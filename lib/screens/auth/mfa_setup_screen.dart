@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:wisp/l10n/app_strings.dart';
 import 'package:wisp/providers/settings_provider.dart';
 import 'package:wisp/routing/app_router.dart';
 import 'package:wisp/services/mfa_service.dart';
@@ -220,7 +221,7 @@ class _MfaSetupScreenState extends ConsumerState<MfaSetupScreen> {
       },
       child: Scaffold(
       appBar: AppBar(
-        title: const Text('Konto absichern'),
+        title: Text(L10n.t(context, 'mfa.setupTitle')),
         automaticallyImplyLeading: false,
         leading: canLeave
             ? BackButton(onPressed: () => context.pop())
@@ -256,22 +257,20 @@ class _MfaSetupScreenState extends ConsumerState<MfaSetupScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            '2FA ist aktiviert',
+            L10n.t(context, 'mfa.activeTitle'),
             style: Theme.of(context).textTheme.headlineSmall,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Dein Konto ist mit einer Authenticator-App geschützt. '
-            'Bei der Anmeldung wird zusätzlich zum Passwort der '
-            'aktuelle Code abgefragt.',
+          Text(
+            L10n.t(context, 'mfa.activeBody'),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
           FilledButton.icon(
             onPressed: _continueFlow,
             icon: const Icon(Icons.check),
-            label: const Text('Fertig'),
+            label: Text(L10n.t(context, 'common.done')),
           ),
         ],
       );
@@ -282,24 +281,20 @@ class _MfaSetupScreenState extends ConsumerState<MfaSetupScreen> {
         const Icon(Icons.shield_outlined, size: 64),
         const SizedBox(height: 16),
         Text(
-          'Schütze dein Konto mit einem zweiten Faktor',
+          L10n.t(context, 'mfa.introTitle'),
           style: Theme.of(context).textTheme.headlineSmall,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 12),
-        const Text(
-          'Mit einer Authenticator-App (z. B. Google Authenticator, Aegis '
-          'oder 2FAS) erstellst du bei jedem Login einen einmaligen Code. '
-          'Nur mit diesem Code kann sich jemand in dein Konto einloggen. '
-          'auch wenn dein Passwort gestohlen wurde.',
+        Text(
+          L10n.t(context, 'mfa.introBody'),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 12),
-        const Text(
-          'Du kannst diesen Schritt überspringen und die Einrichtung '
-          'jederzeit nachholen.',
+        Text(
+          L10n.t(context, 'mfa.introSkip'),
           textAlign: TextAlign.center,
-          style: TextStyle(fontStyle: FontStyle.italic),
+          style: const TextStyle(fontStyle: FontStyle.italic),
         ),
         const SizedBox(height: 32),
         FilledButton.icon(
@@ -311,12 +306,12 @@ class _MfaSetupScreenState extends ConsumerState<MfaSetupScreen> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
               : const Icon(Icons.qr_code),
-          label: const Text('Mit Authenticator-App einrichten'),
+          label: Text(L10n.t(context, 'mfa.setupScan')),
         ),
         const SizedBox(height: 8),
         TextButton(
           onPressed: _skip,
-          child: const Text('Später erinnern'),
+          child: Text(L10n.t(context, 'mfa.setupLater')),
         ),
         if (_error != null) ...[
           const SizedBox(height: 12),
@@ -341,14 +336,11 @@ class _MfaSetupScreenState extends ConsumerState<MfaSetupScreen> {
       children: [
         // ---------- Abschnitt 1: QR-Code ----------
         Text(
-          '1. QR-Code scannen',
+          L10n.t(context, 'mfa.scanStep'),
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Öffne deine Authenticator-App (z. B. Google Authenticator, '
-          'Aegis oder 2FAS) und füge den Eintrag per QR-Scan hinzu.',
-        ),
+        Text(L10n.t(context, 'mfa.scanBody')),
         const SizedBox(height: 24),
         if (_qrUri != null)
           Center(
@@ -366,9 +358,8 @@ class _MfaSetupScreenState extends ConsumerState<MfaSetupScreen> {
           ),
         if (_secret != null) ...[
           const SizedBox(height: 16),
-          const Text(
-            'Kein Scan möglich? Trage diesen Schlüssel manuell ein '
-            '(antippen zum Kopieren):',
+          Text(
+            L10n.t(context, 'mfa.manualKey'),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
@@ -376,10 +367,8 @@ class _MfaSetupScreenState extends ConsumerState<MfaSetupScreen> {
             onTap: () {
               Clipboard.setData(ClipboardData(text: _secret!));
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Schl\u00fcssel kopiert. Wird in 30 s automatisch gel\u00f6scht.',
-                  ),
+                SnackBar(
+                  content: Text(L10n.t(context, 'mfa.copied')),
                 ),
               );
               _clipboardClearTimer?.cancel();
@@ -416,15 +405,14 @@ class _MfaSetupScreenState extends ConsumerState<MfaSetupScreen> {
         FilledButton.icon(
           onPressed: _toConfirm,
           icon: const Icon(Icons.arrow_forward),
-          label: const Text('Weiter: Code eingeben'),
+          label: Text(L10n.t(context, 'mfa.setupNext')),
         ),
         const SizedBox(height: 12),
         Text(
-          'Danach gibst du den 6-stelligen Code aus deiner '
-          'Authenticator-App einmal ein, um die Einrichtung zu bestätigen.',
+          L10n.t(context, 'mfa.setupNextHint'),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           textAlign: TextAlign.center,
         ),
         if (_error != null) ...[
@@ -446,14 +434,11 @@ class _MfaSetupScreenState extends ConsumerState<MfaSetupScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          '2. Code eingeben',
+          L10n.t(context, 'mfa.confirmStep'),
           style: Theme.of(context).textTheme.titleLarge,
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Gib den aktuellen 6-stelligen Code aus deiner '
-          'Authenticator-App ein, um die Einrichtung zu bestätigen:',
-        ),
+        Text(L10n.t(context, 'mfa.confirmBody')),
         const SizedBox(height: 16),
         TextField(
           controller: _codeCtrl,
@@ -480,14 +465,14 @@ class _MfaSetupScreenState extends ConsumerState<MfaSetupScreen> {
                   height: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Bestätigen'),
+              : Text(L10n.t(context, 'common.confirm')),
         ),
         const SizedBox(height: 12),
         TextButton(
           onPressed: _loading
               ? null
               : () => setState(() => _phase = _SetupPhase.scan),
-          child: const Text('Zurück zum QR-Code'),
+          child: Text(L10n.t(context, 'mfa.setupBackQr')),
         ),
         if (_error != null) ...[
           const SizedBox(height: 12),
@@ -513,20 +498,19 @@ class _MfaSetupScreenState extends ConsumerState<MfaSetupScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          'Zwei-Faktor-Schutz aktiv!',
+          L10n.t(context, 'mfa.doneTitle'),
           style: Theme.of(context).textTheme.headlineSmall,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 12),
-        const Text(
-          'Ab jetzt wirst du bei jedem Login nach dem Code aus deiner '
-          'Authenticator-App gefragt.',
+        Text(
+          L10n.t(context, 'mfa.doneBody'),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 32),
         FilledButton(
           onPressed: _continueFlow,
-          child: const Text('Weiter'),
+          child: Text(L10n.t(context, 'common.continue')),
         ),
       ],
     );

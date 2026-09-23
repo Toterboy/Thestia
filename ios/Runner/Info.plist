@@ -6,10 +6,18 @@
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
-	<key>CFBundleDisplayName</key>
- 	<string>Wisp</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Wisp benötigt Mikrofon-Zugriff für Sprachnachrichten</string>
+<key>CFBundleDisplayName</key>
+	<string>WispDating</string>
+ 	<key>NSMicrophoneUsageDescription</key>
+ 	<string>WispDating benötigt Mikrofon-Zugriff für Sprachnachrichten</string>
+ 	<key>NSCameraUsageDescription</key>
+ 	<string>WispDating benötigt Kamera-Zugriff für die Video-Verifizierung und QR-Codes</string>
+ 	<key>NSBluetoothAlwaysUsageDescription</key>
+ 	<string>WispDating nutzt Bluetooth, um Wisp-Geräte in deiner Nähe für Transit Spark zu erkennen</string>
+ 	<key>NSBluetoothPeripheralUsageDescription</key>
+ 	<string>WispDating nutzt Bluetooth, um Wisp-Geräte in deiner Nähe für Transit Spark zu erkennen</string>
+ 	<key>NSLocationWhenInUseUsageDescription</key>
+ 	<string>WispDating nutzt deinen Standort für Transit Spark (Personen in deiner Nähe) und die Entfernungsanzeige</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

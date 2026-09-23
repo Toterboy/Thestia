@@ -23,19 +23,19 @@ void main() {
         email: 'test+tag@beispiel.de',
       );
 
-      // Pfad: otpauth://totp/Wisp:<account>
-      expect(uri, contains(RegExp('otpauth://totp/Wisp:test%2Btag%40beispiel\\.de')));
+      // Pfad: otpauth://totp/WispDating:<account>
+      expect(uri, contains(RegExp('otpauth://totp/WispDating:test%2Btag%40beispiel\\.de')));
       expect(uri, isNot(contains('+tag@beispiel.de?')));
     });
 
     test('ohne Email faellt auf generischen Kontonamen zurueck', () {
       final uri = MfaService.buildOtpAuthUri('XYZ', email: null);
-      expect(uri, contains('otpauth://totp/Wisp:Nutzer'));
+      expect(uri, contains('otpauth://totp/WispDating:Nutzer'));
     });
 
     test('leerer Email-String faellt ebenfalls zurueck', () {
       final uri = MfaService.buildOtpAuthUri('XYZ', email: '');
-      expect(uri, contains('otpauth://totp/Wisp:Nutzer'));
+      expect(uri, contains('otpauth://totp/WispDating:Nutzer'));
     });
 
     test('ist KEIN SVG-Daten-URI mehr (Regression: Supabase qrCode)', () {

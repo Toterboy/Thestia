@@ -112,20 +112,36 @@ class UnifiedPushService {
     }
   }
 
+  /// Optionaler Unterdrückungs-Hook (NUTZERWUNSCH: keine Benachrichtigung,
+  /// wenn der Absender-Chat gerade offen ist). Wird von [App] mit dem
+  /// Riverpod-Ref verdrahtet (der Server liefert `from_user_id` seit
+  /// Build 25 in den Push-Metadaten mit).
+  static bool Function(String fromUserId)? suppressCheck;
+
   static Future<void> _onMessage(
       PushMessage message, String instance) async {
     String title = 'WispDating';
     String body = 'Du hast eine neue Nachricht erhalten.';
+    String? kind;
+    String? from;
     try {
       final text = utf8.decode(message.content);
       if (text.startsWith('{')) {
         final map = jsonDecode(text) as Map<String, dynamic>;
         title = map['title'] as String? ?? title;
         body = map['message'] as String? ?? body;
+        kind = map['kind'] as String?;
+        from = map['from_user_id'] as String?;
       } else {
         body = text;
       }
     } catch (_) {}
+    // Chat offen + Vordergrund -> unterdrücken (wie im FCM-Pfad).
+    if (kind == 'messages' &&
+        from != null &&
+        suppressCheck?.call(from) == true) {
+      return;
+    }
     await _showLocalNotification(title: title, message: body);
   }
 

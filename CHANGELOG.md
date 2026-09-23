@@ -9,6 +9,37 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 ## [Unreleased] – v0.9.0-Nachträge
 
+### Sicherheit (Build 22)
+
+- **Video-Verifizierung, Mehrframe-Median**: Altersschätzung aus bis
+  zu 6 Frames (5 Video-Frames + 1 Selfie), Median statt Einzelbild;
+  2-Jahre-Regel und manuelle Prüfung unverändert.
+- **Stichproben-Audit** (Migration 120, live): Admin-Tab listet
+  Auto-Freigaben mit Video, Bestätigen und Entziehen.
+- **Play Integrity** (nur Play-Builds, `docs/PLAY_INTEGRITY.md`):
+  Token + serverseitige Verdict-Prüfung in `verify-account/action
+  "auto"` (deployed); ohne Play-Eintrag/Secret fällt alles sicher
+  auf manuell zurück.
+- **Modell-Integrität**: SHA-256-Check der ONNX-Modelle (fail-closed
+  in manuell). **TLS-Pinning** für allen Dart-Traffic.
+- **Dart-Obfuskierung** in Release-Builds (R8-Keep-Regel für den
+  Reflection-geladenen Integrity-Helper). Abgelaufener
+  Supabase-Leaf-Pin erneuert (gültig bis 24.11.2026).
+- **Kontolöschung vollständig (DSGVO Art. 17)**: `delete-account`
+  löscht zusätzlich Bug-Reports, Meldungen gegen den Nutzer und
+  Rate-Limit-Reste (Rest via CASCADE, live per pg_constraint
+  verifiziert); lokal werden Chat-Verlauf, Melde-Entwürfe und
+  Crash-Journal mitgelöscht (auch bei Logout gegen Kontowechsel-
+  Reste). Erhalten bleiben nur der irreversible Tombstone-Hash,
+  Admin-Auditspalten und die Sperrliste.
+- **API-Keys umgestellt (Legacy anon/service_role -> Publishable/
+  Secret)**: Client nutzt `SUPABASE_PUBLISHABLE_KEY` (Fallback
+  ANON_KEY), alle 18 Edge Functions bevorzugen die auto-
+  provisionierten Dicts (`SUPABASE_SECRET_KEYS`/`SUPABASE_-
+  PUBLISHABLE_KEYS`, supabase-js 2.44.0) mit Legacy-Fallback.
+  Reihenfolge: deployen, neue Builds verteilen, DANN Legacy-Keys
+  im Dashboard deaktivieren.
+
 Server: Migrationen **086, 087 + 088** einspielen + Edge Functions
 `notify-user` erneut deployen.
 

@@ -21,14 +21,35 @@ class TransitEncounterService {
 
   final Map<String, TransitEncounter> _cache = {};
 
-  /// Kryptografisch zufälliges, ephemeres Token (hex, 32 Zeichen).
+  /// Kryptografisch zufälliges, ephemeres Token (hex, 20 Zeichen = 10 Byte).
+  ///
+  /// ABSICHTLICH kurz: Das Token geht als BLE-Manufacturer-Payload
+  /// ("WST1" + Token) aufs Air - ein Legacy-Advertisement fasst max.
+  /// 31 Byte (Flags + Header + Company-ID + Payload = 7 Byte Overhead,
+  /// Rest 24). Mit 32-Zeichen-Tokens (früher) scheiterte JEDES Advertising
+  /// still mit ADVERTISE_FAILED_DATA_TOO_LARGE ("0 in Reichweite").
+  /// 80 Bit Entropie reichen für 45-Minuten-Ephemeren dicke.
+  /// Server-Regex ([0-9a-fA-F-]{8,64}) und Cache akzeptieren die Länge.
   static String generateToken() {
     final rnd = Random.secure();
     return List.generate(
-      16,
+      10,
       (_) => rnd.nextInt(256).toRadixString(16).padLeft(2, '0'),
     ).join();
   }
+
+  /// Max. nutzbare BLE-Manufacturer-Payload (31 B Paket - 3 B Flags -
+  /// 2 B AD-Header - 2 B Company-ID).
+  static const int maxBlePayloadBytes = 24;
+
+  /// Marker im Manufacturer-Feld (muss zum nativen Advertiser und zum
+  /// Scanner passen).
+  static const String bleMarker = 'WST1';
+
+  /// True, wenn Marker + [token] garantiert in EIN Legacy-Advertisement
+  /// passt (sonst DATA_TOO_LARGE und stille Funkstille).
+  static bool blePayloadFits(String token) =>
+      bleMarker.length + token.length <= maxBlePayloadBytes;
 
   /// Trägt eine Sichtung ein (dedupe per Token, frischeste Zeit gewinnt).
   void recordEncounter(String token) {

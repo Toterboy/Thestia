@@ -66,12 +66,14 @@ class CertPinning {
   /// stabil und dienen als Backup. Mindestens EIN Pin muss passen.
   static const Map<String, List<String>> _pinnedByHost = {
     // Supabase (jftuigjbmmuvrckbchqo.supabase.co).
-    // 1) Leaf (Let's Encrypt, CN=supabase.co) — gültig bis ca. September 2026.
+    // 1) Leaf (Let's Encrypt, CN=supabase.co) — rotiert am 2026-08-26,
+    //    gültig bis 2026-11-24. Bei nächster Rotation aktualisieren.
     // 2) Intermediate (Google Trust Services, CN=WE1) — Jahre stabil.
     // 3) Root (Google Trust Services, CN=GTS Root R4) — Jahrzehnte stabil.
-    // Ausgelesen & cross-verifiziert (openssl + Node.js): 2026-07-26
+    // Ausgelesen & cross-verifiziert (openssl-Kette via Python ssl,
+    // Intermediate + Root unverändert): 2026-09-21
     _defaultHost: <String>[
-      '5IkHI2A4x/6wXNhi5BzX/Fco8o2mG5Xmdh2cKVxbMpg=', // Leaf (Let's Encrypt)
+      'vhe/M2GnaRvd4pPZIwPKNZjmwNFCb4+5LkOKGdr44xs=', // Leaf (Let's Encrypt)
       'HfwWBfutNY2LyET3bRUgP6ycpcGnn9SFf/ryhk++v5Y=', // Intermediate (WE1)
       'drJ7gKWAJ9w88dpo2sFwEO2TmX0LYD4vrb6FASSTtac=', // Root (GTS Root R4)
     ],
@@ -87,6 +89,28 @@ class CertPinning {
       'h9zU3HRkCjIs0gVVJQbRvmTxJZYlgJZUSYa0hQvHJwY=', // Root (Amazon Root CA 1)
     ],
   };
+
+  /// Ob [host] ein gepinnter Host ist (exakter Vergleich, v0.9.0).
+  static bool isPinnedHost(String host) {
+    final needle = host.toLowerCase();
+    return _pinnedByHost.keys.any((h) => h.toLowerCase() == needle);
+  }
+
+  /// Prüft ein Zertifikat für [expectedHost] (reine Logik, v0.9.0):
+  /// exakter Pin ODER eng begrenzter Rotation-Fallback (Issuer + Host
+  /// + Gültigkeit). Wird vom strikten [pinnedHttpClient] UND von den
+  /// globalen [WispHttpOverrides] genutzt.
+  static bool verifyCertificate({
+    required String expectedHost,
+    required X509Certificate cert,
+    required String certHost,
+  }) {
+    final pins = _pinnedByHost[expectedHost] ?? const <String>[];
+    if (pins.isEmpty) return false;
+    final hash = base64Encode(sha256.convert(cert.der).bytes);
+    if (pins.contains(hash)) return true;
+    return _issuerFallbackMatches(expectedHost, cert, certHost);
+  }
 
   /// Host → erwartete Issuer-Bestandteile (Rotation-Fallback).
   ///
@@ -147,20 +171,11 @@ class CertPinning {
     final context = SecurityContext(withTrustedRoots: false);
     final client = HttpClient(context: context);
     client.badCertificateCallback = (cert, certHost, port) {
-      final hash = base64Encode(sha256.convert(cert.der).bytes);
-      if (pins.contains(hash)) {
-        return true;
-      }
-
-      // Rotation-Fallback: Leaf-Pin passt nicht (z. B. Zertifikat wurde
-      // rotiert). Akzeptiere NUR wenn das konkrete gepinnte Intermediate
-      // (CN), Host und Gültigkeitszeitraum passen – sonst MITM → ablehnen.
-      if (_issuerFallbackMatches(targetHost, cert, certHost)) {
-        if (kDebugMode) {
-          debugPrint('[CERT_PINNING] Pin-Mismatch, aber Intermediate-'
-              'Fallback passend, vermutlich Leaf-Rotation. '
-              'Pin-Zentrale aktualisieren!');
-        }
+      // Strikte Stufe: Callback läuft IMMER (leerer Root-Store) -
+      // auch bei systemseitig gültigen Zertifikaten (Schutz vor
+      // nachinstallierten Fremd-CAs auf dem Gerät).
+      if (verifyCertificate(
+          expectedHost: targetHost, cert: cert, certHost: certHost)) {
         return true;
       }
 

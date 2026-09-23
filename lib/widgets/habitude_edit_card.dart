@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:wisp/models/habitude_level.dart';
+import 'package:wisp/l10n/app_strings.dart';
 import 'package:wisp/providers/profile_provider.dart';
 import 'package:wisp/services/supabase_database_service.dart';
 import 'package:wisp/services/supabase_service.dart';
@@ -48,15 +49,13 @@ class HabitudeEditCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Gewohnheiten',
+              L10n.t(context, 'profile.edit.habits'),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Wie stehst du zu ...? Diese Angaben beeinflussen, wen du bei '
-              '"Find your Match" siehst. Es werden nur Personen gezeigt, '
-              'die maximal so viel konsumieren wie du.',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+            Text(
+              L10n.t(context, 'profile.edit.habitsSub'),
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
             const SizedBox(height: 16),
             HabitudeSelector(

@@ -219,6 +219,16 @@ public class MethodCallHandlerImpl implements MethodCallHandler, StateProvider {
             InitializationOptions.builder(context)
                     .setEnableInternalTracer(true)
                     .setInjectableLogger(logSink, logSeverity)
+                    // Wisp-Hinweis (verifiziert 2026-09): Der Trial
+                    // "WebRTC-MDNS-Obfuscation/Disabled/" ist auf nativem
+                    // Android WIRKUNGSLOS (die native libwebrtc verdrahtet
+                    // keinen MdnsResponder - es entstehen ohnehin keine
+                    // .local-Kandidaten; per Bytecode geprüft). Er bleibt
+                    // als harmloser Belt-and-Braces-Eintrag (unregistrierte
+                    // Trials ignoriert libwebrtc still). Same-LAN-P2P hängt
+                    // NICHT hiervon ab, sondern vom Router (AP-Isolation!)
+                    // und dem Signaling; Fallback ist der E2E-Relay.
+                    .setFieldTrials("WebRTC-MDNS-Obfuscation/Disabled/")
                     .createInitializationOptions());
 
     getUserMediaImpl = new GetUserMediaImpl(this, context);

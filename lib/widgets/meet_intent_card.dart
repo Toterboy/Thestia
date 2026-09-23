@@ -34,13 +34,14 @@ class _MeetIntentCardState extends ConsumerState<MeetIntentCard> {
   // Optionale Planungs-Notiz.
   final _noteCtrl = TextEditingController();
 
-  static const _dateIdeas = [
-    'Kaffee trinken',
-    'Spazieren gehen',
-    'Ins Kino',
-    'Museum besuchen',
-    'Etwas essen gehen',
-  ];
+  /// Date-Ideen lokalisiert (meet.idea.1..5).
+  List<String> _dateIdeas(BuildContext context) => [
+        L10n.t(context, 'meet.idea.1'),
+        L10n.t(context, 'meet.idea.2'),
+        L10n.t(context, 'meet.idea.3'),
+        L10n.t(context, 'meet.idea.4'),
+        L10n.t(context, 'meet.idea.5'),
+      ];
 
   @override
   void dispose() {
@@ -63,8 +64,7 @@ class _MeetIntentCardState extends ConsumerState<MeetIntentCard> {
         icon: Icons.celebration,
         color: Colors.green,
         title: L10n.t(context, 'meet.metTitle'),
-        body: 'Wir hoffen, ihr hattet eine schöne Zeit. '
-            'Echte Verbindungen statt nur Online-Reden.',
+        body: L10n.t(context, 'meet.metBody'),
       );
     }
 
@@ -82,8 +82,8 @@ class _MeetIntentCardState extends ConsumerState<MeetIntentCard> {
         icon: Icons.schedule,
         color: Theme.of(context).colorScheme.primary,
         title: L10n.t(context, 'meet.youWant'),
-        body: 'Wir haben ${widget.partnerName} deinen Wunsch weitergegeben. '
-            'Sobald ${widget.partnerName} zustimmt, könnt ihr planen.',
+        body: L10n.tf(context, 'meet.waitBody',
+            {'name': widget.partnerName}),
       );
     }
 
@@ -92,15 +92,15 @@ class _MeetIntentCardState extends ConsumerState<MeetIntentCard> {
         icon: Icons.favorite,
         color: Theme.of(context).colorScheme.primary,
         title: L10n.tf(context, 'meet.theyWant', {'name': widget.partnerName}),
-        body: 'Was hältst du davon, es mal wirklich zu versuchen?',
+        body: L10n.t(context, 'meet.tryBody'),
         actions: [
           FilledButton(
             onPressed: () => notifier.setWants(true),
-            child: const Text('Ja, gerne'),
+            child: Text(L10n.t(context, 'meet.yesGlad')),
           ),
           TextButton(
             onPressed: () => notifier.setWants(false),
-            child: const Text('Doch lieber nicht'),
+            child: Text(L10n.t(context, 'meet.noThanks')),
           ),
         ],
       );
@@ -110,14 +110,12 @@ class _MeetIntentCardState extends ConsumerState<MeetIntentCard> {
     return _card(
       icon: Icons.coffee,
       color: Theme.of(context).colorScheme.primary,
-      title: 'Lust auf ein echtes Treffen?',
-      body: 'Ihr schreibt euch schon eine Weile. Wie wär\'s mit einem '
-          'Kaffee oder einem Spaziergang? Trefft euch an einem öffentlichen '
-          'Ort.',
+      title: L10n.t(context, 'meet.suggestTitle'),
+      body: L10n.t(context, 'meet.suggestBody'),
       actions: [
         FilledButton(
           onPressed: () => notifier.setWants(true),
-          child: const Text('Ja, ich will'),
+          child: Text(L10n.t(context, 'meet.yesWant')),
         ),
         TextButton(
           onPressed: () => setState(() => _dismissed = true),
@@ -139,12 +137,12 @@ class _MeetIntentCardState extends ConsumerState<MeetIntentCard> {
               children: [
                 const Icon(Icons.handshake),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Ihr wollt euch treffen! 🎉',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
+              Expanded(
+                child: Text(
+                  L10n.t(context, 'meet.planningTitle'),
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
+              ),
               ],
             ),
             const SizedBox(height: 8),
@@ -153,7 +151,7 @@ class _MeetIntentCardState extends ConsumerState<MeetIntentCard> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _dateIdeas
+              children: _dateIdeas(context)
                   .map((idea) => Chip(label: Text(idea)))
                   .toList(),
             ),
@@ -161,11 +159,11 @@ class _MeetIntentCardState extends ConsumerState<MeetIntentCard> {
             TextField(
               controller: _noteCtrl,
               maxLines: 2,
-              decoration: const InputDecoration(
-                hintText: 'Notiz (z. B. "Samstag, 15 Uhr, Café X")',
-                border: OutlineInputBorder(),
-                contentPadding:
-                    EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: InputDecoration(
+                hintText: L10n.t(context, 'meet.noteHint'),
+                border: const OutlineInputBorder(),
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 8),
               ),
             ),
             const SizedBox(height: 12),
@@ -174,17 +172,16 @@ class _MeetIntentCardState extends ConsumerState<MeetIntentCard> {
                 Expanded(
                   child: FilledButton.icon(
                     icon: const Icon(Icons.check_circle_outline),
-                    label: const Text('Wir haben uns getroffen'),
+                    label: Text(L10n.t(context, 'meet.metBtn')),
                     onPressed: () => notifier.confirmMet(),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Tip: Trifft euch immer an einem öffentlichen Ort und sag einer '
-              'Vertrauensperson Bescheid.',
-              style: TextStyle(fontSize: 11, color: Colors.grey),
+            Text(
+              L10n.t(context, 'meet.safetyTip'),
+              style: const TextStyle(fontSize: 11, color: Colors.grey),
             ),
           ],
         ),

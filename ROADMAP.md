@@ -283,6 +283,17 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       überspringbar) – KEINE neuen Datenpunkte, nur die bestehenden in
       Gesprächsform; bewusst KEIN Belohnungs-Mechanismus (App-Prinzip:
       spielerisch ≠ Dopamin-Loop)
+- [x] **Build-15-Nachträge (Chat & Server)**: E2E-Nachrichten-Relay als
+      P2P-Fallback (093, nur Ciphertext auf dem Server), geteilte
+      Eisbrecher-Bubbles (60 Fragen, 10 Kategorien, DE/EN), Quiz und
+      Date-Rad erst nach 50–70 Nachrichten je Chat, Kühl-Dialog auch in
+      der Interessen-Liste, Push- statt Go-Navigation (Zurück landet
+      immer auf der Seite davor), Routen-Restore nach Prozesstod,
+      Lieblingssong/Band in der Einrichtung (092), Transit-Notizfeld
+      (091), Funke-Kühl-RPCs als BIGINT (090), Dating-Hour-Mindestzahl
+      konfigurierbar + Admin-Tab (094, Standard 20, Test-Minimum 2),
+      KI-Kennzeichnung an Bildprüfungen, Video-Verifizierung mit lokaler
+  KI-Alters-Triage (095, 2-Jahre-Regel, manuelle Queue für Abweichler)
 
 ## Geplant für 0.10.0 – Emotionaler Rückzugsort (Sanctuary) & Lokaler KI-Reflexions-Chat
 

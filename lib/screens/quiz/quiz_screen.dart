@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -8,8 +9,8 @@ import 'package:go_router/go_router.dart';
 import 'package:wisp/models/find_match_models.dart';
 import 'package:wisp/l10n/app_strings.dart';
 import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/services/find_your_match_service.dart';
 import 'package:wisp/services/quiz_service.dart';
+import 'package:wisp/services/supabase_storage_service.dart';
 import 'package:wisp/widgets/intro_audio_player.dart';
 
 /// Quiz "Wie gut kenn ich mein Match".
@@ -34,7 +35,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   int? _selectedIndex;
   bool _loading = true;
   bool _submitting = false;
-  String? _avatarUrl;
+  Future<Uint8List?>? _avatarFuture;
   String? _error;
 
   Timer? _cooldownTimer;
@@ -97,11 +98,13 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   Future<void> _loadAvatar() async {
     final state = _state;
     if (state == null) return;
-    final service = ref.read(findYourMatchServiceProvider);
-    final url = await service.getAvatarUrl(state.partnerId);
-    if (mounted && url != null) {
-      setState(() => _avatarUrl = url);
-    }
+    // 107: Schlüssel kommen aus match-media (URL + Key, serverseitig
+    // berechtigungsgeprüft) - Bytes werden lokal entschlüsselt.
+    setState(() {
+      _avatarFuture = ref
+          .read(supabaseStorageServiceProvider)
+          .loadPartnerAvatarBytes(targetUserId: state.partnerId);
+    });
   }
 
   void _startCooldownTicker() {
@@ -261,13 +264,20 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
       );
     }
 
-    Widget image = _avatarUrl != null
-        ? Image.network(
-            _avatarUrl!,
+    Widget image = FutureBuilder<Uint8List?>(
+      future: _avatarFuture,
+      builder: (context, snapshot) {
+        final bytes = snapshot.data;
+        if (bytes != null) {
+          return Image.memory(
+            bytes,
             fit: BoxFit.cover,
             errorBuilder: (_, _, _) => const Icon(Icons.person, size: 96),
-          )
-        : const Icon(Icons.person, size: 96);
+          );
+        }
+        return const Icon(Icons.person, size: 96);
+      },
+    );
 
     if (state.unlockLevel < 2) {
       image = ImageFiltered(
@@ -392,13 +402,14 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
           ),
           const SizedBox(height: 16),
           FilledButton(
+            // Zurück in den Chat, aus dem das Quiz geöffnet wurde.
             onPressed: () {
-              final state = _state;
-              context.go(
-                AppRoutes.chatDetailPath(widget.matchId.toString()),
-              );
-              if (state != null && state.partnerId.isNotEmpty) {
-                // Partner-Profil ist jetzt voll zugänglich.
+              if (Navigator.of(context).canPop()) {
+                context.pop();
+              } else {
+                context.go(
+                  AppRoutes.chatDetailPath(widget.matchId.toString()),
+                );
               }
             },
             child: Text(L10n.t(context, 'quiz.toChat')),
@@ -520,10 +531,53 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
         const SizedBox(height: 16),
         if (state.partnerId.isNotEmpty)
           IntroAudioPlayer(targetUserId: state.partnerId),
+        const SizedBox(height: 8),
+        // Vorstellungstext des Matches (Nutzerwunsch: auch lesbar, nicht
+        // nur hörbar) - lädt das Partner-Profil (Quiz-Freischaltung
+        // serverseitig geprüft).
+        if (state.partnerId.isNotEmpty)
+          FutureBuilder<String?>(
+            future: ref
+                .read(quizServiceProvider)
+                .fetchPartnerProfile(widget.matchId)
+                .then((r) => r?.profile.introText),
+            builder: (context, snap) {
+              final text = (snap.data ?? '').trim();
+              if (text.isEmpty) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      L10n.t(context, 'quiz.partnerIntroTitle'),
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleSmall
+                          ?.copyWith(fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      text,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         const SizedBox(height: 16),
         FilledButton.icon(
-          onPressed: () =>
-              context.go(AppRoutes.chatDetailPath(widget.matchId.toString())),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              context.pop();
+            } else {
+              context.go(
+                  AppRoutes.chatDetailPath(widget.matchId.toString()));
+            }
+          },
           icon: const Icon(Icons.chat_bubble_outline),
           label: Text(L10n.t(context, 'quiz.toChat')),
         ),

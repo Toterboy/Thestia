@@ -89,6 +89,70 @@ class FindYourMatchService {
     await _client.rpc('hide_match', params: {'p_match_id': matchId});
   }
 
+  // -- v0.9.2: Herzensstärken (Ideen 3 + 5) -------------------------------
+
+  /// Funken-Typ umschalten: romantisch (spark) <-> Freundschaft (friends).
+  /// Nur der eigene Stand wird geändert; die Gegenseite sieht denselben
+  /// Typ (kann ihn ebenfalls umschalten - letzer Schreibzugriff gewinnt).
+  Future<void> setMatchKind(int matchId, {required bool friends}) async {
+    await _client.rpc('set_match_kind', params: {
+      'p_match_id': matchId,
+      'p_kind': friends ? 'friends' : 'spark',
+    });
+  }
+
+  /// Erinnerungsliste (Idee 5): Einträge eines Funkens lesen.
+  Future<List<BucketItem>> bucketItems(int matchId) async {
+    try {
+      final response = await _client.rpc('match_bucket_items',
+          params: {'p_match_id': matchId});
+      final rows = response is List ? response : const <dynamic>[];
+      return rows
+          .map((row) => BucketItem.fromJson(
+              Map<String, dynamic>.from(row as Map)))
+          .toList();
+    } catch (e) {
+      debugPrint('[Bucket] Lesen fehlgeschlagen: $e');
+      return const [];
+    }
+  }
+
+  /// Erinnerungsliste: Eintrag hinzufügen (max. 200 Zeichen).
+  Future<int?> bucketAdd(int matchId, String text) async {
+    try {
+      final response = await _client.rpc('match_bucket_add', params: {
+        'p_match_id': matchId,
+        'p_text': text,
+      });
+      return (response as num?)?.toInt();
+    } catch (e) {
+      debugPrint('[Bucket] Hinzufügen fehlgeschlagen: $e');
+      return null;
+    }
+  }
+
+  /// Erinnerungsliste: Eintrag abhaken/zurücksetzen (Toggle).
+  Future<bool> bucketToggle(int itemId) async {
+    try {
+      final response = await _client.rpc('match_bucket_toggle',
+          params: {'p_item_id': itemId});
+      return response is Map && response['done'] == true;
+    } catch (e) {
+      debugPrint('[Bucket] Abhaken fehlgeschlagen: $e');
+      return false;
+    }
+  }
+
+  /// Erinnerungsliste: eigenen Eintrag löschen.
+  Future<void> bucketDelete(int itemId) async {
+    try {
+      await _client.rpc('match_bucket_delete',
+          params: {'p_item_id': itemId});
+    } catch (e) {
+      debugPrint('[Bucket] Löschen fehlgeschlagen: $e');
+    }
+  }
+
   /// Signierte URL für die Intro-Audio-Datei eines Nutzers.
   ///
   /// Die match-media-Edge-Function prüft serverseitig, ob eine Berechtigung

@@ -50,8 +50,8 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
   Future<void> _saveIntro() async {
     if (!IntroEditor.isValid(text: _introText, audioPath: _introAudioPath)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Text UND Audio sind Pflicht.'),
+        SnackBar(
+          content: Text(L10n.t(context, 'match.required')),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -110,12 +110,12 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Find your Match'),
+        title: Text(L10n.t(context, 'match.title')),
         actions: [
           if (!_showIntroSetup)
             IconButton(
               icon: const Icon(Icons.record_voice_over),
-              tooltip: 'Meine Vorstellung bearbeiten',
+              tooltip: L10n.t(context, 'match.editIntro'),
               onPressed: () => setState(() => _showIntroSetup = true),
             ),
         ],
@@ -129,14 +129,13 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
                   const Icon(Icons.headphones, size: 64, color: Colors.grey),
                   const SizedBox(height: 12),
                   Text(
-                    'Erstelle zuerst deine eigene Vorstellung',
+                    L10n.t(context, 'match.createFirst'),
                     style: Theme.of(context).textTheme.titleLarge,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Andere lernen dich über deine Vorstellung kennen, '
-                    'bevor sie ein Foto sehen.',
+                    L10n.t(context, 'match.createSub'),
                     style: Theme.of(context).textTheme.bodyMedium,
                     textAlign: TextAlign.center,
                   ),
@@ -153,7 +152,7 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
                   FilledButton.icon(
                     onPressed: _saveIntro,
                     icon: const Icon(Icons.check),
-                    label: const Text('Speichern & weiter'),
+                    label: Text(L10n.t(context, 'match.saveContinue')),
                   ),
                 ],
               ),
@@ -168,22 +167,21 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
                     const Icon(Icons.headphones,
                         size: 64, color: Colors.grey),
                     const SizedBox(height: 16),
-                    const Text(
-                      'Aktuell gibt es keine neuen Vorstellungen.',
+                    Text(
+                      L10n.t(context, 'match.empty'),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Tipp: Hinterlege selbst eine Vorstellung in deinem '
-                      'Profil, dann wirst du hier anderen angezeigt.',
-                      style: TextStyle(color: Colors.grey),
+                    Text(
+                      L10n.t(context, 'match.emptyTip'),
+                      style: const TextStyle(color: Colors.grey),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
                     OutlinedButton.icon(
                       onPressed: notifier.loading ? null : notifier.load,
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Neu laden'),
+                      label: Text(L10n.t(context, 'match.reload')),
                     ),
                   ],
                 ),
@@ -289,9 +287,10 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
                               const SizedBox(height: 12),
                             ],
                             if (current.introText.isNotEmpty) ...[
-                              const Text(
-                                'Vorstellung',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                              Text(
+                                L10n.t(context, 'match.introTitle'),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(height: 8),
                               Text(
@@ -303,16 +302,16 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
                             ],
                             if (current.introAudioPath == null &&
                                 current.introText.isEmpty)
-                              const Text(
-                                'Diese Person hat noch keine Vorstellung '
-                                'hinterlegt.',
-                                style: TextStyle(color: Colors.grey),
+                              Text(
+                                L10n.t(context, 'match.noIntro'),
+                                style: const TextStyle(color: Colors.grey),
                               ),
                             const SizedBox(height: 16),
                             if (current.interests.isNotEmpty) ...[
-                              const Text(
-                                'Interessen',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                              Text(
+                                L10n.t(context, 'match.interestsTitle'),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
                               ),
                               const SizedBox(height: 8),
                               Wrap(

@@ -44,6 +44,21 @@ class RandomChatService {
     }
   }
 
+  /// Aktive Session DES Aufrufers (globaler Relay-Eingang, Migration 111):
+  /// Session-ID + Partner, ohne dass der Client die ID kennen muss.
+  Future<RandomChatSession?> getMyActiveSession() async {
+    try {
+      final response = await _client.rpc('get_my_active_random_chat');
+      if (response == null) return null;
+      final map = Map<String, dynamic>.from(response as Map);
+      if ((map['sessionId'] as String?) == null) return null;
+      return RandomChatSession.fromJson(map);
+    } catch (e) {
+      debugPrint('[RandomChat] getMyActiveSession fehlgeschlagen: $e');
+      return null;
+    }
+  }
+
   /// Beendet die Session (Idempotent, serverseitig).
   Future<void> leave(String sessionId) async {
     try {

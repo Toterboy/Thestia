@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:wisp/l10n/app_strings.dart';
 import 'package:wisp/services/find_your_match_service.dart';
 
 /// Wiedergabe der Audio-Vorstellung eines Nutzers.
@@ -22,7 +23,7 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
   final AudioPlayer _player = AudioPlayer();
   bool _playing = false;
   bool _loading = false;
-  String? _error;
+  String? _errorKey;
   StreamSubscription<PlayerState>? _stateSub;
 
   @override
@@ -43,7 +44,7 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
 
     setState(() {
       _loading = true;
-      _error = null;
+      _errorKey = null;
     });
     try {
       final service = ref.read(findYourMatchServiceProvider);
@@ -51,7 +52,7 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
       if (url == null) {
         setState(() {
           _loading = false;
-          _error = 'Vorstellung nicht abrufbar';
+          _errorKey = 'intro.unavailable';
         });
         return;
       }
@@ -71,7 +72,7 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
       if (mounted) {
         setState(() {
           _loading = false;
-          _error = 'Vorstellung nicht abspielbar';
+          _errorKey = 'intro.unplayable';
         });
       }
     } finally {
@@ -92,8 +93,10 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
           : Icon(_playing ? Icons.stop : Icons.play_arrow),
       label: Text(
         _playing
-            ? 'Stopp'
-            : _error ?? 'Vorstellung anhören',
+            ? L10n.t(context, 'intro.stop')
+            : _errorKey != null
+                ? L10n.t(context, _errorKey!)
+                : L10n.t(context, 'intro.listen'),
       ),
     );
   }

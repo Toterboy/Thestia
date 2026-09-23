@@ -74,7 +74,7 @@ class MfaService {
 
   /// Startet die TOTP-Einrichtung und liefert QR-URI + Secret.
   Future<({String factorId, String qrUri, String secret})> startTotpEnroll({
-    String friendlyName = 'Wisp',
+    String friendlyName = 'WispDating',
   }) async {
     // Verwaiste, unbestätigte Faktoren vorher entfernen: Jede abgebrochene
     // Einrichtung (Screen verlassen, App geschlossen) hinterlässt einen
@@ -106,7 +106,7 @@ class MfaService {
     }
 
     final response = await _client.auth.mfa.enroll(
-      issuer: 'Wisp',
+      issuer: 'WispDating',
       friendlyName: friendlyName,
       factorType: FactorType.totp,
     );
@@ -139,7 +139,7 @@ class MfaService {
   /// Baut den Standard-otpauth-URI, den jede Authenticator-App versteht.
   @visibleForTesting
   static String buildOtpAuthUri(String secret, {String? email}) {
-    const issuer = 'Wisp';
+    const issuer = 'WispDating';
     final account =
         (email == null || email.isEmpty) ? 'Nutzer' : email;
     return 'otpauth://totp/${Uri.encodeComponent(issuer)}:'

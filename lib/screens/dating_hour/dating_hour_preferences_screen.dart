@@ -42,6 +42,24 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
     'Offenheit', 'Bodenständigkeit',
   ];
 
+  /// Angezeigter Name für gespeicherte (deutsche) Trait-Werte.
+  static String _traitLabel(BuildContext context, String trait) {
+    const keys = {
+      'Humor': 'dh.prefs.trait.humor',
+      'Ehrlichkeit': 'dh.prefs.trait.honesty',
+      'Abenteuerlust': 'dh.prefs.trait.adventure',
+      'Intelligenz': 'dh.prefs.trait.intelligence',
+      'Empathie': 'dh.prefs.trait.empathy',
+      'Spontanität': 'dh.prefs.trait.spontaneity',
+      'Zuverlässigkeit': 'dh.prefs.trait.reliability',
+      'Leidenschaft': 'dh.prefs.trait.passion',
+      'Offenheit': 'dh.prefs.trait.openness',
+      'Bodenständigkeit': 'dh.prefs.trait.downToEarth',
+    };
+    final key = keys[trait];
+    return key == null ? trait : L10n.t(context, key);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -146,8 +164,7 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Diese Einstellungen helfen uns, dich mit passenden Personen zu verbinden. '
-                    'Du kannst sie vor jedem Event anpassen.',
+                    L10n.t(context, 'dh.prefs.intro'),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
                     ),
@@ -159,7 +176,7 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
             const SizedBox(height: 32),
 
             // Altersbereich
-            const _SectionTitle('Altersbereich'),
+            _SectionTitle(L10n.t(context, 'dh.prefs.ageSection')),
             const SizedBox(height: 12),
             Card(
               child: Padding(
@@ -182,8 +199,9 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
               maxValue: _ageMax,
               boundsMin: 18,
               boundsMax: 99,
-              minLabelPrefix: 'Mindestalter',
-              maxLabelPrefix: 'Höchstalter',
+              minLabelPrefix: L10n.t(context, 'profile.edit.minAgeLabel'),
+              maxLabelPrefix: L10n.t(context, 'profile.edit.maxAgeLabel'),
+              labelSuffix: L10n.t(context, 'common.years'),
               onChanged: (min, max) {
                 setState(() {
                   _ageMin = min;
@@ -199,7 +217,7 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
             const SizedBox(height: 24),
 
             // Gesuchte Geschlechter
-            const _SectionTitle('Ich suche...'),
+            _SectionTitle(L10n.t(context, 'dh.prefs.genderSection')),
             const SizedBox(height: 12),
             Card(
               child: Padding(
@@ -227,14 +245,13 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
             const SizedBox(height: 24),
 
             // Automatische Teilnahme (Abfrage nach Ende eines Events)
-            const _SectionTitle('Teilnahme'),
+            _SectionTitle(L10n.t(context, 'dh.prefs.joinSection')),
             const SizedBox(height: 12),
             Card(
               child: SwitchListTile(
                 title: Text(L10n.t(context, 'dh.prefs.autoJoin')),
-                subtitle: const Text(
-                  'Wenn aktiviert, nimmst du am nächsten Dating Hour '
-                  'automatisch teil, sobald es läuft.',
+                subtitle: Text(
+                  L10n.t(context, 'dh.prefs.autoJoinHint'),
                 ),
                 value: ref.watch(settingsProvider).datingHourAutoJoin,
                 onChanged: (v) => ref
@@ -246,11 +263,10 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
             const SizedBox(height: 24),
 
             // Bevorzugte Eigenschaft (Freitext + Vorschläge)
-            const _SectionTitle('Was du an anderen besonders magst'),
+            _SectionTitle(L10n.t(context, 'dh.prefs.traitSection')),
             const SizedBox(height: 8),
             Text(
-              'Wähle eine Eigenschaft oder gib deine eigene ein. '
-                     'Dies fließt als weicher Faktor bei den Funken-Vorschlägen ein.',
+              L10n.t(context, 'dh.prefs.traitHint2'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -262,7 +278,7 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
               children: _suggestedTraits.map((trait) {
                 final isSelected = _selectedTrait == trait;
                 return FilterChip(
-                  label: Text(trait),
+                  label: Text(_traitLabel(context, trait)),
                   selected: isSelected,
                   onSelected: (v) => setState(() => _selectedTrait = trait),
                   selectedColor: Theme.of(context).colorScheme.primaryContainer,
@@ -274,7 +290,7 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
             TextField(
               controller: _traitController,
               decoration: InputDecoration(
-                labelText: 'Eigene Eigenschaft eingeben',
+                labelText: L10n.t(context, 'dh.prefs.traitOwn'),
                 hintText: L10n.t(context, 'dh.prefs.traitHintField'),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                 prefixIcon: const Icon(Icons.edit),
@@ -290,8 +306,7 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 4),
             Text(
-              'Personen mit passenden Gewohnheiten werden dir bei den '
-                     'Funken-Vorschlägen zuerst vorgeschlagen, ausgeschlossen wird niemand.',
+              L10n.t(context, 'dh.prefs.habitsHint2'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
@@ -334,8 +349,7 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
 
             // Hinweis
             Text(
-              'Speichern meldet dich NICHT an. Deine Teilnahme bestätigst '
-              'du separat mit "Ich bin dabei" auf dem Event-Screen.',
+              L10n.t(context, 'dh.prefs.saveHint2'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -381,7 +395,9 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
     } on DatingHourException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehler: ${e.message}')),
+          SnackBar(
+              content: Text(L10n.tf(context, 'common.errorWith',
+                  {'error': e.message}))),
         );
       }
     }
@@ -403,16 +419,15 @@ String genderPrefFromList(List<String> genderPreferences) {
   return 'all';
 }
 
-/// Geschlechts-Präferenz für Dating Hour.
+/// Geschlechts-Präferenz für Dating Hour (Anzeige immer über labelKey).
 enum _GenderPreference {
-  all('all', 'Alle Geschlechter', 'dh.gender.all'),
-  women('women', 'Frauen', 'dh.gender.women'),
-  men('men', 'Männer', 'dh.gender.men'),
-  nonBinary('non_binary', 'Nichtbinäre Personen', 'dh.gender.nonBinary');
+  all('all', 'dh.gender.all'),
+  women('women', 'dh.gender.women'),
+  men('men', 'dh.gender.men'),
+  nonBinary('non_binary', 'dh.gender.nonBinary');
 
-  const _GenderPreference(this.value, this.label, this.labelKey);
+  const _GenderPreference(this.value, this.labelKey);
   final String value;
-  final String label;
   final String labelKey;
 }
 

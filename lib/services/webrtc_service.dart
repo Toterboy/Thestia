@@ -34,9 +34,11 @@ class WebRTCService {
   ///
   /// BETREIBER-ENTSCHEIDUNG: Kein TURN (keine laufenden Abos/Kosten).
   /// Konsequenz: Hinter symmetrischen NATs/strikten Firewalls (z. B.
-  /// Unternehmensnetzen) kommt ggf. keine direkte P2P-Verbindung zustande.
-  /// Falls später TURN gewünscht ist: ice-config Edge Function um
-  /// kurzlebige TURN-REST-Credentials erweitern (siehe Git-Historie).
+  /// Unternehmensnetze) kommt ggf. keine direkte P2P-Verbindung zustande.
+  /// Insbesondere MOBILFUNK (CGNAT) scheitert damit aktuell regelmäßig -
+  /// Nutzer-Hinweis: random.errorConnectTimeout. Falls später TURN
+  /// gewünscht ist: ice-config Edge Function um kurzlebige TURN-REST-
+  /// Credentials erweitern (siehe Git-Historie).
   static final List<Map<String, dynamic>> _fallbackIceServers = [
     {'urls': 'stun:stun.nextcloud.com:443'},  // Hetzner, DE
     {'urls': 'stun:stun.miwifi.com:3478'},    // OVH, FR
@@ -66,6 +68,16 @@ class WebRTCService {
   /// Präfix für Steuerungsnachrichten im verschlüsselten Textkanal.
   static const String controlPrefix = 'CALL:';
 
+  /// Wake-up-Signal für den Relay-Fallback: Nach relay_store pingt der
+  /// Sender über den ohnehin bestehenden Signaling-Kanal, damit der
+  /// Empfänger sofort abholt statt aufs Polling zu warten. Ein reiner
+  /// void-Stream (kein Inhalt im Chat, keine Metadaten beim Server).
+  final StreamController<void> _relayPingController =
+      StreamController<void>.broadcast();
+
+  /// Stream der Relay-Wake-up-Pings.
+  Stream<void> get relayPing => _relayPingController.stream;
+
   /// ContentType für Sprachpakete eines Anrufs.
   static const String callAudioContentType = 'audio/call';
 
@@ -78,10 +90,37 @@ class WebRTCService {
   String? _signalingTopic;
   bool _isConnected = false;
 
+  /// True, wenn ein Signaling-Kanal referenziert ist (keine Aussage über
+  /// dessen Realtime-Status - ein toter Kanal wird beim nächsten
+  /// [connect] ersetzt).
+  bool get hasSignalingChannel => _signalingChannel != null;
+
+  /// Zuletzt gesehenes Offer-SDP (Duplikat-Schutz: Realtime liefert
+  /// mindestens einmal aus; identische Wiederholungen starten den
+  /// Handshake nicht neu).
+  String? _lastOfferSdp;
+
   /// True, sobald eine Remote-Description gesetzt wurde. Nach dem ersten
   /// Offer/Answer-Austausch werden weitere ignoriert (Härtung gegen
   /// Signaling-Kaperung; keine Renegotiation in dieser Architektur).
   bool _remoteDescriptionSet = false;
+
+  /// Serialisierte Signaling-Verarbeitung: Broadcast-Events werden in
+  /// einer Queue abgelegt und STRENG NACHEINANDER verarbeitet. Vorher
+  /// lief handleOffer (incl. ice-config-HTTP-Call und PC-Aufbau) parallel
+  /// zum Eintreffen der ICE-Kandidaten - die Kandidaten trafen auf ein
+  /// noch nicht existierendes/noch nicht konfiguriertes PeerConnection
+  /// und gingen VERLOREN -> ICE blieb in "checking" -> keine Verbindung.
+  final List<Map<String, dynamic>> _pendingSignals = [];
+  bool _drainingSignals = false;
+
+  /// Obergrenze für SDP in Signaling-Nachrichten (DoS-Schutz, Audit S4).
+  static const int _maxSdpBytes = 64 * 1024;
+
+  /// ICE-Backlog: Kandidaten, die VOR der Remote-Description eintreffen,
+  /// werden gepuffert (statt sie zu verlieren) und nach
+  /// setRemoteDescription nachgereicht.
+  final List<RTCIceCandidate> _candidateBacklog = [];
 
   /// HTTP-Client MIT Zertifikat-Pinning für ice-config und das
   /// Signaling-Broadcast (Audit: beide Endpunkte laufen gegen denselben
@@ -112,17 +151,29 @@ class WebRTCService {
     }
 
     try {
-      final supabaseUrl = Supabase.instance.client.rest.url;
+      // BUG-FIX (Server-Log: POST rest/v1/functions/v1/ice-config -> 401):
+      // client.rest.url liefert "<Basis>/rest/v1" - mit suffixlosem
+      // Zusammensetzen landeten ice-config-Calls im PostgREST-Pfad und
+      // wurden vom Gateway mit 401 abgelehnt (Fallback STUN rettete die
+      // Verbindung, aber die Config kam nie). Basis-URL sauber ableiten.
+      final supabaseUrl = deriveFunctionBaseUrl(
+          Supabase.instance.client.rest.url);
       final token = Supabase.instance.client.auth.currentSession?.accessToken;
       if (token == null) throw StateError('Keine aktive Session');
-      final res = await _httpClient.post(
-        Uri.parse('$supabaseUrl/functions/v1/ice-config'),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        },
-        body: '{}',
-      );
+      // HARTES Timeout: Der Offer-Aufbau wartet hier drauf - ohne Limit
+      // konnte eine langsame/nicht erreichbare Edge Function den kompletten
+      // Verbindungsaufbau Minuten blockieren (ICE-Kandidaten laufen derweil
+      // ins Leere).
+      final res = await _httpClient
+          .post(
+            Uri.parse('$supabaseUrl/functions/v1/ice-config'),
+            headers: {
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+            body: '{}',
+          )
+          .timeout(const Duration(seconds: 4));
       if (res.statusCode != 200) {
         throw StateError('ice-config Status ${res.statusCode}');
       }
@@ -130,9 +181,14 @@ class WebRTCService {
       final ttl = _extractTtl(res.body);
       _cachedIceServers = servers;
       _cacheExpiry = now.add(Duration(seconds: ttl));
+      if (kDebugMode) {
+        debugPrint('[WebRTC] ICE-Server geladen: ${servers.length} Eintraege');
+      }
       return servers;
     } catch (e) {
-      if (kDebugMode) debugPrint('[WebRTC] ice-config nicht verfügbar, Fallback aktiv.');
+      if (kDebugMode) {
+        debugPrint('[WebRTC] ice-config nicht verfuegbar, Fallback aktiv: $e');
+      }
       return _fallbackIceServers;
     }
   }
@@ -168,6 +224,13 @@ class WebRTCService {
     _cacheExpiry = DateTime.now().add(ttl);
   }
 
+  /// Leitet die Funktions-Basis-URL aus der REST-URL ab (reine Funktion,
+  /// testbar): Der 401-Fix entfernt das `/rest/v1`-Suffix, damit der Call
+  /// den Function-Pfad trifft statt des PostgREST-Pfads.
+  @visibleForTesting
+  static String deriveFunctionBaseUrl(String restUrl) =>
+      restUrl.replaceFirst(RegExp(r'/rest/v1/?$'), '');
+
   /// Stream eingehender entschlüsselter Textnachrichten.
   Stream<String> get incomingMessages => _incomingMessageController.stream;
 
@@ -190,6 +253,10 @@ class WebRTCService {
 
   bool get isConnected => _isConnected;
 
+  /// True, wenn der DataChannel offen und sendebereit ist (v0.9.1:
+  /// Anruf-Invite wartet hierauf statt sofort zu scheitern).
+  bool get isDataChannelOpen => _dataChannel?.state == RTCDataChannelState.RTCDataChannelOpen;
+
   /// Aktiviert die Signaling-Schicht via Supabase Realtime für [myUserId]
   /// und [peerId]. Wird von [P2PChatService.connect] aufgerufen.
   ///
@@ -208,14 +275,60 @@ class WebRTCService {
     required String myUserId,
     required String peerId,
   }) async {
+    // Vorherigen Versuch sauber abräumen (Retry-sicher): sonst sammeln
+    // sich pro connect() ein toter Realtime-Kanal (Socket-Leak) und eine
+    // alte PeerConnection (stale ICE) an - beides verhinderte zuvor, dass
+    // ein späterer Handshake je durchkam.
+    try {
+      await _peerConnection?.close();
+    } catch (_) {}
+    _peerConnection = null;
+    _dataChannel = null;
+    _isConnected = false;
+    _remoteDescriptionSet = false;
+    _lastOfferSdp = null;
+    // Neue Verbindung: alte Signaling-Warteschlangen/Backlogs sind stale.
+    _pendingSignals.clear();
+    _candidateBacklog.clear();
+    await _signalingChannel?.unsubscribe();
+    _signalingChannel = null;
+
     _myUserId = myUserId;
     _currentPeerId = peerId;
     // Safety-Numbers benötigen die eigene User-ID (Signal-Fingerprint).
     _encryptionService.localUserId ??= myUserId;
 
+    // Realtime-Authorization (Private Channels): Der Socket braucht das
+    // AKTUELLE User-JWT im Join-Payload. supabase_flutter setzt es zwar
+    // bei Auth-Events - bleibt dabei aber ein Zeitfenster/Fehlerpfad
+    // (z. B. abgelaufenes Token beim App-Start: FormatException wird
+    // verschluckt), in dem der Socket den ANON-Key behaelt. Der Join
+    // wird dann mit der anon-Rolle gegen die 'to authenticated'-Policy
+    // geprueft und verweigert -> "Signaling-Kanal nicht verfügbar".
+    // Fix (Supabase-Doku): setAuth mit dem aktuellen Session-Token
+    // unmittelbar vor dem Subscribe erzwingen.
+    final accessToken = Supabase.instance.client.auth.currentSession?.accessToken;
+    if (accessToken != null) {
+      try {
+        await Supabase.instance.client.realtime.setAuth(accessToken);
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('[WebRTC] realtime.setAuth fehlgeschlagen: $e');
+        }
+      }
+    }
+
     // Deterministischer Kanal-Name (lexikografisch sortiert).
+    //
+    // WICHTIG (Verbindungs-Fix): Der Client-Name darf KEIN 'realtime:'-
+    // Präfix enthalten - Supabase präfixiert intern selbst mit 'realtime:'
+    // (realtime_client: RealtimeChannel('realtime:$topic')). Mit dem alten
+    // Wert 'realtime:signaling:...' lautete der Server-Topic
+    // 'realtime:realtime:signaling:...', die RLS-Policy (Migration 062,
+    // Regex '^realtime:signaling:...$') matchte nie und der Join des
+    // Private Channels wurde verweigert -> "Verbindung fehlgeschlagen".
     final ids = [myUserId, peerId]..sort();
-    _signalingTopic = 'realtime:signaling:${ids[0]}:${ids[1]}';
+    _signalingTopic = 'signaling:${ids[0]}:${ids[1]}';
     final channelName = _signalingTopic!;
 
     _signalingChannel = Supabase.instance.client.channel(
@@ -229,7 +342,7 @@ class WebRTCService {
       callback: (payload) {
         try {
           final msg = Map<String, dynamic>.from(payload as Map);
-          _routeSignaling(msg);
+          unawaited(_routeSignaling(msg));
         } catch (e) {
           if (kDebugMode) debugPrint('[WebRTC] Fehler beim Signaling-Routing: $e');
         }
@@ -238,6 +351,10 @@ class WebRTCService {
 
     _signalingChannel!.subscribe((status, error) {
       if (subscribed.isCompleted) return;
+      if (kDebugMode) {
+        debugPrint('[WebRTC] Signaling-Subscribe-Status: ${status.name}'
+            '${error != null ? ' ($error)' : ''}');
+      }
       if (status == RealtimeSubscribeStatus.subscribed) {
         subscribed.complete();
       } else if (status == RealtimeSubscribeStatus.channelError ||
@@ -250,7 +367,9 @@ class WebRTCService {
     });
 
     try {
-      await subscribed.future.timeout(const Duration(seconds: 10));
+      // 15 s statt 10 s: Der erste Join (Socket-Aufbau + Authorization)
+      // kann auf Mobilfunk länger dauern, ohne dass er gescheitert ist.
+      await subscribed.future.timeout(const Duration(seconds: 15));
     } catch (_) {
       await _signalingChannel?.unsubscribe();
       _signalingChannel = null;
@@ -272,7 +391,8 @@ class WebRTCService {
     }
   }
 
-  /// Leitet eingehende Signaling-Nachrichten an die passenden WebRTC-Handler.
+  /// Leitet eingehende Signaling-Nachrichten SERIELL an die passenden
+  /// WebRTC-Handler (Offer/Answer/ICE in fester Reihenfolge).
   ///
   /// Härtung gegen Signaling-Missbrauch:
   /// - Nur Nachrichten des erwarteten Peers werden akzeptiert ([_currentPeerId]).
@@ -280,10 +400,11 @@ class WebRTCService {
   ///   Remote-Description vorhanden ist - so kann eine bereits etablierte
   ///   Session nicht durch injizierte Offers gekapert werden (keine
   ///   Renegotiation in dieser Architektur).
-  /// - ICE-Kandidaten werden nur während des Aufbaus akzeptiert.
-  void _routeSignaling(Map<String, dynamic> msg) {
+  /// - SDP wird größenbegrenzt (DoS-Schutz).
+  /// - ICE-Kandidaten vor der Remote-Description werden gepuffert, nicht
+  ///   verworfen ([_candidateBacklog]).
+  Future<void> _routeSignaling(Map<String, dynamic> msg) async {
     try {
-      final type = msg['type'] as String?;
       final from = msg['from'] as String?;
       if (from == null || from != _currentPeerId) {
         if (kDebugMode) {
@@ -291,46 +412,109 @@ class WebRTCService {
         }
         return;
       }
-      switch (type) {
-      case 'offer':
-        if (msg['sdp'] != null && !_isConnected && _peerConnection == null) {
-          handleOffer(from, msg['sdp'] as String);
+      _pendingSignals.add(msg);
+      if (_pendingSignals.length > 200) _pendingSignals.removeAt(0);
+      if (_drainingSignals) return; // Ein Drain läuft bereits.
+      _drainingSignals = true;
+      try {
+        while (_pendingSignals.isNotEmpty) {
+          final next = _pendingSignals.removeAt(0);
+          await _handleSignal(next);
         }
-        break;
-        case 'answer':
-          if (msg['sdp'] != null && !_isConnected && !_remoteDescriptionSet) {
-            handleAnswer(from, msg['sdp'] as String);
-          }
-          break;
-        case 'ice':
-          if (!_isConnected &&
-              msg['candidate'] != null &&
-              msg['sdpMid'] != null &&
-              msg['sdpMLineIndex'] != null) {
-            handleIceCandidate(
-              from,
-              RTCIceCandidate(
-                msg['candidate'] as String,
-                msg['sdpMid'] as String,
-                msg['sdpMLineIndex'] as int,
-              ),
-            );
-          }
-          break;
+      } finally {
+        _drainingSignals = false;
       }
     } catch (e) {
       if (kDebugMode) debugPrint('[WebRTC] Fehler bei Signaling-Routing: $e');
     }
   }
 
+  /// Verarbeitet EINE Signaling-Nachricht (nur im seriellen Drain rufen).
+  Future<void> _handleSignal(Map<String, dynamic> msg) async {
+    final type = msg['type'] as String?;
+    switch (type) {
+      case 'offer':
+        final sdp = msg['sdp'] as String?;
+        if (sdp == null || _isConnected) break;
+        if (utf8Length(sdp) > _maxSdpBytes) {
+          if (kDebugMode) debugPrint('[WebRTC] Offer zu groß, verworfen.');
+          break;
+        }
+        // Identische Offer-Wiederholung: kein Neustart.
+        if (sdp == _lastOfferSdp && _peerConnection != null) break;
+        _lastOfferSdp = sdp;
+        await handleOffer(_currentPeerId!, sdp);
+        break;
+      case 'answer':
+        final sdp = msg['sdp'] as String?;
+        if (sdp == null || _isConnected || _remoteDescriptionSet) break;
+        if (_peerConnection == null || utf8Length(sdp) > _maxSdpBytes) {
+          if (kDebugMode) debugPrint('[WebRTC] Answer verworfen (kein PC/zu groß).');
+          break;
+        }
+        await handleAnswer(_currentPeerId!, sdp);
+        break;
+      case 'ice':
+        // Kein PC-Null-Check hier: Kandidaten vor der PeerConnection
+        // werden in handleIceCandidate gepuffert (Reihenfolge-Sicherheit).
+        if (_isConnected) break;
+        final candidate = msg['candidate'] as String?;
+        final sdpMid = msg['sdpMid'] as String?;
+        final sdpMLineIndexRaw = msg['sdpMLineIndex'];
+        if (candidate == null || sdpMid == null || sdpMLineIndexRaw == null) {
+          break;
+        }
+        // num-Cast: Auf Web liefert jsonDecode ggf. double statt int.
+        final sdpMLineIndex = (sdpMLineIndexRaw as num).toInt();
+        await handleIceCandidate(
+          _currentPeerId!,
+          RTCIceCandidate(candidate, sdpMid, sdpMLineIndex),
+        );
+        break;
+      case 'relay-ping':
+        // Kein WebRTC-Material: Relay-Wake-up für den Fallback-Modus.
+        _relayPingController.add(null);
+        break;
+      default:
+        break; // Unbekannte Typen ignorieren.
+    }
+  }
+
+  /// UTF-8-Länge eines Strings (für Größenlimits).
+  static int utf8Length(String s) => utf8.encode(s).length;
+
   /// Test-Hook: Peer-Pinning-Logik ([_routeSignaling]) ohne echte
   /// Verbindung prüfen.
   @visibleForTesting
-  void routeSignalingForTesting(Map<String, dynamic> msg) => _routeSignaling(msg);
+  Future<void> routeSignalingForTesting(Map<String, dynamic> msg) =>
+      _routeSignaling(msg);
 
   /// Test-Hook: erwarteten Peer setzen, ohne einen Anruf aufzubauen.
   @visibleForTesting
   set currentPeerIdForTesting(String id) => _currentPeerId = id;
+
+  /// Sendet das Offer erneut über den BESTEHENDEN Signaling-Kanal
+  /// (Retry, ohne neuen Kanal und ohne neue E2E-Session). Nur der
+  /// Initiator (kleinere User-ID, vgl. P2PChatService.connect) sendet;
+  /// die Gegenseite antwortet per handleOffer. Harmlos, wenn bereits
+  /// verbunden (dann No-op).
+  Future<void> retryHandshake() async {
+    if (_isConnected) return;
+    final peerId = _currentPeerId;
+    final myId = _myUserId;
+    if (peerId == null || myId == null || _signalingChannel == null) return;
+    if (myId.compareTo(peerId) >= 0) return; // Kein Initiator: warten.
+    try {
+      await _peerConnection?.close();
+    } catch (_) {}
+    _peerConnection = null;
+    _dataChannel = null;
+    _remoteDescriptionSet = false;
+    // Neues Offer = neue Session: alte Antworten/ICE sind stale.
+    _pendingSignals.clear();
+    _candidateBacklog.clear();
+    await createOffer(peerId);
+  }
 
   /// Initialisiert eine neue Peer-Verbindung als Initiator.
   Future<void> createOffer(String peerId) async {
@@ -355,6 +539,16 @@ class WebRTCService {
   /// konnte sich per gefälschtem `from` als Peer etablieren).
   Future<void> handleOffer(String peerId, String offerSdp) async {
     _currentPeerId ??= peerId;
+    // Stale Verbindungsversuche verwerfen, damit ein Re-Offer des
+    // Initiators (Retry) übernommen wird statt zu verhallen.
+    if (!_isConnected) {
+      try {
+        await _peerConnection?.close();
+      } catch (_) {}
+      _peerConnection = null;
+      _dataChannel = null;
+      _remoteDescriptionSet = false;
+    }
     await _createPeerConnection();
 
     _peerConnection!.onDataChannel = (channel) {
@@ -363,6 +557,9 @@ class WebRTCService {
 
     await _peerConnection!.setRemoteDescription(RTCSessionDescription(offerSdp, 'offer'));
     _remoteDescriptionSet = true;
+    // Pufferierte ICE-Kandidaten (vor der Remote-Description eingetroffen)
+    // jetzt nachreichen - sie sind nicht verloren.
+    await _flushCandidateBacklog();
     final answer = await _peerConnection!.createAnswer();
     await _peerConnection!.setLocalDescription(answer);
 
@@ -373,15 +570,47 @@ class WebRTCService {
     });
   }
 
-  /// Verarbeitet eine Answer vom Initiator.
+  /// Verarbeitet eine Answer vom Initiator (nur mit existierender
+  /// PeerConnection - sonst wird die Answer verworfen statt zu crashen).
   Future<void> handleAnswer(String peerId, String answerSdp) async {
-    await _peerConnection!.setRemoteDescription(RTCSessionDescription(answerSdp, 'answer'));
+    final pc = _peerConnection;
+    if (pc == null) {
+      if (kDebugMode) debugPrint('[WebRTC] Answer ohne PeerConnection verworfen.');
+      return;
+    }
+    await pc.setRemoteDescription(RTCSessionDescription(answerSdp, 'answer'));
     _remoteDescriptionSet = true;
+    await _flushCandidateBacklog();
   }
 
-  /// Verarbeitet einen ICE-Kandidaten.
+  /// Verarbeitet einen ICE-Kandidaten. Kandidaten, die VOR der
+  /// Remote-Description (oder gar vor der PeerConnection) eintreffen,
+  /// werden gepuffert statt verworfen (Fix: Kandidatenverlust beim
+  /// Offer-Handling). Die Flush-Punkte (handleOffer/handleAnswer)
+  /// reichen sie nach setRemoteDescription nach.
   Future<void> handleIceCandidate(String peerId, RTCIceCandidate candidate) async {
-    await _peerConnection!.addCandidate(candidate);
+    if (!_remoteDescriptionSet) {
+      _candidateBacklog.add(candidate);
+      if (_candidateBacklog.length > 100) _candidateBacklog.removeAt(0);
+      return;
+    }
+    final pc = _peerConnection;
+    if (pc == null) return;
+    await pc.addCandidate(candidate);
+  }
+
+  /// Reicht gepufferte ICE-Kandidaten nach (nach setRemoteDescription).
+  Future<void> _flushCandidateBacklog() async {
+    final pc = _peerConnection;
+    if (pc == null || _candidateBacklog.isEmpty) return;
+    for (final candidate in _candidateBacklog) {
+      try {
+        await pc.addCandidate(candidate);
+      } catch (e) {
+        if (kDebugMode) debugPrint('[WebRTC] Backlog-Kandidat fehlgeschlagen: $e');
+      }
+    }
+    _candidateBacklog.clear();
   }
 
   /// Sendet eine verschlüsselte Nachricht über den DataChannel.
@@ -493,9 +722,23 @@ class WebRTCService {
     };
   }
 
+  /// Obergrenze für DataChannel-Envelopes (DoS-Schutz, Audit S3): Der
+  /// Peer ist zwar authentifiziert, kann aber bösartig sein - beliebig
+  /// große base64-Payloads/metadata-Maps dürfen den Speicher nicht
+  /// sprengen können.
+  static const int _maxEnvelopeBytes = 512 * 1024;
+
+  /// Maximalzahl der metadata-Einträge im Binär-Envelope.
+  static const int _maxMetadataEntries = 16;
+
   /// Verarbeitet eingehende verschlüsselte Nachrichten.
   Future<void> _handleIncomingMessage(RTCDataChannelMessage message) async {
     try {
+      if (message.text.length > _maxEnvelopeBytes ||
+          message.binary.lengthInBytes > _maxEnvelopeBytes) {
+        if (kDebugMode) debugPrint('[WebRTC] Nachricht zu groß, verworfen.');
+        return;
+      }
       final data = jsonDecode(message.text) as Map<String, dynamic>;
       final type = data['type'] as String;
 
@@ -515,14 +758,20 @@ class WebRTCService {
             signalMessage,
           );
           // Kontroll-Nachrichten (Anruf-Signaling) vom Chat-Verlauf trennen.
+          // Fällt der JSON-Parse fehl (z. B. Nutzer-Text mit CALL:-Präfix),
+          // landet die Nachricht als normaler Chat-Text statt zu
+          // verschwinden (Fix: "Nachricht kommt nicht an").
           if (plaintext.startsWith(controlPrefix)) {
-            final payload = jsonDecode(plaintext.substring(controlPrefix.length));
-            if (payload is Map<String, dynamic>) {
-              _controlController.add(payload);
-            }
-          } else {
-            _incomingMessageController.add(plaintext);
+            try {
+              final payload =
+                  jsonDecode(plaintext.substring(controlPrefix.length));
+              if (payload is Map<String, dynamic>) {
+                _controlController.add(payload);
+                return;
+              }
+            } catch (_) {}
           }
+          _incomingMessageController.add(plaintext);
         } else {
           // Binärdaten müssen mit decryptBinary entschlüsselt werden,
           // da decryptMessage einen UTF-8-Text-Decoder anwendet.
@@ -537,7 +786,13 @@ class WebRTCService {
           );
           final contentType =
               (data['contentType'] as String?) ?? 'application/octet-stream';
-          final metadata = data['metadata'] as Map<String, dynamic>?;
+          // metadata begrenzen: beliebig große/verschlachtelte Maps vom
+          // Peer werden nicht ungeprüft übernommen (Audit S3).
+          final metadataRaw = data['metadata'];
+          final metadata =
+              (metadataRaw is Map && metadataRaw.length <= _maxMetadataEntries)
+                  ? Map<String, dynamic>.from(metadataRaw)
+                  : null;
           final record =
               (data: plaintext, contentType: contentType, metadata: metadata);
           // Anruf-Sprachpakete in den Kontroll-Stream, sonst normaler
@@ -564,6 +819,25 @@ class WebRTCService {
     _myUserId = null;
     _isConnected = false;
     _remoteDescriptionSet = false;
+    _lastOfferSdp = null;
+    _pendingSignals.clear();
+    _candidateBacklog.clear();
+  }
+
+  /// Sendet ein Relay-Wake-up-Signal an den Peer (nur wenn ein Signaling-
+  /// Kanal referenziert ist). Bewusst ohne Payload - der Empfänger holt
+  /// selbst via relay_fetch ab; der Server sieht nur das Ping-Signal.
+  Future<void> sendRelayPing() async {
+    final channel = _signalingChannel;
+    if (channel == null) return;
+    try {
+      await channel.sendBroadcastMessage(
+        event: 'signal',
+        payload: {'type': 'relay-ping', 'from': _myUserId ?? _currentPeerId},
+      );
+    } catch (e) {
+      if (kDebugMode) debugPrint('[WebRTC] Relay-Ping fehlgeschlagen: $e');
+    }
   }
 
   /// Trennt den Realtime-Kanal und gibt Ressourcen frei.
@@ -577,6 +851,7 @@ class WebRTCService {
     _controlAudioController.close();
     _connectionStateController.close();
     _iceConnectionStateController.close();
+    _relayPingController.close();
   }
 }
 

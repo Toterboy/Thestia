@@ -80,10 +80,13 @@ function Copy-SplitApks {
     param([string]$FlavorName)
     $dir = "build\app\outputs\flutter-apk"
     $abis = @("arm64-v8a", "armeabi-v7a", "x86_64")
+    $short = @{ "arm64-v8a" = "arm64"; "armeabi-v7a" = "armv7"; "x86_64" = "x86_64" }
     foreach ($abi in $abis) {
-        $src = Join-Path $dir "app-$FlavorName-$abi-release.apk"
+        # Flutter benennt Splits app-<abi>-<flavor>-release.apk (Fix 21.09.2026,
+        # vorher wurde app-<flavor>-<abi>-release.apk erwartet und nichts kopiert).
+        $src = Join-Path $dir "app-$abi-$FlavorName-release.apk"
         if (Test-Path -LiteralPath $src) {
-            $dst = Join-Path $OutDir "WispDating-v$VersionName-$FlavorName-$abi.apk"
+            $dst = Join-Path $OutDir "WispDating-v$VersionName-$FlavorName-$($short[$abi]).apk"
             Copy-Item -LiteralPath $src -Destination $dst -Force
             Write-Host "    OK: $dst" -ForegroundColor Green
         } else {
@@ -102,14 +105,17 @@ if ($SkipBuild) {
         Write-Host "==> Baue PLAY-Variante..." -ForegroundColor Cyan
         $abiArgs = @()
         if ($SplitPerAbi) { $abiArgs += "--split-per-abi" }
-        flutter build apk --release --flavor play @abiArgs
+        # Dart-Obfuskierung (v0.9.0, Manipulationsschutz): Symbol-Namen
+        # werden unlesbar gemacht; Debug-Symbole landen in build/symbols/
+        # (git-ignoriert) für spätere Crash-Analyse.
+        flutter build apk --release --flavor play @abiArgs --obfuscate --split-debug-info=build/symbols/play
         if ($LASTEXITCODE -ne 0) { throw "Play-Build fehlgeschlagen." }
     }
     if ($Flavor -in @("both", "fdroid")) {
         Write-Host "==> Baue F-DROID-Variante (ohne Google/Firebase)..." -ForegroundColor Cyan
         $abiArgs = @()
         if ($SplitPerAbi) { $abiArgs += "--split-per-abi" }
-        flutter build apk --release --flavor fdroid --dart-define=FDROID=true @abiArgs
+        flutter build apk --release --flavor fdroid --dart-define=FDROID=true @abiArgs --obfuscate --split-debug-info=build/symbols/fdroid
         if ($LASTEXITCODE -ne 0) { throw "F-Droid-Build fehlgeschlagen." }
     }
 }

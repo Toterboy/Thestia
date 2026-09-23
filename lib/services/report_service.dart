@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import 'package:wisp/l10n/app_strings.dart';
 import 'package:wisp/models/message.dart';
 import 'package:wisp/models/report_models.dart';
 import 'package:wisp/providers/profile_provider.dart';
@@ -121,6 +122,18 @@ class ReportService {
     // AES-verschlüsselt (Reports enthalten PII, s. SecureHive).
     _box = await SecureHive.instance.openBox<UserReport>(_boxName);
     _initialized = true;
+  }
+
+  /// Löscht lokale Melde-Entwürfe (Account-Löschung/Logout, DSGVO).
+  Future<void> clearDrafts() async {
+    try {
+      if (!_initialized) {
+        await initialize();
+      }
+      await _box.clear();
+    } catch (_) {
+      // Best-effort: Ein Rest darf die Löschung nie blockieren.
+    }
   }
 
   Future<UserReport> createReport({
@@ -278,7 +291,9 @@ Future<void> showReportUserDialog({
           children: [
             Icon(Icons.flag_outlined, color: Theme.of(context).colorScheme.primary),
             const SizedBox(width: 8),
-            Expanded(child: Text('Nutzer melden: $reportedUserName')),
+            Expanded(
+                child: Text(L10n.tf(ctx, 'report.userTitle',
+                    {'name': reportedUserName}))),
           ],
         ),
         content: SizedBox(
@@ -335,7 +350,7 @@ Future<void> showReportUserDialog({
                   child: Column(
                     children: [
                       ...ReportType.values.map((type) => RadioListTile<ReportType>(
-                        title: Text(type.label),
+                        title: Text(L10n.t(context, type.labelKey)),
                         value: type,
                         contentPadding: EdgeInsets.zero,
                       )),
@@ -347,8 +362,8 @@ Future<void> showReportUserDialog({
                   controller: descriptionController,
                   maxLines: 3,
                   decoration: InputDecoration(
-                    labelText: 'Zusätzliche Details (optional)',
-                    hintText: 'Was ist passiert?',
+                    labelText: L10n.t(ctx, 'report.detailsOptional'),
+                    hintText: L10n.t(ctx, 'common.whatHappened'),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                   ),
                 ),
@@ -359,7 +374,7 @@ Future<void> showReportUserDialog({
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Abbrechen'),
+            child: Text(L10n.t(ctx, 'common.cancel')),
           ),
           FilledButton(
             onPressed: selectedType == null
@@ -383,11 +398,13 @@ Future<void> showReportUserDialog({
                     );
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Meldung gesendet. Danke fuer deine Hilfe!')),
+                        SnackBar(
+                            content:
+                                Text(L10n.t(context, 'report.sendDone'))),
                       );
                     }
                   },
-            child: const Text('Absenden'),
+            child: Text(L10n.t(ctx, 'bug.send')),
           ),
         ],
       ),
@@ -410,7 +427,7 @@ class ReportUserButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return IconButton(
       icon: const Icon(Icons.flag_outlined),
-      tooltip: 'Nutzer melden',
+      tooltip: L10n.t(context, 'report.userTooltip'),
       onPressed: () => showReportUserDialog(
         context: context,
         ref: ref,

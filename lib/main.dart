@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:wisp/app.dart';
+import 'package:wisp/routing/route_restore.dart' show setPendingRouteRestore;
 import 'package:wisp/providers/user_preferences_provider.dart' show sharedPrefsProvider;
 import 'package:wisp/screens/core/loading_screen.dart';
 import 'package:wisp/services/app_config_service.dart';
@@ -22,6 +24,7 @@ import 'package:wisp/services/local_storage.dart';
 import 'package:wisp/services/notification_service.dart';
 import 'package:wisp/services/secure_location_storage.dart';
 import 'package:wisp/services/secure_supabase_session_storage.dart';
+import 'package:wisp/services/supabase_database_service.dart';
 import 'package:wisp/services/supabase_service.dart';
 import 'package:wisp/models/signal_key_models.dart';
 import 'package:wisp/models/photo_moderation_models.dart';
@@ -29,6 +32,7 @@ import 'package:wisp/models/report_models.dart';
 import 'package:wisp/l10n/app_strings.dart';
 import 'package:wisp/theme/app_theme.dart';
 import 'package:wisp/utils/constants.dart';
+import 'package:wisp/utils/pinned_http_overrides.dart';
 
 /// Einstiegspunkt der App.
 ///
@@ -47,6 +51,11 @@ import 'package:wisp/utils/constants.dart';
 /// - Schwere, nicht kritische Dienste (Hive, Serverzeit, Notifications)
 ///   starten im Hintergrund (unawaited).
 Future<void> main() async {
+  // Zertifikat-Pinning für ALLE Dart-TLS-Verbindungen (v0.9.0, als
+  // ERSTES: danach erzeugte HttpClients erben den Check) – schützt
+  // u. a. den kompletten Supabase-Traffic vor MITM.
+  HttpOverrides.global = WispHttpOverrides();
+
   FlutterError.onError = (details) {
     FlutterError.dumpErrorToConsole(details);
     // Crash-Journal (v0.8.0): letzten Absturz lokal speichern. Beim
@@ -64,19 +73,21 @@ Future<void> main() async {
       debugPrint('[ERROR_WIDGET] ${details.exception}\n${details.stack}');
     }
     return Material(
-      child: Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                const SizedBox(height: 16),
-                const Text(
-                  'Es ist ein Fehler aufgetreten:',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
+      child: Builder(
+        builder: (context) => Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(
+                    L10n.t(context, 'common.errorOccurred'),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                 const SizedBox(height: 8),
                 Text(
                   details.exception.toString(),
@@ -88,6 +99,7 @@ Future<void> main() async {
           ),
         ),
       ),
+    ),
     );
   };
 
@@ -170,6 +182,15 @@ Future<_BootstrapInit?> _initializeApp() async {
       unawaited(_initializeFirebase());
     }
 
+    // Letzte Route für die Wiederherstellung nach Prozesstod merken
+    // (v0.9.1) - der Router verbraucht sie genau einmal nach Login+Setup.
+    try {
+      final lastRoute = prefs.getString('last_route');
+      if (lastRoute != null && lastRoute.isNotEmpty) {
+        setPendingRouteRestore(lastRoute);
+      }
+    } catch (_) {}
+
     return _BootstrapInit(
       SharedPreferencesStorage(prefs),
       prefs,
@@ -205,6 +226,20 @@ Future<void> _initializeFirebase() async {
     });
     FirebaseMessaging.instance.onTokenRefresh.listen((token) {
       if (kDebugMode) debugPrint('[MAIN] FCM-Token erneuert');
+      // Fix: Rotierte Token persistieren (vorher nur geloggt) - sonst
+      // stirbt Push still bis zum nächsten Login (neues Token, alte
+      // Server-Zeile).
+      unawaited(() async {
+        try {
+          if (!SupabaseService.isInitialized) return;
+          await SupabaseDatabaseService(SupabaseService.client)
+              .updateOwnProfile({'fcm_token': token});
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('[MAIN] FCM-Token-Refresh persistieren fehlgeschlagen: $e');
+          }
+        }
+      }());
     });
   } catch (e) {
     debugPrint('[MAIN] FCM-Listener/Permission fehlgeschlagen: $e');
@@ -219,7 +254,11 @@ Future<void> _initializeFirebase() async {
 /// ([SupabaseService.isInitialized] == false).
 Future<void> _initializeSupabase() async {
   final supabaseUrl = dotenv.env['SUPABASE_URL'];
-  final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'];
+  // API-Key (Migration Legacy -> Publishable): Publishable-Key
+  // (sb_publishable_...) zuerst, Legacy-Anon als Fallback, bis er im
+  // Dashboard deaktiviert wird. Alte Builds lesen weiter ANON_KEY.
+  final supabaseAnonKey = dotenv.env['SUPABASE_PUBLISHABLE_KEY'] ??
+      dotenv.env['SUPABASE_ANON_KEY'];
 
   if (supabaseUrl == null ||
       supabaseUrl.isEmpty ||
@@ -406,19 +445,22 @@ class _StartupErrorScreen extends StatelessWidget {
             children: [
               const Icon(Icons.error_outline, size: 48, color: Colors.red),
               const SizedBox(height: 16),
-              const Text(
-                'Die App konnte nicht gestartet werden.',
+              Text(
+                L10n.t(context, 'startup.failedTitle'),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 16),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Bitte schließe die App komplett und versuche es erneut.',
+              Text(
+                L10n.t(context, 'startup.failedBody'),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13),
+                style: const TextStyle(fontSize: 13),
               ),
               const SizedBox(height: 24),
-              FilledButton(onPressed: onRetry, child: const Text('Erneut versuchen')),
+              FilledButton(
+                  onPressed: onRetry,
+                  child: Text(L10n.t(context, 'admin.retry'))),
             ],
           ),
         ),
@@ -465,27 +507,25 @@ class _UpdateRequiredScreen extends StatelessWidget {
                     size: 56, color: Theme.of(context).colorScheme.primary),
                 const SizedBox(height: 24),
                 Text(
-                  'Update erforderlich',
+                  L10n.t(context, 'update.required'),
                   style: Theme.of(context).textTheme.headlineSmall,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
-                const Text(
-                  'Deine Version von Wisp unterstuetzt nicht mehr alle '
-                  'Server-Funktionen. Bitte aktualisiere die App, um '
-                  'weiterzumachen.',
+                Text(
+                  L10n.t(context, 'update.body'),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
                 FilledButton.icon(
                   onPressed: _openStore,
                   icon: const Icon(Icons.shop_outlined),
-                  label: const Text('Jetzt aktualisieren'),
+                  label: Text(L10n.t(context, 'update.now')),
                 ),
                 const SizedBox(height: 8),
                 TextButton(
                   onPressed: () {},
-                  child: const Text('Trotzdem fortfahren'),
+                  child: Text(L10n.t(context, 'update.later')),
                 ),
               ],
             ),

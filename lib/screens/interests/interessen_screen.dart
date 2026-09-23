@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,12 +9,74 @@ import 'package:wisp/models/find_match_models.dart';
 import 'package:wisp/models/match.dart';
 import 'package:wisp/models/user_profile.dart';
 import 'package:wisp/providers/chat_provider.dart';
+import 'package:wisp/providers/find_your_match_provider.dart';
 import 'package:wisp/routing/app_router.dart';
 import 'package:wisp/services/find_your_match_service.dart';
+import 'package:wisp/services/report_service.dart';
+import 'package:wisp/services/relay_service.dart';
+import 'package:wisp/services/seen_service.dart';
+import 'package:wisp/services/supabase_database_service.dart';
+import 'package:wisp/services/supabase_service.dart';
+import 'package:wisp/widgets/end_spark_dialog.dart';
 import 'package:wisp/widgets/funke_overlay.dart';
 import 'package:wisp/widgets/intro_audio_player.dart';
 import 'package:wisp/widgets/states.dart';
 import 'package:wisp/l10n/app_strings.dart';
+
+/// Automatisches Nachladen eines Tabs (v0.9.1): bei Rückkehr von einem
+/// gepushten Screen (RouteObserver.didPopNext, z. B. aus dem Chat) und
+/// bei App-Resume (anderes Gerät könnte Likes/Funken geändert haben).
+/// Einbindung: `with RouteAware, WidgetsBindingObserver, _AutoReloadTab`
+/// und [reloadTab] implementieren.
+mixin _AutoReloadTab<T extends ConsumerStatefulWidget>
+    on ConsumerState<T>, RouteAware, WidgetsBindingObserver {
+  /// Lädt den Tab-Inhalt neu (wird von den Observer-Callbacks aufgerufen).
+  Future<void> reloadTab();
+
+  @override
+  void didPopNext() {
+    if (mounted) unawaited(reloadTab());
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      unawaited(reloadTab());
+    }
+  }
+
+  /// In initState aufrufen.
+  void autoReloadInit() {
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  /// In didChangeDependencies aufrufen.
+  void autoReloadSubscribe(BuildContext context) {
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      routeObserver.subscribe(this, route);
+    }
+  }
+
+  /// In dispose aufrufen.
+  void autoReloadDispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    try {
+      routeObserver.unsubscribe(this);
+    } catch (_) {}
+  }
+}
+
+/// Gewünschter Start-Tab für den Interessen-Reiter (v0.9.1): Aktionen wie
+/// "Funke kühlen" navigieren hierher und wollen direkt den Funken-Tab (2)
+/// zeigen - sonst wirkt der gekühlte Funke als "komplett weg". Wird beim
+/// Öffnen genau einmal verbraucht und auf 0 zurückgesetzt.
+final interessenInitialTabProvider = StateProvider<int>((ref) => 0);
+
+/// Verwalten-Modus der Funken-Liste (NUTZERWUNSCH: Ein-/Ausgang über das
+/// AppBar-Icon, Zustand wird zwischen den Tabs geteilt - die AppBar
+/// gehört zum Screen, die Liste zum Tab).
+final matchSelectModeProvider = StateProvider<bool>((ref) => false);
 
 /// Reiter "Interessen" mit drei Bereichen:
 ///   1. Eigene Likes (noch kein Match)
@@ -32,7 +96,18 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    // NUTZERWUNSCH: Der Reiter "Interessen" landet IMMER beim Funken-Tab
+    // (Index 2) - bei "Eigene Likes" entstand der Eindruck, man hoffe auf
+    // neue Likes; im Funken-Tab sieht man die aktuellen Kontakte. Der
+    // interessenInitialTabProvider (z. B. "Funke kühlen") behält Vorrang,
+    // er zeigt ohnehin auf den Funken-Tab.
+    final initial =
+        ref.read(interessenInitialTabProvider).clamp(0, 2).toInt();
+    _tabController =
+        TabController(length: 3, vsync: this, initialIndex: initial == 0 ? 2 : initial);
+    if (initial != 0) {
+      ref.read(interessenInitialTabProvider.notifier).state = 0;
+    }
   }
 
   @override
@@ -47,6 +122,17 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen>
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: Text(L10n.t(context, 'interests.title')),
+        // NUTZERWUNSCH: "Verwalten" als Icon statt Textbutton in der
+        // Funken-Liste (sparte Platz; der Ein-/Ausgang des Auswähl-Modus
+        // bleibt in der Liste selbst).
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: L10n.t(context, 'interests.manage'),
+            onPressed: () =>
+                ref.read(matchSelectModeProvider.notifier).state = true,
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           // Abgerundete Klick-Animation (kein eckiger Aufblitzer).
@@ -81,15 +167,32 @@ class _OwnLikesTab extends ConsumerStatefulWidget {
   ConsumerState<_OwnLikesTab> createState() => _OwnLikesTabState();
 }
 
-class _OwnLikesTabState extends ConsumerState<_OwnLikesTab> {
+class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
+    with RouteAware, WidgetsBindingObserver, _AutoReloadTab {
   List<ReceivedLike> _likes = [];
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
+    autoReloadInit();
     _load();
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    autoReloadSubscribe(context);
+  }
+
+  @override
+  void dispose() {
+    autoReloadDispose();
+    super.dispose();
+  }
+
+  @override
+  Future<void> reloadTab() => _load();
 
   Future<void> _load() async {
     setState(() => _loading = true);
@@ -129,10 +232,24 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab> {
       return const Center(child: CircularProgressIndicator());
     }
     if (_likes.isEmpty) {
-      return EmptyState(
-        icon: Icons.favorite_border,
-        title: L10n.t(context, 'interests.emptySentTitle'),
-        message: L10n.t(context, 'interests.emptySentBody'),
+      // v0.9.1-Fix (Android 16): Auch im Leerzustand pull-to-refresh
+      // ermöglichen - RefreshIndicator braucht ein scrollbares Child mit
+      // AlwaysScrollableScrollPhysics (sonst löst Pull bei kurzer/leerer
+      // Liste nie aus, auf Android 16 mit enforced edge-to-edge fiel das
+      // besonders auf).
+      return RefreshIndicator(
+        onRefresh: _load,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.sizeOf(context).height * 0.6,
+            child: EmptyState(
+              icon: Icons.favorite_border,
+              title: L10n.t(context, 'interests.emptySentTitle'),
+              message: L10n.t(context, 'interests.emptySentBody'),
+            ),
+          ),
+        ),
       );
     }
     return RefreshIndicator(
@@ -196,7 +313,8 @@ class _ReceivedLikesTab extends ConsumerStatefulWidget {
   ConsumerState<_ReceivedLikesTab> createState() => _ReceivedLikesTabState();
 }
 
-class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab> {
+class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
+    with RouteAware, WidgetsBindingObserver, _AutoReloadTab {
   List<ReceivedLike> _likes = [];
   bool _loading = true;
   int? _busyLikeId;
@@ -204,14 +322,35 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab> {
   @override
   void initState() {
     super.initState();
+    autoReloadInit();
     _load();
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    autoReloadSubscribe(context);
+  }
+
+  @override
+  void dispose() {
+    autoReloadDispose();
+    super.dispose();
+  }
+
+  @override
+  Future<void> reloadTab() => _load();
 
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
       final service = ref.read(findYourMatchServiceProvider);
       _likes = await service.listReceivedLikes();
+      // Angesehen = Badge auf Aktuelles weg (v0.9.1, Seen-Tracking).
+      unawaited(ref
+          .read(seenProvider.notifier)
+          .markLikesSeen(_likes.map((l) => l.likeId)));
+      ref.invalidate(receivedLikesProvider);
     } catch (e) {
       debugPrint('[Interessen] Erhaltene Likes fehlgeschlagen: $e');
     } finally {
@@ -261,10 +400,19 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab> {
       return const Center(child: CircularProgressIndicator());
     }
     if (_likes.isEmpty) {
-      return EmptyState(
-        icon: Icons.favorite_border,
-        title: L10n.t(context, 'interests.emptyReceivedTitle'),
-        message: L10n.t(context, 'interests.emptyReceivedBody'),
+      return RefreshIndicator(
+        onRefresh: _load,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.sizeOf(context).height * 0.6,
+            child: EmptyState(
+              icon: Icons.favorite_border,
+              title: L10n.t(context, 'interests.emptyReceivedTitle'),
+              message: L10n.t(context, 'interests.emptyReceivedBody'),
+            ),
+          ),
+        ),
       );
     }
     return RefreshIndicator(
@@ -361,25 +509,58 @@ class _MatchesTab extends ConsumerStatefulWidget {
   ConsumerState<_MatchesTab> createState() => _MatchesTabState();
 }
 
-class _MatchesTabState extends ConsumerState<_MatchesTab> {
+class _MatchesTabState extends ConsumerState<_MatchesTab>
+    with RouteAware, WidgetsBindingObserver, _AutoReloadTab {
   List<MatchWithState> _serverMatches = [];
   bool _loading = true;
-
   /// Chats verwalten (v0.8.0): Mehrfachauswahl + "Aus Liste entfernen".
-  bool _selectMode = false;
+  /// Ein-/Ausgang über das AppBar-Icon (NUTZERWUNSCH: weniger Platz);
+  /// der Zustand lebt im [matchSelectModeProvider] (AppBar <-> Tab).
   final Set<int> _selected = {};
 
   @override
   void initState() {
     super.initState();
+    autoReloadInit();
     _load();
   }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    autoReloadSubscribe(context);
+  }
+
+  @override
+  void dispose() {
+    autoReloadDispose();
+    super.dispose();
+  }
+
+  @override
+  Future<void> reloadTab() => _load();
 
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
       final service = ref.read(findYourMatchServiceProvider);
       _serverMatches = await service.listMatchesWithState();
+      // 72-Stunden-Regel (Betreiber-Entscheidung): Aktive Funken, in denen
+      // 72 h niemand geschrieben hat, wandern RUHIG unter "Erschlossene
+      // Funken" - die App räumt auf, gibt die Verbindung aber nie ganz auf
+      // (Re-Funke jederzeit möglich). Frisch entstandene Funken (z. B. aus
+      // einem Zufallschat, der "nicht so gut lief") bleiben mindestens
+      // 3 Tage aktiv - niemand soll zu schnell aufgeben.
+      await _autoCoolStaleSparks();
+      // Angesehen = Badge auf Aktuelles weg (v0.9.1, Seen-Tracking).
+      final seenBox = ref.read(seenProvider.notifier);
+      unawaited(seenBox
+          .markMatchesSeen(_serverMatches.map((m) => m.matchId)));
+      unawaited(seenBox.markQrSeen(ref
+          .read(chatProvider)
+          .where((m) => m.isQrContact)
+          .map((m) => m.id)));
+      ref.invalidate(serverMatchesProvider);
     } catch (e) {
       debugPrint('[Interessen] Matches laden fehlgeschlagen: $e');
     } finally {
@@ -387,12 +568,76 @@ class _MatchesTabState extends ConsumerState<_MatchesTab> {
     }
   }
 
+  /// Schwelle für die automatische Kühlung inaktiver Funken.
+  static const Duration _autoCoolAfter = Duration(hours: 72);
+
+  /// Kühlt aktive Funken ohne letzte Aktivität älter als [_autoCoolAfter]
+  /// automatisch (status -> cooled via cool_match-RPC). Letzte Aktivität =
+  /// letzte LOCALE Nachricht (E2E: der Server kennt Inhalte nie) oder,
+  /// falls kein Verlauf existiert, die Match-Erstellung.
+  Future<void> _autoCoolStaleSparks() async {
+    if (!SupabaseService.isInitialized) return;
+    final cutoff = DateTime.now().subtract(_autoCoolAfter);
+    final stale = <MatchWithState>[];
+    for (final m in _serverMatches) {
+      if (m.status != 'active') continue;
+      if (_lastSparkActivity(m).isBefore(cutoff)) stale.add(m);
+    }
+    if (stale.isEmpty) return;
+    final staleIds = stale.map((m) => m.matchId).toSet();
+    var cooledAny = false;
+    for (final m in stale) {
+      try {
+        await ref.read(findYourMatchServiceProvider).coolMatch(m.matchId);
+        cooledAny = true;
+      } catch (_) {
+        // Bereits gekühlt (Gegenseite war schneller) oder Netzwerkfehler:
+        // ignorieren, beim nächsten Laden wird erneut geprüft.
+      }
+    }
+    if (cooledAny && mounted) {
+      // Lokal sofort umziehen (ohne erneuten Server-Roundtrip).
+      _serverMatches = _serverMatches
+          .where((m) => !staleIds.contains(m.matchId))
+          .followedBy(stale.map((m) => MatchWithState(
+                matchId: m.matchId,
+                partner: m.partner,
+                unlockLevel: m.unlockLevel,
+                failedAttempts: m.failedAttempts,
+                createdVia: m.createdVia,
+                status: 'cooled',
+                createdAt: m.createdAt,
+                resparkedAt: m.resparkedAt,
+                passedAt: m.passedAt,
+                lastAttemptAt: m.lastAttemptAt,
+              )))
+          .toList();
+    }
+  }
+
+  /// Zeitpunkt der letzten Aktivität eines Funkens: letzte lokale
+  /// Nachricht, sonst der letzte RE-FUNKE (Karenzzeit, Migration 101 -
+  /// ohne sie hätte die Auto-Kühlung jeden frisch entfachten Funken beim
+  /// nächsten Laden sofort wieder gekühlt), sonst die Match-Erstellung.
+  DateTime _lastSparkActivity(MatchWithState m) {
+    final msgs = ref.read(chatProvider.notifier).messagesFor('${m.matchId}');
+    var last = m.createdAt ?? DateTime.now();
+    final resparked = m.resparkedAt;
+    if (resparked != null && resparked.isAfter(last)) last = resparked;
+    if (msgs.isNotEmpty && msgs.last.timestamp.isAfter(last)) {
+      last = msgs.last.timestamp;
+    }
+    return last;
+  }
+
   void _toggleSelect(int matchId) {
     setState(() {
       if (!_selected.add(matchId)) {
         _selected.remove(matchId);
       }
-      if (_selected.isEmpty) _selectMode = false;
+      if (_selected.isEmpty) {
+        ref.read(matchSelectModeProvider.notifier).state = false;
+      }
     });
   }
 
@@ -423,9 +668,125 @@ class _MatchesTabState extends ConsumerState<_MatchesTab> {
     }
     setState(() {
       _selected.clear();
-      _selectMode = false;
     });
+    ref.read(matchSelectModeProvider.notifier).state = false;
     _load();
+  }
+
+  /// Funke direkt in der Liste kühlen (v0.9.1): active -> cooled.
+  ///
+  /// Mit dem gleichen Ehrlich-Dialog wie im Chat (ruhig vs. Absage-Text).
+  /// Ein gewählter Absage-Text geht E2E-verschlüsselt über das Relay raus
+  /// (kein Chat nötig). Optimistisch SOFORT lokal auf "cooled" setzen (die
+  /// App "merkt" es dadurch direkt, kein doppeltes Kühlen möglich);
+  /// "bereits gekühlt" vom Server zählt als Erfolg statt Fehler.
+  Future<void> _cool(MatchWithState match) async {
+    if (match.cooled) {
+      _load();
+      return;
+    }
+    final choice = await showEndSparkDialog(context);
+    if (choice == null || !mounted) return;
+    final goodbye =
+        goodbyeTextForChoice(context, choice);
+    if (goodbye != null) {
+      // Absage-Text ohne geöffneten Chat zustellen (Relay, best-effort).
+      try {
+        await ref.read(relayServiceProvider).storeText(
+              peerId: match.partner.id,
+              text: goodbye,
+            );
+        if (SupabaseService.isInitialized) {
+          await SupabaseService.client.functions.invoke(
+            'notify-user',
+            body: {
+              'kind': 'messages',
+              'target_user_id': match.partner.id,
+            },
+          );
+        }
+      } catch (_) {}
+      if (!mounted) return;
+    }
+    setState(() {
+      _serverMatches = _serverMatches
+          .map((m) => m.matchId == match.matchId
+              ? MatchWithState(
+                  matchId: m.matchId,
+                  partner: m.partner,
+                  unlockLevel: m.unlockLevel,
+                  failedAttempts: m.failedAttempts,
+                  createdVia: m.createdVia,
+                  status: 'cooled',
+                  createdAt: m.createdAt,
+                  resparkedAt: m.resparkedAt,
+                  passedAt: m.passedAt,
+                  lastAttemptAt: m.lastAttemptAt,
+                )
+              : m)
+          .toList();
+    });
+    try {
+      await ref.read(findYourMatchServiceProvider).coolMatch(match.matchId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(L10n.tf(context, 'interests.cooledDone',
+                {'name': match.partner.name})),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      // Bereits gekühlt (z. B. Doppel-Tap): kein Fehler, nur neu laden.
+      if (e.toString().toLowerCase().contains('bereits gekuehlt')) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(L10n.tf(context, 'interests.cooledDone',
+                  {'name': match.partner.name})),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(L10n.tf(context, 'common.errorWith',
+                {'error': '$e'})),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+    _load();
+  }
+
+  /// Funke direkt in der Liste entfernen (ausblenden, nur für mich).
+  Future<void> _hide(MatchWithState match) async {
+    try {
+      await ref.read(findYourMatchServiceProvider).hideMatch(match.matchId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(L10n.tf(context, 'interests.hiddenOne',
+                {'name': match.partner.name})),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      _load();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(L10n.tf(context, 'common.errorWith',
+                {'error': '$e'})),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   /// "Re-Funke ohne Druck": gekühlte Verbindung mit einem Tap reaktivieren.
@@ -501,9 +862,17 @@ class _MatchesTabState extends ConsumerState<_MatchesTab> {
 
   @override
   Widget build(BuildContext context) {
+    // NUTZERWUNSCH "Verwalten funktioniert nicht richtig": Der Modus lebt
+    // im Provider - der Tab muss ihn WATCHEN (sonst reagierte der
+    // AppBar-Button nicht sichtbar) und bei Wechsel das Auswahl-Set
+    // leeren.
+    ref.listen<bool>(matchSelectModeProvider, (prev, next) {
+      if (prev != next) setState(() => _selected.clear());
+    });
     // QR-Kontakte sind nur lokal gespeichert (kein DB-Match).
     final qrContacts =
         ref.watch(chatProvider).where((m) => m.isQrContact).toList();
+    final selectMode = ref.watch(matchSelectModeProvider);
 
     // v0.8.0: aktive Funken oben, gekühlte ("Erschlossene Funken") unten -
     // ohne Countdown, ohne Ablauf-Benachrichtigung, ohne Verlängerungsdruck.
@@ -516,30 +885,46 @@ class _MatchesTabState extends ConsumerState<_MatchesTab> {
       return const Center(child: CircularProgressIndicator());
     }
     if (_serverMatches.isEmpty && qrContacts.isEmpty) {
-      return EmptyState(
-        icon: Icons.chat_bubble_outline,
-        title: L10n.t(context, 'interests.emptySparksTitle'),
-        message: L10n.t(context, 'interests.emptySparksBody'),
+      return RefreshIndicator(
+        onRefresh: _load,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.sizeOf(context).height * 0.6,
+            child: EmptyState(
+              icon: Icons.chat_bubble_outline,
+              title: L10n.t(context, 'interests.emptySparksTitle'),
+              message: L10n.t(context, 'interests.emptySparksBody'),
+            ),
+          ),
+        ),
       );
     }
 
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
+        // v0.9.1-Fix (Android 16): Ohne AlwaysScrollable löst Pull bei
+        // kurzer Liste nie aus - Tab 1/2 hatten die Physics, Tab 3 nicht.
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(vertical: 12),
         children: [
           if (_serverMatches.isNotEmpty) ...[
+            // NUTZERWUNSCH: Der "Verwalten"-Textbutton nahm zu viel Platz
+            // ein. Er lebt jetzt als Icon-Button in der AppBar (aktiver
+            // Modus: Abbrechen + Zähler bleiben hier in der Zeile).
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
               child: Row(
                 children: [
-                  if (_selectMode) ...[
+                  if (selectMode) ...[
                     TextButton.icon(
                       onPressed: () {
                         setState(() {
                           _selected.clear();
-                          _selectMode = false;
                         });
+                        ref.read(matchSelectModeProvider.notifier).state =
+                            false;
                       },
                       icon: const Icon(Icons.close, size: 18),
                       label: Text(L10n.t(context, 'common.cancel')),
@@ -553,11 +938,6 @@ class _MatchesTabState extends ConsumerState<_MatchesTab> {
                     ),
                   ] else ...[
                     const Spacer(),
-                    TextButton.icon(
-                      onPressed: () => setState(() => _selectMode = true),
-                      icon: const Icon(Icons.edit_outlined, size: 18),
-                      label: Text(L10n.t(context, 'interests.manage')),
-                    ),
                   ],
                 ],
               ),
@@ -570,8 +950,13 @@ class _MatchesTabState extends ConsumerState<_MatchesTab> {
               subtitle: L10n.t(context, 'interests.savedSub'),
             ),
             ...qrContacts.map((m) => ListTile(
-                  leading: const CircleAvatar(
-                    child: Icon(Icons.person),
+                  leading: GestureDetector(
+                    onTap: () => context.push(
+                      AppRoutes.profileDetailPath(m.partner.id),
+                    ),
+                    child: const CircleAvatar(
+                      child: Icon(Icons.person),
+                    ),
                   ),
                   title: Text('${m.partner.name}, ${m.partner.age}'),
                   subtitle: Text(L10n.t(context, 'interests.savedTileSub')),
@@ -580,6 +965,14 @@ class _MatchesTabState extends ConsumerState<_MatchesTab> {
                     children: [
                       if (m.unreadCount > 0)
                         Badge.count(count: m.unreadCount),
+                      IconButton(
+                        icon: const Icon(Icons.person_outline),
+                        tooltip: L10n.t(
+                            context, 'profile.detail.aboutMe'),
+                        onPressed: () => context.push(
+                          AppRoutes.profileDetailPath(m.partner.id),
+                        ),
+                      ),
                       IconButton(
                         icon: const Icon(Icons.delete_outline,
                             color: Colors.red),
@@ -591,7 +984,12 @@ class _MatchesTabState extends ConsumerState<_MatchesTab> {
                   ),
                   onTap: () {
                     ref.read(chatProvider.notifier).markRead(m.id);
-                    context.go(AppRoutes.chatDetailPath(m.id));
+                    // Gelesen + gesehen (Badges weg, v0.9.1).
+                    unawaited(ref
+                        .read(seenProvider.notifier)
+                        .markQrSeen([m.id]));
+                    // Push: Zurück landet wieder exakt hier (gleicher Tab).
+                    context.push(AppRoutes.chatDetailPath(m.id));
                   },
                 )),
             const SizedBox(height: 8),
@@ -604,7 +1002,7 @@ title: L10n.t(context, 'interests.sparksTitle'),
 subtitle: L10n.t(context, 'interests.matchesSub'),
 ),
             ...activeMatches.map((m) {
-              if (_selectMode) {
+              if (selectMode) {
                 return CheckboxListTile(
                   value: _selected.contains(m.matchId),
                   onChanged: (_) => _toggleSelect(m.matchId),
@@ -617,9 +1015,25 @@ subtitle: L10n.t(context, 'interests.matchesSub'),
                 // v0.9.0-Feedback: "Auf die Person klicken -> kommt direkt
                 // das Kennenlern-Quiz" - jetzt öffnet die Kachel IMMER den
                 // Chat; das Quiz ist als Button im Chat erreichbar (es
-                // schaltet nur das Foto frei).
-                onTap: () =>
-                    context.go(AppRoutes.chatDetailPath(m.matchId.toString())),
+                // schaltet nur das Foto frei). Das Profil (inkl.
+                // Vorstellung) ist über den Personen-Button erreichbar.
+                // Kühlen/Entfernen geht direkt über das Menü (v0.9.1).
+                // Push: Zurück landet wieder exakt hier (gleicher Tab).
+                onTap: () {
+                  ref.read(chatProvider.notifier).markRead(
+                        m.matchId.toString(),
+                      );
+                  unawaited(ref
+                      .read(seenProvider.notifier)
+                      .markMatchesSeen([m.matchId]));
+                  context.push(
+                      AppRoutes.chatDetailPath(m.matchId.toString()));
+                },
+                onProfile: () => context.push(
+                  AppRoutes.profileDetailPath(m.partner.id),
+                ),
+                onCool: () => _cool(m),
+                onHide: () => _hide(m),
               );
             }),
           ],
@@ -636,8 +1050,19 @@ subtitle: L10n.t(context, 'interests.matchesSub'),
             ),
             ...cooledMatches.map((m) => _CooledMatchTile(
                   match: m,
-                  onOpen: () =>
-                      context.go(AppRoutes.chatDetailPath(m.matchId.toString())),
+                  onOpen: () {
+                    ref
+                        .read(chatProvider.notifier)
+                        .markRead(m.matchId.toString());
+                    unawaited(ref
+                        .read(seenProvider.notifier)
+                        .markMatchesSeen([m.matchId]));
+                    context.push(
+                        AppRoutes.chatDetailPath(m.matchId.toString()));
+                  },
+                  onProfile: () => context.push(
+                    AppRoutes.profileDetailPath(m.partner.id),
+                  ),
                   onRespark: () => _respark(m),
                 )),
           ],
@@ -653,11 +1078,13 @@ class _CooledMatchTile extends StatelessWidget {
   const _CooledMatchTile({
     required this.match,
     required this.onOpen,
+    required this.onProfile,
     required this.onRespark,
   });
 
   final MatchWithState match;
   final VoidCallback onOpen;
+  final VoidCallback onProfile;
   final VoidCallback onRespark;
 
   @override
@@ -669,17 +1096,31 @@ class _CooledMatchTile extends StatelessWidget {
           .withValues(alpha: 0.5),
       child: ListTile(
         onTap: onOpen,
-        leading: const CircleAvatar(child: Icon(Icons.person_outline)),
+        leading: GestureDetector(
+          onTap: onProfile,
+          child: const CircleAvatar(child: Icon(Icons.person_outline)),
+        ),
         title: Text('${p.name}, ${p.age ?? '?'}'),
         subtitle: Text(
           p.bio.isNotEmpty ? p.bio : L10n.t(context, 'interests.noBio'),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        trailing: FilledButton.tonalIcon(
-          onPressed: onRespark,
-          icon: const Icon(Icons.local_fire_department, size: 18),
-          label: Text(L10n.t(context, 'interests.resparkBtn')),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.person_outline),
+              tooltip:
+                  L10n.t(context, 'profile.detail.aboutMe'),
+              onPressed: onProfile,
+            ),
+            FilledButton.tonalIcon(
+              onPressed: onRespark,
+              icon: const Icon(Icons.local_fire_department, size: 18),
+              label: Text(L10n.t(context, 'interests.resparkBtn')),
+            ),
+          ],
         ),
       ),
     );
@@ -722,24 +1163,101 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-class _MatchTile extends StatelessWidget {
-  const _MatchTile({required this.match, required this.onTap});
+class _MatchTile extends ConsumerWidget {
+  const _MatchTile({
+    required this.match,
+    required this.onTap,
+    required this.onProfile,
+    required this.onCool,
+    required this.onHide,
+  });
 
   final MatchWithState match;
   final VoidCallback onTap;
+  final VoidCallback onProfile;
+  final VoidCallback onCool;
+  final VoidCallback onHide;
 
+  /// Blockieren aus dem Funken-Menü (NUTZERWUNSCH): Gleicher Dialog und
+  /// Ablauf wie im Chat (Bestätigung -> blockUser -> Funken-Tab).
+  Future<void> _confirmBlockTile(
+    BuildContext context,
+    WidgetRef ref,
+    MatchWithState m,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.block, color: Colors.red),
+            const SizedBox(width: 8),
+            Expanded(child: Text(L10n.t(ctx, 'chat.blockTitle'))),
+          ],
+        ),
+        content: Text(L10n.tf(
+            ctx, 'chat.blockBody', {'name': m.partner.name})),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(L10n.t(ctx, 'common.cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: Text(L10n.t(ctx, 'chat.blockAction')),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    try {
+      await SupabaseDatabaseService(SupabaseService.client)
+          .blockUser(m.partner.id);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.tf(
+              context, 'chat.blockedDone', {'name': m.partner.name})),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.t(context, 'chat.blockFailed')),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final p = match.partner;
+    // Quiz-Hinweis erst nach 50-70 Nachrichten (pro Chat deterministisch,
+    // gleiche Schwelle wie im Chat-Screen).
+    final threshold =
+        50 + (match.matchId.toString().hashCode.abs() % 21);
+    final msgCount = ref
+        .watch(chatProvider.notifier)
+        .messagesFor(match.matchId.toString())
+        .length;
+    final showQuizHint = !match.quizPassed &&
+        match.createdVia == 'find_match' &&
+        msgCount >= threshold;
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: ListTile(
         onTap: onTap,
-        leading: CircleAvatar(
-          radius: 28,
-          child: match.quizPassed
-              ? const Icon(Icons.person)
-              : const Icon(Icons.visibility_off),
+        leading: GestureDetector(
+          onTap: onProfile,
+          child: CircleAvatar(
+            radius: 28,
+            child: match.quizPassed
+                ? const Icon(Icons.person)
+                : const Icon(Icons.visibility_off),
+          ),
         ),
         title: Row(
           children: [
@@ -755,7 +1273,7 @@ class _MatchTile extends StatelessWidget {
         subtitle: Text(
           match.quizPassed
               ? L10n.t(context, 'interests.photoUnlocked')
-              : match.createdVia == 'find_match'
+              : showQuizHint
                   ? L10n.t(context, 'interests.quizPending')
                   : p.bio.isNotEmpty
                       ? p.bio
@@ -763,9 +1281,76 @@ class _MatchTile extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        trailing: match.quizGated
-            ? const Icon(Icons.photo_outlined)
-            : const Icon(Icons.chat_bubble_outline),
+        // v0.9.1: Kein Bild-/Status-Icon mehr; die 3 Punkte stehen ganz
+        // rechts.
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.person_outline),
+              tooltip: L10n.t(context, 'profile.detail.aboutMe'),
+              onPressed: onProfile,
+            ),
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              tooltip: L10n.t(context, 'chat.more'),
+              onSelected: (value) {
+                switch (value) {
+                  case 'cool':
+                    onCool();
+                  case 'hide':
+                    onHide();
+                  case 'report':
+                    showReportUserDialog(
+                      context: context,
+                      ref: ref,
+                      reportedUserId: p.id,
+                      reportedUserName: p.name,
+                    );
+                  case 'block':
+                    _confirmBlockTile(context, ref, match);
+                }
+              },
+              itemBuilder: (ctx) => [
+                PopupMenuItem(
+                  value: 'cool',
+                  child: ListTile(
+                    leading: const Icon(Icons.ac_unit_outlined),
+                    title: Text(L10n.t(context, 'interests.coolBtn')),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'hide',
+                  child: ListTile(
+                    leading: const Icon(Icons.visibility_off_outlined),
+                    title: Text(
+                        L10n.t(context, 'interests.hideOneBtn')),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                const PopupMenuDivider(),
+                // NUTZERWUNSCH: Melden/Blockieren auch im Funken-Menü.
+                PopupMenuItem(
+                  value: 'report',
+                  child: ListTile(
+                    leading: const Icon(Icons.flag_outlined),
+                    title: Text(L10n.t(context, 'profile.detail.reportUser')),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                PopupMenuItem(
+                  value: 'block',
+                  child: ListTile(
+                    leading: const Icon(Icons.block, color: Colors.red),
+                    title: Text(L10n.t(context, 'profile.detail.blockUser')),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

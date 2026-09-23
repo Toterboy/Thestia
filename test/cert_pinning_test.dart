@@ -28,4 +28,19 @@ void main() {
     final unique = CertPinning.pinnedCertHashes.toSet();
     expect(unique.length, equals(CertPinning.pinnedCertHashes.length));
   });
+
+  test('isPinnedHost erkennt gepinnte Hosts (case-insensitiv, v0.9.0)', () {
+    expect(
+      CertPinning.isPinnedHost('jftuigjbmmuvrckbchqo.supabase.co'),
+      isTrue,
+    );
+    expect(
+      CertPinning.isPinnedHost('JFTUIGJBMMUVRCKBCHQO.SUPABASE.CO'),
+      isTrue,
+    );
+    expect(CertPinning.isPinnedHost('router.huggingface.co'), isTrue);
+    expect(CertPinning.isPinnedHost('evil-supabase.co'), isFalse);
+    expect(CertPinning.isPinnedHost('supabase.co'), isFalse);
+    expect(CertPinning.isPinnedHost(''), isFalse);
+  });
 }

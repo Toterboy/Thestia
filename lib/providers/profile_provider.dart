@@ -48,8 +48,14 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
 
     if (raw != null) {
       try {
-        state = UserProfile.fromJson(
+        final loaded = UserProfile.fromJson(
           jsonDecode(raw) as Map<String, dynamic>,
+        );
+        // birthdayToday hängt vom Tagesdatum ab - gespeicherter Wert
+        // (ggf. von gestern) wird beim Laden neu berechnet.
+        state = loaded.copyWith(
+          birthdayToday:
+              UserProfile.isBirthdayToday(loaded.birthDate),
         );
       } catch (e) {
         debugPrint('[ProfileNotifier] Korrupte Profil-Daten erkannt: $e');
@@ -93,6 +99,9 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
     HabitudeLevel? drugs,
     List<String>? musicLiked,
     List<String>? musicDisliked,
+    String? favoriteSong,
+    String? favoriteBand,
+    String? birthdayStyle,
     bool clearIntroAudio = false,
   }) async {
     state = state.copyWith(
@@ -116,6 +125,13 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
       drugs: drugs,
       musicLiked: musicLiked,
       musicDisliked: musicDisliked,
+      favoriteSong: favoriteSong,
+      favoriteBand: favoriteBand,
+      birthdayStyle: birthdayStyle,
+      // birthdayToday für das eigene Profil immer lokal neu berechnen
+      // (Stichtag hängt vom Tagesdatum ab, nicht vom State).
+      birthdayToday: UserProfile.isBirthdayToday(
+          birthDate ?? state.birthDate),
       clearIntroAudio: clearIntroAudio,
     );
     await _persist();

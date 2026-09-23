@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:wisp/l10n/app_strings.dart';
 import 'package:wisp/providers/auth_provider.dart';
 import 'package:wisp/routing/app_router.dart';
 import 'package:wisp/services/mfa_service.dart';
@@ -73,7 +74,7 @@ class _MfaChallengeScreenState extends ConsumerState<MfaChallengeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sicherheitscode'),
+        title: Text(L10n.t(context, 'mfa.title')),
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
@@ -86,7 +87,7 @@ class _MfaChallengeScreenState extends ConsumerState<MfaChallengeScreen> {
               const Icon(Icons.phonelink_lock_outlined, size: 56),
               const SizedBox(height: 16),
               Text(
-                'Gib den Code aus deiner Authenticator-App ein',
+                L10n.t(context, 'mfa.body'),
                 style: Theme.of(context).textTheme.titleMedium,
                 textAlign: TextAlign.center,
               ),
@@ -107,7 +108,7 @@ class _MfaChallengeScreenState extends ConsumerState<MfaChallengeScreen> {
                   // kein muhsames Ablesen/Eintippen noetig.
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.content_paste),
-                    tooltip: 'Einfügen',
+                    tooltip: L10n.t(context, 'mfa.paste'),
                     onPressed: () async {
                       final data =
                           await Clipboard.getData('text/plain');
@@ -132,12 +133,12 @@ class _MfaChallengeScreenState extends ConsumerState<MfaChallengeScreen> {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Prüfen'),
+                    : Text(L10n.t(context, 'common.check')),
               ),
               const SizedBox(height: 8),
               TextButton(
                 onPressed: _loading ? null : _logout,
-                child: const Text('Abmelden'),
+                child: Text(L10n.t(context, 'email.logout')),
               ),
               if (_error != null) ...[
                 const SizedBox(height: 12),

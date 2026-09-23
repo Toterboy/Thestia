@@ -68,6 +68,11 @@ docs/DATENSCHUTZ-ENTWURF.md
 rotate.sql
 
 android/key.properties
+# Firebase-Client-Konfiguration (API-Key, Projekt-IDs): Nur das
+# redigierte Beispiel einchecken (google-services.json.example),
+# echte Datei lokal aus der Firebase Console beziehen.
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
 *.keystore
 
 # =============================================================================
@@ -101,6 +106,15 @@ releases/*/admin/
 # Editor-/Backup-Dateien
 *.bak
 *.orig
+*.rej
+
+# iOS-Signing / Provisioning (Betreiber-lokal)
+*.mobileprovision
+*.provisionprofile
+
+# Fastlane-Laufzeitberichte (regenerierbar)
+fastlane/report.xml
+fastlane/README.md
 
 # Node-Module (generisch, falls wieder Node-Tools im Repo liegen)
 node_modules/

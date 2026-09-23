@@ -34,11 +34,35 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
   _QrMode _mode = _QrMode.choice;
   bool _processing = false;
   bool _resolving = false;
+  MobileScannerController? _scannerController;
+  DateTime? _lastInvalidHint;
 
   @override
   void dispose() {
     _codeCtrl.dispose();
+    _scannerController?.dispose();
+    _scannerController = null;
     super.dispose();
+  }
+
+  MobileScannerController _scanner() =>
+      _scannerController ??= MobileScannerController();
+
+  void _showInvalidQrHint() {
+    final now = DateTime.now();
+    if (_lastInvalidHint != null &&
+        now.difference(_lastInvalidHint!).inSeconds < 2) {
+      return;
+    }
+    _lastInvalidHint = now;
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.t(context, 'qr.invalidCode')),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Future<void> _onUserFound(String peerId) async {
@@ -239,7 +263,10 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
         return;
       }
       final userId = (rows.first as Map<String, dynamic>)['user_id'] as String;
-      _onUserFound(userId);
+      // v0.9.1-Fix: fehlendes await führte zum Race (_resolving sofort
+      // false, Fehler-Snackbar ggf. nach Navigation) - Like kam scheinbar
+      // nicht an.
+      await _onUserFound(userId);
     } catch (e) {
       debugPrint('[QrScan] Code-Auflösung fehlgeschlagen: $e');
       if (mounted) {
@@ -270,54 +297,65 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
   Widget _buildChoice() {
     return Scaffold(
       appBar: AppBar(title: Text(L10n.t(context, 'qr.menuTitle'))),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              L10n.t(context, 'qr.choiceTitle'),
-              style: Theme.of(context).textTheme.titleLarge,
-              textAlign: TextAlign.center,
+      // Nutzerwunsch: Die drei Auswahl-Felder sind mittig positioniert
+      // (vertikal zentriert, statt am oberen Rand zu kleben).
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  L10n.t(context, 'qr.choiceTitle'),
+                  style: Theme.of(context).textTheme.titleLarge,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.qr_code_2),
+                    title: Text(L10n.t(context, 'qr.showMine')),
+                    subtitle: Text(L10n.t(context, 'qr.shareSub')),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push(AppRoutes.qrProfile),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.qr_code_scanner),
+                    title: Text(L10n.t(context, 'qr.scanTitle')),
+                    subtitle: Text(L10n.t(context, 'qr.scanSub')),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => setState(() => _mode = _QrMode.camera),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.keyboard),
+                    title: Text(L10n.t(context, 'qr.enterCode')),
+                    subtitle: Text(L10n.t(context, 'qr.enterCodeSub')),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => setState(() => _mode = _QrMode.manual),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.qr_code_2),
-                title: Text(L10n.t(context, 'qr.showMine')),
-                subtitle: Text(L10n.t(context, 'qr.shareSub')),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => context.push(AppRoutes.qrProfile),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.qr_code_scanner),
-                title: Text(L10n.t(context, 'qr.scanTitle')),
-                subtitle: Text(L10n.t(context, 'qr.scanSub')),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => setState(() => _mode = _QrMode.camera),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.keyboard),
-                title: Text(L10n.t(context, 'qr.enterCode')),
-                subtitle: Text(L10n.t(context, 'qr.enterCodeSub')),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => setState(() => _mode = _QrMode.manual),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildCameraScanner() {
-    final controller = MobileScannerController();
+    // v0.9.1-Fix: Controller als Feld (nicht pro build neu) - sonst
+    // Neustart der Kamera bei jedem Rebuild; _processing wird nach jedem
+    // Scan zurückgesetzt (vorher blieb er nach Fehlscan true und weitere
+    // Scans waren tot); ungültige Codes geben Feedback statt Stille.
+    final controller = _scanner();
 
     return Scaffold(
       appBar: AppBar(
@@ -325,8 +363,10 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            controller.dispose();
-            setState(() => _mode = _QrMode.choice);
+            setState(() {
+              _mode = _QrMode.choice;
+              _processing = false;
+            });
           },
         ),
       ),
@@ -334,20 +374,37 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
         children: [
           MobileScanner(
             controller: controller,
-            onDetect: (capture) {
+            onDetect: (capture) async {
               if (_processing) return;
               final barcode = capture.barcodes.firstOrNull;
               if (barcode == null || barcode.rawValue == null) return;
               final raw = barcode.rawValue!;
               final uri = Uri.tryParse(raw);
-              if (uri == null || uri.scheme != 'wisp' || uri.host != 'user') return;
-              final peerId = uri.pathSegments.isNotEmpty ? uri.pathSegments.first : '';
+              if (uri == null ||
+                  uri.scheme != 'wisp' ||
+                  uri.host != 'user') {
+                _showInvalidQrHint();
+                return;
+              }
+              final peerId = uri.pathSegments.isNotEmpty
+                  ? uri.pathSegments.first
+                  : '';
               // Fremd-kontrollierte QR-Payload: Peer-ID muss UUID sein
               // (Audit M1 – verhindert Pfad-/Filter-Injection downstream).
-              if (!isValidPeerId(peerId)) return;
+              if (!isValidPeerId(peerId)) {
+                _showInvalidQrHint();
+                return;
+              }
               _processing = true;
-              controller.dispose();
-              _onUserFound(peerId);
+              try {
+                await _onUserFound(peerId);
+              } finally {
+                // Erfolg navigiert weg (go interessen) - Reset nur, wenn
+                // wir noch auf dem Scanner sind (sonst tot).
+                if (mounted && _mode == _QrMode.camera) {
+                  _processing = false;
+                }
+              }
             },
           ),
           Center(

@@ -14,6 +14,7 @@ import 'package:wisp/services/report_service.dart';
 import 'package:wisp/services/supabase_service.dart';
 import 'package:wisp/utils/constants.dart';
 import 'package:wisp/l10n/app_strings.dart';
+import 'package:wisp/widgets/ai_badge.dart';
 
 /// Ergebnis der Bild-Meldung mit KI-Vorprüfung.
 class ImageReportOutcome {
@@ -135,8 +136,8 @@ Future<void> showImageReportDialog({
   final commaIdx = mediaUrl.indexOf(',');
   if (!mediaUrl.startsWith('data:') || commaIdx < 0) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Dieses Bild kann leider nicht gemeldet werden.'),
+      SnackBar(
+        content: Text(L10n.t(context, 'report.imageUnavailable')),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -145,8 +146,8 @@ Future<void> showImageReportDialog({
   final imageBase64 = mediaUrl.substring(commaIdx + 1);
   if (imageBase64.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Dieses Bild kann leider nicht gemeldet werden.'),
+      SnackBar(
+        content: Text(L10n.t(context, 'report.imageUnavailable')),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -173,7 +174,9 @@ Future<void> showImageReportDialog({
             Icon(Icons.flag_outlined,
                 color: Theme.of(context).colorScheme.primary),
             const SizedBox(width: 8),
-            Expanded(child: Text('Bild melden: $reportedUserName')),
+            Expanded(
+                child: Text(L10n.tf(ctx, 'report.imageTitle',
+                    {'name': reportedUserName}))),
           ],
         ),
         content: SizedBox(
@@ -236,7 +239,7 @@ Future<void> showImageReportDialog({
                     children: [
                       ...ReportType.values.map(
                         (type) => RadioListTile<ReportType>(
-                          title: Text(type.label),
+                          title: Text(L10n.t(ctx, type.labelKey)),
                           value: type,
                           contentPadding: EdgeInsets.zero,
                         ),
@@ -250,7 +253,7 @@ Future<void> showImageReportDialog({
                   maxLines: 3,
                   decoration: InputDecoration(
                     labelText: L10n.t(context, 'report.detailsOptional'),
-                    hintText: 'Was ist passiert?',
+                    hintText: L10n.t(ctx, 'common.whatHappened'),
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16)),
                   ),
@@ -262,7 +265,7 @@ Future<void> showImageReportDialog({
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Abbrechen'),
+            child: Text(L10n.t(ctx, 'common.cancel')),
           ),
           FilledButton(
             onPressed: selectedType == null
@@ -281,7 +284,7 @@ Future<void> showImageReportDialog({
                       localScore: localResult?.criticalScore,
                     );
                   },
-            child: const Text('Meldung absenden'),
+            child: Text(L10n.t(ctx, 'report.sendReport')),
           ),
         ],
       ),
@@ -366,27 +369,30 @@ class _LocalSafetyCheckSectionState extends State<_LocalSafetyCheckSection> {
                       ?.copyWith(fontWeight: FontWeight.w500),
                 ),
               ),
+              AiBadge(
+                languageCode:
+                    L10n.localeOf(context).languageCode,
+              ),
             ],
           ),
           const SizedBox(height: 8),
           if (_checking)
-            const Row(
+            Row(
               children: [
-                SizedBox(
+                const SizedBox(
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(
-                  child: Text('Bild wird lokal analysiert…'),
+                  child: Text(L10n.t(context, 'report.analyzing')),
                 ),
               ],
             )
           else if (_result == null)
             Text(
-              'Lokale Prüfung nicht verfügbar (Modell fehlt). Die Meldung '
-              'läuft über den serverseitigen Fallback.',
+              L10n.t(context, 'report.noLocalModel'),
               style: Theme.of(context).textTheme.bodySmall,
             )
           else if (_result!.isFlagged)
@@ -456,7 +462,7 @@ Future<void> _runAiCheck({
           reportedUserId: reportedUserId,
           reportedUserName: reportedUserName,
           type: ReportType.inappropriateContent,
-          description: 'Bild-Meldung: $reason${details.isEmpty ? '' : ' – $details'}',
+          description: 'Bild-Meldung: $reason${details.isEmpty ? '' : ' - $details'}',
         ),
   );
 
@@ -467,7 +473,16 @@ Future<void> _runAiCheck({
     builder: (ctx) => PopScope(
       canPop: false,
       child: AlertDialog(
-        title: Text(L10n.t(context, 'report.checkingTitle')),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(L10n.t(context, 'report.checkingTitle')),
+            ),
+            AiBadge(
+              languageCode: L10n.localeOf(context).languageCode,
+            ),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -498,14 +513,14 @@ Future<void> _runAiCheck({
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Meldung fehlgeschlagen'),
+          title: Text(L10n.t(ctx, 'report.failedTitle')),
           content: Text(
             e is StateError ? e.message : L10n.t(context, 'report.retryLater'),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('OK'),
+              child: Text(L10n.t(ctx, 'common.ok')),
             ),
           ],
         ),
@@ -528,17 +543,20 @@ Future<void> _runAiCheck({
                 color: Theme.of(context).colorScheme.primary),
             const SizedBox(width: 8),
             Expanded(child: Text(L10n.t(context, 'report.confirmed'))),
+            AiBadge(
+              languageCode: L10n.localeOf(context).languageCode,
+            ),
           ],
         ),
         content: Text(
-          'Danke! Die KI stuft das Bild ebenfalls als unangemessen ein '
-          '(Score ${(outcome.score * 100).toStringAsFixed(0)}%).'
-          '${outcome.operatorNotified ? '\n\nBild, dein Report und das KI-Ergebnis wurden automatisch an unser Team gesendet.' : '\n\nHinweis: Das Team konnte nicht per E-Mail benachrichtigt werden - deine Meldung ist trotzdem gespeichert.'}',
+          '${L10n.tf(ctx, 'report.aiConfirm', {
+                'score': (outcome.score * 100).toStringAsFixed(0)
+              })}\n\n${outcome.operatorNotified ? L10n.t(ctx, 'report.aiEscalated') : L10n.t(ctx, 'report.aiNotNotified')}',
         ),
         actions: [
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('OK'),
+            child: Text(L10n.t(ctx, 'common.ok')),
           ),
         ],
       ),
@@ -558,20 +576,23 @@ Future<void> _runAiCheck({
 
   final escalate = await showDialog<bool>(
     context: context,
-    builder: (ctx) => AlertDialog(
-      title: Row(
-        children: [
-          Icon(Icons.psychology_alt_outlined,
-              color: Theme.of(context).colorScheme.primary),
-          const SizedBox(width: 8),
-          const Expanded(child: Text('KI-Ergebnis')),
-        ],
-      ),
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.psychology_alt_outlined,
+                color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 8),
+            Expanded(child: Text(L10n.t(ctx, 'report.aiResult'))),
+            AiBadge(
+              languageCode: L10n.localeOf(ctx).languageCode,
+            ),
+          ],
+        ),
       content: Text(aiText),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),
-          child: const Text('Fertig'),
+          child: Text(L10n.t(ctx, 'common.done')),
         ),
         FilledButton(
           onPressed: () => Navigator.of(ctx).pop(true),
@@ -599,16 +620,14 @@ Future<void> _runAiCheck({
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Weitergeleitet'),
-          content: const Text(
-            'Deine Meldung wurde zur manuellen Prüfung an unser Team '
-            'weitergeleitet - inklusive Bild, deinem Report und dem '
-            'KI-Ergebnis. Danke für deine Hilfe!',
+          title: Text(L10n.t(ctx, 'report.forwardedTitle')),
+          content: Text(
+            L10n.t(ctx, 'report.forwardedBody'),
           ),
           actions: [
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('OK'),
+              child: Text(L10n.t(ctx, 'common.ok')),
             ),
           ],
         ),

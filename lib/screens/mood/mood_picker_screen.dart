@@ -39,14 +39,16 @@ class _MoodPickerScreenState extends ConsumerState<MoodPickerScreen> {
       await ref.read(moodProvider.notifier).setMood(mood);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Mood gespeichert')),
+          SnackBar(content: Text(L10n.t(context, 'mood.saved'))),
         );
         context.pop();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehler: $e')),
+          SnackBar(
+              content: Text(L10n.tf(
+                  context, 'common.errorWith', {'error': '$e'}))),
         );
       }
     } finally {
@@ -61,7 +63,7 @@ class _MoodPickerScreenState extends ConsumerState<MoodPickerScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Stimmung des Tages'),
+        title: Text(L10n.t(context, 'mood.title')),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => context.pop(),
@@ -74,7 +76,7 @@ class _MoodPickerScreenState extends ConsumerState<MoodPickerScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Wie fühlst du dich heute?',
+                L10n.t(context, 'mood.question'),
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -82,7 +84,7 @@ class _MoodPickerScreenState extends ConsumerState<MoodPickerScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Dein Mood hilft uns, dir passendere Vorschläge zu machen.',
+                L10n.t(context, 'mood.explainer'),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -111,7 +113,9 @@ class _MoodPickerScreenState extends ConsumerState<MoodPickerScreen> {
               ),
               const SizedBox(height: 16),
               PrimaryButton(
-                label: _isSaving ? 'Speichern...' : 'Speichern',
+                label: _isSaving
+                    ? L10n.t(context, 'mood.saving')
+                    : L10n.t(context, 'mood.save'),
                 onPressed: _selected == null || _isSaving ? null : _save,
               ),
             ],
@@ -215,7 +219,7 @@ class _CurrentMoodCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Aktuelle Stimmung',
+                    L10n.t(context, 'mood.current'),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),

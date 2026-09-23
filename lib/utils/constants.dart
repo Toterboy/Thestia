@@ -66,6 +66,16 @@ class AppConstants {
     'Klettern', 'Volunteering',
   ];
 
+  /// Musik-Genres zur Auswahl im Interview (Nutzer-Regel: Genres +
+  /// Lieblingskünstler + Song abfragen). Deutsche Literale wie bei
+  /// [presetInterests] (kein L10n); die Werte landen 1:1 in
+  /// profiles.music_liked und damit im Matching (Migration 074).
+  static const List<String> presetMusicGenres = [
+    'Pop', 'Rock', 'Hip-Hop', 'Elektro', 'House', 'Techno',
+    'Klassik', 'Jazz', 'Metal', 'Punk', 'Indie', 'R&B',
+    'Soul', 'Funk', 'Reggae', 'Latin', 'Country', 'Schlager',
+  ];
+
   /// Maximale Distanz (km) für den Entfernungsfilter (Slider-Obergrenze).
   static const int maxDistanceKm = 100;
 
@@ -90,13 +100,14 @@ class AppConstants {
   static const bool nsfwModerationEnabled =
       bool.fromEnvironment('NSFW_MODERATION_ENABLED', defaultValue: false);
 
-  /// Video-Verifizierung (Betreiber-Entscheidung: deaktiviert).
+  /// Video-Verifizierung mit lokaler KI-Triage (v0.9.1: aktiviert).
   ///
-  /// `false` (Default): Der Verifizierungs-Flow (Info/Video/Complete-Routen)
-  /// ist gesperrt und leitet auf Home um; verify-account bleibt admin-only
-  /// am Server. Reaktivierung später: `--dart-define=VERIFICATION_ENABLED=true`.
+  /// `true` (Default): Info/Video/Complete-Routen erreichbar; Einreichung
+  /// und manuelle Prüfung laufen wie bisher, plus KI-Sofortfreigabe bei
+  /// unauffälliger Schätzung (Abweichung <= 2 Jahre) und Admin-Queue mit
+  /// KI-Schätzung. Deaktivierung: `--dart-define=VERIFICATION_ENABLED=false`.
   static const bool verificationEnabled =
-      bool.fromEnvironment('VERIFICATION_ENABLED', defaultValue: false);
+      bool.fromEnvironment('VERIFICATION_ENABLED', defaultValue: true);
 
   /// F-Droid-Build: komplett ohne Firebase/FCM kompiliert und zur Laufzeit
   /// deaktiviert. Build mit:
@@ -176,7 +187,12 @@ class AppConstants {
   // laufenden Abos/Kosten). ICE läuft ausschließlich über STUN (europäische
   // Server, siehe WebRTCService/ice-config Edge Function). Konsequenz:
   // Hinter symmetrischen NATs/strikten Firewalls (z. B. Unternehmensnetze)
-  // kann ggf. keine direkte P2P-Verbindung aufgebaut werden.
+  // kann ggf. keine direkte P2P-Verbindung aufgebaut werden. Betroffen ist
+  // insbesondere MOBILFUNK (CGNAT): Dort scheitert der P2P-Zufallschat
+  // aktuell REGELMÄSSIG. Nutzer-Hinweis hierzu: random.errorConnectTimeout
+  // (app_strings.dart). Lösung, falls gewünscht: TURN-Server (z. B.
+  // coturn auf eigenem VPS) + TURN_URL/TURN_SECRET als Function-Secrets
+  // setzen (Client/ice-config unterstützen das bereits).
 }
 
 /// Deutsche Bundesländer (Vollnamen, für die Auswahl im Profil und in der

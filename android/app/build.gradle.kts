@@ -76,6 +76,15 @@ android {
 
     buildTypes {
         release {
+            // R8-Verkleinerung + Obfuskierung (explizit, war bisher schon
+            // implizit aktiv - siehe mapping/ nach Release-Builds).
+            // Eigene Keep-Regeln in proguard-rules.pro (v0.9.0: hält die
+            // per Reflection geladene PlayIntegrityHelper-Klasse).
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
             // Release mit dem echten Keystore signieren. Ohne key.properties:
             //  - Ein echter Release-Build bricht hart FEHL (kein stiller
             //    Debug-Fallback - debug-signierte Releases waeren ein
@@ -119,6 +128,13 @@ kotlin {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    // Play Integrity NUR im Play-Flavor (v0.9.0, Manipulationsschutz):
+    // Proprietäre Google-Bibliothek - darf NICHT in F-Droid-APKs landen
+    // (F-Droid-Konformität). add() mit String statt playImplementation-
+    // Accessor (Kotlin-DSL erzeugt ihn unter AGP 9 nicht). Der
+    // Kotlin-Helfer liegt im Play-Source-Set (src/play), MainActivity
+    // ruft ihn per Reflection (fdroid-sicher).
+    add("playImplementation", "com.google.android.play:integrity:1.4.0")
 }
 
 // Konfliktlösung: androidx.credentials zieht JVM-tink, unifiedpush_android

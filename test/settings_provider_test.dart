@@ -27,6 +27,15 @@ class _FakeStorage implements LocalStorage {
 
   @override
   Future<void> remove(String key) async => _data.remove(key);
+
+  @override
+  Future<void> saveInt(String key, int value) async => _data[key] = value.toString();
+
+  @override
+  Future<int?> getInt(String key) async =>
+      _data[key] == null ? null : int.tryParse(_data[key]!);
+
+
 }
 
 ProviderContainer _createContainer() {

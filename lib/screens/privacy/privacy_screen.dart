@@ -260,17 +260,21 @@ class PrivacyScreen extends ConsumerWidget {
                   hintText: currentEmail,
                 ),
                 validator: (v) =>
-                    v != null && v.contains('@') ? null : 'Ungültig',
+                    v != null && v.contains('@')
+                        ? null
+                        : L10n.t(ctx, 'privacy.validator.invalidEmail'),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: passwordCtrl,
                 obscureText: true,
                 decoration: InputDecoration(
-                  labelText: L10n.t(context, 'auth.password'),
+                  labelText: L10n.t(ctx, 'auth.password'),
                 ),
                 validator: (v) =>
-                    v != null && v.length >= 8 ? null : 'Zu kurz',
+                    v != null && v.length >= 8
+                        ? null
+                        : L10n.t(ctx, 'privacy.validator.tooShort'),
               ),
             ],
           ),
@@ -340,30 +344,36 @@ class PrivacyScreen extends ConsumerWidget {
                 controller: currentCtrl,
                 obscureText: true,
                 decoration: InputDecoration(
-                  labelText: L10n.t(context, 'auth.passwordCurrent'),
+                  labelText: L10n.t(ctx, 'auth.passwordCurrent'),
                 ),
                 validator: (v) =>
-                    v != null && v.length >= 8 ? null : 'Zu kurz',
+                    v != null && v.length >= 8
+                        ? null
+                        : L10n.t(ctx, 'privacy.validator.tooShort'),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: newCtrl,
                 obscureText: true,
                 decoration: InputDecoration(
-                  labelText: L10n.t(context, 'auth.passwordNew'),
+                  labelText: L10n.t(ctx, 'auth.passwordNew'),
                 ),
                 validator: (v) =>
-                    v != null && v.length >= 8 ? null : 'Zu kurz',
+                    v != null && v.length >= 8
+                        ? null
+                        : L10n.t(ctx, 'privacy.validator.tooShort'),
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: confirmCtrl,
                 obscureText: true,
                 decoration: InputDecoration(
-                  labelText: L10n.t(context, 'auth.passwordConfirm'),
+                  labelText: L10n.t(ctx, 'auth.passwordConfirm'),
                 ),
                 validator: (v) =>
-                    v == newCtrl.text ? null : 'Nicht identisch',
+                    v == newCtrl.text
+                        ? null
+                        : L10n.t(ctx, 'privacy.validator.mismatch'),
               ),
             ],
           ),
@@ -630,25 +640,25 @@ Future<String?> promptTotpCode(BuildContext context) {
   return showDialog<String>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Konto bestÃ¤tigen'),
+      title: Text(L10n.t(ctx, 'privacy.totpTitle')),
       content: TextField(
         controller: controller,
         autofocus: true,
         keyboardType: TextInputType.number,
         maxLength: 6,
-        decoration: const InputDecoration(
-          labelText: 'TOTP-Code (Authenticator-App)',
+        decoration: InputDecoration(
+          labelText: L10n.t(ctx, 'privacy.totpLabel'),
           counterText: '',
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(),
-          child: const Text('Abbrechen'),
+          child: Text(L10n.t(ctx, 'common.cancel')),
         ),
         FilledButton(
           onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
-          child: const Text('BestÃ¤tigen'),
+          child: Text(L10n.t(ctx, 'privacy.totpConfirm')),
         ),
       ],
     ),

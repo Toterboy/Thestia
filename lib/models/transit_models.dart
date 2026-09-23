@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Ergebnis des Signal-Versands ("Blicke getauscht").
 class TransitSparkResult {
-  const TransitSparkResult({required this.matched, this.partnerId});
+  const TransitSparkResult({required this.matched, this.partnerId, this.partnerNote});
 
   /// true = die andere Person hatte ebenfalls signalisiert - der Funke
   /// wurde erzeugt (Match-Übernahme läuft über die Bestandspipeline).
@@ -11,10 +11,15 @@ class TransitSparkResult {
   /// Partner-User-ID bei Match (sonst null).
   final String? partnerId;
 
+  /// Freie Ergänzung der Gegenseite bei Match (sonst null, v0.9.1).
+  final String? partnerNote;
+
   factory TransitSparkResult.fromJson(Map<String, dynamic> json) {
+    final note = json['partnerNote'] as String?;
     return TransitSparkResult(
       matched: json['matched'] == true,
       partnerId: json['partner'] as String?,
+      partnerNote: (note == null || note.trim().isEmpty) ? null : note,
     );
   }
 }
@@ -68,11 +73,33 @@ class TransitTag {
   /// L10n-Schlüssel des Labels.
   String get labelKey => 'transit.tag.$slug';
 
-  /// Farbangaben (serverseitig whitelisted, Migration 084).
+  /// Farbangaben (serverseitig whitelisted, Migration 084/110).
   static const List<String> colors = [
     'black', 'white', 'grey', 'blue', 'green',
     'red', 'yellow', 'orange', 'pink', 'brown',
+    'purple', 'teal',
   ];
+
+  /// Material-Farbe je Farbslug für die Farbklecks-Auswahl (Nutzerwunsch:
+  /// Kleckse statt Textchips - die passende Farbe schneller finden).
+  static const Map<String, Color> colorSwatch = {
+    'black': Colors.black,
+    'white': Colors.white,
+    'grey': Color(0xFF9E9E9E),
+    'blue': Color(0xFF2196F3),
+    'green': Color(0xFF4CAF50),
+    'red': Color(0xFFF44336),
+    'yellow': Color(0xFFFFEB3B),
+    'orange': Color(0xFFFF9800),
+    'pink': Color(0xFFE91E63),
+    'brown': Color(0xFF795548),
+    'purple': Color(0xFF9C27B0),
+    'teal': Color(0xFF009688),
+  };
+
+  /// Hauptfarbe eines Kleckses (Fallback grau bei unbekanntem Slug).
+  static Color swatchOf(String color) =>
+      colorSwatch[color] ?? Colors.grey;
 
   static String colorLabelKey(String color) => 'transit.color.$color';
 

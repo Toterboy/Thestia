@@ -1,7 +1,7 @@
 ﻿name: wisp
 description: Eine moderne, datenschutzfreundliche Dating-App mit Blind Mode (PersÃ¶nlichkeit zuerst).
 publish_to: 'none'
-version: 0.9.0+14
+version: 0.9.0+28
 
 environment:
   sdk: ^3.10.0
@@ -83,6 +83,10 @@ dependencies:
   # Kamera & Video fÃ¼r Verifizierung
   camera: ^0.12.0
   video_player: ^2.9.1
+  # Frame-Entnahme aus dem Verifizierungsvideo (Mehrframe-Median der
+  # AltersschÃ¤tzung, MIT): Thumbnails direkt aus der MP4-Datei, kein
+  # zusÃ¤tzliches KI-Modell nÃ¶tig.
+  video_thumbnail: ^0.5.6
 
   # Berechtigungen
   permission_handler: ^13.0.1
@@ -186,6 +190,11 @@ dependency_overrides:
   # Siehe third_party/unifiedpush_android.
   unifiedpush_android:
     path: third_party/unifiedpush_android
+  # AGP-9-Fork: video_thumbnail zieht upstream jcenter() + AGP-4.1.0-
+  # Klasspath (Build-Fehler unter AGP 9/neuem DSL) und hat ein
+  # Dart-2-SDK-Constraint. Siehe third_party/video_thumbnail.
+  video_thumbnail:
+    path: third_party/video_thumbnail
 
 flutter_launcher_icons:
   # Legacy-Android-Icon (mipmap-*): volles Basis-PNG (weisser Hintergrund +

@@ -589,19 +589,22 @@ Future<void> _createIdentityBackup(
               controller: pwCtrl,
               obscureText: true,
               autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'Passwort (min. 8 Zeichen)',
+              decoration: InputDecoration(
+                labelText: L10n.t(ctx, 'settings.backupPw'),
               ),
-              validator: (v) =>
-                  v != null && v.length >= 8 ? null : 'Zu kurz (min. 8)',
+              validator: (v) => v != null && v.length >= 8
+                  ? null
+                  : L10n.t(ctx, 'settings.backupPwShort'),
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: pw2Ctrl,
               obscureText: true,
-              decoration:
-                  const InputDecoration(labelText: 'Passwort wiederholen'),
-              validator: (v) => v == pwCtrl.text ? null : 'Passwörter stimmen nicht überein',
+              decoration: InputDecoration(
+                  labelText: L10n.t(ctx, 'settings.backupPwRepeat')),
+              validator: (v) => v == pwCtrl.text
+                  ? null
+                  : L10n.t(ctx, 'settings.backupPwMismatch'),
             ),
           ],
         ),
@@ -609,12 +612,12 @@ Future<void> _createIdentityBackup(
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),
-          child: const Text('Abbrechen'),
+          child: Text(L10n.t(ctx, 'common.cancel')),
         ),
         FilledButton(
           onPressed: () =>
               Navigator.of(ctx).pop(formKey.currentState!.validate()),
-          child: const Text('Backup erstellen'),
+          child: Text(L10n.t(ctx, 'settings.backupCreateBtn')),
         ),
       ],
     ),
@@ -627,7 +630,8 @@ Future<void> _createIdentityBackup(
   if (!context.mounted) return;
   if (blob == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Backup konnte nicht erstellt werden.')),
+      SnackBar(
+          content: Text(L10n.t(context, 'settings.backupCreateFailed'))),
     );
     return;
   }
@@ -635,7 +639,7 @@ Future<void> _createIdentityBackup(
   await showDialog<void>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Dein Backup-Code'),
+      title: Text(L10n.t(ctx, 'settings.backupCodeTitle')),
       content: SizedBox(
         width: double.maxFinite,
         child: SingleChildScrollView(
@@ -646,8 +650,7 @@ Future<void> _createIdentityBackup(
                   style: const TextStyle(fontSize: 11, fontFamily: 'monospace')),
               const SizedBox(height: 12),
               Text(
-                'Bewahre Code UND Passwort sicher auf (z. B. Passwort-'
-                'Manager). Ohne beides ist eine Wiederherstellung unmöglich.',
+                L10n.t(context, 'settings.backupKeepSafe'),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],
@@ -659,15 +662,16 @@ Future<void> _createIdentityBackup(
           onPressed: () {
             Clipboard.setData(ClipboardData(text: blob));
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Backup-Code kopiert.')),
+              SnackBar(
+                  content: Text(L10n.t(context, 'settings.backupCopied'))),
             );
           },
           icon: const Icon(Icons.copy),
-          label: const Text('Kopieren'),
+          label: Text(L10n.t(ctx, 'common.copy')),
         ),
         FilledButton(
           onPressed: () => Navigator.of(ctx).pop(),
-          child: const Text('Fertig'),
+          child: Text(L10n.t(ctx, 'common.done')),
         ),
       ],
     ),
@@ -685,19 +689,17 @@ Future<void> _restoreIdentityBackup(
     context: context,
     builder: (ctx) => AlertDialog(
       title: Text(L10n.t(context, 'settings.restoreConfirmTitle')),
-      content: const Text(
-        'Die aktuelle E2E-Identität auf diesem Gerät wird ÜBERSCHRIEBEN '
-        '(bestehende verschlüsselte Sitzungen gehen verloren). Verwende nur '
-        'ein Backup deines eigenen Kontos.',
+      content: Text(
+        L10n.t(context, 'settings.restoreOverwrite'),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),
-          child: const Text('Abbrechen'),
+          child: Text(L10n.t(ctx, 'common.cancel')),
         ),
         FilledButton(
           onPressed: () => Navigator.of(ctx).pop(true),
-          child: const Text('Weiter'),
+          child: Text(L10n.t(ctx, 'common.continue')),
         ),
       ],
     ),
@@ -709,7 +711,7 @@ Future<void> _restoreIdentityBackup(
   final restored = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
-      title: const Text('Backup eingeben'),
+      title: Text(L10n.t(ctx, 'settings.restoreEnterTitle')),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -724,18 +726,19 @@ Future<void> _restoreIdentityBackup(
           TextField(
             controller: pwCtrl,
             obscureText: true,
-            decoration: const InputDecoration(labelText: 'Backup-Passwort'),
+            decoration:
+                InputDecoration(labelText: L10n.t(ctx, 'settings.restorePw')),
           ),
         ],
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),
-          child: const Text('Abbrechen'),
+          child: Text(L10n.t(ctx, 'common.cancel')),
         ),
         FilledButton(
           onPressed: () => Navigator.of(ctx).pop(true),
-          child: const Text('Wiederherstellen'),
+          child: Text(L10n.t(ctx, 'settings.restoreBtn')),
         ),
       ],
     ),
@@ -757,9 +760,8 @@ Future<void> _restoreIdentityBackup(
   } catch (_) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-            'Wiederherstellung fehlgeschlagen. Prüfe Code und Passwort.'),
+      SnackBar(
+        content: Text(L10n.t(context, 'settings.restoreFailed')),
       ),
     );
   }
@@ -1065,7 +1067,7 @@ class _PasskeyManagerCardState extends ConsumerState<_PasskeyManagerCard> {
       children: [
         ListTile(
           leading: const Icon(Icons.manage_accounts_outlined),
-          title: const Text('Passkeys verwalten'),
+          title: Text(L10n.t(context, 'settings.passkeysManage')),
           subtitle: Text(subtitle),
           trailing: IconButton(
             tooltip: L10n.t(context, 'common.refresh'),
@@ -1079,12 +1081,15 @@ class _PasskeyManagerCardState extends ConsumerState<_PasskeyManagerCard> {
         for (final passkey in _passkeys ?? const <Passkey>[])
           ListTile(
             leading: const Icon(Icons.fingerprint, size: 20),
-            title: Text(passkey.friendlyName ?? 'Passkey'),
+                    title: Text(passkey.friendlyName ??
+                        L10n.t(context, 'passkey.name')),
             subtitle: Text(
               [
-                'Erstellt ${_formatDate(passkey.createdAt)}',
+                L10n.tf(context, 'settings.passkeyCreatedAt',
+                    {'date': _formatDate(passkey.createdAt)}),
                 if (passkey.lastUsedAt != null)
-                  'Zuletzt genutzt ${_formatDate(passkey.lastUsedAt)}',
+                  L10n.tf(context, 'settings.passkeyLastUsed',
+                      {'date': _formatDate(passkey.lastUsedAt)}),
               ].join(' · '),
             ),
             dense: true,
@@ -1093,7 +1098,7 @@ class _PasskeyManagerCardState extends ConsumerState<_PasskeyManagerCard> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  tooltip: 'Umbenennen',
+                  tooltip: L10n.t(context, 'settings.passkeyRename'),
                   icon: const Icon(Icons.edit_outlined, size: 20),
                   onPressed: () => _rename(passkey),
                 ),
@@ -1148,7 +1153,9 @@ class _UnifiedPushTileState extends ConsumerState<_UnifiedPushTile> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
+          SnackBar(
+              content: Text(L10n.tf(
+                  context, 'common.errorWith', {'error': '$e'}))),
         );
       }
     } finally {

@@ -7,21 +7,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:wisp/providers/profile_provider.dart';
+import 'package:wisp/providers/chat_provider.dart';
+import 'package:wisp/routing/route_restore.dart';
 import 'package:wisp/providers/settings_provider.dart';
 import 'package:wisp/providers/user_preferences_provider.dart';
 import 'package:wisp/services/app_auth_service.dart';
 import 'package:wisp/services/auth_service.dart';
+import 'package:wisp/services/crash_journal.dart';
 import 'package:wisp/services/device_session_service.dart';
 import 'package:wisp/services/encryption_service.dart';
 import 'package:wisp/services/local_storage.dart';
 import 'package:wisp/services/mfa_service.dart';
 import 'package:wisp/services/prekey_service.dart';
+import 'package:wisp/services/p2p_chat_service.dart';
+import 'package:wisp/services/report_service.dart';
 import 'package:wisp/services/secure_location_storage.dart';
 import 'package:wisp/services/secure_storage.dart';
 import 'package:wisp/services/supabase_auth_service.dart';
 import 'package:wisp/services/supabase_database_service.dart';
 import 'package:wisp/services/supabase_service.dart';
 import 'package:wisp/services/verification_service.dart';
+import 'package:wisp/services/webrtc_service.dart';
 import 'package:wisp/utils/constants.dart';
 import 'package:wisp/utils/demo_mode.dart';
 import 'package:wisp/utils/temp_cleanup.dart';
@@ -140,6 +146,14 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
       // Ohne Session (z. B. direkt nach der Registrierung, bevor die
       // E-Mail bestätigt ist) gibt es nichts zu prüfen.
       if (SupabaseService.currentUser == null) return;
+      // Chat-Besitzer setzen (Audit Kontowechsel): Trennt Verlauf,
+      // Kontakte und State pro Konto, BEVOR irgendetwas nachlädt.
+      // Gleicher Besitzer = No-op (kein Flackern bei Folge-Syncs).
+      try {
+        await _ref
+            .read(chatProvider.notifier)
+            .setOwner(SupabaseService.currentUser?.id);
+      } catch (_) {}
       final database = SupabaseDatabaseService(SupabaseService.client);
 
       // FCM-Token-Registrierung NIE den kritischen Sync-Pfad blockieren
@@ -469,6 +483,16 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
   }
 
   Future<void> logout() async {
+    // Server-Reste VOR dem Abmelden räumen (braucht die Session):
+    // FCM-Token abmelden, damit Pushes des alten Kontos nicht auf
+    // diesem Gerät landen, wenn sich danach ein anderes anmeldet.
+    try {
+      if (SupabaseService.isInitialized &&
+          SupabaseService.client.auth.currentUser != null) {
+        await SupabaseDatabaseService(SupabaseService.client)
+            .updateOwnProfile({'fcm_token': null});
+      }
+    } catch (_) {}
     // Eigenen Geräte-Eintrag entfernen (Best effort, VOR dem Abmelden -
     // danach gibt es keine gültige Session mehr für den Aufruf).
     await _ref.read(deviceSessionServiceProvider).deregisterCurrentDevice();
@@ -480,6 +504,60 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
     _ref.read(setupFlagsKnownProvider.notifier).state = false;
     // MFA-Status zurücksetzen (keine Session -> keine Challenge/Setup).
     _ref.read(mfaStatusProvider.notifier).state = const MfaStatus.initial();
+    // Lokale Nutzerdaten zurücksetzen (Audit: Kontowechsel auf demselben
+    // Gerät). Ohne Reset sieht ein neu registrierter Account Badge und
+    // Setup-Stand des Vorgängers ("verifiziert ohne Verifizierung",
+    // keine Einrichtung). Der nächste Login lädt alles serverseitig
+    // neu - lokale Reste sind danach überflüssig.
+    await _ref.read(settingsProvider.notifier).resetToDefaults();
+    await _ref.read(userPreferencesProvider.notifier).resetToDefaults();
+    await _ref.read(profileProvider.notifier).resetToDefaults();
+    try {
+      await _ref
+          .read(localStorageProvider)
+          .remove(verificationSubmittedKey);
+    } catch (_) {}
+    // Gleiches Geräte-Cleanup wie bei Löschung (keine fremden Reste für
+    // den nächsten Account): Verlauf, Entwürfe, Crash-Journal,
+    // Verifikations-Videos/Dateien, Temp-Dateien, Signal-Identität und
+    // PreKey-Sessions (sonst würde der neue Account mit der Identität
+    // des Vorgängers senden).
+    try {
+      await _ref.read(chatServiceProvider).clearLocalHistory();
+    } catch (_) {}
+    try {
+      await _ref.read(reportServiceProvider).clearDrafts();
+    } catch (_) {}
+    try {
+      await CrashJournal.clear();
+    } catch (_) {}
+    try {
+      await _ref.read(verificationServiceProvider).deleteAllLocalData();
+    } catch (_) {}
+    unawaited(cleanupDecryptedTempFiles());
+    try {
+      await _ref.read(encryptionServiceProvider).clearAllData();
+    } catch (_) {}
+    try {
+      _ref.read(preKeyServiceProvider).reset();
+    } catch (_) {}
+    // P2P-Outbox verwerfen + WebRTC-Verbindung schließen (keine
+    // Vorgänger-Chiffre unter neuem Konto, kein offener Kanal).
+    try {
+      _ref.read(p2pChatServiceProvider).clearOutbox();
+    } catch (_) {}
+    try {
+      await _ref.read(webRTCServiceProvider).close();
+    } catch (_) {}
+    try {
+      await _ref.read(chatProvider.notifier).setOwner(null);
+    } catch (_) {}
+    // Gesicherte Route verwerfen (v0.9.1): Nach Logout kein Restore in
+    // fremde/nicht mehr gültige Screens.
+    try {
+      await _ref.read(localStorageProvider).remove(lastRoutePrefsKey);
+    } catch (_) {}
+    setPendingRouteRestore(null);
     state = const AsyncValue.data(false);
   }
 
@@ -504,6 +582,12 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
     _ref.read(pendingVerificationEmailProvider.notifier).state = null;
     _ref.read(pendingVerificationCredentialsProvider.notifier).state = null;
     state = const AsyncValue.data(true);
+    // KRITISCH (Setup fehlte nach Bestätigung): Wie login()/register()
+    // muss auch hier der Server-Sync laufen - sonst bleiben Profil,
+    // Setup-Flags und FCM-Token leer, der Router kennt den Stand nicht
+    // (flagsKnown false + keine Pending-Creds mehr = keine Einrichtung)
+    // und die App hängt auf dem Lade-Screen bzw. landet auf Home.
+    unawaited(_syncFromServer());
   }
 
   /// Löscht den Account serverseitig UND lokal vollständig.
@@ -515,11 +599,19 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
   ///
   /// Audit H-8: Nach erfolgreicher Löschung werden zusätzlich ALLE lokalen
   /// Reste entfernt: Signal-Keys/Sessions/Peer-Trust ([EncryptionService.
-  /// clearAllData]), GPS-Verifizierungsstandort ([SecureLocationStorage]),
+  /// clearAllData]) + PreKey-Session-Cache ([PreKeyService.reset]),
+  /// GPS-Verifizierungsstandort ([SecureLocationStorage]),
   /// Verifikations-Videos + Dateien ([VerificationService]),
+  /// Chat-Verlauf ([ChatService.clearLocalHistory]) + konto-namespaced
+  /// Chat-Boxen ([ChatService.deleteOwnedData]), Melde-Entwürfe
+  /// ([ReportService.clearDrafts]), Crash-Journal ([CrashJournal.clear]),
   /// entschlüsselte Voice-Note-Temp-Dateien und das FCM-Geräte-Token
   /// (Audit N-20).
   Future<void> deleteAccount() async {
+    // User-ID VOR der Löschung sichern (danach keine Session mehr).
+    final doomedId = SupabaseService.isInitialized
+        ? SupabaseService.client.auth.currentUser?.id
+        : null;
     // 1) Serverseitige Löschung FIRST - schlägt sie fehl, bleibt alles
     //    wie es ist und der Nutzer sieht den Fehler.
     await _auth.deleteAccount();
@@ -538,6 +630,23 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
       debugPrint('[AuthNotifier] Encryption-Cleanup fehlgeschlagen: $e');
     }
     try {
+      _ref.read(preKeyServiceProvider).reset();
+    } catch (e) {
+      debugPrint('[AuthNotifier] PreKey-Cleanup fehlgeschlagen: $e');
+    }
+    // P2P-Outbox + WebRTC wie beim Logout (Re-Registrierung im selben
+    // Prozess darf keine Vorgänger-Chiffre/Kanäle erben).
+    try {
+      _ref.read(p2pChatServiceProvider).clearOutbox();
+    } catch (e) {
+      debugPrint('[AuthNotifier] P2P-Cleanup fehlgeschlagen: $e');
+    }
+    try {
+      await _ref.read(webRTCServiceProvider).close();
+    } catch (e) {
+      debugPrint('[AuthNotifier] WebRTC-Cleanup fehlgeschlagen: $e');
+    }
+    try {
       await SecureLocationStorage.instance.clear();
     } catch (e) {
       debugPrint('[AuthNotifier] Standort-Cleanup fehlgeschlagen: $e');
@@ -546,6 +655,32 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
       await _ref.read(verificationServiceProvider).deleteAllLocalData();
     } catch (e) {
       debugPrint('[AuthNotifier] Video-Cleanup fehlgeschlagen: $e');
+    }
+    // DSGVO-Vollständigkeit: lokaler Chat-Verlauf (Opt-in-Box),
+    // Melde-Entwürfe und Crash-Journal enthalten Nutzerdaten und
+    // werden mitgelöscht (best-effort, blockiert nie). Zusätzlich die
+    // konto-namespaced Chat-Boxen vom Gerät entfernen.
+    try {
+      await _ref.read(chatServiceProvider).clearLocalHistory();
+    } catch (e) {
+      debugPrint('[AuthNotifier] Verlauf-Cleanup fehlgeschlagen: $e');
+    }
+    if (doomedId != null) {
+      try {
+        await _ref.read(chatProvider.notifier).deleteOwnedData(doomedId);
+      } catch (e) {
+        debugPrint('[AuthNotifier] ChatBox-Cleanup fehlgeschlagen: $e');
+      }
+    }
+    try {
+      await _ref.read(reportServiceProvider).clearDrafts();
+    } catch (e) {
+      debugPrint('[AuthNotifier] Draft-Cleanup fehlgeschlagen: $e');
+    }
+    try {
+      await CrashJournal.clear();
+    } catch (e) {
+      debugPrint('[AuthNotifier] Journal-Cleanup fehlgeschlagen: $e');
     }
     unawaited(cleanupDecryptedTempFiles());
 

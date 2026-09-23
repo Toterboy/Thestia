@@ -91,11 +91,13 @@ class SupabaseDatabaseService {
           // REST-Antwort (snake_case) in das lokale JSON-Format (camelCase)
           // mappen – UserProfile.fromJson erwartet das lokale Format und
           // würde sonst (z. B. fehlendes "id") eine Exception werfen.
-          final prefs = (response['gender_preferences'] as List?)
+          final prefs =
+              (response['gender_preferences'] as List?)
                   ?.whereType<String>()
                   .toList() ??
               [];
-          final allSelected = prefs.length >= kAllGenderValues.length &&
+          final allSelected =
+              prefs.length >= kAllGenderValues.length &&
               kAllGenderValues.every(prefs.contains);
           final mapped = <String, dynamic>{
             'id': response['user_id'],
@@ -104,8 +106,9 @@ class SupabaseDatabaseService {
             'interests': response['interests'],
             'photos': response['photos'],
             'gender': response['gender'],
-            'genderPreference':
-                allSelected || prefs.isEmpty ? 'all' : prefs.first,
+            'genderPreference': allSelected || prefs.isEmpty
+                ? 'all'
+                : prefs.first,
             // PostgREST liefert DATE als "YYYY-MM-DD"-String –
             // DateTime.tryParse versteht das Format.
             'birthDate': response['birth_date'] == null
@@ -129,7 +132,9 @@ class SupabaseDatabaseService {
           };
           return UserProfile.fromJson(mapped);
         } catch (e) {
-          debugPrint('[DB] Profil-Fetch (Spaltensatz mit photos=${columns == columnsWithPhotos}) fehlgeschlagen: $e');
+          debugPrint(
+            '[DB] Profil-Fetch (Spaltensatz mit photos=${columns == columnsWithPhotos}) fehlgeschlagen: $e',
+          );
           lastError = e;
         }
       }
@@ -150,28 +155,38 @@ class SupabaseDatabaseService {
     final userId = _currentUser?.id;
     if (userId == null) return null;
 
-    // Dreistufig (v0.8.1): Der ausgewachsenste Spaltensatz zuerst, bei
-    // Fehler jeweils WITHOUT die neuesten Spalten weiterprobieren. Eine
+    // Vierstufig (v0.8.1/v0.9.1): Der ausgewachsenste Spaltensatz zuerst,
+    // bei Fehler jeweils WITHOUT die neuesten Spalten weiterprobieren. Eine
     // fehlende Migration darf nie die GESAMTE Präferenz-Wiederherstellung
-    // (inkl. Theme) auslöschen.
+    // (inkl. Theme) auslöschen. WICHTIG: Die erste Stufe muss ALLE
+    // Radius-Felder enthalten (max_distance_km + distance_filter_mode +
+    // preferred_state) - sonst bleibt der Modus (Km/Bundesland/Land) beim
+    // Restore still auf dem Default (v0.9.1-Fix).
     for (final columns in const [
+      'max_distance_km, age_range_min, age_range_max, '
+          'gender_preferences, relationship_type, preferred_state, city, '
+          'distance_filter_mode, theme_name',
       'max_distance_km, age_range_min, age_range_max, '
           'gender_preferences, relationship_type, preferred_state, city, '
           'theme_name',
       'max_distance_km, age_range_min, age_range_max, '
-          'gender_preferences, city, distance_filter_mode, theme_name, distance_filter_mode',
-      'max_distance_km, age_range_min, age_range_max, '
           'gender_preferences, city, distance_filter_mode',
+      'max_distance_km, age_range_min, age_range_max, '
+          'gender_preferences, city',
     ]) {
       try {
         return await _fetchOwnPreferencesRaw(columns);
       } catch (e) {
-        debugPrint('[DB] Präferenz-Fetch (Spaltensatz) fehlgeschlagen, '
-            'Fallback-Stufe: $e');
+        debugPrint(
+          '[DB] Präferenz-Fetch (Spaltensatz) fehlgeschlagen, '
+          'Fallback-Stufe: $e',
+        );
       }
     }
     // Letzte Stufe ist bereits probiert - fehlgeschlagen (Rechte/Netz).
-    throw StateError('fetchOwnPreferences: alle Fallback-Stufen fehlgeschlagen');
+    throw StateError(
+      'fetchOwnPreferences: alle Fallback-Stufen fehlgeschlagen',
+    );
   }
 
   Future<Map<String, dynamic>?> _fetchOwnPreferencesRaw(String columns) async {
@@ -199,8 +214,9 @@ class SupabaseDatabaseService {
         await Future<void>.delayed(const Duration(seconds: 1));
       }
       try {
-        final prefs = await fetchOwnPreferences()
-            .timeout(const Duration(seconds: 8));
+        final prefs = await fetchOwnPreferences().timeout(
+          const Duration(seconds: 8),
+        );
         return prefs;
       } catch (e) {
         lastError = e;
@@ -220,11 +236,10 @@ class SupabaseDatabaseService {
     required String label,
     required double score,
   }) async {
-    await _client.rpc('submit_photo_appeal', params: {
-      'p_path': path,
-      'p_label': label,
-      'p_score': score,
-    });
+    await _client.rpc(
+      'submit_photo_appeal',
+      params: {'p_path': path, 'p_label': label, 'p_score': score},
+    );
   }
 
   /// Eigener Einspruchs-Status (pending/approved/rejected) oder null.
@@ -259,10 +274,10 @@ class SupabaseDatabaseService {
     required String id,
     required bool approve,
   }) async {
-    await _client.rpc('admin_decide_photo_appeal', params: {
-      'p_id': id,
-      'p_approve': approve,
-    });
+    await _client.rpc(
+      'admin_decide_photo_appeal',
+      params: {'p_id': id, 'p_approve': approve},
+    );
   }
 
   // =========================================================================
@@ -277,28 +292,37 @@ class SupabaseDatabaseService {
     required List<String> tags,
     required String mode,
     List<String> selfTags = const [],
+    String? selfNote,
   }) async {
-    // Fallback-Kette (v0.9.0): Der Server kann je nach Migrationsstand
-    // die 4-Parameter- (084), 3-Parameter- (082) oder 1-Parameter- (081)
-    // Signatur haben. PostgREST matcht nach benannten Argumenten - ein
-    // Aufruf mit zu vielen Parametern scheitert mit PGRST202. Deshalb:
-    // volle Signatur versuchen, bei Nichtfinden absteigen. Die Flags
-    // (Tags/Selbst-Modus) wirken dann erst nach dem jeweiligen Update.
+    // Fallback-Kette (v0.9.0/091/097): Der Server kann je nach
+    // Migrationsstand die 5-Parameter- (091, +self_note), 4-Parameter-
+    // (084), 3-Parameter- (082) oder 1-Parameter- (081) Signatur haben.
+    // PostgREST matcht nach benannten Argumenten - ein Aufruf mit zu
+    // vielen Parametern scheitert mit PGRST202. Zusaetzlich existierten
+    // zeitweise MEHRERE Überladungen gleichzeitig (alte Signaturen wurden
+    // nie gedroppt, erst 097) - dann antwortet PostgREST mit PGRST203
+    // ("could not choose the best candidate"). Beides bedeutet: eine
+    // Stufe absteigen.
+    // p_self_note wird IMMER mitgeschickt (ggf. leer - serverseitig
+    // nullif), damit der 5-Parameter-Aufruf auf 091er-Servern eindeutig
+    // genau eine Überladung trifft.
+    final note = selfNote?.trim() ?? '';
     final attempts = <Map<String, dynamic>>[
       {
         'p_tokens': tokens,
         'p_tags': tags,
         'p_mode': mode,
         'p_self_tags': selfTags,
+        'p_self_note': note,
       },
       {
         'p_tokens': tokens,
         'p_tags': tags,
         'p_mode': mode,
+        'p_self_tags': selfTags,
       },
-      {
-        'p_tokens': tokens,
-      },
+      {'p_tokens': tokens, 'p_tags': tags, 'p_mode': mode},
+      {'p_tokens': tokens},
     ];
     Object? lastError;
     for (final params in attempts) {
@@ -308,17 +332,28 @@ class SupabaseDatabaseService {
       } catch (e) {
         lastError = e;
         // Echte Fachfehler (Rate-Limit, Jugendschutz etc.) nicht
-        // verschlucken: PGRST202 = Funktion nicht gefunden -> naechste
-        // Signatur probieren. Alles andere sofort weiterwerfen.
-        final text = e.toString().toLowerCase();
-        if (!(text.contains('pgrst202') ||
-            text.contains('could not find the function') ||
-            text.contains('function public.match_proximity_spark'))) {
-          rethrow;
-        }
+        // verschlucken: Nur bei Signatur-Fehlmatch eine Stufe absteigen.
+        if (!isRpcSignatureMismatch(e)) rethrow;
       }
     }
     throw lastError ?? StateError('match_proximity_spark fehlgeschlagen');
+  }
+
+  /// True, wenn ein RPC-Fehler ein Signatur-Fehlmatch ist (eine Stufe
+  /// absteigen), statt eines echten Fachfehlers (sofort weiterwerfen):
+  /// - PGRST202 / "could not find the function" = Signatur fehlt
+  ///   (Server älter als der Client).
+  /// - PGRST203 / "could not choose the best candidate" = MEHRERE
+  ///   Überladungen matchen (alte Signaturen wurden nie gedroppt,
+  ///   erst Migration 097) - ebenfalls absteigen statt aufgeben.
+  /// Reine Funktion (testbar).
+  static bool isRpcSignatureMismatch(Object e) {
+    final text = e.toString().toLowerCase();
+    return text.contains('pgrst202') ||
+        text.contains('pgrst203') ||
+        text.contains('could not find the function') ||
+        text.contains('could not choose the best candidate') ||
+        text.contains('function public.match_proximity_spark');
   }
 
   // =========================================================================
@@ -341,11 +376,14 @@ class SupabaseDatabaseService {
     required String messageKey,
     String? customLine,
   }) async {
-    await _client.rpc('send_soft_ping', params: {
-      'p_token': token,
-      'p_message_key': messageKey,
-      'p_custom_line': customLine,
-    });
+    await _client.rpc(
+      'send_soft_ping',
+      params: {
+        'p_token': token,
+        'p_message_key': messageKey,
+        'p_custom_line': customLine,
+      },
+    );
   }
 
   /// Eigene offene Soft-Pings (Empfaenger-Sicht).
@@ -391,11 +429,12 @@ class SupabaseDatabaseService {
   ///  - "column profiles.photos does not exist" (Postgres 42703)
   static String? _missingColumnFromError(Object e) {
     final text = e.toString();
-    final m = RegExp(r"Could not find the '([A-Za-z0-9_]+)' column")
-        .firstMatch(text);
+    final m = RegExp(
+      r"Could not find the '([A-Za-z0-9_]+)' column",
+    ).firstMatch(text);
     if (m != null) return m.group(1);
     final m2 = RegExp(
-        r'column\s+([A-Za-z0-9_]+)\.([A-Za-z0-9_]+)\s+does not exist',
+      r'column\s+([A-Za-z0-9_]+)\.([A-Za-z0-9_]+)\s+does not exist',
     ).firstMatch(text);
     return m2?.group(2);
   }
@@ -423,8 +462,10 @@ class SupabaseDatabaseService {
         'paused, habits_dealbreaker',
       );
     } catch (e) {
-      debugPrint('[DB] Flags-Fetch (voll) fehlgeschlagen, Fallback auf '
-          'Kern-Flags: $e');
+      debugPrint(
+        '[DB] Flags-Fetch (voll) fehlgeschlagen, Fallback auf '
+        'Kern-Flags: $e',
+      );
     }
     return _fetchSetupFlagsRaw(
       'one_time_settings_completed, community_guidelines_accepted, '
@@ -461,8 +502,9 @@ class SupabaseDatabaseService {
         await Future<void>.delayed(Duration(seconds: 1 * i));
       }
       try {
-        final flags = await fetchSetupFlags()
-            .timeout(const Duration(seconds: 8));
+        final flags = await fetchSetupFlags().timeout(
+          const Duration(seconds: 8),
+        );
         if (flags != null) return flags;
         // Sauberes "keine Zeile" (Profil gelöscht): nicht retryen.
         return null;
@@ -525,8 +567,10 @@ class SupabaseDatabaseService {
         // Schreiben war erfolgreich; nur die Kontrolle ist nicht möglich
         // (fehlende Spalte bei unvollständiger Migration / Netz). Nicht
         // fälschlich als Schreibfehler melden.
-        debugPrint('[DB] Verify-Read nicht möglich (Schreiben galt als '
-            'erfolgreich): $e');
+        debugPrint(
+          '[DB] Verify-Read nicht möglich (Schreiben galt als '
+          'erfolgreich): $e',
+        );
         return true;
       }
 
@@ -597,18 +641,15 @@ class SupabaseDatabaseService {
     if (userId == null) throw AppException('Nicht eingeloggt');
 
     try {
-      await _client.from('auth_devices').upsert(
-            {
-              'user_id': userId,
-              'device_id': deviceId,
-              'device_name': deviceName,
-              'platform': platform,
-              'app_version': appVersion,
-              'device_model': deviceModel,
-              'last_seen_at': DateTime.now().toUtc().toIso8601String(),
-            },
-            onConflict: 'user_id,device_id',
-          );
+      await _client.from('auth_devices').upsert({
+        'user_id': userId,
+        'device_id': deviceId,
+        'device_name': deviceName,
+        'platform': platform,
+        'app_version': appVersion,
+        'device_model': deviceModel,
+        'last_seen_at': DateTime.now().toUtc().toIso8601String(),
+      }, onConflict: 'user_id,device_id');
     } catch (e) {
       throw AppException(_explainDeviceError(e));
     }
@@ -655,10 +696,7 @@ class SupabaseDatabaseService {
 
   /// Loescht ein einzelnes eigenes Geraet aus der Liste.
   Future<void> deleteOwnDevice(String deviceId) async {
-    await _client
-        .from('auth_devices')
-        .delete()
-        .eq('device_id', deviceId);
+    await _client.from('auth_devices').delete().eq('device_id', deviceId);
   }
 
   /// Loescht alle GERAETE-Zeilen des eigenen Kontos AUSSER [keepDeviceId].
@@ -746,6 +784,14 @@ class SupabaseDatabaseService {
   Future<List<Map<String, dynamic>>> fetchPendingVerifications() =>
       _adminList('admin_list_pending_verifications');
 
+  /// Auto-Freigaben zur nachträglichen Stichprobe (v0.9.0,
+  /// Manipulationsschutz): Wer das Badge per KI-Triage bekam, bleibt
+  /// mit Video in dieser Liste, bis der Support bestätigt/entzogen
+  /// hat. Fehlt die RPC (Migration 120 nicht deployed), wirft der
+  /// Aufruf - der Aufrufer fängt das ab (Fail-open der Stichprobe).
+  Future<List<Map<String, dynamic>>> fetchAutoVerifications() =>
+      _adminList('admin_list_auto_verifications');
+
   /// Gebannte Email-Adressen (Anzeige).
   Future<List<Map<String, dynamic>>> fetchBannedEmails() =>
       _adminList('admin_list_banned_emails');
@@ -784,47 +830,6 @@ class SupabaseDatabaseService {
       'user_one_id': userOneId,
       'user_two_id': userTwoId,
       'created_at': DateTime.now().toIso8601String(),
-    });
-  }
-
-  // =========================================================================
-  // Nachrichten (messages-Tabelle)
-  // =========================================================================
-
-  /// Holt Nachrichten zwischen dem eingeloggten Nutzer und einem Peer.
-  Future<List<Map<String, dynamic>>> fetchMessages(String peerId) async {
-    final userId = _currentUser?.id;
-    if (userId == null) return [];
-    // Filter-Injection verhindern: Peer-ID muss UUID sein (Audit M2).
-    if (!isValidPeerId(peerId)) return [];
-
-    final response = await _client
-        .from('messages')
-        .select()
-        .or('and(sender_id.eq.$userId,receiver_id.eq.$peerId),and(sender_id.eq.$peerId,receiver_id.eq.$userId)')
-        .order('created_at', ascending: true);
-
-    return List<Map<String, dynamic>>.from(response);
-  }
-
-  /// Speichert eine neue Nachricht.
-  Future<void> sendMessage({
-    required String receiverId,
-    required String content,
-    Map<String, dynamic>? metadata,
-  }) async {
-    final userId = _currentUser?.id;
-    if (userId == null) throw AppException('Nicht eingeloggt');
-    if (!isValidPeerId(receiverId)) {
-      throw AppException('Ungültiger Empfänger.');
-    }
-
-    await _client.from('messages').insert({
-      'sender_id': userId,
-      'receiver_id': receiverId,
-      'content': content,
-      'created_at': DateTime.now().toIso8601String(),
-      'metadata': ?metadata,
     });
   }
 
@@ -944,15 +949,14 @@ class SupabaseDatabaseService {
     final profiles = await _fetchPublicProfilesByIds(ids);
     final byId = {for (final p in profiles) p['user_id'] as String: p};
 
-    return likeRows
-        .where((r) => byId.containsKey(r['liked_user_id']))
-        .map((row) {
-          return {
-            ...byId[row['liked_user_id']] as Map<String, dynamic>,
-            'liked_at': row['created_at'],
-          };
-        })
-        .toList();
+    return likeRows.where((r) => byId.containsKey(r['liked_user_id'])).map((
+      row,
+    ) {
+      return {
+        ...byId[row['liked_user_id']] as Map<String, dynamic>,
+        'liked_at': row['created_at'],
+      };
+    }).toList();
   }
 
   /// "Likes für mich" — Profile, die mich geliked haben (v0.9.0: siehe
@@ -978,15 +982,12 @@ class SupabaseDatabaseService {
     final profiles = await _fetchPublicProfilesByIds(ids);
     final byId = {for (final p in profiles) p['user_id'] as String: p};
 
-    return likeRows
-        .where((r) => byId.containsKey(r['user_id']))
-        .map((row) {
-          return {
-            ...byId[row['user_id']] as Map<String, dynamic>,
-            'liked_at': row['created_at'],
-          };
-        })
-        .toList();
+    return likeRows.where((r) => byId.containsKey(r['user_id'])).map((row) {
+      return {
+        ...byId[row['user_id']] as Map<String, dynamic>,
+        'liked_at': row['created_at'],
+      };
+    }).toList();
   }
 
   /// Batch-Whitelist-Fetch über den 080er-RPC (max. 200 IDs pro Call,
@@ -1002,9 +1003,7 @@ class SupabaseDatabaseService {
         params: {'p_ids': chunk},
       );
       if (res is List) {
-        result.addAll(
-          res.map((e) => Map<String, dynamic>.from(e as Map)),
-        );
+        result.addAll(res.map((e) => Map<String, dynamic>.from(e as Map)));
       }
     }
     return result;
@@ -1020,9 +1019,9 @@ class SupabaseDatabaseService {
 }
 
 /// Provider für den [SupabaseDatabaseService].
-final supabaseDatabaseServiceProvider =
-    Provider<SupabaseDatabaseService>((ref) {
+final supabaseDatabaseServiceProvider = Provider<SupabaseDatabaseService>((
+  ref,
+) {
   final client = SupabaseService.client;
   return SupabaseDatabaseService(client);
 });
-

@@ -14,10 +14,15 @@ enum ReportType {
   @HiveField(3)
   fakeProfile('Fake Profil / Identitätsmissbrauch'),
   @HiveField(4)
-  other('Sonstiges');
+  other('Sonstiges'),
+  @HiveField(5)
+  wrongAge('Falsches Alter / Alter stimmt nicht');
 
   const ReportType(this.label);
   final String label;
+
+  /// L10n-Schlüssel für die Anzeige (Dialoge, Admin-Liste).
+  String get labelKey => 'report.type.$name';
 
   /// Technischer Schlüssel für die Serverseitige Ablage (submit_report-RPC).
   String get value => name;

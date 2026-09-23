@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wisp/models/spice_question.dart';
-import 'package:wisp/providers/spice_question_provider.dart';
-import 'package:wisp/services/spice_question_service.dart';
+import 'package:wisp/data/icebreaker_catalog.dart';
 import 'package:wisp/l10n/app_strings.dart';
+import 'package:wisp/routing/app_router.dart';
 
-/// "Spice Questions": Eisbrecher-Fragen für ein Match (Feature A).
+/// "Spice Questions": Eisbrecher-Fragen als reine Auswahl (v0.9.1).
 ///
-/// Beide Partner antworten unabhängig; erst wenn beide geantwortet haben,
-/// werden die Antworten aufgedeckt (serverseitig erzwungen).
+/// Kein Beantworten, kein Server: 10 Kategorien mit je 6 Fragen
+/// (DE + EN), durchsuchbar. Ein Tap kopiert die Frage in die
+/// Zwischenablage, damit sie im Chat eingefügt werden kann.
 class SpiceQuestionsScreen extends ConsumerStatefulWidget {
   const SpiceQuestionsScreen({required this.matchId, super.key});
 
@@ -22,270 +23,255 @@ class SpiceQuestionsScreen extends ConsumerStatefulWidget {
 }
 
 class _SpiceQuestionsScreenState extends ConsumerState<SpiceQuestionsScreen> {
-  Future<void> _openAnswerDialog(SpiceQuestion question) async {
-    final controller = TextEditingController(
-      text: question.myAnswer ?? '',
-    );
+  final _searchCtrl = TextEditingController();
+  String _query = '';
 
-    final answer = await showDialog<String>(
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _goBack() {
+    if (Navigator.of(context).canPop()) {
+      context.pop();
+    } else {
+      // Ohne Back-Stack (per go() geöffnet): zurück in den Chat.
+      context.go(AppRoutes.chatDetailPath(widget.matchId.toString()));
+    }
+  }
+
+  Future<void> _copyQuestion(IcebreakerQuestion question) async {
+    final lang = L10n.localeOf(context).languageCode;
+    final text = question.textFor(lang);
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(L10n.t(context, 'spice.copied')),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  /// Tap auf eine Frage: als GEMEINSAME Bubble in den Chat senden (beide
+  /// Seiten sehen sie mittig) oder nur kopieren.
+  Future<void> _onQuestionTap(IcebreakerQuestion question) async {
+    final lang = L10n.localeOf(context).languageCode;
+    final text = question.textFor(lang);
+    final choice = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Deine Antwort'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              question.prompt,
-              style: Theme.of(ctx).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: controller,
-              autofocus: true,
-              maxLength: 200,
-              maxLines: 3,
-              decoration: const InputDecoration(
-                hintText: 'Schreib deine Antwort⬦',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
+        title: Text(L10n.t(ctx, 'spice.sendTitle')),
+        content: Text(
+          text,
+          style: Theme.of(ctx).textTheme.bodyMedium,
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Abbrechen'),
+          TextButton.icon(
+            onPressed: () => Navigator.of(ctx).pop('copy'),
+            icon: const Icon(Icons.copy_outlined),
+            label: Text(L10n.t(ctx, 'spice.copyTooltip')),
           ),
-          FilledButton(
-            onPressed: () {
-              final text = controller.text.trim();
-              if (text.isEmpty) return;
-              Navigator.of(ctx).pop(text);
-            },
-            child: const Text('Senden'),
+          FilledButton.icon(
+            onPressed: () => Navigator.of(ctx).pop('send'),
+            icon: const Icon(Icons.send_outlined),
+            label: Text(L10n.t(ctx, 'spice.sendBtn')),
           ),
         ],
       ),
     );
-
-    if (answer == null || answer.isEmpty || !mounted) return;
-
-    final result = await ref
-        .read(spiceQuestionServiceProvider)
-        .answer(widget.matchId, question.questionId, answer);
-
     if (!mounted) return;
-    ref.invalidate(spiceQuestionsProvider(widget.matchId));
-
-    if (result == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Antwort konnte nicht gesendet werden.')),
-      );
-    } else if (result.bothAnswered) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Beide haben geantwortet: Antwort aufgedeckt!'),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(L10n.t(context, 'spice.answerSent')),
-        ),
-      );
+    if (choice == 'copy') {
+      await _copyQuestion(question);
+    } else if (choice == 'send') {
+      // Zurück in den Chat MIT der Frage als Pop-Resultat (v0.9.1): Der
+      // Chat sendet sie direkt als gemeinsame Bubble an beide Seiten.
+      // Ohne Stack (Deep-Link) notfalls per go() in den Chat.
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop(text);
+      } else if (mounted) {
+        context.go(AppRoutes.chatDetailPath(widget.matchId.toString()));
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final questionsAsync = ref.watch(spiceQuestionsProvider(widget.matchId));
+    final lang = L10n.localeOf(context).languageCode;
+    final q = _query.trim().toLowerCase();
+
+    final visible = q.isEmpty
+        ? icebreakerCatalog
+        : icebreakerCatalog
+            .map((cat) {
+              final matches = cat.questions
+                  .where((item) =>
+                      item.de.toLowerCase().contains(q) ||
+                      item.en.toLowerCase().contains(q))
+                  .toList();
+              if (matches.isEmpty) return null;
+              return (cat: cat, questions: matches);
+            })
+            .whereType<({IcebreakerCategory cat, List<IcebreakerQuestion> questions})>()
+            .toList();
+
+    final total = icebreakerCatalog.fold<int>(
+      0,
+      (sum, cat) => sum + cat.questions.length,
+    );
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Eisbrecher-Fragen'),
+        title: Text(L10n.t(context, 'spice.title')),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          tooltip: L10n.t(context, 'common.back'),
+          onPressed: _goBack,
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Aktualisieren',
-            onPressed: () =>
-                ref.invalidate(spiceQuestionsProvider(widget.matchId)),
+      ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: TextField(
+              controller: _searchCtrl,
+              onChanged: (v) => setState(() => _query = v),
+              decoration: InputDecoration(
+                hintText: L10n.t(context, 'spice.searchHint'),
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _query.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchCtrl.clear();
+                          setState(() => _query = '');
+                        },
+                      ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                L10n.tf(context, 'spice.countHint', {'n': '$total'}),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: q.isNotEmpty && visible.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        L10n.t(context, 'spice.emptySearch'),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                    itemCount: q.isEmpty
+                        ? icebreakerCatalog.length
+                        : visible.length,
+                    itemBuilder: (context, index) {
+                      if (q.isEmpty) {
+                        final cat = icebreakerCatalog[index];
+                        return _CategoryCard(
+                          title: cat.titleFor(lang),
+                          icon: cat.icon,
+                          questions: cat.questions,
+                          lang: lang,
+                          onCopy: _copyQuestion,
+                          onTap: _onQuestionTap,
+                        );
+                      }
+                      final entry = visible[index]
+                          as ({IcebreakerCategory cat, List<IcebreakerQuestion> questions});
+                      return _CategoryCard(
+                        title: entry.cat.titleFor(lang),
+                        icon: entry.cat.icon,
+                        questions: entry.questions,
+                        lang: lang,
+                        onCopy: _copyQuestion,
+                        onTap: _onQuestionTap,
+                      );
+                    },
+                  ),
           ),
         ],
       ),
-      body: questionsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, _) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.error_outline, size: 40),
-                const SizedBox(height: 12),
-                Text('Fragen konnten nicht geladen werden:\n$err',
-                    textAlign: TextAlign.center),
-                const SizedBox(height: 12),
-                FilledButton.tonal(
-                  onPressed: () =>
-                      ref.invalidate(spiceQuestionsProvider(widget.matchId)),
-                  child: const Text('Erneut versuchen'),
-                ),
-              ],
-            ),
-          ),
-        ),
-        data: (questions) {
-          if (questions.isEmpty) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text(
-                  'Noch keine Eisbrecher-Fragen verfügbar. '
-                  'Probier es später erneut.',
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            );
-          }
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: questions.length,
-            itemBuilder: (context, index) =>
-                _QuestionCard(
-              question: questions[index],
-              onAnswer: () => _openAnswerDialog(questions[index]),
-            ),
-          );
-        },
-      ),
     );
   }
 }
 
-class _QuestionCard extends StatelessWidget {
-  const _QuestionCard({required this.question, required this.onAnswer});
-
-  final SpiceQuestion question;
-  final VoidCallback onAnswer;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final bothAnswered = question.answeredByBoth;
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    question.prompt,
-                    style: theme.textTheme.titleMedium,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  bothAnswered
-                      ? Icons.visibility
-                      : Icons.visibility_off_outlined,
-                  size: 18,
-                  color: bothAnswered
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.outline,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            if (bothAnswered) ...[
-              _AnswerBox(
-                label: 'Deine Antwort',
-                text: question.myAnswer ?? '(offen)',
-                color: theme.colorScheme.primaryContainer,
-              ),
-              const SizedBox(height: 8),
-              _AnswerBox(
-                label: 'Antwort von deinem Match',
-                text: question.partnerAnswer ?? '(offen)',
-                color: theme.colorScheme.tertiaryContainer,
-              ),
-            ] else if (question.answeredByMe) ...[
-              _AnswerBox(
-                label: 'Deine Antwort',
-                text: question.myAnswer ?? '(offen)',
-                color: theme.colorScheme.primaryContainer,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Warte auf die Antwort deines Matches⬦',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ] else ...[
-              Text(
-                'Deine Antwort wird erst aufgedeckt, wenn dein Gegenüber '
-                'ebenfalls geantwortet hat.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.centerRight,
-              child: FilledButton.tonal(
-                onPressed: onAnswer,
-                child: Text(question.answeredByMe ? L10n.t(context, 'spice.answerEdit') : L10n.t(context, 'spice.answer')),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _AnswerBox extends StatelessWidget {
-  const _AnswerBox({
-    required this.label,
-    required this.text,
-    required this.color,
+class _CategoryCard extends StatelessWidget {
+  const _CategoryCard({
+    required this.title,
+    required this.icon,
+    required this.questions,
+    required this.lang,
+    required this.onCopy,
+    required this.onTap,
   });
 
-  final String label;
-  final String text;
-  final Color color;
+  final String title;
+  final IconData icon;
+  final List<IcebreakerQuestion> questions;
+  final String lang;
+  final Future<void> Function(IcebreakerQuestion) onCopy;
+  final Future<void> Function(IcebreakerQuestion) onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    // shape/collapsedShape ohne BorderSide (v0.9.1): sonst zeichnet das
+    // Material-3-ExpansionTile einen Strich über/unter der geöffneten
+    // Kategorie.
+    final tileShape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    );
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: tileShape,
+      child: ExpansionTile(
+        shape: tileShape,
+        collapsedShape: tileShape,
+        leading: Icon(icon,
+            color: Theme.of(context).colorScheme.primary),
+        title: Text(
+          title,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        subtitle: Text(
+          L10n.tf(context, 'spice.perCategory',
+              {'n': '${questions.length}'}),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
         children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-          const SizedBox(height: 4),
-          Text(text),
+          for (final question in questions)
+            ListTile(
+              title: Text(question.textFor(lang)),
+              trailing: IconButton(
+                icon: const Icon(Icons.copy_outlined),
+                tooltip: L10n.t(context, 'spice.copyTooltip'),
+                onPressed: () => onCopy(question),
+              ),
+              onTap: () => onTap(question),
+            ),
         ],
       ),
     );

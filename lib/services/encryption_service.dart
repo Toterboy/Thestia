@@ -104,7 +104,18 @@ class EncryptionService {
   /// die PreKeys und die Session-Ratchet-States liegen damit nicht im
   /// Klartext auf der Platte.
   Future<void> initialize() async {
-    _identityBox = await SecureHive.instance.openBox<SignalIdentityKeyPairAdapter>(
+    // Fail-open statt Hang (Fix): Schlägt das Öffnen einer Box fehl
+    // (z. B. Keystore gesperrt), bekommen Wartende eine Exception statt
+    // ewig zu blockieren - Aufrufer zeigen dann Fehler statt Funkstille.
+    try {
+      await _initializeInner();
+    } catch (e) {
+      if (!_initCompleter.isCompleted) _initCompleter.completeError(e);
+      rethrow;
+    }
+  }
+
+  Future<void> _initializeInner() async {    _identityBox = await SecureHive.instance.openBox<SignalIdentityKeyPairAdapter>(
       _boxNameIdentity,
     );
     _sessionBox = await SecureHive.instance.openBox<SignalSessionRecordAdapter>(
@@ -131,6 +142,13 @@ class EncryptionService {
     // Persistierte Keys laden; fehlende generieren (Audit H-7/E-2).
     await _loadOrEnsurePreKeys();
     await _loadOrRotateSignedPreKey();
+    // KRITISCHER FIX (Nachrichten kommen nicht an): Der libsignal-Store
+    // ist In-Memory - nach einem Neustart enthielt er nur den AKTIVEN
+    // SignedPreKey. Nachrichten von Peers, die ein AELTERES Bundle
+    // geladen hatten (referenzieren SignedPreKey 1, aktiv inzwischen 2+),
+    // waren unlesbar und blieben im Relay haengen. Jetzt werden ALLE
+    // persistierten SignedPreKeys wieder in den Store geladen.
+    await _reloadAllSignedPreKeys();
     // Initialisierung abgeschlossen - wartende Consumer (PreKeyService) können
     // nun Sessions aufbauen / Bundles exportieren.
     if (!_initCompleter.isCompleted) _initCompleter.complete();
@@ -317,6 +335,32 @@ class EncryptionService {
     debugPrint('[EncryptionService] SignedPreKey $newId erzeugt (Rotation).');
   }
 
+  /// Lädt ALLE persistierten SignedPreKeys aus der Box in den Store
+  /// (Neustart-Fix, siehe [_initializeInner]): Alte SignedPreKeys bleiben
+  /// zur Entschlüsselung von Sessions ged behalten, die Peers aus einem
+  /// älteren Bundle aufgebaut haben. Beschädigte Einträge werden gelöscht.
+  Future<void> _reloadAllSignedPreKeys() async {
+    var loaded = 0;
+    final deadKeys = <dynamic>[];
+    for (final key in _signedPreKeysBox.keys) {
+      final persisted = _signedPreKeysBox.get(key);
+      if (persisted == null) continue;
+      try {
+        final record = SignedPreKeyRecord.fromSerialized(
+          base64Decode(persisted.keyPairJson),
+        );
+        await _store!.storeSignedPreKey(persisted.keyId, record);
+        loaded++;
+      } catch (_) {
+        deadKeys.add(key);
+      }
+    }
+    for (final key in deadKeys) {
+      await _signedPreKeysBox.delete(key);
+    }
+    debugPrint('[EncryptionService] SignedPreKeys geladen: $loaded');
+  }
+
   /// Holt den AKTIVEN Signed PreKey (höchste/latest ID, siehe Box-Metadaten).
   Future<SignedPreKeyRecord?> getCurrentSignedPreKey() async {
     final activeIdStr = _metaBox.get(_signedPreKeyActiveKey);
@@ -336,6 +380,10 @@ class EncryptionService {
   Future<Map<String, dynamic>> exportPreKeyBundle() async {
     final store = _store!;
     final identityPub = _identityKeyPair!.getPublicKey().serialize();
+    // Self-Heal (Fix Publish-Deadlock): Vorrat ggf. erst auffüllen, dann
+    // exportieren - sonst wirft ein erschöpfter Pool dauerhaft und das
+    // Gerät kann nie (wieder) ein Bundle veröffentlichen.
+    await _loadOrEnsurePreKeys();
     final preKey = await getUnusedPreKey();
     if (preKey == null) {
       throw StateError(
@@ -343,8 +391,14 @@ class EncryptionService {
         'Rufe _loadOrEnsurePreKeys() vor exportPreKeyBundle() auf.',
       );
     }
-    final activeIdStr =
-        _identityBox.get(_signedPreKeyActiveKey)?.identityKeyPairJson;
+    // KRITISCHER FIX (Nachrichten kommen nicht an): Die aktive
+    // SignedPreKey-ID liegt seit der Meta-Migration in [_metaBox] (nicht
+    // mehr in [_identityBox]). Vorher wurde hier null gelesen und IMMER
+    // id 1 exportiert - Bundles mit tatsaechlichem SignedPreKey 2+ waren
+    // damit faelschlich als id 1 signiert/advertised, und eingehende
+    // PreKey-Nachrichten verweigerten die Entschluesselung
+    // ("No such signed prekey").
+    final activeIdStr = _metaBox.get(_signedPreKeyActiveKey);
     final activeSignedPreKeyId = int.tryParse(activeIdStr ?? '') ?? 1;
     final signedPreKey = await store.loadSignedPreKey(activeSignedPreKeyId);
     return {

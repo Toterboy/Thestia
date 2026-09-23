@@ -147,7 +147,13 @@ class _AudioReviewSheetState extends State<_AudioReviewSheet> {
               ),
             ],
             const SizedBox(height: 20),
+            // Play-Button optisch auf Höhe des Fortschrittbalkens: Die
+            // Zeile startet oben bündig, die Fortschrittspalte bekommt
+            // oben (Buttonhöhe 40 - Balkenhöhe 4) / 2 Platz, damit beide
+            // Mitten übereinanderliegen (statt Button mittig zur
+            // Gesamtspalte aus Balken + Zeitlabels).
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 IconButton.filled(
                   onPressed: _loadError != null
@@ -166,18 +172,23 @@ class _AudioReviewSheetState extends State<_AudioReviewSheet> {
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Column(
-                    children: [
-                      LinearProgressIndicator(value: progress.clamp(0.0, 1.0)),
-                      const SizedBox(height: 4),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(_fmt(_position)),
-                          Text(_fmt(total)),
-                        ],
-                      ),
-                    ],
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 18),
+                    child: Column(
+                      children: [
+                        LinearProgressIndicator(
+                            value: progress.clamp(0.0, 1.0)),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment:
+                              MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(_fmt(_position)),
+                            Text(_fmt(total)),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],

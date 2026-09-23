@@ -133,11 +133,13 @@ class AppSettings {
     return AppSettings(
       blindModeEnabled: json['blindModeEnabled'] as bool? ?? true,
       revealPhotosAfterMatch: json['revealPhotosAfterMatch'] as bool? ?? true,
-      profileVisibility:
-          ProfileVisibility.fromValue(json['profileVisibility'] as String?),
+      profileVisibility: ProfileVisibility.fromValue(
+        json['profileVisibility'] as String?,
+      ),
       useDarkMode: json['useDarkMode'] as bool?,
       onboardingCompleted: json['onboardingCompleted'] as bool? ?? true,
-      maxDistanceKm: json['maxDistanceKm'] as int? ?? AppConstants.defaultDistanceKm,
+      maxDistanceKm:
+          json['maxDistanceKm'] as int? ?? AppConstants.defaultDistanceKm,
       ageRangeMin: json['ageRangeMin'] as int? ?? 16,
       ageRangeMax: json['ageRangeMax'] as int? ?? 99,
       personalityTestCompleted:
@@ -160,46 +162,56 @@ class AppSettings {
       themeName: json['themeName'] as String? ?? 'classic',
       paused: json['paused'] as bool? ?? false,
       habitsDealbreaker: json['habitsDealbreaker'] as bool? ?? false,
-      contextIcebreakerEnabled: json['contextIcebreakerEnabled'] as bool? ?? true,
+      contextIcebreakerEnabled:
+          json['contextIcebreakerEnabled'] as bool? ?? true,
     );
   }
 
   /// Wandelt die Einstellungen in ein JSON-Map um.
   Map<String, dynamic> toJson() => {
-        'blindModeEnabled': blindModeEnabled,
-        'revealPhotosAfterMatch': revealPhotosAfterMatch,
-        'profileVisibility': profileVisibility.value,
-        'useDarkMode': useDarkMode,
-        'onboardingCompleted': onboardingCompleted,
-        'maxDistanceKm': maxDistanceKm,
-        'ageRangeMin': ageRangeMin,
-        'ageRangeMax': ageRangeMax,
-        'personalityTestCompleted': personalityTestCompleted,
-        'oneTimeSettingsCompleted': oneTimeSettingsCompleted,
-        'communityGuidelinesAccepted': communityGuidelinesAccepted,
-        'onboardingDone': onboardingDone,
-        'introSeen': introSeen,
-        'notificationsEnabled': notificationsEnabled,
-        'notifyMatches': notifyMatches,
-        'notifyLikes': notifyLikes,
-        'notifyMessages': notifyMessages,
-        'notifyDatingHour': notifyDatingHour,
-        'datingHourIntroSeen': datingHourIntroSeen,
-        'datingHourAutoJoin': datingHourAutoJoin,
-        'mfaSetupDismissed': mfaSetupDismissed,
-        'blurChatImages': blurChatImages,
-        'themeName': themeName,
-        'paused': paused,
-        'habitsDealbreaker': habitsDealbreaker,
-        'contextIcebreakerEnabled': contextIcebreakerEnabled,
-      };
+    'blindModeEnabled': blindModeEnabled,
+    'revealPhotosAfterMatch': revealPhotosAfterMatch,
+    'profileVisibility': profileVisibility.value,
+    'useDarkMode': useDarkMode,
+    'onboardingCompleted': onboardingCompleted,
+    'maxDistanceKm': maxDistanceKm,
+    'ageRangeMin': ageRangeMin,
+    'ageRangeMax': ageRangeMax,
+    'personalityTestCompleted': personalityTestCompleted,
+    'oneTimeSettingsCompleted': oneTimeSettingsCompleted,
+    'communityGuidelinesAccepted': communityGuidelinesAccepted,
+    'onboardingDone': onboardingDone,
+    'introSeen': introSeen,
+    'notificationsEnabled': notificationsEnabled,
+    'notifyMatches': notifyMatches,
+    'notifyLikes': notifyLikes,
+    'notifyMessages': notifyMessages,
+    'notifyDatingHour': notifyDatingHour,
+    'datingHourIntroSeen': datingHourIntroSeen,
+    'datingHourAutoJoin': datingHourAutoJoin,
+    'mfaSetupDismissed': mfaSetupDismissed,
+    'blurChatImages': blurChatImages,
+    'themeName': themeName,
+    'paused': paused,
+    'habitsDealbreaker': habitsDealbreaker,
+    'contextIcebreakerEnabled': contextIcebreakerEnabled,
+  };
 
   /// Immutabele Kopie mit veränderten Werten.
+  ///
+  /// Sentinel für [useDarkMode]: Das Feld ist nullable (null = System),
+  /// daher kann ein plain `??` ein explizites null nicht von "nicht
+  /// gesetzt" unterscheiden – `copyWith(useDarkMode: null)` würde sonst
+  /// still den alten Wert behalten (Bug: "System" war nach Hell/Dunkel
+  /// nicht mehr wählbar). Alle anderen Felder sind non-nullable und
+  /// brauchen keinen Sentinel.
+  static const _useDarkModeUnset = Object();
+
   AppSettings copyWith({
     bool? blindModeEnabled,
     bool? revealPhotosAfterMatch,
     ProfileVisibility? profileVisibility,
-    bool? useDarkMode,
+    Object? useDarkMode = _useDarkModeUnset,
     bool? onboardingCompleted,
     int? maxDistanceKm,
     int? ageRangeMin,
@@ -228,7 +240,9 @@ class AppSettings {
       revealPhotosAfterMatch:
           revealPhotosAfterMatch ?? this.revealPhotosAfterMatch,
       profileVisibility: profileVisibility ?? this.profileVisibility,
-      useDarkMode: useDarkMode ?? this.useDarkMode,
+      useDarkMode: identical(useDarkMode, _useDarkModeUnset)
+          ? this.useDarkMode
+          : useDarkMode as bool?,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       maxDistanceKm: maxDistanceKm ?? this.maxDistanceKm,
       ageRangeMin: ageRangeMin ?? this.ageRangeMin,
@@ -253,7 +267,8 @@ class AppSettings {
       themeName: themeName ?? this.themeName,
       paused: paused ?? this.paused,
       habitsDealbreaker: habitsDealbreaker ?? this.habitsDealbreaker,
-      contextIcebreakerEnabled: contextIcebreakerEnabled ?? this.contextIcebreakerEnabled,
+      contextIcebreakerEnabled:
+          contextIcebreakerEnabled ?? this.contextIcebreakerEnabled,
     );
   }
 }

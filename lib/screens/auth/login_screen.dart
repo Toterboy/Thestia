@@ -57,6 +57,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool _passkeyLoading = false;
   bool _submitting = false;
 
+  /// Alters-Wahrheits-Bestätigung (v0.9.1, Pflicht bei Registrierung):
+  /// Falsche Altersangaben gefährden insbesondere junge Nutzer und führen
+  /// zum Ausschluss.
+  bool _ageConfirmed = false;
+
   /// „Angemeldet bleiben" (Default: AN). Wird beim Start gelesen und beim
   /// Umschalten sofort persistiert; der Restore im AuthNotifier respektiert
   /// den Wert (false = Session beim Start verwerfen).
@@ -136,6 +141,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(L10n.t(context, 'auth.birthDateMissing')),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+          return;
+        }
+        // Alters-Wahrheit muss explizit bestätigt sein (v0.9.1).
+        if (!_ageConfirmed) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content:
+                    Text(L10n.t(context, 'auth.ageConfirmRequired')),
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -303,6 +321,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   /// Großer, nicht-abwischbarer Ladekreis während der Auth-Anfrage.
+  /// Optik (Fix "hochkant rechteckig"): kompakte, abgerundet-viereckige
+  /// Karte mit zentriertem Spinner. Der Column aus Spinner + Text ergab
+  /// vorher einen unpassenden Hochformat-Kasten.
   Future<void> _showBlockingLoader() {
     return showDialog<void>(
       context: context,
@@ -313,14 +334,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         child: Center(
           child: Card(
             child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Anmeldung läuft…'),
-                ],
+              padding: EdgeInsets.all(28),
+              child: SizedBox(
+                width: 32,
+                height: 32,
+                child: CircularProgressIndicator(strokeWidth: 3),
               ),
             ),
           ),
@@ -486,13 +504,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           controller: _nameCtrl,
                           keyboardType: TextInputType.text,
                           textCapitalization: TextCapitalization.words,
-                          decoration: const InputDecoration(labelText: 'Name'),
-                          validator: Validators.name,
+                          decoration: InputDecoration(
+                              labelText: L10n.t(context, 'auth.name')),
+                          validator: (v) => Validators.name(context, v),
                         ),
                       ),
                       _field(
                         showError: _submitAttempted,
-                        validate: () => Validators.birthDate(_birthDate),
+                        validate: () => Validators.birthDate(context, _birthDate),
                         child: InkWell(
                           onTap: _pickBirthDate,
                           child: InputDecorator(
@@ -500,7 +519,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               labelText: L10n.t(context, 'auth.birthDate'),
                               hintText: L10n.t(context, 'auth.birthDateHint'),
                               errorText: _submitAttempted
-                                  ? Validators.birthDate(_birthDate)
+                                  ? Validators.birthDate(context, _birthDate)
                                   : null,
                             ),
                             child: Text(
@@ -519,7 +538,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           keyboardType: TextInputType.text,
                           decoration: InputDecoration(
                               labelText: L10n.t(context, 'auth.email')),
-                          validator: Validators.email,
+                          validator: (v) => Validators.email(context, v),
                         ),
                       ),
                        _field(
@@ -545,7 +564,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   setState(() => _obscurePassword = !_obscurePassword),
                             ),
                           ),
-                           validator: Validators.registrationPassword,
+                           validator: (v) =>
+                               Validators.registrationPassword(context, v),
                          ),
                        ),
                         _field(
@@ -576,12 +596,59 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                  value: Gender.other,
                                  child: Text(L10n.t(context, 'gender.other'))),
                            ],
-                           onChanged: (v) {
-                             if (v != null) setState(() => _gender = v);
-                           },
-                         ),
+                            onChanged: (v) {
+                              if (v != null) setState(() => _gender = v);
+                            },
+                          ),
                         ),
-                    ] else ...[
+                        _field(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              CheckboxListTile.adaptive(
+                                contentPadding: EdgeInsets.zero,
+                                controlAffinity:
+                                    ListTileControlAffinity.leading,
+                                title: Text(L10n.t(context,
+                                    'auth.ageConfirmTitle')),
+                                subtitle: Text(L10n.t(context,
+                                    'auth.ageConfirmSub')),
+                                value: _ageConfirmed,
+                                onChanged: (v) => setState(
+                                    () => _ageConfirmed = v ?? false),
+                              ),
+                              if (_submitAttempted && !_ageConfirmed)
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 16, top: 4),
+                                  child: Text(
+                                    L10n.t(context,
+                                        'auth.ageConfirmRequired'),
+                                    style: TextStyle(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .error,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              const SizedBox(height: 4),
+                              Text(
+                                L10n.t(
+                                    context, 'auth.liabilityNote'),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                     ] else ...[
                      _field(
                        showError: _submitAttempted,
                        child: TextFormField(
@@ -589,7 +656,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                          keyboardType: TextInputType.text,
                          decoration: InputDecoration(
                              labelText: L10n.t(context, 'auth.email')),
-                         validator: Validators.email,
+                          validator: (v) => Validators.email(context, v),
                        ),
                      ),
                       _field(
@@ -615,7 +682,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   setState(() => _obscurePassword = !_obscurePassword),
                             ),
                           ),
-                          validator: Validators.password,
+                          validator: (v) => Validators.password(context, v),
                         ),
                       ),
                       Align(

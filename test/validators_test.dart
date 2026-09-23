@@ -1,147 +1,180 @@
+import 'package:flutter/material.dart';
 import 'package:wisp/utils/validators.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+/// Liefert einen BuildContext (Default-Locale Deutsch, wie ohne Scope).
+Future<BuildContext> _ctx(WidgetTester tester) async {
+  late BuildContext ctx;
+  await tester.pumpWidget(MaterialApp(
+    home: Builder(builder: (c) {
+      ctx = c;
+      return const SizedBox();
+    }),
+  ));
+  return ctx;
+}
+
 void main() {
   group('Validators - required', () {
-    test('lehnt null ab', () {
-      expect(Validators.required(null), isNotNull);
+    testWidgets('lehnt null ab', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.required(context, null), isNotNull);
     });
 
-    test('lehnt leere Strings ab', () {
-      expect(Validators.required(''), isNotNull);
-      expect(Validators.required('  '), isNotNull);
+    testWidgets('lehnt leere Strings ab', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.required(context, ''), isNotNull);
+      expect(Validators.required(context, '  '), isNotNull);
     });
 
-    test('akzeptiert nicht-leere Werte', () {
-      expect(Validators.required('ok'), isNull);
-      expect(Validators.required('  ok  '), isNull);
+    testWidgets('akzeptiert nicht-leere Werte', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.required(context, 'ok'), isNull);
+      expect(Validators.required(context, '  ok  '), isNull);
     });
 
-    test('nutzt Feldnamen in der Fehlermeldung', () {
-      final result = Validators.required('', field: 'E-Mail');
+    testWidgets('nutzt Feldnamen in der Fehlermeldung', (tester) async {
+      final context = await _ctx(tester);
+      final result = Validators.required(context, '', field: 'E-Mail');
       expect(result, isNotNull);
       expect(result, contains('E-Mail'));
     });
 
-    test('Standard-Feldname ist Feld', () {
-      final result = Validators.required('');
+    testWidgets('Standard-Feldname ist Feld', (tester) async {
+      final context = await _ctx(tester);
+      final result = Validators.required(context, '');
       expect(result, contains('Feld'));
     });
   });
 
   group('Validators - name', () {
-    test('lehnt null ab', () {
-      expect(Validators.name(null), isNotNull);
+    testWidgets('lehnt null ab', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.name(context, null), isNotNull);
     });
 
-    test('lehnt leere Strings ab', () {
-      expect(Validators.name(''), isNotNull);
-      expect(Validators.name('  '), isNotNull);
+    testWidgets('lehnt leere Strings ab', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.name(context, ''), isNotNull);
+      expect(Validators.name(context, '  '), isNotNull);
     });
 
-    test('lehnt ein Zeichen ab', () {
-      expect(Validators.name('A'), isNotNull);
+    testWidgets('lehnt ein Zeichen ab', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.name(context, 'A'), isNotNull);
     });
 
-    test('akzeptiert ab 2 Zeichen', () {
-      expect(Validators.name('AB'), isNull);
-      expect(Validators.name('ABc'), isNull);
+    testWidgets('akzeptiert ab 2 Zeichen', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.name(context, 'AB'), isNull);
+      expect(Validators.name(context, 'ABc'), isNull);
     });
 
-    test('trimmt Leerzeichen', () {
-      expect(Validators.name(' A'), isNotNull); // Nach Trim nur 1 Zeichen
-      expect(Validators.name('  AB  '), isNull);
+    testWidgets('trimmt Leerzeichen', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.name(context, ' A'), isNotNull); // Nach Trim nur 1 Zeichen
+      expect(Validators.name(context, '  AB  '), isNull);
     });
   });
 
   group('Validators - age', () {
-    test('lehnt leere Werte ab', () {
-      expect(Validators.age(''), isNotNull);
-      expect(Validators.age('  '), isNotNull);
+    testWidgets('lehnt leere Werte ab', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.age(context, ''), isNotNull);
+      expect(Validators.age(context, '  '), isNotNull);
     });
 
-    test('lehnt keine Zahl ab', () {
-      expect(Validators.age('abc'), isNotNull);
-      expect(Validators.age('12.5'), isNotNull);
-      expect(Validators.age(''), isNotNull);
+    testWidgets('lehnt keine Zahl ab', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.age(context, 'abc'), isNotNull);
+      expect(Validators.age(context, '12.5'), isNotNull);
+      expect(Validators.age(context, ''), isNotNull);
     });
 
-    test('akzeptiert 16 bis 99', () {
-      expect(Validators.age('16'), isNull);
-      expect(Validators.age('18'), isNull);
-      expect(Validators.age('25'), isNull);
-      expect(Validators.age('99'), isNull);
+    testWidgets('akzeptiert 16 bis 99', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.age(context, '16'), isNull);
+      expect(Validators.age(context, '18'), isNull);
+      expect(Validators.age(context, '25'), isNull);
+      expect(Validators.age(context, '99'), isNull);
     });
 
-    test('lehnt unter 16 ab', () {
-      expect(Validators.age('15'), isNotNull);
-      expect(Validators.age('0'), isNotNull);
-      expect(Validators.age('-5'), isNotNull);
+    testWidgets('lehnt unter 16 ab', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.age(context, '15'), isNotNull);
+      expect(Validators.age(context, '0'), isNotNull);
+      expect(Validators.age(context, '-5'), isNotNull);
     });
 
-    test('lehnt ueber 99 ab', () {
-      expect(Validators.age('100'), isNotNull);
-      expect(Validators.age('120'), isNotNull);
-      expect(Validators.age('200'), isNotNull);
+    testWidgets('lehnt ueber 99 ab', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.age(context, '100'), isNotNull);
+      expect(Validators.age(context, '120'), isNotNull);
+      expect(Validators.age(context, '200'), isNotNull);
     });
 
-    test('Alter unter 16 wird mit klarer Meldung abgelehnt', () {
-      final msg = Validators.age('14');
+    testWidgets('Alter unter 16 wird mit klarer Meldung abgelehnt', (tester) async {
+      final context = await _ctx(tester);
+      final msg = Validators.age(context, '14');
       expect(msg, isNotNull);
       expect(msg, contains('mindestens $minimumAge Jahre alt'));
     });
 
-    test('Alter ueber 99 wird mit passender Meldung abgelehnt', () {
-      final msg = Validators.age('100');
+    testWidgets('Alter ueber 99 wird mit passender Meldung abgelehnt', (tester) async {
+      final context = await _ctx(tester);
+      final msg = Validators.age(context, '100');
       expect(msg, isNotNull);
       expect(msg, contains('gültiges'));
     });
   });
 
   group('Validators - isOldEnough', () {
-    test('akzeptiert ab 16', () {
+    testWidgets('akzeptiert ab 16', (tester) async {
       expect(Validators.isOldEnough(15), isFalse);
       expect(Validators.isOldEnough(16), isTrue);
       expect(Validators.isOldEnough(30), isTrue);
       expect(Validators.isOldEnough(99), isTrue);
     });
 
-    test('lehnt ueber 99 ab', () {
+    testWidgets('lehnt ueber 99 ab', (tester) async {
       expect(Validators.isOldEnough(100), isFalse);
       expect(Validators.isOldEnough(150), isFalse);
     });
 
-    test('lehnt null ab', () {
+    testWidgets('lehnt null ab', (tester) async {
       expect(Validators.isOldEnough(null), isFalse);
     });
   });
 
   group('E-Mail-Validierung', () {
-    test('gültige E-Mails werden akzeptiert', () {
-      expect(Validators.email('max@beispiel.de'), isNull);
-      expect(Validators.email('a.b@mail.com'), isNull);
-      expect(Validators.email('user@domain.net'), isNull);
-      expect(Validators.email('x@y.org'), isNull);
-      expect(Validators.email('test+filter@example.co.uk'), isNull);
+    testWidgets('gültige E-Mails werden akzeptiert', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.email(context, 'max@beispiel.de'), isNull);
+      expect(Validators.email(context, 'a.b@mail.com'), isNull);
+      expect(Validators.email(context, 'user@domain.net'), isNull);
+      expect(Validators.email(context, 'x@y.org'), isNull);
+      expect(Validators.email(context, 'test+filter@example.co.uk'), isNull);
     });
 
-    test('ungueltige E-Mails werden abgelehnt', () {
-      expect(Validators.email(''), isNotNull);
-      expect(Validators.email('keinemail'), isNotNull);
-      expect(Validators.email('max@beispiel'), isNotNull); // keine TLD
-      expect(Validators.email('max@@de'), isNotNull);
-      expect(Validators.email('max@beispiel.d'), isNotNull); // TLD zu kurz
-      expect(Validators.email(' @beispiel.de'), isNotNull);
-      expect(Validators.email('max @beispiel.de'), isNotNull);
-      expect(Validators.email('max@'), isNotNull);
-      expect(Validators.email('@beispiel.de'), isNotNull);
+    testWidgets('ungueltige E-Mails werden abgelehnt', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.email(context, ''), isNotNull);
+      expect(Validators.email(context, 'keinemail'), isNotNull);
+      expect(Validators.email(context, 'max@beispiel'), isNotNull); // keine TLD
+      expect(Validators.email(context, 'max@@de'), isNotNull);
+      expect(Validators.email(context, 'max@beispiel.d'), isNotNull); // TLD zu kurz
+      expect(Validators.email(context, ' @beispiel.de'), isNotNull);
+      expect(Validators.email(context, 'max @beispiel.de'), isNotNull);
+      expect(Validators.email(context, 'max@'), isNotNull);
+      expect(Validators.email(context, '@beispiel.de'), isNotNull);
     });
 
-    test('null wird abgelehnt', () {
-      expect(Validators.email(null), isNotNull);
+    testWidgets('null wird abgelehnt', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.email(context, null), isNotNull);
     });
 
-    test('isValidEmail spiegelt email() wider', () {
+    testWidgets('isValidEmail spiegelt email() wider', (tester) async {
       expect(Validators.isValidEmail('max@beispiel.de'), isTrue);
       expect(Validators.isValidEmail('falsch'), isFalse);
       expect(Validators.isValidEmail(null), isFalse);
@@ -150,35 +183,40 @@ void main() {
   });
 
   group('Passwort-Validierung', () {
-    test('lehnt leere Passwoerter ab', () {
-      expect(Validators.password(''), isNotNull);
-      expect(Validators.password(null), isNotNull);
+    testWidgets('lehnt leere Passwoerter ab', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.password(context, ''), isNotNull);
+      expect(Validators.password(context, null), isNotNull);
     });
 
-    test('lehnt zu kurze Passwoerter ab', () {
-      expect(Validators.password('kurz'), isNotNull);
-      expect(Validators.password('1234567'), isNotNull);
+    testWidgets('lehnt zu kurze Passwoerter ab', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.password(context, 'kurz'), isNotNull);
+      expect(Validators.password(context, '1234567'), isNotNull);
     });
 
-    test('akzeptiert ab 8 Zeichen mit Buchstabe und Zahl', () {
-      expect(Validators.password('langgenug1'), isNull);
-      expect(Validators.password('meinSicheres99'), isNull);
-      expect(Validators.password('Passwort1!'), isNull);
+    testWidgets('akzeptiert ab 8 Zeichen mit Buchstabe und Zahl', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.password(context, 'langgenug1'), isNull);
+      expect(Validators.password(context, 'meinSicheres99'), isNull);
+      expect(Validators.password(context, 'Passwort1!'), isNull);
     });
 
-    test('akzeptiert nur Buchstaben + Zahl', () {
-      expect(Validators.password('12345678'), isNotNull);
+    testWidgets('akzeptiert nur Buchstaben + Zahl', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.password(context, '12345678'), isNotNull);
     });
 
-    test('lehnt häufige Passwörter ab', () {
-      expect(Validators.password('12345678a'), isNotNull);
-      expect(Validators.password('password1'), isNotNull);
-      expect(Validators.password('qwerty123'), isNotNull);
+    testWidgets('lehnt häufige Passwörter ab', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.password(context, '12345678a'), isNotNull);
+      expect(Validators.password(context, 'password1'), isNotNull);
+      expect(Validators.password(context, 'qwerty123'), isNotNull);
     });
   });
 
   group('16+ Alterspruefung', () {
-    test('isOldEnough akzeptiert ab 16', () {
+    testWidgets('isOldEnough akzeptiert ab 16', (tester) async {
       expect(Validators.isOldEnough(15), isFalse);
       expect(Validators.isOldEnough(16), isTrue);
       expect(Validators.isOldEnough(30), isTrue);
@@ -187,51 +225,59 @@ void main() {
       expect(Validators.isOldEnough(null), isFalse);
     });
 
-    test('Alter unter 16 wird mit klarer Meldung abgelehnt', () {
-      final msg = Validators.age('14');
+    testWidgets('Alter unter 16 wird mit klarer Meldung abgelehnt', (tester) async {
+      final context = await _ctx(tester);
+      final msg = Validators.age(context, '14');
       expect(msg, isNotNull);
       expect(msg, contains('mindestens $minimumAge Jahre alt'));
     });
   });
 
   group('Bio-Validierung', () {
-    test('leere Bio ist erlaubt', () {
-      expect(Validators.bio(''), isNull);
-      expect(Validators.bio(null), isNull);
+    testWidgets('leere Bio ist erlaubt', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.bio(context, ''), isNull);
+      expect(Validators.bio(context, null), isNull);
     });
 
-    test('akzeptiert bis 300 Zeichen', () {
-      expect(Validators.bio('A' * 300), isNull);
+    testWidgets('akzeptiert bis 300 Zeichen', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.bio(context, 'A' * 300), isNull);
     });
 
-    test('lehnt ueber 300 Zeichen ab', () {
-      expect(Validators.bio('A' * 301), isNotNull);
-      expect(Validators.bio('A' * 500), isNotNull);
+    testWidgets('lehnt ueber 300 Zeichen ab', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.bio(context, 'A' * 301), isNotNull);
+      expect(Validators.bio(context, 'A' * 500), isNotNull);
     });
 
-    test('Fehlermeldung enthaelt die Grenze', () {
-      final msg = Validators.bio('A' * 301);
+    testWidgets('Fehlermeldung enthaelt die Grenze', (tester) async {
+      final context = await _ctx(tester);
+      final msg = Validators.bio(context, 'A' * 301);
       expect(msg, isNotNull);
       expect(msg, contains('300'));
     });
   });
 
   group('Geburtsdatum-Validierung', () {
-    test('null wird abgelehnt', () {
-      expect(Validators.birthDate(null), isNotNull);
+    testWidgets('null wird abgelehnt', (tester) async {
+      final context = await _ctx(tester);
+      expect(Validators.birthDate(context, null), isNotNull);
     });
 
-    test('Datum in der Zukunft wird abgelehnt', () {
+    testWidgets('Datum in der Zukunft wird abgelehnt', (tester) async {
+      final context = await _ctx(tester);
       final future = DateTime.now().add(const Duration(days: 1));
-      expect(Validators.birthDate(future), isNotNull);
+      expect(Validators.birthDate(context, future), isNotNull);
     });
 
-    test('Datum heute wird akzeptiert wenn alt genug', () {
+    testWidgets('Datum heute wird akzeptiert wenn alt genug', (tester) async {
+      final context = await _ctx(tester);
       // Person, die heute 16 wird (genau 16 Jahre alt)
       final today = DateTime.now();
       final exactly16 = DateTime(today.year - 16, today.month, today.day);
       // Wenn das Datum heute ist, ist die Person genau 16 -> akzeptiert
-      final result = Validators.birthDate(exactly16);
+      final result = Validators.birthDate(context, exactly16);
       // Kann null oder nicht-null sein je nach genauer Uhrzeit,
       // aber mindestens sollte keine Zukunft-Meldung kommen
       if (result != null) {
@@ -239,33 +285,36 @@ void main() {
       }
     });
 
-    test('unter 16 wird abgelehnt', () {
+    testWidgets('unter 16 wird abgelehnt', (tester) async {
+      final context = await _ctx(tester);
       final tooYoung = DateTime.now().subtract(const Duration(days: 15 * 365));
-      expect(Validators.birthDate(tooYoung), isNotNull);
+      expect(Validators.birthDate(context, tooYoung), isNotNull);
     });
 
-    test('ueber 99 wird abgelehnt', () {
+    testWidgets('ueber 99 wird abgelehnt', (tester) async {
+      final context = await _ctx(tester);
       final tooOld = DateTime(DateTime.now().year - 100, DateTime.now().month, DateTime.now().day);
-      expect(Validators.birthDate(tooOld), isNotNull);
+      expect(Validators.birthDate(context, tooOld), isNotNull);
     });
 
-    test('16-99 wird akzeptiert', () {
+    testWidgets('16-99 wird akzeptiert', (tester) async {
+      final context = await _ctx(tester);
       final ok = DateTime.now().subtract(const Duration(days: 25 * 365));
-      expect(Validators.birthDate(ok), isNull);
+      expect(Validators.birthDate(context, ok), isNull);
     });
   });
 
   group('ageFromBirthDate', () {
-    test('null liefert null', () {
+    testWidgets('null liefert null', (tester) async {
       expect(Validators.ageFromBirthDate(null), isNull);
     });
 
-    test('Datum in der Zukunft liefert null', () {
+    testWidgets('Datum in der Zukunft liefert null', (tester) async {
       final future = DateTime.now().add(const Duration(days: 1));
       expect(Validators.ageFromBirthDate(future), isNull);
     });
 
-    test('berechnt Alter korrekt', () {
+    testWidgets('berechnt Alter korrekt', (tester) async {
       final birthDate = DateTime.now().subtract(const Duration(days: 25 * 365));
       final age = Validators.ageFromBirthDate(birthDate);
       expect(age, isNotNull);

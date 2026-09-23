@@ -73,9 +73,9 @@ class SwipeModeSelectionScreen extends ConsumerWidget {
                         color: Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        'Hinweis',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+Text(
+L10n.t(context, 'common.hint'),
+style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           color: Theme.of(context).colorScheme.onPrimaryContainer,
                           fontWeight: FontWeight.bold,
                         ),
@@ -84,9 +84,7 @@ class SwipeModeSelectionScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Fotos siehst du erst, wenn du das Kennenlern-Quiz nach '
-                    'einem Funke bestehst. Bis dahin zählt, was jemand über '
-                    'sich erzählt.',
+                    L10n.t(context, 'dm.photosNote'),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onPrimaryContainer,
                     ),

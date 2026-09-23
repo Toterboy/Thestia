@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:wisp/services/auth_exception.dart';
 import 'package:wisp/services/avatar_crypto.dart';
@@ -16,8 +18,9 @@ import 'package:wisp/services/supabase_service.dart';
 /// - Anzeige erfolgt über signierte URLs ODER (v0.8.1) verschlüsselt:
 ///   Profilbilder werden clientseitig AES-256-GCM verschlüsselt, bevor
 ///   sie den Server erreichen. Der Schlüssel steckt im `photos`-Eintrag
-///   (`path|key|iv`), der Download läuft über [loadAvatarBytes] mit
-///   lokaler Entschlüsselung.
+///   der EIGENEN Profil-Zeile (`path|key|iv`); Fremd-Bilder laufen über
+///   [loadPartnerAvatarBytes] mit Schlüssel aus match-media (107).
+///   Download + lokale Entschlüsselung via [loadAvatarBytes].
 class SupabaseStorageService {
   SupabaseStorageService(this._client);
 
@@ -228,6 +231,87 @@ class SupabaseStorageService {
     }
   }
 
+  /// Lädt das Avatar-Bild eines FREMDEN Nutzers (Match-Partner, Quiz etc.).
+  ///
+  /// Security-Fix (Migration 107): AES-Schlüssel/IV stehen NICHT mehr in
+  /// der Public-View. Ablauf: match-media (kind=avatar, gleiche
+  /// Match-/Quiz-Berechtigungsprüfung wie für die URL) liefert
+  /// {url, keyB64, ivB64}; Download + lokale Entschlüsselung hier.
+  /// Legacy-Klartextpfade (ohne Schlüssel) funktionieren weiter.
+  /// Eigene Bilder NICHT hierüber laden (dafür [loadAvatarBytes] mit den
+  /// vollen lokalen Refs) - match-media lehnt Selbstabfragen ab.
+  static final Map<String, Uint8List> _partnerAvatarMemoryCache = {};
+
+  Future<Uint8List?> loadPartnerAvatarBytes({
+    required String targetUserId,
+    String? path,
+  }) async {
+    final cacheKey = '$targetUserId|${path ?? 'avatar.jpg'}';
+    final cached = _partnerAvatarMemoryCache[cacheKey];
+    if (cached != null) return cached;
+    try {
+      final response = await _client.functions.invoke(
+        'match-media',
+        body: {
+          'targetUserId': targetUserId,
+          'kind': 'avatar',
+          if (path != null && path.isNotEmpty) 'path': path,
+        },
+      );
+      final data = response.data as Map<String, dynamic>?;
+      final url = data?['url'] as String?;
+      if (url == null || url.isEmpty) return null;
+      final res = await http.get(Uri.parse(url));
+      if (res.statusCode != 200) {
+        if (kDebugMode) {
+          log('[SupabaseStorageService] Partner-Avatar Download fehl: '
+              'HTTP ${res.statusCode}');
+        }
+        return null;
+      }
+      final bytes = res.bodyBytes;
+      final keyB64 = data?['keyB64'] as String?;
+      final ivB64 = data?['ivB64'] as String?;
+      if (keyB64 == null || ivB64 == null) {
+        _partnerAvatarMemoryCache[cacheKey] = bytes; // Legacy-Klartext.
+        return bytes;
+      }
+      final Uint8List result;
+      try {
+        result = await compute(
+          AvatarCrypto.decryptArgs,
+          (bytes, base64Decode(keyB64), base64Decode(ivB64)),
+        );
+      } catch (e) {
+        // NUTZERWUNSCH "Bild einfach nicht sichtbar": Schlüssel passt
+        // nicht zum Ciphertext (z. B. alter Refs-Cache) - NICHT cachen,
+        // damit ein frischer match-media-Aufruf es erneut versucht.
+        if (kDebugMode) {
+          log('[SupabaseStorageService] Avatar-Entschlüsselung fehl: $e');
+        }
+        return null;
+      }
+      _partnerAvatarMemoryCache[cacheKey] = result;
+      return result;
+    } catch (e) {
+      if (kDebugMode) {
+        log('[SupabaseStorageService] Partner-Avatar fehlgeschlagen: $e');
+      }
+      return null;
+    }
+  }
+
+  /// Entfernt einen Partner-Avatar aus dem Memory-Cache (NUTZERWUNSCH
+  /// "Bild einfach nicht sichtbar": Bei Retry keinen veralteten
+  /// Schlüssel-Cache behalten, damit match-media frisch antwortet).
+  void invalidatePartnerAvatar({
+    required String targetUserId,
+    String? path,
+  }) {
+    _partnerAvatarMemoryCache
+        .remove('$targetUserId|${path ?? 'avatar.jpg'}');
+  }
+
   /// Erzeugt eine temporäre signierte URL für den angegebenen Storage-Pfad.
   ///
   /// Gültigkeit: 3600 Sekunden. Die URL ist nur mit aktiver Session gültig.
@@ -336,10 +420,16 @@ class SupabaseStorageService {
           'size=${data.length}');
     }
 
+    // NUTZERWUNSCH-DIAGNOSE: uploadBinary wirft bei "Objekt existiert
+    // bereits" (409) - der REUPLOAD (nach abgelehnter Einreichung)
+    // scheiterte dadurch still. Upsert macht die Einreichung wiederholbar.
     await _client.storage.from(_verificationBucket).uploadBinary(
           path,
           Uint8List.fromList(data),
-          fileOptions: const FileOptions(contentType: 'video/mp4'),
+          fileOptions: const FileOptions(
+            contentType: 'video/mp4',
+            upsert: true,
+          ),
         );
 
     return path;

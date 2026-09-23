@@ -1,8 +1,9 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:wisp/models/app_settings.dart';
+import 'package:wisp/routing/route_restore.dart';
 
 import 'package:wisp/providers/auth_provider.dart';
 import 'package:wisp/providers/settings_provider.dart';
@@ -26,6 +27,9 @@ import 'package:wisp/screens/onboarding/onboarding_screen.dart';
 import 'package:wisp/screens/onboarding/personality_test_screen.dart';
 import 'package:wisp/screens/onboarding/settings_privacy_once_screen.dart';
 import 'package:wisp/screens/mood/mood_picker_screen.dart';
+import 'package:wisp/screens/core/whats_new_screen.dart';
+import 'package:wisp/services/whats_new_service.dart';
+import 'package:wisp/services/local_storage.dart';
 import 'package:wisp/screens/privacy/privacy_screen.dart';
 import 'package:wisp/screens/settings/devices_screen.dart';
 import 'package:wisp/screens/profile/profile_edit_screen.dart';
@@ -89,6 +93,8 @@ class AppRoutes {
   static const String qrScan = '/qr/scan';
   // Mood of the Day
   static const String moodPicker = '/mood/picker';
+  // "Neu in dieser Version" (App-Update-Popup für Registrierte).
+  static const String whatsNew = '/whats-new';
   // Datenschutz & Account (DSGVO)
   static const String privacy = '/privacy';
   static const String safetyCenter = '/safety-center';
@@ -129,10 +135,12 @@ class AppRoutes {
   static String profileDetailPath(String userId) => '/profile/$userId';
 
   /// Baut die Dating Hour Chat URL.
-  static String datingHourChatPath(String sessionId) => '/dating-hour/chat/$sessionId';
+  static String datingHourChatPath(String sessionId) =>
+      '/dating-hour/chat/$sessionId';
 
   /// Baut die Verifizierungs-Info URL mit Code-Parameter.
-  static String verificationInfoPath(String code) => '/verification/info?code=$code';
+  static String verificationInfoPath(String code) =>
+      '/verification/info?code=$code';
 }
 
 /// Benachrichtigt den [GoRouter], sobald sich der Auth-Status ODER die
@@ -147,36 +155,23 @@ class _RouterRefresh extends ChangeNotifier {
   _RouterRefresh(Ref ref) {
     // Auf alle relevanten Provider hören und bei jeder Änderung neu
     // evaluieren lassen.
-    ref.listen<AsyncValue<bool>>(
-      authProvider,
-      (_, _) => notifyListeners(),
-    );
-    ref.listen<AppSettings>(
-      settingsProvider,
-      (_, _) => notifyListeners(),
-    );
+    ref.listen<AsyncValue<bool>>(authProvider, (_, _) => notifyListeners());
+    ref.listen<AppSettings>(settingsProvider, (_, _) => notifyListeners());
     // Auch auf das Settings-Lade-Flag hören: Erst wenn Auth UND Settings
     // geladen sind, wird die initiale Route bestimmt.
-    ref.listen<bool>(
-      settingsLoadedProvider,
-      (_, _) => notifyListeners(),
-    );
+    ref.listen<bool>(settingsLoadedProvider, (_, _) => notifyListeners());
     // Server-Sync (Setup-Flags nach Login) ebenfalls abwarten.
-    ref.listen<bool>(
-      serverSyncDoneProvider,
-      (_, _) => notifyListeners(),
-    );
-    ref.listen<bool?>(
-      emailConfirmedProvider,
-      (_, _) => notifyListeners(),
-    );
+    ref.listen<bool>(serverSyncDoneProvider, (_, _) => notifyListeners());
+    ref.listen<bool?>(emailConfirmedProvider, (_, _) => notifyListeners());
     // MFA-Status (Challenge nötig / Setup-Prompt) ebenfalls beobachten.
-    ref.listen<MfaStatus>(
-      mfaStatusProvider,
-      (_, _) => notifyListeners(),
-    );
+    ref.listen<MfaStatus>(mfaStatusProvider, (_, _) => notifyListeners());
   }
 }
+
+/// Globaler RouteObserver (v0.9.1): Screens laden neu, wenn man per
+/// Zurück-Geste von einem gepushten Screen zurückkehrt (z. B. Funken nach
+/// Chat-Besuch) oder die App aus dem Hintergrund kommt.
+final routeObserver = RouteObserver<ModalRoute<void>>();
 
 /// Erstellt den [GoRouter] mit Redirect-Logik basierend auf
 /// Auth-Status und Onboarding-Fortschritt.
@@ -185,6 +180,7 @@ GoRouter createRouter(Ref ref) {
   ref.onDispose(refresh.dispose);
 
   return GoRouter(
+    observers: [routeObserver],
     // Neutraler Lade-Screen als Start-Route. Während Auth- und Settings-Check
     // laufen, bleibt die App hier (optisch identisch zum nativen Splash).
     // Die finale Start-Route wird erst nach Abschluss beider Checks im
@@ -196,7 +192,7 @@ GoRouter createRouter(Ref ref) {
     // Fallback bei unbekannten Routen: freundliche Fehlerseite mit
     // funktionierendem Button zurück zum sinnvollen Ausgangspunkt.
     errorBuilder: (context, state) => const ErrorScreen(),
-    redirect: (context, state) {
+    redirect: (context, state) async {
       final auth = ref.read(authProvider);
       final settingsReady = ref.read(settingsLoadedProvider);
 
@@ -245,7 +241,9 @@ GoRouter createRouter(Ref ref) {
       final goingToOnboarding = state.matchedLocation == AppRoutes.onboarding;
       final goingToPersonalityTest =
           state.matchedLocation == AppRoutes.personalityTest;
-      final goingToDatingHour = state.matchedLocation == AppRoutes.datingHourEvent;
+      final goingToDatingHour =
+          state.matchedLocation == AppRoutes.datingHourEvent;
+      final goingToWhatsNew = state.matchedLocation == AppRoutes.whatsNew;
 
       // -- Admin-Bereich: NUR fuer die konfigurierte Admin-ID --
       // Normale Nutzer duerfen diesen Screen unter keinen Umstaenden
@@ -258,6 +256,24 @@ GoRouter createRouter(Ref ref) {
         // Erststart -> Willkommen, sonst -> Login.
         if (goingToLoading) {
           return introSeen ? AppRoutes.login : AppRoutes.welcome;
+        }
+        // HARTES E-Mail-Gate (Nutzer-Regel: erst bestätigen, dann
+        // einrichten): Ohne Session ist die Einrichtung tabu – auch
+        // mit laufender Registrierung. Frische Registrierungen gehen
+        // zur E-Mail-Bestätigung, alle anderen zum Login. So kann kein
+        // Navigationspfad (auch kein verfrühter Sprung aus dem
+        // Login-Screen) mehr Setup ohne bestätigte E-Mail erreichen.
+        final goingToSetup =
+            goingToSettingsPrivacyOnce ||
+            goingToOnboarding ||
+            goingToPersonalityTest;
+        if (goingToSetup) {
+          final freshRegistration =
+              ref.read(pendingVerificationCredentialsProvider) != null ||
+              ref.read(pendingVerificationEmailProvider) != null;
+          return freshRegistration
+              ? AppRoutes.emailVerification
+              : AppRoutes.login;
         }
         // Einführung nur beim allerersten Start zeigen: Der Welcome-Screen
         // setzt introSeen bereits beim ANZEIGEN (initState) – deshalb darf
@@ -277,8 +293,11 @@ GoRouter createRouter(Ref ref) {
           // auf dem Login-Screen bleiben.
           return null;
         }
-        if (goingToLogin || goingToForgotPassword ||
-            goingToResetPassword || goingToUnbanRequest || goingToWelcome) {
+        if (goingToLogin ||
+            goingToForgotPassword ||
+            goingToResetPassword ||
+            goingToUnbanRequest ||
+            goingToWelcome) {
           return null;
         }
         return AppRoutes.login;
@@ -327,12 +346,14 @@ GoRouter createRouter(Ref ref) {
       // bestätigt – sonst blitzt der E-Mail-Verify-Screen kurz auf, bis der
       // 3-Sekunden-Poller das feststellt.
       final emailConfirmed = ref.read(emailConfirmedProvider);
-      final sessionConfirmed = supabaseActive &&
+      final sessionConfirmed =
+          supabaseActive &&
           SupabaseService.client.auth.currentUser?.emailConfirmedAt != null;
       if (supabaseActive && emailConfirmed != true && !sessionConfirmed) {
         final location = state.matchedLocation;
         // Seiten die OHNE E-Mail-Bestätigung erreichbar sein müssen:
-        final exempt = location == AppRoutes.emailVerification ||
+        final exempt =
+            location == AppRoutes.emailVerification ||
             location == AppRoutes.bugReport;
         if (!exempt) {
           return AppRoutes.emailVerification;
@@ -350,7 +371,8 @@ GoRouter createRouter(Ref ref) {
       final mfa = ref.read(mfaStatusProvider);
       if (mfa.loaded) {
         final location = state.matchedLocation;
-        final mfaExempt = location == AppRoutes.mfaChallenge ||
+        final mfaExempt =
+            location == AppRoutes.mfaChallenge ||
             location == AppRoutes.mfaSetup ||
             location == AppRoutes.emailVerification ||
             location == AppRoutes.bugReport;
@@ -363,7 +385,8 @@ GoRouter createRouter(Ref ref) {
       // 2FA-Challenge, Bug-Report) erreicht werden, ohne dass der Router
       // zur ersten Einrichtungsseite zurückschmeißt. Sonst landet man nach
       // "Jetzt einrichten" (2FA) wieder auf Seite 1 der Einrichtung.
-      final setupExempt = goingToSettingsPrivacyOnce ||
+      final setupExempt =
+          goingToSettingsPrivacyOnce ||
           state.matchedLocation == AppRoutes.mfaSetup ||
           state.matchedLocation == AppRoutes.mfaChallenge ||
           state.matchedLocation == AppRoutes.bugReport;
@@ -411,6 +434,39 @@ GoRouter createRouter(Ref ref) {
         }
       }
 
+      // -- "Neu in dieser Version" (NUTZERWUNSCH): Nach einem App-Update
+      // (Build gestiegen) bekommen bereits eingerichtete Konten EINMALIG
+      // die Änderungs-Kurzfassung + Nachfragen zu neuen Angaben (z. B.
+      // Geburtstags-Stil). Bewusst als EIGENE Route (kein Overlay-Dialog):
+      // Der Router bleibt Single-Source-of-Truth, und der Screen navigiert
+      // sich selbst zu Home ab. Fail-open: Bei Fehlern (z. B. Storage)
+      // wird der Screen übersprungen, nie blockiert.
+      if (!goingToWhatsNew) {
+        try {
+          final currentBuild = await WhatsNewService.currentBuild();
+          final shown = await WhatsNewService.shownBuild(
+            ref.read(localStorageProvider),
+          );
+          final show = WhatsNewService.shouldShow(
+            currentBuild: currentBuild,
+            shownBuild: shown,
+            registered: true,
+            onboardingDone: settings.onboardingDone,
+          );
+          if (show) {
+            // Sofort markieren (Kill-Schutz: kein Endlos-Popup, siehe
+            // WhatsNewService-Doku).
+            await WhatsNewService.markShown(
+              ref.read(localStorageProvider),
+              currentBuild,
+            );
+            return AppRoutes.whatsNew;
+          }
+        } catch (_) {
+          // Fail-open: Gate überspringen statt App zu blockieren.
+        }
+      }
+
       // Ab hier ist die Einrichtung vollständig abgeschlossen.
       //
       // Intro/Auth-Screens und die EINMALIGEN Setup-Screens
@@ -439,12 +495,19 @@ GoRouter createRouter(Ref ref) {
       }
 
       // Eingeloggter Nutzer, der noch auf dem Lade-Screen steht: Einrichtung
-      // ist offenbar vollständig abgeschlossen -> zur Startseite.
-      if (goingToLoading) return AppRoutes.home;
+      // ist offenbar vollständig abgeschlossen -> IMMER zur Startseite
+      // ("Aktuelles"). Betreiber-Entscheidung: Der App-Start soll die
+      // Startseite öffnen, nicht die zuletzt offene Seite; das Route-
+      // Restore (v0.9.1) wird daher nicht mehr angewendet (der gespeicherte
+      // Wert wird nur konsumiert, damit er nicht stehen bleibt).
+      if (goingToLoading) {
+        consumePendingRouteRestore();
+        return AppRoutes.home;
+      }
 
       return null;
     },
-routes: [
+    routes: [
       GoRoute(
         path: AppRoutes.loading,
         builder: (context, state) => const LoadingScreen(),
@@ -537,6 +600,11 @@ routes: [
       GoRoute(
         path: AppRoutes.moodPicker,
         builder: (context, state) => const MoodPickerScreen(),
+      ),
+      // "Neu in dieser Version" (App-Update-Popup für Registrierte).
+      GoRoute(
+        path: AppRoutes.whatsNew,
+        builder: (context, state) => const WhatsNewScreen(),
       ),
       // Datenschutz & Account (DSGVO)
       GoRoute(
@@ -643,15 +711,13 @@ routes: [
           ),
           GoRoute(
             path: AppRoutes.chatDetail,
-            builder: (context, state) => ChatDetailScreen(
-              matchId: state.pathParameters['matchId']!,
-            ),
+            builder: (context, state) =>
+                ChatDetailScreen(matchId: state.pathParameters['matchId']!),
           ),
           GoRoute(
             path: AppRoutes.profileDetail,
-            builder: (context, state) => ProfileDetailScreen(
-              userId: state.pathParameters['userId']!,
-            ),
+            builder: (context, state) =>
+                ProfileDetailScreen(userId: state.pathParameters['userId']!),
           ),
           GoRoute(
             path: AppRoutes.randomChat,

@@ -3,15 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/models/habitude_level.dart';
 import 'package:wisp/providers/profile_provider.dart';
 import 'package:wisp/providers/settings_provider.dart';
 import 'package:wisp/routing/app_router.dart';
 import 'package:wisp/services/supabase_database_service.dart';
 import 'package:wisp/services/supabase_service.dart';
 import 'package:wisp/utils/constants.dart';
+import 'package:wisp/widgets/birthday_style.dart';
 import 'package:wisp/widgets/buttons.dart';
-import 'package:wisp/widgets/habitude_selector.dart';
 import 'package:wisp/widgets/interview_bubble.dart';
 
 /// Onboarding als INTERVIEW (v0.9.0): Wisp stellt Fragen - eine pro
@@ -30,20 +29,41 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _pageController = PageController();
-  final _bioCtrl = TextEditingController();
+  final _songCtrl = TextEditingController();
+  final _bandCtrl = TextEditingController();
 
-  final Set<String> _interests = {};
+  final Set<String> _musicGenres = {};
 
-  HabitudeLevel? _smoking;
-  HabitudeLevel? _alcohol;
-  HabitudeLevel? _drugs;
+  String _birthdayStyle = 'classic';
 
-  static const int _pageCount = 8;
+  // 7 Seiten: Bio, Interessen und Gewohnheiten fragt die Einrichtung
+  // ("Einstellungen & Privatsphäre") bereits vorher ab - hier kämen
+  // sie doppelt UND würden beim Abschluss sogar mit leeren Werten
+  // überschrieben. Übrig: Begrüßung, Foto-Hinweis, Musik,
+  // Geburtstags-Stil, Abschluss.
+  static const int _pageCount = 7;
+
+  @override
+  void initState() {
+    super.initState();
+    // Vorbelegen, falls das Interview erneut geöffnet wird (kein
+    // Überschreiben mit leeren Werten).
+    final profile = ref.read(profileProvider);
+    _musicGenres.addAll(profile.musicLiked);
+    if (profile.favoriteSong != null) {
+      _songCtrl.text = profile.favoriteSong!;
+    }
+    if (profile.favoriteBand != null) {
+      _bandCtrl.text = profile.favoriteBand!;
+    }
+    _birthdayStyle = BirthdayStyle.orDefault(profile.birthdayStyle);
+  }
 
   @override
   void dispose() {
     _pageController.dispose();
-    _bioCtrl.dispose();
+    _songCtrl.dispose();
+    _bandCtrl.dispose();
     super.dispose();
   }
 
@@ -62,31 +82,73 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   void _finish() async {
     final profile = ref.read(profileProvider);
-    await ref.read(profileProvider.notifier).update(
+    final song = _songCtrl.text.trim();
+    final band = _bandCtrl.text.trim();
+    // NUR Interview-eigene Felder schreiben: Bio, Interessen und
+    // Gewohnheiten kommen aus "Einstellungen & Privatsphäre" und
+    // dürfen hier NICHT mit leeren Werten überschrieben werden.
+    await ref
+        .read(profileProvider.notifier)
+        .update(
           name: profile.name,
-          bio: _bioCtrl.text.trim(),
-          interests: _interests.toList(),
-          smoking: _smoking,
-          alcohol: _alcohol,
-          drugs: _drugs,
+          musicLiked: _musicGenres.toList(),
+          favoriteSong: song.isEmpty ? null : song,
+          favoriteBand: band.isEmpty ? null : band,
+          birthdayStyle: _birthdayStyle,
         );
-    await _persistHabitudesToServer();
+    await _persistMusicToServer();
+    await _persistSongToServer(song);
+    await _persistBandToServer(band);
+    await _persistBirthdayStyleToServer();
     await ref.read(settingsProvider.notifier).completeOnboarding();
     if (mounted) context.go(AppRoutes.home);
   }
 
-  /// Schreibt die Konsum-Präferenzen serverseitig in die profiles-Tabelle,
-  /// damit der Find-your-Match-Algorithmus darüber filtern kann.
-  Future<void> _persistHabitudesToServer() async {
-    if (!SupabaseService.isInitialized) return;
+  /// Schreibt die Musik-Genres serverseitig (Migration 074, Matching).
+  Future<void> _persistMusicToServer() async {
+    if (!SupabaseService.isInitialized || _musicGenres.isEmpty) return;
     try {
       await SupabaseDatabaseService(SupabaseService.client).updateOwnProfile({
-        'smoking': _smoking?.toServer(),
-        'alcohol': _alcohol?.toServer(),
-        'drugs': _drugs?.toServer(),
+        'music_liked': _musicGenres.toList(),
       });
     } catch (e) {
-      debugPrint('[Onboarding] Habitude-Server-Sync fehlgeschlagen: $e');
+      debugPrint('[Onboarding] Musik-Server-Sync fehlgeschlagen: $e');
+    }
+  }
+
+  /// Schreibt Lieblingssong/Band serverseitig (Migration 092).
+  Future<void> _persistSongToServer(String song) async {
+    if (!SupabaseService.isInitialized || song.isEmpty) return;
+    try {
+      await SupabaseDatabaseService(
+        SupabaseService.client,
+      ).updateOwnProfile({'favorite_song': song});
+    } catch (e) {
+      debugPrint('[Onboarding] Song-Server-Sync fehlgeschlagen: $e');
+    }
+  }
+
+  /// Schreibt den Lieblingsband serverseitig (Migration 119).
+  Future<void> _persistBandToServer(String band) async {
+    if (!SupabaseService.isInitialized || band.isEmpty) return;
+    try {
+      await SupabaseDatabaseService(
+        SupabaseService.client,
+      ).updateOwnProfile({'favorite_band': band});
+    } catch (e) {
+      debugPrint('[Onboarding] Band-Server-Sync fehlgeschlagen: $e');
+    }
+  }
+
+  /// Schreibt den Geburtstags-Stil serverseitig (Migration 115).
+  Future<void> _persistBirthdayStyleToServer() async {
+    if (!SupabaseService.isInitialized) return;
+    try {
+      await SupabaseDatabaseService(
+        SupabaseService.client,
+      ).updateOwnProfile({'birthday_style': _birthdayStyle});
+    } catch (e) {
+      debugPrint('[Onboarding] Stil-Server-Sync fehlgeschlagen: $e');
     }
   }
 
@@ -159,38 +221,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         );
                       case 3:
                         return _QuestionStep(
-                          questionKey: 'onboarding.q.bio',
-                          onSkip: _next,
-                          onContinue: _next,
-                          onBack: _prev,
-                          child: TextField(
-                            controller: _bioCtrl,
-                            maxLines: 4,
-                            maxLength: 300,
-                            keyboardType: TextInputType.text,
-                            decoration: InputDecoration(
-                              hintText:
-                                  L10n.t(context, 'onboarding.q.bioHint'),
-                            ),
-                          ),
-                        );
-                      case 4:
-                        return _InterestsStep(
-                          questionKey: 'onboarding.q.interests',
-                          onSkip: _next,
-                          onContinue: _next,
-                          onBack: _prev,
-                          initialInterests: _interests,
-                          onChanged: (interests) {
-                            setState(() {
-                              _interests
-                                ..clear()
-                                ..addAll(interests);
-                            });
-                          },
-                        );
-                      case 5:
-                        return _QuestionStep(
                           questionKey: 'onboarding.q.photo',
                           onSkip: _next,
                           onContinue: _next,
@@ -199,56 +229,98 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                             child: Column(
                               children: [
                                 CircleAvatar(
-                                    radius: 48,
-                                    child:
-                                        Icon(Icons.person, size: 48)),
+                                  radius: 48,
+                                  child: Icon(Icons.person, size: 48),
+                                ),
                                 SizedBox(height: 8),
                                 _PhotoLaterHint(),
                               ],
                             ),
                           ),
                         );
-                      case 6:
+                      case 4:
                         return _QuestionStep(
-                          questionKey: 'onboarding.q.habits',
+                          questionKey: 'onboarding.q.music',
                           onSkip: _next,
                           onContinue: _next,
                           onBack: _prev,
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Text(
                                 L10n.t(context,
-                                    'onboarding.q.habitsHint'),
+                                    'onboarding.q.musicGenres'),
                                 style: Theme.of(context)
                                     .textTheme
-                                    .bodyMedium,
+                                    .titleSmall,
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: AppConstants.presetMusicGenres
+                                    .map(
+                                      (g) => FilterChip(
+                                        label: Text(g),
+                                        selected:
+                                            _musicGenres.contains(g),
+                                        onSelected: (sel) {
+                                          setState(() {
+                                            if (sel) {
+                                              _musicGenres.add(g);
+                                            } else {
+                                              _musicGenres.remove(g);
+                                            }
+                                          });
+                                        },
+                                      ),
+                                    )
+                                    .toList(),
                               ),
                               const SizedBox(height: 16),
-                              HabitudeSelector(
-                                topic: HabitudeTopic.smoking,
-                                value: _smoking,
-                                onChanged: (v) =>
-                                    setState(() => _smoking = v),
+                              TextField(
+                                controller: _songCtrl,
+                                maxLines: 1,
+                                maxLength: 120,
+                                keyboardType: TextInputType.text,
+                                decoration: InputDecoration(
+                                  hintText: L10n.t(
+                                    context,
+                                    'onboarding.q.musicHint',
+                                  ),
+                                  counterText: '',
+                                ),
                               ),
-                              const SizedBox(height: 16),
-                              HabitudeSelector(
-                                topic: HabitudeTopic.alcohol,
-                                value: _alcohol,
-                                onChanged: (v) =>
-                                    setState(() => _alcohol = v),
-                              ),
-                              const SizedBox(height: 16),
-                              HabitudeSelector(
-                                topic: HabitudeTopic.drugs,
-                                value: _drugs,
-                                onChanged: (v) =>
-                                    setState(() => _drugs = v),
+                              const SizedBox(height: 12),
+                              TextField(
+                                controller: _bandCtrl,
+                                maxLines: 1,
+                                maxLength: 120,
+                                keyboardType: TextInputType.text,
+                                decoration: InputDecoration(
+                                  hintText: L10n.t(
+                                    context,
+                                    'onboarding.q.bandHint',
+                                  ),
+                                  counterText: '',
+                                ),
                               ),
                             ],
                           ),
                         );
-                      case 7:
+                      case 5:
+                        return _QuestionStep(
+                          questionKey: 'onboarding.q.birthday',
+                          onSkip: _next,
+                          onContinue: _next,
+                          onBack: _prev,
+                          child: BirthdayStylePicker(
+                            selected: _birthdayStyle,
+                            onSelected: (style) =>
+                                setState(() => _birthdayStyle = style),
+                          ),
+                        );
+                      case 6:
                         return const _InfoPage(
                           icon: Icons.celebration,
                           titleKey: 'onboarding.done.title',
@@ -304,10 +376,9 @@ class _ProgressDots extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: i == page.round()
                         ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant
-                            .withAlpha(70),
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onSurfaceVariant.withAlpha(70),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -371,7 +442,12 @@ class _InfoPage extends StatelessWidget {
 }
 
 /// Überspringbarer Interview-Frage-Schritt: Wisp-Bubble + Antwortbereich.
-class _QuestionStep extends StatelessWidget {
+///
+/// Tastatur-Disziplin (Nutzer-Regel: "man sieht nicht, was man tippt"):
+/// Sobald ein Feld im Antwortbereich den Fokus bekommt, scrollt die
+/// Ansicht das fokussierte Feld über die Tastatur ([FocusableAction]-
+/// frei, via [Scrollable.ensureVisible]) und hält Tastatur-Platz frei.
+class _QuestionStep extends StatefulWidget {
   const _QuestionStep({
     required this.questionKey,
     required this.child,
@@ -387,80 +463,10 @@ class _QuestionStep extends StatelessWidget {
   final VoidCallback? onBack;
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          InterviewBubble(text: L10n.t(context, questionKey)),
-          const SizedBox(height: 20),
-          Expanded(
-            child: Scrollbar(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    child,
-                    const SizedBox(height: 16),
-                    TextButton(
-                      onPressed: onSkip,
-                      child: Text(
-                          L10n.t(context, 'onboarding.fillLater')),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          if (onBack != null)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                onPressed: onBack,
-                icon: const Icon(Icons.arrow_back),
-                label: Text(L10n.t(context, 'common.back')),
-              ),
-            ),
-          PrimaryButton(
-              label: L10n.t(context, 'onboarding.next'),
-              onPressed: onContinue),
-        ],
-      ),
-    );
-  }
+  State<_QuestionStep> createState() => _QuestionStepState();
 }
 
-/// Interessen-Auswahl als Interview-Schritt (gleiche Daten wie zuvor).
-class _InterestsStep extends StatefulWidget {
-  const _InterestsStep({
-    required this.questionKey,
-    required this.onSkip,
-    required this.onContinue,
-    this.onBack,
-    required this.initialInterests,
-    required this.onChanged,
-  });
-
-  final String questionKey;
-  final VoidCallback onSkip;
-  final VoidCallback onContinue;
-  final VoidCallback? onBack;
-  final Set<String> initialInterests;
-  final ValueChanged<Set<String>> onChanged;
-
-  @override
-  State<_InterestsStep> createState() => _InterestsStepState();
-}
-
-class _InterestsStepState extends State<_InterestsStep> {
-  late final Set<String> _interests;
-
-  @override
-  void initState() {
-    super.initState();
-    _interests = Set<String>.from(widget.initialInterests);
-  }
-
+class _QuestionStepState extends State<_QuestionStep> {
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -468,39 +474,43 @@ class _InterestsStepState extends State<_InterestsStep> {
       child: Column(
         children: [
           InterviewBubble(text: L10n.t(context, widget.questionKey)),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Expanded(
             child: Scrollbar(
               child: SingleChildScrollView(
+                // Platz für die Tastatur: Der Inhalt bleibt so über dem
+                // Keyboard scrollbar, statt dahinter zu verschwinden.
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.viewInsetsOf(context).bottom,
+                ),
                 child: Column(
                   children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: AppConstants.presetInterests
-                          .map(
-                            (i) => FilterChip(
-                              label: Text(i),
-                              selected: _interests.contains(i),
-                              onSelected: (sel) {
-                                setState(() {
-                                  if (sel) {
-                                    _interests.add(i);
-                                  } else {
-                                    _interests.remove(i);
-                                  }
-                                });
-                                widget.onChanged(Set<String>.from(_interests));
-                              },
-                            ),
-                          )
-                          .toList(),
+                    // Sobald ein Eingabefeld Fokus bekommt (Tastatur geht
+                    // auf), das Feld sichtbar scrollen - sonst tippt man
+                    // blind unterhalb der Tastatur.
+                    Focus(
+                      onFocusChange: (hasFocus) {
+                        if (!hasFocus || !mounted) return;
+                        Future.delayed(const Duration(milliseconds: 350), () {
+                          if (!mounted) return;
+                          final focused =
+                              FocusManager.instance.primaryFocus?.context;
+                          if (focused != null && focused.mounted) {
+                            Scrollable.ensureVisible(
+                              focused,
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.easeOut,
+                              alignment: 0.25,
+                            );
+                          }
+                        });
+                      },
+                      child: widget.child,
                     ),
                     const SizedBox(height: 16),
                     TextButton(
                       onPressed: widget.onSkip,
-                      child: Text(
-                          L10n.t(context, 'onboarding.fillLater')),
+                      child: Text(L10n.t(context, 'onboarding.fillLater')),
                     ),
                   ],
                 ),
@@ -518,8 +528,9 @@ class _InterestsStepState extends State<_InterestsStep> {
               ),
             ),
           PrimaryButton(
-              label: L10n.t(context, 'onboarding.next'),
-              onPressed: widget.onContinue),
+            label: L10n.t(context, 'onboarding.next'),
+            onPressed: widget.onContinue,
+          ),
         ],
       ),
     );

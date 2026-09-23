@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:wisp/routing/app_router.dart';
 import 'package:wisp/services/supabase_service.dart';
+import 'package:wisp/l10n/app_strings.dart';
 import 'package:wisp/utils/validators.dart';
 import 'package:wisp/widgets/buttons.dart';
 
@@ -48,7 +49,8 @@ class _ForgotPasswordScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Fehler beim Senden: $e'),
+            content: Text(
+                L10n.tf(context, 'common.errorWith', {'error': '$e'})),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -61,7 +63,7 @@ class _ForgotPasswordScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Passwort vergessen')),
+      appBar: AppBar(title: Text(L10n.t(context, 'forgot.title'))),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -74,17 +76,15 @@ class _ForgotPasswordScreenState
                   Icon(Icons.lock_reset, size: 64, color: Theme.of(context).colorScheme.primary),
                   const SizedBox(height: 16),
                   Text(
-                    'Passwort zurücksetzen',
+                    L10n.t(context, 'forgot.heading'),
                     style: Theme.of(context).textTheme.headlineSmall,
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 12),
                   Text(
                     _sent
-                        ? 'Wenn ein Konto mit dieser Email existiert, '
-                            'haben wir einen Link zum Zurücksetzen gesendet.'
-                        : 'Gib deine Emailadresse ein. Wir senden dir '
-                            'einen Link, um dein Passwort zurückzusetzen.',
+                        ? L10n.t(context, 'forgot.sentBody')
+                        : L10n.t(context, 'forgot.body'),
                     style: Theme.of(context).textTheme.bodyLarge,
                     textAlign: TextAlign.center,
                   ),
@@ -93,8 +93,9 @@ class _ForgotPasswordScreenState
                     TextFormField(
                       controller: _emailCtrl,
                       keyboardType: TextInputType.text,
-                      decoration: const InputDecoration(labelText: 'Email'),
-                      validator: Validators.email,
+                      decoration: InputDecoration(
+                          labelText: L10n.t(context, 'forgot.email')),
+                      validator: (v) => Validators.email(context, v),
                     )
                   else
                     Container(
@@ -106,25 +107,26 @@ class _ForgotPasswordScreenState
                             .withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.check_circle_outline),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Falls ein Konto mit dieser Email existiert, '
-                              'wurde ein Link gesendet.',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.check_circle_outline),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  L10n.t(context, 'forgot.sentBox'),
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
                     ),
                   const SizedBox(height: 24),
                    PrimaryButton(
                     label: _sending
-                        ? 'Sende …'
-                        : (_sent ? 'Zurück zum Login' : 'Link senden'),
+                        ? L10n.t(context, 'forgot.sending')
+                        : (_sent
+                            ? L10n.t(context, 'forgot.toLogin')
+                            : L10n.t(context, 'forgot.sendLink')),
                     onPressed: _sending
                         ? null
                         : (_sent

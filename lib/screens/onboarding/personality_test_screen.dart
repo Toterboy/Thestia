@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:wisp/l10n/app_strings.dart';
 import 'package:wisp/providers/profile_provider.dart';
 import 'package:wisp/providers/settings_provider.dart';
 import 'package:wisp/routing/app_router.dart';
@@ -25,22 +26,21 @@ class PersonalityTestScreen extends ConsumerStatefulWidget {
 class _PersonalityTestScreenState
     extends ConsumerState<PersonalityTestScreen> {
   /// Fragen mit je zwei gegensätzlichen Polen (A/B). Die Auswahl steuert
-  /// die Dimensionen E/I, S/N, T/F, J/P.
-  static const _questions = [
-    ('Wie lädst du neue Energie auf?', 'Bei Menschen und Aktivität', 'Bei Ruhe und Zeit für mich'),
-    ('Was beschreibt dich besser?', 'Spontan und flexibel', 'Geplant und organisiert'),
-    ('Bei Entscheidungen vertraust du eher …', 'dem Bauchgefühl', 'den Fakten'),
-    ('Wie gehst du auf neue Leute zu?', 'Offen und aktiv', 'Eher zurückhaltend'),
-    ('Du magst es, Dinge …', 'praktisch und konkret anzugehen', 'im großen Zusammenhang zu sehen'),
-    ('In der Freizeit bevorzugst du …', 'Abwechslung und Überraschungen', 'Routine und Vertrautes'),
-    ('Konflikte gehst du am liebsten an …', 'direkt und sachlich', 'behutsam und harmonisch'),
-    ('Du arbeitest gern …', 'im Team mit anderen', 'selbstständig allein'),
-    ('Beim Kennenlernen zählt für dich zuerst …', 'was wir gemeinsam erleben', 'worüber wir reden'),
-    ('Pläne für das Wochenende …', 'stehen meist schon fest', 'entstehen oft spontan'),
-  ];
+  /// die Dimensionen E/I, S/N, T/F, J/P. Lokalisiert (pt.q1..q10).
+  List<(String, String, String)> _questions(BuildContext context) => [
+        for (var i = 1; i <= 10; i++)
+          (
+            L10n.t(context, 'pt.q$i'),
+            L10n.t(context, 'pt.q${i}a'),
+            L10n.t(context, 'pt.q${i}b'),
+          ),
+      ];
+
+  /// Anzahl der Fragen (s. [_questions]).
+  static const int questionCount = 10;
 
   /// 0 = erstes Item (A), 1 = zweites Item (B).
-  final List<int?> _answers = List.filled(_questions.length, null);
+  final List<int?> _answers = List.filled(questionCount, null);
 
   bool get _allAnswered => _answers.every((a) => a != null);
 
@@ -54,31 +54,19 @@ class _PersonalityTestScreenState
     return ei + sn + tf + jp;
   }
 
-  String _resultLabel(String type) {
-    const map = {
-      'ENFJ': 'Der Mentor',
-      'ENFP': 'Der Begeisterer',
-      'ENTJ': 'Der Anführer',
-      'ENTP': 'Der Erfinder',
-      'ESFJ': 'Der Versorger',
-      'ESFP': 'Der Entertainer',
-      'ESTJ': 'Der Organisator',
-      'ESTP': 'Der Macher',
-      'INFJ': 'Der Träumer',
-      'INFP': 'Der Idealist',
-      'INTJ': 'Der Stratege',
-      'INTP': 'Der Denker',
-      'ISFJ': 'Der Beschützer',
-      'ISFP': 'Der Künstler',
-      'ISTJ': 'Der Logiker',
-      'ISTP': 'Der Handwerker',
-    };
-    return map[type] ?? 'Der Entdecker';
+  /// Anzeigelabel zum Typ (pt.label.*, Fallback bei unbekanntem Typ).
+  /// Wird auch gespeichert (Profil) und dort angezeigt.
+  String _resultLabel(BuildContext context, String type) {
+    final label = L10n.t(context, 'pt.label.$type');
+    if (label == 'pt.label.$type') {
+      return L10n.t(context, 'pt.label.fallback');
+    }
+    return label;
   }
 
   Future<void> _finish() async {
     final type = _type();
-    final result = _resultLabel(type);
+    final result = _resultLabel(context, type);
     await ref.read(profileProvider.notifier).update(
           personalityType: type,
           personalityResult: result,
@@ -94,13 +82,9 @@ class _PersonalityTestScreenState
     final flagsSaved = await _persistSetupFlagsToServer();
     if (mounted && !flagsSaved) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Hinweis: Der Einrichtungs-Stand konnte nicht auf dem Server '
-            'gesichert werden. Die Einrichtung erscheint beim nächsten '
-            'Login möglicherweise erneut.',
-          ),
-          duration: Duration(seconds: 6),
+        SnackBar(
+          content: Text(L10n.t(context, 'pt.saveFailed')),
+          duration: const Duration(seconds: 6),
         ),
       );
     }
@@ -109,12 +93,12 @@ class _PersonalityTestScreenState
       await showDialog<void>(        context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
-          title: const Text('Test abgeschlossen!'),
+          title: Text(L10n.t(context, 'pt.doneTitle')),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'Du bist ein $type!',
+                L10n.tf(context, 'pt.youAre', {'t': type}),
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -128,7 +112,7 @@ class _PersonalityTestScreenState
               ),
               const SizedBox(height: 16),
               Text(
-                _typeDescription(type),
+                _typeDescription(context, type),
                 style: Theme.of(context).textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),
@@ -140,7 +124,7 @@ class _PersonalityTestScreenState
                 Navigator.of(ctx).pop();
                 context.go(AppRoutes.home);
               },
-              child: const Text('Weiter'),
+              child: Text(L10n.t(context, 'common.continue')),
             ),
           ],
         ),
@@ -164,33 +148,21 @@ class _PersonalityTestScreenState
     }
   }
 
-  String _typeDescription(String type) {
-    const descriptions = {
-      'ENFJ': 'Du bist ein natürlicher Mentor, empathisch, organisiert und inspirierend. Du bringst Menschen zusammen und hilfst ihnen, ihr Potenzial zu entfalten.',
-      'ENFP': 'Du sprudelst vor Begeisterung und Ideen. Deine Neugier und Offenheit machen dich zu einem magnetischen Menschen, der andere mitreißt.',
-      'ENTJ': 'Du führst mit Vision und Entschlossenheit. Strategisches Denken und natürliche Autorität machen dich zu einem geborenen Anführer.',
-      'ENTP': 'Du liebst intellektuelle Herausforderungen und neue Perspektiven. Dein Erfindergeist und deine Schlagfertigkeit machen Gespräche mit dir spannend.',
-      'ESFJ': 'Du sorgst dich aufrichtig um andere und schaffst harmonische Umgebungen. Deine Zuverlässigkeit und dein Organisationstalent werden geschätzt.',
-      'ESFP': 'Du lebst im Moment und genießt das Leben in vollen Zügen. Deine Spontanität und Wärme machen dich zum Mittelpunkt jeder Runde.',
-      'ESTJ': 'Du bringst Struktur in Chaos. Mit klarem Verstand und praktischem Sinn organisierst du effizient und verlässlich.',
-      'ESTP': 'Du handelst schnell und entschlossen. Herausforderungen nimmst du direkt an, pragmatisch, energetisch und lösungsorientiert.',
-      'INFJ': 'Du besitzt eine seltene Tiefe und Intuition. Deine Idealismus und dein Einfühlungsvermögen machen dich zu einem vertrauensvollen Berater.',
-      'INFP': 'Du folgst deinen Werten mit stiller Entschlossenheit. Deine Kreativität und Authentizität inspirieren andere, echt zu sein.',
-      'INTJ': 'Du denkst strategisch und langfristig. Deine analytische Schärfe und dein Wille zur Verbesserung machen dich zu einem visionären Planer.',
-      'INTP': 'Du durchdringt komplexe Systeme mit neugierigem Verstand. Deine logische Tiefe und Unabhängigkeit führen zu originellen Lösungen.',
-      'ISFJ': 'Du bist der stille Fels in der Brandung. Fürsorglich, detailverliebt und loyal, auf dich kann man sich immer verlassen.',
-      'ISFP': 'Du drückst dich durch Taten und Ästhetik aus. Deine Sensibilität für Schönheit und deine Authentizität machen dich einzigartig.',
-      'ISTJ': 'Du bist das Fundament, auf dem andere bauen. Gewissenhaft, logisch und beständig, du hältst, was du versprichst.',
-      'ISTP': 'Du meisterst praktische Probleme mit Ruhe und Geschick. Deine analytische Beobachtung und handwerkliches Talent überzeugen.',
-    };
-    return descriptions[type] ?? 'Du entdeckst die Welt mit offener Neugier und findest deinen eigenen Weg, ganz egal, welcher Typ du bist.';
+  /// Beschreibung zum Typ (pt.desc.*, Fallback bei unbekanntem Typ).
+  String _typeDescription(BuildContext context, String type) {
+    final desc = L10n.t(context, 'pt.desc.$type');
+    if (desc == 'pt.desc.$type') {
+      return L10n.t(context, 'pt.desc.fallback');
+    }
+    return desc;
   }
 
   @override
   Widget build(BuildContext context) {
+    final questions = _questions(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Persönlichkeitstest'),
+        title: Text(L10n.t(context, 'pt.title')),
       ),
       body: SafeArea(
         child: Column(
@@ -201,18 +173,20 @@ class _PersonalityTestScreenState
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Lerne deine Persönlichkeit kennen',
+                    L10n.t(context, 'pt.heading'),
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Beantworte ein paar Fragen, ganz ohne falsch oder richtig. '
-                    'Das hilft, dir passende Menschen zu zeigen.',
+                    L10n.t(context, 'pt.sub'),
                     style: Theme.of(context).textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 12),
                   LinearProgressIndicator(
-                    value: _allAnswered ? 1 : _answers.whereType<int>().length / _questions.length,
+                    value: _allAnswered
+                        ? 1
+                        : _answers.whereType<int>().length /
+                            questions.length,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ],
@@ -222,10 +196,10 @@ class _PersonalityTestScreenState
               child: Scrollbar(
                 child: ListView.separated(
                   padding: const EdgeInsets.all(24),
-                  itemCount: _questions.length,
+                  itemCount: questions.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 20),
                   itemBuilder: (context, i) {
-                    final q = _questions[i];
+                    final q = questions[i];
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -264,7 +238,7 @@ class _PersonalityTestScreenState
               child: Column(
                 children: [
                   PrimaryButton(
-                     label: 'Test abschließen',
+                    label: L10n.t(context, 'pt.finish'),
                     onPressed: _allAnswered ? _finish : null,
                   ),
                   const SizedBox(height: 12),
@@ -276,7 +250,7 @@ class _PersonalityTestScreenState
                           .completePersonalityTest();
                       if (mounted) router.go(AppRoutes.home);
                     },
-                    child: const Text('Überspringen'),
+                    child: Text(L10n.t(context, 'common.skip')),
                   ),
                 ],
               ),

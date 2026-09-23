@@ -102,7 +102,7 @@ class DatingHourService {
     });
   }
 
-  /// Anzahl aktiver Teilnehmer eines Events (für die "X von 20"-Anzeige).
+  /// Anzahl aktiver Teilnehmer eines Events (für die "X von N"-Anzeige).
   /// Liefert 0 bei Fehlern (Best effort - die Anzeige darf nicht hängen).
   Future<int> getParticipantCount(String eventId) async {
     try {

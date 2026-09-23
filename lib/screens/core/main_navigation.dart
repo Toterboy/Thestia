@@ -1,11 +1,22 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:wisp/l10n/app_strings.dart';
 import 'package:wisp/routing/app_router.dart';
+import 'package:wisp/routing/route_restore.dart';
 import 'package:wisp/screens/profile/profile_edit_screen.dart'
     show profileEditDirtyProvider, profileEditNavigateAfterSaveProvider;
+import 'package:wisp/services/local_storage.dart';
+
+/// Sichert die Route für die Wiederherstellung nach Prozesstod (v0.9.1).
+Future<void> _saveLastRoute(WidgetRef ref, String path) async {
+  try {
+    await ref.read(localStorageProvider).saveString(lastRoutePrefsKey, path);
+  } catch (_) {}
+}
 
 /// Hält den aktuell aktiven Tab der Bottom-Navigation.
 ///
@@ -47,18 +58,50 @@ class MainNavigation extends ConsumerWidget {
     '/find-your-match': 1,
     '/dating-hour': 1,
     '/qr/': 1,
+    // Transit Spark (vom Modi-Screen gestartet): vorher Fallback 0 =
+    // "Aktuelles" war hervorgehoben statt "Entdecken" (Nutzer-Feedback).
+    '/transit/radar': 1,
     '/profile/edit': 3,
     '/profile/': 2,
   };
 
   /// Routen, auf denen die Bottom-Navigation ausgeblendet wird.
+  ///
+  /// Chat (v0.9.0-Feedback): Im Chat sollen die Reiter unten nicht mehr
+  /// sichtbar sein - das Gespraech hat den vollen Bildschirm. v0.9.1: ALLE
+  /// Fenster innerhalb des Chats (Quiz, Eisbrecher, Profil-Detail) ebenfalls
+  /// ohne Reiter.
   static const _hideBottomNavRoutes = {
     AppRoutes.personalityTest,
     AppRoutes.emailVerification,
-    // Chat (v0.9.0-Feedback): Im Chat sollen die Reiter unten nicht mehr
-    // sichtbar sein - das Gespraech hat den vollen Bildschirm.
     AppRoutes.chatDetail,
+    AppRoutes.randomChat,
+    AppRoutes.quiz,
+    AppRoutes.spiceQuestions,
+    AppRoutes.profileDetail,
   };
+
+  /// Entscheidet anhand Muster UND konkretem Pfad, ob die Reiter
+  /// ausgeblendet werden.
+  ///
+  /// Robust gegen beide GoRouter-Verhaltensweisen: [matchedLocation] liefert
+  /// je nach Version das Muster ("/chat/:matchId") oder den konkreten Pfad
+  /// ("/chat/123"). Der reine [contains]-Vergleich schlug deshalb auf
+  /// manchen Versionen fehl und die Reiter blieben im Chat sichtbar.
+  /// Der konkrete Pfad wird explizit geprüft - dabei bleibt "/profile/edit"
+  /// (Profil BEARBEITEN, mit Reitern) ausgenommen.
+  static bool _hideForLocation(String matchedLocation, String uriPath) {
+    if (_hideBottomNavRoutes.contains(matchedLocation)) return true;
+    if (uriPath.startsWith('/chat/')) return true;
+    if (uriPath == AppRoutes.randomChat) return true;
+    if (uriPath.startsWith('/dating-hour/chat/')) return true;
+    if (uriPath.startsWith('/quiz/')) return true;
+    if (uriPath.startsWith('/spice/')) return true;
+    if (uriPath.startsWith('/profile/') && uriPath != AppRoutes.profileEdit) {
+      return true;
+    }
+    return false;
+  }
 
   int _index(String location) {
     // 1) Exakte übereinstimmung mit einem Haupt-Tab hat Vorrang.
@@ -98,23 +141,20 @@ class MainNavigation extends ConsumerWidget {
       final choice = await showDialog<String>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Ungespeicherte Änderungen'),
-          content: const Text(
-            'Deine Profil-Änderungen wurden noch nicht gespeichert. '
-            'Was möchtest du tun?',
-          ),
+          title: Text(L10n.t(ctx, 'nav.unsavedTitle')),
+          content: Text(L10n.t(ctx, 'nav.unsavedBody')),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop('cancel'),
-              child: const Text('Abbrechen'),
+              child: Text(L10n.t(ctx, 'common.cancel')),
             ),
             TextButton(
               onPressed: () => Navigator.of(ctx).pop('discard'),
-              child: const Text('Verwerfen'),
+              child: Text(L10n.t(ctx, 'common.discard')),
             ),
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop('save'),
-              child: const Text('Speichern'),
+              child: Text(L10n.t(ctx, 'common.save')),
             ),
           ],
         ),
@@ -135,9 +175,22 @@ class MainNavigation extends ConsumerWidget {
     context.go(_tabs[i].route);
   }
 
+  /// Zuletzt gesicherte Route (schreibt Prefs nur bei Wechsel, v0.9.1).
+  static String? _lastSavedRoute;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final location = GoRouterState.of(context).matchedLocation;
+    final routerState = GoRouterState.of(context);
+    final location = routerState.matchedLocation;
+    // Letzte wiederherstellbare Route für Kaltstarts nach Prozesstod
+    // sichern (v0.9.1) - nur bei Wechsel, kein Schreiben pro Build.
+    final concretePath = routerState.uri.path;
+    if (concretePath != _lastSavedRoute) {
+      _lastSavedRoute = concretePath;
+      if (isRestorableRoute(concretePath)) {
+        unawaited(_saveLastRoute(ref, concretePath));
+      }
+    }
     final computedIndex = _index(location);
     // Zentralen State synchronisieren, damit er überall konsistent ist.
     final stateIndex = ref.watch(currentNavIndexProvider);
@@ -148,13 +201,17 @@ class MainNavigation extends ConsumerWidget {
       }
     });
 
-    final hideNav = _hideBottomNavRoutes.contains(location);
+    final hideNav = _hideForLocation(location, routerState.uri.path);
     // Desktop/Web: ab 1000 px logischer Breite NavigationRail statt
     // Bottom-Bar (Touch-Targets bleiben, Maus-Nutzung wird natürlicher).
     final useRail = MediaQuery.sizeOf(context).width >= 1000;
 
     final navBar = NavigationBar(
       selectedIndex: index,
+      // Hintergrund + Schatten kommen vom schwebenden Container unten;
+      // die Bar selbst ist transparent (kein Doppel-Rand).
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       onDestinationSelected: (i) => _goToTab(context, ref, i),
       destinations: _tabs
           .map(
@@ -188,8 +245,30 @@ class MainNavigation extends ConsumerWidget {
               ],
             )
           : child,
-      bottomNavigationBar:
-          (hideNav || useRail) ? null : navBar,
+      bottomNavigationBar: (hideNav || useRail)
+          ? null
+          // Schwebende Reiter-Leiste (Nutzerwunsch): abgerundeter
+          // Container mit Schatten statt kantiger Vollbreite - passt zu
+          // Cards (24) und Dialogen im Rest der App.
+          : SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Material(
+                  elevation: 8,
+                  shadowColor: Theme.of(context)
+                      .colorScheme
+                      .shadow
+                      .withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(28),
+                  color:
+                      Theme.of(context).colorScheme.surfaceContainer,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(28),
+                    child: navBar,
+                  ),
+                ),
+              ),
+            ),
     );
   }
 }

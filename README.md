@@ -115,6 +115,12 @@ Beide finden sich unter [Releases](https://github.com/Toterboy/Wisp-Datingapp/re
 
 - **Ende-zu-Ende-Verschlüsselung** aller Chat-Nachrichten via Signal Protocol (PreKeys, Sessions)
 - **Peer-to-Peer-Verbindung** (WebRTC) mit Peer-Pinning im Signaling-Routing; ICE-Server werden dynamisch über die Supabase-Edge-Function `ice-config` geladen (EU-Fallback ohne Google)
+- **Zustell-Reserve**: Kommt kein direkter Kanal zustande (Mobilfunk/CGNAT), läuft der Chat E2E-verschlüsselt über den Supabase-Relay weiter (Wake-up-Ping + Polling); P2P im selben WLAN nutzt klartext Host-Kandidaten
+- **TURN aktivieren** (optional, Betreiber-Entscheidung wegen Kosten): Direktverbindungen über Netzgrenzen/CGNAT hinweg brauchen einen TURN-Relay. Der Code ist VORBEREITET - die `ice-config` Edge Function generiert kurzlebige TURN-REST-Credentials, sobald zwei Function-Secrets gesetzt sind (kein Code-Ändern nötig):
+  1. Eigener coturn-Server (z. B. 1-vCPU-VPS, `use-auth-secret`) oder TURN-Hoster.
+  2. Secrets setzen: `TURN_URL` = `turn:<host>:3478?transport=udp` (+ optional `TURN_SECRET`, `TURN_TTL`).
+      - Supabase Dashboard → Functions → Secrets, oder lokal: `supabase secrets set TURN_URL=... TURN_SECRET=...`
+  3. Fertig: Clients ziehen die Config automatisch beim nächsten Verbindungsaufbau (Cache-TTL beachten).
 - **Spice Questions (Eisbrecher-Fragen)** – im Chat: Fragen beantworten (max. 200 Zeichen); die Antwort des Gegenübers wird erst sichtbar, wenn beide geantwortet haben
 - Text-, Bild- und Sprachnachrichten
 - Audio-Anrufe innerhalb der App
@@ -253,6 +259,26 @@ Edge Functions (`supabase/functions/`) auf den Server. Stand v0.8.0:
     *photos steht bewusst am Ende der View-Spaltenliste – Postgres
     erlaubt bei `CREATE OR REPLACE VIEW` nur anhängende Spalten*)
   - **078** – `auth_devices.device_model` (echtes Gerätemodell)
+- **Migrationen für v0.9.0:**
+  - **079–080** – Foto-Einsprüche, `public_profiles` als RPCs
+    (`get_public_profile(s)`)
+  - **081–084** – Transit Spark (Signale, Tags v2, Soft-Ping)
+  - **085** – Suchradius-Modus (`distance_filter_mode`)
+  - **086–087, 089** – Personalisiertes Kennenlern-Quiz ohne LLM,
+    Trivia-Pool als deprecated markiert
+  - **088** – Mehrere Profilbilder, Freunde-Filter
+  - **090** – Funke-Kühlen/Re-Funke/Beenden/Ausblenden als BIGINT
+    (UUID-Varianten droppen)
+  - **091** – Transit-Selbstbeschreibung (`self_note`)
+  - **092** – Lieblingssong/Band (`favorite_song`)
+  - **093** – Nachrichten-Relay (E2E-Ciphertext-Fallback bei
+    fehlendem P2P-Kanal)
+  - **094** – Dating-Hour-Mindestzahl konfigurierbar
+    (`app_config`, Standard 20, Admin-RPCs)
+- **Lokale Geheimnisse (nicht im Repo):** `android/key.properties`
+  (Signierung), `.env` (Supabase), `android/app/google-services.json`
+  (Firebase, nur Play-Variante) – je `.example`-Datei als Vorlage
+  (`google-services.json.example`).
 - **Diagnose:** `supabase/check_columns.sql` im SQL Editor ausführen –
   zeigt pro Spalte TRUE/FALSE, welche Migrationen fehlen (wichtig bei
   Symptomen wie „Suchradius/Profilbild wird nicht gespeichert")

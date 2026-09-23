@@ -15,7 +15,7 @@ gehört.
 Konfiguration:
 
 ```bash
-cp .env.example .env          # SUPABASE_URL/ANON_KEY eintragen
+cp .env.example .env          # SUPABASE_URL/PUBLISHABLE_KEY eintragen
 # android/key.properties (Release-Signing) – wird NICHT im Repo liegen;
 # ohne diese Datei bricht der Release-Build absichtlich fehl.
 ```
@@ -46,6 +46,14 @@ sonst versucht sie trotzdem, Firebase zu initialisieren (wird zwar
 abgefangen, sauber ist der Define).
 
 Ergebnis: `build/app/outputs/flutter-apk/app-<flavor>-release.apk`
+
+**Dart-Obfuskierung (v0.9.0)**: Release-Builds laufen mit
+`--obfuscate --split-debug-info=build/symbols/<flavor>` (im Skript
+bereits drin). Die Symbole unter `build/symbols/` (git-ignoriert)
+für die Crash-Analyse aufheben – ohne sie sind Release-Stacktraces
+nicht deobfuskierbar. R8/Java-Minify ist bewusst AUS (Plugin-
+Kompatibilität); der Schutz kommt aus Dart-Obfuskierung + serverseitigen
+Checks, nicht aus Java-Verschleierung.
 
 Determinismus-Hinweise:
 

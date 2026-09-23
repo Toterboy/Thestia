@@ -43,9 +43,10 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
   Future<void> _pickImage(ImageSource source) async {
     if (_images.length >= BugReportLimits.maxImages) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Maximal ${BugReportLimits.maxImages} Bilder erlaubt.',
+            L10n.tf(context, 'bugreport.maxImages',
+                {'n': '${BugReportLimits.maxImages}'}),
           ),
           behavior: SnackBarBehavior.floating,
         ),
@@ -69,9 +70,9 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
     if (!valid) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Bitte wähle eine Bilddatei im Format jpg, jpeg oder png.',
+            L10n.t(context, 'bugreport.badFormat'),
           ),
         ),
       );
@@ -84,10 +85,9 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
       // EXIF-Entfernung) wird der Screenshot NICHT angehängt.
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Screenshot konnte nicht aufbereitet werden (Metadaten-Entfernung '
-            'fehlgeschlagen) und wurde nicht angehängt.',
+            L10n.t(context, 'bugreport.prepareFailed'),
           ),
         ),
       );
@@ -167,7 +167,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
       final service = ref.read(brevoBugReportServiceProvider);
       final images = _base64Images();
       final ok = await service.submitBugReport(
-        summary: 'Bug Report',
+        summary: L10n.t(context, 'bugreport.defaultSummary'),
         description: _descriptionCtrl.text,
         base64Images: images.isEmpty ? null : images,
       );
@@ -178,9 +178,8 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
         SnackBar(
           content: Text(
             ok
-                ? 'Danke, dein Bug Report wurde übermittelt'
-                : 'Übermittlung konnte nicht abgeschlossen werden. '
-                    'Bitte versuche es später erneut.',
+                ? L10n.t(context, 'bugreport.sent')
+                : L10n.t(context, 'bugreport.notSent'),
           ),
           behavior: SnackBarBehavior.floating,
         ),
@@ -204,7 +203,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Bug melden')),
+      appBar: AppBar(title: Text(L10n.t(context, 'bug.title'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -221,22 +220,18 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
                   );
                 },
                 icon: const Icon(Icons.open_in_browser),
-                label: const Text('Bug auf GitHub melden'),
+                label: Text(L10n.t(context, 'bug.github')),
               ),
               const SizedBox(height: 8),
               Text(
-                'Diese Meldung ist öffentlich auf GitHub sichtbar. '
-                'Trage dein Problem dort als Issue ein.',
+                L10n.t(context, 'bug.githubBody'),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 24),
               const Divider(),
               const SizedBox(height: 16),
               Text(
-                'Alternativ kannst du den Bug auch direkt und privat '
-                'per Email melden. '
-                'Die Meldung wird über Brevo an eine Proton Mail Adresse '
-                'gesendet. Sie ist nicht öffentlich einsehbar.',
+                L10n.t(context, 'bug.privateBody'),
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 16),
@@ -244,27 +239,29 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
                 controller: _descriptionCtrl,
                 keyboardType: TextInputType.multiline,
                 maxLength: BugReportLimits.maxDescriptionLength,
-                decoration: const InputDecoration(
-                  labelText: 'Beschreibung *',
-                  hintText: 'Was genau ist passiert?',
+                decoration: InputDecoration(
+                  labelText: L10n.t(context, 'bug.descLabel'),
+                  hintText: L10n.t(context, 'common.whatHappened'),
                 ),
                 maxLines: 5,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Bitte gib eine kurze Beschreibung ein.';
+                    return L10n.t(context, 'bug.descMissing');
                   }
                   if (value.trim().length < 5) {
-                    return 'Beschreibung zu kurz.';
+                    return L10n.t(context, 'bug.descShort');
                   }
                   if (value.length > BugReportLimits.maxDescriptionLength) {
-                    return 'Maximal ${BugReportLimits.maxDescriptionLength} Zeichen erlaubt.';
+                    return L10n.tf(context, 'bug.descLong', {
+                      'n': '${BugReportLimits.maxDescriptionLength}'
+                    });
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 12),
               if (_images.isNotEmpty) ...[
-                const Text('Vorschau'),
+                Text(L10n.t(context, 'bug.preview')),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -316,7 +313,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
                       child: OutlinedButton.icon(
                         onPressed: () => _pickImage(ImageSource.gallery),
                         icon: const Icon(Icons.photo_library),
-                        label: const Text('Galerie'),
+                        label: Text(L10n.t(context, 'bug.gallery')),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -324,17 +321,17 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
                       child: OutlinedButton.icon(
                         onPressed: () => _pickImage(ImageSource.camera),
                         icon: const Icon(Icons.camera_alt),
-                        label: const Text('Kamera'),
+                        label: Text(L10n.t(context, 'bug.camera')),
                       ),
                     ),
                   ],
                 ),
               const SizedBox(height: 12),
               Text(
-                'Erlaubt sind maximal ${BugReportLimits.maxImages} Bilder '
-                'im Format jpg, jpeg oder png und '
-                '${BugReportLimits.maxDescriptionLength} Zeichen Text. '
-                'Es werden keine weiteren persönlichen Daten versendet.',
+                L10n.tf(context, 'bug.limits', {
+                  'images': '${BugReportLimits.maxImages}',
+                  'text': '${BugReportLimits.maxDescriptionLength}'
+                }),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 16),
@@ -346,7 +343,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Absenden'),
+                    : Text(L10n.t(context, 'bug.send')),
               ),
             ],
           ),

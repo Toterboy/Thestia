@@ -26,6 +26,8 @@ import 'package:wisp/utils/age_safety_rules.dart';
 import 'package:wisp/utils/constants.dart';
 import 'package:wisp/utils/geo_names.dart';
 import 'package:wisp/utils/validators.dart';
+import 'package:wisp/widgets/ai_badge.dart';
+import 'package:wisp/widgets/birthday_style.dart';
 import 'package:wisp/widgets/buttons.dart';
 import 'package:wisp/widgets/age_range_sliders.dart';
 import 'package:wisp/widgets/gender_preference_selector.dart';
@@ -61,6 +63,60 @@ const kSupportedCountries = <String>[
 
 // kGermanStates ist zentral in lib/utils/constants.dart definiert.
 
+/// Angezeigter Name für gespeicherte (deutsche) Länder-/Bundesland-Werte.
+/// Unbekannte Werte fallen auf den Rohwert zurück (niemals leer).
+String _countryLabel(BuildContext context, String value) {
+  const keys = {
+    'Deutschland': 'country.deutschland',
+    'Österreich': 'country.oesterreich',
+    'Schweiz': 'country.schweiz',
+    'Luxemburg': 'country.luxemburg',
+    'Belgien': 'country.belgien',
+    'Niederlande': 'country.niederlande',
+    'Frankreich': 'country.frankreich',
+    'Italien': 'country.italien',
+    'Spanien': 'country.spanien',
+    'Portugal': 'country.portugal',
+    'Polen': 'country.polen',
+    'Tschechien': 'country.tschechien',
+    'Dänemark': 'country.daenemark',
+    'Schweden': 'country.schweden',
+    'Norwegen': 'country.norwegen',
+    'Finnland': 'country.finnland',
+    'Vereinigtes Königreich': 'country.uk',
+    'Irland': 'country.irland',
+    'USA': 'country.usa',
+    'Kanada': 'country.kanada',
+    'Australien': 'country.australien',
+    'Anderes Land': 'country.other',
+  };
+  final key = keys[value];
+  return key == null ? value : L10n.t(context, key);
+}
+
+String _stateLabel(BuildContext context, String value) {
+  const keys = {
+    'Baden-Württemberg': 'state.badenWuerttemberg',
+    'Bayern': 'state.bayern',
+    'Berlin': 'state.berlin',
+    'Brandenburg': 'state.brandenburg',
+    'Bremen': 'state.bremen',
+    'Hamburg': 'state.hamburg',
+    'Hessen': 'state.hessen',
+    'Mecklenburg-Vorpommern': 'state.mecklenburgVorpommern',
+    'Niedersachsen': 'state.niedersachsen',
+    'Nordrhein-Westfalen': 'state.nrw',
+    'Rheinland-Pfalz': 'state.rheinlandPfalz',
+    'Saarland': 'state.saarland',
+    'Sachsen': 'state.sachsen',
+    'Sachsen-Anhalt': 'state.sachsenAnhalt',
+    'Schleswig-Holstein': 'state.schleswigHolstein',
+    'Thüringen': 'state.thueringen',
+  };
+  final key = keys[value];
+  return key == null ? value : L10n.t(context, key);
+}
+
 /// Profil bearbeiten: Name, Geburtsdatum, Geschlecht, Präferenzen, Bio,
 /// Beziehungsart, Standort, Entfernungsfilter, Interessen und die
 /// True, solange "Profil bearbeiten" ungespeicherte Änderungen enthält.
@@ -89,6 +145,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   final _bioCtrl = TextEditingController();
   final _cityCtrl = TextEditingController();
   final _stateCtrl = TextEditingController();
+  final _songCtrl = TextEditingController();
+  final _bandCtrl = TextEditingController();
 
   /// Stadt beim Oeffnen des Screens (fuer Change-Detection beim Speichern).
   String? _loadedCity;
@@ -158,6 +216,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   // Musik-Geschmack (v0.8.0): gemagte + ausgeschlossene Genres.
   List<String> _musicLiked = const [];
   List<String> _musicDisliked = const [];
+
+  // Geburtstags-Stil (v0.9.1): 5 wählbare schicke Styles.
+  String _birthdayStyle = 'classic';
   bool _habitsDealbreaker = false;
 
   // ---- Dirty-Snapshot (Stand beim Öffnen des Screens) --------------------
@@ -189,6 +250,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     _bioCtrl.text = p.bio;
     _cityCtrl.text = prefs.location ?? p.city;
     _stateCtrl.text = p.state ?? '';
+    _songCtrl.text = p.favoriteSong ?? '';
+    _bandCtrl.text = p.favoriteBand ?? '';
     _introTextValue = p.introText;
     _introAudioPath = p.introAudioPath;
     // Intro-Snapshot (v0.9.0-Fix): Die Intro-Felder werden beim
@@ -203,6 +266,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     _drugs = p.drugs;
     _musicLiked = List.of(p.musicLiked);
     _musicDisliked = List.of(p.musicDisliked);
+    _birthdayStyle = p.birthdayStyle;
     _habitsDealbreaker = ref.read(settingsProvider).habitsDealbreaker;
     _countryValue = p.country.isEmpty ? 'Deutschland' : p.country;
     _gender = Gender.fromValue(p.gender) ?? Gender.diverse;
@@ -226,7 +290,14 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     // Rebuild - der Dirty-Flag blieb dadurch false und die Bottom-Navigation
     // fragte beim Verlassen nicht nach. Diese Listener halten den Flag
     // bei jedem Tastenanschlag synchron.
-    for (final controller in [_nameCtrl, _bioCtrl, _cityCtrl, _stateCtrl]) {
+    for (final controller in [
+      _nameCtrl,
+      _bioCtrl,
+      _cityCtrl,
+      _stateCtrl,
+      _songCtrl,
+      _bandCtrl,
+    ]) {
       controller.addListener(() {
         if (!mounted) return;
         ref.read(profileEditDirtyProvider.notifier).state = _isDirty();
@@ -351,25 +422,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     _bioCtrl.dispose();
     _cityCtrl.dispose();
     _stateCtrl.dispose();
+    _songCtrl.dispose();
+    _bandCtrl.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickBirthDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _birthDate ??
-          DateTime(DateTime.now().year - 18, DateTime.now().month,
-              DateTime.now().day),
-      firstDate: DateTime(1920),
-      lastDate: DateTime.now(),
-      helpText: L10n.t(context, 'profile.edit.birthDateHelp'),
-    );
-    if (picked != null) {
-      setState(() => _birthDate = picked);
-      _formKey.currentState?.validate();
-      // Geburtsdatum zählt als Änderung für den Speichern-Dialog.
-      _syncDirtyFlag();
-    }
   }
 
   /// Entscheidungs-Verarbeitung für einen eingereichten Einspruch
@@ -478,7 +533,17 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       builder: (ctx) => AlertDialog(
         icon: Icon(Icons.cancel,
             color: Theme.of(ctx).colorScheme.error, size: 40),
-        title: Text(L10n.t(ctx, 'profile.edit.photoNsfwTitle')),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Flexible(
+              child: Text(L10n.t(ctx, 'profile.edit.photoNsfwTitle')),
+            ),
+            const SizedBox(width: 8),
+            AiBadge(languageCode: L10n.localeOf(ctx).languageCode),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -521,7 +586,17 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       builder: (ctx) => AlertDialog(
         icon: Icon(Icons.check_circle,
             color: Theme.of(ctx).colorScheme.primary, size: 40),
-        title: Text(L10n.t(ctx, 'profile.edit.photoOkTitle')),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Flexible(
+              child: Text(L10n.t(ctx, 'profile.edit.photoOkTitle')),
+            ),
+            const SizedBox(width: 8),
+            AiBadge(languageCode: L10n.localeOf(ctx).languageCode),
+          ],
+        ),
         content: Text(L10n.t(ctx, 'profile.edit.photoOkBody')),
         actions: [
           FilledButton(
@@ -799,9 +874,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Der Ort liegt mehr als 15 km von deinem '
-                  'aktuellen Standort entfernt ($distanceInMeters m). '
-                  'Bitte gib einen nahegelegenen Ort ein.'),
+              content: Text(L10n.tf(context, 'profile.edit.farAway',
+                  {'meters': '$distanceInMeters'})),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -842,6 +916,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         _drugs != p.drugs ||
         !_listEq(_musicLiked, p.musicLiked) ||
         !_listEq(_musicDisliked, p.musicDisliked) ||
+        _songCtrl.text.trim() != (p.favoriteSong ?? '') ||
+        _bandCtrl.text.trim() != (p.favoriteBand ?? '') ||
+        _birthdayStyle != p.birthdayStyle ||
         // Regler / Auswahl-Snapshot-Vergleiche:
         _birthDate != _initialBirthDate ||
         settings.ageRangeMin != _initialAgeMin ||
@@ -886,22 +963,21 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(L10n.t(context, 'profile.edit.unsavedTitle')),
-        content: const Text(
-          'Deine Profil-Änderungen wurden noch nicht gespeichert. '
-          'Was möchtest du tun?',
+        content: Text(
+          L10n.t(context, 'profile.edit.unsavedBody'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop('cancel'),
-            child: const Text('Abbrechen'),
+            child: Text(L10n.t(ctx, 'common.cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop('discard'),
-            child: const Text('Verwerfen'),
+            child: Text(L10n.t(ctx, 'profile.edit.unsavedDiscard')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop('save'),
-            child: const Text('Speichern'),
+            child: Text(L10n.t(ctx, 'common.save')),
           ),
         ],
       ),
@@ -1056,6 +1132,13 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           drugs: _drugs,
           musicLiked: _musicLiked,
           musicDisliked: _musicDisliked,
+          favoriteSong: _songCtrl.text.trim().isEmpty
+              ? null
+              : _songCtrl.text.trim(),
+          favoriteBand: _bandCtrl.text.trim().isEmpty
+              ? null
+              : _bandCtrl.text.trim(),
+          birthdayStyle: _birthdayStyle,
         );
     await ref.read(userPreferencesProvider.notifier).setRelationshipType(
           _relationshipType,
@@ -1085,9 +1168,19 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           'drugs': _drugs?.toServer(),
           'music_liked': _musicLiked,
           'music_disliked': _musicDisliked,
+          'favorite_song': _songCtrl.text.trim(),
+          'favorite_band': _bandCtrl.text.trim(),
+          'birthday_style': _birthdayStyle,
           'habits_dealbreaker': _habitsDealbreaker,
           'photos': ref.read(profileProvider).photos,
+          // Radius-Modus VOLLSTÄNDIG mitschicken (v0.9.1-Fix): vorher wurde
+          // nur max_distance_km geschrieben - Modus (Km/Bundesland/Land)
+          // und Bundesland gingen serverseitig verloren.
           'max_distance_km': ref.read(userPreferencesProvider).maxDistanceKm,
+          'distance_filter_mode':
+              ref.read(userPreferencesProvider).distanceFilterMode.name,
+          'preferred_state':
+              ref.read(userPreferencesProvider).preferredState,
           'city': ?location,
         });
         // Dealbreaker-Schalter in die Settings spiegeln (Restore-Pfad).
@@ -1298,26 +1391,46 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                   keyboardType: TextInputType.text,
                   textCapitalization: TextCapitalization.words,
                   decoration: InputDecoration(labelText: L10n.t(context, 'profile.edit.name')),
-                  validator: Validators.name,
+                  validator: (v) => Validators.name(context, v),
                 ),
               ),
+              // Geburtsdatum ist nach der Registrierung GESPERRT (v0.9.1,
+              // Alters-Täuschungsschutz): Der Server lehnt Änderungen ab
+              // (Trigger, 056), die Anzeige bleibt zur Kontrolle sichtbar.
               _field(
-                validate: () => Validators.birthDate(_birthDate),
-                child: InkWell(
-                  onTap: _pickBirthDate,
-                  child: InputDecorator(
-                    decoration: InputDecoration(
-                      labelText: L10n.t(context, 'profile.edit.birthDate'),
-                      hintText: L10n.t(context, 'profile.edit.birthDateHint'),
-                      errorText: Validators.birthDate(_birthDate),
+                validate: () => Validators.birthDate(context, _birthDate),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    InputDecorator(
+                      decoration: InputDecoration(
+                        labelText:
+                            L10n.t(context, 'profile.edit.birthDate'),
+                        hintText:
+                            L10n.t(context, 'profile.edit.birthDateHint'),
+                        errorText: Validators.birthDate(context, _birthDate),
+                        prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                      ),
+                      child: Text(
+                        _birthDate == null
+                            ? L10n.t(context, 'profile.edit.birthDatePick')
+                            : '${_birthDate!.day}.${_birthDate!.month}.'
+                                '${_birthDate!.year}',
+                      ),
                     ),
-                    child: Text(
-                      _birthDate == null
-                          ? L10n.t(context, 'profile.edit.birthDatePick')
-                          : '${_birthDate!.day}.${_birthDate!.month}.'
-                              '${_birthDate!.year}',
+                    const SizedBox(height: 4),
+                    Text(
+                      L10n.t(context, 'profile.edit.birthDateLocked'),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
+                          ),
                     ),
-                  ),
+                  ],
                 ),
               ),
               _field(
@@ -1446,7 +1559,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                     ),
                   ),
                   items: kSupportedCountries
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                      .map((c) => DropdownMenuItem(
+                          value: c, child: Text(_countryLabel(context, c))))
                       .toList(),
                   onChanged: (v) {
                     if (v != null) {
@@ -1473,8 +1587,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                       ),
                     ),
                     items: kGermanStates
-                        .map((s) =>
-                            DropdownMenuItem(value: s, child: Text(s)))
+                        .map((s) => DropdownMenuItem(
+                            value: s, child: Text(_stateLabel(context, s))))
                         .toList(),
                     onChanged: (v) {
                       if (v != null) _stateCtrl.text = v;
@@ -1487,9 +1601,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                   style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
               const SizedBox(height: 16),
-              const Text(
-                'Filter & Präferenzen',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              Text(
+                L10n.t(context, 'profile.edit.filters'),
+                style: const TextStyle(
+                    fontWeight: FontWeight.bold, fontSize: 16),
               ),
               const SizedBox(height: 12),
               _field(
@@ -1502,18 +1617,21 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                   ),
-                  items: const [
+                  items: [
                     DropdownMenuItem(
                       value: DistanceFilterMode.distanceKm,
-                      child: Text('Entfernung in km'),
+                      child: Text(
+                          L10n.t(context, 'profile.edit.distanceKm')),
                     ),
                     DropdownMenuItem(
                       value: DistanceFilterMode.state,
-                      child: Text('Bundesland'),
+                      child:
+                          Text(L10n.t(context, 'profile.edit.state')),
                     ),
                     DropdownMenuItem(
                       value: DistanceFilterMode.germany,
-                      child: Text('Ganz Deutschland'),
+                      child: Text(
+                          L10n.t(context, 'profile.edit.modeGermany')),
                     ),
                   ],
                   onChanged: (v) {
@@ -1533,24 +1651,74 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                   if (prefs.distanceFilterMode == DistanceFilterMode.state) {
                     return DropdownButtonFormField<String>(
                       initialValue: prefs.preferredState,
-                      decoration: const InputDecoration(labelText: 'Bundesland'),
-                      items: const [
-                        DropdownMenuItem(value: 'BW', child: Text('Baden-Württemberg')),
-                        DropdownMenuItem(value: 'BY', child: Text('Bayern')),
-                        DropdownMenuItem(value: 'BE', child: Text('Berlin')),
-                        DropdownMenuItem(value: 'BB', child: Text('Brandenburg')),
-                        DropdownMenuItem(value: 'HB', child: Text('Bremen')),
-                        DropdownMenuItem(value: 'HH', child: Text('Hamburg')),
-                        DropdownMenuItem(value: 'HE', child: Text('Hessen')),
-                        DropdownMenuItem(value: 'MV', child: Text('Mecklenburg-Vorpommern')),
-                        DropdownMenuItem(value: 'NI', child: Text('Niedersachsen')),
-                        DropdownMenuItem(value: 'NW', child: Text('Nordrhein-Westfalen')),
-                        DropdownMenuItem(value: 'RP', child: Text('Rheinland-Pfalz')),
-                        DropdownMenuItem(value: 'SL', child: Text('Saarland')),
-                        DropdownMenuItem(value: 'SN', child: Text('Sachsen')),
-                        DropdownMenuItem(value: 'ST', child: Text('Sachsen-Anhalt')),
-                        DropdownMenuItem(value: 'SH', child: Text('Schleswig-Holstein')),
-                        DropdownMenuItem(value: 'TH', child: Text('Thüringen')),
+                      decoration: InputDecoration(
+                          labelText:
+                              L10n.t(context, 'profile.edit.state')),
+                      items: [
+                        DropdownMenuItem(
+                            value: 'BW',
+                            child: Text(_stateLabel(context,
+                                'Baden-Württemberg'))),
+                        DropdownMenuItem(
+                            value: 'BY',
+                            child:
+                                Text(_stateLabel(context, 'Bayern'))),
+                        DropdownMenuItem(
+                            value: 'BE',
+                            child:
+                                Text(_stateLabel(context, 'Berlin'))),
+                        DropdownMenuItem(
+                            value: 'BB',
+                            child: Text(
+                                _stateLabel(context, 'Brandenburg'))),
+                        DropdownMenuItem(
+                            value: 'HB',
+                            child:
+                                Text(_stateLabel(context, 'Bremen'))),
+                        DropdownMenuItem(
+                            value: 'HH',
+                            child:
+                                Text(_stateLabel(context, 'Hamburg'))),
+                        DropdownMenuItem(
+                            value: 'HE',
+                            child:
+                                Text(_stateLabel(context, 'Hessen'))),
+                        DropdownMenuItem(
+                            value: 'MV',
+                            child: Text(_stateLabel(
+                                context, 'Mecklenburg-Vorpommern'))),
+                        DropdownMenuItem(
+                            value: 'NI',
+                            child: Text(_stateLabel(
+                                context, 'Niedersachsen'))),
+                        DropdownMenuItem(
+                            value: 'NW',
+                            child: Text(_stateLabel(
+                                context, 'Nordrhein-Westfalen'))),
+                        DropdownMenuItem(
+                            value: 'RP',
+                            child: Text(_stateLabel(
+                                context, 'Rheinland-Pfalz'))),
+                        DropdownMenuItem(
+                            value: 'SL',
+                            child: Text(
+                                _stateLabel(context, 'Saarland'))),
+                        DropdownMenuItem(
+                            value: 'SN',
+                            child:
+                                Text(_stateLabel(context, 'Sachsen'))),
+                        DropdownMenuItem(
+                            value: 'ST',
+                            child: Text(_stateLabel(
+                                context, 'Sachsen-Anhalt'))),
+                        DropdownMenuItem(
+                            value: 'SH',
+                            child: Text(_stateLabel(
+                                context, 'Schleswig-Holstein'))),
+                        DropdownMenuItem(
+                            value: 'TH',
+                            child: Text(
+                                _stateLabel(context, 'Thüringen'))),
                       ],
                       onChanged: (v) {
                         if (v != null) {
@@ -1563,16 +1731,17 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                     );
                   }
                   if (prefs.distanceFilterMode == DistanceFilterMode.germany) {
-                    return const Text(
-                      'Keine geografische Einschränkung, Suche in ganz Deutschland.',
-                      style: TextStyle(color: Colors.grey),
+                    return Text(
+                      L10n.t(context, 'profile.edit.noGeoLimit'),
+                      style: const TextStyle(color: Colors.grey),
                     );
                   }
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Maximale Entfernung: ${prefs.maxDistanceKm} km',
+                        L10n.tf(context, 'profile.edit.maxDistance',
+                            {'km': '${prefs.maxDistanceKm}'}),
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       Slider(
@@ -1580,7 +1749,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                         min: 1,
                         max: AppConstants.maxDistanceKm.toDouble(),
                         divisions: AppConstants.maxDistanceKm - 1,
-                        label: '${prefs.maxDistanceKm} km',
+                        label: L10n.tf(
+                            context,
+                            'profile.edit.maxDistance',
+                            {'km': '${prefs.maxDistanceKm}'}),
                         onChanged: (v) {
                           final rounded = v.round();
                           ref
@@ -1654,7 +1826,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                   maxLength: 300,
                   keyboardType: TextInputType.text,
                   decoration: InputDecoration(labelText: L10n.t(context, 'profile.edit.bio')),
-                  validator: Validators.bio,
+                  validator: (v) => Validators.bio(context, v),
                 ),
               ),
               const SizedBox(height: 16),
@@ -1678,11 +1850,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'Wie stehst du zu ...? Diese Angaben beeinflussen, '
-                        'wen du bei "Find your Match" siehst. Es werden nur '
-                        'Personen gezeigt, die maximal so viel konsumieren wie du.',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      Text(
+                        L10n.t(context, 'profile.edit.habitsSub'),
+                        style: const TextStyle(
+                            fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 16),
                       // Dealbreaker (v0.8.0): harter Filter - Kandidaten
@@ -1690,10 +1861,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                       // ausgeschlossen.
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('Dealbreaker: gleicher Konsum'),
-                        subtitle: const Text(
-                            'Zeig mir nur Personen, die maximal so viel '
-                            'konsumieren wie ich.'),
+                        title: Text(L10n.t(context,
+                            'profile.edit.habitsDealbreaker')),
+                        subtitle: Text(L10n.t(context,
+                            'profile.edit.habitsDealbreakerSub')),
                         value: _habitsDealbreaker,
                         onChanged: (v) {
                           setState(() => _habitsDealbreaker = v);
@@ -1749,6 +1920,47 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                           _syncDirtyFlag();
                         },
                       ),
+                      const SizedBox(height: 12),
+                      // NUTZERWUNSCH: Song und Band getrennt erfasst.
+                      TextField(
+                        controller: _songCtrl,
+                        maxLength: 120,
+                        decoration: InputDecoration(
+                          labelText: L10n.t(
+                              context, 'profile.edit.favoriteSong'),
+                          hintText: L10n.t(
+                              context, 'profile.edit.favoriteSongHint'),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          counterText: '',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: _bandCtrl,
+                        maxLength: 120,
+                        decoration: InputDecoration(
+                          labelText: L10n.t(
+                              context, 'profile.edit.favoriteBand'),
+                          hintText: L10n.t(
+                              context, 'profile.edit.favoriteBandHint'),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          counterText: '',
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Geburtstags-Stil (v0.9.1): 5 schicke Styles,
+                      // wirksam nur am Geburtstag.
+                      BirthdayStylePicker(
+                        selected: _birthdayStyle,
+                        onSelected: (style) {
+                          setState(() => _birthdayStyle = style);
+                          _syncDirtyFlag();
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -1775,7 +1987,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               if (profile.personalityResult != null) ...[
                 const SizedBox(height: 16),
                 Text(
-                  'Persönlichkeitstest: ${profile.personalityResult}',
+                  L10n.tf(context, 'pt.profileLine',
+                      {'label': profile.personalityResult ?? ''}),
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
               ],

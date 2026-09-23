@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:wisp/providers/auth_provider.dart';
+import 'package:wisp/l10n/app_strings.dart';
 import 'package:wisp/routing/app_router.dart';
 import 'package:wisp/services/supabase_service.dart';
 import 'package:wisp/utils/validators.dart';
@@ -69,7 +70,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Fehler beim Speichern: $e'),
+            content: Text(
+                L10n.tf(context, 'common.errorWith', {'error': '$e'})),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -99,7 +101,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Neues Passwort')),
+      appBar: AppBar(title: Text(L10n.t(context, 'reset.title'))),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -114,21 +116,19 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'Passwort geändert',
+                      L10n.t(context, 'reset.doneTitle'),
                       style: Theme.of(context).textTheme.headlineSmall,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Dein neues Passwort wurde gespeichert. Aus '
-                      'Sicherheitsgründen wurdest du auf allen Geräten '
-                      'abgemeldet. Bitte melde dich neu an.',
+                      L10n.t(context, 'reset.doneBody'),
                       style: Theme.of(context).textTheme.bodyLarge,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
                     PrimaryButton(
-                      label: 'Zum Login',
+                      label: L10n.t(context, 'reset.toLogin'),
                       onPressed: () => context.go(AppRoutes.login),
                     ),
                   ],
@@ -141,15 +141,13 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                       Icon(Icons.lock_reset, size: 64, color: Theme.of(context).colorScheme.primary),
                       const SizedBox(height: 16),
                       Text(
-                        'Neues Passwort festlegen',
+                        L10n.t(context, 'reset.heading'),
                         style: Theme.of(context).textTheme.headlineSmall,
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Wähle ein neues Passwort für dein Konto. '
-                        'Es muss mindestens 8 Zeichen lang sein und '
-                        'Buchstaben und Zahlen enthalten.',
+                        L10n.t(context, 'reset.body'),
                         style: Theme.of(context).textTheme.bodyMedium,
                         textAlign: TextAlign.center,
                       ),
@@ -160,7 +158,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                         autocorrect: false,
                         enableSuggestions: false,
                         decoration: InputDecoration(
-                          labelText: 'Neues Passwort',
+                          labelText: L10n.t(context, 'reset.newPassword'),
                           border: const OutlineInputBorder(),
                           suffixIcon: IconButton(
                             icon: Icon(_obscure
@@ -170,7 +168,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                                 setState(() => _obscure = !_obscure),
                           ),
                         ),
-                        validator: Validators.password,
+                        validator: (v) => Validators.password(context, v),
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -178,30 +176,30 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                         obscureText: _obscure,
                         autocorrect: false,
                         enableSuggestions: false,
-                        decoration: const InputDecoration(
-                          labelText: 'Passwort wiederholen',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: L10n.t(context, 'reset.repeat'),
+                          border: const OutlineInputBorder(),
                         ),
                         validator: (v) {
                           if (v == null || v.isEmpty) {
-                            return 'Bitte wiederhole das Passwort';
+                            return L10n.t(context, 'reset.repeatMissing');
                           }
                           if (v != _passwordCtrl.text) {
-                            return 'Die Passwörter stimmen nicht überein.';
+                            return L10n.t(context, 'reset.mismatch');
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 24),
                       PrimaryButton(
-                        label: 'Passwort speichern',
+                        label: L10n.t(context, 'reset.save'),
                         onPressed: _saving ? null : _submit,
                         loading: _saving,
                       ),
                       const SizedBox(height: 8),
                       TextButton(
                         onPressed: _saving ? null : _cancel,
-                        child: const Text('Abbrechen'),
+                        child: Text(L10n.t(context, 'common.cancel')),
                       ),
                     ],
                   ),

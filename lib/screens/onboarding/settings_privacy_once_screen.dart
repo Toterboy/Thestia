@@ -50,15 +50,19 @@ class _SettingsPrivacyOnceScreenState
     extends ConsumerState<SettingsPrivacyOnceScreen> {
   final _pageController = PageController();
   final _locationCtrl = TextEditingController();
+  // EIGENER Controller für das Bundesland-Textfeld (Filter-Seite):
+  // Es teilte sich vorher _locationCtrl mit dem Orts-Feld - Tippen
+  // spiegelte sich in beiden Feldern, GPS/Validierung löschte beide.
+  final _stateCtrl = TextEditingController();
 
   int _currentPage = 0;
   bool _isDetectingLocation = false;
   String? _locationError;
   String? _locationValidationError;
   static const int _pageCount = 8;
-  static const int _profilePage = 2;
-  static const int _introPage = 3;
-  static const int _habitudesPage = 4;
+  static const int _profilePage = 1;
+  static const int _introPage = 2;
+  static const int _habitudesPage = 3;
 
   // Schritt "Deine Vorstellung" (überspringbar): Werte des IntroEditor.
   String _introText = '';
@@ -79,6 +83,7 @@ class _SettingsPrivacyOnceScreenState
   HabitudeLevel? _smoking;
   HabitudeLevel? _alcohol;
   HabitudeLevel? _drugs;
+  bool _habitsDealbreaker = false;
 
   @override
   void initState() {
@@ -87,11 +92,15 @@ class _SettingsPrivacyOnceScreenState
     if (prefs.location != null && _locationCtrl.text.isEmpty) {
       _locationCtrl.text = prefs.location!;
     }
+    if (prefs.preferredState != null && _stateCtrl.text.isEmpty) {
+      _stateCtrl.text = prefs.preferredState!;
+    }
     // Vorhandene Konsum-Präferenzen vorbelegen, falls bereits gesetzt.
     final profile = ref.read(profileProvider);
     _smoking = profile.smoking;
     _alcohol = profile.alcohol;
     _drugs = profile.drugs;
+    _habitsDealbreaker = ref.read(settingsProvider).habitsDealbreaker;
     // Profil-Seite vorbelegen (falls bereits Daten vorhanden sind).
     _bioCtrl.text = profile.bio;
     _selectedState = profile.state;
@@ -102,12 +111,14 @@ class _SettingsPrivacyOnceScreenState
   void dispose() {
     _pageController.dispose();
     _locationCtrl.dispose();
+    _stateCtrl.dispose();
     _bioCtrl.dispose();
     super.dispose();
   }
 
   Future<bool> _onWillPop() async {
-    final leave = await showDialog<bool>(
+    final leave =
+        await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
             title: Text(L10n.t(ctx, 'setup.abortTitle')),
@@ -156,8 +167,7 @@ class _SettingsPrivacyOnceScreenState
       unawaited(_saveProfileExtras());
     }
     if (_currentPage == _introPage) {
-      if (!IntroEditor.isValid(
-          text: _introText, audioPath: _introAudioPath)) {
+      if (!IntroEditor.isValid(text: _introText, audioPath: _introAudioPath)) {
         _showStepHint(L10n.t(context, 'setup.hintIntro'));
         return;
       }
@@ -176,10 +186,7 @@ class _SettingsPrivacyOnceScreenState
 
   void _showStepHint(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-      ),
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
   }
 
@@ -189,7 +196,9 @@ class _SettingsPrivacyOnceScreenState
     final text = _introText.trim();
     if (text.isEmpty && _introAudioPath == null) return;
     try {
-      await ref.read(profileProvider.notifier).update(
+      await ref
+          .read(profileProvider.notifier)
+          .update(
             introText: text,
             introAudioPath: _introAudioPath,
             clearIntroAudio: _introAudioPath == null,
@@ -209,20 +218,24 @@ class _SettingsPrivacyOnceScreenState
   /// und best-effort serverseitig. Beeinflusst den Find-your-Match-Filter.
   Future<void> _saveHabitudes() async {
     try {
-      await ref.read(profileProvider.notifier).update(
-            smoking: _smoking,
-            alcohol: _alcohol,
-            drugs: _drugs,
-          );
+      await ref
+          .read(profileProvider.notifier)
+          .update(smoking: _smoking, alcohol: _alcohol, drugs: _drugs);
+      await ref
+          .read(settingsProvider.notifier)
+          .setHabitsDealbreaker(_habitsDealbreaker);
       if (SupabaseService.isInitialized) {
         await SupabaseDatabaseService(SupabaseService.client).updateOwnProfile({
           'smoking': _smoking?.toServer(),
           'alcohol': _alcohol?.toServer(),
           'drugs': _drugs?.toServer(),
+          'habits_dealbreaker': _habitsDealbreaker,
         });
       }
     } catch (e) {
-      debugPrint('[SettingsPrivacyOnce] Habituden-Speichern fehlgeschlagen: $e');
+      debugPrint(
+        '[SettingsPrivacyOnce] Habituden-Speichern fehlgeschlagen: $e',
+      );
     }
   }
 
@@ -230,7 +243,9 @@ class _SettingsPrivacyOnceScreenState
   /// serverseitig (gleiche Felder wie "Profil bearbeiten").
   Future<void> _saveProfileExtras() async {
     try {
-      await ref.read(profileProvider.notifier).update(
+      await ref
+          .read(profileProvider.notifier)
+          .update(
             bio: _bioCtrl.text.trim(),
             stateStr: _selectedState,
             interests: _selectedInterests.toList(),
@@ -243,8 +258,10 @@ class _SettingsPrivacyOnceScreenState
         });
       }
     } catch (e) {
-      debugPrint('[SettingsPrivacyOnce] Profil-Extras speichern '
-          'fehlgeschlagen: $e');
+      debugPrint(
+        '[SettingsPrivacyOnce] Profil-Extras speichern '
+        'fehlgeschlagen: $e',
+      );
     }
   }
 
@@ -271,8 +288,7 @@ class _SettingsPrivacyOnceScreenState
       debugPrint('[SettingsPrivacyOnce] Avatar-Upload fehlgeschlagen: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(L10n.t(context, 'setupp.photoFail'))),
+          SnackBar(content: Text(L10n.t(context, 'setupp.photoFail'))),
         );
       }
     } finally {
@@ -303,10 +319,7 @@ class _SettingsPrivacyOnceScreenState
           : L10n.t(context, 'setup.passkeySetupFailed');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(msg),
-            behavior: SnackBarBehavior.floating,
-          ),
+          SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
         );
       }
     } finally {
@@ -385,7 +398,7 @@ class _SettingsPrivacyOnceScreenState
   Future<void> _finishWithSecurityNudge() async {
     final mfaActive =
         ref.read(mfaStatusProvider).hasVerifiedFactors ||
-            ref.read(mfaStatusProvider).hasAnyFactor;
+        ref.read(mfaStatusProvider).hasAnyFactor;
     if (_passkeyCreated || mfaActive) {
       await _finish();
       return;
@@ -394,8 +407,11 @@ class _SettingsPrivacyOnceScreenState
     final choice = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        icon: Icon(Icons.shield_outlined,
-            color: Theme.of(ctx).colorScheme.primary, size: 40),
+        icon: Icon(
+          Icons.shield_outlined,
+          color: Theme.of(ctx).colorScheme.primary,
+          size: 40,
+        ),
         title: Text(L10n.t(ctx, 'setup.nudgeTitle')),
         content: Text(L10n.t(ctx, 'setup.nudgeBody')),
         actions: [
@@ -439,8 +455,9 @@ class _SettingsPrivacyOnceScreenState
       // es ist in diesem Moment noch false (der Persönlichkeitstest als
       // letzter Schritt setzt es) und würde sonst einen etwaigen
       // serverseitigen true-Stand (Backfill, Migration 065) überschreiben.
-      return await SupabaseDatabaseService(SupabaseService.client)
-          .updateSetupFlagsAndVerify({
+      return await SupabaseDatabaseService(
+        SupabaseService.client,
+      ).updateSetupFlagsAndVerify({
         'one_time_settings_completed': settings.oneTimeSettingsCompleted,
         'community_guidelines_accepted': settings.communityGuidelinesAccepted,
       });
@@ -450,25 +467,32 @@ class _SettingsPrivacyOnceScreenState
     }
   }
 
-  Future<bool> _validateLocationText(String location) async {
+  /// Geokodiert einen getippten Ort und liefert die Koordinaten (oder
+  /// null = ungültig). Mit GPS-Permission muss der Ort im 15-km-Umkreis
+  /// der echten Position liegen (Anti-Fake); ohne GPS gilt der
+  /// angegebene Ort direkt - so rechnet die Entfernung IMMER vom
+  /// angegebenen Standort, nicht von einer alten GPS-Position.
+  Future<Location?> _locateTypedPlace(String location) async {
     try {
-      final locationService = ref.read(locationVerificationServiceProvider);
-      final position = await locationService.getCurrentLocation();
-      if (position == null) return true; // Kein GPS - keine Entfernungspruefung moeglich
-
       final List<Location> locations = await locationFromAddress(location);
-      if (locations.isEmpty) return false; // Ort existiert nicht
-
+      if (locations.isEmpty) return null; // Ort existiert nicht
       final manualPos = locations.first;
-      final distanceInMeters = Geolocator.distanceBetween(
-        position.latitude,
-        position.longitude,
-        manualPos.latitude,
-        manualPos.longitude,
-      );
-      return distanceInMeters <= 15000;
+      final locationService = ref.read(locationVerificationServiceProvider);
+      if (await locationService.hasLocationPermission()) {
+        final position = await locationService.getCurrentLocation();
+        if (position != null) {
+          final distanceInMeters = Geolocator.distanceBetween(
+            position.latitude,
+            position.longitude,
+            manualPos.latitude,
+            manualPos.longitude,
+          );
+          if (distanceInMeters > 15000) return null;
+        }
+      }
+      return manualPos;
     } catch (_) {
-      return false; // Bei Fehler: als ungueltig behandeln
+      return null; // Bei Fehler: als ungueltig behandeln
     }
   }
 
@@ -519,7 +543,9 @@ class _SettingsPrivacyOnceScreenState
 
       // Koordinaten lokal UND serverseitig persistieren - sonst koennen
       // Entfernungen zu anderen Nutzern nicht berechnet werden.
-      await ref.read(profileProvider.notifier).update(
+      await ref
+          .read(profileProvider.notifier)
+          .update(
             city: locationText,
             locationLat: position.latitude,
             locationLng: position.longitude,
@@ -529,7 +555,9 @@ class _SettingsPrivacyOnceScreenState
           final userId = SupabaseService.client.auth.currentUser?.id;
           if (userId != null) {
             unawaited(
-              ref.read(locationCheckServiceProvider).processLocationCheck(
+              ref
+                  .read(locationCheckServiceProvider)
+                  .processLocationCheck(
                     userId: userId,
                     newLatitude: position.latitude,
                     newLongitude: position.longitude,
@@ -566,8 +594,9 @@ class _SettingsPrivacyOnceScreenState
       if (!mounted) return;
       setState(() {
         _isDetectingLocation = false;
-        _locationError = L10n.tf(
-            context, 'setup.locationError', {'error': e.toString()});
+        _locationError = L10n.tf(context, 'setup.locationError', {
+          'error': e.toString(),
+        });
       });
     }
   }
@@ -589,8 +618,14 @@ class _SettingsPrivacyOnceScreenState
     final effectiveAge = userAge ?? 18;
     final allowedAgeMin = AgeSafetyRules.minFilterAge(effectiveAge);
     final allowedAgeMax = AgeSafetyRules.maxFilterAge(effectiveAge);
-    final clampedAgeMin = settings.ageRangeMin.clamp(allowedAgeMin, allowedAgeMax);
-    final clampedAgeMax = settings.ageRangeMax.clamp(clampedAgeMin, allowedAgeMax);
+    final clampedAgeMin = settings.ageRangeMin.clamp(
+      allowedAgeMin,
+      allowedAgeMax,
+    );
+    final clampedAgeMax = settings.ageRangeMax.clamp(
+      clampedAgeMin,
+      allowedAgeMax,
+    );
 
     // Falls Werte außerhalb erlaubtem Bereich: asynchron korrigieren –
     // aber NUR, wenn das Alter tatsächlich bekannt ist.
@@ -633,8 +668,10 @@ class _SettingsPrivacyOnceScreenState
                     Row(
                       children: [
                         Text(
-                          L10n.tf(context, 'setup.stepOf',
-                              {'n': '${_currentPage + 1}', 'of': '$_pageCount'}),
+                          L10n.tf(context, 'setup.stepOf', {
+                            'n': '${_currentPage + 1}',
+                            'of': '$_pageCount',
+                          }),
                           style: Theme.of(context).textTheme.labelMedium,
                         ),
                         const Spacer(),
@@ -653,340 +690,327 @@ class _SettingsPrivacyOnceScreenState
                 ),
               ),
               Expanded(
-        child: PageView(
-          controller: _pageController,
-          // Nutzerwunsch: Swipen DEAKTIVIERT. Die Buttons führen die
-          // pro Schritt erforderlichen Aktionen (Validierung, Speichern)
-          // aus - Wer swipe-te, übersprang sie, wodurch Angaben nicht ins
-          // Profil übernommen wurden.
-          physics: const NeverScrollableScrollPhysics(),
+                child: PageView(
+                  controller: _pageController,
+                  // Nutzerwunsch: Swipen DEAKTIVIERT. Die Buttons führen die
+                  // pro Schritt erforderlichen Aktionen (Validierung, Speichern)
+                  // aus - Wer swipe-te, übersprang sie, wodurch Angaben nicht ins
+                  // Profil übernommen wurden.
+                  physics: const NeverScrollableScrollPhysics(),
                   onPageChanged: (i) => setState(() => _currentPage = i),
                   children: [
-                    // Page 1: Privatsphäre & Theme
+                    // Page 1: Filter & Präferenzen
                     _Page(
-                      questionKey: 'setupq.visibility',
-                      subtitle: L10n.t(context, 'setupp.visibilitySub'),
+                      questionKey: 'setupq.filter',
+                      subtitle: L10n.t(context, 'setup.filterSub'),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(L10n.t(context, 'setupp.visibilityQuestion'), style: Theme.of(context).textTheme.titleMedium,
+                          Text(
+                            L10n.t(context, 'setupp.lookingFor'),
+                            style: Theme.of(context).textTheme.titleMedium,
                           ),
-                          const SizedBox(height: 8),
-                          for (final v in ProfileVisibility.values)
-                            SelectableTile<ProfileVisibility>(
-                              value: v,
-                              groupValue: settings.profileVisibility,
-                              title: L10n.t(context, v.labelKey),
-                              onChanged: (val) {
-                                if (val != null) {
-                                  notifier.setProfileVisibility(val);
-                                }
-                              },
+                          const SizedBox(height: 12),
+                          // Mehrfachauswahl per Chips (inkl. "Alle"-Kurzform).
+                          // Ein einzelnes Geschlecht kann nicht abgewählt
+                          // werden, solange es das letzte aktive ist.
+                           const GenderPreferenceSelector(),
+                           const SizedBox(height: 20),
+                           // Kein Doppel-Titel: Die Frage steht bereits in
+                           // der Bubble oben (setupq.filter).
+                           DropdownButtonFormField<RelationshipType>(
+                            initialValue: userPrefs.relationshipType,
+                            borderRadius: BorderRadius.circular(16),
+                            decoration: InputDecoration(
+                              labelText: L10n.t(context, 'setupp.relType'),
                             ),
-                          const Divider(),
-                          Text(L10n.t(context, 'setupp.appearance'), style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 8),
-                          // String-Keys statt bool?-Werten: Radio mit
-                          // null-Value funktioniert nicht zuverlaessig
-                          // (Tap wird verschluckt). Mapping:
-                          // 'system' -> null, 'light' -> false, 'dark' -> true.
-                          SelectableTile<String>(
-                            value: 'system',
-                            groupValue: settings.useDarkMode == null
-                                ? 'system'
-                                : (settings.useDarkMode!
-                                    ? 'dark'
-                                    : 'light'),
-                            title: L10n.t(context, 'setupp.systemTheme'),
-                            onChanged: (_) => notifier.setDarkMode(null),
-                          ),
-                          SelectableTile<String>(
-                            value: 'light',
-                            groupValue: settings.useDarkMode == null
-                                ? 'system'
-                                : (settings.useDarkMode!
-                                    ? 'dark'
-                                    : 'light'),
-                            title: L10n.t(context, 'setupp.lightTheme'),
-                            onChanged: (_) => notifier.setDarkMode(false),
-                          ),
-                          SelectableTile<String>(
-                            value: 'dark',
-                            groupValue: settings.useDarkMode == null
-                                ? 'system'
-                                : (settings.useDarkMode!
-                                    ? 'dark'
-                                    : 'light'),
-                            title: L10n.t(context, 'setupp.darkTheme'),
-                            onChanged: (_) => notifier.setDarkMode(true),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(L10n.t(context, 'setupp.colorWorld'), style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 8),
-                          ThemePicker(
-                            selectedName: settings.themeName,
-                            onChanged: (t) =>
-                                notifier.setThemeName(t.name),
-                          ),
-                        ],
-                      ),
-                    ),
-                      // Page 3: Filter & Präferenzen
-                      _Page(
-                        questionKey: 'setupq.filter',
-                        subtitle: L10n.t(context, 'setup.filterSub'),
-                       child: Column(
-                         crossAxisAlignment: CrossAxisAlignment.start,
-                         children: [
-                            Text(L10n.t(context, 'setupp.lookingFor'), style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            const SizedBox(height: 12),
-                            // Mehrfachauswahl per Chips (inkl. "Alle"-Kurzform).
-                            // Ein einzelnes Geschlecht kann nicht abgewählt
-                            // werden, solange es das letzte aktive ist.
-                            const GenderPreferenceSelector(),
-                           const SizedBox(height: 20),
-                           Text(L10n.t(context, 'setupp.whatLooking'), style: Theme.of(context).textTheme.titleMedium,
-                           ),
-                           const SizedBox(height: 12),
-                            DropdownButtonFormField<RelationshipType>(
-                              initialValue: userPrefs.relationshipType,
-                              borderRadius: BorderRadius.circular(16),
-                              decoration: InputDecoration(
-                                labelText: L10n.t(context, 'setupp.relType'),
-
-                             ),
-                              items: [
-                                DropdownMenuItem(
-                                  value: RelationshipType.casual,
-                                  child: Text(L10n.t(
-                                      context, 'profile.edit.rel.casual')),
+                            items: [
+                              DropdownMenuItem(
+                                value: RelationshipType.casual,
+                                child: Text(
+                                  L10n.t(context, 'profile.edit.rel.casual'),
                                 ),
-                                DropdownMenuItem(
-                                  value: RelationshipType.dating,
-                                  child: Text(L10n.t(
-                                      context, 'profile.edit.rel.dating')),
-                                ),
-                                DropdownMenuItem(
-                                  value: RelationshipType.relationship,
-                                  child: Text(L10n.t(
-                                      context,
-                                      'profile.edit.rel.relationship')),
-                                ),
-                                DropdownMenuItem(
-                                  value: RelationshipType.friends,
-                                  child: Text(L10n.t(
-                                      context, 'profile.edit.rel.friends')),
-                                ),
-                                DropdownMenuItem(
-                                  value: RelationshipType.open,
-                                  child: Text(L10n.t(
-                                      context, 'profile.edit.rel.open')),
-                                ),
-                             ],
-                             onChanged: (v) {
-                               if (v != null) {
-                                 userPrefsNotifier.setRelationshipType(v);
-                               }
-                             },
-                           ),
-                           const SizedBox(height: 20),
-                           Text(L10n.t(context, 'setupp.distance'), style: Theme.of(context).textTheme.titleMedium,
-                           ),
-                           const SizedBox(height: 12),
-                            DropdownButtonFormField<DistanceFilterMode>(
-                              initialValue: userPrefs.distanceFilterMode,
-                              borderRadius: BorderRadius.circular(16),
-                              decoration: InputDecoration(
-                                labelText: L10n.t(context, 'setupp.filterLabel'),
-
-                             ),
-                             items: DistanceFilterMode.values.map((mode) {
-                               return DropdownMenuItem(
-                                 value: mode,
-                                 child: Text(mode.label),
-                               );
-                             }).toList(),
-                             onChanged: (v) {
-                               if (v != null) {
-                                 userPrefsNotifier.setDistanceFilterMode(v);
-                               }
-                             },
-                           ),
-                           const SizedBox(height: 20),
-                            if (userPrefs.distanceFilterMode == DistanceFilterMode.distanceKm) ...[
-                              Text(
-                                // Gleiche Quelle wie "Profil bearbeiten"
-                                // (userPreferences), damit beide Screens
-                                // immer denselben Wert zeigen.
-                                L10n.tf(context, 'setupp.maxDistance', {'km': ''}),
-                                style: Theme.of(context).textTheme.titleMedium,
                               ),
-                              const SizedBox(height: 8),
-                              Slider(
-                                value: userPrefs.maxDistanceKm.toDouble(),
-                                min: 1,
-                                max: AppConstants.maxDistanceKm.toDouble(),
-                                divisions: AppConstants.maxDistanceKm - 1,
-                                label: '${userPrefs.maxDistanceKm} km',
-                                onChanged: (v) => userPrefsNotifier
-                                    .setMaxDistanceKm(v.round()),
+                              DropdownMenuItem(
+                                value: RelationshipType.dating,
+                                child: Text(
+                                  L10n.t(context, 'profile.edit.rel.dating'),
+                                ),
                               ),
-                              const SizedBox(height: 20),
+                              DropdownMenuItem(
+                                value: RelationshipType.relationship,
+                                child: Text(
+                                  L10n.t(
+                                    context,
+                                    'profile.edit.rel.relationship',
+                                  ),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: RelationshipType.friends,
+                                child: Text(
+                                  L10n.t(context, 'profile.edit.rel.friends'),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: RelationshipType.open,
+                                child: Text(
+                                  L10n.t(context, 'profile.edit.rel.open'),
+                                ),
+                              ),
                             ],
-                           if (userPrefs.distanceFilterMode == DistanceFilterMode.state) ...[
-                             const SizedBox(height: 20),
-                              TextFormField(
-                                controller: _locationCtrl,
-                                keyboardType: TextInputType.text,
-                                decoration: InputDecoration(
-                                  labelText: L10n.t(context, 'setupp.stateLabel'),
-                                  hintText: L10n.t(context, 'setupp.stateHint'),
-                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                                ),
-                               onChanged: (v) async {
-                                 final trimmed = v.trim();
-                                 if (trimmed.isEmpty) {
-                                   userPrefsNotifier.setPreferredState(null);
-                                   _locationValidationError = null;
-                                   return;
-                                 }
-                                 setState(() {
-                                   _locationValidationError = null;
-                                 });
-                                 await userPrefsNotifier.setPreferredState(trimmed);
-                               },
-                             ),
-                             const SizedBox(height: 20),
-                           ],
-                           if (userPrefs.distanceFilterMode == DistanceFilterMode.germany) ...[
-                             const SizedBox(height: 20),
-                             Text(
-                               L10n.t(context, 'setupp.germanyNote'),
-                               style: Theme.of(context).textTheme.bodyMedium,
-                             ),
-                             const SizedBox(height: 20),
-                           ],
-                           Text(L10n.t(context, 'setupp.location'), style: Theme.of(context).textTheme.titleMedium,
-                           ),
-                           const SizedBox(height: 12),
-                            // GPS-Button als suffixIcon: immer perfekt
-                            // ausgerichtet, auch bei grosser Schrift (a11y).
+                            onChanged: (v) {
+                              if (v != null) {
+                                userPrefsNotifier.setRelationshipType(v);
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            L10n.t(context, 'setupp.distance'),
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 12),
+                          DropdownButtonFormField<DistanceFilterMode>(
+                            initialValue: userPrefs.distanceFilterMode,
+                            borderRadius: BorderRadius.circular(16),
+                            decoration: InputDecoration(
+                              labelText: L10n.t(context, 'setupp.filterLabel'),
+                            ),
+                            items: DistanceFilterMode.values.map((mode) {
+                              return DropdownMenuItem(
+                                value: mode,
+                                child: Text(mode.label),
+                              );
+                            }).toList(),
+                            onChanged: (v) {
+                              if (v != null) {
+                                userPrefsNotifier.setDistanceFilterMode(v);
+                              }
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          if (userPrefs.distanceFilterMode ==
+                              DistanceFilterMode.distanceKm) ...[
+                            Text(
+                              // Gleiche Quelle wie "Profil bearbeiten"
+                              // (userPreferences), damit beide Screens
+                              // immer denselben Wert zeigen.
+                              L10n.tf(context, 'setupp.maxDistance', {
+                                'km': '${userPrefs.maxDistanceKm}',
+                              }),
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 8),
+                            Slider(
+                              value: userPrefs.maxDistanceKm.toDouble(),
+                              min: 1,
+                              max: AppConstants.maxDistanceKm.toDouble(),
+                              divisions: AppConstants.maxDistanceKm - 1,
+                              label: '${userPrefs.maxDistanceKm} km',
+                              onChanged: (v) =>
+                                  userPrefsNotifier.setMaxDistanceKm(v.round()),
+                            ),
+                            const SizedBox(height: 20),
+                          ],
+                          if (userPrefs.distanceFilterMode ==
+                              DistanceFilterMode.state) ...[
+                            const SizedBox(height: 20),
                             TextFormField(
-                              controller: _locationCtrl,
+                              controller: _stateCtrl,
                               keyboardType: TextInputType.text,
+                              // Feld beim Tippen über der Tastatur halten
+                              // (wie im Intro-Editor).
+                              scrollPadding: const EdgeInsets.only(bottom: 180),
                               decoration: InputDecoration(
-                                labelText: L10n.t(context, 'setupp.locationLabel'),
-                                hintText: L10n.t(context, 'setupp.locationHint'),
+                                labelText: L10n.t(context, 'setupp.stateLabel'),
+                                hintText: L10n.t(context, 'setupp.stateHint'),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
-                                  borderSide: BorderSide(
-                                    color: Theme.of(context).colorScheme.primary,
-                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
-                                  borderSide: BorderSide(
-                                    color: Theme.of(context).colorScheme.primary,
-                                    width: 2,
-                                  ),
                                 ),
-                                suffixIcon: _isDetectingLocation
-                                    ? const Padding(
-                                        padding: EdgeInsets.all(14),
-                                        child: SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                              strokeWidth: 2),
-                                        ),
-                                      )
-                                    : IconButton(
-                                        tooltip: L10n.t(context, 'setupp.locationGps'),
-                                        onPressed: _detectLocation,
-                                        icon:
-                                            const Icon(Icons.my_location),
-                                      ),
                               ),
                               onChanged: (v) async {
                                 final trimmed = v.trim();
                                 if (trimmed.isEmpty) {
-                                  userPrefsNotifier.setLocation(null);
+                                  userPrefsNotifier.setPreferredState(null);
                                   _locationValidationError = null;
                                   return;
-                                }
-                                // Wenn _detectLocation gerade laeuft, wurde der
-                                // Text programmatisch gesetzt – kein zweiter
-                                // GPS-Aufruf noetig (verhindert App-Hang).
-                                if (_isDetectingLocation) return;
-                                final locationService = ref.read(locationVerificationServiceProvider);
-                                if (await locationService.hasLocationPermission()) {
-                                  final isValid = await _validateLocationText(trimmed);
-                                  if (!isValid) {
-                                    _locationCtrl.clear();
-                                    userPrefsNotifier.setLocation(null);
-                                    setState(() {
-                                      _locationValidationError =
-                                          L10n.t(context,
-                                              'setup.locationTooFar');
-                                    });
-                                    return;
-                                  }
                                 }
                                 setState(() {
                                   _locationValidationError = null;
                                 });
+                                await userPrefsNotifier.setPreferredState(
+                                  trimmed,
+                                );
                               },
                             ),
-                            if (_locationError != null) ...[
-                              const SizedBox(height: 8),
-                              _LocationNotice(text: _locationError!),
-                            ],
-                            if (_locationValidationError != null) ...[
-                              const SizedBox(height: 8),
-                              _LocationNotice(text: _locationValidationError!),
-                            ],
+                            const SizedBox(height: 20),
+                          ],
+                          if (userPrefs.distanceFilterMode ==
+                              DistanceFilterMode.germany) ...[
                             const SizedBox(height: 20),
                             Text(
-                              'Bevorzugte Altersspanne: '
-                              '$clampedAgeMin bis $clampedAgeMax Jahre',
-                              style: Theme.of(context).textTheme.titleMedium,
+                              L10n.t(context, 'setupp.germanyNote'),
+                              style: Theme.of(context).textTheme.bodyMedium,
                             ),
-                            // Zwei gekoppelte Slider statt RangeSlider:
-                            // Bei identischen Werten (z. B. 18-18) friert
-                            // ein RangeSlider ein (End-Regler nicht greif-
-                            // bar). Die Grenzen sind die STATISCHEN
-                            // Sicherheitsgrenzen - nicht die Auswahl selbst.
-                            AgeRangeSliders(
-                              minValue: clampedAgeMin,
-                              maxValue: clampedAgeMax,
-                              boundsMin: allowedAgeMin,
-                              boundsMax: allowedAgeMax,
-                              minLabelPrefix:
-                                  L10n.t(context, 'profile.edit.minAgeLabel'),
-                              maxLabelPrefix:
-                                  L10n.t(context, 'profile.edit.maxAgeLabel'),
-                              labelSuffix:
-                                  L10n.t(context, 'common.years'),
-                              onChanged: (min, max) {
-                                notifier.setAgeRange(min, max);
-                                // Entprellter Server-Sync (Regler feuern
-                                // kontinuierlich) - siehe Profile-Editor.
-                                ref
-                                    .read(userPreferencesProvider.notifier)
-                                    .queueServerSync(
-                                      ageRangeMin: min,
-                                      ageRangeMax: max,
-                                    );
-                              },
+                            const SizedBox(height: 20),
+                          ],
+                          Text(
+                            L10n.t(context, 'setupp.location'),
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 12),
+                          // GPS-Button als suffixIcon: immer perfekt
+                          // ausgerichtet, auch bei grosser Schrift (a11y).
+                          TextFormField(
+                            controller: _locationCtrl,
+                            keyboardType: TextInputType.text,
+                            // Feld beim Tippen über der Tastatur halten
+                            // (wie im Intro-Editor).
+                            scrollPadding: const EdgeInsets.only(bottom: 180),
+                            decoration: InputDecoration(
+                              labelText: L10n.t(
+                                context,
+                                'setupp.locationLabel',
+                              ),
+                              hintText: L10n.t(context, 'setupp.locationHint'),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  width: 2,
+                                ),
+                              ),
+                              suffixIcon: _isDetectingLocation
+                                  ? const Padding(
+                                      padding: EdgeInsets.all(14),
+                                      child: SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                    )
+                                  : IconButton(
+                                      tooltip: L10n.t(
+                                        context,
+                                        'setupp.locationGps',
+                                      ),
+                                      onPressed: _detectLocation,
+                                      icon: const Icon(Icons.my_location),
+                                    ),
                             ),
+                            onChanged: (v) async {
+                              final trimmed = v.trim();
+                              if (trimmed.isEmpty) {
+                                userPrefsNotifier.setLocation(null);
+                                _locationValidationError = null;
+                                return;
+                              }
+                              // Wenn _detectLocation gerade laeuft, wurde der
+                              // Text programmatisch gesetzt – kein zweiter
+                              // GPS-Aufruf noetig (verhindert App-Hang).
+                              if (_isDetectingLocation) return;
+                              final coords = await _locateTypedPlace(
+                                trimmed,
+                              );
+                              if (coords == null) {
+                                _locationCtrl.clear();
+                                userPrefsNotifier.setLocation(null);
+                                setState(() {
+                                  _locationValidationError = L10n.t(
+                                    context,
+                                    'setup.locationTooFar',
+                                  );
+                                });
+                                return;
+                              }
+                              // Angegebener Ort: Text + Koordinaten
+                              // persistieren (lokal + Server), damit
+                              // Entfernungen von HIER aus rechnen.
+                              userPrefsNotifier.setLocation(trimmed);
+                              await ref
+                                  .read(profileProvider.notifier)
+                                  .update(
+                                    city: trimmed,
+                                    locationLat: coords.latitude,
+                                    locationLng: coords.longitude,
+                                  );
+                              if (SupabaseService.isInitialized) {
+                                try {
+                                  await ref
+                                      .read(supabaseDatabaseServiceProvider)
+                                      .updateOwnProfile({
+                                    'city': trimmed,
+                                    'location_lat': coords.latitude,
+                                    'location_lng': coords.longitude,
+                                  });
+                                } catch (_) {}
+                              }
+                              setState(() {
+                                _locationValidationError = null;
+                              });
+                            },
+                          ),
+                          if (_locationError != null) ...[
+                            const SizedBox(height: 8),
+                            _LocationNotice(text: _locationError!),
+                          ],
+                          if (_locationValidationError != null) ...[
+                            const SizedBox(height: 8),
+                            _LocationNotice(text: _locationValidationError!),
+                          ],
+                          const SizedBox(height: 20),
+                          Text(
+                            'Bevorzugte Altersspanne: '
+                            '$clampedAgeMin bis $clampedAgeMax Jahre',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          // Zwei gekoppelte Slider statt RangeSlider:
+                          // Bei identischen Werten (z. B. 18-18) friert
+                          // ein RangeSlider ein (End-Regler nicht greif-
+                          // bar). Die Grenzen sind die STATISCHEN
+                          // Sicherheitsgrenzen - nicht die Auswahl selbst.
+                          AgeRangeSliders(
+                            minValue: clampedAgeMin,
+                            maxValue: clampedAgeMax,
+                            boundsMin: allowedAgeMin,
+                            boundsMax: allowedAgeMax,
+                            minLabelPrefix: L10n.t(
+                              context,
+                              'profile.edit.minAgeLabel',
+                            ),
+                            maxLabelPrefix: L10n.t(
+                              context,
+                              'profile.edit.maxAgeLabel',
+                            ),
+                            labelSuffix: L10n.t(context, 'common.years'),
+                            onChanged: (min, max) {
+                              notifier.setAgeRange(min, max);
+                              // Entprellter Server-Sync (Regler feuern
+                              // kontinuierlich) - siehe Profile-Editor.
+                              ref
+                                  .read(userPreferencesProvider.notifier)
+                                  .queueServerSync(
+                                    ageRangeMin: min,
+                                    ageRangeMax: max,
+                                  );
+                            },
+                          ),
                         ],
                       ),
                     ),
-                    // Page 3: Profil & Interessen (Bio, Bundesland, Bild)
+                    // Page 2: Profil & Interessen (Bio, Bundesland, Bild)
                     _Page(
                       questionKey: 'setupq.profile',
                       subtitle: L10n.t(context, 'setupp.profileSub'),
@@ -1002,9 +1026,9 @@ class _SettingsPrivacyOnceScreenState
                                   children: [
                                     CircleAvatar(
                                       radius: 44,
-                                      backgroundColor: Theme.of(context)
-                                          .colorScheme
-                                          .primaryContainer,
+                                      backgroundColor: Theme.of(
+                                        context,
+                                      ).colorScheme.primaryContainer,
                                       backgroundImage: _avatarBytes != null
                                           ? MemoryImage(_avatarBytes!)
                                           : null,
@@ -1027,9 +1051,14 @@ class _SettingsPrivacyOnceScreenState
                                                 height: 16,
                                                 child:
                                                     CircularProgressIndicator(
-                                                        strokeWidth: 2))
+                                                      strokeWidth: 2,
+                                                    ),
+                                              )
                                             : const Icon(Icons.add_a_photo),
-                                        tooltip: L10n.t(context, 'setup.photoTooltip'),
+                                        tooltip: L10n.t(
+                                          context,
+                                          'setup.photoTooltip',
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -1052,33 +1081,37 @@ class _SettingsPrivacyOnceScreenState
                           // ---- Bundesland ----
                           DropdownButtonFormField<String>(
                             initialValue:
-                                (_selectedState == null || _selectedState!.isEmpty)
-                                    ? null
-                                    : _selectedState,
+                                (_selectedState == null ||
+                                    _selectedState!.isEmpty)
+                                ? null
+                                : _selectedState,
                             borderRadius: BorderRadius.circular(16),
                             decoration: InputDecoration(
-                              labelText: L10n.t(context, 'setupp.stateOptional'),
+                              labelText: L10n.t(
+                                context,
+                                'setupp.stateOptional',
+                              ),
                             ),
                             hint: Text(L10n.t(context, 'setup.pleasePick')),
                             items: kGermanStates
-                                .map((s) => DropdownMenuItem(
-                                      value: s,
-                                      child: Text(s),
-                                    ))
+                                .map(
+                                  (s) => DropdownMenuItem(
+                                    value: s,
+                                    child: Text(s),
+                                  ),
+                                )
                                 .toList(),
                             onChanged: (v) =>
                                 setState(() => _selectedState = v),
                           ),
                           const SizedBox(height: 20),
-                          // ---- Interessen ----
-                          Text(L10n.t(context, 'setupp.interests'), style: Theme.of(context).textTheme.titleMedium),
-                          const SizedBox(height: 8),
+                          // ---- Interessen (ohne Doppel-Titel: Frage steht
+                          // in der Bubble oben) ----
                           Wrap(
                             spacing: 8,
                             runSpacing: 8,
                             children: AppConstants.presetInterests.map((i) {
-                              final selected =
-                                  _selectedInterests.contains(i);
+                              final selected = _selectedInterests.contains(i);
                               return FilterChip(
                                 label: Text(i),
                                 selected: selected,
@@ -1093,7 +1126,7 @@ class _SettingsPrivacyOnceScreenState
                         ],
                       ),
                     ),
-                    // Page 4: Deine Vorstellung (Text + Audio, überspringbar)
+                    // Page 3: Deine Vorstellung (Text + Audio, überspringbar)
                     _Page(
                       questionKey: 'setupq.intro',
                       subtitle: L10n.t(context, 'setupp.introSub'),
@@ -1109,7 +1142,7 @@ class _SettingsPrivacyOnceScreenState
                         },
                       ),
                     ),
-                    // Page 5: Gewohnheiten (Rauchen, Alkohol, Drogen)
+                    // Page 4: Gewohnheiten (Rauchen, Alkohol, Drogen)
                     _Page(
                       questionKey: 'setupq.habits',
                       subtitle: L10n.t(context, 'setupp.habitsSub'),
@@ -1119,21 +1152,35 @@ class _SettingsPrivacyOnceScreenState
                           Text(
                             L10n.t(context, 'setupp.habitsHint'),
                             style: const TextStyle(
-                                fontSize: 12, color: Colors.grey),
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 8),
+                          // Dealbreaker (wie in "Profil bearbeiten"): harter
+                          // Filter - Kandidaten mit höherem Konsum werden
+                          // serverseitig ausgeschlossen.
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(L10n.t(context,
+                                'profile.edit.habitsDealbreaker')),
+                            subtitle: Text(L10n.t(context,
+                                'profile.edit.habitsDealbreakerSub')),
+                            value: _habitsDealbreaker,
+                            onChanged: (v) =>
+                                setState(() => _habitsDealbreaker = v),
+                          ),
+                          const SizedBox(height: 8),
                           HabitudeSelector(
                             topic: HabitudeTopic.smoking,
                             value: _smoking,
-                            onChanged: (v) =>
-                                setState(() => _smoking = v),
+                            onChanged: (v) => setState(() => _smoking = v),
                           ),
                           const SizedBox(height: 16),
                           HabitudeSelector(
                             topic: HabitudeTopic.alcohol,
                             value: _alcohol,
-                            onChanged: (v) =>
-                                setState(() => _alcohol = v),
+                            onChanged: (v) => setState(() => _alcohol = v),
                           ),
                           const SizedBox(height: 16),
                           HabitudeSelector(
@@ -1144,7 +1191,74 @@ class _SettingsPrivacyOnceScreenState
                         ],
                       ),
                     ),
-                    // Page 4: Passkey (überspringbar)
+                    // Page 5: Privatsphäre & Theme
+                    _Page(
+                      questionKey: 'setupq.visibility',
+                      subtitle: L10n.t(context, 'setupp.visibilitySub'),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Kein Doppel-Titel: Die Frage steht bereits in
+                          // der Bubble oben (setupq.visibility).
+                          for (final v in ProfileVisibility.values)
+                            SelectableTile<ProfileVisibility>(
+                              value: v,
+                              groupValue: settings.profileVisibility,
+                              title: L10n.t(context, v.labelKey),
+                              onChanged: (val) {
+                                if (val != null) {
+                                  notifier.setProfileVisibility(val);
+                                }
+                              },
+                            ),
+                          const Divider(),
+                          Text(
+                            L10n.t(context, 'setupp.appearance'),
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 8),
+                          // String-Keys statt bool?-Werten: Radio mit
+                          // null-Value funktioniert nicht zuverlaessig
+                          // (Tap wird verschluckt). Mapping:
+                          // 'system' -> null, 'light' -> false, 'dark' -> true.
+                          SelectableTile<String>(
+                            value: 'system',
+                            groupValue: settings.useDarkMode == null
+                                ? 'system'
+                                : (settings.useDarkMode! ? 'dark' : 'light'),
+                            title: L10n.t(context, 'setupp.systemTheme'),
+                            onChanged: (_) => notifier.setDarkMode(null),
+                          ),
+                          SelectableTile<String>(
+                            value: 'light',
+                            groupValue: settings.useDarkMode == null
+                                ? 'system'
+                                : (settings.useDarkMode! ? 'dark' : 'light'),
+                            title: L10n.t(context, 'setupp.lightTheme'),
+                            onChanged: (_) => notifier.setDarkMode(false),
+                          ),
+                          SelectableTile<String>(
+                            value: 'dark',
+                            groupValue: settings.useDarkMode == null
+                                ? 'system'
+                                : (settings.useDarkMode! ? 'dark' : 'light'),
+                            title: L10n.t(context, 'setupp.darkTheme'),
+                            onChanged: (_) => notifier.setDarkMode(true),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            L10n.t(context, 'setupp.colorWorld'),
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 8),
+                          ThemePicker(
+                            selectedName: settings.themeName,
+                            onChanged: (t) => notifier.setThemeName(t.name),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Page 6: Passkey (überspringbar)
                     _Page(
                       questionKey: 'setupq.passkey',
                       subtitle: L10n.t(context, 'setupp.passkeySub'),
@@ -1153,25 +1267,25 @@ class _SettingsPrivacyOnceScreenState
                         children: [
                           const Icon(Icons.key, size: 48),
                           const SizedBox(height: 16),
-                          Text(
-                            L10n.t(context, 'setupp.passkeyBody'),
-                          ),
+                          Text(L10n.t(context, 'setupp.passkeyBody')),
                           const SizedBox(height: 24),
                           FilledButton.icon(
-                            onPressed:
-                                _passkeyBusy || _passkeyCreated
-                                    ? null
-                                    : _setupPasskey,
+                            onPressed: _passkeyBusy || _passkeyCreated
+                                ? null
+                                : _setupPasskey,
                             icon: _passkeyBusy
                                 ? const SizedBox(
                                     width: 16,
                                     height: 16,
                                     child: CircularProgressIndicator(
-                                        strokeWidth: 2),
+                                      strokeWidth: 2,
+                                    ),
                                   )
-                                : Icon(_passkeyCreated
-                                    ? Icons.check_circle
-                                    : Icons.fingerprint),
+                                : Icon(
+                                    _passkeyCreated
+                                        ? Icons.check_circle
+                                        : Icons.fingerprint,
+                                  ),
                             label: Text(
                               _passkeyCreated
                                   ? L10n.t(context, 'setupp.passkeyDone')
@@ -1187,7 +1301,7 @@ class _SettingsPrivacyOnceScreenState
                         ],
                       ),
                     ),
-                    // Page 5: Zwei-Faktor-Schutz (überspringbar)
+                    // Page 7: Zwei-Faktor-Schutz (überspringbar)
                     _Page(
                       questionKey: 'setupq.mfa',
                       subtitle:
@@ -1222,12 +1336,16 @@ class _SettingsPrivacyOnceScreenState
                                 onPressed: mfaActive
                                     ? null
                                     : () => context.push(AppRoutes.mfaSetup),
-                                icon: Icon(mfaActive
-                                    ? Icons.check_circle
-                                    : Icons.qr_code),
-                                label: Text(mfaActive
-                                    ? L10n.t(context, 'setupp.mfaDone')
-                                    : L10n.t(context, 'setupp.mfaStart')),
+                                icon: Icon(
+                                  mfaActive
+                                      ? Icons.check_circle
+                                      : Icons.qr_code,
+                                ),
+                                label: Text(
+                                  mfaActive
+                                      ? L10n.t(context, 'setupp.mfaDone')
+                                      : L10n.t(context, 'setupp.mfaStart'),
+                                ),
                               ),
                               const SizedBox(height: 8),
                               Text(
@@ -1243,8 +1361,7 @@ class _SettingsPrivacyOnceScreenState
                     // Page 8: Community Richtlinien
                     _Page(
                       questionKey: 'setupq.guidelines',
-                      subtitle:
-                          L10n.t(context, 'setupp.guidelinesSub'),
+                      subtitle: L10n.t(context, 'setupp.guidelinesSub'),
                       child: _buildCommunityGuidelines(context),
                     ),
                   ],
@@ -1291,9 +1408,7 @@ class _SettingsPrivacyOnceScreenState
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 12),
-        Text(
-          L10n.t(context, 'setupp.guidelinesIntroBody'),
-        ),
+        Text(L10n.t(context, 'setupp.guidelinesIntroBody')),
         const SizedBox(height: 16),
         _RuleItem('1', L10n.t(context, 'cg.1.titleShort')),
         _RuleItem('2', L10n.t(context, 'cg.2.titleShort')),
@@ -1305,8 +1420,8 @@ class _SettingsPrivacyOnceScreenState
         Text(
           L10n.t(context, 'setupp.guidelinesWarn'),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.error,
-              ),
+            color: Theme.of(context).colorScheme.error,
+          ),
         ),
       ],
     );
@@ -1371,8 +1486,8 @@ class _Page extends StatelessWidget {
               Text(
                 subtitle,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
             const SizedBox(height: 16),
@@ -1382,18 +1497,18 @@ class _Page extends StatelessWidget {
                   // Platz für die Tastatur: Der Inhalt bleibt so über dem
                   // Keyboard scrollbar, statt dahinter zu verschwinden.
                   padding: EdgeInsets.only(
-                     bottom: MediaQuery.viewInsetsOf(context).bottom,
-                   ),
-                   child: child,
-                 ),
-               ),
-             ),
-           ],
-         ),
-       ),
-     );
-   }
- }
+                    bottom: MediaQuery.viewInsetsOf(context).bottom,
+                  ),
+                  child: child,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 /// Dezent gestylter Hinweis-/Fehlerkasten fuer Standort-Meldungen
 /// (statt roher roter Einzeilen-Texte).
@@ -1421,9 +1536,9 @@ class _LocationNotice extends StatelessWidget {
             child: Text(
               text,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: scheme.onErrorContainer,
-                    height: 1.35,
-                  ),
+                color: scheme.onErrorContainer,
+                height: 1.35,
+              ),
             ),
           ),
         ],

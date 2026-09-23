@@ -10,6 +10,7 @@ import 'package:wisp/providers/settings_provider.dart';
 import 'package:wisp/routing/app_router.dart';
 import 'package:wisp/services/supabase_service.dart';
 import 'package:wisp/utils/constants.dart';
+import 'package:wisp/l10n/app_strings.dart';
 import 'package:wisp/widgets/captcha_challenge.dart';
 
 /// Screen zur Bestätigung der E-Mail-Adresse nach der Registrierung.
@@ -67,22 +68,23 @@ class _EmailVerificationScreenState
     // E-Mail aus der Registrierung (pendingVerificationEmailProvider) bzw.
     // dem Auth-State erfassen. Nach signUp mit aktivierter Bestätigung gibt
     // es KEINE Session (currentUser == null) – deshalb primär der Provider.
-    _capturedEmail = ref.read(pendingVerificationEmailProvider) ??
+    _capturedEmail =
+        ref.read(pendingVerificationEmailProvider) ??
         SupabaseService.client.auth.currentUser?.email;
     // Sobald die E-Mail bestätigt ist, automatisch zur Hauptapp weiterleiten.
     // v0.9.0-Fix: Nach FRISCHER Registrierung direkt die Einrichtung
     // erzwingen (Onboarding-Interview) - vorher kam sie erst beim 2.
     // Appstart, weil der Server-Flag-Sync ggf. einen veralteten Stand
     // lieferte.
-    _emailConfirmedSub = ref.listenManual<bool?>(
-      emailConfirmedProvider,
-      (previous, next) {
-        if (next == true && previous != true) {
-          ref.read(settingsProvider.notifier).markOnboardingPending();
-          if (mounted) context.go(AppRoutes.onboarding);
-        }
-      },
-    );
+    _emailConfirmedSub = ref.listenManual<bool?>(emailConfirmedProvider, (
+      previous,
+      next,
+    ) {
+      if (next == true && previous != true) {
+        ref.read(settingsProvider.notifier).markOnboardingPending();
+        if (mounted) context.go(AppRoutes.onboarding);
+      }
+    });
     // Stillen Auto-Login starten: Nach der Bestätigung meldet sich die App
     // automatisch an und geht weiter (Session existiert erst nach Login).
     _scheduleAutoLoginAttempt();
@@ -101,7 +103,7 @@ class _EmailVerificationScreenState
     // Die Bestätigung passiert meist im Browser: Beim Zurückkehren in die
     // App sofort prüfen. Im Hintergrund nicht pollen – schont das
     // Auth-Rate-Limit-Budget und den Akku.
-if (state == AppLifecycleState.resumed) {
+    if (state == AppLifecycleState.resumed) {
       _autoLoginDelaySeconds = _autoLoginInitialDelaySeconds;
       // Der Nutzer kommt i. d. R. gerade aus der Bestätigungs-Mail zurück:
       // Genau jetzt EINE Captcha-Challenge anbieten (Server verlangt bei
@@ -130,15 +132,17 @@ if (state == AppLifecycleState.resumed) {
   /// [emailConfirmedProvider] erkennt das und navigiert weiter.
   void _scheduleAutoLoginAttempt() {
     _autoLoginTimer?.cancel();
-    _autoLoginTimer =
-        Timer(Duration(seconds: _autoLoginDelaySeconds), _attemptAutoLogin);
+    _autoLoginTimer = Timer(
+      Duration(seconds: _autoLoginDelaySeconds),
+      _attemptAutoLogin,
+    );
   }
 
-Future<void> _attemptAutoLogin({bool withCaptcha = false}) async {
+  Future<void> _attemptAutoLogin({bool withCaptcha = false}) async {
     // Keine überlappenden Versuche (jeder Versuch kostet Rate-Limit-Budget).
     if (_autoLoginInProgress) return;
     if (!mounted || !SupabaseService.isInitialized) return;
-final creds = ref.read(pendingVerificationCredentialsProvider);
+    final creds = ref.read(pendingVerificationCredentialsProvider);
     if (creds == null) return;
     // Ablauf (Audit M1): Die Registrierungs-Credentials dürfen höchstens
     // 15 Minuten im Speicher weitergegeben werden. Danach wird der
@@ -169,7 +173,9 @@ final creds = ref.read(pendingVerificationCredentialsProvider);
       // silentLogin statt login(): Der Status bleibt bei einem Fehler
       // unverändert, damit der Router den Nutzer nicht als "ausgeloggt"
       // behandelt und zum Login-Screen wirft.
-      await ref.read(authProvider.notifier).silentLogin(
+      await ref
+          .read(authProvider.notifier)
+          .silentLogin(
             email: creds.email,
             password: creds.password,
             captchaToken: captchaToken,
@@ -211,8 +217,9 @@ final creds = ref.read(pendingVerificationCredentialsProvider);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-                'Bitte melde dich jetzt mit E-Mail und Passwort an. '
-                'Deine E-Mail-Adresse ist bereits bestätigt.'),
+              'Bitte melde dich jetzt mit E-Mail und Passwort an. '
+              'Deine E-Mail-Adresse ist bereits bestätigt.',
+            ),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -223,16 +230,105 @@ final creds = ref.read(pendingVerificationCredentialsProvider);
     await _attemptAutoLogin(withCaptcha: AppConstants.captchaEnabled);
   }
 
+  /// Bricht die Registrierung ab und löscht den Account serverseitig.
+  ///
+  /// Nutzer-Regel: Auf dem Bestätigungs-Screen muss man abbrechen können,
+  /// wobei der Supabase-Account gelöscht wird. Zwei Pfade:
+  /// - Session vorhanden -> normale Löschung via deleteAccount().
+  /// - Keine Session (Normalfall: unbestätigt) -> cancel-registration
+  ///   mit E-Mail + Passwort aus dem Speicher-Nachweis.
+  Future<void> _cancelRegistration() async {
+    final confirm =
+        await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(L10n.t(ctx, 'email.cancelTitle')),
+            content: Text(L10n.t(ctx, 'email.cancelBody')),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: Text(L10n.t(ctx, 'email.cancelKeep')),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: Text(L10n.t(ctx, 'email.cancelConfirm')),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (!confirm || !mounted) return;
+
+    try {
+      final hasSession =
+          SupabaseService.isInitialized &&
+          SupabaseService.client.auth.currentUser != null;
+      if (hasSession) {
+        await ref.read(authProvider.notifier).deleteAccount();
+      } else {
+        final creds = ref.read(pendingVerificationCredentialsProvider);
+        if (creds == null) {
+          // Nachweis abgelaufen (> 15 Min): ausloggen, zum Login.
+          // Eine Neuregistrierung sendet die Mail erneut.
+          await ref.read(authProvider.notifier).logout();
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(L10n.t(context, 'email.cancelExpired')),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          context.go(AppRoutes.login);
+          return;
+        }
+        final response = await SupabaseService.client.functions
+            .invoke(
+              'cancel-registration',
+              body: {'email': creds.email, 'password': creds.password},
+            )
+            .timeout(const Duration(seconds: 30));
+        final ok = (response.data as Map?)?['deleted'] == true;
+        if (!ok) {
+          final err =
+              (response.data as Map?)?['error']?.toString() ??
+              'Unbekannter Fehler';
+          throw StateError(err);
+        }
+        await ref.read(authProvider.notifier).logout();
+      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.t(context, 'email.deleted')),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      context.go(AppRoutes.login);
+    } catch (e) {
+      debugPrint('[EmailVerification] Abbrechen fehlgeschlagen: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            L10n.tf(context, 'email.deleteFailed', {'error': '$e'}),
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   Future<void> _resend() async {
     if (_resending || _showSent || _cooldownSeconds > 0) return;
     setState(() => _resending = true);
 
-try {
+    try {
       final email =
           _capturedEmail ?? SupabaseService.client.auth.currentUser?.email;
       if (email == null || email.isEmpty) {
         throw Exception(
-            'Keine Emailadresse gefunden. Bitte registriere dich erneut.');
+          'Keine Emailadresse gefunden. Bitte registriere dich erneut.',
+        );
       }
       // Bei aktivierter Dashboard-CAPTCHA verlangt auch der Resend-
       // Endpoint ein Token – vorher schlug "Erneut senden" mit
@@ -276,9 +372,8 @@ try {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-        content: Text('Bestätigungsemail wurde erneut gesendet. '
-            'Bitte prüfe auch deinen Spamordner.'),
+        SnackBar(
+          content: Text(L10n.t(context, 'email.resent')),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -288,13 +383,10 @@ try {
         setState(() => _resending = false);
         final msg = e.toString();
         final display = msg.contains('rate_limit')
-            ? 'Zu viele Anfragen. Bitte warte einen Moment.'
-            : 'Fehler beim Senden: $msg';
+            ? L10n.t(context, 'email.rateLimited')
+            : L10n.tf(context, 'common.errorWith', {'error': msg});
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(display),
-            behavior: SnackBarBehavior.floating,
-          ),
+          SnackBar(content: Text(display), behavior: SnackBarBehavior.floating),
         );
       }
     }
@@ -306,17 +398,16 @@ try {
     final supabaseActive = SupabaseService.isInitialized;
 
     final statusText = switch (isConfirmed) {
-      true => 'Email bestätigt!',
-      null => supabaseActive
-          ? 'Wir warten auf die Bestätigung...'
-          : 'In der Demo kannst du direkt fortfahren.',
-      false => 'Wir warten auf die Bestätigung...',
+      true => L10n.t(context, 'email.confirmed'),
+      null =>
+        supabaseActive
+            ? L10n.t(context, 'email.waiting')
+            : L10n.t(context, 'email.demoContinue'),
+      false => L10n.t(context, 'email.waiting'),
     };
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Email bestätigen'),
-      ),
+      appBar: AppBar(title: Text(L10n.t(context, 'email.title'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -329,15 +420,13 @@ try {
             ),
             const SizedBox(height: 24),
             Text(
-              'Bestätige deine Emailadresse',
+              L10n.t(context, 'email.heading'),
               style: Theme.of(context).textTheme.headlineSmall,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             Text(
-              'Wir haben dir eine Bestätigungsemail gesendet. '
-              'Bitte klicke auf den Link in der Email, um deinen Account zu aktivieren. '
-              'Danach geht es automatisch weiter.',
+              L10n.t(context, 'email.body'),
               style: Theme.of(context).textTheme.bodyLarge,
               textAlign: TextAlign.center,
             ),
@@ -345,13 +434,14 @@ try {
             Text(
               statusText,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
             OutlinedButton.icon(
-              onPressed: (isConfirmed == true ||
+              onPressed:
+                  (isConfirmed == true ||
                       isConfirmed == null && !supabaseActive ||
                       _resending ||
                       _showSent ||
@@ -370,22 +460,34 @@ try {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : _showSent
-                        ? const Icon(Icons.check_circle,
-                            key: ValueKey('sent'), color: Colors.green)
-                        : const Icon(Icons.refresh, key: ValueKey('idle')),
+                    ? const Icon(
+                        Icons.check_circle,
+                        key: ValueKey('sent'),
+                        color: Colors.green,
+                      )
+                    : const Icon(Icons.refresh, key: ValueKey('idle')),
               ),
               label: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 250),
                 child: Text(
                   _resending
-                      ? 'Wird gesendet...'
+                      ? L10n.t(context, 'email.sending')
                       : _showSent
-                          ? 'Email gesendet'
-                          : _cooldownSeconds > 0
-                              ? 'Erneut senden in ${_cooldownSeconds}s'
-                              : 'Bestätigungsmail erneut senden',
+                      ? L10n.t(context, 'email.sent')
+                      : _cooldownSeconds > 0
+                      ? L10n.tf(context, 'email.cooldown', {
+                          's': '$_cooldownSeconds',
+                        })
+                      : L10n.t(context, 'email.resend'),
                   key: ValueKey(
-                      'label-${_resending ? 'sending' : _showSent ? 'sent' : _cooldownSeconds > 0 ? 'cooldown' : 'idle'}'),
+                    'label-${_resending
+                        ? 'sending'
+                        : _showSent
+                        ? 'sent'
+                        : _cooldownSeconds > 0
+                        ? 'cooldown'
+                        : 'idle'}',
+                  ),
                 ),
               ),
             ),
@@ -398,10 +500,10 @@ try {
             FilledButton.icon(
               onPressed:
                   (isConfirmed == true || _autoLoginInProgress || _resending)
-                      ? null
-                      : _manualContinue,
+                  ? null
+                  : _manualContinue,
               icon: const Icon(Icons.arrow_forward),
-              label: const Text('Ich habe die Mail bestätigt: Weiter'),
+              label: Text(L10n.t(context, 'email.continueBtn')),
             ),
             const SizedBox(height: 8),
             const SizedBox(height: 8),
@@ -409,8 +511,9 @@ try {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest
-                    .withValues(alpha: 0.5),
+                color: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Row(
@@ -424,11 +527,7 @@ try {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Kommt der Link in der Email nicht durch? Das kann an '
-                      'aktiven DNS Filtern oder VPNs (z. B. DNS Forge) liegen, '
-                      'die Tracking Links blockieren. Deaktiviere den Filter '
-                      'vorübergehend und klicke den Link erneut. Nach der '
-                      'Bestätigung kannst du ihn wieder aktivieren.',
+                      L10n.t(context, 'email.dnsHint'),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ),
@@ -439,7 +538,7 @@ try {
             TextButton.icon(
               onPressed: () => context.push(AppRoutes.bugReport),
               icon: const Icon(Icons.bug_report, size: 18),
-              label: const Text('Problem melden'),
+              label: Text(L10n.t(context, 'email.reportIssue')),
             ),
             TextButton.icon(
               // Ausweg, falls die Session serverseitig nicht (mehr) existiert
@@ -452,7 +551,21 @@ try {
                 }
               },
               icon: const Icon(Icons.logout, size: 18),
-              label: const Text('Abmelden'),
+              label: Text(L10n.t(context, 'email.logout')),
+            ),
+            TextButton.icon(
+              // Nutzer-Regel: Abbrechen löscht den noch unbestätigten
+              // Account in Supabase (siehe _cancelRegistration).
+              onPressed: _cancelRegistration,
+              icon: const Icon(
+                Icons.delete_outline,
+                size: 18,
+                color: Colors.red,
+              ),
+              label: Text(
+                L10n.t(context, 'email.cancel'),
+                style: const TextStyle(color: Colors.red),
+              ),
             ),
           ],
         ),
@@ -460,4 +573,3 @@ try {
     );
   }
 }
-

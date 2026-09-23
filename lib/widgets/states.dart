@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:wisp/l10n/app_strings.dart';
+
 /// Schöner, animierter "Leerer Zustand" (Empty State) mit Icon + Text + Aktion.
 class EmptyState extends StatelessWidget {
   const EmptyState({
@@ -110,7 +112,7 @@ class ErrorState extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Erneut versuchen'),
+                label: Text(L10n.t(context, 'common.retry')),
               ),
             ],
           ],

@@ -38,8 +38,10 @@ class MatchWithState {
     this.createdVia = 'swipe',
     this.status = 'active',
     this.createdAt,
+    this.resparkedAt,
     this.passedAt,
     this.lastAttemptAt,
+    this.kind = 'spark',
   });
 
   final int matchId;
@@ -51,8 +53,19 @@ class MatchWithState {
   /// 'active' | 'cooled' | 'ended' (Migration 074).
   final String status;
   final DateTime? createdAt;
+
+  /// Letzter Re-Funke (Migration 101): Auto-Kühl-Karenzzeit - ein
+  /// re-entfachter Funke bleibt mindestens 72 h aktiv, auch ohne neue
+  /// Nachricht.
+  final DateTime? resparkedAt;
   final DateTime? passedAt;
   final DateTime? lastAttemptAt;
+
+  /// Funken-Typ (Migration 116, Idee 3): 'spark' = romantisch,
+  /// 'friends' = Freundschaft.
+  final String kind;
+
+  bool get isFriends => kind == 'friends';
 
   bool get quizPassed => unlockLevel >= 2;
 
@@ -79,12 +92,45 @@ class MatchWithState {
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.tryParse(json['createdAt'] as String),
+      resparkedAt: json['resparkedAt'] == null
+          ? null
+          : DateTime.tryParse(json['resparkedAt'] as String),
       passedAt: json['passedAt'] == null
           ? null
           : DateTime.tryParse(json['passedAt'] as String),
       lastAttemptAt: json['lastAttemptAt'] == null
           ? null
           : DateTime.tryParse(json['lastAttemptAt'] as String),
+      kind: json['kind'] as String? ?? 'spark',
+    );
+  }
+}
+
+/// Eintrag der gemeinsamen Erinnerungsliste (Idee 5, Migration 116).
+class BucketItem {
+  const BucketItem({
+    required this.id,
+    required this.text,
+    required this.createdBy,
+    required this.done,
+    this.createdAt,
+  });
+
+  final int id;
+  final String text;
+  final String createdBy;
+  final bool done;
+  final DateTime? createdAt;
+
+  factory BucketItem.fromJson(Map<String, dynamic> json) {
+    return BucketItem(
+      id: (json['id'] as num).toInt(),
+      text: json['text'] as String? ?? '',
+      createdBy: json['createdBy'] as String? ?? '',
+      done: json['done'] as bool? ?? false,
+      createdAt: json['createdAt'] == null
+          ? null
+          : DateTime.tryParse(json['createdAt'] as String),
     );
   }
 }

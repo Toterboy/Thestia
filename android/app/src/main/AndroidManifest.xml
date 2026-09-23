@@ -23,7 +23,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <application
-        android:label="Wisp"
+        android:label="WispDating"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="false"
@@ -88,6 +88,15 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Android-11-Text-Dehnung (Geräte-Feedback): Auf betroffenen
+             Android-11-Geräten rendert Impeller Glyphen inkonsistent
+             (gestreckt/zu dünn, vgl. flutter/flutter#187908). Skia als
+             Renderer erzwingen (dokumentierter Escape-Hatch) - Skia ist
+             der bewährte Pfad; kein funktionaler Unterschied der App. -->
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableImpeller"
+            android:value="false" />
 
         <!-- Wisp-Logo (weisse Silhouette) als Small-Icon fuer FCM-Push -
              ohne diesen Eintrag zeigt Android nur einen weissen Punkt. -->

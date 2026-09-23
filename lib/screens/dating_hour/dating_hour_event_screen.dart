@@ -65,7 +65,9 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen> {
 
   void _startCountdown() {
     // V: Countdown läuft auf verifizierter Serverzeit, nicht DateTime.now().
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+    // v0.9.1 (Akku): Die Anzeige ist minutengenau ("in X Minuten"), ein
+    // 20-Sekunden-Takt genügt statt Sekunden-Rebuilds des ganzen Screens.
+    _countdownTimer = Timer.periodic(const Duration(seconds: 20), (_) {
       if (mounted) setState(() {});
     });
   }
@@ -120,19 +122,18 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Am Event teilnehmen?'),
-        content: const Text(
-          'Du wirst nur dann mit jemandem verbunden, wenn du jetzt '
-          'bestätigst. Du kannst jederzeit aussteigen.',
+        title: Text(L10n.t(ctx, 'dh.event.joinConfirmTitle')),
+        content: Text(
+          L10n.t(ctx, 'dh.event.joinConfirmBody'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Abbrechen'),
+            child: Text(L10n.t(ctx, 'common.cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Ich bin dabei'),
+            child: Text(L10n.t(ctx, 'dh.event.join')),
           ),
         ],
       ),
@@ -162,7 +163,9 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen> {
     } on DatingHourException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehler: ${e.message}')),
+          SnackBar(
+              content: Text(L10n.tf(context, 'common.errorWith',
+                  {'error': e.message}))),
         );
       }
     }
@@ -177,13 +180,15 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen> {
       ref.invalidate(currentDatingHourEventProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Du hast das Event verlassen.')),
+          SnackBar(content: Text(L10n.t(context, 'dh.event.left'))),
         );
       }
     } on DatingHourException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehler: ${e.message}')),
+          SnackBar(
+              content: Text(L10n.tf(context, 'common.errorWith',
+                  {'error': e.message}))),
         );
       }
     }
@@ -204,7 +209,7 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Ja, gerne'),
+            child: Text(L10n.t(ctx, 'dh.event.yesPlease')),
           ),
         ],
       ),
@@ -215,8 +220,8 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(rejoin
-              ? 'Du bist beim nächsten Dating Hour automatisch dabei.'
-              : 'Alles klar, du wirst beim nächsten Mal gefragt.'),
+              ? L10n.t(context, 'dh.event.autoJoinOn')
+              : L10n.t(context, 'dh.event.autoJoinOff')),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -244,7 +249,7 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen> {
           SnackBar(
             content: Text(
                 '${L10n.t(context, 'dh.event.welcomeBack')} '
-                '(änderbar in den Präferenzen).'),
+                '${L10n.t(context, 'dh.event.prefsNote')}'),
           ),
         );
       }
@@ -319,7 +324,7 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen> {
       },
       child: Scaffold(
       appBar: AppBar(
-        title: const Text('Dating Hour'),
+        title: Text(L10n.t(context, 'dh.event.title')),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           // Dating Hour wird via context.go(...) erreicht (kein Stack zum
@@ -334,7 +339,7 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen> {
               ref.invalidate(currentDatingHourEventProvider);
               ref.invalidate(myActiveDatingHourSessionProvider);
             },
-            tooltip: 'Aktualisieren',
+            tooltip: L10n.t(context, 'common.refresh'),
           ),
         ],
       ),
@@ -408,9 +413,9 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen> {
     bool canJoin,
   ) {
     if (isEnded) {
-      return const _PrimaryActionButton(
+      return _PrimaryActionButton(
         icon: Icons.event_busy,
-        label: 'Datinghour beendet',
+        label: L10n.t(context, 'dh.event.ended'),
         onPressed: null,
         color: Colors.grey,
       );
@@ -423,7 +428,7 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen> {
     if (isRunning && !isParticipating && canJoin) {
       return _PrimaryActionButton(
         icon: Icons.login,
-        label: 'Jetzt beitreten & chatten',
+        label: L10n.t(context, 'dh.event.joinNow'),
         onPressed: _joinEvent,
         color: Colors.green,
       );
@@ -432,7 +437,7 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen> {
     if (!isRunning && isParticipating) {
       return _PrimaryActionButton(
         icon: Icons.event_busy,
-        label: 'Raus',
+        label: L10n.t(context, 'dh.event.leave'),
         onPressed: _leaveEvent,
         color: Colors.red,
       );
@@ -452,7 +457,7 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen> {
           const SizedBox(height: 16),
           _PrimaryActionButton(
             icon: Icons.event_available,
-            label: 'Ich bin dabei',
+            label: L10n.t(context, 'dh.event.join'),
             onPressed: _joinEvent,
             color: Theme.of(context).colorScheme.primary,
           ),
@@ -462,40 +467,43 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen> {
 
     return _PrimaryActionButton(
       icon: Icons.schedule,
-      label: '${L10n.t(context, 'dh.nextEventIn')} ${_formatDuration(event.minutesUntilStart)}',
+      label:
+          '${L10n.t(context, 'dh.nextEventIn')} ${_formatDuration(context, event.minutesUntilStart)}',
       onPressed: null,
       color: Colors.grey,
     );
   }
 }
 
-String _formatDuration(int minutes) {
-  if (minutes < 60) return '$minutes Minuten';
+String _formatDuration(BuildContext context, int minutes) {
+  String mins(int m) => L10n.tf(
+      context, m == 1 ? 'dh.duration.minute' : 'dh.duration.minutes',
+      {'m': '$m'});
+  String hrs(int h) => L10n.tf(
+      context, h == 1 ? 'dh.duration.hour' : 'dh.duration.hours',
+      {'h': '$h'});
+  if (minutes < 60) return mins(minutes);
   final h = minutes ~/ 60;
   final m = minutes % 60;
-  if (m == 0) return '$h Stunden';
-  return '$h Stunden $m Minuten';
+  if (m == 0) return hrs(h);
+  return '${hrs(h)} ${mins(m)}';
 }
 
-/// Fortschritt zum Teilnehmer-MINDESTZIEL (20): zeigt "X von 20" und
-/// wie viele noch fehlen, damit das Event stattfindet (Migration 067/068).
-/// WICHTIG: 20 ist die Mindest-Teilnehmerzahl, KEIN Maximum - über dem
-/// Ziel läuft der Balken voll und die Anzeige nennt die echte Gesamtzahl.
+/// Teilnehmer-Anzeige (v0.9.1, Migration 096): Es gibt KEIN Mindestziel
+/// mehr, die Dating Hour fällt nie wegen zu weniger Leute aus. Die Karte
+/// zeigt nur, wie viele dabei sind.
 class _ParticipantProgress extends ConsumerWidget {
   const _ParticipantProgress({required this.eventId});
 
   final String eventId;
 
-  static const int _minimum = 20;
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return FutureBuilder<int>(
-      future: ref.read(datingHourServiceProvider).getParticipantCount(eventId),
+      future:
+          ref.read(datingHourServiceProvider).getParticipantCount(eventId),
       builder: (context, snapshot) {
         final count = snapshot.data ?? 0;
-        final missing = (_minimum - count).clamp(0, _minimum);
-        final reached = count >= _minimum;
         return Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -505,21 +513,15 @@ class _ParticipantProgress extends ConsumerWidget {
                 Row(
                   children: [
                     Icon(
-                      reached ? Icons.check_circle : Icons.groups,
+                      Icons.groups,
                       size: 20,
-                      color: reached
-                          ? Colors.green
-                          : Theme.of(context).colorScheme.primary,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        reached
-                            ? 'Mindestziel erreicht: $count Teilnehmer!'
-                                ' (es können beliebig mehr sein)'
-                            : '$count von $_minimum Teilnehmern'
-                                ' (Mindestziel)'
-                                '${missing > 0 ? ' - es fehlen noch $missing' : ''}',
+                        L10n.tf(context, 'dh.event.participants',
+                            {'n': '$count'}),
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
@@ -527,23 +529,13 @@ class _ParticipantProgress extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: LinearProgressIndicator(
-                    value: (count / _minimum).clamp(0.0, 1.0),
-                    minHeight: 8,
-                  ),
+                const SizedBox(height: 6),
+                Text(
+                  L10n.t(context, 'dh.event.participantsSub'),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                 ),
-                if (reached) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    'Je mehr mitmachen, desto mehr Gespräche pro Runde.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -569,24 +561,24 @@ class _ActiveSessionButton extends ConsumerWidget {
         onPressed: null,
         color: Colors.grey,
       ),
-      error: (err, _) => const _PrimaryActionButton(
+      error: (err, _) => _PrimaryActionButton(
         icon: Icons.error_outline,
-        label: 'Fehler beim Laden',
+        label: L10n.t(context, 'dh.event.loadError'),
         onPressed: null,
         color: Colors.red,
       ),
       data: (session) {
         if (session == null) {
-          return const _PrimaryActionButton(
+          return _PrimaryActionButton(
             icon: Icons.search,
-            label: 'Wir suchen gerade einen Partner...',
+            label: L10n.t(context, 'dh.event.searchingPartner'),
             onPressed: null,
             color: Colors.grey,
           );
         }
         return _PrimaryActionButton(
           icon: Icons.chat_bubble,
-          label: 'Zum Chat',
+          label: L10n.t(context, 'dh.event.toChat'),
           onPressed: () => context.go(AppRoutes.datingHourChatPath(session.id)),
           color: Colors.pink,
         );
@@ -616,8 +608,7 @@ class _ServerTimeWarningBanner extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Countdown und Status basieren auf der lokalen Gerätezeit. '
-                  'Die Server-Zeit konnte nicht verifiziert werden.',
+              L10n.t(context, 'dh.event.localTimeWarn'),
               style: theme.textTheme.bodySmall,
             ),
           ),
@@ -634,7 +625,7 @@ class _LoadingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Dating Hour')),
+      appBar: AppBar(title: Text(L10n.t(context, 'dh.event.title'))),
       body: const Center(child: CircularProgressIndicator()),
     );
   }
@@ -648,7 +639,7 @@ class _ErrorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Dating Hour')),
+      appBar: AppBar(title: Text(L10n.t(context, 'dh.event.title'))),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -674,12 +665,12 @@ class _NoEventScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Dating Hour')),
-      body: const Padding(
-        padding: EdgeInsets.all(24),
+      appBar: AppBar(title: Text(L10n.t(context, 'dh.event.title'))),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
         child: Center(
           child: Text(
-            'Aktuell ist kein Dating Hour Event geplant.',
+            L10n.t(context, 'dh.event.nonePlanned'),
             textAlign: TextAlign.center,
           ),
         ),
@@ -710,10 +701,11 @@ class _EventStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final title = isRunning
-        ? 'LIVE: Dating Hour läuft!'
+        ? L10n.t(context, 'dh.event.liveNow')
         : isEnded
-            ? 'Datinghour beendet'
-            : 'Nächste Datinghour am ${_formatDate(event.eventDate)}';
+            ? L10n.t(context, 'dh.event.ended')
+            : L10n.tf(context, 'dh.event.nextAt',
+                {'date': _formatDate(event.eventDate)});
 
     return Card(
       color: isRunning ? colorScheme.primaryContainer : null,
@@ -757,19 +749,23 @@ class _EventStatusCard extends StatelessWidget {
               children: [
                 _InfoChip(
                   icon: Icons.people,
-                  label: isParticipating ? 'Du nimmst teil' : 'Nicht angemeldet',
+                  label: isParticipating
+                    ? L10n.t(context, 'dh.event.chipParticipating')
+                    : L10n.t(context, 'dh.event.chipNotParticipating'),
                   color: isRunning ? colorScheme.onPrimaryContainer : null,
                 ),
                 if (isRunning)
                   _InfoChip(
                     icon: Icons.timer,
-                    label: 'Noch ${_formatDuration(minutesUntilEnd)}',
+                    label: L10n.tf(context, 'dh.event.remaining',
+                        {'d': _formatDuration(context, minutesUntilEnd)}),
                     color: colorScheme.onPrimaryContainer,
                   )
                 else if (!isEnded && minutesUntilStart > 0)
                   _InfoChip(
                     icon: Icons.timer,
-                    label: 'Start in ${_formatDuration(minutesUntilStart)}',
+                    label: L10n.tf(context, 'dh.event.startIn',
+                        {'d': _formatDuration(context, minutesUntilStart)}),
                     color: colorScheme.primary,
                   ),
               ],
@@ -803,7 +799,11 @@ class _EventStatusCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Du nimmst teil! ${isRunning ? "Chats laufen." : "Warte auf den Start."}',
+                        isRunning
+                            ? L10n.t(context,
+                                'dh.event.participatingLive')
+                            : L10n.t(context,
+                                'dh.event.participatingWaiting'),
                         style: TextStyle(
                           color: isRunning
                               ? colorScheme.onPrimaryContainer

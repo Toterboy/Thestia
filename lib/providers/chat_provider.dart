@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart' show WidgetsBinding, AppLifecycleState;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:wisp/models/match.dart';
@@ -8,7 +9,36 @@ import 'package:wisp/models/user_profile.dart';
 import 'package:wisp/services/chat_service.dart';
 import 'package:wisp/services/local_storage.dart';
 import 'package:wisp/services/notification_service.dart';
+import 'package:wisp/services/supabase_service.dart';
 import 'package:wisp/utils/constants.dart';
+
+/// Match-ID des aktuell im VORDERGRUND geöffneten Chats (sonst null).
+///
+/// Die Chat-Screens setzen den Wert beim Einstieg und löschen ihn im
+/// dispose. [ChatNotifier] nutzt ihn, um die Lokal-Benachrichtigung für
+/// eingehende Nachrichten zu UNTERDRÜCKEN, wenn die Nachricht gerade
+/// sichtbar ist (Nutzerwunsch: "keine Benachrichtigung, wenn ich die
+/// Nachricht schon sehe").
+final activeChatIdProvider = StateProvider<String?>((ref) => null);
+
+/// Partner-ID des aktuell geöffneten Chats (paralleler Zustand zu
+/// [activeChatIdProvider]): Der FCM-Foreground-Handler kennt nur die
+/// Absender-UUID aus den Push-Metadaten, nicht die lokale Match-ID -
+/// die Unterdrückung für Server-Pushes läuft deshalb über diese ID.
+final activeChatPeerIdProvider = StateProvider<String?>((ref) => null);
+
+/// True, wenn die App gerade im Vordergrund ist.
+bool appInForeground() =>
+    WidgetsBinding.instance.lifecycleState == null ||
+    WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+
+/// True, wenn für einen Push von [peerId] gerade die Benachrichtigung
+/// unterdrückt werden soll (Chat mit dem Absender offen + Vordergrund).
+bool shouldSuppressNotificationForPeer(WidgetRef? ref, String peerId) {
+  if (ref == null || peerId.isEmpty) return false;
+  final openPeer = ref.read(activeChatPeerIdProvider);
+  return openPeer != null && openPeer == peerId && appInForeground();
+}
 
 /// Verwaltet Matches und Chats. Reagiert auf Likes aus dem Swipe.
 class ChatNotifier extends StateNotifier<List<Match>> {
@@ -21,9 +51,34 @@ class ChatNotifier extends StateNotifier<List<Match>> {
   void setHistoryPersistence(bool enabled, {int? limit}) =>
       _chat.setHistoryPersistence(enabled, limit: limit);
 
+  /// Besitzerwechsel (Login/Logout, Audit Kontowechsel): Trennt Verlauf,
+  /// Kontakte und State pro Konto. Bei Login werden die eigenen
+  /// QR-Kontakte wiederhergestellt, bei Logout (null) wird nur geleert.
+  Future<void> setOwner(String? userId) async {
+    await _chat.setOwner(userId);
+    if (userId == null) {
+      state = [];
+    } else {
+      await _chat.restoreQrContacts();
+      state = _chat.getMatches();
+    }
+  }
+
+  /// Löscht alle eigenen Chat-Boxen vom Gerät (Account-Löschung).
+  Future<void> deleteOwnedData(String userId) async {
+    await _chat.deleteOwnedData(userId);
+    state = [];
+  }
+
   /// Lädt den gespeicherten Verlauf eines Matches (Opt-in aktiv).
-  Future<void> hydrateHistory(String matchId) =>
-      _chat.hydrateHistory(matchId);
+  /// Aktualisiert nach dem Hydrate den State, damit die UI SOFORT neu
+  /// zeichnet (Fix "Verlauf lädt nicht direkt": Das Hydrate füllte nur
+  /// die interne Map, ohne den Provider-State zu berühren - der Chat
+  /// blieb leer, bis ein anderes Event ein Rebuild auslöste).
+  Future<void> hydrateHistory(String matchId) async {
+    await _chat.hydrateHistory(matchId);
+    state = _chat.getMatches();
+  }
 
   /// Erzeugt ein Match aus einem gelikten Profil.
   void addMatch(UserProfile partner, {WidgetRef? ref}) {
@@ -144,10 +199,18 @@ class ChatNotifier extends StateNotifier<List<Match>> {
   }
 
   void _maybeNotifyMessage(String matchId, Message msg, WidgetRef ref) {
-    // Nur für eingehende Nachrichten (NICHT von mir selbst).
-    if (msg.isFrom(AppConstants.currentUserId)) return;
+    // Nur für eingehende Nachrichten (NICHT von mir selbst). Die ID kommt
+    // aus der Supabase-Session; Demo-Fallback nur für den lokalen Modus
+    // (Fix: AppConstants-Demo-ID kippte die Erkennung bei Session-Lücken).
+    final myId = SupabaseService.currentUser?.id ?? AppConstants.currentUserId;
+    if (msg.isFrom(myId)) return;
     final match = _chat.getMatchById(matchId);
     if (match == null) return;
+    // NUTZERWUNSCH: Kein Notification-Ping, wenn der Chat GEÖFFNET ist und
+    // die Nachricht gerade auf dem Bildschirm erscheint. Im Hintergrund
+    // (App pausiert) zeigt die System-Benachrichtigung die Nachricht an.
+    final open = ref.read(activeChatIdProvider);
+    if (open != null && open == matchId && appInForeground()) return;
     ref.read(notificationServiceProvider).showMessageNotification(
       id: matchId.hashCode ^ (DateTime.now().millisecondsSinceEpoch & 0xFFFFFF),
       title: match.partner.name,

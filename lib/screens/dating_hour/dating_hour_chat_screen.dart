@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import 'package:wisp/models/dating_hour_models.dart';
 import 'package:wisp/models/message.dart';
@@ -11,14 +12,16 @@ import 'package:wisp/providers/chat_provider.dart';
 import 'package:wisp/providers/profile_provider.dart';
 import 'package:wisp/l10n/app_strings.dart';
 import 'package:wisp/routing/app_router.dart';
+import 'package:wisp/screens/interests/interessen_screen.dart'
+    show interessenInitialTabProvider;
 import 'package:wisp/services/supabase_service.dart';
+import 'package:wisp/widgets/chat_bubbles.dart';
 import 'package:wisp/widgets/funke_overlay.dart';
 import 'package:wisp/services/dating_hour_service.dart';
 import 'package:wisp/services/find_your_match_service.dart';
 import 'package:wisp/services/supabase_database_service.dart';
 import 'package:wisp/services/p2p_chat_service.dart';
-import 'package:wisp/services/secure_storage.dart';
-import 'package:wisp/utils/constants.dart';
+import 'package:wisp/services/relay_service.dart';
 
 /// Screen für den aktiven Dating Hour Chat (5-Minuten-Timer).
 ///
@@ -26,9 +29,10 @@ import 'package:wisp/utils/constants.dart';
 /// Ablauf und ermöglicht die Entscheidung (Annehmen/Ablehnen). Bei beidseitigem
 /// Accept wird ein Match erzeugt und zur Matches-Seite navigiert.
 ///
-/// Nachrichten laufen E2E-verschlüsselt über den P2P-DataChannel
-/// ([P2PChatService]) - identisch zum 1:1-Chat. Kein Nachrichteninhalt
-/// verlässt das Gerät Richtung Server.
+/// Nachrichten laufen E2E-verschlüsselt: primär über den P2P-DataChannel
+/// ([P2PChatService]) - identisch zum 1:1-Chat; bei geschlossenem Kanal
+/// über den Server-Relay (Migration 093/106), der Server sieht nur
+/// Ciphertext. Kein Nachrichteninhalt im Klartext Richtung Server.
 class DatingHourChatScreen extends ConsumerStatefulWidget {
   const DatingHourChatScreen({required this.sessionId, super.key});
   final String sessionId;
@@ -37,7 +41,8 @@ class DatingHourChatScreen extends ConsumerStatefulWidget {
   ConsumerState<DatingHourChatScreen> createState() => _DatingHourChatScreenState();
 }
 
-class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen> {
+class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
+    with WidgetsBindingObserver {
   /// Cache: Partner-Profil nur einmal pro Session laden.
   final Map<String, Future<Map<String, dynamic>?>> partnerHabitsCache = {};
   final _messageController = TextEditingController();
@@ -57,24 +62,56 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen> {
   // E2E-P2P-Verbindung (Signal Protocol + WebRTC DataChannel).
   P2PChatService? _p2p;
   StreamSubscription<String>? _msgSub;
+  StreamSubscription<void>? _pingSub;
   bool _p2pInitStarted = false;
 
   @override
   void initState() {
     super.initState();
-    _currentUserId = AppConstants.currentUserId;
+    WidgetsBinding.instance.addObserver(this);
+    // NUTZERWUNSCH: Keine Benachrichtigung, solange dieser Chat sichtbar
+    // ist (Nachrichten erscheinen direkt auf dem Bildschirm).
+    ref.read(activeChatIdProvider.notifier).state = widget.sessionId;
     _loadSession();
     _startTimer();
   }
 
   @override
   void dispose() {
+    // Aktiven Chat freigeben (Notification-Unterdrückung nur solange der
+    // Chat sichtbar ist).
+    if (ref.read(activeChatIdProvider) == widget.sessionId) {
+      ref.read(activeChatIdProvider.notifier).state = null;
+    }
+    if (ref.read(activeChatPeerIdProvider) == _peerId) {
+      ref.read(activeChatPeerIdProvider.notifier).state = null;
+    }
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     _msgSub?.cancel();
+    _pingSub?.cancel();
     _p2p?.disconnect();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Hintergrund: Timer (inkl. 10-s-RPC-Polling) pausieren (v0.9.1,
+    // Akku). Vordergrund: neu starten (Session-Stand wird nachgeholt).
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      _timer?.cancel();
+      _timer = null;
+    } else if (state == AppLifecycleState.resumed && mounted) {
+      if (_timer == null &&
+          _session != null &&
+          !_session!.bothDecided) {
+        _startTimer();
+        _loadSession();
+      }
+    }
   }
 
   /// Lädt das Alter des Chat-Partners (RPC get_public_profile, Migration
@@ -84,7 +121,9 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen> {
     try {
       final myAge = ref.read(profileProvider).age;
       if (myAge == null) return;
-      final peerId = session.getPeerId(_currentUserId ?? AppConstants.currentUserId);
+      final myId = _currentUserId;
+      if (myId == null) return;
+      final peerId = session.getPeerId(myId);
       final row = await SupabaseService.client.rpc(
         'get_public_profile',
         params: {'p_user_id': peerId},
@@ -110,23 +149,39 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen> {
     final p2p = ref.read(p2pChatServiceProvider);
     _p2p = p2p;
 
-    _currentUserId = await ref.read(secureTokenStoreProvider).userId ??
-        _currentUserId ??
-        AppConstants.currentUserId;
+    // Eigene ID strikt aus der Supabase-Session (Fix): Stale Secure-Store-
+    // oder Demo-Fallbacks ('me') erzeugen ein Signaling-Topic ohne die
+    // echte auth.uid() -> RLS verweigert den Join, Nachrichten adressieren
+    // den falschen Peer. Ohne Session: kein P2P, kein Relay.
+    final myId = SupabaseService.currentUser?.id;
+    if (myId == null || myId.isEmpty) {
+      debugPrint('[DatingHourChat] Keine Supabase-Session - P2P übersprungen.');
+      return;
+    }
+    _currentUserId = myId;
     final peerId = session.getPeerId(_currentUserId!);
     _peerId = peerId;
+    // NUTZERWUNSCH: Notification-Unterdrückung (lokal + Server-Push)
+    // solange dieser Chat sichtbar ist.
+    ref.read(activeChatPeerIdProvider.notifier).state = peerId;
 
     // Eingehende (bereits entschlüsselte) Nachrichten in den Verlauf.
     _msgSub = p2p.incomingMessages.listen((text) {
       if (!mounted) return;
       final msg = Message(
-        id: 'p2p_${DateTime.now().millisecondsSinceEpoch}',
+        id: Message.newId('p2p'),
         senderId: peerId,
         receiverId: _currentUserId!,
         text: text,
         timestamp: DateTime.now(),
       );
       ref.read(chatProvider.notifier).addMessage(widget.sessionId, msg, ref: ref);
+    });
+
+    // Relay-Wake-up: Partner hat eine Relay-Nachricht hinterlegt.
+    _pingSub?.cancel();
+    _pingSub = p2p.relayPing.listen((_) {
+      if (mounted) unawaited(_fetchRelay());
     });
 
     try {
@@ -154,7 +209,9 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen> {
     } on DatingHourException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehler: ${e.message}')),
+          SnackBar(
+              content: Text(L10n.tf(context, 'common.errorWith',
+                  {'error': e.message}))),
         );
       }
     }
@@ -162,24 +219,47 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen> {
 
   void _startTimer() {
     // V: Countdown basiert auf verifizierter Serverzeit, damit die 5 Minuten
-    // manipulationssicher sind. Batterie/Netz schonen: Der lokale Countdown
-    // tickt jede Sekunde, die serverseitige Session-Abfrage aber nur alle
-    // 10 Sekunden (vorher: RPC jede Sekunde).
+    // manipulationssicher sind. Batterie/Netz schonen: Die Sekunden-Anzeige
+    // läuft in eigenen Mini-Widgets (_PerSecond, nur sie rebuilden), dieser
+    // Timer feuert die Ablauf-Logik und die Session-Abfrage alle
+    // 10 Sekunden (vorher: VOLLER Screen-Rebuild JEDE Sekunde + RPC).
+    // Sobald beidseitig entschieden ist, endet der Timer ganz (v0.9.1).
     var ticksSinceSync = 0;
+    var slowTicks = 0;
     _timer = Timer.periodic(const Duration(seconds: 1), (_) async {
       if (!mounted) return;
-      setState(() {});
 
       final session = _session;
       if (session == null) return;
+      if (session.bothDecided) {
+        // Nach beidseitiger Entscheidung: Session-Polls stoppen, aber den
+        // Relay-Abruf weiterlaufen lassen (Fix: sonst kommen späte
+        // Nachrichten des Partners nie an, solange der Screen offen ist).
+        slowTicks++;
+        if (slowTicks % 3 == 0) {
+          unawaited(_fetchRelay());
+        }
+        return;
+      }
 
       // Wenn abgelaufen und noch keine Entscheidung angezeigt wird.
-      if (session.isExpired && !_showDecision && !session.bothDecided) {
+      if (session.isExpired && !_showDecision) {
         _showDecisionDialog();
       }
 
       // Während der Timer läuft, frischen wir den Session-Status im
       // Hintergrund auf, um gegenseitige Entscheidungen zu erkennen.
+      // Zusätzlich (Relay-Fallback): Relay-Nachrichten des Partners alle
+      // ~3 s abholen (LATENZ: war 5 s) und den P2P-Handshake alle ~25 s
+      // erneut versuchen. Der Wake-up-Ping liefert sofort - der Timer
+      // fängt nur verlorene Pings ab.
+      slowTicks++;
+      if (slowTicks % 3 == 0) {
+        unawaited(_fetchRelay());
+      }
+      if (slowTicks % 25 == 0) {
+        unawaited(_retryHandshakeThrottled());
+      }
       ticksSinceSync++;
       if (ticksSinceSync >= 10 && _shouldPollSession(session)) {
         ticksSinceSync = 0;
@@ -204,19 +284,67 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen> {
     final text = _messageController.text.trim();
     if (text.isEmpty || _session == null) return;
 
+    // IDs ZUERST prüfen (Fix: _currentUserId!-Crash bei fehlender Session
+    // + Ghost-Bubble mit receiverId '' bei fehlendem Peer).
+    final myId = _currentUserId;
+    final peerId = _peerId;
+    if (myId == null || myId.isEmpty || peerId == null || peerId.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(L10n.t(context, 'dh.chat.sendFailed')),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
     _messageController.clear();
 
     // Lokal für die Anzeige ablegen (kein Mock-Auto-Reply) ...
     final localMsg = Message(
-      id: 'local_${DateTime.now().millisecondsSinceEpoch}',
-      senderId: _currentUserId!,
-      receiverId: _peerId ?? '',
+      id: Message.newId('local'),
+      senderId: myId,
+      receiverId: peerId,
       text: text,
       timestamp: DateTime.now(),
     );
     ref.read(chatProvider.notifier).addMessage(widget.sessionId, localMsg, ref: ref);
 
-    // ... und ECHT E2E-verschlüsselt über den P2P-DataChannel senden.
+    // ... und ECHT E2E-verschlüsselt zustellen: erst direkt per
+    // P2P-DataChannel, bei geschlossenem Kanal über den Server-Relay
+    // (Migration 093/106 - Dating-Hour-Sessions sind relay-berechtigt).
+    // Vorher gab es NUR den P2P-Pfad: Ohne Direktverbindung lief die
+    // Nachricht still in die Outbox und kam im 5-Minuten-Fenster nie an.
+    try {
+      if (await _p2p?.trySendText(text) == true) {
+        return;
+      }
+    } catch (_) {}
+    try {
+      await ref
+          .read(relayServiceProvider)
+          .storeText(peerId: peerId, text: text);
+      // Dual-Delivery-Schutz: trySendText oben hat bei geschlossenem Kanal
+      // bereits in die Outbox eingereiht - nach erfolgreichem Relay-Store
+      // muss der Eintrag raus, sonst Doppelzustellung bei Kanalöffnung.
+      _p2p?.dequeueText(text);
+      unawaited(_p2p?.sendRelayPing());
+      // NUTZERWUNSCH: Push, dass eine Nachricht wartet (nur Metadaten;
+      // Beziehung = offene Dating-Hour-Session).
+      unawaited(() async {
+        try {
+          await SupabaseService.client.functions.invoke(
+            'notify-user',
+            body: {'kind': 'messages', 'target_user_id': peerId},
+          );
+        } catch (_) {}
+      }());
+      return;
+    } catch (e) {
+      debugPrint('[DatingHourChat] Relay-Send fehlgeschlagen: $e');
+    }
     try {
       await _p2p?.sendText(text);
     } catch (e) {
@@ -229,6 +357,64 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen> {
           ),
         );
       }
+    }
+  }
+
+  /// Holt Relay-Nachrichten des Partners ab (Fallback bei fehlendem
+  /// DataChannel). Läuft über den bestehenden 1-s-Timer gedrosselt
+  /// (alle ~5 s) plus sofort per Wake-up-Ping.
+  final Set<String> _seenDhRelayIds = {};
+
+  Future<void> _fetchRelay() async {
+    final peerId = _peerId;
+    if (peerId == null || peerId.isEmpty || !mounted) return;
+    if (!SupabaseService.isInitialized) return;
+    try {
+      final pending =
+          await ref.read(relayServiceProvider).fetchPending(from: peerId);
+      if (!mounted || pending.isEmpty) return;
+      for (final r in pending) {
+        final msgId = 'relay_${r.id}';
+        if (_seenDhRelayIds.contains(msgId)) continue;
+        _seenDhRelayIds.add(msgId);
+        final msg = Message(
+          id: msgId,
+          senderId: peerId,
+          receiverId: _currentUserId ?? '',
+          text: r.text,
+          timestamp: r.createdAt,
+        );
+        ref.read(chatProvider.notifier).addMessage(widget.sessionId, msg, ref: ref);
+      }
+    } catch (_) {
+      // Netzwerkfehler: nächster Timer-Takt versucht es erneut.
+    }
+  }
+
+  /// Handshake-Retry, gedrosselt (der 1-s-Timer ruft max. alle 25 s auf).
+  DateTime? _lastDhHandshakeRetry;
+
+  Future<void> _retryHandshakeThrottled() async {
+    final p2p = _p2p;
+    if (p2p == null || !mounted) return;
+    if (p2p.isConnected) return;
+    if (!SupabaseService.isInitialized) return;
+    final myId = _currentUserId;
+    final peerId = _peerId;
+    if (myId == null || myId.isEmpty || peerId == null || peerId.isEmpty) {
+      return;
+    }
+    final now = DateTime.now();
+    if (_lastDhHandshakeRetry != null &&
+        now.difference(_lastDhHandshakeRetry!) <
+            const Duration(seconds: 25)) {
+      return;
+    }
+    _lastDhHandshakeRetry = now;
+    try {
+      await p2p.ensureConnected(myUserId: myId, peerId: peerId);
+    } catch (e) {
+      debugPrint('[DatingHourChat] Handshake-Retry fehlgeschlagen: $e');
     }
   }
 
@@ -254,7 +440,9 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen> {
     } on DatingHourException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Fehler: ${e.message}')),
+          SnackBar(
+              content: Text(L10n.tf(context, 'common.errorWith',
+                  {'error': e.message}))),
         );
       }
     }
@@ -280,16 +468,23 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen> {
     // serverseitiger Like -> bestehende Mutual-Like-Pipeline erzeugt das
     // kanonische Match (fuer BEIDE, samt Push), und das ECHTE Profil
     // wird geladen.
+    //
+    // NUTZERWUNSCH "Doppelte Funken": Der lokale addMatch legte parallel
+    // zur Server-Pipeline einen ZWEITEN Funken mit anderer ID an (bei
+    // gegenseitigem Liken). Jetzt: lokale Anlage NUR als Offline-Fallback,
+    // wenn der Server-Like scheitert.
     var partnerProfile = UserProfile(
       id: partnerId,
       name: 'Dein Gegenüber',
       bio: '',
       interests: [],
     );
+    var serverMatchOk = false;
     if (SupabaseService.isInitialized) {
       try {
         final fym = ref.read(findYourMatchServiceProvider);
         await fym.likeUser(partnerId);
+        serverMatchOk = true;
         final row = await SupabaseDatabaseService(SupabaseService.client)
             .fetchPublicProfile(partnerId);
         if (row != null) {
@@ -304,11 +499,14 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen> {
           });
         }
       } catch (e) {
-        debugPrint('[DH-Chat] Funke-Server-Sync fehlgeschlagen: ');
+        debugPrint('[DH-Chat] Funke-Server-Sync fehlgeschlagen: $e');
       }
     }
 
-    ref.read(chatProvider.notifier).addMatch(partnerProfile, ref: ref);
+    if (!serverMatchOk) {
+      // Offline: lokaler Funke, damit der Chat nicht leer endet.
+      ref.read(chatProvider.notifier).addMatch(partnerProfile, ref: ref);
+    }
 
     if (mounted) {
       await FunkeOverlay.show(context);
@@ -321,6 +519,13 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen> {
       }
       await Future.delayed(const Duration(milliseconds: 1500));
       if (mounted) {
+        // Direkt auf den Funken-Tab (v0.9.1): sonst landet man auf
+        // "Gesendet" und der neue Funke wirkt unsichtbar.
+        try {
+          ProviderScope.containerOf(context)
+              .read(interessenInitialTabProvider.notifier)
+              .state = 2;
+        } catch (_) {}
         context.go(AppRoutes.interessen);
       }
     }
@@ -375,6 +580,9 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen> {
     final partnerName = session != null
         ? (session.isParticipantA(_currentUserId ?? '') ? 'Teilnehmer B' : 'Teilnehmer A')
         : 'Verbinde...';
+    // Nutzerwunsch Gruppierung: Namens-Header an Gruppenstarts (max. 3
+    // Nachrichten / 3 Minuten pro Gruppe), Zeit an jeder Bubble.
+    final bubbleGroups = computeBubbleGroups(messages);
 
     // Partner-Gewohnheiten: aus public_profiles laden und als Chips zeigen.
     final partnerId = session?.getPeerId(_currentUserId ?? '');
@@ -394,41 +602,51 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen> {
           children: [
             Text(partnerName, style: const TextStyle(fontSize: 16)),
             if (session != null)
-              Row(
-                children: [
-                  Icon(
-                    Icons.lock,
-                    size: 12,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(L10n.t(context, 'dh.chat.e2e'),
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: session.remainingSeconds > 60
-                          ? Colors.green
-                          : session.remainingSeconds > 30
-                              ? Colors.orange
-                              : Colors.red,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _formatTime(session.remainingSeconds),
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+              // v0.9.1: E2E-Badge zentriert im verfügbaren Titel-Raum
+              // (nutzt den Leerraum sauber aus statt rechtsbündig).
+              // Die Sekunden-Anzeige tickt isoliert (_PerSecond), damit
+              // nicht der ganze Screen pro Sekunde rebuildet (Akku).
+              _PerSecond(
+                builder: (_) => Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.lock,
+                        size: 12,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
-                    ),
+                      const SizedBox(width: 4),
+                      Text(L10n.t(context, 'dh.chat.e2e'),
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: session.remainingSeconds > 60
+                              ? Colors.green
+                              : session.remainingSeconds > 30
+                                  ? Colors.orange
+                                  : Colors.red,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          _formatTime(session.remainingSeconds),
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
               if (partnerId != null)
                 FutureBuilder<Map<String, dynamic>?>(
@@ -489,11 +707,13 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen> {
       ),
       body: Column(
         children: [
-          // Timer-Balken
+          // Timer-Balken (tickt isoliert, v0.9.1, Akku).
           if (session != null && !session.bothDecided)
-            _TimerBar(
-              remainingSeconds: session.remainingSeconds,
-              totalSeconds: 300,
+            _PerSecond(
+              builder: (_) => _TimerBar(
+                remainingSeconds: session.remainingSeconds,
+                totalSeconds: 300,
+              ),
             ),
 
           // Altersdifferenz-Hinweis (>= 10 Jahre Unterschied).
@@ -545,9 +765,20 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen> {
                     reverse: true,
                     itemCount: messages.length,
                     itemBuilder: (context, i) {
-                      final msg = messages[messages.length - 1 - i];
+                      final idx = messages.length - 1 - i;
+                      final msg = messages[idx];
                       final mine = msg.isFrom(_currentUserId ?? '');
-                      return _MessageBubble(msg: msg, mine: mine);
+                      final group = idx >= 0 && idx < bubbleGroups.length
+                          ? bubbleGroups[idx]
+                          : (showName: true, showTime: true);
+                      return _MessageBubble(
+                        msg: msg,
+                        mine: mine,
+                        showName: group.showName,
+                        senderName: mine
+                            ? L10n.t(context, 'chat.you')
+                            : partnerName,
+                      );
                     },
                   ),
           ),
@@ -638,10 +869,9 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Chat verlassen?'),
-        content: const Text(
-          'Wenn du den Chat verlässt, gilt das als "Ablehnen". '
-          'Möchtest du wirklich gehen?',
+        title: Text(L10n.t(ctx, 'dh.chat.leaveTitle')),
+        content: Text(
+          L10n.t(ctx, 'dh.chat.leaveBody'),
         ),
         actions: [
           TextButton(
@@ -660,6 +890,39 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen> {
       ),
     );
   }
+}
+
+/// Baut sein Child jede Sekunde neu (v0.9.1, Akku): Sekunden-Anzeigen
+/// (Countdown, Timer-Balken) ticken isoliert, statt den ganzen Screen
+/// pro Sekunde zu rebuilden.
+class _PerSecond extends StatefulWidget {
+  const _PerSecond({required this.builder});
+
+  final WidgetBuilder builder;
+
+  @override
+  State<_PerSecond> createState() => _PerSecondState();
+}
+
+class _PerSecondState extends State<_PerSecond> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.builder(context);
 }
 
 /// Timer-Balken oben im Chat.
@@ -791,9 +1054,19 @@ class _EmptyChatState extends StatelessWidget {
 
 /// Nachrichtenblase.
 class _MessageBubble extends StatelessWidget {
-  const _MessageBubble({required this.msg, required this.mine});
+  const _MessageBubble(
+      {required this.msg,
+      required this.mine,
+      this.showName = false,
+      this.senderName = ''});
   final Message msg;
   final bool mine;
+
+  /// Namens-Header über der Bubble anzeigen (Gruppenstart)?
+  final bool showName;
+
+  /// Anzuzeigender Absendername.
+  final String senderName;
 
   @override
   Widget build(BuildContext context) {
@@ -803,26 +1076,67 @@ class _MessageBubble extends StatelessWidget {
     final textColor = mine
         ? Colors.white
         : Theme.of(context).colorScheme.onSurfaceVariant;
+    String timeLabel = '';
+    try {
+      timeLabel = DateFormat.Hm().format(msg.timestamp.toLocal());
+    } catch (_) {}
 
     return Align(
       alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(18).copyWith(
-            bottomRight: mine ? const Radius.circular(4) : const Radius.circular(18),
-            bottomLeft: mine ? const Radius.circular(18) : const Radius.circular(4),
+      child: Column(
+        crossAxisAlignment:
+            mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (showName && senderName.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2, left: 4, right: 4),
+              child: Text(
+                senderName,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+              ),
+            ),
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.75,
+            ),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(18).copyWith(
+                bottomRight: mine
+                    ? const Radius.circular(4)
+                    : const Radius.circular(18),
+                bottomLeft: mine
+                    ? const Radius.circular(18)
+                    : const Radius.circular(4),
+              ),
+            ),
+            child: Text(
+              msg.text,
+              style: TextStyle(color: textColor),
+            ),
           ),
-        ),
-        child: Text(
-          msg.text,
-          style: TextStyle(color: textColor),
-        ),
+          if (timeLabel.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 2, left: 6, right: 6),
+              child: Text(
+                timeLabel,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurfaceVariant
+                          .withValues(alpha: 0.7),
+                      fontSize: 10,
+                    ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -840,11 +1154,11 @@ class _ShyQuestionChips extends StatelessWidget {
     'Reise ✈️': [
       'Welche Stadt möchte du unbedingt mal besuchen?',
       'Bester Reise-Moment deines Lebens?',
-      'Flug, Zug oder Auto – was magst du am liebsten?',
+      'Flug, Zug oder Auto, was magst du am liebsten?',
     ],
     'Alltag ☀️': [
       'Was war heute dein kleines Glück?',
-      'Kaffee oder Tee – und wie dazu?',
+      'Kaffee oder Tee, und wie dazu?',
       'Was hilft dir wirklich beim Abschalten?',
     ],
     'Träume 🌙': [

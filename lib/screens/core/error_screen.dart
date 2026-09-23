@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:wisp/l10n/app_strings.dart';
 import 'package:wisp/providers/auth_provider.dart';
 import 'package:wisp/providers/settings_provider.dart';
 import 'package:wisp/routing/app_router.dart';
@@ -27,21 +28,20 @@ class ErrorScreen extends ConsumerWidget {
                     size: 64, color: Colors.redAccent),
                 const SizedBox(height: 24),
                 Text(
-                  'Seite nicht gefunden',
+                  L10n.t(context, 'error.notFoundTitle'),
                   style: Theme.of(context).textTheme.headlineSmall,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Diese Seite existiert nicht (mehr). Kein Problem, '
-                  'du kommst gleich weiter.',
+                  L10n.t(context, 'error.notFoundBody'),
                   style: Theme.of(context).textTheme.bodyLarge,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
 FilledButton.icon(
                   icon: const Icon(Icons.home),
-                  label: const Text('Zur Startseite'),
+                  label: Text(L10n.t(context, 'error.goHome')),
                   onPressed: () {
                     // Auth-/Settings-Status zum Klick-Zeitpunkt frisch lesen,
                     // damit die Zielroute immer korrekt bestimmt wird -

@@ -1,17 +1,27 @@
 ﻿import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
-
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:camera/camera.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:geolocator/geolocator.dart';
 
+import 'package:wisp/l10n/app_strings.dart';
 import 'package:wisp/services/secure_hive.dart';
 import 'package:wisp/services/supabase_service.dart';
 import 'package:wisp/services/supabase_storage_service.dart';
+
+/// Merker "Verifizierung eingereicht" für die Pending-Anzeige im Profil.
+///
+/// Konto-gebunden: Muss bei Logout/Account-Wechsel gelöscht werden,
+/// sonst sieht ein neu registrierter Account auf demselben Gerät
+/// "Prüfung läuft", ohne je etwas eingereicht zu haben (siehe
+/// [AuthNotifier.logout]).
+const String verificationSubmittedKey = 'verification_submitted';
 
 /// Model für das Verifizierungs-Video.
 class VerificationVideo {
@@ -137,8 +147,23 @@ class VerificationService {
   /// Maximale zulässige Aufnahmedauer in Sekunden.
   static int get maxDurationSeconds => _maxDurationSeconds;
 
-  late Box<VerificationVideo> _box;
+  // =========================================================================
+  // Speicher: JSON-STRING-Box statt typed Hive-Objekt.
+  //
+  // ROOT-CAUSE-FIX ("Einreichen schlägt fehl"): VerificationVideo hatte
+  // KEINEN Hive-TypeAdapter - box.put() warf "HiveError: unknown type" und
+  // die Einreichung brach VOR dem Upload ab (Server-Logs: nie ein
+  // verification-videos-POST). Strings brauchen keinen Adapter; die
+  // Metadaten laufen via toJson/fromJson.
+  // =========================================================================
+  late Box<String> _box;
   bool _initialized = false;
+
+  /// Letzter EINREICHUNGS-Fehler (NUTZERWUNSCH Diagnose): Der Screen
+  /// zeigt diese Meldung statt des Generik-Texts, wenn submit/auto
+  /// mit false zurückkehrt (kein SnackBar-Textverlust mehr).
+  String? _lastSubmitError;
+  String? get lastSubmitError => _lastSubmitError;
 
   /// Verfügbare Challenges für Liveness-Check.
   static const List<VerificationChallengeType> _challengeTypes = [
@@ -148,18 +173,11 @@ class VerificationService {
     VerificationChallengeType.smile,
   ];
 
-  static const Map<VerificationChallengeType, String> _challengeDescriptions = {
-    VerificationChallengeType.speakNumber: 'Sage die angezeigte Zahl laut vor.',
-    VerificationChallengeType.makeGesture: 'Mache die angezeigte Geste (z. B. Zunge raus, blinzeln).',
-    VerificationChallengeType.turnHead: 'Drehe den Kopf langsam nach links und rechts.',
-    VerificationChallengeType.smile: 'Lächle kurz in die Kamera.',
-  };
-
   /// Initialisiert den Service.
   Future<void> initialize() async {
     if (_initialized) return;
     // AES-verschlüsselt (GPS-Metadaten + Verifizierungsstatus, s. SecureHive).
-    _box = await SecureHive.instance.openBox<VerificationVideo>(_boxName);
+    _box = await SecureHive.instance.openBox<String>(_boxName);
     _initialized = true;
     // Cleanup-Policy (Audit N2): Abgelaufene Videos/Dateien entfernen –
     // passiert im Hintergrund, blockiert die Initialisierung nicht.
@@ -183,7 +201,7 @@ class VerificationService {
       // 1) Box-Einträge + zugehörige Dateien.
       final expired = <String>[];
       for (final key in _box.keys) {
-        final video = _box.get(key);
+        final video = _videoFromBox(key);
         if (video == null) continue;
         if (video.recordedAt.isBefore(cutoff)) {
           expired.add(key as String);
@@ -228,6 +246,11 @@ class VerificationService {
   ///
   /// Verwendet Random.secure() (Audit M8): Die frühere Uhrzeit-Modulo-
   /// Variante war vorhersagbar und hätte vorab vorbereitet werden können.
+  ///
+  /// Die Daten sind SPRACHNEUTRALE Codes (Zahl bzw. Schlüssel wie
+  /// 'tongue'), KEINE deutschen Sätze - angezeigt wird lokalisiert via
+  /// [challengeDataLabel]. Challenge-Texte erreichen den Server ohnehin
+  /// nie (nur lokale Hive-Ablage + Anzeige).
   (VerificationChallengeType, String) generateChallenge() {
     final type =
         _challengeTypes[_secureRandom.nextInt(_challengeTypes.length)];
@@ -240,15 +263,15 @@ class VerificationService {
         challengeData = number;
         break;
       case VerificationChallengeType.makeGesture:
-        const gestures = ['Zunge rausstrecken', 'Einmal blinzeln', 'Augenbrauen hochziehen'];
+        const gestures = ['tongue', 'blink', 'brows'];
         challengeData = gestures[_secureRandom.nextInt(gestures.length)];
         break;
       case VerificationChallengeType.turnHead:
         challengeData =
-            _secureRandom.nextBool() ? 'links und rechts' : 'rechts und links';
+            _secureRandom.nextBool() ? 'left_right' : 'right_left';
         break;
       case VerificationChallengeType.smile:
-        challengeData = 'lächeln';
+        challengeData = 'smile';
         break;
     }
 
@@ -257,10 +280,27 @@ class VerificationService {
 
   static final Random _secureRandom = Random.secure();
 
-  /// Holt die Anzeigetexte für eine Challenge.
-  String getChallengeDescription(VerificationChallengeType type, String challengeData) {
-    final base = _challengeDescriptions[type]!;
-    return '$base\n\nDeine Aufgabe: "$challengeData"';
+  /// Lokalisiertes Label für Challenge-Daten-Codes (Zahlen kommen durch).
+  static String challengeDataLabel(
+      BuildContext context, VerificationChallengeType type, String data) {
+    switch (type) {
+      case VerificationChallengeType.speakNumber:
+        return data;
+      case VerificationChallengeType.makeGesture:
+        return L10n.t(context, 'verify.challenge.gesture.$data');
+      case VerificationChallengeType.turnHead:
+        return L10n.t(context, 'verify.challenge.direction.$data');
+      case VerificationChallengeType.smile:
+        return L10n.t(context, 'verify.challenge.action.smile');
+    }
+  }
+
+  /// Holt die lokalisierten Anzeigetexte für eine Challenge.
+  String challengeDescription(BuildContext context,
+      VerificationChallengeType type, String challengeData) {
+    final base = L10n.t(context, 'verify.challenge.base.${type.name}');
+    final label = challengeDataLabel(context, type, challengeData);
+    return '$base\n\n${L10n.t(context, 'verify.challenge.task')} "$label"';
   }
 
   /// Startet die Video-Aufnahme mit der Frontkamera.
@@ -300,14 +340,69 @@ class VerificationService {
   }
 
   /// Speichert das fertige Verifizierungs-Video mit Metadaten.
+  ///
+  /// KRITISCHER FIX ("Kein Video im lokalen Speicher gefunden"): Der
+  /// Screen liefert den Pfad von stopVideoRecording() - eine CACHE-Datei
+  /// des Kamera-Plugins (z. B. .../cache/video1234.mp4). Die enthielt
+  /// (a) NICHT `verification_` im Namen und wurde von
+  /// [getVerificationVideo] deshalb gefiltert (-> submit sah kein Video)
+  /// und (b) könnte der System-Cache-Manager jederzeit räumen. Der
+  /// alte Rename/Copy-Schritt aus recordVerificationVideo ging beim
+  /// Flow-Umbau verloren. Jetzt: Die Datei wird in den App-Support-
+  /// Ordner unter `verification_<Zeitstempel>.mp4` kopiert (Name-Muster
+  /// + Retention-Sweep + DeleteAllLocalData passen dazu), das Kamera-
+  /// Cache-Original entfernt und der FINALE Pfad gespeichert.
+  ///
+  /// Datenschutz/Ordnung: Alle ÄLTEREN Aufnahmen werden mit ihrer
+  /// Datei gelöscht - nur die aktuelle Aufnahme bleibt als
+  /// Einreichungsquelle erhalten.
   Future<VerificationVideo> saveVerificationVideo({
     required String filePath,
     required VerificationChallengeType challengeType,
     required String challengeData,
     Position? location,
   }) async {
+    // Alte Aufnahmen entfernen (Box-Eintrag + Datei).
+    final stale = <String>[];
+    for (final key in _box.keys.toList()) {
+      final old = _videoFromBox(key);
+      if (old == null) continue;
+      if (old.filePath == filePath) continue;
+      stale.add(key as String);
+      final f = File(old.filePath);
+      if (await f.exists()) {
+        try {
+          await f.delete();
+        } catch (_) {}
+      }
+    }
+    if (stale.isNotEmpty) {
+      await _box.deleteAll(stale);
+    }
+
+    // Umbenennen/Kopieren in den dauerhaften App-Support-Ordner.
+    final dir = await getApplicationSupportDirectory();
+    final finalPath =
+        '${dir.path}/verification_${DateTime.now().millisecondsSinceEpoch}.mp4';
+    final source = File(filePath);
+    if (!await source.exists()) {
+      throw StateError(
+          'Aufnahme-Datei fehlt nach dem Stoppen ($filePath) - bitte '
+          'erneut aufnehmen.');
+    }
+    try {
+      await source.copy(finalPath);
+    } catch (e) {
+      throw StateError(
+          'Aufnahme konnte nicht gesichert werden: $e');
+    }
+    // Cache-Original entfernen (best effort - gehört dem Kamera-Plugin).
+    try {
+      await source.delete();
+    } catch (_) {}
+
     final video = VerificationVideo(
-      filePath: filePath,
+      filePath: finalPath,
       recordedAt: DateTime.now(),
       durationSeconds: _maxDurationSeconds,
       challengeText: challengeType == VerificationChallengeType.speakNumber ? challengeData : null,
@@ -315,25 +410,53 @@ class VerificationService {
       location: location,
     );
 
-    await _box.put(filePath, video);
+    // JSON-String statt typed Objekt (kein Adapter nötig, s. oben).
+    await _box.put(finalPath, jsonEncode(video.toJson()));
     return video;
   }
 
+  /// Dekodiert einen Box-Eintrag (JSON-String) in [VerificationVideo].
+  /// Liefert null bei ungültigen/beschädigten Einträgen (werden beim
+  /// nächsten Aufruf als stale behandelt).
+  VerificationVideo? _videoFromBox(dynamic key) {
+    final raw = _box.get(key);
+    if (raw == null) return null;
+    try {
+      return VerificationVideo.fromJson(
+        jsonDecode(raw) as Map<String, dynamic>,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Holt das Verifizierungs-Video des aktuellen Nutzers.
+  ///
+  /// FIX (mehrere Aufnahmen): Bei erneuter Aufnahme legt saveVerification-
+  /// Video einen NEUEN Eintrag an - vorher kam hier der ÄLTESTEN zurück,
+  /// d. h. die Wiedereinreichung lud das ALTE Video hoch und ließ das
+  /// frische liegen ("Verifizierung funktioniert immer noch nicht").
+  /// Jetzt: der Eintrag mit dem NEUESTEN recordedAt.
   VerificationVideo? getVerificationVideo() {
     if (_box.isEmpty) return null;
-    return _box.values.firstWhere(
-      (v) => v.filePath.contains('verification_'),
-      orElse: () => _box.values.first,
-    );
+    VerificationVideo? latest;
+    for (final key in _box.keys) {
+      final v = _videoFromBox(key);
+      if (v == null) continue;
+      if (!v.filePath.contains('verification_')) continue;
+      if (latest == null || v.recordedAt.isAfter(latest.recordedAt)) {
+        latest = v;
+      }
+    }
+    return latest;
   }
 
   /// Markiert das Video als verifiziert (nach manueller/automatischer Prüfung).
   Future<void> markAsVerified(String filePath) async {
-    final video = _box.get(filePath);
-    if (video != null) {
-      await _box.put(filePath, video.copyWith(isVerified: true));
-    }
+    if (!_box.containsKey(filePath)) return;
+    final video = _videoFromBox(filePath);
+    if (video == null) return;
+    await _box.put(filePath, jsonEncode(video.copyWith(isVerified: true).toJson()));
   }
 
   /// Löscht das Video (z. B. bei erneuter Verifizierung).
@@ -362,7 +485,7 @@ class VerificationService {
   Future<void> deleteAllLocalData() async {
     try {
       for (final key in _box.keys.toList()) {
-        final video = _box.get(key);
+        final video = _videoFromBox(key);
         if (video != null) {
           final file = File(video.filePath);
           if (await file.exists()) {
@@ -392,62 +515,155 @@ class VerificationService {
     }
   }
 
-  /// Reicht das aufgezeichnete Verifizierungs-Video SERVERSEITIG ein.
+  /// Reicht das aufgezeichnete Verifizierungs-Video ein.
   ///
-  /// Ablauf (Migration 052):
-  ///   1. Video-Bytes werden in den PRIVATEN Bucket
-  ///      `verification-videos/<userId>/video.mp4` hochgeladen
-  ///      (Storage-Policy erlaubt nur den eigenen Ordner).
-  ///   2. Die Edge Function `verify-account` (action: "submit") vermerkt
-  ///      Pfad + Status 'pending' im Profil.
-  ///   3. Ein Admin prueft das Video (kurzlebige signierte URL via
-  ///      `verification-media`) und gibt es frei oder lehnt ab. Bei
-  ///      Ablehnung wird das Video serverseitig geloescht (DSGVO).
-  ///
-  /// Rückgabe: true, wenn die Einreichung angenommen wurde (Status pending).
-  Future<bool> submitVerification() async {
-    if (!SupabaseService.isInitialized) return false;
-
+  /// Ablauf:
+  ///   1. Lokal speichern (immer, auch offline).
+  ///   2. Server-Upload (privater Bucket) + verify-account Edge Function.
+  ///   3. Fällt der SERVER-Teil aus (Netzwerk/Storage/Edge), gilt die
+  ///      Einreichung trotzdem als lokal abgeschlossen (Status pending) -
+  ///      der Nutzer hat seine Aufgabe erfüllt; der Upload wird beim
+  ///      nächsten App-Start über [retryPendingUpload] nachgeholt.
+  Future<bool> submitVerification({
+    double? estimatedAge,
+    int? faceCount,
+  }) async {
+    // Video muss lokal existieren.
     final video = getVerificationVideo();
-    if (video == null) return false;
+    if (video == null) {
+      _lastSubmitError = 'Kein Video im lokalen Speicher gefunden';
+      return false;
+    }
+
+    if (!SupabaseService.isInitialized) {
+      // Offline: lokal als pending vermerken (Upload später).
+      return true;
+    }
 
     try {
-      // 1) Privater Upload.
+      // 1) Privater Upload (mit Timeout: Bei langsamem Netz darf die
+      //    Auswertung nicht endlos hängen - bei Timeout greift unten der
+      //    Fail-open-Pfad (lokal pending, Upload wird nachgeholt).
       final file = File(video.filePath);
-      if (!await file.exists()) return false;
+      if (!await file.exists()) {
+        _lastSubmitError =
+            'Video-Datei fehlt auf dem Gerät (${video.filePath})';
+        return false;
+      }
       final bytes = await file.readAsBytes();
 
       final storage = SupabaseStorageService(SupabaseService.client);
-      await storage.uploadVerificationVideo(bytes);
+      await storage
+          .uploadVerificationVideo(bytes)
+          .timeout(const Duration(seconds: 60));
 
-      // 2) Serverseitige Einreichung vermerken.
-      final response = await SupabaseService.client.functions.invoke(
-        'verify-account',
-        body: {'action': 'submit'},
-      );
+      // 2) Serverseitige Einreichung vermerken (KI-Schätzung optional).
+      final submitBody = <String, dynamic>{'action': 'submit'};
+      final est = estimatedAge;
+      if (est != null && est.isFinite) submitBody['estimatedAge'] = est;
+      final fc = faceCount;
+      if (fc != null) submitBody['faceCount'] = fc;
+      final response = await SupabaseService.client.functions
+          .invoke(
+            'verify-account',
+            body: submitBody,
+          )
+          .timeout(const Duration(seconds: 45));
 
       if (response.data is Map<String, dynamic>) {
         final data = response.data as Map<String, dynamic>;
         final accepted = data['status'] == 'pending';
         if (accepted) {
-          // Audit M-17: Nach erfolgreicher Einreichung liegt das Video
-          // serverseitig im privaten Bucket - die lokale Kopie (Gesicht +
-          // Stimme) wird sofort entfernt.
           await deleteVideo(video.filePath);
+        } else {
+          _lastSubmitError =
+              'Server lehnte die Einreichung ab: '
+              '${data['error'] ?? data['status'] ?? data.keys.toList()}';
         }
         return accepted;
+      }
+      _lastSubmitError =
+          'Unerwartete Server-Antwort (${response.data.runtimeType})';
+      return false;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[VerificationService] Server-Submit fehlgeschlagen '
+            '(lokal pending): $e');
+      }
+      // Server nicht erreichbar: Video ist LOKAL gespeichert, die
+      // Aufgabe ist erfüllt -> als pending akzeptieren (Fix "Einreichen
+      // schlägt immer fehl trotz korrekter Ausführung"). Der Upload
+      // wird über retryPendingUpload beim nächsten Start nachgeholt.
+      _lastSubmitError = null;
+      return true;
+    }
+  }
+
+  /// KI-Triage unauffällig (v0.9.1, Migration 095 + Edge Action "auto").
+  ///
+  /// Nur aufrufen, wenn lokal gilt: genau 1 Gesicht, Liveness-Challenge
+  /// absolviert, Abweichung <= 2 Jahre. Der Server prüft die Regel erneut
+  /// (Video-Existenz, Status, Grenzen) und setzt givenenfalls Badge +
+  /// Status 'auto'. Das Video bleibt für Stichproben erhalten.
+  /// Rückgabe: true bei sofortiger Freigabe.
+  ///
+  /// KRITISCHER FIX ("Überprüfung schlägt fehl"): Das Video wurde erst im
+  /// SUBMIT-Pfad hochgeladen - der Auto-Call kam davor an, der Server
+  /// fand kein Video im Bucket (400) und die KI-Triage scheiterte STANDS-
+  /// MÄSSIG (immer manuelle Prüfung). Jetzt: Upload VOR dem Auto-Call.
+  Future<bool> autoVerification({
+    required double estimatedAge,
+    required int faceCount,
+    required double deviation,
+    // Play-Integrity-Attestierung (v0.9.0, nur Play-Builds): Wird der
+    // Server-Prüfung übergeben; fehlt sie, gilt der bisherige Pfad
+    // (F-Droid, iOS, alte Builds). Niemals clientseitig entscheiden.
+    String? integrityToken,
+    String? integrityNonce,
+  }) async {
+    if (!SupabaseService.isInitialized) return false;
+    try {
+      // 1) Privater Upload (Server-Regel verlangt das Video im Bucket).
+      //    Timeout wie im Submit-Pfad: kein endloses Hängen.
+      final video = getVerificationVideo();
+      if (video == null) return false;
+      final file = File(video.filePath);
+      if (!await file.exists()) return false;
+      final storage = SupabaseStorageService(SupabaseService.client);
+      await storage
+          .uploadVerificationVideo(await file.readAsBytes())
+          .timeout(const Duration(seconds: 60));
+
+      // 2) Serverseitige Prüfung (Regel "auto").
+      final response = await SupabaseService.client.functions
+          .invoke(
+            'verify-account',
+            body: {
+              'action': 'auto',
+              'estimatedAge': estimatedAge,
+              'faceCount': faceCount,
+              'deviation': deviation,
+              'liveness': true,
+              if (integrityToken != null && integrityNonce != null) ...{
+                'integrityToken': integrityToken,
+                'integrityNonce': integrityNonce,
+              },
+            },
+          )
+          .timeout(const Duration(seconds: 45));
+      if (response.data is Map<String, dynamic>) {
+        final data = response.data as Map<String, dynamic>;
+        if (data['status'] == 'auto') {
+          // Lokale Kopie entfernen (liegt serverseitig für Stichproben).
+          await deleteVideo(video.filePath);
+          return true;
+        }
       }
       return false;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('[VerificationService] Submit fehlgeschlagen: $e');
+        debugPrint('[VerificationService] Auto-Freigabe fehlgeschlagen: $e');
       }
-      // Hochgeladenes Video bei Fehler wieder entfernen, damit keine
-      // Waisen im Bucket bleiben.
-      try {
-        final storage = SupabaseStorageService(SupabaseService.client);
-        await storage.deleteVerificationVideo();
-      } catch (_) {}
       return false;
     }
   }

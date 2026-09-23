@@ -241,7 +241,14 @@ static __weak id<RTCAudioDeviceModuleDelegate> gAudioDeviceModuleObserver = nil;
 #endif
   }
 
-  NSDictionary* fieldTrials = @{kRTCFieldTrialUseNWPathMonitor : kRTCFieldTrialEnabledValue};
+  NSDictionary* fieldTrials = @{
+    kRTCFieldTrialUseNWPathMonitor : kRTCFieldTrialEnabledValue,
+    // Wisp-Hinweis (verifiziert 2026-09): nativ (Android/iOS) verdrahtet
+    // libwebrtc keinen MdnsResponder - .local-Kandidaten entstehen hier
+    // gar nicht. Eintrag bleibt als harmloser Belt-and-Braces (wird still
+    // ignoriert). Same-LAN-P2P hängt vom Router (AP-Isolation!) ab.
+    @"WebRTC-MDNS-Obfuscation" : @"Disabled"
+  };
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
   RTCInitFieldTrialDictionary(fieldTrials);

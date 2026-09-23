@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wisp/models/user_profile.dart';
 import 'package:wisp/services/app_auth_service.dart';
 import 'package:wisp/services/auth_exception.dart';
@@ -294,6 +295,26 @@ class SupabaseAuthService implements AppAuthService {
     );
   }
 
+  // ---------------------------------------------------------------------
+  // Login-Lockout (Spam-/Bruteforce-Schutz, Betreiber-Anforderung):
+  // Nach 10 fehlgeschlagenen Anmeldeversuchen wird die Anmeldung für
+  // 10 Minuten blockiert. Persistiert in SharedPreferences (überlebt
+  // App-Neustart; bewusst KEIN SecureStore - enthält kein Secret).
+  // Serverseitig zusätzlich durch Supabase-Auth-Rate-Limits abgesichert.
+  // ---------------------------------------------------------------------
+  static const int _maxLoginAttempts = 10;
+  static const Duration _loginLockDuration = Duration(minutes: 10);
+  static const String _prefsFailedLogins = 'auth_failed_login_count';
+  static const String _prefsLockedUntil = 'auth_login_locked_until';
+
+  Future<int> _remainingLockMinutes() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lockedUntil = prefs.getInt(_prefsLockedUntil) ?? 0;
+    final remainingMs = lockedUntil - DateTime.now().millisecondsSinceEpoch;
+    if (remainingMs <= 0) return 0;
+    return (remainingMs / 60000).ceil();
+  }
+
   /// Loggt einen Nutzer per E-Mail + Passwort in Supabase Auth ein.
   ///
   /// [captchaToken]: CAPTCHA-Token (hCaptcha/Turnstile) für den Bot-Schutz –
@@ -309,6 +330,18 @@ class SupabaseAuthService implements AppAuthService {
       debugPrint('[SupabaseAuthService] login aufgerufen');
     }
 
+    // Lockout prüfen (vor allen Server-Roundtrips: In der Sperre wird
+    // bewusst gar nichts angefragt - auch keine Ban-Status-Abfrage).
+    final lockedMinutes = await _remainingLockMinutes();
+    if (lockedMinutes > 0) {
+      throw AppException(
+        'Zu viele fehlgeschlagene Anmeldeversuche. Bitte warte '
+        '$lockedMinutes Minute(n) und versuche es erneut.',
+        messageKey: 'auth.lockedOut',
+        params: {'minutes': '$lockedMinutes'},
+      );
+    }
+
     // Plattform-Sperre (Migration 045): Auch der Login mit einer
     // gesperrten E-Mail-Adresse wird blockiert - der Nutzer soll nur
     // den Entsperrungs-Flow sehen.
@@ -317,25 +350,55 @@ class SupabaseAuthService implements AppAuthService {
       throw EmailBannedException(email: email.trim(), reason: banStatus.reason);
     }
 
-    final authResponse = await _supabase.auth.signInWithPassword(
-      email: email,
-      password: password,
-      captchaToken: captchaToken,
-    );
-
-    final session = authResponse.session;
-    if (session != null) {
-      await _tokens.saveTokens(
-        accessToken: session.accessToken,
-        refreshToken: session.refreshToken ?? '',
-        userId: authResponse.user!.id,
+    try {
+      final authResponse = await _supabase.auth.signInWithPassword(
+        email: email,
+        password: password,
+        captchaToken: captchaToken,
       );
-    }
-    // Safety-Numbers (Signal-Fingerprint) benötigen die eigene User-ID.
-    _encryption.localUserId = authResponse.user!.id;
 
-    if (kDebugMode) {
-      debugPrint('[SupabaseAuthService] login erfolgreich.');
+      final session = authResponse.session;
+      if (session != null) {
+        await _tokens.saveTokens(
+          accessToken: session.accessToken,
+          refreshToken: session.refreshToken ?? '',
+          userId: authResponse.user!.id,
+        );
+      }
+      // Safety-Numbers (Signal-Fingerprint) benötigen die eigene User-ID.
+      _encryption.localUserId = authResponse.user!.id;
+
+      // Erfolg: Fehlversuchs-Zähler zurücksetzen.
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_prefsFailedLogins);
+
+      if (kDebugMode) {
+        debugPrint('[SupabaseAuthService] login erfolgreich.');
+      }
+    } on AuthException catch (e) {
+      // Nur echte "falsche Zugangsdaten" zählen (GoTrue antwortet mit
+      // HTTP 400; statusCode ist bei supabase-dart ein String).
+      // Netzwerk-/Server-/Captcha-Fehler erhöhen den Zähler NICHT.
+      final wrongCredentials = e.statusCode == '400';
+      if (!wrongCredentials) rethrow;
+      final prefs = await SharedPreferences.getInstance();
+      final attempts = (prefs.getInt(_prefsFailedLogins) ?? 0) + 1;
+      if (attempts >= _maxLoginAttempts) {
+        await prefs.setInt(
+          _prefsLockedUntil,
+          DateTime.now().millisecondsSinceEpoch +
+              _loginLockDuration.inMilliseconds,
+        );
+        await prefs.setInt(_prefsFailedLogins, 0);
+        throw AppException(
+          'Zu viele fehlgeschlagene Anmeldeversuche. Die Anmeldung ist für '
+          '10 Minuten gesperrt.',
+          messageKey: 'auth.lockedOut10',
+          params: const {'minutes': '10'},
+        );
+      }
+      await prefs.setInt(_prefsFailedLogins, attempts);
+      rethrow;
     }
   }
 
@@ -426,9 +489,27 @@ class SupabaseAuthService implements AppAuthService {
     final user = _supabase.auth.currentUser;
     if (user != null) {
       try {
+        // Sitzung auffrischen: Ein abgelaufener Access-Token (Refresh
+        // schlägt still fehl, z. B. nach langer Inaktivität) führt
+        // serverseitig zu 401 - dann lieber klar zum Re-Login schicken,
+        // statt kryptisch abzulehnen.
+        try {
+          await _supabase.auth.refreshSession().timeout(
+                const Duration(seconds: 15),
+              );
+        } catch (_) {
+          throw AppException(
+            'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an '
+            'und versuche das Löschen danach erneut.',
+          );
+        }
+        // Timeout 60 s (statt 20 s): Kalte Edge-Function-Starts brauchen
+        // beim ersten Aufruf deutlich länger - ein Timeout sieht sonst
+        // exakt wie ein Netzwerkfehler aus ("konnte nicht übermittelt
+        // werden"), obwohl der Server noch arbeitet.
         final response = await _supabase.functions
             .invoke('delete-account')
-            .timeout(const Duration(seconds: 20));
+            .timeout(const Duration(seconds: 60));
         final data = response.data;
         if (response.status != 200 ||
             (data is Map && data['deleted'] != true)) {
@@ -439,6 +520,26 @@ class SupabaseAuthService implements AppAuthService {
         }
       } on AppException {
         rethrow;
+      } on FunctionException catch (e) {
+        // Echte Server-Antwort statt Generik: details enthält den
+        // JSON-Body der Function ({"error": "..."}). So wird aus
+        // "konnte nicht übermittelt werden" eine Diagnose.
+        final serverError =
+            e.details is Map ? (e.details as Map)['error']?.toString() : null;
+        if (serverError != null &&
+            serverError.contains('mfa_required')) {
+          throw AppException(
+            'Für die Löschung ist ein aktueller MFA-Code nötig. Bitte '
+            'schließe zuerst die 2FA-Abfrage ab und versuche es erneut.',
+          );
+        }
+        if (serverError != null && serverError.isNotEmpty) {
+          throw AppException('Löschung abgelehnt ($serverError).');
+        }
+        throw AppException(
+          'Die Löschung konnte nicht an den Server übermittelt werden. '
+          'Dein Account wurde NICHT gelöscht - bitte versuche es erneut.',
+        );
       } catch (e) {
         throw AppException(
           'Die Löschung konnte nicht an den Server übermittelt werden. '

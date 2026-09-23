@@ -34,6 +34,13 @@ class _FakeLocalStorage implements LocalStorage {
   Future<bool?> getBool(String key) async => map[key] == 'true';
 
   @override
+  Future<void> saveInt(String key, int value) async => map[key] = '$value';
+
+  @override
+  Future<int?> getInt(String key) async =>
+      map[key] == null ? null : int.tryParse(map[key]!);
+
+  @override
   Future<void> remove(String key) async => map.remove(key);
 }
 

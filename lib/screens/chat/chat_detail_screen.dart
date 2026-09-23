@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:record/record.dart';
 
@@ -18,30 +19,44 @@ import 'package:wisp/l10n/app_strings.dart';
 import 'package:wisp/models/gender.dart' show RelationshipType;
 import 'package:wisp/models/message.dart';
 import 'package:wisp/models/user_profile.dart';
+import 'package:wisp/models/find_match_models.dart';
 import 'package:wisp/providers/chat_provider.dart';
 import 'package:wisp/providers/profile_provider.dart';
 import 'package:wisp/providers/user_preferences_provider.dart';
 import 'package:wisp/services/find_your_match_service.dart'
     show findYourMatchServiceProvider;
+import 'package:wisp/widgets/heart_moments.dart';
 import 'package:wisp/providers/settings_provider.dart';
 import 'package:wisp/routing/app_router.dart';
 import 'package:wisp/screens/chat/call_screen.dart';
+import 'package:wisp/screens/interests/interessen_screen.dart'
+    show interessenInitialTabProvider;
 import 'package:wisp/services/image_report_service.dart';
 import 'package:wisp/services/report_service.dart';
 import 'package:wisp/services/encryption_service.dart';
+import 'package:wisp/services/local_storage.dart';
 import 'package:wisp/services/p2p_chat_service.dart';
 import 'package:wisp/services/prekey_service.dart';
+import 'package:wisp/screens/chat/bucket_list_sheet.dart'
+    show BucketListSheet;
 import 'package:wisp/services/quiz_service.dart';
-import 'package:wisp/services/secure_storage.dart';
+import 'package:wisp/services/relay_service.dart';
 import 'package:wisp/services/supabase_database_service.dart';
 import 'package:wisp/services/supabase_service.dart';
+import 'package:wisp/data/icebreaker_catalog.dart';
 import 'package:wisp/utils/age_safety_rules.dart';
 import 'package:wisp/utils/constants.dart';
 import 'package:wisp/utils/exif_stripper.dart';
 import 'package:wisp/widgets/audio_review_sheet.dart';
+import 'package:wisp/widgets/chat_bubbles.dart';
+import 'package:wisp/widgets/end_spark_dialog.dart';
 import 'package:wisp/widgets/intro_audio_player.dart';
 import 'package:wisp/widgets/meet_intent_card.dart';
 import 'package:wisp/widgets/profile_widgets.dart';
+
+/// Präfix für geteilte Eisbrecher-Fragen im Textkanal (v0.9.1): Beide Seiten
+/// stellen solche Nachrichten als gemeinsame mittige Bubble dar.
+const String icebreakerPrefix = '__ICEBREAKER__:';
 
 /// 1:1-Chat-Detailansicht mit Nachrichtenverlauf und Eingabefeld.
 ///
@@ -58,11 +73,17 @@ class ChatDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<ChatDetailScreen> createState() => _ChatDetailScreenState();
 }
 
-class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
+class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
+    with WidgetsBindingObserver {
   final _ctrl = TextEditingController();
   bool _recording = false;
+  bool _paused = false;
   int _recordSeconds = 0;
   Timer? _recordTimer;
+  StreamSubscription<Amplitude>? _ampSub;
+  final List<double> _levels = [];
+  static const int _maxVoiceSeconds = 300;
+  static const int _ampBarCount = 24;
   // E: Ladezustand für Bild-Upload.
   bool _uploadingImage = false;
 
@@ -76,6 +97,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   StreamSubscription<String>? _msgSub;
   StreamSubscription<({Uint8List data, String contentType, Map<String, dynamic>? metadata})>? _binarySub;
   StreamSubscription<Map<String, dynamic>>? _callControlSub;
+  StreamSubscription<dynamic>? _connSub;
+  StreamSubscription<void>? _relayPingSub;
   bool _p2pConnected = false;
   // Deduplication: bereits verarbeitete Message-IDs.
   final Set<String> _seenMessageIds = {};
@@ -93,16 +116,144 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   // erzwungen, hier clientseitig gespiegelt).
   bool _quizGated = false;
 
+  // Relay-Fallback (v0.9.1): zwischengespeicherte Nachrichten abholen.
+  Timer? _relayTimer;
+  bool _relayHintDismissed = false;
+  bool _relayExpanded = false;
+  // Handshake-Retry (v0.9.1-Fix "keine direkte Verbindung"): letzter
+  // Re-Offer-Versuch (Drosselung, max. alle 25 s, nur im Vordergrund).
+  DateTime? _lastHandshakeRetry;
+  // Kurz-Fehler des letzten Handshake-Versuchs (für die Diagnose-Zeile
+  // in der aufgeklappten Relay-Karte).
+  String? _lastP2pError;
+
+  /// Partner-ID des geöffneten Chats (für die Notification-Unterdrückung).
+  String? _activePeerId;
+
+  /// Kürzt Fehlermeldungen für die UI (keine Stacks, max. 160 Zeichen).
+  static String _shortError(Object e) {
+    var t = e
+        .toString()
+        .replaceFirst('StateError: ', '')
+        .replaceFirst('Exception: ', '');
+    if (t.length > 160) t = t.substring(0, 160);
+    return t;
+  }
+
+  /// Date-Rad pro Chat ausgeblendet (v0.9.1, persistent in den Prefs).
+  static const _ideaWheelHiddenKey = 'idea_wheel_hidden_chats';
+  bool _ideaWheelHidden = false;
+
+  /// 5-Minuten-Stille-Vorschlag (Nutzerwunsch): In einem frischen Funken-
+  /// Chat ohne eigene Nachricht schlägt die App nach 5 Minuten eine
+  /// Eisbrecher-Frage vor (Dialog mit Senden/Später). Einmalig je Match
+  /// (Prefs-Key), läuft nur im geöffneten Chat im Vordergrund - beide
+  /// Seiten bekommen den Vorschlag jeweils lokal.
+  Timer? _icebreakerSuggestTimer;
+  static const _icebreakerSuggestedKey = 'icebreaker_suggested_chats';
+
+  /// Herzensstärken (v0.9.2): Server-Match-Daten (Funken-Typ 'friends',
+  /// createdAt/passedAt für Erinnerungs-Momente) - im _bootstrap geladen.
+  MatchWithState? _serverMatch;
+  Set<String> _milestoneDismissed = const {};
+  static const _milestoneDismissedKey = 'milestone_dismissed';
+
+  /// Lädt Server-Match + dismissed-Momente für die Herzensstärken.
+  Future<void> _loadHeartState() async {
+    final serverId = int.tryParse(widget.matchId);
+    if (serverId == null || !SupabaseService.isInitialized) return;
+    try {
+      final all =
+          await ref.read(findYourMatchServiceProvider).listMatchesWithState();
+      _serverMatch = all.where((m) => m.matchId == serverId).firstOrNull;
+    } catch (_) {}
+    try {
+      final storage = ref.read(localStorageProvider);
+      final raw = await storage.getString(_milestoneDismissedKey);
+      _milestoneDismissed =
+          (jsonDecode(raw ?? '[]') as List).map((e) => '$e').toSet();
+    } catch (_) {}
+    if (mounted) setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // NUTZERWUNSCH: Unterdrückt die Lokal-Benachrichtigung für eingehende
+    // Nachrichten, solange dieser Chat geöffnet ist (Nachricht sichtbar).
+    ref.read(activeChatIdProvider.notifier).state = widget.matchId;
     unawaited(_bootstrap());
     unawaited(_loadQuizGate());
-    // Opt-in-Verlauf (v0.8.0): gespeicherte Nachrichten laden, sobald der
-    // Nutzer den verschlüsselten lokalen Verlauf aktiviert hat.
-    unawaited(ref
-        .read(chatProvider.notifier)
-        .hydrateHistory(widget.matchId));
+    unawaited(_loadIdeaWheelHidden());
+    // Relay-Polling (5 s, Fix "Nachrichten kommen nicht an"): Der Partner
+    // pingt nach relay_store sofort, aber falls der Ping verloren geht,
+    // holt der Timer spätestens nach 5 s nach. Pausiert im Hintergrund.
+    _startRelayTimer();
+  }
+
+  void _startRelayTimer() {
+    _relayTimer?.cancel();
+    // LATENZ: 3 s statt 5 s - der Wake-up-Ping liefert sofort, der Timer
+    // fängt nur verlorene Pings ab (Akku-Kompromiss).
+    _relayTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (mounted) {
+        unawaited(_fetchRelay());
+        unawaited(_retryHandshakeThrottled());
+      }
+    });
+  }
+
+  /// Versucht den P2P-Handshake erneut, solange keine direkte Verbindung
+  /// besteht (Initiator sendet Re-Offer, sonst voller Neuaufbau).
+  /// Läuft nur im geöffneten Chat im Vordergrund und ist auf max. einen
+  /// Versuch alle 25 Sekunden gedrosselt (Akku).
+  Future<void> _retryHandshakeThrottled() async {
+    if (_p2pConnected || _p2p == null || !mounted) return;
+    if (!SupabaseService.isInitialized) return;
+    final match = _match;
+    final myId = _myUserId;
+    if (match == null || myId == null) return;
+    final now = DateTime.now();
+    if (_lastHandshakeRetry != null &&
+        now.difference(_lastHandshakeRetry!) <
+            const Duration(seconds: 25)) {
+      return;
+    }
+    _lastHandshakeRetry = now;
+    try {
+      await _p2p!.ensureConnected(myUserId: myId, peerId: match.partner.id);
+    } catch (e) {
+      // Still - nächster Timer-Takt versucht es erneut. Fehler für die
+      // Diagnose-Zeile merken.
+      if (mounted) setState(() => _lastP2pError = _shortError(e));
+      return;
+    }
+    if (!mounted) return;
+    final open = _p2p?.isConnected ?? false;
+    if (open != _p2pConnected || (open && _lastP2pError != null)) {
+      setState(() {
+        _p2pConnected = open;
+        if (open) _lastP2pError = null;
+      });
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Hintergrund: kein Polling/Netz (Akku). Vordergrund: Timer neu +
+    // sofort abholen (Nachrichten aus der Abwesenheit).
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      _relayTimer?.cancel();
+      _relayTimer = null;
+    } else if (state == AppLifecycleState.resumed && mounted) {
+      _startRelayTimer();
+      unawaited(_fetchRelay());
+      // Rückkehr in den Chat: ggf. sofort neu verbinden statt bis zum
+      // nächsten Timer-Takt zu warten (Drossel greift trotzdem).
+      unawaited(_retryHandshakeThrottled());
+    }
   }
 
   /// Bootstrapping in richtiger Reihenfolge:
@@ -114,10 +265,271 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   ///   4. Offline gescannter Kontakt: Like nachholen (der QR-Scan erzeugt
   ///      nur bei Online den Like - beim späteren Öffnen nachholen).
   Future<void> _bootstrap() async {
+    // Opt-in-Verlauf ZUERST laden (Fix "Verlauf wird nicht direkt
+    // geladen"): lokal & sofort. Vorher lief die Hydration ganz am ENDE -
+    // hinter dem (ggf. Sekunden dauernden oder scheiternden) P2P-Connect
+    // und dem Relay-Fetch, der Chat blieb entsprechend lange leer.
+    await ref.read(chatProvider.notifier).hydrateHistory(widget.matchId);
     await _ensureLocalMatch();
     await _initP2P();
     await _loadPartnerProfileIfNeeded();
     await _ensureLikeForSavedContact();
+    // Relay-Nachrichten sofort abholen (Partner hat ggf. bei fehlendem
+    // P2P-Kanal zwischengespeichert).
+    await _fetchRelay();
+    // Herzensstärken: Server-Match-Daten (Freundschafts-Badge,
+    // Erinnerungs-Momente) im Hintergrund laden.
+    unawaited(_loadHeartState());
+    // 5-Minuten-Stille-Vorschlag starten (nur frischer Chat ohne eigene
+    // Nachricht, siehe _maybeSuggestIcebreaker).
+    unawaited(_maybeSuggestIcebreaker());
+  }
+
+  /// Eisbrecher-Sammlung im Chat (vom "mehr"-Menü, NUTZERWUNSCH): Frage
+  /// auswählen -> direkt als gemeinsame mittige Bubble senden. Für
+  /// QR-Kontakte (keine Server-ID) mit Hinweis statt tot aufhören.
+  Future<void> _openIcebreakerCollection() async {
+    final serverId = int.tryParse(widget.matchId);
+    if (serverId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.t(context, 'chat.spiceUnavailable')),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    final picked = await context.push<String>(
+      AppRoutes.spiceQuestionsPath(serverId),
+    );
+    if (picked != null && picked.trim().isNotEmpty && mounted) {
+      _sendIcebreakerQuestion(picked);
+    }
+  }
+
+  /// Herzensstärken (Idee 5): Gemeinsame Erinnerungsliste (Bucket List)
+  /// als Bottom Sheet - beide Seiten können Einträge hinzufügen, abhaken
+  /// und eigene löschen. Bei Stillstand (14 Tage) erscheint ein sanfter
+  /// Hinweis oben im Sheet.
+  Future<void> _showBucketListSheet() async {
+    final serverId = int.tryParse(widget.matchId);
+    if (serverId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.t(context, 'chat.spiceUnavailable')),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    final partnerName = _match?.partner.name ?? '';
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (ctx) => BucketListSheet(
+        matchId: serverId,
+        partnerName: partnerName,
+        myId: _myUserId ?? AppConstants.currentUserId,
+      ),
+    );
+  }
+
+  /// 5-Minuten-Stille-Vorschlag (Nutzerwunsch "Icebreaker-Vorschlag an
+  /// beide nach 5 Minuten ohne Nachricht"): Hat der Nutzer in diesem
+  /// frischen Funken-Chat nach 5 Minuten noch nichts geschrieben, wird
+  /// EINMALIG eine zufällige Eisbrecher-Frage zum Senden angeboten.
+  /// Die Gegenseite bekommt denselben Vorschlag lokal, sobald sie den
+  /// Chat mit ebenfalls leerem Verlauf öffnet (beide Geräte werten
+  /// dieselbe Regel aus - kein Server nötig).
+  Future<void> _maybeSuggestIcebreaker() async {
+    final match = _match;
+    final myId = _myUserId;
+    if (match == null || myId == null || !mounted) return;
+    // Nur wenn ICH noch nichts geschrieben habe (empfangene zählen
+    // nicht - dann läuft das Gespräch bereits).
+    final sent = ref
+        .read(chatProvider.notifier)
+        .messagesFor(match.id)
+        .any((m) => m.isFrom(myId));
+    if (sent) return;
+    // Einmalig je Match (Prefs).
+    try {
+      final storage = ref.read(localStorageProvider);
+      final raw = await storage.getString(_icebreakerSuggestedKey);
+      final done =
+          (jsonDecode(raw ?? '[]') as List).map((e) => '$e').toSet();
+      if (done.contains(match.id)) return;
+    } catch (_) {}
+    _icebreakerSuggestTimer?.cancel();
+    _icebreakerSuggestTimer = Timer(const Duration(minutes: 5), () async {
+      if (!mounted) return;
+      final current = _match;
+      final myIdNow = _myUserId;
+      if (current == null || myIdNow == null) return;
+      if (ref
+          .read(chatProvider.notifier)
+          .messagesFor(current.id)
+          .any((m) => m.isFrom(myIdNow))) {
+        return; // Inzwischen geschrieben - kein Vorschlag nötig.
+      }
+      // Als gezeigt vermerken (auch bei "Später" - kein Nerven).
+      try {
+        final storage = ref.read(localStorageProvider);
+        final raw = await storage.getString(_icebreakerSuggestedKey);
+        final done =
+            (jsonDecode(raw ?? '[]') as List).map((e) => '$e').toSet();
+        done.add(current.id);
+        await storage.saveString(
+            _icebreakerSuggestedKey, jsonEncode(done.toList()));
+      } catch (_) {}
+      if (!mounted) return;
+      // Zufällige Frage aus dem Katalog (Sprache des Geräts).
+      final lang = Localizations.localeOf(context).languageCode;
+      final all = [
+        for (final c in icebreakerCatalog) ...c.questions,
+      ];
+      if (all.isEmpty) return;
+      all.shuffle();
+      final question = all.first.textFor(lang);
+      final send = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          icon: const Icon(Icons.lightbulb_outline, size: 40),
+          title: Text(L10n.t(ctx, 'chat.icebreakerSuggestTitle')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(L10n.t(ctx, 'chat.icebreakerSuggestBody')),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(ctx).colorScheme.tertiaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '„$question"',
+                  style: Theme.of(ctx).textTheme.bodyLarge?.copyWith(
+                        fontStyle: FontStyle.italic,
+                      ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(L10n.t(ctx, 'chat.icebreakerSuggestLater')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(L10n.t(ctx, 'chat.icebreakerSuggestSend')),
+            ),
+          ],
+        ),
+      );
+      if (send == true && mounted) {
+        await _sendIcebreakerQuestion(question);
+      }
+    });
+  }
+
+  /// Holt E2E-verschlüsselte Relay-Nachrichten des Partners ab (Fallback,
+  /// wenn P2P nicht zustande kam) und hängt sie in den Verlauf.
+  Future<void> _fetchRelay() async {
+    final match =
+        _match ?? ref.read(chatProvider.notifier).getMatchById(widget.matchId);
+    if (match == null || !mounted) return;
+    if (!SupabaseService.isInitialized) return;
+    try {
+      // Nur Zeilen DIESES Partners abholen/bestätigen - fremde warten
+      // unangetastet auf ihren eigenen Chat (RelayService.fetchPending).
+      final pending = await ref
+          .read(relayServiceProvider)
+          .fetchPending(from: match.partner.id);
+      if (!mounted) return;
+      var added = false;
+      for (final r in pending) {
+        if (r.senderId != match.partner.id) continue;
+        final msgId = 'relay_${r.id}';
+        if (_seenMessageIds.contains(msgId)) continue;
+        _seenMessageIds.add(msgId);
+        final msg = Message(
+          id: msgId,
+          senderId: r.senderId,
+          receiverId: _myUserId ?? AppConstants.currentUserId,
+          text: r.text,
+          timestamp: r.createdAt,
+          type: r.kind == 'icebreaker'
+              ? MessageType.icebreaker
+              : MessageType.text,
+        );
+        ref.read(chatProvider.notifier).addMessage(match.id, msg, ref: ref);
+        added = true;
+      }
+      if (added && mounted) setState(() {});
+    } catch (e) {
+      debugPrint('[ChatDetail] Relay-Abruf fehlgeschlagen: $e');
+    }
+  }
+
+  /// Sendet Text über drei Stufen (v0.9.1):
+  ///   1. Direkt per P2P-DataChannel (wenn offen).
+  ///   2. E2E-verschlüsselt über das Server-Relay (Partner holt beim
+  ///      Öffnen des Chats ab - kein gleichzeitiges Online nötig).
+  ///   3. Lokale Outbox (letzte Reserve, braucht später beide online).
+  /// Inkl. Push-Metadaten und ehrlichem Zustands-Hinweis.
+  Future<void> _transmitText(Match match, String text,
+      {String kind = 'text'}) async {
+    final wireText =
+        kind == 'icebreaker' ? '$icebreakerPrefix$text' : text;
+    final p2p = _p2p;
+    if (p2p != null) {
+      try {
+        if (await p2p.trySendText(wireText)) {
+          unawaited(_notifyPeerAboutMessage(match));
+          return;
+        }
+      } catch (_) {}
+    }
+    // Kanal zu: Relay-Fallback (nur Ciphertext zum Server, E2E bleibt).
+    try {
+      await ref.read(relayServiceProvider).storeText(
+            peerId: match.partner.id,
+            text: text,
+            kind: kind,
+          );
+      // Dual-Delivery-Schutz: trySendText oben hat bei geschlossenem Kanal
+      // bereits in die Outbox eingereiht (mit icebreaker-Präfix!) - nach
+      // erfolgreichem Relay-Store muss der Eintrag raus, sonst kommt die
+      // Nachricht bei Kanalöffnung doppelt.
+      p2p?.dequeueText(wireText);
+      // Wake-up-Ping: Der Partner holt sofort ab statt aufs 5-s-Polling
+      // zu warten (gleicher Mechanismus wie im Zufallschat).
+      unawaited(p2p?.sendRelayPing());
+      unawaited(_notifyPeerAboutMessage(match));
+      // KEINE "zwischengespeichert"-SnackBar mehr (Fix: war bei jeder
+      // Nachricht störend - die Nachricht kommt zuverlässig an, der
+      // Nutzer braucht keinen Hinweis auf den Transportweg).
+      return;
+    } catch (_) {}
+    // Letzte Reserve: Outbox (wird bei späterer Direktverbindung geflusht).
+    try {
+      await p2p?.sendText(wireText);
+    } catch (_) {}
+    unawaited(_notifyPeerAboutMessage(match));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.t(context, 'chat.queuedHint')),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   /// Auflösung von Matches, die es lokal noch nicht gibt: Bei einer
@@ -165,15 +577,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     }
   }
 
-  /// QR-Kontakte werden beim Scan mit Platzhaltern ("Unbekannt") angelegt.
-  /// Hier wird das echte Profil (Name, Alter, Interessen, Vorstellung) vom
-  /// Server nachgeladen, damit der Chat den Namen zeigt und die Vorstellung
-  /// anhörbar ist. Fehlschlag ist unkritisch - der Chat funktioniert ohne.
+  /// Das Partner-Profil wird IMMER vom Server nachgeladen (v0.9.1-Fix:
+  /// vorher nur bei "Unbekannt" - dadurch fehlten bei bestehenden Kontakten
+  /// Vorstellungstext und Audio-Pfad und die Vorstellung war weder sichtbar
+  /// noch anhörbar). Lokale Daten bleiben Fallback bei Fehlschlag.
   Future<void> _loadPartnerProfileIfNeeded() async {
     final match = ref.read(chatProvider.notifier).getMatchById(widget.matchId);
     if (match == null) return;
     if (!SupabaseService.isInitialized) return;
-    if (match.partner.name != 'Unbekannt') return;
     try {
       final db = ref.read(supabaseDatabaseServiceProvider);
       final row = await db.fetchPublicProfile(match.partner.id);
@@ -188,6 +599,36 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     } catch (e) {
       debugPrint('[ChatDetail] Partner-Profil-Refresh fehlgeschlagen: $e');
     }
+  }
+
+  /// Lädt, ob das Date-Rad für diesen Chat ausgeblendet wurde.
+  Future<void> _loadIdeaWheelHidden() async {
+    try {
+      final raw =
+          await ref.read(localStorageProvider).getString(_ideaWheelHiddenKey);
+      if (raw == null || raw.isEmpty || !mounted) return;
+      final hidden =
+          (jsonDecode(raw) as List).map((e) => '$e').toSet();
+      if (mounted && hidden.contains(widget.matchId)) {
+        setState(() => _ideaWheelHidden = true);
+      }
+    } catch (_) {}
+  }
+
+  /// Blendet das Date-Rad für diesen Chat dauerhaft aus.
+  Future<void> _hideIdeaWheel() async {
+    setState(() => _ideaWheelHidden = true);
+    try {
+      final storage = ref.read(localStorageProvider);
+      final raw = await storage.getString(_ideaWheelHiddenKey);
+      final hidden = <String>{
+        if (raw != null && raw.isNotEmpty)
+          ...(jsonDecode(raw) as List).map((e) => '$e'),
+        widget.matchId,
+      };
+      await storage.saveString(
+          _ideaWheelHiddenKey, jsonEncode(hidden.toList()));
+    } catch (_) {}
   }
 
   /// Prüft serverseitig, ob dieses Match noch quiz-gesperrt ist.
@@ -213,22 +654,60 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final match = ref.read(chatProvider.notifier).getMatchById(widget.matchId);
     if (match == null) return;
     _p2p = ref.read(p2pChatServiceProvider);
-    _myUserId = await ref.read(secureTokenStoreProvider).userId ??
-        SupabaseService.currentUser?.id ??
-        AppConstants.currentUserId;
+    // NUTZERWUNSCH: Notification-Unterdrückung braucht die Partner-ID
+    // (Server-Push-Metadaten enthalten den Absender, nicht die Match-ID).
+    _activePeerId = match.partner.id;
+    ref.read(activeChatPeerIdProvider.notifier).state = _activePeerId;
+    // Eigene ID strikt aus der Supabase-Session (Fix): Stale Secure-Store-
+    // Werte (alter Account, Demo-'me') erzeugen ein Signaling-Topic, das
+    // die echte auth.uid() nicht enthält -> Realtime-RLS verweigert den
+    // Join und das Peer-Pinning verwirft jede Nachricht.
+    _myUserId = SupabaseService.isInitialized
+        ? SupabaseService.currentUser?.id
+        : null;
+    if (_myUserId == null || _myUserId!.isEmpty) {
+      debugPrint('[ChatDetail] Keine Supabase-Session - P2P übersprungen.');
+      return;
+    }
 
-    // Textnachrichten abonnieren.
+    // Verbindungsstatus LIVE spiegeln (v0.9.1-Fix): Bisher wurde
+    // _p2pConnected nur EINMAL direkt nach connect() gelesen - zu dem
+    // Zeitpunkt ist ICE praktisch nie fertig, sodass Badge und
+    // Relay-Karte dauerhaft "keine direkte Verbindung" zeigten, obwohl
+    // der Kanal Sekunden später aufging.
+    _connSub?.cancel();
+    _connSub = _p2p!.connectionState.listen((_) {
+      if (!mounted) return;
+      final open = _p2p?.isConnected ?? false;
+      if (open != _p2pConnected) {
+        setState(() => _p2pConnected = open);
+      }
+    });
+
+    // Relay-Wake-up: Der Partner hat eine Relay-Nachricht hinterlegt -
+    // sofort abholen statt auf den 5-s-Poll-Takt zu warten.
+    _relayPingSub?.cancel();
+    _relayPingSub = _p2p!.relayPing.listen((_) {
+      if (mounted) unawaited(_fetchRelay());
+    });
+
+    // Textnachrichten abonnieren. Nachrichten mit Eisbrecher-Präfix werden
+    // als gemeinsame mittige Bubble dargestellt (v0.9.1, beide Seiten).
     _msgSub = _p2p!.incomingMessages.listen((text) {
       if (!mounted) return;
-      final msgId = 'p2p_${DateTime.now().millisecondsSinceEpoch}';
+      final msgId = Message.newId('p2p');
       if (_seenMessageIds.contains(msgId)) return;
       _seenMessageIds.add(msgId);
+      final isIcebreaker = text.startsWith(icebreakerPrefix);
       final msg = Message(
         id: msgId,
         senderId: match.partner.id,
-        receiverId: _myUserId!,
-        text: text,
+        receiverId: _myUserId ?? AppConstants.currentUserId,
+        text: isIcebreaker
+            ? text.substring(icebreakerPrefix.length)
+            : text,
         timestamp: DateTime.now(),
+        type: isIcebreaker ? MessageType.icebreaker : MessageType.text,
       );
       ref.read(chatProvider.notifier).addMessage(match.id, msg, ref: ref);
     });
@@ -239,7 +718,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       final contentType = record.contentType;
       final metadata = record.metadata;
       if (!mounted) return;
-      final msgId = 'p2p_bin_${DateTime.now().millisecondsSinceEpoch}';
+      final msgId = Message.newId('p2p_bin');
       if (_seenMessageIds.contains(msgId)) return;
       _seenMessageIds.add(msgId);
 
@@ -291,8 +770,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       // NORMAL und kein Fehler. Der orange E2E-Badge zeigt den Zustand;
       // die Verbindung kommt zustande, sobald beide gleichzeitig online
       // sind. Nur ein ruhiger Hinweis, keine Fehlermeldung.
+      // Der Kurz-Fehler landet zusätzlich in der aufgeklappten
+      // Relay-Karte (Diagnose statt Logcat-Suche).
       debugPrint('[ChatDetail] P2P-Verbindung noch nicht offen: $e');
-      if (mounted) setState(() => _p2pConnected = false);
+      if (mounted) {
+        setState(() {
+          _p2pConnected = false;
+          _lastP2pError = _shortError(e);
+        });
+      }
     }
 
     // Eingehende Anrufe (invite) abonnieren. Der Anruf-Screen wird nur
@@ -301,7 +787,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       if (!mounted) return;
       final type = payload['type'] as String?;
       if (type != 'invite') return;
-      final callId = payload['callId'] as String? ?? '';
+      // Leere/fremde callIds verwerfen (keine Ghost-Calls).
+      final callId = payload['callId'] as String?;
+      if (callId == null || callId.isEmpty) return;
       if (ref.read(activeCallIdProvider) != null) {
         // Bereits im Anruf: ablehnen statt zweiten Screen zu öffnen.
         _p2p?.sendCallControl({'type': 'decline', 'callId': callId});
@@ -367,12 +855,26 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   @override
   void dispose() {
+    // Aktiven Chat freigeben (sonst bliebe die Notification-Unterdrückung
+    // für diese Chat-ID aktiv, obwohl der Screen weg ist).
+    if (ref.read(activeChatIdProvider) == widget.matchId) {
+      ref.read(activeChatIdProvider.notifier).state = null;
+    }
+    if (ref.read(activeChatPeerIdProvider) == _activePeerId) {
+      ref.read(activeChatPeerIdProvider.notifier).state = null;
+    }
+    _icebreakerSuggestTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     _msgSub?.cancel();
     _binarySub?.cancel();
     _callControlSub?.cancel();
+    _connSub?.cancel();
+    _relayPingSub?.cancel();
+    _relayTimer?.cancel();
     _p2p?.disconnect();
     _ctrl.dispose();
     _recordTimer?.cancel();
+    _ampSub?.cancel();
     _audioRecorder.dispose();
     // Audit M-17: Entschlüsselte Voice-Reste entfernen.
     for (final path in List<String>.from(_voiceTempFiles)) {
@@ -388,35 +890,22 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     if (match == null) return;
     final text = _ctrl.text.trim();
     if (text.isEmpty) return;
+    final myId = _myUserId ?? AppConstants.currentUserId;
     _ctrl.clear();
 
     // Lokal für die Anzeige ablegen (ohne Mock-Auto-Reply) …
     final localMsg = Message(
-      id: 'local_${DateTime.now().millisecondsSinceEpoch}',
-      senderId: _myUserId!,
+      id: Message.newId('local'),
+      senderId: myId,
       receiverId: match.partner.id,
       text: text,
       timestamp: DateTime.now(),
     );
     ref.read(chatProvider.notifier).addMessage(match.id, localMsg, ref: ref);
 
-    // … und ECHT E2E-verschlüsselt über den P2P-DataChannel senden.
-    try {
-      await _p2p?.sendText(text);
-      // Push für den Empfänger anstoßen – NUR Metadaten ("Neue Nachricht
-      // von X"), niemals Inhalte (E2E). Die Edge Function prüft die
-      // Einzel-Schalter des Empfängers serverseitig.
-      unawaited(_notifyPeerAboutMessage(match));
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-                L10n.tf(context, 'chat.sendFailed', {'error': '$e'})),
-          ),
-        );
-      }
-    }
+    // … und ECHT E2E-verschlüsselt zustellen: direkt per P2P, sonst über
+    // das Server-Relay (Partner holt beim Öffnen ab), sonst Outbox.
+    await _transmitText(match, text);
     if (mounted) setState(() {});
   }
 
@@ -474,7 +963,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             style: TextButton.styleFrom(
               minimumSize: const Size.fromHeight(44),
             ),
-            child: const Text('Abbrechen'),
+            child: Text(L10n.t(ctx, 'common.cancel')),
           ),
         ],
       ),
@@ -492,6 +981,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           : ImageSource.gallery;
       final picked = await picker.pickImage(
         source: source,
+        // Bounds wie Avatare (2048 px): Vollauflösung vom Gallery-Pick
+        // würde Speicher sprengen und den DataChannel verstopfen.
+        // Angezeigt wird max. 0.8 Bildschirmbreite - mehr braucht niemand.
+        maxWidth: 2048,
+        maxHeight: 2048,
         imageQuality: 70, // Kompression für DataChannel
       );
       if (picked == null) {
@@ -515,10 +1009,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         if (mounted) setState(() => _uploadingImage = false);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content:
-                  Text('Bild konnte nicht sicher aufbereitet werden und '
-                      'wurde nicht gesendet.'),
+            SnackBar(
+              content: Text(
+                  L10n.t(context, 'chat.imagePrepareFailed')),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -550,8 +1043,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
       // Lokale Vorschau anzeigen.
       final localMsg = Message(
-        id: 'local_img_${DateTime.now().millisecondsSinceEpoch}',
-        senderId: _myUserId!,
+          id: Message.newId('local_img'),
+        senderId: _myUserId ?? AppConstants.currentUserId,
         receiverId: match.partner.id,
         text: '',
         timestamp: DateTime.now(),
@@ -577,7 +1070,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Abbrechen'),
+                child: Text(L10n.t(ctx, 'common.cancel')),
               ),
               FilledButton(
                 onPressed: () {
@@ -593,6 +1086,53 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     }
   }
 
+  /// Lautstärke für die Live-Visualisierung (neues Design, wie IntroEditor):
+  /// dBFS (-60..0) auf 0..1 normieren.
+  void _onChatAmplitude(Amplitude amp) {
+    if (!mounted || !_recording || _paused) return;
+    final db = amp.current.clamp(-60.0, 0.0);
+    final level = ((db + 60) / 60).clamp(0.0, 1.0);
+    setState(() {
+      _levels.add(level);
+      while (_levels.length > _ampBarCount) {
+        _levels.removeAt(0);
+      }
+    });
+  }
+
+  void _startChatTimer() {
+    _recordTimer?.cancel();
+    _recordTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || _paused) return;
+      setState(() => _recordSeconds++);
+      if (_recordSeconds >= _maxVoiceSeconds) {
+        _toggleRecord();
+      }
+    });
+  }
+
+  /// Pause/Fortsetzen während der Sprachaufnahme (neues Design).
+  Future<void> _pauseResumeRecording() async {
+    if (!_recording) return;
+    try {
+      if (_paused) {
+        await _audioRecorder.resume();
+        if (mounted) setState(() => _paused = false);
+      } else {
+        await _audioRecorder.pause();
+        if (mounted) setState(() => _paused = true);
+      }
+    } catch (e) {
+      debugPrint('[ChatDetail] Pause/Resume fehlgeschlagen: $e');
+    }
+  }
+
+  String _fmtRecordSeconds(int s) {
+    final m = s ~/ 60;
+    final sec = (s % 60).toString().padLeft(2, '0');
+    return '$m:$sec';
+  }
+
   /// D: Sprachaufnahme starten/beenden mit [AudioRecorder].
   ///
   /// Aufnahme als .m4a (AAC), dann Bytes E2E-verschlüsselt via
@@ -600,10 +1140,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   /// erfolgreichem Senden.
   ///
   /// Mindestlänge: 1 Sekunde (versehentliche Ultra-Kurz-Aufnahmen
-  /// werden verworfen).
+  /// werden verworfen). Neues Design (v0.9.1): Live-Dauer +
+  /// Lautstärke-Balken + Pause/Fortsetzen, wie im IntroEditor.
   Future<void> _toggleRecord() async {
     if (_recording) {
       _recordTimer?.cancel();
+      await _ampSub?.cancel();
+      _ampSub = null;
 
       // WICHTIG: Sekunden VOR dem Reset sichern – vorher stand der Reset
       // vor der Prüfung, sodass jede Aufnahme als "unter 1 Sekunde"
@@ -614,8 +1157,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       final path = _recordingPath;
       setState(() {
         _recording = false;
+        _paused = false;
         _recordSeconds = 0;
         _recordingPath = null;
+        _levels.clear();
       });
 
       if (path == null) return;
@@ -676,8 +1221,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
         // Lokale Vorschau anzeigen.
         final localMsg = Message(
-          id: 'local_voice_${DateTime.now().millisecondsSinceEpoch}',
-          senderId: _myUserId!,
+          id: Message.newId('local_voice'),
+          senderId: _myUserId ?? AppConstants.currentUserId,
           receiverId: match.partner.id,
           text: '',
           timestamp: DateTime.now(),
@@ -686,6 +1231,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           type: MessageType.voice,
         );
         ref.read(chatProvider.notifier).addMessage(match.id, localMsg, ref: ref);
+        if (mounted && !_p2pConnected) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(L10n.t(context, 'chat.queuedHint')),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
 
         // Temporäre Datei NICHT löschen: die Nachricht referenziert den
         // Pfad, damit sie lokal angehört werden kann.
@@ -724,13 +1278,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
         setState(() {
           _recording = true;
+          _paused = false;
           _recordSeconds = 0;
           _recordingPath = path;
+          _levels.clear();
         });
-
-        _recordTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-          if (mounted) setState(() => _recordSeconds++);
-        });
+        _ampSub = _audioRecorder
+            .onAmplitudeChanged(const Duration(milliseconds: 100))
+            .listen(_onChatAmplitude);
+        _startChatTimer();
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -745,11 +1301,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   /// und die temporäre Datei gelöscht.
   Future<void> _cancelRecording() async {
     _recordTimer?.cancel();
+    await _ampSub?.cancel();
+    _ampSub = null;
     final path = _recordingPath;
     setState(() {
       _recording = false;
+      _paused = false;
       _recordSeconds = 0;
       _recordingPath = null;
+      _levels.clear();
     });
     try {
       await _audioRecorder.stop();
@@ -765,18 +1325,136 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     }
   }
 
+  /// Neues Aufnahme-Panel (v0.9.1): Karte mit Live-Dauer, Pegel-Balken,
+  /// Pause/Fortsetzen, Verwerfen und Stoppen - analog zum IntroEditor,
+  /// statt des alten Mic/X-Hint-Designs.
+  Widget _buildVoiceRecordingPanel(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final liveColor = _paused ? scheme.onSurfaceVariant : scheme.error;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      child: Card(
+        color: scheme.errorContainer.withValues(alpha: 0.35),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    _paused
+                        ? Icons.pause_circle
+                        : Icons.radio_button_checked,
+                    size: 18,
+                    color: liveColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _paused
+                        ? L10n.t(context, 'intro.pausedState')
+                        : L10n.t(context, 'intro.recordingState'),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: liveColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    _fmtRecordSeconds(_recordSeconds),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontFeatures: const [
+                            FontFeature.tabularFigures()
+                          ],
+                        ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 32,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    for (var i = 0; i < _ampBarCount; i++)
+                      Container(
+                        width: 3.5,
+                        height: 4.0 +
+                            26.0 *
+                                (_levels.length > i
+                                    ? _levels[_levels.length - 1 - i]
+                                    : 0.0),
+                        decoration: BoxDecoration(
+                          color: (_levels.length > i
+                                      ? _levels[_levels.length - 1 - i]
+                                      : 0.0) <=
+                                  0.01
+                              ? liveColor.withValues(alpha: 0.25)
+                              : liveColor.withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: _cancelRecording,
+                    icon: const Icon(Icons.delete_outline),
+                    tooltip: L10n.t(context, 'chat.voiceCancel'),
+                    color: scheme.error,
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _pauseResumeRecording,
+                      icon: Icon(
+                          _paused ? Icons.play_arrow : Icons.pause),
+                      label: Text(_paused
+                          ? L10n.t(context, 'intro.resume')
+                          : L10n.t(context, 'intro.pause')),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: _toggleRecord,
+                      icon: const Icon(Icons.stop),
+                      label: Text(
+                          L10n.t(context, 'intro.stopListen')),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   /// F: Startet einen Audio-Anruf. Öffnet den Anruf-Screen (Signaling + Audio
   /// laufen E2E-verschlüsselt über den bestehenden P2P-DataChannel).
   Future<void> _call() async {
     final match = _match;
     if (match == null) return;
     if (!mounted) return;
+    if (ref.read(activeCallIdProvider) != null) return;
+    // callId synchron reservieren (v0.9.1-Fix: sonst öffnet ein exakt
+    // gleichzeitig eingehendes Invite einen zweiten Screen darüber).
+    final callId =
+        'call_${DateTime.now().millisecondsSinceEpoch}';
+    ref.read(activeCallIdProvider.notifier).state = callId;
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => CallScreen(
           partnerName: match.partner.name,
           peerId: match.partner.id,
           isIncoming: false,
+          incomingCallId: callId,
         ),
       ),
     );
@@ -948,7 +1626,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             behavior: SnackBarBehavior.floating,
           ),
         );
-        // Match wurde serverseitig gelöscht -> zurück zur Match-Liste.
+        // Match wurde serverseitig gelöscht -> zurück zur Match-Liste
+        // (Funken-Tab, v0.9.1).
+        ref.read(interessenInitialTabProvider.notifier).state = 2;
         context.go(AppRoutes.interessen);
       }
     } catch (e) {
@@ -976,40 +1656,68 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   }
 
   /// Sendet eine E2E-Nachricht auf Basis der gemeinsamen Interessen.
+  ///
+  /// v0.9.1-Fix ("Icebreaker Button geht nicht"): Vorher stilles return,
+  /// wenn [_myUserId] noch null war (P2P-Init läuft asynchron) oder [_p2p]
+  /// null - ohne Feedback wirkte der Button funktionslos. Jetzt Fallback-ID,
+  /// fehlender P2P-Hinweis und Queue-Hinweis bei offline Partner.
   Future<void> _sendContextIcebreaker(String interest) async {
     final match = _match;
-    if (match == null || _myUserId == null) return;
+    if (match == null) return;
+    final myId = _myUserId ?? AppConstants.currentUserId;
     final text = L10n.tf(
         context, 'chat.icebreakerText', {'interest': interest});
     final localMsg = Message(
-      id: 'local_${DateTime.now().millisecondsSinceEpoch}',
-      senderId: _myUserId!,
+      id: Message.newId('local'),
+      senderId: myId,
       receiverId: match.partner.id,
       text: text,
       timestamp: DateTime.now(),
     );
     ref.read(chatProvider.notifier).addMessage(match.id, localMsg, ref: ref);
-    try {
-      await _p2p?.sendText(text);
-      unawaited(_notifyPeerAboutMessage(match));
-    } catch (_) {
-      // Best-effort.
-    }
+    await _transmitText(match, text);
+    if (mounted) setState(() {});
   }
 
-  // Ideen-Rad (v0.8.0): die bestehenden Date-Kategorien des Meet-Intents.
+  /// Sendet eine Eisbrecher-Frage als GEMEINSAME mittige Bubble (v0.9.1):
+  /// Beide Seiten sehen dieselbe Frage in der Chat-Mitte; sie wandert wie
+  /// jede Nachricht mit.
+  Future<void> _sendIcebreakerQuestion(String question) async {
+    final match = _match;
+    final text = question.trim();
+    if (match == null || text.isEmpty) return;
+    final myId = _myUserId ?? AppConstants.currentUserId;
+    final localMsg = Message(
+          id: Message.newId('local_ice'),
+      senderId: myId,
+      receiverId: match.partner.id,
+      text: text,
+      timestamp: DateTime.now(),
+      type: MessageType.icebreaker,
+    );
+    ref.read(chatProvider.notifier).addMessage(match.id, localMsg, ref: ref);
+    await _transmitText(match, text, kind: 'icebreaker');
+    if (mounted) setState(() {});
+  }
+
+  // Ideen-Rad (v0.8.0): die bestehenden Date-Kategorien des Meet-Intents,
+  // lokalisiert (l10n-Keys 'chat.idea.*').
   static const _meetIdeaCategories = <String>[
-    'Kaffee & Kuchen',
-    'Gemeinsam spazieren gehen',
-    'Eis essen',
-    'Museum oder Ausstellung',
-    'Minigolf',
-    'Kinoabend',
-    'Markt bummeln',
-    'Bowling oder Billard',
-    'Live-Musik',
-    'Sterne beobachten',
+    'chat.idea.coffeeCake',
+    'chat.idea.walk',
+    'chat.idea.iceCream',
+    'chat.idea.museum',
+    'chat.idea.minigolf',
+    'chat.idea.movieNight',
+    'chat.idea.market',
+    'chat.idea.bowling',
+    'chat.idea.liveMusic',
+    'chat.idea.stargazing',
   ];
+
+  List<String> _localizedMeetIdeas(BuildContext context) => [
+        for (final key in _meetIdeaCategories) L10n.t(context, key),
+      ];
 
   /// Ideen-Rad: dreht (animiert über abnehmende Zyklen), landet auf einer
   /// Kategorie und bietet an, den Vorschlag als E2E-Nachricht zu senden.
@@ -1019,142 +1727,84 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
     final picked = await showDialog<String>(
       context: context,
-      builder: (ctx) => const _MeetIdeaWheelDialog(categories: _meetIdeaCategories),
+      builder: (ctx) => _MeetIdeaWheelDialog(
+          categories: _localizedMeetIdeas(ctx)),
     );
     if (picked == null || !mounted) return;
 
     // Vorschlag als E2E-Nachricht senden (gleicher Weg wie _send()).
     final text = L10n.tf(context, 'chat.dateIdea', {'idea': picked});
     final localMsg = Message(
-      id: 'local_${DateTime.now().millisecondsSinceEpoch}',
+      id: Message.newId('local'),
       senderId: _myUserId ?? AppConstants.currentUserId,
       receiverId: match.partner.id,
       text: text,
       timestamp: DateTime.now(),
     );
     ref.read(chatProvider.notifier).addMessage(match.id, localMsg, ref: ref);
-    try {
-      await _p2p?.sendText(text);
-      unawaited(_notifyPeerAboutMessage(match));
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(L10n.t(context, 'chat.ideaSendFailed')),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
+    await _transmitText(match, text);
   }
-
-  /// Vorbereitete, freundliche Absage-Texte ("Ehrliches Beenden", v0.8.0):
-  /// Ghosting aktiv erschweren, ohne den Nutzer mit Formulierungen allein
-  /// zu lassen. Zweisprachig über L10n-Keys (chat.goodbye.1..4).
-  static const _goodbyeCount = 4;
 
   /// "Ehrliches Beenden" (v0.8.0) statt hartem Auflösen: Entweder den
   /// Funken RUHIG enden lassen (status -> cooled, landet bei beiden unter
   /// "Erschlossene Funken", Re-Funke jederzeit) oder vorher einen der
-  /// vorbereiteten, freundlichen Absage-Texte senden.
+  /// vorbereiteten, freundlichen Absage-Texte senden (Dialog geteilt mit
+  /// der Interessen-Liste, siehe [showEndSparkDialog]).
   Future<void> _showEndSparkDialog() async {
-    var choice = 'silent';
+    final choice = await showEndSparkDialog(context);
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Funke beenden – ehrlich & freundlich'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  L10n.t(ctx, 'chat.endSparkBody'),
-                  style: const TextStyle(fontSize: 13),
-                ),
-                const SizedBox(height: 12),
-                RadioGroup<String>(
-                  groupValue: choice,
-                  onChanged: (v) =>
-                      setDialogState(() => choice = v ?? 'silent'),
-                  child: Column(
-                    children: [
-                      RadioListTile<String>(
-                        value: 'silent',
-                        title: Text(L10n.t(ctx, 'chat.endSilent')),
-                        subtitle: Text(L10n.t(ctx, 'chat.endSilentSub')),
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      for (var i = 1; i <= _goodbyeCount; i++)
-                        RadioListTile<String>(
-                          value: 'msg_${i - 1}',
-                          title: Text(
-                            L10n.t(ctx, 'chat.goodbye.$i'),
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                          contentPadding: EdgeInsets.zero,
-                          dense: true,
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Abbrechen'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: Text(L10n.t(context, 'chat.coolSpark')),
-            ),
-          ],
-        ),
-      ),
-    );
+    if (choice == null || !mounted) return;
 
-    if (confirmed != true || !mounted) return;
-
-    // Optional: gewählten Absage-Text zuerst E2E senden (gleicher Weg wie
-    // normale Nachrichten).
-    if (choice.startsWith('msg_')) {
-      final index = int.tryParse(choice.substring(4)) ?? 0;
-      if (index >= 0 && index < _goodbyeCount) {
-        final match = _match;
-        if (match != null && _myUserId != null) {
-          final localMsg = Message(
-            id: 'local_${DateTime.now().millisecondsSinceEpoch}',
-            senderId: _myUserId!,
-            receiverId: match.partner.id,
-            text: L10n.t(context, 'chat.goodbye.${index + 1}'),
-            timestamp: DateTime.now(),
-          );
-          ref.read(chatProvider.notifier).addMessage(match.id, localMsg,
-              ref: ref);
-          try {
-            await _p2p?.sendText(
-                L10n.t(context, 'chat.goodbye.${index + 1}'));
-            unawaited(_notifyPeerAboutMessage(match));
-          } catch (_) {
-            // Best-Effort: Die Verbindung kühlt trotzdem.
-          }
+    // Optional: gewählten Absage-Text zuerst senden (P2P, sonst Relay).
+    final goodbye = goodbyeTextForChoice(context, choice);
+    if (goodbye != null) {
+      final match = _match;
+      if (match != null) {
+        final localMsg = Message(
+          id: Message.newId('local'),
+          senderId: _myUserId ?? AppConstants.currentUserId,
+          receiverId: match.partner.id,
+          text: goodbye,
+          timestamp: DateTime.now(),
+        );
+        ref.read(chatProvider.notifier).addMessage(match.id, localMsg,
+            ref: ref);
+        try {
+          await _transmitText(match, goodbye);
+        } catch (_) {
+          // Best-Effort: Die Verbindung kühlt trotzdem.
         }
       }
     }
 
-    // Serverseitig kühlen (Migration 074): status -> cooled. Die Match-ID
-    // kommt aus der Route als String, der Server erwartet BIGINT.
+    // Serverseitig kühlen (Migration 090, BIGINT): status -> cooled.
+    // Die Match-ID kommt aus der Route als String.
     final matchId = int.tryParse(_match?.id ?? '');
-    if (matchId != null) {
-      try {
-        await ref
-            .read(findYourMatchServiceProvider)
-            .coolMatch(matchId);
-      } catch (e) {
+    if (matchId == null) {
+      // Lokaler Kontakt (QR): kein Server-Funke - nur lokal entfernen.
+      ref.read(chatProvider.notifier).dissolveMatch(_match!.id);
+      if (mounted) {
+        ref.read(interessenInitialTabProvider.notifier).state = 2;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(L10n.t(context, 'chat.coolSparkDone')),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        context.go(AppRoutes.interessen);
+      }
+      return;
+    }
+    try {
+      await ref
+          .read(findYourMatchServiceProvider)
+          .coolMatch(matchId);
+    } catch (e) {
+      // Bereits gekühlt (z. B. aus der Liste): kein Fehler, weiter zum
+      // Funken-Tab statt Fehlermeldung.
+      final alreadyCooled =
+          e.toString().toLowerCase().contains('bereits gekuehlt');
+      if (!alreadyCooled) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -1168,6 +1818,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     }
 
     if (mounted) {
+      // Direkt auf den Funken-Tab (v0.9.1): sonst landet man auf
+      // "Gesendet" und der gekühlte Funke wirkt "komplett weg".
+      ref.read(interessenInitialTabProvider.notifier).state = 2;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(L10n.t(context, 'chat.coolSparkDone')),
@@ -1227,6 +1880,19 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     _match = ref.watch(chatProvider.notifier).getMatchById(widget.matchId);
     final settings = ref.watch(settingsProvider);
 
+    void goToSparks() {
+      // Zurück IMMER auf die Seite davor (v0.9.1): per Push geöffnet ->
+      // pop zum exakten Vorzustand (z. B. Funken-Tab). Nur ohne Stack
+      // (Deep-Link) auf den Funken-Tab navigieren - Chats hängen dort,
+      // sonst wirkt der Funke "plötzlich weg".
+      if (Navigator.of(context).canPop()) {
+        context.pop();
+        return;
+      }
+      ref.read(interessenInitialTabProvider.notifier).state = 2;
+      context.go(AppRoutes.interessen);
+    }
+
     if (_match == null) {
       // Match existiert nicht mehr (z. B. aufgelöst) - zurück zur übersicht.
       return Scaffold(
@@ -1234,9 +1900,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             tooltip: L10n.t(context, 'chat.backToSparks'),
-            onPressed: () => context.go(AppRoutes.interessen),
+            onPressed: goToSparks,
           ),
-          title: const Text('Chat'),
+          title: Text(L10n.t(context, 'chat.title')),
         ),
         body: Center(
           child: Column(
@@ -1244,10 +1910,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             children: [
               const Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey),
               const SizedBox(height: 16),
-              const Text('Dieser Chat existiert nicht mehr.'),
+              Text(L10n.t(context, 'chat.gone')),
               const SizedBox(height: 16),
               FilledButton(
-                onPressed: () => context.go(AppRoutes.interessen),
+                onPressed: goToSparks,
                 child: Text(L10n.t(context, 'chat.backToSparks')),
               ),
             ],
@@ -1259,6 +1925,28 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final partner = _match!.partner;
     final myProfile = ref.watch(profileProvider);
     final messages = ref.watch(chatProvider.notifier).messagesFor(_match!.id);
+    final myId = _myUserId ?? AppConstants.currentUserId;
+    // Nutzerwunsch Gruppierung: Namens-Header an Gruppenstarts (max. 3
+    // Nachrichten / 3 Minuten pro Gruppe), Zeit an jeder Bubble.
+    final bubbleGroups = computeBubbleGroups(messages);
+
+    // Vorstellung ausblenden, sobald die erste eigene Nachricht raus ist.
+    final hasSentMessage = messages.any((m) => m.isFrom(myId));
+
+    // Kennenlern-Quiz erst nach 50-70 Nachrichten vorschlagen. Die Schwelle
+    // ist pro Chat deterministisch (Hash der Match-ID) - jeder Chat hat
+    // seine eigene, sie gilt nicht global für alle.
+    final quizThreshold = 50 + (widget.matchId.hashCode.abs() % 21);
+    final showQuizBanner = _quizGated && messages.length >= quizThreshold;
+
+    // Date-Rad erst nach 50-70 Nachrichten (v0.9.1): Eigene Schwelle je
+    // Chat (bitversetzt, damit sie nicht mit der Quiz-Schwelle
+    // zusammenfällt), pro Chat ausblendbar.
+    final ideaThreshold =
+        50 + ((widget.matchId.hashCode >> 8).abs() % 21);
+    final showIdeaWheel = !noDates &&
+        messages.length >= ideaThreshold &&
+        !_ideaWheelHidden;
 
     // Altersbasierte Sichtbarkeits-Regeln anwenden
     final myAge = myProfile.age ?? 0;
@@ -1271,12 +1959,26 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       isMatched: _match!.photosUnlocked,
     );
 
+    // Herzensstärken (v0.9.2): Funken-Typ + Server-Match-Daten (wenn der
+    // Server-Match bekannt ist; QR-/Lokal-Chats bleiben 'spark') werden
+    // NICHT im Build geladen (Sync-Build!), sondern in _bootstrap
+    // vorgeladen und im State gehalten (Dismissed-Set ebenfalls).
+    final serverMatch = _serverMatch;
+    final serverId = serverMatch?.matchId;
+    // Erinnerungs-Moment (Idee 1): EIN Moment pro Chat-Öffnung.
+    final milestone = Milestones.currentFor(
+      matchId: serverId ?? widget.matchId.hashCode,
+      matchedAt: serverMatch?.createdAt,
+      quizPassedAt: serverMatch?.passedAt,
+      dismissed: _milestoneDismissed,
+    );
+
     return Scaffold(
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             tooltip: L10n.t(context, 'chat.backToSparks'),
-            onPressed: () => context.go(AppRoutes.interessen),
+            onPressed: goToSparks,
           ),
         // G/H: Tap auf Name/Avatar -> Profil des Gegenübers.
         // Bewusst push() statt go(), damit der "Zurück"-Pfeil im
@@ -1309,92 +2011,100 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                     ]),
                     // Bewusst KEIN Online-Status / „schreibt…“ /
                     // Lesebestätigung - siehe ADR-0007 (Präsenz-frei).
-                  ],
-                ),
-              ),
-              // E2E + P2P-Status-Badge (sichtbarer Verschlüsselungs-Status)
-              const SizedBox(width: 8),
-              Tooltip(
-                message: _p2pConnected
-                    ? 'Ende zu Ende verschlüsselt (Signal Protocol via P2P)'
-                    : 'E2E-Verbindung wird aufgebaut.',
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: _p2pConnected
-                        ? Colors.green.withValues(alpha: 0.15)
-                        : Colors.orange.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _p2pConnected ? Icons.lock : Icons.lock_open,
-                        size: 13,
-                        color: _p2pConnected ? Colors.green : Colors.orange,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'E2E',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: _p2pConnected
-                              ? Colors.green
-                              : Colors.orange,
+                    // E2E + P2P-Status-Badge (v0.9.1: zentriert im
+                    // verfügbaren Titel-Raum statt rechtsbündig am Rand -
+                    // nutzt den Leerraum zwischen Avatar und Actions sauber
+                    // aus und wird bei langen Namen nicht abgeschnitten).
+                    const SizedBox(height: 2),
+                    Center(
+                      child: Tooltip(
+                        message: _p2pConnected
+                            ? L10n.t(context, 'chat.e2eReady')
+                            : L10n.t(context, 'chat.e2eWaiting'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: _p2pConnected
+                                ? Colors.green.withValues(alpha: 0.15)
+                                : Colors.orange.withValues(alpha: 0.15),
+                            borderRadius:
+                                BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment:
+                                MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _p2pConnected
+                                    ? Icons.lock
+                                    : Icons.lock_open,
+                                size: 13,
+                                color: _p2pConnected
+                                    ? Colors.green
+                                    : Colors.orange,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'E2E',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: _p2pConnected
+                                      ? Colors.green
+                                      : Colors.orange,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.verified_user_outlined),
-            tooltip: L10n.t(context, 'chat.safetyNumberTooltip'),
-            onPressed: () => _showSafetyNumberDialog(partner.id, partner.name),
-          ),
-          IconButton(
-            icon: const Icon(Icons.local_fire_department_outlined),
-            tooltip: L10n.t(context, 'chat.spiceTooltip'),
-            onPressed: () => context.go(
-              AppRoutes.spiceQuestionsPath(int.parse(widget.matchId)),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.flag_outlined),
-            tooltip: L10n.t(context, 'chat.reportTooltip'),
-            onPressed: () {
-              // Letzte 3 Nachrichten (inkl. Medien) werden automatisch mit
-              // der Meldung an den Support übermittelt – nur so kann der
-              // Support E2E-Chats einsehen. Die Liste ist chronologisch
-              // (älteste zuerst), daher die letzten Elemente nehmen.
-              final lastMessages = messages.length > 3
-                  ? messages.sublist(messages.length - 3)
-                  : messages;
-              showReportUserDialog(
-                context: context,
-                ref: ref,
-                reportedUserId: partner.id,
-                reportedUserName: partner.name,
-                messages: lastMessages,
-              );
-            },
-          ),
+          // NUTZERWUNSCH "zu viele Symbole, Name abgeschnitten": Die
+          // AppBar-Buttons sind auf ZWEI kompakte reduziert (Anruf +
+          // Menü). Alles andere (Eisbrecher, Erinnerungsliste,
+          // Sicherheit, Melden, Blockieren, Funke beenden) lebt im
+          // "mehr"-Menü bzw. im Chat-Verlauf - der Platz bleibt dem
+          // Chat erhalten.
           IconButton(
             icon: const Icon(Icons.call),
-                      tooltip: L10n.t(context, 'chat.call'),
+            tooltip: L10n.t(context, 'chat.call'),
             onPressed: _call,
-          ),          PopupMenuButton<String>(
+          ),
+          PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             tooltip: L10n.t(context, 'chat.more'),
             onSelected: (value) {
               switch (value) {
+                case 'icebreaker':
+                  _openIcebreakerCollection();
+                case 'bucket':
+                  _showBucketListSheet();
+                case 'safety':
+                  _showSafetyNumberDialog(partner.id, partner.name);
+                case 'report':
+                  // Letzte 3 Nachrichten (inkl. Medien) werden automatisch
+                  // mit der Meldung an den Support übermittelt – nur so
+                  // kann der Support E2E-Chats einsehen. Chronologisch
+                  // (älteste zuerst), daher die letzten Elemente nehmen.
+                  final lastMessages = messages.length > 3
+                      ? messages.sublist(messages.length - 3)
+                      : messages;
+                  showReportUserDialog(
+                    context: context,
+                    ref: ref,
+                    reportedUserId: partner.id,
+                    reportedUserName: partner.name,
+                    messages: lastMessages,
+                  );
                 case 'toggleIcebreaker':
                   final current =
                       ref.read(settingsProvider).contextIcebreakerEnabled;
@@ -1408,6 +2118,67 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
               }
             },
             itemBuilder: (ctx) => [
+              // NUTZERWUNSCH "Menü besser geordnet": Die Punkte laufen in
+              // sinngemäßen Gruppen - ZUSAMMEN (Eisbrecher, Erinnerungs-
+              // liste) -> SICHERHEIT (Sicherheitsnummer, Melden,
+              // Blockieren, Funke beenden) -> EINSTELLUNGEN (Kontext-
+              // Eisbrecher an/aus). Optisch getrennt durch Divider.
+              const PopupMenuDivider(),
+              PopupMenuItem(
+                value: 'icebreaker',
+                child: ListTile(
+                  leading: const Icon(Icons.local_fire_department_outlined),
+                  title: Text(L10n.t(context, 'chat.spiceTooltip')),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'bucket',
+                child: ListTile(
+                  leading: const Icon(Icons.checklist),
+                  title: Text(L10n.t(context, 'bucket.title')),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem(
+                enabled: false,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 16, top: 4, bottom: 4),
+                  child: Text('Sicherheit',
+                      style: TextStyle(
+                          fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'safety',
+                child: ListTile(
+                  leading:
+                      const Icon(Icons.verified_user_outlined),
+                  title: Text(L10n.t(
+                      context, 'chat.safetyNumberTooltip')),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'report',
+                child: ListTile(
+                  leading: const Icon(Icons.flag_outlined),
+                  title: Text(
+                      L10n.t(context, 'chat.reportTooltip')),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              PopupMenuItem(
+                value: 'block',
+                child: ListTile(
+                  leading: const Icon(Icons.block),
+                  title: Text(L10n.t(context, 'chat.block')),
+                  subtitle: Text(L10n.t(context, 'chat.blockSub')),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+              const PopupMenuDivider(),
               PopupMenuItem(
                 value: 'toggleIcebreaker',
                 child: ListTile(
@@ -1419,15 +2190,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                           .contextIcebreakerEnabled
                       ? L10n.t(context, 'chat.icebreakerOff')
                       : L10n.t(context, 'chat.icebreakerOn')),
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ),
-              PopupMenuItem(
-                value: 'block',
-                child: ListTile(
-                  leading: const Icon(Icons.block),
-                  title: Text(L10n.t(context, 'chat.block')),
-                  subtitle: Text(L10n.t(context, 'chat.blockSub')),
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
@@ -1445,8 +2207,291 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       ),
       body: Column(
         children: [
+          // Verbindungs-Hinweis (v0.9.1): Abgerundete Karte, eingeklappt
+          // nur "Keine direkte Verbindung", aufklappbar für Details.
+          // Wegtippbar pro Öffnen.
+          if (!_p2pConnected && !_relayHintDismissed)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+              child: Card(
+                color: Theme.of(context)
+                    .colorScheme
+                    .secondaryContainer,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                margin: EdgeInsets.zero,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () => setState(
+                      () => _relayExpanded = !_relayExpanded),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              _relayExpanded
+                                  ? Icons.expand_less
+                                  : Icons.cloud_sync_outlined,
+                              size: 16,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSecondaryContainer,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _relayExpanded
+                                    ? L10n.t(
+                                        context, 'chat.relayBanner')
+                                    : L10n.t(context,
+                                        'chat.relayBannerShort'),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSecondaryContainer,
+                                    ),
+                              ),
+                            ),
+                            IconButton(
+                              visualDensity: VisualDensity.compact,
+                              icon: const Icon(Icons.close, size: 16),
+                              tooltip:
+                                  L10n.t(context, 'common.close'),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSecondaryContainer,
+                              onPressed: () => setState(
+                                  () => _relayHintDismissed = true),
+                            ),
+                          ],
+                        ),
+                        // Technische Diagnose (nur aufgeklappt): hilft zu
+                        // erkennen, wo der Aufbau hängt (Signaling vs.
+                        // ICE/NAT). Automatischer Neuversuch läuft.
+                        if (_relayExpanded)
+                          Padding(
+                            padding: const EdgeInsets.only(
+                                left: 24, top: 2),
+                            child: StreamBuilder(
+                              stream:
+                                  _p2p?.iceConnectionState,
+                              builder: (context, snap) {
+                                final ice = snap.data
+                                        ?.toString()
+                                        .split('.')
+                                        .last ??
+                                    '-';
+                                final err = _lastP2pError;
+                                return Text(
+                                  err == null
+                                      ? L10n.tf(context,
+                                          'chat.connDiag', {'ice': ice})
+                                      : '${L10n.tf(context, 'chat.connDiag', {'ice': ice})}\n${L10n.tf(context, 'chat.connError', {'error': err})}',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelSmall
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSecondaryContainer,
+                                      ),
+                                );
+                              },
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          // Altersdifferenz-Hinweis (v0.9.1, Jugendschutz): Ab 10 Jahren
+          // Unterschied warnen, Profile können falsche Angaben enthalten.
+          // Tap führt ins Safety Center.
+          if (myAge > 0 &&
+              partnerAge > 0 &&
+              (myAge - partnerAge).abs() >= 10)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+              child: Card(
+                color: Colors.orange.shade100,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                margin: EdgeInsets.zero,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(16),
+                  onTap: () =>
+                      context.push(AppRoutes.safetyCenter),
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          size: 20,
+                          color: Colors.orange.shade900,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            L10n.tf(context, 'chat.ageGapHint', {
+                              'my': '$myAge',
+                              'other': '$partnerAge',
+                            }),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.orange.shade900,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          // Herzensstärken (Idee 1): Erinnerungs-Karte (ein Moment pro
+          // Chat-Öffnung, wegwischbar).
+          if (milestone != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+              child: Card(
+                color: Theme.of(context).colorScheme.tertiaryContainer,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                margin: EdgeInsets.zero,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.favorite,
+                          size: 20,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onTertiaryContainer),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${L10n.t(context, 'milestone.title')} · '
+                              '${L10n.t(context, milestone.titleKey)}',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onTertiaryContainer,
+                                  ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              L10n.tf(
+                                  context,
+                                  milestone.bodyKey,
+                                  {
+                                    'date': milestone.formattedDate(
+                                        Localizations.localeOf(context)
+                                            .languageCode),
+                                  }),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onTertiaryContainer,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, size: 16),
+                        tooltip: L10n.t(context, 'milestone.dismiss'),
+                        onPressed: () async {
+                          // Dismiss je Match+Moment (Prefs).
+                          final key =
+                              '${serverId ?? widget.matchId.hashCode}:${milestone.type}';
+                          try {
+                            final storage = ref.read(localStorageProvider);
+                            final raw = await storage
+                                .getString(_milestoneDismissedKey);
+                            final dismissed = (jsonDecode(raw ?? '[]')
+                                    as List)
+                                .map((e) => '$e')
+                                .toSet()
+                              ..add(key);
+                            await storage.saveString(
+                                _milestoneDismissedKey,
+                                jsonEncode(dismissed.toList()));
+                            _milestoneDismissed = dismissed;
+                          } catch (_) {}
+                          if (mounted) setState(() {});
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           if (!isPhotosVisible)
             BlindPhotoPlaceholder(label: L10n.t(context, 'chat.photosAfterSpark')),
+          // Freundschafts-Badge + Typ-Umschalter (Idee 3): Dezent als Chip
+          // unter dem Verbindungs-Hinweis; Popup zum Umschalten.
+          if (serverMatch?.isFriends == true)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: ActionChip(
+                  avatar: Icon(Icons.group_outlined,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.primary),
+                  label: Text(
+                    L10n.t(context, 'friends.badge'),
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  onPressed: () async {
+                    final serverId = int.tryParse(widget.matchId);
+                    if (serverId == null) return;
+                    final messenger = ScaffoldMessenger.of(context);
+                    final l10nHint = L10n.t(context, 'friends.toggleHint');
+                    try {
+                      await ref
+                          .read(findYourMatchServiceProvider)
+                          .setMatchKind(serverId, friends: false);
+                      if (!mounted) return;
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text(l10nHint),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                      setState(() {});
+                    } catch (_) {}
+                  },
+                ),
+              ),
+            ),
           // Kein Meet-Intent für Freunde-Sucher (v0.9.0: "keine Dates").
           if (!noDates)
             MeetIntentCard(
@@ -1456,30 +2501,50 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           // Vorstellung des Partners (Text + Audio): Beide Seiten können
           // die Vorstellung im Chat anhören (v0.9.0-Feedback - die Person,
           // die den Funke erhalten hat, hörte sie bisher nur im
-          // "Erhalten"-Tab).
-          if (partner.introText.isNotEmpty || partner.introAudioPath != null)
+          // "Erhalten"-Tab). Blendet sich nach der ersten eigenen
+          // Nachricht aus (v0.9.1).
+          if (!hasSentMessage &&
+              (partner.introText.isNotEmpty ||
+                  partner.introAudioPath != null))
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
               child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.record_voice_over_outlined, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          partner.introText.isNotEmpty
-                              ? partner.introText
-                              : L10n.t(context, 'chat.introTitle'),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  // Volle Vorstellung im Profil-Screen (Text + Audio).
+                  // Die Karten-Vorschau bleibt kompakt (2 Zeilen), ein Tap
+                  // öffnet die ausführliche Ansicht.
+                  onTap: () => context.push(
+                    AppRoutes.profileDetailPath(partner.id),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Row(
+                      children: [
+                        const Icon(
+                            Icons.record_voice_over_outlined,
+                            size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            partner.introText.isNotEmpty
+                                ? partner.introText
+                                : L10n.t(context, 'chat.introTitle'),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                Theme.of(context).textTheme.bodySmall,
+                          ),
                         ),
-                      ),
-                      if (partner.introAudioPath != null)
-                        IntroAudioPlayer(targetUserId: partner.id),
-                    ],
+                        const Icon(
+                          Icons.chevron_right,
+                          size: 18,
+                        ),
+                        if (partner.introAudioPath != null)
+                          IntroAudioPlayer(
+                              targetUserId: partner.id),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1487,17 +2552,27 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           // Ideen-Rad (v0.8.0, Test): wählt aus den bestehenden Date-
           // Kategorien einen Vorschlag, der als Nachricht gesendet wird -
           // beide bestätigen im Chat. Für Freunde-Sucher ausgeblendet
-          // (v0.9.0: "keine Dates vorschlagen").
-          if (!noDates)
+          // (v0.9.0: "keine Dates vorschlagen"). Erst nach 50-70
+          // Nachrichten pro Chat sichtbar und ausblendbar (v0.9.1).
+          if (showIdeaWheel)
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: _showMeetIdeaWheel,
-                  icon: const Icon(Icons.casino_outlined, size: 18),
-                  label: Text(L10n.t(context, 'chat.ideaWheelBtn')),
-                ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _showMeetIdeaWheel,
+                      icon: const Icon(Icons.casino_outlined, size: 18),
+                      label: Text(L10n.t(context, 'chat.ideaWheelBtn')),
+                    ),
+                  ),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.close, size: 18),
+                    tooltip: L10n.t(context, 'chat.ideaHide'),
+                    onPressed: _hideIdeaWheel,
+                  ),
+                ],
               ),
             ),
           // Kontext-Icebreaker (v0.8.0): gemeinsame Interessen als
@@ -1526,20 +2601,27 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.all(12),
-                    itemCount: messages.length +
-                        (_match!.photosUnlocked ? 1 : 0),
+                    itemCount: messages.length,
                     reverse: true,
                     itemBuilder: (context, i) {
-                      // J: Einmalige System-Nachricht zu freigeschalteten
-                      // Fotos als erstes (unterstes) Element des Verlaufs.
-                      if (_match!.photosUnlocked && i == 0) {
-                        return _SystemNotice(
-                           text: L10n.t(context, 'chat.photosUnlocked'),
+                      final idx = messages.length - 1 - i;
+                      final msg = messages[idx];
+                      final mine = msg.isFrom(_myUserId ?? AppConstants.currentUserId);
+                      final group = idx >= 0 && idx < bubbleGroups.length
+                          ? bubbleGroups[idx]
+                          : (showName: true, showTime: true);
+                      // Geteilte Eisbrecher-Frage: mittige Bubble für BEIDE
+                      // Seiten (v0.9.1), wandert wie jede Nachricht mit.
+                      if (msg.type == MessageType.icebreaker) {
+                        final senderName =
+                            mine ? L10n.t(context, 'chat.you') : partner.name;
+                        return Center(
+                          child: _IcebreakerBubble(
+                            text: msg.text,
+                            senderName: senderName,
+                          ),
                         );
                       }
-                      final msgIndex = _match!.photosUnlocked ? i - 1 : i;
-                      final msg = messages[messages.length - 1 - msgIndex];
-                      final mine = msg.isFrom(_myUserId ?? AppConstants.currentUserId);
                       return Align(
                         alignment: mine
                             ? Alignment.centerRight
@@ -1549,15 +2631,19 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                           mine: mine,
                           blurEnabled: _blurChatImages,
                           onReportImage: _reportImage,
+                          showName: group.showName,
+                          senderName: mine
+                              ? L10n.t(context, 'chat.you')
+                              : partner.name,
                         ),
                       );
                     },
                   ),
           ),
           // Kennenlern-Quiz: schaltet NUR das Foto frei - chatten ist
-          // unabhängig möglich (v0.9.0-Feedback: "Das Quiz soll erst
-          // später kommen").
-          if (_quizGated)
+          // unabhängig möglich. Vorschlag erst nach 50-70 Nachrichten
+          // pro Chat (v0.9.1, Schwelle je Match deterministisch).
+          if (showQuizBanner)
             Container(
               width: double.infinity,
               color: Theme.of(context).colorScheme.tertiaryContainer,
@@ -1574,14 +2660,32 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   ),
                   const SizedBox(width: 8),
                   FilledButton.tonal(
-                    onPressed: () => context.go(
-                      AppRoutes.quizPath(int.parse(widget.matchId)),
-                    ),
+                    onPressed: () {
+                      final serverId =
+                          int.tryParse(widget.matchId);
+                      if (serverId == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(L10n.t(
+                                context, 'chat.quizUnavailable')),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                        return;
+                      }
+                      // Push: Zurück landet wieder in DIESEM Chat.
+                      context.push(AppRoutes.quizPath(serverId));
+                    },
                     child: Text(L10n.t(context, 'chat.quizOpen')),
                   ),
                 ],
               ),
             ),
+          // Neues Aufnahme-Design (v0.9.1, wie IntroEditor): Live-Dauer,
+          // Lautstärke-Balken, Pause/Fortsetzen, Verwerfen, Stoppen/Senden
+          // in einer Karte OBERHALB der Eingabezeile - statt nur Mic/X und
+          // Sekunden im Hint-Text (altes Design).
+          if (_recording) _buildVoiceRecordingPanel(context),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(12),
@@ -1594,7 +2698,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                     onPressed: _uploadingImage ? null : _pickImage,
                   ),
                   IconButton(
-                    icon: Icon(_recording ? Icons.stop : Icons.mic),
+                    icon: Icon(
+                        _recording ? Icons.stop : Icons.mic),
                     tooltip: _recording
                         ? L10n.t(context, 'chat.voiceStopSend')
                         : L10n.t(context, 'chat.voiceTooltip'),
@@ -1664,12 +2769,19 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
 /// Sprechende Blase für Text-, Bild- und Sprachnachrichten mit
 /// Playback-Unterstützung für Voice.
+///
+/// Nutzerwunsch Gruppierung: [showName] blendet den Absendernamen über
+/// der Bubble ein (neue Gruppe nach Senderwechsel, > 3 Minuten Abstand
+/// oder max. 3 Nachrichten am Stück). Jede Nachricht bleibt in ihrer
+/// eigenen Bubble und trägt eine kleine Zeitanzeige.
 class _MessageBubble extends StatefulWidget {
   const _MessageBubble({
     required this.msg,
     required this.mine,
     required this.blurEnabled,
     required this.onReportImage,
+    this.showName = false,
+    this.senderName = '',
   });
 
   final Message msg;
@@ -1680,6 +2792,21 @@ class _MessageBubble extends StatefulWidget {
 
   /// Meldet dieses Bild als unangemessenen Inhalt.
   final void Function(Message msg) onReportImage;
+
+  /// Namens-Header über der Bubble anzeigen (Gruppenstart)?
+  final bool showName;
+
+  /// Anzuzeigender Absendername (z. B. "Du" oder Partnername).
+  final String senderName;
+
+  /// Uhrzeit (HH:mm) der Nachricht, lokal formatiert.
+  String get _timeLabel {
+    try {
+      return DateFormat.Hm().format(msg.timestamp.toLocal());
+    } catch (_) {
+      return '';
+    }
+  }
 
   @override
   State<_MessageBubble> createState() => _MessageBubbleState();
@@ -1720,7 +2847,24 @@ class _MessageBubbleState extends State<_MessageBubble> {
     // Blur-Zustand einmal pro Build berechnen (siehe Bild-Zweig).
     final blurred = widget.blurEnabled && !widget.mine && !_revealed;
 
-    return Container(
+    return Column(
+      crossAxisAlignment:
+          widget.mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Absendername über der Bubble (nur Gruppenstart, Nutzerwunsch).
+        if (widget.showName && widget.senderName.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 2, left: 4, right: 4),
+            child: Text(
+              widget.senderName,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+            ),
+          ),
+        Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
@@ -1754,10 +2898,8 @@ class _MessageBubbleState extends State<_MessageBubble> {
                     onLongPress: () => _showImageActions(context, blurred),
                     child: Semantics(
                       label: blurred
-                          ? 'Verpixelt Bildnachricht. Doppeltippen zum '
-                              'Anzeigen nach Warnung, lang drücken zum Melden.'
-                          : 'Bildnachricht. Doppeltippen für Vollbild, '
-                              'lang drücken zum Melden.',
+                          ? L10n.t(context, 'chat.imageBlurredHint')
+                          : L10n.t(context, 'chat.imageHint'),
                       button: true,
                       child: Stack(
                       children: [
@@ -1854,6 +2996,23 @@ class _MessageBubbleState extends State<_MessageBubble> {
             style: TextStyle(color: textColor),
           ),
       },
+        ),
+        // Zeitanzeige unter der Bubble (Nutzerwunsch, dezent).
+        if (widget._timeLabel.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 2, left: 6, right: 6),
+            child: Text(
+              widget._timeLabel,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurfaceVariant
+                        .withValues(alpha: 0.7),
+                    fontSize: 10,
+                  ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -2076,6 +3235,7 @@ class _VoiceMessage extends StatefulWidget {
 class _VoiceMessageState extends State<_VoiceMessage> {
   AudioPlayer? _player;
   bool _playing = false;
+  bool _sourceLoaded = false;
   Duration _position = Duration.zero;
   final Duration _length = Duration.zero;
   bool _consumed = false; // Datei nach Wiedergabe gelöscht (M-17).
@@ -2117,33 +3277,35 @@ class _VoiceMessageState extends State<_VoiceMessage> {
     try {
       final player = _player ??= AudioPlayer();
       if (_playing) {
-        await player.stop();
-        if (mounted) {
-          setState(() {
-            _playing = false;
-            _position = Duration.zero;
-          });
-        }
+        // Echte Pause (v0.9.1): Position bleibt, Fortsetzen per erneutem
+        // Tap statt Neustart.
+        await player.pause();
+        if (mounted) setState(() => _playing = false);
         return;
       }
-      await player.setFilePath(widget.path);
-      await _posSub?.cancel();
-      _posSub = player.positionStream.listen((p) {
-        if (mounted) setState(() => _position = p);
-      });
-      await _stateSub?.cancel();
-      _stateSub = player.playerStateStream.listen((state) {
-        if (state.processingState == ProcessingState.completed && mounted) {
-          setState(() {
-            _playing = false;
-            _position = Duration.zero;
-            _consumed = true;
-          });
-          // Audit M-17: Nach der Wiedergabe wird die entschlüsselte Datei
-          // sofort entfernt.
-          unawaited(_deletePlayedFile());
-        }
-      });
+      if (!_sourceLoaded) {
+        await player.setFilePath(widget.path);
+        _sourceLoaded = true;
+        await _posSub?.cancel();
+        _posSub = player.positionStream.listen((p) {
+          if (mounted) setState(() => _position = p);
+        });
+        await _stateSub?.cancel();
+        _stateSub = player.playerStateStream.listen((state) {
+          if (state.processingState == ProcessingState.completed &&
+              mounted) {
+            setState(() {
+              _playing = false;
+              _position = Duration.zero;
+              _sourceLoaded = false;
+              _consumed = true;
+            });
+            // Audit M-17: Nach der Wiedergabe wird die entschlüsselte Datei
+            // sofort entfernt.
+            unawaited(_deletePlayedFile());
+          }
+        });
+      }
       await player.play();
       if (mounted) setState(() => _playing = true);
     } catch (e) {
@@ -2186,13 +3348,16 @@ class _VoiceMessageState extends State<_VoiceMessage> {
       children: [
         IconButton.filled(
           visualDensity: VisualDensity.compact,
+          tooltip: _playing
+              ? L10n.t(context, 'intro.review.pause')
+              : L10n.t(context, 'intro.review.listen'),
           onPressed: _toggle,
+          // Weiß auf Primär-Button (v0.9.1-Fix: vorher Primär auf
+          // Primär bei eigenen Nachrichten = unsichtbar).
           icon: Icon(
             _playing ? Icons.pause : Icons.play_arrow,
             size: 20,
-            color: widget.mine
-                ? Theme.of(context).colorScheme.primary
-                : Theme.of(context).colorScheme.onSurface,
+            color: Colors.white,
           ),
         ),
         const SizedBox(width: 6),
@@ -2233,35 +3398,75 @@ class _VoiceMessageState extends State<_VoiceMessage> {
   }
 }
 
-/// Einmalige, zentrierte System-Hinweis-Zeile im Chat-Verlauf
-/// (z. B. "Fotos wurden freigeschaltet").
-class _SystemNotice extends StatelessWidget {
-  const _SystemNotice({required this.text});
+/// Geteilte Eisbrecher-Frage als mittige Bubble (v0.9.1): für BEIDE
+/// Gesprächsseiten identisch in der Chat-Mitte, wandert wie jede andere
+/// Nachricht mit nach oben.
+class _IcebreakerBubble extends StatelessWidget {
+  const _IcebreakerBubble({required this.text, required this.senderName});
+
   final String text;
+  final String senderName;
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Center(
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(12),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.8,
           ),
-           child: Text(
-             text,
-             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                   color: Theme.of(context).colorScheme.onSurfaceVariant,
-                 ),
-             textAlign: TextAlign.center,
-           ),
-         ),
-       ),
-     );
-   }
- }
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: scheme.tertiaryContainer,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: scheme.tertiary.withValues(alpha: 0.5),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.lightbulb_outline,
+                    size: 14,
+                    color: scheme.onTertiaryContainer,
+                  ),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      senderName,
+                      style: Theme.of(context)
+                          .textTheme
+                          .labelSmall
+                          ?.copyWith(
+                            color: scheme.onTertiaryContainer,
+                            fontWeight: FontWeight.w600,
+                          ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                text,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: scheme.onTertiaryContainer,
+                    ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// Das Ideen-Rad (v0.8.0): dreht mit abnehmender Geschwindigkeit und
 /// landet auf einer zufälligen Date-Kategorie. Rückgabe via Navigator.pop
@@ -2367,7 +3572,7 @@ class _MeetIdeaWheelDialogState extends State<_MeetIdeaWheelDialog> {
           ),
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Abbrechen'),
+          child: Text(L10n.t(context, 'common.cancel')),
         ),
         if (_result != null)
           FilledButton(

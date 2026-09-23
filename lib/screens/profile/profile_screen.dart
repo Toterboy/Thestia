@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -14,9 +15,14 @@ import 'package:wisp/providers/profile_provider.dart';
 import 'package:wisp/providers/settings_provider.dart';
 import 'package:wisp/routing/app_router.dart';
 import 'package:wisp/screens/admin/admin_screen.dart';
+import 'package:wisp/services/verification_service.dart'
+    show verificationSubmittedKey, verificationServiceProvider;
+import 'package:wisp/services/local_storage.dart';
 import 'package:wisp/services/supabase_storage_service.dart';
 import 'package:wisp/l10n/app_strings.dart';
+import 'package:wisp/widgets/birthday_style.dart';
 import 'package:wisp/utils/age_safety_rules.dart';
+import 'package:wisp/utils/constants.dart';
 import 'package:wisp/widgets/profile_widgets.dart';
 import 'package:wisp/widgets/scroll_more_hint.dart';
 
@@ -98,6 +104,10 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                 ),
               ],
+              // Verifizierungs-Status (v0.9.1): Badge, Prüfung läuft oder
+              // Einstieg in den Video-Flow (Konto bleibt immer nutzbar).
+              const SizedBox(height: 8),
+              const _VerificationStatusCard(),
               const SizedBox(height: 16),
               Card(
                 child: Padding(
@@ -483,6 +493,93 @@ class ProfileScreen extends ConsumerWidget {
 }
 
 /// Card mit aktuellem Mood of the Day und Button zum Ändern.
+/// Verifizierungs-Status des eigenen Profils (v0.9.1).
+///
+/// Verifiziert -> Badge. Eingereicht, aber noch kein Badge -> "Prüfung
+/// läuft" (Konto bleibt voll nutzbar). Sonst Einstieg in den Video-Flow
+/// mit lokaler KI-Triage (Modell auf dem Gerät, sonst manuelle Queue).
+class _VerificationStatusCard extends ConsumerWidget {
+  const _VerificationStatusCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profile = ref.watch(profileProvider);
+    if (profile.isVerified) {
+      return Center(
+        child: Chip(
+          avatar: const Icon(Icons.verified, size: 18),
+          label: Text(L10n.t(context, 'verify.badge')),
+        ),
+      );
+    }
+    return FutureBuilder<bool>(
+      future: _submittedFlag(ref),
+      builder: (context, snapshot) {
+        final submitted = snapshot.data ?? false;
+        if (submitted) {
+          return Card(
+            child: ListTile(
+              leading: const Icon(Icons.hourglass_top_outlined),
+              title: Text(L10n.t(context, 'verify.pendingChip')),
+              subtitle: Text(L10n.t(context, 'verify.pendingHint')),
+            ),
+          );
+        }
+        if (!AppConstants.verificationEnabled) {
+          return const SizedBox.shrink();
+        }
+        return Card(
+          child: ListTile(
+            leading: const Icon(Icons.verified_outlined),
+            title: Text(L10n.t(context, 'verify.cta')),
+            subtitle: Text(L10n.t(context, 'verify.ctaSub')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.verificationInfo),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<bool> _submittedFlag(WidgetRef ref) async {
+    try {
+      final storage = ref.read(localStorageProvider);
+      // Badge da -> Merker aufräumen, Chip verschwindet von selbst.
+      if (ref.read(profileProvider).isVerified) {
+        await storage.remove(verificationSubmittedKey);
+        return false;
+      }
+      final stored = await storage.getBool(verificationSubmittedKey) ?? false;
+      if (!stored) return false;
+      // Selbstheilung (Nutzer-Regel "läuft ohne Video"): Der Merker ohne
+      // lokales Video (alte Installation, fremder Account-Rest) zeigt
+      // fälschlich "Prüfung läuft" - aufräumen und CTA anzeigen. Ohne
+      // Video gibt es serverseitig nichts zu prüfen.
+      //
+      // Robustheit: Service-Init abwarten (ungeöffnete Box würfe sonst
+      // und der Chip bliebe fälschlich versteckt).
+      final verificationService = ref.read(verificationServiceProvider);
+      try {
+        await verificationService.initialize();
+      } catch (_) {}
+      final video = verificationService.getVerificationVideo();
+      if (video == null) {
+        await storage.remove(verificationSubmittedKey);
+        return false;
+      }
+      try {
+        if (!await File(video.filePath).exists()) {
+          await storage.remove(verificationSubmittedKey);
+          return false;
+        }
+      } catch (_) {}
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+}
+
 class _MoodCard extends ConsumerWidget {
   const _MoodCard();
 
@@ -654,7 +751,11 @@ class _OwnAvatar extends ConsumerWidget {
         size: 56, color: Theme.of(context).colorScheme.onSurfaceVariant);
 
     // v0.9.0: abgerundet-RECHTECKIG statt komplett rund.
-    return ClipRRect(
+    // Geburtstag: Stil-Rahmen am Ehrentag (Nutzerwunsch, dezent).
+    final isBirthday =
+        UserProfile.isBirthdayToday(ref.watch(profileProvider).birthDate);
+    final birthdayStyle = ref.watch(profileProvider).birthdayStyle;
+    final avatarBox = ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: Container(
         width: 118,
@@ -663,9 +764,28 @@ class _OwnAvatar extends ConsumerWidget {
         alignment: Alignment.center,
         child: bytes != null
             ? Image.memory(bytes, fit: BoxFit.cover,
+                // LOAD-FIX: In Displaygröße dekodieren (2x DPR) statt das
+                // Multi-MB-Original voll aufzulösen - deutlich schneller
+                // sichtbar + weniger RAM.
+                cacheWidth: 118 * 3,
                 width: 118, height: 152)
             : placeholder,
       ),
+    );
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        BirthdayStyleFrame(
+          style: birthdayStyle,
+          active: isBirthday,
+          borderRadius: 20,
+          child: avatarBox,
+        ),
+        if (isBirthday) ...[
+          const SizedBox(height: 8),
+          const BirthdayChip(),
+        ],
+      ],
     );
   }
 }

@@ -11,12 +11,26 @@ enum MessageType {
 
   /// Sprachnachricht (Pfad/URL in [mediaUrl], Dauer in [durationSeconds]).
   voice,
+
+  /// Geteilte Eisbrecher-Frage (v0.9.1): wird BEIDEN Chat-Seiten gleichzeitig
+  /// als mittige Bubble angezeigt und wandert wie jede Nachricht mit.
+  icebreaker,
 }
 
 /// Repräsentiert eine 1:1-Nachricht im Chat.
 class Message {
   /// Eindeutige Nachrichten-ID.
   final String id;
+
+  /// Prozess-weiter Sequenzzähler für [newId]: Reine
+  /// Millisekunden-Zeitstempel kollidieren bei Bursts (zwei Nachrichten
+  /// in derselben Millisekunde, Ping+Poll-Doppelabruf) und wurden dann
+  /// per Dedup verworfen bzw. dupliziert angezeigt.
+  static int _idSeq = 0;
+
+  /// Erzeugt eine eindeutige Nachrichten-ID (`<prefix>_<ms>_<seq>`).
+  static String newId(String prefix) =>
+      '${prefix}_${DateTime.now().millisecondsSinceEpoch}_${_idSeq++}';
 
   /// ID des Absenders.
   final String senderId;

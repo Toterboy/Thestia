@@ -38,6 +38,122 @@ class ChatService {
   final List<Match> _matches = [];
   final Map<String, List<Message>> _messages = {};
 
+  /// Kontowechsel-Trennung (Audit: "Setup fehlt / verifiziert ohne
+  /// Verifizierung" durch Vorgänger-Daten): Persistente Boxen
+  /// (Verlauf, QR-Kontakte) sind pro Konto namespaced
+  /// (`<basis>_<userId>`), In-Memory-Listen werden beim Wechsel
+  /// geleert. So sieht Konto B auf demselben Gerät niemals Matches,
+  /// Nachrichten oder gespeicherte Profile von Konto A.
+  String? _ownerId;
+
+  static const String _legacyHistoryBox = 'chat_history';
+  static const String _legacyQrBox = 'qr_contacts';
+
+  String get _historyBoxName => historyBoxNameFor(_ownerId);
+  String get _qrBoxName => qrBoxNameFor(_ownerId);
+
+  /// Box-Name für den Verlauf eines Besitzers (testbar): Ohne Besitzer
+  /// der Legacy-Name, sonst namespaced. Unterschiedliche Besitzer
+  /// erhalten IMMER unterschiedliche Boxen (Kontowechsel-Trennung).
+  @visibleForTesting
+  static String historyBoxNameFor(String? ownerId) => ownerId == null
+      ? _legacyHistoryBox
+      : '${_legacyHistoryBox}_$ownerId';
+
+  /// Box-Name für QR-Kontakte eines Besitzers (testbar, s. o.).
+  @visibleForTesting
+  static String qrBoxNameFor(String? ownerId) =>
+      ownerId == null ? _legacyQrBox : '${_legacyQrBox}_$ownerId';
+
+  /// Wechselt den Box-Besitzer (Login/Logout). Leert In-Memory-State,
+  /// vergisst geöffnete Boxen und migriert einmalig Legacy-Bestände
+  /// (vor-Namensraum) in den Namensraum des Besitzers.
+  Future<void> setOwner(String? userId) async {
+    if (_ownerId == userId) return;
+    _ownerId = userId;
+    _historyBox = null;
+    _qrContactsBox = null;
+    _matches.clear();
+    _messages.clear();
+    if (userId != null) {
+      await _migrateLegacyBoxes();
+    }
+  }
+
+  /// Löscht alle eigenen Box-Daten vom Gerät (Account-Löschung).
+  Future<void> deleteOwnedData(String userId) async {
+    _historyBox = null;
+    _qrContactsBox = null;
+    _matches.clear();
+    _messages.clear();
+    for (final name in <String>[
+      '${_legacyHistoryBox}_$userId',
+      '${_legacyQrBox}_$userId',
+      _legacyHistoryBox,
+      _legacyQrBox,
+    ]) {
+      try {
+        if (Hive.isBoxOpen(name)) {
+          await Hive.box<dynamic>(name).close();
+        }
+      } catch (_) {}
+      try {
+        await Hive.deleteBoxFromDisk(name);
+      } catch (_) {}
+    }
+  }
+
+  /// Zieht Einträge aus einer Legacy-Box (ohne Suffix) in die
+  /// namensraum-Box um und löscht das Original. Best-effort: Bei
+  /// jedem Fehler bleibt der Altbestand erhalten (kein Datenverlust,
+  /// altes Verhalten).
+  Future<void> _migrateLegacyBoxes() async {
+    await _migrateLegacyBox(_legacyHistoryBox, _historyBoxName);
+    await _migrateLegacyBox(_legacyQrBox, _qrBoxName);
+  }
+
+  Future<void> _migrateLegacyBox(String legacy, String namespaced) async {
+    if (legacy == namespaced) return;
+    try {
+      if (!await Hive.boxExists(legacy)) return;
+      if (await Hive.boxExists(namespaced)) {
+        // Bereits migriert (oder Ziel befüllt): Legacy-Rest löschen.
+        try {
+          if (Hive.isBoxOpen(legacy)) {
+            await Hive.box<dynamic>(legacy).close();
+          }
+          await Hive.deleteBoxFromDisk(legacy);
+        } catch (_) {}
+        return;
+      }
+      final oldBox =
+          await SecureHive.instance.openBox<String>(legacy);
+      if (oldBox.isEmpty) {
+        await oldBox.close();
+        try {
+          await Hive.deleteBoxFromDisk(legacy);
+        } catch (_) {}
+        return;
+      }
+      final newBox =
+          await SecureHive.instance.openBox<String>(namespaced);
+      for (final key in oldBox.keys) {
+        if (!newBox.containsKey(key)) {
+          final v = oldBox.get(key);
+          if (v != null) await newBox.put(key, v);
+        }
+      }
+      await newBox.flush();
+      await oldBox.close();
+      await newBox.close();
+      _historyBox = null;
+      _qrContactsBox = null;
+      await Hive.deleteBoxFromDisk(legacy);
+    } catch (e) {
+      debugPrint('[ChatService] Legacy-Migration übersprungen: $e');
+    }
+  }
+
   // ---------------------------------------------------------------------
   // Persistente QR-Kontakte ("gespeicherte Profile", v0.9.1)
   // ---------------------------------------------------------------------
@@ -45,7 +161,7 @@ class ChatService {
   // behalten, um sie später anzuschreiben. Max. 5, einzeln löschbar,
   // AES-256-verschlüsselt (SecureHive). Ohne SecureHive (Web/Test) läuft
   // alles wie bisher rein in-memory (fail-open, wie der Chat-Verlauf).
-  static const String _qrBoxName = 'qr_contacts';
+  // Box-Name: siehe _qrBoxName-Getter oben (pro Konto namespaced).
   static const int maxQrContacts = 5;
   Box<String>? _qrContactsBox;
 
@@ -64,7 +180,10 @@ class ChatService {
 
   /// Stellt die beim letzten Mal gespeicherten QR-Kontakte wieder her
   /// (App-Neustart). Duplikate (bereits im Speicher) werden übersprungen.
+  /// Ohne Besitzer (ausgeloggt) kein Restore: Die Legacy-Box könnte Daten
+  /// eines anderen Kontos enthalten.
   Future<void> restoreQrContacts() async {
+    if (_ownerId == null) return;
     final box = await _qrContactsBoxFuture();
     if (box == null) return;
     try {
@@ -136,7 +255,7 @@ class ChatService {
   // OPT-IN und schreibt AES-256-verschlüsselt (SecureHive, Key im
   // Keystore) - der N-8-Fußangel (Klartext-Box) ist durch den
   // _historyEnabled-Schalter und SecureHive geschlossen.
-  static const String _historyBoxName = 'chat_history';
+  // Box-Name: siehe _historyBoxName-Getter oben (pro Konto namespaced).
   Box<String>? _historyBox;
   bool _historyEnabled = false;
   int? _historyLimit;
@@ -159,6 +278,24 @@ class ChatService {
     }
   }
 
+  /// Löscht den lokalen Chat-Verlauf (Account-Löschung/Logout, DSGVO),
+  /// OHNE die Opt-in-Einstellung zu ändern.
+  Future<void> clearLocalHistory() async {
+    try {
+      _historyBox = null;
+      if (Hive.isBoxOpen(_historyBoxName)) {
+        await Hive.box<String>(_historyBoxName).clear();
+      } else {
+        final box = await SecureHive.instance.openBox<String>(
+          _historyBoxName,
+        );
+        await box.clear();
+      }
+    } catch (_) {
+      // Best-effort: Ein Rest darf die Löschung nie blockieren.
+    }
+  }
+
   Future<Box<String>?> _historyBoxFuture() async {
     if (!_historyEnabled) return null;
     return _historyBox ??= await SecureHive.instance.openBox<String>(
@@ -167,10 +304,12 @@ class ChatService {
   }
 
   /// Lädt den gespeicherten Verlauf eines Matches (falls Opt-in aktiv und
-  /// Speicher leer - z. B. direkt nach dem App-Start).
+  /// Speicher leer - z. B. direkt nach dem App-Start). Mergt statt zu
+  /// überschreiben: Nachrichten, die exakt in der Async-Lücke eintreffen
+  /// (frisches Öffnen + sofortiger Empfang), gehen nicht verloren.
   Future<void> hydrateHistory(String matchId) async {
     if (!_historyEnabled) return;
-    if (_messages[matchId]?.isNotEmpty ?? false) return;
+    if (_ownerId == null) return;
     try {
       final box = await _historyBoxFuture();
       if (box == null) return;
@@ -180,7 +319,14 @@ class ChatService {
           .map((e) =>
               Message.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
-      _messages[matchId] = list;
+      final existing = _messages.putIfAbsent(matchId, () => []);
+      if (existing.isEmpty) {
+        _messages[matchId] = list;
+      } else {
+        final knownIds = existing.map((m) => m.id).toSet();
+        existing.addAll(list.where((m) => !knownIds.contains(m.id)));
+        existing.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      }
     } catch (e) {
       debugPrint('[ChatService] Verlauf-Hydration fehlgeschlagen: $e');
     }
@@ -294,8 +440,13 @@ class ChatService {
 
   /// Hängt eine bereits lokal vorliegende Nachricht an (genutzt für echte
   /// P2P-Nachrichten: gesendet wie empfangen). Löst KEINEN Mock-Auto-Reply aus.
+  ///
+  /// Dedup nach Nachrichten-ID: Relay-Redelivery (Ack-Fehler, Ping+Poll-
+  /// Rennen, Neustart-Retry) darf keine Doppel-Bubbles erzeugen.
   void addMessage(String matchId, Message msg) {
-    _messages.putIfAbsent(matchId, () => []).add(msg);
+    final list = _messages.putIfAbsent(matchId, () => []);
+    if (list.any((m) => m.id == msg.id)) return;
+    list.add(msg);
     unawaited(_persistHistory(matchId));
   }
 

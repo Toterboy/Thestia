@@ -50,7 +50,7 @@ class GenderPreferenceSelector extends ConsumerWidget {
       runSpacing: 8,
       children: [
         FilterChip(
-          label: const Text('Alle'),
+          label: Text(L10n.t(context, 'genderpref.all')),
           selected: allSelected,
           // "Alle" ist abwählbar: erneuter Tipp auf eine aktive
           // "Alle"-Auswahl hebt die komplette Auswahl auf.

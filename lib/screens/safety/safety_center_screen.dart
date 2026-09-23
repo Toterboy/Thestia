@@ -34,7 +34,7 @@ class _SafetyCenterScreenState extends ConsumerState<SafetyCenterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Safety Center')),
+      appBar: AppBar(title: Text(L10n.t(context, 'safety.centerTitle'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -135,6 +135,18 @@ class _SafetyCenterScreenState extends ConsumerState<SafetyCenterScreen> {
               ),
             ],
           ),
+          // Alter & Täuschung (v0.9.1, Jugendschutz): Warnung vor falschen
+          // Altersangaben, Meldegrund "Falsches Alter", Treffen-Regeln.
+          ExpansionTile(
+            leading: const Icon(Icons.cake_outlined),
+            title: Text(L10n.t(context, 'safety.ageTitle')),
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: Text(L10n.t(context, 'safety.ageBody')),
+              ),
+            ],
+          ),
           const _BlockedUsersSection(),
           const SizedBox(height: 8),
           const _MyReportsSection(),
@@ -201,7 +213,7 @@ class _MyReportsSectionState extends ConsumerState<_MyReportsSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Meine Meldungen',
+        Text(L10n.t(context, 'safety.myReports'),
             style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
         if (_reports == null)
@@ -211,8 +223,8 @@ class _MyReportsSectionState extends ConsumerState<_MyReportsSection> {
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2)))
         else if (_reports!.isEmpty)
-          const Text('Du hast bisher keine Meldungen geschrieben.',
-              style: TextStyle(color: Colors.grey))
+          Text(L10n.t(context, 'safety.noReports'),
+              style: const TextStyle(color: Colors.grey))
         else
           for (final report in _reports!)
             ListTile(
@@ -225,9 +237,9 @@ class _MyReportsSectionState extends ConsumerState<_MyReportsSection> {
                 size: 20,
                 color: Theme.of(context).colorScheme.primary,
               ),
-              title: Text(report.reportType.isEmpty
-                  ? 'Meldung'
-                  : report.reportType),
+            title: Text(report.reportType.isEmpty
+                ? L10n.t(context, 'report.type.default')
+                : report.reportType),
               subtitle: Text(report.statusLabel),
             ),
       ],
@@ -275,9 +287,8 @@ class _BlockedUsersSectionState extends ConsumerState<_BlockedUsersSection> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Entblocken fehlgeschlagen. Bitte erneut '
-                'versuchen.'),
+          SnackBar(
+            content: Text(L10n.t(context, 'safety.unblockFailed')),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -290,7 +301,7 @@ class _BlockedUsersSectionState extends ConsumerState<_BlockedUsersSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Blockierte Nutzer',
+        Text(L10n.t(context, 'safety.blockedUsers'),
             style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
         if (_blocked == null)
@@ -300,8 +311,8 @@ class _BlockedUsersSectionState extends ConsumerState<_BlockedUsersSection> {
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2)))
         else if (_blocked!.isEmpty)
-          const Text('Du hast niemanden blockiert.',
-              style: TextStyle(color: Colors.grey))
+          Text(L10n.t(context, 'safety.noBlocked'),
+              style: const TextStyle(color: Colors.grey))
         else
           for (final entry in _blocked!)
             ListTile(
@@ -311,7 +322,7 @@ class _BlockedUsersSectionState extends ConsumerState<_BlockedUsersSection> {
               title: Text(entry.name),
               trailing: TextButton(
                 onPressed: () => _unblock(entry),
-                child: const Text('Entblocken'),
+                child: Text(L10n.t(context, 'safety.unblock')),
               ),
             ),
       ],

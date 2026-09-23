@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:wisp/models/find_match_models.dart';
 import 'package:wisp/models/user_profile.dart';
 import 'package:wisp/services/find_your_match_service.dart';
 import 'package:wisp/services/supabase_service.dart';
@@ -79,5 +80,32 @@ final pendingLikesCountProvider = FutureProvider<int>((ref) async {
   } catch (e) {
     debugPrint('[PendingLikes] Zählen fehlgeschlagen: $e');
     return 0;
+  }
+});
+
+/// Erhaltene Likes (Liste, für "Neue Likes"-Badge mit Seen-Abgleich).
+final receivedLikesProvider =
+    FutureProvider<List<ReceivedLike>>((ref) async {
+  if (!SupabaseService.isInitialized) return const [];
+  try {
+    return await ref.watch(findYourMatchServiceProvider).listReceivedLikes();
+  } catch (e) {
+    debugPrint('[ReceivedLikes] Laden fehlgeschlagen: $e');
+    return const [];
+  }
+});
+
+/// Server-Funken mit Zustand (v0.9.1): für "Neue Funken"-Badge mit
+/// Seen-Abgleich (unabhängig vom lokalen Chat-Cache).
+final serverMatchesProvider =
+    FutureProvider<List<MatchWithState>>((ref) async {
+  if (!SupabaseService.isInitialized) return const [];
+  try {
+    return await ref
+        .watch(findYourMatchServiceProvider)
+        .listMatchesWithState();
+  } catch (e) {
+    debugPrint('[ServerMatches] Laden fehlgeschlagen: $e');
+    return const [];
   }
 });

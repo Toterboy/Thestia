@@ -68,10 +68,6 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
   bool _paused = false;
   int _recordSeconds = 0;
   Timer? _recordTimer;
-  StreamSubscription<Amplitude>? _ampSub;
-
-  /// Die letzten Amplituden-Level (0..1) für die Balken-Visualisierung.
-  final List<double> _levels = [];
   bool _uploading = false;
 
   @override
@@ -84,7 +80,6 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
   @override
   void dispose() {
     _recordTimer?.cancel();
-    _ampSub?.cancel();
     _textCtrl.dispose();
     _recorder.dispose();
     super.dispose();
@@ -123,29 +118,11 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
         _recording = true;
         _paused = false;
         _recordSeconds = 0;
-        _levels.clear();
       });
-      _ampSub = _recorder
-          .onAmplitudeChanged(
-              const Duration(milliseconds: IntroEditor.ampIntervalMs))
-          .listen(_onAmplitude);
       _startTimer();
     } catch (e) {
       debugPrint('[IntroEditor] Start fehlgeschlagen: $e');
     }
-  }
-
-  /// Lautstärke-Visualisierung: dBFS (-60..0) auf 0..1 normieren.
-  void _onAmplitude(Amplitude amp) {
-    if (!mounted || !_recording || _paused) return;
-    final db = amp.current.clamp(-60.0, 0.0);
-    final level = ((db + 60) / 60).clamp(0.0, 1.0);
-    setState(() {
-      _levels.add(level);
-      while (_levels.length > IntroEditor.ampBarCount) {
-        _levels.removeAt(0);
-      }
-    });
   }
 
   void _startTimer() {
@@ -185,8 +162,6 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
     // "unter 1 Sekunde" verworfen wurde.
     final seconds = _recordSeconds;
     _recordTimer?.cancel();
-    _ampSub?.cancel();
-    _ampSub = null;
     setState(() {
       _recording = false;
       _paused = false;
@@ -275,8 +250,6 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
         false;
     if (!discard || !_recording) return;
     _recordTimer?.cancel();
-    _ampSub?.cancel();
-    _ampSub = null;
     try {
       final path = await _recorder.stop();
       if (path != null) {
@@ -291,7 +264,6 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
         _recording = false;
         _paused = false;
         _recordSeconds = 0;
-        _levels.clear();
       });
     }
   }
@@ -382,6 +354,40 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
           ),
           onChanged: (_) => widget.onChanged(_textCtrl.text, _audioPath),
         ),
+        // Fragenbasierte Einstiegshilfe (Nutzerwunsch "Einführungsscreen
+        // fragenbasiert"): Leitfragen als Chips - Antippen hängt die
+        // Frage als Starthilfe an den Text an.
+        const SizedBox(height: 8),
+        Text(
+          L10n.t(context, 'intro.promptTitle'),
+          style: Theme.of(context).textTheme.labelLarge,
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final key in const [
+              'intro.prompt.weekend',
+              'intro.prompt.friends',
+              'intro.prompt.laugh',
+              'intro.prompt.dream',
+            ])
+              ActionChip(
+                label: Text(L10n.t(context, key)),
+                onPressed: () {
+                  final q = L10n.t(context, key);
+                  final cur = _textCtrl.text.trimRight();
+                  final sep = cur.isEmpty ? '' : '\n';
+                  _textCtrl.text = '$cur$sep$q ';
+                  _textCtrl.selection = TextSelection.fromPosition(
+                    TextPosition(offset: _textCtrl.text.length),
+                  );
+                  widget.onChanged(_textCtrl.text, _audioPath);
+                },
+              ),
+          ],
+        ),
         const SizedBox(height: 12),
         Card(
           child: Padding(
@@ -424,21 +430,14 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
           ],
         ),
         const SizedBox(height: 12),
-        // Lautstärke-Visualisierung: Balken spiegelbildlich zur Mitte.
-        SizedBox(
-          height: 40,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              for (var i = 0; i < IntroEditor.ampBarCount; i++)
-                _AmpBar(
-                  level: _levels.length > i
-                      ? _levels[_levels.length - 1 - i]
-                      : 0.0,
-                  color: liveColor,
-                ),
-            ],
-          ),
+        // Lautstärke-Balken als EIGENES Widget: Die 10-Hz-Amplitude baut
+        // sonst bei jedem Wert den kompletten Editor (Textfeld + Chips +
+        // Karte) neu - auf schwachen Geräten sichtbares Ruckeln während
+        // der Aufnahme. Jetzt rendert nur die Balken-Reihe neu.
+        _AmplitudeBars(
+          recorder: _recorder,
+          active: _recording && !_paused,
+          color: liveColor,
         ),
         const SizedBox(height: 12),
         Row(
@@ -538,6 +537,98 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
           ],
         ),
       ],
+    );
+  }
+}
+
+/// Lautstärke-Balken mit eigenem State: Abonniert die Recorder-Amplitude
+/// (10 Hz) und baut NUR die Balken-Reihe neu - der Rest des Editors
+/// (Textfeld mit Fokus!) bleibt unberührt.
+class _AmplitudeBars extends StatefulWidget {
+  const _AmplitudeBars({
+    required this.recorder,
+    required this.active,
+    required this.color,
+  });
+
+  final AudioRecorder recorder;
+  final bool active;
+  final Color color;
+
+  @override
+  State<_AmplitudeBars> createState() => _AmplitudeBarsState();
+}
+
+class _AmplitudeBarsState extends State<_AmplitudeBars> {
+  StreamSubscription<Amplitude>? _sub;
+
+  /// Die letzten Amplituden-Level (0..1), spiegelbildlich dargestellt.
+  final List<double> _levels = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _subscribe();
+  }
+
+  @override
+  void didUpdateWidget(covariant _AmplitudeBars oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.active != oldWidget.active) {
+      if (widget.active) {
+        _subscribe();
+      } else {
+        _unsubscribe();
+      }
+    }
+  }
+
+  void _subscribe() {
+    _unsubscribe();
+    if (!widget.active) return;
+    _sub = widget.recorder
+        .onAmplitudeChanged(
+            const Duration(milliseconds: IntroEditor.ampIntervalMs))
+        .listen((amp) {
+      if (!mounted) return;
+      // dBFS (-60..0) auf 0..1 normieren.
+      final db = amp.current.clamp(-60.0, 0.0);
+      setState(() {
+        _levels.add(((db + 60) / 60).clamp(0.0, 1.0));
+        while (_levels.length > IntroEditor.ampBarCount) {
+          _levels.removeAt(0);
+        }
+      });
+    });
+  }
+
+  void _unsubscribe() {
+    _sub?.cancel();
+    _sub = null;
+  }
+
+  @override
+  void dispose() {
+    _unsubscribe();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 40,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          for (var i = 0; i < IntroEditor.ampBarCount; i++)
+            _AmpBar(
+              level: _levels.length > i
+                  ? _levels[_levels.length - 1 - i]
+                  : 0.0,
+              color: widget.color,
+            ),
+        ],
+      ),
     );
   }
 }

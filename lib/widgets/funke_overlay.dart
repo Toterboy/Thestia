@@ -10,14 +10,25 @@ class FunkeOverlay extends StatefulWidget {
   const FunkeOverlay({super.key});
 
   /// Zeigt die Animation ~1,8 s und schließt sie dann von selbst.
+  ///
+  /// v0.9.1-Fix (Android 16): barrierLabel für Accessibility, SafeArea
+  /// gegen edge-to-edge-Insets und robustes Schließen (auch wenn canPop
+  /// auf neuen Android-Versionen mit Predictive Back anders meldet).
   static Future<void> show(BuildContext context) {
-    return showGeneralDialog(
-      context: context,
-      barrierDismissible: false,
-      barrierColor: Colors.black54,
-      transitionDuration: const Duration(milliseconds: 180),
-      pageBuilder: (_, _, _) => const FunkeOverlay(),
-    ).then((_) {});
+    try {
+      return showGeneralDialog(
+        context: context,
+        barrierDismissible: false,
+        barrierLabel: 'Funke-Animation',
+        barrierColor: Colors.black54,
+        transitionDuration: const Duration(milliseconds: 180),
+        pageBuilder: (_, _, _) => const FunkeOverlay(),
+      ).then((_) {});
+    } catch (_) {
+      // Falls der Dialog auf diesem Gerät nicht darstellbar ist, den
+      // Like-Erfolg nicht blockieren - Aufrufer läuft weiter.
+      return Future.value();
+    }
   }
 
   @override
@@ -53,8 +64,16 @@ class _FunkeOverlayState extends State<FunkeOverlay>
 
     _ctrl.forward();
     Future.delayed(const Duration(milliseconds: 1900), () {
-      if (mounted && Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
+      if (!mounted) return;
+      try {
+        final nav = Navigator.of(context);
+        if (nav.canPop()) {
+          nav.pop();
+        } else {
+          nav.maybePop();
+        }
+      } catch (_) {
+        // Best-effort: Overlay darf nie hängen bleiben.
       }
     });
   }
@@ -69,7 +88,8 @@ class _FunkeOverlayState extends State<FunkeOverlay>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: AnimatedBuilder(
+      body: SafeArea(
+        child: AnimatedBuilder(
         animation: _ctrl,
         builder: (context, _) {
           final t = _ctrl.value;
@@ -157,6 +177,7 @@ class _FunkeOverlayState extends State<FunkeOverlay>
             ),
           );
         },
+        ),
       ),
     );
   }

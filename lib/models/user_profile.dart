@@ -59,6 +59,9 @@ class UserProfile {
   /// Lieblingssong (optional, für Musik-Swiping-Modus).
   final String? favoriteSong;
 
+  /// Lieblingsband/-künstler (optional, getrennt vom Song, Migration 119).
+  final String? favoriteBand;
+
   /// Breitengrad des verifizierten Standorts (optional).
   final double? locationLat;
 
@@ -101,6 +104,15 @@ class UserProfile {
   /// Kandidaten-Objekte gesetzt, reiner Anzeige-Wert.
   final int? matchScore;
 
+  /// Gewählter Geburtstags-Stil (classic/midnight/sage/rose/mono,
+  /// Migration 115). Wirkt nur am Geburtstag (schick, nicht kitschig).
+  final String birthdayStyle;
+
+  /// True, wenn heute der Geburtstag ist (serverseitig als Boolean aus
+  /// Tag/Monat berechnet - das Geburtsdatum selbst wird nie geleakt).
+  /// Für das EIGENE Profil lokal aus birthDate berechnet.
+  final bool birthdayToday;
+
   const UserProfile({
     required this.id,
     required this.name,
@@ -119,6 +131,7 @@ class UserProfile {
     this.videoUrl,
     this.audioUrl,
     this.favoriteSong,
+    this.favoriteBand,
     this.locationLat,
     this.locationLng,
     this.isVerified = false,
@@ -132,7 +145,17 @@ class UserProfile {
     this.musicLiked = const <String>[],
     this.musicDisliked = const <String>[],
     this.matchScore,
+    this.birthdayStyle = 'classic',
+    this.birthdayToday = false,
   });
+
+  /// True, wenn das Geburtsdatum auf heute fällt (Tag/Monat, lokal für
+  /// das eigene Profil; fremde Profile liefern birthdayToday serverseitig).
+  static bool isBirthdayToday(DateTime? birthDate) {
+    if (birthDate == null) return false;
+    final now = DateTime.now();
+    return birthDate.month == now.month && birthDate.day == now.day;
+  }
 
   /// Berechnet das Alter dynamisch basierend auf dem aktuellen Datum.
   ///
@@ -156,8 +179,7 @@ class UserProfile {
         ? DateTime(DateTime.now().year - age, 1, 1)
         : null;
 
-    return UserProfile(
-      id: json['user_id'] as String,
+    return UserProfile(      id: json['user_id'] as String,
       name: json['name'] as String,
       bio: json['bio'] as String? ?? '',
       // Profilbilder (v0.9.0, max. 3): verschlüsselte Refs - Lesen via
@@ -174,6 +196,12 @@ class UserProfile {
       locationLng: (json['lng_approx'] as num?)?.toDouble(),
       birthDate: birthDate,
       mood: json['mood'] as String?,
+      favoriteSong: (json['favorite_song'] as String?)?.trim().isNotEmpty == true
+          ? (json['favorite_song'] as String).trim()
+          : null,
+      favoriteBand: (json['favorite_band'] as String?)?.trim().isNotEmpty == true
+          ? (json['favorite_band'] as String).trim()
+          : null,
       introText: json['intro_text'] as String? ?? '',
       introAudioPath: json['intro_audio_path'] as String?,
       smoking: HabitudeLevel.fromServer(json['smoking'] as String?),
@@ -185,6 +213,10 @@ class UserProfile {
       musicDisliked: (json['music_disliked'] as List<dynamic>? ?? <dynamic>[])
           .whereType<String>()
           .toList(),
+      birthdayStyle: (json['birthday_style'] as String?)?.isNotEmpty == true
+          ? (json['birthday_style'] as String)
+          : 'classic',
+      birthdayToday: json['birthday_today'] as bool? ?? false,
       // Abgerundete Distanz in km (5-km-Schritte, serverseitig berechnet).
       distanceKm: (json['distance_km'] as num?)?.toDouble() ?? 0,
       matchScore: (json['match_score'] as num?)?.toInt(),
@@ -217,6 +249,7 @@ class UserProfile {
       videoUrl: json['videoUrl'] as String?,
       audioUrl: json['audioUrl'] as String?,
       favoriteSong: json['favoriteSong'] as String?,
+      favoriteBand: json['favoriteBand'] as String?,
       locationLat: json['location_lat'] == null
           ? null
           : (json['location_lat'] as num).toDouble(),
@@ -238,6 +271,8 @@ class UserProfile {
       musicDisliked: (json['music_disliked'] as List<dynamic>? ?? <dynamic>[])
           .whereType<String>()
           .toList(),
+      birthdayStyle: json['birthdayStyle'] as String? ?? 'classic',
+      birthdayToday: json['birthdayToday'] as bool? ?? false,
     );
   }
 
@@ -260,6 +295,7 @@ class UserProfile {
         'videoUrl': videoUrl,
         'audioUrl': audioUrl,
         'favoriteSong': favoriteSong,
+        'favoriteBand': favoriteBand,
         'location_lat': locationLat,
         'location_lng': locationLng,
         'is_verified': isVerified,
@@ -272,6 +308,8 @@ class UserProfile {
         'drugs': drugs?.toServer(),
         'music_liked': musicLiked,
         'music_disliked': musicDisliked,
+        'birthdayStyle': birthdayStyle,
+        'birthdayToday': birthdayToday,
       };
 
   /// Erstellt eine Kopie mit veränderten Feldern (immutabel).
@@ -293,6 +331,7 @@ class UserProfile {
     String? videoUrl,
     String? audioUrl,
     String? favoriteSong,
+    String? favoriteBand,
     double? locationLat,
     double? locationLng,
     bool? isVerified,
@@ -306,6 +345,8 @@ class UserProfile {
     List<String>? musicLiked,
     List<String>? musicDisliked,
     int? matchScore,
+    String? birthdayStyle,
+    bool? birthdayToday,
     bool clearIntroAudio = false,
   }) {
     return UserProfile(
@@ -326,6 +367,7 @@ class UserProfile {
       videoUrl: videoUrl ?? this.videoUrl,
       audioUrl: audioUrl ?? this.audioUrl,
       favoriteSong: favoriteSong ?? this.favoriteSong,
+      favoriteBand: favoriteBand ?? this.favoriteBand,
       locationLat: locationLat ?? this.locationLat,
       locationLng: locationLng ?? this.locationLng,
       isVerified: isVerified ?? this.isVerified,
@@ -342,6 +384,8 @@ class UserProfile {
       musicLiked: musicLiked ?? this.musicLiked,
       musicDisliked: musicDisliked ?? this.musicDisliked,
       matchScore: matchScore ?? this.matchScore,
+      birthdayStyle: birthdayStyle ?? this.birthdayStyle,
+      birthdayToday: birthdayToday ?? this.birthdayToday,
     );
   }
 

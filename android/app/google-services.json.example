@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "HIER_EINTRAGEN",
+    "project_id": "HIER_EINTRAGEN",
+    "storage_bucket": "wisp-a044f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "HIER_EINTRAGEN",
+        "android_client_info": {
+          "package_name": "com.wisp.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "HIER_EINTRAGEN"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

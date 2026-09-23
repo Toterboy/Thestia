@@ -23,12 +23,16 @@ class TransitState {
     this.busy = false,
     this.lastResult,
     this.selfTags = const [],
+    this.selfNote = '',
     this.lastError,
   });
 
   /// Taegliche Selbst-Angaben (v0.9.0): 1-3 Merkmale zu sich selbst,
   /// werden mit jedem Signal mitgeschickt - andere finden dich darueber.
   final List<String> selfTags;
+
+  /// Freie Ergänzung zur Selbstbeschreibung (v0.9.1, max. 140 Zeichen).
+  final String selfNote;
 
   final bool active;
 
@@ -56,6 +60,7 @@ class TransitState {
     TransitSparkResult? lastResult,
     bool clearResult = false,
     List<String>? selfTags,
+    String? selfNote,
     String? lastError,
   }) {
     return TransitState(
@@ -67,6 +72,7 @@ class TransitState {
       lastResult:
           clearResult ? null : (lastResult ?? this.lastResult),
       selfTags: selfTags ?? this.selfTags,
+      selfNote: selfNote ?? this.selfNote,
       lastError: lastError,
     );
   }
@@ -111,6 +117,11 @@ class TransitNotifier extends StateNotifier<TransitState> {
   /// Taegliche Selbst-Angaben setzen (v0.9.0, beim Radar-Start).
   void setSelfTags(List<String> tags) {
     state = state.copyWith(selfTags: tags);
+  }
+
+  /// Freie Ergänzung zur Selbstbeschreibung setzen (v0.9.1).
+  void setSelfNote(String note) {
+    state = state.copyWith(selfNote: note.trim());
   }
 
   /// Aktiviert das Radar (BLE + Cache). Gibt false zurück, wenn BLE
@@ -195,7 +206,18 @@ class TransitNotifier extends StateNotifier<TransitState> {
       }
     }
     await _encounters.persist();
-    state = const TransitState();
+    // FIX "Button verschwindet / Ansicht wie davor": Ein blanker Reset
+    // warf auch Selbstbeschreibung und Encounter-Stand weg - der
+    // "Gesehene Geräte"-Button und die Ergänzungs-Karte verschwanden
+    // plötzlich. Jetzt: nur das AKTIVE Radar zurücksetzen, alles andere
+    // (Selbst-Tags, Notiz, Encounter-Anzeige) bleibt bestehen.
+    state = state.copyWith(
+      active: false,
+      endsAt: null,
+      encounterCount: _encounters.count,
+      busy: false,
+      clearResult: true,
+    );
   }
 
   /// Liste der NOCH SICHTBAREN Encounters (2-Stunden-Fenster, v0.9.0)
@@ -253,6 +275,7 @@ class TransitNotifier extends StateNotifier<TransitState> {
         tags: tags,
         mode: state.mode.value,
         selfTags: state.selfTags,
+        selfNote: state.selfNote.isEmpty ? null : state.selfNote,
       );
       final result = TransitSparkResult.fromJson(res);
       state = state.copyWith(busy: false, lastResult: result, lastError: null);

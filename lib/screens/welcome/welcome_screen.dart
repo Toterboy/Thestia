@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:wisp/l10n/app_strings.dart';
 import 'package:wisp/providers/settings_provider.dart';
 import 'package:wisp/routing/app_router.dart';
 import 'package:wisp/widgets/app_logo.dart';
@@ -53,28 +54,21 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     _logoReady = precacheImage(imageProvider, context);
   }
 
-  static const _pages = [
-    _PageData(
-      title: 'Willkommen bei Blind Date',
-      body: 'Hier lernst du Menschen wirklich kennen, bevor du ihr Foto '
-          'siehst. Denn am Anfang zählt die Persönlichkeit, nicht das Aussehen.',
-    ),
-    _PageData(
-      title: 'Blind Chat & Match',
-      body: 'Chatte zuerst blind und lerne die Person hinter dem Profil '
-          'kennen. Erst wenn ihr euch beide gemocht habt, werden die Fotos '
-          'freigeschaltet.',
-    ),
-    _PageData(
-      title: 'Deine Privatsphäre',
-      body: 'Alle Nachrichten und Anrufe sind Ende zu Ende verschlüsselt '
-          '(E2E). Niemand außer dir und deinem Gegenüber kann mitlesen, '
-          'auch wir nicht. Deine Daten gehören dir.\n\n'
-          'Hochgeladene Fotos werden automatisch auf unangemessene Inhalte '
-          'geprüft. Diese Prüfung erfolgt DSGVO konform und ohne dauerhafte '
-          'Speicherung deiner Bilder bei Drittanbietern.',
-    ),
-  ];
+  /// Seiten lokalisiert aufbauen (kein static const: Texte kommen aus L10n).
+  List<_PageData> _pages(BuildContext context) => [
+        _PageData(
+          title: L10n.t(context, 'welcome.t1'),
+          body: L10n.t(context, 'welcome.b1'),
+        ),
+        _PageData(
+          title: L10n.t(context, 'welcome.t2'),
+          body: L10n.t(context, 'welcome.b2'),
+        ),
+        _PageData(
+          title: L10n.t(context, 'welcome.t3'),
+          body: L10n.t(context, 'welcome.b3'),
+        ),
+      ];
 
   Future<void> _leave() async {
     // introSeen wird bereits beim Anzeigen gesetzt (initState) – hier nur
@@ -89,6 +83,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
   }
 
   Widget _buildContent(bool isLast) {
+    final pages = _pages(context);
     return Column(
       children: [
         Expanded(
@@ -98,10 +93,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
           // braucht keinen Scrollbar, da es intern horizontal scrollt.
           child: PageView.builder(
             controller: _pageController,
-            itemCount: _pages.length,
+            itemCount: pages.length,
             onPageChanged: (i) => setState(() => _currentPage = i),
             itemBuilder: (context, index) {
-              final page = _pages[index];
+              final page = pages[index];
               return Padding(
                 padding: const EdgeInsets.all(32),
                 child: Column(
@@ -128,7 +123,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         ),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(_pages.length, (i) {
+          children: List.generate(pages.length, (i) {
             final active = i == _currentPage;
             return AnimatedContainer(
               duration: const Duration(milliseconds: 200),
@@ -154,7 +149,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                     duration: const Duration(milliseconds: 300),
                     curve: Curves.easeInOut,
                   ),
-                  child: const Text('Zurück'),
+                  child: Text(L10n.t(context, 'common.back')),
                 )
               else
                 const SizedBox.shrink(),
@@ -166,7 +161,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.easeInOut,
                         ),
-                child: Text(isLast ? 'Los geht\'s' : 'Weiter'),
+                child: Text(isLast
+                    ? L10n.t(context, 'welcome.start')
+                    : L10n.t(context, 'common.continue')),
               ),
             ],
           ),
@@ -177,7 +174,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isLast = _currentPage == _pages.length - 1;
+    final isLast = _currentPage == _pages(context).length - 1;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -185,7 +182,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         actions: [
           TextButton(
             onPressed: _leave,
-            child: const Text('Überspringen'),
+            child: Text(L10n.t(context, 'common.skip')),
           ),
         ],
       ),

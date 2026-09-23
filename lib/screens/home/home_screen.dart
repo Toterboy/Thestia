@@ -11,31 +11,132 @@ import 'package:wisp/providers/find_your_match_provider.dart';
 import 'package:wisp/providers/profile_provider.dart';
 import 'package:wisp/providers/settings_provider.dart';
 import 'package:wisp/routing/app_router.dart';
+import 'package:wisp/screens/interests/interessen_screen.dart'
+    show interessenInitialTabProvider;
+import 'package:wisp/services/seen_service.dart';
 import 'package:wisp/utils/age_safety_rules.dart';
 import 'package:wisp/widgets/buttons.dart';
 import 'package:wisp/l10n/app_strings.dart';
+
+/// Öffnet Interessen auf dem passenden Tab per Push (v0.9.1): Likes ->
+/// Erhalten (1), Funken/Nachrichten -> Funken (2). Zurück landet wieder
+/// auf Aktuelles.
+void _goToInteressenTab(BuildContext context, int tab) {
+  try {
+    ProviderScope.containerOf(context)
+        .read(interessenInitialTabProvider.notifier)
+        .state = tab;
+  } catch (_) {}
+  context.push(AppRoutes.interessen);
+}
 
 /// Start-/Dashboard-Screen ("Aktuelles") mit drei Bereichen:
 /// - Neue Nachrichten (bis 5 Einträge mit Vorschau)
 /// - Neue Likes (Anzahl + Navigation zu Likes-Screen)
 /// - Neue Matches (Anzahl + Navigation zu Matches)
-class HomeScreen extends ConsumerWidget {
+///
+/// Badges verschwinden beim Ansehen (v0.9.1, Seen-Tracking) und die
+/// Zähler laden neu bei Rückkehr (RouteObserver) und App-Resume.
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with RouteAware, WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) {
+      routeObserver.subscribe(this, route);
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    try {
+      routeObserver.unsubscribe(this);
+    } catch (_) {}
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    // Von gepushter Seite zurück (z. B. Chat/Interessen): Zähler neu.
+    _refreshCounts();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Aus Hintergrund zurück: Funken/Likes könnten sich geändert haben
+    // (anderes Gerät) - neu laden.
+    if (state == AppLifecycleState.resumed && mounted) {
+      _refreshCounts();
+    }
+  }
+
+  void _refreshCounts() {
+    try {
+      ref.invalidate(pendingLikesCountProvider);
+      ref.invalidate(receivedLikesProvider);
+      ref.invalidate(serverMatchesProvider);
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
     final profile = ref.watch(profileProvider);
     final matches = ref.watch(chatProvider);
-    final likedCount =
-        ref.watch(pendingLikesCountProvider).valueOrNull ?? 0;
+    // Seen-Version beobachten: Badges nach Ansehen neu berechnen.
+    ref.watch(seenProvider);
+    final seen = ref.read(seenProvider.notifier);
 
     // Ungelesene Nachrichten über alle Matches
     final newMessages = matches.fold<int>(
       0,
       (sum, m) => sum + m.unreadCount,
     );
-    final newMatches = matches.length;
+
+    // Neue Likes = erhaltene, noch nicht angesehene (Fallback: Summe).
+    final received =
+        ref.watch(receivedLikesProvider).valueOrNull;
+    final likedCount = received == null
+        ? (ref.watch(pendingLikesCountProvider).valueOrNull ?? 0)
+        : received
+            .where((l) => !seen.likeIds.contains(l.likeId))
+            .length;
+
+    // Neue Funken = aktive Server-Funken, noch nicht angesehen, plus
+    // QR-Kontakte mit ungelesenen Nachrichten (Fallback: lokale Anzahl).
+    final serverMatches =
+        ref.watch(serverMatchesProvider).valueOrNull;
+    final int newMatches;
+    if (serverMatches == null) {
+      newMatches = matches.length;
+    } else {
+      final unseenServer = serverMatches
+          .where((m) =>
+              m.status == 'active' && !seen.matchIds.contains(m.matchId))
+          .length;
+      final unseenQr = matches
+          .where((m) =>
+              m.isQrContact &&
+              m.unreadCount > 0 &&
+              !seen.qrIds.contains(m.id))
+          .length;
+      newMatches = unseenServer + unseenQr;
+    }
 
     // Neueste 5 Matches mit ungelesenen Nachrichten für Vorschau
     final recentMatchesWithMessages = matches
@@ -44,11 +145,13 @@ class HomeScreen extends ConsumerWidget {
       ..sort((a, b) => b.matchedAt.compareTo(a.matchedAt));
     final messagePreviews = recentMatchesWithMessages.take(5).toList();
 
-    final name = profile.name.isNotEmpty ? profile.name : 'du';
+    final name = profile.name.isNotEmpty
+        ? profile.name
+        : L10n.t(context, 'home.fallbackName');
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Aktuelles'),
+        title: Text(L10n.t(context, 'home.title')),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -63,6 +166,8 @@ class HomeScreen extends ConsumerWidget {
         onRefresh: () async {
           // Likes/Match-Stand vom Server neu einlesen.
           ref.invalidate(pendingLikesCountProvider);
+          ref.invalidate(receivedLikesProvider);
+          ref.invalidate(serverMatchesProvider);
           ref.invalidate(chatProvider);
           await Future<void>.delayed(const Duration(milliseconds: 400));
         },
@@ -119,14 +224,14 @@ class HomeScreen extends ConsumerWidget {
               child: Column(
                 children: [
                   PrimaryButton(
-                    label: 'Leute entdecken',
+                    label: L10n.t(context, 'home.discover'),
                     icon: const Icon(Icons.favorite),
                     onPressed: () => context.go(AppRoutes.swipeModeSelection),
                   ),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
                     icon: const Icon(Icons.chat_bubble),
-                    label: const Text('Zufallschat starten'),
+                    label: Text(L10n.t(context, 'home.randomChat')),
                     onPressed: () => context.go(AppRoutes.randomChat),
                   ),
                 ],
@@ -162,7 +267,7 @@ Widget _buildMessagesSection(
             title: 'Neue Nachrichten',
             count: totalNewMessages,
             onTap: totalNewMessages > 0
-                ? () => context.go(AppRoutes.interessen)
+                ? () => _goToInteressenTab(context, 2)
                 : null,
           ),
           const SizedBox(height: 12),
@@ -195,7 +300,19 @@ Widget _buildMessagesSection(
                   child: Card(
                     margin: const EdgeInsets.only(bottom: 8),
                     child: InkWell(
-                      onTap: () => context.go(AppRoutes.chatDetailPath(match.id)),
+                      onTap: () {
+                        // Gelesen + Funke gesehen markieren (Badge weg).
+                        ref.read(chatProvider.notifier).markRead(match.id);
+                        final seenBox =
+                            ref.read(seenProvider.notifier);
+                        if (match.isQrContact) {
+                          seenBox.markQrSeen([match.id]);
+                        } else {
+                          final id = int.tryParse(match.id);
+                          if (id != null) seenBox.markMatchesSeen([id]);
+                        }
+                        context.push(AppRoutes.chatDetailPath(match.id));
+                      },
                       borderRadius: BorderRadius.circular(12),
                       child: Padding(
                         padding: const EdgeInsets.all(12),
@@ -304,7 +421,7 @@ Widget _buildLikesSection(
             title: 'Neue Likes',
             count: likedCount,
             onTap: likedCount > 0
-                ? () => context.go(AppRoutes.interessen)
+                ? () => _goToInteressenTab(context, 1)
                 : null,
           ),
           const SizedBox(height: 12),
@@ -322,7 +439,7 @@ title: L10n.t(context, 'home.noLikes'),
               width: double.infinity,
               child: Card(
                 child: InkWell(
-                  onTap: () => context.go(AppRoutes.interessen),
+                  onTap: () => _goToInteressenTab(context, 1),
                   borderRadius: BorderRadius.circular(12),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -383,7 +500,7 @@ Widget _buildMatchesSection(
             title: 'Neue Funken',
             count: newMatches,
             onTap: newMatches > 0
-                ? () => context.go(AppRoutes.interessen)
+                ? () => _goToInteressenTab(context, 2)
                 : null,
           ),
           const SizedBox(height: 12),
@@ -401,7 +518,7 @@ title: L10n.t(context, 'home.noSparks'),
               width: double.infinity,
               child: Card(
                 child: InkWell(
-                  onTap: () => context.go(AppRoutes.interessen),
+                  onTap: () => _goToInteressenTab(context, 2),
                   borderRadius: BorderRadius.circular(12),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -475,7 +592,10 @@ class _SectionHeader extends StatelessWidget {
             onPressed: onTap,
             icon: const Icon(Icons.chevron_right, size: 18),
             label: Text(
-              count > 0 ? '$count ansehen' : 'Alle ansehen',
+              count > 0
+                  ? L10n.tf(context, 'home.viewCount',
+                      {'count': '$count'})
+                  : L10n.t(context, 'home.viewAll'),
               style: Theme.of(context).textTheme.labelLarge,
             ),
           ),

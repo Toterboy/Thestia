@@ -1,16 +1,18 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:wisp/l10n/app_strings.dart';
 import 'package:wisp/routing/app_router.dart';
 import 'package:wisp/services/photo_moderation_service.dart';
 import 'package:wisp/services/supabase_database_service.dart';
 import 'package:wisp/services/supabase_service.dart';
 import 'package:wisp/services/supabase_storage_service.dart';
 import 'package:wisp/utils/constants.dart';
+import 'package:wisp/widgets/ai_badge.dart';
 
 /// Hilfsfunktion: Prueft, ob der aktuell eingeloggte Nutzer der Admin ist.
 ///
@@ -80,8 +82,10 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
       // Fail-closed (Audit H6): SchlÃ¤gt die serverseitige PrÃ¼fung fehl,
       // wird der Admin-Bereich NICHT gerendert.
       if (kDebugMode) {
-        debugPrint('[AdminScreen] Server-Admin-Check fehlgeschlagen '
-            '(fail-closed): $e');
+        debugPrint(
+          '[AdminScreen] Server-Admin-Check fehlgeschlagen '
+          '(fail-closed): $e',
+        );
       }
       if (mounted) {
         context.go(AppRoutes.home);
@@ -95,41 +99,55 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
   Widget build(BuildContext context) {
     if (!isCurrentUserAdmin()) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Zugriff verweigert')),
-        body: const Center(
-          child: Text('Du hast keine Berechtigung, diesen Bereich zu oeffnen.'),
-        ),
+        appBar: AppBar(title: Text(L10n.t(context, 'admin.deniedTitle'))),
+        body: Center(child: Text(L10n.t(context, 'admin.deniedBody'))),
       );
     }
 
     if (!_serverAdminChecked) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return DefaultTabController(
       length: 6,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Admin Bereich'),
-          bottom: const TabBar(
+          title: Text(L10n.t(context, 'admin.title')),
+          bottom: TabBar(
             isScrollable: true,
             // Abgerundete Klick-Animation (kein eckiger Aufblitzer).
-            splashBorderRadius: BorderRadius.all(Radius.circular(24)),
+            splashBorderRadius: const BorderRadius.all(Radius.circular(24)),
             tabs: [
-              Tab(text: 'Meldungen', icon: Icon(Icons.flag)),
-              Tab(text: 'Bug Reports', icon: Icon(Icons.bug_report)),
-              Tab(text: 'Verifizierung', icon: Icon(Icons.verified)),
-              Tab(text: 'Moderation', icon: Icon(Icons.photo_library)),
-              Tab(text: 'Bild-Prüfung', icon: Icon(Icons.image_search)),
-              Tab(text: 'Sperren', icon: Icon(Icons.block)),
+              Tab(
+                text: L10n.t(context, 'admin.tabReports'),
+                icon: const Icon(Icons.flag),
+              ),
+              Tab(
+                text: L10n.t(context, 'admin.tabBugs'),
+                icon: const Icon(Icons.bug_report),
+              ),
+              Tab(
+                text: L10n.t(context, 'admin.tabVerification'),
+                icon: const Icon(Icons.verified),
+              ),
+              Tab(
+                text: L10n.t(context, 'admin.tabModeration'),
+                icon: const Icon(Icons.photo_library),
+              ),
+              Tab(
+                text: L10n.t(context, 'admin.tabAppeals'),
+                icon: const Icon(Icons.image_search),
+              ),
+              Tab(
+                text: L10n.t(context, 'admin.tabBans'),
+                icon: const Icon(Icons.block),
+              ),
             ],
           ),
           actions: [
             IconButton(
               icon: const Icon(Icons.logout),
-              tooltip: 'Schliessen',
+              tooltip: L10n.t(context, 'admin.close'),
               // WICHTIG: context.go statt Navigator.pop - der Admin-Screen
               // wird per GoRouter-go erreicht (kein Stack-Eintrag), ein
               // Navigator.pop ging hinter die Root-Route und erzeugte
@@ -181,12 +199,12 @@ class _AsyncList extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Fehler: $error'),
+            Text(L10n.tf(context, 'admin.error', {'error': '$error'})),
             const SizedBox(height: 8),
             TextButton.icon(
               onPressed: () => onRetry(),
               icon: const Icon(Icons.refresh),
-              label: const Text('Erneut versuchen'),
+              label: Text(L10n.t(context, 'admin.retry')),
             ),
           ],
         ),
@@ -206,8 +224,9 @@ class _AsyncList extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
             side: BorderSide(
-              color: Theme.of(context).colorScheme.outlineVariant
-                  .withValues(alpha: 0.5),
+              color: Theme.of(
+                context,
+              ).colorScheme.outlineVariant.withValues(alpha: 0.5),
             ),
           ),
           child: Padding(
@@ -220,11 +239,9 @@ class _AsyncList extends StatelessWidget {
   }
 }
 
-String _fmtTs(dynamic ts) {
-  final dt = ts is DateTime
-      ? ts
-      : DateTime.tryParse(ts?.toString() ?? '') ;
-  if (dt == null) return 'unbekannt';
+String _fmtTs(BuildContext context, dynamic ts) {
+  final dt = ts is DateTime ? ts : DateTime.tryParse(ts?.toString() ?? '');
+  if (dt == null) return L10n.t(context, 'admin.unknown');
   return DateFormat('dd.MM.yyyy HH:mm').format(dt);
 }
 
@@ -260,8 +277,9 @@ class _UserReportsTabState extends ConsumerState<_UserReportsTab> {
       // JSONB-Felder (createdAt als ISO-String) normalisieren.
       _items = rows.map((r) {
         final copy = Map<String, dynamic>.from(r);
-        copy['createdAt'] =
-            DateTime.tryParse('${copy['createdAt']}')?.toLocal();
+        copy['createdAt'] = DateTime.tryParse(
+          '${copy['createdAt']}',
+        )?.toLocal();
         return copy;
       }).toList();
     } catch (e) {
@@ -278,7 +296,11 @@ class _UserReportsTabState extends ConsumerState<_UserReportsTab> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Konnte Meldung nicht abschliessen: $e')),
+          SnackBar(
+            content: Text(
+              L10n.tf(context, 'admin.reportResolveFailed', {'error': '$e'}),
+            ),
+          ),
         );
       }
     }
@@ -290,11 +312,12 @@ class _UserReportsTabState extends ConsumerState<_UserReportsTab> {
       loading: _loading,
       error: _error,
       items: _items,
-      emptyText: 'Keine Meldungen vorhanden.',
+      emptyText: L10n.t(context, 'admin.noReports'),
       onRetry: _load,
       itemBuilder: (context, data) {
         final theme = Theme.of(context);
-        final type = data['reportType'] as String? ?? 'unbekannt';
+        final type =
+            data['reportType'] as String? ?? L10n.t(context, 'admin.unknown');
         final description = (data['description'] as String? ?? '').trim();
         final status = data['status'] as String? ?? 'pending';
         final reportedId = data['reportedUserId'] as String? ?? '?';
@@ -311,24 +334,42 @@ class _UserReportsTabState extends ConsumerState<_UserReportsTab> {
                 Row(
                   children: [
                     Chip(
-                      label: Text(status),
+                      label: Text(
+                        status == 'pending'
+                            ? L10n.t(context, 'admin.statusPending')
+                            : status,
+                      ),
                       backgroundColor: status == 'pending'
                           ? theme.colorScheme.primaryContainer
                           : theme.colorScheme.surfaceContainerHighest,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(type,
-                          style: theme.textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold)),
+                      child: Text(
+                        type,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                SelectableText('Gemeldeter Nutzer: $reportedId'),
                 SelectableText(
-                    'Reporter: ${reporterShort.length > 12 ? '${reporterShort.substring(0, 12)}â€¦' : reporterShort} (gehasht)'),
-                Text('$messagesCount Nachricht(en) beigelegt'),
+                  L10n.tf(context, 'admin.reportedUser', {'id': reportedId}),
+                ),
+                SelectableText(
+                  L10n.tf(context, 'admin.reporter', {
+                    'id': reporterShort.length > 12
+                        ? '${reporterShort.substring(0, 12)}…'
+                        : reporterShort,
+                  }),
+                ),
+                Text(
+                  L10n.tf(context, 'admin.messagesAttached', {
+                    'count': '$messagesCount',
+                  }),
+                ),
                 if (description.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   SelectableText(description),
@@ -338,7 +379,7 @@ class _UserReportsTabState extends ConsumerState<_UserReportsTab> {
                   children: [
                     Expanded(
                       child: Text(
-                        _fmtTs(data['createdAt']),
+                        _fmtTs(context, data['createdAt']),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -346,9 +387,8 @@ class _UserReportsTabState extends ConsumerState<_UserReportsTab> {
                     ),
                     if (status == 'pending')
                       TextButton(
-                        onPressed: () =>
-                            _resolve(data['id'] as String),
-                        child: const Text('Bearbeitet'),
+                        onPressed: () => _resolve(data['id'] as String),
+                        child: Text(L10n.t(context, 'admin.resolved')),
                       ),
                   ],
                 ),
@@ -392,8 +432,9 @@ class _BugReportsTabState extends ConsumerState<_BugReportsTab> {
       final rows = await db.fetchBugReports();
       _items = rows.map((r) {
         final copy = Map<String, dynamic>.from(r);
-        copy['createdAt'] =
-            DateTime.tryParse('${copy['createdAt']}')?.toLocal();
+        copy['createdAt'] = DateTime.tryParse(
+          '${copy['createdAt']}',
+        )?.toLocal();
         return copy;
       }).toList();
     } catch (e) {
@@ -408,7 +449,7 @@ class _BugReportsTabState extends ConsumerState<_BugReportsTab> {
       loading: _loading,
       error: _error,
       items: _items,
-      emptyText: 'Keine Bug Reports vorhanden.',
+      emptyText: L10n.t(context, 'admin.noBugs'),
       onRetry: _load,
       itemBuilder: (context, data) {
         final theme = Theme.of(context);
@@ -423,24 +464,35 @@ class _BugReportsTabState extends ConsumerState<_BugReportsTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SelectableText(description.isNotEmpty
-                    ? description
-                    : '(ohne Beschreibung)',
-                    style: theme.textTheme.bodyMedium),
+                SelectableText(
+                  description.isNotEmpty
+                      ? description
+                      : L10n.t(context, 'admin.noDescription'),
+                  style: theme.textTheme.bodyMedium,
+                ),
                 const SizedBox(height: 8),
-                Text('AnhÃ¤nge: $attachments Â· ${_fmtTs(data['createdAt'])}',
-                    style: theme.textTheme.bodySmall),
+                Text(
+                  L10n.tf(context, 'admin.attachments', {
+                    'count': '$attachments',
+                    'time': _fmtTs(context, data['createdAt']),
+                  }),
+                  style: theme.textTheme.bodySmall,
+                ),
                 if (deviceInfo.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  SelectableText(deviceInfo,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      )),
+                  SelectableText(
+                    deviceInfo,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 ],
                 if (userId.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  SelectableText('Nutzer: $userId',
-                      style: theme.textTheme.bodySmall),
+                  SelectableText(
+                    L10n.tf(context, 'admin.user', {'id': userId}),
+                    style: theme.textTheme.bodySmall,
+                  ),
                 ],
               ],
             ),
@@ -463,6 +515,9 @@ class _VerificationTab extends ConsumerStatefulWidget {
 
 class _VerificationTabState extends ConsumerState<_VerificationTab> {
   List<Map<String, dynamic>> _items = [];
+  // Stichproben: Auto-Freigaben für die nachträgliche Kontrolle
+  // (v0.9.0, Manipulationsschutz).
+  List<Map<String, dynamic>> _auditItems = [];
   bool _loading = true;
   String? _error;
   String? _busyUserId;
@@ -483,14 +538,40 @@ class _VerificationTabState extends ConsumerState<_VerificationTab> {
       final rows = await db.fetchPendingVerifications();
       _items = rows.map((r) {
         final copy = Map<String, dynamic>.from(r);
-        copy['submittedAt'] =
-            DateTime.tryParse('${copy['submittedAt']}')?.toLocal();
+        copy['submittedAt'] = DateTime.tryParse(
+          '${copy['submittedAt']}',
+        )?.toLocal();
         return copy;
       }).toList();
+      // Größte Altersabweichung zuerst (v0.9.1, 80-als-22-Fälle oben).
+      _items.sort((a, b) => _deviation(b).compareTo(_deviation(a)));
+      // Stichproben laden - EIGENER try/catch: Fehlt die RPC (Migration
+      // 120 noch nicht deployed), darf die Pending-Queue NICHT brechen.
+      try {
+        final auditRows = await db.fetchAutoVerifications();
+        _auditItems = auditRows.map((r) {
+          final copy = Map<String, dynamic>.from(r);
+          copy['submittedAt'] = DateTime.tryParse(
+            '${copy['submittedAt']}',
+          )?.toLocal();
+          return copy;
+        }).toList();
+      } catch (e) {
+        debugPrint('[Admin] Auto-Stichproben n/a (Migration 120?): $e');
+        _auditItems = [];
+      }
     } catch (e) {
       _error = e.toString();
     }
     if (mounted) setState(() => _loading = false);
+  }
+
+  /// Betrag |KI-Schätzung - angegebenes Alter| (-1 = unbekannt).
+  static double _deviation(Map<String, dynamic> data) {
+    final est = (data['estimatedAge'] as num?)?.toDouble();
+    final stated = (data['statedAge'] as num?)?.toDouble();
+    if (est == null || stated == null) return -1;
+    return (est - stated).abs();
   }
 
   Future<void> _review(String targetUserId, {required bool approve}) async {
@@ -508,7 +589,11 @@ class _VerificationTabState extends ConsumerState<_VerificationTab> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Review fehlgeschlagen: $e')),
+          SnackBar(
+            content: Text(
+              L10n.tf(context, 'admin.reviewFailed', {'error': '$e'}),
+            ),
+          ),
         );
       }
     } finally {
@@ -518,71 +603,170 @@ class _VerificationTabState extends ConsumerState<_VerificationTab> {
 
   /// Kurzlebige signierte URL vom Server holen und Video ansehen.
   Future<void> _watch(String targetUserId) async {
+    // Vor den Awaits einlesen (kein BuildContext über async-Gaps).
+    final noUrl = L10n.t(context, 'admin.noVideoUrl');
+    final browserFailed = L10n.t(context, 'admin.browserOpenFailed');
     try {
       final response = await SupabaseService.client.functions.invoke(
         'verification-media',
         body: {'targetUserId': targetUserId},
       );
       final url = (response.data as Map?)?['url'] as String?;
-      if (url == null) throw StateError('keine URL');
+      if (url == null) {
+        throw StateError(noUrl);
+      }
       final uri = Uri.parse(url);
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-        throw StateError('Browser konnte URL nicht oeffnen');
+        throw StateError(browserFailed);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Video konnte nicht geladen werden: $e')),
+          SnackBar(
+            content: Text(
+              L10n.tf(context, 'admin.videoFailed', {'error': '$e'}),
+            ),
+          ),
         );
       }
     }
   }
 
+  /// Karte für einen Verifizierungsfall (Pending-Queue und Auto-
+  /// Stichproben teilen sich Darstellung + Aktionen).
+  Widget _verificationCard(BuildContext context, Map<String, dynamic> data) {
+    final name = data['name'] as String? ?? '?';
+    final userId = data['userId'] as String? ?? '?';
+    final busy = _busyUserId == userId;
+    // KI-Schätzung vs. angegebenes Alter (v0.9.1, Migration 095).
+    final est = (data['estimatedAge'] as num?)?.toDouble();
+    final stated = (data['statedAge'] as num?)?.toDouble();
+    final dev = _VerificationTabState._deviation(data);
+    final ageLine = (est == null || stated == null)
+        ? L10n.tf(context, 'admin.ageNoAi', {
+            'stated': stated?.toStringAsFixed(0) ?? '?',
+          })
+        : L10n.tf(context, 'admin.ageAi', {
+            'stated': stated.toStringAsFixed(0),
+            'est': est.toStringAsFixed(0),
+            'dev': dev.toStringAsFixed(0),
+          });
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      color: dev > 2
+          ? Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.35)
+          : null,
+      child: ListTile(
+        title: Text(name),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SelectableText(userId),
+            Text(
+              ageLine,
+              style: TextStyle(
+                fontWeight: dev > 2 ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+        trailing: busy
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: L10n.t(context, 'admin.watchVideo'),
+                    icon: const Icon(Icons.play_circle_outline),
+                    onPressed: () => _watch(userId),
+                  ),
+                  IconButton(
+                    tooltip: L10n.t(context, 'admin.approve'),
+                    icon: const Icon(Icons.check, color: Colors.green),
+                    onPressed: () => _review(userId, approve: true),
+                  ),
+                  IconButton(
+                    tooltip: L10n.t(context, 'admin.rejectWithVideo'),
+                    icon: const Icon(Icons.close, color: Colors.red),
+                    onPressed: () => _review(userId, approve: false),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return _AsyncList(
-      loading: _loading,
-      error: _error,
-      items: _items,
-      emptyText: 'Keine offenen Verifizierungen.',
-      onRetry: _load,
-      itemBuilder: (context, data) {
-        final name = data['name'] as String? ?? '?';
-        final userId = data['userId'] as String? ?? '?';
-        final busy = _busyUserId == userId;
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: ListTile(
-            title: Text(name),
-            subtitle: SelectableText(userId),
-            trailing: busy
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2))
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        tooltip: 'Video ansehen',
-                        icon: const Icon(Icons.play_circle_outline),
-                        onPressed: () => _watch(userId),
-                      ),
-                      IconButton(
-                        tooltip: 'Freigeben',
-                        icon: const Icon(Icons.check, color: Colors.green),
-                        onPressed: () => _review(userId, approve: true),
-                      ),
-                      IconButton(
-                        tooltip: 'Ablehnen (Video wird geloescht)',
-                        icon: const Icon(Icons.close, color: Colors.red),
-                        onPressed: () => _review(userId, approve: false),
-                      ),
-                    ],
-                  ),
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(L10n.tf(context, 'admin.error', {'error': '$_error'})),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: _load,
+              icon: const Icon(Icons.refresh),
+              label: Text(L10n.t(context, 'admin.retry')),
+            ),
+          ],
+        ),
+      );
+    }
+    // Pending-Queue UND Auto-Stichproben in EINER scrollbaren Liste
+    // (v0.9.0, Manipulationsschutz): Auto-Freigaben wurden bisher
+    // nirgends mehr angezeigt - jetzt sind sie nachträglich prüfbar
+    // (Video ansehen, bei Missbrauch entziehen).
+    return RefreshIndicator(
+      onRefresh: _load,
+      child: ListView(
+        padding: const EdgeInsets.all(12),
+        children: [
+          if (_items.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Text(L10n.t(context, 'admin.noVerifications')),
+              ),
+            )
+          else
+            for (final data in _items) ...[
+              _verificationCard(context, data),
+              const SizedBox(height: 8),
+            ],
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            child: Text(
+              L10n.t(context, 'admin.auditTitle'),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
           ),
-        );
-      },
+          if (_auditItems.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Text(L10n.t(context, 'admin.auditEmpty')),
+              ),
+            )
+          else
+            for (final data in _auditItems) ...[
+              _verificationCard(context, data),
+              const SizedBox(height: 8),
+            ],
+        ],
+      ),
     );
   }
 }
@@ -635,7 +819,7 @@ class _PhotoModerationListState extends ConsumerState<_PhotoModerationList> {
   Widget build(BuildContext context) {
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_entries.isEmpty) {
-      return const Center(child: Text('Keine ausstehenden Moderationen.'));
+      return Center(child: Text(L10n.t(context, 'admin.noModeration')));
     }
     return ListView.separated(
       itemCount: _entries.length,
@@ -647,24 +831,39 @@ class _PhotoModerationListState extends ConsumerState<_PhotoModerationList> {
         final hashFull = entry['photo_hash'] as String? ?? '';
         // Guard: kuerzerer Hash darf keinen RangeError werfen.
         final hash = hashFull.length > 12
-            ? '${hashFull.substring(0, 12)}â€¦'
+            ? '${hashFull.substring(0, 12)}…'
             : hashFull;
         final created = entry['created_at'] as String? ?? '';
+        // Cloud-KI-Befund (HuggingFace) - nur wenn ein echter Cloud-
+        // Check lief (kein 'moderation_disabled'-Marker).
+        final hfLabel = entry['hf_label'] as String?;
 
         return ListTile(
           title: Text('$userName ($hash...)'),
-          subtitle: Text(created),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(created),
+              if (hfLabel != null &&
+                  hfLabel.isNotEmpty &&
+                  hfLabel != 'moderation_disabled') ...[
+                const SizedBox(height: 4),
+                const AiBadge.cloudCompact(),
+              ],
+            ],
+          ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
                 icon: const Icon(Icons.check, color: Colors.green),
-                tooltip: 'Genehmigen',
+                tooltip: L10n.t(context, 'admin.approveTooltip'),
                 onPressed: () => _approve(entry['id'] as int),
               ),
               IconButton(
                 icon: const Icon(Icons.close, color: Colors.red),
-                tooltip: 'Ablehnen',
+                tooltip: L10n.t(context, 'admin.rejectTooltip'),
                 onPressed: () => _reject(entry['id'] as int),
               ),
             ],
@@ -707,8 +906,7 @@ class _BansTabState extends ConsumerState<_BansTab> {
       final rows = await db.fetchBannedEmails();
       _items = rows.map((r) {
         final copy = Map<String, dynamic>.from(r);
-        copy['bannedAt'] =
-            DateTime.tryParse('${copy['bannedAt']}')?.toLocal();
+        copy['bannedAt'] = DateTime.tryParse('${copy['bannedAt']}')?.toLocal();
         return copy;
       }).toList();
     } catch (e) {
@@ -718,7 +916,12 @@ class _BansTabState extends ConsumerState<_BansTab> {
   }
 
   /// Ruft die Edge Function `admin-ban` auf (Service-Role-Aktionen).
-  Future<Map<String, dynamic>> _invoke(Map<String, dynamic> body) async {
+  /// [actionFailedMessage] baut die lokalisierte Fallback-Fehlermeldung
+  /// aus dem HTTP-Status (Aufrufer haben BuildContext, _invoke nicht).
+  Future<Map<String, dynamic>> _invoke(
+    Map<String, dynamic> body,
+    String Function(int status) actionFailedMessage,
+  ) async {
     final response = await SupabaseService.client.functions.invoke(
       'admin-ban',
       body: body,
@@ -726,8 +929,7 @@ class _BansTabState extends ConsumerState<_BansTab> {
     final data = (response.data as Map?)?.cast<String, dynamic>() ?? {};
     if (response.status != 200) {
       throw StateError(
-        data['error']?.toString() ??
-            'Aktion fehlgeschlagen (Status ${response.status}).',
+        data['error']?.toString() ?? actionFailedMessage(response.status),
       );
     }
     return data;
@@ -739,16 +941,21 @@ class _BansTabState extends ConsumerState<_BansTab> {
     final reasonCtrl = TextEditingController();
     var notifyUser = true;
     final formKey = GlobalKey<FormState>();
+    // Nachrichten vor den Awaits einlesen (kein BuildContext über async-Gaps).
+    final bannedMsg = L10n.t(context, 'admin.banned');
+    final banFailedMsg = L10n.t(context, 'admin.banFailed');
+    String actionFailed(int status) =>
+        L10n.tf(context, 'admin.actionFailed', {'status': '$status'});
 
     await showDialog<void>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) => AlertDialog(
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.block, color: Colors.red),
-              SizedBox(width: 8),
-              Expanded(child: Text('Nutzer sperren')),
+              const Icon(Icons.block, color: Colors.red),
+              const SizedBox(width: 8),
+              Expanded(child: Text(L10n.t(ctx, 'admin.banUser'))),
             ],
           ),
           content: Form(
@@ -760,44 +967,41 @@ class _BansTabState extends ConsumerState<_BansTab> {
                 children: [
                   TextFormField(
                     controller: targetCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'E-Mail oder User-ID',
-                      hintText: 'z. B. aus der Meldungs-Mail kopiert',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: L10n.t(ctx, 'admin.banTarget'),
+                      hintText: L10n.t(ctx, 'admin.banTargetHint'),
+                      border: const OutlineInputBorder(),
                     ),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Pflichtfeld' : null,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? L10n.t(ctx, 'admin.required')
+                        : null,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: reasonCtrl,
                     maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: 'BegrÃ¼ndung (Pflicht)',
-                      hintText: 'Warum wird der Nutzer gesperrt?',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: L10n.t(ctx, 'admin.banReason'),
+                      hintText: L10n.t(ctx, 'admin.banReasonHint'),
+                      border: const OutlineInputBorder(),
                     ),
                     validator: (v) => (v == null || v.trim().length < 3)
-                        ? 'Mindestens 3 Zeichen'
+                        ? L10n.t(ctx, 'admin.minChars')
                         : null,
                   ),
                   const SizedBox(height: 4),
                   CheckboxListTile(
                     value: notifyUser,
                     onChanged: (v) => setState(() => notifyUser = v ?? true),
-                    title: const Text('Nutzer per E-Mail informieren'),
-                    subtitle: const Text(
-                        'EnthÃ¤lt die BegrÃ¼ndung und den Weg zum '
-                        'Entsperrungsantrag'),
+                    title: Text(L10n.t(ctx, 'admin.notifyUser')),
+                    subtitle: Text(L10n.t(ctx, 'admin.notifySub')),
                     contentPadding: EdgeInsets.zero,
                     controlAffinity: ListTileControlAffinity.leading,
                     dense: true,
                   ),
-                  const Text(
-                    'Hinweis: Mit User-ID wird zusÃ¤tzlich der bestehende '
-                    'Account sofort gesperrt (Sessions ungÃ¼ltig). Mit nur '
-                    'E-Mail ist die Neu-Registrierung blockiert.',
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  Text(
+                    L10n.t(ctx, 'admin.banHint'),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                   ),
                 ],
               ),
@@ -806,7 +1010,7 @@ class _BansTabState extends ConsumerState<_BansTab> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Abbrechen'),
+              child: Text(L10n.t(ctx, 'admin.cancel')),
             ),
             FilledButton(
               style: FilledButton.styleFrom(backgroundColor: Colors.red),
@@ -819,13 +1023,13 @@ class _BansTabState extends ConsumerState<_BansTab> {
                     'emailOrUserId': targetCtrl.text.trim(),
                     'reason': reasonCtrl.text.trim(),
                     'notifyUser': notifyUser,
-                  });
+                  }, actionFailed);
                   if (ctx.mounted) Navigator.of(ctx).pop();
                   await _load();
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Nutzer gesperrt.'),
+                      SnackBar(
+                        content: Text(bannedMsg),
                         behavior: SnackBarBehavior.floating,
                       ),
                     );
@@ -833,14 +1037,13 @@ class _BansTabState extends ConsumerState<_BansTab> {
                 } catch (e) {
                   messenger.showSnackBar(
                     SnackBar(
-                      content: Text(
-                          e is StateError ? e.message : 'Sperren fehlgeschlagen.'),
+                      content: Text(e is StateError ? e.message : banFailedMsg),
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
                 }
               },
-              child: const Text('Sperren'),
+              child: Text(L10n.t(ctx, 'admin.ban')),
             ),
           ],
         ),
@@ -854,31 +1057,32 @@ class _BansTabState extends ConsumerState<_BansTab> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Entsperren?'),
-        content: Text(
-            '$email kann sich wieder registrieren und anmelden. Der '
-            'Entsperrungsantrag sollte vorher geprÃ¼ft worden sein.'),
+        title: Text(L10n.t(ctx, 'admin.unbanTitle')),
+        content: Text(L10n.tf(ctx, 'admin.unbanBody', {'email': email})),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Abbrechen'),
+            child: Text(L10n.t(ctx, 'admin.cancel')),
           ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Entsperren'),
+            child: Text(L10n.t(ctx, 'admin.unban')),
           ),
         ],
       ),
     );
     if (confirmed != true || !mounted) return;
     setState(() => _busy = true);
+    // Vor den Awaits einlesen (kein BuildContext über async-Gaps).
+    String actionFailed(int status) =>
+        L10n.tf(context, 'admin.actionFailed', {'status': '$status'});
     try {
-      await _invoke({'action': 'unban', 'emailOrUserId': email});
+      await _invoke({'action': 'unban', 'emailOrUserId': email}, actionFailed);
       await _load();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('$email wurde entsperrt.'),
+            content: Text(L10n.tf(context, 'admin.unbanned', {'email': email})),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -888,7 +1092,10 @@ class _BansTabState extends ConsumerState<_BansTab> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                e is StateError ? e.message : 'Entsperren fehlgeschlagen.'),
+              e is StateError
+                  ? e.message
+                  : L10n.t(context, 'admin.unbanFailed'),
+            ),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -909,7 +1116,7 @@ class _BansTabState extends ConsumerState<_BansTab> {
             child: FilledButton.icon(
               onPressed: _busy ? null : _showBanDialog,
               icon: const Icon(Icons.person_add_disabled),
-              label: const Text('Nutzer sperren'),
+              label: Text(L10n.t(context, 'admin.banUser')),
             ),
           ),
         ),
@@ -918,7 +1125,7 @@ class _BansTabState extends ConsumerState<_BansTab> {
             loading: _loading,
             error: _error,
             items: _items,
-            emptyText: 'Keine Sperren vorhanden.',
+            emptyText: L10n.t(context, 'admin.noBans'),
             onRetry: _load,
             itemBuilder: (context, data) {
               final email = data['email'] as String? ?? '?';
@@ -930,13 +1137,18 @@ class _BansTabState extends ConsumerState<_BansTab> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (reason.isNotEmpty) SelectableText(reason),
-                    Text('${_fmtTs(data['bannedAt'])} Â· von $bannedBy'),
+                    Text(
+                      L10n.tf(context, 'admin.bannedBy', {
+                        'time': _fmtTs(context, data['bannedAt']),
+                        'by': bannedBy,
+                      }),
+                    ),
                   ],
                 ),
                 leading: const Icon(Icons.block, color: Colors.red),
                 trailing: IconButton(
                   icon: const Icon(Icons.lock_open, color: Colors.green),
-                  tooltip: 'Entsperren',
+                  tooltip: L10n.t(context, 'admin.unban'),
                   onPressed: _busy ? null : () => _unban(data),
                 ),
               );
@@ -947,7 +1159,6 @@ class _BansTabState extends ConsumerState<_BansTab> {
     );
   }
 }
-
 
 // ===========================================================================
 // Tab 5: Bild-Prüfung (v0.8.1 Einspruchs-Verfahren)
@@ -1007,7 +1218,11 @@ class _PhotoAppealsTabState extends ConsumerState<_PhotoAppealsTab> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Entscheidung fehlgeschlagen: $e')),
+          SnackBar(
+            content: Text(
+              L10n.tf(context, 'admin.decideFailed', {'error': '$e'}),
+            ),
+          ),
         );
       }
     } finally {
@@ -1023,19 +1238,19 @@ class _PhotoAppealsTabState extends ConsumerState<_PhotoAppealsTab> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Fehler: $_error'),
+            Text(L10n.tf(context, 'admin.error', {'error': '$_error'})),
             const SizedBox(height: 8),
             TextButton.icon(
               onPressed: _load,
               icon: const Icon(Icons.refresh),
-              label: const Text('Erneut versuchen'),
+              label: Text(L10n.t(context, 'admin.retry')),
             ),
           ],
         ),
       );
     }
     if (_appeals.isEmpty) {
-      return const Center(child: Text('Keine offenen Bild-Einsprüche.'));
+      return Center(child: Text(L10n.t(context, 'admin.noAppeals')));
     }
     return RefreshIndicator(
       onRefresh: _load,
@@ -1073,9 +1288,10 @@ class _AppealCard extends ConsumerWidget {
     final status = appeal['status'] as String? ?? 'pending';
     final label = appeal['localLabel'] as String? ?? '';
     final score = (appeal['localScore'] as num?)?.toDouble() ?? 0;
-    final userName = appeal['userName'] as String? ?? 'Unbekannt';
-    final createdAt = DateTime.tryParse(
-            appeal['createdAt'] as String? ?? '') ??
+    final userName =
+        appeal['userName'] as String? ?? L10n.t(context, 'admin.unknown');
+    final createdAt =
+        DateTime.tryParse(appeal['createdAt'] as String? ?? '') ??
         DateTime.now();
 
     return Card(
@@ -1115,17 +1331,30 @@ class _AppealCard extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(userName,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold)),
+                      Text(
+                        userName,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
                       const SizedBox(height: 4),
-                      Text('Eingereicht: '
-                          '${createdAt.toLocal().toString().substring(0, 16)}'),
-                      Text('Lokaler Befund: '
-                          '${label.isEmpty ? 'n/a' : label} '
-                          '(${(score * 100).toStringAsFixed(0)} %)'),
+                      Text(
+                        L10n.tf(context, 'admin.appealSubmitted', {
+                          'time': createdAt.toLocal().toString().substring(
+                            0,
+                            16,
+                          ),
+                        }),
+                      ),
+                      Text(
+                        L10n.tf(context, 'admin.appealFinding', {
+                          'label': label.isEmpty ? 'n/a' : label,
+                          'score': (score * 100).toStringAsFixed(0),
+                        }),
+                      ),
+                      // KI-Transparenz (Nutzerwunsch): Dieser Befund stammt
+                      // aus der lokalen On-Device-KI.
+                      const SizedBox(height: 4),
+                      const AiBadge.localCompact(),
                       const SizedBox(height: 4),
                       _StatusChip(status: status),
                     ],
@@ -1139,17 +1368,15 @@ class _AppealCard extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   OutlinedButton.icon(
-                    onPressed:
-                        busy ? null : () => onDecide(false),
+                    onPressed: busy ? null : () => onDecide(false),
                     icon: const Icon(Icons.close),
-                    label: const Text('Ablehnen'),
+                    label: Text(L10n.t(context, 'admin.rejectTooltip')),
                   ),
                   const SizedBox(width: 8),
                   FilledButton.icon(
-                    onPressed:
-                        busy ? null : () => onDecide(true),
+                    onPressed: busy ? null : () => onDecide(true),
                     icon: const Icon(Icons.check),
-                    label: const Text('Freigeben'),
+                    label: Text(L10n.t(context, 'admin.approve')),
                   ),
                 ],
               ),
@@ -1169,10 +1396,10 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      'pending' => ('Offen', Colors.orange),
-      'approved' => ('Freigegeben', Colors.green),
-      'rejected' => ('Abgelehnt', Colors.red),
-      'notified' => ('Quittiert', Colors.blueGrey),
+      'pending' => (L10n.t(context, 'admin.statusOpen'), Colors.orange),
+      'approved' => (L10n.t(context, 'admin.statusApproved'), Colors.green),
+      'rejected' => (L10n.t(context, 'admin.statusRejected'), Colors.red),
+      'notified' => (L10n.t(context, 'admin.statusNotified'), Colors.blueGrey),
       _ => (status, Colors.grey),
     };
     return Container(

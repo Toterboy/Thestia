@@ -13,6 +13,9 @@ abstract class LocalStorage {
   Future<String?> getString(String key);
   Future<void> saveBool(String key, bool value);
   Future<bool?> getBool(String key);
+  /// Speichert eine Ganzzahl (z. B. zuletzt gezeigter WhatsNew-Build).
+  Future<void> saveInt(String key, int value);
+  Future<int?> getInt(String key);
   Future<void> remove(String key);
 }
 
@@ -50,6 +53,17 @@ class SecurePreferencesStorage implements LocalStorage {
     final raw = await _storage.read(key: key);
     if (raw == null) return null;
     return raw == 'true';
+  }
+
+  @override
+  Future<void> saveInt(String key, int value) =>
+      _storage.write(key: key, value: '$value');
+
+  @override
+  Future<int?> getInt(String key) async {
+    final raw = await _storage.read(key: key);
+    if (raw == null || raw.isEmpty) return null;
+    return int.tryParse(raw);
   }
 
   @override
@@ -92,6 +106,12 @@ class SharedPreferencesStorage implements LocalStorage {
 
   @override
   Future<bool?> getBool(String key) => Future.value(_prefs.getBool(key));
+
+  @override
+  Future<void> saveInt(String key, int value) => _prefs.setInt(key, value);
+
+  @override
+  Future<int?> getInt(String key) => Future.value(_prefs.getInt(key));
 
   @override
   Future<void> remove(String key) => _prefs.remove(key);

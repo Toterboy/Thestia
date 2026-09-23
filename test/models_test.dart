@@ -91,12 +91,7 @@ void main() {
     });
 
     test('age ist null wenn kein birthDate gesetzt', () {
-      const p = UserProfile(
-        id: '1',
-        name: 'A',
-        birthDate: null,
-        bio: '',
-      );
+      const p = UserProfile(id: '1', name: 'A', birthDate: null, bio: '');
       expect(p.age, isNull);
     });
 
@@ -189,7 +184,12 @@ void main() {
     });
 
     test('Gleichheit basiert auf id', () {
-      final partner = UserProfile(id: 'p1', name: 'Mira', birthDate: DateTime(1995, 1, 1), bio: '');
+      final partner = UserProfile(
+        id: 'p1',
+        name: 'Mira',
+        birthDate: DateTime(1995, 1, 1),
+        bio: '',
+      );
       final m1 = Match(id: 'm1', partner: partner, matchedAt: DateTime.now());
       final m2 = Match(id: 'm1', partner: partner, matchedAt: DateTime.now());
       final m3 = Match(id: 'm2', partner: partner, matchedAt: DateTime.now());
@@ -198,8 +198,17 @@ void main() {
     });
 
     test('Default-Werte', () {
-      final partner = UserProfile(id: 'p1', name: 'Mira', birthDate: DateTime(1995, 1, 1), bio: '');
-      final match = Match(id: 'm1', partner: partner, matchedAt: DateTime.now());
+      final partner = UserProfile(
+        id: 'p1',
+        name: 'Mira',
+        birthDate: DateTime(1995, 1, 1),
+        bio: '',
+      );
+      final match = Match(
+        id: 'm1',
+        partner: partner,
+        matchedAt: DateTime.now(),
+      );
       expect(match.photosUnlocked, isFalse);
       expect(match.unreadCount, 0);
     });
@@ -356,9 +365,7 @@ void main() {
     });
 
     test('fromJson mit fehlendem ProfilVisibility nutzt everyone', () {
-      final json = <String, dynamic>{
-        'blindModeEnabled': false,
-      };
+      final json = <String, dynamic>{'blindModeEnabled': false};
       final s = AppSettings.fromJson(json);
       expect(s.profileVisibility, ProfileVisibility.everyone);
     });
@@ -369,6 +376,18 @@ void main() {
       expect(updated.blindModeEnabled, isTrue);
       expect(updated.profileVisibility, ProfileVisibility.everyone);
       expect(updated.maxDistanceKm, equals(50));
+    });
+
+    test('copyWith(useDarkMode: null) setzt System zurück (Sentinel)', () {
+      // Regression: "System" war nach Hell/Dunkel nicht mehr wählbar,
+      // weil copyWith null nicht von "nicht gesetzt" unterschied.
+      final dark = AppSettings.defaults().copyWith(useDarkMode: true);
+      expect(dark.useDarkMode, isTrue);
+      final system = dark.copyWith(useDarkMode: null);
+      expect(system.useDarkMode, isNull);
+      // Ohne Angabe bleibt der alte Wert erhalten.
+      final untouched = dark.copyWith();
+      expect(untouched.useDarkMode, isTrue);
     });
   });
 
@@ -389,10 +408,7 @@ void main() {
     });
 
     test('fromValue liefert hidden bei hidden', () {
-      expect(
-        ProfileVisibility.fromValue('hidden'),
-        ProfileVisibility.hidden,
-      );
+      expect(ProfileVisibility.fromValue('hidden'), ProfileVisibility.hidden);
     });
 
     test('fromValue liefert matchesOnly bei matches_only', () {
