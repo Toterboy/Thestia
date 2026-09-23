@@ -6,17 +6,17 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 //
 // Hintergrund (live bewiesen + upstream issue supabase-js#1568): Alte
 // supabase-js-Versionen schicken den API-Key als Authorization-Bearer-
-// Fallback mit. Legacy-JWTs (anon/service_role) sind gültige JWTs und
-// funktionieren; sb_-Keys sind KEINE JWTs ("Expected 3 parts in JWT")
+// Fallback mit. sb_-Keys sind KEINE JWTs ("Expected 3 parts in JWT")
 // und fielen dadurch auf eine Rolle ohne Rechte zurück (fälschlich
-// "permission denied" trotz korrekter Grants).
+// "permission denied" trotz korrekter Grants). Lösung: Raw-Client nur
+// mit dem verifizierten Key.
 //
 // Deshalb wird hier NICHT geraten, sondern GEMESSEN: Jeder Kandidat
-// (sb_ aus Auto-Dict, custom Secret, Legacy) wird mit einem harmlosen
+// (sb_ aus Auto-Dict, SUPABASE_SECRET_KEY) wird mit einem harmlosen
 // Service-Read (profiles head-count: service_role OK, anon denied)
 // geprüft. Der erste funktionierende Key gewinnt und wird für die
-// Isolate-Lebensdauer gecacht. Schlägt alles fehl, gilt Legacy
-// (letzter bekannter Stand) - lieber langsamer als kaputt.
+// Isolate-Lebensdauer gecacht. Legacy-JWTs sind entfernt (vgl.
+// _pickApiKey in den übrigen Functions).
 type _KeyCand = { key: string; source: string };
 
 function _keyCandidates(): _KeyCand[] {
@@ -31,9 +31,7 @@ function _keyCandidates(): _KeyCand[] {
     }
   } catch (_) {}
   const single = Deno.env.get("SUPABASE_SECRET_KEY") ?? "";
-  if (single.length > 0) out.push({ key: single, source: "custom" });
-  const legacy = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  if (legacy.length > 0) out.push({ key: legacy, source: "legacy" });
+  if (single.length > 0) out.push({ key: single, source: "sbcustom" });
   return out;
 }
 
@@ -90,14 +88,14 @@ async function admin(): Promise<{
     seen.push(`${c.source}:denied`);
   }
   _lastKeyReport = seen.length > 0 ? seen.join(",") : "no-candidates";
-  // Letzter Ausweg: Legacy-Blindflug (historischer Stand).
-  const legacy = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  console.error("delete-account: KEIN Key verifiziert, nutze Legacy blind");
+  console.error("delete-account: KEIN Service-Key verifiziert");
+  // Ohne verifizierten Key läuft die Purge-Kette bewusst ins Leere und
+  // liefert die Diagnose (key=none-verified|keys=...) im Fehlerpfad.
   _adminCache = {
-    client: createClient(SUPABASE_URL, legacy, {
+    client: createClient(SUPABASE_URL, "", {
       auth: { autoRefreshToken: false, persistSession: false },
     }),
-    source: "legacy-blind",
+    source: "none-verified",
   };
   return _adminCache;
 }

@@ -75,7 +75,7 @@ verify_jwt = false
 verify_jwt = false
 
 # notify-user: eigene Auth im Code (internes Trigger-Secret ODER User-JWT
-# bei Client-Aufrufen). Gateway-JWT-Pruefung ist deshalb deaktiviert.
+# bei Client-Aufrufen). Gateway-JWT-Prüfung ist deshalb deaktiviert.
 [functions.notify-user]
 verify_jwt = false
 

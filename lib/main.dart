@@ -254,11 +254,7 @@ Future<void> _initializeFirebase() async {
 /// ([SupabaseService.isInitialized] == false).
 Future<void> _initializeSupabase() async {
   final supabaseUrl = dotenv.env['SUPABASE_URL'];
-  // API-Key (Migration Legacy -> Publishable): Publishable-Key
-  // (sb_publishable_...) zuerst, Legacy-Anon als Fallback, bis er im
-  // Dashboard deaktiviert wird. Alte Builds lesen weiter ANON_KEY.
-  final supabaseAnonKey = dotenv.env['SUPABASE_PUBLISHABLE_KEY'] ??
-      dotenv.env['SUPABASE_ANON_KEY'];
+  final supabaseAnonKey = dotenv.env['SUPABASE_PUBLISHABLE_KEY'];
 
   if (supabaseUrl == null ||
       supabaseUrl.isEmpty ||

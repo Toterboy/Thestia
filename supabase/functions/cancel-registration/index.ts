@@ -26,13 +26,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.0";
 // unbestätigte Accounts löschbar.
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-// API-Keys: Legacy-JWTs (anon/service_role) ZUERST - funktionierende
-// Konfiguration (Grants live verifiziert). Die neuen sb_-Keys sind nur
-// RESERVE (sie mappen nicht auf service_role-Rechte - live bewiesen).
-// Legacy im Dashboard erst deaktivieren, wenn sb_ nachweislich trägt.
-function _pickApiKey(autoDict: string, custom: string, legacy: string): string {
-  const old = Deno.env.get(legacy) ?? "";
-  if (old.length > 0) return old;
+// API-Keys: sb_-Keys (secret_jwt_template -> service_role). Nach
+// Migration 122 (SELECT-Grants) live verifiziert (GoTrue listUsers OK +
+// PostgREST-DELETE 204). Legacy-JWTs sind entfernt. Reihenfolge:
+// SUPABASE_SECRET_KEY ('default') zuerst, Reserve SUPABASE_SECRET_KEYS.
+// Publishable analog (sb_publishable_/anon).
+function _pickApiKey(autoDict: string, custom: string): string {
   const single = Deno.env.get(custom) ?? "";
   if (single.length > 0) return single;
   try {
@@ -46,8 +45,8 @@ function _pickApiKey(autoDict: string, custom: string, legacy: string): string {
   return "";
 }
 
-const SUPABASE_SERVICE_ROLE_KEY = _pickApiKey("SUPABASE_SECRET_KEYS", "SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY");
-const SUPABASE_ANON_KEY = _pickApiKey("SUPABASE_PUBLISHABLE_KEYS", "SUPABASE_PUBLISHABLE_KEY", "SUPABASE_ANON_KEY");
+const SUPABASE_SERVICE_ROLE_KEY = _pickApiKey("SUPABASE_SECRET_KEYS", "SUPABASE_SECRET_KEY");
+const SUPABASE_PUBLISHABLE_KEY = _pickApiKey("SUPABASE_PUBLISHABLE_KEYS", "SUPABASE_PUBLISHABLE_KEY");
 
 const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
@@ -139,7 +138,7 @@ serve(async (req) => {
     }
 
     // 1) Inhaberschaft beweisen: Anmeldeversuch mit eigenem Client.
-    const supabaseAnon = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    const supabaseAnon = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
     const { error: signInError } =

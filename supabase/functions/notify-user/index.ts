@@ -24,7 +24,9 @@
 //                                   passen (Migration 040). KEIN hartcodierter
 //                                   Fallback: fehlt das Env, ist die Funktion
 //                                   für interne Aufrufe geschlossen (fail-closed).
-//   SUPABASE_SERVICE_ROLE_KEY     – bereits als Function-Secret vorhanden
+//   SUPABASE_SECRET_KEYS / SUPABASE_SECRET_KEY – automatisch injizierte
+//                                   sb_-Keys (secret_jwt_template ->
+//                                   service_role)
 //   FIREBASE_SERVICE_ACCOUNT_JSON – Service-Account-Schlüssel (siehe oben)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -32,13 +34,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.0";
 
 const WISP_INTERNAL_SECRET = Deno.env.get("WISP_INTERNAL_SECRET") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-// API-Keys: Legacy-JWTs (anon/service_role) ZUERST - funktionierende
-// Konfiguration (Grants live verifiziert). Die neuen sb_-Keys sind nur
-// RESERVE (sie mappen nicht auf service_role-Rechte - live bewiesen).
-// Legacy im Dashboard erst deaktivieren, wenn sb_ nachweislich trägt.
-function _pickApiKey(autoDict: string, custom: string, legacy: string): string {
-  const old = Deno.env.get(legacy) ?? "";
-  if (old.length > 0) return old;
+// API-Keys: sb_-Keys (secret_jwt_template -> service_role). Nach
+// Migration 122 (SELECT-Grants) live verifiziert (GoTrue listUsers OK +
+// PostgREST-DELETE 204). Legacy-JWTs sind entfernt. Reihenfolge:
+// SUPABASE_SECRET_KEY ('default') zuerst, Reserve SUPABASE_SECRET_KEYS.
+function _pickApiKey(autoDict: string, custom: string): string {
   const single = Deno.env.get(custom) ?? "";
   if (single.length > 0) return single;
   try {
@@ -52,7 +52,7 @@ function _pickApiKey(autoDict: string, custom: string, legacy: string): string {
   return "";
 }
 
-const SUPABASE_SERVICE_ROLE_KEY = _pickApiKey("SUPABASE_SECRET_KEYS", "SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY");
+const SUPABASE_SERVICE_ROLE_KEY = _pickApiKey("SUPABASE_SECRET_KEYS", "SUPABASE_SECRET_KEY");
 
 const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },

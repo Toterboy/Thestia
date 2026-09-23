@@ -7,13 +7,11 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.0";
 // ---------------------------------------------------------------------------
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-// API-Keys: Legacy-JWTs (anon/service_role) ZUERST - funktionierende
-// Konfiguration (Grants live verifiziert). Die neuen sb_-Keys sind nur
-// RESERVE (sie mappen nicht auf service_role-Rechte - live bewiesen).
-// Legacy im Dashboard erst deaktivieren, wenn sb_ nachweislich trägt.
-function _pickApiKey(autoDict: string, custom: string, legacy: string): string {
-  const old = Deno.env.get(legacy) ?? "";
-  if (old.length > 0) return old;
+// API-Keys: sb_-Keys (secret_jwt_template -> service_role). Nach
+// Migration 122 (SELECT-Grants) live verifiziert (GoTrue listUsers OK +
+// PostgREST-DELETE 204). Legacy-JWTs sind entfernt. Reihenfolge:
+// SUPABASE_SECRET_KEY ('default') zuerst, Reserve SUPABASE_SECRET_KEYS.
+function _pickApiKey(autoDict: string, custom: string): string {
   const single = Deno.env.get(custom) ?? "";
   if (single.length > 0) return single;
   try {
@@ -27,7 +25,7 @@ function _pickApiKey(autoDict: string, custom: string, legacy: string): string {
   return "";
 }
 
-const SUPABASE_SERVICE_ROLE_KEY = _pickApiKey("SUPABASE_SECRET_KEYS", "SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY");
+const SUPABASE_SERVICE_ROLE_KEY = _pickApiKey("SUPABASE_SECRET_KEYS", "SUPABASE_SECRET_KEY");
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error("SUPABASE_URL und SUPABASE_SERVICE_ROLE_KEY müssen als Secrets gesetzt sein.");
