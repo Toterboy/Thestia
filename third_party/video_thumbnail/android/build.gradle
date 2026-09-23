@@ -1,0 +1,38 @@
+group 'xyz.justsoft.video_thumbnail'
+version '1.0-SNAPSHOT'
+
+// Lokaler Fork (third_party/video_thumbnail, upstream v0.5.6 + AGP-9-Fix):
+// - buildscript-Block ENTFERNT (jcenter() existiert nicht mehr, AGP-4.1.0-
+//   Klasspath inkompatibel mit AGP 9 / neuem DSL) - Repos auf
+//   google()/mavenCentral() umgestellt.
+// - Reines Java-Plugin (VideoThumbnailPlugin.java), daher keine
+//   Kotlin-Anpassung noetig; der Flutter-Plugin-Loader kompiliert es
+//   mit dem Projekt-Toolchain (Java 17).
+// - compileSdk 35 wie die anderen third_party-Forks (App: 37).
+
+rootProject.allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+apply plugin: 'com.android.library'
+
+android {
+    namespace 'xyz.justsoft.video_thumbnail'
+    compileSdkVersion 35
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    defaultConfig {
+        minSdkVersion 21
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+    lintOptions {
+        disable 'InvalidPackage'
+    }
+}
