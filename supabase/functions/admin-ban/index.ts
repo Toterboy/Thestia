@@ -19,12 +19,32 @@
 // Fail-closed: Ohne gesetztes Secret lehnt die Funktion ALLE Anfragen ab.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.0";
 
 const ADMIN_UUID = Deno.env.get("ADMIN_UUID") ?? "";
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+// API-Keys: Legacy-JWTs (anon/service_role) ZUERST - funktionierende
+// Konfiguration (Grants live verifiziert). Die neuen sb_-Keys sind nur
+// RESERVE (sie mappen nicht auf service_role-Rechte - live bewiesen).
+// Legacy im Dashboard erst deaktivieren, wenn sb_ nachweislich trägt.
+function _pickApiKey(autoDict: string, custom: string, legacy: string): string {
+  const old = Deno.env.get(legacy) ?? "";
+  if (old.length > 0) return old;
+  const single = Deno.env.get(custom) ?? "";
+  if (single.length > 0) return single;
+  try {
+    const dict = JSON.parse(Deno.env.get(autoDict) ?? "{}") as Record<
+      string,
+      unknown
+    >;
+    const named = dict["default"];
+    if (typeof named === "string" && named.length > 0) return named;
+  } catch (_) {}
+  return "";
+}
+
+const SUPABASE_SERVICE_ROLE_KEY = _pickApiKey("SUPABASE_SECRET_KEYS", "SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY");
 
 const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },

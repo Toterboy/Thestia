@@ -1,9 +1,29 @@
-﻿import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.0";
 
 // Von Supabase automatisch injected (niemals manuell setzen!)
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+// API-Keys: Legacy-JWTs (anon/service_role) ZUERST - funktionierende
+// Konfiguration (Grants live verifiziert). Die neuen sb_-Keys sind nur
+// RESERVE (sie mappen nicht auf service_role-Rechte - live bewiesen).
+// Legacy im Dashboard erst deaktivieren, wenn sb_ nachweislich trägt.
+function _pickApiKey(autoDict: string, custom: string, legacy: string): string {
+  const old = Deno.env.get(legacy) ?? "";
+  if (old.length > 0) return old;
+  const single = Deno.env.get(custom) ?? "";
+  if (single.length > 0) return single;
+  try {
+    const dict = JSON.parse(Deno.env.get(autoDict) ?? "{}") as Record<
+      string,
+      unknown
+    >;
+    const named = dict["default"];
+    if (typeof named === "string" && named.length > 0) return named;
+  } catch (_) {}
+  return "";
+}
+
+const SUPABASE_SERVICE_ROLE_KEY = _pickApiKey("SUPABASE_SECRET_KEYS", "SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY");
 
 const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false },
@@ -108,9 +128,14 @@ serve(async (req) => {
     }
 
     // M-23: Persistentes DB-Rate-Limit (überlebt Cold Starts).
+    // 240/h statt 60/h: Der Client pollt beim Warten auf ein Partner-
+    // Bundle (404) ~2 GETs je 75 s (Partner-Fetch + Self-Heal-Check des
+    // eigenen Bundles) - mit 60/h griff das Limit nach ~40 Min Wartezeit
+    // und erzeugte ein scheinbares "der Fehler kommt wieder" (429).
+    // Missbrauchsschutz bleibt der In-Memory-Burst-Limiter (30/min).
     const { data: dbRateOk } = await supabaseAdmin.rpc("consume_rate_limit", {
       p_key: `prekeys_get:${callerAuth.user.id}`,
-      p_max_hits: 60,
+      p_max_hits: 240,
       p_window_seconds: 3600,
     });
     if (dbRateOk !== true) {

@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.0";
 
 // match-media: Liefert signierte URLs für Partner-Medien (Intro-Audio,
 // Avatar) NUR wenn eine Berechtigung besteht. Die Dateien liegen im
@@ -22,7 +22,27 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // ("existiert irgendein Match des Ziels" statt "Match zwischen uns").
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+// API-Keys: Legacy-JWTs (anon/service_role) ZUERST - funktionierende
+// Konfiguration (Grants live verifiziert). Die neuen sb_-Keys sind nur
+// RESERVE (sie mappen nicht auf service_role-Rechte - live bewiesen).
+// Legacy im Dashboard erst deaktivieren, wenn sb_ nachweislich trägt.
+function _pickApiKey(autoDict: string, custom: string, legacy: string): string {
+  const old = Deno.env.get(legacy) ?? "";
+  if (old.length > 0) return old;
+  const single = Deno.env.get(custom) ?? "";
+  if (single.length > 0) return single;
+  try {
+    const dict = JSON.parse(Deno.env.get(autoDict) ?? "{}") as Record<
+      string,
+      unknown
+    >;
+    const named = dict["default"];
+    if (typeof named === "string" && named.length > 0) return named;
+  } catch (_) {}
+  return "";
+}
+
+const SUPABASE_SERVICE_ROLE_KEY = _pickApiKey("SUPABASE_SECRET_KEYS", "SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY");
 const BUCKET = "avatars";
 const URL_EXPIRES_IN = 3600;
 
@@ -93,6 +113,9 @@ serve(async (req) => {
     const body = await req.json();
     const targetUserId = (body.targetUserId ?? "").toString();
     const kind = (body.kind ?? "").toString();
+    // Optionaler Dateipfad (nur Avatar-Hauptbild + max. 3 Zusatzbilder des
+    // Ziels, 107). Default: avatar.jpg (Quiz-Flow, abwärtskompatibel).
+    const requestedPath = typeof body.path === "string" ? body.path : "";
 
     if (
       !UUID_REGEX.test(targetUserId) ||
@@ -103,10 +126,23 @@ serve(async (req) => {
     if (targetUserId === user.id) {
       return json({ error: "Ungültige Parameter" }, 400);
     }
+    // Pfad-Allowlist gegen Storage-Pfad-Traversal (M6): strikt
+    // "<targetUuid>/(avatar.jpg|photos/1..3.jpg)".
+    const pathAllowlist = new RegExp(
+      `^${targetUserId}/(avatar\\.jpg|photos/[123]\\.jpg)$`,
+    );
+    const filePath =
+      kind === "avatar"
+        ? (requestedPath !== "" ? requestedPath : `${targetUserId}/avatar.jpg`)
+        : `${targetUserId}/intro.m4a`;
+    if (kind === "avatar" && !pathAllowlist.test(filePath)) {
+      return json({ error: "Ungültige Parameter" }, 400);
+    }
 
     if (kind === "avatar") {
       const match = await getMatchBetween(user.id, targetUserId);
       if (!match) {
+        console.log(`avatar 403: kein Match (caller=${user.id}, target=${targetUserId})`);
         return json({ error: "Kein Match" }, 403);
       }
       // Audit E2: Bei Find-your-Match-Matches wird das scharfe Foto erst
@@ -115,9 +151,51 @@ serve(async (req) => {
       if (match.created_via === "find_match") {
         const level = await quizUnlockLevel(match.id);
         if (level < 2) {
+          console.log(`avatar 403: Quiz-Lock (match=${match.id}, via=${match.created_via}, level=${level})`);
           return json({ error: "Quiz nicht bestanden" }, 403);
         }
       }
+      // 107: AES-Schlüssel/IV stammen aus der Profil-Zeile (Service-Role)
+      // und werden NUR an berechtigte Betrachter ausgeliefert - nie mehr
+      // über die Public-View. Legacy-Klartextpfade liefern key/iv = null.
+      // Fix: Bei mehreren Refs mit gleichem Pfad (Re-Uploads) den LETZTEN
+      // nehmen (Arrays werden appended, letzter = aktuellster Schlüssel).
+      const { data: targetProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("photos")
+        .eq("user_id", targetUserId)
+        .maybeSingle();
+      const refs = Array.isArray((targetProfile as { photos?: unknown } | null)?.photos)
+        ? ((targetProfile as { photos: unknown[] }).photos as string[])
+        : [];
+      const matching = refs.filter(
+        (r) => typeof r === "string" && r.split("|")[0] === filePath,
+      );
+      const ref = matching.length > 0 ? matching[matching.length - 1] : undefined;
+      let keyB64: string | null = null;
+      let ivB64: string | null = null;
+      if (typeof ref === "string") {
+        const parts = ref.split("|");
+        if (parts.length >= 3) {
+          keyB64 = parts[1] || null;
+          ivB64 = parts[2] || null;
+        }
+      }
+
+      const { data: signed, error } = await supabaseAdmin.storage
+        .from(BUCKET)
+        .createSignedUrl(filePath, URL_EXPIRES_IN);
+
+      if (error || !signed) {
+        return json({ error: "Datei nicht gefunden" }, 404);
+      }
+
+      return json({
+        url: signed.signedUrl,
+        expiresIn: URL_EXPIRES_IN,
+        keyB64,
+        ivB64,
+      });
     } else {
       // Intro: Zielprofil muss existieren und eine Vorstellung haben.
       const { data: target } = await supabaseAdmin
@@ -130,13 +208,12 @@ serve(async (req) => {
       }
     }
 
-    const filePath = kind === "avatar"
-      ? `${targetUserId}/avatar.jpg`
-      : `${targetUserId}/intro.m4a`;
+    // Nur noch Intro erreicht diese Stelle (Avatar returned oben früh).
+    const introPath = `${targetUserId}/intro.m4a`;
 
     const { data: signed, error } = await supabaseAdmin.storage
       .from(BUCKET)
-      .createSignedUrl(filePath, URL_EXPIRES_IN);
+      .createSignedUrl(introPath, URL_EXPIRES_IN);
 
     if (error || !signed) {
       return json({ error: "Datei nicht gefunden" }, 404);

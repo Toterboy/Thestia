@@ -1,8 +1,28 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.0";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+// API-Keys: Legacy-JWTs (anon/service_role) ZUERST - funktionierende
+// Konfiguration (Grants live verifiziert). Die neuen sb_-Keys sind nur
+// RESERVE (sie mappen nicht auf service_role-Rechte - live bewiesen).
+// Legacy im Dashboard erst deaktivieren, wenn sb_ nachweislich trägt.
+function _pickApiKey(autoDict: string, custom: string, legacy: string): string {
+  const old = Deno.env.get(legacy) ?? "";
+  if (old.length > 0) return old;
+  const single = Deno.env.get(custom) ?? "";
+  if (single.length > 0) return single;
+  try {
+    const dict = JSON.parse(Deno.env.get(autoDict) ?? "{}") as Record<
+      string,
+      unknown
+    >;
+    const named = dict["default"];
+    if (typeof named === "string" && named.length > 0) return named;
+  } catch (_) {}
+  return "";
+}
+
+const SUPABASE_SERVICE_ROLE_KEY = _pickApiKey("SUPABASE_SECRET_KEYS", "SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY");
 const INTERNAL_SECRET = Deno.env.get("INTERNAL_SECRET") ?? "";
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !INTERNAL_SECRET) {
@@ -94,6 +114,24 @@ serve(async (req) => {
       });
     }
 
+    // Bereichsvalidierung (Fix): Ohne Clamp landeten invalide Koordinaten
+    // im Profil und dienten danach als Basislinie für Speed-Checks.
+    if (
+      newLatitude < -90 || newLatitude > 90 ||
+      newLongitude < -180 || newLongitude > 180
+    ) {
+      return new Response(JSON.stringify({ error: "Ungültige Eingabedaten." }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Caller-JWT für den internen check-location-Aufruf weiterreichen
+    // (dort JWT-Bindung zusätzlich zum Secret).
+    const forwardAuth = authHeader.startsWith("Bearer ")
+      ? authHeader
+      : `Bearer ${token}`;
+
     // 1) Alte Position aus der Datenbank lesen
     const { data, error } = await supabaseAdmin
       .from("profiles")
@@ -165,7 +203,7 @@ serve(async (req) => {
     if (previousCheckedAt) {
       const elapsedMs =
         Date.now() - new Date(previousCheckedAt).getTime();
-      if (Number.isFinite(elapsedMs) && elapsedMs > 0) {
+        if (Number.isFinite(elapsedMs) && elapsedMs > 0) {
         const { data: speedCheck } = await supabaseAdmin.functions.invoke(
           "check-location",
           {
@@ -175,7 +213,10 @@ serve(async (req) => {
               lat2: newLatitude,
               lon2: newLongitude,
             },
-            headers: { "x-internal-secret": INTERNAL_SECRET },
+            headers: {
+              "x-internal-secret": INTERNAL_SECRET,
+              "Authorization": forwardAuth,
+            },
           },
         );
         const distanceKm =
@@ -225,6 +266,7 @@ serve(async (req) => {
           },
           headers: {
             "x-internal-secret": INTERNAL_SECRET,
+            "Authorization": forwardAuth,
           },
         },
       );

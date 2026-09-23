@@ -28,11 +28,31 @@
 //   FIREBASE_SERVICE_ACCOUNT_JSON – Service-Account-Schlüssel (siehe oben)
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.0";
 
 const WISP_INTERNAL_SECRET = Deno.env.get("WISP_INTERNAL_SECRET") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+// API-Keys: Legacy-JWTs (anon/service_role) ZUERST - funktionierende
+// Konfiguration (Grants live verifiziert). Die neuen sb_-Keys sind nur
+// RESERVE (sie mappen nicht auf service_role-Rechte - live bewiesen).
+// Legacy im Dashboard erst deaktivieren, wenn sb_ nachweislich trägt.
+function _pickApiKey(autoDict: string, custom: string, legacy: string): string {
+  const old = Deno.env.get(legacy) ?? "";
+  if (old.length > 0) return old;
+  const single = Deno.env.get(custom) ?? "";
+  if (single.length > 0) return single;
+  try {
+    const dict = JSON.parse(Deno.env.get(autoDict) ?? "{}") as Record<
+      string,
+      unknown
+    >;
+    const named = dict["default"];
+    if (typeof named === "string" && named.length > 0) return named;
+  } catch (_) {}
+  return "";
+}
+
+const SUPABASE_SERVICE_ROLE_KEY = _pickApiKey("SUPABASE_SECRET_KEYS", "SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY");
 
 const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
@@ -134,18 +154,24 @@ async function isRateLimited(callerId: string): Promise<boolean> {
 
 /** Serverseitig generierte Texte pro kind (kein client-kontrollierter Text). */
 const clientTextsByKind: Record<string, { title: string; body: string }> = {
-  messages: { title: "Wisp", body: "Du hast eine neue Nachricht erhalten." },
+  messages: { title: "WispDating", body: "Du hast eine neue Nachricht erhalten." },
   // v0.9.0-Feedback ("auf dem anderen Gerät passiert gar nichts"): Nach
   // einem QR-Scan/Like soll die gescannte Person einen Push erhalten.
   // Der Text ist serverseitig fix (kein Phishing), die E1-Beziehungs-
   // prüfung unten verlangt einen EIGENEN Like des Aufrufers an das Ziel.
-  likes: { title: "Wisp", body: "Jemand hat deine Vorstellung entdeckt." },
+  likes: { title: "WispDating", body: "Jemand hat deine Vorstellung entdeckt." },
 };
 
 /**
  * Audit E1: Clients dürfen nur Nutzer benachrichtigen, mit denen eine
  * reale Beziehung besteht (Match zwischen beiden ODER eigener Like an
- * das Ziel). Interne Trigger-Aufrufe sind davon ausgenommen.
+ * das Ziel ODER aktive Zufallschat-Session ODER offene Dating-Hour-
+ * Session). Interne Trigger-Aufrufe sind davon ausgenommen.
+ *
+ * NUTZERWUNSCH "Ich muss im Chat sein, um Nachrichten zu erhalten":
+ * Zufallschat-/Dating-Hour-Partner sind KEINE Matches - ohne diese
+ * Erweiterung wurde ihr Nachrichten-Push mit no_relationship
+ * abgelehnt, obwohl eine aktive Session existiert.
  */
 async function hasRelationshipBetween(
   callerId: string,
@@ -162,6 +188,33 @@ async function hasRelationshipBetween(
       .limit(1)
       .maybeSingle();
     if (data) return true;
+
+    // Aktive Zufallschat-Session zwischen beiden (Paarung in BEIDEN
+    // Richtungen möglich).
+    const { data: randomSession } = await admin
+      .from("random_chat_sessions")
+      .select("id")
+      .eq("status", "active")
+      .or(
+        `and(user_a.eq.${callerId},user_b.eq.${targetUserId}),` +
+          `and(user_a.eq.${targetUserId},user_b.eq.${callerId})`,
+      )
+      .limit(1)
+      .maybeSingle();
+    if (randomSession) return true;
+
+    // Offene Dating-Hour-Session zwischen beiden.
+    const { data: dhSession } = await admin
+      .from("dating_hour_session")
+      .select("id")
+      .is("ended_at", null)
+      .or(
+        `and(user_a.eq.${callerId},user_b.eq.${targetUserId}),` +
+          `and(user_a.eq.${targetUserId},user_b.eq.${callerId})`,
+      )
+      .limit(1)
+      .maybeSingle();
+    if (dhSession) return true;
 
     // Noch kein Match: ein eigener (auch unbeantworteter) Like genügt,
     // damit Like-Benachrichtigungen zustellen können.
@@ -302,10 +355,17 @@ serve(async (req) => {
   // Nur internen Aufrufen (DB-Trigger) ist es erlaubt, Titel/Text frei zu
   // wählen. Clients bekommen feste, serverseitig generierte Texte - das
   // verhindert Push-Phishing mit beliebigem Inhalt im App-Look.
+  // Rate-Limit gilt für BEIDE Zweige (interner Zweig mit globalem Bucket:
+  // Secret-Leak darf nicht zu unbegrenztem Push führen).
   let title: string;
   let text: string;
   if (isInternal) {
-    title = String(body.title ?? "Wisp").slice(0, 100);
+    if (await isRateLimited("internal:global")) {
+      return new Response(JSON.stringify({ ok: false, reason: "rate_limited" }), {
+        status: 200, headers: { "Content-Type": "application/json" },
+      });
+    }
+    title = String(body.title ?? "WispDating").slice(0, 100);
     text = String(body.body ?? "").slice(0, 200);
   } else {
     const fixed = clientTextsByKind[kind];
@@ -380,7 +440,14 @@ serve(async (req) => {
       const upResp = await fetch(upEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, message: text }),
+        body: JSON.stringify({
+          title,
+          message: text,
+          kind,
+          from_user_id: isInternal
+            ? String((body as Record<string, unknown>).from_user_id ?? "")
+            : callerId,
+        }),
       });
       if (!upResp.ok) {
         console.error("UnifiedPush-Fehler:", upResp.status, await upResp.text());
@@ -419,6 +486,14 @@ serve(async (req) => {
     const projectId = (JSON.parse(serviceAccount) as { project_id?: string }).project_id;
     if (!projectId) throw new Error("project_id fehlt im Service-Account");
 
+    // NUTZERWUNSCH ("Benachrichtigung fehlt, wenn App offen"): Die App
+    // zeigt FCM-Nachrichten im VORDERGRUND selbst an - dafür braucht sie
+    // die Metadaten (kind + Absender), um den push im offenen Chat des
+    // Absenders zu unterdrücken. Nur Metadaten (keine Inhalte, E2E).
+    const fromUserId = isInternal
+      ? String((body as Record<string, unknown>).from_user_id ?? "")
+      : callerId;
+
     const resp = await fetch(
       `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
       {
@@ -431,6 +506,7 @@ serve(async (req) => {
           message: {
             token: fcmToken,
             notification: { title, body: text },
+            data: { kind: kind, from_user_id: fromUserId },
             android: {
               priority: "high",
               // WICHTIG: Ohne icon zeigt Android in der Statusleiste das

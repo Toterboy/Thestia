@@ -79,6 +79,14 @@ verify_jwt = false
 [functions.notify-user]
 verify_jwt = false
 
+# cancel-registration: Abbruch einer UNBESTAETIGTEN Registrierung vom
+# E-Mail-Bestätigungs-Screen. Der Aufrufer hat bewusst KEIN JWT (ohne
+# Bestätigung gibt es keine Session) - die Inhaberschaft wird im Code
+# über das Registrierungs-Passwort nachgewiesen. Nur unbestätigte
+# Accounts sind löschbar (Rate-Limit pro E-Mail im Code).
+[functions.cancel-registration]
+verify_jwt = false
+
 # request-unban: Entsperrungsantrag fuer gesperrte E-Mail-Adressen.
 # Der Nutzer ist bewusst NICHT eingeloggt (Konto gesperrt) -> verify_jwt
 # deaktiviert. Eigene Absicherung in der Funktion: nur Eintraege aus

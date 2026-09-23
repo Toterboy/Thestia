@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.0";
 
 // ---------------------------------------------------------------------------
 // WICHTIG: Diese Funktion wird AUSSCHLIESSLICH serverseitig ausgeführt.
@@ -6,7 +7,27 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // ---------------------------------------------------------------------------
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+// API-Keys: Legacy-JWTs (anon/service_role) ZUERST - funktionierende
+// Konfiguration (Grants live verifiziert). Die neuen sb_-Keys sind nur
+// RESERVE (sie mappen nicht auf service_role-Rechte - live bewiesen).
+// Legacy im Dashboard erst deaktivieren, wenn sb_ nachweislich trägt.
+function _pickApiKey(autoDict: string, custom: string, legacy: string): string {
+  const old = Deno.env.get(legacy) ?? "";
+  if (old.length > 0) return old;
+  const single = Deno.env.get(custom) ?? "";
+  if (single.length > 0) return single;
+  try {
+    const dict = JSON.parse(Deno.env.get(autoDict) ?? "{}") as Record<
+      string,
+      unknown
+    >;
+    const named = dict["default"];
+    if (typeof named === "string" && named.length > 0) return named;
+  } catch (_) {}
+  return "";
+}
+
+const SUPABASE_SERVICE_ROLE_KEY = _pickApiKey("SUPABASE_SECRET_KEYS", "SUPABASE_SECRET_KEY", "SUPABASE_SERVICE_ROLE_KEY");
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error("SUPABASE_URL und SUPABASE_SERVICE_ROLE_KEY müssen als Secrets gesetzt sein.");
@@ -69,12 +90,47 @@ serve(async (req) => {
     });
   }
 
+  // JWT-Bindung (Fix: reines Secret ohne Nutzer-Kontext): Der interne
+  // Aufrufer (process-location-check) reicht das User-JWT weiter; es muss
+  // gültig sein. Damit ist die Funktion selbst bei Secret-Leak nicht mehr
+  // frei als anonymes Rechen-Orakel aufrufbar.
+  const authClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+  const callerToken = (req.headers.get("Authorization") ?? "").replace(
+    /^Bearer\s+/i,
+    "",
+  );
+  if (!callerToken) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  const { data: { user: caller }, error: callerError } =
+    await authClient.auth.getUser(callerToken);
+  if (callerError || !caller) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const body = (await req.json()) as CheckLocationRequest;
     const { lat1, lon1, lat2, lon2 } = body;
 
     if (
       [lat1, lon1, lat2, lon2].some((v) => v == null || isNaN(v))
+    ) {
+      return new Response(JSON.stringify({ error: "Ungültige Eingabedaten." }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    if (
+      lat1 < -90 || lat1 > 90 || lat2 < -90 || lat2 > 90 ||
+      lon1 < -180 || lon1 > 180 || lon2 < -180 || lon2 > 180
     ) {
       return new Response(JSON.stringify({ error: "Ungültige Eingabedaten." }), {
         status: 400,
