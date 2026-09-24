@@ -4,8 +4,12 @@
 
 | Version | Support |
 | ------- | ------- |
-| 0.5.x   | ✅      |
-| < 0.5   | ❌      |
+| 0.9.0 und höher (Build 28+) | ✅ |
+| unter 0.9.0 (Build < 28) | ❌ (End of Support seit 24.09.2026) |
+
+Ältere Builds erhalten beim Start einen Update-Hinweis (serverseitiges
+Mindest-Build-Gate: `app_config.min_app_version_build = 28`,
+Migration 034/076). Details: [SUPPORT.md](SUPPORT.md).
 
 ## Schwachstellen melden
 
