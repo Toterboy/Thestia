@@ -173,6 +173,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   String _countryValue = 'Deutschland';
   bool _isDetectingLocation = false;
   String? _locationError;
+  // Debounce für die Stadt-Eingabe: GPS-Gegenprüfung erst bei Tipppause
+  // (vorher lief Geokodieren+GPS bei JEDEM Tastenanschlag).
+  Timer? _cityDebounce;
+  int _citySeq = 0;
   Future<Uint8List?>? _avatarBytesFuture;
   ProviderSubscription<UserProfile>? _profileSub;
 
@@ -406,7 +410,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     // auslösen. Der Microtask läuft erst NACH abgeschlossenem Unmount.
     _nsfwWarmupTimer?.cancel();
     _nsfwWarmupTimer = null;
-        final dirtyController = _dirtyController;
+    _cityDebounce?.cancel();
+    final dirtyController = _dirtyController;
     _dirtyController = null;
     if (dirtyController != null) {
       scheduleMicrotask(() {
@@ -1539,8 +1544,24 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                           ),
                   ),
                   onChanged: (v) {
+                    // Debounce: GPS-Gegenprüfung (Geokodieren + Fix) erst
+                    // bei 600-ms-Tipppause; nur die Antwort zur neuesten
+                    // Eingabe gilt (Sequenz-Token).
+                    _cityDebounce?.cancel();
+                    _citySeq++;
                     if (v.trim().isEmpty) return;
-                    _validateLocationAgainstGps(v.trim());
+                    final seq = _citySeq;
+                    final typed = v.trim();
+                    _cityDebounce = Timer(const Duration(milliseconds: 600),
+                        () {
+                      final current = _cityCtrl.text.trim();
+                      if (seq != _citySeq ||
+                          current.isEmpty ||
+                          current != typed) {
+                        return;
+                      }
+                      _validateLocationAgainstGps(current);
+                    });
                   },
                 ),
               ),

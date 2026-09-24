@@ -438,6 +438,9 @@ const Map<String, Map<String, String>> _strings = {
     'setup.locationError': 'Fehler bei der Standortermittlung: {error}',
     'setup.locationTooFar':
         'Der Ort liegt mehr als 15 km von deinem aktuellen Standort entfernt.',
+    'setup.locationNotFound':
+        'Ort nicht gefunden. Bitte schreibe ihn so, wie er auf einer Karte '
+        'heißt (z. B. "Berlin").',
     // Setup: Seiten-Inhalte
     'setupp.visibilitySub':
         'Wer darf dein Profil sehen? Wie soll die App aussehen?',
@@ -4087,6 +4090,9 @@ const Map<String, Map<String, String>> _strings = {
     'setup.locationError': 'Location detection failed: {error}',
     'setup.locationTooFar':
         'The place is more than 15 km away from your current location.',
+    'setup.locationNotFound':
+        'Place not found. Please spell it the way it appears on a map '
+        '(e.g. "Berlin").',
     // Setup: page content
     'setupp.visibilitySub':
         'Who may see your profile? How should the app look?',

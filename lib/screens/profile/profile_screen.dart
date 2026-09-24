@@ -95,19 +95,41 @@ class ProfileScreen extends ConsumerWidget {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),
-              if (profile.personalityType != null) ...[
+              // Verifiziert-Badge direkt neben dem Persönlichkeitstyp
+              // (Nutzerwunsch; Layout wie im Profil-Detail-Screen).
+              if (profile.isVerified || profile.personalityType != null) ...[
                 const SizedBox(height: 4),
                 Center(
-                  child: Chip(
-                    label: Text(
-                        '${L10n.t(context, 'profile.typePrefix')} ${profile.personalityType}'),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (profile.isVerified)
+                        Tooltip(
+                          message: L10n.t(context, 'verify.badge'),
+                          child: Icon(
+                            Icons.verified,
+                            size: 20,
+                            color: Colors.lightBlue.shade400,
+                          ),
+                        ),
+                      if (profile.isVerified && profile.personalityType != null)
+                        const SizedBox(width: 6),
+                      if (profile.personalityType != null)
+                        Chip(
+                          label: Text(
+                              '${L10n.t(context, 'profile.typePrefix')} ${profile.personalityType}'),
+                        ),
+                    ],
                   ),
                 ),
               ],
-              // Verifizierungs-Status (v0.9.1): Badge, Prüfung läuft oder
+              // Verifizierungs-Status (v0.9.1): Prüfung läuft oder
               // Einstieg in den Video-Flow (Konto bleibt immer nutzbar).
-              const SizedBox(height: 8),
-              const _VerificationStatusCard(),
+              // Das Badge selbst steht oben neben dem Persönlichkeitstyp.
+              if (!profile.isVerified) ...[
+                const SizedBox(height: 8),
+                const _VerificationStatusCard(),
+              ],
               const SizedBox(height: 16),
               Card(
                 child: Padding(
@@ -492,12 +514,13 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-/// Card mit aktuellem Mood of the Day und Button zum Ändern.
 /// Verifizierungs-Status des eigenen Profils (v0.9.1).
 ///
-/// Verifiziert -> Badge. Eingereicht, aber noch kein Badge -> "Prüfung
-/// läuft" (Konto bleibt voll nutzbar). Sonst Einstieg in den Video-Flow
-/// mit lokaler KI-Triage (Modell auf dem Gerät, sonst manuelle Queue).
+/// Der Verifiziert-Badge steht oben in der Kopfzeile neben dem
+/// Persönlichkeitstyp (Nutzerwunsch) - hier nur noch der Rest:
+/// Eingereicht, aber noch kein Badge -> "Prüfung läuft" (Konto bleibt
+/// voll nutzbar). Sonst Einstieg in den Video-Flow mit lokaler
+/// KI-Triage (Modell auf dem Gerät, sonst manuelle Queue).
 class _VerificationStatusCard extends ConsumerWidget {
   const _VerificationStatusCard();
 
@@ -505,12 +528,8 @@ class _VerificationStatusCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(profileProvider);
     if (profile.isVerified) {
-      return Center(
-        child: Chip(
-          avatar: const Icon(Icons.verified, size: 18),
-          label: Text(L10n.t(context, 'verify.badge')),
-        ),
-      );
+      // Badge steht oben neben dem Persönlichkeitstyp - hier nichts.
+      return const SizedBox.shrink();
     }
     return FutureBuilder<bool>(
       future: _submittedFlag(ref),

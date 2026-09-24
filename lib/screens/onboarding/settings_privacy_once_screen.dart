@@ -59,6 +59,13 @@ class _SettingsPrivacyOnceScreenState
   bool _isDetectingLocation = false;
   String? _locationError;
   String? _locationValidationError;
+  // Debounce für die Orts-Eingabe: Geokodieren erst bei Tipppause.
+  // Vorher lief der Platform-Geocoder bei JEDEM Tastenanschlag und
+  // brandete Teil-Eingaben ("Berl") fälschlich als Fehler - inklusive
+  // Löschung des getippten Texts.
+  Timer? _locationDebounce;
+  // Sequenz-Token: Nur die Antwort zur NEUESTEN Eingabe gilt.
+  int _locationSeq = 0;
   static const int _pageCount = 8;
   static const int _profilePage = 1;
   static const int _introPage = 2;
@@ -109,6 +116,7 @@ class _SettingsPrivacyOnceScreenState
 
   @override
   void dispose() {
+    _locationDebounce?.cancel();
     _pageController.dispose();
     _locationCtrl.dispose();
     _stateCtrl.dispose();
@@ -467,15 +475,18 @@ class _SettingsPrivacyOnceScreenState
     }
   }
 
-  /// Geokodiert einen getippten Ort und liefert die Koordinaten (oder
-  /// null = ungültig). Mit GPS-Permission muss der Ort im 15-km-Umkreis
-  /// der echten Position liegen (Anti-Fake); ohne GPS gilt der
-  /// angegebene Ort direkt - so rechnet die Entfernung IMMER vom
-  /// angegebenen Standort, nicht von einer alten GPS-Position.
-  Future<Location?> _locateTypedPlace(String location) async {
+  /// Geokodiert einen getippten Ort. Ergebnis: [place] (null = Ort
+  /// unbekannt/Geocoder-Fehler) und [tooFar] (echte >15-km-Abweichung
+  /// von der GPS-Position). Mit GPS-Permission muss der Ort im
+  /// 15-km-Umkreis der echten Position liegen (Anti-Fake); ohne GPS
+  /// gilt der angegebene Ort direkt - so rechnet die Entfernung IMMER
+  /// vom angegebenen Standort, nicht von einer alten GPS-Position.
+  Future<({Location? place, bool tooFar})> _locateTypedPlace(
+    String location,
+  ) async {
     try {
       final List<Location> locations = await locationFromAddress(location);
-      if (locations.isEmpty) return null; // Ort existiert nicht
+      if (locations.isEmpty) return (place: null, tooFar: false);
       final manualPos = locations.first;
       final locationService = ref.read(locationVerificationServiceProvider);
       if (await locationService.hasLocationPermission()) {
@@ -487,12 +498,12 @@ class _SettingsPrivacyOnceScreenState
             manualPos.latitude,
             manualPos.longitude,
           );
-          if (distanceInMeters > 15000) return null;
+          if (distanceInMeters > 15000) return (place: null, tooFar: true);
         }
       }
-      return manualPos;
+      return (place: manualPos, tooFar: false);
     } catch (_) {
-      return null; // Bei Fehler: als ungueltig behandeln
+      return (place: null, tooFar: false); // Bei Fehler: als unbekannt behandeln
     }
   }
 
@@ -912,6 +923,8 @@ class _SettingsPrivacyOnceScreenState
                             ),
                             onChanged: (v) async {
                               final trimmed = v.trim();
+                              _locationDebounce?.cancel();
+                              _locationSeq++;
                               if (trimmed.isEmpty) {
                                 userPrefsNotifier.setLocation(null);
                                 _locationValidationError = null;
@@ -921,44 +934,75 @@ class _SettingsPrivacyOnceScreenState
                               // Text programmatisch gesetzt – kein zweiter
                               // GPS-Aufruf noetig (verhindert App-Hang).
                               if (_isDetectingLocation) return;
-                              final coords = await _locateTypedPlace(
-                                trimmed,
-                              );
-                              if (coords == null) {
-                                _locationCtrl.clear();
-                                userPrefsNotifier.setLocation(null);
-                                setState(() {
-                                  _locationValidationError = L10n.t(
-                                    context,
-                                    'setup.locationTooFar',
-                                  );
-                                });
-                                return;
-                              }
-                              // Angegebener Ort: Text + Koordinaten
-                              // persistieren (lokal + Server), damit
-                              // Entfernungen von HIER aus rechnen.
-                              userPrefsNotifier.setLocation(trimmed);
-                              await ref
-                                  .read(profileProvider.notifier)
-                                  .update(
-                                    city: trimmed,
-                                    locationLat: coords.latitude,
-                                    locationLng: coords.longitude,
-                                  );
-                              if (SupabaseService.isInitialized) {
-                                try {
-                                  await ref
-                                      .read(supabaseDatabaseServiceProvider)
-                                      .updateOwnProfile({
-                                    'city': trimmed,
-                                    'location_lat': coords.latitude,
-                                    'location_lng': coords.longitude,
+                              // Debounce: Geokodieren erst bei 600-ms-
+                              // Tipppause - der Platform-Geocoder darf NICHT
+                              // bei jedem Tastenanschlag laufen (Teil-Eingaben
+                              // wie "Berl" wuerden sonst sofort als Fehler
+                              // erscheinen). Sequenz-Token: Nur die Antwort
+                              // zur neuesten Eingabe gilt.
+                              final seq = _locationSeq;
+                              final typed = trimmed;
+                              _locationDebounce =
+                                  Timer(const Duration(milliseconds: 600),
+                                      () async {
+                                final current = _locationCtrl.text.trim();
+                                if (seq != _locationSeq ||
+                                    current.isEmpty ||
+                                    current != typed) {
+                                  return;
+                                }
+                                final result =
+                                    await _locateTypedPlace(current);
+                                if (!mounted || seq != _locationSeq) return;
+                                if (_locationCtrl.text.trim() != current) {
+                                  return;
+                                }
+                                final place = result.place;
+                                if (place == null) {
+                                  // Getippten Text NICHT loeschen - der
+                                  // Nutzer tippt ggf. weiter. Nur klar
+                                  // unterscheiden: echt zu weit weg vs.
+                                  // Ort unbekannt.
+                                  userPrefsNotifier.setLocation(null);
+                                  setState(() {
+                                    _locationValidationError = L10n.t(
+                                      context,
+                                      result.tooFar
+                                          ? 'setup.locationTooFar'
+                                          : 'setup.locationNotFound',
+                                    );
                                   });
-                                } catch (_) {}
-                              }
-                              setState(() {
-                                _locationValidationError = null;
+                                  return;
+                                }
+                                // Angegebener Ort: Text + Koordinaten
+                                // persistieren (lokal + Server), damit
+                                // Entfernungen von HIER aus rechnen.
+                                userPrefsNotifier.setLocation(current);
+                                await ref
+                                    .read(profileProvider.notifier)
+                                    .update(
+                                      city: current,
+                                      locationLat: place.latitude,
+                                      locationLng: place.longitude,
+                                    );
+                                if (SupabaseService.isInitialized) {
+                                  try {
+                                    await ref
+                                        .read(supabaseDatabaseServiceProvider)
+                                        .updateOwnProfile({
+                                      'city': current,
+                                      'location_lat': place.latitude,
+                                      'location_lng': place.longitude,
+                                    });
+                                  } catch (_) {}
+                                }
+                                if (!mounted) return;
+                                if (_locationCtrl.text.trim() != current) {
+                                  return;
+                                }
+                                setState(() {
+                                  _locationValidationError = null;
+                                });
                               });
                             },
                           ),
