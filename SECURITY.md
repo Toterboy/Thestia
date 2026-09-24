@@ -84,12 +84,6 @@ Einige Punkte erfordern BETREIBER-Seitige Aktionen bzw. Entscheidungen:
 
 ### Zu bestätigen (aus dem Audit)
 
-- [ ] CAPTCHA ist im Supabase-Dashboard aktiviert (Auth → CAPTCHA,
-      Anbieter Turnstile/hCaptcha + Secret passend zu `constants.dart`).
-- [ ] Dashboard-Option „Sign out other sessions on password change“ geprüft
-      (Client macht jetzt Global-SignOut selbst, M-13).
-- [ ] Das in Git-Historie dokumentierte, kompromittierte
-      `WISP_INTERNAL_SECRET` wurde rotiert (Migration 029/040).
 - [ ] Leaf-Zertifikats-Pins vor Ablauf aktualisieren:
       `dart run tool/rotate_cert_pins.dart`.
 
