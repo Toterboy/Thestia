@@ -1,5 +1,8 @@
 # WispDating v0.8.0 – Release Notes
 
+> **⚠️ End of Support (seit 24.09.2026):** Diese Version wird **nicht mehr unterstützt** (Bug- und Security-Fixes eingestellt). Bitte auf **v0.9.0 oder neuer** aktualisieren – siehe [SUPPORT.md](../../SUPPORT.md).
+
+
 **Geschmack & Matching** – der große Feature-Meilenstein.
 
 ## Neu

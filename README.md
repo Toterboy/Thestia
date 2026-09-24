@@ -70,10 +70,22 @@ WispDating ist für Android konzipiert (iOS/Web/Desktop folgen) und basiert auf 
 
 | Variante | Datei | Push |
 | --- | --- | --- |
-| Standard (empfohlen) | `WispDating-v0.8.0-play.apk` | Firebase/FCM |
-| Google-frei (F-Droid-Stil) | `WispDating-v0.8.0-fdroid.apk` | optional via UnifiedPush |
+| Standard (empfohlen) | `WispDating-v0.9.0-play.apk` | Firebase/FCM |
+| Google-frei (F-Droid-Stil) | `WispDating-v0.9.0-fdroid.apk` | optional via UnifiedPush |
 
-Beide finden sich unter [Releases](https://github.com/Toterboy/Wisp-Datingapp/releases) (Build-Artefakte liegen lokal unter `releases/v0.8.0/`; dort zusätzlich pro-CPU-APKs (`-play-arm64`/`-play-armv7`, ~77 MB) und Admin-Builds im Unterordner `admin/`, die nicht für die Verteilung bestimmt sind). Hinweis: Beide Varianten nutzen dieselbe App-ID und können nicht parallel installiert werden.
+Beide finden sich unter [Releases](https://github.com/Toterboy/Wisp-Datingapp/releases) (Build-Artefakte liegen lokal unter `releases/v0.9.0/`; dort zusätzlich pro-CPU-APKs (`-play-arm64`/`-play-armv7`, ~55 MB) und Admin-Builds im Unterordner `admin/`, die nicht für die Verteilung bestimmt sind). Hinweis: Beide Varianten nutzen dieselbe App-ID und können nicht parallel installiert werden.
+
+## Unterstützte Versionen
+
+| Version | Status |
+| --- | --- |
+| v0.9.0 und höher (Build 28+) | **Unterstützt** – Bug-Reports willkommen, Security-Fixes |
+| unter v0.9.0 (Build < 28) | **End of Support** (seit 24.09.2026) – keine Fixes mehr, bitte aktualisieren |
+
+Ältere Builds werden über das serverseitige Mindest-Build-Gate
+(`app_config.min_app_version_build`, Migration 034/076) markiert: Liegt der
+installierte Build darunter, zeigt die App beim Start einen Update-Hinweis.
+Details: [SUPPORT.md](SUPPORT.md).
 
 ---
 

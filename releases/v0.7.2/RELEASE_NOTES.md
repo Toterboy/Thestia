@@ -1,5 +1,8 @@
 # WispDating v0.7.2-Beta – Release Notes
 
+> **⚠️ End of Support (seit 24.09.2026):** Diese Version wird **nicht mehr unterstützt** (Bug- und Security-Fixes eingestellt). Bitte auf **v0.9.0 oder neuer** aktualisieren – siehe [SUPPORT.md](../../SUPPORT.md).
+
+
 Das Dating-Hour-Update: Die Dating Hour startet jetzt zur richtigen Zeit,
 ist fairer (keine Wiederholungen, Mindestteilnehmer) und der Admin-Bereich
 ist aufgeräumt. Danke an alle Tester von v0.7.1!

@@ -33,12 +33,23 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Reste). Erhalten bleiben nur der irreversible Tombstone-Hash,
   Admin-Auditspalten und die Sperrliste.
 - **API-Keys umgestellt (Legacy anon/service_role -> Publishable/
-  Secret)**: Client nutzt `SUPABASE_PUBLISHABLE_KEY` (Fallback
-  ANON_KEY), alle 18 Edge Functions bevorzugen die auto-
-  provisionierten Dicts (`SUPABASE_SECRET_KEYS`/`SUPABASE_-
-  PUBLISHABLE_KEYS`, supabase-js 2.44.0) mit Legacy-Fallback.
-  Reihenfolge: deployen, neue Builds verteilen, DANN Legacy-Keys
-  im Dashboard deaktivieren.
+  Secret)**: Client liest nur noch `SUPABASE_PUBLISHABLE_KEY`, alle
+  18 Edge Functions nutzen ausschließlich die sb_-Quellen
+  (`SUPABASE_SECRET_KEY` / `SUPABASE_SECRET_KEYS`, supabase-js
+  2.44.0); alle Legacy-JWT-Fallbacks sind entfernt (inkl. Secret
+  `WISP_SERVICE_ROLE_KEY`). Legacy anon/service_role-Keys im
+  Dashboard deaktiviert; Migration 122 ergänzt die SELECT-Grants,
+  die PostgREST für Filter-DELETEs benötigt.
+- **Versions-Support**: v0.9.0 (Build 28) ist die unterste
+  unterstützte Version. v0.8.x und älter sind End-of-Support
+  (seit 24.09.2026, siehe [SUPPORT.md](SUPPORT.md)); sie erhalten
+  beim Start einen Update-Hinweis (serverseitig
+  `app_config.min_app_version_build = 28`).
+- **Behoben (Build 28)**: Standort-Eingabe (Onboarding + Profil):
+  Geokodieren läuft erst bei Tipppause (Debounce), der getippte
+  Text wird nicht mehr gelöscht, „Ort nicht gefunden" ist eine
+  eigene Meldung. Verifiziert-Badge steht im eigenen Profil neben
+  dem Persönlichkeitstyp.
 
 Server: Migrationen **086, 087 + 088** einspielen + Edge Functions
 `notify-user` erneut deployen.

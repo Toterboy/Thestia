@@ -1,4 +1,4 @@
-# WispDating v0.9.0-Beta – Release Notes (Kurzfassung)
+# WispDating v0.9.0-Beta – Release Notes
 
 **Transit Spark** – der Nahbereichs-Funke. Plus Server-Härtung und
 Entdecken-Neuaufbau.
@@ -40,3 +40,25 @@ Entdecken-Neuaufbau.
 - **Funken**: Serverseitige Matches (nie doppelt/einseitig),
   72-h-Auto-Kühlung. **Zufallschat**: Relay bei ICE-Failure.
 - **Login-Sperre** (10/10 Min), **Chat zuerst, Quiz später**.
+
+## Behoben (Nachtrag, Build 28)
+
+- **Standort-Eingabe**: „Ort liegt mehr als 15 km entfernt" erschien
+  direkt beim Tippen (Geokodieren lief bei JEDEM Tastenanschlag und
+  löschte den Text). Jetzt: Geokodieren erst bei Tipppause, der
+  getippte Text bleibt, „Ort nicht gefunden" ist eine eigene,
+  korrekte Meldung (gilt für Onboarding UND Profil-Bearbeitung).
+- **Verifiziert-Badge** steht jetzt direkt neben dem
+  Persönlichkeitstyp statt in einer eigenen Zeile darunter.
+- **Account-Löschen-Fix**: Migration 122 ergänzt fehlende
+  SELECT-Grants (PostgREST braucht sie für Filter-DELETEs) –
+  „Konto löschen" läuft seither fehlerfrei durch.
+
+## Unterstützte Versionen
+
+**v0.9.0 (Build 28) und höher** werden unterstützt. Alle älteren
+Versionen (v0.8.x und älter) sind **End of Support** (seit
+24.09.2026): keine Bug- oder Security-Fixes mehr, bitte
+aktualisieren. Ältere Builds erhalten beim Start automatisch einen
+Update-Hinweis (serverseitiges Mindest-Build-Gate). Siehe
+[SUPPORT.md](../../SUPPORT.md).
