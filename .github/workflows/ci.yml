@@ -86,3 +86,41 @@ jobs:
         run: >
           flutter build apk --debug
           --flavor fdroid --dart-define=FDROID=true
+
+  play-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Java 17 (Android-Toolchain)
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Flutter installieren
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.44.6
+          cache: true
+
+      # google-services.json ist gitignored (echte Firebase-Werte); der
+      # Debug-Build kommt mit dem Dummy-Beispiel aus - er muss nur
+      # KOMPILEIERBAR sein, nicht gegen echte Firebase-Projekte laufen.
+      - name: google-services.json aus Beispiel erzeugen
+        run: cp android/app/google-services.json.example android/app/google-services.json
+
+      - name: .env aus Beispiel erzeugen
+        run: cp .env.example .env
+
+      - name: Dependencies laden
+        run: flutter pub get
+
+      # Hält die Play-Variante dauerhaft kompilierbar (Pendant zu
+      # fdroid-build; kompiliert MIT Google-Services-Plugin).
+      - name: Play Debug-Build (mit Firebase-Plugin)
+        run: >
+          flutter build apk --debug
+          --flavor play

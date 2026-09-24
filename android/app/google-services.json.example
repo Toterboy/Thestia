@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "HIER_EINTRAGEN",
-    "project_id": "HIER_EINTRAGEN",
-    "storage_bucket": "wisp-a044f.firebasestorage.app"
+    "project_number": "123456789012",
+    "project_id": "wisp-ci-dummy",
+    "storage_bucket": "wisp-ci-dummy.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "HIER_EINTRAGEN",
+        "mobilesdk_app_id": "1:123456789012:android:0000000000000000",
         "android_client_info": {
           "package_name": "com.wisp.app"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "HIER_EINTRAGEN"
+          "current_key": "AIzaSyCI_DUMMY_KEY_REPLACE_ME"
         }
       ],
       "services": {
