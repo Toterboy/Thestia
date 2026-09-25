@@ -37,10 +37,28 @@ class MainActivity : FlutterActivity() {
         // FLAG_SECURE verhindert Screenshots und Screen-Recording.
         // Schützt die Privatsphäre: Keine Fotos/Chats anderer Nutzer
         // können via Screenshot unkontrolliert weitergegeben werden.
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_SECURE,
-            WindowManager.LayoutParams.FLAG_SECURE
-        )
+        // Ausnahme: Store-Screenshot-Builds (Manifest-Meta "allowScreenshots"
+        // via THESTIA_ALLOW_SCREENSHOTS=true) - NUR für eigene
+        // Play-Store-Bilder, niemals verteilen.
+        if (!screenshotsAllowed()) {
+            window.setFlags(
+                WindowManager.LayoutParams.FLAG_SECURE,
+                WindowManager.LayoutParams.FLAG_SECURE
+            )
+        }
+    }
+
+    private fun screenshotsAllowed(): Boolean {
+        return try {
+            val info = packageManager.getApplicationInfo(
+                packageName,
+                android.content.pm.PackageManager.GET_META_DATA
+            )
+            info.metaData?.getString("allowScreenshots") == "true" ||
+                info.metaData?.getBoolean("allowScreenshots") == true
+        } catch (_: Exception) {
+            false
+        }
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {

@@ -9,9 +9,9 @@
       "package_name": "com.thestia.app",
       "sha256_cert_fingerprints": [
         "37:AA:4F:6C:C1:DE:B8:F5:95:74:5E:AC:0A:CE:0A:19:C9:54:72:80:FC:74:8F:02:66:BD:D2:EC:7B:E9:55:72",
+        "37aa4f6cc1deb8f595745eac0ace0a19c9547280fc748f0266bdd2ec7be95572",
         "5A:B8:D0:D5:E5:1D:4C:69:C7:11:E3:12:02:A8:40:EA:DA:A8:30:5A:9D:EB:23:88:35:2A:CD:C1:5C:30:A9:79",
-        "37aa4f6cc1ddb8f595745eac0ace0a19c9547280fc748f0266bdd2ec7be95572",
-        "5ab8d0d5e51d4c69c711e31202a840eada8305a9deb2388352acd1c5c30a979"
+        "5ab8d0d5e51d4c69c711e31202a840eadaa8305a9deb2388352acdc15c30a979"
       ]
     }
   },

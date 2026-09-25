@@ -339,6 +339,9 @@ const Map<String, Map<String, String>> _strings = {
     'chatbg.stars': 'Sterne',
     'chatbg.waves': 'Wellen',
     'chatbg.custom': 'Eigenes Bild',
+    'chatbg.tooLarge':
+        'Bild zu groß (max. 8 MB), bitte ein kleineres wählen.',
+    'chatbg.badImage': 'Diese Datei ist kein unterstütztes Bild.',
     'paused.homeTitle': 'Dein Profil ist pausiert',
     'paused.homeBody':
         'Du bist für neue Personen unsichtbar. Tippen zum Entpausieren.',
@@ -2969,6 +2972,9 @@ const Map<String, Map<String, String>> _strings = {
     'chatbg.stars': 'Stars',
     'chatbg.waves': 'Waves',
     'chatbg.custom': 'Own picture',
+    'chatbg.tooLarge':
+        'Image too large (max. 8 MB), please choose a smaller one.',
+    'chatbg.badImage': 'This file is not a supported image.',
     'paused.homeTitle': 'Your profile is paused',
     'paused.homeBody':
         'You are invisible to new people. Tap to unpause.',

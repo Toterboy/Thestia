@@ -109,14 +109,17 @@ rp_id = "auth.thestia.de"
 # RP-Origins: HTTPS-Origin der RP-Domain + Android-App-Origin.
 # Den Android-Teil durch den BASE64(SHA256 deines Signing-Zertifikats)
 # ersetzen (siehe passkey-assets/README.md, Abschnitt 2/4).
-# WICHTIG (Fix Passkey-Fehler): Der bisherige Hash N6pPbMHeuPWVdF6sCs4KGclUcoD8dI8CZr3S7HvpVXI
-# passte zu KEINEM aktuellen Keystore. Korrekt sind (BASE64URL(SHA-1)):
-#   - Upload/Release-Key (bisher wisp-upload.keystore): eCBZhrV1MwP5k7i2doyQajeNoMg
-#   - Debug-Keystore (flutter run/Emulator):     gSZ8R1GNUntkLo4WCNPgAYShA9g
+# GROUND TRUTH per keytool verifiziert (25.09.2026):
+#   - Upload/Release-Key (wisp-upload.keystore, Alias upload):
+#     android:apk-key-hash:N6pPbMHeuPWVdF6sCs4KGclUcoD8dI8CZr3S7HvpVXI
+#   - Debug-Keystore (flutter run/Emulator):
+#     android:apk-key-hash:WrjQ1eUdTGnHEeMSAqhA6tqoMFqd6yOINSrNwVwwqXk
 # BEI SUPABASE CLOUD: Werte zusätzlich/zuständig im DASHBOARD pflegen
 # (Authentication -> WebAuthn/Passkeys -> Origins)!
+# Play-Store-Verteilung: ZUSÄTZLICH den Play-App-Signing-Hash eintragen
+# (Play Console -> Setup -> App-Integrität -> App-Signaturschlüssel).
 rp_origins = [
   "https://auth.thestia.de",
-  "android:apk-key-hash:eCBZhrV1MwP5k7i2doyQajeNoMg",
-  "android:apk-key-hash:gSZ8R1GNUntkLo4WCNPgAYShA9g",
+  "android:apk-key-hash:N6pPbMHeuPWVdF6sCs4KGclUcoD8dI8CZr3S7HvpVXI",
+  "android:apk-key-hash:WrjQ1eUdTGnHEeMSAqhA6tqoMFqd6yOINSrNwVwwqXk",
 ]

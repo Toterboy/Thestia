@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -31,6 +32,7 @@ import 'package:thestia/models/photo_moderation_models.dart';
 import 'package:thestia/models/report_models.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/theme/app_theme.dart';
+import 'package:thestia/utils/chat_backgrounds.dart';
 import 'package:thestia/utils/constants.dart';
 import 'package:thestia/utils/pinned_http_overrides.dart';
 
@@ -319,6 +321,16 @@ Future<void> _initializeServices() async {
   if (!hiveOk) {
     // Hive-abhängige Services deaktivieren/nicht initialisieren.
     // Die App läuft mit eingeschränkter Funktionalität weiter.
+  }
+
+  // App-Dokumentenverzeichnis für die Pfadprüfung des eigenen
+  // Chat-Hintergrundbildes binden (v0.9.1): Es werden ausschliesslich
+  // Bilder aus diesem Verzeichnis gerendert.
+  try {
+    final docs = await getApplicationDocumentsDirectory();
+    ChatBackgrounds.bindAppDocsDir(docs.path);
+  } catch (e) {
+    debugPrint('[MAIN] Doku-Verzeichnis nicht bindbar: $e');
   }
 }
 

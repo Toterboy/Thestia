@@ -50,6 +50,12 @@ android {
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.thestia.app"
+        // Screenshot-Freigabe NUR für Store-Screenshot-Builds: Über die
+        // Umgebungsvariable THESTIA_ALLOW_SCREENSHOTS=true setzt der Build
+        // ein Manifest-Flag, das FLAG_SECURE in MainActivity deaktiviert.
+        // Standard (auch alle Store-Releases): false = Screenshots blockiert.
+        manifestPlaceholders["allowScreenshots"] =
+            (System.getenv("THESTIA_ALLOW_SCREENSHOTS") == "true").toString()
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 28

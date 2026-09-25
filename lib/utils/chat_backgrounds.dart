@@ -29,6 +29,24 @@ class ChatBackgrounds {
 
   /// L10n-Schlüssel für die Anzeige-Namen.
   static String labelKey(String id) => 'chatbg.$id';
+
+  /// Wird beim App-Start einmalig gesetzt (sync, kein Future).
+  static String? _appDocsDir;
+
+  /// Bindet das App-Dokumentenverzeichnis für die Pfadprüfung des
+  /// eigenen Hintergrundbildes.
+  static void bindAppDocsDir(String dir) => _appDocsDir = dir;
+
+  /// Liegt [file] im App-Dokumentenverzeichnis und ist es der
+  /// Hintergrund-Dateiname? Schützt davor, dass ein manipulierter
+  /// Einstellungs-Import einen beliebigen Dateipfad als Hintergrund
+  /// einschleust.
+  static bool isOwnBackgroundFile(File file) {
+    final docs = _appDocsDir;
+    if (docs == null) return false;
+    return file.path.startsWith(docs) &&
+        file.path.endsWith('chat_bg_custom.jpg');
+  }
 }
 
 /// Zeigt den gewählten Chat-Hintergrund als füllendes Widget.
@@ -52,12 +70,22 @@ class ChatBackgroundView extends StatelessWidget {
   Widget build(BuildContext context) {
     if (backgroundId == ChatBackgrounds.custom && customPath != null) {
       final file = File(customPath!);
+      // Nur Bilder aus dem App-eigenen Verzeichnis rendern: Der Pfad
+      // stamm aus lokalen Einstellungen. Würde dort ein beliebiger Pfad
+      // (z. B. über einen manipulierten Datenimport) landen, sollen keine
+      // fremden Dateien als Hintergrund erscheinen.
+      if (!_isOwnAppFile(file)) return const SizedBox.shrink();
+      // cacheWidth begrenzt den dekodierten Bitmap-Speicher auf die
+      // tatsächlich benötigte Auflösung (statt voller Bildgröße).
+      final logicalWidth = MediaQuery.sizeOf(context).width;
       return Stack(
         fit: StackFit.expand,
         children: [
           Image.file(
             file,
             fit: BoxFit.cover,
+            cacheWidth: (logicalWidth * 2).round().clamp(320, 2400),
+            filterQuality: FilterQuality.medium,
             errorBuilder: (_, _, _) => const SizedBox.shrink(),
           ),
           // Overlay für Lesbarkeit in beiden Modi.
@@ -81,6 +109,11 @@ class ChatBackgroundView extends StatelessWidget {
       child: const SizedBox.expand(),
     );
   }
+
+  /// Liegt [file] im App-Dokumentenverzeichnis? Siehe
+  /// [ChatBackgrounds.isOwnBackgroundFile].
+  static bool _isOwnAppFile(File file) =>
+      ChatBackgrounds.isOwnBackgroundFile(file);
 }
 
 /// Zeichnet die Muster dezent (Alpha ~0.10), Kachelgröße 56 px.

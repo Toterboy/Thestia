@@ -37,7 +37,8 @@ SHA-256 via keytool verifiziert):
 
 | Schlüssel | SHA-256 | Origin (exakt so übernehmen) |
 |---|---|---|
-| **Upload-/Release-Key** | `37AA4F…5572` | `android:apk-key-hash:N6pPbMHeuPWVdF6sCs4KGclUcoD8dI8CZr3S7HvpVXI` |
+| **Upload-/Release-Key** | 37AA4F…5572 | ndroid:apk-key-hash:N6pPbMHeuPWVdF6sCs4KGclUcoD8dI8CZr3S7HvpVXI |
+| **Debug-Key** (nur lokal) | 5AB8D0…A979 | ndroid:apk-key-hash:WrjQ1eUdTGnHEeMSAqhA6tqoMFqd6yOINSrNwVwwqXk |
 | iOS/Web (Associated Domain) | – | `https://auth.thestia.de` |
 | Web-App (falls auf Root-Domain) | – | `https://thestia.de` |
 
@@ -55,8 +56,10 @@ Base64URL-Zeichen, 32 Byte). Damit war der Abgleich nie erfolgreich →
 ersetzen, Produktions-Umfang):**
 
 ```
-https://auth.thestia.de,android:apk-key-hash:N6pPbMHeuPWVdF6sCs4KGclUcoD8dI8CZr3S7HvpVXI
+https://auth.thestia.de,android:apk-key-hash:N6pPbMHeuPWVdF6sCs4KGclUcoD8dI8CZr3S7HvpVXI,android:apk-key-hash:WrjQ1eUdTGnHEeMSAqhA6tqoMFqd6yOINSrNwVwwqXk
 ```
+
+**Play-Store-Verteilung:** Von Play installierte Builds tragen den separaten Play-App-Signing-Key – dessen Hash (Play Console → Setup → App-Integrität) als dritten Origin ergänzen.
 
 **Achtung:** Wer ein APK mit einem NEUEN Keystore signiert (z. B. neuer
 Upload-Key nach Play-Key-Rotation), braucht einen ZUSÄTZLICHEN Origin mit

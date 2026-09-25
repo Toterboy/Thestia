@@ -2,12 +2,16 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/providers/settings_provider.dart';
 import 'package:thestia/utils/chat_backgrounds.dart';
+
+/// Dateiname des eigenen Hintergrundbildes im App-Verzeichnis.
+const String _customFileName = 'chat_bg_custom.jpg';
 
 /// Auswahl-Kachel für Chat-Hintergründe (v0.9.1).
 ///
@@ -20,14 +24,49 @@ class ChatBackgroundPicker extends ConsumerWidget {
 
   static final ImagePicker _picker = ImagePicker();
 
+  /// Harte Obergrenze für das Hintergrundbild: 8 MB. Darüber werden
+  /// weder Datei noch Bitmap-Speicher akzeptiert – ein decompression-Bomb
+  /// (winzige Datei, riesige Bitmap) würde sonst beim Rendern den
+  /// Speicher des Geräts sprengen.
+  static const int _maxBytes = 8 * 1024 * 1024;
+
+  /// Ziel-Kantenlänge beim Import. 1600 px reichen für jedes Display
+  /// (auch 4K) und begrenzen den Bitmap-Speicher auf ~10 MB.
+  static const int _targetPx = 1600;
+
   Future<void> _pickCustom(BuildContext context, WidgetRef ref) async {
     try {
-      final picked =
-          await _picker.pickImage(source: ImageSource.gallery);
-      if (picked == null) return;
+      final picked = await _picker.pickImage(source: ImageSource.gallery);
+      if (picked == null || !context.mounted) return;
+      final bytes = await picked.readAsBytes();
+      if (!context.mounted) return;
+      if (bytes.isEmpty || bytes.length > _maxBytes) {
+        _toast(context, 'chatbg.tooLarge');
+        return;
+      }
+      final decoded = img.decodePng(bytes) ?? img.decodeJpg(bytes);
+      if (decoded == null) {
+        _toast(context, 'chatbg.badImage');
+        return;
+      }
+      // Auf Zielgröße bringen (Aspect-Ratio bleibt erhalten) und als
+      // JPEG speichern: verkleinert die Datei und vereinheitlicht das
+      // Format – ein laterales Dekodieren ist so günstig wie möglich.
+      final scaled = decoded.width > _targetPx || decoded.height > _targetPx
+          ? img.copyResize(
+              decoded,
+              width: decoded.width >= decoded.height
+                  ? _targetPx
+                  : (decoded.width * _targetPx / decoded.height).round(),
+              height: decoded.height >= decoded.width
+                  ? _targetPx
+                  : (decoded.height * _targetPx / decoded.width).round(),
+              interpolation: img.Interpolation.average,
+            )
+          : decoded;
       final dir = await getApplicationDocumentsDirectory();
-      final target = File('${dir.path}/chat_bg_custom.jpg');
-      await File(picked.path).copy(target.path);
+      final target = File('${dir.path}/$_customFileName');
+      await target.writeAsBytes(img.encodeJpg(scaled, quality: 88));
       final notifier = ref.read(settingsProvider.notifier);
       await notifier.setChatBackgroundPath(target.path);
       await notifier.setChatBackground(ChatBackgrounds.custom);
@@ -45,13 +84,22 @@ class ChatBackgroundPicker extends ConsumerWidget {
     }
   }
 
+  void _toast(BuildContext context, String key) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(L10n.t(context, key)),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   Future<void> _removeCustom(BuildContext context, WidgetRef ref) async {
     final notifier = ref.read(settingsProvider.notifier);
     await notifier.setChatBackground(ChatBackgrounds.none);
     await notifier.setChatBackgroundPath(null);
     try {
       final dir = await getApplicationDocumentsDirectory();
-      final f = File('${dir.path}/chat_bg_custom.jpg');
+      final f = File('${dir.path}/$_customFileName');
       if (await f.exists()) await f.delete();
     } catch (_) {}
   }
