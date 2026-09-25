@@ -122,6 +122,13 @@ node_modules/
 # Screenshot-Goldens (regenerierbare Build-Artefakte, teils > 100 KB):
 # Neu erzeugen mit STORE_SHOTS=1 flutter test --update-goldens test/screenshots/
 test/screenshots/goldens/
+# Store-Screenshot-Renderer (v0.9.1) inkl. seiner Ausgaben: sind
+# Werbematerial, kein Quellcode - werden lokal via
+# tool/make_store_screenshots.py erzeugt und nicht veroeffentlicht.
+test/screenshots/store_v091_shots_test.dart
+test/screenshots/store_v091/
+fastlane/metadata/android/*/images/phoneScreenshots/
+releases/testapk/screenshots/
 
 # Plattform-Ephemeral-Ordner (Flutter-Tool, auto-generiert)
 **/Flutter/ephemeral/
