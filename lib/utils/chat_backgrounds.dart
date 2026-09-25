@@ -150,7 +150,7 @@ class _PatternPainter extends CustomPainter {
         for (var y = tile / 2; y < size.height + tile; y += tile) {
           final off = (row.isEven ? 0.0 : tile / 2);
           for (var x = tile / 2 + off; x < size.width + tile; x += tile) {
-            _heart(canvas, Offset(x, y), 9, paint);
+            _heart(canvas, Offset(x, y), 11, paint);
           }
           row++;
         }
@@ -184,15 +184,31 @@ class _PatternPainter extends CustomPainter {
     }
   }
 
-  /// Kleines Herz aus zwei Kreisen + Dreieck.
+  /// Herz aus der klassischen parametrischen Kurve
+  /// (x = 16 sin³t, y = 13 cos t − 5 cos 2t − 2 cos 3t − cos 4t).
+  /// Zwei Kreise + Dreieck lesen sich auf Kachelgröße als Flecken -
+  /// die echte Kurve ergibt ein klar erkennbares Herz.
   void _heart(Canvas canvas, Offset c, double s, Paint paint) {
-    canvas.drawCircle(Offset(c.dx - s * 0.35, c.dy - s * 0.2), s * 0.42, paint);
-    canvas.drawCircle(Offset(c.dx + s * 0.35, c.dy - s * 0.2), s * 0.42, paint);
-    final path = Path()
-      ..moveTo(c.dx - s * 0.72, c.dy)
-      ..lineTo(c.dx + s * 0.72, c.dy)
-      ..lineTo(c.dx, c.dy + s * 0.9)
-      ..close();
+    const steps = 64;
+    final path = Path();
+    // Kurve auf die Kachelmitte skalieren (Breite ~32 Einheiten -> s).
+    final k = s / 16.0;
+    for (var i = 0; i <= steps; i++) {
+      final t = i / steps * 2 * math.pi;
+      final x = 16 * math.pow(math.sin(t), 3);
+      final y = 13 * math.cos(t) -
+          5 * math.cos(2 * t) -
+          2 * math.cos(3 * t) -
+          math.cos(4 * t);
+      final px = c.dx + x * k;
+      final py = c.dy - y * k + s * 0.55; // optisch zentrieren
+      if (i == 0) {
+        path.moveTo(px, py);
+      } else {
+        path.lineTo(px, py);
+      }
+    }
+    path.close();
     canvas.drawPath(path, paint);
   }
 
