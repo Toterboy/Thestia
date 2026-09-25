@@ -6,7 +6,7 @@
     ],
     "target": {
       "namespace": "android_app",
-      "package_name": "com.wisp.app",
+      "package_name": "com.thestia.app",
       "sha256_cert_fingerprints": [
         "37:AA:4F:6C:C1:DE:B8:F5:95:74:5E:AC:0A:CE:0A:19:C9:54:72:80:FC:74:8F:02:66:BD:D2:EC:7B:E9:55:72",
         "5A:B8:D0:D5:E5:1D:4C:69:C7:11:E3:12:02:A8:40:EA:DA:A8:30:5A:9D:EB:23:88:35:2A:CD:C1:5C:30:A9:79",
@@ -21,7 +21,7 @@
     ],
     "target": {
       "namespace": "web",
-      "site": "https://auth.wispdating.de"
+      "site": "https://auth.thestia.de"
     }
   }
 ]

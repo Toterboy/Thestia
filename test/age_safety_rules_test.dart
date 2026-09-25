@@ -1,4 +1,4 @@
-import 'package:wisp/utils/age_safety_rules.dart';
+import 'package:thestia/utils/age_safety_rules.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

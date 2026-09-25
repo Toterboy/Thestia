@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wisp/utils/cert_pinning.dart';
+import 'package:thestia/utils/cert_pinning.dart';
 
 /// Unit-Tests für die Cert-Pinning-Konfiguration (DER-Hashes).
 void main() {

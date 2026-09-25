@@ -6,7 +6,7 @@
 ## Kontext
 
 Klassische Swipe-Apps belohnen oberflächliche Auswahl und erzeugen
-Selektionsdruck (Optimierung des eigenen Fotos). Beides soll WispDating
+Selektionsdruck (Optimierung des eigenen Fotos). Beides soll Thestia
 bewusst vermeiden – ohne Nutzer zu bevormunden.
 
 ## Entscheidung

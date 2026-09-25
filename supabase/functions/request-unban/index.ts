@@ -14,7 +14,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.0";
 
-const SUPPORT_EMAIL = "support@wispdating.de";
+const SUPPORT_EMAIL = "support@thestia.de";
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 // API-Keys: sb_-Keys (secret_jwt_template -> service_role). Nach
@@ -148,7 +148,7 @@ serve(async (req) => {
         <table width="480" cellpadding="0" cellspacing="0" style="max-width:480px;background:#fff8f5;border-radius:16px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.06)">
           <tr>
             <td style="background:linear-gradient(135deg,#ff8fab 0%,#ff6b9d 100%);padding:40px 30px;text-align:center">
-              <h1 style="color:#fff;font-size:28px;margin:0;font-weight:600;letter-spacing:1px">WispDating</h1>
+              <h1 style="color:#fff;font-size:28px;margin:0;font-weight:600;letter-spacing:1px">Thestia</h1>
             </td>
           </tr>
           <tr>
@@ -173,7 +173,7 @@ serve(async (req) => {
           <tr>
             <td style="background:#fdf0ee;padding:20px 30px;text-align:center">
               <p style="color:#b0b0b0;font-size:12px;margin:0">
-                WispDating &middot; Automatischer Entsperrungsantrag
+                Thestia &middot; Automatischer Entsperrungsantrag
               </p>
             </td>
           </tr>
@@ -192,8 +192,8 @@ serve(async (req) => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        sender: { email: "support@wispdating.de", name: "Wisp Entsperrungsantrag" },
-        to: [{ email: SUPPORT_EMAIL, name: "Wisp Support" }],
+        sender: { email: "support@thestia.de", name: "Thestia Entsperrungsantrag" },
+        to: [{ email: SUPPORT_EMAIL, name: "Thestia Support" }],
         subject: `Entsperrungsantrag – ${emailRaw}`,
         htmlContent,
       }),

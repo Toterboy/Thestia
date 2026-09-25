@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart' show WidgetsBinding, AppLifecycleState;
 
-import 'package:wisp/models/message.dart';
-import 'package:wisp/providers/chat_provider.dart';
-import 'package:wisp/services/random_chat_service.dart';
-import 'package:wisp/services/relay_service.dart';
-import 'package:wisp/services/supabase_service.dart';
+import 'package:thestia/models/message.dart';
+import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/services/random_chat_service.dart';
+import 'package:thestia/services/relay_service.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// Benachrichtigungs-Hook (vom App-Wurzel-Widget mit WidgetRef verdrahtet,
 /// da Ref != WidgetRef). `title` darf null sein (Hook ergänzt den

@@ -3,10 +3,10 @@ import 'dart:math' as math;
 
 import 'package:image/image.dart' as img;
 
-/// Erzeugt die Android-Branding-Assets aus dem WispDating-Basis-Icon
-/// (`assets/images/wispdating_icon_base.png`, EINZIGE Logo-Quelle):
+/// Erzeugt die Android-Branding-Assets aus dem Thestia-Basis-Icon
+/// (`assets/images/thestia_icon_base.png`, EINZIGE Logo-Quelle):
 ///
-///  1. `wisp_icon_foreground.png` – Adaptive-Icon-Foreground (Safe-Zone).
+///  1. `thestia_icon_foreground.png` – Adaptive-Icon-Foreground (Safe-Zone).
 ///  2. `drawable/notification_icon.png` – 96 px, weiß + Alpha (Android-
 ///     Statusleiste): helle Elemente des Logos werden weiß, der Rest
 ///     transparent. Fällt auf eine volle Kreissilhouette zurück, wenn zu
@@ -17,7 +17,7 @@ import 'package:image/image.dart' as img;
 ///
 /// Aufruf: dart run tool/generate_branding.dart
 void main() {
-  const roundPath = 'assets/images/wispdating_icon_base.png';
+  const roundPath = 'assets/images/thestia_icon_base.png';
   final src = img.decodePng(File(roundPath).readAsBytesSync());
   if (src == null) throw Exception('$roundPath konnte nicht gelesen werden');
 
@@ -35,7 +35,7 @@ void main() {
   for (final p in fgScaled) {
     fg.setPixel(p.x + fgOff, p.y + fgOff, p);
   }
-  File('assets/images/wisp_icon_foreground.png')
+  File('assets/images/thestia_icon_foreground.png')
       .writeAsBytesSync(img.encodePng(fg));
 
   // ---- 2) Notification-Icon (weiß + Alpha, 96 px, HERZ) ------------------
@@ -99,6 +99,6 @@ void main() {
   File('android/app/src/main/res/drawable/notification_icon.png')
       .writeAsBytesSync(img.encodePng(n));
 
-  stdout.writeln('Branding erzeugt (Quelle: wispdating_icon_base.png): '
+  stdout.writeln('Branding erzeugt (Quelle: thestia_icon_base.png): '
       'Adaptive-Foreground, Notification-Icon (weiss=$whitePixels px)');
 }

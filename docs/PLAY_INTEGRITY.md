@@ -20,7 +20,7 @@ unveränderte Play-Installationen auf integeren Geräten.
 Gefordert: `appRecognitionVerdict == PLAY_RECOGNIZED` UND
 `MEETS_DEVICE_INTEGRITY` oder `MEETS_STRONG_INTEGRITY` (reines
 `MEETS_BASIC_INTEGRITY` reicht nicht), Package
-`com.wisp.app`, Nonce-Gleichheit, Token-Alter < 10 Minuten.
+`com.thestia.app`, Nonce-Gleichheit, Token-Alter < 10 Minuten.
 
 ## Wichtig: Ohne Play-Eintrag bleibt das Feature stumm
 

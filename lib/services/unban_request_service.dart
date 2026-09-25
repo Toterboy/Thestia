@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wisp/services/auth_exception.dart';
-import 'package:wisp/services/supabase_service.dart';
+import 'package:thestia/services/auth_exception.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// Service für Entsperrungsanträge gesperrter E-Mail-Adressen.
 ///

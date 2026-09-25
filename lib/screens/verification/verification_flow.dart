@@ -9,16 +9,16 @@ import 'package:camera/camera.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:video_thumbnail/video_thumbnail.dart' as thumb;
 
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/providers/profile_provider.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/services/age_estimation_service.dart';
-import 'package:wisp/services/local_storage.dart';
-import 'package:wisp/services/play_integrity_service.dart';
-import 'package:wisp/services/verification_service.dart';
-import 'package:wisp/services/location_verification_service.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/widgets/ai_badge.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/services/age_estimation_service.dart';
+import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/play_integrity_service.dart';
+import 'package:thestia/services/verification_service.dart';
+import 'package:thestia/services/location_verification_service.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/widgets/ai_badge.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 /// Ergebnis der Verifizierung für den Abschluss-Screen (v0.9.1):

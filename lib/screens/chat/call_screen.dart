@@ -9,10 +9,10 @@ import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
 import 'package:flutter_webrtc/flutter_webrtc.dart';
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/data/icebreaker_catalog.dart';
-import 'package:wisp/services/p2p_chat_service.dart';
-import 'package:wisp/services/supabase_service.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/data/icebreaker_catalog.dart';
+import 'package:thestia/services/p2p_chat_service.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// ID des aktuell aktiven Anrufs (oder null).
 ///
@@ -305,7 +305,7 @@ class _CallScreenState extends ConsumerState<CallScreen> {
     try {
       final dir = await getTemporaryDirectory();
       final file = File(
-          '${dir.path}/wisp_call_${DateTime.now().millisecondsSinceEpoch}.m4a');
+          '${dir.path}/thestia_call_${DateTime.now().millisecondsSinceEpoch}.m4a');
       await file.writeAsBytes(record.data);
       if (_disposed) {
         try {
@@ -376,7 +376,7 @@ class _CallScreenState extends ConsumerState<CallScreen> {
 
       final dir = await getTemporaryDirectory();
       final path =
-          '${dir.path}/wisp_ptt_${DateTime.now().millisecondsSinceEpoch}.m4a';
+          '${dir.path}/thestia_ptt_${DateTime.now().millisecondsSinceEpoch}.m4a';
       await _recorder.start(
         const RecordConfig(
           encoder: AudioEncoder.aacLc,

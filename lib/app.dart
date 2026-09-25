@@ -4,14 +4,14 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/providers/chat_provider.dart';
-import 'package:wisp/providers/settings_provider.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/services/global_relay_inbox.dart';
-import 'package:wisp/services/notification_service.dart';
-import 'package:wisp/services/unified_push_service.dart';
-import 'package:wisp/theme/app_theme.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/services/global_relay_inbox.dart';
+import 'package:thestia/services/notification_service.dart';
+import 'package:thestia/services/unified_push_service.dart';
+import 'package:thestia/theme/app_theme.dart';
 
 /// Laufende Instanz des globalen Relay-Eingangs (für [App.dispose]).
 final globalRelayInboxProvider = StateProvider<GlobalRelayInbox?>((ref) => null);
@@ -131,7 +131,7 @@ class _AppState extends ConsumerState<App> {
     // notification-Sektion; Fallback: feste Servertexte.
     await ref.read(notificationServiceProvider).show(
       id: DateTime.now().millisecondsSinceEpoch & 0xFFFFFF,
-      title: title ?? 'WispDating',
+      title: title ?? 'Thestia',
       body: body ?? fallbacks[kindIndex].$1,
       channelId: fallbacks[kindIndex].$2,
       payload: null,
@@ -159,7 +159,7 @@ class _AppState extends ConsumerState<App> {
 
     final settings = ref.watch(settingsProvider);
     final router = ref.watch(routerProvider);
-    final theme = WispTheme.fromName(settings.themeName);
+    final theme = ThestiaTheme.fromName(settings.themeName);
     final locale = ref.watch(localeProvider);
 
     final brightness = settings.useDarkMode == null
@@ -167,7 +167,7 @@ class _AppState extends ConsumerState<App> {
         : (settings.useDarkMode! ? Brightness.dark : Brightness.light);
 
     return L10nScope(child: MaterialApp.router(
-      title: 'WispDating',
+      title: 'Thestia',
       debugShowCheckedModeBanner: false,
       locale: locale,
       // Audit/Fix: Delegates fuer de+en PFLICHT. Ohne sie unterstuetzt

@@ -2,13 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:wisp/models/user_profile.dart';
-import 'package:wisp/services/app_auth_service.dart';
-import 'package:wisp/services/auth_exception.dart';
-import 'package:wisp/services/encryption_service.dart';
-import 'package:wisp/services/passkey_auth.dart';
-import 'package:wisp/services/secure_storage.dart';
-import 'package:wisp/services/supabase_database_service.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/services/app_auth_service.dart';
+import 'package:thestia/services/auth_exception.dart';
+import 'package:thestia/services/encryption_service.dart';
+import 'package:thestia/services/passkey_auth.dart';
+import 'package:thestia/services/secure_storage.dart';
+import 'package:thestia/services/supabase_database_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Echte Authentifizierung über Supabase Auth (ersetzt den Mock [AuthService]).

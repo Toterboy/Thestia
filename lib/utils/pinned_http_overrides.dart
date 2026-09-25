@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:wisp/utils/cert_pinning.dart';
+import 'package:thestia/utils/cert_pinning.dart';
 
 /// Globale HTTP-Overrides (v0.9.0): Zieht das Zertifikat-Pinning über
 /// ALLE Dart-seitigen TLS-Verbindungen – insbesondere den gesamten
@@ -22,7 +22,7 @@ import 'package:wisp/utils/cert_pinning.dart';
 /// strikte [CertPinning.pinnedHttpClient] (leerer Root-Store, bereits
 /// für WebRTC-Signaling im Einsatz). Firebase/FCM laufen nativ
 /// (OkHttp) und sind von Dart-Overrides unberührt.
-class WispHttpOverrides extends HttpOverrides {
+class ThestiaHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     final client = super.createHttpClient(context);

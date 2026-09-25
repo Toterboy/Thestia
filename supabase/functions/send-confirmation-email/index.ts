@@ -2,7 +2,7 @@
 //
 // Sendet Bestätigungs-E-Mails über Mailjet (EU, Frankreich, Free-Tier)
 // mit deaktiviertem Link-Tracking (TrackClicks/TrackOpens = none) –
-// Links bleiben roh (confirm.wispdating.de) und funktionieren auch mit
+// Links bleiben roh (confirm.thestia.de) und funktionieren auch mit
 // DNS-Filtern (z. B. DNS Forge). Brevo dient nur als letzter Fallback
 // (verschleiert Links mit Tracking-Domains).
 //
@@ -175,19 +175,19 @@ serve(async (req) => {
     }
 
     // Schöner Bestätigungs-Link über die eigene Subdomain (Spaceship-Redirect,
-    // Typ 301, NICHT masked). confirm.wispdating.de leitet auf
+    // Typ 301, NICHT masked). confirm.thestia.de leitet auf
     // <SUPABASE_URL>/functions/v1/confirm weiter – die Landing-Page liest
     // token/type aus den Query-Parametern (getestet: Parameter, Pfad und
     // HTTPS werden korrekt durchgereicht).
-    const confirmUrl = `https://confirm.wispdating.de/?token=${encodeURIComponent(token)}&type=signup`;
+    const confirmUrl = `https://confirm.thestia.de/?token=${encodeURIComponent(token)}&type=signup`;
     const html = buildHtml(confirmUrl);
     const text =
-      `Bestätige deine E-Mail-Adresse bei WispDating:\n${confirmUrl}\n\n` +
+      `Bestätige deine E-Mail-Adresse bei Thestia:\n${confirmUrl}\n\n` +
       "Der Link ist 24 Stunden gültig.";
 
     // --- 1) Primär: Mailjet (EU, Frankreich; Free-Tier) ---------------------
     // WICHTIG: TrackClicks/TrackOpens = "none" => KEIN Link-Wrapping.
-    // Die Bestätigungs-Links bleiben roh (confirm.wispdating.de) und
+    // Die Bestätigungs-Links bleiben roh (confirm.thestia.de) und
     // funktionieren auch mit DNS-Filtern (z. B. DNS Forge), die
     // Tracking-Domains blockieren.
     let sent = false;
@@ -205,9 +205,9 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             Messages: [{
-              From: { Email: "support@wispdating.de", Name: "WispDating" },
+              From: { Email: "support@thestia.de", Name: "Thestia" },
               To: [{ Email: email }],
-              Subject: "Bestätige deine E-Mail-Adresse – WispDating",
+              Subject: "Bestätige deine E-Mail-Adresse – Thestia",
               HTMLPart: html,
               TextPart: text,
               TrackClicks: "none",
@@ -252,9 +252,9 @@ serve(async (req) => {
             "content-type": "application/json",
           },
           body: JSON.stringify({
-            sender: { email: "support@wispdating.de", name: "WispDating" },
+            sender: { email: "support@thestia.de", name: "Thestia" },
             to: [{ email }],
-            subject: "Bestätige deine E-Mail-Adresse – WispDating",
+            subject: "Bestätige deine E-Mail-Adresse – Thestia",
             htmlContent: html,
             textContent: text,
           }),
@@ -302,7 +302,7 @@ function buildHtml(confirmUrl: string): string {
 <tr><td align="center">
 <table width="480" cellpadding="0" cellspacing="0" style="max-width:480px;background:#fff8f5;border-radius:16px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.06)">
 <tr><td style="background:linear-gradient(135deg,#ff8fab,#ff6b9d);padding:40px 30px;text-align:center">
-<h1 style="color:#fff;font-size:28px;margin:0;font-weight:600;letter-spacing:1px">WispDating</h1>
+<h1 style="color:#fff;font-size:28px;margin:0;font-weight:600;letter-spacing:1px">Thestia</h1>
 </td></tr>
 <tr><td style="padding:40px 30px;text-align:center">
 <h2 style="color:#2d2d2d;font-size:22px;margin:0 0 10px">Bestätige deine E-Mail-Adresse</h2>
@@ -311,7 +311,7 @@ function buildHtml(confirmUrl: string): string {
 <p style="color:#999;font-size:13px;margin:30px 0 0;line-height:1.5">Link ist 24 Std. gültig.</p>
 </td></tr>
 <tr><td style="background:#fdf0ee;padding:20px 30px;text-align:center">
-<p style="color:#b0b0b0;font-size:12px;margin:0">WispDating &middot; Alle Rechte vorbehalten</p>
+<p style="color:#b0b0b0;font-size:12px;margin:0">Thestia &middot; Alle Rechte vorbehalten</p>
 </td></tr>
 </table>
 </td></tr>

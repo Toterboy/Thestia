@@ -3,22 +3,22 @@ import 'dart:math' as math;
 
 import 'package:image/image.dart' as img;
 
-/// Erzeugt das runde WispDating-Logo aus dem Basis-Icon
-/// (`assets/images/wispdating_icon_base.png`, EINZIGE Logo-Quelle):
+/// Erzeugt das runde Thestia-Logo aus dem Basis-Icon
+/// (`assets/images/thestia_icon_base.png`, EINZIGE Logo-Quelle):
 ///
-///  1. `wispdating_logo_round.png`      – rundes App-Logo (Launcher,
+///  1. `thestia_logo_round.png`      – rundes App-Logo (Launcher,
 ///     pubspec/flutter_launcher_icons). Zoom basiert auf dem größten
 ///     um den Mittelpunkt liegenden opaken Kreis des Artworks: keine
 ///     transparenten Ecken, aber minimal möglicher Zuschnitt, damit
 ///     der Schriftzug vollständig lesbar bleibt.
-///  2. `wispdating_logo_round_dark.png` – Hintergrund ~12 % abgedunkelt.
+///  2. `thestia_logo_round_dark.png` – Hintergrund ~12 % abgedunkelt.
 ///
 /// Splash-/Foreground-/Notification-Assets werden aus derselben Quelle
 /// von `tool/generate_branding.dart` erzeugt.
 ///
 /// Aufruf: dart run tool/generate_round_logo.dart
 void main(List<String> args) {
-  const sourcePath = 'assets/images/wispdating_icon_base.png';
+  const sourcePath = 'assets/images/thestia_icon_base.png';
   final src = img.decodePng(File(sourcePath).readAsBytesSync());
   if (src == null) throw Exception('$sourcePath konnte nicht gelesen werden');
 
@@ -144,7 +144,7 @@ void main(List<String> args) {
     }
   }
 
-  File('assets/images/wispdating_logo_round.png')
+  File('assets/images/thestia_logo_round.png')
       .writeAsBytesSync(img.encodePng(round));
 
   // Dark: Hintergrund-Motive ~12 % abgedunkelt; nahe-weiße Design-Elemente
@@ -162,9 +162,9 @@ void main(List<String> args) {
       );
     }
   }
-  File('assets/images/wispdating_logo_round_dark.png')
+  File('assets/images/thestia_logo_round_dark.png')
       .writeAsBytesSync(img.encodePng(dark));
 
   stdout.writeln('Rundes Logo erzeugt: ${round.width}px '
-      '(Quelle: wispdating_icon_base.png), zoom=${zoom.toStringAsFixed(3)}');
+      '(Quelle: thestia_icon_base.png), zoom=${zoom.toStringAsFixed(3)}');
 }

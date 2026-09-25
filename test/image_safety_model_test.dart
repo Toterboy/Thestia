@@ -10,7 +10,7 @@
 import 'package:flutter/services.dart' show Uint8List, rootBundle;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
-import 'package:wisp/services/image_safety_service.dart';
+import 'package:thestia/services/image_safety_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

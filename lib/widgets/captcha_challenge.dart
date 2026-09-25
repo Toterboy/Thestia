@@ -2,13 +2,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/utils/constants.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// CAPTCHA-Challenge für Registrierung & Login (Bot-Schutz).
 ///
 /// Lädt die statische Turnstile-Seite `index.html` (gehostet auf
-/// `https://auth.wispdating.de/`, Ordner `passkey-assets/`) in einem WebView
+/// `https://auth.thestia.de/`, Ordner `passkey-assets/`) in einem WebView
 /// und liefert das Token an die aufrufende Stelle. Das Token wird an
 /// `supabase.auth.signUp(...)` bzw. `signInWithPassword(...)` als
 /// `captchaToken` übergeben; Supabase validiert es serverseitig gegen das
@@ -17,9 +17,9 @@ import 'package:wisp/utils/constants.dart';
 /// Konfiguration (Operator):
 ///   1. `passkey-assets/index.html` deployen; dort den Platzhalter
 ///      `<TURNSTILE_SITE_KEY>` durch den öffentlichen Sitekey ersetzen.
-///   2. Cloudflare-Dashboard: Widget-Hostname `auth.wispdating.de`
+///   2. Cloudflare-Dashboard: Widget-Hostname `auth.thestia.de`
 ///      registrieren – die Seite wird exakt unter
-///      `https://auth.wispdating.de/` ausgeliefert (Netlify liefert
+///      `https://auth.thestia.de/` ausgeliefert (Netlify liefert
 ///      `index.html` automatisch als Startseite aus).
 ///   3. Supabase Dashboard → Authentication → CAPTCHA: Turnstile aktivieren
 ///      + Secret eintragen (Secret liegt NUR dort, nie im Client).
@@ -69,10 +69,10 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
   /// Wichtig: Turnstile validiert den Hostnamen der aufrufenden Seite gegen
   /// die Widget-Konfiguration. `loadHtmlString` hätte die Origin
   /// `about:blank` und würde abgelehnt – deshalb wird die Seite exakt unter
-  /// `https://auth.wispdating.de/` ausgeliefert (Netlify, Ordner
+  /// `https://auth.thestia.de/` ausgeliefert (Netlify, Ordner
   /// `passkey-assets/`, `index.html` als Startseite). Im Cloudflare-
-  /// Dashboard muss der Hostname `auth.wispdating.de` registriert sein.
-  static const String _captchaPageUrl = 'https://auth.wispdating.de/';
+  /// Dashboard muss der Hostname `auth.thestia.de` registriert sein.
+  static const String _captchaPageUrl = 'https://auth.thestia.de/';
 
   /// Fehlertext, falls Turnstile einen Fehler meldet (z. B. abgelaufen).
   String? _error;
@@ -111,9 +111,9 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
             // Nur CAPTCHA-/Anbieter-bezogene Navigation erlauben
             // (Startseite, Turnstile-Assets). Host-exakter Vergleich statt
             // startsWith - sonst matchen auch Suffix-Domains wie
-            // auth.wispdating.de.evil.com.
+            // auth.thestia.de.evil.com.
             final host = Uri.tryParse(request.url)?.host.toLowerCase();
-            if (host == 'auth.wispdating.de' ||
+            if (host == 'auth.thestia.de' ||
                 host == 'challenges.cloudflare.com' ||
                 (host?.endsWith('.challenges.cloudflare.com') ?? false)) {
               return NavigationDecision.navigate;

@@ -14,28 +14,29 @@ import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show Passkey;
 
-import 'package:wisp/models/profile_visibility.dart';
-import 'package:wisp/providers/auth_provider.dart';
-import 'package:wisp/providers/chat_provider.dart';
-import 'package:wisp/providers/profile_provider.dart';
-import 'package:wisp/providers/settings_provider.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/screens/privacy/privacy_screen.dart' show promptTotpCode;
-import 'package:wisp/services/auth_exception.dart';
-import 'package:wisp/services/encryption_service.dart';
-import 'package:wisp/services/local_storage.dart';
-import 'package:wisp/services/mfa_service.dart';
-import 'package:wisp/services/passkey_auth.dart';
-import 'package:wisp/services/prekey_service.dart';
-import 'package:wisp/services/supabase_database_service.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/services/unified_push_service.dart';
-import 'package:wisp/utils/age_safety_rules.dart';
-import 'package:wisp/widgets/buttons.dart';
-import 'package:wisp/widgets/selectable_tile.dart';
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/widgets/language_switch.dart';
-import 'package:wisp/widgets/theme_picker.dart';
+import 'package:thestia/models/profile_visibility.dart';
+import 'package:thestia/providers/auth_provider.dart';
+import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/screens/privacy/privacy_screen.dart' show promptTotpCode;
+import 'package:thestia/services/auth_exception.dart';
+import 'package:thestia/services/encryption_service.dart';
+import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/mfa_service.dart';
+import 'package:thestia/services/passkey_auth.dart';
+import 'package:thestia/services/prekey_service.dart';
+import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/services/unified_push_service.dart';
+import 'package:thestia/utils/age_safety_rules.dart';
+import 'package:thestia/widgets/buttons.dart';
+import 'package:thestia/widgets/chat_background_picker.dart';
+import 'package:thestia/widgets/selectable_tile.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/widgets/language_switch.dart';
+import 'package:thestia/widgets/theme_picker.dart';
 
 /// Spiegelt den Rest der UI-Einstellungen nach profiles.ui_prefs (v0.8.0,
 /// Migration 074) - damit überstehen Blind Mode, Sichtbarkeit, Dark Mode
@@ -216,7 +217,7 @@ class SettingsScreen extends ConsumerWidget {
                     const Divider(),
                     // Eigene Stateful-Kachel: Doppel-Tap-Schutz. Zwei
                     // parallel laufende Passkey-Registrierungen brechen
-                    // sich gegenseitig ab ("Anfrage abgebrochen von Wisp"
+                    // sich gegenseitig ab ("Anfrage abgebrochen von Thestia"
                     // / "credential verification failed").
                     const _PasskeyTile(),
                     const _PasskeyManagerCard(),
@@ -406,6 +407,18 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   const LanguageSwitch(),
+                  const SizedBox(height: 12),
+                  Text(L10n.t(context, 'settings.chatBg'),
+                      style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 4),
+                  Text(L10n.t(context, 'settings.chatBgSub'),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
+                          )),
+                  const SizedBox(height: 8),
+                  const ChatBackgroundPicker(),
                 ],
               ),
             ),
@@ -804,7 +817,7 @@ Future<bool> _ensurePasskeyAal2(BuildContext context, WidgetRef ref) async {
 /// "Passkey erstellen"-Kachel mit Doppel-Tap-Schutz: Solange die
 /// Registrierung läuft (inkl. 2FA-Step-up), ist die Kachel gesperrt.
 /// Zwei parallele Zeremonien brechen sich sonst gegenseitig ab
-/// ("Anfrage abgebrochen von Wisp" / "credential verification failed").
+/// ("Anfrage abgebrochen von Thestia" / "credential verification failed").
 class _PasskeyTile extends ConsumerStatefulWidget {
   const _PasskeyTile();
 

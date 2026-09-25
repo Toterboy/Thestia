@@ -20,18 +20,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:wisp/models/habitude_level.dart';
-import 'package:wisp/models/user_profile.dart';
-import 'package:wisp/providers/profile_provider.dart';
-import 'package:wisp/providers/user_preferences_provider.dart';
-import 'package:wisp/screens/auth/login_screen.dart';
-import 'package:wisp/screens/dating_hour/dating_hour_how_it_works_screen.dart';
-import 'package:wisp/screens/profile/profile_edit_screen.dart';
-import 'package:wisp/screens/welcome/welcome_screen.dart';
-import 'package:wisp/services/local_storage.dart';
-import 'package:wisp/services/secure_storage.dart';
-import 'package:wisp/theme/app_theme.dart';
-import 'package:wisp/widgets/theme_picker.dart';
+import 'package:thestia/models/habitude_level.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/providers/user_preferences_provider.dart';
+import 'package:thestia/screens/auth/login_screen.dart';
+import 'package:thestia/screens/dating_hour/dating_hour_how_it_works_screen.dart';
+import 'package:thestia/screens/profile/profile_edit_screen.dart';
+import 'package:thestia/screens/welcome/welcome_screen.dart';
+import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/secure_storage.dart';
+import 'package:thestia/theme/app_theme.dart';
+import 'package:thestia/widgets/theme_picker.dart';
 
 bool _fontsLoaded = false;
 
@@ -160,7 +160,7 @@ Widget _harness(
     ],
     child: MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(theme: WispTheme.classic),
+      theme: AppTheme.light(theme: ThestiaTheme.classic),
       locale: const Locale('de'),
       supportedLocales: const [Locale('de'), Locale('en')],
       localizationsDelegates: const [
@@ -253,7 +253,7 @@ void main() {
     // Beispielhafte Eingaben für den Store (after first frame).
     final fields = find.byType(TextFormField);
     if (tester.widgetList(fields).length >= 2) {
-      await tester.enterText(fields.at(0), 'lena@wispdating.de');
+      await tester.enterText(fields.at(0), 'lena@thestia.de');
       await tester.enterText(fields.at(1), 'geheim1234');
       // Floating-Label-Animation abschließen, sonst überlappt der Label-
       // Text den eingegebenen Wert im Screenshot.

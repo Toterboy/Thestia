@@ -5,23 +5,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wisp/models/gender.dart';
-import 'package:wisp/models/user_mood.dart';
-import 'package:wisp/models/user_profile.dart';
-import 'package:wisp/providers/chat_provider.dart';
-import 'package:wisp/providers/profile_provider.dart';
-import 'package:wisp/providers/settings_provider.dart';
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/services/supabase_database_service.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/services/supabase_storage_service.dart';
-import 'package:wisp/services/report_service.dart';
-import 'package:wisp/widgets/birthday_style.dart';
-import 'package:wisp/utils/age_safety_rules.dart';
-import 'package:wisp/widgets/intro_audio_player.dart';
-import 'package:wisp/widgets/profile_widgets.dart';
-import 'package:wisp/widgets/music_taste_widgets.dart';
+import 'package:thestia/models/gender.dart';
+import 'package:thestia/models/user_mood.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/services/supabase_storage_service.dart';
+import 'package:thestia/services/report_service.dart';
+import 'package:thestia/widgets/birthday_style.dart';
+import 'package:thestia/utils/age_safety_rules.dart';
+import 'package:thestia/widgets/intro_audio_player.dart';
+import 'package:thestia/widgets/profile_widgets.dart';
+import 'package:thestia/widgets/music_taste_widgets.dart';
 
 /// Versucht, ein Nutzerprofil anhand seiner ID aus den verfügbaren Quellen
 /// aufzulösen (eigenes Profil, Matches). Liefert null, wenn kein Profil in

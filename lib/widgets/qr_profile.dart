@@ -3,9 +3,9 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 /// Zeigt den QR-Code eines Nutzerprofils an.
 ///
-/// Inhalt des QR-Codes (Deep Link): `wisp://user/<userId>`
+/// Inhalt des QR-Codes (Deep Link): `thestia://user/<userId>`
 ///
-/// Fallback (fuer Nutzer ohne App): `https://wispdating.de/invite/<userId>`
+/// Fallback (fuer Nutzer ohne App): `https://thestia.de/invite/<userId>`
 ///
 /// Beim Scannen:
 /// - App installiert → App oeffnet, Profil wird geladen, Chat startbar
@@ -22,9 +22,9 @@ class QrProfileWidget extends StatelessWidget {
   final double size;
   final bool showLabel;
 
-  String get _deepLink => 'wisp://user/$userId';
+  String get _deepLink => 'thestia://user/$userId';
   // Fallback für Nutzer ohne App:
-  // String get _fallbackUrl => 'https://wispdating.de/invite/$userId';
+  // String get _fallbackUrl => 'https://thestia.de/invite/$userId';
 
   /// QR enthaelt NUR den Deep-Link.
   String get _qrContent => _deepLink;

@@ -1,4 +1,4 @@
-package com.wisp.app
+package com.thestia.app
 
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.AdvertiseCallback
@@ -16,19 +16,19 @@ import io.flutter.plugin.common.MethodChannel
  *  1. FLAG_SECURE verhindert Screenshots und Screen-Recording (Privatsphäre:
  *     Keine Fotos/Chats anderer Nutzer via Screenshot teilbar).
  *  2. Transit Spark (v0.9.0): BLE-Advertising über einen nativen
- *     Platform-Channel ("wisp/transit_ble"). Bewusst KEIN Plugin:
+ *     Platform-Channel ("thestia/transit_ble"). Bewusst KEIN Plugin:
  *     flutter_ble_peripheral 3.1.0 kompiliert mit dem aktuellen
  *     Kotlin-Setup nicht (Argument-Type-Mismatch im Plugin-Code) - der
  *     eigene Channel ist minimal, wartbar und dependency-frei.
  *     Scanning läuft separat über flutter_blue_plus.
- *  3. Play Integrity (v0.9.0, nur Play-Flavor): Channel "wisp/integrity"
+ *  3. Play Integrity (v0.9.0, nur Play-Flavor): Channel "thestia/integrity"
  *     für App-/Geräte-Attestierung bei der Video-Verifizierung. Der
  *     eigentliche Helper liegt im Play-Source-Set und wird per
  *     Reflection aufgerufen (F-Droid baut ohne ihn).
  */
 class MainActivity : FlutterActivity() {
-    private val channelName = "wisp/transit_ble"
-    private val integrityChannelName = "wisp/integrity"
+    private val channelName = "thestia/transit_ble"
+    private val integrityChannelName = "thestia/integrity"
     private var advertiser: android.bluetooth.le.BluetoothLeAdvertiser? = null
     private var advertiseCallback: AdvertiseCallback? = null
 
@@ -99,7 +99,7 @@ class MainActivity : FlutterActivity() {
             return
         }
         try {
-            val helper = Class.forName("com.wisp.app.PlayIntegrityHelper")
+            val helper = Class.forName("com.thestia.app.PlayIntegrityHelper")
             val method = helper.getMethod(
                 "requestToken",
                 android.app.Activity::class.java,

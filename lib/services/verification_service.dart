@@ -10,10 +10,10 @@ import 'package:camera/camera.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:geolocator/geolocator.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/services/secure_hive.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/services/supabase_storage_service.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/services/secure_hive.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/services/supabase_storage_service.dart';
 
 /// Merker "Verifizierung eingereicht" für die Pending-Anzeige im Profil.
 ///

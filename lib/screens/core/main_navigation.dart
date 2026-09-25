@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/routing/route_restore.dart';
-import 'package:wisp/screens/profile/profile_edit_screen.dart'
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/routing/route_restore.dart';
+import 'package:thestia/screens/profile/profile_edit_screen.dart'
     show profileEditDirtyProvider, profileEditNavigateAfterSaveProvider;
-import 'package:wisp/services/local_storage.dart';
+import 'package:thestia/services/local_storage.dart';
 
 /// Sichert die Route für die Wiederherstellung nach Prozesstod (v0.9.1).
 Future<void> _saveLastRoute(WidgetRef ref, String path) async {

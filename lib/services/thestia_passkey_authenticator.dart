@@ -4,17 +4,17 @@ import 'package:flutter/foundation.dart';
 import 'package:passkeys_platform_interface/passkeys_platform_interface.dart';
 import 'package:passkeys_platform_interface/types/types.dart';
 
-/// Wisp-eigener Authenticator für die WebAuthn-Zeremonie.
+/// Thestia-eigener Authenticator für die WebAuthn-Zeremonie.
 ///
 /// Unterschied zum `PasskeyAuthenticator` des `passkeys`-Packages: Hier
 /// wird VOR der Zeremonie NICHT `cancelCurrentAuthenticatorOperation()`
 /// aufgerufen. Das vorzeitige Abbrechen kann auf einigen Geräten die
 /// FOLGENDE eigene Anfrage mit abwürgen - Android zeigt dann
-/// "Anfrage abgebrochen von Wisp" und die Registrierung schlägt fehl
+/// "Anfrage abgebrochen von Thestia" und die Registrierung schlägt fehl
 /// ("credential verification failed"), obwohl der Nutzer nichts
 /// abgebrochen hat. Zwei parallel laufende Zeremonien werden stattdessen
 /// in [PasskeyAuth] über einen Busy-Guard verhindert.
-class WispPasskeyAuthenticator implements PasskeyAuthenticatorInterface {
+class ThestiaPasskeyAuthenticator implements PasskeyAuthenticatorInterface {
   final PasskeysPlatform _platform = PasskeysPlatform.instance;
 
   /// Diagnose (nur Debug-Builds): Dekodiert die clientDataJSON und loggt
@@ -31,7 +31,7 @@ class WispPasskeyAuthenticator implements PasskeyAuthenticatorInterface {
           RegExp(r'"origin"\s*:\s*"([^"]+)"').firstMatch(json)?.group(1);
       debugPrint('[Passkey] clientDataJSON: type=$type origin=$origin');
       debugPrint('[Passkey] ^ dieser Origin muss in GOTRUE_WEBAUTHN_RP_ORIGINS '
-          'enthalten sein (auth.wispdating.de)!');
+          'enthalten sein (auth.thestia.de)!');
     } catch (_) {
       // Diagnose ist best-effort.
     }

@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:wisp/models/spice_question.dart';
-import 'package:wisp/services/supabase_service.dart';
+import 'package:thestia/models/spice_question.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// Service für "Spice Questions" (Eisbrecher-Fragen, Feature A).
 ///

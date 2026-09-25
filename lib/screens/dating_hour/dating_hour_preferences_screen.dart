@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wisp/models/dating_hour_models.dart';
-import 'package:wisp/models/gender.dart';
-import 'package:wisp/models/habitude_level.dart';
-import 'package:wisp/providers/settings_provider.dart';
-import 'package:wisp/providers/user_preferences_provider.dart';
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/services/dating_hour_service.dart';
-import 'package:wisp/widgets/age_range_sliders.dart';
-import 'package:wisp/widgets/habitude_selector.dart';
+import 'package:thestia/models/dating_hour_models.dart';
+import 'package:thestia/models/gender.dart';
+import 'package:thestia/models/habitude_level.dart';
+import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/providers/user_preferences_provider.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/services/dating_hour_service.dart';
+import 'package:thestia/widgets/age_range_sliders.dart';
+import 'package:thestia/widgets/habitude_selector.dart';
 
 /// Screen für Dating-Hour-Präferenzen (vor dem Event-Beitritt).
 class DatingHourPreferencesScreen extends ConsumerStatefulWidget {

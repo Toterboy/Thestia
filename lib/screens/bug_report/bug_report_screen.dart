@@ -8,8 +8,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:wisp/services/brevo_bug_report_service.dart';
-import 'package:wisp/l10n/app_strings.dart';
+import 'package:thestia/services/brevo_bug_report_service.dart';
+import 'package:thestia/l10n/app_strings.dart';
 
 /// Grenzen eines Bugreports (auch serverseitig in der Edge Function
 /// `send-bug-report` erzwungen).
@@ -215,7 +215,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
                 onPressed: () async {
                   await _launchUrl(
                     Uri.parse(
-                      'https://github.com/Toterboy/Blind-Date-App/issues',
+                      'https://github.com/Toterboy/Thestia/issues',
                     ),
                   );
                 },

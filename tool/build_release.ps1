@@ -1,6 +1,6 @@
 # tool/build_release.ps1
 #
-# Baut die Release-APKs fuer WispDating korrekt (mit Product Flavors!)
+# Baut die Release-APKs fuer Thestia korrekt (mit Product Flavors!)
 # und legt sie benannt unter releases/<version>/ ab.
 #
 # HINTERGRUND: Das Projekt definiert zwei Product Flavors ("play" und
@@ -17,6 +17,8 @@
 #   .\tool\build_release.ps1 -SkipBuild       # nur kopieren/umbenennen
 #   .\tool\build_release.ps1 -SplitPerAbi     # pro-CPU-APKs (~55 MB statt 156 MB)
 #   .\tool\build_release.ps1 -Aab             # zusätzlich Play-App-Bundle (.aab)
+#   .\tool\build_release.ps1 -AdminUUID <uuid> # Team-Admin-Builds nach releases/<version>/admin/
+#                                             # (NICHT zur Verteilung; UUID = ADMIN_UUID-Secret)
 #
 # APK-GRÖSSE (Hintergrund): Ein universelles APK enthält die nativen
 # Bibliotheken (Flutter-Engine, WebRTC, ONNX Runtime) DREIMAL - für
@@ -43,6 +45,11 @@ param(
     # Store-Format; Play liefert pro Gerät nur die nötigen ABIs aus).
     [switch]$Aab,
 
+    # Admin-UUID (entspricht dem ADMIN_UUID-Secret der admin-ban-Function):
+    # Baut play+fdroid als universelle APKs mit --dart-define=ADMIN_UUID=...
+    # nach "<OutDir>/admin/" (Team-intern, NICHT verteilen).
+    [string]$AdminUUID = "",
+
     [string]$OutRoot = "releases"
 )
 
@@ -60,7 +67,7 @@ $VersionName = $pubspecLine.Matches[0].Groups[1].Value.Trim()
 $VersionCode = $pubspecLine.Matches[0].Groups[2].Value.Trim()
 $OutDir = Join-Path $OutRoot "v$VersionName"
 
-Write-Host "==> WispDating v$VersionName (build $VersionCode)" -ForegroundColor Cyan
+Write-Host "==> Thestia v$VersionName (build $VersionCode)" -ForegroundColor Cyan
 Write-Host "    Ziel: $OutDir"
 
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
@@ -71,7 +78,7 @@ function Copy-FlavorApk {
     if (-not (Test-Path -LiteralPath $src)) {
         throw "APK nicht gefunden: $src - Bitte zuerst bauen (ohne -SkipBuild)."
     }
-    $dst = Join-Path $OutDir "WispDating-v$VersionName-$FlavorName.apk"
+    $dst = Join-Path $OutDir "Thestia-v$VersionName-$FlavorName.apk"
     Copy-Item -LiteralPath $src -Destination $dst -Force
     Write-Host "    OK: $dst" -ForegroundColor Green
 }
@@ -86,7 +93,7 @@ function Copy-SplitApks {
         # vorher wurde app-<flavor>-<abi>-release.apk erwartet und nichts kopiert).
         $src = Join-Path $dir "app-$abi-$FlavorName-release.apk"
         if (Test-Path -LiteralPath $src) {
-            $dst = Join-Path $OutDir "WispDating-v$VersionName-$FlavorName-$($short[$abi]).apk"
+            $dst = Join-Path $OutDir "Thestia-v$VersionName-$FlavorName-$($short[$abi]).apk"
             Copy-Item -LiteralPath $src -Destination $dst -Force
             Write-Host "    OK: $dst" -ForegroundColor Green
         } else {
@@ -117,6 +124,21 @@ if ($SkipBuild) {
         if ($SplitPerAbi) { $abiArgs += "--split-per-abi" }
         flutter build apk --release --flavor fdroid --dart-define=FDROID=true @abiArgs --obfuscate --split-debug-info=build/symbols/fdroid
         if ($LASTEXITCODE -ne 0) { throw "F-Droid-Build fehlgeschlagen." }
+    }
+    if ($AdminUUID -ne "") {
+        $adminDir = Join-Path $OutDir "admin"
+        New-Item -ItemType Directory -Force -Path $adminDir | Out-Null
+        foreach ($adminFlavor in @("play", "fdroid")) {
+            Write-Host "==> Baue ADMIN-Variante ($adminFlavor, nur Team-intern)..." -ForegroundColor Magenta
+            $defineArgs = @("--dart-define=ADMIN_UUID=$AdminUUID")
+            if ($adminFlavor -eq "fdroid") { $defineArgs += "--dart-define=FDROID=true" }
+            flutter build apk --release --flavor $adminFlavor @defineArgs --obfuscate --split-debug-info=build/symbols/admin-$adminFlavor
+            if ($LASTEXITCODE -ne 0) { throw "Admin-Build ($adminFlavor) fehlgeschlagen." }
+            $src = Join-Path "build\app\outputs\flutter-apk" "app-$adminFlavor-release.apk"
+            $dst = Join-Path $adminDir "Thestia-v$VersionName-$adminFlavor-ADMIN.apk"
+            Copy-Item -LiteralPath $src -Destination $dst -Force
+            Write-Host "    OK: $dst" -ForegroundColor Green
+        }
     }
 }
 

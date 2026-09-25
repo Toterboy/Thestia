@@ -5,31 +5,31 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:wisp/services/auth_exception.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/services/wisp_passkey_authenticator.dart';
+import 'package:thestia/services/auth_exception.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/services/thestia_passkey_authenticator.dart';
 
 /// Kapselt die native Passkey-Anmeldung/-Registrierung.
 ///
-/// Nutzt den [WispPasskeyAuthenticator] für die Plattform-Prompts
+/// Nutzt den [ThestiaPasskeyAuthenticator] für die Plattform-Prompts
 /// (FaceID/TouchID/Biometrie) und Supabase Auth für die WebAuthn-Ceremony
 /// (Server-Seite).
 ///
 /// Voraussetzungen (sonst schlägt der Dialog/Login fehl):
-///  - Supabase Dashboard: Passkeys aktiv, RP-ID = `auth.wispdating.de`
+///  - Supabase Dashboard: Passkeys aktiv, RP-ID = `auth.thestia.de`
 ///  - Android: `assetlinks.json` + `<meta-data asset_statements>` (Manifest)
-///  - iOS: Associated-Domains-Entitlement (`webcredentials:auth.wispdating.de`)
+///  - iOS: Associated-Domains-Entitlement (`webcredentials:auth.thestia.de`)
 ///  - Gerät: Sperrbildschirm (PIN/Muster/Biometrie) + aktuelle Google Play
 ///    Services (Credential Manager).
 class PasskeyAuth {
   PasskeyAuth._();
 
-  static final WispPasskeyAuthenticator _authenticator =
-      WispPasskeyAuthenticator();
+  static final ThestiaPasskeyAuthenticator _authenticator =
+      ThestiaPasskeyAuthenticator();
 
   /// Busy-Guard: Nur EINE Zeremonie gleichzeitig. Ein Doppel-Tap auf
   /// "Passkey erstellen" startete sonst zwei Registrierungen parallel -
-  /// die zweite brach die erste ab ("Anfrage abgebrochen von Wisp") und
+  /// die zweite brach die erste ab ("Anfrage abgebrochen von Thestia") und
   /// die Challenge-Verrechnung endete in "credential verification failed".
   static bool _ceremonyRunning = false;
 
@@ -256,7 +256,7 @@ class PasskeyAuth {
       return AppException(
         'Der Server hat die Passkey-Anfrage abgelehnt. Bitte prüfe in den '
         'Supabase-Einstellungen, ob "Passkeys" aktiviert ist und die '
-        'RP-ID auf auth.wispdating.de gesetzt ist.$reason',
+        'RP-ID auf auth.thestia.de gesetzt ist.$reason',
         messageKey: '${k}serverRejected',
         params: {'reason': reason},
       );

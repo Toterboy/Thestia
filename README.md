@@ -1,17 +1,23 @@
-﻿# WispDating
+﻿# Thestia
 
-![CI](https://github.com/Thoralf/blind_date_app/actions/workflows/ci.yml/badge.svg)
+> **Umbenannt:** Aus **WispDating** wurde **Thestia** (ab v0.9.1, Build 29).
+> Neuer Name, neues Logo, neue App-ID (`com.thestia.app`) – **bitte neu
+> installieren**, die alte App aktualisiert sich nicht von selbst. Konto
+> und Daten bleiben erhalten (Login genügt), nur Passkeys müssen einmal
+> neu registriert werden. Details: [Release Notes v0.9.1](releases/v0.9.1/RELEASE_NOTES.md).
+
+![CI](https://github.com/Toterboy/Thestia/actions/workflows/ci.yml/badge.svg)
 [![Lizenz: AGPL v3](https://img.shields.io/badge/Lizenz-AGPL_v3-blue.svg)](LICENSE)
 
-Eine moderne, datenschutzfreundliche Dating-App mit Fokus auf **Persönlichkeit statt Aussehen**. WispDating setzt auf Blind-Matching („Persönlichkeit zuerst"), Ende-zu-Ende-Verschlüsselung und Peer-to-Peer-Kommunikation, um authentischere Verbindungen zu ermöglichen. Entsteht eine Verbindung, heißt das bei uns **„Funke"**.
+Eine moderne, datenschutzfreundliche Dating-App mit Fokus auf **Persönlichkeit statt Aussehen**. Thestia setzt auf Blind-Matching („Persönlichkeit zuerst"), Ende-zu-Ende-Verschlüsselung und Peer-to-Peer-Kommunikation, um authentischere Verbindungen zu ermöglichen. Entsteht eine Verbindung, heißt das bei uns **„Funke"**.
 
 Das Projekt ist vollständig kostenlos nutzbar und soll eine echte Alternative zu Tinder & Co. darstellen. Es befindet sich in aktiver Entwicklung und ist noch nicht vollständig funktional. Beiträge und Feedback sind willkommen:
 [Beitragen](CONTRIBUTING.md) · [Verhaltenskodex](CODE_OF_CONDUCT.md) · [Sicherheitslücken melden](SECURITY.md) · [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md) · [Entscheidungen (ADR)](docs/adr/) · [Build & F-Droid](docs/BUILD.md) · [Architektur](docs/ARCHITEKTUR.md) · [Datenschutz](docs/DATENSCHUTZ.md) · [Passkey-Server-Setup](docs/PASSKEYS_SERVER_SETUP.md)
 
 
-## Warum WispDating – und nicht Tinder, Bumble & Co.?
+## Warum Thestia – und nicht Tinder, Bumble & Co.?
 
-Weil moderne Dating-Apps genau die Probleme haben, die WispDating gezielt
+Weil moderne Dating-Apps genau die Probleme haben, die Thestia gezielt
 löst – ohne Abo-Falle, ohne Aufmerksamkeits-Casino, ohne Daten-Hammer:
 
 - **Persönlichkeit vor Aussehen.** Bei uns heißt der erste Schritt
@@ -64,23 +70,23 @@ löst – ohne Abo-Falle, ohne Aufmerksamkeits-Casino, ohne Daten-Hammer:
 
 ## Über die App
 
-WispDating ist für Android konzipiert (iOS/Web/Desktop folgen) und basiert auf Flutter, Riverpod (State Management) und go_router (Navigation) im Material-3-Design. Backend ist Supabase (Auth, Postgres, Storage, Edge Functions, Realtime); Chat-Nachrichten laufen Ende-zu-Ende-verschlüsselt über das Signal Protocol, die Verbindung direkt Peer-to-Peer per WebRTC.
+Thestia ist für Android konzipiert (iOS/Web/Desktop folgen) und basiert auf Flutter, Riverpod (State Management) und go_router (Navigation) im Material-3-Design. Backend ist Supabase (Auth, Postgres, Storage, Edge Functions, Realtime); Chat-Nachrichten laufen Ende-zu-Ende-verschlüsselt über das Signal Protocol, die Verbindung direkt Peer-to-Peer per WebRTC.
 
 ## Downloads
 
 | Variante | Datei | Push |
 | --- | --- | --- |
-| Standard (empfohlen) | `WispDating-v0.9.0-play.apk` | Firebase/FCM |
-| Google-frei (F-Droid-Stil) | `WispDating-v0.9.0-fdroid.apk` | optional via UnifiedPush |
+| Standard (empfohlen) | `Thestia-v0.9.1-play.apk` | Firebase/FCM |
+| Google-frei (F-Droid-Stil) | `Thestia-v0.9.1-fdroid.apk` | optional via UnifiedPush |
 
-Beide finden sich unter [Releases](https://github.com/Toterboy/Wisp-Datingapp/releases) (Build-Artefakte liegen lokal unter `releases/v0.9.0/`; dort zusätzlich pro-CPU-APKs (`-play-arm64`/`-play-armv7`, ~55 MB) und Admin-Builds im Unterordner `admin/`, die nicht für die Verteilung bestimmt sind). Hinweis: Beide Varianten nutzen dieselbe App-ID und können nicht parallel installiert werden.
+Beide finden sich unter [Releases](https://github.com/Toterboy/Thestia/releases) (Build-Artefakte liegen lokal unter `releases/v0.9.1/`). Hinweis: Beide Varianten nutzen dieselbe App-ID und können nicht parallel installiert werden. Ältere Dateien (`WispDating-v0.9.0-*.apk` unter `releases/v0.9.0/`) gehören zur Vorgänger-Version – bitte **Thestia neu installieren** (kein Update-Pfad, neue App-ID).
 
 ## Unterstützte Versionen
 
 | Version | Status |
 | --- | --- |
-| v0.9.0 und höher (Build 28+) | **Unterstützt** – Bug-Reports willkommen, Security-Fixes |
-| unter v0.9.0 (Build < 28) | **End of Support** (seit 24.09.2026) – keine Fixes mehr, bitte aktualisieren |
+| v0.9.1 und höher (Build 29+) | **Unterstützt** – Bug-Reports willkommen, Security-Fixes |
+| unter v0.9.1 (Build < 29, inkl. aller WispDating-Builds) | **End of Support** – keine Fixes mehr, bitte Thestia neu installieren |
 
 Ältere Builds werden über das serverseitige Mindest-Build-Gate
 (`app_config.min_app_version_build`, Migration 034/076) markiert: Liegt der
@@ -100,7 +106,7 @@ Details: [SUPPORT.md](SUPPORT.md).
 - **Passkey einrichten** (überspringbarer Schritt; WebAuthn, Anmeldung ohne E-Mail/Passwort möglich)
 - **Persönlichkeitstest** (MBTI-Style, z. B. ENTP, INFJ)
 - **Gewohnheiten** (Rauchen, Alkohol, Drogen) als eigener Einrichtungsschritt
-- **Settings-/Privacy-Auswahl** nach der Registrierung – inklusive **Erscheinungsbild**: 6 Farbwelten (Classic WispDating, Ozean, Wald, Sonnenuntergang, Lavendel, Schiefer), jederzeit änderbar
+- **Settings-/Privacy-Auswahl** nach der Registrierung – inklusive **Erscheinungsbild**: 6 Farbwelten (Classic Thestia, Ozean, Wald, Sonnenuntergang, Lavendel, Schiefer), jederzeit änderbar
 - **Willkommens-Screen** beim allerersten App-Start
 
 ### Entdecken
@@ -304,7 +310,7 @@ Edge Functions (`supabase/functions/`) auf den Server. Stand v0.8.0:
   - `HF_API_TOKEN` – optional, aktiviert die NSFW-KI-Vorprüfung
   - `FIREBASE_SERVICE_ACCOUNT_JSON` – FCM-Versand (bereits vorhanden)
 - **Passkeys/WebAuthn** (Dashboard → Authentication → Passkeys): RP-ID
-  `auth.wispdating.de`; Origins MÜSSEN den **SHA-256**-Signatur-Hash der
+  `auth.thestia.de`; Origins MÜSSEN den **SHA-256**-Signatur-Hash der
   installierten APK enthalten. Falsche (SHA-1-)Einträge sind die häufigste
   Ursache für „Der Server konnte den Passkey nicht bestätigen" – exakte
   Werte: [docs/PASSKEYS_SERVER_SETUP.md](docs/PASSKEYS_SERVER_SETUP.md)
@@ -356,7 +362,7 @@ Geplant und teilweise bereits in Entwicklung (Details:
   Sitzungen zerstören sich nach 24–48 h selbst
 - Same-Train-Matching über Zug-WLAN-Erkennung (BSSID) und
   Geschwindigkeits-/Vektor-Abgleich; Live-Strecken-Board auf
-  `wisp.app/live` mit Waggon-Angabe und Merkmalen
+  `thestia.app/live` mit Waggon-Angabe und Merkmalen
 
 ---
 

@@ -3,7 +3,8 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
-/// Audit M-17: Entschlüsselte Voice-Notes (`wisp_incoming_*.m4a`) wurden in
+/// Audit M-17: Entschlüsselte Voice-Notes (`thestia_incoming_*.m4a`,
+/// historisch `wisp_incoming_*.m4a`) wurden in
 /// das System-Temp-Verzeichnis geschrieben und NIE gelöscht - der
 /// E2E-Versprechen ("Inhalte existieren nur im Speicher") wurde damit am
 /// Ruhe-Zustand untergraben.
@@ -23,7 +24,9 @@ Future<void> cleanupDecryptedTempFiles() async {
     await for (final entity in dir.list()) {
       if (entity is! File) continue;
       final name = entity.uri.pathSegments.last;
-      if (name.startsWith('wisp_incoming_') && name.endsWith('.m4a')) {
+      if ((name.startsWith('thestia_incoming_') ||
+              name.startsWith('wisp_incoming_')) &&
+          name.endsWith('.m4a')) {
         try {
           await entity.delete();
         } catch (_) {

@@ -23,7 +23,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.wisp.app"
+    namespace = "com.thestia.app"
     // permission_handler_android (v14) benötigt compileSdk 37.
     compileSdk = 37
     ndkVersion = flutter.ndkVersion
@@ -49,7 +49,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.wisp.app"
+        applicationId = "com.thestia.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 28

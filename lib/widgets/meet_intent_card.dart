@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wisp/providers/meet_intent_provider.dart';
-import 'package:wisp/l10n/app_strings.dart';
+import 'package:thestia/providers/meet_intent_provider.dart';
+import 'package:thestia/l10n/app_strings.dart';
 
 /// Vorschlag-Karte für ein echtes Treffen im Chat.
 ///

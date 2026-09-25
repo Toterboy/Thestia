@@ -15,7 +15,7 @@ Migration 034/076). Details: [SUPPORT.md](SUPPORT.md).
 
 **Bitte keine Sicherheitsprobleme als öffentliches Issue erstellen!**
 
-Melde sie stattdessen vertraulich an: **security@wispdating.de**
+Melde sie stattdessen vertraulich an: **security@thestia.de**
 
 Bitte gib an:
 
@@ -32,7 +32,7 @@ Danksagung an dich (opt-in).
 
 **In Scope:** dieser Quellcode (Flutter-App, `supabase/functions/`,
 `supabase/migrations/`), die bereitgestellten Endpunkte unter
-`*.wispdating.de`.
+`*.thestia.de`.
 
 **Out of Scope:** automatisiertes Scanning ohne Rücksprache, Spam/Sozial-
 Engineering gegenüber Nutzer:innen, fehlende Features, Brute-Force gegen

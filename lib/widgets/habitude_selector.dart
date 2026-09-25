@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:wisp/models/habitude_level.dart';
+import 'package:thestia/models/habitude_level.dart';
 
 /// Drei-Button-Auswahl (Täglich / Gelegentlich / Nie) für eine
 /// Konsum-Präferenz (Rauchen, Alkohol, andere Drogen).

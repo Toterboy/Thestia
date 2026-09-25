@@ -118,7 +118,7 @@ async function isAdminUser(userId: string): Promise<boolean> {
 // Function-Secret PLAY_INTEGRITY_SA_JSON hinterlegen. Siehe
 // docs/PLAY_INTEGRITY.md.
 // ------------------------------------------------------------------
-const PLAY_PACKAGE_NAME = "com.wisp.app";
+const PLAY_PACKAGE_NAME = "com.thestia.app";
 const PLAY_INTEGRITY_DECODE_URL =
   "https://playintegrity.googleapis.com/v1/" + PLAY_PACKAGE_NAME +
   ":decodeIntegrityToken";

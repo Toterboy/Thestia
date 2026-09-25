@@ -5,10 +5,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:wisp/models/gender.dart';
-import 'package:wisp/services/local_storage.dart';
-import 'package:wisp/services/supabase_database_service.dart';
-import 'package:wisp/services/supabase_service.dart';
+import 'package:thestia/models/gender.dart';
+import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// Filter-Modus für die Entfernungs-Suche.
 enum DistanceFilterMode {

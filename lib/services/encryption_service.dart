@@ -7,10 +7,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart';
 
-import 'package:wisp/models/signal_key_models.dart';
-import 'package:wisp/services/backup_crypto.dart';
-import 'package:wisp/services/hive_signal_store.dart';
-import 'package:wisp/services/secure_hive.dart';
+import 'package:thestia/models/signal_key_models.dart';
+import 'package:thestia/services/backup_crypto.dart';
+import 'package:thestia/services/hive_signal_store.dart';
+import 'package:thestia/services/secure_hive.dart';
 
 /// Zentrale Service-Klasse für Ende-zu-Ende-Verschlüsselung mit dem Signal Protocol.
 ///

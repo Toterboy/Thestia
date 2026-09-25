@@ -154,12 +154,12 @@ async function isRateLimited(callerId: string): Promise<boolean> {
 
 /** Serverseitig generierte Texte pro kind (kein client-kontrollierter Text). */
 const clientTextsByKind: Record<string, { title: string; body: string }> = {
-  messages: { title: "WispDating", body: "Du hast eine neue Nachricht erhalten." },
+  messages: { title: "Thestia", body: "Du hast eine neue Nachricht erhalten." },
   // v0.9.0-Feedback ("auf dem anderen Gerät passiert gar nichts"): Nach
   // einem QR-Scan/Like soll die gescannte Person einen Push erhalten.
   // Der Text ist serverseitig fix (kein Phishing), die E1-Beziehungs-
   // prüfung unten verlangt einen EIGENEN Like des Aufrufers an das Ziel.
-  likes: { title: "WispDating", body: "Jemand hat deine Vorstellung entdeckt." },
+  likes: { title: "Thestia", body: "Jemand hat deine Vorstellung entdeckt." },
 };
 
 /**
@@ -365,7 +365,7 @@ serve(async (req) => {
         status: 200, headers: { "Content-Type": "application/json" },
       });
     }
-    title = String(body.title ?? "WispDating").slice(0, 100);
+    title = String(body.title ?? "Thestia").slice(0, 100);
     text = String(body.body ?? "").slice(0, 200);
   } else {
     const fixed = clientTextsByKind[kind];
@@ -511,7 +511,7 @@ serve(async (req) => {
               priority: "high",
               // WICHTIG: Ohne icon zeigt Android in der Statusleiste das
               // App-Launcher-Icon (opakes Viereck). Das rund maskierte
-              // drawable der App sorgt für das Wisp-Zeichen.
+              // drawable der App sorgt für das Thestia-Zeichen.
               notification: { icon: "notification_icon" },
             },
           },

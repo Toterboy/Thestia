@@ -4,10 +4,10 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:pointycastle/export.dart';
 
-import 'package:wisp/services/app_auth_service.dart';
-import 'package:wisp/services/auth_exception.dart';
-import 'package:wisp/models/user_profile.dart';
-import 'package:wisp/utils/constants.dart';
+import 'package:thestia/services/app_auth_service.dart';
+import 'package:thestia/services/auth_exception.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// Mock-Authentifizierung (kein echtes Backend, keine echten Berechtigungen).
 ///

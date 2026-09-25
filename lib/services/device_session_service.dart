@@ -6,9 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show SignOutScope;
 
-import 'package:wisp/services/local_storage.dart';
-import 'package:wisp/services/supabase_database_service.dart';
-import 'package:wisp/services/supabase_service.dart';
+import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// Ein Gerät, auf dem das Konto aktuell (oder zuletzt) eingeloggt ist.
 class DeviceSession {

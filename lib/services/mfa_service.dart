@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:wisp/services/supabase_service.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// Kapselt die Supabase-MFA-API (TOTP/Authenticator-App) und stellt den
 /// App-weiten MFA-Status für den Router bereit.
@@ -74,7 +74,7 @@ class MfaService {
 
   /// Startet die TOTP-Einrichtung und liefert QR-URI + Secret.
   Future<({String factorId, String qrUri, String secret})> startTotpEnroll({
-    String friendlyName = 'WispDating',
+    String friendlyName = 'Thestia',
   }) async {
     // Verwaiste, unbestätigte Faktoren vorher entfernen: Jede abgebrochene
     // Einrichtung (Screen verlassen, App geschlossen) hinterlässt einen
@@ -106,7 +106,7 @@ class MfaService {
     }
 
     final response = await _client.auth.mfa.enroll(
-      issuer: 'WispDating',
+      issuer: 'Thestia',
       friendlyName: friendlyName,
       factorType: FactorType.totp,
     );
@@ -139,7 +139,7 @@ class MfaService {
   /// Baut den Standard-otpauth-URI, den jede Authenticator-App versteht.
   @visibleForTesting
   static String buildOtpAuthUri(String secret, {String? email}) {
-    const issuer = 'WispDating';
+    const issuer = 'Thestia';
     final account =
         (email == null || email.isEmpty) ? 'Nutzer' : email;
     return 'otpauth://totp/${Uri.encodeComponent(issuer)}:'

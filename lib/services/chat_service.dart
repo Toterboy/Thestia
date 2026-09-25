@@ -4,11 +4,11 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 
-import 'package:wisp/models/match.dart';
-import 'package:wisp/models/message.dart';
-import 'package:wisp/models/user_profile.dart';
-import 'package:wisp/services/secure_hive.dart';
-import 'package:wisp/utils/constants.dart';
+import 'package:thestia/models/match.dart';
+import 'package:thestia/models/message.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/services/secure_hive.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// Lokaler Speicher für Matches und Chat-Verläufe.
 ///

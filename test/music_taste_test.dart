@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wisp/widgets/music_taste_widgets.dart';
+import 'package:thestia/widgets/music_taste_widgets.dart';
 
 void main() {
   group('Musik-Genre-Katalog', () {

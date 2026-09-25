@@ -1,4 +1,4 @@
-import 'package:wisp/utils/formatters.dart';
+import 'package:thestia/utils/formatters.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

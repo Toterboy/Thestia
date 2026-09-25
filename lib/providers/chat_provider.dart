@@ -3,14 +3,14 @@ import 'dart:async';
 import 'package:flutter/widgets.dart' show WidgetsBinding, AppLifecycleState;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wisp/models/match.dart';
-import 'package:wisp/models/message.dart';
-import 'package:wisp/models/user_profile.dart';
-import 'package:wisp/services/chat_service.dart';
-import 'package:wisp/services/local_storage.dart';
-import 'package:wisp/services/notification_service.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/utils/constants.dart';
+import 'package:thestia/models/match.dart';
+import 'package:thestia/models/message.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/services/chat_service.dart';
+import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/notification_service.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// Match-ID des aktuell im VORDERGRUND geöffneten Chats (sonst null).
 ///

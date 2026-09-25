@@ -6,8 +6,8 @@ import 'package:flutter/material.dart'
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:unifiedpush/unifiedpush.dart';
 
-import 'package:wisp/services/supabase_database_service.dart';
-import 'package:wisp/services/supabase_service.dart';
+import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// Google-freier Push über UnifiedPush (F-Droid-Variante, Roadmap-Spike).
 ///
@@ -120,7 +120,7 @@ class UnifiedPushService {
 
   static Future<void> _onMessage(
       PushMessage message, String instance) async {
-    String title = 'WispDating';
+    String title = 'Thestia';
     String body = 'Du hast eine neue Nachricht erhalten.';
     String? kind;
     String? from;

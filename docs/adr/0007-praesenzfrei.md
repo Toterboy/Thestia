@@ -8,12 +8,12 @@
 Messenger zeigen üblicherweise Online-Status, „schreibt gerade“-Indikatoren
 und Lesebestätigungen. Für eine Dating-Zielgruppe erzeugt das
 Verpflichtungsdruck („warum antwortest du, du warst doch online?“) und
-belohnt ständige App-Nutzung – das Gegenteil des WispDating-Ziels,
+belohnt ständige App-Nutzung – das Gegenteil des Thestia-Ziels,
 Dating zurück ins echte Leben zu bringen.
 
 ## Entscheidung
 
-WispDating ist bewusst **präsenz-frei**:
+Thestia ist bewusst **präsenz-frei**:
 
 - Kein Online-/Offline-Status
 - Kein „schreibt gerade…“

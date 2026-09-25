@@ -1,11 +1,11 @@
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:wisp/models/gender.dart';
-import 'package:wisp/models/user_profile.dart';
-import 'package:wisp/services/auth_exception.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/utils/peer_id.dart';
+import 'package:thestia/models/gender.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/services/auth_exception.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/peer_id.dart';
 
 /// Datenbankzugriff über Supabase PostgREST, abgesichert durch Row Level Security (RLS).
 ///

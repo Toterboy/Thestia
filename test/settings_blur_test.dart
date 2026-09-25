@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wisp/models/app_settings.dart';
-import 'package:wisp/providers/settings_provider.dart';
-import 'package:wisp/services/local_storage.dart';
-import 'package:wisp/utils/constants.dart';
+import 'package:thestia/models/app_settings.dart';
+import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// In-Memory-Implementierung von [LocalStorage] fuer Tests
 /// (Muster aus settings_provider_test.dart).

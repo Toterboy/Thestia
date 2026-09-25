@@ -1,4 +1,4 @@
-WispDating flips the classic dating formula: person first, picture later.
+Thestia flips the classic dating formula: person first, picture later.
 
 You only see photos once two people have genuinely gotten to know each other – through written and spoken intros plus a little quiz about each other. No perfectly staged profile pics in the spotlight; the human behind them takes center stage.
 
@@ -24,4 +24,4 @@ SAFETY FOR EVERYONE
 • Report and block features with personal review by the support team
 • Optional: two-factor authentication and passkeys
 
-WispDating is free software (AGPLv3). The complete source code is public.
+Thestia is free software (AGPLv3). The complete source code is public.

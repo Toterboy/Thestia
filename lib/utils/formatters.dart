@@ -1,6 +1,6 @@
 // Hilfsfunktionen zur Formatierung von Werten in der UI.
 
-import 'package:wisp/utils/age_calculator.dart';
+import 'package:thestia/utils/age_calculator.dart';
 
 class Formatters {
   Formatters._();

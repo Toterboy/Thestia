@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/models/find_match_models.dart';
-import 'package:wisp/providers/chat_provider.dart';
-import 'package:wisp/services/find_your_match_service.dart';
-import 'package:wisp/widgets/heart_moments.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/models/find_match_models.dart';
+import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/services/find_your_match_service.dart';
+import 'package:thestia/widgets/heart_moments.dart';
 
 /// Gemeinsame Erinnerungsliste (Idee 5, Migration 116): Einträge anlegen,
 /// abhaken, eigene löschen. Stillstand-Hinweis ab 14 Tagen + Chat-Stille.

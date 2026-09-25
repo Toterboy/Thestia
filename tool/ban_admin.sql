@@ -44,5 +44,5 @@ WHERE email = 'nutzer@beispiel.de';
 --   Service-Role (Edge Functions) haben Zugriff - weder anon noch
 --   eingeloggte Nutzer.
 -- - Entsperrungsanträge kommen per E-Mail über die Edge Function
---   request-unban (Brevo) an support@wispdating.de.
+--   request-unban (Brevo) an support@thestia.de.
 -- ============================================================================

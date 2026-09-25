@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
-import 'package:wisp/services/secure_hive.dart';
+import 'package:thestia/services/secure_hive.dart';
 
 /// In-Memory-Fake für den Keystore (flutter_secure_storage).
 class _FakeSecureStorage extends FlutterSecureStorage {

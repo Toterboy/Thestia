@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 
 /// Verfügbare Farbschemata ("Erscheinungsbilder").
 ///
-/// Classic ist das ursprüngliche WispDating-Rosa; die anderen sind
+/// Classic ist das ursprüngliche Thestia-Rosa; die anderen sind
 /// gleichwertige Alternativen (Light + Dark aus demselben Seed).
-enum WispTheme {
-  classic('Classic WispDating', 'theme.classic', Color(0xFFE9457B)),
+enum ThestiaTheme {
+  classic('Classic Thestia', 'theme.classic', Color(0xFFE9457B)),
   ocean('Ozean', 'theme.ocean', Color(0xFF1E88E5)),
   forest('Wald', 'theme.forest', Color(0xFF2E7D32)),
   sunset('Sonnenuntergang', 'theme.sunset', Color(0xFFF57C00)),
   lila('Lavendel', 'theme.lavender', Color(0xFF8E6BD0)),
   mono('Schiefer', 'theme.slate', Color(0xFF546E7A));
 
-  const WispTheme(this.label, this.labelKey, this.primaryColor);
+  const ThestiaTheme(this.label, this.labelKey, this.primaryColor);
 
   final String label;
 
@@ -23,20 +23,20 @@ enum WispTheme {
 
   /// Kompakter Anzeigename für den Picker (feste Kachelbreite).
   String get shortLabel => switch (this) {
-        WispTheme.classic => 'Classic',
-        WispTheme.ocean => 'Ozean',
-        WispTheme.forest => 'Wald',
-        WispTheme.sunset => 'Sonnenuntergang',
-        WispTheme.lila => 'Lavendel',
-        WispTheme.mono => 'Schiefer',
+        ThestiaTheme.classic => 'Classic',
+        ThestiaTheme.ocean => 'Ozean',
+        ThestiaTheme.forest => 'Wald',
+        ThestiaTheme.sunset => 'Sonnenuntergang',
+        ThestiaTheme.lila => 'Lavendel',
+        ThestiaTheme.mono => 'Schiefer',
       };
 
   /// Aufhellung für Dark-Mode-Akzente.
   Color get lightPrimary => Color.lerp(primaryColor, Colors.white, 0.25)!;
 
-  static WispTheme fromName(String? name) => WispTheme.values
+  static ThestiaTheme fromName(String? name) => ThestiaTheme.values
       .where((t) => t.name == name)
-      .firstOrNull ?? WispTheme.classic;
+      .firstOrNull ?? ThestiaTheme.classic;
 }
 
 /// Zentrale Design-Farben der App (warm, einladend, modern).
@@ -75,7 +75,7 @@ class AppTheme {
   AppTheme._();
 
   /// Light Theme (Material 3) für das gewählte Farbschema.
-  static ThemeData light({WispTheme theme = WispTheme.classic}) => ThemeData(
+  static ThemeData light({ThestiaTheme theme = ThestiaTheme.classic}) => ThemeData(
         useMaterial3: true,
         brightness: Brightness.light,
         colorScheme: ColorScheme.fromSeed(
@@ -123,7 +123,7 @@ class AppTheme {
       );
 
   /// Dark Theme (Material 3) für das gewählte Farbschema.
-  static ThemeData dark({WispTheme theme = WispTheme.classic}) => ThemeData(
+  static ThemeData dark({ThestiaTheme theme = ThestiaTheme.classic}) => ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
         colorScheme: ColorScheme.fromSeed(

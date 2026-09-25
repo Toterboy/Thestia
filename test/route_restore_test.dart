@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wisp/routing/route_restore.dart';
+import 'package:thestia/routing/route_restore.dart';
 
 void main() {
   group('isRestorableRoute', () {

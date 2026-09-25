@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wisp/models/meet_intent.dart';
-import 'package:wisp/services/meet_intent_service.dart';
+import 'package:thestia/models/meet_intent.dart';
+import 'package:thestia/services/meet_intent_service.dart';
 
 /// Verwaltet den "echtes Treffen"-Vorschlag eines einzelnen Matches.
 class MeetIntentNotifier extends StateNotifier<MeetIntent?> {

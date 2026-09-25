@@ -5,9 +5,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:wisp/services/auth_exception.dart';
-import 'package:wisp/services/avatar_crypto.dart';
-import 'package:wisp/services/supabase_service.dart';
+import 'package:thestia/services/auth_exception.dart';
+import 'package:thestia/services/avatar_crypto.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// Service für private Avatar-Speicherung in Supabase Storage.
 ///

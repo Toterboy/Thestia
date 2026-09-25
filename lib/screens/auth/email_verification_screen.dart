@@ -5,13 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:wisp/providers/auth_provider.dart';
-import 'package:wisp/providers/settings_provider.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/utils/constants.dart';
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/widgets/captcha_challenge.dart';
+import 'package:thestia/providers/auth_provider.dart';
+import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/constants.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/widgets/captcha_challenge.dart';
 
 /// Screen zur Bestätigung der E-Mail-Adresse nach der Registrierung.
 ///
@@ -82,7 +82,7 @@ class _EmailVerificationScreenState
     ) {
       if (next == true && previous != true) {
         ref.read(settingsProvider.notifier).markOnboardingPending();
-        if (mounted) context.go(AppRoutes.onboarding);
+        if (mounted) context.go(AppRoutes.signupWelcome);
       }
     });
     // Stillen Auto-Login starten: Nach der Bestätigung meldet sich die App

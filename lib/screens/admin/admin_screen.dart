@@ -5,14 +5,14 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/services/photo_moderation_service.dart';
-import 'package:wisp/services/supabase_database_service.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/services/supabase_storage_service.dart';
-import 'package:wisp/utils/constants.dart';
-import 'package:wisp/widgets/ai_badge.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/services/photo_moderation_service.dart';
+import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/services/supabase_storage_service.dart';
+import 'package:thestia/utils/constants.dart';
+import 'package:thestia/widgets/ai_badge.dart';
 
 /// Hilfsfunktion: Prueft, ob der aktuell eingeloggte Nutzer der Admin ist.
 ///

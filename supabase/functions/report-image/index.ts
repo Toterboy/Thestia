@@ -23,7 +23,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.0";
 
-const MODERATION_EMAIL = Deno.env.get("MODERATION_EMAIL") ?? "moderation@wispdating.de";
+const MODERATION_EMAIL = Deno.env.get("MODERATION_EMAIL") ?? "moderation@thestia.de";
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY") ?? "";
 const HF_API_TOKEN = Deno.env.get("HF_API_TOKEN") ?? "";
 // HF Inference Router (hf-inference-Provider) mit NSFW-Klassifikator.
@@ -306,7 +306,7 @@ serve(async (req) => {
     <p style="color:#999;font-size:13px;margin:16px 0 0">Das gemeldete Bild ist dieser E-Mail angehängt (reported_image.jpg).</p>
   </td></tr>
   <tr><td style="background:#fdf0ee;padding:18px 30px;text-align:center">
-    <p style="color:#b0b0b0;font-size:12px;margin:0">WispDating &middot; Automatische Bild-Moderation</p>
+    <p style="color:#b0b0b0;font-size:12px;margin:0">Thestia &middot; Automatische Bild-Moderation</p>
   </td></tr>
 </table>
 </td></tr></table></body></html>`;
@@ -319,8 +319,8 @@ serve(async (req) => {
           "content-type": "application/json",
         },
         body: JSON.stringify({
-          sender: { email: "moderation@wispdating.de", name: "Wisp Moderation" },
-          to: [{ email: MODERATION_EMAIL, name: "Wisp Moderation" }],
+          sender: { email: "moderation@thestia.de", name: "Thestia Moderation" },
+          to: [{ email: MODERATION_EMAIL, name: "Thestia Moderation" }],
           subject: `Bild-Meldung${ai.available && ai.nsfw ? " (KI bestätigt)" : ""}${escalate ? " - eskaliert" : ""} – ${now.slice(0, 10)}`,
           htmlContent,
           attachment: [{ name: "reported_image.jpg", content: imageBase64 }],

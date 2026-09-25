@@ -3,8 +3,8 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 
-import 'package:wisp/models/transit_models.dart';
-import 'package:wisp/services/local_storage.dart';
+import 'package:thestia/models/transit_models.dart';
+import 'package:thestia/services/local_storage.dart';
 
 /// Lokaler Encounter-Cache für Transit Spark (Phase 1).
 ///

@@ -1,4 +1,4 @@
-# Changelog – WispDating
+# Changelog – Thestia
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
@@ -194,7 +194,7 @@ Server: Migrationen **080, 081, 082** einspielen (Reihenfolge).
   „Menschen kennenlernen" (Find your Match, Dating Hour), „Direkt
   verbinden" (Zufallschat), „Unterwegs" (QR-Code, Transit Spark) –
   mit NEU-Badge für frische Modi.
-- **Onboarding als Interview**: Wisp stellt Fragen statt eines
+- **Onboarding als Interview**: Thestia stellt Fragen statt eines
   Formulars – eine Frage pro Screen in Chat-Optik (Sprechblase, warmer
   Ton), dezente Fortschritts-Dots, alles überspringbar. Keine neuen
   Datenpunkte, kein Belohnungs-Mechanismus; komplett zweisprachig.
@@ -527,10 +527,10 @@ bleibt ein 0.7.x-Patch/Polish-Release.
   (`Image()`-Default = RGB) - Android zeigte daher ein volles weißes
   Quadrat statt der Herz-Silhouette. Das Icon ist jetzt ein echtes
   RGBA-Asset; beide Icon-Tools sind gegen stillen Alpha-Verlust gehärtet
-- **Passkey-Erstellen: "Anfrage abgebrochen von Wisp" / "credential
+- **Passkey-Erstellen: "Anfrage abgebrochen von Thestia" / "credential
   verification failed"**: Der Plugin-Authenticator brach vor JEDER
   Zeremonie eine laufende Operation ab - das konnte die eigene neue
-  Anfrage mit abwürgen. Wisp nutzt jetzt einen eigenen Authenticator ohne
+  Anfrage mit abwürgen. Thestia nutzt jetzt einen eigenen Authenticator ohne
   dieses Vorabbrechen, plus Doppel-Tap-Schutz an der Kachel und im
   Service (nur eine Zeremonie gleichzeitig). Server-"Verifikation
   fehlgeschlagen" bekommt eine verständliche Meldung mit Lösungshinweis
@@ -969,7 +969,7 @@ und Edge-Function-Updates – zuerst ausrollen** (siehe
   Angaben sind Pflicht (Bio, mindestens ein Interesse, Text + Audio)
 - Passkey und 2FA werden am Ende der Einrichtung **dringend empfohlen**
   (mit Direkt-Sprung zum Einrichten)
-- **Neues WispDating-Logo**: rundes Logo überall (App, Splash day/night,
+- **Neues Thestia-Logo**: rundes Logo überall (App, Splash day/night,
   Launcher-Icons, Adaptive-Icon, Fastlane) – generiert aus der neuen
   Basis-Grafik, Schriftzug vollständig lesbar
 - App-Logo mit Dark-Variante (keine weißen Flächen mehr), Splash kleiner
@@ -981,13 +981,13 @@ und Edge-Function-Updates – zuerst ausrollen** (siehe
 - Captcha-Dialog an die Cloudflare-Fenstergröße angepasst
 - Theme-Picker mit einheitlichen Kachelgrößen
 - Bild-Zuschnitt folgt dem aktiven Farbschema
-- App-Titel überall „WispDating"
+- App-Titel überall „Thestia"
 
 ## [0.6.0] – 2026-08-24
 
 ### Hinzugefügt
 
-- **Erscheinungsbilder**: 6 Farbschemata (Classic WispDating, Ozean, Wald,
+- **Erscheinungsbilder**: 6 Farbschemata (Classic Thestia, Ozean, Wald,
   Sonnenuntergang, Lavendel, Schiefer) – wählbar in der Einrichtung
   (Schritt „Darstellung") und in den Einstellungen; gilt für Light UND Dark
 - **Verschlüsseltes E2E-Key-Backup**: private Signal-Identität per
@@ -1033,7 +1033,7 @@ und Edge-Function-Updates – zuerst ausrollen** (siehe
   über optionales CAPTCHA + Rate-Limits)
 - GPS-Button beim Standortfeld sitzt als suffixIcon exakt am Eingabefeld –
   auch bei großer Systemschrift
-- App-Titel überall „WispDating"
+- App-Titel überall „Thestia"
 
 ### Behoben
 
@@ -1062,7 +1062,7 @@ und Edge-Function-Updates – zuerst ausrollen** (siehe
 
 ### Erste öffentliche Beta 🎉
 
-WispDating dreht das Prinzip klassischer Dating-Apps um: **Persönlichkeit zuerst**.
+Thestia dreht das Prinzip klassischer Dating-Apps um: **Persönlichkeit zuerst**.
 Fotos sieht man erst nach einem echten Kennenlernen – und alle Kommunikation läuft
 Ende-zu-Ende-verschlüsselt direkt zwischen den Geräten.
 

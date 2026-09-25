@@ -14,7 +14,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wisp/services/backup_crypto.dart';
+import 'package:thestia/services/backup_crypto.dart';
 
 void main() {
   // Klartext-Fixture: identifizierbar als Test-Daten.

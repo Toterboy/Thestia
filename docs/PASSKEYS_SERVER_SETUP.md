@@ -20,9 +20,17 @@ android:apk-key-hash:<base64url(SHA-256 des Signaturzertifikats)>
 Fehlt der Origin des installierten APKs in der Konfiguration, schlägt die
 Verifikation IMMER fehl – während der native Dialog trotzdem funktioniert,
 denn der prüft nur die `assetlinks.json` auf der RP-Domain (dort stehen bei
-Wisp beide Keys drin).
+Thestia beide Keys drin).
 
-## Die Origins von WispDating
+## Die Origins von Thestia
+
+> **Migration WispDating → Thestia:** Der **Keystore bleibt derselbe**
+> (`wisp-upload.keystore`) – deshalb bleiben alle `apk-key-hash`-Origins
+> und `assetlinks.json`-Fingerprints gültig. Es ändern sich nur RP-ID und
+> HTTPS-Origins (`auth.thestia.de`). **Achtung:** Bestehende Passkeys sind
+> an die alte RP-ID gebunden und werden ungültig – Nutzer müssen nach der
+> Migration ihre Passkeys neu registrieren (2FA/TOTP oder E-Mail-Login
+> bleibt als Fallback).
 
 Berechnet aus dem **tatsächlichen Signatur-Keystore** (`wisp-upload.keystore`,
 SHA-256 via keytool verifiziert):
@@ -30,8 +38,8 @@ SHA-256 via keytool verifiziert):
 | Schlüssel | SHA-256 | Origin (exakt so übernehmen) |
 |---|---|---|
 | **Upload-/Release-Key** | `37AA4F…5572` | `android:apk-key-hash:N6pPbMHeuPWVdF6sCs4KGclUcoD8dI8CZr3S7HvpVXI` |
-| iOS/Web (Associated Domain) | – | `https://auth.wispdating.de` |
-| Web-App (falls auf Root-Domain) | – | `https://wispdating.de` |
+| iOS/Web (Associated Domain) | – | `https://auth.thestia.de` |
+| Web-App (falls auf Root-Domain) | – | `https://thestia.de` |
 
 Der **Debug-Key-Hash** wird hier bewusst NICHT veröffentlicht. Er gehört
 ausschließlich in lokale/Entwicklungs-Konfigurationen (bei lokalem
@@ -47,7 +55,7 @@ Base64URL-Zeichen, 32 Byte). Damit war der Abgleich nie erfolgreich →
 ersetzen, Produktions-Umfang):**
 
 ```
-https://auth.wispdating.de,android:apk-key-hash:N6pPbMHeuPWVdF6sCs4KGclUcoD8dI8CZr3S7HvpVXI
+https://auth.thestia.de,android:apk-key-hash:N6pPbMHeuPWVdF6sCs4KGclUcoD8dI8CZr3S7HvpVXI
 ```
 
 **Achtung:** Wer ein APK mit einem NEUEN Keystore signiert (z. B. neuer
@@ -62,7 +70,7 @@ SHA-256-Fingerprints sind NICHT austauschbar.
 - Ein Zertifikats-Fingerprint (SHA-1/SHA-256) ist ein **öffentlicher
   Ableitungswert**: Er steckt in jedem verteilten APK, wird von Google
   Play öffentlich angezeigt und steht ohnehin in der öffentlich
-  abrufbaren `https://auth.wispdating.de/.well-known/assetlinks.json`
+  abrufbaren `https://auth.thestia.de/.well-known/assetlinks.json`
   (dort ist er FUNKTIONAL ERFORDERLICH – ohne ihn verweigert Android den
   Passkey-Dialog).
 - Das eigentliche Geheimnis ist der **Keystore selbst samt Passwort**
@@ -83,11 +91,11 @@ sind demnach **kein Sicherheitsrisiko** und bleiben absichtlich im Repo.
 GoTrue (Quelle: `internal/conf/configuration.go`) verlangt bei aktivem
 WebAuthn/Passkeys zwingend:
 
-| Env/Setting | Wert für WispDating |
+| Env/Setting | Wert für Thestia |
 |---|---|
-| `GOTRUE_WEBAUTHN_RP_ID` | `auth.wispdating.de` |
-| `GOTRUE_WEBAUTHN_RP_DISPLAY_NAME` | z. B. `WispDating` |
-| `GOTRUE_WEBAUTHN_RP_ORIGINS` | kommaseparierte Liste – MUSS den `android:apk-key-hash:`-Origin des Release-Keys, `https://auth.wispdating.de` und ggf. `https://wispdating.de` enthalten (Debug-Hash nur lokal, nicht in Produktion) |
+| `GOTRUE_WEBAUTHN_RP_ID` | `auth.thestia.de` |
+| `GOTRUE_WEBAUTHN_RP_DISPLAY_NAME` | z. B. `Thestia` |
+| `GOTRUE_WEBAUTHN_RP_ORIGINS` | kommaseparierte Liste – MUSS den `android:apk-key-hash:`-Origin des Release-Keys, `https://auth.thestia.de` und ggf. `https://thestia.de` enthalten (Debug-Hash nur lokal, nicht in Produktion) |
 
 **Supabase (Hosted):** Dashboard → **Authentication → Sign In / Providers →
 Passkeys (Beta)** → dort **RP ID**, **Display Name** und **Origins** pflegen.
@@ -122,5 +130,5 @@ python -c "import base64;print('android:apk-key-hash:'+base64.urlsafe_b64encode(
 | `credential verification failed` nur manchmal | Challenge abgelaufen/doppelt gestartet | Einmal sauber wiederholen |
 | `aal2 required` / 403 | 2FA aktiv, Session nur AAL1 | 2FA-Bestätigung im Flow (automatisch) |
 | `User enrollments disabled` | Passkeys im Dashboard nicht aktiviert | Dashboard → Passkeys aktivieren |
-| Native Dialog lehnt ab (`SecurityError`) | assetlinks.json passt nicht | Hash in `auth.wispdating.de/.well-known/assetlinks.json` ergänzen |
+| Native Dialog lehnt ab (`SecurityError`) | assetlinks.json passt nicht | Hash in `auth.thestia.de/.well-known/assetlinks.json` ergänzen |
 | Passkey in Google-Passwortmanager sichtbar, aber Login schlägt fehl | Credential auf Gerät, nie serverseitig registriert (Verifikation schlug fehl) | Eintrag im Passwortmanager löschen; nach Origin-Fix neu anlegen |

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wisp/services/relay_service.dart';
+import 'package:thestia/services/relay_service.dart';
 
 void main() {
   group('Relay-Fallback (v0.9.1, Migration 093)', () {

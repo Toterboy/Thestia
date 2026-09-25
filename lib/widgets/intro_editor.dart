@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record/record.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/services/supabase_storage_service.dart';
-import 'package:wisp/widgets/audio_review_sheet.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/services/supabase_storage_service.dart';
+import 'package:thestia/widgets/audio_review_sheet.dart';
 
 /// Editor für die eigene Vorstellung ("Find your Match"): Text + Audio.
 ///
@@ -105,7 +105,7 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
       }
       final dir = Directory.systemTemp;
       final path =
-          '${dir.path}/wisp_intro_${DateTime.now().millisecondsSinceEpoch}.m4a';
+          '${dir.path}/thestia_intro_${DateTime.now().millisecondsSinceEpoch}.m4a';
       await _recorder.start(
         const RecordConfig(
           encoder: AudioEncoder.aacLc,

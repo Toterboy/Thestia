@@ -24,10 +24,10 @@ class SecureLocationStorage {
 
   /// Schlüssel im secure_storage (eigener Namespace, um Kollisionen zu
   /// vermeiden).
-  static const _keyLat = 'wisp_loc_lat';
-  static const _keyLng = 'wisp_loc_lng';
-  static const _keyTs = 'wisp_loc_ts';
-  static const _keyAcc = 'wisp_loc_acc';
+  static const _keyLat = 'thestia_loc_lat';
+  static const _keyLng = 'thestia_loc_lng';
+  static const _keyTs = 'thestia_loc_ts';
+  static const _keyAcc = 'thestia_loc_acc';
 
   /// Alte SharedPreferences-Schlüssel (Klartext).
   static const _legacyKeyLat = 'verification_latitude';
@@ -36,7 +36,7 @@ class SecureLocationStorage {
   static const _legacyKeyAcc = 'verification_location_accuracy';
 
   /// Marker, der signalisiert, dass die Migration durchgelaufen ist.
-  static const _migrationMarker = 'wisp_loc_migrated_v1';
+  static const _migrationMarker = 'thestia_loc_migrated_v1';
 
   final FlutterSecureStorage _secure = const FlutterSecureStorage();
 

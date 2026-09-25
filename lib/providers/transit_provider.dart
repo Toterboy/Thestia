@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wisp/models/transit_models.dart';
-import 'package:wisp/services/local_storage.dart';
-import 'package:wisp/services/supabase_database_service.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/services/transit_ble_service.dart';
-import 'package:wisp/services/transit_encounter_service.dart';
+import 'package:thestia/models/transit_models.dart';
+import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/services/transit_ble_service.dart';
+import 'package:thestia/services/transit_encounter_service.dart';
 
 /// Transit-Aktivitätsdauer (Session-Fenster).
 const Duration kTransitSessionDuration = Duration(minutes: 45);

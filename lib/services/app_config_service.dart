@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-import 'package:wisp/services/supabase_service.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// Liest Betriebs-Parameter aus der app_config-Tabelle (Migration 034/076).
 ///

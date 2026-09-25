@@ -1,12 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wisp/models/gender.dart';
-import 'package:wisp/models/personality_type.dart';
-import 'package:wisp/models/profile_visibility.dart';
-import 'package:wisp/models/report_models.dart';
-import 'package:wisp/models/transit_models.dart';
-import 'package:wisp/models/user_mood.dart';
+import 'package:thestia/models/gender.dart';
+import 'package:thestia/models/personality_type.dart';
+import 'package:thestia/models/profile_visibility.dart';
+import 'package:thestia/models/report_models.dart';
+import 'package:thestia/models/transit_models.dart';
+import 'package:thestia/models/user_mood.dart';
 
 /// Guard-Tests für das L10n-System (v0.9.1-Vollsweep).
 ///

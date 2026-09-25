@@ -3,17 +3,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wisp/providers/chat_provider.dart';
-import 'package:wisp/providers/profile_provider.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/services/find_your_match_service.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/utils/peer_id.dart';
+import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/services/find_your_match_service.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/peer_id.dart';
 
 // mobile_scanner: Kamera auf Mobile, Stub auf Web/Desktop.
 import 'package:mobile_scanner/mobile_scanner.dart'
-    if (dart.library.html) 'package:wisp/utils/mobile_scanner_stub.dart';
-import 'package:wisp/l10n/app_strings.dart';
+    if (dart.library.html) 'package:thestia/utils/mobile_scanner_stub.dart';
+import 'package:thestia/l10n/app_strings.dart';
 
 enum _QrMode { choice, camera, manual }
 
@@ -381,7 +381,7 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
               final raw = barcode.rawValue!;
               final uri = Uri.tryParse(raw);
               if (uri == null ||
-                  uri.scheme != 'wisp' ||
+                  uri.scheme != 'thestia' ||
                   uri.host != 'user') {
                 _showInvalidQrHint();
                 return;

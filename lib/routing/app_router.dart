@@ -2,60 +2,61 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wisp/models/app_settings.dart';
-import 'package:wisp/routing/route_restore.dart';
+import 'package:thestia/models/app_settings.dart';
+import 'package:thestia/routing/route_restore.dart';
 
-import 'package:wisp/providers/auth_provider.dart';
-import 'package:wisp/providers/settings_provider.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/services/mfa_service.dart';
-import 'package:wisp/utils/constants.dart';
-import 'package:wisp/screens/auth/login_screen.dart';
-import 'package:wisp/screens/auth/forgot_password_screen.dart';
-import 'package:wisp/screens/auth/reset_password_screen.dart';
-import 'package:wisp/screens/auth/unban_request_screen.dart';
-import 'package:wisp/screens/auth/email_verification_screen.dart';
-import 'package:wisp/screens/auth/mfa_setup_screen.dart';
-import 'package:wisp/screens/auth/mfa_challenge_screen.dart';
-import 'package:wisp/screens/core/loading_screen.dart';
-import 'package:wisp/screens/welcome/welcome_screen.dart';
-import 'package:wisp/screens/core/error_screen.dart';
-import 'package:wisp/screens/home/home_screen.dart';
-import 'package:wisp/screens/core/main_navigation.dart';
-import 'package:wisp/screens/interests/interessen_screen.dart';
-import 'package:wisp/screens/onboarding/onboarding_screen.dart';
-import 'package:wisp/screens/onboarding/personality_test_screen.dart';
-import 'package:wisp/screens/onboarding/settings_privacy_once_screen.dart';
-import 'package:wisp/screens/mood/mood_picker_screen.dart';
-import 'package:wisp/screens/core/whats_new_screen.dart';
-import 'package:wisp/services/whats_new_service.dart';
-import 'package:wisp/services/local_storage.dart';
-import 'package:wisp/screens/privacy/privacy_screen.dart';
-import 'package:wisp/screens/settings/devices_screen.dart';
-import 'package:wisp/screens/profile/profile_edit_screen.dart';
-import 'package:wisp/screens/profile/profile_screen.dart';
-import 'package:wisp/screens/settings/settings_screen.dart';
-import 'package:wisp/screens/admin/admin_screen.dart';
-import 'package:wisp/screens/swipe/swipe_mode_selection_screen.dart';
-import 'package:wisp/screens/swipe/find_your_match_screen.dart';
-import 'package:wisp/screens/quiz/quiz_screen.dart';
-import 'package:wisp/screens/spice/spice_questions_screen.dart';
-import 'package:wisp/screens/dating_hour/dating_hour_chat_screen.dart';
-import 'package:wisp/screens/dating_hour/dating_hour_event_screen.dart';
-import 'package:wisp/screens/dating_hour/dating_hour_how_it_works_screen.dart';
-import 'package:wisp/screens/dating_hour/dating_hour_preferences_screen.dart';
-import 'package:wisp/screens/dating_hour/dating_hour_rules_screen.dart';
-import 'package:wisp/screens/verification/verification_flow.dart';
-import 'package:wisp/screens/safety/safety_center_screen.dart';
-import 'package:wisp/screens/chat/chat_detail_screen.dart';
-import 'package:wisp/screens/profile/profile_detail_screen.dart';
-import 'package:wisp/screens/swipe/random_chat_screen.dart';
-import 'package:wisp/screens/swipe/transit_radar_screen.dart';
-import 'package:wisp/screens/bug_report/bug_report_screen.dart';
-import 'package:wisp/screens/qr/qr_profile_screen.dart';
-import 'package:wisp/screens/qr/qr_scan_screen.dart';
-import 'package:wisp/screens/legal/community_guidelines_screen.dart';
-import 'package:wisp/widgets/back_to_route_scope.dart';
+import 'package:thestia/providers/auth_provider.dart';
+import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/services/mfa_service.dart';
+import 'package:thestia/utils/constants.dart';
+import 'package:thestia/screens/auth/login_screen.dart';
+import 'package:thestia/screens/auth/forgot_password_screen.dart';
+import 'package:thestia/screens/auth/reset_password_screen.dart';
+import 'package:thestia/screens/auth/unban_request_screen.dart';
+import 'package:thestia/screens/auth/email_verification_screen.dart';
+import 'package:thestia/screens/auth/mfa_setup_screen.dart';
+import 'package:thestia/screens/auth/mfa_challenge_screen.dart';
+import 'package:thestia/screens/core/loading_screen.dart';
+import 'package:thestia/screens/welcome/welcome_screen.dart';
+import 'package:thestia/screens/welcome/signup_welcome_screen.dart';
+import 'package:thestia/screens/core/error_screen.dart';
+import 'package:thestia/screens/home/home_screen.dart';
+import 'package:thestia/screens/core/main_navigation.dart';
+import 'package:thestia/screens/interests/interessen_screen.dart';
+import 'package:thestia/screens/onboarding/onboarding_screen.dart';
+import 'package:thestia/screens/onboarding/personality_test_screen.dart';
+import 'package:thestia/screens/onboarding/settings_privacy_once_screen.dart';
+import 'package:thestia/screens/mood/mood_picker_screen.dart';
+import 'package:thestia/screens/core/whats_new_screen.dart';
+import 'package:thestia/services/whats_new_service.dart';
+import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/screens/privacy/privacy_screen.dart';
+import 'package:thestia/screens/settings/devices_screen.dart';
+import 'package:thestia/screens/profile/profile_edit_screen.dart';
+import 'package:thestia/screens/profile/profile_screen.dart';
+import 'package:thestia/screens/settings/settings_screen.dart';
+import 'package:thestia/screens/admin/admin_screen.dart';
+import 'package:thestia/screens/swipe/swipe_mode_selection_screen.dart';
+import 'package:thestia/screens/swipe/find_your_match_screen.dart';
+import 'package:thestia/screens/quiz/quiz_screen.dart';
+import 'package:thestia/screens/spice/spice_questions_screen.dart';
+import 'package:thestia/screens/dating_hour/dating_hour_chat_screen.dart';
+import 'package:thestia/screens/dating_hour/dating_hour_event_screen.dart';
+import 'package:thestia/screens/dating_hour/dating_hour_how_it_works_screen.dart';
+import 'package:thestia/screens/dating_hour/dating_hour_preferences_screen.dart';
+import 'package:thestia/screens/dating_hour/dating_hour_rules_screen.dart';
+import 'package:thestia/screens/verification/verification_flow.dart';
+import 'package:thestia/screens/safety/safety_center_screen.dart';
+import 'package:thestia/screens/chat/chat_detail_screen.dart';
+import 'package:thestia/screens/profile/profile_detail_screen.dart';
+import 'package:thestia/screens/swipe/random_chat_screen.dart';
+import 'package:thestia/screens/swipe/transit_radar_screen.dart';
+import 'package:thestia/screens/bug_report/bug_report_screen.dart';
+import 'package:thestia/screens/qr/qr_profile_screen.dart';
+import 'package:thestia/screens/qr/qr_scan_screen.dart';
+import 'package:thestia/screens/legal/community_guidelines_screen.dart';
+import 'package:thestia/widgets/back_to_route_scope.dart';
 
 /// Zentrale Routen der App.
 class AppRoutes {
@@ -63,10 +64,12 @@ class AppRoutes {
 
   static const String welcome = '/welcome';
   static const String loading = '/loading';
+  // Kurzer Willkommensscreen nach E-Mail-Bestätigung (v0.9.1, einmalig).
+  static const String signupWelcome = '/welcome-new';
   static const String onboarding = '/onboarding';
   static const String login = '/login';
   static const String forgotPassword = '/forgot-password';
-  // Passwort-Reset (Ziel des Recovery-Deep-Links wisp://reset-password)
+  // Passwort-Reset (Ziel des Recovery-Deep-Links thestia://reset-password)
   static const String resetPassword = '/reset-password';
   // Entsperrungsantrag für gesperrte E-Mail-Adressen (öffentlich)
   static const String unbanRequest = '/unban-request';
@@ -229,6 +232,8 @@ GoRouter createRouter(Ref ref) {
 
       final goingToLoading = state.matchedLocation == AppRoutes.loading;
       final goingToWelcome = state.matchedLocation == AppRoutes.welcome;
+      final goingToSignupWelcome =
+          state.matchedLocation == AppRoutes.signupWelcome;
       final goingToLogin = state.matchedLocation == AppRoutes.login;
       final goingToForgotPassword =
           state.matchedLocation == AppRoutes.forgotPassword;
@@ -266,6 +271,7 @@ GoRouter createRouter(Ref ref) {
         final goingToSetup =
             goingToSettingsPrivacyOnce ||
             goingToOnboarding ||
+            goingToSignupWelcome ||
             goingToPersonalityTest;
         if (goingToSetup) {
           final freshRegistration =
@@ -387,9 +393,20 @@ GoRouter createRouter(Ref ref) {
       // "Jetzt einrichten" (2FA) wieder auf Seite 1 der Einrichtung.
       final setupExempt =
           goingToSettingsPrivacyOnce ||
+          goingToSignupWelcome ||
           state.matchedLocation == AppRoutes.mfaSetup ||
           state.matchedLocation == AppRoutes.mfaChallenge ||
           state.matchedLocation == AppRoutes.bugReport;
+
+      // Schritt 0.7: Kurzer Willkommensscreen nach frischer Registrierung
+      // (v0.9.1, einmalig) – VOR der Einrichtung. Nur für Konten ohne
+      // abgeschlossenes Onboarding; Bestandsnutzer (Update) sehen ihn nie.
+      // Bei Kill während des Screens greift beim nächsten Start direkt
+      // die Einrichtung (Flag bleibt false, Onboarding aber offen).
+      if (!settings.signupWelcomeSeen && !settings.onboardingDone) {
+        if (!goingToSignupWelcome) return AppRoutes.signupWelcome;
+        return null;
+      }
 
       // "NIEMALS-EINRICHTUNG"-GARANTIE:
       // Die Einrichtung / der Persönlichkeitstest werden NIE wieder
@@ -478,6 +495,7 @@ GoRouter createRouter(Ref ref) {
       // ("Test wiederholen"). Sonst würde der Router den Nutzer sofort wieder
       // nach Home werfen und der Button hätte keine Wirkung.
       if (goingToWelcome ||
+          goingToSignupWelcome ||
           goingToLogin ||
           goingToForgotPassword ||
           goingToResetPassword ||
@@ -515,6 +533,10 @@ GoRouter createRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.welcome,
         builder: (context, state) => const WelcomeScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.signupWelcome,
+        builder: (context, state) => const SignupWelcomeScreen(),
       ),
       GoRoute(
         path: AppRoutes.login,

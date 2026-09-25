@@ -1,6 +1,6 @@
-# Beitragen zu WispDating
+# Beitragen zu Thestia
 
-Danke für dein Interesse! WispDating ist Open Source (AGPLv3) und lebt von
+Danke für dein Interesse! Thestia ist Open Source (AGPLv3) und lebt von
 Beiträgen – Code, Design, Übersetzungen, Dokumentation und Bug-Reports.
 
 ## Setup

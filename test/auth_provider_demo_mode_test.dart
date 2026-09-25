@@ -1,7 +1,7 @@
 // Tests für die reine Demo-Modus-Entscheidung (G-01).
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wisp/utils/demo_mode.dart';
+import 'package:thestia/utils/demo_mode.dart';
 
 void main() {
   group('resolveDemoMode', () {
@@ -44,7 +44,7 @@ void main() {
           isReleaseMode: false,
           isSupabaseInitialized: false,
           demoModeFlag: true,
-          baseUrl: 'https://api.wispdating.de',
+          baseUrl: 'https://api.thestia.de',
         ),
         isTrue,
       );
@@ -69,7 +69,7 @@ void main() {
           isReleaseMode: false,
           isSupabaseInitialized: false,
           demoModeFlag: false,
-          baseUrl: 'https://api.wispdating.de',
+          baseUrl: 'https://api.thestia.de',
         ),
         isFalse,
       );

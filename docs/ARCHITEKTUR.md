@@ -106,7 +106,7 @@ Erweiterung um Flutter-Web als LEICHTE GAST-Fläche (ohne App-Install):
 ┌────────────── Codeberg Pages (Berlin, trackerfrei) ──────────────┐
 │ Flutter-Web-Build: Gast-Profil, Gast-Chat (WebRTC/WASM), /live   │
 └───────────────┬──────────────────────────────────────────────────┘
-                │ Einmal-Token  wispdating.app/spark/<token>
+                │ Einmal-Token  thestia.app/spark/<token>
 ┌───────────────▼──────────────────────────────────────────────────┐
 │ Supabase: flüchtige Spark-Sessions (TTL 24–48 h), Rate-Limits,   │
 │ Same-Train-Lobbys (BSSID-Hash, Zugnummer), Realtime-Signaling    │

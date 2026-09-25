@@ -4,9 +4,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:wisp/screens/settings/settings_screen.dart';
-import 'package:wisp/services/local_storage.dart';
-import 'package:wisp/services/secure_storage.dart';
+import 'package:thestia/screens/settings/settings_screen.dart';
+import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/secure_storage.dart';
 
 /// Noop-Variante des Secure-Storages (kein Plugin im Widget-Test noetig).
 class _NoopSecureStorage extends FlutterSecureStorage {

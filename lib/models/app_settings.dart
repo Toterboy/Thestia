@@ -1,5 +1,5 @@
-import 'package:wisp/models/profile_visibility.dart';
-import 'package:wisp/utils/constants.dart';
+import 'package:thestia/models/profile_visibility.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// App-Einstellungen inkl. Blind-Mode und Privatsphäre-Optionen.
 ///
@@ -82,7 +82,7 @@ class AppSettings {
   /// unangemessenen Inhalten; Antippen zeigt nach Warnung das Bild).
   final bool blurChatImages;
 
-  /// Gewähltes Farbschema (Name aus WispTheme, Default 'classic').
+  /// Gewähltes Farbschema (Name aus ThestiaTheme, Default 'classic').
   final String themeName;
 
   /// Pausenmodus (v0.8.0): Profil in Discovery/FYM unsichtbar, Funken
@@ -95,6 +95,18 @@ class AppSettings {
   /// Kontext-Icebreaker-Chip im Chat (v0.8.0): Vorschläge aus gemeinsamen
   /// Interessen; vom Nutzer deaktivierbar.
   final bool contextIcebreakerEnabled;
+
+  /// Chat-Hintergrund (v0.9.1): none, Muster oder custom (eigenes Bild).
+  /// Serverseitig in ui_prefs gespiegelt.
+  final String chatBackground;
+
+  /// Lokaler Dateipfad des eigenen Chat-Hintergrundbildes (nur custom).
+  /// Bleibt bewusst NUR auf dem Geraet (kein Server-Sync).
+  final String? chatBackgroundPath;
+
+  /// Kurzer Willkommensscreen nach der Registrierung (v0.9.1) gesehen?
+  /// Einmalig nach E-Mail-Bestaetigung, danach direkt Einrichtung.
+  final bool signupWelcomeSeen;
 
   const AppSettings({
     this.blindModeEnabled = true,
@@ -123,6 +135,9 @@ class AppSettings {
     this.paused = false,
     this.habitsDealbreaker = false,
     this.contextIcebreakerEnabled = true,
+    this.chatBackground = 'none',
+    this.chatBackgroundPath,
+    this.signupWelcomeSeen = false,
   });
 
   /// Standard-Einstellungen für einen neuen Nutzer.
@@ -164,6 +179,9 @@ class AppSettings {
       habitsDealbreaker: json['habitsDealbreaker'] as bool? ?? false,
       contextIcebreakerEnabled:
           json['contextIcebreakerEnabled'] as bool? ?? true,
+      chatBackground: json['chatBackground'] as String? ?? 'none',
+      chatBackgroundPath: json['chatBackgroundPath'] as String?,
+      signupWelcomeSeen: json['signupWelcomeSeen'] as bool? ?? false,
     );
   }
 
@@ -195,6 +213,9 @@ class AppSettings {
     'paused': paused,
     'habitsDealbreaker': habitsDealbreaker,
     'contextIcebreakerEnabled': contextIcebreakerEnabled,
+    'chatBackground': chatBackground,
+    'chatBackgroundPath': chatBackgroundPath,
+    'signupWelcomeSeen': signupWelcomeSeen,
   };
 
   /// Immutabele Kopie mit veränderten Werten.
@@ -206,6 +227,10 @@ class AppSettings {
   /// nicht mehr wählbar). Alle anderen Felder sind non-nullable und
   /// brauchen keinen Sentinel.
   static const _useDarkModeUnset = Object();
+
+  /// Sentinel für [chatBackgroundPath]: null bedeutet "Pfad löschen",
+  /// daher braucht es die Unterscheidung wie bei [useDarkMode].
+  static const _chatBackgroundPathUnset = Object();
 
   AppSettings copyWith({
     bool? blindModeEnabled,
@@ -234,6 +259,9 @@ class AppSettings {
     bool? paused,
     bool? habitsDealbreaker,
     bool? contextIcebreakerEnabled,
+    String? chatBackground,
+    Object? chatBackgroundPath = _chatBackgroundPathUnset,
+    bool? signupWelcomeSeen,
   }) {
     return AppSettings(
       blindModeEnabled: blindModeEnabled ?? this.blindModeEnabled,
@@ -269,6 +297,12 @@ class AppSettings {
       habitsDealbreaker: habitsDealbreaker ?? this.habitsDealbreaker,
       contextIcebreakerEnabled:
           contextIcebreakerEnabled ?? this.contextIcebreakerEnabled,
+      chatBackground: chatBackground ?? this.chatBackground,
+      chatBackgroundPath:
+          identical(chatBackgroundPath, _chatBackgroundPathUnset)
+              ? this.chatBackgroundPath
+              : chatBackgroundPath as String?,
+      signupWelcomeSeen: signupWelcomeSeen ?? this.signupWelcomeSeen,
     );
   }
 }

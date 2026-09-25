@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:wisp/services/supabase_service.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// Service für Standort-Prüfungen via Supabase Edge Functions.
 ///

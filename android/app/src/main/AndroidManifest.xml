@@ -23,7 +23,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <application
-        android:label="WispDating"
+        android:label="Thestia"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="false"
@@ -53,7 +53,7 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- Deep-Link für den Passwort-Reset (wisp://reset-password).
+            <!-- Deep-Link für den Passwort-Reset (thestia://reset-password).
                  Der Link aus der Recovery-E-Mail enthält Token im Fragment/
                  Query; AppDeepLinkPlugin (supabase_flutter) verarbeitet ihn
                  und meldet das passwordRecovery-Event. -->
@@ -61,21 +61,21 @@
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="wisp"/>
+                <data android:scheme="thestia"/>
             </intent-filter>
             <!-- App Links (HTTPS, autoVerify): Sichere Variante für den
                  Recovery-Flow - nur die verifizierte Domain darf die Links
                  öffnen, fremde Apps können sie nicht abfangen. Voraussetzung:
-                 https://wispdating.de/.well-known/assetlinks.json muss den
+                 https://thestia.de/.well-known/assetlinks.json muss den
                  SHA-256 des Signatur-Zertifikats enthalten (siehe
                  passkey-assets/ASSETLINKS_ROOTDOMAIN.md). Bleibt die Datei
-                 unbeantwortet, fällt Android still auf wisp:// zurück. -->
+                 unbeantwortet, fällt Android still auf thestia:// zurück. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="https"
-                      android:host="wispdating.de"/>
+                      android:host="thestia.de"/>
             </intent-filter>
         </activity>
         <!-- image_cropper: Crop-Screen fuer Profilbilder. -->
@@ -98,7 +98,7 @@
             android:name="io.flutter.embedding.android.EnableImpeller"
             android:value="false" />
 
-        <!-- Wisp-Logo (weisse Silhouette) als Small-Icon fuer FCM-Push -
+        <!-- Thestia-Logo (weisse Silhouette) als Small-Icon fuer FCM-Push -
              ohne diesen Eintrag zeigt Android nur einen weissen Punkt. -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
@@ -108,8 +108,8 @@
             android:resource="@color/notification_accent" />
 
         <!-- Passkey-/Credential-Manager-Verknüpfung mit der RP-Domain
-             (auth.wispdating.de). Die Datei liegt unter
-             https://auth.wispdating.de/.well-known/assetlinks.json.
+             (auth.thestia.de). Die Datei liegt unter
+             https://auth.thestia.de/.well-known/assetlinks.json.
              Ohne diesen Eintrag verweigert Android den Passkey-Dialog. -->
         <meta-data
             android:name="asset_statements"

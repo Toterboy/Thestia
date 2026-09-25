@@ -1,15 +1,15 @@
 {
   "project_info": {
     "project_number": "123456789012",
-    "project_id": "wisp-ci-dummy",
-    "storage_bucket": "wisp-ci-dummy.firebasestorage.app"
+    "project_id": "thestia-ci-dummy",
+    "storage_bucket": "thestia-ci-dummy.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
         "mobilesdk_app_id": "1:123456789012:android:0000000000000000",
         "android_client_info": {
-          "package_name": "com.wisp.app"
+          "package_name": "com.thestia.app"
         }
       },
       "oauth_client": [],

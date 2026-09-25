@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wisp/models/find_match_models.dart';
-import 'package:wisp/models/user_profile.dart';
+import 'package:thestia/models/find_match_models.dart';
+import 'package:thestia/models/user_profile.dart';
 
 UserProfile _partner() => UserProfile(
       id: 'u1',

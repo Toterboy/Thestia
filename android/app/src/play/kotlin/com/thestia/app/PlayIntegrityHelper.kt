@@ -1,4 +1,4 @@
-package com.wisp.app
+package com.thestia.app
 
 import android.app.Activity
 import com.google.android.play.core.integrity.IntegrityManagerFactory

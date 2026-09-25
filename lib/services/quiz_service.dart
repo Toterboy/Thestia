@@ -2,9 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:wisp/models/find_match_models.dart';
-import 'package:wisp/models/user_profile.dart';
-import 'package:wisp/services/supabase_service.dart';
+import 'package:thestia/models/find_match_models.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// Service für das Quiz "Wie gut kenn ich mein Match".
 ///

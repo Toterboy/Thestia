@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/theme/app_theme.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/theme/app_theme.dart';
 
 /// Farbschema-Auswahl: Kreise mit Vorschau + Label, ausgewählt mit Ring.
 ///
@@ -14,10 +14,10 @@ class ThemePicker extends StatelessWidget {
     super.key,
   });
 
-  /// Name des aktiven [WispTheme] (siehe settings.themeName).
+  /// Name des aktiven [ThestiaTheme] (siehe settings.themeName).
   final String selectedName;
 
-  final ValueChanged<WispTheme> onChanged;
+  final ValueChanged<ThestiaTheme> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +25,7 @@ class ThemePicker extends StatelessWidget {
       spacing: 10,
       runSpacing: 10,
       children: [
-        for (final theme in WispTheme.values)
+        for (final theme in ThestiaTheme.values)
           _ThemeSwatch(
             theme: theme,
             selected: theme.name == selectedName,
@@ -43,7 +43,7 @@ class _ThemeSwatch extends StatelessWidget {
     required this.onTap,
   });
 
-  final WispTheme theme;
+  final ThestiaTheme theme;
   final bool selected;
   final VoidCallback onTap;
 

@@ -4,8 +4,8 @@
 // (Mock-)Bild-Pfaden/URLs gespeichert. Der Blind Mode sorgt dafür, dass
 // diese Fotos erst nach einem Match für andere sichtbar sind.
 
-import 'package:wisp/models/habitude_level.dart';
-import 'package:wisp/utils/age_calculator.dart';
+import 'package:thestia/models/habitude_level.dart';
+import 'package:thestia/utils/age_calculator.dart';
 
 class UserProfile {
   /// Eindeutige ID des Nutzers.

@@ -10,12 +10,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:wisp/models/user_profile.dart';
-import 'package:wisp/providers/profile_provider.dart';
-import 'package:wisp/providers/user_preferences_provider.dart';
-import 'package:wisp/screens/profile/profile_edit_screen.dart';
-import 'package:wisp/services/local_storage.dart';
-import 'package:wisp/services/secure_storage.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/providers/user_preferences_provider.dart';
+import 'package:thestia/screens/profile/profile_edit_screen.dart';
+import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/secure_storage.dart';
 
 class _FakeLocalStorage implements LocalStorage {
   final map = <String, String>{};

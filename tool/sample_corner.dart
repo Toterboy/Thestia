@@ -5,7 +5,7 @@ import 'package:image/image.dart' as img;
 /// Findet die Bounding-Box der opaken Pixel und samplet deren Randfarbe.
 void main() {
   final im = img.decodePng(
-      File('assets/images/wispdating_icon_base.png').readAsBytesSync())!;
+      File('assets/images/thestia_icon_base.png').readAsBytesSync())!;
   var minX = im.width, minY = im.height, maxX = 0, maxY = 0;
   for (final p in im) {
     if (p.a.toInt() > 20) {

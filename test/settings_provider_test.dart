@@ -1,9 +1,9 @@
 import 'dart:convert';
 
-import 'package:wisp/models/profile_visibility.dart';
-import 'package:wisp/providers/settings_provider.dart';
-import 'package:wisp/screens/core/main_navigation.dart';
-import 'package:wisp/services/local_storage.dart';
+import 'package:thestia/models/profile_visibility.dart';
+import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/screens/core/main_navigation.dart';
+import 'package:thestia/services/local_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

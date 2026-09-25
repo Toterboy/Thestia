@@ -5,23 +5,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:wisp/models/find_match_models.dart';
-import 'package:wisp/models/match.dart';
-import 'package:wisp/models/user_profile.dart';
-import 'package:wisp/providers/chat_provider.dart';
-import 'package:wisp/providers/find_your_match_provider.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/services/find_your_match_service.dart';
-import 'package:wisp/services/report_service.dart';
-import 'package:wisp/services/relay_service.dart';
-import 'package:wisp/services/seen_service.dart';
-import 'package:wisp/services/supabase_database_service.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/widgets/end_spark_dialog.dart';
-import 'package:wisp/widgets/funke_overlay.dart';
-import 'package:wisp/widgets/intro_audio_player.dart';
-import 'package:wisp/widgets/states.dart';
-import 'package:wisp/l10n/app_strings.dart';
+import 'package:thestia/models/find_match_models.dart';
+import 'package:thestia/models/match.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/providers/find_your_match_provider.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/services/find_your_match_service.dart';
+import 'package:thestia/services/report_service.dart';
+import 'package:thestia/services/relay_service.dart';
+import 'package:thestia/services/seen_service.dart';
+import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/widgets/end_spark_dialog.dart';
+import 'package:thestia/widgets/funke_overlay.dart';
+import 'package:thestia/widgets/intro_audio_player.dart';
+import 'package:thestia/widgets/states.dart';
+import 'package:thestia/l10n/app_strings.dart';
 
 /// Automatisches Nachladen eines Tabs (v0.9.1): bei Rückkehr von einem
 /// gepushten Screen (RouteObserver.didPopNext, z. B. aus dem Chat) und

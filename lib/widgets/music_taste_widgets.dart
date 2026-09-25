@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
+import 'package:thestia/l10n/app_strings.dart';
 
 /// Musik-Genre-Katalog für "Geschmack & Matching" (v0.8.0, Migration 074).
 ///

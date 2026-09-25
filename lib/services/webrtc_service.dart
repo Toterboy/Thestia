@@ -9,8 +9,8 @@ import 'package:http/io_client.dart';
 import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:wisp/services/encryption_service.dart';
-import 'package:wisp/utils/cert_pinning.dart';
+import 'package:thestia/services/encryption_service.dart';
+import 'package:thestia/utils/cert_pinning.dart';
 
 /// Service für WebRTC Peer-to-Peer Verbindungen.
 ///

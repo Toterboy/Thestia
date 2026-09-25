@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wisp/utils/peer_id.dart';
+import 'package:thestia/utils/peer_id.dart';
 
 /// Tests für die Peer-ID-Validierung (Audit M1/M2).
 ///

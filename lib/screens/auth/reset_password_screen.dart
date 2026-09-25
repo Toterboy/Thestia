@@ -3,17 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:wisp/providers/auth_provider.dart';
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/utils/validators.dart';
-import 'package:wisp/widgets/buttons.dart';
+import 'package:thestia/providers/auth_provider.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/validators.dart';
+import 'package:thestia/widgets/buttons.dart';
 
 /// Screen zum Setzen eines neuen Passworts nach der Passwort-Reset-Mail.
 ///
 /// Erreichbar ausschließlich über den Recovery-Deep-Link
-/// (`wisp://reset-password`), den der eingebaute Deep-Link-Observer
+/// (`thestia://reset-password`), den der eingebaute Deep-Link-Observer
 /// (app_links + detectSessionInUriPredicate in main.dart) verarbeitet und
 /// als `passwordRecovery`-Event anmeldet ([passwordRecoveryPendingProvider]).
 /// Das neue Passwort wird serverseitig per `updateUser` gesetzt – der

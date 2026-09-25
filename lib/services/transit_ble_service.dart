@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:wisp/services/transit_encounter_service.dart';
+import 'package:thestia/services/transit_encounter_service.dart';
 
 /// BLE-Schicht für Transit Spark (Phase 1, v0.9.0).
 ///
@@ -19,7 +19,7 @@ import 'package:wisp/services/transit_encounter_service.dart';
 /// fremdes Token in Reichweite (3-10 m).
 ///
 /// Implementation:
-///  - Advertising über den NATIVEN Platform-Channel "wisp/transit_ble"
+///  - Advertising über den NATIVEN Platform-Channel "thestia/transit_ble"
 ///    (MainActivity.kt) - bewusst kein Plugin: flutter_ble_peripheral
 ///    kompilierte mit unserem Kotlin-Setup nicht. Scanning läuft über
 ///    flutter_blue_plus.
@@ -33,7 +33,7 @@ class TransitBleService {
   TransitBleService._();
   static final TransitBleService instance = TransitBleService._();
 
-  static const MethodChannel _channel = MethodChannel('wisp/transit_ble');
+  static const MethodChannel _channel = MethodChannel('thestia/transit_ble');
 
   StreamSubscription<List<ScanResult>>? _scanSub;
 
@@ -247,7 +247,7 @@ class TransitBleService {
     }
   }
 
-  /// Extrahiert das Wisp-Transit-Token aus einem Scan-Ergebnis
+  /// Extrahiert das Thestia-Transit-Token aus einem Scan-Ergebnis
   /// (Hersteller-Feld 0xFFFF: Marker + Token).
   String? _extractToken(ScanResult r) {
     try {

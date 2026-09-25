@@ -1,7 +1,7 @@
 import 'package:intl/intl.dart';
 
-import 'package:wisp/models/find_match_models.dart';
-import 'package:wisp/models/message.dart';
+import 'package:thestia/models/find_match_models.dart';
+import 'package:thestia/models/message.dart';
 
 /// Herzensstärken (v0.9.2, Nutzerwunsch-Ideen 1/3/5):
 /// Erinnerungs-Momente, Freundschafts-Modus, gemeinsame Erinnerungsliste.

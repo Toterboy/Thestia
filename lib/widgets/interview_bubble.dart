@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Die Wisp-Interview-Frage: Avatar-Bubble mit warmem Fragetext.
+/// Die Thestia-Interview-Frage: Avatar-Bubble mit warmem Fragetext.
 ///
 /// Das optische Kernstück des Interviews (Chat-Optik statt Formular).
 /// Genutzt in Onboarding UND Erst-Einrichtung (settings_privacy_once),

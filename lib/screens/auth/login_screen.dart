@@ -8,18 +8,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:wisp/models/gender.dart';
-import 'package:wisp/providers/auth_provider.dart';
-import 'package:wisp/services/auth_exception.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/utils/constants.dart';
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/utils/validators.dart';
-import 'package:wisp/widgets/language_switch.dart';
-import 'package:wisp/widgets/app_version_footer.dart';
-import 'package:wisp/widgets/buttons.dart';
-import 'package:wisp/widgets/captcha_challenge.dart';
+import 'package:thestia/models/gender.dart';
+import 'package:thestia/providers/auth_provider.dart';
+import 'package:thestia/services/auth_exception.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/utils/constants.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/utils/validators.dart';
+import 'package:thestia/widgets/language_switch.dart';
+import 'package:thestia/widgets/app_version_footer.dart';
+import 'package:thestia/widgets/buttons.dart';
+import 'package:thestia/widgets/captcha_challenge.dart';
 
 /// Login & Registrierung (Mock).
 ///

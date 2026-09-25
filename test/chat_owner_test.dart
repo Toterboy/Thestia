@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wisp/services/chat_service.dart';
+import 'package:thestia/services/chat_service.dart';
 
 /// Tests für die Kontowechsel-Trennung (Audit: Setup/Verifizierung des
 /// Vorgängers leckten in neue Konten): Persistente Boxen sind pro

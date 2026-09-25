@@ -1,8 +1,8 @@
-# Datenschutzerklärung für WispDating
+# Datenschutzerklärung für Thestia
 
 **Stand: September 2026** · Version 4 (v0.8.x)
 
-WispDating ist ein datenschutzorientiertes Open-Source-Projekt (AGPLv3).
+Thestia ist ein datenschutzorientiertes Open-Source-Projekt (AGPLv3).
 Der Schutz deiner persönlichen Sphäre steht an erster Stelle: Es werden
 keine Werbetracker eingesetzt, keine Verhaltensprofile erstellt und keine
 Nutzerdaten an Dritte verkauft.
@@ -12,10 +12,10 @@ Nutzerdaten an Dritte verkauft.
 ## 1. Grundsatz und Verantwortliche Stelle
 
 Verantwortliche Stelle im Sinne der DSGVO ist der Betreiber der
-WispDating-Instanz (Hosting Supabase EU-Region). Kontaktaufnahme für alle
+Thestia-Instanz (Hosting Supabase EU-Region). Kontaktaufnahme für alle
 datenschutzbezogenen Anliegen: über das **In-App-Bug-Report-Formular**
 (Einstellungen) oder das Issue-Tracker des öffentlichen
-Projekt-Repositorys. Da WispDating als Community-Projekt betrieben wird,
+Projekt-Repositorys. Da Thestia als Community-Projekt betrieben wird,
 kann die kontaktierbare Stelle je nach Instanz variieren; der Code ist
 jederzeit öffentlich einsehbar und selbst hostbar.
 

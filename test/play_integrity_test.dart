@@ -1,12 +1,12 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wisp/services/play_integrity_service.dart';
+import 'package:thestia/services/play_integrity_service.dart';
 
 /// Tests für Play Integrity (v0.9.0): Channel-Aufruf mit gemocktem
 /// Messenger; echte Tokens kommen nur vom Gerät (Play-Build).
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  const channel = MethodChannel('wisp/integrity');
+  const channel = MethodChannel('thestia/integrity');
 
   tearDown(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

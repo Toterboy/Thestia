@@ -1,4 +1,4 @@
-WispDating dreht das Prinzip klassischer Dating-Apps um: Persönlichkeit zuerst.
+Thestia dreht das Prinzip klassischer Dating-Apps um: Persönlichkeit zuerst.
 
 Fotos sieht man erst, wenn zwei Menschen sich wirklich kennengelernt haben – über Text- und Audio-Vorstellungen und ein kleines Quiz übereinander. So steht nicht das perfekt ausgeleuchtete Profilbild im Mittelpunkt, sondern der Mensch dahinter.
 
@@ -24,4 +24,4 @@ SICHERHEIT FÜR ALLE
 • Melden und Blockieren mit persönlicher Prüfung durch den Support
 • Optional: Zwei-Faktor-Authentisierung und Passkeys
 
-WispDating ist freie Software (AGPLv3). Der komplette Code ist öffentlich einsehbar.
+Thestia ist freie Software (AGPLv3). Der komplette Code ist öffentlich einsehbar.

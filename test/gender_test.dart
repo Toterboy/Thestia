@@ -1,4 +1,4 @@
-import 'package:wisp/models/gender.dart';
+import 'package:thestia/models/gender.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

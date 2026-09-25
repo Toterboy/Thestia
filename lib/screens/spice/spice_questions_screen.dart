@@ -3,9 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wisp/data/icebreaker_catalog.dart';
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/routing/app_router.dart';
+import 'package:thestia/data/icebreaker_catalog.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/routing/app_router.dart';
 
 /// "Spice Questions": Eisbrecher-Fragen als reine Auswahl (v0.9.1).
 ///

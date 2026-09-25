@@ -96,7 +96,7 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       Messe-Modus (RSSI-Schärfe) + Merkmal-Tags (1–3, whitelisted, 082),
       public_profiles-View → SECURITY-DEFINER-RPCs (080, Option A),
       Entdecken-Gruppierung („Unterwegs" = QR + Transit Spark), Onboarding
-      als Interview (Wisp-Frage-Bubbles, zweisprachig); Soft-Ping folgt
+      als Interview (Thestia-Frage-Bubbles, zweisprachig); Soft-Ping folgt
       in 0.9.1, Gerätetest ausstehend
 
 ## In Arbeit
@@ -194,7 +194,7 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
 
 > Vision: Man lächelt sich im Zug, Café oder auf einer Messe (z. B.
 > Gamescom) an – traut sich aber nicht anzusprechen. Kurz darauf ist die
-> Person 50–500 m entfernt. Wisp macht aus diesem Moment trotzdem einen
+> Person 50–500 m entfernt. Thestia macht aus diesem Moment trotzdem einen
 > Funke: **Asynchrone Two-Tier-Spark-Architektur**.
 >
 > 1. **Phase 1 (Nahbereichs-Moment per BLE):** In der Nähe (3–10 m)
@@ -212,11 +212,11 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
 > Verläufe).
 
 - [x] **Lokaler Encounter-Cache** (`lib/services/encounter_cache_service.dart`):
-      Erkannte Wisp-BLE-Tokens mit Zeitstempel + stärkstem RSSI cachen,
+      Erkannte Thestia-BLE-Tokens mit Zeitstempel + stärkstem RSSI cachen,
       45 Minuten Vorhaltezeit, automatisches Aufräumen alter Einträge
 - [x] **BLE Proximity Service** (`lib/services/transit_ble_service.dart`):
       Advertising rotierender ephemerer Tokens + Tag-Bitmask; Scanning auf
-      Wisp-UUID; Messe-Modus mit engerem RSSI-Schwellwert (z. B. > -75 dBm
+      Thestia-UUID; Messe-Modus mit engerem RSSI-Schwellwert (z. B. > -75 dBm
       = echter Sichtkontakt); Batterieschutz über gepulste Scans und
       einstellbaren Auto-Stop-Timer
 - [x] **Matching als RPC `match_proximity_spark`** (Abweichung: SECURITY-DEFINER-RPC statt Edge Function - gleiche Aufgabe, kein Extra-Deployment): Nimmt `cachedEncounterTokens`,
@@ -363,7 +363,7 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       Bildschirm. Nutzt bestehendes Ideen-Rad + Audio-Calls.
 - [ ] **Offline-Knopf nach dem echten Treffen**: Nach einem Treffen, das
       BEIDE Personen bestätigt haben, erscheint der sanfte Vorschlag
-      „Genießt die Zeit - Wisp schweigt bis morgen": Benachrichtigungen
+      „Genießt die Zeit - Thestia schweigt bis morgen": Benachrichtigungen
       stumm für den Abend, ruhiger Bildschirm. Die App feiert Abwesenheit
       statt Bindung zu erzeugen (konkrete Form der „Digitalen Entgiftung").
 - [ ] **Antizipation statt Streak**: Bei Distanz-Funken den Chat sanft
@@ -377,7 +377,7 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
 
 > Vision: Nutzer können Menschen im Alltag und im Nahverkehr (z. B. im
 > Zug, Bus oder Café) direkt erreichen – unabhängig davon, ob die andere
-> Person WispDating installiert hat, sich im selben WLAN befindet oder
+> Person Thestia installiert hat, sich im selben WLAN befindet oder
 > mehrere Waggons entfernt sitzt.
 
 ### 1. OS-Level „System-Ping“ (Überbrückung ohne App & ohne Netzwerk)
@@ -398,7 +398,7 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
 ### 2. Passiver Funk-Leuchtturm (Hotspot-SSID-Beacon)
 
 - [ ] **Temporärer Hotspot-Schalter** mit konfigurierbarem Netzwerknamen
-      (SSID), z. B. `wisp.app/RE9-Wagen3` oder `Laecheln_im_Wagen_4`
+      (SSID), z. B. `thestia.app/RE9-Wagen3` oder `Laecheln_im_Wagen_4`
 - [ ] **Sichtbarer Link in der WLAN-Suche** fremder Smartphones bei
       Reichweiten von bis zu 30 Metern
 - [ ] **Offline-Captive-Portal**: Verbindet sich die Person mit dem
@@ -406,7 +406,7 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       Smartphone gehostet; alternativ ist die kurze Web-Adresse über
       mobile Daten im Browser öffnbar
 
-### 3. Fahrplan-Synchronisation & Live-Strecken-Board (`wisp.app/live`)
+### 3. Fahrplan-Synchronisation & Live-Strecken-Board (`thestia.app/live`)
 
 - [ ] **Exakte Fahrt-Identifikation**: Check-in mit Linie (z. B. RE9),
       offizieller Zugnummer (z. B. RE 4412), Startbahnhof und
@@ -416,7 +416,7 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       oberes Deck") und dezenter visueller Merkmale (z. B. „Schwarze
       Jacke, liest Buch")
 - [ ] **Asynchrones Web-Board**: Fahrgäste können während oder nach der
-      Fahrt auf `wisp.app/live` nach ihrer Zugverbindung suchen und einen
+      Fahrt auf `thestia.app/live` nach ihrer Zugverbindung suchen und einen
       anonymen Gast-Chat mit der Person starten
 
 ### 4. Same-Train-Matching (für Nutzer mit installierter App)
@@ -431,12 +431,12 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
 
 ### 5. Zero-Install Web-Gastzugang (Flutter Web & Supabase)
 
-- [ ] **Einmalige Einladungslinks** (`wispdating.app/spark/<token>`) mit
+- [ ] **Einmalige Einladungslinks** (`thestia.app/spark/<token>`) mit
       kryptografisch gesicherten Session-Tokens
 - [ ] **Kein Download, keine Registrierung, keine Telefonnummer und keine
       E-Mail-Abfrage** für den Gast erforderlich
 - [ ] **E2E-verschlüsselter P2P-Chat** direkt im mobilen Browser (WebRTC
-      via WebAssembly) zur nativen App des Wisp-Nutzers
+      via WebAssembly) zur nativen App des Thestia-Nutzers
 - [ ] **Flüchtige Sitzungen**: Chatrooms zerstören sich serverseitig nach
       24 oder 48 Stunden rückstandslos selbst
 

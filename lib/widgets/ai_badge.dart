@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
+import 'package:thestia/l10n/app_strings.dart';
 
 /// KI-Herkunfts-Badge (Nutzerwunsch Transparenz): Zwei klar
 /// unterschiedliche Batches für lokale vs. Drittanbieter-KI.

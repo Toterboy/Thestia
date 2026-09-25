@@ -2,6 +2,6 @@
 <resources>
     <!-- Hintergrund des adaptiven Launchers (Flutter-Icon-Konfiguration). -->
     <color name="ic_launcher_background">#390D3C</color>
-    <!-- Akzentfarbe fuer Benachrichtigungen (Wisp-Brand-Pink). -->
+    <!-- Akzentfarbe fuer Benachrichtigungen (Thestia-Brand-Pink). -->
     <color name="notification_accent">#FF6B9D</color>
 </resources>

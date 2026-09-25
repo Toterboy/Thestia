@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Wisp – E-Mail bestätigen</title>
+    <title>Thestia – E-Mail bestätigen</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -54,8 +54,8 @@
       const params = new URLSearchParams(window.location.search);
       const query = params.toString();
 
-      // Ziel: App öffnen via wisp://confirm?token=...&type=signup
-      const appUrl = 'wisp://confirm' + (query ? '?' + query : '');
+      // Ziel: App öffnen via thestia://confirm?token=...&type=signup
+      const appUrl = 'thestia://confirm' + (query ? '?' + query : '');
 
       // Fallback: zur Supabase-URL, falls App nicht installiert
       const siteUrl = 'https://jftuigjbmmuvrckbchqo.supabase.co';
@@ -107,7 +107,7 @@
 
     <!-- Fallback: App wurde nicht gefunden -->
     <div id="fallback" class="hidden">
-      <p>Die Wisp-App konnte nicht geöffnet werden. Du hast sie vielleicht noch nicht installiert.</p>
+      <p>Die Thestia-App konnte nicht geöffnet werden. Du hast sie vielleicht noch nicht installiert.</p>
       <div class="links">
         <a href="#" id="retry-btn" class="btn">App öffnen</a>
         <a href="#" id="web-btn" class="btn btn-outline">Im Browser bestätigen</a>

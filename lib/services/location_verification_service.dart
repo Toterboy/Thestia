@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import 'package:wisp/services/secure_location_storage.dart';
+import 'package:thestia/services/secure_location_storage.dart';
 
 /// Service für die einmalige Standort-Abfrage bei der Verifizierung.
 ///

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wisp/models/user_profile.dart';
-import 'package:wisp/providers/find_your_match_provider.dart';
-import 'package:wisp/providers/profile_provider.dart';
-import 'package:wisp/services/supabase_database_service.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/widgets/intro_audio_player.dart';
-import 'package:wisp/widgets/intro_editor.dart';
-import 'package:wisp/l10n/app_strings.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/providers/find_your_match_provider.dart';
+import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/widgets/intro_audio_player.dart';
+import 'package:thestia/widgets/intro_editor.dart';
+import 'package:thestia/l10n/app_strings.dart';
 
 /// "Find your Match": Kennenlernen über die Vorstellung (Text oder Audio)
 /// statt über Fotos.

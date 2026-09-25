@@ -10,8 +10,8 @@ flutter_native_splash:
   # zentriert. Das 920-px-Basislogo wirkte dadurch "reingezoomt" (Schrift
   # teils abgeschnitten). Die generierten Varianten skalieren das Logo
   # herunter (~47 % bzw. ~55 %), sodass es auf allen Geraeten passt.
-  image: "assets/images/wispdating_splash.png"
-  image_dark: "assets/images/wispdating_splash.png"
+  image: "assets/images/thestia_splash.png"
+  image_dark: "assets/images/thestia_splash.png"
   android: true
   ios: false
   fullscreen: true
@@ -20,6 +20,6 @@ flutter_native_splash:
   # (sichtbar ~768 px) - die 55-%-Variante haelt die Schrift sicher im
   # sichtbaren Kreis.
   android_12:
-    image: "assets/images/wispdating_splash_android12.png"
+    image: "assets/images/thestia_splash_android12.png"
     color: "#ffffff"
     color_dark: "#121212"

@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wisp/models/habitude_level.dart';
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/providers/profile_provider.dart';
-import 'package:wisp/services/supabase_database_service.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/widgets/habitude_selector.dart';
+import 'package:thestia/models/habitude_level.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/widgets/habitude_selector.dart';
 
 /// Editierbare Karte für die Konsum-Präferenzen (Rauchen, Alkohol, Drogen).
 ///

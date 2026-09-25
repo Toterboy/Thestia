@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/routing/app_router.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/routing/app_router.dart';
 
 /// Screen zur Auswahl des Entdeckungs-Modus (wird über "Entdecken" in der Bottom-Nav erreicht).
 ///
@@ -37,24 +38,28 @@ class SwipeModeSelectionScreen extends ConsumerWidget {
           _ModeGroup(
             headerKey: 'dm.groupMeet',
             modes: [
-              (DiscoveryMode.findMatch, () => context.push(AppRoutes.findYourMatch)),
-              (DiscoveryMode.datingHour, () => context.push(AppRoutes.datingHourEvent)),
+              (DiscoveryMode.findMatch,
+                  () => _openMode(context, ref, AppRoutes.findYourMatch)),
+              (DiscoveryMode.datingHour,
+                  () => _openMode(context, ref, AppRoutes.datingHourEvent)),
             ],
           ),
           const SizedBox(height: 16),
           _ModeGroup(
             headerKey: 'dm.groupDirect',
             modes: [
-              (DiscoveryMode.randomChat, () => context.push(AppRoutes.randomChat)),
+              (DiscoveryMode.randomChat,
+                  () => _openMode(context, ref, AppRoutes.randomChat)),
             ],
           ),
           const SizedBox(height: 16),
           _ModeGroup(
             headerKey: 'dm.groupOnTheGo',
             modes: [
-              (DiscoveryMode.qrScan, () => context.push(AppRoutes.qrScan)),
+              (DiscoveryMode.qrScan,
+                  () => _openMode(context, ref, AppRoutes.qrScan)),
               (DiscoveryMode.transitSpark,
-                  () => context.push(AppRoutes.transitRadar)),
+                  () => _openMode(context, ref, AppRoutes.transitRadar)),
             ],
           ),
           const SizedBox(height: 24),
@@ -98,6 +103,43 @@ style: Theme.of(context).textTheme.titleMedium?.copyWith(
     );
   }
 
+}
+
+/// Modus nur bei aktivem Profil öffnen (v0.9.1): Ist das Profil
+/// pausiert, blockt ein Popup die Auswahl und führt per Klick in die
+/// Einstellungen zum Entpausieren.
+void _openMode(BuildContext context, WidgetRef ref, String route) {
+  final paused = ref.read(settingsProvider).paused;
+  if (!paused) {
+    context.push(route);
+    return;
+  }
+  showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (ctx) => AlertDialog(
+      icon: Icon(
+        Icons.pause_circle_outline,
+        color: Theme.of(ctx).colorScheme.primary,
+        size: 40,
+      ),
+      title: Text(L10n.t(ctx, 'paused.popupTitle')),
+      content: Text(L10n.t(ctx, 'paused.popupBody')),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: Text(L10n.t(ctx, 'common.cancel')),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.of(ctx).pop();
+            context.push(AppRoutes.settings);
+          },
+          child: Text(L10n.t(ctx, 'paused.toSettings')),
+        ),
+      ],
+    ),
+  );
 }
 
 /// Enum für die Entdeckungs-Modi (v0.9.0: gruppiert nach Zweck).

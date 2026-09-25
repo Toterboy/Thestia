@@ -5,23 +5,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import 'package:wisp/models/dating_hour_models.dart';
-import 'package:wisp/models/message.dart';
-import 'package:wisp/models/user_profile.dart';
-import 'package:wisp/providers/chat_provider.dart';
-import 'package:wisp/providers/profile_provider.dart';
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/screens/interests/interessen_screen.dart'
+import 'package:thestia/models/dating_hour_models.dart';
+import 'package:thestia/models/message.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/screens/interests/interessen_screen.dart'
     show interessenInitialTabProvider;
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/widgets/chat_bubbles.dart';
-import 'package:wisp/widgets/funke_overlay.dart';
-import 'package:wisp/services/dating_hour_service.dart';
-import 'package:wisp/services/find_your_match_service.dart';
-import 'package:wisp/services/supabase_database_service.dart';
-import 'package:wisp/services/p2p_chat_service.dart';
-import 'package:wisp/services/relay_service.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/chat_backgrounds.dart';
+import 'package:thestia/widgets/chat_bubbles.dart';
+import 'package:thestia/widgets/funke_overlay.dart';
+import 'package:thestia/services/dating_hour_service.dart';
+import 'package:thestia/services/find_your_match_service.dart';
+import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/p2p_chat_service.dart';
+import 'package:thestia/services/relay_service.dart';
 
 /// Screen für den aktiven Dating Hour Chat (5-Minuten-Timer).
 ///
@@ -705,8 +707,19 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
         ),
         automaticallyImplyLeading: false,
       ),
-      body: Column(
-        children: [
+      body: Builder(
+        builder: (context) {
+          final bg = ref.watch(settingsProvider);
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: ChatBackgroundView(
+                  backgroundId: bg.chatBackground,
+                  customPath: bg.chatBackgroundPath,
+                ),
+              ),
+              Column(
+          children: [
           // Timer-Balken (tickt isoliert, v0.9.1, Akku).
           if (session != null && !session.bothDecided)
             _PerSecond(
@@ -810,8 +823,12 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
                   if (mounted) context.go(AppRoutes.datingHourEvent);
                 },
               ),
-          ],
+              ],
+            ],
+          ),
         ],
+      );
+    },
       ),
     );
   }

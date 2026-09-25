@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:wisp/widgets/app_logo.dart';
+import 'package:thestia/widgets/app_logo.dart';
 
 /// Neutraler Lade-Screen, der während der Startup-Checks (Auth-Status +
 /// geladene Einstellungen + Server-Sync) angezeigt wird

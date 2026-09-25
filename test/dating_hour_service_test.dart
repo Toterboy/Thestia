@@ -2,9 +2,9 @@
 // ohne Supabase). Die RPC-Pfade sind serverseitig getestet (Migrationen).
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wisp/models/dating_hour_models.dart';
-import 'package:wisp/services/dating_hour_service.dart';
-import 'package:wisp/services/server_time_service.dart';
+import 'package:thestia/models/dating_hour_models.dart';
+import 'package:thestia/services/dating_hour_service.dart';
+import 'package:thestia/services/server_time_service.dart';
 
 void main() {
   final serverTime = ServerTimeService.instance;

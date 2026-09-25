@@ -5,9 +5,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:wisp/models/photo_moderation_models.dart';
-import 'package:wisp/services/huggingface_service.dart';
-import 'package:wisp/utils/constants.dart';
+import 'package:thestia/models/photo_moderation_models.dart';
+import 'package:thestia/services/huggingface_service.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// Service für Foto-Moderation (NSFW via Hugging Face, FaceMatch Mock).
 class PhotoModerationService {

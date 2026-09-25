@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wisp/models/meet_intent.dart';
+import 'package:thestia/models/meet_intent.dart';
 
 void main() {
   group('MeetIntent.bothWant', () {

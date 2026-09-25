@@ -2,18 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/providers/profile_provider.dart';
-import 'package:wisp/providers/settings_provider.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/services/supabase_database_service.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/utils/constants.dart';
-import 'package:wisp/widgets/birthday_style.dart';
-import 'package:wisp/widgets/buttons.dart';
-import 'package:wisp/widgets/interview_bubble.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/constants.dart';
+import 'package:thestia/widgets/birthday_style.dart';
+import 'package:thestia/widgets/buttons.dart';
+import 'package:thestia/widgets/chat_background_picker.dart';
+import 'package:thestia/widgets/interview_bubble.dart';
 
-/// Onboarding als INTERVIEW (v0.9.0): Wisp stellt Fragen - eine pro
+/// Onboarding als INTERVIEW (v0.9.0): Thestia stellt Fragen - eine pro
 /// Screen, in warmem Ton, alles immer überspringbar. KEINE neuen
 /// Datenpunkte und bewusst KEIN Belohnungs-Mechanismus (spielerisch
 /// heißt hier: Gesprächston statt Formular, kein Dopamin-Loop).
@@ -36,12 +37,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   String _birthdayStyle = 'classic';
 
-  // 7 Seiten: Bio, Interessen und Gewohnheiten fragt die Einrichtung
+  // 8 Seiten: Bio, Interessen und Gewohnheiten fragt die Einrichtung
   // ("Einstellungen & Privatsphäre") bereits vorher ab - hier kämen
   // sie doppelt UND würden beim Abschluss sogar mit leeren Werten
   // überschrieben. Übrig: Begrüßung, Foto-Hinweis, Musik,
-  // Geburtstags-Stil, Abschluss.
-  static const int _pageCount = 7;
+  // Geburtstags-Stil, Chat-Hintergrund, Abschluss.
+  static const int _pageCount = 8;
 
   @override
   void initState() {
@@ -321,6 +322,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                           ),
                         );
                       case 6:
+                        return _QuestionStep(
+                          questionKey: 'onboarding.q.chatbg',
+                          onSkip: _next,
+                          onContinue: _next,
+                          onBack: _prev,
+                          child: const ChatBackgroundPicker(),
+                        );
+                      case 7:
                         return const _InfoPage(
                           icon: Icons.celebration,
                           titleKey: 'onboarding.done.title',
@@ -391,7 +400,7 @@ class _ProgressDots extends StatelessWidget {
 }
 
 /// statische Informationsseite (Blind Mode / Privatsphäre) - im Interview-
-/// Ton, als Wisp-Bubble statt_INFO-Karte.
+/// Ton, als Thestia-Bubble statt_INFO-Karte.
 class _InfoPage extends StatelessWidget {
   const _InfoPage({
     required this.icon,
@@ -441,7 +450,7 @@ class _InfoPage extends StatelessWidget {
   }
 }
 
-/// Überspringbarer Interview-Frage-Schritt: Wisp-Bubble + Antwortbereich.
+/// Überspringbarer Interview-Frage-Schritt: Thestia-Bubble + Antwortbereich.
 ///
 /// Tastatur-Disziplin (Nutzer-Regel: "man sieht nicht, was man tippt"):
 /// Sobald ein Feld im Antwortbereich den Fokus bekommt, scrollt die

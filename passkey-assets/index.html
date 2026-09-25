@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; frame-src https://challenges.cloudflare.com; connect-src https://challenges.cloudflare.com; img-src 'self' data:">
-  <title>Sicherheitscheck – Wisp</title>
+  <title>Sicherheitscheck – Thestia</title>
   <!-- Kein async: zusammen mit DOMContentLoaded-Race führe das sonst zu
        "typeof turnstile === 'undefined'" (ERROR:SCRIPT_NOT_LOADED), weil
        DOMContentLoaded feuern kann, bevor das Script ausgeführt wurde.
@@ -24,7 +24,7 @@
 <body>
   <!-- Öffentlicher Sitekey (kein Secret!). -->
   <div id="captcha-box" class="cf-turnstile"
-       data-sitekey="0x4AAAAAAEULSj7cNo-O2bmp"></div>
+       data-sitekey="0x4AAAAAAFDhMgIL_nrpUokM"></div>
 
   <!-- Nur sichtbar bei Browser-/Debug-Tests ohne WebView-Channel. -->
   <div id="debug-output" style="display:none; margin-top:16px; color:#4ade80; font-family:monospace;"></div>

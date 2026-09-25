@@ -6,7 +6,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-import 'package:wisp/utils/constants.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// Play-Integrity-Attestierung für die Video-Verifizierung (v0.9.0,
 /// Manipulationsschutz).
@@ -22,7 +22,7 @@ import 'package:wisp/utils/constants.dart';
 class PlayIntegrityService {
   PlayIntegrityService._();
 
-  static const MethodChannel _channel = MethodChannel('wisp/integrity');
+  static const MethodChannel _channel = MethodChannel('thestia/integrity');
 
   /// Fordert Token + Nonce an. Null = nicht verfügbar (kein harter
   /// Fehler, Aufrufer nutzt die manuelle Queue).

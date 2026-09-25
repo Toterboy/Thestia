@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-import 'package:wisp/services/local_storage.dart';
+import 'package:thestia/services/local_storage.dart';
 
 /// "Neu in dieser Version"-Gate (NUTZERWUNSCH): Bei einem APP-UPDATE
 /// (Build-Nummer gestiegen) bekommen bereits REGISTRIERTE Nutzer einmalig

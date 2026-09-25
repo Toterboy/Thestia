@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wisp/services/encryption_service.dart';
+import 'package:thestia/services/encryption_service.dart';
 
 /// Tests für die Safety-Number-Berechnung (Audit B2).
 ///

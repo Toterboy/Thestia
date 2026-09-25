@@ -3,11 +3,11 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wisp/models/habitude_level.dart';
-import 'package:wisp/models/user_profile.dart';
-import 'package:wisp/services/local_storage.dart';
-import 'package:wisp/services/secure_storage.dart';
-import 'package:wisp/utils/constants.dart';
+import 'package:thestia/models/habitude_level.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/secure_storage.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// Verwaltet das eigene Nutzerprofil und persistiert es lokal.
 ///

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/utils/age_calculator.dart';
-import 'package:wisp/utils/common_passwords.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/utils/age_calculator.dart';
+import 'package:thestia/utils/common_passwords.dart';
 
 /// Mindestalter für die Nutzung der App.
 const int minimumAge = 16;

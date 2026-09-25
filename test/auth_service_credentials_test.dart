@@ -11,7 +11,7 @@
 // Produktions-E-Mails oder echten Passwörter.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wisp/services/auth_service.dart';
+import 'package:thestia/services/auth_service.dart';
 
 void main() {
   group('Gesalzenes Credential-Hashing (salt\$hash)', () {

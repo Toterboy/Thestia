@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wisp/screens/admin/admin_screen.dart';
-import 'package:wisp/utils/constants.dart';
+import 'package:thestia/screens/admin/admin_screen.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// Tests für den Admin-Zugang (fail-safe: ohne dart-define kein Admin).
 void main() {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// App-Logo für WispDating — das abgerundete Standard-Logo
-/// (`wispdating_icon_base.png`, Ecken transparent gebacken).
+/// App-Logo für Thestia — das abgerundete Standard-Logo
+/// (`thestia_icon_base.png`, Ecken transparent gebacken).
 ///
 /// Bewusst OHNE ClipOval: Das Artwork bringt seine eigene Rounded-Square-
 /// Form mit. (Für Splash/Benachrichtigungen wird das runde Logo genutzt,
@@ -17,7 +17,7 @@ class AppLogo extends StatelessWidget {
     final cacheDim = (size * pixelRatio).toInt();
     return RepaintBoundary(
       child: Image.asset(
-        'assets/images/wispdating_icon_base.png',
+        'assets/images/thestia_icon_base.png',
         width: size,
         height: size,
         cacheWidth: cacheDim,

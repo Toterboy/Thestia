@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/services/find_your_match_service.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/services/find_your_match_service.dart';
 
 /// Wiedergabe der Audio-Vorstellung eines Nutzers.
 ///

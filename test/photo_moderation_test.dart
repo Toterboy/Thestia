@@ -2,9 +2,9 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wisp/services/huggingface_service.dart';
-import 'package:wisp/services/photo_moderation_service.dart';
-import 'package:wisp/utils/constants.dart';
+import 'package:thestia/services/huggingface_service.dart';
+import 'package:thestia/services/photo_moderation_service.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// Tests für die Foto-Moderation (Feature-Flag-gesteuert).
 ///

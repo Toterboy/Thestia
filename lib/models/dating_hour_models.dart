@@ -1,4 +1,4 @@
-import 'package:wisp/services/server_time_service.dart';
+import 'package:thestia/services/server_time_service.dart';
 
 /// Domain-Modelle für das Dating-Hour-Feature.
 ///

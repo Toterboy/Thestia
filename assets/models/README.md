@@ -1,6 +1,6 @@
 # Modelle (On-Device-KI)
 
-Dieser Ordner enthält lokale KI-Modelle für WispDating.
+Dieser Ordner enthält lokale KI-Modelle für Thestia.
 
 ## image-safety-classifier-xs.onnx (NSFW-Bildmoderation, v0.8.0)
 

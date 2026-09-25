@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wisp/models/dating_hour_models.dart';
-import 'package:wisp/services/dating_hour_service.dart';
-import 'package:wisp/utils/constants.dart';
+import 'package:thestia/models/dating_hour_models.dart';
+import 'package:thestia/services/dating_hour_service.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// Liefert das aktuelle oder nächste Dating-Hour-Event inklusive eigener
 /// Teilnahme-Information. Wird automatisch von Riverpod gecached und kann mit

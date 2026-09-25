@@ -2,21 +2,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wisp/models/app_settings.dart';
-import 'package:wisp/models/match.dart' as match_model;
-import 'package:wisp/models/message.dart';
-import 'package:wisp/models/user_profile.dart';
-import 'package:wisp/providers/chat_provider.dart';
-import 'package:wisp/providers/find_your_match_provider.dart';
-import 'package:wisp/providers/profile_provider.dart';
-import 'package:wisp/providers/settings_provider.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/screens/interests/interessen_screen.dart'
+import 'package:thestia/models/app_settings.dart';
+import 'package:thestia/models/match.dart' as match_model;
+import 'package:thestia/models/message.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/providers/find_your_match_provider.dart';
+import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/screens/interests/interessen_screen.dart'
     show interessenInitialTabProvider;
-import 'package:wisp/services/seen_service.dart';
-import 'package:wisp/utils/age_safety_rules.dart';
-import 'package:wisp/widgets/buttons.dart';
-import 'package:wisp/l10n/app_strings.dart';
+import 'package:thestia/services/seen_service.dart';
+import 'package:thestia/utils/age_safety_rules.dart';
+import 'package:thestia/widgets/buttons.dart';
+import 'package:thestia/l10n/app_strings.dart';
 
 /// Öffnet Interessen auf dem passenden Tab per Push (v0.9.1): Likes ->
 /// Erhalten (1), Funken/Nachrichten -> Funken (2). Zurück landet wieder
@@ -173,7 +173,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         },
         child: CustomScrollView(
           slivers: [
-          SliverToBoxAdapter(
+            // Pausiert-Hinweis (v0.9.1): Profil unsichtbar – mit Abkürzung
+            // zu den Einstellungen zum Entpausieren.
+            if (settings.paused)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Card(
+                    color: Theme.of(context).colorScheme.secondaryContainer,
+                    child: ListTile(
+                      leading: Icon(
+                        Icons.pause_circle_outline,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSecondaryContainer,
+                      ),
+                      title: Text(
+                        L10n.t(context, 'paused.homeTitle'),
+                        style: TextStyle(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSecondaryContainer,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: Text(
+                        L10n.t(context, 'paused.homeBody'),
+                        style: TextStyle(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSecondaryContainer,
+                        ),
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.push(AppRoutes.settings),
+                    ),
+                  ),
+                ),
+              ),
+            SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
               child: Column(

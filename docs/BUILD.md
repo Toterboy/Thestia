@@ -37,7 +37,7 @@ flutter build apk --release --flavor fdroid --dart-define=FDROID=true
 nicht mehr möglich — Flutter findet die APK sonst nicht (Fehler
 „failed to produce an .apk file"). Immer `--flavor play` oder
 `--flavor fdroid` angeben. In IntelliJ liegen fertige Run-Konfigurationen
-bereit: **„WispDating (play)"** und **„WispDating (fdroid)"** (Dropdown
+bereit: **„Thestia (play)"** und **„Thestia (fdroid)"** (Dropdown
 oben in der Toolbar).
 
 Der `FDROID`-Define schaltet Firebase/FCM im Dart-Code komplett ab

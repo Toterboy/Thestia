@@ -8,11 +8,11 @@ import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/providers/settings_provider.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/services/mfa_service.dart';
-import 'package:wisp/services/supabase_service.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/services/mfa_service.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// 2FA-Einrichtung (Authenticator-App / TOTP) – wird nach der
 /// E-Mail-Bestätigung als optionaler Schritt angezeigt.

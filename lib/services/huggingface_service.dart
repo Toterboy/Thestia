@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-import 'package:wisp/utils/constants.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// NSFW-Bild-Moderation – zurzeit per Feature-Flag DEAKTIVIERT
 /// (AppConstants.nsfwModerationEnabled, Betreiber-Entscheidung).

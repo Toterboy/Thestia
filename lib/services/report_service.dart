@@ -7,13 +7,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/models/message.dart';
-import 'package:wisp/models/report_models.dart';
-import 'package:wisp/providers/profile_provider.dart';
-import 'package:wisp/services/secure_hive.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/utils/constants.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/models/message.dart';
+import 'package:thestia/models/report_models.dart';
+import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/services/secure_hive.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// Pseudonymisiert einen Identifier/Name mit SHA-256 (H-06).
 ///

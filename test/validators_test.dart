@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wisp/utils/validators.dart';
+import 'package:thestia/utils/validators.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Liefert einen BuildContext (Default-Locale Deutsch, wie ohne Scope).

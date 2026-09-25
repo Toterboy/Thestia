@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:wisp/services/auth_exception.dart';
+import 'package:thestia/services/auth_exception.dart';
 
 /// App-Sprache (Deutsch/Englisch). Default: Deutsch. Der Startwert wird
 /// in main() aus SharedPreferences als Override gesetzt; [saveLocale]
@@ -169,7 +169,7 @@ const Map<String, Map<String, String>> _strings = {
     'auth.ageConfirmRequired':
         'Bitte bestätige die Richtigkeit deines Geburtsdatums.',
     'auth.liabilityNote':
-        'Hinweis: Wisp prüft Angaben nicht lückenlos. Verlass dich nie '
+        'Hinweis: Thestia prüft Angaben nicht lückenlos. Verlass dich nie '
         'allein auf Profilangaben, triff dich nur an öffentlichen Orten '
         'und melde Verdacht auf falsches Alter sofort.',
     'email.resent':
@@ -329,6 +329,29 @@ const Map<String, Map<String, String>> _strings = {
     'settings.pauseOn':
         'Profil pausiert. Du bist unsichtbar, bis du die Pause beendest.',
     'settings.pauseOff': 'Pause beendet. Dein Profil ist wieder sichtbar.',
+    'settings.chatBg': 'Chat-Hintergrund',
+    'settings.chatBgSub':
+        'Muster oder eigenes Bild für deine Chats. Gilt für alle Chats.',
+    'chatbg.none': 'Keiner',
+    'chatbg.dots': 'Punkte',
+    'chatbg.lines': 'Linien',
+    'chatbg.hearts': 'Herzen',
+    'chatbg.stars': 'Sterne',
+    'chatbg.waves': 'Wellen',
+    'chatbg.custom': 'Eigenes Bild',
+    'paused.homeTitle': 'Dein Profil ist pausiert',
+    'paused.homeBody':
+        'Du bist für neue Personen unsichtbar. Tippen zum Entpausieren.',
+    'paused.popupTitle': 'Profil pausiert',
+    'paused.popupBody':
+        'Solange dein Profil pausiert ist, kannst du keine Entdecken-Modi '
+        'nutzen. Beende die Pause in den Einstellungen, um weiterzumachen.',
+    'paused.toSettings': 'Zu den Einstellungen',
+    'signup.title': 'Willkommen bei Thestia!',
+    'signup.body':
+        'Schön, dass du da bist. Gleich geht es mit deiner Einrichtung '
+        'los - Schritt für Schritt, alles kann später geändert werden.',
+    'signup.start': 'Jetzt einrichten',
     'settings.visEveryoneSub':
         'Dein Profil erscheint in Entdecken und Find your Match.',
     'settings.visMatchesSub':
@@ -345,7 +368,7 @@ const Map<String, Map<String, String>> _strings = {
     'mood.flirty': 'Flirty',
     'mood.thoughtful': 'Nachdenklich',
     'mood.tired': 'Müde',
-    'theme.classic': 'Classic WispDating',
+    'theme.classic': 'Classic Thestia',
     'theme.ocean': 'Ozean',
     'theme.forest': 'Wald',
     'theme.sunset': 'Sonnenuntergang',
@@ -376,10 +399,10 @@ const Map<String, Map<String, String>> _strings = {
     'transit.start': 'Radar aktivieren',
     'transit.stop': 'Radar stoppen',
     'transit.active':
-        'Radar aktiv - du bist sichtbar für Wisp-Geräte in der Nähe.',
+        'Radar aktiv - du bist sichtbar für Thestia-Geräte in der Nähe.',
     'transit.inactive': 'Radar aus. Aktiviere es, wenn du unterwegs bist.',
     'transit.remaining': 'Noch {time} aktiv',
-    'transit.seenCount': '{count} Wisp-Geräte in Reichweite gesehen.',
+    'transit.seenCount': '{count} Thestia-Geräte in Reichweite gesehen.',
     'transit.exchanged': 'Blicke getauscht',
     'transit.modeLabel': 'Wie weit soll die Erkennung reichen?',
     'transit.mode.transit': 'Normal',
@@ -409,7 +432,7 @@ const Map<String, Map<String, String>> _strings = {
     'setup.locationDone': 'Standort erkannt und übernommen (GPS-Koordinaten).',
     'setup.passkeyDone':
         'Passkey eingerichtet. Du kannst dich künftig damit anmelden.',
-    // Erst-Einrichtung als Interview (Wisp-Fragen-Bubbles)
+    // Erst-Einrichtung als Interview (Thestia-Fragen-Bubbles)
     'setupq.visibility':
         'Wie privat magst du bleiben, und wie soll die App aussehen?',
     // Setup: Dialoge, Validierung, Status
@@ -586,12 +609,12 @@ const Map<String, Map<String, String>> _strings = {
         'und damit der Chat.',
     'qr.likeFailed': 'Like konnte nicht gesendet werden: {error}',
     'qr.invalidCode':
-        'Dieser QR-Code ist kein Wisp-Profilcode. Bitte scanne den '
+        'Dieser QR-Code ist kein Thestia-Profilcode. Bitte scanne den '
         'persönlichen QR-Code aus der App.',
     'qr.savedOffline':
         'Kein Internet - Profil lokal gespeichert. Du kannst die Person '
         'später anschreiben ("Gespeicherte Profile").',
-    'setupq.filter': 'Wonach soll Wisp jemanden für dich suchen?',
+    'setupq.filter': 'Wonach soll Thestia jemanden für dich suchen?',
     'setupq.profile':
         'Was macht dich aus? Ein Bild, ein paar Worte, deine Interessen.',
     'setupq.intro': 'Wie klingst du? Erzähl von dir, als Text und gesprochen.',
@@ -702,7 +725,7 @@ const Map<String, Map<String, String>> _strings = {
     'transit.howTitle': 'Wie funktioniert das?',
     'transit.howBody':
         'Aktiviere das Radar, wenn du unterwegs bist (Zug, Café, Messe). '
-        'Dein Gerät tauscht mit anderen Wisp-Geräten in nächster Nähe '
+        'Dein Gerät tauscht mit anderen Thestia-Geräten in nächster Nähe '
         'anonyme, zufällige Token aus - ohne Namen, ohne Standort, ohne '
         'Fotos. Tippe später auf "Blicke getauscht": Spürt die andere '
         'Person denselben Moment und funkt ebenfalls, entsteht ein Funke.',
@@ -717,7 +740,7 @@ const Map<String, Map<String, String>> _strings = {
     'onboarding.skipAll': 'Überspringen',
     'onboarding.fillLater': 'Später ausfüllen',
     'onboarding.next': 'Weiter',
-    'onboarding.hello.title': 'Hi, ich bin Wisp!',
+    'onboarding.hello.title': 'Hi, ich bin Thestia!',
     'onboarding.hello.body':
         'In den nächsten Minuten richten wir dein Profil zusammen - '
         'als kurzes Gespräch statt Formular. Alles ist überspringbar, '
@@ -742,11 +765,14 @@ const Map<String, Map<String, String>> _strings = {
     'onboarding.q.bandHint': 'z. B. Lieblingsband oder Künstler …',
     'onboarding.q.birthday':
         'Welcher Stil soll dein Profil an deinem Geburtstag haben?',
+    'onboarding.q.chatbg':
+        'Wie sollen deine Chats aussehen? Wähle einen Hintergrund - '
+        'später jederzeit änderbar.',
     'onboarding.done.title': 'Geschafft - schön, dass du da bist!',
     'onboarding.done.body':
         'Dein Profil steht. Alles kannst du später jederzeit in den '
         'Einstellungen ändern. Viel Spaß beim Entdecken!',
-    'welcome.t1': 'Willkommen bei Blind Date',
+    'welcome.t1': 'Willkommen bei Thestia',
     'welcome.b1':
         'Hier lernst du Menschen wirklich kennen, bevor du ihr Foto '
         'siehst. Denn am Anfang zählt die Persönlichkeit, nicht das '
@@ -1084,7 +1110,7 @@ const Map<String, Map<String, String>> _strings = {
         'warnt dich der Chat. Triff dich nur an öffentlichen Orten, nimm '
         'beim ersten Treffen dein Handy mit und sag einer Vertrauensperson '
         'Bescheid. Melde Verdacht auf falsches Alter sofort über den '
-        'Meldegrund "Falsches Alter". Wisp kann Angaben nicht lückenlos '
+        'Meldegrund "Falsches Alter". Thestia kann Angaben nicht lückenlos '
         'prüfen und übernimmt keine Gewähr für deren Richtigkeit.',
     'home.noMessages': 'Keine neuen Nachrichten',
     'home.noMessagesSub':
@@ -1098,7 +1124,7 @@ const Map<String, Map<String, String>> _strings = {
     'safety.hotline3Sub': 'klicksafe.de',
     'safety.hotline4': 'Hilfetelefon Stalking (Weisser Ring)',
     'safety.hotline4Sub': 'weisser-ring.de - 116 006',
-    'safety.sectionProtect': 'Schutz in WispDating',
+    'safety.sectionProtect': 'Schutz in Thestia',
     'safety.reportSomeone': 'Jemanden melden',
     'safety.reportSomeoneBody':
         'Im Chat über das Flag-Symbol oben rechts oder per langem Drücken '
@@ -1426,7 +1452,7 @@ const Map<String, Map<String, String>> _strings = {
     'passkey.err.serverRejected':
         'Der Server hat die Passkey-Anfrage abgelehnt. Bitte prüfe in '
         'den Supabase-Einstellungen, ob "Passkeys" aktiviert ist und die '
-        'RP-ID auf auth.wispdating.de gesetzt ist.{reason}',
+        'RP-ID auf auth.thestia.de gesetzt ist.{reason}',
     'passkey.err.unknownRegister':
         'Passkey-Einrichtung fehlgeschlagen. Bitte versuche es später '
         'erneut.',
@@ -1493,7 +1519,7 @@ const Map<String, Map<String, String>> _strings = {
     'devices.activeHoursB': 'Std.',
     'devices.activeLastSeen': 'zuletzt aktiv am',
     'devices.empty':
-        'Keine weiteren Geräte registriert. Öffne Wisp auf einem anderen '
+        'Keine weiteren Geräte registriert. Öffne Thestia auf einem anderen '
         'Gerät (mindestens diese Version), damit es sich in der Liste zeigt.',
     'devices.signingOut': 'Melde ab …',
     'devices.logoutBtnLong': 'Überall abmelden (außer diesem Gerät)',
@@ -1665,7 +1691,7 @@ const Map<String, Map<String, String>> _strings = {
         'oder das Vorgeben einer falschen Identität sind untersagt. Das '
         'gilt besonders für dein Alter und dein Geburtsdatum: Wer sich '
         'jünger ausgibt als er ist, gefährdet andere, besonders junge '
-        'Nutzer, und wird bei Nachweis dauerhaft ausgeschlossen. Wisp kann '
+        'Nutzer, und wird bei Nachweis dauerhaft ausgeschlossen. Thestia kann '
         'Angaben nicht lückenlos prüfen und übernimmt keine Gewähr für '
         'deren Richtigkeit.',
     'cg.3.title': '§3 Kein Spam',
@@ -2275,7 +2301,7 @@ const Map<String, Map<String, String>> _strings = {
     'privacy.validator.mismatch': 'Nicht identisch',
     'privacy.yourData': 'Deine Daten',
     'privacy.dataInfo':
-        'Wisp speichert Profilinformationen, Standortdaten (nur wenn du '
+        'Thestia speichert Profilinformationen, Standortdaten (nur wenn du '
         'sie freigibst), Fotos, Chats, Likes und Funken. Alle Daten '
         'werden verschlüsselt übertragen und nur so lange gespeichert, '
         'wie dein Account aktiv ist.',
@@ -2286,7 +2312,7 @@ const Map<String, Map<String, String>> _strings = {
     'privacy.importSub': 'JSON-Datenexport wiederherstellen',
     'privacy.importTitle': 'Daten importieren',
     'privacy.importBody':
-        'Füge hier den Inhalt deiner Export-Datei (wisp_data_export.json) '
+        'Füge hier den Inhalt deiner Export-Datei (thestia_data_export.json) '
         'ein. Profil, Einstellungen und Präferenzen werden '
         'wiederhergestellt.',
     'privacy.importHint': '{ ... JSON hier einfügen ... }',
@@ -2496,7 +2522,7 @@ const Map<String, Map<String, String>> _strings = {
         'Bitte schließe die App komplett und versuche es erneut.',
     'update.required': 'Update erforderlich',
     'update.body':
-        'Deine Version von Wisp unterstützt nicht mehr alle '
+        'Deine Version von Thestia unterstützt nicht mehr alle '
         'Server-Funktionen. Bitte aktualisiere die App, um '
         'weiterzumachen.',
     'update.now': 'Jetzt aktualisieren',
@@ -2786,7 +2812,7 @@ const Map<String, Map<String, String>> _strings = {
     'auth.ageConfirmRequired':
         'Please confirm that your date of birth is correct.',
     'auth.liabilityNote':
-        'Note: Wisp cannot verify every detail. Never rely on profile '
+        'Note: Thestia cannot verify every detail. Never rely on profile '
         'information alone, only meet in public places and report '
         'suspected false age immediately.',
     'email.resent':
@@ -2933,6 +2959,29 @@ const Map<String, Map<String, String>> _strings = {
     'settings.pauseOn':
         'Profile paused. You are invisible until you end the pause.',
     'settings.pauseOff': 'Pause ended. Your profile is visible again.',
+    'settings.chatBg': 'Chat background',
+    'settings.chatBgSub':
+        'Pattern or own picture for your chats. Applies to all chats.',
+    'chatbg.none': 'None',
+    'chatbg.dots': 'Dots',
+    'chatbg.lines': 'Lines',
+    'chatbg.hearts': 'Hearts',
+    'chatbg.stars': 'Stars',
+    'chatbg.waves': 'Waves',
+    'chatbg.custom': 'Own picture',
+    'paused.homeTitle': 'Your profile is paused',
+    'paused.homeBody':
+        'You are invisible to new people. Tap to unpause.',
+    'paused.popupTitle': 'Profile paused',
+    'paused.popupBody':
+        'While your profile is paused, you cannot use Discovery modes. '
+        'End the pause in settings to continue.',
+    'paused.toSettings': 'To settings',
+    'signup.title': 'Welcome to Thestia!',
+    'signup.body':
+        'Glad you are here. Your setup starts right away - step by step, '
+        'everything can be changed later.',
+    'signup.start': 'Start setup',
     'settings.visEveryoneSub':
         'Your profile appears in Discovery and Find your Match.',
     'settings.visMatchesSub':
@@ -2948,7 +2997,7 @@ const Map<String, Map<String, String>> _strings = {
     'mood.flirty': 'Flirty',
     'mood.thoughtful': 'Thoughtful',
     'mood.tired': 'Tired',
-    'theme.classic': 'Classic WispDating',
+    'theme.classic': 'Classic Thestia',
     'theme.ocean': 'Ocean',
     'theme.forest': 'Forest',
     'theme.sunset': 'Sunset',
@@ -2978,10 +3027,10 @@ const Map<String, Map<String, String>> _strings = {
     'transit.title': 'Transit Spark',
     'transit.start': 'Activate radar',
     'transit.stop': 'Stop radar',
-    'transit.active': 'Radar active - visible to nearby Wisp devices.',
+    'transit.active': 'Radar active - visible to nearby Thestia devices.',
     'transit.inactive': 'Radar off. Activate it when you are on the go.',
     'transit.remaining': 'Active for another {time}',
-    'transit.seenCount': 'Seen {count} Wisp devices in range.',
+    'transit.seenCount': 'Seen {count} Thestia devices in range.',
     'transit.exchanged': 'Exchanged glances',
     'transit.modeLabel': 'How far should detection reach?',
     'transit.mode.transit': 'Normal',
@@ -3010,10 +3059,10 @@ const Map<String, Map<String, String>> _strings = {
     'setup.pleasePick': 'Please choose',
     'setup.locationDone': 'Location detected and applied (GPS coordinates).',
     'setup.passkeyDone': 'Passkey set up. You can now sign in with it.',
-    // One-time setup as interview (Wisp question bubbles)
+    // One-time setup as interview (Thestia question bubbles)
     'setupq.visibility':
         'How private would you like to stay - and how should the app look?',
-    'setupq.filter': 'What should Wisp search for on your behalf?',
+    'setupq.filter': 'What should Thestia search for on your behalf?',
     'setupq.profile':
         'What makes you you? A photo, a few words, your interests.',
     'setupq.intro':
@@ -3163,7 +3212,7 @@ const Map<String, Map<String, String>> _strings = {
     'transit.howBody':
         'Activate the radar while you are on the go (train, café, '
         'convention). Your device exchanges anonymous, random tokens with '
-        'other Wisp devices nearby - no names, no location, no photos. '
+        'other Thestia devices nearby - no names, no location, no photos. '
         'Later, tap "Exchanged glances": if the other person feels the '
         'same moment and signals too, a spark is created.',
     'transit.privacyNote':
@@ -3180,7 +3229,7 @@ const Map<String, Map<String, String>> _strings = {
     'onboarding.skipAll': 'Skip',
     'onboarding.fillLater': 'Fill in later',
     'onboarding.next': 'Continue',
-    'onboarding.hello.title': 'Hi, I am Wisp!',
+    'onboarding.hello.title': 'Hi, I am Thestia!',
     'onboarding.hello.body':
         'Over the next few minutes we will set up your profile - as a '
         'short conversation instead of a form. Everything is skippable, '
@@ -3205,11 +3254,14 @@ const Map<String, Map<String, String>> _strings = {
     'onboarding.q.bandHint': 'e.g. favorite band or artist …',
     'onboarding.q.birthday':
         'Which style should your profile have on your birthday?',
+    'onboarding.q.chatbg':
+        'How should your chats look? Pick a background - '
+        'changeable anytime later.',
     'onboarding.done.title': 'Done - glad you are here!',
     'onboarding.done.body':
         'Your profile is set up. You can change everything later in '
         'the settings. Enjoy discovering!',
-    'welcome.t1': 'Welcome to Blind Date',
+    'welcome.t1': 'Welcome to Thestia',
     'welcome.b1':
         'Here you really get to know people before you see their photo. '
         'Because at first, personality counts, not looks.',
@@ -3491,7 +3543,7 @@ const Map<String, Map<String, String>> _strings = {
         'never blindly trust an age claim. The chat warns you about large '
         'age differences. Only meet in public places, bring your phone to '
         'a first meeting and tell a trusted person. Report suspected false '
-        'age immediately via the "Wrong age" report reason. Wisp cannot '
+        'age immediately via the "Wrong age" report reason. Thestia cannot '
         'verify every detail and gives no guarantee for their accuracy.',
     'home.noMessages': 'No new messages',
     'home.noMessagesSub': 'New messages appear here once you have sparks.',
@@ -3504,7 +3556,7 @@ const Map<String, Map<String, String>> _strings = {
     'safety.hotline3Sub': 'klicksafe.de',
     'safety.hotline4': 'Stalking helpline (Weisser Ring)',
     'safety.hotline4Sub': 'weisser-ring.de - 116 006',
-    'safety.sectionProtect': 'Protection in WispDating',
+    'safety.sectionProtect': 'Protection in Thestia',
     'safety.reportSomeone': 'Report someone',
     'safety.reportSomeoneBody':
         'In the chat via the flag icon at the top right, or by long-pressing '
@@ -3819,7 +3871,7 @@ const Map<String, Map<String, String>> _strings = {
     'passkey.err.serverRejected':
         'The server rejected the passkey request. Please check in the '
         'Supabase settings whether "Passkeys" is enabled and the RP ID '
-        'is set to auth.wispdating.de.{reason}',
+        'is set to auth.thestia.de.{reason}',
     'passkey.err.unknownRegister':
         'Passkey setup failed. Please try again later.',
     'passkey.err.unknownLogin':
@@ -3879,7 +3931,7 @@ const Map<String, Map<String, String>> _strings = {
     'devices.activeHoursB': 'h ago',
     'devices.activeLastSeen': 'last active on',
     'devices.empty':
-        'No other devices registered. Open Wisp on another device (at '
+        'No other devices registered. Open Thestia on another device (at '
         'least this version) so it shows up in the list.',
     'devices.signingOut': 'Signing out…',
     'devices.logoutBtnLong': 'Sign out everywhere (except this device)',
@@ -4046,7 +4098,7 @@ const Map<String, Map<String, String>> _strings = {
         'or pretending to be someone else are prohibited. This applies in '
         'particular to your age and date of birth: pretending to be younger '
         'than you are endangers others, especially young users, and leads '
-        'to a permanent ban when proven. Wisp cannot verify every detail '
+        'to a permanent ban when proven. Thestia cannot verify every detail '
         'and gives no guarantee for their accuracy.',
     'cg.3.title': '§3 No spam',
     'cg.3.titleShort':
@@ -4227,7 +4279,7 @@ const Map<String, Map<String, String>> _strings = {
         'Like sent! As soon as the person accepts it, your chat opens up.',
     'qr.likeFailed': 'Like could not be sent: {error}',
     'qr.invalidCode':
-        'This QR code is not a Wisp profile code. Please scan the personal '
+        'This QR code is not a Thestia profile code. Please scan the personal '
         'QR code from the app.',
     'qr.savedOffline':
         'No internet - profile saved locally. You can write to the person '
@@ -4798,7 +4850,7 @@ const Map<String, Map<String, String>> _strings = {
     'privacy.validator.mismatch': 'Does not match',
     'privacy.yourData': 'Your data',
     'privacy.dataInfo':
-        'Wisp stores profile information, location data (only if you '
+        'Thestia stores profile information, location data (only if you '
         'share it), photos, chats, likes and matches. All data is '
         'transferred encrypted and stored only as long as your account is '
         'active.',
@@ -4810,7 +4862,7 @@ const Map<String, Map<String, String>> _strings = {
     'privacy.importTitle': 'Import data',
     'privacy.importBody':
         'Paste the contents of your export file '
-        '(wisp_data_export.json) here. Profile, settings and '
+        '(thestia_data_export.json) here. Profile, settings and '
         'preferences will be restored.',
     'privacy.importHint': '{ ... paste JSON here ... }',
     'privacy.importApply': 'Import',
@@ -5008,7 +5060,7 @@ const Map<String, Map<String, String>> _strings = {
     'startup.failedBody': 'Please close the app completely and try again.',
     'update.required': 'Update required',
     'update.body':
-        'Your version of Wisp no longer supports all server features. '
+        'Your version of Thestia no longer supports all server features. '
         'Please update the app to continue.',
     'update.now': 'Update now',
     'update.later': 'Continue anyway',

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/l10n/app_strings.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/l10n/app_strings.dart';
 
 /// Screen mit den Community-Regeln (Netiquette) der App.
 class CommunityGuidelinesScreen extends StatelessWidget {

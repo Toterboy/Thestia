@@ -4,8 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 
-import 'package:wisp/services/prekey_service.dart';
-import 'package:wisp/services/webrtc_service.dart';
+import 'package:thestia/services/prekey_service.dart';
+import 'package:thestia/services/webrtc_service.dart';
 
 /// Orchestriert eine echte Ende-zu-Ende-P2P-Chatverbindung:
 ///   1. E2E-Session zum Partner aufbauen (PreKey-Bundle via Supabase Edge)

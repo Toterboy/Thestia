@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wisp/services/local_storage.dart';
+import 'package:thestia/services/local_storage.dart';
 
 /// Merkt sich, welche Likes/Funken der Nutzer bereits ANGESEHEN hat
 /// (v0.9.1): Die Badges auf Aktuelles ("Neue Likes", "Neue Funken")

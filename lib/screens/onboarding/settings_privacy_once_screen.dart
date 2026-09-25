@@ -2,39 +2,39 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:wisp/utils/avatar_image.dart';
+import 'package:thestia/utils/avatar_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wisp/models/gender.dart';
-import 'package:wisp/models/habitude_level.dart';
-import 'package:wisp/models/profile_visibility.dart';
-import 'package:wisp/providers/profile_provider.dart';
-import 'package:wisp/providers/settings_provider.dart';
-import 'package:wisp/providers/user_preferences_provider.dart';
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/services/auth_exception.dart';
-import 'package:wisp/services/location_check_service.dart';
-import 'package:wisp/services/location_verification_service.dart';
-import 'package:wisp/services/mfa_service.dart';
-import 'package:wisp/services/passkey_auth.dart';
-import 'package:wisp/services/supabase_database_service.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/services/supabase_storage_service.dart';
-import 'package:wisp/utils/age_safety_rules.dart';
-import 'package:wisp/utils/constants.dart';
-import 'package:wisp/utils/geo_names.dart';
-import 'package:wisp/widgets/age_range_sliders.dart';
-import 'package:wisp/widgets/buttons.dart';
-import 'package:wisp/widgets/gender_preference_selector.dart';
-import 'package:wisp/widgets/habitude_selector.dart';
-import 'package:wisp/widgets/intro_editor.dart';
-import 'package:wisp/widgets/interview_bubble.dart';
-import 'package:wisp/widgets/selectable_tile.dart';
-import 'package:wisp/widgets/theme_picker.dart';
+import 'package:thestia/models/gender.dart';
+import 'package:thestia/models/habitude_level.dart';
+import 'package:thestia/models/profile_visibility.dart';
+import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/providers/user_preferences_provider.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/services/auth_exception.dart';
+import 'package:thestia/services/location_check_service.dart';
+import 'package:thestia/services/location_verification_service.dart';
+import 'package:thestia/services/mfa_service.dart';
+import 'package:thestia/services/passkey_auth.dart';
+import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/services/supabase_storage_service.dart';
+import 'package:thestia/utils/age_safety_rules.dart';
+import 'package:thestia/utils/constants.dart';
+import 'package:thestia/utils/geo_names.dart';
+import 'package:thestia/widgets/age_range_sliders.dart';
+import 'package:thestia/widgets/buttons.dart';
+import 'package:thestia/widgets/gender_preference_selector.dart';
+import 'package:thestia/widgets/habitude_selector.dart';
+import 'package:thestia/widgets/intro_editor.dart';
+import 'package:thestia/widgets/interview_bubble.dart';
+import 'package:thestia/widgets/selectable_tile.dart';
+import 'package:thestia/widgets/theme_picker.dart';
 
 /// Einmaliger Einstellungen- & Privatsphäre-Screen direkt nach der Anmeldung.
 /// Danach sind diese Einstellungen jederzeit in den normalen Einstellungen änderbar.
@@ -1507,7 +1507,7 @@ class _Page extends StatelessWidget {
     required this.child,
   });
 
-  /// Interview-Frage als L10n-Key (Wisp-Bubble statt Formular-Überschrift).
+  /// Interview-Frage als L10n-Key (Thestia-Bubble statt Formular-Überschrift).
   final String questionKey;
   final String subtitle;
   final Widget child;
@@ -1523,7 +1523,7 @@ class _Page extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Interview-Stil: Wisp stellt die Frage (Chat-Optik).
+            // Interview-Stil: Thestia stellt die Frage (Chat-Optik).
             InterviewBubble(text: L10n.t(context, questionKey)),
             if (subtitle.isNotEmpty) ...[
               const SizedBox(height: 10),

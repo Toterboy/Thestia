@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wisp/widgets/selectable_tile.dart';
+import 'package:thestia/widgets/selectable_tile.dart';
 
 void main() {
   testWidgets('SelectableTile: System (null) auswählbar', (tester) async {

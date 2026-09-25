@@ -99,7 +99,7 @@ class CertPinning {
   /// Prüft ein Zertifikat für [expectedHost] (reine Logik, v0.9.0):
   /// exakter Pin ODER eng begrenzter Rotation-Fallback (Issuer + Host
   /// + Gültigkeit). Wird vom strikten [pinnedHttpClient] UND von den
-  /// globalen [WispHttpOverrides] genutzt.
+  /// globalen [ThestiaHttpOverrides] genutzt.
   static bool verifyCertificate({
     required String expectedHost,
     required X509Certificate cert,

@@ -1,6 +1,6 @@
 # Support
 
-Danke, dass du WispDating nutzt. Hier steht, welche Versionen unterstützt werden und wie du Feedback/Bug-Reports loswirst.
+Danke, dass du Thestia nutzt. Hier steht, welche Versionen unterstützt werden und wie du Feedback/Bug-Reports loswirst.
 
 ## Unterstützte Versionen
 
@@ -24,7 +24,7 @@ Aktuell: `min_app_version_build = 28` (= v0.9.0).
 - **In-App (empfohlen)**: Einstellungen → Bug-Report. Die Meldung
   enthält Version, Geräteinfos und (optional) einen Log-Auszug – das
   beschleunigt die Zuordnung erheblich.
-- **GitHub**: [Issues](https://github.com/Toterboy/Wisp-Datingapp/issues)
+- **GitHub**: [Issues](https://github.com/Toterboy/Thestia/issues)
   anlegen, bitte **Version** (siehe Einstellungen → Info) und
   **Variante** (play/fdroid) angeben.
 
@@ -36,6 +36,6 @@ eingespielt werden kann.
 
 ## Beta-Hinweis
 
-WispDating ist als Beta klassifiziert (Versionsnummer beginnt mit
+Thestia ist als Beta klassifiziert (Versionsnummer beginnt mit
 `0.`): Schnittstellen und Verhalten können sich jederzeit ändern,
 solange die Major-Version 0 ist.

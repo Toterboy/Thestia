@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:wisp/theme/app_theme.dart';
+import 'package:thestia/theme/app_theme.dart';
 
 /// Zeigt Interessen als abgerundete "Chips" an.
 class InterestChips extends StatelessWidget {

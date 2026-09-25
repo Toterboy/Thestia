@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
+import 'package:thestia/l10n/app_strings.dart';
 
 /// Schöner, animierter "Leerer Zustand" (Empty State) mit Icon + Text + Aktion.
 class EmptyState extends StatelessWidget {

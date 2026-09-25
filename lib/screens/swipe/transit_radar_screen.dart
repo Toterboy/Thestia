@@ -7,17 +7,17 @@ import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/models/transit_models.dart';
-import 'package:wisp/providers/transit_provider.dart';
-import 'package:wisp/providers/profile_provider.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/services/find_your_match_service.dart';
-import 'package:wisp/services/local_storage.dart';
-import 'package:wisp/services/supabase_database_service.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/services/transit_ble_service.dart';
-import 'package:wisp/widgets/funke_overlay.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/models/transit_models.dart';
+import 'package:thestia/providers/transit_provider.dart';
+import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/services/find_your_match_service.dart';
+import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/services/transit_ble_service.dart';
+import 'package:thestia/widgets/funke_overlay.dart';
 
 /// Lokale Speicher-Stelle für die gemerkte Radar-Exit-Entscheidung
 /// ('stop' | 'keep' | null = immer fragen).
@@ -33,7 +33,7 @@ const String kTransitRadioCleanupKey = 'transit_radio_cleanup';
 
 /// Transit-Radar (v0.9.0): "Blicke getauscht, sich nicht getraut?"
 /// Aktiviert BLE-Nähe-Erkennung (Vordergrund), zeigt live, wie viele
-/// Wisp-Geräte in Reichweite gesehen wurden, und funkt bei beidseitigem
+/// Thestia-Geräte in Reichweite gesehen wurden, und funkt bei beidseitigem
 /// Signal über die Bestandspipeline einen Funken.
 class TransitRadarScreen extends ConsumerStatefulWidget {
   const TransitRadarScreen({super.key});

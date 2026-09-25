@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wisp/services/local_storage.dart';
-import 'package:wisp/services/seen_service.dart';
+import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/seen_service.dart';
 
 class _MemoryStorage implements LocalStorage {
   final _map = <String, Object>{};

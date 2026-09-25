@@ -4,18 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:wisp/models/dating_hour_models.dart';
-import 'package:wisp/providers/dating_hour_provider.dart';
-import 'package:wisp/providers/settings_provider.dart';
-import 'package:wisp/providers/user_preferences_provider.dart';
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/screens/dating_hour/dating_hour_preferences_screen.dart'
+import 'package:thestia/models/dating_hour_models.dart';
+import 'package:thestia/providers/dating_hour_provider.dart';
+import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/providers/user_preferences_provider.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/screens/dating_hour/dating_hour_preferences_screen.dart'
     show genderPrefFromList;
-import 'package:wisp/services/dating_hour_service.dart';
-import 'package:wisp/services/notification_service.dart';
-import 'package:wisp/services/server_time_service.dart';
-import 'package:wisp/utils/constants.dart';
+import 'package:thestia/services/dating_hour_service.dart';
+import 'package:thestia/services/notification_service.dart';
+import 'package:thestia/services/server_time_service.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// Haupt-Screen für den Dating Hour Event.
 ///

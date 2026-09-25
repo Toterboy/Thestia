@@ -34,7 +34,7 @@ serve(async (req) => {
   if (!token) {
     return new Response(
       "Deine E-Mail-Adresse wurde bestätigt. ✅\n\n" +
-        "Du kannst dieses Fenster schließen und zur Wisp-App zurückkehren – " +
+        "Du kannst dieses Fenster schließen und zur Thestia-App zurückkehren – " +
         "sie erkennt die Bestätigung automatisch und geht weiter.",
       { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } },
     );

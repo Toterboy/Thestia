@@ -6,9 +6,9 @@ src = p.read_text(encoding="utf-8")
 
 # 1. Imports + Helper
 src = src.replace(
-    "import 'package:wisp/utils/validators.dart';\nimport 'package:flutter_test/flutter_test.dart';",
+    "import 'package:thestia/utils/validators.dart';\nimport 'package:flutter_test/flutter_test.dart';",
     "import 'package:flutter/material.dart';\n"
-    "import 'package:wisp/utils/validators.dart';\n"
+    "import 'package:thestia/utils/validators.dart';\n"
     "import 'package:flutter_test/flutter_test.dart';\n"
     "\n"
     "/// Liefert einen BuildContext (Default-Locale Deutsch, wie ohne Scope).\n"

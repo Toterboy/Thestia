@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wisp/services/age_estimation_service.dart';
+import 'package:thestia/services/age_estimation_service.dart';
 
 void main() {
   group('2-Jahre-Regel (v0.9.1)', () {

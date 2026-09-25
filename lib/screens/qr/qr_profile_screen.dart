@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/providers/profile_provider.dart';
-import 'package:wisp/services/supabase_storage_service.dart';
-import 'package:wisp/widgets/qr_profile.dart';
-import 'package:wisp/utils/constants.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/services/supabase_storage_service.dart';
+import 'package:thestia/widgets/qr_profile.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// Entschlüsselte Bild-Bytes des eigenen Avatars (Speicher-Cache im
 /// Storage-Service macht dies nach dem ersten Laden sofort verfügbar).
@@ -24,7 +24,7 @@ final _qrAvatarBytesProvider =
 /// Zeigt den eigenen QR-Code und den teilbaren Nutzer-Code an.
 ///
 /// Andere Nutzer können diesen Code scannen (via Kamera-App oder
-/// in der Wisp-App) um das Profil zu finden und einen Chat zu starten.
+/// in der Thestia-App) um das Profil zu finden und einen Chat zu starten.
 class QrProfileScreen extends ConsumerWidget {
   const QrProfileScreen({super.key});
 

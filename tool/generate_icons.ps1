@@ -1,9 +1,9 @@
 # =============================================================================
 # generate_icons.ps1
 # -----------------------------------------------------------------------------
-# Generiert die Icon-Quell-Assets fuer das Wisp-App-Icon (Android + iOS):
+# Generiert die Icon-Quell-Assets fuer das Thestia-App-Icon (Android + iOS):
 #
-#   1. assets/images/wisp_icon_foreground.png  (1024x1024)
+#   1. assets/images/thestia_icon_foreground.png  (1024x1024)
 #      - Transparentes Foreground fuer das Android Adaptive Icon.
 #      - Weisse Bereiche (Hintergrund des Basis-PNG) werden per
 #        Flood-Fill-Weiss-Keying (verbunden mit dem Bildrand) transparent.
@@ -11,7 +11,7 @@
 #        damit es in der Safe-Zone jeder Launcher-Maske (Kreis/Squircle)
 #        vollstaendig sichtbar ist.
 #
-#   2. assets/images/wisp_icon_ios.png          (1024x1024)
+#   2. assets/images/thestia_icon_ios.png          (1024x1024)
 #      - Voll opake Quadrat-Variante des Basis-PNG fuer iOS (Apple maskt
 #        selbst, Quadrat ohne Transparenz ist dort Pflicht).
 #
@@ -32,9 +32,9 @@ Add-Type -AssemblyName System.Drawing
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
-$srcPath = Join-Path $root 'assets\images\wisp_icon_base.png'
-$outForeground = Join-Path $root 'assets\images\wisp_icon_foreground.png'
-$outIos = Join-Path $root 'assets\images\wisp_icon_ios.png'
+$srcPath = Join-Path $root 'assets\images\thestia_icon_base.png'
+$outForeground = Join-Path $root 'assets\images\thestia_icon_foreground.png'
+$outIos = Join-Path $root 'assets\images\thestia_icon_ios.png'
 $previewDir = Join-Path $root 'build\icon_previews'
 
 # Weiss-Keying-Schwelle: Pixel mit min(R,G,B) >= $whiteThreshold gelten als

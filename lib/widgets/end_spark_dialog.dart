@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
+import 'package:thestia/l10n/app_strings.dart';
 
 /// Anzahl der vorbereiteten, freundlichen Absage-Texte ("Ehrliches
 /// Beenden", zweisprachig über L10n-Keys `chat.goodbye.1..4`).

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wisp/services/supabase_service.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// Service für den Versand von Bug-Reports per E-Mail über Brevo.
 ///

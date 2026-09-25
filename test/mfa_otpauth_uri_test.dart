@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wisp/services/mfa_service.dart';
+import 'package:thestia/services/mfa_service.dart';
 
 /// Tests fuer den Standard-otpauth-URI, den die 2FA-Einrichtung der
 /// Authenticator-App uebergibt (QR-Inhalt + manuelle Eingabe).
@@ -11,7 +11,7 @@ void main() {
 
       expect(uri, startsWith('otpauth://totp/'));
       expect(uri, contains('secret=ABCDEF234567'));
-      expect(uri, contains('issuer=Wisp'));
+      expect(uri, contains('issuer=Thestia'));
       expect(uri, contains('algorithm=SHA1'));
       expect(uri, contains('digits=6'));
       expect(uri, contains('period=30'));
@@ -23,19 +23,19 @@ void main() {
         email: 'test+tag@beispiel.de',
       );
 
-      // Pfad: otpauth://totp/WispDating:<account>
-      expect(uri, contains(RegExp('otpauth://totp/WispDating:test%2Btag%40beispiel\\.de')));
+      // Pfad: otpauth://totp/Thestia:<account>
+      expect(uri, contains(RegExp('otpauth://totp/Thestia:test%2Btag%40beispiel\\.de')));
       expect(uri, isNot(contains('+tag@beispiel.de?')));
     });
 
     test('ohne Email faellt auf generischen Kontonamen zurueck', () {
       final uri = MfaService.buildOtpAuthUri('XYZ', email: null);
-      expect(uri, contains('otpauth://totp/WispDating:Nutzer'));
+      expect(uri, contains('otpauth://totp/Thestia:Nutzer'));
     });
 
     test('leerer Email-String faellt ebenfalls zurueck', () {
       final uri = MfaService.buildOtpAuthUri('XYZ', email: '');
-      expect(uri, contains('otpauth://totp/WispDating:Nutzer'));
+      expect(uri, contains('otpauth://totp/Thestia:Nutzer'));
     });
 
     test('ist KEIN SVG-Daten-URI mehr (Regression: Supabase qrCode)', () {

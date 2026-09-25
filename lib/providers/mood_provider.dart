@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wisp/models/user_mood.dart';
-import 'package:wisp/services/mood_service.dart';
+import 'package:thestia/models/user_mood.dart';
+import 'package:thestia/services/mood_service.dart';
 
 /// Verwaltet das eigene Mood of the Day.
 class MoodNotifier extends StateNotifier<Mood?> {

@@ -1,4 +1,4 @@
-﻿import 'package:wisp/models/user_profile.dart';
+﻿import 'package:thestia/models/user_profile.dart';
 
 /// Ein erhaltener Like inklusive Profil (Vorstellung) des Likers.
 class ReceivedLike {

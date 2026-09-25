@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wisp/services/auth_exception.dart';
-import 'package:wisp/services/passkey_auth.dart';
+import 'package:thestia/services/auth_exception.dart';
+import 'package:thestia/services/passkey_auth.dart';
 
 /// Tests fuer das Fehler-Mapping der Passkey-Integration: Kryptische
 /// Plugin-/WebAuthn-Fehler (DOM-Exception-Typen, PlatformException-Codes)

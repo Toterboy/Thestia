@@ -24,7 +24,7 @@ diskriminierungsfreier Umfeld für alle, die beitragen möchten.
 ## Durchsetzung
 
 Verstöße können dem Projektbetreiber gemeldet werden:
-**support@wispdating.de**. Berichte werden vertraulich behandelt.
+**support@thestia.de**. Berichte werden vertraulich behandelt.
 Bei wiederholten oder schweren Verstößen können Beiträge ausgeschlossen
 werden (Entfernen von Kommentaren, Sperre von Accounts/PRs).
 

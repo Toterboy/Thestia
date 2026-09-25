@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wisp/models/report_models.dart';
+import 'package:thestia/models/report_models.dart';
 
 void main() {
   group('Altersschutz-Meldegründe (v0.9.1)', () {

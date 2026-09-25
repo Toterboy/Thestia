@@ -3,9 +3,9 @@
 import 'package:image/image.dart' as img;
 
 Future<void> main() async {
-  const sourcePath = 'assets/images/wispdating_icon_base.png';
-  const roundedForegroundPath = 'assets/images/wisp_icon_rounded_foreground.png';
-  const roundedBackgroundPath = 'assets/images/wisp_icon_rounded_background.png';
+  const sourcePath = 'assets/images/thestia_icon_base.png';
+  const roundedForegroundPath = 'assets/images/thestia_icon_rounded_foreground.png';
+  const roundedBackgroundPath = 'assets/images/thestia_icon_rounded_background.png';
 
   final sourceBytes = File(sourcePath).readAsBytesSync();
   final source = img.decodePng(sourceBytes);

@@ -6,15 +6,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wisp/models/message.dart';
-import 'package:wisp/models/report_models.dart';
-import 'package:wisp/providers/profile_provider.dart';
-import 'package:wisp/services/image_safety_service.dart';
-import 'package:wisp/services/report_service.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/utils/constants.dart';
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/widgets/ai_badge.dart';
+import 'package:thestia/models/message.dart';
+import 'package:thestia/models/report_models.dart';
+import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/services/image_safety_service.dart';
+import 'package:thestia/services/report_service.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/constants.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/widgets/ai_badge.dart';
 
 /// Ergebnis der Bild-Meldung mit KI-Vorprüfung.
 class ImageReportOutcome {

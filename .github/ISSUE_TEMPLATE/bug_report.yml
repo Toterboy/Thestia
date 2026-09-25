@@ -1,5 +1,5 @@
 name: Bug melden
-description: Ein Fehler in WispDating – danke für die Meldung!
+description: Ein Fehler in Thestia – danke für die Meldung!
 labels: [bug]
 body:
   - type: markdown

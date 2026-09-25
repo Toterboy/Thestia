@@ -4,12 +4,13 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wisp/models/app_settings.dart';
-import 'package:wisp/models/profile_visibility.dart';
-import 'package:wisp/services/local_storage.dart';
-import 'package:wisp/services/supabase_database_service.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/utils/constants.dart';
+import 'package:thestia/models/app_settings.dart';
+import 'package:thestia/models/profile_visibility.dart';
+import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/chat_backgrounds.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// StateNotifier, der die App-Einstellungen verwaltet und sicher persistiert.
 ///
@@ -246,6 +247,13 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       next = next.copyWith(notifyMatches: notifyMatches);
       changed = true;
     }
+    final chatBg = read<String>('chatBackground');
+    if (chatBg != null &&
+        ChatBackgrounds.isValid(chatBg) &&
+        chatBg != next.chatBackground) {
+      next = next.copyWith(chatBackground: chatBg);
+      changed = true;
+    }
     final paused = read<bool>('paused');
     if (paused != null && paused != next.paused) {
       var vis = next.profileVisibility;
@@ -424,9 +432,29 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     await _persist();
   }
 
-  /// Farbschema wechseln (WispTheme-Name).
+  /// Farbschema wechseln (ThestiaTheme-Name).
   Future<void> setThemeName(String name) async {
     state = state.copyWith(themeName: name);
+    await _persist();
+  }
+
+  /// Chat-Hintergrund wählen (v0.9.1): 'none', Muster oder 'custom'.
+  /// Unbekannte IDs fallen auf 'none' zurück.
+  Future<void> setChatBackground(String id) async {
+    final valid = ChatBackgrounds.isValid(id) ? id : ChatBackgrounds.none;
+    state = state.copyWith(chatBackground: valid);
+    await _persist();
+  }
+
+  /// Lokalen Pfad des eigenen Hintergrundbildes setzen/löschen (nur lokal).
+  Future<void> setChatBackgroundPath(String? path) async {
+    state = state.copyWith(chatBackgroundPath: path);
+    await _persist();
+  }
+
+  /// Kurzer Willkommensscreen nach Registrierung wurde gezeigt.
+  Future<void> markSignupWelcomeSeen() async {
+    state = state.copyWith(signupWelcomeSeen: true);
     await _persist();
   }
 
@@ -476,6 +504,7 @@ void scheduleUiPrefsServerSync(AppSettings settings) {
             'notifyMessages': settings.notifyMessages,
             'notifyDatingHour': settings.notifyDatingHour,
             'blurChatImages': settings.blurChatImages,
+            'chatBackground': settings.chatBackground,
           },
         });
       } catch (e) {

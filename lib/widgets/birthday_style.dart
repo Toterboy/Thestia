@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
+import 'package:thestia/l10n/app_strings.dart';
 
 /// Geburtstags-Stile (Nutzerwunsch: schick, nicht kitschig): 5 wählbare
 /// Designs für das Profil am Geburtstag. Der Stil wirkt NUR am Geburtstag

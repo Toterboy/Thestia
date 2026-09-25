@@ -1,0 +1,3 @@
+• Neuer Name: Aus WispDating wird Thestia (neues Logo, neue App-ID – bitte neu installieren, Konto bleibt erhalten)
+• Neues Benachrichtigungs-Herz in der Statusleiste
+• Neue Adressen: thestia.de, Support & Mails über @thestia.de

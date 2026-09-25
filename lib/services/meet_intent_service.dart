@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:wisp/models/meet_intent.dart';
-import 'package:wisp/services/supabase_service.dart';
+import 'package:thestia/models/meet_intent.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// Lädt und aktualisiert den "echtes Treffen"-Vorschlag eines Matches.
 ///

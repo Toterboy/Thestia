@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wisp/services/whats_new_service.dart';
+import 'package:thestia/services/whats_new_service.dart';
 
 /// Tests für das "Neu in dieser Version"-Gate (NUTZERWUNSCH: Popup bei
 /// App-Update für bereits registrierte Nutzer + neue Angaben abfragen).

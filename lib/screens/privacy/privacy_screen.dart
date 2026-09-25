@@ -10,19 +10,19 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/models/user_profile.dart';
-import 'package:wisp/providers/auth_provider.dart';
-import 'package:wisp/providers/chat_provider.dart';
-import 'package:wisp/providers/mood_provider.dart';
-import 'package:wisp/providers/profile_provider.dart';
-import 'package:wisp/providers/settings_provider.dart';
-import 'package:wisp/providers/user_preferences_provider.dart';
-import 'package:wisp/routing/app_router.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/providers/auth_provider.dart';
+import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/providers/mood_provider.dart';
+import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/providers/user_preferences_provider.dart';
+import 'package:thestia/routing/app_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show UserAttributes;
-import 'package:wisp/services/mfa_service.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/utils/constants.dart';
+import 'package:thestia/services/mfa_service.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// DSGVO-relevanter Datenschutz- und Account-Screen.
 ///
@@ -54,7 +54,7 @@ class PrivacyScreen extends ConsumerWidget {
 
     final exportData = <String, dynamic>{
       'exportedAt': DateTime.now().toIso8601String(),
-      'app': 'Wisp Dating App',
+      'app': 'Thestia',
       'userId': AppConstants.currentUserId,
       'profile': profile.toJson(),
       'settings': settings.toJson(),
@@ -102,14 +102,14 @@ class PrivacyScreen extends ConsumerWidget {
 
     try {
       final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/wisp_data_export.json');
+      final file = File('${dir.path}/thestia_data_export.json');
       await file.writeAsString(json);
       try {
         await SharePlus.instance.share(
           ShareParams(
             files: [XFile(file.path, mimeType: 'application/json')],
-            subject: 'Wisp Datenexport',
-            text: 'Dein Wisp-Datenexport (JSON).',
+            subject: 'Thestia Datenexport',
+            text: 'Dein Thestia-Datenexport (JSON).',
           ),
         );
       } finally {

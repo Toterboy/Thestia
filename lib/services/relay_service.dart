@@ -4,9 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart';
 
-import 'package:wisp/services/encryption_service.dart';
-import 'package:wisp/services/prekey_service.dart';
-import 'package:wisp/services/supabase_service.dart';
+import 'package:thestia/services/encryption_service.dart';
+import 'package:thestia/services/prekey_service.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// Eine abgeholte Relay-Nachricht (entschlüsselt, versandbereit zur Anzeige).
 class RelayMessage {

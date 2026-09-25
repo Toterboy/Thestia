@@ -8,7 +8,7 @@
 /// - Jede Bubble trägt eine kleine Zeitanzeige (HH:mm).
 library;
 
-import 'package:wisp/models/message.dart';
+import 'package:thestia/models/message.dart';
 
 /// Gruppier-Fenster: Nachrichten desselben Absenders innerhalb von
 /// [groupWindow] gehören (bis [maxPerGroup]) zu einer Gruppe.

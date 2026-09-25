@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:wisp/models/user_mood.dart';
-import 'package:wisp/services/auth_exception.dart';
-import 'package:wisp/services/supabase_service.dart';
+import 'package:thestia/models/user_mood.dart';
+import 'package:thestia/services/auth_exception.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// Service für das Mood-of-the-Day-Feature.
 ///

@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:wisp/services/encryption_service.dart';
-import 'package:wisp/utils/peer_id.dart';
+import 'package:thestia/services/encryption_service.dart';
+import 'package:thestia/utils/peer_id.dart';
 
 /// Vermittelt den Aufbau einer Ende-zu-Ende-Session zum Kommunikationspartner.
 ///

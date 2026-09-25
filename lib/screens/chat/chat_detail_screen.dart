@@ -14,45 +14,46 @@ import 'package:intl/intl.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:record/record.dart';
 
-import 'package:wisp/models/match.dart';
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/models/gender.dart' show RelationshipType;
-import 'package:wisp/models/message.dart';
-import 'package:wisp/models/user_profile.dart';
-import 'package:wisp/models/find_match_models.dart';
-import 'package:wisp/providers/chat_provider.dart';
-import 'package:wisp/providers/profile_provider.dart';
-import 'package:wisp/providers/user_preferences_provider.dart';
-import 'package:wisp/services/find_your_match_service.dart'
+import 'package:thestia/models/match.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/models/gender.dart' show RelationshipType;
+import 'package:thestia/models/message.dart';
+import 'package:thestia/utils/chat_backgrounds.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/models/find_match_models.dart';
+import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/providers/user_preferences_provider.dart';
+import 'package:thestia/services/find_your_match_service.dart'
     show findYourMatchServiceProvider;
-import 'package:wisp/widgets/heart_moments.dart';
-import 'package:wisp/providers/settings_provider.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/screens/chat/call_screen.dart';
-import 'package:wisp/screens/interests/interessen_screen.dart'
+import 'package:thestia/widgets/heart_moments.dart';
+import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/screens/chat/call_screen.dart';
+import 'package:thestia/screens/interests/interessen_screen.dart'
     show interessenInitialTabProvider;
-import 'package:wisp/services/image_report_service.dart';
-import 'package:wisp/services/report_service.dart';
-import 'package:wisp/services/encryption_service.dart';
-import 'package:wisp/services/local_storage.dart';
-import 'package:wisp/services/p2p_chat_service.dart';
-import 'package:wisp/services/prekey_service.dart';
-import 'package:wisp/screens/chat/bucket_list_sheet.dart'
+import 'package:thestia/services/image_report_service.dart';
+import 'package:thestia/services/report_service.dart';
+import 'package:thestia/services/encryption_service.dart';
+import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/p2p_chat_service.dart';
+import 'package:thestia/services/prekey_service.dart';
+import 'package:thestia/screens/chat/bucket_list_sheet.dart'
     show BucketListSheet;
-import 'package:wisp/services/quiz_service.dart';
-import 'package:wisp/services/relay_service.dart';
-import 'package:wisp/services/supabase_database_service.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/data/icebreaker_catalog.dart';
-import 'package:wisp/utils/age_safety_rules.dart';
-import 'package:wisp/utils/constants.dart';
-import 'package:wisp/utils/exif_stripper.dart';
-import 'package:wisp/widgets/audio_review_sheet.dart';
-import 'package:wisp/widgets/chat_bubbles.dart';
-import 'package:wisp/widgets/end_spark_dialog.dart';
-import 'package:wisp/widgets/intro_audio_player.dart';
-import 'package:wisp/widgets/meet_intent_card.dart';
-import 'package:wisp/widgets/profile_widgets.dart';
+import 'package:thestia/services/quiz_service.dart';
+import 'package:thestia/services/relay_service.dart';
+import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/data/icebreaker_catalog.dart';
+import 'package:thestia/utils/age_safety_rules.dart';
+import 'package:thestia/utils/constants.dart';
+import 'package:thestia/utils/exif_stripper.dart';
+import 'package:thestia/widgets/audio_review_sheet.dart';
+import 'package:thestia/widgets/chat_bubbles.dart';
+import 'package:thestia/widgets/end_spark_dialog.dart';
+import 'package:thestia/widgets/intro_audio_player.dart';
+import 'package:thestia/widgets/meet_intent_card.dart';
+import 'package:thestia/widgets/profile_widgets.dart';
 
 /// Präfix für geteilte Eisbrecher-Fragen im Textkanal (v0.9.1): Beide Seiten
 /// stellen solche Nachrichten als gemeinsame mittige Bubble dar.
@@ -1265,7 +1266,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
 
         final dir = Directory.systemTemp;
         final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final path = '${dir.path}/wisp_voice_$timestamp.m4a';
+        final path = '${dir.path}/thestia_voice_$timestamp.m4a';
 
         await _audioRecorder.start(
           const RecordConfig(
@@ -1840,7 +1841,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   Future<String?> _writeVoiceFile(String msgId, Uint8List data) async {
     try {
       final dir = Directory.systemTemp;
-      final path = '${dir.path}/wisp_incoming_$msgId.m4a';
+      final path = '${dir.path}/thestia_incoming_$msgId.m4a';
       await File(path).writeAsBytes(data);
       _voiceTempFiles.add(path);
       return path;
@@ -2205,7 +2206,16 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
           ),
         ],
       ),
-      body: Column(
+      body: Stack(
+        children: [
+          // Chat-Hintergrund (v0.9.1): Muster oder eigenes Bild.
+          Positioned.fill(
+            child: ChatBackgroundView(
+              backgroundId: settings.chatBackground,
+              customPath: settings.chatBackgroundPath,
+            ),
+          ),
+          Column(
         children: [
           // Verbindungs-Hinweis (v0.9.1): Abgerundete Karte, eingeklappt
           // nur "Keine direkte Verbindung", aufklappbar für Details.
@@ -2760,6 +2770,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                 ],
               ),
             ),
+          ),
+        ],
           ),
         ],
       ),

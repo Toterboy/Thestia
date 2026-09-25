@@ -1,71 +1,57 @@
-﻿import 'dart:io';
+﻿// tool/generate_notification_icon.dart
+//
+// Erzeugt das Android-Benachrichtigungs-Icon als sauber gezeichnete
+// Herz-Silhouette (weiss auf transparent, 96x96).
+//
+// Android verlangt fuer Statusleisten-Icons eine alpha-maskierte,
+// einfarbige Form - das alte Icon war eine automatisch abgeleitete
+// Logo-Silhouette (inkl. Schriftzug-Resten). Das neue Herz ist eine
+// parametrische Kurve (16*sin^3, 13*cos - 5*cos2 - 2*cos3 - cos4),
+// symmetrisch, mit ruhigen Rundungen und gleichmaessigem Padding.
+//
+// Output: android/app/src/main/res/drawable/notification_icon.png
+//
+// Ausfuehren: dart run tool/generate_notification_icon.dart
+
+import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:image/image.dart' as img;
 
-/// Erzeugt das Android-Benachrichtigungs-Icon (weisse Silhouette mit
-/// Transparenz) aus dem Wisp-Logo.
-///
-/// Android verlangt fuer Statusleisten-Icons ein alpha-maskiertes,
-/// einfarbig (weiss) Asset - farbige Logos erscheinen als weisser Punkt.
-/// Output: android/app/src/main/res/drawable/notification_icon.png (96px).
-///
-/// Ausfuehren: dart run tool/generate_notification_icon.dart
-void main(List<String> args) {
-  final sourcePath = args.isNotEmpty
-      ? args[0]
-      : 'assets/images/wispdating_icon_base.png';
-  final bytes = File(sourcePath).readAsBytesSync();
-  final src = img.decodePng(bytes);
-  if (src == null) {
-    stderr.writeln('Konnte $sourcePath nicht dekodieren.');
-    exit(1);
-  }
+void main() {
+  const size = 96;
+  // Herz-Breite ~60 px, zentriert mit ~18 px Padding ringsum.
+  const heartWidth = 60.0;
+  const cx = size / 2.0;
+  const cy = size / 2.0 + 2.0;
+  // Klassische Herz-Kurve: x in [-16, 16], y in ca. [-17, 12].
+  const scale = heartWidth / 32.0;
 
-  var work = src;
-  if (work.width != 96 || work.height != 96) {
-    work = img.copyResize(
-      work,
-      width: 96,
-      height: 96,
-      interpolation: img.Interpolation.average,
-    );
-  }
-  // WICHTIG: Sicherstellen, dass das Bild einen Alpha-Kanal hat. Ohne
-  // numChannels: 4 (bzw. bei opaken Quellen) entstaende ein volles 96x96
-  // weisses Quadrat -> Statusleiste zeigt ein weisses VIERECK.
-  if (work.numChannels < 4) {
-    work = work.convert(numChannels: 4);
-  }
+  final canvas = img.Image(width: size, height: size, numChannels: 4);
 
-  // Vollstaendig opake Quelle (alpha ueberall 255)? Dann gibt es keine
-  // Silhouette - Alpha aus der Luminanz ableiten: dunkle Pixel (Badge/
-  // Schriftzug) werden opak weiss, helle Flaechen transparent.
-  var hasTransparency = false;
-  for (final p in work) {
-    if (p.a < 250) {
-      hasTransparency = true;
-      break;
-    }
+  // Polygon aus der Kurve abtasten (720 Punkte = glatte Raender).
+  final points = <img.Point>[];
+  for (var i = 0; i < 720; i++) {
+    final t = i / 720 * 2 * math.pi;
+    final x = 16 * math.pow(math.sin(t), 3);
+    final y = 13 * math.cos(t) -
+        5 * math.cos(2 * t) -
+        2 * math.cos(3 * t) -
+        math.cos(4 * t);
+    points.add(img.Point(
+      (cx + x * scale).round(),
+      (cy - y * scale).round(),
+    ));
   }
-  for (var y = 0; y < work.height; y++) {
-    for (var x = 0; x < work.width; x++) {
-      final p = work.getPixel(x, y);
-      if (hasTransparency) {
-        // Alpha-Maske behalten => Silhouette.
-        work.setPixelRgba(x, y, 255, 255, 255, p.a);
-      } else {
-        // Luminanz-Fallback: 0.2126 R + 0.7152 G + 0.0722 B.
-        final lum =
-            0.2126 * p.r + 0.7152 * p.g + 0.0722 * p.b;
-        final alpha = (255 - lum).round().clamp(0, 255);
-        work.setPixelRgba(x, y, 255, 255, 255, alpha);
-      }
-    }
-  }
+  img.fillPolygon(
+    canvas,
+    vertices: points,
+    color: img.ColorRgba8(255, 255, 255, 255),
+  );
 
   const outDir = 'android/app/src/main/res/drawable';
   Directory(outDir).createSync(recursive: true);
   final out = File('$outDir/notification_icon.png');
-  out.writeAsBytesSync(img.encodePng(work));
-  stdout.writeln('Geschrieben: $out (${work.width}x${work.height})');
+  out.writeAsBytesSync(img.encodePng(canvas));
+  stdout.writeln('Geschrieben: $out (${size}x$size)');
 }

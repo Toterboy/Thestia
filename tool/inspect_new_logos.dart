@@ -6,11 +6,11 @@ import 'package:image/image.dart' as img;
 void main(List<String> args) {
   final dir = r'C:\Users\Thoralf\Downloads\Blind-Date-App Repository';
   final files = [
-    'wispdating_icon_base.png',
-    'wispdating_icon_base neu.png',
-    'wispdating_icon_base-small.png',
-    'wispdating_benachrichtigungsicon.png',
-    'wispdating_benachrichtigungsicon neu.png',
+    'thestia_icon_base.png',
+    'thestia_icon_base neu.png',
+    'thestia_icon_base-small.png',
+    'thestia_notification.png',
+    'thestia_benachrichtigungsicon neu.png',
   ];
   for (final name in files) {
     final f = File('$dir\\$name');

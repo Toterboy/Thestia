@@ -181,7 +181,7 @@ serve(async (req) => {
 <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 0"><tr><td align="center">
 <table width="480" cellpadding="0" cellspacing="0" style="max-width:480px;background:#fff8f5;border-radius:16px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,0.06)">
   <tr><td style="background:linear-gradient(135deg,#ff8fab 0%,#ff6b9d 100%);padding:28px 30px;text-align:center">
-    <h1 style="color:#fff;font-size:24px;margin:0;font-weight:600">Dein WispDating-Konto</h1>
+    <h1 style="color:#fff;font-size:24px;margin:0;font-weight:600">Dein Thestia-Konto</h1>
   </td></tr>
   <tr><td style="padding:30px;text-align:left">
     <p style="color:#2d2d2d;font-size:15px;line-height:1.6;margin:0 0 16px">
@@ -196,7 +196,7 @@ serve(async (req) => {
     </p>
   </td></tr>
   <tr><td style="background:#fdf0ee;padding:18px 30px;text-align:center">
-    <p style="color:#b0b0b0;font-size:12px;margin:0">WispDating &middot; Dein Team</p>
+    <p style="color:#b0b0b0;font-size:12px;margin:0">Thestia &middot; Dein Team</p>
   </td></tr>
 </table>
 </td></tr></table></body></html>`;
@@ -209,9 +209,9 @@ serve(async (req) => {
               "content-type": "application/json",
             },
             body: JSON.stringify({
-              sender: { email: "moderation@wispdating.de", name: "WispDating" },
+              sender: { email: "moderation@thestia.de", name: "Thestia" },
               to: [{ email }],
-              subject: "Dein WispDating-Konto wurde gesperrt",
+              subject: "Dein Thestia-Konto wurde gesperrt",
               htmlContent: html,
             }),
           });

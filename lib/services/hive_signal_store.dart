@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart';
 
-import 'package:wisp/models/signal_key_models.dart';
+import 'package:thestia/models/signal_key_models.dart';
 
 /// Ein [InMemorySignalProtocolStore], der Session-Records automatisch in
 /// einer Hive-Box persistiert.

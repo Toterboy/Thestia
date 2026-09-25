@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:wisp/models/random_chat_session.dart';
-import 'package:wisp/services/supabase_service.dart';
+import 'package:thestia/models/random_chat_session.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// Vermittelt das serverseitige Matching für den Zufallschat.
 ///

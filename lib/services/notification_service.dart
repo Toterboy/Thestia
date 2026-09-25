@@ -8,7 +8,7 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
-import 'package:wisp/providers/settings_provider.dart';
+import 'package:thestia/providers/settings_provider.dart';
 
 /// Kategorie einer Benachrichtigung – für die Einzel-Schalter in den
 /// Einstellungen (Matches, Likes, Chatnachrichten, Dating Hour).
@@ -152,7 +152,7 @@ class NotificationService {
         android: AndroidNotificationDetails(
           channelId,
           channelId,
-          // Wisp-Silhouette statt weissem Punkt (siehe
+          // Thestia-Silhouette statt weissem Punkt (siehe
           // tool/generate_notification_icon.dart).
           icon: 'notification_icon',
           color: const Color(0xFFFF6B9D),

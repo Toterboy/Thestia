@@ -1,7 +1,7 @@
-import 'package:wisp/models/message.dart';
-import 'package:wisp/models/user_profile.dart';
-import 'package:wisp/providers/chat_provider.dart';
-import 'package:wisp/services/chat_service.dart';
+import 'package:thestia/models/message.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/services/chat_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

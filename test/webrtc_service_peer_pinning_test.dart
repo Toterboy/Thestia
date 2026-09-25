@@ -4,8 +4,8 @@
 // - Peer-Pinning im Signaling-Routing (fremde Absender werden verworfen)
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wisp/services/encryption_service.dart';
-import 'package:wisp/services/webrtc_service.dart';
+import 'package:thestia/services/encryption_service.dart';
+import 'package:thestia/services/webrtc_service.dart';
 
 void main() {
   group('parseIceConfig', () {

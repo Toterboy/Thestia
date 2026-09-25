@@ -4,9 +4,9 @@ import 'dart:math';
 import 'package:image/image.dart' as img;
 
 Future<void> main() async {
-  const sourcePath = 'assets/images/wispdating_icon_base.png';
-  const hexForegroundPath = 'assets/images/wisp_icon_hex_foreground.png';
-  const hexBackgroundPath = 'assets/images/wisp_icon_hex_background.png';
+  const sourcePath = 'assets/images/thestia_icon_base.png';
+  const hexForegroundPath = 'assets/images/thestia_icon_hex_foreground.png';
+  const hexBackgroundPath = 'assets/images/thestia_icon_hex_background.png';
 
   final sourceBytes = File(sourcePath).readAsBytesSync();
   final source = img.decodePng(sourceBytes);

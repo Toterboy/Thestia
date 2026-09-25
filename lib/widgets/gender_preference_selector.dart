@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:wisp/models/gender.dart';
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/providers/user_preferences_provider.dart';
-import 'package:wisp/services/supabase_database_service.dart';
-import 'package:wisp/services/supabase_service.dart';
+import 'package:thestia/models/gender.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/providers/user_preferences_provider.dart';
+import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// Mehrfachauswahl der Geschlechts-Präferenz ("Ich suche").
 ///

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:wisp/services/supabase_database_service.dart';
-import 'package:wisp/services/transit_encounter_service.dart';
+import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/transit_encounter_service.dart';
 
 void main() {
   group('Transit-Token (BLE-Paketgrenzen)', () {

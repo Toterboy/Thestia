@@ -13,26 +13,26 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
-import 'package:wisp/app.dart';
-import 'package:wisp/routing/route_restore.dart' show setPendingRouteRestore;
-import 'package:wisp/providers/user_preferences_provider.dart' show sharedPrefsProvider;
-import 'package:wisp/screens/core/loading_screen.dart';
-import 'package:wisp/services/app_config_service.dart';
-import 'package:wisp/services/crash_journal.dart';
-import 'package:wisp/services/server_time_service.dart';
-import 'package:wisp/services/local_storage.dart';
-import 'package:wisp/services/notification_service.dart';
-import 'package:wisp/services/secure_location_storage.dart';
-import 'package:wisp/services/secure_supabase_session_storage.dart';
-import 'package:wisp/services/supabase_database_service.dart';
-import 'package:wisp/services/supabase_service.dart';
-import 'package:wisp/models/signal_key_models.dart';
-import 'package:wisp/models/photo_moderation_models.dart';
-import 'package:wisp/models/report_models.dart';
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/theme/app_theme.dart';
-import 'package:wisp/utils/constants.dart';
-import 'package:wisp/utils/pinned_http_overrides.dart';
+import 'package:thestia/app.dart';
+import 'package:thestia/routing/route_restore.dart' show setPendingRouteRestore;
+import 'package:thestia/providers/user_preferences_provider.dart' show sharedPrefsProvider;
+import 'package:thestia/screens/core/loading_screen.dart';
+import 'package:thestia/services/app_config_service.dart';
+import 'package:thestia/services/crash_journal.dart';
+import 'package:thestia/services/server_time_service.dart';
+import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/notification_service.dart';
+import 'package:thestia/services/secure_location_storage.dart';
+import 'package:thestia/services/secure_supabase_session_storage.dart';
+import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/models/signal_key_models.dart';
+import 'package:thestia/models/photo_moderation_models.dart';
+import 'package:thestia/models/report_models.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/theme/app_theme.dart';
+import 'package:thestia/utils/constants.dart';
+import 'package:thestia/utils/pinned_http_overrides.dart';
 
 /// Einstiegspunkt der App.
 ///
@@ -54,7 +54,7 @@ Future<void> main() async {
   // Zertifikat-Pinning für ALLE Dart-TLS-Verbindungen (v0.9.0, als
   // ERSTES: danach erzeugte HttpClients erben den Check) – schützt
   // u. a. den kompletten Supabase-Traffic vor MITM.
-  HttpOverrides.global = WispHttpOverrides();
+  HttpOverrides.global = ThestiaHttpOverrides();
 
   FlutterError.onError = (details) {
     FlutterError.dumpErrorToConsole(details);
@@ -249,7 +249,7 @@ Future<void> _initializeFirebase() async {
 /// Initialisiert Supabase mit Timeout.
 ///
 /// Ohne Timeout kann ein langsames/unerreichbares Netzwerk den App-Start
-/// unbegrenzt blockieren ("Wisp isn't responding"). Bei Timeout oder Fehler
+      /// unbegrenzt blockieren ("Thestia isn't responding"). Bei Timeout oder Fehler
 /// startet die App im Limit-Modus weiter
 /// ([SupabaseService.isInitialized] == false).
 Future<void> _initializeSupabase() async {
@@ -269,14 +269,14 @@ Future<void> _initializeSupabase() async {
       url: supabaseUrl,
       publishableKey: supabaseAnonKey,
       // Deep-Link-Handling für Passwort-Reset / E-Mail-Bestätigung
-      // (wisp://reset-password): supabase_flutter hört über app_links auf
+      // (thestia://reset-password): supabase_flutter hört über app_links auf
       // eingehende URIs. Der eingebaute Filter erkennt aber nur
       // access_token/code/error – PKCE-Links mit token_hash (Standard bei
       // E-Mail-OTP und Recovery) würden ignoriert. Das Predicate erweitert
       // die Erkennung um token_hash, damit getSessionFromUrl den Link
       // verarbeitet und das passwordRecovery-Event feuert (das der
       // AuthNotifier in den passwordRecoveryPendingProvider schreibt).
-      // QR-Deep-Links (wisp://user/...) tragen kein Auth-Token und fallen
+      // QR-Deep-Links (thestia://user/...) tragen kein Auth-Token und fallen
       // weiterhin NICHT darunter.
       authOptions: FlutterAuthClientOptions(
         // Audit H-6: Session (inkl. Refresh-Token) im Keystore/Keychain
@@ -474,8 +474,8 @@ class _UpdateRequiredScreen extends StatelessWidget {
 
   Future<void> _openStore() async {
     final uris = [
-      Uri.parse('market://details?id=com.wisp.app'),
-      Uri.parse('https://play.google.com/store/apps/details?id=com.wisp.app'),
+      Uri.parse('market://details?id=com.thestia.app'),
+      Uri.parse('https://play.google.com/store/apps/details?id=com.thestia.app'),
     ];
     for (final uri in uris) {
       try {

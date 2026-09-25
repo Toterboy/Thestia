@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 
-import 'package:wisp/l10n/app_strings.dart';
+import 'package:thestia/l10n/app_strings.dart';
 
 /// Zeigt eine aufgezeichnete Audio-Datei zum ANHÖREN an, bevor sie
 /// gesendet/verwendet wird ("Anhören" vor "Senden").

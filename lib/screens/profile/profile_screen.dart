@@ -7,24 +7,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:just_audio/just_audio.dart';
 
-import 'package:wisp/models/app_settings.dart';
-import 'package:wisp/models/gender.dart';
-import 'package:wisp/models/user_profile.dart';
-import 'package:wisp/providers/mood_provider.dart';
-import 'package:wisp/providers/profile_provider.dart';
-import 'package:wisp/providers/settings_provider.dart';
-import 'package:wisp/routing/app_router.dart';
-import 'package:wisp/screens/admin/admin_screen.dart';
-import 'package:wisp/services/verification_service.dart'
+import 'package:thestia/models/app_settings.dart';
+import 'package:thestia/models/gender.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/providers/mood_provider.dart';
+import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/screens/admin/admin_screen.dart';
+import 'package:thestia/services/verification_service.dart'
     show verificationSubmittedKey, verificationServiceProvider;
-import 'package:wisp/services/local_storage.dart';
-import 'package:wisp/services/supabase_storage_service.dart';
-import 'package:wisp/l10n/app_strings.dart';
-import 'package:wisp/widgets/birthday_style.dart';
-import 'package:wisp/utils/age_safety_rules.dart';
-import 'package:wisp/utils/constants.dart';
-import 'package:wisp/widgets/profile_widgets.dart';
-import 'package:wisp/widgets/scroll_more_hint.dart';
+import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/supabase_storage_service.dart';
+import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/widgets/birthday_style.dart';
+import 'package:thestia/utils/age_safety_rules.dart';
+import 'package:thestia/utils/constants.dart';
+import 'package:thestia/widgets/profile_widgets.dart';
+import 'package:thestia/widgets/scroll_more_hint.dart';
 
 /// Profil-Anzeige des eigenen Nutzers mit Schnellzugriff auf Bearbeiten
 /// und Einstellungen.

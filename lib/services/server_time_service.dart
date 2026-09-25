@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
-import 'package:wisp/services/supabase_service.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// Service für Serverzeit-Synchronisation.
 ///

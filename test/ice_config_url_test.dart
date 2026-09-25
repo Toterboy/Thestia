@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wisp/services/webrtc_service.dart';
+import 'package:thestia/services/webrtc_service.dart';
 
 /// Regressionstest für den ice-config-401-Bug (Server-Log-Beweis):
 /// Die URL wurde aus `client.rest.url` (= Basis plus Rest-Pfad) durch

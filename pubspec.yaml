@@ -1,7 +1,7 @@
-﻿name: wisp
+﻿name: thestia
 description: Eine moderne, datenschutzfreundliche Dating-App mit Blind Mode (PersÃ¶nlichkeit zuerst).
 publish_to: 'none'
-version: 0.9.0+28
+version: 0.9.1+29
 
 environment:
   sdk: ^3.10.0
@@ -197,23 +197,20 @@ dependency_overrides:
     path: third_party/video_thumbnail
 
 flutter_launcher_icons:
-  # Legacy-Android-Icon (mipmap-*): volles Basis-PNG (weisser Hintergrund +
-  # Badge) â€“ entspricht exakt der hochgeladenen PNG.
-  image_path: "assets/images/wispdating_logo_round.png"
-  # iOS-Icon: voll opake 1024er-Variante (Apple maskt selbst, Transparenz
-  # ist auf iOS nicht erlaubt).
-  image_path_ios: "assets/images/wispdating_logo_round.png"
+  # Thestia-Branding (Quelle: assets/images/thestia_icon_base.png):
+  #  - Legacy/iOS: volles Basis-PNG (Verlauf + Schriftzug).
+  #  - iOS: opake 1024er-Variante (thestia_icon_ios.png, Apple maskt selbst).
+  image_path: "assets/images/thestia_icon_base.png"
+  image_path_ios: "assets/images/thestia_icon_ios.png"
   android: true
   ios: true
   remove_alpha_ios: true
-  # Adaptive Icon (Android 8+): weisser Hintergrund (wie im Original-PNG) +
-  # transparentes Foreground, in dem das Badge zentriert auf 66 % der
-  # Safe-Zone eingebacken ist (generiert via tool/generate_icons.ps1).
-  # KEINE hex-Varianten! Die enthalten schwarze RÃ¤nder/Dreiecke.
+  # Adaptive Icon (Android 8+): Verlauf aus dem Artwork + weich
+  # eingeblendetes Badge (Figuren/Herz/Schrift), generiert via
+  # tool/generate_icons.dart. Hintergrund #390D3C = Badge-Bett.
   adaptive_icon_background: "#390D3C"
-  adaptive_icon_foreground: "assets/images/wisp_icon_foreground.png"
-  # Safe-Zone steckt bereits im Foreground -> kein zusaetzlicher Inset,
-  # sonst wuerde das Badge erneut verkleinert (16 % Default).
+  adaptive_icon_foreground: "assets/images/thestia_icon_foreground.png"
+  # Safe-Zone steckt bereits im Foreground -> kein zusaetzlicher Inset.
   adaptive_icon_foreground_inset: 0
   platforms:
     web:
@@ -229,9 +226,9 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/wispdating_icon_base.png
-    - assets/images/wispdating_logo_round.png
-    - assets/images/wispdating_benachrichtigungsicon.png
+    - assets/images/thestia_icon_base.png
+    - assets/images/thestia_splash.png
+    - assets/images/thestia_splash_android12.png
     - assets/models/
     - .env
 

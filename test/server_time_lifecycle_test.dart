@@ -2,7 +2,7 @@
 // isVerified-Flag, Lifecycle-Behandlung ohne Flutter-Binding).
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:wisp/services/server_time_service.dart';
+import 'package:thestia/services/server_time_service.dart';
 
 void main() {
   final service = ServerTimeService.instance;
