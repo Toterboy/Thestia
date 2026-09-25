@@ -362,6 +362,17 @@ GoRouter createRouter(Ref ref) {
             location == AppRoutes.emailVerification ||
             location == AppRoutes.bugReport;
         if (!exempt) {
+          // Session vorhanden, Bestätigungsstatus aber noch unbekannt
+          // (Poller voraus, z. B. direkt nach Login)? Kurz auf Laden
+          // halten statt fälschlich den Verifikations-Screen zu blitzen.
+          // Ohne Session (frische Registrierung) direkt zur Verifizierung.
+          final hasSession =
+              SupabaseService.client.auth.currentSession != null;
+          if (hasSession && emailConfirmed == null) {
+            return state.matchedLocation == AppRoutes.loading
+                ? null
+                : AppRoutes.loading;
+          }
           return AppRoutes.emailVerification;
         }
         return null;

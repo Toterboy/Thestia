@@ -84,6 +84,19 @@ class ProfileScreen extends ConsumerWidget {
                         style: Theme.of(context).textTheme.headlineSmall,
                       ),
                     ),
+                    // Verifiziert-Badge direkt neben dem Namen
+                    // (Nutzerwunsch; serverseitig durch Admin-Freigabe).
+                    if (profile.isVerified) ...[
+                      const SizedBox(width: 6),
+                      Tooltip(
+                        message: L10n.t(context, 'verify.badge'),
+                        child: Icon(
+                          Icons.verified,
+                          size: 20,
+                          color: Colors.lightBlue.shade400,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -95,37 +108,18 @@ class ProfileScreen extends ConsumerWidget {
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),
-              // Verifiziert-Badge direkt neben dem Persönlichkeitstyp
-              // (Nutzerwunsch; Layout wie im Profil-Detail-Screen).
-              if (profile.isVerified || profile.personalityType != null) ...[
+              // Persönlichkeitstyp als Chip (Badge steht jetzt beim Namen).
+              if (profile.personalityType != null) ...[
                 const SizedBox(height: 4),
                 Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (profile.isVerified)
-                        Tooltip(
-                          message: L10n.t(context, 'verify.badge'),
-                          child: Icon(
-                            Icons.verified,
-                            size: 20,
-                            color: Colors.lightBlue.shade400,
-                          ),
-                        ),
-                      if (profile.isVerified && profile.personalityType != null)
-                        const SizedBox(width: 6),
-                      if (profile.personalityType != null)
-                        Chip(
-                          label: Text(
-                              '${L10n.t(context, 'profile.typePrefix')} ${profile.personalityType}'),
-                        ),
-                    ],
+                  child: Chip(
+                    label: Text(
+                        '${L10n.t(context, 'profile.typePrefix')} ${profile.personalityType}'),
                   ),
                 ),
               ],
               // Verifizierungs-Status (v0.9.1): Prüfung läuft oder
               // Einstieg in den Video-Flow (Konto bleibt immer nutzbar).
-              // Das Badge selbst steht oben neben dem Persönlichkeitstyp.
               if (!profile.isVerified) ...[
                 const SizedBox(height: 8),
                 const _VerificationStatusCard(),

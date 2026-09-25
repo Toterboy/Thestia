@@ -446,6 +446,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
       _ref.read(pendingVerificationEmailProvider.notifier).state = null;
       _ref.read(pendingVerificationCredentialsProvider.notifier).state = null;
       state = const AsyncValue.data(true);
+      // E-Mail-Status sofort neu prüfen (statt auf den 3-s-Poller zu
+      // warten): Verhindert kurzes Aufblitzen des Verifikations-Screens
+      // direkt nach dem Login.
+      _ref.invalidate(emailConfirmedProvider);
       unawaited(_syncFromServer());
     } catch (e, st) {
       if (kDebugMode) {
@@ -472,6 +476,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
       _ref.read(pendingVerificationEmailProvider.notifier).state = null;
       _ref.read(pendingVerificationCredentialsProvider.notifier).state = null;
       state = const AsyncValue.data(true);
+      // Wie im Passwort-Pfad: E-Mail-Status sofort neu prüfen.
+      _ref.invalidate(emailConfirmedProvider);
       unawaited(_syncFromServer());
     } catch (e, st) {
       if (kDebugMode) {

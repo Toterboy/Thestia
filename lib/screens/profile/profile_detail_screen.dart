@@ -279,6 +279,19 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
                       textAlign: TextAlign.center,
                     ),
                   ),
+                  // Verifiziert-Badge direkt neben dem Namen
+                  // (Nutzerwunsch; serverseitig durch Admin-Freigabe).
+                  if (profile.isVerified) ...[
+                    const SizedBox(width: 6),
+                    Tooltip(
+                      message: L10n.t(context, 'verify.badge'),
+                      child: Icon(
+                        Icons.verified,
+                        size: 20,
+                        color: Colors.lightBlue.shade400,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -296,34 +309,16 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
                 ),
               ),
             ],
-            // Verifiziert-Badge direkt neben dem Persönlichkeitstyp
-            // (Nutzerwunsch; serverseitig durch Admin-Freigabe).
-            if (profile.isVerified || profile.personalityType != null) ...[
+            // Persönlichkeitstyp als Chip (Badge steht jetzt beim Namen).
+            if (profile.personalityType != null) ...[
               const SizedBox(height: 8),
               Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (profile.isVerified)
-                      Tooltip(
-                        message: L10n.t(context, 'verify.badge'),
-                        child: Icon(
-                          Icons.verified,
-                          size: 20,
-                          color: Colors.lightBlue.shade400,
-                        ),
-                      ),
-                    if (profile.isVerified && profile.personalityType != null)
-                      const SizedBox(width: 6),
-                    if (profile.personalityType != null)
-                      Chip(
-                        label: Text(
-                          L10n.tf(context, 'profile.detail.type', {
-                            't': profile.personalityType ?? '',
-                          }),
-                        ),
-                      ),
-                  ],
+                child: Chip(
+                  label: Text(
+                    L10n.tf(context, 'profile.detail.type', {
+                      't': profile.personalityType ?? '',
+                    }),
+                  ),
                 ),
               ),
             ],

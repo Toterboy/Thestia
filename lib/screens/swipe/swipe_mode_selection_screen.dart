@@ -26,13 +26,6 @@ class SwipeModeSelectionScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(
-            L10n.t(context, 'dm.pickHint'),
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 16),
           // v0.9.0: Gruppierung nach Zweck - neue Modi rutschen ohne
           // Unübersichtlichkeit ein.
           _ModeGroup(

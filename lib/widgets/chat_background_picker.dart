@@ -125,30 +125,35 @@ class _Tile extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       onTap: onTap,
       child: Column(
         children: [
           Expanded(
             child: Stack(
+              clipBehavior: Clip.none,
               children: [
                 Positioned.fill(
                   child: Container(
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: selected ? scheme.primary : scheme.outlineVariant,
                         width: selected ? 2.5 : 1,
                       ),
                     ),
-                    clipBehavior: Clip.antiAlias,
-                    child: preview,
+                    // Expliziter Clip (statt Container-clipBehavior):
+                    // garantiert sauber abgerundete Vorschaubilder.
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(15),
+                      child: preview,
+                    ),
                   ),
                 ),
                 if (selected)
                   Positioned(
-                    right: 4,
-                    top: 4,
+                    right: 6,
+                    top: 6,
                     child: CircleAvatar(
                       radius: 11,
                       backgroundColor: scheme.primary,
@@ -158,8 +163,8 @@ class _Tile extends StatelessWidget {
                   ),
                 if (onDelete != null)
                   Positioned(
-                    left: 4,
-                    top: 4,
+                    left: 6,
+                    top: 6,
                     child: InkWell(
                       onTap: onDelete,
                       child: CircleAvatar(
