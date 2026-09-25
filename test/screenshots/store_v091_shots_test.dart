@@ -16,10 +16,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:thestia/providers/user_preferences_provider.dart';
 import 'package:thestia/screens/auth/login_screen.dart';
-import 'package:thestia/screens/dating_hour/dating_hour_how_it_works_screen.dart';
+import 'package:thestia/screens/spice/spice_questions_screen.dart';
 import 'package:thestia/screens/swipe/swipe_mode_selection_screen.dart';
 import 'package:thestia/screens/welcome/welcome_screen.dart';
 import 'package:thestia/services/local_storage.dart';
@@ -146,6 +145,7 @@ Future<void> _pump(
   required String name,
   required Size size,
   required double dpr,
+  double textScale = 1.0,
   Future<void> Function(WidgetTester)? after,
 }) async {
   await tester.runAsync(_loadFontsOnce);
@@ -161,7 +161,14 @@ Future<void> _pump(
     (call) async => null,
   );
 
-  await tester.pumpWidget(_harness(child, prefs));
+  await tester.pumpWidget(
+    MediaQuery(
+      // Nur fuer Screens, die sonst ueber den unteren Rand hinauslaufen
+      // (Entdecken-Liste): echtes UI, kompakter gesetzt.
+      data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
+      child: _harness(child, prefs),
+    ),
+  );
   for (var i = 0; i < 3; i++) {
     await tester.pumpAndSettle(const Duration(milliseconds: 300));
     await tester.runAsync(
@@ -181,6 +188,7 @@ Future<void> _pump(
 void _shot(
   String name,
   Widget Function() build, {
+  double textScale = 1.0,
   Future<void> Function(WidgetTester)? after,
 }) {
   for (final entry in _sizes.entries) {
@@ -192,6 +200,7 @@ void _shot(
         name: name,
         size: entry.value.size,
         dpr: entry.value.dpr,
+        textScale: textScale,
         after: after,
       );
     }, skip: !_enabled);
@@ -212,8 +221,10 @@ void main() {
         }
       });
 
-  // 3) Entdecken: die Modi inkl. Transit Spark.
-  _shot('03_entdecken', () => const SwipeModeSelectionScreen());
+  // 3) Entdecken: ALLE fuenf Modi sichtbar (textScale kompakter gesetzt,
+  //    damit Transit Spark nicht unter den Rand rutscht).
+  _shot('03_entdecken', () => const SwipeModeSelectionScreen(),
+      textScale: 0.64);
 
   // 4) Chat-Hintergrund (NEU in v0.9.1): Muster + eigenes Bild.
   _shot('04_chat_hintergrund', () => Builder(
@@ -242,6 +253,14 @@ void main() {
         ),
       ));
 
-  // 5) Dating Hour: das Event-Feature.
-  _shot('05_dating_hour', () => const DatingHourHowItWorksScreen());
+  // 5) Eisbrecher-Fragen (Spice Questions): das Herzstueck im Chat.
+  //    Erste Kategorie aufgeklappt, damit echte Fragen sichtbar sind.
+  _shot('05_eisbrecher', () => const SpiceQuestionsScreen(matchId: 1),
+      after: (tester) async {
+        final tiles = find.byType(ExpansionTile);
+        if (tester.widgetList(tiles).isNotEmpty) {
+          await tester.tap(tiles.first);
+          await tester.pumpAndSettle(const Duration(milliseconds: 400));
+        }
+      });
 }
