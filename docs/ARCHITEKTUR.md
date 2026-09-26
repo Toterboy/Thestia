@@ -140,5 +140,6 @@ Designpunkte:
 | [DATENSCHUTZ-ENTWURF.md](DATENSCHUTZ-ENTWURF.md) | Arbeitsentwurf/Platzhalter |
 | [PASSKEYS_SERVER_SETUP.md](PASSKEYS_SERVER_SETUP.md) | GoTrue-WebAuthn-Konfiguration (RP-Origins, apk-key-hash) |
 | [BUILD.md](BUILD.md) | Build/Flavors |
+| [BLE-GERAETETEST.md](BLE-GERAETETEST.md) | Gerätetest-Protokoll Transit Spark (BLE) |
 | [FDROID.md](FDROID.md) | F-Droid-Pipeline |
 | [adr/](adr/) | Architektur-Entscheidungen (ADRs) |

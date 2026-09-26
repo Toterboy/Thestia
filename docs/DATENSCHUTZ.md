@@ -66,6 +66,42 @@ Ergebnis verarbeiten sich ausschließlich auf dem Gerät; bei Nicht-
 bestehen verlässt das Bild dein Gerät nicht (Einspruch mit manueller
 Team-Prüfung ist möglich).
 
+## 3b. Nahbereichsfunk (BLE, „Transit Spark")
+
+Transit Spark nutzt Bluetooth Low Energy, damit zwei Personen sich in der
+Nähe begegnen können, ohne sich ansprechen zu müssen. Dabei werden
+Funk-Metadaten verarbeitet.
+
+**Was gesendet wird:** ein ephemerer, zufälliger Token (keine Geräte-ID,
+kein Name, keine MAC-Adresse des Geräts). Der Stack des Betriebssystems
+vergibt für das Advertising eine auflösbare Privatadresse; die App setzt
+keine feste Adresse.
+
+**Was empfangen wird:** der Scanner ist seit v0.9.2 auf die Hersteller-ID der
+App gefiltert. Vorher verarbeitete er jedes Bluetooth-Signal in Reichweite
+(Uhren, Kopfhörer, Beacons); das ist korrigiert.
+
+**Was lokal bleibt:** Begegnungen (Token, Zeitstempel, stärkstes RSSI) werden
+ausschließlich auf dem Gerät gespeichert, mit einer Vorhaltezeit von
+45 Minuten, danach automatische Löschung. Sie werden nicht an den Server
+übertragen.
+
+**Was der Server sieht:** erst wenn beide Personen ausdrücklich bestätigen,
+werden die zuletzt beobachteten Tokens zur Prüfung übermittelt. Der Server
+prüft Alter, Geschlecht und Blockierstatus. Aus einem Token lässt sich keine
+Geräte-Identität ableiten.
+
+**Verminderung des Funk-Fingerprints:** Das Advertising wird in
+unregelmäßigen Abständen neu gestartet und das Encounter-Token wird nicht
+in einem starren Zeitraster gewechselt. Damit ist das Sendemuster nicht
+sessionübergreifend konstant. Ein vollständiger Schutz gegen das
+Mitschreiben des Funks ist damit nicht verbunden: Bluetooth ist ein
+Funkmedium und im Umfeld beobachtbar.
+
+**Keine Ortung:** Transit Spark ermittelt keine Position per Funk. Der
+Standort wird nur für die Entfernungsanzeige der Profile verwendet und
+dient serverseitig nach 30 Tagen der Löschung (Migration 129).
+
 ## 4. Lokaler Chat-Verlauf (optional) und lokaler KI-Reflexions-Chat (Sanctuary, geplant ab v0.10.0)
 
 **Lokaler Chat-Verlauf (seit v0.8.x):** Auf Wunsch speichert die App

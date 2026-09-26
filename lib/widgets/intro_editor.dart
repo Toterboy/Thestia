@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:record/record.dart';
 
+import 'package:thestia/data/intro_prompt_catalog.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/services/supabase_storage_service.dart';
 import 'package:thestia/widgets/audio_review_sheet.dart';
@@ -70,9 +71,17 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
   Timer? _recordTimer;
   bool _uploading = false;
 
+  /// Rotations-Seed fuer die Prompt-Chips. Einmal in initState
+  /// gezogen und gehalten: die Chips duerfen waehrend des
+  /// Bearbeitens nicht springen (v0.9.2).
+  late final int _promptSeed;
+
   @override
   void initState() {
     super.initState();
+    // Stündlich wechselndes Set aus dem Katalog. Einmalig hier,
+    // damit die Chips während des Bearbeitens stehen bleiben.
+    _promptSeed = IntroPromptCatalog.seedFor(DateTime.now());
     _textCtrl = TextEditingController(text: widget.initialText);
     _audioPath = widget.initialAudioPath;
   }
@@ -374,12 +383,8 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
           spacing: 8,
           runSpacing: 8,
           children: [
-            for (final key in const [
-              'intro.prompt.weekend',
-              'intro.prompt.friends',
-              'intro.prompt.laugh',
-              'intro.prompt.dream',
-            ])
+            for (final key
+                in IntroPromptCatalog.rotated(seed: _promptSeed))
               ActionChip(
                 label: Text(L10n.t(context, key)),
                 onPressed: () {
