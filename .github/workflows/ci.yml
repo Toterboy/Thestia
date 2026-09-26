@@ -9,6 +9,14 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # An EINER Stelle. Der Pin stand vorher dreifach im Workflow
+  # (analyze-and-test, fdroid-build, play-build) und konnte driften.
+  # Hinweis: docs/BUILD.md nennt 3.35.x - das ist der SDK-Minimum aus
+  # pubspec.yaml, nicht die getestete Version.
+  FLUTTER_VERSION: "3.44.6"
+  JAVA_VERSION: "17"
+
 jobs:
   analyze-and-test:
     runs-on: ubuntu-latest
@@ -20,13 +28,13 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: ${{ env.JAVA_VERSION }}
 
       - name: Flutter installieren
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: 3.44.6
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
       # pubspec.yaml bindet .env als Asset ein - ohne Datei schlägt der
@@ -56,6 +64,80 @@ jobs:
       - name: Tests
         run: flutter test
 
+  # ---------------------------------------------------------------
+  # v0.9.2: Dependency-Hygiene. Getrennt vom Build, damit ein
+  # veraltetes Paket sichtbar wird, ohne den Release zu blockieren -
+  # ABER mit hartem Fehler beim Pin-Audit und bei den Security-Checks.
+  # ---------------------------------------------------------------
+  dependency-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Flutter installieren
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: .env aus Beispiel erzeugen
+        run: cp .env.example .env
+
+      - name: Dependencies laden
+        run: flutter pub get
+
+      # 1) Informational. Eine neue Version ist kein Fehler, sondern eine
+      #    Entscheidung: Security-Pakete werden bewusst gepinnt.
+      - name: Veraltete Pakete (nur Report)
+        run: |
+          flutter pub outdated --no-dev-dependencies             | tee outdated.txt || true
+
+      - name: Veraltete Pakete als Artefakt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pub-outdated
+          path: outdated.txt
+          retention-days: 30
+
+      # 2) Hart: die 16 sicherheitsrelevanten Pakete muessen exakt gepinnt
+      #    sein. Verhindert, dass jemand ein "^" zurueckbaut.
+      - name: Pin-Audit (sicherheitsrelevante Pakete)
+        run: python tool/check_dependency_pins.py --lock
+
+      # 3) Hart: die 62 Security-Invarianten laufen bisher nur manuell.
+      - name: Security-Invarianten
+        run: python tool/check_security_invariants.py
+
+      # 4) SBOM fuer die F-Droid-Einreichung vorbereiten.
+      #    CycloneDX listet transitive Abhaengigkeiten inkl. der sieben
+      #    lokalen Forks, die `pub outdated` nicht sieht.
+      #    continue-on-error: ist Vorbereitung, kein Gate - ein fehlendes
+      #    Python-Tool darf den Release nicht blockieren.
+      - name: SBOM (CycloneDX)
+        continue-on-error: true
+        run: |
+          pip install --quiet cyclonedx-bom
+          cyclonedx-py environment --output-file sbom.json || \
+            cyclonedx-py --output-file sbom.json
+          test -s sbom.json && echo "SBOM erzeugt: $(wc -c < sbom.json) Bytes"
+
+      - name: SBOM als Artefakt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-cyclonedx
+          path: sbom.json
+          retention-days: 90
+
   fdroid-build:
     runs-on: ubuntu-latest
     timeout-minutes: 40
@@ -66,13 +148,13 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: ${{ env.JAVA_VERSION }}
 
       - name: Flutter installieren
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: 3.44.6
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
       - name: .env aus Beispiel erzeugen
@@ -97,13 +179,13 @@ jobs:
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: ${{ env.JAVA_VERSION }}
 
       - name: Flutter installieren
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: 3.44.6
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
       # google-services.json ist gitignored (echte Firebase-Werte); der

@@ -29,7 +29,7 @@ dependencies:
   go_router: ^17.3.0
 
   # Lokale, sichere Datenspeicherung (Einstellungen, Profil, Auth-Token)
-  shared_preferences: ^2.2.3
+  shared_preferences: 2.5.5
 
   # SchÃ¶ne Icons & Utilities
   # 0.20.2 ist von flutter_localizations (Flutter SDK) gepinnt - eine
@@ -43,11 +43,11 @@ dependencies:
   # Echtes Geraetemodell fuer Angemeldete Geraete (v0.8.1)
 
   # Transit Spark (v0.9.0): BLE-Advertising + -Scanning
-  flutter_blue_plus: ^1.35.2
+  flutter_blue_plus: 1.36.8
   device_info_plus: ^13.2.0
 
   # Ã–ffnen externer Links (GitHub Issues)
-  url_launcher: ^6.3.1
+  url_launcher: 6.3.2
 
   # Bildauswahl fÃ¼r Bug-Reports
   image_picker: ^1.1.2
@@ -58,7 +58,7 @@ dependencies:
   # === NEUE DEPENDENCIES FÃœR SICHERHEITS-FEATURES ===
 
   # E2E-VerschlÃ¼sselung (Signal Protocol)
-  libsignal_protocol_dart: ^0.8.2
+  libsignal_protocol_dart: 0.8.2
 
   # WebRTC fÃ¼r P2P-Kommunikation
   flutter_webrtc: ^1.6.0
@@ -66,20 +66,20 @@ dependencies:
   # WebSocket fÃ¼r Signaling-Server-Kommunikation
 
   # HTTP-Client fÃ¼r REST-API (mit Zertifikat-Pinning)
-  http: ^1.2.1
+  http: 1.6.0
 
   # Kryptographische Hash-Funktionen (fÃ¼r Zertifikat-Pinning)
-  crypto: ^3.0.5
+  crypto: 3.0.7
 
   # Sichere, verschlÃ¼sselte lokale Speicherung von Tokens (statt SharedPreferences)
-  flutter_secure_storage: ^11.0.0
+  flutter_secure_storage: 11.0.0
 
   # Hive fÃ¼r lokale verschlÃ¼sselte Speicherung der Signal-Keys
   hive: ^2.2.3
   hive_flutter: ^1.1.0
 
   # Kamera & Video fÃ¼r Verifizierung
-  camera: ^0.12.0
+  camera: 0.12.0+2
   video_player: ^2.9.1
   # Frame-Entnahme aus dem Verifizierungsvideo (Mehrframe-Median der
   # AltersschÃ¤tzung, MIT): Thumbnails direkt aus der MP4-Datei, kein
@@ -87,7 +87,7 @@ dependencies:
   video_thumbnail: ^0.5.6
 
   # Berechtigungen
-  permission_handler: ^13.0.1
+  permission_handler: 13.0.1
 
   # Standort
   geolocator: ^14.0.3
@@ -96,22 +96,22 @@ dependencies:
   geocoding: ^4.0.0
 
   # Bildverarbeitung fÃ¼r Moderation (Placeholder fÃ¼r ML-Kit)
-  image: ^4.10.1
+  image: 4.10.1
 
   # NSFW on-device (v0.8.0): lokale Inferenz des Bild-Sicherheits-Modells
   # (image-safety-classifier-xs, ONNX-Format) - nur bei manueller Meldung.
-  onnxruntime: ^1.4.1
+  onnxruntime: 1.4.1
 
   # Path Provider fÃ¼r Dateipfade
-  path_provider: ^2.1.4
+  path_provider: 2.1.6
 
   # Benachrichtigungen (Nachrichten, Likes, Matches, Event-Erinnerungen)
-  flutter_local_notifications: ^22.1.0
+  flutter_local_notifications: 22.3.0
 
   # EU-Push Ã¼ber Supabase Push (Verarbeitung in eu-central-1, Free Tier).
   # FCM dient nur als Zustell-Transport (kostenloses Firebase-Konto nÃ¶tig).
-  firebase_core: ^4.13.0
-  firebase_messaging: ^16.5.0
+  firebase_core: 4.13.0
+  firebase_messaging: 16.5.0
 
   # Geplante Benachrichtigungen (Dating-Hour-Erinnerung auch bei
   # geschlossener App)
@@ -123,7 +123,7 @@ dependencies:
   flutter_native_splash: ^2.4.8
 
   # Crypto fÃ¼r Key-Backup-VerschlÃ¼sselung
-  pointycastle: ^4.0.0
+  pointycastle: 4.0.0
 
   # Supabase fÃ¼r Auth + Datenbank (RLS-abgesichert) + Supabase Push (EU)
   flutter_dotenv: ^6.0.1
@@ -167,6 +167,13 @@ dev_dependencies:
 # Lokale Forks der drei Plugins, die noch kein Built-in Kotlin unterstÃ¼tzen
 # (KGP-Warnung beim Build). Die Forks enthalten KEINE KGP-Apply-Zeilen mehr;
 # der Flutter-Plugin-Loader wendet KGP dann selbst an (builtInKotlin=false).
+# --- v0.9.2: Sicherheitsrelevante Abhaengigkeiten exakt gepinnt ---------------
+# Nicht mit "^": bei Krypto-, Keystore- und Transport-Paketen kann ein
+# Minor-Bump das Laufzeitverhalten aendern, ohne dass es im Diff auftaucht.
+# Gepinnt wird die aufgeloeste Version aus pubspec.lock, also der Stand, der
+# tatsaechlich getestet und ausgeliefert wird. Aufloesen bewusst per
+# `flutter pub upgrade <paket>` + Review, nicht durch bloesses Editieren.
+
 dependency_overrides:
   flutter_timezone:
     path: third_party/flutter_timezone
