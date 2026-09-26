@@ -136,3 +136,10 @@ releases/testapk/screenshots/
 **/Pods/
 # Temporaere Analyse-Ausgaben
 tool/*.txt
+
+# Altersschaetzer-Modell (81 MB): bewusst NICHT im Repo, Aufnahme ist eine
+# bewusste Betreiber-Entscheidung (9f843fa). Ohne diese Zeile wuerde ein
+# `git add -A` das Modell in das oeffentliche Repo ziehen. Die beiden
+# kleineren Modelle (image-safety-classifier-xs, face_detector) bleiben
+# drin - On-Device-Moderation soll nachvollziehbar sein.
+assets/models/age_estimator.onnx

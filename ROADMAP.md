@@ -295,6 +295,42 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       KI-Kennzeichnung an Bildprüfungen, Video-Verifizierung mit lokaler
   KI-Alters-Triage (095, 2-Jahre-Regel, manuelle Queue für Abweichler)
 
+## Geplant für 0.9.2 – Transit Spark auf echten Geräten & Qualitätssicherung
+
+> Status: 0.9.1 ist veröffentlicht. 0.9.2 ist bewusst klein und enthält
+> keine neue Kern-Funktion: hier wird Transit Spark erst belastbar gemacht
+> und die Auslieferungs-Hygiene nachgezogen. Neue Kern-Features bleiben
+> 0.10.0 vorbehalten.
+
+- [ ] **BLE-Gerätetest als HARTER Release-Blocker** – Transit Spark gilt
+      erst als stabil, wenn Reichweite, Advertise-Abdeckung und der
+      komplette Match-Flow auf MINDESTENS 2 echten Geräten verschiedener
+      Android-Hersteller erfolgreich durchlaufen. Simulator und Emulator
+      zählen nicht (kein echtes Advertising, keine realistische
+      Reichweite, kein Funkrauschen). Der in 0.9.0 als „Gerätetest
+      ausstehend" vermerkte Punkt bleibt bis dahin offen – er ist kein
+      Nice-to-have, sondern Abnahmekriterium
+- [ ] **BLE-Tracking-Härtung (Privacy im Funk)**: rotierende BLE-MAC-
+      Adressen (Resolvable Private Addresses) + gejitterte Advertisement-
+      Intervalle. Begründung: rotierende Encounter-Tokens allein schützen
+      nicht – eine statische MAC bzw. ein starres Sendemuster bleibt über
+      die Sitzung hinweg ein wiedererkennbares Funk-Signal und erlaubt
+      Long-/Cross-Session-Tracking mit einem passiven Sniffer. Der Jitter
+      bricht zusätzlich die zeitliche Korrelation, aus der
+      Advertisement-Abstände ein Muster macht
+- [ ] **Dependency-Hygiene in CI** (frühestmöglich): automatischer
+      `flutter pub outdated`- und CVE-Check je Pipeline-Lauf, hartes
+      Version-Pinning für direkte Abhängigkeiten (kein `^` für Anything,
+      was Sicherheitsverhalten trägt) sowie vorbereitete SBOM-Erzeugung
+      (CycloneDX) für die F-Droid-Einreichung. Hintergrund: die
+      Einreichung verlangt eine Abhängigkeitsliste, und ungenutzte
+      Direct-Dependencies wandern sonst ungeprüft mit
+- [ ] **Vorstellungs-Vorlagen (Text + Audio) terminiert** – das Feature
+      steht in „In Arbeit" und wird hier verbindlich für 0.9.2 eingeplant:
+      kleines Feature, aber es hebt die Profilqualität der frühen
+      Nutzerschaft direkt, solange das Match-Erlebnis noch ohne Stimmen
+      auskommt
+
 ## Geplant für 0.10.0 – Emotionaler Rückzugsort (Sanctuary) & Lokaler KI-Reflexions-Chat
 
 > Vision: Ein vollständig offlinefähiger, geschützter Raum zur
@@ -351,6 +387,19 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       Notfallkontakten (Telefonseelsorge, Nummer gegen Kummer)
 - [ ] **Datenintegrität**: Chatverläufe verbleiben flüchtig im RAM oder
       werden optional rein lokal AES-verschlüsselt in Hive abgelegt
+- [ ] **Import-Sicherheitsnetz für benutzerdefinierte Modelle**: jeder
+      manuell importierte GGUF-Download bekommt einen sichtbaren
+      Warnhinweis (ungeprüfte Qualität und Sicherheit, keine
+      Haftungsübernahme) und wird intern als „Fremdmodell" markiert
+- [ ] **Schutzschicht unterhalb des System-Prompts (nicht abschaltbar)**:
+      Für Fremdmodelle bleiben Krisen-Erkennung und Therapie-Hinweis-
+      Banner technisch erzwungen. Sie liegen UNTERHALB der Prompt-Ebene,
+      damit weder ein selbst geladener GGUF noch ein manipuliertes Modell
+      sie aushebeln kann. Der editierbare System-Prompt gilt
+      ausschließlich oberhalb dieser Schicht – die fest verdrahtete
+      Reihenfolge lautet Schutzschicht → editierbarer Prompt → Modell.
+      Wer den Schutz entfernen will, kann das nicht per Konfiguration,
+      nur durch Entfernen der App
 
 
 ### Begleitend in 0.10.0 – Begegnung statt Bildschirm
@@ -371,6 +420,41 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       Texte"); sobald der Meet-Intent terminiert ist, zeigt der
       Chat-Header die Vorfreude („Treffen am Samstag!") statt
       Chat-Metriken.
+- [ ] **VORSCHLAG: Date-Safety-Check-in** (Anschluss ans Safety Center):
+      optionaler Begleit-Modus für ein von BEIDEN bestätigtes echtes
+      Treffen. Nach ~2 Stunden eine dezente Nachfrage („Alles okay?") und
+      ein Schnellzugriff auf den Notfallkontakt – bewusst zurückhaltend,
+      ohne Push-Druck und ohne sichtbaren Countdown. Rein lokal (Timer +
+      lokaler State), KEINE Standort-Übertragung: Thestia erfährt weder,
+      wo das Treffen stattfindet, noch ob ein Check-in unterblieben ist.
+      Damit kann aus dem Safety-Feature kein Überwachungs- oder
+      Ortungsdruck entstehen
+- [ ] **VORSCHLAG: Privacy-Dashboard im Profil**: Übersichtsseite, die
+      sichtbar macht, welche Daten ausschließlich lokal liegen (Chats,
+      E2E-Identität und Pre-Keys, Sanctuary-Modelle) und welche
+      serverseitig gespeichert sind (Präferenzen und Sync-Spalten aus
+      066/074, verschlüsselte Profilbilder aus 077). Keine neuen Daten,
+      nur eine Aufschlüsselung der bereits bestehenden Trennung –
+      Datensparsamkeit wird für die Nutzenden überprüfbar statt
+      behauptet
+- [ ] **VORSCHLAG: „Abschied in die Realität"**: Nach beidseitig
+      bestätigtem echten Treffen macht die App einen sanften, einmaligen
+      Vorschlag zum direkten Kontaktaustausch (z. B. Telefonnummer oder
+      Signal-Account) und tritt danach zurück. Bewusste Produktentscheidung:
+      Thestia „entlässt" erfolgreiche Paare, statt sie an den Bildschirm zu
+      binden – das Gegenteil von Streak, Read-Receipt und
+      Reaktivierungskampagnen. Ablehnung ist selbstverständlich und ohne
+      jede Konsequenz; es gibt ausdrücklich keinen „Ablehnungen"-Zähler
+- [ ] **Öffentliches Threat-Model + veröffentlichte SECURITY.md (VOR
+      0.11.0)**: die Sicherheitsrichtlinie existiert bereits, ist aber
+      nicht veröffentlicht. Vor 0.11.0 kommen ein dokumentiertes
+      Angriffsbild (RLS-Modell, PUBLIC-EXECUTE-Falle bei Functions, BLE-
+      Metadaten, Zero-Install-Web-Gastzugang ohne Account, Drittland-
+      Transfers bei der Moderation) und ein klarer Kontaktweg für
+      verantwortungsvolle Offenlegung (Koordinaten, Reaktionsfrist,
+      Credit-Richtlinie). Bewusst VOR dem Web-Gastzugang, weil der das
+      Angriffsbild am stärksten erweitert und eine Offenlegung dann nicht
+      mehr über private Kanäle laufen muss
 
 
 ## Geplant für 0.11.0 – Web-Bridge, Transit-Reachability & Zero-Install Gast-Verbindungen
@@ -418,6 +502,15 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
 - [ ] **Asynchrones Web-Board**: Fahrgäste können während oder nach der
       Fahrt auf `thestia.app/live` nach ihrer Zugverbindung suchen und einen
       anonymen Gast-Chat mit der Person starten
+- [ ] **Stalking-Schutz für Waggon-Ruf & Live-Board**: präzise Angaben
+      (Linie + Wagen + optische Merkmale) werden erst nach beidseitigem
+      Funke sichtbar – vorher bleibt der Eintrag auf Linien-Ebene.
+      Board-Einträge löschen sich automatisch nach Fahrtende bzw.
+      spätestens nach 24 h, serverseitig und unabhängig davon, ob ein
+      Client noch läuft (dasselbe Auto-Cleanup-Prinzip wie beim
+      Encounter-Cache: wer nichts mehr anzeigt, hat nichts mehr
+      gespeichert). Kein dauerhaft mitlesbarer Standort-Feed, der über
+      die Zeit ein Bewegungsprofil ergibt
 
 ### 4. Same-Train-Matching (für Nutzer mit installierter App)
 
