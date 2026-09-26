@@ -115,9 +115,23 @@ class AppConstants {
   static const bool fdroidBuild =
       bool.fromEnvironment('FDROID', defaultValue: false);
 
-  /// Basis-URL des Supabase-Projekts (aus .env), ohne trailing slash.
+  /// Basis-URL des Supabase-Projekts, ohne trailing slash.
   /// Wird u. a. für die captcha-page Edge Function benötigt.
+  ///
+  /// SECURITY (Audit 2026-09-26): Die Konfiguration kommt ÜBER
+  /// `--dart-define` zur Compile-Zeit, NICHT aus einem gebündelten `.env`.
+  /// Ein als App-Asset registriertes `.env` landet im APK/IPA und ist
+  /// extrahierbar - heute zwar nur öffentliche Werte, aber die Falle ist real
+  /// (früher stand hier einmal ein `HF_API_TOKEN`). `tool/build_release.ps1`
+  /// liest die Werte beim Bauen und übergibt sie als Defines.
+  ///
+  /// `.env` bleibt als reine Entwicklungs-Quelle erhalten (dotenv, unten als
+  /// Fallback) - es wird nur nicht mehr mit ausgeliefert.
   static String get supabaseUrlBase {
+    const fromDefine = String.fromEnvironment('SUPABASE_URL');
+    if (fromDefine.isNotEmpty) {
+      return fromDefine.replaceAll(RegExp(r'/+$'), '');
+    }
     if (_dotenvReady) {
       final v = dotenv.env['SUPABASE_URL']?.trim() ?? '';
       if (v.isNotEmpty) return v.replaceAll(RegExp(r'/+$'), '');
@@ -129,29 +143,35 @@ class AppConstants {
   // CAPTCHA bei der Registrierung (Bot-Schutz)
   // ===========================================================================
 
-  /// CAPTCHA-Anbieter: `'hcaptcha'`, `'turnstile'` (Cloudflare) oder `''`
-  /// (deaktiviert – Default).
+  /// CAPTCHA-Anbieter: `'hcaptcha'`, `'turnstile'` (Cloudflare).
+  ///
+  /// SECURITY (Audit 2026-09-26): Der Default ist NICHT mehr `''`, sondern
+  /// `'turnstile'`. Vorher lieferte ein Build ohne `.env` (CI, fremder
+  /// Rechner) `captchaEnabled == false` - also komplett ohne Bot-Schutz, und
+  /// das war im Client mit einer Zeile abschaltbar. Jetzt ist CAPTCHA im
+  /// Release-Build immer aktiv; wer es wirklich abschalten will, muss es
+  /// explizit mit `--dart-define=CAPTCHA_PROVIDER=none` tun.
   ///
   /// Quellen (in dieser Reihenfolge):
-  ///  1. `.env`-Eintrag `CAPTCHA_PROVIDER` (empfohlen – gilt automatisch
-  ///     für jeden Build/Run, keine --dart-define-Args nötig)
-  ///  2. `--dart-define=CAPTCHA_PROVIDER=...` (Fallback)
+  ///  1. `--dart-define=CAPTCHA_PROVIDER=...` (Release)
+  ///  2. `.env`-Eintrag `CAPTCHA_PROVIDER` (lokale Entwicklung)
   ///
   /// WICHTIG (Operator): Funktioniert NUR zusammen mit der Dashboard-
   /// Aktivierung (Authentication → CAPTCHA, gleicher Anbieter + Secret).
   /// Ohne Dashboard-Aktivierung wird das Token vom Server ignoriert.
   static String get captchaProvider {
-    const fromEnv = String.fromEnvironment('CAPTCHA_PROVIDER');
+    const fromEnv = String.fromEnvironment('CAPTCHA_PROVIDER',
+        defaultValue: 'turnstile');
     if (fromEnv.isNotEmpty) return fromEnv;
     if (_dotenvReady) {
       final v = dotenv.env['CAPTCHA_PROVIDER']?.trim() ?? '';
       if (v.isNotEmpty) return v;
     }
-    return '';
+    return 'turnstile';
   }
 
   /// Öffentlicher Sitekey des CAPTCHA-Anbieters (kein Secret!).
-  /// `.env`-Eintrag `CAPTCHA_SITEKEY` oder `--dart-define=CAPTCHA_SITEKEY=`.
+  /// `--dart-define=CAPTCHA_SITEKEY=` oder `.env`-Eintrag `CAPTCHA_SITEKEY`.
   static String get captchaSiteKey {
     const fromEnv = String.fromEnvironment('CAPTCHA_SITEKEY');
     if (fromEnv.isNotEmpty) return fromEnv;

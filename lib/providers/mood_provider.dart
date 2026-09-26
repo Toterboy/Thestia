@@ -14,17 +14,22 @@ class MoodNotifier extends StateNotifier<Mood?> {
 
   Future<void> _load() async {
     try {
-      state = await _service.getTodayMood();
+      final mood = await _service.getTodayMood();
+      // Der Provider ist autoDispose: verlässt der Nutzer den Screen vor
+      // Ende des Server-Calls, ist der Notifier schon disposed. Eine
+      // State-Zuweisung wirft dann "Bad state: Cannot use ... after dispose".
+      if (!mounted) return;
+      state = mood;
     } catch (e) {
       debugPrint('[MoodNotifier] Fehler beim Laden: $e');
-      state = null;
+      if (mounted) state = null;
     }
   }
 
   /// Setzt ein neues Mood und aktualisiert den lokalen Zustand.
   Future<void> setMood(Mood mood) async {
     await _service.setMood(mood);
-    state = mood;
+    if (mounted) state = mood;
   }
 }
 

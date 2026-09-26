@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:thestia/services/secure_storage_namespaces.dart';
 import 'package:hive/hive.dart';
 
 /// Öffnet Hive-Boxen AES-256-verschlüsselt (Audit K6/M11).
@@ -42,9 +43,15 @@ class SecureHive {
   /// Hinweis, ob eine Datei schon verschlüsselt ist.
   static const String _metaBoxName = 'secure_hive_meta';
 
-  static const _androidOptions = AndroidOptions();
+  // Eigener Namespace (secure_storage_namespaces.dart): die E2EE-Keys
+  // duerfen nicht im selben Keystore-Alias liegen wie Auth-Tokens - sonst
+  // loescht ein Dekrypt-Fehler hier beides.
+  static const _androidOptions = AndroidOptions(
+    storageNamespace: SecureNamespaces.signals,
+  );
   static const _iOSOptions = IOSOptions(
     accessibility: KeychainAccessibility.first_unlock_this_device,
+    accountName: SecureNamespaces.signals,
   );
 
   final FlutterSecureStorage _storage;

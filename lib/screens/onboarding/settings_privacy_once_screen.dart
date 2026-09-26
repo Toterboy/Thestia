@@ -533,7 +533,11 @@ class _SettingsPrivacyOnceScreenState
       // Geraets (lokal). Ein serverseitiger Abgleich mit fremden Accounts
       // existiert bewusst nicht - der Server prueft separat eigene
       // Positions-Spruenge (>15 km / >300 km/h) via process-location-check.
-      if (await locationService.isLocationSuspicious(position)) {
+      // isLocationSuspicious liest den Secure Storage (async) - in dieser
+      // Zeit kann der Screen verlassen worden sein.
+      final suspicious = await locationService.isLocationSuspicious(position);
+      if (!mounted) return;
+      if (suspicious) {
         setState(() {
           _isDetectingLocation = false;
           _locationError = L10n.t(context, 'setup.locationSuspicious');

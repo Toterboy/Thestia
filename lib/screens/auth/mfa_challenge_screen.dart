@@ -47,8 +47,10 @@ class _MfaChallengeScreenState extends ConsumerState<MfaChallengeScreen> {
       _loading = true;
       _error = null;
     });
+    bool verified = false;
     try {
       await service.verifyChallenge(code: code);
+      verified = true;
       // Status aktualisieren (jetzt AAL2) – Router gibt die App frei.
       final status = await service.loadStatus();
       ref.read(mfaStatusProvider.notifier).state = status;
@@ -57,8 +59,14 @@ class _MfaChallengeScreenState extends ConsumerState<MfaChallengeScreen> {
       if (kDebugMode) debugPrint('[MfaChallenge] verify fehlgeschlagen: $e');
       if (mounted) {
         setState(() {
-          _error = 'Code nicht korrekt. Bitte gib den aktuellen Code aus '
-              'deiner Authenticator-App ein.';
+          // Der Code war GÜLTIG, nur das Nachladen des Status scheiterte
+          // (Netzwerk). "Code nicht korrekt" wäre eine falsche Diagnose und
+          // ließe den Nutzer mit korrektem 2FA-Stand hängen.
+          _error = verified
+              ? 'Anmeldung erfolgreich, Status konnte nicht geladen werden. '
+                  'Bitte erneut versuchen.'
+              : 'Code nicht korrekt. Bitte gib den aktuellen Code aus '
+                  'deiner Authenticator-App ein.';
           _loading = false;
         });
       }
@@ -67,7 +75,13 @@ class _MfaChallengeScreenState extends ConsumerState<MfaChallengeScreen> {
 
   Future<void> _logout() async {
     setState(() => _loading = true);
-    await ref.read(authProvider.notifier).logout();
+    try {
+      await ref.read(authProvider.notifier).logout();
+    } catch (e) {
+      if (kDebugMode) debugPrint('[MfaChallenge] logout fehlgeschlagen: $e');
+      // Sonst bleibt der Spinner fuer immer stehen.
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -112,6 +126,10 @@ class _MfaChallengeScreenState extends ConsumerState<MfaChallengeScreen> {
                     onPressed: () async {
                       final data =
                           await Clipboard.getData('text/plain');
+                      // Dieser Screen wird per GoRouter-Redirect verlassen,
+                      // sobald sich der Auth-State aendert - genau dann kann
+                      // Clipboard.getData zurueckkommen.
+                      if (!mounted) return;
                       final text =
                           (data?.text ?? '').replaceAll(RegExp(r'\D'), '');
                       if (text.isNotEmpty) {

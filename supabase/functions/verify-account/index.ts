@@ -70,13 +70,18 @@ async function isRateLimited(userId: string): Promise<boolean> {
       p_window_seconds: 3600,
     });
     if (error) {
-      console.error("consume_rate_limit error:", error);
-      return false;
+      // SECURITY (2026-09-26): fail-CLOSED. Vorher stand hier `return false`
+      // (= "nicht begrenzt"): ein gestoerter/fehlgeschlagener RPC-Aufruf
+      // hob das Limit komplett auf. verify-account ist der EINZIGE Weg zu
+      // `is_verified: true` - ein Ausfall der Rate-Limit-RPC waere damit ein
+      // unbegrenzter Badge-Spam-Vektor. Muster wie notify-user:142-147.
+      console.error("consume_rate_limit error (fail-closed):", error);
+      return true;
     }
     return data !== true;
   } catch (e) {
-    console.error("consume_rate_limit exception:", e);
-    return false;
+    console.error("consume_rate_limit exception (fail-closed):", e);
+    return true;
   }
 }
 

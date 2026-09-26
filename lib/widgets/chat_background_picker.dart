@@ -67,9 +67,11 @@ class ChatBackgroundPicker extends ConsumerWidget {
       final dir = await getApplicationDocumentsDirectory();
       final target = File('${dir.path}/$_customFileName');
       await target.writeAsBytes(img.encodeJpg(scaled, quality: 88));
-      final notifier = ref.read(settingsProvider.notifier);
-      await notifier.setChatBackgroundPath(target.path);
-      await notifier.setChatBackground(ChatBackgrounds.custom);
+      // Pfad + Auswahl in einem Schritt: spart einen kompletten
+      // JSON-Encode und einen Keystore-Write.
+      await ref
+          .read(settingsProvider.notifier)
+          .setCustomChatBackground(target.path);
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -94,9 +96,7 @@ class ChatBackgroundPicker extends ConsumerWidget {
   }
 
   Future<void> _removeCustom(BuildContext context, WidgetRef ref) async {
-    final notifier = ref.read(settingsProvider.notifier);
-    await notifier.setChatBackground(ChatBackgrounds.none);
-    await notifier.setChatBackgroundPath(null);
+    await ref.read(settingsProvider.notifier).setCustomChatBackground(null);
     try {
       final dir = await getApplicationDocumentsDirectory();
       final f = File('${dir.path}/$_customFileName');
@@ -252,9 +252,14 @@ class _CustomPreview extends StatelessWidget {
         child: const Center(child: Icon(Icons.add_photo_alternate_outlined)),
       );
     }
+    // Die Datei ist bis zu 1600 px breit (~10 MB Bitmap). Fuer eine ~120-px-
+    // Vorschaukachel reicht ein Bruchteil - ohne cacheWidth landet das
+    // Originalbild dauerhaft im globalen ImageCache.
     return Image.file(
       File(path!),
       fit: BoxFit.cover,
+      cacheWidth: 240,
+      filterQuality: FilterQuality.low,
       errorBuilder: (_, _, _) => const Center(child: Icon(Icons.broken_image)),
     );
   }

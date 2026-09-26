@@ -114,6 +114,12 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
         ),
         path: path,
       );
+      // Mikrofon-Permission + Start dauern real mehrere Hundert ms. Navigiert
+      // der Nutzer in dieser Zeit weg, waere das setState ein Crash.
+      if (!mounted) {
+        await _recorder.stop();
+        return;
+      }
       setState(() {
         _recording = true;
         _paused = false;
@@ -122,6 +128,7 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
       _startTimer();
     } catch (e) {
       debugPrint('[IntroEditor] Start fehlgeschlagen: $e');
+      if (mounted) setState(() => _recording = false);
     }
   }
 
@@ -171,7 +178,7 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
     try {
       final recordedPath = await _recorder.stop();
       if (recordedPath == null) {
-        setState(() => _uploading = false);
+        if (mounted) setState(() => _uploading = false);
         return;
       }
       final file = File(recordedPath);

@@ -26,6 +26,7 @@ import 'package:thestia/services/secure_storage.dart';
 import 'package:thestia/services/supabase_auth_service.dart';
 import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/services/transit_encounter_service.dart';
 import 'package:thestia/services/verification_service.dart';
 import 'package:thestia/services/webrtc_service.dart';
 import 'package:thestia/utils/constants.dart';
@@ -652,6 +653,14 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
     } catch (e) {
       debugPrint('[AuthNotifier] WebRTC-Cleanup fehlgeschlagen: $e');
     }
+    // SECURITY (Audit 2026-09-26): Transit-Encounter-Cache (Begehnachweise
+    // fremder Geraete per BLE) war bis hierher NICHT in der Loeschkette - die
+    // Daten ueberlebten die Kontoloeschung im lokalen Speicher.
+    try {
+      await TransitEncounterService(SecurePreferencesStorage()).clear();
+    } catch (e) {
+      debugPrint('[AuthNotifier] Transit-Encounter-Cleanup fehlgeschlagen: $e');
+    }
     try {
       await SecureLocationStorage.instance.clear();
     } catch (e) {
@@ -847,6 +856,7 @@ class EmailConfirmedNotifier extends StateNotifier<bool?>
     try {
       if (!SupabaseService.isInitialized) {
         if (state != null) state = null;
+        _stopPolling();
         return;
       }
 
@@ -857,6 +867,11 @@ class EmailConfirmedNotifier extends StateNotifier<bool?>
       final loggedIn = auth.valueOrNull ?? false;
       if (!loggedIn) {
         if (state != null) state = null;
+        // Ohne eingeloggten Nutzer gibt es nichts zu bestaetigen. Vorher lief
+        // der 3-s-Timer trotzdem die gesamte App-Lebenszeit weiter (20
+        // Aufrufe/Minute, auch im Welcome-/Login-Screen) - das war einer der
+        // groessten Dauer-Verbraucher im Vordergrund.
+        _stopPolling();
         return;
       }
 

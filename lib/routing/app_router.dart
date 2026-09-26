@@ -176,6 +176,30 @@ class _RouterRefresh extends ChangeNotifier {
 /// Chat-Besuch) oder die App aus dem Hintergrund kommt.
 final routeObserver = RouteObserver<ModalRoute<void>>();
 
+/// Route-Parameter sicher auslesen.
+///
+/// Deep-Links und Push-Notifications koennen beliebige URIs liefern. Ein
+/// `int.parse(param!)` im Page-Builder wirft dann mitten im Build eine
+/// FormatException - der Nutzer sieht statt des Screens einen roten
+/// ErrorWidget-Screen. Mit diesen Helfern landen ungueltige Links per
+/// `redirect` auf einer sinnvollen Seite.
+int? _intRouteParam(GoRouterState state, String name) =>
+    int.tryParse(state.pathParameters[name] ?? '');
+
+String? _stringRouteParam(GoRouterState state, String name) {
+  final value = state.pathParameters[name];
+  if (value == null || value.isEmpty) return null;
+  return value;
+}
+
+/// `redirect`: null = weiter, sonst Zielpfad.
+String? _requireIntParam(GoRouterState state, String name, String fallback) =>
+    _intRouteParam(state, name) == null ? fallback : null;
+
+String? _requireStringParam(
+        GoRouterState state, String name, String fallback) =>
+    _stringRouteParam(state, name) == null ? fallback : null;
+
 /// Erstellt den [GoRouter] mit Redirect-Logik basierend auf
 /// Auth-Status und Onboarding-Fortschritt.
 GoRouter createRouter(Ref ref) {
@@ -686,10 +710,12 @@ GoRouter createRouter(Ref ref) {
       ),
       GoRoute(
         path: AppRoutes.datingHourChat,
+        redirect: (context, state) => _requireStringParam(
+            state, 'sessionId', AppRoutes.datingHourEvent),
         builder: (context, state) => BackToRouteScope(
           route: AppRoutes.datingHourEvent,
           child: DatingHourChatScreen(
-            sessionId: state.pathParameters['sessionId']!,
+            sessionId: _stringRouteParam(state, 'sessionId')!,
           ),
         ),
       ),
@@ -720,14 +746,18 @@ GoRouter createRouter(Ref ref) {
           ),
           GoRoute(
             path: AppRoutes.quiz,
+            redirect: (context, state) =>
+                _requireIntParam(state, 'matchId', AppRoutes.interessen),
             builder: (context, state) => QuizScreen(
-              matchId: int.parse(state.pathParameters['matchId']!),
+              matchId: _intRouteParam(state, 'matchId')!,
             ),
           ),
           GoRoute(
             path: AppRoutes.spiceQuestions,
+            redirect: (context, state) =>
+                _requireIntParam(state, 'matchId', AppRoutes.interessen),
             builder: (context, state) => SpiceQuestionsScreen(
-              matchId: int.parse(state.pathParameters['matchId']!),
+              matchId: _intRouteParam(state, 'matchId')!,
             ),
           ),
           GoRoute(
@@ -744,13 +774,19 @@ GoRouter createRouter(Ref ref) {
           ),
           GoRoute(
             path: AppRoutes.chatDetail,
-            builder: (context, state) =>
-                ChatDetailScreen(matchId: state.pathParameters['matchId']!),
+            redirect: (context, state) =>
+                _requireStringParam(state, 'matchId', AppRoutes.interessen),
+            builder: (context, state) => ChatDetailScreen(
+              matchId: _stringRouteParam(state, 'matchId')!,
+            ),
           ),
           GoRoute(
             path: AppRoutes.profileDetail,
-            builder: (context, state) =>
-                ProfileDetailScreen(userId: state.pathParameters['userId']!),
+            redirect: (context, state) =>
+                _requireStringParam(state, 'userId', AppRoutes.profile),
+            builder: (context, state) => ProfileDetailScreen(
+              userId: _stringRouteParam(state, 'userId')!,
+            ),
           ),
           GoRoute(
             path: AppRoutes.randomChat,

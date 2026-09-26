@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -659,8 +660,14 @@ class _OwnIntroAudioPlayerState extends ConsumerState<_OwnIntroAudioPlayer> {
   bool _playing = false;
   bool _loading = false;
 
+  /// Zustands-Listener. Ohne das Feld wurde bei JEDEM Klick auf Play ein
+  /// weiterer Listener auf denselben Player gehaengt - nach 20 Klicks liefen
+  /// 20 Closures, alle mit setState.
+  StreamSubscription<PlayerState>? _stateSub;
+
   @override
   void dispose() {
+    _stateSub?.cancel();
     _player.dispose();
     super.dispose();
   }
@@ -691,7 +698,8 @@ class _OwnIntroAudioPlayerState extends ConsumerState<_OwnIntroAudioPlayer> {
       await _player.setUrl(url);
       await _player.play();
       if (mounted) setState(() => _playing = true);
-      _player.playerStateStream.listen((state) {
+      await _stateSub?.cancel();
+      _stateSub = _player.playerStateStream.listen((state) {
         if (state.processingState == ProcessingState.completed && mounted) {
           setState(() => _playing = false);
         }

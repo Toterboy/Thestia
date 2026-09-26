@@ -1383,15 +1383,38 @@ class _SoftPingInbox extends ConsumerStatefulWidget {
 class _SoftPingInboxState extends ConsumerState<_SoftPingInbox> {
   List<Map<String, dynamic>>? _pings;
   Timer? _refreshTimer;
+  int _idleTicks = 0;
+
+  /// 15 s im aktiven Fall, im Leerlauf gestreckt. Soft-Pings entstehen
+  /// selten; vorher feuerte der Timer alle 15 s einen RPC, auch wenn die
+  /// Liste stundenlang leer blieb.
+  static const List<Duration> _intervals = [
+    Duration(seconds: 15),
+    Duration(seconds: 40),
+    Duration(minutes: 2),
+  ];
 
   @override
   void initState() {
     super.initState();
     _load();
-    // Auto-Refresh alle 15 s (Fix "Seite aktualisiert sich nur beim
-    // Neuöffnen"): Neue Soft-Pings erscheinen ohne Screen-Wechsel.
-    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
-      if (mounted) _load();
+    _scheduleRefresh();
+  }
+
+  void _scheduleRefresh() {
+    _refreshTimer?.cancel();
+    _refreshTimer = null;
+    if (!mounted) return;
+    final step = _idleTicks.clamp(0, _intervals.length - 1);
+    _refreshTimer = Timer(_intervals[step], () async {
+      if (!mounted) return;
+      final before = _idleTicks;
+      await _load();
+      if (!mounted) return;
+      if (_idleTicks == before && _idleTicks < _intervals.length - 1) {
+        _idleTicks++;
+      }
+      _scheduleRefresh();
     });
   }
 
@@ -1405,6 +1428,11 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox> {
     try {
       final db = SupabaseDatabaseService(SupabaseService.client);
       final pings = await db.listMySoftPings();
+      if (pings.isEmpty) {
+        _idleTicks = _idleTicks < _intervals.length - 1 ? _idleTicks + 1 : _idleTicks;
+      } else {
+        _idleTicks = 0;
+      }
       if (mounted) setState(() => _pings = pings);
     } catch (_) {
       if (mounted) setState(() => _pings = []);

@@ -104,6 +104,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       helpText: 'Wähle dein Geburtsdatum',
     );
     if (picked != null) {
+      // Der Datumspicker ist ein await: der Screen kann in dieser Zeit
+      // verlassen worden sein.
+      if (!mounted) return;
       setState(() => _birthDate = picked);
       // NICHT _formKey.currentState?.validate() aufrufen!
       // Validierung erfolgt erst nach Klick auf "Registrieren"/"Anmelden"

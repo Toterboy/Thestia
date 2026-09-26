@@ -107,6 +107,25 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
     });
   }
 
+  /// Partner-Vorstellungstext cachen.
+  ///
+  /// Das Future stand in `build`. Der Cooldown-Ticker ruft einmal pro Sekunde
+  /// `setState` auf dem GANZEN Screen auf - im Wartemodus mit aktivem
+  /// Cooldown war das ein Server-Request pro Sekunde.
+  Future<String?>? _introFuture;
+  String? _introForPartnerId;
+
+  Future<String?> _partnerIntro(String partnerId) {
+    if (_introForPartnerId != partnerId) {
+      _introForPartnerId = partnerId;
+      _introFuture = ref
+          .read(quizServiceProvider)
+          .fetchPartnerProfile(widget.matchId)
+          .then((r) => r?.profile.introText);
+    }
+    return _introFuture ?? Future.value(null);
+  }
+
   void _startCooldownTicker() {
     _cooldownTimer?.cancel();
     final state = _state;
@@ -537,10 +556,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
         // serverseitig geprüft).
         if (state.partnerId.isNotEmpty)
           FutureBuilder<String?>(
-            future: ref
-                .read(quizServiceProvider)
-                .fetchPartnerProfile(widget.matchId)
-                .then((r) => r?.profile.introText),
+            future: _partnerIntro(state.partnerId),
             builder: (context, snap) {
               final text = (snap.data ?? '').trim();
               if (text.isEmpty) return const SizedBox.shrink();

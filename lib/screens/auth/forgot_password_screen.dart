@@ -44,7 +44,7 @@ class _ForgotPasswordScreenState
           redirectTo: 'thestia://reset-password',
         );
       }
-      setState(() => _sent = true);
+      if (mounted) setState(() => _sent = true);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

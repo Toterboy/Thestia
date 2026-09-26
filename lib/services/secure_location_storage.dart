@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:thestia/services/secure_storage_namespaces.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Migriert den Klartext-Standort aus SharedPreferences in secure_storage.
@@ -18,8 +19,11 @@ class SecureLocationStorage {
   /// Singleton-Instanz.
   static final SecureLocationStorage instance = SecureLocationStorage._internal();
 
+  // Eigener Namespace (secure_storage_namespaces.dart): verhindert, dass ein
+  // Dekrypt-Fehler hier auch Tokens/Profil loescht.
   static const _iosOptions = IOSOptions(
     accessibility: KeychainAccessibility.first_unlock_this_device,
+    accountName: SecureNamespaces.location,
   );
 
   /// Schlüssel im secure_storage (eigener Namespace, um Kollisionen zu

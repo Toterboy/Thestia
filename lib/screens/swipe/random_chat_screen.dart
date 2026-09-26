@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
@@ -184,7 +185,17 @@ class _RandomChatScreenState extends ConsumerState<RandomChatScreen>
       final service = ref.read(randomChatServiceProvider);
       final sessionId = _sessionId;
       if (service == null || sessionId == null || !mounted) return;
-      final session = await service.getSession(sessionId);
+      // Jeder Netzwerkfehler wuerde sonst als unhandled Async-Error aus
+      // dem Timer-Callback herausfliegen - alle 2 s erneut, ohne Stopp.
+      RandomChatSession? session;
+      try {
+        session = await service.getSession(sessionId);
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('[RandomChat] Such-Poll fehlgeschlagen: $e');
+        }
+        return;
+      }
       if (!mounted || session == null) return;
       if (session.status == RandomChatStatus.ended) {
         _pollTimer?.cancel();
@@ -381,7 +392,15 @@ setState(() {
       final service = ref.read(randomChatServiceProvider);
       final sessionId = _sessionId;
       if (service == null || sessionId == null || !mounted) return;
-      final session = await service.getSession(sessionId);
+      RandomChatSession? session;
+      try {
+        session = await service.getSession(sessionId);
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('[RandomChat] Status-Poll fehlgeschlagen: $e');
+        }
+        return;
+      }
       if (!mounted || session == null) return;
       if (session.status == RandomChatStatus.ended && !_leaving) {
         _statusTimer?.cancel();
@@ -539,15 +558,36 @@ setState(() {
 
   // ------------------------------------------------------------- Relay --
 
-  /// Polling im Relay-Modus: alle 2 s abholen (Partner speichert neue
-  /// Nachrichten serverseitig zwischen; der Wake-up-Ping liefert SOFORT,
-  /// dieser Timer fängt verlorene Pings ab - Latenz-Kompromiss Akku).
+  /// Relay-Polling im Relay-Modus als Einmal-Timer mit variablem Intervall.
+  ///
+  /// Der Wake-up-Ping liefert Nachrichten sofort; dieser Timer fängt nur
+  /// verlorene Pings ab. Ein Chat ohne Verkehr ist der Normalfall, deshalb
+  /// wird das Intervall bei leerem Ergebnis gestreckt (2 s -> 6 s -> 15 s)
+  /// statt 1800 RPCs pro Stunde zu feuern. Kommt etwas an, geht es sofort
+  /// auf 2 s zurueck.
+  static const List<Duration> _relayIntervals = [
+    Duration(seconds: 2),
+    Duration(seconds: 6),
+    Duration(seconds: 15),
+  ];
+  int _relayBackoffStep = 0;
+
   /// Läuft nur bei offenem Chat im Vordergrund.
   void _startRelayPolling() {
     _relayTimer?.cancel();
-    _relayTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
+    _relayTimer = null;
+    if (!mounted) return;
+    final step = _relayBackoffStep.clamp(0, _relayIntervals.length - 1);
+    _relayTimer = Timer(_relayIntervals[step], () async {
       if (!mounted || _leaving || !_relayMode) return;
+      final before = _relayBackoffStep;
       await _fetchRelay();
+      if (!mounted || _leaving || !_relayMode) return;
+      if (_relayBackoffStep == before &&
+          _relayBackoffStep < _relayIntervals.length - 1) {
+        _relayBackoffStep++;
+      }
+      _startRelayPolling();
     });
     unawaited(_fetchRelay());
   }
@@ -560,6 +600,10 @@ setState(() {
       final pending =
           await ref.read(relayServiceProvider).fetchPending(from: peerId);
       if (!mounted || pending.isEmpty) return;
+      if (_relayBackoffStep != 0) {
+        // Zustellung lief -> wieder schnell pollen.
+        _relayBackoffStep = 0;
+      }
       for (final r in pending) {
         final msgId = 'relay_${r.id}';
         if (_seenRelayIds.contains(msgId)) continue;

@@ -56,18 +56,19 @@ class ChatNotifier extends StateNotifier<List<Match>> {
   /// QR-Kontakte wiederhergestellt, bei Logout (null) wird nur geleert.
   Future<void> setOwner(String? userId) async {
     await _chat.setOwner(userId);
+    if (!mounted) return;
     if (userId == null) {
       state = [];
     } else {
       await _chat.restoreQrContacts();
-      state = _chat.getMatches();
+      if (mounted) state = _chat.getMatches();
     }
   }
 
   /// Löscht alle eigenen Chat-Boxen vom Gerät (Account-Löschung).
   Future<void> deleteOwnedData(String userId) async {
     await _chat.deleteOwnedData(userId);
-    state = [];
+    if (mounted) state = [];
   }
 
   /// Lädt den gespeicherten Verlauf eines Matches (Opt-in aktiv).
@@ -77,7 +78,7 @@ class ChatNotifier extends StateNotifier<List<Match>> {
   /// blieb leer, bis ein anderes Event ein Rebuild auslöste).
   Future<void> hydrateHistory(String matchId) async {
     await _chat.hydrateHistory(matchId);
-    state = _chat.getMatches();
+    if (mounted) state = _chat.getMatches();
   }
 
   /// Erzeugt ein Match aus einem gelikten Profil.
@@ -149,7 +150,10 @@ class ChatNotifier extends StateNotifier<List<Match>> {
   /// ("gespeicherte Profile" überleben den Neustart).
   Future<void> restorePersistedQrContacts() async {
     await _chat.restoreQrContacts();
-    state = _chat.getMatches();
+    // Wird im Provider-Builder unawaited gestartet: Ist der Container in
+    //zwischen invalidiert (Logout, Container-Wechsel), waere die Zuweisung
+    // ein "Bad state: ... after dispose"-Crash.
+    if (mounted) state = _chat.getMatches();
   }
 
   /// QR-Kontakte aus dem Speicher (für den Datenexport): enthält die

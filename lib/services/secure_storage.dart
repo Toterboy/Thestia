@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:thestia/services/secure_storage_namespaces.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Sichere, verschlüsselte Speicherung von Authentifizierungs-Tokens.
@@ -21,12 +22,18 @@ class SecureTokenStore {
   static const _userIdKey = 'auth_user_id';
   static const _demoCredentialsKey = 'demo_auth_credentials';
 
+  // Security (Audit 2026-09-26): eigener Keystore-Namespace. Ohne ihn
+  // teilten sich sechs Stores denselben Alias - und `resetOnError: true`
+  // (v11-Default) loeschte beim ersten Dekrypt-Fehler ALLES (globaler
+  // Logout). Werte werden einmalig per migrateLegacyNamespaces() verschoben.
   static const _androidOptions = AndroidOptions(
     // flutter_secure_storage verschlüsselt automatisch über den Keystore.
     // Der Parameter encryptedSharedPreferences ist veraltet und wird ignoriert.
+    storageNamespace: SecureNamespaces.tokens,
   );
   static const _iOSOptions = IOSOptions(
     accessibility: KeychainAccessibility.first_unlock_this_device,
+    accountName: SecureNamespaces.tokens,
   );
 
   final FlutterSecureStorage _storage;
@@ -99,9 +106,13 @@ final secureTokenStoreProvider = Provider<SecureTokenStore>((ref) {
 class SecureProfileStore {
   static const _profileKey = 'user_profile_secure';
 
-  static const _androidOptions = AndroidOptions();
+  // Eigener Namespace (siehe SecureTokenStore / secure_storage_namespaces.dart).
+  static const _androidOptions = AndroidOptions(
+    storageNamespace: SecureNamespaces.profile,
+  );
   static const _iOSOptions = IOSOptions(
     accessibility: KeychainAccessibility.first_unlock_this_device,
+    accountName: SecureNamespaces.profile,
   );
 
   final FlutterSecureStorage _storage;

@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:http/io_client.dart' show IOClient;
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:thestia/app.dart';
@@ -25,6 +26,7 @@ import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/services/notification_service.dart';
 import 'package:thestia/services/secure_location_storage.dart';
 import 'package:thestia/services/secure_supabase_session_storage.dart';
+import 'package:thestia/services/secure_storage_namespaces.dart';
 import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/models/signal_key_models.dart';
@@ -33,6 +35,7 @@ import 'package:thestia/models/report_models.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/theme/app_theme.dart';
 import 'package:thestia/utils/chat_backgrounds.dart';
+import 'package:thestia/utils/cert_pinning.dart';
 import 'package:thestia/utils/constants.dart';
 import 'package:thestia/utils/pinned_http_overrides.dart';
 
@@ -57,6 +60,12 @@ Future<void> main() async {
   // ERSTES: danach erzeugte HttpClients erben den Check) – schützt
   // u. a. den kompletten Supabase-Traffic vor MITM.
   HttpOverrides.global = ThestiaHttpOverrides();
+
+  // Security (Audit 2026-09-26): Keystore-Werte einmalig aus dem alten
+  // Default-Namespace in die neuen, getrennten Namespaces verschieben.
+  // Ohne das waeren nach dem Update alle Tokens unlesbar (Massen-Logout).
+  // Idempotent + fail-closed: nur wenn der Ziel-Namespace leer ist.
+  unawaited(migrateLegacyNamespaces());
 
   FlutterError.onError = (details) {
     FlutterError.dumpErrorToConsole(details);
@@ -266,6 +275,10 @@ Future<void> _initializeSupabase() async {
     return;
   }
 
+  // Host fuer das strikte Pinning aus der URL ableiten (ohne Schema/Port).
+  final supabaseHost =
+      supabaseUrl.replaceFirst(RegExp(r'^https?://'), '').split('/').first;
+
   try {
     await Supabase.initialize(
       url: supabaseUrl,
@@ -295,6 +308,26 @@ Future<void> _initializeSupabase() async {
               has('error');
         },
       ),
+      // SECURITY (Audit 2026-09-26): STRIKTES Zertifikat-Pinning fuer den
+      // gesamten Supabase-Traffic (Auth, PostgREST/DB, Storage, Edge
+      // Functions, Realtime).
+      //
+      // Warum ein eigener Client noetig ist: `HttpOverrides.global` erzeugt
+      // Clients MIT System-Root-Store. Dart ruft `badCertificateCallback` nur
+      // auf, wenn die Systemvalidierung FEHLGESCHLAGEN ist - eine auf dem
+      // Geraet nachinstallierte Fremd-CA (MDM/Enterprise-Root, Stalkerware)
+      // wurde also akzeptiert und umging den Pin. Genau der Fall, den Pinning
+      // verhindern soll.
+      //
+      // `CertPinning.pinnedHttpClient()` nutzt `SecurityContext(
+      // withTrustedRoots: false)`: der Callback laeuft damit IMMER. Fuer den
+      // Supabase-Host ist das unkritisch - dort wird ausschliesslich der
+      // gepinnte Supabase-Endpunkt kontaktiert, es gibt keine ungepinnten
+      // Fremd-Hosts in diesem Pfad. Fuer andere Hosts (WebRTC-Signaling)
+      // wird derselbe strikte Client bereits separat genutzt.
+      // `http` (IOClient) verpackt den dart:io-Client fuer den
+      // PostgREST/Storage/Realtime-Stack von supabase_flutter.
+      httpClient: IOClient(CertPinning.pinnedHttpClient(supabaseHost)),
     ).timeout(const Duration(seconds: 4));
   } on TimeoutException {
     debugPrint('[MAIN] Supabase.initialize Timeout (> 4s), Limit-Modus.');
@@ -389,8 +422,8 @@ class _BootstrapAppState extends State<_BootstrapApp> {
         if (snapshot.connectionState != ConnectionState.done) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
-            theme: AppTheme.light(),
-            darkTheme: AppTheme.dark(),
+            theme: AppTheme.of(ThestiaTheme.classic, Brightness.light),
+            darkTheme: AppTheme.of(ThestiaTheme.classic, Brightness.dark),
             home: const LoadingScreen(),
           );
         }
@@ -401,8 +434,8 @@ class _BootstrapAppState extends State<_BootstrapApp> {
         if (init == null) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
-            theme: AppTheme.light(),
-            darkTheme: AppTheme.dark(),
+            theme: AppTheme.of(ThestiaTheme.classic, Brightness.light),
+            darkTheme: AppTheme.of(ThestiaTheme.classic, Brightness.dark),
             home: _StartupErrorScreen(onRetry: _retry),
           );
         }
@@ -414,7 +447,8 @@ class _BootstrapAppState extends State<_BootstrapApp> {
         if (init.updateRequired) {
           return MaterialApp(
             debugShowCheckedModeBanner: false,
-            theme: AppTheme.light(),
+            theme: AppTheme.of(ThestiaTheme.classic, Brightness.light),
+            darkTheme: AppTheme.of(ThestiaTheme.classic, Brightness.dark),
             home: const _UpdateRequiredScreen(),
           );
         }

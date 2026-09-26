@@ -74,66 +74,50 @@ class AppColors {
 class AppTheme {
   AppTheme._();
 
+  /// Cache: pro (Farbschema, Helligkeit) genau EIN ThemeData-Objekt.
+  ///
+  /// Vorher wurde bei JEDEM Settings-Change ein komplettes ThemeData inkl.
+  /// `ColorScheme.fromSeed` neu berechnet (zweimal: hell + dunkel, obwohl
+  /// nur eines benutzt wird). Das kostete CPU und erzeugte bei jedem
+  /// Rebuild eine neue Theme-Identitaet, wodurch `AnimatedTheme` die ganze
+  /// Oberflaeche erneut animierte - Hell/Dunkel brauchte dadurch sichtbar
+  /// "Zeit", bis sich Chat-Hintergruende, Cards und Texte angleichten.
+  /// Jetzt: einmal berechnen, stabile Identitaet, sofortiger Wechsel.
+  static final Map<String, ThemeData> _cache = <String, ThemeData>{};
+
+  /// Gecachtes Theme. [theme] und [brightness] bestimmen den Cache-Key.
+  static ThemeData of(ThestiaTheme theme, Brightness brightness) =>
+      _cache.putIfAbsent('${theme.name}:${brightness.name}', () {
+        return brightness == Brightness.dark
+            ? dark(theme: theme)
+            : light(theme: theme);
+      });
+
   /// Light Theme (Material 3) für das gewählte Farbschema.
-  static ThemeData light({ThestiaTheme theme = ThestiaTheme.classic}) => ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.light,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: theme.primaryColor,
-          brightness: Brightness.light,
-          surface: AppColors.surfaceLight,
-        ),
-        scaffoldBackgroundColor: AppColors.backgroundLight,
-        cardTheme: _cardTheme(AppColors.surfaceLight),
-        popupMenuTheme: _popupMenuTheme(AppColors.surfaceLight),
-        // Klick-Animation (Ripple) folgt der 24-px-Rundung der Karten -
-        // überall derselbe abgerundete Effekt, auch beim Antippen (v0.8.1).
-        listTileTheme: const ListTileThemeData(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(24)),
-          ),
-        ),
-        elevatedButtonTheme: _elevatedButtonTheme,
-        filledButtonTheme: _filledButtonTheme,
-        outlinedButtonTheme: _outlinedButtonTheme,
-        inputDecorationTheme: _inputDecorationTheme(
-            AppColors.surfaceLight, theme.primaryColor),
-        appBarTheme: const AppBarTheme(
-          centerTitle: true,
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          foregroundColor: Colors.black87,
-        ),
-        bottomNavigationBarTheme: BottomNavigationBarThemeData(
-          elevation: 8,
-          selectedItemColor: theme.primaryColor,
-        ),
-        // Snackbars als schwebende Bubbles am unteren Rand – konsistent
-        // für Light- und Dark-Mode.
-        snackBarTheme: SnackBarThemeData(
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 4,
-        ),
-        extensions: const <ThemeExtension<dynamic>>[
-          BlindModeTheme(placeholderColor: Color(0xFFE1E1EC)),
-        ],
-      );
+  static ThemeData light({ThestiaTheme theme = ThestiaTheme.classic}) =>
+      _build(theme, Brightness.light);
 
   /// Dark Theme (Material 3) für das gewählte Farbschema.
-  static ThemeData dark({ThestiaTheme theme = ThestiaTheme.classic}) => ThemeData(
+  static ThemeData dark({ThestiaTheme theme = ThestiaTheme.classic}) =>
+      _build(theme, Brightness.dark);
+
+  /// Baut das Theme für [theme] in [brightness] - einheitlicher Aufbau für
+  /// beide Modi, nur Farben, Flächen und Akzente unterscheiden sich.
+  static ThemeData _build(ThestiaTheme theme, Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
+    final surface = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
+    final bg = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
+    return ThemeData(
         useMaterial3: true,
-        brightness: Brightness.dark,
+        brightness: brightness,
         colorScheme: ColorScheme.fromSeed(
           seedColor: theme.primaryColor,
-          brightness: Brightness.dark,
-          surface: AppColors.surfaceDark,
+          brightness: brightness,
+          surface: surface,
         ),
-        scaffoldBackgroundColor: AppColors.backgroundDark,
-        cardTheme: _cardTheme(AppColors.surfaceDark),
-        popupMenuTheme: _popupMenuTheme(AppColors.surfaceDark),
+        scaffoldBackgroundColor: bg,
+        cardTheme: _cardTheme(surface),
+        popupMenuTheme: _popupMenuTheme(surface),
         // Klick-Animation (Ripple) folgt der 24-px-Rundung der Karten -
         // überall derselbe abgerundete Effekt, auch beim Antippen (v0.8.1).
         listTileTheme: const ListTileThemeData(
@@ -145,16 +129,20 @@ class AppTheme {
         filledButtonTheme: _filledButtonTheme,
         outlinedButtonTheme: _outlinedButtonTheme,
         inputDecorationTheme: _inputDecorationTheme(
-            AppColors.surfaceDark, theme.primaryColor),
-        appBarTheme: const AppBarTheme(
+            surface, theme.primaryColor),
+        appBarTheme: AppBarTheme(
           centerTitle: true,
           elevation: 0,
           backgroundColor: Colors.transparent,
-          foregroundColor: Colors.white,
+          // Transparente AppBar: im Dark-Mode darf die Schriftfarbe nicht
+          // schwarz bleiben, sonst ist sie auf dunklem Grund unlesbar.
+          foregroundColor: isDark ? Colors.white : Colors.black87,
+          surfaceTintColor: Colors.transparent,
         ),
         bottomNavigationBarTheme: BottomNavigationBarThemeData(
           elevation: 8,
-          selectedItemColor: theme.lightPrimary,
+          selectedItemColor:
+              isDark ? theme.lightPrimary : theme.primaryColor,
         ),
         // Snackbars als schwebende Bubbles am unteren Rand – konsistent
         // für Light- und Dark-Mode.
@@ -165,10 +153,14 @@ class AppTheme {
           ),
           elevation: 4,
         ),
-        extensions: const <ThemeExtension<dynamic>>[
-          BlindModeTheme(placeholderColor: Color(0xFF2C2C2C)),
+        extensions: <ThemeExtension<dynamic>>[
+          BlindModeTheme(
+              placeholderColor: isDark
+                  ? const Color(0xFF2C2C2C)
+                  : const Color(0xFFE1E1EC)),
         ],
       );
+  }
 
   /// Popup-Menüs (z. B. Sprachumschalter) mit demselben 16-px-Radius wie
   /// Cards/Snackbars/Inputs - konsistent abgerundet in der ganzen App.

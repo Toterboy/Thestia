@@ -216,6 +216,11 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
                   {'error': e.message}))),
         );
       }
+    } catch (e) {
+      // _loadSession wird unawaited aufgerufen und laeuft im Timer. Ein
+      // Postgrest-/Socket-Fehler ist KEIN DatingHourException und wuerde
+      // sonst unhandled aus dem Timer fliegen - alle 10 s erneut.
+      debugPrint('[DatingHourChat] Session konnte nicht geladen werden: ');
     }
   }
 
@@ -421,13 +426,25 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
   }
 
   Future<void> _handleDecision(bool accept) async {
-    if (_session == null) return;
+    final session = _session;
+    // Die eigene User-ID wird nur in _initP2P() gesetzt. Bricht das ohne
+    // Supabase-Session frueh ab, ist sie null - ein Tipp auf "Treffen" wuerde
+    // dann mit einem Null-Check-Crash enden (User saehe einen roten Screen).
+    final myId = _currentUserId;
+    if (session == null || myId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(L10n.t(context, 'common.errorOccurred'))),
+        );
+      }
+      return;
+    }
 
     final service = ref.read(datingHourServiceProvider);
     try {
       final updated = await service.recordDecision(
         widget.sessionId,
-        _currentUserId!,
+        myId,
         accept,
       );
 
@@ -462,7 +479,17 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
   }
 
   Future<void> _createMatchAndNavigate(DatingHourSession session) async {
-    final partnerId = session.getPeerId(_currentUserId!);
+    // Siehe _handleDecision: ohne eigene User-ID gibt es keine Partner-ID.
+    final myId = _currentUserId;
+    if (myId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(L10n.t(context, 'common.errorOccurred'))),
+        );
+      }
+      return;
+    }
+    final partnerId = session.getPeerId(myId);
 
     // v0.9.0-Fix (Gerätetest): Der Funke wurde vorher NUR LOKAL erzeugt
     // (Platzhalter 'Dein Gegenüber') - der Partner sah ihn nie, das Profil

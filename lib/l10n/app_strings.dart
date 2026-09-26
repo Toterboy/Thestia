@@ -1927,6 +1927,9 @@ const Map<String, Map<String, String>> _strings = {
     'chat.identityVerifiedHint':
         'Nur aktivieren, wenn die Nummern übereinstimmen.',
     'chat.more': 'Weitere Optionen',
+    'chat.requireVerifiedTitle': 'Schluessel immer pruefen',
+    'chat.requireVerifiedHint': 'Senden erst erlauben, wenn ihr die Safety-Nummern verglichen habt. Das schuetzt davor, dass jemand die Schluessel eurer Chats ersetzt und mitliest.',
+    'chat.peerUnverifiedBlocked': 'Ihr habt die Safety-Nummern fuer {name} noch nicht verglichen. Unter Sicherheit im Chat kannst du das pruefen und freischalten.',
     'dh.event.startingSoon': 'Dating Hour startet gleich',
     'dh.event.cancelledToday':
         'Heute fällt die Dating Hour aus: Es haben sich nicht genug '
@@ -4493,6 +4496,9 @@ const Map<String, Map<String, String>> _strings = {
         'Compare this number with {name}, ideally in person or by phone:',
     'chat.identityVerifiedHint': 'Only enable if the numbers match.',
     'chat.more': 'More options',
+    'chat.requireVerifiedTitle': 'Always verify keys',
+        'chat.requireVerifiedHint': 'Only allow sending after you compared the safety numbers. This protects against someone substituting your chat keys.',
+        'chat.peerUnverifiedBlocked': 'You have not compared the safety numbers for {name} yet. Open "Security" in the chat to check and unlock.',
     'dh.event.startingSoon': 'Dating Hour starts soon',
     'dh.event.cancelledToday':
         "Today's Dating Hour is cancelled: not enough people signed up.",

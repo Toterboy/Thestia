@@ -64,6 +64,33 @@ function escapeHtml(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
+/**
+ * Client-IP robust bestimmen (Security 2026-09-26).
+ *
+ * BUG VORHER: `req.headers.get("x-forwarded-for")` liefert die GESAMTE
+ * Komma-Liste als String. Der Angreifer rotiert den Header-Wert einfach
+ * ("1.2.3.4, 5.6.7.8, ...") - der Rate-Limit-Key wechselt damit und das
+ * Limit ist wirkungslos.
+ *
+ * Reihenfolge: x-client-ip (von der Plattform gesetzt, nicht vom Client
+ * faelschbar) -> cf-connecting-ip (Cloudflare) -> ERSTER Eintrag aus
+ * x-forwarded-for. "unknown" nur, wenn gar nichts vorhanden ist.
+ */
+function clientIp(req: Request): string {
+  const direct =
+    req.headers.get("x-client-ip") ??
+    req.headers.get("cf-connecting-ip") ??
+    req.headers.get("true-client-ip");
+  if (direct) return direct.trim().slice(0, 64);
+
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) {
+    const first = forwarded.split(",")[0]?.trim();
+    if (first) return first.slice(0, 64);
+  }
+  return "unknown";
+}
+
 function jsonError(message: string, status: number): Response {
   return new Response(JSON.stringify({ error: message }), {
     status,
@@ -76,10 +103,7 @@ serve(async (req) => {
     return jsonError("Method not allowed", 405);
   }
 
-  const ip =
-    req.headers.get("x-forwarded-for") ??
-    req.headers.get("cf-connecting-ip") ??
-    "unknown";
+  const ip = clientIp(req);
   if (isRateLimited(ip)) {
     return jsonError("Too many requests", 429);
   }

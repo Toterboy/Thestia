@@ -121,6 +121,35 @@ serve(async (req) => {
     ) {
       return json({ error: "Ungültige Parameter" }, 400);
     }
+    // SECURITY (2026-09-26): persistentes Rate-Limit.
+    //
+    // BEFUND: Die Funktion hatte gar keines. Pro Aufruf entstehen vier
+    // Service-Role-Abfragen (Match, Quiz-Stufe, Profil, Signed-URL) und
+    // eine 1-Stunde-gueltende URL. Ein angemeldeter Nutzer konnte damit
+    // beliebig oft Signed-URLs fuer Intro-Audio ERTENBURGER erzeugen
+    // (kind=intro prueft nur "Profil existiert + Intro vorhanden", kein
+    // Match, kein Block, kein Alter) - das war eine unbegrenzte
+    // Service-Last und ein unbegrenzter URL-Missbrauchsvektor.
+    //
+    // 600/h pro Nutzer: das Profil laedt bis zu 4 Fotos + Intro in einem
+    // Screen und polled gelegentlich - normaler Betrieb bleibt weit darunter.
+    const { data: rateOk, error: rateErr } = await supabaseAdmin.rpc(
+      "consume_rate_limit",
+      {
+        p_key: `match_media:${user.id}`,
+        p_max_hits: 600,
+        p_window_seconds: 3600,
+      },
+    );
+    if (rateErr) {
+      // fail-closed
+      console.error("consume_rate_limit error (fail-closed):", rateErr);
+      return json({ error: "Zu viele Anfragen" }, 429);
+    }
+    if (rateOk !== true) {
+      return json({ error: "Zu viele Anfragen" }, 429);
+    }
+
     if (targetUserId === user.id) {
       return json({ error: "Ungültige Parameter" }, 400);
     }
@@ -202,6 +231,30 @@ serve(async (req) => {
         .eq("user_id", targetUserId)
         .maybeSingle();
       if (!target || !target.intro_audio_path) {
+        return json({ error: "Keine Vorstellung vorhanden" }, 404);
+      }
+
+      // SECURITY (2026-09-26): Intros sind bewusst fuer alle angemeldeten
+      // Nutzer abrufbar (Aushaengeschild des Modus). Die SPERRLISTE galt
+      // hier aber nicht - wer jemanden blockiert - oder von jemandem
+      // blockiert wird - konnte dessen Intro weiterhin als Signed-URL
+      // ziehen. In beiden Richtungen pruefen, wie in block_user.
+      //
+      // `and(...)` ist noetig: `.or(a,b)` verknuepft die beiden Zeilen
+      // implizit UND, nicht ODER.
+      //
+      // Neutrale 404 statt 403: sonst waere erkennbar, ob es das Profil
+      // ueberhaupt gibt (Enumerationskanal).
+      const { data: block } = await supabaseAdmin
+        .from("blocked_users")
+        .select("blocker")
+        .or(
+          `and(blocker.eq.${user.id},blocked.eq.${targetUserId}),` +
+            `and(blocker.eq.${targetUserId},blocked.eq.${user.id})`,
+        )
+        .limit(1)
+        .maybeSingle();
+      if (block) {
         return json({ error: "Keine Vorstellung vorhanden" }, 404);
       }
     }

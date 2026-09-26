@@ -793,10 +793,17 @@ class _PhotoModerationListState extends ConsumerState<_PhotoModerationList> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    if (mounted) setState(() => _loading = true);
     final service = ref.read(photoModerationServiceProvider);
-    _entries = await service.fetchPendingReviews();
-    if (mounted) setState(() => _loading = false);
+    // Ohne try/catch blieb `_loading` bei einem Netzwerkfehler dauerhaft
+    // true (Endlos-Spinner) und der Fehler landete unhandled.
+    try {
+      _entries = await service.fetchPendingReviews();
+    } catch (e) {
+      if (kDebugMode) debugPrint('[Admin] Reviews laden fehlgeschlagen: $e');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Future<void> _approve(int id) async {
@@ -1309,21 +1316,7 @@ class _AppealCard extends ConsumerWidget {
                   child: SizedBox(
                     width: 96,
                     height: 96,
-                    child: FutureBuilder<String?>(
-                      future: ref
-                          .read(supabaseStorageServiceProvider)
-                          .getSignedUrlFor(path),
-                      builder: (context, snap) {
-                        final url = snap.data;
-                        if (url != null) {
-                          return Image.network(url, fit: BoxFit.cover);
-                        }
-                        return const ColoredBox(
-                          color: Color(0x22000000),
-                          child: Icon(Icons.image_not_supported),
-                        );
-                      },
-                    ),
+                    child: _SignedAppealImage(path: path),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1412,6 +1405,74 @@ class _StatusChip extends StatelessWidget {
         label,
         style: TextStyle(color: color, fontWeight: FontWeight.bold),
       ),
+    );
+  }
+}
+
+/// Bild einer Appeal-Zeile.
+///
+/// Eigenes StatefulWidget, weil das Signed-URL-Future GECACHT werden muss:
+/// Stand es in `build`, feuerte jeder Rebuild (Liste, Pull-to-refresh,
+/// _load()) fuer jede sichtbare Zeile einen neuen Signed-URL-Request ab.
+/// Zusaetzlich begrenzt `cacheWidth` die Dekodierung auf die 96-px-Kachel.
+class _SignedAppealImage extends ConsumerStatefulWidget {
+  const _SignedAppealImage({required this.path});
+
+  final String path;
+
+  @override
+  ConsumerState<_SignedAppealImage> createState() => _SignedAppealImageState();
+}
+
+class _SignedAppealImageState extends ConsumerState<_SignedAppealImage> {
+  Future<String?>? _urlFuture;
+  String? _loadedPath;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _ensureUrl();
+  }
+
+  @override
+  void didUpdateWidget(covariant _SignedAppealImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.path != widget.path) _ensureUrl();
+  }
+
+  void _ensureUrl() {
+    if (widget.path.isEmpty) {
+      _urlFuture = null;
+      _loadedPath = null;
+      return;
+    }
+    if (_loadedPath == widget.path && _urlFuture != null) return;
+    _loadedPath = widget.path;
+    _urlFuture =
+        ref.read(supabaseStorageServiceProvider).getSignedUrlFor(widget.path);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final future = _urlFuture;
+    if (future == null) {
+      return const ColoredBox(
+        color: Color(0x22000000),
+        child: Icon(Icons.image_not_supported),
+      );
+    }
+    return FutureBuilder<String?>(
+      future: future,
+      builder: (context, snap) {
+        final url = snap.data;
+        if (url != null) {
+          return Image.network(url, fit: BoxFit.cover, cacheWidth: 96 * 3);
+        }
+        return const ColoredBox(
+          color: Color(0x22000000),
+          child: Icon(Icons.image_not_supported),
+        );
+      },
     );
   }
 }

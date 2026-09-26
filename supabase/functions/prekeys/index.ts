@@ -33,12 +33,35 @@ const rateMap = new Map<string, number[]>();
 const RATE_LIMIT = 30;        // Aufrufe pro Zeitfenster
 const RATE_WINDOW_MS = 60_000; // 1 Minute
 
+/**
+ * Client-IP robust bestimmen (Security 2026-09-26).
+ *
+ * BUG VORHER: `req.headers.get("x-forwarded-for")` liefert die GESAMTE
+ * Komma-Liste als String. Der Angreifer rotiert den Header-Wert einfach
+ * ("1.2.3.4, 5.6.7.8, ...") - der Rate-Limit-Key wechselt damit und das
+ * Limit ist wirkungslos.
+ *
+ * Reihenfolge: x-client-ip / cf-connecting-ip (von der Plattform gesetzt)
+ * -> ERSTER Eintrag aus x-forwarded-for. "unknown" nur, wenn nichts da ist.
+ */
+function clientIp(req: Request): string {
+  const direct =
+    req.headers.get("x-client-ip") ??
+    req.headers.get("cf-connecting-ip") ??
+    req.headers.get("true-client-ip");
+  if (direct) return direct.trim().slice(0, 64);
+
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) {
+    const first = forwarded.split(",")[0]?.trim();
+    if (first) return first.slice(0, 64);
+  }
+  return "unknown";
+}
+
 function rateLimitKey(req: Request, userId?: string): string {
   if (userId) return `user:${userId}`;
-  const ip = req.headers.get("x-forwarded-for") ??
-    req.headers.get("cf-connecting-ip") ??
-    "unknown";
-  return `ip:${ip}`;
+  return `ip:${clientIp(req)}`;
 }
 
 function isRateLimited(key: string): boolean {
@@ -143,6 +166,87 @@ serve(async (req) => {
       );
     }
 
+    // ---------------------------------------------------------------
+    // SECURITY (2026-09-26): Beziehungspruefung.
+    //
+    // BEFUND: Vorher konnte JEDER angemeldete Nutzer ueber eine beliebige
+    // UUID das Identity-Key-Bundle jedes anderen Nutzers laden - also genau
+    // das Schluesselmaterial fuer den Erstkontakt. Die Funktion nutzt
+    // durchgehend `supabaseAdmin` (Service-Role), die RLS-Festung auf
+    // `prekeys` (061:30-35) wirkte daher nicht. 404 vs. 200 war zusaetzlich
+    // ein User-Existenzorakel.
+    //
+    // Erlaubt sind exakt die Wege, ueber die der Client eine E2E-Session
+    // aufbaut (p2p_chat_service.connect / relay_service.send):
+    //   eigenes Bundle (Self-Heal), Match-Partner, aktive Zufallschat- oder
+    //   Dating-Hour-Session, laufendes Transit-Signal-Paar.
+    // Alles andere: 404 OHNE Aussage darueber, ob der Nutzer existiert.
+    // ---------------------------------------------------------------
+    const callerId = callerAuth.user.id;
+    let related = userId === callerId;
+
+    if (!related) {
+      const { data: m } = await supabaseAdmin
+        .from("matches")
+        .select("id")
+        .or(
+          `and(user_one_id.eq.${callerId},user_two_id.eq.${userId}),` +
+          `and(user_two_id.eq.${callerId},user_one_id.eq.${userId})`,
+        )
+        .limit(1)
+        .maybeSingle();
+      related = !!m;
+    }
+
+    if (!related) {
+      const { data: rc } = await supabaseAdmin
+        .from("random_chat_sessions")
+        .select("id")
+        .eq("status", "active")
+        .or(
+          `and(user_a.eq.${callerId},user_b.eq.${userId}),` +
+          `and(user_a.eq.${userId},user_b.eq.${callerId})`,
+        )
+        .limit(1)
+        .maybeSingle();
+      related = !!rc;
+    }
+
+    if (!related) {
+      const { data: dh } = await supabaseAdmin
+        .from("dating_hour_session")
+        .select("id")
+        .is("ended_at", null)
+        .or(
+          `and(user_a.eq.${callerId},user_b.eq.${userId}),` +
+          `and(user_b.eq.${callerId},user_a.eq.${userId})`,
+        )
+        .limit(1)
+        .maybeSingle();
+      related = !!dh;
+    }
+
+    if (!related) {
+      const { data: tr } = await supabaseAdmin
+        .from("transit_signals")
+        .select("id")
+        .in("status", ["pending", "matched"])
+        .or(
+          `and(user_id.eq.${callerId},matched_with.eq.${userId}),` +
+          `and(user_id.eq.${userId},matched_with.eq.${callerId})`,
+        )
+        .limit(1)
+        .maybeSingle();
+      related = !!tr;
+    }
+
+    if (!related) {
+      return new Response(
+        JSON.stringify({ error: "nicht verfuegbar" }),
+        { status: 404, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
     const { data, error } = await supabaseAdmin
       .from("prekeys")
       .select("bundle")
@@ -159,7 +263,9 @@ serve(async (req) => {
 
     if (!data) {
       return new Response(
-        JSON.stringify({ error: "Kein PreKey-Bundle für diesen Nutzer gefunden." }),
+        // Neutral formuliert: gibt keine Auskunft darueber, ob der Nutzer
+        // existiert (kein Enumeration-Signal).
+        JSON.stringify({ error: "Kein Bundle verfügbar." }),
         { status: 404, headers: { "Content-Type": "application/json" } },
       );
     }

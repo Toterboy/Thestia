@@ -72,6 +72,56 @@ Write-Host "    Ziel: $OutDir"
 
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 
+# ---------------------------------------------------------------------
+# Konfiguration als --dart-define injizieren (Security 2026-09-26)
+# ---------------------------------------------------------------------
+# Hintergrund: `.env` ist KEIN App-Asset mehr. Eine gebuendelte
+# Konfigurationsdatei liegt extrahierbar im APK/IPA. Die Werte werden
+# hier beim Bauen aus der lokalen `.env` gelesen und als Defines
+# uebergeben - das Ergebnis ist identisch im Build, aber nichts davon
+# liegt als Datei im Bundle.
+#
+# `.env` fehlt -> harter Fehler statt "Bot-Schutz stillschweigend aus".
+$EnvFile = Join-Path (Get-Location) ".env"
+$ConfigDefines = @()
+if (Test-Path -LiteralPath $EnvFile) {
+    foreach ($line in Get-Content -LiteralPath $EnvFile -Encoding UTF8) {
+        if ($line -match '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+?)\s*$') {
+            $key = $Matches[1]
+            $val = $Matches[2].Trim('"').Trim("'")
+            # Nur die vier oeffentlichen Konfigurationswerte - KEINE Secrets.
+            if ($key -in @("SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY",
+                           "CAPTCHA_PROVIDER", "CAPTCHA_SITEKEY")) {
+                $ConfigDefines += "--dart-define=$key=$val"
+            }
+        }
+    }
+}
+# Kein Release ohne Instanz-URL: sonst baut die App "unkonfiguriert" aus und
+# scheitert spaeter zur Laufzeit statt beim Build.
+if (-not ($ConfigDefines | Where-Object { $_ -like "--dart-define=SUPABASE_URL=*" })) {
+  Write-Warning "Keine SUPABASE_URL in .env gefunden."
+  throw "Keine SUPABASE_URL in .env gefunden. Der Release-Build bricht bewusst ab, damit nicht unkonfiguriert ausgeliefert wird."
+}
+
+# SECURITY: Ein Build ohne CAPTCHA-Sitekey liefert captchaEnabled == false,
+# also ein Release ganz ohne Bot-Schutz. Das war bisher still (CI, fremder
+# Rechner). Deshalb Abbruch - ABER nur, wenn laut Konfiguration ueberhaupt
+# Bot-Schutz gewollt ist. `CAPTCHA_PROVIDER=none` ist der dokumentierte
+# Ausweg (z. B. F-Droid-Build) und darf nicht blockiert werden.
+$captchaProvider = "turnstile"
+$pd = $ConfigDefines | Where-Object { $_ -like "--dart-define=CAPTCHA_PROVIDER=*" } | Select-Object -First 1
+if ($pd) { $captchaProvider = $pd -replace "^--dart-define=CAPTCHA_PROVIDER=", "" }
+if ($captchaProvider -ne "none" -and
+    -not ($ConfigDefines | Where-Object { $_ -like "--dart-define=CAPTCHA_SITEKEY=*" })) {
+  Write-Warning "CAPTCHA_SITEKEY fehlt in .env, CAPTCHA_PROVIDER=$captchaProvider - der Bot-Schutz waere im Build AUS (captchaEnabled == false). Abbruch."
+  throw "CAPTCHA_SITEKEY fehlt in .env bei CAPTCHA_PROVIDER=$captchaProvider - refusing to build without bot protection. Zum bewussten Abschalten: CAPTCHA_PROVIDER=none in .env setzen."
+}
+if ($captchaProvider -eq "none") {
+  Write-Warning "CAPTCHA_PROVIDER=none - dieser Build hat bewusst KEINEN Bot-Schutz."
+}
+Write-Host "    Config: $($ConfigDefines.Count) Defines aus .env (nicht gebuendelt)"
+
 function Copy-FlavorApk {
     param([string]$FlavorName)
     $src = Join-Path "build\app\outputs\flutter-apk" "app-$FlavorName-release.apk"
@@ -115,14 +165,14 @@ if ($SkipBuild) {
         # Dart-Obfuskierung (v0.9.0, Manipulationsschutz): Symbol-Namen
         # werden unlesbar gemacht; Debug-Symbole landen in build/symbols/
         # (git-ignoriert) für spätere Crash-Analyse.
-        flutter build apk --release --flavor play @abiArgs --obfuscate --split-debug-info=build/symbols/play
+        flutter build apk --release --flavor play @ConfigDefines @abiArgs --obfuscate --split-debug-info=build/symbols/play
         if ($LASTEXITCODE -ne 0) { throw "Play-Build fehlgeschlagen." }
     }
     if ($Flavor -in @("both", "fdroid")) {
         Write-Host "==> Baue F-DROID-Variante (ohne Google/Firebase)..." -ForegroundColor Cyan
         $abiArgs = @()
         if ($SplitPerAbi) { $abiArgs += "--split-per-abi" }
-        flutter build apk --release --flavor fdroid --dart-define=FDROID=true @abiArgs --obfuscate --split-debug-info=build/symbols/fdroid
+        flutter build apk --release --flavor fdroid --dart-define=FDROID=true @ConfigDefines @abiArgs --obfuscate --split-debug-info=build/symbols/fdroid
         if ($LASTEXITCODE -ne 0) { throw "F-Droid-Build fehlgeschlagen." }
     }
     if ($AdminUUID -ne "") {
@@ -130,7 +180,7 @@ if ($SkipBuild) {
         New-Item -ItemType Directory -Force -Path $adminDir | Out-Null
         foreach ($adminFlavor in @("play", "fdroid")) {
             Write-Host "==> Baue ADMIN-Variante ($adminFlavor, nur Team-intern)..." -ForegroundColor Magenta
-            $defineArgs = @("--dart-define=ADMIN_UUID=$AdminUUID")
+            $defineArgs = @("--dart-define=ADMIN_UUID=$AdminUUID") + $ConfigDefines
             if ($adminFlavor -eq "fdroid") { $defineArgs += "--dart-define=FDROID=true" }
             flutter build apk --release --flavor $adminFlavor @defineArgs --obfuscate --split-debug-info=build/symbols/admin-$adminFlavor
             if ($LASTEXITCODE -ne 0) { throw "Admin-Build ($adminFlavor) fehlgeschlagen." }

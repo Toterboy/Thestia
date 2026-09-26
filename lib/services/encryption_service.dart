@@ -580,6 +580,50 @@ class EncryptionService {
   bool isPeerIdentityVerified(String peerId) =>
       _decodeTrustEntry(peerId)?['verified'] == true;
 
+  /// SECURITY (Audit 2026-09-26): Erzwingt die Out-of-Band-Bestaetigung fuer
+  /// diesen Kontakt.
+  ///
+  /// BEFUND: Das `verified`-Flag existierte, wurde aber NIRGENDS in einer
+  /// Entscheidung ausgewertet - nur in der UI. Die Schluesselverteilung lief
+  /// ueber den Server (TOFU). Ein kompromittierter Server konnte beim
+  /// ERSTKONTAKT ein eigenes Identity-Key-Bundle einschleusen und danach
+  /// alles mitlesen. Die Safety-Nummer existierte, war aber rein informell.
+  ///
+  /// Mit diesem Schalter wird der Vergleich praktisch erzwungen: solange er
+  /// gesetzt und die Identity NICHT bestaetigt ist, verweigert
+  /// [encryptMessage] die Nachricht. Der Nutzer muss die Safety-Nummer
+  /// also im echten Gespraech (oder ueber einen zweiten Kanal) abgleichen.
+  ///
+  /// Default: AUS. Eine erzwungene Verifikation ohne erzwungenes
+  /// MFA-Enroll waere eine Produktentscheidung, keine Sicherheitskorrektur.
+  bool requiresPeerVerification(String peerId) =>
+      _decodeTrustEntry(peerId)?['requireVerification'] == true;
+
+  /// Schalter fuer [requiresPeerVerification] setzen.
+  Future<void> setRequiresPeerVerification(String peerId, bool value) async {
+    final entry = _decodeTrustEntry(peerId);
+    if (entry == null) return;
+    await _peerTrustBox.put(peerId, jsonEncode({
+      'identityKeyPublic': entry['identityKeyPublic'],
+      'verified': entry['verified'] == true,
+      'requireVerification': value,
+    }));
+  }
+
+  /// Wirft, wenn fuer [peerId] eine verzwungene Verifikation gilt, die
+  /// Identity aber nicht bestaetigt ist. Aufrufer behandeln das als
+  /// "erst verifizieren".
+  void assertPeerUsable(String peerId) {
+    if (requiresPeerVerification(peerId) &&
+        !isPeerIdentityVerified(peerId)) {
+      throw StateError(
+        'peer_unverified: Fuer $peerId ist die Safety-Nummer-Pruefung '
+        'aktiviert, die Identitaet ist aber nicht bestaetigt. Bitte im Chat '
+        'ueber "Sicherheit" die Safety-Nummern vergleichen.',
+      );
+    }
+  }
+
   /// Markiert die Peer-Identity als verifiziert (nach gemeinsamem Vergleich
   /// der Safety-Number über einen zweiten Kanal) bzw. entfernt die
   /// Verifikation.
@@ -589,6 +633,8 @@ class EncryptionService {
     await _peerTrustBox.put(peerId, jsonEncode({
       'identityKeyPublic': entry['identityKeyPublic'],
       'verified': verified,
+      // Nicht zuruecksetzen: eine aktivierte Erzwingung bleibt bestehen.
+      'requireVerification': entry['requireVerification'] == true,
     }));
   }
 
@@ -597,8 +643,14 @@ class EncryptionService {
   // ==========================================================================
 
   /// Verschlüsselt eine Nachricht für einen Empfänger.
+  ///
+  /// SECURITY (Audit 2026-09-26): Vor dem Versand wird geprüft, ob für
+  /// [recipientId] eine erzwungene Safety-Number-Verifikation gilt. Ohne
+  /// diesen Check wäre der Schalter in [setRequiresPeerVerification] reine
+  /// Dekoration - das `verified`-Flag wurde vorher nirgends ausgewertet.
   Future<CiphertextMessage> encryptMessage(
       String recipientId, String plaintext) async {
+    assertPeerUsable(recipientId);
     final address = SignalProtocolAddress(recipientId, 1);
     final sessionCipher = SessionCipher.fromStore(_store!, address);
     return sessionCipher.encrypt(

@@ -782,7 +782,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
       // Plausibilitaets-Check gegen die BISHERIGEN Standorte dieses
       // Geraets (lokal) - keine Cross-Account-Erkennung.
-      if (await locationService.isLocationSuspicious(position)) {
+      // isLocationSuspicious liest den Secure Storage (async) - in dieser
+      // Zeit kann der Screen verlassen worden sein.
+      final suspicious = await locationService.isLocationSuspicious(position);
+      if (!mounted) return;
+      if (suspicious) {
         setState(() {
           _isDetectingLocation = false;
           _locationError = L10n.t(context, 'profile.edit.locationSuspicious');
@@ -2163,7 +2167,11 @@ class _PhotoSlotsRow extends StatelessWidget {
     if (pendingBytes != null) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: Image.memory(pendingBytes, fit: BoxFit.cover),
+        // Die Fotos kommen mit 2048 px aus dem Crop. Fuer eine ~110-px-
+        // Kachel reichen 300 px - ohne cacheWidth waeren es bis zu 16 MB
+        // dekodierte Bitmap pro Slot (4 Slots = ~64 MB Peak).
+        child: Image.memory(pendingBytes,
+            fit: BoxFit.cover, cacheWidth: 300),
       );
     }
     if (future == null) {
@@ -2196,7 +2204,7 @@ class _PhotoSlotsRow extends StatelessWidget {
                 color: Theme.of(context).colorScheme.onSurfaceVariant),
           );
         }
-        return Image.memory(bytes, fit: BoxFit.cover);
+        return Image.memory(bytes, fit: BoxFit.cover, cacheWidth: 300);
       },
     );
   }

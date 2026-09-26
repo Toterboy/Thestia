@@ -193,15 +193,37 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     _startRelayTimer();
   }
 
+  /// Relay-Ticker als Einmal-Timer mit variablem Intervall.
+  ///
+  /// Der Wake-up-Ping liefert Nachrichten sofort; dieser Timer faengt nur
+  /// verlorene Pings ab. Ein aktiver Chat ohne Nachrichtenverkehr ist der
+  /// Normalfall - deshalb wird das Intervall bei leerem Ergebnis gestreckt
+  /// (3 s -> 10 s -> 20 s) statt stur alle 3 s einen RPC zu feuern. Kommt
+  /// etwas an, geht es sofort zurueck auf 3 s.
+  static const List<Duration> _relayIntervals = [
+    Duration(seconds: 3),
+    Duration(seconds: 10),
+    Duration(seconds: 20),
+  ];
+  int _relayBackoffStep = 0;
+
   void _startRelayTimer() {
     _relayTimer?.cancel();
-    // LATENZ: 3 s statt 5 s - der Wake-up-Ping liefert sofort, der Timer
-    // fängt nur verlorene Pings ab (Akku-Kompromiss).
-    _relayTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-      if (mounted) {
-        unawaited(_fetchRelay());
-        unawaited(_retryHandshakeThrottled());
+    _relayTimer = null;
+    if (!mounted) return;
+    final step = _relayBackoffStep.clamp(0, _relayIntervals.length - 1);
+    _relayTimer = Timer(_relayIntervals[step], () async {
+      if (!mounted) return;
+      final before = _relayBackoffStep;
+      await _fetchRelay();
+      if (!mounted) return;
+      // Leerer Abruf -> eine Stufe langsamer, Timer neu aufsetzen.
+      if (_relayBackoffStep == before &&
+          _relayBackoffStep < _relayIntervals.length - 1) {
+        _relayBackoffStep++;
       }
+      unawaited(_retryHandshakeThrottled());
+      _startRelayTimer();
     });
   }
 
@@ -244,11 +266,17 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // Hintergrund: kein Polling/Netz (Akku). Vordergrund: Timer neu +
     // sofort abholen (Nachrichten aus der Abwesenheit).
+    //
+    // `hidden` zaehlt mit: auf Android kommt es direkt nach `inactive`,
+    // wenn der Nutzer den App-Switcher oeffnet - der Poller soll da
+    // ebenfalls sofort enden statt 3 s weiterzulaufen.
     if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden ||
         state == AppLifecycleState.detached) {
       _relayTimer?.cancel();
       _relayTimer = null;
     } else if (state == AppLifecycleState.resumed && mounted) {
+      _relayBackoffStep = 0;
       _startRelayTimer();
       unawaited(_fetchRelay());
       // Rückkehr in den Chat: ggf. sofort neu verbinden statt bis zum
@@ -471,7 +499,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         ref.read(chatProvider.notifier).addMessage(match.id, msg, ref: ref);
         added = true;
       }
-      if (added && mounted) setState(() {});
+      if (added) {
+        // Zustellung lief -> Intervall wieder auf Ausgangswert.
+        _relayBackoffStep = 0;
+        if (mounted) setState(() {});
+      }
     } catch (e) {
       debugPrint('[ChatDetail] Relay-Abruf fehlgeschlagen: $e');
     }
@@ -1147,6 +1179,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     if (_recording) {
       _recordTimer?.cancel();
       await _ampSub?.cancel();
+      // Siehe _cancelRecording: nach dem asynchronen cancel() kann der
+      // Screen bereits disposed sein.
+      if (!mounted) return;
       _ampSub = null;
 
       // WICHTIG: Sekunden VOR dem Reset sichern – vorher stand der Reset
@@ -1277,6 +1312,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
           path: path,
         );
 
+        // Mikrofon-Permission + Start dauern real mehrere Hundert ms. Ein
+        // Back-Navigieren in dieser Zeit wuerde das setState crashen.
+        if (!mounted) {
+          await _audioRecorder.stop();
+          return;
+        }
+
         setState(() {
           _recording = true;
           _paused = false;
@@ -1303,6 +1345,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   Future<void> _cancelRecording() async {
     _recordTimer?.cancel();
     await _ampSub?.cancel();
+    // Das cancel()-Future ist asynchron: ein Back-Navigieren im selben
+    // Frame wuerde das folgende setState crashen.
+    if (!mounted) return;
     _ampSub = null;
     final path = _recordingPath;
     setState(() {
@@ -1473,6 +1518,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
 
     var verified = encryption.isPeerIdentityVerified(peerId);
     final safetyNumber = encryption.safetyNumberFor(peerId);
+    // SECURITY (Audit 2026-09-26): Das `verified`-Flag wurde vorher nur
+    // angezeigt, aber NIRGENDS ausgewertet. Der Schalter macht die
+    // Out-of-Band-Bestaetigung praktisch erzwingbar.
+    var requireVerified = encryption.requiresPeerVerification(peerId);
 
     if (!mounted) return;
     await showDialog<void>(
@@ -1528,6 +1577,22 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                   onChanged: (value) async {
                     await encryption.setPeerIdentityVerified(peerId, value);
                     setDialogState(() => verified = value);
+                  },
+                ),
+                const SizedBox(height: 8),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(L10n.t(context, 'chat.requireVerifiedTitle')),
+                  subtitle: Text(
+                    L10n.t(context, 'chat.requireVerifiedHint'),
+                  ),
+                  value: requireVerified,
+                  onChanged: (value) async {
+                    await encryption.setRequiresPeerVerification(
+                        peerId, value);
+                    if (ctx.mounted) {
+                      setDialogState(() => requireVerified = value);
+                    }
                   },
                 ),
               ],
@@ -1780,10 +1845,16 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
 
     // Serverseitig kühlen (Migration 090, BIGINT): status -> cooled.
     // Die Match-ID kommt aus der Route als String.
-    final matchId = int.tryParse(_match?.id ?? '');
+    //
+    // Wichtig: `match` einmal am Anfang lesen. Zwischen dem await oben und
+    // hier kann ein Rebuild `_match` leeren (z. B. Chat-Verlauf lädt neu);
+    // ein späteres `_match!` wäre dann ein Null-Check-Crash.
+    final match = _match;
+    if (match == null) return;
+    final matchId = int.tryParse(match.id);
     if (matchId == null) {
       // Lokaler Kontakt (QR): kein Server-Funke - nur lokal entfernen.
-      ref.read(chatProvider.notifier).dissolveMatch(_match!.id);
+      ref.read(chatProvider.notifier).dissolveMatch(match.id);
       if (mounted) {
         ref.read(interessenInitialTabProvider.notifier).state = 2;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1930,6 +2001,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     // Nutzerwunsch Gruppierung: Namens-Header an Gruppenstarts (max. 3
     // Nachrichten / 3 Minuten pro Gruppe), Zeit an jeder Bubble.
     final bubbleGroups = computeBubbleGroups(messages);
+
+    // Gemeinsame Interessen EINMAL pro Build ermitteln. Vorher rief
+    // _commonInterests() im Chip-Block bis zu dreimal auf und baute dabei
+    // jedes Mal ein neues Set + Liste auf.
+    final commonInterests = _commonInterests();
+    final sharedInterest = commonInterests.isEmpty ? null : commonInterests.first;
 
     // Vorstellung ausblenden, sobald die erste eigene Nachricht raus ist.
     final hasSentMessage = messages.any((m) => m.isFrom(myId));
@@ -2587,8 +2664,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
             ),
           // Kontext-Icebreaker (v0.8.0): gemeinsame Interessen als
           // Gesprächseinstieg. Im Menü deaktivierbar.
-          if (icebreakerEnabled &&
-              _commonInterests().isNotEmpty)
+          if (icebreakerEnabled && sharedInterest != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
               child: Align(
@@ -2596,11 +2672,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                 child: ActionChip(
                   avatar: const Icon(Icons.lightbulb_outline, size: 18),
                   label: Text(
-                    'Gemeinsam: ${_commonInterests().first}',
+                    'Gemeinsam: $sharedInterest',
                     style: const TextStyle(fontSize: 12),
                   ),
-                  onPressed: () => _sendContextIcebreaker(
-                      _commonInterests().first),
+                  onPressed: () => _sendContextIcebreaker(sharedInterest),
                 ),
               ),
             ),
@@ -2812,9 +2887,15 @@ class _MessageBubble extends StatefulWidget {
   final String senderName;
 
   /// Uhrzeit (HH:mm) der Nachricht, lokal formatiert.
+  ///
+  /// Das Format-Objekt wird einmal pro State-Instanz erzeugt: `DateFormat.Hm()`
+  /// loest bei jedem Aufruf die Locale neu auf - das war bei langen
+  /// Verlaufen ein spuerbarer Kostenfaktor (pro Bubble pro Build).
+  static final DateFormat _timeFormat = DateFormat.Hm();
+
   String get _timeLabel {
     try {
-      return DateFormat.Hm().format(msg.timestamp.toLocal());
+      return _timeFormat.format(msg.timestamp.toLocal());
     } catch (_) {
       return '';
     }
@@ -2915,26 +2996,19 @@ class _MessageBubbleState extends State<_MessageBubble> {
                       button: true,
                       child: Stack(
                       children: [
-                        ImageFiltered(
-                          imageFilter: ImageFilter.blur(
-                            sigmaX: blurred ? 16 : 0,
-                            sigmaY: blurred ? 16 : 0,
-                          ),
-                          child: Container(
-                            width: 180,
-                            height: 120,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              gradient: const LinearGradient(
-                                colors: [Colors.purple, Colors.blue],
-                              ),
+                        // Nur wenn wirklich unscharf: ein ImageFiltered mit
+                        // sigma 0 erzeugt trotzdem einen Offscreen-Layer und
+                        // einen Filter-Pass - pro Bild-Bubble beim Scrollen.
+                        if (blurred)
+                          ImageFiltered(
+                            imageFilter: ImageFilter.blur(
+                              sigmaX: 16,
+                              sigmaY: 16,
                             ),
-                            child: const Center(
-                              child: Icon(Icons.image,
-                                  color: Colors.white, size: 40),
-                            ),
-                          ),
-                        ),
+                            child: const _ImageBubblePlaceholder(),
+                          )
+                        else
+                          const _ImageBubblePlaceholder(),
                         if (blurred)
                           Positioned(
                             bottom: 6,
@@ -3592,6 +3666,30 @@ class _MeetIdeaWheelDialogState extends State<_MeetIdeaWheelDialog> {
             child: Text(L10n.t(context, 'chat.wheelSend')),
           ),
       ],
+    );
+  }
+}
+
+/// Platzhalter-Box einer Bild-Bubble (wird erst durch das echte Bild
+/// ersetzt). Eigene Klasse, damit der Unschärf-Filter nur im verpixelten
+/// Zustand um das Bild gelegt wird und nicht um die Deko-Box.
+class _ImageBubblePlaceholder extends StatelessWidget {
+  const _ImageBubblePlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 180,
+      height: 120,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        gradient: const LinearGradient(
+          colors: [Colors.purple, Colors.blue],
+        ),
+      ),
+      child: const Center(
+        child: Icon(Icons.image, color: Colors.white, size: 40),
+      ),
     );
   }
 }

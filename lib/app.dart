@@ -177,8 +177,14 @@ class _AppState extends ConsumerState<App> {
       // mit "No MaterialLocalizations found" (grauer Fehler-Screen).
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       supportedLocales: const [Locale('de'), Locale('en')],
-      theme: AppTheme.light(theme: theme),
-      darkTheme: AppTheme.dark(theme: theme),
+      // Gecachte Themes (AppTheme.of): stabile Identitaet, kein Neubau von
+      // ColorScheme.fromSeed bei jedem Settings-Change.
+      theme: AppTheme.of(theme, Brightness.light),
+      darkTheme: AppTheme.of(theme, Brightness.dark),
+      // Sofort umschalten. Mit der Standard-Animation (200 ms) lief die
+      // ganze Oberflaeche inkl. Chat-Hintergruende erst sichtbar hinterher -
+      // der Wechsel wirkt dadurch "verzögert".
+      themeAnimationDuration: Duration.zero,
       themeMode: brightness == null
           ? ThemeMode.system
           : (brightness == Brightness.dark

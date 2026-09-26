@@ -18,6 +18,8 @@
   	<string>Thestia nutzt Bluetooth, um Thestia-Geräte in deiner Nähe für Transit Spark zu erkennen</string>
   	<key>NSLocationWhenInUseUsageDescription</key>
   	<string>Thestia nutzt deinen Standort für Transit Spark (Personen in deiner Nähe) und die Entfernungsanzeige</string>
+  	<key>NSPhotoLibraryUsageDescription</key>
+  	<string>Thestia braucht Zugriff auf deine Fotos, damit du ein Profilbild, ein Chat-Bild oder einen Hintergrund für den Chat auswählen kannst. Die Bilder werden nur von dir ausgewählt und an niemanden sonst gesendet.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

@@ -46,11 +46,25 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   }
 
   Future<void> _persist() async {
-    await _storage.saveString(
-      AppConstants.prefsSettingsKey,
-      jsonEncode(state.toJson()),
-    );
+    try {
+      final json = jsonEncode(state.toJson());
+      // Doppelte Schreibvorgauge vermeiden: der Chat-Hintergrund-Picker ruft
+      // ansonsten zweimal hintereinander (Pfad + Auswahl) und schreibt
+      // zweimal den kompletten Stand in den Keystore.
+      if (json == _lastPersisted) return;
+      await _storage.saveString(AppConstants.prefsSettingsKey, json);
+      _lastPersisted = json;
+    } catch (e) {
+      // Die UI zeigt den neuen Stand bereits optimistisch an. Ein
+      // Keystore-Fehler (z. B. PlatformException bei gleichzeitigem Zugriff)
+      // darf aber nicht als unbehandelter Async-Fehler nach oben schlagen.
+      if (kDebugMode) debugPrint('[Settings] Persist fehlgeschlagen: $e');
+      _lastPersisted = null;
+    }
   }
+
+  /// Zuletzt erfolgreich geschriebener JSON-Stand (Deduplizierung).
+  String? _lastPersisted;
 
   /// Schaltet den Blind Mode um.
   Future<void> toggleBlindMode(bool value) async {
@@ -449,6 +463,20 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   /// Lokalen Pfad des eigenen Hintergrundbildes setzen/löschen (nur lokal).
   Future<void> setChatBackgroundPath(String? path) async {
     state = state.copyWith(chatBackgroundPath: path);
+    await _persist();
+  }
+
+  /// Eigenes Hintergrundbild UND Auswahl in EINEM Schritt setzen.
+  ///
+  /// Getrennte Aufrufe von [setChatBackgroundPath] + [setChatBackground]
+  /// erzeugten zwei komplette JSON-Encodes und zwei Keystore-Writes pro Tap.
+  /// [path] null entfernt das Bild und setzt auf "kein Hintergrund".
+  Future<void> setCustomChatBackground(String? path) async {
+    state = state.copyWith(
+      chatBackgroundPath: path,
+      chatBackground:
+          path == null ? ChatBackgrounds.none : ChatBackgrounds.custom,
+    );
     await _persist();
   }
 

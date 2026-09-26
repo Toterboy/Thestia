@@ -32,7 +32,6 @@ dependencies:
   shared_preferences: ^2.2.3
 
   # SchÃ¶ne Icons & Utilities
-  flutter_svg: ^2.0.10
   # 0.20.2 ist von flutter_localizations (Flutter SDK) gepinnt - eine
   # hoehere Constraint wuerde die Abhaengigkeitsaufloesung brechen.
   intl: ^0.20.2
@@ -65,7 +64,6 @@ dependencies:
   flutter_webrtc: ^1.6.0
 
   # WebSocket fÃ¼r Signaling-Server-Kommunikation
-  web_socket_channel: ^3.0.1
 
   # HTTP-Client fÃ¼r REST-API (mit Zertifikat-Pinning)
   http: ^1.2.1
@@ -98,7 +96,7 @@ dependencies:
   geocoding: ^4.0.0
 
   # Bildverarbeitung fÃ¼r Moderation (Placeholder fÃ¼r ML-Kit)
-  image: ^4.2.0
+  image: ^4.10.1
 
   # NSFW on-device (v0.8.0): lokale Inferenz des Bild-Sicherheits-Modells
   # (image-safety-classifier-xs, ONNX-Format) - nur bei manueller Meldung.
@@ -136,9 +134,11 @@ dependencies:
   # Plattform-Prompts an Supabase Auth weiter (siehe lib/services/passkey_auth.dart).
   # ACHTUNG: BenÃ¶tigt Flutter 3.35+ / Dart 3.9+ und supabase_flutter mit
   # Passkey-UnterstÃ¼tzung (signInWithPasskey/registerPasskey).
-  passkeys: ^2.21.0
-  # Direkte Abhängigkeit: WispPasskeyAuthenticator implementiert die
+  # Direkte Abhängigkeit: ThestiaPasskeyAuthenticator implementiert die
   # Interface-Klasse des Platform-Interfaces (ohne Pre-Cancel-Verhalten).
+  # NUR das Platform-Interface wird direkt gebraucht - das konkrete
+  # passkeys-Paket kommt transitiv über supabase_flutter (Security 2026-09-26:
+  # ungenutzte Direkt-Abhängigkeiten = unnötige Angriffsfläche).
   passkeys_platform_interface: ^2.9.0
 
   # QR-Code (Profil teilen + Scannen)
@@ -149,7 +149,6 @@ dependencies:
   webview_flutter: ^4.14.1
   image_cropper: ^12.2.1
   unifiedpush: ^6.2.0
-  passkeys_doctor: ^1.6.0
 
 dev_dependencies:
   flutter_test:
@@ -205,10 +204,11 @@ flutter_launcher_icons:
   android: true
   ios: true
   remove_alpha_ios: true
-  # Adaptive Icon (Android 8+): Verlauf aus dem Artwork + weich
-  # eingeblendetes Badge (Figuren/Herz/Schrift), generiert via
-  # tool/generate_icons.dart. Hintergrund #390D3C = Badge-Bett.
-  adaptive_icon_background: "#390D3C"
+  # Adaptive Icon (Android 8+): Hintergrund = Markenverlauf (volflaechig),
+  # Vordergrund = Herz + Schriftzug in der Safe-Zone, damit die KREIS-Maske
+  # des Launchers nichts abschneidet. Erzeugt von
+  # tool/generate_launcher_icon.py (dort auch monochrome + Legacy-Round-Icon).
+  adaptive_icon_background: "assets/images/thestia_icon_background.png"
   adaptive_icon_foreground: "assets/images/thestia_icon_foreground.png"
   # Safe-Zone steckt bereits im Foreground -> kein zusaetzlicher Inset.
   adaptive_icon_foreground_inset: 0
@@ -230,6 +230,9 @@ flutter:
     - assets/images/thestia_splash.png
     - assets/images/thestia_splash_android12.png
     - assets/models/
-    - .env
+    # SECURITY (Audit 2026-09-26): KEIN .env als App-Asset. Eine gebündelte
+    # Konfigurationsdatei ist aus APK/IPA extrahierbar. Die Werte werden
+    # ueber --dart-define zur Compile-Zeit injiziert (tool/build_release.ps1),
+    # .env bleibt rein lokale Entwicklungsquelle (nicht Teil des Bundles).
 
   # Hinweis: In einer echten App wÃ¼rden hier weitere Assets (Bilder, Fonts) registriert.

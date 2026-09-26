@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart' show WidgetsBinding, AppLifecycleState;
+import 'package:flutter/widgets.dart'
+    show WidgetsBinding, WidgetsBindingObserver, AppLifecycleState;
 
 import 'package:thestia/models/message.dart';
 import 'package:thestia/providers/chat_provider.dart';
@@ -38,7 +39,7 @@ bool appInForeground() {
 ///    Lokal-Benachrichtigung (macht _maybeNotifyMessage) -> ack (löschen).
 ///  - NICHT routierbar -> NICHT acken: die Zeile bleibt im Relay und
 ///    wird vom zuständigen Chat-Screen abgeholt (kein Datenverlust).
-class GlobalRelayInbox {
+class GlobalRelayInbox with WidgetsBindingObserver {
   GlobalRelayInbox(this._ref);
 
   /// WidgetRef (vom App-Wurzel-Widget) - hat dieselbe read-API und bleibt
@@ -48,26 +49,86 @@ class GlobalRelayInbox {
   final dynamic _ref;
   Timer? _timer;
   bool _busy = false;
+  bool _running = false;
+  bool _foreground = true;
 
   /// Gecachte aktive Zufallschat-Session (Session-Lookup nicht pro Tick).
   ({String sessionId, String partnerId})? _activeRandomChat;
   DateTime? _activeRandomChatAt;
 
   static const Duration _pollInterval = Duration(seconds: 6);
+  static const Duration _maxInterval = Duration(seconds: 45);
+
+  /// Leerer-Backoff: Solange nichts kommt, wird das Intervall gestreckt
+  /// (bis [_maxInterval]). Vorher pollte der Eingang stur alle 6 s, auch
+  /// wenn seit Stunden keine Relay-Zeile existiert - das war einer der
+  /// größten Dauer-Verbraucher im Vordergrund. Kommt wieder etwas an,
+  /// geht es sofort auf [_pollInterval] zurück (Latenz bleibt erhalten).
+  static const List<Duration> _backoffLadder = [
+    _pollInterval,
+    Duration(seconds: 12),
+    Duration(seconds: 25),
+    _maxInterval,
+  ];
   static const Duration _sessionCacheTtl = Duration(seconds: 30);
+  int _backoffStep = 0;
 
   /// Benachrichtigungs-Hook (wird vom App-Wurzel-Widget gesetzt, da der
   /// Inbox-Pfad kein WidgetRef hat).
   static RelayInboxNotifier? notifier;
 
   void start() {
-    _timer ??= Timer.periodic(_pollInterval, (_) => _tick());
+    if (_running) return;
+    _running = true;
+    WidgetsBinding.instance.addObserver(this);
+    _foreground = appInForeground();
+    _schedule();
     unawaited(_tick());
   }
 
   void stop() {
+    _running = false;
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     _timer = null;
+  }
+
+  /// Timer neu aufsetzen (Einmal-Timer statt periodic: erlaubt ein
+  /// variables Intervall und echtes Pausieren im Hintergrund).
+  void _schedule() {
+    _timer?.cancel();
+    _timer = null;
+    if (!_running || !_foreground) return;
+    final step = _backoffStep.clamp(0, _backoffLadder.length - 1);
+    _timer = Timer(_backoffLadder[step], () async {
+      await _tick();
+      _schedule();
+    });
+  }
+
+  /// Hintergrund: Timer anhalten. Im Vordergrund mit frischem Intervall
+  /// weiter (der Nutzer soll beim Zurückkommen sofort Nachrichten sehen).
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final fg = state == AppLifecycleState.resumed;
+    if (fg == _foreground) return;
+    _foreground = fg;
+    if (fg) {
+      _backoffStep = 0;
+      _schedule();
+      unawaited(_tick());
+    } else {
+      _timer?.cancel();
+      _timer = null;
+    }
+  }
+
+  /// Backoff eine Stufe zurücksetzen (Zustellung war erfolgreich).
+  void _resetBackoff() {
+    if (_backoffStep != 0) {
+      _backoffStep = 0;
+      _schedule();
+    }
   }
 
   Future<void> _tick() async {
@@ -85,7 +146,16 @@ class GlobalRelayInbox {
       // braucht).
       final pending =
           await _ref.read(relayServiceProvider).fetchPending(ack: false);
-      if (pending.isEmpty) return;
+      if (pending.isEmpty) {
+        // Leer -> eine Stufe langsamer. Ruhezustand kostet fast nichts.
+        if (_backoffStep < _backoffLadder.length - 1) {
+          _backoffStep++;
+        } else if (_backoffLadder.last < _maxInterval) {
+          _backoffStep = _backoffLadder.length - 1;
+        }
+        return;
+      }
+      _resetBackoff();
       final acked = <int>[];
       for (final r in pending) {
         final routed = await _route(r);

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:thestia/services/secure_storage_namespaces.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Audit H-6: Sichere Session-Persistenz für Supabase.
@@ -31,11 +32,19 @@ class SecureSupabaseLocalStorage implements LocalStorage {
   // flutter_secure_storage verschlüsselt über den Keystore; der Parameter
   // encryptedSharedPreferences ist veraltet und wird ignoriert (siehe
   // secure_storage.dart).
-  static const _platformOptions = AndroidOptions();
+  // Eigener Namespace (secure_storage_namespaces.dart): die Session darf
+  // nicht im selben Keystore-Alias wie die Token-Credentials liegen -
+  // `resetOnError: true` (v11-Default) wuerde sonst beides loeschen.
+  static const _platformOptions = AndroidOptions(
+    storageNamespace: SecureNamespaces.session,
+  );
 
   final FlutterSecureStorage _storage = const FlutterSecureStorage(
     aOptions: _platformOptions,
-    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device),
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock_this_device,
+      accountName: SecureNamespaces.session,
+    ),
   );
 
   String? _key;

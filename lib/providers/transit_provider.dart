@@ -82,15 +82,21 @@ class TransitState {
 /// rotiert Tokens, hält den Encounter-Cache warm und sendet Signale
 /// mit 1-3 Merkmal-Tags.
 class TransitNotifier extends StateNotifier<TransitState> {
-  TransitNotifier(this._storage) : super(const TransitState()) {
+  TransitNotifier() : super(const TransitState()) {
     _encounters.load();
   }
 
-  final LocalStorage _storage;
-
   TransitEncounterService? _encountersField;
-  TransitEncounterService get _encounters =>
-      _encountersField ??= TransitEncounterService(_storage);
+
+  /// SECURITY (Audit 2026-09-26): Der Encounter-Cache wird BEWUSST nicht
+  /// ueber `_storage` (localStorageProvider = SharedPreferences =
+  /// Klartext) geschrieben, sondern in den Keystore. Der Cache enthaelt
+  /// BEGEHNACHWEISE - welche fremden Geraete waren per BLE in Funkreichweite
+  /// und wann. Das ist ein Ortungsdatum (DSGVO Art. 9); die restlichen
+  /// Art.-9-Preferenzen liegen bereits im Keystore
+  /// (user_preferences_provider.dart), dieser Store war die Ausnahme.
+  TransitEncounterService get _encounters => _encountersField ??=
+      TransitEncounterService(SecurePreferencesStorage());
 
   Timer? _countdownTimer;
   Timer? _rotateTimer;
@@ -170,15 +176,23 @@ class TransitNotifier extends StateNotifier<TransitState> {
       }
     });
 
-    // Countdown/Ende-Überwachung.
+    // Countdown/Ende-Überwachung: EINMAL-Timer auf die Restlaufzeit.
+    // Vorher lief hier ein 1-s-Timer, der nichts tat außer
+    // `DateTime.now().isAfter(endsAt)` zu vergleichen - 3600 Weckrufe pro
+    // Stunde und Aktivierungsminute, obwohl die Sekunden-Anzeige gar nicht
+    // davon profitiert (sie rendert über eigene Mini-Widgets beim Aufbau).
     _countdownTimer?.cancel();
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!state.active) return;
-      final endsAt = state.endsAt;
-      if (endsAt != null && DateTime.now().isAfter(endsAt)) {
-        deactivate();
+    final sessionEndsAt = state.endsAt;
+    if (sessionEndsAt != null) {
+      final remaining = sessionEndsAt.difference(DateTime.now());
+      if (remaining <= Duration.zero) {
+        unawaited(deactivate());
+      } else {
+        _countdownTimer = Timer(remaining, () {
+          if (state.active) unawaited(deactivate());
+        });
       }
-    });
+    }
 
     return true;
   }
@@ -307,5 +321,5 @@ class TransitNotifier extends StateNotifier<TransitState> {
 /// Provider für Transit Spark.
 final transitProvider =
     StateNotifierProvider<TransitNotifier, TransitState>((ref) {
-  return TransitNotifier(ref.read(localStorageProvider));
+  return TransitNotifier();
 });

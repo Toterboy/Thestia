@@ -2,7 +2,7 @@
 tool/make_store_screenshots.py
 ==============================
 Erzeugt MARKETING-Screenshots fuer den Play Store aus den gerenderten
-App-Screens (test/screenshots/store_v091/9x16/*.png).
+App-Screens (test/screenshots/store_v091/phone/*.png).
 
 Statt nackter UI-Dumps: Markenverlauf als Hintergrund, echtes
 Phone-Mockup (Rahmen + Schatten) und eine Nutzen-Headline darueber.
@@ -23,11 +23,12 @@ Voraussetzung: die App-Screens vorher rendern -
 
 import pathlib
 import sys
+import time
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SRC = ROOT / 'test' / 'screenshots' / 'store_v091' / '9x16'
+SRC = ROOT / 'test' / 'screenshots' / 'store_v091' / 'phone'
 OUT_9x16 = ROOT / 'releases' / 'testapk' / 'screenshots' / 'marketing' / '9x16'
 OUT_WQHD = ROOT / 'releases' / 'testapk' / 'screenshots' / 'marketing' / 'wqhd'
 OUT_FASTLANE = (ROOT / 'fastlane' / 'metadata' / 'android' / 'de-DE'
@@ -60,11 +61,11 @@ SHOTS = {
         'im Zug nebenan Blickkontakt genügt.',
         'E2E-verschlüsselt',
     ),
-    '04_chat_hintergrund': (
-        'Deine Chats,\ndein Stil',
-        'Muster oder eigenes Bild – und trotzdem\n'
-        'endet-zu-ende verschlüsselt.',
-        '6 Muster + eigenes Bild',
+    '04_anpassen': (
+        'Dein Stil,\ndeine Farben',
+        'Sechs Farbschemata, Hell oder Dunkel und ein eigener\n'
+        'Chat-Hintergrund – alles bleibt erhalten.',
+        'Auch 6 Muster im Chat',
     ),
     '05_eisbrecher': (
         '60 Fragen gegen\ndas Schweigen',
@@ -108,49 +109,88 @@ def rounded_mask(size, radius, supersample=4):
     return m.resize((w, h), Image.LANCZOS)
 
 
-def phone_mockup(screen: Image.Image, scale=1.0):
-    """Rahmen + Schatten um den Screen-Screenshot."""
-    w, h = screen.size
-    bezel = int(round(14 * scale))
-    radius_out = int(round(64 * scale))
-    radius_in = int(round(46 * scale))
-    pad = int(round(30 * scale))          # Schattenabstand
+# Geraetemasse (in den Screen-Pixeln des 1080x2400-Quellrendings, werden mit
+# `scale` skaliert). Bewusst "normales" Handy: sichtbare, rundum SYMMETRISCHE
+# Randbreiten statt Edge-to-Edge, Punch-Hole-Kamera als eigenstaendige Linse.
+BEZEL = 36
+PAD = 40
+CAM_R = 14
 
-    body_w, body_h = w + 2 * bezel, h + 2 * bezel
-    canvas = Image.new('RGBA', (body_w + 2 * pad, body_h + 2 * pad), (0, 0, 0, 0))
+
+def phone_mockup(screen: Image.Image, scale=1.0):
+    """Natuerliches Smartphone-Mockup.
+
+    Rundum gleiche, sichtbare Randbreite, echte Punch-Hole-Kamera mit
+    dunklem Ring, Linse und Glanzpunkt, weicher Schlagschatten. Sieht aus wie
+    ein Handy und nicht wie eine Folie.
+    """
+    w, h = screen.size
+    b = BEZEL * scale
+    bs = bt = bb = b
+    pad = PAD * scale
+    radius_out = 54 * scale
+    radius_in = 42 * scale
+
+    body_w, body_h = int(w + 2 * bs), int(h + bt + bb)
+    pad_i = int(pad)
+    canvas = Image.new('RGBA', (body_w + 2 * pad_i, body_h + 2 * pad_i), (0, 0, 0, 0))
 
     # Weicher Schlagschatten unter dem Geraet
     shadow = Image.new('RGBA', canvas.size, (0, 0, 0, 0))
     ImageDraw.Draw(shadow).rounded_rectangle(
-        [pad - int(6 * scale), pad + int(10 * scale),
-         pad + body_w + int(6 * scale), pad + body_h + int(18 * scale)],
-        radius=radius_out, fill=(20, 0, 40, 120))
-    canvas.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(18 * scale)))
+        [pad_i - 5 * scale, pad_i + 12 * scale,
+         pad_i + body_w + 5 * scale, pad_i + body_h + 20 * scale],
+        radius=radius_out, fill=(18, 0, 36, 130))
+    canvas.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(20 * scale)))
 
-    # Geraetekorpus (dunkles Graphit mit hellem Rand)
+    # Geraetekorpus (Graphit, heller Rand)
     body = Image.new('RGBA', (body_w, body_h), (0, 0, 0, 0))
     ImageDraw.Draw(body).rounded_rectangle(
         [0, 0, body_w - 1, body_h - 1], radius=radius_out,
-        fill=(26, 18, 40, 255), outline=(255, 255, 255, 60),
+        fill=(26, 19, 38, 255), outline=(255, 255, 255, 78),
         width=max(2, int(2 * scale)))
 
-    # Screen: Ecken oben leicht gerundet (wie ein Modern-Handy)
-    scr_mask = rounded_mask((w, h), radius_in)
+    # Screen mit gerundeten Ecken
     scr = Image.new('RGBA', (w, h), (0, 0, 0, 0))
-    scr.paste(screen.convert('RGBA'), (0, 0), scr_mask)
-    body.alpha_composite(scr, (bezel, bezel))
+    scr.paste(screen.convert('RGBA'), (0, 0), rounded_mask((w, h), radius_in))
+    body.alpha_composite(scr, (int(bs), int(bt)))
 
-    # Notch/Dynamic-Island
     d = ImageDraw.Draw(body)
-    iw = int(round(150 * scale))
-    ih = int(round(40 * scale))
-    d.rounded_rectangle(
-        [(body_w - iw) // 2, bezel + int(round(8 * scale)),
-         (body_w + iw) // 2, bezel + ih + int(round(8 * scale))],
-        radius=ih // 2, fill=(20, 14, 30, 235))
 
-    canvas.alpha_composite(body, (pad, pad))
+    # Punch-Hole-Kamera mittig im oberen Rand: dunkler Rand, dunkelblaue
+    # Linse, kleiner Glanzpunkt. Wichtig: opake Farben auf einer eigenen Ebene
+    # - alpha_composite mischt, ImageDraw auf dem Korpus wuerde ihn durchbohren.
+    cr = int(CAM_R * scale)
+    cx, cy = int(body_w / 2), int(bt / 2)
+    side = 2 * cr + 2
+    cam = Image.new('RGBA', (side, side), (0, 0, 0, 0))
+    dc = ImageDraw.Draw(cam)
+    dc.ellipse([1, 1, side - 2, side - 2], fill=(8, 6, 12, 255))
+    inset = max(1, int(cr * 0.32))
+    dc.ellipse([inset, inset, side - 1 - inset, side - 1 - inset],
+               fill=(28, 34, 56, 255))
+    mid = max(1, int(cr * 0.66))
+    dc.ellipse([mid, mid, side - 1 - mid, side - 1 - mid], fill=(9, 12, 24, 255))
+    dc.ellipse([int(cr * 1.05), int(cr * 0.75), int(cr * 1.7), int(cr * 1.4)],
+               fill=(150, 155, 175, 255))
+    body.alpha_composite(cam, (cx - cr - 1, cy - cr - 1))
+
+    canvas.alpha_composite(body, (pad_i, pad_i))
     return canvas
+
+
+def fit_scale(shot: Image.Image, box_h: int, box_w: int = 10 ** 9):
+    """Scale, damit Screen + Bezel + Schattenplatz in box_h/box_w passen."""
+    h = shot.height + 2 * (BEZEL + PAD)
+    w = shot.width + 2 * (BEZEL + PAD)
+    return min(box_h / h, box_w / w)
+
+
+def round_corners(img: Image.Image, radius: int):
+    """Beschneidet das fertige Bild auf abgerundete Ecken (aussen transparent)."""
+    out = Image.new('RGBA', img.size, (0, 0, 0, 0))
+    out.paste(img.convert('RGBA'), (0, 0), rounded_mask(img.size, radius))
+    return out
 
 
 def draw_lines(draw, xy, text, font, fill, line_gap, anchor_x, y, align='center'):
@@ -194,26 +234,29 @@ def compose_9x16(shot: Image.Image, headline: str, subline: str, badge: str):
     draw = ImageDraw.Draw(bg)
 
     # --- Textblock oben -------------------------------------------------
-    f_head = ImageFont.truetype(FONT_BOLD, 74)
-    f_sub = ImageFont.truetype(FONT_REG, 36)
-    y = 130
-    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255), 20, W // 2, y)
-    y += 30
-    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226), 14, W // 2, y)
+    f_head = ImageFont.truetype(FONT_BOLD, 70)
+    f_sub = ImageFont.truetype(FONT_REG, 34)
+    y = 110
+    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255), 18,
+                   W // 2, y)
+    y += 26
+    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226), 13,
+                   W // 2, y)
 
-    # --- Phone-Mockup ---------------------------------------------------
-    scale = 0.55
-    tw, th = int(1080 * scale), int(1920 * scale)
+    # --- Phone-Mockup: Hoehe an den Restkasten anpassen ------------------
+    mock_h = H - y - 170
+    scale = fit_scale(shot, mock_h, W - 120)
+    tw, th = int(shot.width * scale), int(shot.height * scale)
     scr = shot.resize((tw, th), Image.LANCZOS)
     phone = phone_mockup(scr, scale=scale)
     px = (W - phone.width) // 2
-    py = y + 40
+    py = y + 30
     bg.alpha_composite(phone, (px, py))
 
     # --- Badge unter dem Geraet -------------------------------------------
-    by = min(py + phone.height + 26, H - 100)
+    by = min(py + phone.height + 18, H - 100)
     badge_pill(bg, badge, W // 2, by)
-    return bg.convert('RGB')
+    return round_corners(bg, 56)
 
 
 def compose_wqhd(shot: Image.Image, headline: str, subline: str, badge: str):
@@ -222,13 +265,13 @@ def compose_wqhd(shot: Image.Image, headline: str, subline: str, badge: str):
     draw = ImageDraw.Draw(bg)
 
     # Phone links: Hoehe so skalieren, dass es mit Rand sicher passt
-    # (Mockup = Screen + 2xBezel + 2xSchattenabstand).
-    margin = 70
-    scale = (H - 2 * margin) / (1920.0 + 2 * (14 + 30))
-    tw, th = int(1080 * scale), int(1920 * scale)
+    # (Mockup = Screen + Bezel + 2xSchattenabstand).
+    margin = 60
+    scale = fit_scale(shot, H - 2 * margin, 1000)
+    tw, th = int(shot.width * scale), int(shot.height * scale)
     scr = shot.resize((tw, th), Image.LANCZOS)
     phone = phone_mockup(scr, scale=scale)
-    px = 120
+    px = 130
     py = (H - phone.height) // 2
     bg.alpha_composite(phone, (px, py))
 
@@ -257,7 +300,24 @@ def compose_wqhd(shot: Image.Image, headline: str, subline: str, badge: str):
         (tx + 68 - bb[0], y + 20 - bb[1]), badge, font=f_badge,
         fill=(255, 255, 255, 250))
     bg.alpha_composite(layer)
-    return bg.convert('RGB')
+    return round_corners(bg, 56)
+
+
+def save_png(img: Image.Image, path: pathlib.Path, tries: int = 6):
+    """PNG schreiben mit Retry.
+
+    Windows-Defender/Indexer haelt die neu geschriebene Datei manchmal
+    kurzzeitig offen; dann schlaegt das Speichern mit Errno 22 fehl.
+    """
+    last = None
+    for attempt in range(tries):
+        try:
+            img.save(path, optimize=True)
+            return
+        except OSError as e:  # Datei temporaer gesperrt
+            last = e
+            time.sleep(0.4 * (attempt + 1))
+    raise last
 
 
 def main():
@@ -276,9 +336,8 @@ def main():
         shot = Image.open(src)
         a = compose_9x16(shot, headline, subline, badge)
         b = compose_wqhd(shot, headline, subline, badge)
-        a.save(OUT_9x16 / f'{name}.png', optimize=True)
-        b.save(OUT_WQHD / f'{name}.png', optimize=True)
-        a.save(OUT_FASTLANE / f'{name}.png', optimize=True)
+        for d, im in ((OUT_9x16, a), (OUT_WQHD, b), (OUT_FASTLANE, a)):
+            save_png(im, d / f'{name}.png')
         print(f'  {name}: 9x16 {a.size} + wqhd {b.size}')
 
     print('Fertig.')

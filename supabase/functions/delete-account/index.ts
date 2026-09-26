@@ -224,14 +224,14 @@ async function mfaSatisfied(
     const adminAny = client.auth as unknown as {
       mfa?: { listFactors?: (uid: string) => Promise<{ data?: { factors?: { status?: string }[] } }> };
     };
-    if (typeof adminAny.mfa?.listFactors !== "function") return true;
+    if (typeof adminAny.mfa?.listFactors !== "function") return false;
     const { data } = await adminAny.mfa.listFactors(userId);
     const hasVerified = (data?.factors ?? []).some((f) => f.status === "verified");
     if (hasVerified && aal !== "aal2") return false;
     return true;
   } catch (e) {
-    console.warn("MFA-Faktor-Prüfung nicht verfügbar:", e);
-    return true;
+    console.error("MFA-Faktor-Prüfung fehlgeschlagen (fail-closed):", e);
+    return false;
   }
 }
 

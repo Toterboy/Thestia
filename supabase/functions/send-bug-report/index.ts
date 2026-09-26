@@ -43,6 +43,32 @@ function isRateLimited(ip: string): boolean {
 }
 
 // HTML-Escaping gegen Stored XSS
+/**
+ * Client-IP robust bestimmen (Security 2026-09-26).
+ *
+ * BUG VORHER: `req.headers.get("x-forwarded-for")` liefert die GESAMTE
+ * Komma-Liste als String. Der Angreifer rotiert den Header-Wert einfach
+ * ("1.2.3.4, 5.6.7.8, ...") - der Rate-Limit-Key wechselt damit und das
+ * Limit ist wirkungslos.
+ *
+ * Reihenfolge: x-client-ip / cf-connecting-ip (von der Plattform gesetzt)
+ * -> ERSTER Eintrag aus x-forwarded-for. "unknown" nur, wenn nichts da ist.
+ */
+function clientIp(req: Request): string {
+  const direct =
+    req.headers.get("x-client-ip") ??
+    req.headers.get("cf-connecting-ip") ??
+    req.headers.get("true-client-ip");
+  if (direct) return direct.trim().slice(0, 64);
+
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) {
+    const first = forwarded.split(",")[0]?.trim();
+    if (first) return first.slice(0, 64);
+  }
+  return "unknown";
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -60,7 +86,7 @@ serve(async (req) => {
   }
 
   // Rate Limiting
-  const ip = req.headers.get("x-forwarded-for") ?? req.headers.get("cf-connecting-ip") ?? "unknown";
+  const ip = clientIp(req);
   if (isRateLimited(ip)) {
     return new Response(JSON.stringify({ error: "Too many requests" }), {
       status: 429, headers: { "Content-Type": "application/json" },

@@ -64,20 +64,31 @@ class LocationVerificationService {
   Future<bool> hasVerificationLocation() => _storage.hasLocation();
 
   /// Holt den gespeicherten Verifizierungs-Standort.
+  ///
+  /// Die Werte kommen aus `FlutterSecureStorage` und können nach einem
+  /// Gerätewechsel, einem App-Update oder einer Migration korrupt sein.
+  /// Ein `parse` auf ungeprüften Rohtext würde dann eine FormatException
+  /// werfen und den aufrufenden Screen crashen. Lieber "kein Standort"
+  /// zurückgeben als den Nutzer mit einem Absturz zu verlieren.
   Future<Map<String, dynamic>?> getVerificationLocation() async {
     final data = await _storage.readAll();
     if (data == null) return null;
 
-    return {
-      'latitude': double.parse(data['latitude']!),
-      'longitude': double.parse(data['longitude']!),
-      'timestamp': data['timestamp']!.isNotEmpty
-          ? DateTime.parse(data['timestamp']!)
-          : null,
-      'accuracy': data['accuracy']!.isNotEmpty
-          ? double.parse(data['accuracy']!)
-          : null,
-    };
+    try {
+      final lat = double.parse(data['latitude'] ?? '');
+      final lng = double.parse(data['longitude'] ?? '');
+      final rawTs = data['timestamp'] ?? '';
+      final rawAcc = data['accuracy'] ?? '';
+      return {
+        'latitude': lat,
+        'longitude': lng,
+        'timestamp': rawTs.isNotEmpty ? DateTime.tryParse(rawTs) : null,
+        'accuracy': rawAcc.isNotEmpty ? double.tryParse(rawAcc) : null,
+      };
+    } catch (e) {
+      debugPrint('[LocationVerification] Gespeicherter Standort unlesbar: $e');
+      return null;
+    }
   }
 
   /// Berechnet die Distanz zwischen zwei Standorten in Metern.

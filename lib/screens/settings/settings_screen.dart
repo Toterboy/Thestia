@@ -536,7 +536,10 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           FutureBuilder<PackageInfo>(
-            future: PackageInfo.fromPlatform(),
+            // Einmalig fuer die App-Lebenszeit. Im build() erzeugt,
+            // feuert jeder Schalter-Toggle einen neuen
+            // Platform-Channel-Aufruf.
+            future: _packageInfo,
             builder: (context, snapshot) {
               final version = snapshot.data;
               if (version == null) return const SizedBox.shrink();
@@ -551,6 +554,9 @@ class SettingsScreen extends ConsumerWidget {
       ),
     );
   }
+
+  /// Einmalig: die Version aendert sich waehrend der Sitzung nicht.
+  static final Future<PackageInfo> _packageInfo = PackageInfo.fromPlatform();
 }
 
 class _SectionTitle extends StatelessWidget {

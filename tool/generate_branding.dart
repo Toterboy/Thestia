@@ -6,11 +6,16 @@ import 'package:image/image.dart' as img;
 /// Erzeugt die Android-Branding-Assets aus dem Thestia-Basis-Icon
 /// (`assets/images/thestia_icon_base.png`, EINZIGE Logo-Quelle):
 ///
-///  1. `thestia_icon_foreground.png` – Adaptive-Icon-Foreground (Safe-Zone).
-///  2. `drawable/notification_icon.png` – 96 px, weiß + Alpha (Android-
+///  1. `drawable/notification_icon.png` – 96 px, weiß + Alpha (Android-
 ///     Statusleiste): helle Elemente des Logos werden weiß, der Rest
 ///     transparent. Fällt auf eine volle Kreissilhouette zurück, wenn zu
 ///     wenige helle Pixel gefunden werden.
+///
+/// WICHTIG: Das Adaptive-Launcher-Icon wird hier NICHT mehr erzeugt. Es muss
+/// das vollständige Artwork in der Safe-Zone halten, sonst schneidet die
+/// Kreis-Maske des Launchers den Schriftzug "Thestia" an den Rändern ab.
+/// Das macht `tool/generate_launcher_icon.py` (Python) – dort auch der
+/// monochrome-Layer und das runde Legacy-Icon.
 ///
 /// (Der native Splash wird separat von `tool/generate_splash_images.dart`
 /// + `flutter_native_splash:create` erzeugt - ebenfalls aus dem Basis-Icon.)
@@ -21,24 +26,7 @@ void main() {
   final src = img.decodePng(File(roundPath).readAsBytesSync());
   if (src == null) throw Exception('$roundPath konnte nicht gelesen werden');
 
-  // ---- 1) Adaptive-Icon-Foreground (Safe-Zone ~66 %) --------------------
-  const fgSize = 1024;
-  final fgContent = (fgSize * 0.66).round();
-  final fgScaled = img.copyResize(
-    src,
-    width: fgContent,
-    height: fgContent,
-    interpolation: img.Interpolation.cubic,
-  );
-  final fg = img.Image(width: fgSize, height: fgSize, numChannels: 4);
-  final fgOff = (fgSize - fgContent) ~/ 2;
-  for (final p in fgScaled) {
-    fg.setPixel(p.x + fgOff, p.y + fgOff, p);
-  }
-  File('assets/images/thestia_icon_foreground.png')
-      .writeAsBytesSync(img.encodePng(fg));
-
-  // ---- 2) Notification-Icon (weiß + Alpha, 96 px, HERZ) ------------------
+  // ---- 1) Notification-Icon (weiß + Alpha, 96 px, HERZ) ------------------
   // Android zeigt das Small Icon als weiße Silhouette in der Statusleiste.
   // Die frühere Luminanz-Extraktion aus dem Logo lieferte nur ~308 weiße
   // Pixel (praktisch LEER / wirkte als weißes Viereck). Jetzt: eine klare,
@@ -100,5 +88,5 @@ void main() {
       .writeAsBytesSync(img.encodePng(n));
 
   stdout.writeln('Branding erzeugt (Quelle: thestia_icon_base.png): '
-      'Adaptive-Foreground, Notification-Icon (weiss=$whitePixels px)');
+      'Notification-Icon (weiss=$whitePixels px)');
 }

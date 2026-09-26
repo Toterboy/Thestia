@@ -101,12 +101,19 @@ class ChatBackgroundView extends StatelessWidget {
         !ChatBackgrounds.presets.contains(backgroundId)) {
       return const SizedBox.shrink();
     }
-    return CustomPaint(
-      painter: _PatternPainter(
-        id: backgroundId,
-        color: Theme.of(context).colorScheme.primary,
+    // RepaintBoundary: das Muster ist eine grossflaechige, teure
+    // CustomPaint-Zeichnung. Ohne eigene Ebene wird sie bei jedem Repaint des
+    // Chat-Screens (Scrollen, neue Nachricht, Animationen) neu gerastert -
+    // das kostet spuerbar Strom. Die Ebene merkt sich das fertige Muster und
+    // zeichnet es nur neu, wenn sich Farbe/ID aendern.
+    return RepaintBoundary(
+      child: CustomPaint(
+        painter: _PatternPainter(
+          id: backgroundId,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        child: const SizedBox.expand(),
       ),
-      child: const SizedBox.expand(),
     );
   }
 
@@ -174,12 +181,9 @@ class _PatternPainter extends CustomPainter {
               path.lineTo(x, yy);
             }
           }
-          canvas.drawPath(
-              path,
-              Paint()
-                ..color = color.withValues(alpha: 0.10)
-                ..style = PaintingStyle.stroke
-                ..strokeWidth = 2);
+          // `stroke` wiederverwenden - pro Zeile ein neues Paint-Objekt
+          // anzulegen erzeugte bei ~90 Zeilen jedes Mal 90 Allokationen.
+          canvas.drawPath(path, stroke);
         }
     }
   }

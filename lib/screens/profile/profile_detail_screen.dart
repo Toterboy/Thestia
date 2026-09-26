@@ -643,6 +643,22 @@ class _PublicProfileAvatar extends ConsumerStatefulWidget {
 class _PublicProfileAvatarState extends ConsumerState<_PublicProfileAvatar> {
   Future<Uint8List?>? _avatarFuture;
 
+  /// Thumbnail-Futures nach Pfad cachen.
+  ///
+  /// Vorher wurde das Future der Thumbnails direkt in `build` erzeugt - jeder
+  /// Rebuild (Scrollen, Provider-Update) startete fuer jedes Bild erneut
+  /// einen match-media-Aufruf + HTTP-GET + compute-Entschluesselung. Bei
+  /// Fehlern wird nichts gecacht -> Endlos-Netz bei jedem Rebuild.
+  final Map<String, Future<Uint8List?>> _thumbFutures = {};
+
+  Future<Uint8List?> _thumbFuture(String path) =>
+      _thumbFutures[path] ??= ref
+          .read(supabaseStorageServiceProvider)
+          .loadPartnerAvatarBytes(
+            targetUserId: widget.profile.id,
+            path: path,
+          );
+
   @override
   void initState() {
     super.initState();
@@ -663,6 +679,7 @@ class _PublicProfileAvatarState extends ConsumerState<_PublicProfileAvatar> {
   }
 
   void _loadAvatar() {
+    _thumbFutures.clear();
     // 107: Pfade aus der View enthalten keine Schlüssel mehr - Fremd-
     // Bilder laufen über match-media (URL + Schlüssel, serverseitig
     // berechtigungsgeprüft). VOR dem Laden den Memory-Cache-Eintrag
@@ -796,12 +813,7 @@ class _PublicProfileAvatarState extends ConsumerState<_PublicProfileAvatar> {
                       // loadAvatarBytes wäre der EIGENE Pfad -> 403 ->
                       // nur Spinner, nie ein Bild.
                       child: FutureBuilder<Uint8List?>(
-                        future: ref
-                            .read(supabaseStorageServiceProvider)
-                            .loadPartnerAvatarBytes(
-                              targetUserId: widget.profile.id,
-                              path: ref1,
-                            ),
+                        future: _thumbFuture(ref1),
                         builder: (context, snap) {
                           final b = snap.data;
                           if (b == null) {

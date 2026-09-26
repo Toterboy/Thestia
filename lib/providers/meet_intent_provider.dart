@@ -14,7 +14,10 @@ class MeetIntentNotifier extends StateNotifier<MeetIntent?> {
 
   Future<void> _load() async {
     try {
-      state = await _service.get(_matchId);
+      final value = await _service.get(_matchId);
+      // Family-Elemente werden beim Routenwechsel disposed, während der
+      // Server-Call noch läuft -> State-Zuweisung wäre ein Crash.
+      if (mounted) state = value;
     } catch (e) {
       // still null -> UI zeigt nichts an.
     }
@@ -26,13 +29,13 @@ class MeetIntentNotifier extends StateNotifier<MeetIntent?> {
   /// Eigene Zustimmung setzen (true = will treffen, false = will nicht).
   Future<void> setWants(bool wants) async {
     final updated = await _service.set(_matchId, wants: wants);
-    if (updated != null) state = updated;
+    if (updated != null && mounted) state = updated;
   }
 
   /// Bestätigt, dass das Treffen stattgefunden hat.
   Future<void> confirmMet() async {
     final updated = await _service.set(_matchId, metConfirmed: true);
-    if (updated != null) state = updated;
+    if (updated != null && mounted) state = updated;
   }
 }
 

@@ -74,6 +74,34 @@ function isRateLimited(userId: string): boolean {
   return timestamps.length > RATE_LIMIT;
 }
 
+// SECURITY (2026-09-26): PERSISTENTES Rate-Limit als Primaer-Limiter.
+//
+// BEFUND: Oben steht ein reiner In-Memory-Zaehler. Supabase Edge Functions
+// skalieren instanzenweise - jeder Cold-Start setzt die Map zurueck, das
+// Limit war also aushebbar. Pro bestandenem Aufruf feuern zwei
+// KOSTENPFLICHTIGE Externaufrufe: HuggingFace-Inferenz
+// (`router.huggingface.co`) und eine Brevo-Mail mit dem vollstaendigen
+// Bild im Klartext. Das ist ein Kontingent-DoS mit Bremsbelag.
+//
+// fail-closed: Lieber eine Meldung zu viel als unbegrenzte Kosten.
+async function isPersistentRateLimited(userId: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabaseAdmin.rpc("consume_rate_limit", {
+      p_key: `report_image:${userId}`,
+      p_max_hits: 5,
+      p_window_seconds: 3600,
+    });
+    if (error) {
+      console.error("consume_rate_limit error (fail-closed):", error);
+      return true;
+    }
+    return data !== true;
+  } catch (e) {
+    console.error("consume_rate_limit exception (fail-closed):", e);
+    return true;
+  }
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -154,7 +182,10 @@ serve(async (req) => {
   }
   const reporter = authData.user;
 
-  if (isRateLimited(reporter.id)) {
+  // Bursts bleiben in-memory (schuetzt die Instanz), die eigentliche
+  // Begrenzung ist persistent und ueberlebt Cold Starts.
+  if (isRateLimited(reporter.id) ||
+      await isPersistentRateLimited(reporter.id)) {
     return new Response(JSON.stringify({ error: "Too many requests" }), {
       status: 429, headers: { "Content-Type": "application/json" },
     });
