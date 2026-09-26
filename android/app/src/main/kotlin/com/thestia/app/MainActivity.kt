@@ -193,7 +193,7 @@ class MainActivity : FlutterActivity() {
                         reply(true)
                     } else {
                         android.util.Log.e(
-                            "WispTransit",
+                            "ThestiaTransit",
                             "Advertising fehlgeschlagen, Code: $errorCode"
                         )
                         reply(false)

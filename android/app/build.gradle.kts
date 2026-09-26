@@ -14,8 +14,8 @@ plugins {
 // Fehlt die Datei, schlägt der Release-Build FEHL (kein stiller Debug-
 // Keystore-Fallback mehr – ein versehentlich debug-signiertes Release wäre
 // nicht Play-Store-tauglich und sicherheitsrelevant). Für lokale Release-
-// Testsignierungen explizit: -PWisp.allowDebugSigning=true ODER
-// Umgebungsvariable WISP_ALLOW_DEBUG_SIGNING=true.
+// Testsignierungen explizit: -Pthestia.allowDebugSigning=true ODER
+// Umgebungsvariable THESTIA_ALLOW_DEBUG_SIGNING=true.
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
@@ -103,8 +103,8 @@ android {
                 signingConfig = signingConfigs.getByName("release")
             } else {
                 val allowDebugSigning =
-                    System.getenv("WISP_ALLOW_DEBUG_SIGNING") == "true" ||
-                        (project.findProperty("wisp.allowDebugSigning") as? String) == "true"
+                    System.getenv("THESTIA_ALLOW_DEBUG_SIGNING") == "true" ||
+                        (project.findProperty("thestia.allowDebugSigning") as? String) == "true"
                 val releaseRequested = gradle.startParameter.taskNames.any {
                     it.contains("Release", ignoreCase = true)
                 }
@@ -116,7 +116,7 @@ android {
                         throw GradleException(
                             "Release-Build ohne android/key.properties nicht erlaubt. " +
                                 "Lege android/key.properties an (siehe README/.env.example) oder " +
-                                "signiere lokal bewusst mit -PWisp.allowDebugSigning=true."
+                                "signiere lokal bewusst mit -Pthestia.allowDebugSigning=true."
                         )
                     }
                 }
