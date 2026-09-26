@@ -70,7 +70,11 @@ class MainActivity : FlutterActivity() {
             when (call.method) {
                 "startAdvertise" -> {
                     val token = call.argument<String>("token") ?: ""
-                    startAdvertise(token, result)
+                    // Jitter-Zyklus kommt aus Dart (transit_ble_privacy.dart).
+                    // Default 30 s, falls ein alter Client den Wert nicht
+                    // mitschickt - sonst wuerde dort der starre Takt laufen.
+                    val cycleMs = call.argument<Int>("cycleMs") ?: 30_000
+                    startAdvertise(token, cycleMs, result)
                 }
                 "stopAdvertise" -> {
                     stopAdvertise()
@@ -148,7 +152,19 @@ class MainActivity : FlutterActivity() {
      * stilles Funkstille bedeutete ("0 in Reichweite" trotz Nachbar).
      * Deshalb wird [result] erst im Callback beantwortet.
      */
-    private fun startAdvertise(token: String, result: MethodChannel.Result) {
+    /**
+     * Jitter-Zyklus des Advertisings (v0.9.2). Die Verzoegerung kommt von
+     * Dart (transit_ble_privacy.dart, dort getestet) - hier nur der Timer.
+     */
+    private var cycleHandler: android.os.Handler? = null
+    private var cycleRunnable: Runnable? = null
+    private var currentToken: String? = null
+
+    private fun startAdvertise(
+        token: String,
+        cycleMs: Int,
+        result: MethodChannel.Result
+    ) {
         var replied = false
         fun reply(ok: Boolean) {
             if (!replied) {
@@ -161,6 +177,7 @@ class MainActivity : FlutterActivity() {
         }
         try {
             stopAdvertise()
+            currentToken = token
             val manager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
             advertiser = manager.adapter?.bluetoothLeAdvertiser
             val adv = advertiser
@@ -184,6 +201,7 @@ class MainActivity : FlutterActivity() {
                 override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
                     advertiseCallback = this
                     reply(true)
+                    scheduleJitterRestart(cycleMs)
                 }
 
                 override fun onStartFailure(errorCode: Int) {
@@ -196,6 +214,8 @@ class MainActivity : FlutterActivity() {
                             "ThestiaTransit",
                             "Advertising fehlgeschlagen, Code: $errorCode"
                         )
+                        // KEIN Zyklus planen: der Stack sendet nicht. Eine
+                        // Neustart-Schleife wuerde hier nur Akku fressen.
                         reply(false)
                     }
                 }
@@ -211,7 +231,83 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    /**
+     * Plant den naechsten Advertising-Neustart nach [delayMs].
+     *
+     * stopAdvertising + startAdvertising erzeugt eine Funkluecke in
+     * variabler Laenge. Das bricht die sessionuebergreifend konstante Phase
+     * des ~100-ms-Takts auf. Die Adresse selbst vergibt der Stack als
+     * Resolvable Private Address - daran wird hier nichts geaendert.
+     */
+    private fun scheduleJitterRestart(delayMs: Int) {
+        cancelJitterRestart()
+        val token = currentToken ?: return
+        if (token.isBlank()) return
+        // Untergrenze: unter ~10 s ist der Neustart teurer als der
+        // Erkenntnisgewinn, und der Stack braucht Luft.
+        val delay = delayMs.coerceIn(10_000, 120_000)
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        cycleHandler = handler
+        val runnable = object : Runnable {
+            override fun run() {
+                val advNow = advertiser
+                val cbNow = advertiseCallback
+                if (advNow == null || cbNow == null || currentToken == null) return
+                try {
+                    advNow.stopAdvertising(cbNow)
+                    val data = AdvertiseData.Builder()
+                        .setIncludeDeviceName(false)
+                        .setIncludeTxPowerLevel(false)
+                        .addManufacturerData(
+                            0xFFFF,
+                            "WST1$token".toByteArray(Charsets.UTF_8)
+                        )
+                        .build()
+                    val settings = AdvertiseSettings.Builder()
+                        .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
+                        .setConnectable(false)
+                        .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
+                        .build()
+                    // Neuer Callback je Zyklus: derselbe Callback-Objekt
+                    // kann nach stopAdvertising nicht wiederverwendet werden.
+                    val next = object : AdvertiseCallback() {
+                        override fun onStartSuccess(settingsInEffect: AdvertiseSettings) {
+                            advertiseCallback = this
+                            scheduleJitterRestart(
+                                (delay * 0.8).toInt() + (delay * 0.4 * Math.random()).toInt()
+                            )
+                        }
+
+                        override fun onStartFailure(errorCode: Int) {
+                            if (errorCode != ADVERTISE_FAILED_ALREADY_STARTED) {
+                                android.util.Log.e(
+                                    "ThestiaTransit",
+                                    "Jitter-Neustart fehlgeschlagen, Code: $errorCode"
+                                )
+                            }
+                        }
+                    }
+                    advNow.startAdvertising(settings, data, next)
+                } catch (e: Exception) {
+                    android.util.Log.e("ThestiaTransit", "Jitter-Neustart: $e")
+                }
+            }
+        }
+        cycleRunnable = runnable
+        handler.postDelayed(runnable, delay.toLong())
+    }
+
+    private fun cancelJitterRestart() {
+        cycleRunnable?.let { cycleHandler?.removeCallbacks(it) }
+        cycleRunnable = null
+        cycleHandler = null
+    }
+
     private fun stopAdvertise() {
+        // Zyklus zuerst beenden - sonst startet der Handler nach dem
+        // Stopp noch einmal und sendet weiter.
+        cancelJitterRestart()
+        currentToken = null
         try {
             val cb = advertiseCallback
             val adv = advertiser

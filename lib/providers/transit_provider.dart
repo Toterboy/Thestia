@@ -8,6 +8,7 @@ import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/services/transit_ble_service.dart';
+import 'package:thestia/services/transit_ble_privacy.dart';
 import 'package:thestia/services/transit_encounter_service.dart';
 
 /// Transit-Aktivitätsdauer (Session-Fenster).
@@ -159,22 +160,13 @@ class TransitNotifier extends StateNotifier<TransitState> {
       }());
     }
 
-    // Token-Rotation alle 10 Minuten (ephemere Tokens).
-    _rotateTimer?.cancel();
-    _rotateTimer = Timer.periodic(const Duration(minutes: 10), (_) async {
-      if (!state.active) return;
-      final newToken = TransitEncounterService.generateToken();
-      await TransitBleService.instance.rotateToken(
-        newToken: newToken,
-        onEncounter: _recordEncounter,
-      );
-      if (SupabaseService.isInitialized) {
-        try {
-          await SupabaseDatabaseService(SupabaseService.client)
-              .transitPresenceHeartbeat(newToken);
-        } catch (_) {}
-      }
-    });
+    // Token-Rotation mit JITTER (v0.9.2): vorher exakt alle 10 Minuten.
+    // Ein fester Rotations-Raster ist selbst ein Fingerprint - wer den
+    // Wechsel mitzaehlt, kennt die Periode und bildet daraus eine
+    // Geraeteklasse ueber Sitzungen hinweg. Jetzt 6-14 min, neu gewuerfelt
+    // nach jeder Rotation. Der Server prueft Begegnungen ueber ein
+    // 30-Minuten-Fenster, der grosszuehige Spielraum passt weiter.
+    _scheduleRotation();
 
     // Countdown/Ende-Überwachung: EINMAL-Timer auf die Restlaufzeit.
     // Vorher lief hier ein 1-s-Timer, der nichts tat außer
@@ -204,6 +196,30 @@ class TransitNotifier extends StateNotifier<TransitState> {
   /// die Tokens sind ephemere Zufallswerte ohne Positionsdaten und
   /// verfallen lokael; die eigenen PRESENCE-Tokens werden weiterhin
   /// sofort entfernt (Radar aus = nicht mehr adressierbar).
+  /// Plant die naechste Token-Rotation mit jitteriger Verzoegerung.
+  ///
+  /// Einmal-Timer statt `Timer.periodic`, weil sich die Verzoegerung nach
+  /// jeder Rotation neu auswerfen soll - ein periodischer Timer hat
+  /// zwangslaeufig eine feste Periode.
+  void _scheduleRotation() {
+    _rotateTimer?.cancel();
+    _rotateTimer = Timer(TransitBlePrivacy.tokenRotationDelay(), () async {
+      if (!state.active) return;
+      final newToken = TransitEncounterService.generateToken();
+      await TransitBleService.instance.rotateToken(
+        newToken: newToken,
+        onEncounter: _recordEncounter,
+      );
+      if (SupabaseService.isInitialized) {
+        try {
+          await SupabaseDatabaseService(SupabaseService.client)
+              .transitPresenceHeartbeat(newToken);
+        } catch (_) {}
+      }
+      if (state.active) _scheduleRotation();
+    });
+  }
+
   Future<void> deactivate() async {
     _rotateTimer?.cancel();
     _countdownTimer?.cancel();

@@ -10,6 +10,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:thestia/services/transit_encounter_service.dart';
+import 'package:thestia/services/transit_ble_privacy.dart';
 
 /// BLE-Schicht für Transit Spark (Phase 1, v0.9.0).
 ///
@@ -162,6 +163,7 @@ class TransitBleService {
   }) async {
     await stop();
     _currentToken = token;
+    _onEncounter = onEncounter;
 
     // Laufzeit-Berechtigungen (Android 11 braucht STANDORT fürs Scanning,
     // Android 12+ braucht SCAN/CONNECT) - vorher kam der Start mit einer
@@ -184,8 +186,13 @@ class TransitBleService {
     try {
       // --- Advertising (nativ, ECHTES Ergebnis via AdvertiseCallback) ---
       final ok = await _channel
-          .invokeMethod<bool>('startAdvertise', {'token': token})
-          .timeout(const Duration(seconds: 10));
+          .invokeMethod<bool>('startAdvertise', {
+        'token': token,
+        // Jitter-Zyklus: die native Seite startet das Advertising nach
+        // dieser Zeit neu. Ohne sie laeuft LOW_LATENCY 45 min im
+        // starren ~100-ms-Takt - ein Fingerprint.
+        'cycleMs': TransitBlePrivacy.advertiseCycleDelay().inMilliseconds,
+      }).timeout(const Duration(seconds: 10));
       _advertising = ok ?? false;
       if (!_advertising) {
         debugPrint('[TransitBle] Natives Advertising abgelehnt.');
@@ -195,15 +202,13 @@ class TransitBleService {
       }
 
       // --- Scanning (fremde Tokens) ---
-      await FlutterBluePlus.startScan(timeout: null);
-      _scanSub = FlutterBluePlus.scanResults.listen((results) {
-        for (final r in results) {
-          final token = _extractToken(r);
-          if (token != null && token != _currentToken) {
-            onEncounter(token, r.rssi);
-          }
-        }
-      });
+      //
+      // withMsd filtert schon im Plattform-Callback auf unsere
+      // Hersteller-ID: alles andere in der Luft (Uhren, Kopfhoerer,
+      // Beacons) erreicht die App gar nicht erst. Das war vorher die
+      // Hauptlast und ein passiver Fremdverkehrs-Sniffer des Geraets.
+      _startScanWindow();
+      _schedulePulseNext();
       _scanning = true;
       return true;
     } catch (e) {
@@ -222,8 +227,12 @@ class TransitBleService {
     _currentToken = newToken;
     try {
       final ok = await _channel
-          .invokeMethod<bool>('startAdvertise', {'token': newToken})
-          .timeout(const Duration(seconds: 8));
+          .invokeMethod<bool>('startAdvertise', {
+        'token': newToken,
+        // Neuer Zyklus mit neuer Jitter-Dauer: der Restart faellt dann
+        // nicht mit der Token-Rotation zusammen.
+        'cycleMs': TransitBlePrivacy.advertiseCycleDelay().inMilliseconds,
+      }).timeout(const Duration(seconds: 8));
       if (ok != true) {
         debugPrint('[TransitBle] Rotation fehlgeschlagen');
       }
@@ -232,29 +241,94 @@ class TransitBleService {
     }
   }
 
-  Future<void> stop() async {
+  /// Callback fuer Begegnungen; wird von den Impulsfenstern genutzt.
+  void Function(String token, int rssi)? _onEncounter;
+
+  /// Timer fuer die Scan-Impulse (v0.9.2: gepulstes Scannen statt
+  /// Dauerscan - siehe ROADMAP 0.9.0, dort war es behauptet, nicht gebaut).
+  Timer? _pulseTimer;
+
+  /// Startet ein Scan-Fenster.
+  ///
+  /// Der Plattform-Callback filtert schon auf unsere Hersteller-ID, es
+  /// kommen also nur Thestia-Advertisements an.
+  Future<void> _startScanWindow() async {
+    try {
+      await FlutterBluePlus.startScan(
+        timeout: kScanPulseOn,
+        withMsd: [MsdFilter(kThestiaManufacturerId)],
+        continuousUpdates: true,
+        oneByOne: false,
+      );
+      _scanSub = FlutterBluePlus.scanResults.listen(_onResults);
+    } catch (e) {
+      debugPrint('[TransitBle] Scan-Fenster start fehlgeschlagen: $e');
+    }
+  }
+
+  /// Schliesst das aktuelle Fenster und plant das nächste nach einer
+  /// unregelmässigen Pause (Datenschutz + Akku, siehe ROADMAP 0.9.2).
+  void _schedulePulseNext() {
+    _pulseTimer?.cancel();
+    _pulseTimer = Timer(TransitBlePrivacy.scanPulseOff(), () async {
+      if (!_scanning) return;
+      await _stopScanWindow();
+      if (!_scanning) return;
+      await _startScanWindow();
+      if (!_scanning) return;
+      _schedulePulseNext();
+    });
+  }
+
+  Future<void> _stopScanWindow() async {
     try {
       await _scanSub?.cancel();
+      _scanSub = null;
       await FlutterBluePlus.stopScan();
+    } catch (e) {
+      debugPrint('[TransitBle] Scan-Fenster stop fehlgeschlagen: $e');
+    } finally {
+    }
+  }
+
+  void _onResults(List<ScanResult> results) {
+    for (final r in results) {
+      final token = _extractToken(r);
+      if (token != null && token != _currentToken) {
+        _onEncounter?.call(token, r.rssi);
+      }
+    }
+  }
+
+  Future<void> stop() async {
+    // _scanning VOR dem Abo-Kill setzen: sonst plant _schedulePulseNext
+    // den naechsten Zyklus, der nach dem Stop wieder aufwacht.
+    _scanning = false;
+    _pulseTimer?.cancel();
+    _pulseTimer = null;
+    try {
+      await _stopScanWindow();
       await _channel.invokeMethod('stopAdvertise');
     } catch (e) {
       debugPrint('[TransitBle] Stop fehlgeschlagen: $e');
     } finally {
       _scanSub = null;
       _advertising = false;
-      _scanning = false;
+      _onEncounter = null;
       _currentToken = null;
     }
   }
 
   /// Extrahiert das Thestia-Transit-Token aus einem Scan-Ergebnis
-  /// (Hersteller-Feld 0xFFFF: Marker + Token).
+  /// (Hersteller-Feld kThestiaManufacturerId: Marker + Token).
   String? _extractToken(ScanResult r) {
     try {
       final md = r.advertisementData.manufacturerData;
       if (md.isEmpty) return null;
-      // Nur unser Hersteller-ID-Eintrag (Key = 0xFFFF).
-      final entry = md[0xFFFF];
+    // Nur unser Hersteller-ID-Eintrag. Die Konstante ist dieselbe, die der
+    // withMsd-Filter beim Scannen benutzt - beide muessen zusammenpassen,
+    // sonst sieht der Scanner nichts (bzw. filtert zu viel weg).
+    final entry = md[kThestiaManufacturerId];
       if (entry == null || entry.isEmpty) return null;
       final markerBytes = utf8.encode(TransitEncounterService.bleMarker);
       if (entry.length <= markerBytes.length) return null;
