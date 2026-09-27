@@ -45,6 +45,11 @@ param(
     # Store-Format; Play liefert pro Gerät nur die nötigen ABIs aus).
     [switch]$Aab,
 
+    # Universelle APKs bauen (ohne --split-per-abi). Mit
+    # -SplitPerAbi kombinierbar: Flutter liefert bei --split-per-abi
+    # NUR Splits, fuer den vollstaendigen Satz braucht es zwei
+    # Durchlaeufe - das Skript erledigt beides in einem Lauf.
+    [switch]$UniversalApk,
     # Admin-UUID (entspricht dem ADMIN_UUID-Secret der admin-ban-Function):
     # Baut play+fdroid als universelle APKs mit --dart-define=ADMIN_UUID=...
     # nach "<OutDir>/admin/" (Team-intern, NICHT verteilen).
@@ -152,29 +157,77 @@ function Copy-SplitApks {
     }
 }
 
+function Copy-Aab {
+    param([string]$FlavorName)
+    # Ab Flutter 3.35 mit Product Flavors: outputs/bundle/<flavor>Release/
+    # Aelter ohne Flavor: outputs/bundle/release/
+    $candidates = @(
+        (Join-Path "build\app\outputs\bundle" "$FlavorName`Release\app-$FlavorName-release.aab"),
+        (Join-Path "build\app\outputs\bundle\release" "app-$FlavorName-release.aab")
+    )
+    $src = $null
+    foreach ($c in $candidates) {
+        if (Test-Path -LiteralPath $c) { $src = $c; break }
+    }
+    if ($null -eq $src) {
+        # Letzte Chance: suchen, statt still zu scheitern
+        $found = Get-ChildItem -Path "build\app\outputs\bundle" -Recurse -Filter "app-$FlavorName-release.aab" -ErrorAction SilentlyContinue
+        if ($found) { $src = $found[0].FullName }
+    }
+    if ($null -eq $src) {
+        throw "AAB nicht gefunden. Gesucht: $($candidates -join " | ") - Bau fehlgeschlagen?"
+    }
+    $dst = Join-Path $OutDir "Thestia-v$VersionName-$FlavorName.aab"
+    Copy-Item -LiteralPath $src -Destination $dst -Force
+    Write-Host "    OK: $dst" -ForegroundColor Green
+}
+
 # ---------------------------------------------------------------------
 # Bauen
+#
+# Reihenfolge ist wichtig: Flutter leert build/app/outputs bei jedem
+# Aufruf. Deshalb wird nach JEDEM Bau sofort kopiert, sonst fehlen die
+# zuvor gebauten Artefakte.
 # ---------------------------------------------------------------------
 if ($SkipBuild) {
     Write-Host "==> -SkipBuild: verwende vorhandene APKs." -ForegroundColor Yellow
 } else {
-    if ($Flavor -in @("both", "play")) {
-        Write-Host "==> Baue PLAY-Variante..." -ForegroundColor Cyan
-        $abiArgs = @()
-        if ($SplitPerAbi) { $abiArgs += "--split-per-abi" }
-        # Dart-Obfuskierung (v0.9.0, Manipulationsschutz): Symbol-Namen
-        # werden unlesbar gemacht; Debug-Symbole landen in build/symbols/
-        # (git-ignoriert) für spätere Crash-Analyse.
-        flutter build apk --release --flavor play @ConfigDefines @abiArgs --obfuscate --split-debug-info=build/symbols/play
+    # --- 1) Universelle APKs (zuerst, danach sind sie weg) ---
+    if ($UniversalApk -and $Flavor -in @("both", "play")) {
+        Write-Host "==> Baue PLAY universal..." -ForegroundColor Cyan
+        flutter build apk --release --flavor play @ConfigDefines --obfuscate --split-debug-info=build/symbols/play
         if ($LASTEXITCODE -ne 0) { throw "Play-Build fehlgeschlagen." }
+        Copy-FlavorApk -FlavorName "play"
     }
-    if ($Flavor -in @("both", "fdroid")) {
-        Write-Host "==> Baue F-DROID-Variante (ohne Google/Firebase)..." -ForegroundColor Cyan
-        $abiArgs = @()
-        if ($SplitPerAbi) { $abiArgs += "--split-per-abi" }
-        flutter build apk --release --flavor fdroid --dart-define=FDROID=true @ConfigDefines @abiArgs --obfuscate --split-debug-info=build/symbols/fdroid
+    if ($UniversalApk -and $Flavor -in @("both", "fdroid")) {
+        Write-Host "==> Baue F-DROID universal..." -ForegroundColor Cyan
+        flutter build apk --release --flavor fdroid --dart-define=FDROID=true @ConfigDefines --obfuscate --split-debug-info=build/symbols/fdroid
         if ($LASTEXITCODE -ne 0) { throw "F-Droid-Build fehlgeschlagen." }
+        Copy-FlavorApk -FlavorName "fdroid"
     }
+
+    # --- 2) Pro-ABI-APKs (deutlich kleinere Downloads) ---
+    if ($SplitPerAbi -and $Flavor -in @("both", "play")) {
+        Write-Host "==> Baue PLAY pro ABI..." -ForegroundColor Cyan
+        flutter build apk --release --flavor play @ConfigDefines --split-per-abi --obfuscate --split-debug-info=build/symbols/play
+        if ($LASTEXITCODE -ne 0) { throw "Play-Split-Build fehlgeschlagen." }
+        Copy-SplitApks -FlavorName "play"
+    }
+    if ($SplitPerAbi -and $Flavor -in @("both", "fdroid")) {
+        Write-Host "==> Baue F-DROID pro ABI..." -ForegroundColor Cyan
+        flutter build apk --release --flavor fdroid --dart-define=FDROID=true @ConfigDefines --split-per-abi --obfuscate --split-debug-info=build/symbols/fdroid
+        if ($LASTEXITCODE -ne 0) { throw "F-Droid-Split-Build fehlgeschlagen." }
+        Copy-SplitApks -FlavorName "fdroid"
+    }
+
+    # --- 3) Play-App-Bundle (Pflichtformat fuer den Store) ---
+    if ($Aab -and $Flavor -in @("both", "play")) {
+        Write-Host "==> Baue Play App-Bundle (.aab)..." -ForegroundColor Cyan
+        flutter build appbundle --release --flavor play @ConfigDefines --obfuscate --split-debug-info=build/symbols/play
+        if ($LASTEXITCODE -ne 0) { throw "App-Bundle-Build fehlgeschlagen." }
+        Copy-Aab -FlavorName "play"
+    }
+
     if ($AdminUUID -ne "") {
         $adminDir = Join-Path $OutDir "admin"
         New-Item -ItemType Directory -Force -Path $adminDir | Out-Null
@@ -182,7 +235,7 @@ if ($SkipBuild) {
             Write-Host "==> Baue ADMIN-Variante ($adminFlavor, nur Team-intern)..." -ForegroundColor Magenta
             $defineArgs = @("--dart-define=ADMIN_UUID=$AdminUUID") + $ConfigDefines
             if ($adminFlavor -eq "fdroid") { $defineArgs += "--dart-define=FDROID=true" }
-            flutter build apk --release --flavor $adminFlavor @defineArgs --obfuscate --split-debug-info=build/symbols/admin-$adminFlavor
+            flutter build apk --release --flavor $adminFlavor @defineArgs --obfuscate --split-debug-info=build/symbols/$adminFlavor
             if ($LASTEXITCODE -ne 0) { throw "Admin-Build ($adminFlavor) fehlgeschlagen." }
             $src = Join-Path "build\app\outputs\flutter-apk" "app-$adminFlavor-release.apk"
             $dst = Join-Path $adminDir "Thestia-v$VersionName-$adminFlavor-ADMIN.apk"
@@ -194,16 +247,23 @@ if ($SkipBuild) {
 
 # ---------------------------------------------------------------------
 # Kopieren & Benennen
+#
+# Nur bei -SkipBuild: im normalen Lauf wurde oben direkt nach jedem
+# Build kopiert (Flutter leert das Output-Verzeichnis pro Aufruf).
 # ---------------------------------------------------------------------
-if ($SplitPerAbi) {
-    if ($Flavor -in @("both", "play")) { Copy-SplitApks -FlavorName "play" }
-    if ($Flavor -in @("both", "fdroid")) { Copy-SplitApks -FlavorName "fdroid" }
-} else {
-    if ($Flavor -in @("both", "play")) { Copy-FlavorApk -FlavorName "play" }
-    if ($Flavor -in @("both", "fdroid")) { Copy-FlavorApk -FlavorName "fdroid" }
+if ($SkipBuild) {
+    if ($UniversalApk -or (-not $SplitPerAbi)) {
+        if ($Flavor -in @("both", "play")) { Copy-FlavorApk -FlavorName "play" }
+        if ($Flavor -in @("both", "fdroid")) { Copy-FlavorApk -FlavorName "fdroid" }
+    }
+    if ($SplitPerAbi) {
+        if ($Flavor -in @("both", "play")) { Copy-SplitApks -FlavorName "play" }
+        if ($Flavor -in @("both", "fdroid")) { Copy-SplitApks -FlavorName "fdroid" }
+    }
+    if ($Aab -and $Flavor -in @("both", "play")) { Copy-Aab -FlavorName "play" }
 }
 
 Write-Host ""
 Write-Host "==> Fertig: v$VersionName liegt unter $OutDir" -ForegroundColor Cyan
-Write-Host "    Hinweis: Vor dem Verteilen DB-Migrationen (056-062) und" 
+Write-Host "    Hinweis: Vor dem Verteilen DB-Migrationen (123-130) und" 
 Write-Host "    Edge Functions deployen + CAPTCHA im Dashboard aktivieren."
