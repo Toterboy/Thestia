@@ -267,7 +267,7 @@ jobs:
           python-version: '3.12'
 
       - name: Gepinnte Pruef-Abhaengigkeiten
-        run: pip install --require-hashes=false -r tool/requirements.txt
+        run: pip install -r tool/requirements.txt
 
       # keytool wird von check_passkey_assetlinks.py nur optional genutzt
       # (java ist auf dem Runner vorhanden, android/key.properties ist
