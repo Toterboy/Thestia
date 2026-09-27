@@ -108,18 +108,29 @@ rp_display_name = "Thestia"
 rp_id = "auth.thestia.de"
 # RP-Origins: HTTPS-Origin der RP-Domain + Android-App-Origin.
 # Den Android-Teil durch den BASE64(SHA256 deines Signing-Zertifikats)
-# ersetzen (siehe passkey-assets/README.md, Abschnitt 2/4).
-# GROUND TRUTH per keytool verifiziert (25.09.2026):
-#   - Upload/Release-Key (wisp-upload.keystore, Alias upload):
-#     android:apk-key-hash:N6pPbMHeuPWVdF6sCs4KGclUcoD8dI8CZr3S7HvpVXI
-#   - Debug-Keystore (flutter run/Emulator):
+# ersetzen (Rechenweg in docs/PASSKEYS_SERVER_SETUP.md, Abschnitt
+# "Neue Keystore-Fingerprint -> Origin-String selbst berechnen").
+#
+# GROUND TRUTH per keytool verifiziert (Release-Keywechsel auf CN=Thestia):
+#   - Upload/Release-Key (thestia-upload.keystore, Alias upload):
+#     android:apk-key-hash:jL730I-GZlQuHVO5tCbFRq-CR5Ma3-ggYZ4X95E_Pho
+#     (der Vorgänger CN=WispDating endete auf ...CZr3S7HvpVXI und ist
+#      ersetzt, nicht ergänzt - beide gleichzeitig würde jeden Key
+#      akzeptieren)
+#   - Debug-Keystore (flutter run/Emulator), BEWUSST NICHT HIER:
 #     android:apk-key-hash:WrjQ1eUdTGnHEeMSAqhA6tqoMFqd6yOINSrNwVwwqXk
-# BEI SUPABASE CLOUD: Werte zusätzlich/zuständig im DASHBOARD pflegen
-# (Authentication -> WebAuthn/Passkeys -> Origins)!
-# Play-Store-Verteilung: ZUSÄTZLICH den Play-App-Signing-Hash eintragen
-# (Play Console -> Setup -> App-Integrität -> App-Signaturschlüssel).
+#     Der Debug-Keystore ist der Android-Studio-Werksstandard mit dem
+#     Passwort "android", also allgemein bekannt. Als Origin zulaesst
+#     wuerde GoTrue eine Passkey-Registrierung auch aus einer fremden,
+#     selbst gebauten App akzeptieren. Fuer lokale Entwicklung daher
+#     nur in einer eigenen Supabase-Instanz eintragen, nicht hier.
+#
+# BEI SUPABASE CLOUD: Werte zustaendig im DASHBOARD pflegen
+# (Authentication -> Passkeys -> Origins)!
+# Play-Store-Verteilung: ZUSAETZLICH den Play-App-Signing-Hash eintragen
+# (Play Console -> Setup -> App-Integritaet -> App-Signaturschluessel).
+# Den gibt es erst nach dem ersten Upload, weil Play den Key dann erzeugt.
 rp_origins = [
   "https://auth.thestia.de",
-  "android:apk-key-hash:N6pPbMHeuPWVdF6sCs4KGclUcoD8dI8CZr3S7HvpVXI",
-  "android:apk-key-hash:WrjQ1eUdTGnHEeMSAqhA6tqoMFqd6yOINSrNwVwwqXk",
+  "android:apk-key-hash:jL730I-GZlQuHVO5tCbFRq-CR5Ma3-ggYZ4X95E_Pho",
 ]

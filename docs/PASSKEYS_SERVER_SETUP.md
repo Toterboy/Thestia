@@ -24,21 +24,44 @@ Thestia beide Keys drin).
 
 ## Die Origins von Thestia
 
-> **Migration WispDating → Thestia:** Der **Keystore bleibt derselbe**
-> (`wisp-upload.keystore`) – deshalb bleiben alle `apk-key-hash`-Origins
-> und `assetlinks.json`-Fingerprints gültig. Es ändern sich nur RP-ID und
-> HTTPS-Origins (`auth.thestia.de`). **Achtung:** Bestehende Passkeys sind
-> an die alte RP-ID gebunden und werden ungültig – Nutzer müssen nach der
-> Migration ihre Passkeys neu registrieren (2FA/TOTP oder E-Mail-Login
-> bleibt als Fallback).
+> **Signierer-DN auf `CN=Thestia` umgestellt (Release-Keywechsel).**
+> Das alte Release-Zertifikat trug `CN=WispDating`. Ein Zertifikat lässt
+> sich nicht umbenennen – der DN liegt im signierten Teil, jede Änderung
+> entwertet die Signatur. Weil Thestia zum Zeitpunkt des Wechsels an noch
+> keinem Store veröffentlicht war, konnte der Key ohne Key-Rotation
+> getauscht werden; ein Rollback wäre jetzt nur noch über den
+> Play-Key-Reset möglich.
+>
+> **Folge:** Fingerabdruck **und** `apk-key-hash`-Origin des
+> Release-Keys haben sich geändert. Der alte Eintrag
+> `…CZr3S7HvpVXI` muss aus `assetlinks.json` **und** aus der
+> Origin-Liste **ersetzt** (nicht ergänzt) werden – sonst laufen
+> Release-Builds in `credential verification failed`.
+>
+> Der alte Keystore `wisp-upload.keystore` bleibt als Datei erhalten,
+> wird aber nicht mehr verwendet. Sein Passwort ist mit dem Umschreiben
+> von `android/key.properties` verloren, er ist also nur noch als
+> Fingerabdruck-Dokumentation nützlich, nicht zum Signieren.
+>
+> **Achtung Firebase/Google-API-Key:** Ist der API-Key des Projekts
+> `thestia-c6855` per Android-App-Signatur eingeschränkt, muss dort der
+> **neue** SHA-1 stehen, sonst lehnt Google die Anfragen des
+> Release-Builds ab:
+> `94:15:FC:F0:04:89:CC:82:0C:AD:D1:AD:2C:6D:EB:4C:63:0E:D0:76`
+> (Paketname `com.thestia.app`).
+>
+> **Achtung Bestand:** Bestehende Passkeys sind an die alte RP-ID
+> gebunden und nach der Migration ungültig – Nutzer müssen sie neu
+> registrieren (2FA/TOTP oder E-Mail-Login bleibt als Fallback). Da noch
+> keine Nutzer existieren, ist das bisher nie aufgefallen.
 
-Berechnet aus dem **tatsächlichen Signatur-Keystore** (`wisp-upload.keystore`,
-SHA-256 via keytool verifiziert):
+Berechnet aus dem **tatsächlichen Signatur-Keystore**
+(`thestia-upload.keystore`, SHA-256 via keytool verifiziert):
 
 | Schlüssel | SHA-256 | Origin (exakt so übernehmen) |
 |---|---|---|
-| **Upload-/Release-Key** | 37AA4F…5572 | ndroid:apk-key-hash:N6pPbMHeuPWVdF6sCs4KGclUcoD8dI8CZr3S7HvpVXI |
-| **Debug-Key** (nur lokal) | 5AB8D0…A979 | ndroid:apk-key-hash:WrjQ1eUdTGnHEeMSAqhA6tqoMFqd6yOINSrNwVwwqXk |
+| **Upload-/Release-Key** | 8CBEF7…3E1A | android:apk-key-hash:jL730I-GZlQuHVO5tCbFRq-CR5Ma3-ggYZ4X95E_Pho |
+| **Debug-Key** (nur lokal) | 5AB8D0…A979 | android:apk-key-hash:WrjQ1eUdTGnHEeMSAqhA6tqoMFqd6yOINSrNwVwwqXk |
 | iOS/Web (Associated Domain) | – | `https://auth.thestia.de` |
 | Web-App (falls auf Root-Domain) | – | `https://thestia.de` |
 
@@ -56,7 +79,7 @@ Base64URL-Zeichen, 32 Byte). Damit war der Abgleich nie erfolgreich →
 ersetzen, Produktions-Umfang):**
 
 ```
-https://auth.thestia.de,android:apk-key-hash:N6pPbMHeuPWVdF6sCs4KGclUcoD8dI8CZr3S7HvpVXI
+https://auth.thestia.de,android:apk-key-hash:jL730I-GZlQuHVO5tCbFRq-CR5Ma3-ggYZ4X95E_Pho
 ```
 
 **Vor dem ersten Veröffentlichen noch zu entscheiden: Debug-Origin.**
@@ -103,10 +126,11 @@ SHA-256-Fingerprints sind NICHT austauschbar.
   (dort ist er FUNKTIONAL ERFORDERLICH – ohne ihn verweigert Android den
   Passkey-Dialog).
 - Das eigentliche Geheimnis ist der **Keystore selbst samt Passwort**
-  (`wisp-upload.keystore`, `android/key.properties`) – beides ist via
+  (`thestia-upload.keystore`, `android/key.properties`) – beides ist via
   `.gitignore` (`*.keystore`, `android/key.properties`, `*.jks`,
   `*.p12`/`*.pfx`/`*.pem`/`*.key`) ausgeschlossen und war NIE Teil des
-  Repositorys (geprüft via `git ls-files`).
+  Repositorys (geprüft via `git ls-files`). Dasselbe gilt für den
+  Vorgänger-Key `wisp-upload.keystore`.
 - Der Debug-Key-Fingerprint ist maschinenspezifisch und nur für lokale
   `flutter run`-Tests relevant; sein Origin gehört deshalb bewusst NICHT
   in diese öffentliche Anleitung und sollte nach lokalem Testen aus der
