@@ -37,9 +37,14 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
-      # pubspec.yaml bindet .env als Asset ein - ohne Datei schlägt der
-      # Asset-Build von flutter test fehl.
-      - name: .env aus Beispiel erzeugen
+      # `.env` ist seit dem Audit 2026-09-26 KEIN App-Asset mehr (pubspec.yaml
+      # registriert es bewusst nicht), aber der Code laesst den dotenv-Pfad
+      # als lokale Entwicklungsquelle zu (lib/utils/constants.dart, Quelle 2
+      # der Defines-Kette). Ohne Datei ist `_dotenvReady` false, dann liefert
+      # `captchaSiteKey` '' und `captchaEnabled` waere false - die Tests, die
+      # den Bot-Schutz voraussetzen, laufen dann gegen einen anderen Zustand
+      # als lokal. Also weiterhin erzeugen, aber aus dem richtigen Grund.
+      - name: .env aus Beispiel erzeugen (dotenv-Fallback fuer Tests)
         run: cp .env.example .env
 
       - name: Dependencies laden
@@ -213,3 +218,28 @@ jobs:
         run: >
           flutter build apk --debug
           --flavor play
+
+  # Ohne diesen Job konnte assetlinks.json woertlich duplizierte
+  # Fingerprints und eine unausgefuellte AASA-Vorlage enthalten, ohne dass
+  # irgendetwas rot wurde. Beides ist passiert: die Vorlage
+  # "REPLACE_WITH_APPLE_TEAM_ID" laeuft seit dem ersten Commit so mit und
+  # macht iOS-Passkeys still wirkungslos.
+  #
+  # continue-on-error, weil die AASA bis zur Eintragung der echten
+  # Apple Team-ID offen bleibt (die kann nur der Kontoinhaber liefern).
+  # Sobald sie in passkey-assets/apple-app-site-association steht, ist das
+  # hier zu streichen - dann soll der Job bremsen.
+  passkey-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v5
+
+      # Nur keytool (JDK ist auf ubuntu-latest vorinstalliert) - der
+      # Fingerprint-Vergleich gegen die Keystores laeuft nur, wenn
+      # android/key.properties existiert. Im Repo ist die Datei absichtlich
+      # gitignored, also laeuft der Job hier strukturell: JSON-Validitaet,
+      # Hex-Laenge, Duplikate, Vorlagen.
+      - name: Passkey-Assets pruefen
+        run: python3 tool/check_passkey_assetlinks.py

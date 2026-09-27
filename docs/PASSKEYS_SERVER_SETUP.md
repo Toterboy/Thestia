@@ -42,10 +42,10 @@ SHA-256 via keytool verifiziert):
 | iOS/Web (Associated Domain) | – | `https://auth.thestia.de` |
 | Web-App (falls auf Root-Domain) | – | `https://thestia.de` |
 
-Der **Debug-Key-Hash** wird hier bewusst NICHT veröffentlicht. Er gehört
-ausschließlich in lokale/Entwicklungs-Konfigurationen (bei lokalem
-Testen gegen einen selbst betriebenen Auth-Dienst selbst berechnen,
-Kommando siehe unten) – **nicht** in die Produktions-Origins.
+Der **Debug-Key-Hash** steht in der Tabelle, weil `assetlinks.json` ihn
+braucht (siehe `passkey-assets/ASSETLINKS_ROOTDOMAIN.md`) — ohne ihn
+schlägt die native Prüfung in jedem Debug-Build fehl. Für die
+**serverseitige Origin-Liste** ist das eine andere Frage, siehe unten.
 
 ### ⚠️ Konkreter Fehlerfall (Stand 05.09.2026 behoben)
 
@@ -56,10 +56,36 @@ Base64URL-Zeichen, 32 Byte). Damit war der Abgleich nie erfolgreich →
 ersetzen, Produktions-Umfang):**
 
 ```
-https://auth.thestia.de,android:apk-key-hash:N6pPbMHeuPWVdF6sCs4KGclUcoD8dI8CZr3S7HvpVXI,android:apk-key-hash:WrjQ1eUdTGnHEeMSAqhA6tqoMFqd6yOINSrNwVwwqXk
+https://auth.thestia.de,android:apk-key-hash:N6pPbMHeuPWVdF6sCs4KGclUcoD8dI8CZr3S7HvpVXI
 ```
 
-**Play-Store-Verteilung:** Von Play installierte Builds tragen den separaten Play-App-Signing-Key – dessen Hash (Play Console → Setup → App-Integrität) als dritten Origin ergänzen.
+**Vor dem ersten Veröffentlichen noch zu entscheiden: Debug-Origin.**
+Solange gegen dasselbe Supabase-Projekt entwickelt wird, ist der
+Debug-Origin erforderlich, damit `flutter run` überhaupt einen Passkey
+registrieren kann. Er gehört damit in eine **Entwicklungs-Konfiguration,
+nicht in die Produktionsliste** – und zwar aus einem konkreten Grund:
+
+Der Android-Debug-Keystore ist der Standard-Key aus Android Studio mit dem
+Passwort `android`, also praktisch allgemein bekannt. Steht sein Hash in
+`RP_ORIGINS`, besteht jeder beliebige selbst signierte Build die
+Origin-Prüfung von GoTrue. Zusammen mit einer erlangten Session (z. B.
+über einen Phishing-Proxy im OAuth-Code-Flow) kann ein Angreifer damit
+einen eigenen Authenticator als Passkey auf dem fremden Konto
+registrieren. Die Registrierung ersetzt keine Anmeldung, aber sie
+entzieht dem Konto den Passkey-Schutz.
+
+Empfohlene Aufteilung:
+
+| Umgebung | Origins |
+|---|---|
+| **Produktion** (Supabase, thestia.de) | `https://auth.thestia.de` + Release-Key-Hash + (nach Upload) Play-Key-Hash |
+| **Lokal** (eigenes Supabase-Projekt oder self-hosted) | zusätzlich der Debug-Key-Hash |
+
+Wenn es kein separates Entwicklungsprojekt geben soll: Debug-Origin
+während der Entwicklung setzen und **vor dem ersten Upload entfernen**.
+Kontrolle: `python tool/check_passkey_assetlinks.py --live`
+
+**Play-Store-Verteilung:** Von Play installierte Builds tragen den separaten Play-App-Signing-Key – dessen Hash (Play Console → Setup → App-Integrität) als **dritten** Origin ergänzen. Der ist erst vorhanden, wenn der App-Signing-Key existiert, und Play erzeugt ihn erst beim ersten Upload; er ist also bis dahin nicht eintragbar.
 
 **Achtung:** Wer ein APK mit einem NEUEN Keystore signiert (z. B. neuer
 Upload-Key nach Play-Key-Rotation), braucht einen ZUSÄTZLICHEN Origin mit

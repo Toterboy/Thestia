@@ -56,3 +56,64 @@ Bleibt Schritt 2 aus, funktioniert der Reset weiterhin über das
 
 iOS entspricht dem: Associated Domain `applinks:thestia.de` im
 Entitlements-File + `/.well-known/apple-app-site-association` auf der Domain.
+
+## `apple-app-site-association`: Vorlage ist noch nicht ausgefüllt
+
+`passkey-assets/apple-app-site-association` enthält aktuell
+
+```json
+{ "webcredentials": { "apps": ["REPLACE_WITH_APPLE_TEAM_ID.com.thestia.app"] } }
+```
+
+**Damit sind iOS-Passkeys wirkungslos.** Apple prüft den Team-Identifier
+streng; `REPLACE_WITH_APPLE_TEAM_ID` ist kein gültiger Wert, also wird die
+Domain-Bindung nie bestätigt. Die Datei wird zwar mit HTTP 200 und
+`Content-Type: application/json` ausgeliefert, was den Defekt
+unsichtbar macht — es gibt schlicht kein `webcredentials`-Match.
+
+Vor dem ersten iOS-Build ersetzen:
+
+1. Apple Developer → Membership → Team-ID (10 Zeichen, z. B. `ABCDE12345`).
+2. In der Datei `REPLACE_WITH_APPLE_TEAM_ID` durch die Team-ID ersetzen.
+   Bundle-ID `com.thestia.app` bleibt (steht so in `ios/Runner.xcodeproj`).
+3. Prüfen: `curl -i https://auth.thestia.de/.well-known/apple-app-site-association`
+   — die Antwort darf keine Zeichenkette `REPLACE_` enthalten.
+
+`tool/check_passkey_assetlinks.py` schlägt bei diesem Punkt an, solange die
+Vorlage steht.
+
+## Warum die Datei genau zwei Zertifikate enthält
+
+`assetlinks.json` listete jedes Zertifikat doppelt: einmal als
+colon-getrennter Hex in Großbuchstaben und einmal als kompakter Hex in
+Kleinbuchstaben. Android vergleicht Zertifikatsbytes, nicht die
+Schreibweise, deshalb war die Doppelung wirkungsloser Ballast — sie hat
+nur Diff-Vergleiche unlesbar gemacht und echte Abweichungen zwischen
+Live- und Repo-Datei kaschiert. Beide Formate sind jetzt auf den
+kanonischen colon-getrennten Eintrag zusammengeführt.
+
+Der Debug-Fingerprint gehört hier ausdrücklich **dazu**: ohne ihn schlägt
+die Passkey-Einrichtung in jedem `flutter run`-Debug-Build mit
+`CreatePublicKeyCredentialDomException` fehl, weil Credential Manager die
+App-Signatur sonst nicht gegen `assetlinks.json` prüfen kann. Für die
+*serverseitige* Origin-Liste ist das eine andere Frage — siehe
+`docs/PASSKEYS_SERVER_SETUP.md`.
+
+## Nach dem ersten Play-Upload nachpflegen
+
+Der Fingerprint des Play-App-Signing-Keys **fehlt hier bewusst**, weil er
+erst beim ersten Upload entsteht: Play erzeugt den App-Signing-Key beim
+Anlegen der App, nicht vorher. Ihn zu raten oder vorzutragen wäre
+falsch. Sobald der erste Upload durch ist:
+
+1. Play Console → Setup → App Signing → *App signing key certificate*
+   → SHA-256-Fingerabdruck kopieren.
+2. Als dritten Eintrag in `sha256_cert_fingerprints` aufnehmen.
+3. Den zugehörigen `android:apk-key-hash:`-Origin ebenfalls in Supabase
+   ergänzen (Auth → Sign In / Providers → Passkeys → Origins).
+4. `python tool/check_passkey_assetlinks.py --live` muss danach grün sein.
+
+Grund: Von Play installierte Builds tragen den Play-Key, nicht den
+Upload-Key. Ohne diesen Eintrag läuft die native Passkey-Dialog-Prüfung
+im Play-Build ins Leere, während sie im Debug- und Sideload-Build
+funktioniert.
