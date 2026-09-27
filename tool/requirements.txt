@@ -1,0 +1,18 @@
+# Laufzeitabhaengigkeiten der Pruefwerkzeuge unter tool/.
+#
+# Bewusst gepinnt, auch fuer eine reine Entwicklungsabhaengigkeit:
+# sqlglot 30.18.0 kann "LANGUAGE sql SECURITY DEFINER" nicht parsen und
+# wirft ParseError. Ohne Pin ist der Checker von einer pip-Aktualisierung
+# abhaengig - die SQL ist seit dem Deploy unveraendert, trotzdem faellt
+# der Check plötzlich um. Genau das ist passiert: 30.18.0 kam nach dem
+# letzten Stand des Checkers rein.
+#
+# Beim Wechsel: tool/check_migrations_sql.py Abschnitt 2b pruefen, ob die
+# Umgehung noch noetig ist, und diese Zeile mitziehen.
+sqlglot==30.18.0
+
+# pglast ist der echte PostgreSQL-Parser fuer check_migration_safety.py.
+# Auch das eine Entwicklungswerkzeug, aber die Ausgabe ist Teil des
+# Push-Signoffs, also ebenfalls gepinnt - eine pglast-Aktualisierung darf
+# keine stillen Aussagen in der Reihenfolge der Meldungen verschieben.
+pglast==8.4

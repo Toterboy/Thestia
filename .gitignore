@@ -136,6 +136,10 @@ releases/testapk/screenshots/
 **/Pods/
 # Temporaere Analyse-Ausgaben
 tool/*.txt
+# Ausnahme: die Abhaengigkeits-Pins sind Quelltext, keine Ausgabe. Ohne
+# diese Ausnahme fehlt die Datei im Repo und der CI-Job static-checks
+# bricht, weil er sie per -r einliest.
+!tool/requirements.txt
 
 # Altersschaetzer-Modell (81 MB): bewusst NICHT im Repo, Aufnahme ist eine
 # bewusste Betreiber-Entscheidung (9f843fa). Ohne diese Zeile wuerde ein
