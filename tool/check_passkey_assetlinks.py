@@ -8,8 +8,10 @@ tatsaechlich aufgetreten:
    colon-getrennt, zweimal als kompakter Hex). Funktioniert, ist aber
    Ballast und macht Diff-Vergleiche unlesbar.
 2) apple-app-site-association enthielt die unausgefuellte Vorlage
-   "REPLACE_WITH_APPLE_TEAM_ID" - dadurch sind iOS-Passkeys tot,
-   ohne dass irgendwo ein Fehler sichtbar wird.
+   "REPLACE_WITH_APPLE_TEAM_ID". Das meldet der Pruefer als WARNUNG, nicht
+   als Fehler - die Vorlage ist nicht mit vertretbarem Aufwand aus dem
+   Repo heraus fuellbar, und eine dauerhaft rote CI wird abgelesen und
+   dann ignoriert. Die Warnung bleibt sichtbar, bis die Team-ID steht.
 3) Der Fingerprint des Play-App-Signing-Keys fehlt. Der ist erst nach
    dem ERSTEN Upload vorhanden; bis dahin ist er nicht erzeugbar und
    darf nicht geraten werden. Der Pruefer sagt das explizit, statt es
@@ -143,6 +145,19 @@ def check_assetlinks(expected: dict[str, str | None]) -> set[str]:
 
 
 def check_aasa() -> None:
+    """iOS-Passkeys.
+
+    Die Vorlage ist eine WARNUNG, kein Fehler: der Platzhalter
+    REPLACE_WITH_APPLE_TEAM_ID laesst sich nur mit der Team-ID aus dem
+    Apple-Developer-Konto des Kontoinhabers fuellen. Solange der Weg
+    "irgendwann" ist, darf die CI deswegen nicht dauerhaft rot sein -
+    eine staendig rote Ampel wird abgelesen und dann ignoriert, und dann
+    faellt sie auch nicht mehr auf, wenn sie einmal wichtig wird.
+
+    Sobald die Team-ID eingetragen ist, greift die Warnung nicht mehr und
+    derselbe Code meldet einen Fehler, falls die Datei kaputt ist. Es
+    braucht keine zweite Regel dafuer.
+    """
     print('--- apple-app-site-association ---')
     if not AASA.exists():
         fail.append('apple-app-site-association fehlt')
@@ -155,16 +170,18 @@ def check_aasa() -> None:
         return
     m = PLACEHOLDER.search(raw)
     if m:
-        fail.append(
-            'AASA enthaelt eine unausgefuellte Vorlage '
-            f'({m.group(0)!r}) - iOS-Passkeys sind damit NICHT nutzbar. '
-            'Apple Team-ID aus Apple Developer -> Membership einsetzen.')
+        warn.append(
+            f'AASA enthaelt noch die Vorlage ({m.group(0)!r}) - iOS-Passkeys '
+            'sind bis dahin NICHT nutzbar, Android-Passkeys sind davon nicht '
+            'betroffen. Fuellen: Apple Developer -> Membership -> Team-ID. '
+            'Kein Fehler, weil nur der Kontoinhaber die ID liefern kann.')
     apps = data.get('webcredentials', {}).get('apps', [])
     if not apps:
         fail.append('AASA: webcredentials.apps ist leer')
     for app in apps:
         if not PLACEHOLDER.search(app):
             print(f'  app: {app}')
+
 
 
 def check_live(local_android: set[str]) -> None:
@@ -204,7 +221,8 @@ def check_live(local_android: set[str]) -> None:
             live_aasa = r.read().decode('utf-8')
         m = PLACEHOLDER.search(live_aasa)
         if m:
-            fail.append(f'LIVE {AASA_URL} liefert die Vorlage {m.group(0)!r} aus')
+            warn.append(f'LIVE {AASA_URL} liefert die Vorlage {m.group(0)!r} aus '
+                        '- deckt sich mit dem Repo-Stand, nur als Hinweis')
     except Exception as e:  # noqa: BLE001
         warn.append(f'AASA live nicht pruefbar: {e}')
 

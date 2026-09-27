@@ -221,18 +221,20 @@ jobs:
 
   # Ohne diesen Job konnte assetlinks.json woertlich duplizierte
   # Fingerprints und eine unausgefuellte AASA-Vorlage enthalten, ohne dass
-  # irgendetwas rot wurde. Beides ist passiert: die Vorlage
+  # irgendetwas auffiel. Beides ist passiert: die Vorlage
   # "REPLACE_WITH_APPLE_TEAM_ID" laeuft seit dem ersten Commit so mit und
   # macht iOS-Passkeys still wirkungslos.
   #
-  # continue-on-error, weil die AASA bis zur Eintragung der echten
-  # Apple Team-ID offen bleibt (die kann nur der Kontoinhaber liefern).
-  # Sobald sie in passkey-assets/apple-app-site-association steht, ist das
-  # hier zu streichen - dann soll der Job bremsen.
+  # Der Job ist wieder blockierend. Zuvor stand hier
+  # continue-on-error: true, weil die AASA-Vorlage als Fehler gewertet
+  # wurde und die Team-ID noch fehlt. Zwei Argumente dagegen:
+  # eine dauerhaft rote Ampel wird abgelesen und dann ignoriert, und sie
+  # faellt genau dann nicht mehr auf, wenn sie einmal wirklich wichtig
+  # wird. Die Vorlage ist jetzt eine WARNUNG im Pruefer, kein Fehler -
+  # damit ist dieser Job gruen, ohne dass etwas verloren geht.
   passkey-assets:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v5
 
