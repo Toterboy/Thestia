@@ -245,3 +245,52 @@ jobs:
       # Hex-Laenge, Duplikate, Vorlagen.
       - name: Passkey-Assets pruefen
         run: python3 tool/check_passkey_assetlinks.py
+
+  # Von 15 Pruefern unter tool/ liefen vor diesem Job nur vier in der CI.
+  # check_migrations_sql, check_migration_safety und check_push_readiness
+  # wurden ausschliesslich lokal ausgefuehrt - und genau dort ist etwas
+  # kaputtgegangen, ohne dass es jemand bemerkt haette: sqlglot ist eine
+  # ungepinnte Abhaengigkeit, und 30.18.0 kann
+  # "LANGUAGE sql SECURITY DEFINER" nicht parsen. Die SQL ist seit dem
+  # Deploy unveraendert, der Check ist trotzdem umgekippt.
+  #
+  # Die beiden externen Parser sind jetzt in tool/requirements.txt
+  # gepinnt, damit das nicht erneut passiert.
+  static-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Gepinnte Pruef-Abhaengigkeiten
+        run: pip install --require-hashes=false -r tool/requirements.txt
+
+      # keytool wird von check_passkey_assetlinks.py nur optional genutzt
+      # (java ist auf dem Runner vorhanden, android/key.properties ist
+      # gitignored) - es verursacht hier keinen Fehler.
+      - name: SQL-Parser
+        run: |
+          python3 tool/check_migrations_sql.py
+          python3 tool/check_migration_safety.py
+
+      # Selftests mit Negativfaellen: sie pruefen, dass die Pruefer nicht
+      # nur gruen melden, sondern echte Fehler auch finden.
+      - name: Selftests der Pruefer
+        run: |
+          python3 tool/check_migrations_sql_selftest.py
+          python3 tool/check_namespace_migration_selftest.py
+          python3 tool/check_push_readiness_selftest.py
+
+      - name: Uebrige statische Pruefer
+        run: |
+          python3 tool/check_security_invariants.py
+          python3 tool/check_dependency_pins.py
+          python3 tool/check_push_readiness.py
+          python3 tool/check_passkey_assetlinks.py
+          python3 tool/check_dashes.py
+          python3 tool/check_texts.py
+          python3 tool/check_keys.py

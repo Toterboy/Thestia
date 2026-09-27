@@ -46,6 +46,21 @@ def check(path: str) -> bool:
         )
     merged = merged.replace("&&", "")
 
+    # 2b) sqlglot-Parserlücke: "LANGUAGE sql SECURITY DEFINER" ohne
+    #     dazwischenliegendes SET search_path wirft in sqlglot 30.x
+    #     ParseError ("Required keyword: 'this' missing for
+    #     LanguageProperty"). Das ist ein Parser-Mangel, kein SQL-Fehler -
+    #     die Konstruktion ist regulaeres Postgres und in Migration 108
+    #     live deployt. Nachgewiesen: dieselbe Anweisung parst, sobald
+    #     SET search_path zwischen LANGUAGE und SECURITY steht.
+    #     Eingefuegt wird NUR fuer den Parse, nie fuer die Ausfuehrung.
+    merged = re.sub(
+        r"(LANGUAGE\s+sql)\s+(SECURITY\s+DEFINER)",
+        r"\1 SET search_path = pg_temp \2",
+        merged,
+        flags=re.I,
+    )
+
     # 3) Klammer-Balance ausserhalb von Strings UND Kommentaren pruefen.
     no_strings = re.sub(r"'(?:[^']|'')*'", "''", merged)
     no_strings = re.sub(r"--[^\n]*", "", no_strings)
