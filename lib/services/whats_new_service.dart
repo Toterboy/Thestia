@@ -31,6 +31,19 @@ class WhatsNewService {
   /// Zusammenfassung je Version (l10n-Keys). NUR Titel-Bullets - Details
   /// stehen in den Release Notes.
   static const Map<int, List<String>> contentByBuild = {
+    30: [
+      'Vorstellungen, die sich nicht wiederholen: die Ideen-Karten',
+      'rotieren jetzt. Wer die App oft oeffnet, tippt nicht mehr',
+      'immer dieselben vier Fragen an.',
+      'Wichtig: Eine bestaetigte E-Mail-Adresse ist jetzt Voraussetzung',
+      'fuer Funken, Daumen und Nachrichten. Wer sie nicht bestaetigt',
+      'hat, sieht an dieser Stelle einen Hinweis.',
+      'Sicherheitsnummer: Du kannst jetzt festlegen, dass ein Chat erst',
+      'nach dem Vergleich der Nummern beginnt.',
+      'Naehefunk: Das Geraet sendet unregelmaessig statt im festen',
+      'Takt und hoert nur noch Signale von Thestia.',
+    ],
+
     22: [
       'whatsnew.v090.sparkMoments',
       'whatsnew.v090.friendship',

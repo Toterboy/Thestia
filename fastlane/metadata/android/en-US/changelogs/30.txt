@@ -1,0 +1,26 @@
+Security and privacy in one update
+
+Introductions that do not repeat
+The idea cards for your introduction now rotate. Instead of tapping the
+same four questions every time, you get a fresh mix each time you open
+the app.
+
+Important: confirm your e-mail address
+A confirmed address is now required to receive sparks, give a thumbs up
+and send messages. If yours is not confirmed, you will see a notice
+where it matters. You can confirm it at any time in the settings.
+
+Security number in chat
+You can now make a chat wait until you have compared your security
+numbers. That way nobody can swap the key of your chat and read along.
+
+Nearby mode transmits irregularly
+Your device no longer transmits on a fixed rhythm, but at irregular
+intervals. It also only listens for Thestia signals now instead of every
+Bluetooth message in the area.
+
+Fixes
+- Passkeys can be created more reliably
+- Random chat and Dating Hour check again whether someone blocked you
+- Location data is deleted automatically after 30 days
+- Fewer profiles are shown when distance, age or pause do not allow it

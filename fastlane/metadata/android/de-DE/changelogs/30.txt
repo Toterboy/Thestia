@@ -1,0 +1,29 @@
+Sicherheit und Privatsphaere in einem Update
+
+Vorstellungen, die sich nicht wiederholen
+Die Ideen-Karten fuer deine Vorstellung rotieren jetzt. Du tippst nicht
+mehr immer dieselben vier Fragen an - sondern bekommst bei jedem Oeffnen
+eine frische Mischung.
+
+Wichtig: E-Mail-Adresse bestaetigen
+Eine bestaetigte Adresse ist jetzt Voraussetzung, um Funken zu erhalten,
+Daumen zu vergeben und Nachrichten zu schreiben. Wer sie nicht
+bestaetigt hat, sieht an dieser Stelle einen Hinweis. Das laesst sich in
+den Einstellungen jederzeit nachholen.
+
+Sicherheitsnummer im Chat
+Du kannst jetzt festlegen, dass ein Chat erst beginnt, nachdem ihr eure
+Sicherheitsnummern verglichen habt. Damit kann niemand den Schluessel
+eures Chats austauschen und mitlesen.
+
+Naehefunk sendet unregelmaessig
+Das Geraet sendet nicht mehr im festen Takt, sondern in unregelmaessigen
+Abstaenden. Ausserdem hoert es nur noch Signale von Thestia und nicht
+mehr jede Bluetooth-Nachricht in der Umgebung.
+
+Fehlerbehebungen
+- Passkeys lassen sich stabiler anlegen
+- Zufallschat und Dating Hour pruefen wieder, ob jemand dich blockiert hat
+- Standortdaten werden nach 30 Tagen automatisch geloescht
+- Profile werden weniger angezeigt, wenn Distanz, Alter oder Pause
+  das nicht hergeben

@@ -6,7 +6,7 @@ Danke, dass du Thestia nutzt. Hier steht, welche Versionen unterstützt werden u
 
 | Version | Status | Anmerkung |
 | --- | --- | --- |
-| **v0.9.0 und höher** (Build 28+) | ✅ **Unterstützt** | Bug-Reports willkommen; Security-Fixes |
+| **v0.9.1 und höher** (Build 29+) | ✅ **Unterstützt** | Bug-Reports willkommen; Security-Fixes |
 | **unter v0.9.0** (v0.8.x und älter, Build < 28) | ❌ **End of Support** (seit 24.09.2026) | Keine Bug-/Security-Fixes mehr – bitte aktualisieren |
 
 ### Update-Hinweis für alte Builds
@@ -17,7 +17,9 @@ Flutter-Build-Nummer in der `app_config`-Tabelle
 Build darunter, zeigt die App beim Start einen Update-Hinweis
 (fail-open: bei Netz-/Schema-Fehlern startet die App normal).
 
-Aktuell: `min_app_version_build = 28` (= v0.9.0).
+Aktuell: `min_app_version_build = 29` (= v0.9.1).
+Gesetzt in Migration 130 (v0.9.2) - in 0.9.1 war es
+angekuendigt, aber nicht ausgefuehrt worden.
 
 ## Bugs melden
 

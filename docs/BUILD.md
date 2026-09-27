@@ -8,7 +8,7 @@ gehört.
 
 | Werkzeug | Version |
 | --- | --- |
-| Flutter SDK | 3.35.x (stable) – exakt die Version aus `pubspec.yaml` (`environment.flutter`) |
+| Flutter SDK | **3.44.6** (stable) – die Version, die `.github/workflows/ci.yml` pinnt und mit der gebaut wurde. `pubspec.yaml` nennt `flutter: ^3.35.0`; das ist das **Minimum**, nicht die getestete Version |
 | Java / JDK | 17 (Temurin empfohlen) |
 | Android SDK | Platform 37 + Build-Tools (via `flutter doctor` prüfen) |
 

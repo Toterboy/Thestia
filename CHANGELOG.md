@@ -7,7 +7,82 @@ und folgt der [Semantic Versioning Specification (SemVer)](https://semver.org/la
 Solange die Versionsnummer mit `0.` beginnt (Initial Development Phase nach SemVer §4),
 können sich Schnittstellen und Verhalten jederzeit ändern.
 
-## [Unreleased] – v0.9.0-Nachträge
+## [0.9.2] – Unreleased (Build 30)
+
+### Sicherheit
+
+- **Serverseitig erzwungene E-Mail-Bestaetigung** (Migration 128): ohne
+  bestaetigte Adresse sind Matches, Likes und das Nachrichten-Relay nicht
+  mehr moeglich. Vorher pruefte **keine** der 122 Migrationen den Status
+- **Optionale AAL2-Pflicht** pro Konto (`profiles.mfa_required`), mit
+  Kill-Switch in `app_config`, damit sie im Notfall ohne Deploy
+  abzuschalten ist
+- **Antwortschluessel-Exploit geschlossen**: `quiz_shuffle_for_match` war
+  eine reine Permutationsfunktion und fuer die Rolle `anon` aufrufbar.
+  Ueber 24 Permutationen liess sich der korrekte Antwortindex ermitteln -
+  damit war der AES-Schluessel scharfer Profilfotos erreichbar, ohne eine
+  einzige richtige Antwort. Ursache war nicht eine fehlende, sondern eine
+  unvollstaendige Berechtigung: `REVOKE ... FROM anon` greift nicht, weil
+  Rechte ueber die Pseudo-Rolle `PUBLIC` vererbt werden (Migration 123)
+- **Erzwungener Jugendschutz und Blockier-Pruefung** fuer Zufallschat und
+  Dating Hour wiederhergestellt - Migrationen 102/096 hatten die Regeln
+  aus 056/058 ueberschrieben. Zusaetzlich als Tabellen-Trigger, damit ein
+  spaeteres `CREATE OR REPLACE` die Function nicht mehr aushebeln kann
+- **Safety-Number erzwingbar**: Chat-Versand erst nach Vergleich der
+  Sicherheitsnummern
+- **Certifikat-Pinning strikt**: bisher entschied der Callback, ob
+  ueberhaupt geprueft wurde - eine nachinstallierte Fremd-CA kam durch
+- **Kein Rate-Limit-Bypass mehr** in `verify-account`,
+  `cancel-registration` und `report-image` (fail-open bei DB-Fehlern) sowie
+  in `delete-account` (MFA-Pruefung war fail-open). `x-forwarded-for` wird
+  jetzt geparst - Header-Rotation umging jedes IP-Limit
+- **`prekeys` prueft die Beziehung** (kein Bundle-Harvesting) und gibt bei
+  404 keine Existenz-Auskunft
+- **`.env` ist kein App-Asset mehr** (im gebauten APK verifiziert nicht
+  enthalten); Konfiguration laeuft ueber `--dart-define`
+- **Keystore-Namespaces mit Migration**: ohne sie waeren nach dem Update
+  alle Nutzer abgemeldet gewesen und Signal-Keys unlesbar geworden
+
+### Neu
+
+- **Rotierende Vorstellungs-Prompts**: 4 Themen mit je drei offenen Fragen
+  statt vier fester Chips
+- **Mindest-Build-Gate auf 29** gesetzt (Migration 130) – Support ab
+  v0.9.1, wie in den 0.9.1-Release-Notes angekuendigt
+- **Naehefunk (Transit Spark) gehaertet**: Advertising mit
+  unregelmaessigen Abstaenden statt starrem ~100-ms-Takt, Token-Rotation
+  ohne festes Raster, Scan-Filter auf die eigene Hersteller-ID, gepulstes
+  Scannen statt 45 Minuten Dauerscan
+
+### Geaendert
+
+- **Dependency-Hygiene in CI**: 16 sicherheitsrelevante Pakete exakt
+  gepinnt, `pub outdated`-/CVE-Report, Security-Invarianten und
+  SBOM-Erzeugung als CI-Job
+- **Zertifikats-Pins und Konfiguration** kommen nicht mehr aus
+  gebuendelten Dateien im APK
+- **iOS**: `NSPhotoLibraryUsageDescription` ergaenzt - ohne den Eintrag
+  waere die App beim Oeffnen der Fotomediathek abgestuerzt
+- **Discovery**: Distanz-, Alters-, Pausen- und Reziprozitaetsfilter
+  werden jetzt serverseitig in einer zentralen Regel geprueft
+- **Quiz-Cooldown** greift bei jedem Versuch (vorher gar nicht)
+
+### Behoben
+
+- **Standort wird nach 30 Tagen automatisch geloescht** (Migration 129,
+  taeglicher Cron) statt unbegrenzt gespeichert
+- **`match_bucket_list`**: `match_id` und `created_by` sind nicht mehr
+  aenderbar, Statuswechsel sind gedrosselt
+- **`check_email_ban_status`** gibt keinen internen Moderations-Freitext
+  mehr nach aussen
+- **Bilder**: Groessen-, Pixel- und Dimensionsbudget werden vor dem Decode
+  geprueft (`image` 4.10.1), damit eine Decompression-Bomb nicht mehr den
+  Speicher des Geraets frisst
+- **WispDating-Reste** in Gradle, PWA-Manifest und Log-Tag entfernt
+- **Speicher-Namespaces mit abwartbarer Migration**, damit die app-weite
+  Keystore-Reset-Kaskade nicht mehr greift
+
+## [0.9.1] – 2026-09-25
 
 ### Sicherheit (Build 22)
 
@@ -164,6 +239,23 @@ Server: Migrationen **086, 087 + 088** einspielen + Edge Functions
   Online-Fetch) werden sofort persistiert; offline gescannte Kontakte
   bleiben „Unbekannt" und laden ihren Namen automatisch, sobald
   wieder Internet da ist.
+
+## 0.9.1 – Nachtrag (Build 29, 2026-09-25)
+
+- **Umbenennung WispDating zu Thestia**: neue App-ID `com.thestia.app`.
+  Neuinstallation noetig, **Konto und Daten bleiben erhalten**. Passkeys
+  sind an die alte Domain gebunden und mussten neu angelegt werden
+- **Chat-Hintergruende**: Muster (Punkte, Linien, Herzen, Sterne, Wellen)
+- **Willkommens-Screen** nach der E-Mail-Bestaetigung
+- **Pausiert-Hinweis**: bei pausiertem Profil zeigt "Aktuelles" einen
+  Hinweis
+- **Benachrichtigungs-Herz** in der Statusleiste
+- **Neue Kontaktwege**: Bug-Reports und Bild-Meldungen
+- **Neue Adressen**: `thestia.de` (App-Links, Bestaetigungs-Mails)
+- **Betrieb**: FCM laeuft ueber ein neues Firebase-Projekt
+- **Offen geblieben**: das Mindest-Build-Gate war fuer 29 vorgesehen,
+  wurde aber nicht gesetzt (Migration 076 legte 9 fest). In v0.9.2
+  nachgeholt (Migration 130)
 
 ## [0.9.0] – Beta – 2026-09-08
 
