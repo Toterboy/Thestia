@@ -117,6 +117,13 @@ jobs:
       - name: Security-Invarianten
         run: python tool/check_security_invariants.py
 
+      # Ein Namespace-Wechsel im Keystore OHNE Migrations-Eintrag bedeutet:
+      # beim Update sind die Daten unerreichbar (alle Nutzer abgemeldet bzw.
+      # neuer Hive-Schluessel -> verschluesselte Boxen unlesbar). Das ist im
+      # Review nicht sichtbar, weil der Code je fuer sich korrekt ist.
+      - name: Namespace-Migration (Datenverlust beim Update)
+        run: python tool/check_namespace_migration.py
+
       # 4) SBOM fuer die F-Droid-Einreichung vorbereiten.
       #    CycloneDX listet transitive Abhaengigkeiten inkl. der sieben
       #    lokalen Forks, die `pub outdated` nicht sieht.

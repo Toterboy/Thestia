@@ -55,6 +55,25 @@ import 'package:thestia/utils/pinned_http_overrides.dart';
 ///   Endpunkt den Start nie unbegrenzt blockiert.
 /// - Schwere, nicht kritische Dienste (Hive, Serverzeit, Notifications)
 ///   starten im Hintergrund (unawaited).
+/// Legacy-Key der Supabase-Session nach SDK-Konvention.
+///
+/// Gespiegelt aus `SecureSupabaseLocalStorage`, damit die Namespace-
+/// Migration wirklich denselben Key findet, den 0.9.1 geschrieben hat.
+/// Ohne das bliebe die Session im alten Keystore-Alias und jeder
+/// Bestandsnutzer waere nach dem Update abgemeldet.
+String _supabaseSessionKey() {
+  const raw = String.fromEnvironment('SUPABASE_URL');
+  if (raw.isNotEmpty) {
+    try {
+      final host = Uri.parse(raw).host;
+      if (host.isNotEmpty) return 'sb-${host.split('.').first}-auth-token';
+    } catch (_) {
+      // Unparsbare URL -> Fallback unten.
+    }
+  }
+  return 'sb-auth-token';
+}
+
 Future<void> main() async {
   // Zertifikat-Pinning für ALLE Dart-TLS-Verbindungen (v0.9.0, als
   // ERSTES: danach erzeugte HttpClients erben den Check) – schützt
@@ -65,7 +84,13 @@ Future<void> main() async {
   // Default-Namespace in die neuen, getrennten Namespaces verschieben.
   // Ohne das waeren nach dem Update alle Tokens unlesbar (Massen-Logout).
   // Idempotent + fail-closed: nur wenn der Ziel-Namespace leer ist.
-  unawaited(migrateLegacyNamespaces());
+  // AWAITED, nicht unawaited: der Supabase-Client startet gleich danach und
+  // liest die Session. Liefe die Migration parallel, fände er sie nicht -
+  // und bei `resetOnError: true` (Default in v11) löscht ein Dekrypt-
+  // Fehlschlag dann die Werte aller anderen Namespaces mit.
+  await migrateLegacyNamespaces(
+    extraSessionKeys: [_supabaseSessionKey()],
+  );
 
   FlutterError.onError = (details) {
     FlutterError.dumpErrorToConsole(details);

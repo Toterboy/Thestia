@@ -60,7 +60,18 @@ const Map<String, List<String>> _legacyKeys = {
     'seen_match_ids',
     'seen_qr_ids',
   ],
-  SecureNamespaces.location: [
+  // v0.9.2 (Release-Blocker): Beide Namespaces wurden bei der Umstellung
+// vergessen. `hive_encryption_key` ohne Migration bedeutet einen NEUEN
+// Verschluesselungsschluessel - jede verschluesselte Box waere danach nicht
+// mehr lesbar, bei Signal-Keys also Verlust der E2E-Identitaet.
+// `session` bleibt hier leer, weil der Key projektabhaengig ist
+// (`sb-<host-prefix>-auth-token`); er wird ueber `extraSessionKeys`
+// dazugefuegt.
+SecureNamespaces.session: [],
+SecureNamespaces.signals: [
+  'hive_encryption_key',
+],
+SecureNamespaces.location: [
     'thestia_loc_lat',
     'thestia_loc_lng',
     'thestia_loc_ts',
@@ -87,6 +98,13 @@ const Map<String, List<String>> _legacyKeys = {
 /// Aufruf: VOR der ersten Nutzung der umgestellten Stores, z. B. direkt
 /// nach `FlutterSecureStorage`-Initialisierung im Bootstrap.
 Future<void> migrateLegacyNamespaces({
+  /// Legacy-Keys, die nicht statisch in [_legacyKeys] stehen.
+  ///
+  /// Nötig für den Supabase-Session-Key: er folgt der SDK-Konvention
+  /// `sb-<host-prefix>-auth-token` und ist damit projektabhängig. Ohne
+  /// Übergabe wird die Session nicht migriert und jeder Bestandsnutzer
+  /// wird beim Update abgemeldet.
+  List<String> extraSessionKeys = const [],
   FlutterSecureStorage? storage,
   AndroidOptions legacyAndroid = const AndroidOptions(),
   IOSOptions legacyIOS = const IOSOptions(
@@ -97,7 +115,10 @@ Future<void> migrateLegacyNamespaces({
 
   for (final entry in _legacyKeys.entries) {
     final namespace = entry.key;
-    final keys = entry.value;
+    final keys = [
+      ...entry.value,
+      if (entry.key == SecureNamespaces.session) ...extraSessionKeys,
+    ];
     final target = AndroidOptions(storageNamespace: namespace);
     final targetIOS = IOSOptions(
       accessibility: KeychainAccessibility.first_unlock_this_device,

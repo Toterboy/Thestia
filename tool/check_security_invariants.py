@@ -148,8 +148,15 @@ check(has('lib/utils/exif_stripper.dart', 'kMaxScrubBytes',
 check(has('lib/services/secure_storage_namespaces.dart',
           'migrateLegacyNamespaces', 'storageNamespace'),
       'APP: Keystore-Namespaces + idempotente Migration')
-check(has('lib/main.dart', 'migrateLegacyNamespaces()'),
-      'APP: Namespace-Migration laeuft beim Start')
+check(has('lib/main.dart', 'await migrateLegacyNamespaces('),
+      'APP: Namespace-Migration laeuft beim Start UND wird awaited')
+# Ein unawaited-Lauf war der Bug: der Supabase-Client startet gleich danach
+# und laeuft bei `resetOnError: true` (Default) sonst in einen Dekrypt-
+# Fehlschlag, der die Werte aller anderen Namespaces mitloescht.
+check('unawaited(migrateLegacyNamespaces' not in read(ROOT / 'lib/main.dart'),
+      'APP: Namespace-Migration ist NICHT unawaited (Race mit Supabase-Init)')
+check(has('lib/main.dart', '_supabaseSessionKey()'),
+      'APP: Supabase-Session-Key wird fuer die Migration berechnet')
 for f, ns in (('lib/services/secure_storage.dart', 'SecureNamespaces.tokens'),
               ('lib/services/secure_hive.dart', 'SecureNamespaces.signals'),
               ('lib/services/secure_supabase_session_storage.dart',
