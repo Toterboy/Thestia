@@ -282,6 +282,7 @@ jobs:
       - name: Selftests der Pruefer
         run: |
           python3 tool/check_migrations_sql_selftest.py
+          python3 tool/check_migrations_sql_paths_selftest.py
           python3 tool/check_namespace_migration_selftest.py
           python3 tool/check_push_readiness_selftest.py
 

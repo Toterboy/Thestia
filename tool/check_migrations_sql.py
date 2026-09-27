@@ -1,33 +1,49 @@
-"""Statische SQL-Validierung fuer die neuen Migrationen (098/099).
+﻿"""Statische SQL-Validierung fuer die neuen Migrationen (098/099).
 
 sqlglot unterstuetzt kein Dollar-Quoting und keine Postgres-"adjacent
 string literal"-Verkettung - beides wird hier vor dem Parse abstrahiert.
 Geprueft wird: Dollar-Quote-Balance, Klammer-Balance und Parsebarkeit
 aller Statements AUSSERHALB der Funktionskoerper.
 """
+import pathlib
 import re
 import sys
 
 import sqlglot
 
+# Pfade mit Forward-Slashes und verankert am Repo-Root. Vorher standen hier
+# Windows-Rawstrings (r"supabase\migrations\...") - damit liess sich die Datei
+# unter Linux nicht oeffnen, der Check lief also ausschliesslich auf
+# Windows. Er ist jetzt zum ersten Mal in der CI gelandet und dort
+# gescheitert. Zusaetzlich loest der Pfad unabhaengig vom aktuellen
+# Arbeitsverzeichnis auf, damit der Check auch aus tool/ heraus laeuft.
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+# Bewusst eine feste Liste und kein Glob: der Check soll die fuenf
+# nach dem Relay-Umbau hinzugekommen Migrationen pruefen, nicht
+# stillschweigend alle 128 mitwachsen.
 FILES = [
-    r"supabase\migrations\098_relay_store_relationship_check.sql",
-    r"supabase\migrations\099_random_chat_match_window.sql",
-    r"supabase\migrations\106_relay_dating_hour_and_limits.sql",
-    r"supabase\migrations\107_avatar_keys_out_of_public_view.sql",
-    r"supabase\migrations\108_hardening_followups.sql",
+    "supabase/migrations/098_relay_store_relationship_check.sql",
+    "supabase/migrations/099_random_chat_match_window.sql",
+    "supabase/migrations/106_relay_dating_hour_and_limits.sql",
+    "supabase/migrations/107_avatar_keys_out_of_public_view.sql",
+    "supabase/migrations/108_hardening_followups.sql",
 ]
 
 
-def check(path: str) -> bool:
-    sql = open(path, encoding="utf-8").read()
+def check(rel: str) -> bool:
+    path = ROOT / rel
+    if not path.exists():
+        print(f"{rel}: FEHLER - Datei nicht gefunden unter {path}")
+        return False
+    sql = path.read_text(encoding="utf-8")
 
     # 1) Dollar-Quoting: $$-Marker zaehlen (muss gerade sein; 1 Funktion
     #    = 2 Marker = 1 Block) und fuer den Parse durch Platzhalter
     #    ersetzen.
     marker_count = sql.count("$$")
     if marker_count % 2 != 0:
-        print(f"{path}: FEHLER - Dollar-Quotes unausbalanciert ({marker_count})")
+        print(f"{rel}: FEHLER - Dollar-Quotes unausbalanciert ({marker_count})")
         return False
     stripped = re.sub(r"\$\$.*?\$\$", "$$ DOLLAR_BODY $$", sql, flags=re.S)
 
@@ -46,7 +62,7 @@ def check(path: str) -> bool:
         )
     merged = merged.replace("&&", "")
 
-    # 2b) sqlglot-Parserlücke: "LANGUAGE sql SECURITY DEFINER" ohne
+    # 2b) sqlglot-ParserlÃ¼cke: "LANGUAGE sql SECURITY DEFINER" ohne
     #     dazwischenliegendes SET search_path wirft in sqlglot 30.x
     #     ParseError ("Required keyword: 'this' missing for
     #     LanguageProperty"). Das ist ein Parser-Mangel, kein SQL-Fehler -
@@ -65,7 +81,7 @@ def check(path: str) -> bool:
     no_strings = re.sub(r"'(?:[^']|'')*'", "''", merged)
     no_strings = re.sub(r"--[^\n]*", "", no_strings)
     if no_strings.count("(") != no_strings.count(")"):
-        print(f"{path}: FEHLER - Klammern unausbalanciert "
+        print(f"{rel}: FEHLER - Klammern unausbalanciert "
               f"({no_strings.count('(')} offen / {no_strings.count(')')} zu)")
         return False
 
@@ -73,10 +89,10 @@ def check(path: str) -> bool:
     try:
         stmts = [s for s in sqlglot.parse(merged, read="postgres") if s]
         kinds = [type(s).__name__ for s in stmts]
-        print(f"{path}: OK - {len(stmts)} Statements geparst: {kinds}")
+        print(f"{rel}: OK - {len(stmts)} Statements geparst: {kinds}")
         return True
     except Exception as e:  # noqa: BLE001
-        print(f"{path}: PARSE-FEHLER: {e}")
+        print(f"{rel}: PARSE-FEHLER: {e}")
         return False
 
 
