@@ -1,4 +1,4 @@
-﻿"""Statische SQL-Validierung fuer die neuen Migrationen (098/099).
+"""Statische SQL-Validierung fuer die neuen Migrationen (098/099).
 
 sqlglot unterstuetzt kein Dollar-Quoting und keine Postgres-"adjacent
 string literal"-Verkettung - beides wird hier vor dem Parse abstrahiert.
@@ -62,7 +62,7 @@ def check(rel: str) -> bool:
         )
     merged = merged.replace("&&", "")
 
-    # 2b) sqlglot-ParserlÃ¼cke: "LANGUAGE sql SECURITY DEFINER" ohne
+    # 2b) sqlglot-Parserlücke: "LANGUAGE sql SECURITY DEFINER" ohne
     #     dazwischenliegendes SET search_path wirft in sqlglot 30.x
     #     ParseError ("Required keyword: 'this' missing for
     #     LanguageProperty"). Das ist ein Parser-Mangel, kein SQL-Fehler -
