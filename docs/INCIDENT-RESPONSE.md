@@ -1,7 +1,7 @@
 # Incident Response
 
 Stand 2026-09-28. Öffentlich, damit die Zusage in
-[SECURITY.md](SECURITY.md) nachprüfbar ist.
+[SECURITY.md](../SECURITY.md) nachprüfbar ist.
 
 **Zwei verschiedene 72-Stunden-Fristen – nicht verwechseln:**
 
@@ -113,7 +113,7 @@ Innerhalb von 14 Tagen:
 - Welche Meldungen gingen an wen?
 - **Was wird geändert, damit es nicht wieder passiert?** Konkret und
   nachprüfbar – idealerweise als Eintrag im
-  [ROADMAP](ROADMAP.md) oder als neue Regel in
+  [ROADMAP](../ROADMAP.md) oder als neue Regel in
   `tool/check_security_invariants.py`
 
 Ein Vorfall ohne Konsequenz ist zweimal derselbe Vorfall.

@@ -5,7 +5,7 @@
 Dieses Dokument beschreibt, **wor** Thestia angreifbar ist und welche
 Maßnahmen greifen. Zweck ist nicht Vollständigkeit um ihrer selbst
 willen, sondern die Belastbarkeit der Zusage in
-[SECURITY.md](SECURITY.md): Ein Meldeweg ohne dokumentiertes
+[SECURITY.md](../SECURITY.md): Ein Meldeweg ohne dokumentiertes
 Angriffsbild ist eine Zusage ohne Verfahren.
 
 **Kein Versuch der Vollständigkeit.** Es werden die Angriffsflächen
@@ -75,7 +75,7 @@ UI; Altersband-Unschärfe wird nicht automatisch aufgelöst, sondern
 queue-t.
 **Offen:** kein verbindliches Mindestalter, kein Widerspruchsverfahren,
 keine Aufbewahrungsregel für Verifizierungsmedien. Siehe
-[ROADMAP](ROADMAP.md).
+[ROADMAP](../ROADMAP.md).
 
 ### 3.3 BLE-Nahbereich
 
@@ -184,7 +184,7 @@ Server ignoriert – der Bot-Schutz ist dann still aus.
 
 ## 5. Sicherheitslücken melden
 
-`security@thestia.de` – siehe [SECURITY.md](SECURITY.md) für Fristen
+`security@thestia.de` – siehe [SECURITY.md](../SECURITY.md) für Fristen
 und den gewünschten Umfang. Eingangsbestätigung binnen 72 Stunden.
 
 Für dieses Dokument gilt: Fehlt eine Angriffsfläche, ist das ein

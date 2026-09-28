@@ -12,11 +12,13 @@ Stand 2026-09-28. Betrifft `com.thestia.app` (Build 30 / v0.9.2) und die
 Zusatzdienste Supabase, Firebase, Cloudflare, Brevo, Netlify.
 
 > **Zur Reichweite dieser Abschätzung:** Sie behandelt die *Verarbeitung
-> durch die App*, nicht die Rechtsstellung des Betreibers. Wenn der
-> Betreiber minderjährig ist, steht vor allem anderen die Frage nach
-> Rechtsfähigkeit und Vertragsschluss (§ 106 BGB) – sie steht deshalb
-> als erster Punkt in Abschnitt 7.1 und geht den übrigen Abschnitten
-> voraus. Diese Abschätzung ersetzt diese Klärung nicht.
+> durch die App*, nicht die Rechtsstellung des Betreibers. Der Betreiber
+> ist volljährig; § 106 BGB ist nicht einschlägig. Offen bleiben die
+> Rechtsform und die Frage des Umgangs mit Minderjährigen als **Nutzende**
+> – Letzteres ist unabhängig vom Alter des Betreibers und in den
+> Abschnitten 4 und 5 behandelt. Die konkreten Fragen für eine
+> Beratung stehen in [DSFA-FRAGEN.md](DSFA-FRAGEN.md), der mögliche
+> Weg dorthin in Abschnitt 7.3.
 
 ## 1. Ergebnis in einem Satz
 
@@ -198,31 +200,21 @@ gemeinsam mit der Rechtsberatung.
 
 ## 7. Ungeklärte Punkte – vor Launch zu klären
 
-### 7.1 Rechtliche Stellung des Betreibers (zuerst zu klären)
+### 7.1 Rechtliche Stellung des Betreibers
 
-- [ ] **Rechtsfähigkeit und Vertragsschluss.** Minderjährige können nach
-      § 106 BGB nur Verträge mit Deckung des eigenen Bedarfs wirksam
-      schließen. Die Auftragsverarbeitungsverträge mit Brevo,
-      Cloudflare und Firebase sind solche Verträge, ebenso die
-      Apple-/Google-Entwicklerverträge und kostenpflichtige
-      Store-Bausteine. **Ob und wie weit das die Wirksamkeit berührt,
-      ist nicht pauschal zu beantworten** – es kommt darauf an, ob die
-      Tätigkeit als Bedarf im Sinne des § 106 BGB einzuordnen ist. Diese
-      Frage ist **nicht aus der Software heraus beantwortbar** und geht
-      einer Betreiber- oder Rechtsberatung voraus
-- [ ] **Wie ist der Vertragspartner gegenüber Nutzern und Behörden
-      auftretend?** Bei einer Minderjährigkeit im Rechtsverkehr ist zu
-      klären, ob eine volljährige Person als Betreiber auftritt
-- [ ] **Minderjährige als Vertragspartner auf Nutzerseite.**
-      Altersgrenze und Einwilligungskonstruktion (§ 25 Abs. 2 TDDDG)
-      hängen an derselben Frage
-- [ ] **Haftungs- und Finanzierungsfragen**, die aus einem
-      Nebenprojekt mit gebundener Ausgabe (Store, Hosting, Modelle) folgen
-
-> **Diese Punkte stehen bewusst an erster Stelle.** Sie sind die
-> Voraussetzung dafür, dass die übrigen Abschnitte gelten. Eine DSFA, die
-> einen ungeklärten Vertragspartner nicht adressiert, verschiebt das
-> Problem nur.
+- [x] **Rechtsfähigkeit geklärt:** Der Betreiber ist volljährig.
+      § 106 BGB ist damit nicht einschlägig, Auftragsverarbeitungs-
+      verträge und Entwicklerverträge sind ohne Geschäftsunfähigkeit
+      wirksam. **Aus einer früheren Fassung dieses Dokuments**
+- [ ] **Rechtsform und Erkennbarkeit des Betreibers** gegenüber Nutzern
+      und Behörden: Impressumspflichtige Angaben nach § 5 DDG (Name,
+      ladungsfähige Anschrift, Vertretungsberechtigte, Kontakt), und ob
+      eine gewerbliche oder eine private Tätigkeit vorliegt. Beides
+      ändert nichts an der DSFA-Pflicht, wohl aber an Impressum,
+      Steuern und der Frage, ob überhaupt ein Verbrauchervertrag
+      vorliegt
+- [ ] **Umgang mit Minderjährigen als Nutzende** – davon unabhängig
+      weiterhin offen, siehe 5. und 7.2
 
 ### 7.2 Fachliche Punkte
 
@@ -235,6 +227,26 @@ gemeinsam mit der Rechtsberatung.
 - [ ] Bewertung der Krisen-Erkennung als Nicht-Medizinprodukt
 - [ ] Verfügbarkeit des Live-Boards für Minderjährige
 - [ ] Verbindliche Bewertung des BSSID-/Geschwindigkeitsabgleichs
+
+### 7.3 Wie die fachliche Prüfung erfolgen soll
+
+Reihenfolge nach Aufwand, in dieser Reihenfolge sinnvoll:
+
+1. **Selbstabschätzung** gegen die DSK-Muss-Liste und das
+   DSK-Kurzpapier Nr. 5 (beides öffentlich und kostenlos). Ergebnis
+   ist mindestens eine **schriftlich begründete Entscheidung**, ob eine
+   DSFA erforderlich ist – die Begründung ist Pflicht, nicht die DSFA
+2. **Kostenlose Beratung** bei der zuständigen Landesdatenschutz-
+   behörde (nicht-bindend, Aufwand in Wochen)
+3. **Externer Datenschutzbeauftragter** nach Art. 37 Abs. 2 DSGVO.
+   Für kleine Projekte der übliche und schnellste Weg, wenn eine
+   belastbare Antwort gebraucht wird; die Benennung ist freiwillig
+   (Pflicht erst ab etwa 20 ständig Beschäftigten nach BDSG) und
+   darf auch projektbezogen erfolgen
+4. **Rechtsanwalt** mit Tätigkeitsschwerpunkt Datenschutz
+
+Die konkreten Fragen für Schritt 2 bis 4 stehen in
+[docs/DSFA-FRAGEN.md](DSFA-FRAGEN.md).
 
 ## 8. Wiedervorlage
 
