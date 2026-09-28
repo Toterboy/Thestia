@@ -81,7 +81,7 @@ class SupabaseAuthService implements AppAuthService {
 
     // Serverseitige Validierung NICHT abwarten (Startzeit!).
     unawaited(_validateSession());
-    // Safety-Numbers (Signal-Fingerprint) ben�tigen die eigene User-ID.
+    // Safety-Numbers (Signal-Fingerprint) benötigen die eigene User-ID.
     _encryption.localUserId = user.id;
     return true;
   }

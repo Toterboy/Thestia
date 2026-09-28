@@ -18,11 +18,11 @@ import 'package:thestia/widgets/ai_badge.dart';
 ///
 /// Die Admin-UUID wird via --dart-define=ADMIN_UUID=... beim Build gesetzt.
 /// Ist sie nicht konfiguriert (leerer String), gibt die Funktion IMMER false
-/// zurÃ¼ck â€” Admin-Funktionen sind dann deaktiviert (fail-safe).
+/// zurück — Admin-Funktionen sind dann deaktiviert (fail-safe).
 bool isCurrentUserAdmin() {
   final adminId = AppConstants.adminUserId;
   // Fail-safe: Wenn die Admin-UUID nicht konfiguriert ist, kann NIEMAND
-  // Admin sein â€” auch nicht versehentlich durch leere User-ID.
+  // Admin sein — auch nicht versehentlich durch leere User-ID.
   if (adminId.isEmpty) return false;
   final userId = SupabaseService.currentUser?.id;
   if (userId == null) return false;
@@ -79,7 +79,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
         context.go(AppRoutes.home);
       }
     } catch (e) {
-      // Fail-closed (Audit H6): SchlÃ¤gt die serverseitige PrÃ¼fung fehl,
+      // Fail-closed (Audit H6): Schlägt die serverseitige Prüfung fehl,
       // wird der Admin-Bereich NICHT gerendert.
       if (kDebugMode) {
         debugPrint(
@@ -942,7 +942,7 @@ class _BansTabState extends ConsumerState<_BansTab> {
     return data;
   }
 
-  /// Formular: Nutzer sperren (E-Mail oder User-ID + Pflicht-BegrÃ¼ndung).
+  /// Formular: Nutzer sperren (E-Mail oder User-ID + Pflicht-Begründung).
   Future<void> _showBanDialog() async {
     final targetCtrl = TextEditingController();
     final reasonCtrl = TextEditingController();
@@ -1058,7 +1058,7 @@ class _BansTabState extends ConsumerState<_BansTab> {
     );
   }
 
-  /// Entsperrt eine E-Mail (banned_emails-Eintrag lÃ¶schen + GoTrue-Entsperren).
+  /// Entsperrt eine E-Mail (banned_emails-Eintrag löschen + GoTrue-Entsperren).
   Future<void> _unban(Map<String, dynamic> entry) async {
     final email = entry['email'] as String? ?? '';
     final confirmed = await showDialog<bool>(

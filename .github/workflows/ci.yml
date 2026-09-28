@@ -295,3 +295,16 @@ jobs:
           python3 tool/check_dashes.py
           python3 tool/check_texts.py
           python3 tool/check_keys.py
+
+      # Doppelkodierte Umlaute sind gueltiges UTF-8, deshalb findet sie
+      # weder der Analyzer noch ein Test. Sie fielen nur auf, als eine
+      # Play-Grafik "verschluesselte" zeigte. Betroffen waren unter
+      # anderem nutzer-sichtbare Strings in privacy_screen.dart und die
+      # description aus pubspec.yaml, die im Play-Listing erscheint.
+      #
+      # test/l10n_test.dart und tool/check_mojibake.py enthalten die
+      # Fehlzeichen ABSICHTLICH (der eine sucht danach, der andere zeigt
+      # sie in der Doku) und sind deshalb ausgenommen - sonst wuerde die
+      # Reparatur das Pruefmittel zerstoeren.
+      - name: Mojibake (Doppelkodierung) pruefen
+        run: python3 tool/check_mojibake.py --skip-known

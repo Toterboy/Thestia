@@ -37,13 +37,20 @@ Tracking-Pixel und **keine** nutzerübergreifende Verhaltensanalyse.
 | Push-Tokens | FCM-Token (nur Play) bzw. UnifiedPush-Endpunkt (F-Droid) | Zustellung von Push-Signalen **ohne Nachrichteninhalt** | Mit Account-Löschung / Abmelden |
 | Verifizierung | Beta-Funktion, derzeit deaktiviert | – | – |
 
-## 3. Ende-zu-Ende-Verschlüsselung (Signal-Protokoll & P2P)
+## 3. Ende-zu-Ende-Verschlüsselung (Signal-Protokoll)
 
 Sämtliche regulären Chat-Nachrichten, Bilder und Sprachanrufe zwischen
-Nutzern werden Ende-zu-Ende über das **Signal-Protokoll** verschlüsselt
-und direkt **Peer-to-Peer (WebRTC)** übertragen. Weder die Betreiber noch
-zwischengeschaltete Server können Nachrichteninhalte einsehen.
+Nutzern werden Ende-zu-Ende über das **Signal-Protokoll** verschlüsselt.
+Weder die Betreiber noch zwischengeschaltete Server können
+Nachrichteninhalte einsehen.
 
+- **Übertragungsweg:** Direkte Peer-to-Peer-Verbindung (WebRTC) wird
+  versucht; gelingt sie nicht, übernimmt der Server **ausschließlich den
+  Transport des verschlüsselten Chiffrats** (Relay-Fallback). Die
+  Verschlüsselung ist in beiden Fällen Ende-zu-Ende und identisch – der
+  Server sieht und verarbeitet in keinem Fall Klartext. Auf die
+  Verbindungsqualität hat das keinen Einfluss, auf die Privatsphäre
+  ebenso wenig.
 - Identitäts- und Sitzungsschlüssel werden im verschlüsselten
   Geräte-Keystore (Android Keystore / iOS Keychain) gehalten.
 - Ein optionales, **passwortverschlüsseltes Key-Backup** (PBKDF2 +

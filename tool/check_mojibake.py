@@ -24,6 +24,7 @@ zerstoert, die sie diagnostizieren soll.
 """
 from __future__ import annotations
 
+import argparse
 import pathlib
 import sys
 
@@ -67,6 +68,29 @@ def inspect(text: str) -> list[tuple[int, str]]:
 
 
 def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--skip-known', action='store_true',
+                    help='Dateien auslassen, die die Fehlzeichen absichtlich '
+                         'enthalten (Pruefmittel und Dokumentation)')
+    args = ap.parse_args()
+
+    # Ausschlussliste aus dem Reparaturskript beziehen, damit beide
+    # Werkzeuge dieselbe Quelle truth. Zweimal getippte Ausschlusslisten
+    # driften auseinander - und eine zu weite ausschliesst echte Fehler.
+    known: set[str] = set()
+    prefix_excluded = None
+    if args.skip_known:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            'fixmoji', pathlib.Path(__file__).resolve().parent / 'fix_mojibake.py')
+        mod = importlib.util.module_from_spec(spec)
+        try:
+            spec.loader.exec_module(mod)
+            known = set(mod.EXCLUDE_FILES)
+            prefix_excluded = mod.excluded
+        except Exception:  # noqa: BLE001
+            print('WARNUNG: Ausschlussliste nicht ladbar, pruefe alle Dateien.')
+
     print('=' * 72)
     print('MOJIBAKE-CHECK')
     print('=' * 72)
@@ -77,6 +101,11 @@ def main() -> int:
             continue
         if any(part in SKIP for part in p.parts):
             continue
+        rel = p.relative_to(ROOT).as_posix()
+        if rel in known:
+            continue
+        if prefix_excluded is not None and prefix_excluded(rel):
+            continue
         try:
             text = p.read_text(encoding='utf-8-sig')
         except (UnicodeDecodeError, OSError):
@@ -84,9 +113,11 @@ def main() -> int:
         scanned += 1
         hits = inspect(text)
         if hits:
-            by_file[str(p.relative_to(ROOT))] = hits
+            by_file[rel] = hits
 
-    print(f'\n{scanned} Textdateien geprueft.')
+    print(f'\n{scanned} Textdateien geprueft.'
+          + (f' ({len(known)} mit absichtlichen Fehlzeichen ausgenommen)'
+             if known else ''))
     if not by_file:
         print('\nOK: keine Mojibake-Spuren.')
         return 0

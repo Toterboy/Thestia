@@ -11,11 +11,24 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
   Features, Moderation on-device, i18n-Ausbau
 - **0.9.0** – Nahbereichs-Funke („Transit Spark", BLE): das erste komplett
   neue Kern-Feature
+- **0.9.1** – veröffentlicht: E-Mail-Bestätigungspflicht, Safety Number,
+  Nähfunk-Jitter, Standort-TTL, rotierende Vorstellungs-Prompts
 - **0.10.0** – Emotionaler Rückzugsort (Sanctuary) & lokaler
   KI-Reflexions-Chat (rein on-device)
 - **0.11.0** – Web-Bridge, Transit-Reachability & Zero-Install
   Gast-Verbindungen (Flutter Web, Codeberg Pages)
 - Neue Nutzerfunktionen sind immer MINOR-Bumps; nur Fixes gehen in PATCH.
+- **Regel „neue Nutzerfunktion = MINOR" ist zweimal gebrochen worden**,
+  nachträglich gekennzeichnet: 0.7.2 (Mood öffentlich, Altersdifferenz-
+  Hinweis, Passkey-Step-up) und 0.7.3 (angemeldete Geräte ansehen,
+  „Überall abmelden"). Beide Male waren die Funktionen an ein
+  Sicherheitsaudit desselben Releases gekoppelt. Das ist ein vertretbarer
+  Grund, aber es bleibt eine Ausnahme – künftige Abweichungen brauchen
+  denselben dokumentierten Anlass.
+- „Kern-Funktion" im Sinne dieser Regel: eine Änderung des
+  Funktionsumfangs **oder** der Datenverarbeitung für Nutzende. Vorlagen,
+  Polish und Sprachausbau sind es nicht. Diese Abgrenzung war vorher
+  nirgends festgelegt und hat in 0.9.2 zu einem Widerspruch geführt.
 
 ## Erledigt
 
@@ -49,12 +62,16 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       Berlin (Sommer-/Winterzeit, Migration 067), Mindestteilnehmer 20
       (darunter fällt das Event aus), keine Partner-Dopplungen im
       Matching, Dating-Hour-Präferenzen bleiben über Events/Neuinstallationen
-      erhalten, Mood of the Day öffentlich sichtbar (024 nachgezogen),
-      Altersdifferenz-Hinweis (>= 10 Jahre) im Event-Chat, Admin-
-      Blackscreen behoben + Card-Look, Zurück-Geste beendet die App nicht
-      mehr, Formulierungs-Fix, Passkey-Erstellung mit 2FA-Step-up
+      erhalten, Admin-Blackscreen behoben + Card-Look, Zurück-Geste beendet
+      die App nicht mehr, Formulierungs-Fix
+      - **Anlage 0.7.2 – Funktionen trotz PATCH-Version:** „Mood of the
+        Day öffentlich sichtbar" (024 nachgezogen), Altersdifferenz-Hinweis
+        (>= 10 Jahre) im Event-Chat, Passkey-Erstellung mit 2FA-Step-up.
+        Bewusst gebündelt, weil alle drei aus demselben Sicherheitsaudit
+        stammten; nachträglich als dokumentierte Ausnahme von der Regel
+        „neue Nutzerfunktion = MINOR" gekennzeichnet, statt stillschweigend
 - [x] **0.7.3** – Fix-Release: Altersspanne im Profil-Editor ergänzt,
-      Ladekreis direkt nach dem Anmelde-Klick, Dating-Hour-Zurück führt zur
+      Ladekreis direkt nach dem Anmelden-Klick, Dating-Hour-Rückzug führt zur
       Seite davor, Teilnehmer-Fortschritt „X von 20" im Event-Screen
       (Migration 068), 2FA-Anzeige/Passkey (frischer MFA-Status + Step-up
       vor der Passkey-Erstellung), Auto-Logout nach Stunden behoben
@@ -62,10 +79,14 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       Symbol als klare Herz-Silhouette (vorher praktisch leer),
       Reporter-Pseudonymisierung (069), Nachweis-Pflicht für Bild-Meldungen
       (068), 20er-Ziel nur mit Accounts >= 24 h (070)
-      - Nachtrag (+6): angemeldete Geräte einsehen + „Überall abmelden",
-        Themefarbe/Entfernung/Altersspanne überleben Neuinstallationen
-        (Migration 071), Dating-Hour-Regeln nur einmal pro Konto,
-        Altersspannen-Regler-Fix (18-18), Profil-Editor-Speicherdialog,
+      - Nachtrag (+6): **angemeldete Geräte ansehen + „Überall abmelden"**
+        (Anlage 0.7.3 – erweitert den Funktionsumfang; die nach 0.7.0
+        geltende Regel "neue Nutzerfunktion = MINOR" ist hier bewusst
+        überschritten worden, weil das Feature mit dem Sicherheitsaudit
+        dieses Releases gekoppelt war. Als Ausnahme dokumentiert, nicht
+        stillschweigend), Themefarbe/Entfernung/Altersspanne überleben
+        Neuinstallationen (Migration 071), Dating-Hour-Regeln nur einmal pro
+        Konto, Altersspannen-Regler-Fix (18-18), Profil-Editor-Speicherdialog,
         Notification-Icon-Alpha-Fix (weißes Viereck), Passkey-Registrierung
         robust (Pre-Cancel-Race + Doppel-Tap-Schutz)
 - [x] **Dating-Hour-Zeit: Fallback gehärtet** – Live-Check bestätigte:
@@ -101,10 +122,18 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
 
 ## In Arbeit
 
-- [ ] Applogo & Branding-Feinschliff (Quelle konsolidiert auf
-      `wispdating_icon_base.png`; Größen/Masken/Farbwelt-Abstimmung folgen)
-- [ ] F-Droid-Veröffentlichung (Build-Seite fertig: google-freier Flavor,
-      UnifiedPush, Fastlane-Metadaten – Einreichung steht noch aus)
+> Kein eigener Meilenstein – dieser Abschnitt sammelt Arbeiten, die noch
+> keinem Release zugeordnet sind. Jeder Eintrag nennt unten sein Ziel.
+
+- [ ] Applogo & Branding-Feinschliff – Quelle ist
+      `assets/images/thestia_icon_base.png` (941×941, im Repo vorhanden);
+      Größen/Masken/Farbwelt-Abstimmung folgen. **Ziel: 0.9.2.**
+      Store-Icon (512×512) und Feature Graphic (1024×500) sind bereits
+      erzeugt, siehe `tool/make_play_icon.py` und
+      `tool/make_feature_graphic.py`
+- [ ] F-Droid-Einreichung (google-freier Flavor, UnifiedPush, Fastlane-
+      Metadaten liegen vor; Einreichung steht aus). **Ziel: 0.9.2**,
+      unabhängig vom Play-Upload
 - [ ] **Vorstellungs-Vorlagen (Text + Audio)**: Prompt-Karten (rotierend,
       z. B. „Erzähl von einem Moment, der dich zuletzt zum Lachen gebracht
       hat") als opt-in Gerüst für die Text-Vorstellung – ein Tipp fügt
@@ -113,7 +142,8 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       Aufnehmen (Wer bist du? / Was macht dich aus? / Warum bist du hier?).
       Ziel: natürliche, persönliche Vorstellungen statt stumpfer Daten-
       Aufzählung – zahlt direkt auf das Audio-first-Matching von
-      Find your Match ein
+      Find your Match ein. **Ziel: 0.9.2**, ausformuliert unter
+      „Geplant für 0.9.2".
 
 ## 0.8.0 – Geschmack & Matching (umgesetzt, inkl. Nachträge 1–2)
 
@@ -177,7 +207,7 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       ohne Export/Import. Sensible Inhalte (Chats, E2E-Identität) bleiben
       davon ausgenommen
 
-## Geplant für 0.9.0 – Nahbereichs-Funke („Transit Spark", BLE)
+## Umgesetzt: 0.9.0 – Nahbereichs-Funke („Transit Spark", BLE)
 
 > Status nach dem Bau (v0.9.0-Beta, Endstand): Kern-Feature + Begleit-
 > posten + Soft-Ping umgesetzt (Migrationen 080-085). ABWEICHUNG: Das
@@ -204,8 +234,15 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
 >    Person A (auch 10 Minuten später) auf „Blicke getauscht" und Person B
 >    dasselbe, matcht Supabase die Encounter-Tokens + optischen Tags –
 >    auch wenn beide inzwischen weit voneinander entfernt sind.
-> 3. **Privacy:** Kein Fotokatalog im Raum. Ein Funke entsteht
->    ausschließlich bei **beidseitigem Signal (Double Blind Opt-In)**.
+> 3. **Privacy – präzise gefasst:** Im Nahbereich werden **keine Bilder
+>    übertragen und kein Fotokatalog aufgebaut**. Funk-Signale bleiben
+>    technisch beobachtbar: ein passiver Sniffer kann Advertising-Pakete
+>    sehen. Deshalb rotieren die Encounter-Tokens, und die gejitterten
+>    Sendintervalle verhindern, dass aus den Abständen ein
+>    wiedererkennbares Muster über die Sitzung entsteht. Vollständige
+>    Funk-Unsichtbarkeit ist mit BLE nicht erreichbar und wird hier nicht
+>    behauptet. Ein Funke entsteht ausschließlich bei **beidseitigem
+>    Signal (Double Blind Opt-In)**.
 >
 > Enthält strikten Jugendschutz (serverseitige Alter/Geschlecht-Prüfung
 > wie überall) und Datensparsamkeit (Auto-Cleanup, keine dauerhaften
@@ -297,10 +334,19 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
 
 ## Geplant für 0.9.2 – Transit Spark auf echten Geräten & Qualitätssicherung
 
-> Status: 0.9.1 ist veröffentlicht. 0.9.2 ist bewusst klein und enthält
-> keine neue Kern-Funktion: hier wird Transit Spark erst belastbar gemacht
-> und die Auslieferungs-Hygiene nachgezogen. Neue Kern-Features bleiben
-> 0.10.0 vorbehalten.
+> Status: 0.9.1 ist veröffentlicht. 0.9.2 enthält **kein neues
+> Kern-Feature** und **keine neue Datenerhebung** – hier wird Transit
+> Spark erst belastbar gemacht und die Auslieferungs-Hygiene nachgezogen.
+> Die Abgrenzung zu „Kern-Feature" lautet: Eine Kern-Funktion verändert
+> den Funktionsumfang oder die Datenverarbeitung für Nutzende. Vorlagen
+> und Polish tun beides nicht.
+>
+> **Bedingung für den Release von 0.9.2:** Der BLE-Gerätetest ist der
+> einzige Punkt, der den Release blockiert. Ist er bis dahin nicht
+> bestanden, wird Transit Spark serverseitig für Neuregistrierungen
+> gesperrt (Flag in `app_config`, wirkt über die bestehende RPC) – und
+> **nicht** so getan, als wäre der Release durch das offene Kriterium
+> erlaubt. Die Entscheidung wird vor dem Upload getroffen, nicht danach.
 
 - [ ] **BLE-Gerätetest als HARTER Release-Blocker** – Transit Spark gilt
       erst als stabil, wenn Reichweite, Advertise-Abdeckung und der
@@ -309,27 +355,52 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       zählen nicht (kein echtes Advertising, keine realistische
       Reichweite, kein Funkrauschen). Der in 0.9.0 als „Gerätetest
       ausstehend" vermerkte Punkt bleibt bis dahin offen – er ist kein
-      Nice-to-have, sondern Abnahmekriterium
-- [ ] **BLE-Tracking-Härtung (Privacy im Funk)**: rotierende BLE-MAC-
-      Adressen (Resolvable Private Addresses) + gejitterte Advertisement-
-      Intervalle. Begründung: rotierende Encounter-Tokens allein schützen
-      nicht – eine statische MAC bzw. ein starres Sendemuster bleibt über
-      die Sitzung hinweg ein wiedererkennbares Funk-Signal und erlaubt
-      Long-/Cross-Session-Tracking mit einem passiven Sniffer. Der Jitter
-      bricht zusätzlich die zeitliche Korrelation, aus der
-      Advertisement-Abstände ein Muster macht
-- [ ] **Dependency-Hygiene in CI** (frühestmöglich): automatischer
-      `flutter pub outdated`- und CVE-Check je Pipeline-Lauf, hartes
-      Version-Pinning für direkte Abhängigkeiten (kein `^` für Anything,
-      was Sicherheitsverhalten trägt) sowie vorbereitete SBOM-Erzeugung
-      (CycloneDX) für die F-Droid-Einreichung. Hintergrund: die
-      Einreichung verlangt eine Abhängigkeitsliste, und ungenutzte
-      Direct-Dependencies wandern sonst ungeprüft mit
-- [ ] **Vorstellungs-Vorlagen (Text + Audio) terminiert** – das Feature
-      steht in „In Arbeit" und wird hier verbindlich für 0.9.2 eingeplant:
-      kleines Feature, aber es hebt die Profilqualität der frühen
-      Nutzerschaft direkt, solange das Match-Erlebnis noch ohne Stimmen
-      auskommt
+      Nice-to-have, sondern Abnahmekriterium. **Durchsetzung: siehe
+      Statusblock oben.** Protokoll: `docs/BLE-GERAETETEST.md`
+- [ ] **BLE-Tracking-Härtung (Privacy im Funk)** – *vorgezogen, steht
+      vor den kosmetischen Punkten, weil die Exposition bereits
+      gegenwärtig für jeden Nutzer mit aktivem Transit Spark besteht.*
+      Umgesetzt in 0.9.2: rotierende Encounter-Tokens mit Jitter,
+      Herstellerfilter, gepulstes Scanning. **Offen und zuerst zu
+      klären:** die Plattform-Frage. Resolvable Private Addresses
+      rotieren auf Android als **Plattformverhalten**; eine App kann sie
+      für eigenes Advertising nicht erzwingen, und `flutter_blue_plus`
+      bietet dafür keine API. Zu prüfen ist deshalb, was sich tatsächlich
+      steuern lässt: frische Token pro Advertising-Neustart, Jitter der
+      Intervalle, Verkürzung der Fenster. Der Eintrag wird nicht als
+      „RPA umgesetzt" verbucht, solange das nicht belegt ist.
+- [x] **Dependency-Hygiene in CI** – erledigt: `flutter pub outdated`- und
+      CVE-Prüfung je Pipeline-Lauf, exakte Pins für alle 16
+      sicherheitsrelevanten direkten Abhängigkeiten (kein `^` für
+      Anything mit Sicherheitsverhalten), SBOM (CycloneDX) für die
+      F-Droid-Einreichung, zentral gepinnte Tool-Versionen in
+      `tool/requirements.txt`. CI-Jobs: `dependency-audit` und
+      `static-checks`
+- [ ] **Öffentliches Threat-Model vor dem Release (aus 0.10.0
+      vorgezogen)** – `SECURITY.md` ist bereits öffentlich und nennt
+      `security@thestia.de` mit 72-Stunden-Eingangsbestätigung. Fehlt ist
+      das **dokumentierte Angriffsbild**: RLS-Modell, PUBLIC-EXECUTE-Falle
+      bei Functions, BLE-Metadaten, Drittlandtransfers bei der Moderation
+      (Brevo, Cloudflare, Firebase) sowie die Betriebsgrenzen (Firebase-
+      API-Key ohne Zugriff auf die Google Cloud Console nicht per
+      Application-Restriction einengbar). Ohne Angriffsbild ist der
+      Meldeweg eine Zusage ohne Verfahren. Erledigung: kurzes Dokument
+      im öffentlichen Repo, Verweis aus `SECURITY.md` darauf
+- [ ] **Datenschutzfolgeabschätzung nach Art. 35 DSGVO** – bisher nicht
+      vorhanden. Klartext-Auslöser: systematische Erfassung eines
+      öffentlich zugänglichen Raums (BLE-Nahbereich, geplantes
+      Live-Board), Verarbeitung bei Minderjährigen, Biometrie-nahe
+      Verarbeitung, Drittlandtransfers. Kein Feature-Eintrag – eine
+      Rechtspflicht, unabhängig von der Feature-Planung
+- [ ] **Incident-Response mit 72-Stunden-Uhr (Art. 33 DSGVO)** – Rollen,
+      Meldeschwellen, Entscheidungsbaum, was im Extremfall evakuiert wird
+      (Edge Functions mit Service-Role-Zugriff, Key-Backup mit
+      Nutzerpasswort, öffentliches Repo). Ohne diesen Prozess ist die
+      Zusage aus `SECURITY.md` nicht einhaltbar
+- [ ] **Vorstellungs-Vorlagen (Text + Audio)** – hier verbindlich für
+      0.9.2 eingeplant; Ausformulierung siehe „In Arbeit". Kleines
+      Feature, aber es hebt die Profilqualität der frühen Nutzerschaft
+      direkt, solange das Match-Erlebnis noch ohne Stimmen auskommt
 
 ## Geplant für 0.10.0 – Emotionaler Rückzugsort (Sanctuary) & Lokaler KI-Reflexions-Chat
 
@@ -367,8 +438,30 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
 
 ### 2. Inferenz-Engine & Prompt-Steuerung
 
-- [ ] **Lokale Ausführung** via llama.cpp (FFI) oder MediaPipe / LiteRT –
-      ohne jede externe Serververbindung
+- [ ] **Inferenz-Engine**: **llama.cpp über FFI ist der tragfähige
+      Pfad** – Gemma 4 und Spark-X2.5 liefern GGUF-Checkpoints, und
+      Spark-X2.5 wird von llama.cpp nativ unterstützt. **NICHT** MediaPipe
+      oder LiteRT: das sind Frameworks für Vision- bzw. klassische
+      On-Device-ML, nicht für autoregressive Textgenerierung. Für
+      Gemma 4 existiert mit **ML Kit GenAI Prompt API / Google AI Edge**
+      zusätzlich ein erstklassiger Android-Pfad, der ohne eigenen
+      llama.cpp-Build auskommt – der gehört als Alternative geprüft,
+      weil er RAM und Akku deutlich schont. Beides ohne jede externe
+      Serververbindung
+- [ ] **Hugging-Face-Downloader: Drittlandproblem lösen.** Modelle über
+      Hugging Face zu beziehen ist die einfachste Variante und die
+      bequemste, aber der Anbieter ist US-gestützt, während 0.11.0
+      US-Cloud-Abhängigkeit ausdrücklich als Ausschlusskriterium führt
+      (CLOUD Act). Zusätzlich übermittelt jeder Metadatenabruf die
+      IP-Adresse des Nutzers an einen US-Dienst. Zu entscheiden:
+      eigener EU-Spiegel, oder die Aussage in 0.11.0 relativieren.
+      Spark-X2.5 stammt von iFlytek (CN) – die Governance-Frage ist
+      damit nicht auf US-Anbieter begrenzt
+- [ ] **Modellgrößen gegen den Speicher dokumentieren** (Gemma 4 E2B
+      mobil ca. 1,1 GB, E4B mobil ca. 2,5 GB; Q4_0 2,9 bzw. 4,5 GB):
+      der Downloader warnt bisher nur vor RAM-Mangel, nicht vor
+      fehlendem Speicher. Die App selbst ist bereits 1,6 GB groß, ein
+      2,5-GB-Modell verdoppelt das
 - [ ] **Fest integrierte, modellspezifisch optimierte System-Prompts** für
       alle kuratierten Standardmodelle (Fokus auf Empathie, kognitive
       Umstrukturierung, offene Fragen, keine falschen Diagnosen)
@@ -400,6 +493,30 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       Reihenfolge lautet Schutzschicht → editierbarer Prompt → Modell.
       Wer den Schutz entfernen will, kann das nicht per Konfiguration,
       nur durch Entfernen der App
+- [ ] **Notruf 112 neben den Beratungsstellen** (Telefonseelsorge, Nummer
+      gegen Kummer). Fehlt bisher und ist die naheliegendste Reaktion
+- [ ] **Verhalten bei Wegtippen des Krisen-Banners**: Was passiert, wenn
+      jemand die Einblendung schließt? Ohne definierte Antwort bleibt die
+      Maßnahme eine Anzeige ohne Handlungskette
+- [ ] **Rechtsberatung zur Haftungsformulierung** (Krisen-Erkennung,
+      Pflichtbanner, „ersetzt keine Therapie"). Das Banner ist ein
+      Haftungshinweis, kein Sicherheitsnachweis
+- [ ] **Einordnung als Nicht-Medizinprodukt** in der App und in den
+      Store-Metadaten. Medizinprodukteregulierung (MDR/IVDR) und
+      Jugendschutz bei Minderjährigen sind bisher nicht bewertet –
+      Sanctuary wird voraussichtlich auch von Nutzenden unter 18 genutzt
+- [ ] **Evaluation der Krisen-Erkennung, nicht nur Regex**: Eine
+      Regex auf suizidale Begriffe trifft keine Umschreibungen, keine
+      metaphorischen Formulierungen und keine mehrsprachigen Eingaben.
+      Ohne Testmenge ist nicht belegbar, wie hoch die Erkennungsrate
+      ist – das ist gegenüber Nutzenden eine Zusage, die derzeit nicht
+      gedeckt ist. Mindestanforderung: dokumentierte Testmenge mit
+      Positiv- und Negativfällen, Recall-Wert, und die Erkennung läuft
+      **zusätzlich** zum Modell, nicht nur bei einer Modellantwort
+- [ ] **Restrisiko benennen**: Der Schutz entfällt, wenn die App
+      deinstalliert wird. Das ist als Eigenschaft der Architektur korrekt
+      und nicht zu beheben – es gehört aber offen kommuniziert, statt als
+      Stärke dargestellt zu werden
 
 
 ### Begleitend in 0.10.0 – Begegnung statt Bildschirm
@@ -420,6 +537,16 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       Texte"); sobald der Meet-Intent terminiert ist, zeigt der
       Chat-Header die Vorfreude („Treffen am Samstag!") statt
       Chat-Metriken.
+
+### Vorschläge zu 0.10.0 (nicht terminiert, nicht eingeplant)
+
+> Die folgenden drei Punkte sind **Ideen, keine Zusagen**. Sie standen
+> bisher in derselben Liste wie die fest eingeplanten Einträge und waren
+> daran nur durch das Präfix „VORSCHLAG" erkennbar. Sie sind jetzt
+> getrennt, damit der Status auf einen Blick stimmt. Jeder bekommt vor
+> einer Aufnahme in 0.10.0 eine Entscheidung: angenommen, abgelehnt oder
+> vertagt – mit Begründung, nicht nur mit Häkchen.
+
 - [ ] **VORSCHLAG: Date-Safety-Check-in** (Anschluss ans Safety Center):
       optionaler Begleit-Modus für ein von BEIDEN bestätigtes echtes
       Treffen. Nach ~2 Stunden eine dezente Nachfrage („Alles okay?") und
@@ -429,14 +556,22 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       wo das Treffen stattfindet, noch ob ein Check-in unterblieben ist.
       Damit kann aus dem Safety-Feature kein Überwachungs- oder
       Ortungsdruck entstehen
-- [ ] **VORSCHLAG: Privacy-Dashboard im Profil**: Übersichtsseite, die
-      sichtbar macht, welche Daten ausschließlich lokal liegen (Chats,
-      E2E-Identität und Pre-Keys, Sanctuary-Modelle) und welche
-      serverseitig gespeichert sind (Präferenzen und Sync-Spalten aus
-      066/074, verschlüsselte Profilbilder aus 077). Keine neuen Daten,
-      nur eine Aufschlüsselung der bereits bestehenden Trennung –
-      Datensparsamkeit wird für die Nutzenden überprüfbar statt
-      behauptet
+      - **Offener Konflikt:** siehe 0.11.0 §4 (BSSID- und
+        Geschwindigkeitsabgleich). Solange dort kontinuierliche
+        präzise Standortdaten erhoben werden, ist die Zusage dieses
+        Vorschlags nicht haltbar. Beides muss entschieden werden
+- [ ] **VORSCHLAG: Privacy-Dashboard im Profil** (aus den Vorschlägen
+      herausgenommen – die Aufschlüsselungspflicht ist keine Option):
+      Übersichtsseite, die sichtbar macht, welche Daten ausschließlich
+      lokal liegen (Chats, E2E-Identität und Pre-Keys, Sanctuary-Modelle)
+      und welche serverseitig gespeichert sind (Präferenzen und
+      Sync-Spalten aus 066/074, verschlüsselte Profilbilder aus 077).
+      Keine neuen Daten, nur eine Aufschlüsselung der bereits bestehenden
+      Trennung – Datenschutzparsamkeit wird für die Nutzenden überprüfbar
+      statt behauptet
+      - **Umgehängt auf 0.9.x:** Die Information über die Verarbeitung
+        nach Art. 13/15 DSGVO besteht unabhängig vom Nice-to-have-Status.
+        Als Teil des Datenschutz-Bereichs, nicht als Produktidee
 - [ ] **VORSCHLAG: „Abschied in die Realität"**: Nach beidseitig
       bestätigtem echten Treffen macht die App einen sanften, einmaligen
       Vorschlag zum direkten Kontaktaustausch (z. B. Telefonnummer oder
@@ -445,16 +580,15 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       binden – das Gegenteil von Streak, Read-Receipt und
       Reaktivierungskampagnen. Ablehnung ist selbstverständlich und ohne
       jede Konsequenz; es gibt ausdrücklich keinen „Ablehnungen"-Zähler
-- [ ] **Öffentliches Threat-Model + veröffentlichte SECURITY.md (VOR
-      0.11.0)**: die Sicherheitsrichtlinie existiert bereits, ist aber
-      nicht veröffentlicht. Vor 0.11.0 kommen ein dokumentiertes
-      Angriffsbild (RLS-Modell, PUBLIC-EXECUTE-Falle bei Functions, BLE-
-      Metadaten, Zero-Install-Web-Gastzugang ohne Account, Drittland-
-      Transfers bei der Moderation) und ein klarer Kontaktweg für
-      verantwortungsvolle Offenlegung (Koordinaten, Reaktionsfrist,
-      Credit-Richtlinie). Bewusst VOR dem Web-Gastzugang, weil der das
-      Angriffsbild am stärksten erweitert und eine Offenlegung dann nicht
-      mehr über private Kanäle laufen muss
+- [ ] **Öffentliches Threat-Model & SECURITY.md**: **nach 0.9.2
+      vorgezogen** (dort als eigener Eintrag geführt). `SECURITY.md` ist
+      bereits öffentlich und nennt `security@thestia.de` mit
+      72-Stunden-Eingangsbestätigung – der Meldeweg steht also, das
+      **Angriffsbild** fehlt noch: RLS-Modell, PUBLIC-EXECUTE-Falle bei
+      Functions, BLE-Metadaten, Zero-Install-Web-Gastzugang ohne Account,
+      Drittlandtransfers bei der Moderation. Aus „Irgendwann" gestrichen,
+      weil die Roadmap an zwei Stellen sonst verschiedene Zeiten für
+      dasselbe Vorhaben nennt
 
 
 ## Geplant für 0.11.0 – Web-Bridge, Transit-Reachability & Zero-Install Gast-Verbindungen
@@ -481,8 +615,20 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
 
 ### 2. Passiver Funk-Leuchtturm (Hotspot-SSID-Beacon)
 
+> **MACHBARKEIT VOR BAU KLÄREN – die Fähigkeit steht so nicht mehr
+> zur Verfügung.** Ein App-gesteuerter Hotspot mit eigenem SSID ist auf
+> aktuellen Systemen nicht mehr zuverlässig umsetzbar:
+> `WifiManager.setWifiApEnabled` ist seit Android 10 stark
+> eingeschränkt, benötigt Standortberechtigung und aktive Ortungsdienste
+> und wird von mehreren Herstellern blockiert. Unter iOS kann eine App
+> grundsätzlich **keinen** Hotspot erzeugen – „Persönlicher Hotspot" ist
+> eine Systemfunktion. Vor der Umsetzung ist zu entscheiden: auf
+> Android-only und experimentell zurückstufen, oder streichen. Als
+> plattformneutraler Baustein geplant wäre die Funktion irreführend.
+
 - [ ] **Temporärer Hotspot-Schalter** mit konfigurierbarem Netzwerknamen
       (SSID), z. B. `thestia.app/RE9-Wagen3` oder `Laecheln_im_Wagen_4`
+      – **nur Android, experimentell** (Bedingung siehe oben)
 - [ ] **Sichtbarer Link in der WLAN-Suche** fremder Smartphones bei
       Reichweiten von bis zu 30 Metern
 - [ ] **Offline-Captive-Portal**: Verbindet sich die Person mit dem
@@ -497,41 +643,101 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       fahrplanmäßiger Abfahrtszeit zur eindeutigen Unterscheidung
       paralleler Fahrten
 - [ ] **Waggon-Ruf**: Optionale Angabe des Sitzbereichs (z. B. „Wagen 3,
-      oberes Deck") und dezenter visueller Merkmale (z. B. „Schwarze
+      oberes Deck") und dezente optische Merkmale (z. B. „Schwarze
       Jacke, liest Buch")
 - [ ] **Asynchrones Web-Board**: Fahrgäste können während oder nach der
       Fahrt auf `thestia.app/live` nach ihrer Zugverbindung suchen und einen
       anonymen Gast-Chat mit der Person starten
-- [ ] **Stalking-Schutz für Waggon-Ruf & Live-Board**: präzise Angaben
-      (Linie + Wagen + optische Merkmale) werden erst nach beidseitigem
-      Funke sichtbar – vorher bleibt der Eintrag auf Linien-Ebene.
-      Board-Einträge löschen sich automatisch nach Fahrtende bzw.
-      spätestens nach 24 h, serverseitig und unabhängig davon, ob ein
-      Client noch läuft (dasselbe Auto-Cleanup-Prinzip wie beim
-      Encounter-Cache: wer nichts mehr anzeigt, hat nichts mehr
-      gespeichert). Kein dauerhaft mitlesbarer Standort-Feed, der über
-      die Zeit ein Bewegungsprofil ergibt
+- [ ] **Stalking-Schutz für Waggon-Ruf & Live-Board – VORAUSSETZUNG,
+      nicht Folgepunkt.** Die drei vorstehenden Einträge (exakte
+      Fahrt-Identifikation, Waggon-Ruf, asynchrones Web-Board) erzeugen
+      genau die Daten, die dieser Punkt begrenzt. Wird er erst danach
+      umgesetzt, ist die Frist bereits abgelaufen. Reihenfolge im
+      Arbeitsablauf: Schutzschicht zuerst, Feature danach freischalten.
+      - Präzise Angaben (Linie + Wagen + optische Merkmale) werden erst
+        nach beidseitigem Funke sichtbar – vorher bleibt der Eintrag auf
+        Linien-Ebene
+      - Board-Einträge löschen sich automatisch nach Fahrtende bzw.
+        spätestens nach 24 h, serverseitig und unabhängig davon, ob ein
+        Client noch läuft (dasselbe Auto-Cleanup-Prinzip wie beim
+        Encounter-Cache: wer nichts mehr anzeigt, hat nichts mehr
+        gespeichert)
+      - Kein dauerhaft mitlesbarer Standort-Feed, der über die Zeit ein
+        Bewegungsprofil ergibt
+      - **Noch offen: Aufbewahrung der Check-in-Rohdaten selbst.** Der
+        Punkt regelt die Sichtbarkeit von Board-Einträgen, nicht die
+        Lebensdauer der zugrunde liegenden Datensätze (Linie, Zugnummer,
+        Abfahrtszeit, Sitzbereich). Ohne eigene Frist entsteht genau das
+        Bewegungsprofil, das der letzte Spiegel verhindern soll.
+        Festzulegen: Frist, Zugriff (nur die betroffenen Nutzenden),
+        Löschung unabhängig vom Client, und ob die Daten überhaupt
+        persistiert werden müssen
 
 ### 4. Same-Train-Matching (für Nutzer mit installierter App)
 
+> **ZWEIFELHAFT – steht in Konflikt zur eigenen Datenschutzposition.
+> Vor Umsetzung entscheiden, nicht während.** Die beiden folgenden
+> Verfahren erzeugen präzise Standort- und Bewegungsdaten. Der
+> Date-Safety-Check-in in 0.10.0 sagt ausdrücklich zu: „KEINE
+> Standort-Übertragung: Thestia erfährt weder, wo das Treffen
+> stattfindet". Beides kann nicht gleichzeitig gelten.
+>
+> Hinzu kommt die technische Seite: Die BSSID des aktuellen WLANs ist
+> ab Android 8 nur mit Standortfreigabe *und* aktiven Ortungsdiensten
+> lesbar und wird ab API 29 von Google häufig maskiert. Ein
+> BSSID-Abgleich ist also unzuverlässig **und** datenschutzfeindlich
+> zugleich. Der Geschwindigkeitsabgleich >80 km/h bedeutet zudem
+> kontinuierliche GPS-Erfassung während der gesamten Fahrt.
+
+- [ ] **Entscheidung vor der Umsetzung**: Verzicht auf BSSID-Abgleich,
+      Verzicht auf kontinuierlichen Geschwindigkeitsabgleich, oder
+      ausdrückliche Einwilligung mit eigener Speicherfrist. Der
+      Eintrag bleibt offen, bis das entschieden ist
 - [ ] **BSSID- & Gateway-Erkennung**: Erkennt automatisch, wenn zwei
       Geräte im selben Zug-WLAN (z. B. WIFIonICE) angemeldet sind, und
-      schaltet eine gemeinsame Waggon-Lobby frei
+      schaltet eine gemeinsame Waggon-Lobby frei – **nur nach
+      Einwilligung und nur als Vorschlag, nicht automatisch**
 - [ ] **Vektor- & Geschwindigkeitsabgleich**: Erkennt über grobe
       GPS-Vektoren und übereinstimmende Fahrgeschwindigkeiten auf
       Schienensträngen (>80 km/h), dass sich Nutzer im selben Zug
-      befinden – selbst wenn BLE durch Waggontrennwände blockiert ist
+      befinden – selbst wenn BLE durch Waggontrennwände blockiert ist.
+      **Nur mit Einwilligung, mit eigener Speicherfrist für die
+      Bewegungsdaten und mit Abschaltung in den Einstellungen**
 
 ### 5. Zero-Install Web-Gastzugang (Flutter Web & Supabase)
 
 - [ ] **Einmalige Einladungslinks** (`thestia.app/spark/<token>`) mit
       kryptografisch gesicherten Session-Tokens
-- [ ] **Kein Download, keine Registrierung, keine Telefonnummer und keine
-      E-Mail-Abfrage** für den Gast erforderlich
+- [ ] **Kein Download, keine Registrierung, keine Telefonnummer und
+      keine E-Mail-Abfrage** für den Gast erforderlich
+      - **Rechtlich zu klären, bevor gebaut wird:** Die Gäste-Sitzung
+        ist zwar anonymer als ein Konto, aber sie ist nicht
+        datenfrei – Serverseit entstehen Raum, Zeitstempel und
+        Chiffrat. Das ist personenbezogene Verarbeitung und braucht eine
+        benannte Rechtsgrundlage (berechtigtes Interesse o. ä.) sowie
+        eine Löschfrist. Die Zusage ist deshalb auf **keine
+        Kontaktdaten** zuspitzen, nicht auf „keine personenbezogenen
+        Daten" – sonst weckt sie einen Eindruck, den die Einrichtung
+        nicht erfüllt
 - [ ] **E2E-verschlüsselter P2P-Chat** direkt im mobilen Browser (WebRTC
       via WebAssembly) zur nativen App des Thestia-Nutzers
-- [ ] **Flüchtige Sitzungen**: Chatrooms zerstören sich serverseitig nach
-      24 oder 48 Stunden rückstandslos selbst
+      - **ABHÄNGIGKEIT, bisher nirgends geführt:** Das Signal-Protokoll
+        muss für Web verfügbar sein. Die native App bringt eine
+        Dart-Implementierung mit; im Browser ist das ein eigenes Projekt
+        (WASM-Build, WebCrypto für die Schlüsselableitung, sichere
+        Zufallsquellen, Schlüsselspeicher). Ohne diese Grundlage ist der
+        Zero-Install-Gastzugang nicht umsetzbar, egal wie sauber der
+        Rest aussieht. Als eigener Arbeitspaket-Eintrag zu führen
+- [ ] **Serverseitige Chat-Räume mit Auto-Zerstörung** als Voraussetzung
+      für die Zusage „zerstören sich nach 24/48 h". Es existiert bisher
+      keine Raum-Infrastruktur; sie braucht einen serverseitigen
+      Aufräum-Mechanismus (Cron/jobs), der unabhängig davon läuft, ob
+      noch ein Client verbunden ist
+- [ ] **Flüchtige Sitzungen**: Chaträume werden serverseitig nach 24
+      oder 48 Stunden gelöscht. Formulierung bewusst ohne
+      „rückstandslos" – Daten in Backups, Logs und Schlüsselmaterial
+      können eine kürzere Frist nicht versprechen; die zugesagte Frist
+      gilt für die produktiven Datensätze
 
 ### 6. Interaktive Web-Visitenkarte & Vor-Ort-Schnittstellen
 
@@ -573,7 +779,31 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
 - [ ] Digitale Entgiftung: sanfte Nutzungs-Erinnerungen (Anti-
       Aufmerksamkeitsökonomie) – Balance finden, damit die App nicht
       „langweilig" wird
-- [ ] Öffentliches Threat-Model & Transparenzberichte
+- [ ] **Drittanbieter als eigenes Betriebsrisiko führen**: Brevo
+      (E-Mail), Cloudflare (Turnstile), Netlify (Passkey-Assets),
+      Firebase (FCM) und für 0.11.0 Codeberg. Offen sind je Anbieter
+      Auftragsverarbeitungsvertrag, Drittlandtransfer und
+      Fähigkeit des Anbieters, die US-EU-Data-Privacy-Framework-
+      Zertifizierung zu tragen. Dazu ein Notfallplan: Was passiert,
+      wenn ein Anbieter seine Bedingungen ändert, sein Quota erhöht
+      oder ausfällt? Für eine App, die US-Cloud-Abhängigkeit als
+      Wertverlust verkauft, ist das die zentrale betriebliche
+      Schwachstelle – sie stand bisher nirgends
+- [ ] **Aufbewahrungskatalog konsolidieren**: Einzelzusagen existieren
+      (Standort 30 Tage, Live-Board 24 h, Encounter-Cache 45 min,
+      Soft-Ping 48 h, Chat-Verlauf wählbar). Fehlt ist die
+      zusammengeführte Übersicht **einschließlich Backups**: was
+      passiert mit Supabase-Backups, dem Pre-Key-Speicher und
+      Push-Payloads. Die Information nach Art. 13 DSGVO besteht
+      unabhängig davon, ob die Umsetzung steht
+- [ ] **Belastbare Durchsetzung des Mindestalters**: Die Roadmap nennt
+      „serverseitig erzwungenen Jugendschutz" und eine KI-Alters-Triage
+      mit manueller Queue, aber kein konkretes Mindestalter, keine
+      Rechtsgrundlage, kein Widerspruchsverfahren, keine Regel für
+      Altersband-Unschärfe und keine Aufbewahrung der
+      Verifizierungsmedien. Für eine App mit Jugendschutz ist das die
+      zentrale rechtliche Voraussetzung, kein Feature
+- Öffentliches Threat-Model: **nach 0.9.2 vorgezogen**, dort geführt
 
 ## Versionierungsprinzip
 

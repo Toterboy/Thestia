@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -26,18 +26,18 @@ import 'package:thestia/utils/constants.dart';
 
 /// DSGVO-relevanter Datenschutz- und Account-Screen.
 ///
-/// - Zeigt die verarbeiteten Daten an (knappe Ãœbersicht).
-/// - ErmÃ¶glicht den Export der eigenen Daten (E-01: lokale Daten als JSON
-///   inkl. Auftragsverarbeiter-Liste; Chat-VerlÃ¤ufe sind E2E-verschlÃ¼sselt
-///   und bleiben auf dem GerÃ¤t).
-/// - ErmÃ¶glicht das vollstÃ¤ndige LÃ¶schen des Accounts inkl. aller Daten.
+/// - Zeigt die verarbeiteten Daten an (knappe Übersicht).
+/// - Ermöglicht den Export der eigenen Daten (E-01: lokale Daten als JSON
+///   inkl. Auftragsverarbeiter-Liste; Chat-Verläufe sind E2E-verschlüsselt
+///   und bleiben auf dem Gerät).
+/// - Ermöglicht das vollständige Löschen des Accounts inkl. aller Daten.
 class PrivacyScreen extends ConsumerWidget {
   const PrivacyScreen({super.key});
 
   Future<void> _requestDataExport(BuildContext context, WidgetRef ref) async {
-    // Lokale Daten bÃ¼ndeln (Profile, Einstellungen, PrÃ¤ferenzen, Mood).
-    // Chat-VerlÃ¤ufe sind E2E-verschlÃ¼sselt und werden bewusst NICHT
-    // exportiert â€” sie verbleiben auf dem GerÃ¤t.
+    // Lokale Daten bündeln (Profile, Einstellungen, Präferenzen, Mood).
+    // Chat-Verläufe sind E2E-verschlüsselt und werden bewusst NICHT
+    // exportiert — sie verbleiben auf dem Gerät.
     final profile = ref.read(profileProvider);
     final settings = ref.read(settingsProvider);
     final prefs = ref.read(userPreferencesProvider);
@@ -65,9 +65,9 @@ class PrivacyScreen extends ConsumerWidget {
       // hat. Beim Import werden sie wiederhergestellt (Gerätewechsel).
       if (chatExport.isNotEmpty) 'chats': chatExport,
       if (qrContacts.isNotEmpty) 'qrContacts': qrContacts,
-      'note': 'Chat-VerlÃ¤ufe sind Ende-zu-Ende verschlÃ¼sselt und verbleiben '
-          'auf deinen GerÃ¤ten. Sie werden von keinem Server verarbeitet '
-          'und kÃ¶nnen daher nicht exportiert werden.',
+      'note': 'Chat-Verläufe sind Ende-zu-Ende verschlüsselt und verbleiben '
+          'auf deinen Geräten. Sie werden von keinem Server verarbeitet '
+          'und können daher nicht exportiert werden.',
       'processors': [
         {'name': 'Supabase Inc.', 'purpose': 'Hosting, Datenbank, Auth'},
         {'name': 'Google LLC (Firebase)', 'purpose': 'Push-Benachrichtigungen'},
@@ -113,8 +113,8 @@ class PrivacyScreen extends ConsumerWidget {
           ),
         );
       } finally {
-        // TemporÃ¤re Export-Datei (enthÃ¤lt alle Profildaten) wieder
-        // lÃ¶schen, damit nichts im Temp-Verzeichnis liegen bleibt
+        // Temporäre Export-Datei (enthält alle Profildaten) wieder
+        // löschen, damit nichts im Temp-Verzeichnis liegen bleibt
         // (Audit N2).
         try {
           if (await file.exists()) await file.delete();
@@ -420,10 +420,10 @@ class PrivacyScreen extends ConsumerWidget {
   }
 
   Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
-    // Step-up (ASVS 7.5.3): Bei aktivem MFA ist vor der Konto-LÃ¶schung
-    // eine zusÃ¤tzliche TOTP-Verifikation nÃ¶tig â€“ eine reine Passwort-
+    // Step-up (ASVS 7.5.3): Bei aktivem MFA ist vor der Konto-Löschung
+    // eine zusätzliche TOTP-Verifikation nötig – eine reine Passwort-
     // Session (AAL1) reicht nicht (die Edge Function erzwingt AAL2
-    // serverseitig; der Pre-Check hier liefert die verstÃ¤ndliche
+    // serverseitig; der Pre-Check hier liefert die verständliche
     // Fehlermeldung statt eines kryptischen Server-Fehlers).
     final mfa = ref.read(mfaStatusProvider);
     if (mfa.hasVerifiedFactors && mfa.currentAal != 'aal2') {
@@ -436,8 +436,8 @@ class PrivacyScreen extends ConsumerWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
-                'UngÃ¼ltiger oder abgelaufener Code. '
-                'Die LÃ¶schung wurde abgebrochen.',
+                'Ungültiger oder abgelaufener Code. '
+                'Die Löschung wurde abgebrochen.',
               ),
               behavior: SnackBarBehavior.floating,
             ),
@@ -572,7 +572,7 @@ class PrivacyScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => Geolocator.openLocationSettings(),
           ),
-          // Push: Ã–ffnet die App-Einstellungen des Betriebssystems
+          // Push: Öffnet die App-Einstellungen des Betriebssystems
           // (Android: Benachrichtigungen sind dort ein Tap entfernt).
           ListTile(
             leading: const Icon(Icons.notifications),
@@ -632,8 +632,8 @@ class _InfoCard extends StatelessWidget {
   }
 }
 
-/// Fragt den 6-stelligen TOTP-Code fÃ¼r das Step-up vor einer sensiblen
-/// Aktion (Konto-LÃ¶schung, Passkey-Erstellung) ab.
+/// Fragt den 6-stelligen TOTP-Code für das Step-up vor einer sensiblen
+/// Aktion (Konto-Löschung, Passkey-Erstellung) ab.
 /// Liefert `null`, wenn der Nutzer abgebrochen hat.
 Future<String?> promptTotpCode(BuildContext context) {
   final controller = TextEditingController();

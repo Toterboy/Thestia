@@ -29,7 +29,7 @@ from __future__ import annotations
 import pathlib
 import sys
 
-from PIL import Image, ImageChops, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 W, H = 1024, 500
@@ -48,7 +48,13 @@ INK_SOFT = (0xF0, 0xD8, 0xF0)
 
 BRAND = 'Thestia'
 HOOK = 'Person statt Bild.'
-PROOF = 'Datenschutzfreundliches Dating  ·  E2E-verschlüsselt  ·  P2P'
+# KEIN "P2P" als Werbeaussage. Betreiber-Angabe: die P2P-Verbindung
+# funktioniert nicht zuverlaessig, es greift durchgehend der E2E-Transport
+# ueber den Server. "Ende-zu-Ende verschluesselt" bleibt wahr - der Server
+# sieht nur Ciphertext. "P2P" waere eine Zusage, die der Betrieb nicht
+# einloest. Derselbe Fehler stand in fastlane short_description (beide
+# Sprachen) und in docs/DATENSCHUTZ.md Abschnitt 3, dort eingeraenkt.
+PROOF = 'Datenschutzfreundliches Dating  ·  Ende-zu-Ende verschlüsselt'
 
 FONT_BOLD = pathlib.Path('C:/Windows/Fonts/segoeuib.ttf')
 FONT_REG = pathlib.Path('C:/Windows/Fonts/segoeui.ttf')
@@ -105,60 +111,26 @@ def fit_font(draw: ImageDraw.ImageDraw, text: str, path: pathlib.Path,
     return f
 
 
-# Zuschnitt des Emblems, als Anteile der Icon-Groesse. Zentral
-# konfigurierbar, damit sich der Bildausschnitt justieren laesst, ohne
-# an der Geometrie zu drehen.
+# Das Emblem ist das App-Icon in seiner nativen Form - die abgerundete
+# Kachel. Drei Anlaengeuehr vorheriger Versuche:
 #
-#   CROP_SIDE   Kantenlaenge des Quadrats (Anteil der Icon-Breite)
-#   CROP_CX     Mittelpunkt x (0.5 = mittig)
-#   CROP_CY     Mittelpunkt y - bestimmt, wie viel Marke und wie viel
-#               Schriftzug sichtbar werden
+# 1) Icon unveraendert, kein Beschnitt: der Name stand zweimal da
+#    (Schriftzug im Icon + grosser Text), das konkurrierte.
+# 2) Anschnitt am unteren Rand + Kreismaske: die Kachel fuellt das
+#    Quadrat fast vollstaendig, deshalb dominierte ihre eigene Form die
+#    Maske. Ergebnis war wieder eine Kachel, diesmal beschnitten, mit
+#    einem Rest des Schriftzugs unten - sichtbar kaputt.
+# 3) Quadrat INNERHALB der Kachel + Kreismaske: kein Schriftzug mehr,
+#    aber die Maske schnitt die Kachelecken an, sodass ein Rechteck im
+#    Kreis stand. Genau das war die Beanstandung: man erkennt einen
+#    viereckigen Kasten und damit, dass etwas eingesetzt wurde.
 #
-# Abgelesen aus dem Icon (941x941):
-#   Bildmarke mit Figuren und Glitzern  y ca. 0,10 bis 0,58
-#   Schriftzug "Thestia"                ab  y ca. 0,64
-# Bei CROP_SIDE 0,56 und CROP_CY 0,31 liegt die Unterkante bei 0,59 - also
-# mit Luft ueber dem Schriftzug. CROP_CX leicht links der Mitte, damit
-# der Glitzer rechts nicht an der Kreiskante abgeschnitten wird.
-CROP_SIDE = 0.56
-CROP_CX = 0.47
-CROP_CY = 0.31
-
-
+# Die Loesung ist nicht eine dritte Maske, sondern gar keine. Die Kachel
+# IST die Form des Logos; sie wirkt nicht eingesetzt, wenn man sie nicht
+# zusaetzlich verformt. Alles ungeschnitten, nichts abgeschnitten oben.
 def emblem(size: int) -> Image.Image:
-    """Bildmarke ohne Schriftzug, als saubere Kreisscheibe.
-
-    Das App-Icon ist eine abgerundete Kachel und traegt unten den
-    Schriftzug "Thestia". In der Graphic waere der Name damit zweimal
-    da und die beiden konkurrierten.
-
-    Der naive Anschnitt am unteren Rand (oberhalb des Schriftzugs) hat
-    nicht funktioniert: die Kachel fuellt das Quadrat fast vollstaendig,
-    deshalb dominierte ihre eigene abgerundete Form die Kreismaske - das
-    Ergebnis war wieder eine Kachel, unten zusaetzlich mit einem Rest
-    des Schriftzugs. Richtig ist deshalb, ein Quadrat INNERHALB der
-    Kachel auszuschneiden: es liegt dann auf dem Icon-Verlauf, die
-    Kreismaske schneidet sauber, und die Kachelkante liegt ausserhalb
-    und stoert nicht.
-    """
     with Image.open(ICON) as im:
-        im = im.convert('RGBA')
-        w, h = im.size
-        side = int(min(w, h) * CROP_SIDE)
-        cx = w * CROP_CX
-        cy = h * CROP_CY
-        box = (max(0, int(cx - side / 2)), max(0, int(cy - side / 2)),
-               min(w, int(cx + side / 2)), min(h, int(cy + side / 2)))
-        sq = im.crop(box).resize((size, size), Image.LANCZOS)
-    mask = Image.new('L', (size * 4, size * 4), 0)
-    ImageDraw.Draw(mask).ellipse([0, 0, size * 4 - 1, size * 4 - 1], fill=255)
-    mask = mask.resize((size, size), Image.LANCZOS)
-    # Alpha MULTIPLIZIEREN, nicht setzen. putalpha() ueberschreibt den
-    # Kanal: alle Pixel innerhalb des Kreises wurden deckend, auch die
-    # transparenten neben der Icon-Kachel - und deren RGB ist (0,0,0).
-    # Ergebnis war ein schwarzer Ring um das Emblem.
-    sq.putalpha(ImageChops.multiply(sq.getchannel('A'), mask))
-    return sq
+        return im.convert('RGBA').resize((size, size), Image.LANCZOS)
 
 
 def main() -> int:
@@ -179,10 +151,16 @@ def main() -> int:
     EMB = 250
     ix, iy = MARGIN, (H - EMB) // 2
 
+    # Schatten in der Form der Kachel, nicht als Ellipse. Die Icon-Datei
+    # hat die Ecken bereits abgerundet; ein elliptischer Schatten darunter
+    # wuerde an den vier Stellen hervorstehen, an denen das Icon gerade
+    # ist, und den Kachel-Eindruck wieder verstaerken.
+    radius = int(EMB * 0.28)  # entspricht der Kachelrundung des Icons
     shadow = Image.new('RGBA', (EMB, EMB), (0, 0, 0, 0))
-    ImageDraw.Draw(shadow).ellipse([0, 0, EMB - 1, EMB - 1], fill=(0, 0, 0, 110))
-    shadow = shadow.filter(ImageFilter.GaussianBlur(16))
-    canvas.paste(shadow, (ix + 3, iy + 11), shadow)
+    ImageDraw.Draw(shadow).rounded_rectangle(
+        [0, 0, EMB - 1, EMB - 1], radius=radius, fill=(0, 0, 0, 105))
+    shadow = shadow.filter(ImageFilter.GaussianBlur(15))
+    canvas.paste(shadow, (ix + 3, iy + 10), shadow)
     mark = emblem(EMB)
     canvas.paste(mark, (ix, iy), mark)
 

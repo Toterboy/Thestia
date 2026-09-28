@@ -1,5 +1,5 @@
-﻿name: thestia
-description: Eine moderne, datenschutzfreundliche Dating-App mit Blind Mode (PersÃ¶nlichkeit zuerst).
+name: thestia
+description: Eine moderne, datenschutzfreundliche Dating-App mit Blind Mode (Persönlichkeit zuerst).
 publish_to: 'none'
 version: 0.9.2+30
 
@@ -31,13 +31,13 @@ dependencies:
   # Lokale, sichere Datenspeicherung (Einstellungen, Profil, Auth-Token)
   shared_preferences: 2.5.5
 
-  # SchÃ¶ne Icons & Utilities
+  # Schöne Icons & Utilities
   # 0.20.2 ist von flutter_localizations (Flutter SDK) gepinnt - eine
   # hoehere Constraint wuerde die Abhaengigkeitsaufloesung brechen.
   intl: ^0.20.2
   share_plus: ^13.2.1
 
-  # App-Informationen fÃ¼r Bug-Reports (Version)
+  # App-Informationen für Bug-Reports (Version)
   package_info_plus: ^10.0.0
 
   # Echtes Geraetemodell fuer Angemeldete Geraete (v0.8.1)
@@ -46,44 +46,44 @@ dependencies:
   flutter_blue_plus: 1.36.8
   device_info_plus: ^13.2.0
 
-  # Ã–ffnen externer Links (GitHub Issues)
+  # Öffnen externer Links (GitHub Issues)
   url_launcher: 6.3.2
 
-  # Bildauswahl fÃ¼r Bug-Reports
+  # Bildauswahl für Bug-Reports
   image_picker: ^1.1.2
 
-  # Firebase fÃ¼r Server-Zeit & Cloud-Functions
-  # ENTFERNT: Wird nicht mehr benÃ¶tigt, ersetzt durch Supabase.
+  # Firebase für Server-Zeit & Cloud-Functions
+  # ENTFERNT: Wird nicht mehr benötigt, ersetzt durch Supabase.
 
-  # === NEUE DEPENDENCIES FÃœR SICHERHEITS-FEATURES ===
+  # === NEUE DEPENDENCIES FÜR SICHERHEITS-FEATURES ===
 
-  # E2E-VerschlÃ¼sselung (Signal Protocol)
+  # E2E-Verschlüsselung (Signal Protocol)
   libsignal_protocol_dart: 0.8.2
 
-  # WebRTC fÃ¼r P2P-Kommunikation
+  # WebRTC für P2P-Kommunikation
   flutter_webrtc: ^1.6.0
 
-  # WebSocket fÃ¼r Signaling-Server-Kommunikation
+  # WebSocket für Signaling-Server-Kommunikation
 
-  # HTTP-Client fÃ¼r REST-API (mit Zertifikat-Pinning)
+  # HTTP-Client für REST-API (mit Zertifikat-Pinning)
   http: 1.6.0
 
-  # Kryptographische Hash-Funktionen (fÃ¼r Zertifikat-Pinning)
+  # Kryptographische Hash-Funktionen (für Zertifikat-Pinning)
   crypto: 3.0.7
 
-  # Sichere, verschlÃ¼sselte lokale Speicherung von Tokens (statt SharedPreferences)
+  # Sichere, verschlüsselte lokale Speicherung von Tokens (statt SharedPreferences)
   flutter_secure_storage: 11.0.0
 
-  # Hive fÃ¼r lokale verschlÃ¼sselte Speicherung der Signal-Keys
+  # Hive für lokale verschlüsselte Speicherung der Signal-Keys
   hive: ^2.2.3
   hive_flutter: ^1.1.0
 
-  # Kamera & Video fÃ¼r Verifizierung
+  # Kamera & Video für Verifizierung
   camera: 0.12.0+2
   video_player: ^2.9.1
   # Frame-Entnahme aus dem Verifizierungsvideo (Mehrframe-Median der
-  # AltersschÃ¤tzung, MIT): Thumbnails direkt aus der MP4-Datei, kein
-  # zusÃ¤tzliches KI-Modell nÃ¶tig.
+  # Altersschätzung, MIT): Thumbnails direkt aus der MP4-Datei, kein
+  # zusätzliches KI-Modell nötig.
   video_thumbnail: ^0.5.6
 
   # Berechtigungen
@@ -92,24 +92,24 @@ dependencies:
   # Standort
   geolocator: ^14.0.3
 
-  # Geocoding fÃ¼r Ortserkennung
+  # Geocoding für Ortserkennung
   geocoding: ^4.0.0
 
-  # Bildverarbeitung fÃ¼r Moderation (Placeholder fÃ¼r ML-Kit)
+  # Bildverarbeitung für Moderation (Placeholder für ML-Kit)
   image: 4.10.1
 
   # NSFW on-device (v0.8.0): lokale Inferenz des Bild-Sicherheits-Modells
   # (image-safety-classifier-xs, ONNX-Format) - nur bei manueller Meldung.
   onnxruntime: 1.4.1
 
-  # Path Provider fÃ¼r Dateipfade
+  # Path Provider für Dateipfade
   path_provider: 2.1.6
 
   # Benachrichtigungen (Nachrichten, Likes, Matches, Event-Erinnerungen)
   flutter_local_notifications: 22.3.0
 
-  # EU-Push Ã¼ber Supabase Push (Verarbeitung in eu-central-1, Free Tier).
-  # FCM dient nur als Zustell-Transport (kostenloses Firebase-Konto nÃ¶tig).
+  # EU-Push über Supabase Push (Verarbeitung in eu-central-1, Free Tier).
+  # FCM dient nur als Zustell-Transport (kostenloses Firebase-Konto nötig).
   firebase_core: 4.13.0
   firebase_messaging: 16.5.0
 
@@ -119,21 +119,21 @@ dependencies:
   flutter_timezone: ^5.1.0
 
   # Nativer Splash (Preserve/Remove-API wird zur Laufzeit in main.dart genutzt,
-  # daher als regulÃ¤re Dependency statt dev_dependency)
+  # daher als reguläre Dependency statt dev_dependency)
   flutter_native_splash: ^2.4.8
 
-  # Crypto fÃ¼r Key-Backup-VerschlÃ¼sselung
+  # Crypto für Key-Backup-Verschlüsselung
   pointycastle: 4.0.0
 
-  # Supabase fÃ¼r Auth + Datenbank (RLS-abgesichert) + Supabase Push (EU)
+  # Supabase für Auth + Datenbank (RLS-abgesichert) + Supabase Push (EU)
   flutter_dotenv: ^6.0.1
   supabase_flutter: ^2.17.1
 
   # Passkeys (WebAuthn): native Passkey-Dialoge (FaceID/TouchID/Biometrie).
-  # Der Plugin-Code lÃ¤uft auf iOS 16+ / Android; es reicht die
+  # Der Plugin-Code läuft auf iOS 16+ / Android; es reicht die
   # Plattform-Prompts an Supabase Auth weiter (siehe lib/services/passkey_auth.dart).
-  # ACHTUNG: BenÃ¶tigt Flutter 3.35+ / Dart 3.9+ und supabase_flutter mit
-  # Passkey-UnterstÃ¼tzung (signInWithPasskey/registerPasskey).
+  # ACHTUNG: Benötigt Flutter 3.35+ / Dart 3.9+ und supabase_flutter mit
+  # Passkey-Unterstützung (signInWithPasskey/registerPasskey).
   # Direkte Abhängigkeit: ThestiaPasskeyAuthenticator implementiert die
   # Interface-Klasse des Platform-Interfaces (ohne Pre-Cancel-Verhalten).
   # NUR das Platform-Interface wird direkt gebraucht - das konkrete
@@ -154,17 +154,17 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  # Lint-Regeln fÃ¼r sauberen, modernen Code
+  # Lint-Regeln für sauberen, modernen Code
   flutter_lints: ^6.0.0
 
-  # Code Generation fÃ¼r Hive
+  # Code Generation für Hive
   build_runner: ^2.4.13
   hive_generator: ^2.0.1
 
   # Launcher-Icons aus einem Basis-Bild generieren
   flutter_launcher_icons: ^0.14.4
 
-# Lokale Forks der drei Plugins, die noch kein Built-in Kotlin unterstÃ¼tzen
+# Lokale Forks der drei Plugins, die noch kein Built-in Kotlin unterstützen
 # (KGP-Warnung beim Build). Die Forks enthalten KEINE KGP-Apply-Zeilen mehr;
 # der Flutter-Plugin-Loader wendet KGP dann selbst an (builtInKotlin=false).
 # --- v0.9.2: Sicherheitsrelevante Abhaengigkeiten exakt gepinnt ---------------
@@ -242,4 +242,4 @@ flutter:
     # ueber --dart-define zur Compile-Zeit injiziert (tool/build_release.ps1),
     # .env bleibt rein lokale Entwicklungsquelle (nicht Teil des Bundles).
 
-  # Hinweis: In einer echten App wÃ¼rden hier weitere Assets (Bilder, Fonts) registriert.
+  # Hinweis: In einer echten App würden hier weitere Assets (Bilder, Fonts) registriert.
