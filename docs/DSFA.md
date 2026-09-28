@@ -11,6 +11,13 @@
 Stand 2026-09-28. Betrifft `com.thestia.app` (Build 30 / v0.9.2) und die
 Zusatzdienste Supabase, Firebase, Cloudflare, Brevo, Netlify.
 
+> **Zur Reichweite dieser Abschätzung:** Sie behandelt die *Verarbeitung
+> durch die App*, nicht die Rechtsstellung des Betreibers. Wenn der
+> Betreiber minderjährig ist, steht vor allem anderen die Frage nach
+> Rechtsfähigkeit und Vertragsschluss (§ 106 BGB) – sie steht deshalb
+> als erster Punkt in Abschnitt 7.1 und geht den übrigen Abschnitten
+> voraus. Diese Abschätzung ersetzt diese Klärung nicht.
+
 ## 1. Ergebnis in einem Satz
 
 Die Verarbeitung ist **notwendig für den Kernzweck der App** (Menschen
@@ -190,6 +197,34 @@ gemeinsam mit der Rechtsberatung.
 | Verfolgung Minderjähriger | **reduziert, nicht ausgeschlossen** | abhängig von Einhaltung der Punkte in 5 |
 
 ## 7. Ungeklärte Punkte – vor Launch zu klären
+
+### 7.1 Rechtliche Stellung des Betreibers (zuerst zu klären)
+
+- [ ] **Rechtsfähigkeit und Vertragsschluss.** Minderjährige können nach
+      § 106 BGB nur Verträge mit Deckung des eigenen Bedarfs wirksam
+      schließen. Die Auftragsverarbeitungsverträge mit Brevo,
+      Cloudflare und Firebase sind solche Verträge, ebenso die
+      Apple-/Google-Entwicklerverträge und kostenpflichtige
+      Store-Bausteine. **Ob und wie weit das die Wirksamkeit berührt,
+      ist nicht pauschal zu beantworten** – es kommt darauf an, ob die
+      Tätigkeit als Bedarf im Sinne des § 106 BGB einzuordnen ist. Diese
+      Frage ist **nicht aus der Software heraus beantwortbar** und geht
+      einer Betreiber- oder Rechtsberatung voraus
+- [ ] **Wie ist der Vertragspartner gegenüber Nutzern und Behörden
+      auftretend?** Bei einer Minderjährigkeit im Rechtsverkehr ist zu
+      klären, ob eine volljährige Person als Betreiber auftritt
+- [ ] **Minderjährige als Vertragspartner auf Nutzerseite.**
+      Altersgrenze und Einwilligungskonstruktion (§ 25 Abs. 2 TDDDG)
+      hängen an derselben Frage
+- [ ] **Haftungs- und Finanzierungsfragen**, die aus einem
+      Nebenprojekt mit gebundener Ausgabe (Store, Hosting, Modelle) folgen
+
+> **Diese Punkte stehen bewusst an erster Stelle.** Sie sind die
+> Voraussetzung dafür, dass die übrigen Abschnitte gelten. Eine DSFA, die
+> einen ungeklärten Vertragspartner nicht adressiert, verschiebt das
+> Problem nur.
+
+### 7.2 Fachliche Punkte
 
 - [ ] Rechtsgrundlage für BLE-Nahbereich bei Minderjährigen
 - [ ] Mindestalter festlegen

@@ -23,10 +23,16 @@ Bitte gib an:
 - Reproduktionsschritte oder Proof-of-Concept
 - Deine Einschätzung der Auswirkung
 
-Du erhältst innerhalb von **72 Stunden** eine Eingangsbestätigung und
-regelmäßige Statusupdates, bis das Problem behoben ist. Eine öffentliche
-Bekanntmachung erfolgt erst nach Veröffentlichung eines Fixes – gerne mit
-Danksagung an dich (opt-in).
+**Zur Bearbeitung:** Thestia ist ein kleines, nebenberuflich betriebenes
+Projekt. Eine Sicherheitsmeldung wird zeitnah bestätigt, ein Fix für
+bestätigte Probleme folgt so bald wie möglich. Wir nennen bewusst **keine
+Frist**: eine Zusage, die nicht gehalten werden kann, ist schlechter als
+keine Zusage – sie beschädigt genau das Vertrauen, um das es hier geht.
+Wenn dir eine konkrete Frist wichtig ist, frag danach; wenn keine Antwort
+kommt, ist das auch eine Information und wird nicht gegen dich verwendet.
+
+**Was wir nicht versprechen:** sofortige Reaktion rund um die Uhr. Für
+ein Projekt dieser Größe wäre das eine leere Zusage.
 
 ## Angriffsbild
 
@@ -40,6 +46,13 @@ Der Ablauf für gemeldete Vorgänge steht in
 [docs/INCIDENT-RESPONSE.md](docs/INCIDENT-RESPONSE.md), die
 Abschätzung der Risiken nach Art. 35 DSGVO in
 [docs/DSFA.md](docs/DSFA.md).
+
+**Zu den Fristen:** Die 72 Stunden aus Art. 33 DSGVO betreffen die
+Meldung einer **Datenpanne an die Aufsichtsbehörde**, nicht die Antwort
+an einen Hinweisgeber. Diese Antwort ist freiwillig und in
+`SECURITY.md` bewusst ohne Frist zugesagt. Wenn es zu einer bestätigten
+Datenpanne kommt, gilt die gesetzliche Frist unverändert – dafür steht
+der Ablauf in `docs/INCIDENT-RESPONSE.md`.
 
 ## Scope
 
