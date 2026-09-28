@@ -1798,9 +1798,27 @@ const Map<String, Map<String, String>> _strings = {
     'whatsnew.v090.bucketList':
         'Gemeinsame Erinnerungsliste im Chat: Das wollt ihr zusammen '
         'erleben - ankreuzbar, ohne Druck.',
-    'whatsnew.v090.birthdayStyles':
-        '5 schicke Geburtstags-Stile für dein Profil (unten auswählen '
-        'oder später im Profil-Bearbeiten).',
+        'whatsnew.v090.birthdayStyles':
+            '5 schicke Geburtstags-Stile für dein Profil (unten auswählen '
+            'oder später im Profil-Bearbeiten).',
+        // Build 30 (v0.9.2). EIN Key pro Anzeigepunkt, jeder Punkt ein
+        // vollstaendiger Satz - siehe Bug-Hinweis in
+        // lib/services/whats_new_service.dart: bei hartkodiertem Text
+        // waren es Satzbausteine, und die Abschneidegrenze zerschnitt
+        // mitten im Satz. Ausserdem waren diese Zeilen ueberhaupt nicht
+        // uebersetzt, englische Nutzer sahen deutschen Text.
+        'whatsnew.v092.rotatingPrompts':
+            'Vorstellungen, die sich nicht wiederholen: Die Ideen-Karten '
+            'rotieren jetzt, statt immer dieselben vier zu zeigen.',
+        'whatsnew.v092.emailRequired':
+            'Wichtig: Eine bestätigte E-Mail-Adresse ist jetzt '
+            'Voraussetzung für Funken, Daumen und Nachrichten.',
+        'whatsnew.v092.safetyNumber':
+            'Neu: Du kannst festlegen, dass ein Chat erst nach dem Vergleich '
+            'der Sicherheitsnummern beginnt.',
+        'whatsnew.v092.proximityJitter':
+            'Nähefunk sendet jetzt unregelmäßig statt im festen Takt und '
+            'hört nur noch Signale von Thestia.',
     // Sprachnachrichten im Chat (Einmal-Anhören, M-17)
     'chat.voiceOnce':
         'Diese Sprachnachricht wurde bereits angehört und entfernt '
@@ -4380,9 +4398,22 @@ const Map<String, Map<String, String>> _strings = {
     'whatsnew.v090.bucketList':
         'Shared memory list in the chat: things you want to experience '
         'together - checkable, no pressure.',
-    'whatsnew.v090.birthdayStyles':
-        '5 tasteful birthday styles for your profile (choose below or '
-        'later in profile editing).',
+        'whatsnew.v090.birthdayStyles':
+            '5 tasteful birthday styles for your profile (choose below or '
+            'later in profile editing).',
+        // Build 30 (v0.9.2) - siehe deutsche Fassung oben.
+        'whatsnew.v092.rotatingPrompts':
+            'Introductions that do not repeat: the prompt cards now rotate '
+            'instead of always showing the same four.',
+        'whatsnew.v092.emailRequired':
+            'Important: a confirmed email address is now required for '
+            'sparks, thumbs and messages.',
+        'whatsnew.v092.safetyNumber':
+            'New: you can require a chat to start only after comparing '
+            'safety numbers.',
+        'whatsnew.v092.proximityJitter':
+            'Proximity now sends at irregular intervals instead of a fixed '
+            'rhythm, and listens only for Thestia signals.',
     // Voice messages (listen once, M-17)
     'chat.voiceOnce':
         'This voice message was already listened to and removed (privacy: '

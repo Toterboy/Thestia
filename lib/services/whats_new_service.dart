@@ -30,18 +30,23 @@ class WhatsNewService {
 
   /// Zusammenfassung je Version (l10n-Keys). NUR Titel-Bullets - Details
   /// stehen in den Release Notes.
+  ///
+  /// REGEL: Ein Listeneintrag ist EIN Anzeigepunkt und damit EIN
+  /// vollstaendiger Satz. Frueher stand hier der Text als Satzbausteine
+  /// ('Vorstellungen, die sich nicht wiederholen: die Ideen-Karten',
+  /// 'rotieren jetzt. Wer die App oft oeffnet, ...') - zehn Bausteine
+  /// fuer vier Aussagen. Die Abschneidegrenze in [keysFor] hat daraufhin
+  /// mitten im Satz abgeschnitten: die Anzeige begann mit
+  /// 'fuer Funken, Daumen und Nachrichten. ...' (Satzrumpf) und der
+  /// Punkt 'Vorstellungen rotieren' - die erste sichtbare Aenderung von
+  /// 0.9.2 - fehlte vollstaendig. Zusaetzlich war der Text nicht
+  /// uebersetzt; englische Nutzer sahen Deutsch.
   static const Map<int, List<String>> contentByBuild = {
     30: [
-      'Vorstellungen, die sich nicht wiederholen: die Ideen-Karten',
-      'rotieren jetzt. Wer die App oft oeffnet, tippt nicht mehr',
-      'immer dieselben vier Fragen an.',
-      'Wichtig: Eine bestaetigte E-Mail-Adresse ist jetzt Voraussetzung',
-      'fuer Funken, Daumen und Nachrichten. Wer sie nicht bestaetigt',
-      'hat, sieht an dieser Stelle einen Hinweis.',
-      'Sicherheitsnummer: Du kannst jetzt festlegen, dass ein Chat erst',
-      'nach dem Vergleich der Nummern beginnt.',
-      'Naehefunk: Das Geraet sendet unregelmaessig statt im festen',
-      'Takt und hoert nur noch Signale von Thestia.',
+      'whatsnew.v092.rotatingPrompts',
+      'whatsnew.v092.emailRequired',
+      'whatsnew.v092.safetyNumber',
+      'whatsnew.v092.proximityJitter',
     ],
 
     22: [
@@ -51,6 +56,16 @@ class WhatsNewService {
       'whatsnew.v090.birthdayStyles',
     ],
   };
+
+  /// Hoechstzahl gleichzeitig gezeigter Punkte.
+  ///
+  /// Wirkt nur noch als Schutz gegen eine Ausreiessliste. Weil ein
+  /// Eintrag jetzt ein vollstaendiger Punkt ist, kann das Abschneiden
+  /// keinen Satz mehr zerstoeren - es faellt nur eine ganze Aussage
+  /// weg. Fuer die Oberflaeche ist eine Ausreiessliste schlimmer als
+  /// weglassen, deshalb wird abgeschnitten, aber nach der neuen Logik:
+  /// die JUENGSTE Version zuerst, aeltere nur, solange Platz ist.
+  static const int maxPoints = 6;
 
   /// Neue ANGABEN, die im Flow abgefragt werden (z. B. Geburtstags-Stil).
   static bool hasNewInputs(int build) =>
@@ -108,15 +123,32 @@ class WhatsNewService {
     }
   }
 
-  /// Bullets für den aktuellen Build (älteste Versionen ausblenden - nur
-  /// die relevante Bande zeigen, max. 6 Punkte).
-  static List<String> keysFor({required int currentBuild, required int? shownBuild}) {
+  /// Anzeigepunkte fuer den aktuellen Build.
+  ///
+  /// Reihenfolge: die JUENGSTE Version zuerst. Wer von einem alten Build
+  /// direkt auf den aktuellen springt, soll zuerst sehen, was jetzt neu
+  /// ist - nicht den Aeltesten. Die alte Logik nahm
+  /// `out.sublist(out.length - 6)`, also die LETZTEN sechs einer
+  /// aufsteigend zusammengebauten Liste; bei einem Sprung ueber
+  /// mehrere Versionen verdraengte damit eine alte Version den Inhalt
+  /// der aktuellen.
+  ///
+  /// Jeder Eintrag ist ein vollstaendiger Punkt (siehe [contentByBuild]),
+  /// das Abschneiden zerstoert deshalb keinen Satz mehr.
+  static List<String> keysFor({
+    required int currentBuild,
+    required int? shownBuild,
+  }) {
+    final last = shownBuild ?? 0;
+    final relevant = contentByBuild.entries
+        .where((e) => e.key > last && e.key <= currentBuild)
+        .toList()
+      ..sort((a, b) => b.key.compareTo(a.key)); // juengste zuerst
     final out = <String>[];
-    for (final entry in contentByBuild.entries) {
-      if (entry.key > (shownBuild ?? 0) && entry.key <= currentBuild) {
-        out.addAll(entry.value);
-      }
+    for (final entry in relevant) {
+      out.addAll(entry.value);
+      if (out.length >= maxPoints) break;
     }
-    return out.length > 6 ? out.sublist(out.length - 6) : out;
+    return out.length > maxPoints ? out.sublist(0, maxPoints) : out;
   }
 }
