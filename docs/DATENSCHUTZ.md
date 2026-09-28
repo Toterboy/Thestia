@@ -213,7 +213,16 @@ erzwungen), und die Altersfilter sind serverseitig begrenzt (Migration
 verarbeitet (Art. 6 Abs. 1 lit. c/f) und gegenüber anderen Nutzern nie
 angezeigt (nur gerundetes Alter).
 
-## 10. Änderungen dieser Erklärung
+## 10. Angriffsbild und Risikoabschätzung
+
+Die technische Bewertung der Verarbeitung ist öffentlich: Angriffsbild
+in [THREAT-MODEL.md](THREAT-MODEL.md), Risiken nach Art. 35 DSGVO in
+[DSFA.md](DSFA.md) (Entwurf, rechtlich noch nicht geprüft). Dort sind
+auch die Punkte benannt, die Thestia bewusst **nicht** zusichert:
+Funk-Metadaten sind technisch beobachtbar, und Ende-zu-Ende-
+Verschlüsselung schützt Inhalte, nicht Kommunikationsmuster.
+
+## 11. Änderungen dieser Erklärung
 
 Bei funktionalen Änderungen (neue Datenkategorien, neue Anbieter) wird
 diese Erklärung in der App und im Repository aktualisiert; die

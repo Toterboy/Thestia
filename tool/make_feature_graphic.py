@@ -151,16 +151,18 @@ def main() -> int:
     EMB = 250
     ix, iy = MARGIN, (H - EMB) // 2
 
-    # Schatten in der Form der Kachel, nicht als Ellipse. Die Icon-Datei
-    # hat die Ecken bereits abgerundet; ein elliptischer Schatten darunter
-    # wuerde an den vier Stellen hervorstehen, an denen das Icon gerade
-    # ist, und den Kachel-Eindruck wieder verstaerken.
-    radius = int(EMB * 0.28)  # entspricht der Kachelrundung des Icons
-    shadow = Image.new('RGBA', (EMB, EMB), (0, 0, 0, 0))
-    ImageDraw.Draw(shadow).rounded_rectangle(
-        [0, 0, EMB - 1, EMB - 1], radius=radius, fill=(0, 0, 0, 105))
-    shadow = shadow.filter(ImageFilter.GaussianBlur(15))
-    canvas.paste(shadow, (ix + 3, iy + 10), shadow)
+    # KEIN Schlagschatten. Drei Anlaenge hintereinander:
+    # 1) Elliptischer Schatten unter einem eckigen Icon - an den vier
+    #    Stellen hervorstehend, wo das Icon gerade ist.
+    # 2) Kein Schatten, aber die Kachelmaske schnitt die Icon-Ecken an,
+    #    es blieb ein Rechteck im Kreis.
+    # 3) Schatten in Kachelform - passte, erzeugte aber auf dem
+    #    Violett-Magenta-Grund eine dunkle Kontur um die Kachel, die als
+    #    schwarze Umrandung las und die Kachel eckig wirken liess.
+    #
+    # Der Schatten war reine Zutat: das App-Icon ist auf seinen
+    # eigenen Verlauf gesetzt und braucht keinen. Betreiberwunsch ist
+    # ausdruecklich "nur das Logo, ohne schwarze Umrandung".
     mark = emblem(EMB)
     canvas.paste(mark, (ix, iy), mark)
 

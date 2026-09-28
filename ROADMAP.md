@@ -376,27 +376,33 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       F-Droid-Einreichung, zentral gepinnte Tool-Versionen in
       `tool/requirements.txt`. CI-Jobs: `dependency-audit` und
       `static-checks`
-- [ ] **Öffentliches Threat-Model vor dem Release (aus 0.10.0
-      vorgezogen)** – `SECURITY.md` ist bereits öffentlich und nennt
-      `security@thestia.de` mit 72-Stunden-Eingangsbestätigung. Fehlt ist
-      das **dokumentierte Angriffsbild**: RLS-Modell, PUBLIC-EXECUTE-Falle
-      bei Functions, BLE-Metadaten, Drittlandtransfers bei der Moderation
-      (Brevo, Cloudflare, Firebase) sowie die Betriebsgrenzen (Firebase-
-      API-Key ohne Zugriff auf die Google Cloud Console nicht per
-      Application-Restriction einengbar). Ohne Angriffsbild ist der
-      Meldeweg eine Zusage ohne Verfahren. Erledigung: kurzes Dokument
-      im öffentlichen Repo, Verweis aus `SECURITY.md` darauf
-- [ ] **Datenschutzfolgeabschätzung nach Art. 35 DSGVO** – bisher nicht
-      vorhanden. Klartext-Auslöser: systematische Erfassung eines
-      öffentlich zugänglichen Raums (BLE-Nahbereich, geplantes
-      Live-Board), Verarbeitung bei Minderjährigen, Biometrie-nahe
-      Verarbeitung, Drittlandtransfers. Kein Feature-Eintrag – eine
-      Rechtspflicht, unabhängig von der Feature-Planung
-- [ ] **Incident-Response mit 72-Stunden-Uhr (Art. 33 DSGVO)** – Rollen,
-      Meldeschwellen, Entscheidungsbaum, was im Extremfall evakuiert wird
-      (Edge Functions mit Service-Role-Zugriff, Key-Backup mit
-      Nutzerpasswort, öffentliches Repo). Ohne diesen Prozess ist die
-      Zusage aus `SECURITY.md` nicht einhaltbar
+- [x] **Öffentliches Threat-Model** – fertig: [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md).
+      Benennt Vertrauensgrenzen, Angriffsflächen (RLS/`SECURITY DEFINER`,
+      Jugendschutz, BLE-Metadaten, Standort, E2E-Irrtum, Lieferkette,
+      Moderation/Drittland, Authentifizierung), die Maßnahmen und – ohne
+      Beschönigung – die Restrisiken. `SECURITY.md` und die
+      Datenschutzerklärung verweisen darauf. `SECURITY.md` selbst war
+      bereits öffentlich und nennt `security@thestia.de`
+- [x] **Incident-Response mit 72-Stunden-Uhr (Art. 33 DSGVO)** –
+      fertig: [docs/INCIDENT-RESPONSE.md](docs/INCIDENT-RESPONSE.md).
+      Rollen, Triage in 4 h, Schweregrade mit Fristen, konkreter
+      Reaktionsablauf (Eindämmen vor Ursachenanalyse, Sitzungswiderruf),
+      Umgang mit kompromittiertem Signing-Key und Firebase-Key, Nachbereitung
+      mit Pflicht zur Konsequenz
+- [~] **Datenschutzfolgeabschätzung (Art. 35 DSGVO)** – fachlich
+      erstellt: [docs/DSFA.md](docs/DSFA.md), **als Entwurf markiert**.
+      Nicht rechtsgeprüft. Enthält Rechtsgrundlagen je Verarbeitung,
+      Risikobewertung und – für Minderjährige – fünf zusätzliche
+      Vorkehrungen. **Offen und nicht wegformuliert:** neun Punkte in
+      Abschnitt 7, darunter Mindestalter, Auftragsverarbeitungsverträge
+      je Anbieter, Art. 22 für den Matching-Score, Widerspruchsverfahren
+      bei Altersablehnung, Bewertung der Krisen-Erkennung als
+      Nicht-Medizinprodukt. Vor dem Launch rechtlich zu prüfen
+- [ ] **Bleibt Betreiberentscheidung:** Mindestalter verbindlich
+      festlegen, Live-Board und Same-Train-Matching für Minderjährige
+      sperren, BLE-Nahbereich für unter 18-Jährige abschaltbar machen.
+      Vorschläge stehen in Abschnitt 5 der DSFA, sie sind fachlich
+      begründet und rechtlich nicht geprüft
 - [ ] **Vorstellungs-Vorlagen (Text + Audio)** – hier verbindlich für
       0.9.2 eingeplant; Ausformulierung siehe „In Arbeit". Kleines
       Feature, aber es hebt die Profilqualität der frühen Nutzerschaft

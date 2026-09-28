@@ -28,6 +28,19 @@ regelmäßige Statusupdates, bis das Problem behoben ist. Eine öffentliche
 Bekanntmachung erfolgt erst nach Veröffentlichung eines Fixes – gerne mit
 Danksagung an dich (opt-in).
 
+## Angriffsbild
+
+Das dokumentierte Bedrohungsmodell liegt öffentlich in
+[docs/THREAT-MODEL.md](docs/THREAT-MODEL.md). Es benennt die
+Angriffsflächen, die Maßnahmen und – ausdrücklich – die Restrisiken.
+Fehlt dort eine Angriffsfläche, ist das ein wirksamer Hinweis und wird
+mit Priorität bearbeitet.
+
+Der Ablauf für gemeldete Vorgänge steht in
+[docs/INCIDENT-RESPONSE.md](docs/INCIDENT-RESPONSE.md), die
+Abschätzung der Risiken nach Art. 35 DSGVO in
+[docs/DSFA.md](docs/DSFA.md).
+
 ## Scope
 
 **In Scope:** dieser Quellcode (Flutter-App, `supabase/functions/`,
