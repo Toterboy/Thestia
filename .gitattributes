@@ -64,3 +64,9 @@ test/screenshots/**/*.png     -text
 *.cmd                          text eol=crlf
 *.gradle                       text eol=lf
 *.properties                   text eol=lf
+
+# Git liest .gitattributes mit CRLF-Voreinstellung unter Windows als Text.
+# Das ist unkritisch (die Regeln sind zeilenbasiert), aber ein LF/CRLF-
+# Wechsel macht den Diff unnoetig laut - daher explizit.
+.gitattributes                  text eol=lf
+.gitignore                     text eol=lf
