@@ -318,3 +318,11 @@ jobs:
       # Regel existiert.
       - name: .gitignore auf Luecken pruefen
         run: python3 tool/check_gitignore.py
+
+      # Am 2026-09-29 war fastlane/.../01_willkommen.png unlesbar: eine
+      # Binärdatei war als Text behandelt und mit CRLF/BOM zerstoert
+      # worden (PNG-Signatur verschoben, ~20 KB gewachsen). Ohne diesen
+      # Check fällt das erst beim Store-Upload auf - die Version im
+      # Login-Screenshot war parallel auf 0.9.1 stehen geblieben.
+      - name: PNG-Dateien auf Korruption pruefen
+        run: python3 tool/check_png_integrity.py

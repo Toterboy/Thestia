@@ -1,2 +1,66 @@
-assets/models/*.onnx filter=lfs diff=lfs merge=lfs -text
+# Binärdateien dürfen NIE vom Text-Trennverfahren (core.autocrlf) berührt
+# werden. Ohne diese Regel zerstört ein Checkout unter Windows Binärdaten,
+# weil Git sie als Text liest und CRLF-Zeilenenden einfügt.
+#
+# Konkreter Vorfall (2026-09-29): 01_willkommen.png im Play-Store-Metadaten-
+# Ordner war nach einem Text-Roundtrip unlesbar - die PNG-Signatur war
+# verschoben und die Bytegröße um ~20 KB gewachsen. Play Store akzeptiert
+# eine solche Datei nicht (oder zeigt sie fehlerhaft).
+#
+# Hintergrund: core.autocrlf=true ist in diesem Repo gesetzt (Windows-
+# Entwicklung), und core.eol war ungesetzt. Git wendet CRLF-Umwandlung auf
+# JEDE Datei an, die es für Text hält. Binärdateien erkennt Git nur über
+# eine NUL-Byte-Heuristik - die bei Bildern mit wenig NUL-Anteil
+# versagt. Die -text-Regel schaltet die Umwandlung für den Pfad explizit ab.
+#
+# Nicht anfassen: die *.onnx-Zeile darüber. Die nutzt Git LFS
+# (filter=lfs) und braucht zusätzlich -text.
 
+# Store-Metadaten: Icon, Feature Graphic, Phone-Screenshots.
+# Gerade die Screenshots sind Marketing-Material und werden im
+# Doppelpack mit den Release-Artefakten erzeugt - ein Fehler hier ist
+# sofort sichtbar und direkt kostenwirksam.
+fastlane/metadata/**/*.png    -text
+releases/**/*.png             -text
+test/screenshots/**/*.png     -text
+
+# Weitere Binärformate, die im Repo liegen oder liegen können.
+*.png                          -text
+*.jpg                          -text
+*.jpeg                         -text
+*.webp                         -text
+*.gif                          -text
+*.ico                          -text
+*.so                           -text
+*.aar                          -text
+*.apk                          -text
+*.aab                          -text
+*.ttf                          -text
+*.otf                          -text
+*.zip                          -text
+*.jar                          -text
+*.keystore                     -text
+*.jks                          -text
+*.env                          -text
+
+# Textdateien: explizit LF im Repository, Checkout nach CRLF unter Windows.
+# Das ist die Gegenrichtung und verhindert, dass später jemand die
+# Binärregeln oben weglässt und dafür core.autocrlf umschaltet.
+*.dart                         text eol=lf
+*.sql                          text eol=lf
+*.md                           text eol=lf
+*.yml                          text eol=lf
+*.yaml                         text eol=lf
+*.json                         text eol=lf
+*.arb                          text eol=lf
+*.xml                          text eol=lf
+*.html                         text eol=lf
+*.css                          text eol=lf
+*.js                           text eol=lf
+*.py                           text eol=lf
+*.ps1                          text eol=crlf
+*.sh                           text eol=lf
+*.bat                          text eol=crlf
+*.cmd                          text eol=crlf
+*.gradle                       text eol=lf
+*.properties                   text eol=lf
