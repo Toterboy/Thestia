@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/transit_models.dart';
+import 'package:thestia/widgets/appearance_selector.dart';
 import 'package:thestia/widgets/transit_mode_selector.dart';
 
 /// Laufzeit-Test der Sprachumschaltung.
@@ -136,6 +137,73 @@ void main() {
     });
   });
 
+  group('AppearanceSelector: beide Sprachen', () {
+    // v0.9.2: Das Widget ersetzt drei SelectableTile-Radiozeilen. Es
+    // traegt je Modus eine Erklaerung - die ist der eigentliche Grund
+    // fuer den Wechsel, also wird sie hier wie beim Transit geprueft.
+    const keys = [
+      'appearance.light',
+      'appearance.system',
+      'appearance.dark',
+      'appearanceDesc.light',
+      'appearanceDesc.system',
+      'appearanceDesc.dark',
+    ];
+
+    for (final locale in ['de', 'en']) {
+      testWidgets('$locale: Wert und Erklaerung uebersetzt', (tester) async {
+        await tester.pumpWidget(_appearanceHost(initial: Locale(locale)));
+        await tester.pumpAndSettle();
+
+        final ctx = tester.element(find.byType(AppearanceSelector));
+        for (final key in keys) {
+          final t = L10n.t(ctx, key);
+          expect(t, isNot(key), reason: '$locale: $key fehlt');
+          expect(t.trim(), isNotEmpty, reason: '$locale: $key leer');
+        }
+      });
+    }
+
+    testWidgets('DE zeigt deutschen Text', (tester) async {
+      await tester.pumpWidget(_appearanceHost());
+      await tester.pumpAndSettle();
+
+      expect(find.text('Hell'), findsOneWidget);
+      expect(find.text('System'), findsOneWidget);
+      expect(find.text('Dunkel'), findsOneWidget);
+      expect(find.textContaining('Folgt deinem Gerät'), findsOneWidget);
+    });
+
+    testWidgets('EN zeigt englischen Text ohne deutsche Reste',
+        (tester) async {
+      await tester.pumpWidget(_appearanceHost(initial: const Locale('en')));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Follows your device'), findsOneWidget);
+      expect(find.textContaining('Folgt deinem Gerät'), findsNothing);
+    });
+
+    testWidgets('genau eine Option ist als gewählt markiert', (tester) async {
+      for (final mode in ['light', 'system', 'dark']) {
+        await tester.pumpWidget(_appearanceHost(mode: mode));
+        await tester.pumpAndSettle();
+        expect(find.byIcon(Icons.check_circle), findsOneWidget,
+            reason: 'Modus $mode: Auswahl nicht eindeutig');
+      }
+    });
+
+    testWidgets('meldet den Wechsel nach außen', (tester) async {
+      String? picked;
+      await tester.pumpWidget(_appearanceHost(
+          mode: 'light', onChanged: (m) => picked = m));
+
+      await tester.tap(find.text('Dunkel'));
+      await tester.pumpAndSettle();
+
+      expect(picked, 'dark');
+    });
+  });
+
   group('Sperrbildschirm: beide Sprachen', () {
     testWidgets('Alterssperre erscheint auf Deutsch', (tester) async {
       await tester.pumpWidget(
@@ -187,6 +255,31 @@ void main() {
 }
 
 void _noop(TransitMode _) {}
+
+Widget _appearanceHost({
+  Locale? initial,
+  String mode = 'system',
+  ValueChanged<String>? onChanged,
+}) {
+  return ProviderScope(
+    overrides: [
+      if (initial != null) localeProvider.overrideWith((ref) => initial),
+    ],
+    child: MaterialApp(
+      home: Scaffold(
+        body: L10nScope(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: AppearanceSelector(
+              value: mode,
+              onChanged: onChanged ?? (String _) {},
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
 
 /// Abbild des Sperrbildschirms - bewusst dupliziert statt die private
 /// Methode der Radar-Seite zu testen, damit der Test nicht am

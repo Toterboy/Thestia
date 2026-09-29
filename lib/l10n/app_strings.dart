@@ -292,6 +292,20 @@ const Map<String, Map<String, String>> _strings = {
     'settings.system': 'System',
     'settings.light': 'Hell',
     'settings.dark': 'Dunkel',
+    // AppearanceSelector: Wert + Erklaerung je Modus. Die Erklaerung
+    // sagt, was die Wahl TUT - das unterscheidet 'System' (folgt dem
+    // Geraet) von 'Hell'/'Dunkel' (erzwingen etwas). Ohne das sind drei
+    // gleich aussehende Zeilen, in denen die Voreinstellung nicht von
+    // einer bewussten Entscheidung unterscheidbar ist.
+    'appearance.light': 'Hell',
+    'appearance.system': 'System',
+    'appearance.dark': 'Dunkel',
+    'appearanceDesc.light':
+        'Immer helle Oberfläche, auch am Abend.',
+    'appearanceDesc.system':
+        'Folgt deinem Gerät: hell am Tag, dunkel bei Dunkelmodus.',
+    'appearanceDesc.dark':
+        'Immer dunkle Oberfläche, schon am Morgen.',
     'settings.colors': 'Farbwelt',
     'settings.language': 'Sprache',
     'settings.notifications': 'Benachrichtigungen',
@@ -468,9 +482,6 @@ const Map<String, Map<String, String>> _strings = {
     'setupp.visibilitySub':
         'Wer darf dein Profil sehen? Wie soll die App aussehen?',
     'setupp.appearance': 'Darstellung',
-    'setupp.systemTheme': 'System',
-    'setupp.lightTheme': 'Hell',
-    'setupp.darkTheme': 'Dunkel',
     'setupp.colorWorld': 'Farbwelt',
     'setupp.lookingFor': 'Ich suche',
     'setupp.relType': 'Beziehungsart',
@@ -2961,7 +2972,15 @@ const Map<String, Map<String, String>> _strings = {
     'settings.system': 'System',
     'settings.light': 'Light',
     'settings.dark': 'Dark',
-    'settings.colors': 'Color scheme',
+    'appearance.light': 'Light',
+    'appearance.system': 'System',
+    'appearance.dark': 'Dark',
+    'appearanceDesc.light':
+        'Always a light interface, even in the evening.',
+    'appearanceDesc.system':
+        'Follows your device: light by day, dark when it is in dark mode.',
+    'appearanceDesc.dark':
+        'Always a dark interface, starting in the morning.',    'settings.colors': 'Color scheme',
     'settings.language': 'Language',
     'settings.notifications': 'Notifications',
     'settings.push': 'Push notifications',
@@ -4200,9 +4219,6 @@ const Map<String, Map<String, String>> _strings = {
     'setupp.visibilitySub':
         'Who may see your profile? How should the app look?',
     'setupp.appearance': 'Appearance',
-    'setupp.systemTheme': 'System',
-    'setupp.lightTheme': 'Light',
-    'setupp.darkTheme': 'Dark',
     'setupp.colorWorld': 'Color scheme',
     'setupp.lookingFor': 'I am looking for',
     'setupp.relType': 'Relationship type',

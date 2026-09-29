@@ -31,6 +31,7 @@ import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/services/unified_push_service.dart';
 import 'package:thestia/utils/age_safety_rules.dart';
+import 'package:thestia/widgets/appearance_selector.dart';
 import 'package:thestia/widgets/buttons.dart';
 import 'package:thestia/widgets/chat_background_picker.dart';
 import 'package:thestia/widgets/selectable_tile.dart';
@@ -353,31 +354,25 @@ class SettingsScreen extends ConsumerWidget {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
-                  // String-Keys statt bool? (siehe Einrichtung):
-                  // Radio mit null-Value verschluckt Taps.
-                  SelectableTile<String>(
-                    value: 'system',
-                    groupValue: settings.useDarkMode == null
+                  // v0.9.2: drei SelectableTile-Radiozeilen wurden zu
+                  // einem AppearanceSelector. Siehe dort, warum.
+                  // String-Keys statt bool? bleibt: Radio mit
+                  // null-Value verschluckt Taps.
+                  AppearanceSelector(
+                    value: settings.useDarkMode == null
                         ? 'system'
                         : (settings.useDarkMode! ? 'dark' : 'light'),
-                    title: L10n.t(context, 'settings.system'),
-                    onChanged: (_) { notifier.setDarkMode(null); _persistUiPrefs(ref); },
-                  ),
-                  SelectableTile<String>(
-                    value: 'light',
-                    groupValue: settings.useDarkMode == null
-                        ? 'system'
-                        : (settings.useDarkMode! ? 'dark' : 'light'),
-                    title: L10n.t(context, 'settings.light'),
-                    onChanged: (_) { notifier.setDarkMode(false); _persistUiPrefs(ref); },
-                  ),
-                  SelectableTile<String>(
-                    value: 'dark',
-                    groupValue: settings.useDarkMode == null
-                        ? 'system'
-                        : (settings.useDarkMode! ? 'dark' : 'light'),
-                    title: L10n.t(context, 'settings.dark'),
-                    onChanged: (_) { notifier.setDarkMode(true); _persistUiPrefs(ref); },
+                    onChanged: (mode) {
+                      switch (mode) {
+                        case 'light':
+                          notifier.setDarkMode(false);
+                        case 'dark':
+                          notifier.setDarkMode(true);
+                        default:
+                          notifier.setDarkMode(null);
+                      }
+                      _persistUiPrefs(ref);
+                    },
                   ),
                   const SizedBox(height: 12),
                   Text(L10n.t(context, 'settings.colors'),

@@ -22,6 +22,7 @@ Voraussetzung: die App-Screens vorher rendern -
 """
 
 import pathlib
+import re
 import sys
 import time
 
@@ -42,33 +43,51 @@ FONT_BOLD = r'C:\Windows\Fonts\segoeuib.ttf'
 FONT_REG = r'C:\Windows\Fonts\segoeui.ttf'
 
 # Datei -> (Headline, Subline, Badge)
+#
+# ACHTUNG - Text ist Produktversprechen, kein Design-Element.
+# "In einer Minute startklar" stand hier bis v0.9.2, war aber falsch und
+# wurde von der App selbst widerlegt: nach der E-Mail-Bestaetigung
+# folgen 8 Seiten Einrichtung (settings_privacy_once_screen.dart,
+# _pageCount = 8) und 8 Seiten Onboarding (onboarding_screen.dart,
+# _pageCount = 8), dazu ein Pflicht-Foto. Das ist eine Investition von
+# mehreren Minuten, keine von einer. Ein Screenshot, der das Gegenteil
+# behauptet, ist Marketing-Waffenschmiede.
+#
+# Kriterien fuer die Badges, in dieser Reihenfolge:
+#   1. Nachpruefbar aus dem Code.
+#   2. Kein Zeitversprechen, keine Mengenangabe ohne Beleg.
+#   3. Erklaert ein echtes Alleinstellungsmerkmal.
 SHOTS = {
     '01_willkommen': (
         'Blind Date mit\nSubstanz',
         'Persönlichkeit vor Aussehen: Hör erst zu,\n'
         'und siehst ein Foto erst nach dem Funke.',
-        'Kostenlos. Für immer.',
+        'Kein Foto vor dem Kennenlernen',
     ),
     '02_anmelden': (
-        'In einer Minute\nstartklar',
-        'Keine Abos, keine Werbung, kein Daten-Hammer.\n'
-        'Einfach registrieren und loslegen.',
-        'Open Source (AGPLv3)',
+        'Erst prüfen,\n'
+        'dann freischalten',
+        'Mit E-Mail bestätigen, Profil ausfüllen,\n'
+        'Geburtsdatum hinterlegen, los.',
+        'Foto erst nach dem Funke',
     ),
     '03_entdecken': (
-        'Fünf Wege,\neinen Funken zu zünden',
+        'Fünf Wege,\n'
+        'einen Funken zu zünden',
         'Von Find your Match bis Transit Spark:\n'
         'im Zug nebenan Blickkontakt genügt.',
-        'E2E-verschlüsselt',
+        'Ende-zu-Ende-verschlüsselt',
     ),
     '04_anpassen': (
-        'Dein Stil,\ndeine Farben',
-        'Sechs Farbschemata, Hell oder Dunkel und ein eigener\n'
+        'Dein Stil,\n'
+        'deine Farben',
+        'Sechs Farbschemata, Hell/System/Dunkel und ein eigener\n'
         'Chat-Hintergrund – alles bleibt erhalten.',
         'Auch 6 Muster im Chat',
     ),
     '05_eisbrecher': (
-        '60 Fragen gegen\ndas Schweigen',
+        '60 Fragen gegen\n'
+        'das Schweigen',
         'Eisbrecher für den ersten Chat: antippen,\n'
         'senden, plaudern. In 10 Kategorien.',
         'Ohne Stockfoto-Posen',
@@ -320,11 +339,62 @@ def save_png(img: Image.Image, path: pathlib.Path, tries: int = 6):
     raise last
 
 
+def _check_claims():
+    """Sperrt Textversprechen, die der Code nicht einloest.
+
+    Bis v0.9.2 stand in den Shots "In einer Minute startklar" und
+    "Kostenlos. Fuer immer." Beides war unbelegbar bzw. falsch - der
+    Registrierungsweg dauert nach der E-Mail-Bestaetigung 8 Setup- und
+    8 Onboarding-Seiten. Der Fehler war nicht der schlechte Text,
+    sondern dass niemand pruefen konnte, dass er stimmt.
+
+    Diese Liste ist bewusst eine Positivliste: sie erlaubt Formulie-
+    rungen, deren Richtigkeit aus dem Quellcode hervorgeht, und
+    blockiert die beiden Arten von Aussagen, die erfahrungsgemaess falsch
+    werden - Zeitversprechen und unbegruendete Mengenangaben.
+    """
+    forbidden = [
+        # Zeitversprechen. "einer/eine Minute", "eine Minute", "Minuten"
+        # in jeder Form - der Zwischenwort-Abstand ist gewolft offen.
+        (r'\b(in|einer|eine)?\s*minut', 'Zeitversprechen ohne Beleg'),
+        (r'\bsofort\b', '"sofort" ist ein Zeitversprechen'),
+        (r'\bsekunden?\b', 'Zeitversprechen ohne Beleg'),
+        (r'\bkostenlos', '"kostenlos" ist eine Preiszusage, keine Funktion'),
+        (r'\bunbegrenzt', '"unbegrenzt" ist eine Ressourcen-Zusage'),
+        (r'\bnie\s+gelöscht', 'Datenloesch-Zusage'),
+        (r'\bsicher\b(?!heit)', '"sicher" ohne Bezug ist eine Behauptung'),
+        (r'\b\d+\s*%\s*(sicher|verschlüsselt)',
+         'Prozentangabe zur Verschluesselung ist nicht belegbar'),
+    ]
+    problems = []
+    for name, (headline, subline, badge) in SHOTS.items():
+        blob = ' '.join((headline, subline, badge))
+        for pattern, why in forbidden:
+            m = re.search(pattern, blob, re.I)
+            if m:
+                problems.append(
+                    f'{name}: "{m.group(0)}" - {why}')
+    return problems
+
+
 def main():
     if not SRC.exists():
         sys.exit('Keine App-Screens gefunden. Erst rendern:\n'
                  '  $env:STORE_SHOTS="1"; flutter test --update-goldens '
                  'test/screenshots/store_v091_shots_test.dart')
+
+    problems = _check_claims()
+    if problems:
+        print('STORE-SCREENSHOT-TEXT abgelehnt:', file=sys.stderr)
+        for p in problems:
+            print('  X', p, file=sys.stderr)
+        print('\nDer Text ist ein Produktversprechen. Wenn die Aussage '
+              'zutrifft,\ndarf sie NICHT einfach hier erlaubt werden - '
+              'sie muss im Kommentar\nzu SHOTS begruendet werden, damit '
+              'sie beim naechsten Review wiedergeprueft wird.',
+              file=sys.stderr)
+        sys.exit(1)
+
     for d in (OUT_9x16, OUT_WQHD, OUT_FASTLANE):
         d.mkdir(parents=True, exist_ok=True)
 

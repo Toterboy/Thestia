@@ -28,6 +28,7 @@ import 'package:thestia/utils/age_safety_rules.dart';
 import 'package:thestia/utils/constants.dart';
 import 'package:thestia/utils/geo_names.dart';
 import 'package:thestia/widgets/age_range_sliders.dart';
+import 'package:thestia/widgets/appearance_selector.dart';
 import 'package:thestia/widgets/buttons.dart';
 import 'package:thestia/widgets/gender_preference_selector.dart';
 import 'package:thestia/widgets/habitude_selector.dart';
@@ -1265,33 +1266,26 @@ class _SettingsPrivacyOnceScreenState
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           const SizedBox(height: 8),
-                          // String-Keys statt bool?-Werten: Radio mit
-                          // null-Value funktioniert nicht zuverlaessig
-                          // (Tap wird verschluckt). Mapping:
-                          // 'system' -> null, 'light' -> false, 'dark' -> true.
-                          SelectableTile<String>(
-                            value: 'system',
-                            groupValue: settings.useDarkMode == null
+                          // v0.9.2: dieselbe Auswahl wie in den
+                          // Einstellungen, damit beide Stellen nicht
+                          // unterschiedlich aussehen. String-Keys statt
+                          // bool? bleibt: Radio mit null-Value
+                          // verschluckt Taps. Mapping: 'system' -> null,
+                          // 'light' -> false, 'dark' -> true.
+                          AppearanceSelector(
+                            value: settings.useDarkMode == null
                                 ? 'system'
                                 : (settings.useDarkMode! ? 'dark' : 'light'),
-                            title: L10n.t(context, 'setupp.systemTheme'),
-                            onChanged: (_) => notifier.setDarkMode(null),
-                          ),
-                          SelectableTile<String>(
-                            value: 'light',
-                            groupValue: settings.useDarkMode == null
-                                ? 'system'
-                                : (settings.useDarkMode! ? 'dark' : 'light'),
-                            title: L10n.t(context, 'setupp.lightTheme'),
-                            onChanged: (_) => notifier.setDarkMode(false),
-                          ),
-                          SelectableTile<String>(
-                            value: 'dark',
-                            groupValue: settings.useDarkMode == null
-                                ? 'system'
-                                : (settings.useDarkMode! ? 'dark' : 'light'),
-                            title: L10n.t(context, 'setupp.darkTheme'),
-                            onChanged: (_) => notifier.setDarkMode(true),
+                            onChanged: (mode) {
+                              switch (mode) {
+                                case 'light':
+                                  notifier.setDarkMode(false);
+                                case 'dark':
+                                  notifier.setDarkMode(true);
+                                default:
+                                  notifier.setDarkMode(null);
+                              }
+                            },
                           ),
                           const SizedBox(height: 16),
                           Text(

@@ -144,6 +144,8 @@ void main() {
         'chat.goodbye.\$i',
         'transit.preset.\$key',
         'transit.modeDesc.\${mode.value}',
+        'appearance.\$mode',
+        'appearanceDesc.\$mode',
         'pt.q\$i',
         'pt.q\${i}a',
         'pt.q\${i}b',
@@ -197,6 +199,16 @@ void main() {
         expect(deKeys, contains('verify.challenge.direction.$direction'));
       }
       expect(deKeys, contains('verify.challenge.action.smile'));
+
+      // AppearanceSelector (v0.9.2): Wert + Erklaerung je Modus. Fehlt
+      // eine der sechs Zeilen, zeigt das Widget im Store-Screenshot
+      // bzw. in den Einstellungen statt Text den Schluessel an.
+      for (final mode in ['light', 'system', 'dark']) {
+        expect(deKeys, contains('appearance.$mode'));
+        expect(enKeys, contains('appearance.$mode'));
+        expect(deKeys, contains('appearanceDesc.$mode'));
+        expect(enKeys, contains('appearanceDesc.$mode'));
+      }
     });
   });
 
