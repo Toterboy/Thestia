@@ -136,10 +136,27 @@ for f in NEW:
             for a in split_top(m.group(2)))
         revoked.setdefault(name, set()).add(types)
 
+    # Per Signatur gedroppte Überladungen gelten als unschädlich: ein
+    # DROP entfernt die aufrufbare Variante vollständig, ein Revoke
+    # allein nicht. Sonst würde jede saubere Bereinigung (Migration 131
+    # droppt die alten match_proximity_spark-Signaturen) fälschlich als
+    # offene Variante gemeldet - und die alte Signatur würde nur
+    # zusätzlich REVOKt, obwohl es sie nicht mehr gibt.
+    dropped = {}
+    for m in re.finditer(
+            r'DROP\s+FUNCTION\s+(?:IF\s+EXISTS\s+)?(?:public\.)?([a-z_0-9]+)\s*\(([^)]*)\)',
+            code, re.I | re.S):
+        name = m.group(1).lower()
+        types = tuple(
+            re.sub(r'\s+', ' ', re.split(r'\bDEFAULT\b', a, flags=re.I)[0]
+                   .strip().lower()).split()[-1]
+            for a in split_top(m.group(2)))
+        dropped.setdefault(name, set()).add(types)
+
     for name, sigs in revoked.items():
         if name not in multi or dynamic:
             continue
-        missing = overloads[name] - sigs
+        missing = (overloads[name] - sigs) - dropped.get(name, set())
         if missing:
             pretty = ', '.join('(' + ', '.join(s) + ')' for s in sorted(missing))
             flag('2 Overloads', f,

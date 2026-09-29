@@ -4,12 +4,17 @@
 
 | Version | Support |
 | ------- | ------- |
-| 0.9.1 und höher (Build 29+) | ✅ |
-| unter 0.9.1 (Build < 29, inkl. aller WispDating-Builds) | ❌ (End of Support – bitte Thestia neu installieren) |
+| 0.9.2 und höher (Build 30+) | ✅ |
+| unter 0.9.2 (Build < 30, inkl. aller WispDating-Builds) | ❌ (End of Support – bitte Thestia neu installieren) |
 
 Ältere Builds erhalten beim Start einen Update-Hinweis (serverseitiges
-Mindest-Build-Gate: `app_config.min_app_version_build = 29`,
-Migration 034/076). Details: [SUPPORT.md](SUPPORT.md).
+Mindest-Build-Gate: `app_config.min_app_version_build = 30`,
+Migration 132). Details: [SUPPORT.md](SUPPORT.md).
+
+Der Support-Zustieg auf v0.9.2 folgt aus der Alterssperre für Transit
+Spark (Migration 131): Ältere Builds kennen die Beschränkung auf
+Volljährige nicht und können sie umgehen. Details in
+[SUPPORT.md](SUPPORT.md#warum-der-support-erst-ab-v092-beginnt).
 
 ## Schwachstellen melden
 

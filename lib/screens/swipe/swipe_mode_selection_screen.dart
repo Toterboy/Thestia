@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/providers/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 
@@ -101,7 +102,19 @@ style: Theme.of(context).textTheme.titleMedium?.copyWith(
 /// Modus nur bei aktivem Profil öffnen (v0.9.1): Ist das Profil
 /// pausiert, blockt ein Popup die Auswahl und führt per Klick in die
 /// Einstellungen zum Entpausieren.
+///
+/// Transit Spark (v0.9.2) zusaetzlich nur ab 18: Der Eintrag wird vor
+/// dem Absprung geprueft, damit die Sperre nicht erst auf der
+/// Radarseite sichtbar wird. Fail-closed - ohne Geburtsdatum bleibt
+/// der Modus zu, genau wie in der Datenbank (Migration 131).
 void _openMode(BuildContext context, WidgetRef ref, String route) {
+  if (route == AppRoutes.transitRadar) {
+    final age = ref.read(profileProvider).age;
+    if (age == null || age < 18) {
+      _showAdultOnlyDialog(context, missingBirthDate: age == null);
+      return;
+    }
+  }
   final paused = ref.read(settingsProvider).paused;
   if (!paused) {
     context.push(route);
@@ -122,6 +135,44 @@ void _openMode(BuildContext context, WidgetRef ref, String route) {
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(),
           child: Text(L10n.t(ctx, 'common.cancel')),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.of(ctx).pop();
+            context.push(AppRoutes.settings);
+          },
+          child: Text(L10n.t(ctx, 'paused.toSettings')),
+        ),
+      ],
+    ),
+  );
+}
+
+/// Dialog bei Alterssperre fuer Transit Spark.
+///
+/// Bewusst ein Dialog und kein stilles Verschwinden der Kachel: der
+/// Nutzer soll wissen, WARUM der Modus nicht aufgeht - sonst tippt er
+/// wiederholt darauf und meldet es als Fehler.
+void _showAdultOnlyDialog(
+  BuildContext context, {
+  required bool missingBirthDate,
+}) {
+  showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      icon: Icon(
+        Icons.cake,
+        color: Theme.of(ctx).colorScheme.primary,
+        size: 40,
+      ),
+      title: Text(L10n.t(ctx, 'transit.adultOnly.title')),
+      content: Text(L10n.t(ctx, missingBirthDate
+          ? 'transit.adultOnly.missingAge'
+          : 'transit.adultOnly.body')),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: Text(L10n.t(ctx, 'common.ok')),
         ),
         FilledButton(
           onPressed: () {

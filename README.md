@@ -85,12 +85,14 @@ Beide finden sich unter [Releases](https://github.com/Toterboy/Thestia/releases)
 
 | Version | Status |
 | --- | --- |
-| v0.9.1 und höher (Build 29+) | **Unterstützt** – Bug-Reports willkommen, Security-Fixes |
-| unter v0.9.1 (Build < 29, inkl. aller WispDating-Builds) | **End of Support** – keine Fixes mehr, bitte Thestia neu installieren |
+| v0.9.2 und höher (Build 30+) | **Unterstützt** – Bug-Reports willkommen, Security-Fixes |
+| unter v0.9.2 (Build < 30, inkl. aller WispDating-Builds) | **End of Support** – keine Fixes mehr, bitte Thestia neu installieren |
 
 Ältere Builds werden über das serverseitige Mindest-Build-Gate
-(`app_config.min_app_version_build`, Migration 034/076) markiert: Liegt der
+(`app_config.min_app_version_build = 30`, Migration 132) markiert: Liegt der
 installierte Build darunter, zeigt die App beim Start einen Update-Hinweis.
+Der Support erst ab v0.9.2 ist eine Folge der Alterssperre für Transit Spark
+(Migration 131) – ältere Builds können diese umgehen.
 Details: [SUPPORT.md](SUPPORT.md).
 
 ---

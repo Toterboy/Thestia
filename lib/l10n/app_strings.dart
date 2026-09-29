@@ -666,6 +666,7 @@ const Map<String, Map<String, String>> _strings = {
     'transit.modeDesc.convention':
         'Eng begrenzt: nur Personen unmittelbar neben dir zählen. Ideal '
         'für volle Messen, Konzerte und Events.',
+    'transit.rssiValue': 'Signal ab {value} dBm',
     'transit.tag.jacket': 'Jacke',
     'transit.tag.cap': 'Cap',
     'transit.tag.glasses': 'Brille',
@@ -736,9 +737,15 @@ const Map<String, Map<String, String>> _strings = {
         'Tokens sind zufällig, rotieren regelmäßig und verfallen nach '
         '45 Minuten. Gespeichert wird nur, was du aktiv sendest - nichts '
         'verlässt dein Gerät, solange du nicht selbst funkt. Ein Gruß an eine Person braucht deren aktuelles Token - dafür wird bei aktivem Radar dein zufälliges Token (nur dieses) 45 Minuten serverseitig hinterlegt.',
-    'transit.teenNote':
-        'Unter 18? Du siehst ausschließlich altersseitig kompatible '
-        'Nutzer - serverseitig erzwungen.',
+    'transit.adultOnly.title': 'Transit Spark nur ab 18',
+    'transit.adultOnly.body':
+        'Transit Spark zeigt dir in Echtzeit, wer gerade in deiner Nähe '
+        'ist. Diese Funktion steht nur volljährigen Personen zur '
+        'Verfügung - auf der App-Seite wie auch serverseitig gesperrt.',
+    'transit.adultOnly.missingAge':
+        'Für Transit Spark brauchen wir dein Geburtsdatum. Hinterlege es '
+        'in deinen Profildaten, dann prüfen wir dein Alter - solange das '
+        'nicht belegt ist, bleibt die Funktion gesperrt.',
     'onboarding.appbarTitle': 'Kurz kennengelernt',
     'onboarding.skipAll': 'Überspringen',
     'onboarding.fillLater': 'Später ausfüllen',
@@ -3147,6 +3154,7 @@ const Map<String, Map<String, String>> _strings = {
     'transit.modeDesc.convention':
         'Tightly limited: only people right next to you count. Ideal '
         'for packed conventions, concerts and events.',
+    'transit.rssiValue': 'Signal from {value} dBm',
     'transit.tag.jacket': 'Jacket',
     'transit.tag.cap': 'Cap',
     'transit.tag.glasses': 'Glasses',
@@ -3257,9 +3265,15 @@ const Map<String, Map<String, String>> _strings = {
         'needs their current token - therefore while the radar is '
         'active your random token (only this one) is stored server-'
         'side for 45 minutes.',
-    'transit.teenNote':
-        'Under 18? You only see age-compatible users - enforced '
-        'server-side.',
+    'transit.adultOnly.title': 'Transit Spark is 18+ only',
+    'transit.adultOnly.body':
+        'Transit Spark shows you in real time who is near you right now. '
+        'This feature is only available to adults - blocked in the app '
+        'and enforced on the server.',
+    'transit.adultOnly.missingAge':
+        'Transit Spark needs your date of birth. Add it to your profile '
+        'so we can check your age - until that is confirmed, the feature '
+        'stays locked.',
     'onboarding.appbarTitle': 'Nice to meet you',
     'onboarding.skipAll': 'Skip',
     'onboarding.fillLater': 'Fill in later',

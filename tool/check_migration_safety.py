@@ -67,6 +67,37 @@ for name in PAIRS:
         print(f'  {name:26} {k:30} {"OK" if v else "FEHLT"}')
         ok &= v
 
+# --- Transit Spark nur ab 18 (Migration 131) ----------------------------------
+# Drei Einstiegspunkte muessen das Gate transit_spark_adult() enthalten.
+# Zusaetzlich muss die Gegenseite mitgeprueft werden: nur der aufrufende
+# Nutzer zu sperren wuerde einem Erwachsenen weiterhin erlauben, eine
+# Minderjaehrige zu finden (age_compatible erlaubt ein 2-Jahres-Band).
+TRANSIT_GATED = ['transit_presence_heartbeat', 'match_proximity_spark',
+                 'send_soft_ping']
+print('\nInvarianten Transit Spark 18+ (Migration 131):')
+for name in TRANSIT_GATED:
+    body = defs.get(name, '')
+    self_gate = 'transit_spark_adult(' in body
+    print(f'  {name:28} {"OK" if self_gate else "FEHLT":6} (eigenes 18+-Gate)')
+    ok &= self_gate
+for name in ('match_proximity_spark', 'send_soft_ping'):
+    body = defs.get(name, '')
+    # Gegenpartei separat filtern: ein Treffer muss auf eine Person
+    # zielen, nicht auf den eigenen uid-Ausdruck.
+    other_gate = re.search(r'transit_spark_adult\(\s*(?:s|pr)\.user_id\s*\)', body)
+    print(f'  {name:28} {"OK" if other_gate else "FEHLT":6} '
+          f'(Gegenpartei 18+)')
+    ok &= bool(other_gate)
+
+# Die Hilfsfunktion selbst muss fail-closed sein: ohne birth_date darf
+# sie NICHT "erwachsen" liefern (public.profile_age coalesct auf 2000).
+helper = defs.get('transit_spark_adult', '')
+helper_ok = ('birth_date IS NOT NULL' in helper
+             and re.search(r'::int\s*>=\s*18', helper) is not None)
+print(f'  {"transit_spark_adult":28} {"OK" if helper_ok else "FEHLT":6} '
+      f'(fail-closed, >= 18)')
+ok &= helper_ok
+
 # Fail-Fast-Guard vorhanden?
 all_sql = '\n'.join(f.read_text(encoding='utf-8', errors='replace') for f in files)
 guards = {

@@ -6,8 +6,28 @@ Danke, dass du Thestia nutzt. Hier steht, welche Versionen unterstützt werden u
 
 | Version | Status | Anmerkung |
 | --- | --- | --- |
-| **v0.9.1 und höher** (Build 29+) | ✅ **Unterstützt** | Bug-Reports willkommen; Security-Fixes |
-| **unter v0.9.0** (v0.8.x und älter, Build < 28) | ❌ **End of Support** (seit 24.09.2026) | Keine Bug-/Security-Fixes mehr – bitte aktualisieren |
+| **v0.9.2 und höher** (Build 30+) | ✅ **Unterstützt** | Bug-Reports willkommen; Security-Fixes |
+| **unter v0.9.2** (v0.8.x, v0.9.0, v0.9.1; Build < 30) | ❌ **End of Support** (seit 29.09.2026) | Keine Bug-/Security-Fixes mehr – bitte aktualisieren |
+
+### Warum der Support erst ab v0.9.2 beginnt
+
+Der Support-Zustieg ist eine Folge der Alterssperre für Transit Spark,
+nicht nur eine Versionspolitik.
+
+Transit Spark ist ab v0.9.2 auf **volljährige Nutzende (18+)** beschränkt –
+in der App und serverseitig. Ältere Builds enthalten diese Sperre nicht:
+v0.9.1 blendet die Funktion für Minderjährige lediglich mit einem
+Hinweistext aus, statt sie zu blockieren. Solange solche Builds
+weitergeliefert werden, lässt sich die Beschränkung umgehen – unabhängig
+vom Server, weil die alte App die serverseitige Prüfung gar nicht erst
+aufruft.
+
+Deshalb ist v0.9.2 die älteste unterstützte Version. Wer den Support
+früher auf v0.9.1 setzt, muss die Beschränkung entweder wieder aus dem
+Server entfernen (und damit aufheben) oder hinnehmen, dass sie für
+installierte v0.9.1-Clients nicht greift.
+
+Umsetzung: `supabase/migrations/131_transit_spark_adults_only.sql`.
 
 ### Update-Hinweis für alte Builds
 
@@ -17,9 +37,10 @@ Flutter-Build-Nummer in der `app_config`-Tabelle
 Build darunter, zeigt die App beim Start einen Update-Hinweis
 (fail-open: bei Netz-/Schema-Fehlern startet die App normal).
 
-Aktuell: `min_app_version_build = 29` (= v0.9.1).
-Gesetzt in Migration 130 (v0.9.2) - in 0.9.1 war es
-angekuendigt, aber nicht ausgefuehrt worden.
+Aktuell: `min_app_version_build = 30` (= v0.9.2).
+Gesetzt in Migration 132. Migration 130 hatte zuvor auf 29 gehoben
+(Support ab v0.9.1); der Sprung auf 30 folgt aus der Alterssperre für
+Transit Spark, siehe oben.
 
 ## Bugs melden
 

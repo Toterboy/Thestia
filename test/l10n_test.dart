@@ -143,6 +143,7 @@ void main() {
         'chat.goodbye.\${index + 1}',
         'chat.goodbye.\$i',
         'transit.preset.\$key',
+        'transit.modeDesc.\${mode.value}',
         'pt.q\$i',
         'pt.q\${i}a',
         'pt.q\${i}b',

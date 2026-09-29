@@ -18,6 +18,7 @@ import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/services/transit_ble_service.dart';
 import 'package:thestia/widgets/funke_overlay.dart';
+import 'package:thestia/widgets/transit_mode_selector.dart';
 
 /// Lokale Speicher-Stelle für die gemerkte Radar-Exit-Entscheidung
 /// ('stop' | 'keep' | null = immer fragen).
@@ -175,6 +176,16 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
       await _maybeOfferRadioCleanup();
       return;
     }
+
+    // NUTZERWUNSCH (Build 30): Transit Spark nur ab 18. build() blendet
+    // den Start-Button fuer Minderjaehrige bereits aus, diese Pruefung
+    // ist die zweite Verteidigungslinie fuer den Fall, dass ein bereits
+    // gestarteter Radar nach einer Profilaenderung weiterlaeuft - der
+    // Server wuerde den Heartbeat ohnehin mit transit_age_restricted
+    // ablehnen, dann waere der Fehler aber erst nach dem BLE-Start
+    // sichtbar.
+    final age = ref.read(profileProvider).age;
+    if (age == null || age < 18) return;
 
     // Taegliche Selbst-Angaben (v0.9.0): Pflicht vor dem Start - andere
     // koennen dich nur darueber finden. Jeden Tag neu angeben. Plus
@@ -754,6 +765,20 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
     final transit = ref.watch(transitProvider);
     final myAge = ref.watch(profileProvider).age;
 
+    // NUTZERWUNSCH (Build 30): Transit Spark ausschliesslich ab 18.
+    // Das ist bewusst ein Fail-closed-Gate: kein Geburtsdatum bedeutet
+    // "nicht nachgewiesen volljaehrig" und wird genauso gesperrt wie
+    // ein Minderjaehriger-Alter. Genau so arbeitet auch die Datenbank
+    // (transit_spark_adult() in Migration 131) - sonst waere die
+    // Server-Sperrе allein nicht ausreichend, weil das Profil sonst
+    // bis zum naechsten Laden lokal "volljaehrig" aussaehe.
+    if (myAge == null || myAge < 18) {
+      return Scaffold(
+        appBar: AppBar(title: Text(L10n.t(context, 'transit.title'))),
+        body: _adultOnlyNotice(missingBirthDate: myAge == null),
+      );
+    }
+
     // v0.9.0-Feedback: Beim Verlassen der Radar-Seite fragen, ob das Radar
     // gestoppt werden soll - mit Merk-Checkbox ("zukünftig automatisch so
     // beibehalten"). Gespeicherte Entscheidungen werden ohne Nachfrage
@@ -884,7 +909,7 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
               ),
             ],
             const SizedBox(height: 24),
-            // Modus-Toggle (v0.9.0): Bahn/Café vs. Messe/Event - der
+            // Modus-Auswahl (v0.9.0): Bahn/Café vs. Messe/Event - der
             // Messe-Modus nimmt nur starke BLE-Signale auf (echter
             // Sichtkontakt in dichten Umgebungen). Nur inaktiv umschaltbar.
             if (!transit.active) ...[
@@ -892,27 +917,11 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
                 L10n.t(context, 'transit.modeLabel'),
                 style: Theme.of(context).textTheme.titleSmall,
               ),
-              const SizedBox(height: 8),
-              SegmentedButton<TransitMode>(
-                segments: [
-                  for (final mode in TransitMode.values)
-                    ButtonSegment(
-                      value: mode,
-                      icon: Icon(mode.icon),
-                      label: Text(L10n.t(context, mode.labelKey)),
-                    ),
-                ],
-                selected: {transit.mode},
-                onSelectionChanged: (selection) {
-                  ref.read(transitProvider.notifier).setMode(selection.first);
-                },
-              ),
-              const SizedBox(height: 4),
-              Text(
-                L10n.t(context, 'transit.modeHint'),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+              const SizedBox(height: 10),
+              TransitModeSelector(
+                value: transit.mode,
+                onChanged: (mode) =>
+                    ref.read(transitProvider.notifier).setMode(mode),
               ),
               const SizedBox(height: 16),
             ],
@@ -1059,18 +1068,48 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
                 ),
               ),
             ),
-            if (myAge != null && myAge < 18) ...[
-              const SizedBox(height: 12),
-              Text(
-                L10n.t(context, 'transit.teenNote'),
-                style: Theme.of(context).textTheme.bodySmall,
-                textAlign: TextAlign.center,
-              ),
-            ],
             const SizedBox(height: 32),
           ],
         ),
       ),
+      ),
+    );
+  }
+
+    /// Ersatzansicht fuer Nutzende unter 18 bzw. ohne hinterlegtes
+  /// Geburtsdatum. Erklaert die Sperre, statt sie kommentarlos zu
+  /// zeigen - und verlinkt auf die Profildaten, damit der Weg zur
+  /// Loesung sichtbar ist.
+  Widget _adultOnlyNotice({required bool missingBirthDate}) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Icon(Icons.cake, size: 56, color: scheme.onSurfaceVariant),
+            const SizedBox(height: 20),
+            Text(
+              L10n.t(context, 'transit.adultOnly.title'),
+              style: theme.textTheme.titleLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              L10n.t(context, missingBirthDate
+                  ? 'transit.adultOnly.missingAge'
+                  : 'transit.adultOnly.body'),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: scheme.onSurfaceVariant,
+                height: 1.45,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
