@@ -410,9 +410,6 @@ const Map<String, Map<String, String>> _strings = {
     'transit.modeLabel': 'Wie weit soll die Erkennung reichen?',
     'transit.mode.transit': 'Normal',
     'transit.mode.convention': 'Nur direkt daneben',
-    'transit.modeHint':
-        'Messe-Modus: nur starke Signale zählen (echter Sichtkontakt in '
-        'dichten Umgebungen).',
     'transit.sheetTitle': 'Wer war das?',
     'transit.sheetHint':
         'Wähle 2-5 Merkmale, die dir an der Person aufgefallen sind - '
@@ -3077,9 +3074,6 @@ const Map<String, Map<String, String>> _strings = {
     'transit.modeLabel': 'How far should detection reach?',
     'transit.mode.transit': 'Normal',
     'transit.mode.convention': 'Only right next to me',
-    'transit.modeHint':
-        'Convention mode: only strong signals count (real sight contact '
-        'in dense environments).',
     'transit.sheetTitle': 'Who was it?',
     'transit.sheetHint':
         'Pick 2-5 traits you noticed about the person - your selection '
