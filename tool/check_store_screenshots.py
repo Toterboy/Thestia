@@ -125,12 +125,49 @@ def count_indicators(im, dev):
 
 
 def main():
-    if not SRC.exists():
-        sys.exit('Keine Quell-Screens gefunden. Erst rendern:\n'
-                 '  $env:STORE_SHOTS="1"; flutter test --update-goldens '
-                 'test/screenshots/store_v091_shots_test.dart')
-
+    # Das Insets-Modul ist committet und in CI IMMER vorhanden. Es wird
+    # deshalb vor allem anderen geprueft - wenn es fehlt oder keine
+    # plausiblen Werte liefert, ist der Screenshot-Render kaputt, und das
+    # ist auch ohne fertige Bilder feststellbar.
     status_dp, nav_dp = read_insets()
+    problems = []
+    if not (16 <= status_dp <= 48):
+        problems.append(
+            f'storeStatusBarDp = {status_dp} dp ist unrealistisch '
+            f'(Android: 24..32 dp, Erwartung 16..48)')
+    if not (16 <= nav_dp <= 48):
+        problems.append(
+            f'storeNavBarDp = {nav_dp} dp ist unrealistisch '
+            f'(Erwartung 16..48)')
+
+    # Die Screenshot-Ausgaben sind bewusst gitignoriert und in CI nicht
+    # vorhanden. Ohne sie ist der Realismus nicht pruefbar - der Check
+    # darf daran nicht scheitern, sonst ist die ganze CI rot und der
+    # Nutzen weg. Er meldet "uebersprungen" und beendet mit 0.
+    #
+    # Das ist kein Wegsehen: sind die Dateien da (lokaler Release-Lauf),
+    # wird vollstaendig geprueft und ein Befund bricht hart ab.
+    if not SRC.exists() or not any(SRC.glob('*.png')):
+        print('=' * 68)
+        print('STORE-SCREENSHOT-REALISMUS')
+        print('=' * 68)
+        print(f'Insets-Modul geprueft: Status {status_dp} dp, '
+              f'Navigation {nav_dp} dp')
+        if problems:
+            for p in problems:
+                print(' X', p)
+            return 1
+        print(f'Keine Quell-Screens vorhanden ({SRC.relative_to(ROOT)}).')
+        print('Die Ausgaben sind gitignoriert und in CI nicht da - der')
+        print('Realismus wird beim Release-Lauf lokal geprueft:')
+        print('  $env:STORE_SHOTS="1"; flutter test --update-goldens '
+              'test/screenshots/store_v091_shots_test.dart')
+        print('  python tool/make_store_screenshots.py')
+        print('  python tool/check_store_screenshots.py')
+        print()
+        print('OK  Insets plausibel, Bildpruefung uebersprungen.')
+        return 0
+
     band_px = int(status_dp * DPR)
     tol = 12
 
