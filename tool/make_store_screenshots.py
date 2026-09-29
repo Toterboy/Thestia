@@ -128,12 +128,123 @@ def rounded_mask(size, radius, supersample=4):
     return m.resize((w, h), Image.LANCZOS)
 
 
-# Geraetemasse (in den Screen-Pixeln des 1080x2400-Quellrendings, werden mit
-# `scale` skaliert). Bewusst "normales" Handy: sichtbare, rundum SYMMETRISCHE
-# Randbreiten statt Edge-to-Edge, Punch-Hole-Kamera als eigenstaendige Linse.
-BEZEL = 36
+# Geraetemasse, in den Pixeln des 1080x2400-Quellrendings (mit `scale`
+# skaliert).
+#
+# v0.9.2: Die Werte korrigiert. Vorher BEZEL=36, das sind 3.3% der
+# Bildbreite - bei einem echten Pixel-class Geraet liegt der Rand bei
+# 8..14 px. Zusammen mit dem dicken, gleichmässigen Rahmen wirkte das
+# Geraet wie eine Tafel statt wie ein Telefon. Jetzt 12 px, was einem
+# zeitgeraeten Android-Geraet entspricht.
+BEZEL = 12
 PAD = 40
-CAM_R = 14
+CAM_R = 11
+
+# System-UI in dp (Source-Render ist 360x800 dp bei dpr 3).
+# Der App-Render reserviert seit dem SafeArea-Fix genau diese Insets -
+# sie werden hier als echte Elemente gezeichnet, damit der Screen wie
+# ein Geraet und nicht wie ein Bild aussieht.
+STATUS_BAR_DP = 24
+NAV_BAR_DP = 24
+
+
+def _draw_status_bar(img: Image.Image):
+    """Zeichnet die System-Statusleiste: Indikatoren links, Akku rechts.
+
+    Wichtig: der App-Render hat seit dem SafeArea-Fix oben eine Luecke
+    (24 dp). Stand dort nichts, wirkte der Screen abgeschnitten - als
+    fehle genau der Bereich, an dem das Auge ein Geraet erkennt.
+
+    Der Screen ist bereits auf die Mockup-Groesse skaliert, deshalb wird
+    hier gegen die tatsaechliche Bildhoehe gerechnet statt gegen die
+    Source-Dp-Werte.
+
+    Zwei Details, die den ersten Versuch unbrauchbar machten:
+      * Die Punch-Hole-Kamera sitzt oben MITTEN. Eine dort gezeichnete
+        Leiste kollidiert mit ihr - die Leiste ist deshalb auf die
+        Seiten verteilt, wie es Material 3 vorgibt.
+      * Die Leiste fuellt nur den oberen Drittel des reservierten
+        Streifens. Sie wird jetzt auf dessen Mitte gezeichnet.
+    """
+    d = ImageDraw.Draw(img)
+    w, h = img.size
+    band = h * (STATUS_BAR_DP / 800.0)   # reservierter Streifen
+    if band < 8:
+        return
+    H = int(band)
+    cy = H / 2.0
+
+    # Kein Text in der Mitte: dort ist die Kamera.
+
+    # Uhr links, bewusst nicht die echte Uhrzeit, sondern eine runde
+    # Form - sie soll die Position zeigen, nicht eine Behauptung.
+    cx, cy = w * 0.085, H / 2
+    r = max(2.0, H * 0.10)
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(255, 255, 255, 225))
+
+    # Signal-Balken (4 Balken, Hoehen 0.30..0.78 der Leiste)
+    bx = w * 0.845
+    for i in range(4):
+        bh = H * (0.30 + 0.16 * i)
+        x0 = bx + i * H * 0.20
+        d.rounded_rectangle(
+            [x0, cy + H * 0.32 - bh, x0 + H * 0.12, cy + H * 0.32],
+            radius=int(H * 0.05), fill=(255, 255, 255, 200))
+
+    # WLAN-Symbol als vereinfachter Bogen.
+    # PIL verlangt bei arc/zwei Argumenten Ganzzahlen - hier wird
+    # deshalb einmalig auf int gerundet statt an jeder Stelle.
+    wx = int(w * 0.925)
+    rr = H * 0.30
+    d.arc([wx - rr, cy - rr, wx + rr, cy + rr], 210, 330,
+          fill=(255, 255, 255, 210), width=max(1, int(H * 0.07)))
+    d.arc([wx - rr * 0.55, cy - rr * 0.45, wx + rr * 0.55, cy + rr * 0.8],
+          210, 330, fill=(255, 255, 255, 210), width=max(1, int(H * 0.07)))
+    d.ellipse([wx - H * 0.05, cy - H * 0.02,
+               wx + H * 0.05, cy + H * 0.10],
+              fill=(255, 255, 255, 225))
+
+    # Akku
+    ax, aw, ah = w * 0.062, H * 0.44, H * 0.24
+    d.rounded_rectangle(
+        [w - ax - aw, cy - ah / 2, w - ax, cy + ah / 2],
+        radius=int(H * 0.05), outline=(255, 255, 255, 220),
+        width=max(1, int(H * 0.035)))
+    d.rounded_rectangle(
+        [w - ax - aw + aw * 0.14, cy - ah * 0.28,
+         w - ax - aw * 0.22, cy + ah * 0.28],
+        radius=int(H * 0.03), fill=(255, 255, 255, 235))
+    d.rounded_rectangle(
+        [w - ax + 1, cy - ah * 0.14, w - ax + H * 0.05, cy + ah * 0.14],
+        radius=int(H * 0.02), fill=(255, 255, 255, 200))
+
+
+def _draw_nav_bar(img: Image.Image):
+    """Zeichnet die Gesture-Navigation als hellen Strich mittig unten.
+
+    Der Strich bekommt eine dezente scrim-artige Hinterlegung: auf einem
+    echten Geraet liegt die Systemleiste ueber dem App-Inhalt, und ohne
+    den dunklen Saum verschwindet der Strich auf hellen Kacheln. Der
+    Saum ist sehr weich und nur so breit wie der reservierte Streifen.
+    """
+    d = ImageDraw.Draw(img)
+    w, h = img.size
+    band = h * (NAV_BAR_DP / 800.0)
+    if band < 6:
+        return
+    cy = h - band / 2.0
+
+    # Weicher Saum, damit der Strich auf hellem Inhalt lesbar bleibt.
+    scrim = Image.new('RGBA', img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(scrim).rectangle(
+        [0, int(h - band * 1.5), w, h], fill=(0, 0, 0, 42))
+    img.alpha_composite(scrim.filter(ImageFilter.GaussianBlur(band * 0.35)))
+
+    d = ImageDraw.Draw(img)
+    bw, bh = w * 0.28, max(2.0, band * 0.11)
+    d.rounded_rectangle(
+        [w / 2 - bw / 2, cy - bh / 2, w / 2 + bw / 2, cy + bh / 2],
+        radius=int(bh / 2), fill=(255, 255, 255, 205))
 
 
 def phone_mockup(screen: Image.Image, scale=1.0):
@@ -172,6 +283,13 @@ def phone_mockup(screen: Image.Image, scale=1.0):
     # Screen mit gerundeten Ecken
     scr = Image.new('RGBA', (w, h), (0, 0, 0, 0))
     scr.paste(screen.convert('RGBA'), (0, 0), rounded_mask((w, h), radius_in))
+    # System-UI auf den Screen zeichnen. Der App-Render reserviert diese
+    # Insets seit dem SafeArea-Fix, zeigt aber selbst nichts - ohne sie
+    # bleibt oben und unten ein leerer Streifen, der wie abgeschnitten
+    # wirkt. Gezeichnet wird NACH dem Einfuegen, damit die Kacheln des
+    # Randes nicht darueberliegen.
+    _draw_status_bar(scr)
+    _draw_nav_bar(scr)
     body.alpha_composite(scr, (int(bs), int(bt)))
 
     d = ImageDraw.Draw(body)

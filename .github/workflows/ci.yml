@@ -326,3 +326,12 @@ jobs:
       # Login-Screenshot war parallel auf 0.9.1 stehen geblieben.
       - name: PNG-Dateien auf Korruption pruefen
         run: python3 tool/check_png_integrity.py
+
+      # Der Screenshot-Render (store_v091_shots_test.dart) ist gitignoriert
+      # - Fehler darin fallen sonst erst beim Store-Upload auf. Geprueft
+      # wird das ERGEBNIS: Seitenverhaeltnis 20:9, reservierte
+      # Statusleiste, gezeichnete System-Indikatoren. Ohne die Insets aus
+      # test/screenshots/support/ beginnt die App im Bild direkt am oberen
+      # Rand und der Screenshot wirkt abgeschnitten.
+      - name: Store-Screenshots auf Realismus pruefen
+        run: python3 tool/check_store_screenshots.py
