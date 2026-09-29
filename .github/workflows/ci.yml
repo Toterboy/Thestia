@@ -308,3 +308,13 @@ jobs:
       # Reparatur das Pruefmittel zerstoeren.
       - name: Mojibake (Doppelkodierung) pruefen
         run: python3 tool/check_mojibake.py --skip-known
+
+      # Eine .gitignore ist nur eine Seite der Wahrheit: sie muss
+      # aufnehmen, was nicht ins Repo gehoert - UND duerfen nicht
+      # versionierte Dateien blockieren. Die zweite Haelfte wird
+      # routinemaessig geprueft, weil .gitignore auf versionierte
+      # Dateien gar nicht wirkt: android/app/google-services.json
+      # mit API-Key lag dadurch im oeffentlichen Verlauf, obwohl die
+      # Regel existiert.
+      - name: .gitignore auf Luecken pruefen
+        run: python3 tool/check_gitignore.py
