@@ -58,7 +58,13 @@ class _ThemeSwatch extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(28),
         child: SizedBox(
-          width: 78,
+          // 78 px war zu schmal fuer die laengste Bezeichnung
+          // ("Sonnenuntergang"). Im Store-Screenshot sichtbar geworden:
+          // der Text wurde mit maxLines:1 + ellipsis abgeschnitten und
+          // las sich als "Sonnenunter…", obwohl der Name korrekt ist.
+          // 96 px nehmen den laengsten Namen voll auf; das Wrap-Spacing
+          // haelt die Anordnung bei.
+          width: 96,
           height: 86,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

@@ -335,3 +335,10 @@ jobs:
       # Rand und der Screenshot wirkt abgeschnitten.
       - name: Store-Screenshots auf Realismus pruefen
         run: python3 tool/check_store_screenshots.py
+
+      # Am 2026-09-30 lief 03_entdecken mit textScale 0.64 und
+      # 04_anpassen mit 0.72, die anderen mit 1.0. Im Play Store waren
+      # es drei Schriftgroessen in einer Serie. Der Harness ist
+      # gitignoriert, deshalb wird die Angabe direkt aus ihm gelesen.
+      - name: Screenshot-Schriftgroesse einheitlich
+        run: python3 tool/check_screenshot_consistency.py

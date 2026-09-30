@@ -90,7 +90,13 @@ SHOTS = {
         'das Schweigen',
         'Eisbrecher für den ersten Chat: antippen,\n'
         'senden, plaudern. In 10 Kategorien.',
-        'Ohne Stockfoto-Posen',
+        # Stand vorher "Ohne Stockfoto-Posen". Das ist kein
+        # Nutzenversprechen, sondern eine Abgrenzung gegen etwas, das
+        # gar nicht zur App gehoert - und "ohne" liest sich wie ein
+        # Mangel. Ersetzt durch die tatsaechliche Eigenschaft: die
+        # Fragen sind kopierfertig, man muss nichts tippen. Das ist der
+        # Grund, warum es eine Eisbrecher-Liste gibt.
+        'Antippen, senden, plaudern',
     ),
 }
 
@@ -148,84 +154,107 @@ STATUS_BAR_DP = 24
 NAV_BAR_DP = 24
 
 
-def _draw_status_bar(img: Image.Image):
-    """Zeichnet die System-Statusleiste: Indikatoren links, Akku rechts.
+def _draw_status_bar(img: Image.Image, clock='12:30'):
+    """Zeichnet die System-Statusleiste im Android-Layout.
 
     Wichtig: der App-Render hat seit dem SafeArea-Fix oben eine Luecke
     (24 dp). Stand dort nichts, wirkte der Screen abgeschnitten - als
     fehle genau der Bereich, an dem das Auge ein Geraet erkennt.
 
-    Der Screen ist bereits auf die Mockup-Groesse skaliert, deshalb wird
-    hier gegen die tatsaechliche Bildhoehe gerechnet statt gegen die
-    Source-Dp-Werte.
+    Aufbau nach Android 12/13 (Material 3), von links nach rechts:
+      Uhrzeit (Text) - Mitte frei fuer die Punch-Hole-Kamera -
+      Signal, WLAN, Akku.
 
-    Zwei Details, die den ersten Versuch unbrauchbar machten:
-      * Die Punch-Hole-Kamera sitzt oben MITTEN. Eine dort gezeichnete
-        Leiste kollidiert mit ihr - die Leiste ist deshalb auf die
-        Seiten verteilt, wie es Material 3 vorgibt.
-      * Die Leiste fuellt nur den oberen Drittel des reservierten
-        Streifens. Sie wird jetzt auf dessen Mitte gezeichnet.
+    Zwei Fehler der ersten Fassung, die hier behoben sind:
+      * Die Uhr war ein KREIS, kein Text. Ein Punkt an dieser Stelle
+        liest sich als Benachrichtigungspunkt, nicht als Uhrzeit -
+        daher jetzt echte Ziffern mit Systemschrift.
+      * Die Symbole waren halbtransparentes Weiss und verschwanden auf
+        der hellen App-Oberflaeche (247,247,251). Jetzt deckend
+        (60,52,66), sichtbar auf hellen wie dunklen Flaechen.
+
+    Der Screen ist bereits skaliert, deshalb wird die Schriftgroesse aus
+    der Bandhoehe abgeleitet - so bleibt das Verhaeltnis zur Kachel
+    wie auf einem echten Geraet.
     """
     d = ImageDraw.Draw(img)
     w, h = img.size
     band = h * (STATUS_BAR_DP / 800.0)   # reservierter Streifen
-    if band < 8:
+    if band < 10:
         return
     H = int(band)
-    cy = H / 2.0
+    # Die Symbole duerfen den Streifen nicht verlassen. Bei textScale
+    # 1.0 beginnt der AppBar-Titel nur ~3 px unter dem Streifen, eine
+    # zu grosse Icon-Hoehe ragte deshalb sichtbar in die Titelzeile.
+    # 0.78 der Bandhoehe haelt oben und unten Luft.
+    H = int(H * 0.78)
+    cy = band / 2.0
 
-    # Kein Text in der Mitte: dort ist die Kamera.
-    #
-    # Farbe: die Indikatoren liegen auf der hellen App-Oberflaeche
-    # (247,247,251), nicht auf dem Markenverlauf. Halbtransparentes
-    # Weiss (alpha 190..235) verschwindet darauf fast vollstaendig - im
-    # fertigen Bild waren sie nur noch ein Schleier. Deckendes, dunkles
-    # Grau ist auf hellen UND dunklen App-Flaechen sichtbar und sieht
-    # aus wie echte System-Symbole.
-    ICON = (60, 52, 66, 235)
+    # Deckendes Dunkelgrau: auf der hellen App nahezu unsichtbar.
+    ICON = (60, 52, 66, 240)
 
-    # Uhr links. Position bei 12% der Breite - bei 8.5% lag der Punkt
-    # auf dem gerundeten Radius und wurde vom Maskenschnitt abgeschnitten.
-    cx, cy = w * 0.12, H / 2
-    r = max(2.0, H * 0.12)
-    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=ICON)
+    # --- Uhrzeit links, echte Ziffern ---------------------------------
+    # Schriftgroesse: Android setzt die Uhrzeit auf etwa 60% der
+    # Statusleistenhoehe. Bei 41 px Band sind das rund 25 px.
+    font_px = max(8, int(H * 0.60))
+    try:
+        font = ImageFont.truetype(FONT_REG, font_px)
+    except OSError:
+        font = None
+    tx = int(w * 0.075)
+    ty = int(cy - font_px * 0.62)
+    if font is not None:
+        d.text((tx, ty), clock, font=font, fill=ICON)
+        clock_w = d.textbbox((0, 0), clock, font=font)[2]
+    else:
+        clock_w = font_px * 3
 
-    # Signal-Balken (4 Balken, Hoehen 0.30..0.78 der Leiste)
-    # Auch rechts etwas einruecken - dort schneidet der Radius ebenso.
-    bx = w * 0.80
-    for i in range(4):
-        bh = H * (0.30 + 0.16 * i)
-        x0 = bx + i * H * 0.20
-        d.rounded_rectangle(
-            [x0, cy + H * 0.32 - bh, x0 + H * 0.12, cy + H * 0.32],
-            radius=int(H * 0.05), fill=ICON)
+    # --- Statusleistensymbole rechts, gestaffelt von rechts nach links ----
+    # Layout wie Android 12/13: Akku ganz rechts, davor WLAN, davor
+    # Signal. Die Positionen werden VOM RAND aus berechnet und
+    # rueckwaerts gefuellt - vorher wurden sie absolute Anteile der
+    # Breite, wodurch WLAN und Signal kollidierten und der Akku aus der
+    # Kachel geschnitten wurde (bei 700..900 px sichtbar gewesen).
+    margin_r = w * 0.045          # Innenabstand zum gerundeten Rand
 
-    # WLAN-Symbol als vereinfachter Bogen.
-    # PIL verlangt bei arc/zwei Argumenten Ganzzahlen - hier wird
-    # deshalb einmalig auf int gerundet statt an jeder Stelle.
-    wx = int(w * 0.925)
-    rr = H * 0.30
-    d.arc([wx - rr, cy - rr, wx + rr, cy + rr], 210, 330,
-          fill=ICON, width=max(1, int(H * 0.07)))
-    d.arc([wx - rr * 0.55, cy - rr * 0.45, wx + rr * 0.55, cy + rr * 0.8],
-          210, 330, fill=ICON, width=max(1, int(H * 0.07)))
-    d.ellipse([wx - H * 0.05, cy - H * 0.02,
-               wx + H * 0.05, cy + H * 0.10],
-              fill=ICON)
-
-    # Akku
-    ax, aw, ah = w * 0.062, H * 0.44, H * 0.24
+    # Akku: ganz rechts, plus Kontaktstift.
+    bw, bh = H * 0.50, H * 0.26
+    ax = int(w - margin_r - H * 0.055)          # Stift ragt nach rechts
+    by0 = int(cy - bh / 2)
+    d.rounded_rectangle([ax - bw, by0, ax, by0 + bh],
+                        radius=int(bh * 0.28), outline=ICON,
+                        width=max(1, int(H * 0.045)))
     d.rounded_rectangle(
-        [w - ax - aw, cy - ah / 2, w - ax, cy + ah / 2],
-        radius=int(H * 0.05), outline=ICON,
-        width=max(1, int(H * 0.035)))
-    d.rounded_rectangle(
-        [w - ax - aw + aw * 0.14, cy - ah * 0.28,
-         w - ax - aw * 0.22, cy + ah * 0.28],
-        radius=int(H * 0.03), fill=ICON)
-    d.rounded_rectangle(
-        [w - ax + 1, cy - ah * 0.14, w - ax + H * 0.05, cy + ah * 0.14],
-        radius=int(H * 0.02), fill=ICON)
+        [ax - bw + H * 0.045, by0 + H * 0.045,
+         ax - bw + H * 0.045 + bw * 0.74, by0 + bh - H * 0.045],
+        radius=int(bh * 0.18), fill=ICON)
+    d.rounded_rectangle([ax + 1, int(cy - bh * 0.22),
+                         ax + H * 0.05, int(cy + bh * 0.22)],
+                        radius=int(H * 0.02), fill=ICON)
+
+    # WLAN: links neben dem Akku, mit eigenem Abstand.
+    wifi_r = H * 0.32
+    wx = int(ax - bw - H * 0.55)
+    d.arc([wx - wifi_r, cy - wifi_r, wx + wifi_r, cy + wifi_r],
+          200, 340, fill=ICON, width=max(1, int(H * 0.075)))
+    d.arc([wx - wifi_r * 0.52, cy - wifi_r * 0.52,
+           wx + wifi_r * 0.52, cy + wifi_r * 0.52],
+          200, 340, fill=ICON, width=max(1, int(H * 0.075)))
+    d.ellipse([wx - H * 0.055, cy + H * 0.02,
+               wx + H * 0.055, cy + H * 0.13], fill=ICON)
+
+    # Signal: vier aufsteigende Balken, links vom WLAN.
+    bar_w = H * 0.10
+    gap = H * 0.05
+    bars = 4
+    sig_w = bars * bar_w + (bars - 1) * gap
+    bx = int(wx - wifi_r - H * 0.30 - sig_w)
+    base = cy + H * 0.30
+    for i in range(bars):
+        bhh = H * (0.26 + 0.16 * i)
+        x0 = bx + i * (bar_w + gap)
+        d.rounded_rectangle([x0, base - bhh, x0 + bar_w, base],
+                            radius=int(bar_w * 0.35), fill=ICON)
 
 
 def _draw_nav_bar(img: Image.Image):
