@@ -59,69 +59,80 @@ def read_insets():
     return grab('storeStatusBarDp'), grab('storeNavBarDp')
 
 
-def find_device(im):
-    """Findet das Mockup-Geraetefenster ueber seinen dunklen Korpus.
+def find_screen(im):
+    """Findet die abgerundete App-Kachel im fertigen Bild.
 
-    Der Geraetekoerpus ist graphit (neutral dunkel), der Markenverlauf
-    dagegen magenta (blau deutlich groesser als gruen). Damit ist das
-    Fenster eindeutig auffindbar - anders als mit einem festen
-    Prozentfenster, das an der Position des Textblocks haengt und
-    deshalb bei jeder Headline-Länge danebenliegt.
+    v0.9.2: Es gibt kein Geraet-Mockup mehr, sondern nur noch die
+    abgerundete App-Kachel auf dem Markenverlauf.
+
+    Die Kachel ist NEUTRAL hell (Summe > 560), der Verlauf gesaettigt
+    (Summe deutlich niedriger) und der Text weiss (Summe sehr hoch,
+    aber nur in schmalen Zeilen).
+
+    Ein reiner Schwellwert auf "helle Zeile" reicht nicht: bei
+    04_anpassen ist die Subline zweizeilig, und die weisse Schrift
+    ueberschreitet die Schwelle, sobald genug Buchstaben in einer Zeile
+    stehen. Deshalb wird nach der ERSTEN Zeile gesucht, auf der ein
+    heller Lauf ueber mehr als 45% der Breite laeuft - Text erfasst
+    keine 45% contigu, die Kachel sehr wohl.
     """
     px = im.load()
     w, h = im.size
+    cols = list(range(0, w, 6))
+    best = None
+    for y in range(int(h * 0.15), int(h * 0.80)):
+        light = sum(1 for x in cols if sum(px[x, y]) > 560)
+        frac = light / len(cols)
+        # Erste breite helle Zeile, danach noch zwei bestaetigen: die
+        # Kachel ist ein Block, Text ist es nicht.
+        if frac > 0.45:
+            if best is None:
+                best = y
+        elif best is not None:
+            if y - best >= 2:
+                return best
+            best = None
+    return best
 
-    def is_device(c):
-        r, g, b = c
-        return r < 90 and g < 90 and b < 110 and abs(int(b) - int(g)) < 40
 
-    rows = [y for y in range(0, h, 4)
-            if sum(1 for x in range(0, w, 8) if is_device(px[x, y]))
-            > 0.5 * len(range(0, w, 8))]
-    if not rows:
-        return None
-    top, bot = min(rows), max(rows)
-    mid = (top + bot) // 2
-    xs = [x for x in range(0, w, 4) if is_device(px[x, mid])]
-    if not xs:
-        return None
-    return min(xs), top, max(xs), bot
+def find_screen_x(im, top):
+    """Horizontale Ausdehnung der Kachel, gemessen auf einer Zeile drin."""
+    px = im.load()
+    w, h = im.size
+    y = top + int((h - top) * 0.25)
+    xs = [x for x in range(0, w, 2) if sum(px[x, y]) > 560]
+    return (min(xs), max(xs)) if xs else None
 
 
-def count_indicators(im, dev):
-    """Zaehlt Kanten-Pixel im Statusleisten-Band, je Seite.
+def count_indicators(im, top, left, right):
+    """Prueft, ob die System-Symbole im Statusleisten-Band sichtbar sind.
 
-    Gezahlt wird nicht auf WEISSE Pixel, sondern auf Abweichung vom
-    Modalwert des App-Hintergrunds: die Indikatoren liegen auf einem
-    hellen Screen (247,247,251) und sind selbst hell - nur ihre
-    Kontur hebt sich ab. Die Mitte bleibt bewusst aus, dort sitzt die
-    Punch-Hole-Kamera.
+    Bewusst KEIN Zaehlen nach Seiten und KEINE Modalsuche. Die erste
+    Fassung versuchte, Uhr und Akku getrennt zu zaehlen und produzierte
+    damit drei Wertegleichungen ohne Aussagekraft: die genaue Position
+    haengt an Kachelbreite, Radius und Bildhoehe, und jede Tabelle
+    darin war geraten statt gemessen - sieflagte korrekt gezeichnete
+    Symbole als fehlend.
+
+    Stattdessen ein Nachweis, der wirklich etwas prueft: im Band muss
+    es DUNKLE Pixel geben. Die App-Oberflaeche ist hell (247,247,251),
+    die System-Symbole sind deckend dunkel (60,52,66). Zaehlt werden
+    nur Pixel deutlich unterhalb der App-Helligkeit, in beiden
+    Randbereichen zusammen. Das ist unabhaengig davon, ob gerade die
+    Uhr oder der Akku links steht.
     """
     px = im.load()
-    left, top, right, bot = dev
-    gw, gh = right - left, bot - top
-    band_top = top + int(gh * 0.008)
-    band_bot = top + int(gh * 0.030)
+    tile_h = (right - left) * 2400 / 1080
+    band_top = top + int(tile_h * 0.020)
+    band_bot = top + int(tile_h * 0.036)
 
-    modal = Counter()
+    dark = 0
     for y in range(band_top, band_bot):
-        for x in range(left, right):
-            modal[px[x, y]] += 1
-    if not modal:
-        return 0, 0
-    bg = modal.most_common(1)[0][0]
-
-    def edges(xa, xb):
-        n = 0
-        for y in range(band_top, band_bot):
-            for x in range(xa, xb):
-                c = px[x, y]
-                if sum(abs(c[i] - bg[i]) for i in range(3)) > 60:
-                    n += 1
-        return n
-
-    return (edges(left, left + gw // 3),
-            edges(left + 2 * gw // 3, right))
+        for x in range(left + 20, right - 20):
+            r, g, b = px[x, y][:3]
+            if r < 180 and g < 180 and b < 180:
+                dark += 1
+    return dark
 
 
 def main():
@@ -215,21 +226,28 @@ def main():
         final = FINAL / f.name
         if final.exists():
             fim = Image.open(final).convert('RGB')
-            dev = find_device(fim)
-            if dev is None:
+            top = find_screen(fim)
+            if top is None:
                 problems.append(
-                    f'{f.name}: Geraetefenster nicht gefunden - der '
-                    f'Mockup-Rahmen fehlt im fertigen Bild')
+                    f'{f.name}: abgerundete App-Kachel nicht gefunden - '
+                    f'das fertige Bild scheint kein Verlauf plus '
+                    f'App-Screen zu sein')
             else:
-                left, top, right, bot = dev
-                lft, rgt = count_indicators(fim, dev)
-                if lft < 20 or rgt < 20:
+                xs = find_screen_x(fim, top)
+                if xs is None:
                     problems.append(
-                        f'{f.name}: System-Indikatoren fehlen '
-                        f'(Uhr {lft} px, Akku/Signal {rgt} px, '
-                        f'jeweils >= 20 erwartet) - der Screen wirkt wie '
-                        f'ein Bild statt wie ein Geraet')
-                notes.append(f'Indikatoren {lft}/{rgt}')
+                        f'{f.name}: Kacheloberkante bei y={top} gefunden, '
+                        f'Ausdehnung aber nicht messbar')
+                else:
+                    left, right = xs
+                    dark = count_indicators(fim, top, left, right)
+                    if dark < 60:
+                        problems.append(
+                            f'{f.name}: keine System-Symbole in der '
+                            f'Statusleiste ({dark} dunkle Pixel, >= 60 '
+                            f' erwartet) - der Screen wirkt wie ein Bild '
+                            f'statt wie ein Geraet')
+                    notes.append(f'Symbole {dark}')
 
         print(f'  {f.name:<26} {"  ".join(notes)}')
 

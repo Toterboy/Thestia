@@ -175,21 +175,30 @@ def _draw_status_bar(img: Image.Image):
     cy = H / 2.0
 
     # Kein Text in der Mitte: dort ist die Kamera.
+    #
+    # Farbe: die Indikatoren liegen auf der hellen App-Oberflaeche
+    # (247,247,251), nicht auf dem Markenverlauf. Halbtransparentes
+    # Weiss (alpha 190..235) verschwindet darauf fast vollstaendig - im
+    # fertigen Bild waren sie nur noch ein Schleier. Deckendes, dunkles
+    # Grau ist auf hellen UND dunklen App-Flaechen sichtbar und sieht
+    # aus wie echte System-Symbole.
+    ICON = (60, 52, 66, 235)
 
-    # Uhr links, bewusst nicht die echte Uhrzeit, sondern eine runde
-    # Form - sie soll die Position zeigen, nicht eine Behauptung.
-    cx, cy = w * 0.085, H / 2
-    r = max(2.0, H * 0.10)
-    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=(255, 255, 255, 225))
+    # Uhr links. Position bei 12% der Breite - bei 8.5% lag der Punkt
+    # auf dem gerundeten Radius und wurde vom Maskenschnitt abgeschnitten.
+    cx, cy = w * 0.12, H / 2
+    r = max(2.0, H * 0.12)
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=ICON)
 
     # Signal-Balken (4 Balken, Hoehen 0.30..0.78 der Leiste)
-    bx = w * 0.845
+    # Auch rechts etwas einruecken - dort schneidet der Radius ebenso.
+    bx = w * 0.80
     for i in range(4):
         bh = H * (0.30 + 0.16 * i)
         x0 = bx + i * H * 0.20
         d.rounded_rectangle(
             [x0, cy + H * 0.32 - bh, x0 + H * 0.12, cy + H * 0.32],
-            radius=int(H * 0.05), fill=(255, 255, 255, 200))
+            radius=int(H * 0.05), fill=ICON)
 
     # WLAN-Symbol als vereinfachter Bogen.
     # PIL verlangt bei arc/zwei Argumenten Ganzzahlen - hier wird
@@ -197,26 +206,26 @@ def _draw_status_bar(img: Image.Image):
     wx = int(w * 0.925)
     rr = H * 0.30
     d.arc([wx - rr, cy - rr, wx + rr, cy + rr], 210, 330,
-          fill=(255, 255, 255, 210), width=max(1, int(H * 0.07)))
+          fill=ICON, width=max(1, int(H * 0.07)))
     d.arc([wx - rr * 0.55, cy - rr * 0.45, wx + rr * 0.55, cy + rr * 0.8],
-          210, 330, fill=(255, 255, 255, 210), width=max(1, int(H * 0.07)))
+          210, 330, fill=ICON, width=max(1, int(H * 0.07)))
     d.ellipse([wx - H * 0.05, cy - H * 0.02,
                wx + H * 0.05, cy + H * 0.10],
-              fill=(255, 255, 255, 225))
+              fill=ICON)
 
     # Akku
     ax, aw, ah = w * 0.062, H * 0.44, H * 0.24
     d.rounded_rectangle(
         [w - ax - aw, cy - ah / 2, w - ax, cy + ah / 2],
-        radius=int(H * 0.05), outline=(255, 255, 255, 220),
+        radius=int(H * 0.05), outline=ICON,
         width=max(1, int(H * 0.035)))
     d.rounded_rectangle(
         [w - ax - aw + aw * 0.14, cy - ah * 0.28,
          w - ax - aw * 0.22, cy + ah * 0.28],
-        radius=int(H * 0.03), fill=(255, 255, 255, 235))
+        radius=int(H * 0.03), fill=ICON)
     d.rounded_rectangle(
         [w - ax + 1, cy - ah * 0.14, w - ax + H * 0.05, cy + ah * 0.14],
-        radius=int(H * 0.02), fill=(255, 255, 255, 200))
+        radius=int(H * 0.02), fill=ICON)
 
 
 def _draw_nav_bar(img: Image.Image):
@@ -241,10 +250,13 @@ def _draw_nav_bar(img: Image.Image):
     img.alpha_composite(scrim.filter(ImageFilter.GaussianBlur(band * 0.35)))
 
     d = ImageDraw.Draw(img)
+    # Wie bei der Statusleiste: die Leiste liegt auf der hellen App, nicht
+    # auf dem Verlauf. Der weiche Saum bleibt (er hebt den Strich auf
+    # bunten Kacheln ab), der Strich selbst ist aber deckend dunkel.
     bw, bh = w * 0.28, max(2.0, band * 0.11)
     d.rounded_rectangle(
         [w / 2 - bw / 2, cy - bh / 2, w / 2 + bw / 2, cy + bh / 2],
-        radius=int(bh / 2), fill=(255, 255, 255, 205))
+        radius=int(bh / 2), fill=(45, 38, 50, 210))
 
 
 def phone_mockup(screen: Image.Image, scale=1.0):
@@ -316,6 +328,44 @@ def phone_mockup(screen: Image.Image, scale=1.0):
     return canvas
 
 
+def app_tile(shot: Image.Image, box_h: int, box_w: int, corner_ratio=0.055):
+    """Skaliert den App-Screen auf den Kasten und zeichnet die System-UI.
+
+    v0.9.2: Ersetzt phone_mockup(). Das Geraet ist entfallen, der
+    App-Screen steht direkt und abgerundet auf dem Verlauf.
+
+    Die System-UI (Statusleiste, Gesture-Navigation) wird HIER gezeichnet
+    und nicht mehr im Mockup - sonst fehlt sie nach dessen Wegfall
+    komplett, und ein Screenshot ohne Statusleiste wirkt wie ein Bild
+    statt wie ein Geraet. Der App-Render reserviert diese Streifen seit
+    dem SafeArea-Fix, zeigt aber selbst nichts; sie werden deshalb
+    zusaetzlich gemalt.
+
+    corner_ratio: Eckenradius als Anteil der Breite. Ohne Mockup ist die
+    Kachel das einzige abgerundete Element und traegt damit die
+    Komposition - der Radius ist bewusst grosszuegig gewaehlt.
+    """
+    scale = min(box_h / shot.height, box_w / shot.width)
+    tw, th = int(shot.width * scale), int(shot.height * scale)
+    scr = shot.resize((tw, th), Image.LANCZOS)
+    _draw_status_bar(scr)
+    _draw_nav_bar(scr)
+    return _round_image(scr, int(tw * corner_ratio))
+
+
+def _round_image(img: Image.Image, radius: int) -> Image.Image:
+    """Schneidet ein Bild auf abgerundete Ecken (RGBA, Radius in px).
+
+    Anders als round_corners() wird hier NICHTS transparent ausserhalb
+    gemacht - der App-Screen liegt auf dem Markenverlauf und soll mit
+    seinen runden Ecken darauf schweben. transparent wuerde den
+    Verlauf durchscheinen lassen und die Kachel wirkt hinein geschnitten.
+    """
+    out = Image.new('RGBA', img.size, (0, 0, 0, 0))
+    out.paste(img.convert('RGBA'), (0, 0), rounded_mask(img.size, radius))
+    return out
+
+
 def fit_scale(shot: Image.Image, box_h: int, box_w: int = 10 ** 9):
     """Scale, damit Screen + Bezel + Schattenplatz in box_h/box_w passen."""
     h = shot.height + 2 * (BEZEL + PAD)
@@ -380,18 +430,22 @@ def compose_9x16(shot: Image.Image, headline: str, subline: str, badge: str):
     y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226), 13,
                    W // 2, y)
 
-    # --- Phone-Mockup: Hoehe an den Restkasten anpassen ------------------
-    mock_h = H - y - 170
-    scale = fit_scale(shot, mock_h, W - 120)
-    tw, th = int(shot.width * scale), int(shot.height * scale)
-    scr = shot.resize((tw, th), Image.LANCZOS)
-    phone = phone_mockup(scr, scale=scale)
-    px = (W - phone.width) // 2
-    py = y + 30
-    bg.alpha_composite(phone, (px, py))
+    # --- App-Bild: direkt, ohne Mockup-Rahmen ---------------------------
+    # v0.9.2: Das Geraet-Mockup ist entfallen. Es war ein Fremdkoerper:
+    # Rand, Schatten, Punch-Hole-Kamera und System-UI sind Dinge, die der
+    # Store ohnehin ergaenzt, und auf dem Mockup wirkte der echte Screen
+    # wie eine eingepasste Miniatur. Jetzt steht der App-Screen selbst
+    # gross und abgerundet da - die Flaeche gehoert dem Produkt.
+    box_h = H - y - 150
+    box_w = W - 150
+    scr = app_tile(shot, box_h, box_w, corner_ratio=0.055)
+    tw, th = scr.size
+    px = (W - tw) // 2
+    py = y + 34
+    bg.alpha_composite(scr, (px, py))
 
-    # --- Badge unter dem Geraet -------------------------------------------
-    by = min(py + phone.height + 18, H - 100)
+    # --- Badge unter dem Bild --------------------------------------------
+    by = min(py + th + 22, H - 100)
     badge_pill(bg, badge, W // 2, by)
     return round_corners(bg, 56)
 
@@ -401,22 +455,22 @@ def compose_wqhd(shot: Image.Image, headline: str, subline: str, badge: str):
     bg = gradient((W, H), 25).convert('RGBA')
     draw = ImageDraw.Draw(bg)
 
-    # Phone links: Hoehe so skalieren, dass es mit Rand sicher passt
-    # (Mockup = Screen + Bezel + 2xSchattenabstand).
+    # App-Bild links, ohne Mockup. Hoehe so skalieren, dass es mit Rand
+    # sicher passt; Breite ist bewusst gedeckelt, sonst waere der Screen
+    # bei 20:9 sehr schmal und der Text bekame zu wenig Platz.
     margin = 60
-    scale = fit_scale(shot, H - 2 * margin, 1000)
-    tw, th = int(shot.width * scale), int(shot.height * scale)
-    scr = shot.resize((tw, th), Image.LANCZOS)
-    phone = phone_mockup(scr, scale=scale)
+    box_h, box_w = H - 2 * margin, 1020
+    scr = app_tile(shot, box_h, box_w, corner_ratio=0.045)
+    tw, th = scr.size
     px = 130
-    py = (H - phone.height) // 2
-    bg.alpha_composite(phone, (px, py))
+    py = (H - th) // 2
+    bg.alpha_composite(scr, (px, py))
 
-    # Text rechts vom Geraet, linksbuendig (breite Headlines wuerden sonst
-    # ueber den Geraeterand hinausragen).
+    # Text rechts vom Bild, linksbuendig (breite Headlines wuerden sonst
+    # ueber den Bildrand hinausragen).
     f_head = ImageFont.truetype(FONT_BOLD, 78)
     f_sub = ImageFont.truetype(FONT_REG, 38)
-    tx = px + phone.width + 100
+    tx = px + tw + 90
     y = max(200, (H - 400) // 2)
     y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255), 20,
                    tx, y, align='left')
