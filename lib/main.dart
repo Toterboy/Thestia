@@ -80,6 +80,19 @@ Future<void> main() async {
   // u. a. den kompletten Supabase-Traffic vor MITM.
   HttpOverrides.global = ThestiaHttpOverrides();
 
+  // v0.9.2: Binding VOR der Keystore-Migration aufbauen.
+  //
+  // `ensureInitialized()` stand previously hinter dem await der Migration.
+  // Die Migration spricht ueber Platform-Channels mit dem Keystore - ohne
+  // Binding ist das der erste Kanalaufruf des Prozesses, und ein Fehler
+  // dort kommt vor `FlutterError.onError` und
+  // `PlatformDispatcher.instance.onError` zustande. Ein solcher Fehler
+  // beendet den Prozess kommentarlos: keine Logs, kein Fehlerbildschirm,
+  // nur der Splash. Das ist die Systemmeldung "Die App konnte nicht
+  // gestartet werden" - der typische Android-Text fuer einen beim Start
+  // gestorbenen Prozess.
+  final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+
   // Security (Audit 2026-09-26): Keystore-Werte einmalig aus dem alten
   // Default-Namespace in die neuen, getrennten Namespaces verschieben.
   // Ohne das waeren nach dem Update alle Tokens unlesbar (Massen-Logout).
@@ -88,9 +101,25 @@ Future<void> main() async {
   // liest die Session. Liefe die Migration parallel, fände er sie nicht -
   // und bei `resetOnError: true` (Default in v11) löscht ein Dekrypt-
   // Fehlschlag dann die Werte aller anderen Namespaces mit.
-  await migrateLegacyNamespaces(
-    extraSessionKeys: [_supabaseSessionKey()],
-  );
+  //
+  // v0.9.2: try/catch + 8 Sekunden Limit. `migrateLegacyNamespaces` faengt
+  // Fehler pro Namespace ab, aber ein Fehler VOR dieser Schleife (Plugin-
+  // Kanal, Konstanten) wuerde durchschlagen. Und ein Keystore, der auf
+  // manchen Geraeten haengt (biometrisch gesicherte Schluessel, defekte
+  // TEE), wuerde ohne Limit endlos auf dem Splash stehen, bis Android die
+  // App killt - von aussen exakt wie ein Absturz, ohne jeden Logeintrag.
+  //
+  // Der Fehler ist bewusst NICHT fatal: die Migration ist idempotent, der
+  // Legacy-Wert bleibt beim Fehlschlag erhalten, der naechste Start
+  // versucht es erneut. Ein unbrauchbarer Keystore kostet Push-Funktionen,
+  // aber er darf die App nicht unsichtbar machen.
+  try {
+    await migrateLegacyNamespaces(
+      extraSessionKeys: [_supabaseSessionKey()],
+    ).timeout(const Duration(seconds: 8));
+  } catch (e) {
+    debugPrint('[MAIN] Keystore-Migration uebersprungen: $e');
+  }
 
   FlutterError.onError = (details) {
     FlutterError.dumpErrorToConsole(details);
@@ -139,9 +168,9 @@ Future<void> main() async {
     );
   };
 
-  final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   // Splash aktiv halten, bis der erste Frame der BOOTSTRAP-UI (Lade-Screen
   // mit drehendem Kreis) präsentiert wird - danach übernimmt Flutter.
+  // (Das Binding steht seit v0.9.2 oben, VOR der Keystore-Migration.)
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   // Plattform-Fehler (außerhalb der Widget-UI) ebenfalls journalesieren.
   PlatformDispatcher.instance.onError = (error, stack) {

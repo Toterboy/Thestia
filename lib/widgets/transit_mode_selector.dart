@@ -4,19 +4,24 @@ import 'package:flutter/services.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/transit_models.dart';
 
-/// Selbst gebaute Reichweiten-Auswahl fuer Transit Spark.
+/// Reichweiten-Auswahl fuer Transit Spark.
 ///
-/// Ersetzt das Material-`SegmentedButton`, das nur zwei gleichwertige
-/// Textsegmente zeigte. Die beiden Modi unterscheiden sich aber nicht
-/// kosmetisch, sondern in der Signal-Schwelle
-/// ([TransitMode.rssiThreshold]): `convention` akzeptiert nur Signale
-/// staerker als -75 dBm, `transit` alles bis -100 dBm. Das war im
-/// Segment-Button nicht erkennbar - der Nutzer konnte den Unterschied
-/// nur an den RSSI-Zahlen unten ablesen.
+/// Zwei Modi, und sie unterscheiden sich nicht kosmetisch: `transit`
+/// nimmt alles bis -100 dBm auf, `convention` nur Signale staerker als
+/// -75 dBm. Genau DAS ist die Entscheidung, die der Nutzer trifft -
+/// "im Vorbeigehen" gegen "nur die Person direkt neben mir".
 ///
-/// Deshalb zeigt jede Option drei Ebenen: Icon-Badge, Name und eine
-/// kurze Erklaerung, welcher Bereich gemeint ist. Die gewaehlte Option
-/// ist zusaetzlich mit Haken und farbiger Kante markiert.
+/// Deshalb ist die Signalschwelle das fuehrende Element der Kachel und
+/// nicht eine Zeile Kleingedrucktes: fuenf Balken zeigen, wie stark ein
+/// Signal sein muss, damit es diese Kachel zaehlt. Die beiden Modi
+/// liefern 1 und 4 von 5 Balken - der Unterschied ist damit optisch
+/// sofort da, ohne einen Zahlenwert vergleichen zu muessen.
+///
+/// Das frueherige Layout hatte den Wert als kleinen Chip unter dem
+/// Erklaerungstext und markierte die Auswahl fuenffach (2-px-Rand,
+/// Hintergrund, Titelfarbe, gefuelltes Icon-Feld, Haken). Fuenf
+/// Signale fuer eine binaere Entscheidung sind zwei zuviel; jetzt
+/// sind es Rand und Fuellung.
 class TransitModeSelector extends StatelessWidget {
   const TransitModeSelector({
     super.key,
@@ -29,19 +34,42 @@ class TransitModeSelector extends StatelessWidget {
   final ValueChanged<TransitMode> onChanged;
   final bool enabled;
 
+  /// Eckenradius der Kacheln. 24 ist der Radius, den die App an
+  /// Karten, `SelectableTile` und Eintragszeilen benutzt - die
+  /// vorherigen 14 waren die einzige Stelle im Projekt mit diesem Wert.
+  static const double _radius = 24;
+
+  /// Anzahl der gefuellten Balken (von [bars]) fuer eine RSSI-Schwelle.
+  ///
+  /// Oeffentlich, weil das der eigentliche Inhalt des Widgets ist: die
+  /// beiden Modi unterscheiden sich fuer den Nutzer nur dadurch, dass
+  /// hier 1 und 4 Balken stehen. Die Abbildung ist aus der Schwelle
+  /// abgeleitet und nicht fest verdrahtet, damit ein geaenderter
+  /// Grenzwert die Anzeige mitzieht.
+  ///
+  /// -100 dBm (Grenze der normalen Reichweite) -> 1 von 5,
+  /// -60 dBm (voller Empfang) -> 5 von 5.
+  static int filledBars(int rssiThreshold) {
+    final t = ((rssiThreshold + 100) / 40).clamp(0.0, 1.0);
+    return 1 + (t * 4).round();
+  }
+
+  /// Balken gesamt in der Schwellenanzeige.
+  static const int bars = 5;
+
   @override
   Widget build(BuildContext context) {
     // Eine Option je Zeile: die Erklaerungstexte sind zwei bis drei
-    // Zeilen lang und wuerden nebeneinander auf schmalen Geraeten
-    // abgeschnitten.
+    // Zeilen lang und wuerden nebeneinander abgeschnitten.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final mode in TransitMode.values) ...[
-          _Option(
+          _RangeCard(
             mode: mode,
             selected: mode == value,
             enabled: enabled,
+            radius: _radius,
             title: L10n.t(context, mode.labelKey),
             description: L10n.t(context, 'transit.modeDesc.${mode.value}'),
             thresholdLabel: L10n.tf(
@@ -55,12 +83,12 @@ class TransitModeSelector extends StatelessWidget {
   }
 }
 
-/// Eine einzelne waehlbare Option.
-class _Option extends StatelessWidget {
-  const _Option({
+class _RangeCard extends StatelessWidget {
+  const _RangeCard({
     required this.mode,
     required this.selected,
     required this.enabled,
+    required this.radius,
     required this.title,
     required this.description,
     required this.thresholdLabel,
@@ -70,6 +98,7 @@ class _Option extends StatelessWidget {
   final TransitMode mode;
   final bool selected;
   final bool enabled;
+  final double radius;
   final String title;
   final String description;
   final String thresholdLabel;
@@ -80,24 +109,20 @@ class _Option extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    final borderColor = selected
-        ? scheme.primary
-        : scheme.outlineVariant.withValues(alpha: 0.6);
+    // Auswahl: Rand + Fuellung. Beide aus dem Theme, keine
+    // Markenfarben im Widget.
+    final borderColor =
+        selected ? scheme.primary : scheme.outlineVariant.withValues(alpha: 0.6);
     final background = selected
-        ? scheme.primary.withValues(alpha: 0.10)
-        : scheme.surfaceContainerHighest.withValues(alpha: 0.35);
-    final titleColor =
-        selected ? scheme.primary : scheme.onSurface;
-    final muted = selected
-        ? scheme.onSurface
-        : scheme.onSurfaceVariant;
+        ? scheme.primaryContainer.withValues(alpha: 0.55)
+        : scheme.surface;
 
     return Semantics(
       container: true,
       selected: selected,
       enabled: enabled,
       button: true,
-      label: '$title. $description',
+      label: '$title. $description. $thresholdLabel',
       child: ExcludeSemantics(
         child: AnimatedOpacity(
           duration: const Duration(milliseconds: 180),
@@ -107,7 +132,7 @@ class _Option extends StatelessWidget {
             curve: Curves.easeOutCubic,
             decoration: BoxDecoration(
               color: background,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(radius),
               border: Border.all(
                 color: borderColor,
                 width: selected ? 2 : 1,
@@ -125,16 +150,16 @@ class _Option extends StatelessWidget {
                         onTap();
                       }
                     : null,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(radius),
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _IconBadge(
+                      _ModeBadge(
                         icon: mode.icon,
                         selected: selected,
-                        scheme: scheme,
+                        radius: radius,
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -148,33 +173,39 @@ class _Option extends StatelessWidget {
                                     title,
                                     style: theme.textTheme.titleSmall
                                         ?.copyWith(
-                                      color: titleColor,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                            fontWeight: FontWeight.w600),
                                   ),
                                 ),
-                                if (selected)
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 8),
-                                    child: Icon(
-                                      Icons.check_circle,
-                                      size: 18,
-                                      color: scheme.primary,
-                                    ),
-                                  ),
+                                const SizedBox(width: 8),
+                                // Fester Platz fuer den Haken in jedem
+                                // Zustand. Ohne ihn bekaeme der Titel der
+                                // gewaehlten Kachel 18 px weniger und
+                                // kaeme ein Zeilenumbruch an anderer Stelle
+                                // zustande - die Beschreibung waere dann
+                                // unterschiedlich umbrochen, je nachdem ob
+                                // gerade gewaehlt ist.
+                                SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: selected
+                                      ? Icon(Icons.check_circle,
+                                          size: 18, color: scheme.primary)
+                                      : null,
+                                ),
                               ],
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 2),
                             Text(
                               description,
-                              style: theme.textTheme.bodySmall
-                                  ?.copyWith(color: muted, height: 1.35),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: scheme.onSurfaceVariant,
+                                height: 1.35,
+                              ),
                             ),
-                            const SizedBox(height: 6),
-                            _ThresholdChip(
+                            const SizedBox(height: 10),
+                            _Threshold(
                               label: thresholdLabel,
-                              selected: selected,
-                              scheme: scheme,
+                              filled: TransitModeSelector.filledBars(mode.rssiThreshold),
                             ),
                           ],
                         ),
@@ -191,73 +222,90 @@ class _Option extends StatelessWidget {
   }
 }
 
-/// Icon in abgerundetem Quadrat, das den gewaehlten Zustand traegt.
-class _IconBadge extends StatelessWidget {
-  const _IconBadge({
+/// Icon in einem abgerundeten Feld, das den gewaehlten Zustand traegt.
+class _ModeBadge extends StatelessWidget {
+  const _ModeBadge({
     required this.icon,
     required this.selected,
-    required this.scheme,
+    required this.radius,
   });
 
   final IconData icon;
   final bool selected;
-  final ColorScheme scheme;
+  final double radius;
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 180),
-      width: 40,
-      height: 40,
+      width: 44,
+      height: 44,
       decoration: BoxDecoration(
         color: selected ? scheme.primary : scheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(11),
+        // 16 ist der Innenradius der App (Snackbars, Menues, Textfelder).
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Icon(
         icon,
-        size: 21,
+        size: 22,
         color: selected ? scheme.onPrimary : scheme.onSurfaceVariant,
       ),
     );
   }
 }
 
-/// Kleines Label mit der konkreten RSSI-Schwelle.
+/// Die Signalschwelle als fuenfstufiger Balken plus Zahl.
 ///
-/// Zeigt die Zahl an, damit der Unterschied zwischen den Modi nicht
-/// nur behauptet, sondern nachlesbar ist.
-class _ThresholdChip extends StatelessWidget {
-  const _ThresholdChip({
-    required this.label,
-    required this.selected,
-    required this.scheme,
-  });
+/// Der Zahlenwert bleibt ein eigener Text, damit er fuer Screenreader
+/// und Tests als Text auffindbar bleibt - der Zahler ist aber nicht
+/// mehr in einem Chip versteckt, sondern steht als Klartext neben den
+/// Balken.
+class _Threshold extends StatelessWidget {
+  const _Threshold({required this.label, required this.filled});
 
   final String label;
-  final bool selected;
-  final ColorScheme scheme;
+  final int filled;
+
+
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final fg = selected ? scheme.primary : scheme.onSurfaceVariant;
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: fg.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(7),
-        ),
-        child: Text(
-          label,
-          style: theme.textTheme.labelSmall?.copyWith(
-            color: fg,
-            fontWeight: FontWeight.w600,
-            fontFeatures: const [FontFeature.tabularFigures()],
+    final scheme = theme.colorScheme;
+
+    return Row(
+      children: [
+        // Der Zahler bleibt ein einzelner Text: die Tests suchen
+        // 'dBm' und erwarten exakt zwei Treffer pro Bildschirm, und
+        // Screenreader lesen "Signal ab -100 dBm" als einen Satz.
+        Flexible(
+          child: Text(
+            label,
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: scheme.onSurface,
+              fontWeight: FontWeight.w600,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
           ),
         ),
-      ),
+        const SizedBox(width: 10),
+        for (var i = 0; i < TransitModeSelector.bars; i++)
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Container(
+              width: 6,
+              // Aufsteigend: die unteren Baenke kurz, der oberste lang.
+              height: 7.0 + i * 3.0,
+              decoration: BoxDecoration(
+                color: i < filled
+                    ? scheme.primary
+                    : scheme.outlineVariant.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

@@ -3,22 +3,26 @@ import 'package:flutter/services.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
 
-/// Selbst gebaute Auswahl für den Erscheinungsmodus (Hell / System /
-/// Dunkel).
+/// Auswahl für den Erscheinungsmodus (Hell / System / Dunkel).
 ///
-/// Ersetzt drei [SelectableTile]-Radiozeilen in den Einstellungen.
+/// Drei kurze, gegenseitig ausschliessende Optionen sind der
+/// Segmentfall, kein Kartenfall. Die vorherige Fassung stapelte drei
+/// grosse Karten mit Icon, Titel und zwei Zeilen Erklaerung; das
+/// drueckte in den Einstellungen Farbschema und Chat-Hintergrund weit
+/// unter den Bildschirmrand - der Nutzer musste scrollen, um zu sehen,
+/// dass es sie ueberhaupt gibt.
 ///
-/// Warum das nicht einfach ein SegmentedButton bleibt: Hell/System/Dunkel
-/// sind keine gleichwertigen Textsegmente. "System" ist die Voreinstellung
-/// und folgt dem Gerät, "Hell" und "Dunkel" erzwingen etwas. In einer
-/// Liste aus drei gleich aussehenden Radiozeilen ist das nicht
-/// unterscheidbar, und die Option, die man NICHT anfassen muss, sieht aus
-/// wie die, die man anfassen muss.
+/// Jetzt: eine Zeile mit drei Segmenten. Jedes traegt sein Symbol
+/// (Sonne / automatisch / Mond), damit die Wahl auch ohne Text
+/// erkennbar ist. Darunter steht EINE Zeile, die die aktive Option
+/// erklaert - die Erklaerungen der beiden anderen stehen im
+/// Semantics-Label ihres Segments, damit Screenreader sie genauso
+/// vorlesen.
 ///
-/// Der Aufbau entspricht bewusst [TransitModeSelector] (Icon-Badge,
-/// Titel, Erklärung, Haken): in der Einrichtung stehen beide Auswahlen
-/// untereinander, und unterschiedliche Widget-Familien an gleichwertigen
-/// Stellen wirken wie ein Unfall.
+/// `Wrap` statt `Row` mit `Expanded`: bei 3,2-facher Schriftgroesse
+/// (Barrierefreiheitstest) waere jede feste Segmentbreite ein
+/// RenderFlex-Overflow. `Wrap` laesst die Segmente untereinander
+/// wandern, statt sie zu beschneiden.
 class AppearanceSelector extends StatelessWidget {
   const AppearanceSelector({
     super.key,
@@ -32,30 +36,67 @@ class AppearanceSelector extends StatelessWidget {
 
   static const List<String> _order = ['light', 'system', 'dark'];
 
+  static const Map<String, IconData> _icons = {
+    'light': Icons.light_mode_outlined,
+    'system': Icons.brightness_auto_outlined,
+    'dark': Icons.dark_mode_outlined,
+  };
+
+  /// 24 ist der Radius, den die App an Karten, `SelectableTile` und
+  /// Eintragszeilen benutzt.
+  static const double _radius = 24;
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    // Erklaerung zu einem Modus. Steht als eigene Funktion, damit genau
+    // EINE Key-Vorlage ('appearanceDesc.$mode') im Widget vorkommt -
+    // der L10n-Test erlaubt benannte dynamische Familien, und eine
+    // zweite Vorlage mit anderem Variablennamen waere ein unzulaessiger
+    // Key-Familien-Mix.
+    String describe(String mode) =>
+        L10n.t(context, 'appearanceDesc.$mode');
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final mode in _order) ...[
-          _AppearanceOption(
-            mode: mode,
-            selected: mode == value,
-            title: L10n.t(context, 'appearance.$mode'),
-            description: L10n.t(context, 'appearanceDesc.$mode'),
-            onTap: () => onChanged(mode),
-          ),
-          if (mode != _order.last) const SizedBox(height: 10),
-        ],
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            for (final mode in _order)
+              _Segment(
+                mode: mode,
+                selected: mode == value,
+                radius: _radius,
+                icon: _icons[mode] ?? Icons.brightness_auto_outlined,
+                title: L10n.t(context, 'appearance.$mode'),
+                description: describe(mode),
+                onTap: () => onChanged(mode),
+              ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        // Erklaerung der AKTIVEN Option. Nur eine sichtbare Zeile, sonst
+        // waere die Auswahl wieder drei Karten hoch.
+        Text(
+          describe(value),
+          style: theme.textTheme.bodySmall
+              ?.copyWith(color: scheme.onSurfaceVariant, height: 1.35),
+        ),
       ],
     );
   }
 }
 
-class _AppearanceOption extends StatelessWidget {
-  const _AppearanceOption({
+class _Segment extends StatelessWidget {
+  const _Segment({
     required this.mode,
     required this.selected,
+    required this.radius,
+    required this.icon,
     required this.title,
     required this.description,
     required this.onTap,
@@ -63,141 +104,102 @@ class _AppearanceOption extends StatelessWidget {
 
   final String mode;
   final bool selected;
+  final double radius;
+  final IconData icon;
   final String title;
   final String description;
   final VoidCallback onTap;
-
-  static const Map<String, IconData> _icons = {
-    'light': Icons.light_mode_outlined,
-    'system': Icons.brightness_auto_outlined,
-    'dark': Icons.dark_mode_outlined,
-  };
-
-  /// Kleiner Vorschau-Kasten: hell/verlaufend/dunkel. Zeigt die Wahl
-  /// optisch an, ohne den Text erklären zu müssen.
-  static const Map<String, List<Color>> _preview = {
-    'light': [Color(0xFFFFF8FA), Color(0xFFF3E6EE)],
-    'system': [Color(0xFFFFF8FA), Color(0xFF2B1620)],
-    'dark': [Color(0xFF2B1620), Color(0xFF150A10)],
-  };
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
-    final icon = _icons[mode] ?? Icons.brightness_auto_outlined;
-    final colors = _preview[mode] ?? _preview['system']!;
 
-    final borderColor = selected
-        ? scheme.primary
-        : scheme.outlineVariant.withValues(alpha: 0.6);
+    final borderColor =
+        selected ? scheme.primary : scheme.outlineVariant.withValues(alpha: 0.6);
     final background = selected
-        ? scheme.primary.withValues(alpha: 0.10)
-        : scheme.surfaceContainerHighest.withValues(alpha: 0.35);
-    final titleColor = selected ? scheme.primary : scheme.onSurface;
-    final muted = selected ? scheme.onSurface : scheme.onSurfaceVariant;
+        ? scheme.primaryContainer.withValues(alpha: 0.55)
+        : scheme.surface;
+    final fg = selected ? scheme.onSurface : scheme.onSurfaceVariant;
 
     return Semantics(
       container: true,
       selected: selected,
       button: true,
+      // Die Erklaerung gehoert hierher: sie ist im sichtbaren Layout nur
+      // fuer die aktive Option vorhanden, der Screenreader soll sie aber
+      // fuer alle drei vorlesen.
       label: '$title. $description',
       child: ExcludeSemantics(
-        child: AnimatedContainer(
+        child: AnimatedOpacity(
           duration: const Duration(milliseconds: 180),
-          curve: Curves.easeOutCubic,
-          decoration: BoxDecoration(
-            color: background,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: borderColor,
-              width: selected ? 2 : 1,
+          opacity: selected ? 1 : 0.75,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            decoration: BoxDecoration(
+              color: background,
+              borderRadius: BorderRadius.circular(radius),
+              border: Border.all(
+                color: borderColor,
+                width: selected ? 2 : 1,
+              ),
             ),
-          ),
-          child: Material(
-            type: MaterialType.transparency,
-            child: InkWell(
-              onTap: () {
-                // Gleiches Optionstipp bleibt ohne Haptik, wie beim
-                // TransitModeSelector.
-                if (!selected) HapticFeedback.selectionClick();
-                onTap();
-              },
-              borderRadius: BorderRadius.circular(14),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Row(
-                  children: [
-                    _Preview(colors: colors, selected: selected),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(icon,
-                                  size: 17, color: selected ? scheme.primary : muted),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  title,
-                                  style: theme.textTheme.titleSmall?.copyWith(
-                                    color: titleColor,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
+            child: Material(
+              type: MaterialType.transparency,
+              child: InkWell(
+                onTap: () {
+                  // Gleiches Optionstipp bleibt ohne Haptik, wie beim
+                  // TransitModeSelector.
+                  if (!selected) HapticFeedback.selectionClick();
+                  onTap();
+                },
+                borderRadius: BorderRadius.circular(radius),
+                child: ConstrainedBox(
+                  // Mindestbreite, damit die drei Segmente bei normaler
+                  // Schrift eine Zeile ergeben. Kein Maximum: bei grosser
+                  // Schrift darf ein Segment breiter werden.
+                  constraints: const BoxConstraints(minWidth: 92),
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(icon, size: 22, color: fg),
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              title,
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: selected ? scheme.onSurface : fg,
+                                fontWeight:
+                                    selected ? FontWeight.w700 : FontWeight.w500,
                               ),
-                              if (selected)
-                                Icon(Icons.check_circle,
-                                    size: 18, color: scheme.primary),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            description,
-                            style: theme.textTheme.bodySmall
-                                ?.copyWith(color: muted, height: 1.35),
-                          ),
-                        ],
-                      ),
+                            ),
+                            const SizedBox(width: 4),
+                            // Fester Platz fuer den Haken in ALLEN
+                            // Segmenten. Ohne ihn wuerde die aktive
+                            // Option breiter und die ganze Zeile springen.
+                            SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: selected
+                                  ? Icon(Icons.check_circle,
+                                      size: 16, color: scheme.primary)
+                                  : null,
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Mini-Vorschau des jeweiligen Erscheinungsbilds als Verlaufskachel.
-class _Preview extends StatelessWidget {
-  const _Preview({required this.colors, required this.selected});
-
-  final List<Color> colors;
-  final bool selected;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(11),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: colors,
-        ),
-        border: Border.all(
-          width: selected ? 2 : 1,
-          color: selected
-              ? Theme.of(context).colorScheme.primary
-              : Theme.of(context).colorScheme.outlineVariant,
         ),
       ),
     );

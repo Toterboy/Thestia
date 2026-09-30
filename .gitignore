@@ -122,10 +122,14 @@ node_modules/
 # Screenshot-Goldens (regenerierbare Build-Artefakte, teils > 100 KB):
 # Neu erzeugen mit STORE_SHOTS=1 flutter test --update-goldens test/screenshots/
 test/screenshots/goldens/
-# Store-Screenshot-Renderer (v0.9.1) inkl. seiner Ausgaben: sind
-# Werbematerial, kein Quellcode - werden lokal via
-# tool/make_store_screenshots.py erzeugt und nicht veroeffentlicht.
-test/screenshots/store_v091_shots_test.dart
+# Store-Screenshot-Renderer: NUR seine Ausgaben sind regenerierbare
+# Build-Artefakte und bleiben ignoriert. Der RENDERER selbst
+# (store_v091_shots_test.dart) ist Quellcode und wird seit v0.9.2
+# versioniert: er ist die einzige Quelle, aus der
+# tool/make_store_screenshots.py die Store-Bilder baut. War auch er
+# ignoriert, waeren der Kachel-Export fuer 03_entdecken und die
+# SafeArea-Reservierung beim naechsten Checkout spurlos verschwunden,
+# waehrend das Python-Werkzeug weiter auf sie wartet.
 test/screenshots/store_v091/
 fastlane/metadata/android/*/images/phoneScreenshots/
 releases/testapk/screenshots/

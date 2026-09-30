@@ -202,6 +202,45 @@ void main() {
 
       expect(picked, 'dark');
     });
+
+    testWidgets('alle drei Optionen stehen in EINER Zeile', (tester) async {
+      // Der Grund fuer das Redesign: drei Karten uebereinander schoben
+      // Farbschema und Chat-Hintergrund in den Einstellungen aus dem
+      // Bild. Diese Prüfung verhindert, dass jemand zur Kartenliste
+      // zurueckkehrt, ohne es zu bemerken.
+      await tester.pumpWidget(_appearanceHost());
+      await tester.pumpAndSettle();
+
+      double centerOf(String label) =>
+          tester.getCenter(find.text(label)).dy;
+
+      final ys = ['Hell', 'System', 'Dunkel'].map(centerOf).toList();
+      for (final y in ys) {
+        // 3 px Toleranz: die gewaehlte Option ist fetter gesetzt, was die
+        // Zeilenhoehe um etwa ein Pixel aendert. Gestapelte Karten lagen
+        // dagegen rund 60 px auseinander.
+        expect(y, closeTo(ys.first, 3.0),
+            reason: 'Optionen nicht in einer Zeile: $ys');
+      }
+    });
+
+    testWidgets('grosse Schrift bricht um, statt zu ueberlaufen', (
+      tester,
+    ) async {
+      // Wrap statt Row+Expanded: bei 3,2-facher Schrift waere jede
+      // feste Segmentbreite ein RenderFlex-Overflow.
+      tester.platformDispatcher
+          .textScaleFactorTestValue = 3.2;
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+      await tester.pumpWidget(_appearanceHost());
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      for (final label in ['Hell', 'System', 'Dunkel']) {
+        expect(find.text(label), findsOneWidget);
+      }
+    });
   });
 
   group('Sperrbildschirm: beide Sprachen', () {

@@ -290,6 +290,30 @@ void main() {
       expect(find.textContaining('-75 dBm'), findsOneWidget);
     });
 
+    test('die beiden Modi zeigen unterschiedlich starke Signale', () {
+      // Das ist der Grund fuer das Redesign: die Kacheln unterscheiden
+      // sich fuer den Nutzer nur ueber die Signalstaerke. Faellt die
+      // Abbildung auf einen gemeinsamen Wert zurueck, sehen beide
+      // gleich aus und die Entscheidung ist wieder blind.
+      final transit = TransitModeSelector.filledBars(
+          TransitMode.transit.rssiThreshold);
+      final convention = TransitModeSelector.filledBars(
+          TransitMode.convention.rssiThreshold);
+
+      expect(transit, isNot(convention),
+          reason: 'die Modi muessen sich optisch unterscheiden');
+      // Grenzen: -100 dBm -> 1, -60 dBm (voller Empfang) -> 5.
+      expect(transit, 1);
+      expect(convention, 4);
+      for (final mode in TransitMode.values) {
+        final bars = TransitModeSelector.filledBars(mode.rssiThreshold);
+        expect(bars, inInclusiveRange(1, TransitModeSelector.bars),
+            reason: '${mode.name}: $bars Balken liegen ausserhalb 1..'
+                '${TransitModeSelector.bars}');
+      }
+    });
+
+
     testWidgets('deaktiviert: Tippen bleibt wirkungslos', (tester) async {
       var calls = 0;
       await tester.pumpWidget(_host(TransitMode.transit, enabled: false,
