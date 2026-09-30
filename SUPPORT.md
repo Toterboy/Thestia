@@ -29,6 +29,25 @@ installierte v0.9.1-Clients nicht greift.
 
 Umsetzung: `supabase/migrations/131_transit_spark_adults_only.sql`.
 
+### Installation von v0.9.2: deinstallieren statt aktualisieren
+
+**v0.9.2 lässt sich nicht über eine installierte v0.9.0/0.9.1
+aktualisieren.** Die alte App muss vorher deinstalliert werden:
+
+```powershell
+adb uninstall com.thestia.app
+```
+
+Grund ist der Wechsel des Signier-Zertifikats vor dem ersten
+Store-Upload. Android erlaubt ein Update nur bei identischer Signatur,
+sonst schlägt es mit `INSTALL_FAILED_UPDATE_INCOMPATIBLE` fehl. Die
+anschließende Meldung „Die App konnte nicht gestartet werden" ist nur
+der Folgezustand des abgebrochenen Updates.
+
+Nach dem Deinstallieren muss ein **Passkey neu registriert** werden –
+Android löscht Passkeys beim Deinstallieren. Das Konto selbst bleibt
+erhalten. Details: [docs/SIGNATUR-KEY.md](docs/SIGNATUR-KEY.md).
+
 ### Update-Hinweis für alte Builds
 
 Die App kennt ihre Mindestversion selbst: Der Server hält die minimale
