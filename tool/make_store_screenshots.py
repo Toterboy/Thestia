@@ -32,6 +32,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = ROOT / 'test' / 'screenshots' / 'store_v091' / 'phone'
 OUT_9x16 = ROOT / 'releases' / 'testapk' / 'screenshots' / 'marketing' / '9x16'
 OUT_WQHD = ROOT / 'releases' / 'testapk' / 'screenshots' / 'marketing' / 'wqhd'
+TILES = ROOT / 'test' / 'screenshots' / 'store_v091' / 'tiles'
 OUT_FASTLANE = (ROOT / 'fastlane' / 'metadata' / 'android' / 'de-DE'
                 / 'images' / 'phoneScreenshots')
 
@@ -154,107 +155,117 @@ STATUS_BAR_DP = 24
 NAV_BAR_DP = 24
 
 
-def _draw_status_bar(img: Image.Image, clock='12:30'):
-    """Zeichnet die System-Statusleiste im Android-Layout.
+def _draw_status_bar(img: Image.Image, clock='3:41', percent='70'):
+    """Zeichnet die System-Statusleiste nach dem Geraet des Nutzers.
 
-    Wichtig: der App-Render hat seit dem SafeArea-Fix oben eine Luecke
-    (24 dp). Stand dort nichts, wirkte der Screen abgeschnitten - als
-    fehle genau der Bereich, an dem das Auge ein Geraet erkennt.
+    Referenz ist ein Screenshot vom Android-16-Geraet des Nutzers. Die
+    Anordnung ist von links nach rechts:
 
-    Aufbau nach Android 12/13 (Material 3), von links nach rechts:
-      Uhrzeit (Text) - Mitte frei fuer die Punch-Hole-Kamera -
-      Signal, WLAN, Akku.
+        [3:41]  ......  [Stumm] [WLAN] [Signal] [Akku mit 70]
 
-    Zwei Fehler der ersten Fassung, die hier behoben sind:
-      * Die Uhr war ein KREIS, kein Text. Ein Punkt an dieser Stelle
-        liest sich als Benachrichtigungspunkt, nicht als Uhrzeit -
-        daher jetzt echte Ziffern mit Systemschrift.
-      * Die Symbole waren halbtransparentes Weiss und verschwanden auf
-        der hellen App-Oberflaeche (247,247,251). Jetzt deckend
-        (60,52,66), sichtbar auf hellen wie dunklen Flaechen.
+    WICHTIG - alle Masse sind Bruchteile der BILDBREITE, nicht der
+    Bandhoehe. Das war der Fehler in den ersten beiden Fassungen: an
+    der Bandhoehe gemessen waren die Symbole rund 1,5x zu klein, weil
+    die Statusleiste des Geraets deutlich hoeher ist als ihre Symbole
+    (Reserve fuer die Kamera-Aussparung). In der Referenz belegt der
+    Symbolcluster 30 % der Bildbreite, die Uhr 7 %, der linke Rand 6,5 %,
+    der rechte 3,9 %. Genau diese Verhaeltnisse sind hier hinterlegt.
 
-    Der Screen ist bereits skaliert, deshalb wird die Schriftgroesse aus
-    der Bandhoehe abgeleitet - so bleibt das Verhaeltnis zur Kachel
-    wie auf einem echten Geraet.
+    Die Referenz hat helle Symbole auf einem Foto. Die App-Oberflaeche
+    ist hell, dort waeren sie unsichtbar - deshalb deckendes Dunkel. Die
+    Form ist dieselbe, das nur fuer den Kontrast.
     """
     d = ImageDraw.Draw(img)
     w, h = img.size
-    band = h * (STATUS_BAR_DP / 800.0)   # reservierter Streifen
+    band = h * (STATUS_BAR_DP / 800.0)
     if band < 10:
         return
-    H = int(band)
-    # Die Symbole duerfen den Streifen nicht verlassen. Bei textScale
-    # 1.0 beginnt der AppBar-Titel nur ~3 px unter dem Streifen, eine
-    # zu grosse Icon-Hoehe ragte deshalb sichtbar in die Titelzeile.
-    # 0.78 der Bandhoehe haelt oben und unten Luft.
-    H = int(H * 0.78)
     cy = band / 2.0
 
-    # Deckendes Dunkelgrau: auf der hellen App nahezu unsichtbar.
-    ICON = (60, 52, 66, 240)
+    ICON = (38, 34, 44, 245)
+    u = float(w)
 
-    # --- Uhrzeit links, echte Ziffern ---------------------------------
-    # Schriftgroesse: Android setzt die Uhrzeit auf etwa 60% der
-    # Statusleistenhoehe. Bei 41 px Band sind das rund 25 px.
-    font_px = max(8, int(H * 0.60))
-    try:
-        font = ImageFont.truetype(FONT_REG, font_px)
-    except OSError:
-        font = None
-    tx = int(w * 0.075)
-    ty = int(cy - font_px * 0.62)
-    if font is not None:
-        d.text((tx, ty), clock, font=font, fill=ICON)
-        clock_w = d.textbbox((0, 0), clock, font=font)[2]
-    else:
-        clock_w = font_px * 3
+    def font(path, px):
+        try:
+            return ImageFont.truetype(path, max(7, int(px)))
+        except OSError:
+            return None
 
-    # --- Statusleistensymbole rechts, gestaffelt von rechts nach links ----
-    # Layout wie Android 12/13: Akku ganz rechts, davor WLAN, davor
-    # Signal. Die Positionen werden VOM RAND aus berechnet und
-    # rueckwaerts gefuellt - vorher wurden sie absolute Anteile der
-    # Breite, wodurch WLAN und Signal kollidierten und der Akku aus der
-    # Kachel geschnitten wurde (bei 700..900 px sichtbar gewesen).
-    margin_r = w * 0.045          # Innenabstand zum gerundeten Rand
+    def centered(text, fnt, fill, left, width):
+        """Text horizontal in [left, left+width] und vertikal auf cy zentrieren."""
+        if fnt is None:
+            return
+        bb = d.textbbox((0, 0), text, font=fnt)
+        d.text((left + (width - (bb[2] - bb[0])) / 2 - bb[0],
+                cy - (bb[3] - bb[1]) / 2 - bb[1]), text, font=fnt, fill=fill)
 
-    # Akku: ganz rechts, plus Kontaktstift.
-    bw, bh = H * 0.50, H * 0.26
-    ax = int(w - margin_r - H * 0.055)          # Stift ragt nach rechts
-    by0 = int(cy - bh / 2)
-    d.rounded_rectangle([ax - bw, by0, ax, by0 + bh],
-                        radius=int(bh * 0.28), outline=ICON,
-                        width=max(1, int(H * 0.045)))
-    d.rounded_rectangle(
-        [ax - bw + H * 0.045, by0 + H * 0.045,
-         ax - bw + H * 0.045 + bw * 0.74, by0 + bh - H * 0.045],
-        radius=int(bh * 0.18), fill=ICON)
-    d.rounded_rectangle([ax + 1, int(cy - bh * 0.22),
-                         ax + H * 0.05, int(cy + bh * 0.22)],
-                        radius=int(H * 0.02), fill=ICON)
+    # --- Uhrzeit links -------------------------------------------------
+    f_time = font(FONT_BOLD, u * 0.030)
+    if f_time is not None:
+        d.text((u * 0.0655, cy), clock, font=f_time, fill=ICON, anchor='lm')
 
-    # WLAN: links neben dem Akku, mit eigenem Abstand.
-    wifi_r = H * 0.32
-    wx = int(ax - bw - H * 0.55)
-    d.arc([wx - wifi_r, cy - wifi_r, wx + wifi_r, cy + wifi_r],
-          200, 340, fill=ICON, width=max(1, int(H * 0.075)))
-    d.arc([wx - wifi_r * 0.52, cy - wifi_r * 0.52,
-           wx + wifi_r * 0.52, cy + wifi_r * 0.52],
-          200, 340, fill=ICON, width=max(1, int(H * 0.075)))
-    d.ellipse([wx - H * 0.055, cy + H * 0.02,
-               wx + H * 0.055, cy + H * 0.13], fill=ICON)
+    # --- Cluster rechts, vom Rand rueckwaerts ----------------------------
+    # Reihenfolge und Breiten aus der Referenz. Der Akku ist eine breite,
+    # flache Pille MIT der Prozentzahl darin - kein gefuellter Balken und
+    # keine Zahl daneben.
+    gap = u * 0.013
+    icon_h = u * 0.035          # Hoehe der Signalbaenke = hoechste Glyphe
+    stroke = max(1, int(u * 0.0035))
 
-    # Signal: vier aufsteigende Balken, links vom WLAN.
-    bar_w = H * 0.10
-    gap = H * 0.05
-    bars = 4
-    sig_w = bars * bar_w + (bars - 1) * gap
-    bx = int(wx - wifi_r - H * 0.30 - sig_w)
-    base = cy + H * 0.30
-    for i in range(bars):
-        bhh = H * (0.26 + 0.16 * i)
-        x0 = bx + i * (bar_w + gap)
-        d.rounded_rectangle([x0, base - bhh, x0 + bar_w, base],
-                            radius=int(bar_w * 0.35), fill=ICON)
+    # Akku ganz rechts: Pille mit Prozentzahl, Kontaktstift nach rechts.
+    bat_h = icon_h * 0.92
+    bat_w = u * 0.108
+    nub_w = u * 0.008
+    bat_x1 = int(u * (1 - 0.039) - nub_w)
+    bat_x0 = bat_x1 - int(bat_w)
+    bat_y0 = int(cy - bat_h / 2)
+    d.rounded_rectangle([bat_x0, bat_y0, bat_x1, bat_y0 + int(bat_h)],
+                        radius=int(bat_h * 0.34), outline=ICON, width=stroke)
+    d.rounded_rectangle([bat_x1 + 1, int(cy - bat_h * 0.22),
+                         bat_x1 + int(nub_w), int(cy + bat_h * 0.22)],
+                        radius=max(1, int(bat_h * 0.10)), fill=ICON)
+    f_pct = font(FONT_BOLD, bat_h * 0.78)
+    centered(percent, f_pct, ICON, bat_x0, bat_w)
+
+    # Signal: vier aufsteigende Balken, links vom Akku.
+    sig_w = u * 0.055
+    sig_x1 = bat_x0 - gap
+    bar_gap = u * 0.006
+    bar_w = (sig_w - 3 * bar_gap) / 4
+    for i in range(4):
+        bh = icon_h * (0.34 + 0.22 * i)
+        bx = sig_x1 - sig_w + i * (bar_w + bar_gap)
+        d.rounded_rectangle([bx, cy + icon_h / 2 - bh,
+                             bx + bar_w, cy + icon_h / 2],
+                            radius=max(1, int(bar_w * 0.35)), fill=ICON)
+
+    # WLAN: zwei Boegen und Punkt, links vom Signal.
+    wifi_w = u * 0.039
+    wifi_h = icon_h * 0.86
+    wx = int(sig_x1 - sig_w - gap - wifi_w)
+    dot_r = icon_h * 0.10
+    dcx, dcy = wx + wifi_w / 2, cy + icon_h / 2 - dot_r * 0.6
+    for k in (0.55, 1.0):
+        r = wifi_h * 0.62 * k
+        d.arc([dcx - r, dcy - r, dcx + r, dcy + r], 212, 328,
+              fill=ICON, width=stroke)
+    d.ellipse([dcx - dot_r, dcy - dot_r, dcx + dot_r, dcy + dot_r],
+              fill=ICON)
+
+    # Stumm: Lautsprecher mit Schraegstrich, links vom WLAN.
+    mute_w = u * 0.028
+    sx = int(wx - gap - mute_w)
+    my = cy + icon_h * 0.06
+    mh = icon_h * 0.46          # halbe Hoehe des Lautsprechers
+    d.rectangle([sx, my - mh * 0.55, sx + mute_w * 0.20, my + mh * 0.55],
+                fill=ICON)
+    d.polygon([(sx + mute_w * 0.20, my - mh * 0.55),
+               (sx + mute_w * 0.58, my - mh * 1.15),
+               (sx + mute_w * 0.58, my + mh * 1.15),
+               (sx + mute_w * 0.20, my + mh * 0.55)], fill=ICON)
+    d.line([(sx - mute_w * 0.16, my + mh * 1.05),
+            (sx + mute_w * 0.74, my - mh * 1.15)],
+           fill=ICON, width=max(1, int(icon_h * 0.11)))
 
 
 def _draw_nav_bar(img: Image.Image):
@@ -444,6 +455,234 @@ def badge_pill(bg, text, cx, top, font_path=FONT_BOLD, size=34, pad_x=72,
     bg.alpha_composite(layer)
 
 
+def _crop_tile(img):
+    """Schneidet aus dem Golden-Export genau die Kachel heraus.
+
+    matchesGoldenFile erfasst immer den ganzen Screenshot-Frame, nicht
+    das Widget. Der Export einer Einzel-Kachel ist deshalb 360x800
+    (die View) mit der Kachel mittig darin und viel leerem Rand drum.
+
+    Gesucht wird nach der Kachelkontur: Das erste von oben kommende
+    breite Band heller Pixel ist die Kachel, ihr Ende ist das letzte
+    solche Band. Alles darueber (Scaffold-Hintergrund) und darunter wird
+    abgeschnitten.
+
+    Bewusst ueber Pixel und nicht ueber eine gemeldete Groesse: die
+    Kachelgroesse haengt am Inhalt der jeweiligen Modus-Beschreibung
+    und ist deshalb pro Kachel verschieden (im Zwischenstand zwischen
+    136 und 256 px Hoehe gemessen).
+    """
+    im = img.convert('RGB')
+    w, h = im.size
+    px = im.load()
+
+    # Die Kachel ist EXAKT weiss (255,255,255); der Scaffold drumher ist
+    # (247,247,251). Beide sind "hell" - deshalb wird nicht auf
+    # Helligkeit, sondern auf exaktes Weiss geprueft. Mit einem
+    # Schwellwert >700 lag die ganze View als Kachel da und der Crop
+    # lief ins Leere.
+    def is_card(x, y):
+        r, g, b = px[x, y]
+        return r >= 252 and g >= 252 and b >= 252
+
+    # Vertikal: Zeilen, in denen ein nennenswerter Anteil der Breite
+    # zur Kachel gehoert.
+    rows = []
+    for y in range(h):
+        n = sum(1 for x in range(0, w, 4) if is_card(x, y))
+        if n / len(range(0, w, 4)) > 0.5:
+            rows.append(y)
+    if not rows:
+        return im
+    top, bot = min(rows), max(rows)
+
+    # Seitlich: Spalten, die ueber die Kachel-Hoehe weitgehend weiss sind.
+    mid = range(top, bot + 1, 4)
+    xs = [x for x in range(w)
+          if sum(1 for y in mid if is_card(x, y)) > 0.6 * len(list(mid))]
+    if not xs:
+        return im
+    left, right = min(xs), max(xs)
+    return im.crop((left, top, right + 1, bot + 1))
+
+
+def _card_shadow(img, radius, opacity=52, blur=16, dy=8):
+    """Kachel mit weichem Schatten, auf einer groesseren Flaeche.
+
+    Die Kacheln liegen auf dem gesättigten Markenverlauf. Ohne Schatten
+    heben sie sich nur durch die Helligkeit ab und wirken eingeklebt.
+
+    Wichtig: zurueckgegeben wird die Kachel INKLUSIVE Schatten, nicht
+    nur der Schatten. Die erste Fassion lieferte nur die Schattenebene
+    zurueck - die Kacheln fehlten dadurch in beiden fertigen Bildern,
+    ohne Fehlermeldung, weil alpha_composite mit einem transparenten
+    Bild stillschweigend nichts tut.
+
+    Rueckgabe: (bild, x_offset, y_offset) - das Bild ist um pad links/
+    oben und um dy unten groesser als die Kachel.
+    """
+    w, h = img.size
+    pad = int(blur * 2)
+    total = (w + 2 * pad, h + 2 * pad + dy)
+
+    # 1) Schattenebene
+    shadow = Image.new('RGBA', total, (0, 0, 0, 0))
+    ImageDraw.Draw(shadow).rounded_rectangle(
+        [pad, pad, pad + w, pad + h], radius=radius,
+        fill=(18, 0, 32, opacity))
+    shadow = shadow.filter(ImageFilter.GaussianBlur(blur))
+
+    # 2) Kachel OBEN AUF den Schatten legen - nicht daneben.
+    out = shadow
+    out.alpha_composite(img.convert('RGBA'), (pad, pad))
+    return out, pad, pad
+
+
+# Die echte Modus-Kachel ist eine Card mit 16 dp Eckradius
+# (swipe_mode_selection_screen.dart). Der Golden-Export schneidet nur die
+# exakt weissen Pixel heraus und verliert damit genau diese Rundung -
+# die Kacheln wirkten dadurch wie aufgeklebte Rechtecke. Der Radius wird
+# hier aus der Kachelbreite zurueckgerechnet, damit die Kachel im fertigen
+# Bild exakt so rund ist wie in der App.
+TILE_RADIUS_DP = 16
+TILE_WIDTH_DP = 312
+
+
+def _round_tile(tile, col_w):
+    """Kachel auf die Zielbreite bringen und mit dem echten Radius runden."""
+    r = max(2, int(round(col_w * TILE_RADIUS_DP / TILE_WIDTH_DP)))
+    return round_corners(tile, r)
+
+
+def _tile_scale(tiles, max_w, avail_h, gap):
+    """Groesster gemeinsamer Skalierungsfaktor fuer alle Kacheln.
+
+    Begrenzt von der Breite (max_w) und von der Hoehe (avail_h inklusive
+    der Abstaende). Beide Grenzen sind noetig: eine Kachel, die nur in die
+    Breite passt, wuerde unten aus dem Bild laufen oder die naechste
+    ueberdecken.
+    """
+    widest = max(t.width for t in tiles)
+    total_h = sum(t.height for t in tiles)
+    by_w = max_w / widest
+    by_h = (avail_h - (len(tiles) - 1) * gap) / total_h
+    return min(by_w, by_h)
+
+
+def _place_tiles(bg, tiles, y, avail_h, max_w, gap, x=None, center_w=0):
+    """Kacheln untereinander ab y setzen, zentriert im Restfeld.
+
+    `x` setzt die Kacheln auf eine feste linke Kante (16:9 nutzt das fuer
+    die Textspalte). `center_w` mittelt sie stattdessen in dieser Breite -
+    im 9:16-Bild ist die Mitte die einzige sinnvolle Wahl, weil die
+    Kachelbreite erst aus der Hoehenbegrenzung entsteht.
+
+    Gibt die tatsaechliche Kantenbreite zurueck, damit der Aufrufer den
+    Textblock daneben setzen kann.
+    """
+    k = _tile_scale(tiles, max_w, avail_h, gap)
+    col_w = int(round(max(t.width for t in tiles) * k))
+    block_h = int(round(sum(t.height for t in tiles) * k)) \
+        + (len(tiles) - 1) * gap
+
+    if center_w:
+        x = (center_w - col_w) // 2
+    ty = y + max(0, (avail_h - block_h) // 2)
+    radius = max(2, int(round(col_w * TILE_RADIUS_DP / TILE_WIDTH_DP)))
+    for t in tiles:
+        tile = t.resize((col_w, max(1, int(round(t.height * k)))),
+                        Image.LANCZOS)
+        card, dp, dpy = _card_shadow(_round_tile(tile, col_w), radius)
+        bg.alpha_composite(card, (x - dp, ty - dpy))
+        ty += tile.height + gap
+    return col_w
+
+
+def compose_modes(tiles, headline: str, subline: str, badge: str):
+    """9:16: die fuenf echten Modus-Kacheln als grosse Liste.
+
+    v0.9.2, dritter Durchgang. Zwei vorherige Fassungen waren falsch:
+
+      * Kompletter Screen im Geraet - alle fuenf Modi passten nur, wenn
+        die Schrift auf 0.64 verkleinert wurde, also kleiner als in allen
+        anderen Store-Bildern.
+      * Losgeloste Kacheln in zwei Spalten und drei Reihen. Die Kacheln
+        waren dabei nur 460 px breit (43 % der Bildbreite) und der
+        Crop hatte ihnen die runden Ecken genommen. Dazu verteilte der
+        Faktor die Reihen ueber die ganze Bildhoehe, sodass zwischen
+        den Kacheln riesige leere Streifen standen.
+
+    Jetzt: eine Spalte, fuenf Kacheln ueber die volle Bildbreite, so
+    gross wie die Hoehe zulaesst. Das ist genau die Liste, die die App
+    zeigt - und die Kacheln sind mit rund 830 px gut doppelt so breit
+    wie vorher, mit gerundeten Ecken und ohne tote Flaechen.
+    """
+    W, H = 1080, 1920
+    bg = gradient((W, H), 40).convert('RGBA')
+    draw = ImageDraw.Draw(bg)
+
+    f_head = ImageFont.truetype(FONT_BOLD, 62)
+    f_sub = ImageFont.truetype(FONT_REG, 30)
+    y = 104
+    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255), 14,
+                   W // 2, y)
+    y += 20
+    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226), 10,
+                   W // 2, y)
+
+    margin = 60
+    gap = 28
+    badge_top = H - 136
+    _place_tiles(bg, tiles, y + 34, badge_top - y - 70, W - 2 * margin, gap,
+                 center_w=W)
+
+    badge_pill(bg, badge, W // 2, badge_top)
+    return round_corners(bg, 56)
+
+
+def compose_modes_wqhd(tiles, headline: str, subline: str, badge: str):
+    """16:9: Kacheln links, Text rechts - wie compose_wqhd, aber mit
+    Kacheln statt eines Geraets.
+
+    Die Kacheln werden mit derselben Hoehenbegrenzung gesetzt wie im
+    9:16-Bild. Vorher lag die Spaltenbreite fest bei 900 px, wodurch die
+    hohe Transit-Spark-Kachel aus ihrer Zeile in die darunterliegende
+    ragte.
+    """
+    W, H = 2560, 1440
+    bg = gradient((W, H), 25).convert('RGBA')
+    draw = ImageDraw.Draw(bg)
+
+    margin = 90
+    gap = 26
+    col_w = _place_tiles(bg, tiles, margin, H - 2 * margin, 980, gap,
+                         x=margin)
+
+    f_head = ImageFont.truetype(FONT_BOLD, 78)
+    f_sub = ImageFont.truetype(FONT_REG, 38)
+    tx = margin + col_w + 90
+    y = max(200, (H - 400) // 2)
+    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255), 20,
+                   tx, y, align='left')
+    y += 24
+    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226), 14,
+                   tx, y, align='left')
+    y += 40
+    f_badge = ImageFont.truetype(FONT_BOLD, 36)
+    bb = draw.textbbox((0, 0), badge, font=f_badge)
+    bw = bb[2] - bb[0] + 2 * 68
+    layer = Image.new('RGBA', bg.size, (0, 0, 0, 0))
+    ImageDraw.Draw(layer).rounded_rectangle(
+        [tx, y, tx + bw, y + bb[3] - bb[1] + 40],
+        radius=(bb[3] - bb[1] + 40) // 2,
+        fill=(255, 255, 255, 52), outline=(255, 255, 255, 130), width=2)
+    ImageDraw.Draw(layer).text(
+        (tx + 68 - bb[0], y + 20 - bb[1]), badge, font=f_badge,
+        fill=(255, 255, 255, 250))
+    bg.alpha_composite(layer)
+    return round_corners(bg, 56)
+
+
 def compose_9x16(shot: Image.Image, headline: str, subline: str, badge: str):
     W, H = 1080, 1920
     bg = gradient((W, H), 40).convert('RGBA')
@@ -604,6 +843,25 @@ def main():
         if not src.exists():
             print('  fehlt:', src.name)
             continue
+        if name == '03_entdecken' and TILES.exists():
+            # Sonderfall: nicht der Screen, sondern die einzelnen
+            # Modus-Kacheln (siehe compose_modes).
+            tiles = sorted(TILES.glob('tile_*.png'),
+                           key=lambda p: int(p.stem.split('_')[1]))
+            if tiles:
+                a = compose_modes([_crop_tile(Image.open(t)) for t in tiles],
+                                  headline, subline, badge)
+                b = compose_modes_wqhd(
+                    [_crop_tile(Image.open(t)) for t in tiles],
+                    headline, subline, badge)
+                for d, im in ((OUT_9x16, a), (OUT_WQHD, b),
+                              (OUT_FASTLANE, a)):
+                    save_png(im, d / f'{name}.png')
+                print(f'  {name}: 9x16 {a.size} + wqhd {b.size} '
+                      f'({len(tiles)} Kacheln)')
+                continue
+            print('  03_entdecken: keine Kacheln gefunden, Fallback auf '
+                  'den Screen')
         shot = Image.open(src)
         a = compose_9x16(shot, headline, subline, badge)
         b = compose_wqhd(shot, headline, subline, badge)

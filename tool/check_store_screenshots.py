@@ -43,6 +43,14 @@ except ImportError:  # pragma: no cover
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = ROOT / 'test' / 'screenshots' / 'store_v091' / 'phone'
+
+# Kompositionen OHNE Geraet und OHNE System-UI.
+#
+# 03_entdecken zeigt seit v0.9.2 die fuenf Modus-Kacheln einzeln auf dem
+# Markenverlauf - kein Screen, kein Mockup. Eine Statusleiste gibt es
+# dort nicht, also waeren Reserve- und Indikator-Pruefung sinnlos und
+# meldeten faelschlich "Insets nicht angewendet".
+NO_STATUSBAR = {'03_entdecken.png'}
 FINAL = (ROOT / 'fastlane' / 'metadata' / 'android' / 'de-DE' /
          'images' / 'phoneScreenshots')
 
@@ -214,26 +222,33 @@ def main():
             problems.append(
                 f'{f.name}: Seitenverhaeltnis {ratio:.2f}:1 ist nicht 20:9')
 
-        # 2) Statusleisten-Reserve
-        bg = px[6, 6]
-        content = total = 0
-        for y in range(0, max(0, band_px - tol), 2):
-            for x in range(0, w, 6):
-                c = px[x, y]
-                total += 1
-                if sum(abs(c[i] - bg[i]) for i in range(3)) > 90:
-                    content += 1
-        share = content / total if total else 0
-        if share >= 0.02:
-            problems.append(
-                f'{f.name}: {share*100:.1f}% sichtbarer App-Inhalt im '
-                f'Statusleisten-Band (0..{band_px - tol}px) - der Render '
-                f'hat die System-Insets nicht angewendet')
-        notes.append(f'Reserve {share*100:.2f}%')
+        # 2) Statusleisten-Reserve - nur fuer die Kompositionen, die
+        #    ueberhaupt eine Statusleiste zeigen. 03_entdecken besteht
+        #    seit v0.9.2 aus losen Modus-Kacheln auf dem Verlauf, ohne
+        #    Geraet und ohne System-UI: dort waere die Pruefung sinnlos.
+        has_statusbar = f.name not in NO_STATUSBAR
+        if has_statusbar:
+            bg = px[6, 6]
+            content = total = 0
+            for y in range(0, max(0, band_px - tol), 2):
+                for x in range(0, w, 6):
+                    c = px[x, y]
+                    total += 1
+                    if sum(abs(c[i] - bg[i]) for i in range(3)) > 90:
+                        content += 1
+            share = content / total if total else 0
+            if share >= 0.02:
+                problems.append(
+                    f'{f.name}: {share*100:.1f}% sichtbarer App-Inhalt im '
+                    f'Statusleisten-Band (0..{band_px - tol}px) - der Render '
+                    f'hat die System-Insets nicht angewendet')
+            notes.append(f'Reserve {share*100:.2f}%')
 
-        # 3) System-Indikatoren im fertigen Bild
+        # 3) System-Indikatoren im fertigen Bild. Nur wo ueberhaupt eine
+        #    Statusleiste gezeichnet wird - 03_entdecken besteht aus losen
+        #    Kacheln auf dem Verlauf, ohne Geraet und ohne System-UI.
         final = FINAL / f.name
-        if final.exists():
+        if has_statusbar and final.exists():
             fim = Image.open(final).convert('RGB')
             top = find_screen(fim)
             if top is None:

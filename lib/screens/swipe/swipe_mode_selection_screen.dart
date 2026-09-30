@@ -257,6 +257,12 @@ class _ModeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      // Key fuer den Store-Screenshot-Renderer: er exportiert jede
+      // Modus-Kachel einzeln. Ohne eindeutigen Key muss er die Kachel
+      // ueber ihr Layout erraten, und ein Fehler dort faellt erst
+      // beim Sichten des fertigen Bildes auf - nicht im Test.
+      // Ausserdem nuetzlich fuer gezielte Widget-Tests.
+      key: ValueKey('mode-tile-${mode.name}'),
       margin: EdgeInsets.zero,
       elevation: isSelected ? 4 : 1,
       color: isSelected
