@@ -339,6 +339,23 @@ jobs:
       # Am 2026-09-30 lief 03_entdecken mit textScale 0.64 und
       # 04_anpassen mit 0.72, die anderen mit 1.0. Im Play Store waren
       # es drei Schriftgroessen in einer Serie. Der Harness ist
-      # gitignoriert, deshalb wird die Angabe direkt aus ihm gelesen.
+      # seit v0.9.2 versioniert, die Angabe wird trotzdem direkt aus ihm
+      # gelesen - dann gilt der Check auch fuer eine spaetere Aenderung
+      # am Harness.
       - name: Screenshot-Schriftgroesse einheitlich
         run: python3 tool/check_screenshot_consistency.py
+
+      # Release-Artefakte: Signatur und Admin-Trennung.
+      #
+      # Hintergrund: Bei v0.9.1 sind die beiden universellen APKs unter
+      # dem oeffentlichen Namen byte-identisch mit den Admin-Builds. Der
+      # Admin-Build hatte den oeffentlichen Pfad ueberschrieben, sodass
+      # dort ein Build mit vollstaendigem Admin-Zugang lag. Im Play Store
+      # fiel das nicht auf, weil beide Dateien gueltig signiert sind.
+      #
+      # Ohne ADMIN_UUID laeuft der Check absichtlich nur teilweise: die
+      # UUID ist ein Geheimnis und darf nicht im Repository liegen. Der
+      # Byte-Vergleich ueber alle Versionen braucht sie nicht und ist
+      # deshalb der Teil, der hier die volle Staerke hat.
+      - name: Release-Artefakte auf Signatur und Admin-Trennung pruefen
+        run: python3 tool/check_release_artifacts.py
