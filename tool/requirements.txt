@@ -16,3 +16,19 @@ sqlglot==30.18.0
 # Push-Signoffs, also ebenfalls gepinnt - eine pglast-Aktualisierung darf
 # keine stillen Aussagen in der Reihenfolge der Meldungen verschieben.
 pglast==8.4
+
+# Pillow fuer die Bildpruefungen: check_png_integrity.py (PNG-Struktur,
+# IEND, Groesse gegen den Git-Blob) und check_store_screenshots.py
+# (Statusleisten-Reserve, System-Symbole).
+#
+# Auch das keine reine Entwicklungsabhaengigkeit: der Import steht ganz
+# oben im Skript, fehlt das Paket, bricht der Lauf AB - nicht mit einem
+# Befund, sondern mit ImportError, und die Uebersprungenlogik fuer CI
+# (keine Screenshots vorhanden) wird nie erreicht. Genau das hat den
+# static-checks-Job am 2026-09-29 zweimal rot gemacht.
+#
+# 12.3.0 ist lokal verifiziert; ab dieser Linie gibt es die
+# Image.resize()-Semantik, auf die der Store-Screenshot-Render sich
+# verlaesst (LANCZOS ist seit 9.1 Standard).
+Pillow==12.3.0
+
