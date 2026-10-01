@@ -775,6 +775,35 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
 
 ## Irgendwann / Idee
 
+- [ ] **Eigene Hintergründe im Chat zeichnen**: die sechs
+      mitgelieferten Muster (`lib/data/chat_backgrounds.dart`) sind
+      fester Bestandteil. Nutzer sollen eigene Hintergründe bauen
+      können – eigene Farbverläufe, Muster-Zeichner (Vektor statt
+      gerastert, damit es auf jedem Display scharf bleibt) und
+      ausgewählte Chat-Hintergründe der anderen Seite als Vorlage
+      übernehmen. Offen sind vor allem: was mit fremden Mustern passiert
+      (Urheberrecht, Moderation), wie groß ein Hintergrund maximal sein
+      darf, und wie das mit dem Vergrößern der Bilder in
+      `profile_widgets.dart` zusammenpasst. Ohne diese Antworten
+      verschiebt man nur die Probleme
+- [ ] **Spenden-Button mit echter Zieladresse**: Der Button ist wieder
+      da (`lib/widgets/donate_button.dart`), `kDonateUrl` ist aber leer.
+      Offen ist die Abwicklung – Zahlungsanbieter, steuerliche
+      Behandlung, Beleg, Rückerstattung – und ob daraus das frühere
+      „Spender"-Badge zurückkommt (damals entfernt, weil die Zahlung
+      eine Attrappe war). Ohne Zieladrede bleibt der Button eine
+      höfliche Enttäuschung
+- [ ] **Eigene Komponenten statt Standard-Widgets**: die App setzt
+      an vielen Stellen rohe Material-Widgets ein – 137 `FilledButton`,
+      102 `TextButton`, 83 `IconButton`, 69 `AlertDialog`, 78 `Card`,
+      69 `ListTile`. Die auffälligsten Stellen: `chat_detail_screen.dart`,
+      `settings_screen.dart`, `transit_radar_screen.dart`,
+      `privacy_screen.dart`, `interessen_screen.dart`. Bisher ad hoc
+      gelöst (zwei Auswahl-Widgets mit eigener Optik, `SelectableTile`,
+      `ThemePicker`), aber ohne gemeinsame Bibliothek. Ziel ist ein
+      Satz eigener Bausteine – Knopf, Dialog, Karte, Zeile, Segment –
+      mit einer statt drei Optiken und eigener Drück-Physik, damit sich
+      die App nicht wie eine Standard-Flutter-App liest
 - [ ] Admin-Screen-Überarbeitung (internes Werkzeug): Pillen-förmiger
       Tab-Indikator, Kennzahlen-Zeile oben (offene Meldungen, neue Bugs),
       Suche im Sperren-Tab, einheitliche Karten- und Empty-States

@@ -154,26 +154,115 @@ CAM_R = 11
 STATUS_BAR_DP = 24
 NAV_BAR_DP = 24
 
+# Sprite der echten Statusleisten-Symbole, aus dem Referenz-Screenshot
+# geschnitten (siehe tool/make_statusbar_assets.py). Fehlt die Datei,
+# wird zurueckgezeichnet - die Rueckfallloesung ist schlechter, aber
+# sie existiert, damit ohne Referenz ueberhaupt ein Bild entsteht.
+STATUSBAR_SPRITE = ROOT / 'assets' / 'images' / 'statusbar_icons.png'
+STATUSBAR_GEOMETRY = ROOT / 'tool' / 'statusbar_geometry.json'
+STATUSBAR_ORDER = ('mute', 'wifi', 'signal', 'battery')
+
+
+def _paste_status_bar_icons(img, cy, tint):
+    """Setzt die echten Symbole aus dem Sprite ein. True bei Erfolg.
+
+    Der Akku kommt aus dem Sprite MIT der Prozentzahl, die darin
+    steckt - deshalb wird sie nicht noch einmal gezeichnet. Bei den
+    Symbolen, die aus einem hellen Screenshot stammen, wird das Weiss
+    auf die Zielfarbe umgefärbt: die App-Oberflaeche ist hell, helle
+    Symbole waeren dort unsichtbar.
+    """
+    import json
+    if not STATUSBAR_SPRITE.is_file() or not STATUSBAR_GEOMETRY.is_file():
+        return False
+    try:
+        geom = json.loads(STATUSBAR_GEOMETRY.read_text(encoding='utf-8'))
+        sprite = Image.open(STATUSBAR_SPRITE).convert('RGBA')
+    except (OSError, ValueError, KeyError):
+        return False
+
+    boxes = geom.get('sprite') or {}
+    if any(name not in boxes for name in STATUSBAR_ORDER):
+        return False
+
+    target = tuple(tint[:3])
+    w, h = img.size
+    u = float(w)
+
+    # Zielflaeche in der Breite des Original-Statusleisten-Clusters:
+    # 30 % der Bildbreite, gemessen an der Referenz.
+    target_w = u * 0.30
+    natural = sum(boxes[n]['w'] for n in STATUSBAR_ORDER) + 3 * (u * 0.013)
+    if natural <= 0:
+        return False
+    scale = target_w / natural
+
+    # Hoehe aus dem Verhaeltnis des Sprites zur Breite bestimmen und
+    # zusaetzlich auf die Bandhoehe begrenzen, damit die Symbole
+    # niemals in die AppBar ragen.
+    sprite_h = max(boxes[n]['h'] for n in STATUSBAR_ORDER)
+    height = min(sprite_h * scale, h * (STATUS_BAR_DP / 800.0) * 0.80)
+    scale = height / sprite_h
+
+    gap = u * 0.013 * scale
+    cursor = w - u * 0.039
+
+    for name in reversed(STATUSBAR_ORDER):
+        b = boxes[name]
+        tw = b['w'] * scale
+        th = b['h'] * scale
+        tile = sprite.crop((b['x'], b['y'], b['x'] + b['w'], b['y'] + b['h']))
+        tile = tile.resize((max(1, int(round(tw))), max(1, int(round(th)))),
+                           Image.LANCZOS)
+
+        # Weiss auf die Zielfarbe umfaerben, Alpha bleibt erhalten.
+        # Abstand von Weiss wird als Deckkraft genutzt: die Referenz
+        # hat weisse Symbole, die App-Oberflaeche ist hell.
+        rr, gg, bb, _alpha = tile.split()
+        mask = Image.new('L', tile.size, 0)
+        rp, gp, bpp = rr.load(), gg.load(), bb.load()
+        mp = mask.load()
+        for yy in range(tile.size[1]):
+            for xx in range(tile.size[0]):
+                dist = (255 - rp[xx, yy]) + (255 - gp[xx, yy]) + \
+                    (255 - bpp[xx, yy])
+                mp[xx, yy] = max(0, 255 - int(dist / 3))
+        flat = Image.new('L', tile.size, 0)
+        recolored = Image.merge('RGBA', (
+            Image.new('L', tile.size, target[0]),
+            Image.new('L', tile.size, target[1]),
+            Image.new('L', tile.size, target[2]),
+            mask,
+        ))
+        img.alpha_composite(
+            recolored, (int(cursor - tw), int(cy - th / 2)))
+        cursor -= tw + gap
+
+    return True
+
 
 def _draw_status_bar(img: Image.Image, clock='3:41', percent='70'):
     """Zeichnet die System-Statusleiste nach dem Geraet des Nutzers.
 
-    Referenz ist ein Screenshot vom Android-16-Geraet des Nutzers. Die
-    Anordnung ist von links nach rechts:
+    ZWEI WEGE, und der erste ist der richtige:
+
+    1. Sprite aus dem echten Referenz-Screenshot. Ist
+       `assets/images/statusbar_icons.png` vorhanden (erzeugt von
+       `tool/make_statusbar_assets.py`), werden die Original-Symbole
+       pixelgenau eingesetzt. Handgezeichnete Naeherungen sind der
+       Grund, warum die Leiste dreimal nicht gepasst hat: Android-
+       Symbole sind Vektorpfade mit eigenen Kurven, und ein
+       nachgezeichneter Bogen ist nie derselbe Bogen.
+
+    2. Ohne Sprite wird zurueckgezeichnet, nach den Verhaeltnissen aus
+       der Referenz (Cluster 30 % der Bildbreite, Uhr 7 %, linker Rand
+       6,5 %, rechter Rand 3,9 %). Das ist die zweite Schicht und sie
+       ist deutlich schlechter - sie existiert nur, damit ohne
+       Referenzdatei ueberhaupt etwas dasteht.
+
+    Die Anordnung ist in beiden Faellen gleich, von links nach rechts:
 
         [3:41]  ......  [Stumm] [WLAN] [Signal] [Akku mit 70]
-
-    WICHTIG - alle Masse sind Bruchteile der BILDBREITE, nicht der
-    Bandhoehe. Das war der Fehler in den ersten beiden Fassungen: an
-    der Bandhoehe gemessen waren die Symbole rund 1,5x zu klein, weil
-    die Statusleiste des Geraets deutlich hoeher ist als ihre Symbole
-    (Reserve fuer die Kamera-Aussparung). In der Referenz belegt der
-    Symbolcluster 30 % der Bildbreite, die Uhr 7 %, der linke Rand 6,5 %,
-    der rechte 3,9 %. Genau diese Verhaeltnisse sind hier hinterlegt.
-
-    Die Referenz hat helle Symbole auf einem Foto. Die App-Oberflaeche
-    ist hell, dort waeren sie unsichtbar - deshalb deckendes Dunkel. Die
-    Form ist dieselbe, das nur fuer den Kontrast.
     """
     d = ImageDraw.Draw(img)
     w, h = img.size
@@ -191,6 +280,15 @@ def _draw_status_bar(img: Image.Image, clock='3:41', percent='70'):
         except OSError:
             return None
 
+    # --- Uhrzeit links -------------------------------------------------
+    f_time = font(FONT_BOLD, u * 0.030)
+    if f_time is not None:
+        d.text((u * 0.0655, cy), clock, font=f_time, fill=ICON, anchor='lm')
+
+    # --- Weg 1: echte Symbole aus dem Sprite ---------------------------
+    if _paste_status_bar_icons(img, cy, ICON):
+        return
+
     def centered(text, fnt, fill, left, width):
         """Text horizontal in [left, left+width] und vertikal auf cy zentrieren."""
         if fnt is None:
@@ -198,11 +296,6 @@ def _draw_status_bar(img: Image.Image, clock='3:41', percent='70'):
         bb = d.textbbox((0, 0), text, font=fnt)
         d.text((left + (width - (bb[2] - bb[0])) / 2 - bb[0],
                 cy - (bb[3] - bb[1]) / 2 - bb[1]), text, font=fnt, fill=fill)
-
-    # --- Uhrzeit links -------------------------------------------------
-    f_time = font(FONT_BOLD, u * 0.030)
-    if f_time is not None:
-        d.text((u * 0.0655, cy), clock, font=f_time, fill=ICON, anchor='lm')
 
     # --- Cluster rechts, vom Rand rueckwaerts ----------------------------
     # Reihenfolge und Breiten aus der Referenz. Der Akku ist eine breite,

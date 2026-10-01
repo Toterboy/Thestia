@@ -1558,6 +1558,12 @@ const Map<String, Map<String, String>> _strings = {
     'profile.years': 'Jahre',
     'profile.ageUnknown': 'Alter unbekannt',
     'profile.typePrefix': 'Typ',
+    // Hinweis auf ein frisches Konto. Bewusst ohne Datum: ein exaktes
+    // Erstellungsdatum waere ein Datenleck, und ein Hinweis ist kein
+    // Beweis - auch echte neue Nutzer fallen darunter.
+    'profile.newAccountBadge': 'Neu',
+    'profile.newAccountTooltip':
+        'Account ist jünger als 7 Tage. Ein Hinweis, kein Beweis.',
     'profile.aboutMe': 'Über mich',
     'profile.noBio': 'Noch keine Bio.',
     'profile.interests': 'Interessen',
@@ -1565,6 +1571,13 @@ const Map<String, Map<String, String>> _strings = {
     'profile.blindModeSub': 'Fotos erst nach Funke anzeigen',
     'profile.profileBtn': 'Profil',
     'profile.bugReportBtn': 'Bug melden',
+    'profile.donateBtn': 'Unterstützen',
+    'profile.donateTitle': 'App unterstützen',
+    'profile.donateNotConfigured':
+        'Für diese App ist noch keine Spendenadresse hinterlegt. '
+        'Es wurde nichts abgebucht und nichts verbucht.',
+    'profile.donateOpenFailed':
+        'Die Seite ließ sich nicht öffnen.',
     'profile.edit.title': 'Profil bearbeiten',
     'profile.edit.name': 'Name',
     'profile.edit.birthDate': 'Geburtsdatum',
@@ -4014,6 +4027,9 @@ const Map<String, Map<String, String>> _strings = {
     'profile.years': 'years',
     'profile.ageUnknown': 'Age unknown',
     'profile.typePrefix': 'Type',
+    'profile.newAccountBadge': 'New',
+    'profile.newAccountTooltip':
+        'Account is younger than 7 days. An indication, not proof.',
     'profile.aboutMe': 'About me',
     'profile.noBio': 'No bio yet.',
     'profile.interests': 'Interests',
@@ -4021,6 +4037,12 @@ const Map<String, Map<String, String>> _strings = {
     'profile.blindModeSub': 'Show photos only after a spark',
     'profile.profileBtn': 'Profile',
     'profile.bugReportBtn': 'Report a bug',
+    'profile.donateBtn': 'Support',
+    'profile.donateTitle': 'Support the app',
+    'profile.donateNotConfigured':
+        'No donation address is configured for this app yet. '
+        'Nothing was charged and nothing was booked.',
+    'profile.donateOpenFailed': 'The page could not be opened.',
     'profile.edit.title': 'Edit profile',
     'profile.edit.name': 'Name',
     'profile.edit.birthDate': 'Date of birth',

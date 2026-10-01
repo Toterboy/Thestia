@@ -20,6 +20,7 @@ import 'package:thestia/services/report_service.dart';
 import 'package:thestia/widgets/birthday_style.dart';
 import 'package:thestia/utils/age_safety_rules.dart';
 import 'package:thestia/widgets/intro_audio_player.dart';
+import 'package:thestia/widgets/new_account_badge.dart';
 import 'package:thestia/widgets/profile_widgets.dart';
 import 'package:thestia/widgets/music_taste_widgets.dart';
 
@@ -291,6 +292,14 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
                         color: Colors.lightBlue.shade400,
                       ),
                     ),
+                  ],
+                  // Konto juenger als 7 Tage. Hier ist der Hinweis
+                  // wertvoll: bei einem neuen Account ist eine
+                  // ungefragte Nachricht mit hoher Wahrscheinlichkeit
+                  // Missbrauch. Die RPC liefert created_at bereits mit.
+                  if (profile.isRecentlyCreated) ...[
+                    const SizedBox(width: 6),
+                    NewAccountBadge(profile: profile),
                   ],
                 ],
               ),

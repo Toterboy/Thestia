@@ -129,6 +129,9 @@ class SupabaseDatabaseService {
             'drugs': response['drugs'],
             'music_liked': response['music_liked'],
             'music_disliked': response['music_disliked'],
+            // Steht seit langem in der Spaltenliste, wurde aber nie
+            // gelesen. Wird fuer den Hinweis "neuer Account" gebraucht.
+            'createdAt': response['created_at'],
           };
           return UserProfile.fromJson(mapped);
         } catch (e) {

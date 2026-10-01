@@ -22,6 +22,8 @@ import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/services/supabase_storage_service.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/widgets/birthday_style.dart';
+import 'package:thestia/widgets/donate_button.dart';
+import 'package:thestia/widgets/new_account_badge.dart';
 import 'package:thestia/utils/age_safety_rules.dart';
 import 'package:thestia/utils/constants.dart';
 import 'package:thestia/widgets/profile_widgets.dart';
@@ -97,6 +99,14 @@ class ProfileScreen extends ConsumerWidget {
                           color: Colors.lightBlue.shade400,
                         ),
                       ),
+                    ],
+                    // Konto juenger als 7 Tage. Auf dem eigenen Profil
+                    // sichtbar, damit man sieht, wie man bei anderen
+                    // wirkt - die eigentliche Wirkung ist die Anzeige
+                    // auf fremden Profilen.
+                    if (profile.isRecentlyCreated) ...[
+                      const SizedBox(width: 6),
+                      NewAccountBadge(profile: profile),
                     ],
                   ],
                 ),
@@ -190,6 +200,12 @@ class ProfileScreen extends ConsumerWidget {
                 icon: const Icon(Icons.bug_report),
                 label: Text(L10n.t(context, 'profile.bugReportBtn')),
               ),
+              const SizedBox(height: 12),
+              // Spenden-Button, wieder da (bis v0.4.0 entfernt, weil die
+              // Zahlung eine Attrappe war). Ohne hinterlegte Adresse sagt
+              // der Button das auch - es tut so, als waere gespendet
+              // worden, waere schlimmer als gar nichts.
+              const Center(child: DonateButton()),
               const SizedBox(height: 12),
             ],
           ),

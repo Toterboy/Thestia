@@ -147,7 +147,40 @@ class UserProfile {
     this.matchScore,
     this.birthdayStyle = 'classic',
     this.birthdayToday = false,
+    this.createdAt,
   });
+
+  /// Zeitpunkt, zu dem das Konto angelegt wurde.
+  ///
+  /// Wird fuer die Anzeige "neuer Account" gebraucht (siehe
+  /// [isRecentlyCreated]). Die Spalte `created_at` liefern sowohl das
+  /// eigene Profil als auch `get_public_profile` bereits mit - sie war
+  /// nur nie im Modell abgelegt.
+  ///
+  /// Bewusst der Zeitpunkt des Kontos und nicht der Registrierung: das
+  /// ist der fuer den Missbrauch relevante Zeitraum.
+  final DateTime? createdAt;
+
+  /// Ab wie vielen Tagen gilt ein Konto nicht mehr als neu.
+  static const int recentAccountDays = 7;
+
+  /// Ob das Konto juenger als [recentAccountDays] Tage ist.
+  ///
+  /// Ein Hinweis, kein Beweis: auch echte neue Nutzer fallen darunter.
+  /// Er soll davor schuetzen, dass man dauerhaft von Accounts
+  /// angeschrieben wird, die es gerade erst gibt. Ein exaktes Datum
+  /// waere zusaetzlich ein Datenleck, deshalb wird nichts genauer
+  /// angezeigt als "neu".
+  ///
+  /// Ohne [createdAt] (Server liefert die Spalte nicht) gilt das Konto
+  /// bewusst NICHT als neu: eine falsche Entwarnung waere schaedlicher
+  /// als ein fehlender Hinweis.
+  bool get isRecentlyCreated {
+    final created = createdAt;
+    if (created == null) return false;
+    final age = DateTime.now().toUtc().difference(created.toUtc());
+    return age.inDays < recentAccountDays;
+  }
 
   /// True, wenn das Geburtsdatum auf heute fällt (Tag/Monat, lokal für
   /// das eigene Profil; fremde Profile liefern birthdayToday serverseitig).
@@ -220,6 +253,9 @@ class UserProfile {
       // Abgerundete Distanz in km (5-km-Schritte, serverseitig berechnet).
       distanceKm: (json['distance_km'] as num?)?.toDouble() ?? 0,
       matchScore: (json['match_score'] as num?)?.toInt(),
+      // Die RPC liefert created_at mit (profile_to_jsonb), es wurde nur
+      // nie gelesen. Wird fuer den Hinweis "neuer Account" gebraucht.
+      createdAt: _parseCreatedAt(json['created_at']),
     );
   }
 
@@ -273,6 +309,7 @@ class UserProfile {
           .toList(),
       birthdayStyle: json['birthdayStyle'] as String? ?? 'classic',
       birthdayToday: json['birthdayToday'] as bool? ?? false,
+      createdAt: _parseCreatedAt(json['createdAt'] ?? json['created_at']),
     );
   }
 
@@ -310,7 +347,21 @@ class UserProfile {
         'music_disliked': musicDisliked,
         'birthdayStyle': birthdayStyle,
         'birthdayToday': birthdayToday,
+        'createdAt': createdAt?.toIso8601String(),
       };
+
+  /// Liest `created_at` robust.
+  ///
+  /// Die Spalte kommt aus Supabase als ISO-String, kann aber auch
+  /// bereits ein [DateTime] sein (z. B. aus einem Cache) und ist in
+  /// manchen Faellen null. Ein kaputter Wert darf den Profilaufbau
+  /// nicht sprengen - dann gilt das Konto schlicht nicht als neu.
+  static DateTime? _parseCreatedAt(Object? raw) {
+    if (raw == null) return null;
+    if (raw is DateTime) return raw;
+    if (raw is String) return DateTime.tryParse(raw);
+    return null;
+  }
 
   /// Erstellt eine Kopie mit veränderten Feldern (immutabel).
   UserProfile copyWith({
@@ -347,6 +398,7 @@ class UserProfile {
     int? matchScore,
     String? birthdayStyle,
     bool? birthdayToday,
+    DateTime? createdAt,
     bool clearIntroAudio = false,
   }) {
     return UserProfile(
@@ -386,6 +438,7 @@ class UserProfile {
       matchScore: matchScore ?? this.matchScore,
       birthdayStyle: birthdayStyle ?? this.birthdayStyle,
       birthdayToday: birthdayToday ?? this.birthdayToday,
+      createdAt: createdAt ?? this.createdAt,
     );
   }
 
