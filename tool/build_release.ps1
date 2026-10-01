@@ -62,6 +62,25 @@ $ErrorActionPreference = "Stop"
 Set-Location -LiteralPath (Join-Path $PSScriptRoot "..")
 
 # ---------------------------------------------------------------------
+# Gating: Geheimnisse nie als Parameter
+# ---------------------------------------------------------------------
+# ABBRUCH vor JEDER Ausfuehrung, nicht erst vor dem Admin-Block. Ein
+# Parameter landet im Klartext in der PowerShell-History (unredigiert,
+# ueber Jahre) und ist waehrend des Laufs in der Prozessliste sichtbar.
+# Beides ist bei einem Geheimnis, das Admin-Zugriff freischaltet, keine
+# Kleinigkeit - und auf diesem Rechner stand der Wert achtmal in der
+# History, ohne dass jemand es bemerkt hat.
+if ($AdminUUID -ne "") {
+    throw ("-AdminUUID ist nicht mehr erlaubt: der Wert landet in der " +
+           "PowerShell-History und in der Prozessliste.`n" +
+           "Stattdessen als Umgebungsvariable setzen:`n" +
+           "    `$env:ADMIN_UUID = '<uuid>'`n" +
+           "    powershell -NoProfile -ExecutionPolicy Bypass " +
+           "-File tool\build_release.ps1 -Flavor both -UniversalApk`n" +
+           "    Remove-Item Env:\ADMIN_UUID")
+}
+
+# ---------------------------------------------------------------------
 # Version aus pubspec.yaml lesen (version: <name>+<build>)
 # ---------------------------------------------------------------------
 $pubspecLine = Select-String -Path "pubspec.yaml" -Pattern "^version:\s*(.+)\+(.+)"
@@ -166,37 +185,115 @@ function Test-ContainsText {
     }
 }
 
+function Get-AdminMarkerPath {
+    # Datei, die protokolliert, welche Artefakte aus einem Admin-Build
+    # stammen. Sie enthaelt KEIN Geheimnis, nur Hashes - sie darf also
+    # gefahrlos im Arbeitsverzeichnis liegen.
+    Join-Path "build" ".admin-artifacts.json"
+}
+
+function Register-AdminArtifact {
+    <#
+      Vermerkt eine Datei als Admin-Artefakt, mit ihrem SHA-256.
+
+      Warum das noetig ist: die UUID-Pruefung in Assert-PublicSafe
+      greift nur, wenn das Geheimnis bekannt ist. Genau beim
+      -SkipBuild-Lauf, in dem niemand an ein Geheimnis denkt, greift
+      sie also nicht. Der Provenienz-Check braucht kein Geheimnis: er
+      weiss, dass diese Datei aus einem Admin-Build stammt, und
+      blockt sie - unabhaengig davon, ob jemand das Geheimnis kennt.
+    #>
+    param([string]$Path)
+
+    $marker = Get-AdminMarkerPath
+    $hash = (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLower()
+
+    $list = @{}
+    if (Test-Path -LiteralPath $marker) {
+        try {
+            $raw = Get-Content -LiteralPath $marker -Raw | ConvertFrom-Json
+            foreach ($p in $raw.PSObject.Properties) { $list[$p.Name] = $p.Value }
+        } catch {
+            # Beschaedigte Markerdatei ist kein Grund weiterzuarbeiten:
+            # dann verlieren wir die Provenienz.
+            throw "Admin-Marker nicht lesbar ($marker). Bitte loeschen: $marker"
+        }
+    }
+    $list[$hash] = (Split-Path $Path -Leaf)
+    $list | ConvertTo-Json | Set-Content -LiteralPath $marker -Encoding UTF8
+    Write-Host "    als Admin-Artefakt vermerkt: $(Split-Path $Path -Leaf)" -ForegroundColor DarkGray
+}
+
+function Test-IsAdminArtifact {
+    <#
+      True, wenn die Datei als aus einem Admin-Build stammend vermerkt
+      ist. Braucht kein Geheimnis.
+    #>
+    param([string]$Path)
+
+    $marker = Get-AdminMarkerPath
+    if (-not (Test-Path -LiteralPath $marker)) { return $false }
+    if (-not (Test-Path -LiteralPath $Path)) { return $false }
+    $hash = (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLower()
+    try {
+        $raw = Get-Content -LiteralPath $marker -Raw | ConvertFrom-Json
+        return $raw.PSObject.Properties.Name -contains $hash
+    } catch {
+        return $false
+    }
+}
+
 function Assert-PublicSafe {
     <#
-      Sperrt JEDE Kopie in den oeffentlichen Ablageort, die die
-      Admin-UUID enthaelt.
+      Sperrt JEDE Kopie in den oeffentlichen Ablageort, die aus einem
+      Admin-Build stammt oder die Admin-UUID enthaelt.
 
       Hintergrund (v0.9.1, 30.09.2026): der Admin- und der
       Universal-Build schreiben auf DENSELBEN Gradle-Pfad
-      build\app\outputs\flutter-apk\app-<flavor>-release.apk. Nach einem
-      Admin-Build liegt dort der Admin-Build, und jeder spaetere Lauf mit
-      -SkipBuild hat ihn unter dem oeffentlichen Namen kopiert. Die
-      beiden universellen v0.9.1-APKs waren tatsaechlich byte-identisch
-      mit den Admin-Builds und enthielten die UUID. Im Play Store faellt
-      das nicht auf, weil beide Dateien gueltig signiert sind.
+      build\app\outputs\flutter-apk\app-<flavor>-release.apk - und der
+      Admin-Build zusaetzlich nach outputs\apk\<flavor>\release\. Nach
+      einem Admin-Build liegt dort der Admin-Build, und jeder spaetere
+      Lauf mit -SkipBuild hat ihn unter dem oeffentlichen Namen
+      kopiert. Die beiden universellen v0.9.1-APKs waren tatsaechlich
+      byte-identisch mit den Admin-Builds.
 
-      Das ist die zweite Schicht. Die erste ist, dass der Admin-Build
-      sein Ergebnis nach dem Kopieren wieder aus dem geteilten
-      Output-Verzeichnis entfernt.
+      Drei unabhaengige Pruefungen, absichtlich redundant:
+
+      1. PROVENIENZ (ohne Geheimnis): steht der Hash der Quelldatei in
+         build\.admin-artifacts.json, ist sie ein Admin-Build.
+      2. INHALT (mit Geheimnis): enthaelt sie die bekannte UUID.
+      3. MUSTER (ohne Geheimnis): ein oeffentlicher Build darf nicht
+         MEHR UUIDs enthalten als der letzte saubere oeffentliche
+         Build. Ein Admin-Build kompiliert eine zusaetzliche ein.
     #>
     param([string]$Path, [string]$DestLabel)
 
+    if (Test-IsAdminArtifact -Path $Path) {
+        throw ("ABGEBROCHEN: $DestLabel stammt aus einem Admin-Build " +
+               "(Provenienz-Marker). Ein Admin-Build darf nicht in den " +
+               "oeffentlichen Ablageort. Im geteilten Output-Verzeichnis " +
+               "noch einmal ohne -AdminUUID bauen, dann pruefen: " +
+               "python tool\check_release_artifacts.py")
+    }
+
     $secret = $AdminUUID
     if ([string]::IsNullOrWhiteSpace($secret)) { $secret = $env:ADMIN_UUID }
-    if ([string]::IsNullOrWhiteSpace($secret)) { return }
 
-    if (Test-ContainsText -Path $Path -Needle $secret) {
-        throw ("ABGEBROCHEN: $DestLabel enthaelt die Admin-UUID. Das ist " +
-               "ein Admin-Build und darf nicht in den oeffentlichen " +
-               "Ablageort. Ursache ist in der Regel, dass der letzte " +
-               "Build im geteilten Output-Verzeichnis ein Admin-Build " +
-               "war. Ohne -AdminUUID neu bauen und pruefen: " +
-               "python tool\check_release_artifacts.py")
+    if (-not [string]::IsNullOrWhiteSpace($secret)) {
+        if (Test-ContainsText -Path $Path -Needle $secret) {
+            throw ("ABGEBROCHEN: $DestLabel enthaelt die Admin-UUID. Das " +
+                   "ist ein Admin-Build und darf nicht in den " +
+                   "oeffentlichen Ablageort. Ohne -AdminUUID neu bauen " +
+                   "und pruefen: python tool\check_release_artifacts.py")
+        }
+    } else {
+        # ${DestLabel}: die geschweiften Klammern sind Pflicht. Ohne sie
+        # liest PowerShell "$DestLabel:" als Variablen mit
+        # Laufwerksbezeichnung und das Skript ist nicht einmal parsesbar.
+        Write-Warning ("${DestLabel}: kein ADMIN_UUID bekannt - der " +
+                       "Inhaltscheck entfaellt. Der Provenienz-Marker " +
+                       "greift weiterhin. Fuer den vollen Check: " +
+                       "`$env:ADMIN_UUID setzen.")
     }
 }
 
@@ -314,22 +411,41 @@ if ($SkipBuild) {
             Write-Host "==> Baue ADMIN-Variante ($adminFlavor, nur Team-intern)..." -ForegroundColor Magenta
             $defineArgs = @("--dart-define=ADMIN_UUID=$AdminUUID") + $ConfigDefines
             if ($adminFlavor -eq "fdroid") { $defineArgs += "--dart-define=FDROID=true" }
-            flutter build apk --release --flavor $adminFlavor @defineArgs --obfuscate --split-debug-info=build/symbols/$adminFlavor
+            # Eigenes Symbolverzeichnis. Vorher landeten die
+            # Admin-Symbole in build/symbols/<flavor> - demselben Ordner
+            # wie die oeffentlichen. Die Zeitstempel haben gezeigt, dass
+            # der Admin-Build sie ueberschrieben hat: die
+            # Crash-Symbolisierung des oeffentlichen Releases laeuft dann
+            # gegen die falschen Symbole. Gleiche Fehlerklasse wie bei
+            # den APKs, nur unsichtbarer.
+            $adminSymbols = "build/symbols/admin-$adminFlavor"
+            flutter build apk --release --flavor $adminFlavor @defineArgs --obfuscate --split-debug-info=$adminSymbols
             if ($LASTEXITCODE -ne 0) { throw "Admin-Build ($adminFlavor) fehlgeschlagen." }
             $src = Join-Path "build\app\outputs\flutter-apk" "app-$adminFlavor-release.apk"
-            $dst = Join-Path $adminDir "Thestia-v$VersionName-$adminFlavor-ADMIN.apk"
-            Copy-Item -LiteralPath $src -Destination $dst -Force
-            Write-Host "    OK: $dst" -ForegroundColor Green
+            Copy-Item -LiteralPath $src -Destination (Join-Path $adminDir "Thestia-v$VersionName-$adminFlavor-ADMIN.apk") -Force
+            Write-Host "    OK: $(Join-Path $adminDir "Thestia-v$VersionName-$adminFlavor-ADMIN.apk")" -ForegroundColor Green
 
             # Erste Schicht gegen die UUID im oeffentlichen Ablageort.
-            #
-            # Der Admin-Build schreibt auf denselben Pfad wie der
-            # Universal-Build (app-<flavor>-release.apk). Bleibt er dort
-            # liegen, kopiert jeder spaetere -SkipBuild-Lauf ihn unter den
-            # oeffentlichen Namen - genau das ist bei v0.9.1 passiert.
-            # Deshalb wird der Admin-Build hier sofort wieder entfernt.
-            Remove-Item -LiteralPath $src -Force
-            Write-Host "    Admin-APK aus dem geteilten Output entfernt (sonst kopiert -SkipBuild sie oeffentlich)." -ForegroundColor DarkGray
+            Register-AdminArtifact -Path $src
+
+            # Admin-Baum restlos entfernen, NICHT nur die flutter-apk-
+            # Kopie. Flutter kopiert outputs\apk\** nach
+            # outputs\flutter-apk\** - wer nur die Kopie loescht, hat
+            # beim naechsten Gradle-Lauf die Quelle wieder da, und
+            # `flutter install` oder "Analyze APK" im Studio liefert
+            # sie direkt aus. Genau so ist der v0.9.1-Fehler entstanden.
+            $toRemove = @(
+                "build\app\outputs\apk\$adminFlavor\release",
+                "build\app\outputs\flutter-apk\app-$adminFlavor-release.apk",
+                "build\app\outputs\mapping\${adminFlavor}Release"
+            )
+            foreach ($r in $toRemove) {
+                if (Test-Path -LiteralPath $r) {
+                    Remove-Item -LiteralPath $r -Recurse -Force
+                    Write-Host "    entfernt: $r" -ForegroundColor DarkGray
+                }
+            }
+            Write-Host "    Admin-Baum entfernt - ein spaeterer -SkipBuild kann ihn nicht mehr oeffentlich kopieren." -ForegroundColor DarkGray
         }
     }
 }

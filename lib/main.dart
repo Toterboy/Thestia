@@ -27,8 +27,10 @@ import 'package:thestia/services/notification_service.dart';
 import 'package:thestia/services/secure_location_storage.dart';
 import 'package:thestia/services/secure_supabase_session_storage.dart';
 import 'package:thestia/services/secure_storage_namespaces.dart';
+import 'package:thestia/services/startup_watchdog.dart';
 import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/widgets/startup_failure_screen.dart';
 import 'package:thestia/models/signal_key_models.dart';
 import 'package:thestia/models/photo_moderation_models.dart';
 import 'package:thestia/models/report_models.dart';
@@ -75,6 +77,8 @@ String _supabaseSessionKey() {
 }
 
 Future<void> main() async {
+  StartupWatchdog.reached(0);
+
   // Zertifikat-Pinning für ALLE Dart-TLS-Verbindungen (v0.9.0, als
   // ERSTES: danach erzeugte HttpClients erben den Check) – schützt
   // u. a. den kompletten Supabase-Traffic vor MITM.
@@ -92,6 +96,7 @@ Future<void> main() async {
   // gestartet werden" - der typische Android-Text fuer einen beim Start
   // gestorbenen Prozess.
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  StartupWatchdog.reached(1);
 
   // Security (Audit 2026-09-26): Keystore-Werte einmalig aus dem alten
   // Default-Namespace in die neuen, getrennten Namespaces verschieben.
@@ -119,7 +124,9 @@ Future<void> main() async {
     ).timeout(const Duration(seconds: 8));
   } catch (e) {
     debugPrint('[MAIN] Keystore-Migration uebersprungen: $e');
+    StartupWatchdog.reached(2, error: e);
   }
+  StartupWatchdog.reached(2);
 
   FlutterError.onError = (details) {
     FlutterError.dumpErrorToConsole(details);
@@ -193,6 +200,7 @@ Future<void> main() async {
   // runApp kann mit Frame-Scheduling/Splash-Removal interferieren und
   // ließ die App beim Logo hängen.)
   runApp(const _BootstrapApp());
+  StartupWatchdog.reached(3);
 
   // Schwere/nicht kritische Dienste im Hintergrund starten, damit sie
   // weder den ersten Frame noch die erste Route blockieren.
@@ -264,6 +272,10 @@ Future<_BootstrapInit?> _initializeApp() async {
     );
   } catch (e) {
     debugPrint('[MAIN] Initialisierung fehlgeschlagen: $e');
+    // Schritt 4 mit Fehlertext festhalten. Ohne das weiss der
+    //naechste Start nur "irgendwo vor der App", und genau das hat die
+    // Fehlersuche bisher blockiert.
+    StartupWatchdog.reached(4, error: e);
     return null;
   }
 }
@@ -452,10 +464,30 @@ class _BootstrapAppState extends State<_BootstrapApp> {
   late Future<_BootstrapInit?> _initFuture = _initializeApp();
   bool _splashRemoveScheduled = false;
 
+  /// Befund ueber den LETZTEN Startversuch.
+  ///
+  /// Wird nur einmal gelesen, und nur wenn die Basis-Initialisierung
+  /// diesmal scheitert: dann ist der Bildschirm mit dem Grund
+  /// wichtiger als ein erneuter Ladeversuch. Genau das ist der Fall,
+  /// den der Nutzer auf Android 11 sieht - Splash, dann Systemmeldung,
+  /// und beim naechsten Versuch wieder dasselbe ohne jede Erklaerung.
+  StartupFailure? _previousFailure;
+  bool _previousFailureChecked = false;
+
   void _retry() {
     setState(() {
       _initFuture = _initializeApp();
     });
+  }
+
+  Future<StartupFailure?> _readPreviousFailure() async {
+    if (_previousFailureChecked) return _previousFailure;
+    _previousFailureChecked = true;
+    try {
+      final f = await StartupWatchdog.readPreviousAttempt();
+      if (mounted) setState(() => _previousFailure = f);
+    } catch (_) {}
+    return _previousFailure;
   }
 
   @override
@@ -486,11 +518,21 @@ class _BootstrapAppState extends State<_BootstrapApp> {
         // statt endlosem Ladekreis.
         final init = snapshot.data;
         if (init == null) {
+          // Wenn der VORIGE Versuch ebenfalls gestorben ist, gibt es
+          // einen Befund - und der ist wertvoller als ein dritter
+          // Ladeversuch, der wieder nichts anzeigt.
+          _readPreviousFailure();
+          final previous = _previousFailure;
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             theme: AppTheme.of(ThestiaTheme.classic, Brightness.light),
             darkTheme: AppTheme.of(ThestiaTheme.classic, Brightness.dark),
-            home: _StartupErrorScreen(onRetry: _retry),
+            home: previous != null
+                ? StartupFailureScreen(
+                    failure: previous,
+                    onDismiss: _retry,
+                  )
+                : _StartupErrorScreen(onRetry: _retry),
           );
         }
 
@@ -509,6 +551,10 @@ class _BootstrapAppState extends State<_BootstrapApp> {
 
         // Initialisierung abgeschlossen: echte App mit den Overrides
         // (lokaler Storage, Prefs, gespeicherte Sprache) mounten.
+        // Der Start gilt ab hier als erfolgreich - erst jetzt ist
+        // markAlive() berechtigt.
+        StartupWatchdog.reached(5);
+        StartupWatchdog.markAlive();
         return ProviderScope(
           overrides: [
             localStorageProvider.overrideWithValue(init.storage),

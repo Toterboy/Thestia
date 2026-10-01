@@ -353,9 +353,21 @@ jobs:
       # dort ein Build mit vollstaendigem Admin-Zugang lag. Im Play Store
       # fiel das nicht auf, weil beide Dateien gueltig signiert sind.
       #
-      # Ohne ADMIN_UUID laeuft der Check absichtlich nur teilweise: die
-      # UUID ist ein Geheimnis und darf nicht im Repository liegen. Der
-      # Byte-Vergleich ueber alle Versionen braucht sie nicht und ist
-      # deshalb der Teil, der hier die volle Staerke hat.
-      - name: Release-Artefakte auf Signatur und Admin-Trennung pruefen
+      # ZWEI Schritte, weil der Artefaktcheck in der CI nichts findet:
+      # die APKs sind gitignoriert und damit nicht im Checkout. Ein
+      # Check, der 0 Dateien sieht und "OK" meldet, ist eine gruene
+      # Null - deshalb wird er hier gar nicht erst als Gate gefuehrt.
+      #
+      #   1. Der Selbsttest prueft, dass der Checker Negativfaelle
+      #      überhaupt erkennt. Das braucht keine Artefakte und ist
+      #      deshalb in der CI ein echtes Gate.
+      #   2. Der Artefaktcheck selbst laeuft in einem eigenen Schritt mit
+      #      `continue-on-error`, damit man sein Ergebnis sieht, ohne
+      #      dass die CI an einem Zustand scheitert, den sie nicht
+      #      pruefen kann.
+      - name: Release-Checker: Selbsttest (Negativfaelle)
+        run: python3 tool/check_release_artifacts_selftest.py
+
+      - name: Release-Artefakte (nur informativ, ohne Artefakte im CI)
+        continue-on-error: true
         run: python3 tool/check_release_artifacts.py

@@ -1564,6 +1564,27 @@ const Map<String, Map<String, String>> _strings = {
     'profile.newAccountBadge': 'Neu',
     'profile.newAccountTooltip':
         'Account ist jünger als 7 Tage. Ein Hinweis, kein Beweis.',
+    // Startprotokoll: der Bildschirm, der erscheint, wenn der letzte
+    // Startversuch gestorben ist. Ohne Computer, ohne Konsole.
+    'startupFail.title': 'Startprotokoll',
+    'startupFail.heading': 'Der letzte Start ist nicht durchgelaufen',
+    'startupFail.stepLabel': 'Letzter erreichter Schritt',
+    'startupFail.noStep': 'keiner (Absturz vor dem App-Start)',
+    'startupFail.errorLabel': 'Fehler',
+    'startupFail.explainEarly':
+        'Die App wurde beendet, bevor ihre Logik starten konnte. Das '
+        'liegt im nativen Teil der App oder in einem Plugin, das beim '
+        'Laden fehlschlägt.',
+    'startupFail.explainLate':
+        'Die App wurde mitten im Start beendet. Der Schritt oben zeigt, '
+        'wo es passiert ist.',
+    'startupFail.copy': 'Text kopieren',
+    'startupFail.copied': 'Kopiert. In eine Nachricht einfügen und senden.',
+    'startupFail.share': 'Text senden',
+    'startupFail.shareFailed': 'Senden nicht möglich. Bitte den Text kopieren.',
+    'startupFail.continue': 'Trotzdem fortfahren',
+    'startupFail.hint':
+        'Der Text enthält keine persönlichen Daten.',
     'profile.aboutMe': 'Über mich',
     'profile.noBio': 'Noch keine Bio.',
     'profile.interests': 'Interessen',
@@ -4030,6 +4051,23 @@ const Map<String, Map<String, String>> _strings = {
     'profile.newAccountBadge': 'New',
     'profile.newAccountTooltip':
         'Account is younger than 7 days. An indication, not proof.',
+    // Startup log: the screen shown when the last start attempt died.
+    'startupFail.title': 'Startup log',
+    'startupFail.heading': 'The last start did not complete',
+    'startupFail.stepLabel': 'Last step reached',
+    'startupFail.noStep': 'none (crashed before the app logic started)',
+    'startupFail.errorLabel': 'Error',
+    'startupFail.explainEarly':
+        'The app was stopped before its logic could start. This is in the '
+        'native part of the app or in a plugin that fails to load.',
+    'startupFail.explainLate':
+        'The app was stopped during startup. The step above shows where.',
+    'startupFail.copy': 'Copy text',
+    'startupFail.copied': 'Copied. Paste it into a message and send it.',
+    'startupFail.share': 'Send text',
+    'startupFail.shareFailed': 'Sending is not possible. Please copy the text.',
+    'startupFail.continue': 'Continue anyway',
+    'startupFail.hint': 'The text contains no personal data.',
     'profile.aboutMe': 'About me',
     'profile.noBio': 'No bio yet.',
     'profile.interests': 'Interests',

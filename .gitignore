@@ -151,3 +151,27 @@ tool/*.txt
 # kleineren Modelle (image-safety-classifier-xs, face_detector) bleiben
 # drin - On-Device-Moderation soll nachvollziehbar sein.
 assets/models/age_estimator.onnx
+
+# Weitere Ziele, die es heute nicht gibt, aber die bei der naechsten
+# falschen Konfiguration entstehen wuerden. check_gitignore.py
+# prueft nur, was JETZT auf der Platte liegt - ein Pfad, den es noch
+# nicht gibt, kann dort nicht gemeldet werden. Diese Zeilen sind die
+# Soll-Liste, damit `flutterfire configure` oder ein
+# Service-Account-Download nicht versehentlich eingecheckt wird.
+lib/firebase_options.dart
+**/*service-account*.json
+**/*serviceaccount*.json
+fastlane/Appfile
+fastlane/keystore.json
+fastlane/*.json
+*.p8
+*.der
+*.csr
+*.asc
+passkey-assets/.netlify/
+
+# Logcat-Ausgaben: enthalten User-IDs, Token und Chat-Metadaten. Der
+# Android-Debug-Pfad darf sie erzeugen, sie gehoeren aber nicht ins
+# Repo. `*.log` deckt die .bat-Ausgabe nicht, weil sie .txt schreibt.
+tools/*.txt
+android-log*.txt

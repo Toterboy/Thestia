@@ -22,16 +22,37 @@ cp .env.example .env          # SUPABASE_URL/PUBLISHABLE_KEY eintragen
 
 ## Release-Build
 
+**Immer über das Skript.** Nicht über direkte `flutter build`-Aufrufe:
+
+```powershell
+# öffentliche Artefakte
+powershell -NoProfile -ExecutionPolicy Bypass -File tool\build_release.ps1 `
+  -Flavor both -UniversalApk -SplitPerAbi -Aab
+
+# Admin-Builds: Geheimnis als Umgebungsvariable, NICHT als Parameter.
+# Ein Parameter landet im Klartext in der PowerShell-History und in der
+# Prozessliste.
+$env:ADMIN_UUID = "<uuid>"
+powershell -NoProfile -ExecutionPolicy Bypass -File tool\build_release.ps1 `
+  -Flavor both -UniversalApk
+Remove-Item Env:\ADMIN_UUID
+```
+
+Warum das Skript und nicht `flutter build` direkt: der Admin- und der
+Universal-Build schreiben auf **denselben** Gradle-Pfad. Wer sie direkt
+aufruft, kann einen Admin-Build im öffentlichen Ablageort hinterlassen -
+genau das ist bei v0.9.1 passiert (siehe
+[ADMIN-UUID.md](ADMIN-UUID.md)). Das Skript verhindert das dreifach:
+Admin-Baum wird danach restlos gelöscht, jede öffentliche Kopie prüft
+die Herkunft der Datei, und `build/.admin-artifacts.json` vermerkt
+jedes Admin-Artefakt als Herkunftsnachweis.
+
+Was das Skript tut, falls du es nachvollziehen willst:
+
 ```bash
 flutter build apk --release --flavor play --dart-define=FDROID=false
 flutter build apk --release --flavor fdroid --dart-define=FDROID=true
 ```
-
-**Alle Release-Varianten per Skript** (empfohlen): 
-`tool/build_release.ps1` baut die Standard-APKs, optional per
-`-SplitPerAbi` (pro-CPU-APKs, arm64/armv7 – deutlich kleiner) und
-`-Aab` (Play-App-Bundle) sowie mit `-AdminUUID <uuid>` Admin-Builds
-(`--dart-define=ADMIN_UUID=…`, nur für das Team, nicht zur Verteilung).
 
 **Wichtig:** Seit es die Flavors gibt, ist ein Build **ohne** `--flavor`
 nicht mehr möglich — Flutter findet die APK sonst nicht (Fehler
@@ -47,9 +68,19 @@ abgefangen, sauber ist der Define).
 
 Ergebnis: `build/app/outputs/flutter-apk/app-<flavor>-release.apk`
 
+**Prüfen vor dem Verteilen** - der Check läuft ohne Geheimnis und findet
+eine Kontamination auch dann, wenn niemand die UUID kennt:
+
+```powershell
+python tool\check_release_artifacts.py
+```
+
 **Dart-Obfuskierung (v0.9.0)**: Release-Builds laufen mit
 `--obfuscate --split-debug-info=build/symbols/<flavor>` (im Skript
-bereits drin). Die Symbole unter `build/symbols/` (git-ignoriert)
+bereits drin). Admin-Builds bekommen `build/symbols/admin-<flavor>` -
+ein eigener Ordner, weil beide sonst dieselben Symbole überschreiben
+und die Crash-Analyse des öffentlichen Releases gegen die falschen
+Stacks läuft. Die Symbole unter `build/symbols/` (git-ignoriert)
 für die Crash-Analyse aufheben – ohne sie sind Release-Stacktraces
 nicht deobfuskierbar. R8/Java-Minify ist bewusst AUS (Plugin-
 Kompatibilität); der Schutz kommt aus Dart-Obfuskierung + serverseitigen
