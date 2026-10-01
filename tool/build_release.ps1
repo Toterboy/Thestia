@@ -127,6 +127,79 @@ if ($captchaProvider -eq "none") {
 }
 Write-Host "    Config: $($ConfigDefines.Count) Defines aus .env (nicht gebuendelt)"
 
+function Test-ContainsText {
+    <#
+      Prueft, ob eine Datei eine Zeichenkette enthaelt - chunkweise, damit
+      keine 240-MB-APK komplett in den Speicher muss. Der Treffer darf
+      ueber eine Chunk-Grenze liegen, deshalb wird der Rest des
+      vorherigen Chunks vorgehalten.
+    #>
+    param([string]$Path, [string]$Needle)
+
+    $needleBytes = [System.Text.Encoding]::UTF8.GetBytes($Needle)
+    if ($needleBytes.Length -eq 0) { return $false }
+
+    $stream = [System.IO.File]::OpenRead($Path)
+    try {
+        $buf = New-Object byte[] (1MB)
+        $keep = $needleBytes.Length - 1
+        $tail = New-Object byte[] ([Math]::Max($keep, 1))
+        $tailLen = 0
+
+        while (($read = $stream.Read($buf, 0, $buf.Length)) -gt 0) {
+            $len = $tailLen + $read
+            $chunk = New-Object byte[] $len
+            if ($tailLen -gt 0) { [Array]::Copy($tail, 0, $chunk, 0, $tailLen) }
+            [Array]::Copy($buf, 0, $chunk, $tailLen, $read)
+
+            $text = [System.Text.Encoding]::ASCII.GetString($chunk)
+            if ($text.Contains($Needle)) { return $true }
+
+            if ($keep -gt 0) {
+                $tailLen = [Math]::Min($keep, $len)
+                [Array]::Copy($chunk, $len - $tailLen, $tail, 0, $tailLen)
+            }
+        }
+        return $false
+    } finally {
+        $stream.Dispose()
+    }
+}
+
+function Assert-PublicSafe {
+    <#
+      Sperrt JEDE Kopie in den oeffentlichen Ablageort, die die
+      Admin-UUID enthaelt.
+
+      Hintergrund (v0.9.1, 30.09.2026): der Admin- und der
+      Universal-Build schreiben auf DENSELBEN Gradle-Pfad
+      build\app\outputs\flutter-apk\app-<flavor>-release.apk. Nach einem
+      Admin-Build liegt dort der Admin-Build, und jeder spaetere Lauf mit
+      -SkipBuild hat ihn unter dem oeffentlichen Namen kopiert. Die
+      beiden universellen v0.9.1-APKs waren tatsaechlich byte-identisch
+      mit den Admin-Builds und enthielten die UUID. Im Play Store faellt
+      das nicht auf, weil beide Dateien gueltig signiert sind.
+
+      Das ist die zweite Schicht. Die erste ist, dass der Admin-Build
+      sein Ergebnis nach dem Kopieren wieder aus dem geteilten
+      Output-Verzeichnis entfernt.
+    #>
+    param([string]$Path, [string]$DestLabel)
+
+    $secret = $AdminUUID
+    if ([string]::IsNullOrWhiteSpace($secret)) { $secret = $env:ADMIN_UUID }
+    if ([string]::IsNullOrWhiteSpace($secret)) { return }
+
+    if (Test-ContainsText -Path $Path -Needle $secret) {
+        throw ("ABGEBROCHEN: $DestLabel enthaelt die Admin-UUID. Das ist " +
+               "ein Admin-Build und darf nicht in den oeffentlichen " +
+               "Ablageort. Ursache ist in der Regel, dass der letzte " +
+               "Build im geteilten Output-Verzeichnis ein Admin-Build " +
+               "war. Ohne -AdminUUID neu bauen und pruefen: " +
+               "python tool\check_release_artifacts.py")
+    }
+}
+
 function Copy-FlavorApk {
     param([string]$FlavorName)
     $src = Join-Path "build\app\outputs\flutter-apk" "app-$FlavorName-release.apk"
@@ -134,6 +207,7 @@ function Copy-FlavorApk {
         throw "APK nicht gefunden: $src - Bitte zuerst bauen (ohne -SkipBuild)."
     }
     $dst = Join-Path $OutDir "Thestia-v$VersionName-$FlavorName.apk"
+    Assert-PublicSafe -Path $src -DestLabel $dst
     Copy-Item -LiteralPath $src -Destination $dst -Force
     Write-Host "    OK: $dst" -ForegroundColor Green
 }
@@ -149,6 +223,7 @@ function Copy-SplitApks {
         $src = Join-Path $dir "app-$abi-$FlavorName-release.apk"
         if (Test-Path -LiteralPath $src) {
             $dst = Join-Path $OutDir "Thestia-v$VersionName-$FlavorName-$($short[$abi]).apk"
+            Assert-PublicSafe -Path $src -DestLabel $dst
             Copy-Item -LiteralPath $src -Destination $dst -Force
             Write-Host "    OK: $dst" -ForegroundColor Green
         } else {
@@ -178,6 +253,7 @@ function Copy-Aab {
         throw "AAB nicht gefunden. Gesucht: $($candidates -join " | ") - Bau fehlgeschlagen?"
     }
     $dst = Join-Path $OutDir "Thestia-v$VersionName-$FlavorName.aab"
+    Assert-PublicSafe -Path $src -DestLabel $dst
     Copy-Item -LiteralPath $src -Destination $dst -Force
     Write-Host "    OK: $dst" -ForegroundColor Green
 }
@@ -228,6 +304,9 @@ if ($SkipBuild) {
         Copy-Aab -FlavorName "play"
     }
 
+    # WICHTIG - Reihenfolge: die oeffentlichen Kopien oben passieren VOR
+    # diesem Block, nie danach. Flutter leert build\app\outputs bei jedem
+    # Aufruf, deshalb wird nach jedem Bau sofort kopiert.
     if ($AdminUUID -ne "") {
         $adminDir = Join-Path $OutDir "admin"
         New-Item -ItemType Directory -Force -Path $adminDir | Out-Null
@@ -241,6 +320,16 @@ if ($SkipBuild) {
             $dst = Join-Path $adminDir "Thestia-v$VersionName-$adminFlavor-ADMIN.apk"
             Copy-Item -LiteralPath $src -Destination $dst -Force
             Write-Host "    OK: $dst" -ForegroundColor Green
+
+            # Erste Schicht gegen die UUID im oeffentlichen Ablageort.
+            #
+            # Der Admin-Build schreibt auf denselben Pfad wie der
+            # Universal-Build (app-<flavor>-release.apk). Bleibt er dort
+            # liegen, kopiert jeder spaetere -SkipBuild-Lauf ihn unter den
+            # oeffentlichen Namen - genau das ist bei v0.9.1 passiert.
+            # Deshalb wird der Admin-Build hier sofort wieder entfernt.
+            Remove-Item -LiteralPath $src -Force
+            Write-Host "    Admin-APK aus dem geteilten Output entfernt (sonst kopiert -SkipBuild sie oeffentlich)." -ForegroundColor DarkGray
         }
     }
 }
