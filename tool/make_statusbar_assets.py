@@ -618,6 +618,22 @@ def main():
     nub_cols = [x for x, h in col_h
                 if 0 < h <= max_h * 0.75 and x > bat_a + bat_h]
     body_x1 = (min(nub_cols) - 1) if nub_cols else bat_b
+
+    # Die Randstaerke des Koerpers wird hier NICHT gemessen - sie laesst
+    # sich aus diesem Foto nicht messen. Der Akku ist auf 474 px ein
+    # gefuellter Fleck von 14 px Hoehe: die Prozentzahl darin ist nicht
+    # mehr als Text, die Mitte ist nicht leer. Ein Versuch, die Staerke
+    # ueber den ersten Tintenlauf auf der mittleren Zeile zu gewinnen,
+    # lieferte konsequent die volle Koerperbreite (13 px) statt einer
+    # Randstaerke - es gibt schlicht keine leere Mitte, an der sich die
+    # Innenkante zeigen wuerde.
+    #
+    # Die Randstaerke ist damit eine.Renderentscheidung und keine
+    # Messung. Sie steht als BENANNTE KONSTANTE im Zeichner
+    # (BATTERY_STROKE_RATIO in tool/make_store_screenshots.py), damit sie
+    # als Stellschraube erkennbar ist und nicht als Messwert missver-
+    # standen wird. Der Wert 0,13 folgt der Rueckmeldung "die Raender
+    # duerfen minimal dicker"; vorher war es 0,085.
     geom['battery'] = {
         'bodyWidthFraction': round((body_x1 - bat_a + 1) / ref_w, 5),
         'nubWidthFraction': round(max(0, bat_b - body_x1) / ref_w, 5),
@@ -626,7 +642,8 @@ def main():
         'bodyHeightFraction': round(bat_h / ref_w, 5),
     }
     print(f'  Akku          Koerper {geom["battery"]["bodyWidthFraction"]*100:.2f} %'
-          f' breit, Stift {geom["battery"]["nubWidthFraction"]*100:.2f} % breit')
+          f' breit, Stift {geom["battery"]["nubWidthFraction"]*100:.2f} % breit'
+          ' (Randstaerke: Renderwert, nicht messbar)')
     icon_w = {n: (b - a) for n, (a, b) in zip(ORDER, right)}
     gaps = [right[i + 1][0] - right[i][1] for i in range(len(right) - 1)]
     gap_px = sum(gaps) / max(1, len(gaps))

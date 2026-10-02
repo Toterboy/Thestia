@@ -172,6 +172,16 @@ STATUSBAR_ORDER = ('mute', 'wifi', 'signal', 'battery')
 BATTERY_PERCENT = '100'
 CLOCK_TEXT = '12:00'
 
+# Randstaerke des Akkukoerpers, als Anteil seiner Hoehe.
+#
+# Das ist eine RENDERENTSCHEIDUNG und keine Messung: der Akku ist auf
+# 474 px ein gefuellter Fleck von 14 px Hoehe ohne leere Mitte, die
+# Innenkante des Rahmens ist im Foto nicht sichtbar. Ein Versuch, sie
+# zu messen, lieferte konsequent die volle Koerperbreite statt einer
+# Randstaerke. Der Wert folgt der Rueckmeldung "die Raender duerfen
+# minimal dicker"; vorher stand hier 0,085.
+BATTERY_STROKE_RATIO = 0.13
+
 # ZWEI VARIANTEN, bewusst nebeneinander (Nutzerwunsch):
 #
 #   1. MIT nachgeahmter Systemleiste. Die Icons werden aus einem Foto
@@ -379,11 +389,12 @@ def _draw_reference_battery(draw, right, cy, tint, geom, u):
     x1 = right - nub_w
     x0 = x1 - body_w
     y0 = cy - body_h / 2
-    stroke = max(1, int(body_h * 0.085))
+    stroke = max(1, int(round(BATTERY_STROKE_RATIO * body_h)))
 
     draw.rounded_rectangle(
         [x0, y0, x1, y0 + body_h],
-        radius=body_h * 0.28, outline=tint, width=stroke)
+        radius=body_h * 0.28, outline=tint,
+        width=max(1, int(round(BATTERY_STROKE_RATIO * body_h))))
     if nub_w >= 1:
         draw.rounded_rectangle(
             [x1 + 1, cy - nub_h / 2, right, cy + nub_h / 2],
@@ -418,49 +429,60 @@ def _draw_reference_signal(draw, right, top, tint, geom, u):
     sie nicht aus Pixeln besteht. Die Grundlinie ist die Oberkante des
     Signal-Iconfelds, die Balken waechsen nach links oben.
     """
-    sig = (geom.get('signal') or {}).get('bars') or []
+    # AUFSTEIGEND, gleiche Breiten, gleiche Abstaende.
+    #
+    # Aufsteigend ist die Orientierung der Referenz: x=386 ist der
+    # kuerzeste Balken (Oberkante y=36), x=402 der hoechste (y=29).
+    # Ein zwischenzeitlicher Versuch, die Balken zu SPIEGELN, beruhte
+    # auf einem Missverstaendnis von "anders herum" und wurde
+    # zurueckgenommen - die Referenz stimmt bereits.
+    #
+    # Die Abstaende im Foto sind ungleich: die Balken sind 3, 3, 4 und
+    # 3 px breit, die Luecken dazwischen 2, 1 und 1 px. Auf 17 px
+    # Gesamtbreite faellt das als unruhig auf. Deshalb werden Breite
+    # und Abstand gemittelt und gleich verteilt; die Gesamtspannweite
+    # bleibt die gemessene, die Hoehen bleiben gemessen.
+    sig = sorted((geom.get('signal') or {}).get('bars') or [],
+                 key=lambda b: float(b['dxFraction']))
     if not sig:
         return False
 
-    # SPIEGELN. Im Referenzfoto stehen die Balken links kurz und rechts
-    # hoch (x=386 ist der kuerzeste, x=402 der hoechste). Der Wunsch
-    # des Nutzers ist die umgekehrte Orientierung: der hoechste Balken
-    # links. Das ist eine Festlegung und keine Messung - sie weicht
-    # bewusst vom Foto ab, sonst waere sie hier stillschweigend
-    # "korrigiert" worden.
     icon_w = float(((geom.get('cluster') or [{}])[-2] or {}).get('w', 0.0)) * u
-    bars = []
-    for bar in sig:
-        dx = float(bar['dxFraction']) * u
-        w = float(bar['wFraction']) * u
-        bars.append((icon_w - (dx + w), w,
-                     float(bar['dyTopFraction']) * u,
-                     float(bar['hFraction']) * u))
-    bars.sort()
+    bar_w = (sum(float(b['wFraction']) for b in sig) / len(sig)) * u
+    gap = (icon_w - bar_w * len(sig)) / max(1, len(sig) - 1)
+    if gap < 0:
+        bar_w = icon_w / len(sig)
+        gap = 0.0
 
     x0 = right - icon_w
-    for bx0, bw, dy, bh in bars:
+    # Gemeinsame Grundlinie. Im Foto enden drei Balken bei y=41 und der
+    # hoechste bei y=40 - eine Folge davon, dass die Tinte rechts einen
+    # Pixel kuerzer ist. Uebernommen sah die Treppe schief aus, also
+    # werden alle Balken auf die tiefste Unterkante gestellt.
+    baseline = max(float(b['dyTopFraction']) + float(b['hFraction'])
+                   for b in sig) * u
+    for i, bar in enumerate(sig):
+        bx0 = x0 + i * (bar_w + gap)
         # dyTopFraction ist icon-relativ gemessen: die Oberkante des
         # Iconfelds ist `top`, die Balken waechsen von dort nach unten.
-        y0 = top + dy
-        y1 = y0 + bh
+        y1 = top + baseline
+        y0 = y1 - float(bar['hFraction']) * u
         # Ecken minimal abrunden, damit die Balken nicht als Tabelle
         # aussehen - Android zeichnet sie mit einem kleinen Radius.
-        r = min((y1 - y0) * 0.28, bw * 0.45)
+        r = min((y1 - y0) * 0.28, bar_w * 0.45)
         if r >= 0.5:
-            draw.rounded_rectangle([x0 + bx0, y0, x0 + bx0 + bw, y1],
+            draw.rounded_rectangle([bx0, y0, bx0 + bar_w, y1],
                                    radius=r, fill=tint)
         else:
-            draw.rectangle([x0 + bx0, y0, x0 + bx0 + bw, y1], fill=tint)
+            draw.rectangle([bx0, y0, bx0 + bar_w, y1], fill=tint)
     return True
 
 
 def _draw_reference_wifi(draw, right, top, tint, geom, u):
-    """WLAN als konzentriske Boegen um den Punkt. True bei Erfolg.
+    """WLAN als drei konzentrische Boegen, OHNE Punkt. True bei Erfolg.
 
-    Drei Boegen und ein Punkt, alle aus einem Kreis mit Mittelpunkt im
-    Punktmittelpunkt. Das ist nicht geraten, sondern nachgerechnet an
-    den gemessenen Spalten der Referenz:
+    Drei Boegen, kein Punkt. Die Form ist ein Kreis, nicht eine
+    Ellipse, und das laesst sich an den gemessenen Spalten nachweisen:
 
       Spalte x=364 (linker Rand)  Tinten y=31..33
       Spalte x=372 (Mitte)         Tinten y=29..41
@@ -517,6 +539,19 @@ def _draw_reference_wifi(draw, right, top, tint, geom, u):
     dev = math.degrees(math.acos(max(-1.0, min(1.0, half / r_outer))))
     start, end = 270.0 - dev, 270.0 + dev
 
+    # OHNE Punkt (Nutzerwunsch). Der Punkt sitzt in der Referenz unter
+    # den Boegen; weggelassen wird er trotzdem nicht aus dem gemessenen
+    # Kasten - der bleibt, sonst rueckt die ganze Zeile.
+    #
+    # Der Fan wird deshalb in seinem Kasten MITTIERT. Ohne den Punkt
+    # enden die Arme bei y = top + r*cos(Winkel), also rund 3,5 px unter
+    # der Oberkante: uebrig bliebe ein 9 px hoher Leerraum darunter und
+    # das Symbol klebte oben. Die Mitte des gezeichneten Fanbands wird
+    # darum auf die Mitte des Iconfelds gelegt.
+    apex_y = (top + (height - (r_outer * math.cos(math.radians(dev))
+                               + stroke)) / 2.0 + stroke / 2.0)
+    arc_cy = apex_y + r_outer
+
     # Solange Boegen uebereinander passen, wird gezeichnet. Der Abstand
     # ist eine halbe Strichstaerke zuzueglich einer Luecke von einer
     # halben - so bleiben die Straeche gleich dick und der Zwischenraum
@@ -524,13 +559,9 @@ def _draw_reference_wifi(draw, right, top, tint, geom, u):
     step = stroke * 1.5
     r = r_outer
     while r > stroke_i:
-        draw.arc([dot_cx - r, dot_cy - r, dot_cx + r, dot_cy + r],
+        draw.arc([dot_cx - r, arc_cy - r, dot_cx + r, arc_cy + r],
                  start=start, end=end, fill=tint, width=stroke_i)
         r -= step
-
-    if dot_r >= 0.6:
-        draw.ellipse([dot_cx - dot_r, dot_cy - dot_r,
-                      dot_cx + dot_r, dot_cy + dot_r], fill=tint)
     return True
 
 
