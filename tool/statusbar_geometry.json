@@ -5,44 +5,68 @@
     194
   ],
   "iconRowY": 32,
-  "padding": 5,
+  "padding": 12,
   "sprite": {
     "mute": {
       "x": 0,
       "y": 0,
-      "w": 22,
-      "h": 11
+      "w": 36,
+      "h": 25
     },
     "wifi": {
-      "x": 26,
+      "x": 40,
       "y": 0,
-      "w": 27,
-      "h": 11
+      "w": 41,
+      "h": 25
     },
     "signal": {
-      "x": 57,
+      "x": 85,
       "y": 0,
-      "w": 28,
-      "h": 11
+      "w": 42,
+      "h": 25
     },
     "battery": {
-      "x": 89,
+      "x": 131,
       "y": 0,
-      "w": 35,
-      "h": 11
+      "w": 49,
+      "h": 25
     }
   },
   "spriteSize": [
-    124,
-    11
+    180,
+    25
   ],
+  "iconBox": {
+    "mute": {
+      "w": 11,
+      "h": 11
+    },
+    "wifi": {
+      "w": 16,
+      "h": 13
+    },
+    "signal": {
+      "w": 17,
+      "h": 13
+    },
+    "battery": {
+      "w": 24,
+      "h": 14
+    }
+  },
+  "iconHeightFraction": 0.02954,
   "iconWidthFraction": {
     "mute": 0.02321,
     "wifi": 0.03376,
     "signal": 0.03586,
     "battery": 0.05063
   },
-  "iconHeightFraction": 0.02321,
+  "battery": {
+    "bodyWidthFraction": 0.04852,
+    "nubWidthFraction": 0.00422,
+    "nubHeightFraction": 0.01477,
+    "bodyHeightFraction": 0.02954
+  },
   "gapFraction": 0.01547,
   "clusterFraction": 0.18987,
   "rightMarginFraction": 0.0865,

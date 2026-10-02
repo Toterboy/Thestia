@@ -45,7 +45,7 @@ import json
 import pathlib
 import sys
 
-from PIL import Image
+from PIL import Image, ImageFilter
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SPRITE = ROOT / 'assets' / 'images' / 'statusbar_icons.png'
@@ -212,6 +212,117 @@ def crop_cluster(im, x0, x1, y, pad):
     return im.crop((left, top, right, bottom))
 
 
+def _row_background(rgb, ref_w, y):
+    """Mittlere Hintergrundfarbe einer Zeile des Referenzfotos."""
+    samples = range(0, ref_w, 7)
+    n = len(samples)
+    out = []
+    for i in range(3):
+        out.append(sum(rgb.getpixel((x, y))[i] for x in samples) / n)
+    return out
+
+
+def _deviation(rgb, ref_w, x, y, rows_bg):
+    bg_row = rows_bg.get(y)
+    if bg_row is None:
+        bg_row = _row_background(rgb, ref_w, y)
+        rows_bg[y] = bg_row
+    p = rgb.getpixel((x, y))
+    return sum(abs(p[i] - bg_row[i]) for i in range(3))
+
+
+def _alpha_for_tile(rgb, ref_w, box, tol):
+    """Deckkraft eines Symbols, gemessen gegen den Zeilenhintergrund.
+
+    Weich, nicht binarisiert. Zwei Fehler, beide an derselben Stelle:
+
+      * Feste Schwelle: die Symbole wurden zu dick. An den Raendern
+        eines 13-px-Symbols liegen viele Anti-Aliasing-Pixel knapp
+        ueber der Schwelle und verbreitern den Strich beim
+        Binarisieren um ein Pixel je Seite.
+      * Relative Schwelle (62 % vom Maximum): zu duenn. Das Maximum
+        stammt aus Ausreissern, der echte Strich liegt weit darunter.
+
+    Die Weichheit ist die ehrliche Uebernahme: die Deckkraft ist die
+    Abweichung vom Hintergrund, normalisiert auf das kraeftigste Pixel.
+    Die Strichstaerke ist damit die des Originals, unabhaengig davon,
+    wie stark die Vorlage verkleinert wurde.
+
+    `tol` ist der Abstand, unterhalb dessen nichts gezaehlt wird. Er
+    kommt aus derselben Suche wie die Icon-Erkennung - mit eigenen
+    Werten frisst die Messung den Himmelverlauf des Fotos mit.
+    """
+    x0 = max(0, box[0])
+    y0 = max(0, box[1])
+    x1 = min(ref_w, box[2])
+    y1 = min(rgb.size[1], box[3])
+    w = max(1, x1 - x0)
+    h = max(1, y1 - y0)
+
+    rows_bg = {}
+    devs = []
+    for yy in range(y0, y1):
+        for xx in range(x0, x1):
+            d = _deviation(rgb, ref_w, xx, yy, rows_bg)
+            devs.append(d if d > tol else 0.0)
+    if not devs:
+        return Image.new('L', (w, h), 0)
+
+    # Normierung: ein Pixel bei 32 % des Maximums bekommt volle
+    # Deckkraft. Bei 75 % (zuerst versucht) war nur der allerstaerkste
+    # Kern undurchsichtig, der Rest blieb blass - die Icons wirkten
+    # ausgewaschen statt gezeichnet. Die 32 % erhalten die Anti-
+    # Aliasing-Raender als weiche Kante, ohne die Flaeche zu
+    # ausdunnen.
+    span = max(1.0, max(devs) * 0.32)
+    hard = Image.new('L', (w, h), 0)
+    data = hard.load()
+    i = 0
+    for yy in range(y0, y1):
+        for xx in range(x0, x1):
+            data[xx - x0, yy - y0] = 255 if devs[i] >= span else 0
+            i += 1
+
+    # Schliessen (MinFilter = verdunkeln, danach MaxFilter = aufhellen):
+    # schliesst die LOECHTEN INNEN in den duennen Strichen. Ohne das
+    # waren Stumm und WLAN zerrissen - die Symbole sind im Referenzfoto
+    # nur 11 bis 14 px hoch, ihre Striche ein bis zwei Pixel, und ein
+    # Pixel ohne Messpunkt darin ist ein Loch. Anschliessend leicht
+    # weichzeichnen, damit die Kanten wieder Anti-Aliasing bekommen
+    # statt zu bleiben wie ein Schwellwertbild.
+    closed = hard.filter(ImageFilter.MinFilter(3)).filter(
+        ImageFilter.MaxFilter(3))
+    return closed.filter(ImageFilter.GaussianBlur(0.6))
+
+
+def _ink_box(rgb, ref_w, y, tol, x0, x1, half=12):
+    """Engster Kasten um die Tintenpixel einer Spaltengruppe.
+
+    Zwei Fehler waren hier drin:
+
+    * `min_hits=1` genuegt ein einziges verrauschtes Pixel pro Spalte,
+      dann umfasst der Kasten den ganzen Ausschnitt (gemessene
+      Iconfeld-Hoehe: 25 px, das ist genau das Fenster).
+    * Es wurden nicht die tatsaechlich getroffenen Zeilen gesammelt,
+      sondern das ganze Fenster, sobald eine Spalte ueberhaupt Tinte
+      hatte. Damit war die Hoehe immer 2*half+1, unabhaengig vom
+      Symbol.
+    """
+    rows_bg = {}
+    hits_x, hits_y = [], []
+    for x in range(max(0, x0), min(ref_w, x1)):
+        ink_rows = []
+        for yy in range(max(0, y - half), min(rgb.size[1], y + half + 1)):
+            if _deviation(rgb, ref_w, x, yy, rows_bg) > tol:
+                ink_rows.append(yy)
+        if len(ink_rows) >= 2:
+            hits_x.append(x)
+            hits_y.extend(ink_rows)
+    if not hits_x:
+        return None, None, None, None
+    return min(hits_x), min(hits_y), max(hits_x), max(hits_y)
+
+
 def main():
     ap = argparse.ArgumentParser(
         description='Statusleisten-Symbole aus einer Referenz schneiden')
@@ -244,10 +355,34 @@ def main():
         sys.exit(f'Nur {len(right)} Symbole rechts erkannt, erwartet 4.')
     chosen = right[-4:]
 
-    pad = max(4, rgb.width // 90)
+    # Ausschnitt grosszuegig: +/- 12 Zeilen um die erkannte Zeile.
+    #
+    # Erster Versuch war +/- 5 (rgb.width // 90). Das hat Symbole
+    # beschnitten, und zwar still: das WLAN reicht in der Referenz von
+    # y=29 bis y=41, der Ausschnitt endete bei y=37. Es fehlten vier
+    # Zeilen am unteren Rand des Fan-Symbols. In der fertigen
+    # Komposition sah das nicht wie ein Abschneidefehler aus, sondern
+    # wie ein falsches Symbol.
+    #
+    # Der Comment-Bereich wird spaeter ueber die Alphabox wieder
+    # weggeschnitten, mehr Ausschnitt schadet also nicht.
+    pad = 12
+
+    # Die Deckkraft wird HIER berechnet, nicht erst beim Einfuegen in
+    # den Store-Screenshot. Sie braucht den Hintergrund der ganzen
+    # Referenzzeile; beim Einfuegen liegt nur die Kachel vor, und der
+    # Himmel verlaufet innerhalb einer Kachel - eine mittlere Randfarbe
+    # trifft daneben und die Kachel bleibt als grauer Kasten stehen.
     tiles = []
     for name, (a, b) in zip(ORDER, chosen):
-        tile = crop_cluster(rgb, a, b, y, pad)
+        # Die Box muss EXAKT dem Ausschnitt entsprechen (rechts +1, weil
+        # crop_cluster exklusiv schneidet) - sonst passt die Deckkraft
+        # nicht auf die Kachel und putalpha wirft.
+        box = (a - pad, y - pad, b + pad + 1, y + pad + 1)
+        alpha = _alpha_for_tile(rgb, rgb.width, box, tol)
+        tile = Image.new('RGBA', crop_cluster(rgb, a, b, y, pad).size,
+                         (255, 255, 255, 0))
+        tile.putalpha(alpha)
         tiles.append((name, tile))
         print(f'  {name:<8} {tile.size}')
 
@@ -300,17 +435,71 @@ def main():
     # Padding und wuerden die Abstaende um genau diesen Betrag
     # verfaelschen (7,6 % statt 1,5 %).
     ref_w = im.size[0]
+
+    # ECHTE Tintenkaesten messen, nicht die erkannten Spaltengruppen.
+    #
+    # Die Gruppen liefern nur x-Bereiche und eine Fensterhoehe von
+    # 2*pad+1. Beides geht nicht in die Skalierung ein: der Ausschnitt
+    # ist absichtlich gross, ein zu hohes Fenster macht die Symbole zu
+    # klein. Gemessen wird nur ueber die eigene Spaltengruppe - mit
+    # Nachbarspalten laufen die Kaesten ineinander (mute 343..365
+    # statt 343..353).
+    ink_boxes = {}
+    for name, (a, b) in zip(ORDER, right):
+        bx0, by0, bx1, by1 = _ink_box(rgb, ref_w, y, tol, a, b)
+        ink_boxes[name] = ({} if bx0 is None else
+                           {'w': bx1 - bx0 + 1, 'h': by1 - by0 + 1})
+    heights = [v['h'] for v in ink_boxes.values() if v.get('h')]
+    geom['iconBox'] = ink_boxes
+    geom['iconHeightFraction'] = round(
+        (max(heights) if heights else 2 * pad + 1) / ref_w, 5)
+    geom['iconWidthFraction'] = {
+        n: round(v['w'] / ref_w, 5) for n, v in ink_boxes.items() if v.get('w')}
+    geom['padding'] = pad
+
+    # Akku: Koerper und Kontaktstift getrennt messen. Der Stift war
+    # "komisch lang" - er war mit dem Icon-Abstand gezeichnet, also
+    # rund ein Drittel so breit wie der Koerper statt wie im Original
+    # rund ein Elftel.
+    #
+    # Er hat keine eigene Spaltenluecke (x=431 Koerper, x=432 Stift),
+    # gesucht wird deshalb nach Spalten mit kleinerer Tintenhoehe: der
+    # Stift ist die schmale, flache Fortsetzung am rechten Rand.
+    bat_a, bat_b = right[-1]
+    bat_box = _ink_box(rgb, ref_w, y, tol, bat_a, bat_b)
+    bat_h = (bat_box[3] - bat_box[1] + 1) if bat_box[0] is not None else 14
+    rows_bg = {}
+    col_h = []
+    for xx in range(bat_a, bat_b + 1):
+        ys = [yy for yy in range(max(0, y - 12), min(rgb.size[1], y + 13))
+              if _deviation(rgb, ref_w, xx, yy, rows_bg) > tol]
+        col_h.append((xx, (max(ys) - min(ys) + 1) if ys else 0))
+    max_h = max((h for _x, h in col_h), default=bat_h)
+    nub_cols = [x for x, h in col_h
+                if 0 < h <= max_h * 0.75 and x > bat_a + bat_h]
+    body_x1 = (min(nub_cols) - 1) if nub_cols else bat_b
+    geom['battery'] = {
+        'bodyWidthFraction': round((body_x1 - bat_a + 1) / ref_w, 5),
+        'nubWidthFraction': round(max(0, bat_b - body_x1) / ref_w, 5),
+        'nubHeightFraction': round(
+            max((h for x, h in col_h if x in nub_cols), default=0) / ref_w, 5),
+        'bodyHeightFraction': round(bat_h / ref_w, 5),
+    }
+    print(f'  Akku          Koerper {geom["battery"]["bodyWidthFraction"]*100:.2f} %'
+          f' breit, Stift {geom["battery"]["nubWidthFraction"]*100:.2f} % breit')
     icon_w = {n: (b - a) for n, (a, b) in zip(ORDER, right)}
     gaps = [right[i + 1][0] - right[i][1] for i in range(len(right) - 1)]
     gap_px = sum(gaps) / max(1, len(gaps))
-    row_h = max(boxes[n]['h'] for n in ORDER)
 
-    geom['iconWidthFraction'] = {n: round(w / ref_w, 5)
-                                 for n, w in icon_w.items()}
-    geom['iconHeightFraction'] = round(row_h / ref_w, 5)
+    # iconWidthFraction, iconHeightFraction, iconBox und battery stehen
+    # bereits weiter oben - sie stammen aus den TINTENKAESTEN, nicht aus
+    # den Spaltengruppen. Ein spaeteres Ueberschreiben mit der
+    # Fensterhoehe (2*pad+1 = 25 px statt der echten 14) hat die Icons
+    # auf 80 % ihrer gedachten Groesse geschrumpft.
     geom['gapFraction'] = round(gap_px / ref_w, 5)
     geom['clusterFraction'] = round(
-        (sum(icon_w.values()) + gap_px * (len(ORDER) - 1)) / ref_w, 5)
+        (sum(ink_boxes[n]['w'] for n in ORDER if ink_boxes[n].get('w'))
+         + gap_px * (len(ORDER) - 1)) / ref_w, 5)
     geom['rightMarginFraction'] = round(
         (ref_w - right[-1][1]) / ref_w, 5)
 

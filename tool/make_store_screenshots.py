@@ -162,6 +162,30 @@ STATUSBAR_SPRITE = ROOT / 'assets' / 'images' / 'statusbar_icons.png'
 STATUSBAR_GEOMETRY = ROOT / 'tool' / 'statusbar_geometry.json'
 STATUSBAR_ORDER = ('mute', 'wifi', 'signal', 'battery')
 
+# Anzeigewerte der nachgeahmten Systemleiste. Beides sind bewusste
+# Festlegungen des Nutzers, keine Messung:
+#   * 100 % statt des in der Referenz stehenden 70 - ein halbvoller
+#     Akku sieht auf einem Screenshot nach Sorge aus.
+#   * eine gerade Uhrzeit. Aus demselben Grund: 3:41 ist eine
+#     Zufallszeit und wirkt wie ein Screenshot vom falschen Moment.
+BATTERY_PERCENT = '100'
+CLOCK_TEXT = '12:00'
+
+# ZWEI VARIANTEN, bewusst nebeneinander (Nutzerwunsch):
+#
+#   1. MIT nachgeahmter Systemleiste. Die Icons werden aus einem Foto
+#      des Geraetes extrahiert (make_statusbar_assets.py).
+#   2. OHNE Systemleiste. Keine nachgeahmten Symbole - der Store legt
+#      seine eigene Statusleiste ohnehin ueber das Bild.
+#
+# Welche besser aussieht, ist eine Sache des Auges und nicht messbar.
+# Deshalb werden beide erzeugt und getrennt abgelegt, statt im
+# Quelltext umgeschaltet zu werden - dann ist der Vergleich moeglich,
+# ohne dass man weiss, welcher Lauf gerade der aktuelle ist.
+OMIT_SYSTEM_UI = False
+OUT_9x16_OHNE = OUT_9x16.with_name('9x16-ohne-systemleiste')
+OUT_WQHD_OHNE = OUT_WQHD.with_name('wqhd-ohne-systemleiste')
+
 
 def _draw_clock(img, d, cy, color):
     """Zeichnet die Uhrzeit nach den gemessenen Werten der Referenz.
@@ -176,7 +200,7 @@ def _draw_clock(img, d, cy, color):
     w, _h = img.size
     u = float(w)
 
-    text = '3:41'
+    text = CLOCK_TEXT
     width_f = 0.0549
     left_f = 0.0717
     height_f = 0.0211
@@ -185,7 +209,7 @@ def _draw_clock(img, d, cy, color):
             geom = json.loads(STATUSBAR_GEOMETRY.read_text(
                 encoding='utf-8-sig'))
             clock_geom = geom.get('clock') or {}
-            text = clock_geom.get('text') or text
+            text = CLOCK_TEXT
             width_f = float(clock_geom.get('widthFraction', width_f))
             left_f = float(clock_geom.get('leftFraction', left_f))
             height_f = float(clock_geom.get('heightFraction', height_f))
@@ -274,22 +298,16 @@ def _paste_status_bar_icons(img, cy, tint, draw):
         tile = sprite.crop((b['x'], b['y'], b['x'] + b['w'], b['y'] + b['h']))
 
         if name == 'battery':
-            _draw_reference_battery(
-                draw, cursor, cy, icon_w, height, target, gap)
+            _draw_reference_battery(draw, cursor, cy, target, geom, u)
         else:
-            # Hintergrundfarbe aus dem Ausschnitt schaetzen, Maske
-            # bilden, DANN den transparenten Rand wegschneiden - und
-            # zwar ueber die Alphabbox, nicht ueber eine feste
-            # Padding-Zahl.
-            #
-            # Feste Zahl war der Fehler: der Sprite-Ausschnitt ist
-            # 2*padding+1 = 11 Pixel hoch, ein 5-Pixel-Beschnitt oben
-            # und unten laesst EINE Zeile uebrig. Das ist die
-            # Mittellinie des Icons, und die sieht aus wie vier kurze
-            # Striche. Die Alphabbox schneidet genau das ab, was
-            # unsichtbar ist, und sonst nichts.
-            bg = _estimate_background(tile)
-            mask = _icon_mask(tile, bg)
+            # Die Deckkraft kommt fertig aus dem Sprite. Sie wird bei
+            # der Sprite-Erzeugung gegen den Zeilenhintergrund der
+            # GANZEN Referenz gemessen. Beim Einfuegen laesst sich das
+            # nicht mehr korrekt nachholen: der Himmel verlaufet
+            # innerhalb einer Kachel, eine mittlere Randfarbe trifft
+            # daneben, und die Kachel bleibt als grauer Kasten stehen.
+            # Das war der dritte Versuch dieser Art.
+            mask = tile.getchannel('A')
             box = mask.getbbox()
             if box is None:
                 cursor -= icon_w + gap
@@ -333,44 +351,52 @@ def _estimate_background(tile):
             sum(p[2] for p in edge) / len(edge))
 
 
-def _draw_reference_battery(draw, right, cy, icon_w, height, target, gap):
+def _draw_reference_battery(draw, right, cy, tint, geom, u):
     """Akku mit den aus der Referenz gemessenen Proportionen.
 
-    Die Proportionen kommen aus `statusbar_geometry.json`: Breite
-    5,06 % der Bildbreite, Hoehe der Iconfeldhoehe. Das Seitenverhaeltnis
-    von rund 2:1 ist damit ebenfalls gemessen und nicht geraten -
-    die gezeichnete Fassung lag bei 3,4:1 und war deshalb sichtbar zu
-    breit.
+    Alle vier Werte kommen aus statusbar_geometry.json und wurden im
+    Referenzfoto gemessen:
+
+      Koerper 4,85 % der Bildbreite breit, 2,95 % hoch
+      Stift   0,42 % breit, 1,48 % hoch
+
+    Der Stift war vorher mit dem Icon-Abstand gezeichnet, also rund ein
+    Drittel so breit wie der Koerper - das war das "komisch lange
+    Ende". Er ist jetzt knapp ein Elftel des Koerpers und halb so hoch,
+    genau wie im Original.
     """
-    body_h = height * 0.78
-    body_w = icon_w - gap * 0.9          # der Kontaktstift ist schmaler
-    x1 = right - gap * 0.9
+    b = geom.get('battery') or {}
+    body_w = float(b.get('bodyWidthFraction', 0.0485)) * u
+    body_h = float(b.get('bodyHeightFraction', 0.0295)) * u
+    nub_w = float(b.get('nubWidthFraction', 0.0042)) * u
+    nub_h = float(b.get('nubHeightFraction', 0.0148)) * u
+
+    # `right` ist die rechte Kante des ICONFELDS (inklusive Stift).
+    x1 = right - nub_w
     x0 = x1 - body_w
     y0 = cy - body_h / 2
-    stroke = max(1, int(height * 0.075))
+    stroke = max(1, int(body_h * 0.085))
 
     draw.rounded_rectangle(
         [x0, y0, x1, y0 + body_h],
-        radius=body_h * 0.30, outline=target, width=stroke)
-    # Kontaktstift nach rechts
-    nub_w = gap * 0.9
-    draw.rounded_rectangle(
-        [x1 + 1, cy - body_h * 0.20, x1 + nub_w, cy + body_h * 0.20],
-        radius=max(1, int(body_h * 0.10)), fill=target)
+        radius=body_h * 0.28, outline=tint, width=stroke)
+    if nub_w >= 1:
+        draw.rounded_rectangle(
+            [x1 + 1, cy - nub_h / 2, right, cy + nub_h / 2],
+            radius=max(1, int(nub_h * 0.25)), fill=tint)
 
     # Prozentzahl. Sie ist der eigentliche Inhalt dieses Symbols - ohne
     # sie waere der Akku nur eine Form. Deshalb wird sie gezeichnet
     # statt der Silhouette aus dem Sprite genommen zu werden, wo sie
     # im gefuellten Rechteck verschwindet.
     try:
-        f = ImageFont.truetype(FONT_BOLD, max(6, int(body_h * 0.62)))
-        bb = draw.textbbox((0, 0), '70', font=f)
-        tw, th = bb[2] - bb[0], bb[3] - bb[1]
-        if tw <= body_w - 2 * stroke:
-            draw.text(
-                (x0 + (body_w - tw) / 2 - bb[0],
-                 cy - th / 2 - bb[1]),
-                '70', font=f, fill=target)
+        f = ImageFont.truetype(FONT_BOLD, max(6, int(body_h * 0.60)))
+        bb = draw.textbbox((0, 0), BATTERY_PERCENT, font=f)
+        tw = bb[2] - bb[0]
+        if tw <= body_w - 2 * stroke - 1:
+            draw.text((x0 + (body_w - tw) / 2 - bb[0],
+                       cy - (bb[1] + bb[3]) / 2),
+                      BATTERY_PERCENT, font=f, fill=tint)
     except OSError:
         pass
 
@@ -396,23 +422,50 @@ def _icon_mask(tile, bg):
     wpx, hpx = tile.size
     br, bg_, bb = bg
 
-    raw = Image.new('L', tile.size, 0)
+    devs = []
     src = tile.load()
-    rp = raw.load()
     for yy in range(hpx):
         for xx in range(wpx):
             r, g, b, _a = src[xx, yy]
-            dev = abs(r - br) + abs(g - bg_) + abs(b - bb)
-            rp[xx, yy] = 0 if dev < 45 else min(255, int(dev * 2))
+            devs.append(abs(r - br) + abs(g - bg_) + abs(b - bb))
+    if not devs:
+        return Image.new('L', tile.size, 0)
 
-    # Oeffnung: entfernt einzelne verirrte Pixel aus dem
-    # Anti-Aliasing, ohne die echten Striche anzutasten.
-    cleaned = raw.filter(ImageFilter.MaxFilter(3)).filter(
-        ImageFilter.MinFilter(3))
-    return cleaned.point(lambda v: 255 if v > 128 else 0)
+    # Weiche Maske, KEINE Binarisierung.
+    #
+    # Zwei Fehler, beide an derselben Stelle:
+    #   * Feste Schwelle 45: die Symbole wurden zu dick. An den Raendern
+    #     eines 11-px-Symbols liegen viele Anti-Aliasing-Pixel knapp
+    #     ueber der Schwelle und verbreitern den Strich beim Binarisieren
+    #     um ein Pixel je Seite.
+    #   * Relative Schwelle (62 % vom Maximum): zu duenn. Das Maximum
+    #     stammt aus Ausreissern, der echte Strich liegt weit darunter
+    #     und wird weggeschnitten - uebrig blieben drei Punkte.
+    #
+    # Die Weichheit ist die ehrliche Uebernahme: die Deckkraft ist die
+    # Abweichung vom Hintergrund, normalisiert. Die Strichstaerke ist
+    # damit genau die des Originals, unabhaengig davon, wie stark
+    # verkleitert die Vorlage ist.
+    top = max(devs)
+    span = max(1.0, top * 0.75)
+    mask = Image.new('L', tile.size, 0)
+    mp = mask.load()
+    i = 0
+    for yy in range(hpx):
+        for xx in range(wpx):
+            d = devs[i]
+            if d < 8:
+                mp[xx, yy] = 0
+            else:
+                mp[xx, yy] = min(255, int(d * 255 / span))
+            i += 1
+
+    # Weichzeichnen entfernt vereinzelte Ausreisser, ohne die
+    # Strichstaerke zu veraendern (im Gegensatz zu einer Erosion).
+    return mask.filter(ImageFilter.GaussianBlur(0.6))
 
 
-def _draw_status_bar(img: Image.Image, clock='3:41', percent='70'):
+def _draw_status_bar(img: Image.Image, clock=CLOCK_TEXT, percent=BATTERY_PERCENT):
     """Zeichnet die System-Statusleiste nach dem Geraet des Nutzers.
 
     ZWEI WEGE, und der erste ist der richtige:
@@ -616,8 +669,9 @@ def phone_mockup(screen: Image.Image, scale=1.0):
     # bleibt oben und unten ein leerer Streifen, der wie abgeschnitten
     # wirkt. Gezeichnet wird NACH dem Einfuegen, damit die Kacheln des
     # Randes nicht darueberliegen.
-    _draw_status_bar(scr)
-    _draw_nav_bar(scr)
+    if not OMIT_SYSTEM_UI:
+        _draw_status_bar(scr)
+        _draw_nav_bar(scr)
     body.alpha_composite(scr, (int(bs), int(bt)))
 
     d = ImageDraw.Draw(body)
@@ -664,8 +718,9 @@ def app_tile(shot: Image.Image, box_h: int, box_w: int, corner_ratio=0.055):
     scale = min(box_h / shot.height, box_w / shot.width)
     tw, th = int(shot.width * scale), int(shot.height * scale)
     scr = shot.resize((tw, th), Image.LANCZOS)
-    _draw_status_bar(scr)
-    _draw_nav_bar(scr)
+    if not OMIT_SYSTEM_UI:
+        _draw_status_bar(scr)
+        _draw_nav_bar(scr)
     return _round_image(scr, int(tw * corner_ratio))
 
 
@@ -1111,7 +1166,8 @@ def main():
               file=sys.stderr)
         sys.exit(1)
 
-    for d in (OUT_9x16, OUT_WQHD, OUT_FASTLANE):
+    for d in (OUT_9x16, OUT_WQHD, OUT_FASTLANE,
+              OUT_9x16_OHNE, OUT_WQHD_OHNE):
         d.mkdir(parents=True, exist_ok=True)
 
     for name, (headline, subline, badge) in SHOTS.items():
@@ -1125,25 +1181,39 @@ def main():
             tiles = sorted(TILES.glob('tile_*.png'),
                            key=lambda p: int(p.stem.split('_')[1]))
             if tiles:
-                a = compose_modes([_crop_tile(Image.open(t)) for t in tiles],
-                                  headline, subline, badge)
-                b = compose_modes_wqhd(
-                    [_crop_tile(Image.open(t)) for t in tiles],
-                    headline, subline, badge)
+                crops = [_crop_tile(Image.open(t)) for t in tiles]
+                a = compose_modes(crops, headline, subline, badge)
+                b = compose_modes_wqhd(crops, headline, subline, badge)
                 for d, im in ((OUT_9x16, a), (OUT_WQHD, b),
-                              (OUT_FASTLANE, a)):
+                              (OUT_FASTLANE, a),
+                              (OUT_9x16_OHNE, a), (OUT_WQHD_OHNE, b)):
                     save_png(im, d / f'{name}.png')
                 print(f'  {name}: 9x16 {a.size} + wqhd {b.size} '
-                      f'({len(tiles)} Kacheln)')
+                      f'({len(tiles)} Kacheln, beide Varianten)')
                 continue
             print('  03_entdecken: keine Kacheln gefunden, Fallback auf '
                   'den Screen')
         shot = Image.open(src)
         a = compose_9x16(shot, headline, subline, badge)
         b = compose_wqhd(shot, headline, subline, badge)
+
+        # Variante MIT nachgeahmter Systemleiste.
         for d, im in ((OUT_9x16, a), (OUT_WQHD, b), (OUT_FASTLANE, a)):
             save_png(im, d / f'{name}.png')
-        print(f'  {name}: 9x16 {a.size} + wqhd {b.size}')
+
+        # Variante OHNE. Der Aufruf geht ueber das Modul-Flag, damit
+        # beide Varianten garantiert denselben Weg nehmen - die App-
+        # Screens werden nicht zweimal geladen.
+        globals()['OMIT_SYSTEM_UI'] = True
+        try:
+            a2 = compose_9x16(shot, headline, subline, badge)
+            b2 = compose_wqhd(shot, headline, subline, badge)
+            save_png(a2, OUT_9x16_OHNE / f'{name}.png')
+            save_png(b2, OUT_WQHD_OHNE / f'{name}.png')
+        finally:
+            globals()['OMIT_SYSTEM_UI'] = False
+
+        print(f'  {name}: 9x16 {a.size} + wqhd {b.size} (beide Varianten)')
 
     print('Fertig.')
 
