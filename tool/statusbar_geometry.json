@@ -1,0 +1,49 @@
+{
+  "source": "Statusleiste.png",
+  "sourceSize": [
+    474,
+    194
+  ],
+  "iconRowY": 32,
+  "padding": 5,
+  "sprite": {
+    "mute": {
+      "x": 0,
+      "y": 0,
+      "w": 22,
+      "h": 11
+    },
+    "wifi": {
+      "x": 26,
+      "y": 0,
+      "w": 27,
+      "h": 11
+    },
+    "signal": {
+      "x": 57,
+      "y": 0,
+      "w": 28,
+      "h": 11
+    },
+    "battery": {
+      "x": 89,
+      "y": 0,
+      "w": 35,
+      "h": 11
+    }
+  },
+  "spriteSize": [
+    124,
+    11
+  ],
+  "iconWidthFraction": {
+    "mute": 0.02321,
+    "wifi": 0.03376,
+    "signal": 0.03586,
+    "battery": 0.05063
+  },
+  "iconHeightFraction": 0.02321,
+  "gapFraction": 0.01547,
+  "clusterFraction": 0.18987,
+  "rightMarginFraction": 0.0865
+}

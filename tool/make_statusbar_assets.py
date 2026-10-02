@@ -119,38 +119,89 @@ def detect_band(im, max_fraction=0.22):
     return best_row, best_score
 
 
-def find_clusters(px, w, y, tolerance=150):
-    """Spalten mit Symbolpixeln zu zusammenhaengenden Gruppen verbinden.
-
-    Zwischen den Symbolen sind Luecken. Eine Luecke zaehlt nur als
-    Trenner, wenn sie breiter ist als die halbe Symbolbreite -
-    sonst wuerde ein Icon mit einem Strich darin zerrissen.
-    """
-    cols = []
+def _groups_at(px, w, py_h, y, tol, merge, half=6):
+    """Roh erkannte Spaltengruppen bei bestimmten Parametern."""
+    ink = []
     for x in range(w):
-        hits = 0
-        for yy in range(max(0, y - 12), y + 13):
-            r, g, b = px[x, yy]
-            # Weiss-Nahe: die Referenzsymbole sind hell. Ueber die
-            # Sättigung erkennbar, damit ein heller Hintergrund
-            # (Wolke) nicht mitgezaehlt wird.
-            if r > 200 and g > 200 and b > 200:
-                hits += 1
-        cols.append(hits > 0)
+        s = [px[x, yy] for yy in range(y - half, y + half + 1)]
+        n = len(s)
+        mr = sum(c[0] for c in s) / n
+        mg = sum(c[1] for c in s) / n
+        mb = sum(c[2] for c in s) / n
+        hits = sum(1 for c in s
+                   if abs(c[0] - mr) + abs(c[1] - mg) + abs(c[2] - mb) > tol)
+        ink.append(hits >= 2)
 
-    groups, start = [], None
-    for x, on in enumerate(cols):
+    raw, start = [], None
+    for x, on in enumerate(ink):
         if on and start is None:
             start = x
         elif not on and start is not None:
-            groups.append((start, x))
+            raw.append([start, x])
             start = None
     if start is not None:
-        groups.append((start, len(cols)))
+        raw.append([start, len(ink)])
 
-    # Zu enge Gruppen (schmale Kratzer) verwerfen.
-    min_w = max(4, w // 120)
-    return [g for g in groups if g[1] - g[0] >= min_w]
+    merged = []
+    for g in raw:
+        if merged and g[0] - merged[-1][1] <= merge:
+            merged[-1][1] = g[1]
+        else:
+            merged.append(g)
+
+    return [(a, b) for a, b in merged if b - a >= max(3, int(round(w * 0.010)))]
+
+
+def detect_icon_groups(px, w, py_h, y, expected=4):
+    """Sucht die Parameter, die genau `expected` Symbole ergeben.
+
+    Fest verdrahtete Schwellen sind hier falsch gewesen. Zwei Werte
+    muessen gleichzeitig passen, und sie ziehen gegeneinander:
+
+      * Die Toleranz bestimmt, wie schwach ein anti-aliasiertes
+        Pixel zaehlt. Zu hoch fallen die ersten drei Signalbaenke weg
+        (nur der letzte, 4 px breite, bleibt) - das Bild sieht dann aus
+        wie es funktioniert, ist aber voellig falsch. Zu niedrig
+        zaehlt Himmel-Rauschen mit.
+      * Die Merge-Breite haelt die vier Signalbaenke zusammen, weil
+        zwischen ihnen nur 2 px liegen, und muss trotzdem die Icons
+        trennen, zwischen denen 6 bis 10 px liegen. Das Fenster ist
+        eng: zu 7 px verschmilzt das Signal mit dem Akku.
+
+    Deshalb wird das Paar gesucht statt geraten. Erwartet wird genau
+    die Zahl der Symbole, die rechts in der Statusleiste stehen. Findet
+    sich keine Kombination, bricht das Skript ab, statt vier falsche
+    Schnipsel zu speichern.
+    """
+    trials = []
+    for tol in (60, 70, 80, 90, 100, 120):
+        for merge in (3, 4, 5, 6, 7):
+            g = _groups_at(px, w, py_h, y, tol, merge)
+            # Die Uhrzeit steht links, die Symbole rechts. Der
+            # Referenzausschnitt ist ein Streifen des oberen Randes, die
+            # Grenze liegt daher bei der Haelfte minus dem
+            # Symbolbereich.
+            right = [x for x in g if x[0] > w * 0.55]
+            trials.append((len(right), abs(len(g) - (expected + 1)),
+                           tol, merge, right, g))
+
+    # Exakt vier Symbole rechts gewinnt; unter mehreren Treffern das
+    # mit den insgesamt wenigsten Gruppen (weniger Rauschen).
+    exact = [t for t in trials if t[0] == expected]
+    if not exact:
+        best = max(trials, key=lambda t: t[0])
+        sys.exit(
+            f'Symbolerkennung unzuverlaessig: beste Kombination fand '
+            f'{best[0]} Symbole rechts (erwartet {expected}), '
+            f'tol={best[2]} merge={best[3]}. '
+            f'Gefunden: {best[4]}\n'
+            f'Der Screenshot ist evtl. unschaerf, beschnitten oder zeigt '
+            f'etwas anderes als die Statusleiste.')
+    exact.sort(key=lambda t: t[1])
+    _, _, tol, merge, right, all_groups = exact[0]
+    print(f'Parameter selbst gesucht: toleranz={tol}  '
+          f'merge={merge}  -> {len(right)} Symbole')
+    return all_groups, right, tol, merge
 
 
 def crop_cluster(im, x0, x1, y, pad):
@@ -182,21 +233,15 @@ def main():
         sys.exit('Keine Symbolzeile erkannt. Ist das die Statusleiste?')
 
     rgb = im.convert('RGB')
-    groups = find_clusters(rgb.load(), rgb.width, y)
-    print(f'Gefundene Spaltengruppen: {len(groups)}')
-    for i, (a, b) in enumerate(groups):
+    all_groups, right, tol, merge = detect_icon_groups(
+        rgb.load(), rgb.width, rgb.height, y)
+    print(f'Gefundene Spaltengruppen: {len(all_groups)}')
+    for i, (a, b) in enumerate(all_groups):
         print(f'  {i}: x={a}..{b}  breite={b - a}')
 
-    if len(groups) < 4:
-        sys.exit(
-            f'Nur {len(groups)} Gruppen gefunden, erwartet werden 4 '
-            f'(Stumm, WLAN, Signal, Akku) - plus moeglicherweise die '
-            f'Uhrzeit links. Bitte den Screenshot ohne Taskleiste und '
-            f'ohne weitere Symbole im Band schneiden.')
-
-    # Die rechten vier Gruppen sind die Symbole. Eine fuenfte ganz
-    # links ist in der Regel die Uhrzeit und wird uebersprungen.
-    chosen = groups[-4:]
+    if len(right) < 4:
+        sys.exit(f'Nur {len(right)} Symbole rechts erkannt, erwartet 4.')
+    chosen = right[-4:]
 
     pad = max(4, rgb.width // 90)
     tiles = []
@@ -228,15 +273,55 @@ def main():
     print(f'\nSprite geschrieben: {SPRITE.relative_to(ROOT)}  {sprite.size}')
 
     geom = {
-        'source': str(ref),
+        # NUR der Dateiname, nie der volle Pfad: die Referenz ist ein
+        # Foto vom Bildschirm des Nutzers und der Pfad enthaelt den
+        # Benutzernamen. Das Repository ist oeffentlich.
+        'source': ref.name,
         'sourceSize': list(im.size),
         'iconRowY': y,
         'padding': pad,
         'sprite': boxes,
         'spriteSize': [sprite.size[0], sprite.size[1]],
     }
+
+    # Gemessene Proportionen, auf die die Bildbreite bezogen.
+    #
+    # Diese Zahlen sind das eigentliche Ergebnis der Analyse. Die
+    # gezeichnete Fassung hatte den Cluster auf geratene "30 % der
+    # Bildbreite" gesetzt und die Symbole auf 3,5 % Hoehe - beides zu
+    # gross. Aus der Referenz kommen rund 2,3 % Hoehe und ein Cluster
+    # von knapp 20 % Breite. Nachgebaut ist das nie 1:1, skaliert ist es
+    # dagegen exakt: der Composer teilt die Bildbreite des Zielbildes
+    # durch die Bildbreite der Referenz.
+    #
+    # Gemessen wird an den ERKANNTEN Gruppen, nicht an den
+    # Sprite-Kacheln: deren Positionen enthalten das zusaetzliche
+    # Padding und wuerden die Abstaende um genau diesen Betrag
+    # verfaelschen (7,6 % statt 1,5 %).
+    ref_w = im.size[0]
+    icon_w = {n: (b - a) for n, (a, b) in zip(ORDER, right)}
+    gaps = [right[i + 1][0] - right[i][1] for i in range(len(right) - 1)]
+    gap_px = sum(gaps) / max(1, len(gaps))
+    row_h = max(boxes[n]['h'] for n in ORDER)
+
+    geom['iconWidthFraction'] = {n: round(w / ref_w, 5)
+                                 for n, w in icon_w.items()}
+    geom['iconHeightFraction'] = round(row_h / ref_w, 5)
+    geom['gapFraction'] = round(gap_px / ref_w, 5)
+    geom['clusterFraction'] = round(
+        (sum(icon_w.values()) + gap_px * (len(ORDER) - 1)) / ref_w, 5)
+    geom['rightMarginFraction'] = round(
+        (ref_w - right[-1][1]) / ref_w, 5)
+
     GEOMETRY.write_text(json.dumps(geom, indent=2), encoding='utf-8')
     print(f'Geometrie geschrieben: {GEOMETRY.relative_to(ROOT)}')
+    print(f'  Icon-Hoehe      {geom["iconHeightFraction"]*100:.2f} % der Breite')
+    for n in ORDER:
+        print(f'  {n:<8} Breite   '
+              f'{geom["iconWidthFraction"][n]*100:.2f} %')
+    print(f'  Abstand         {geom["gapFraction"]*100:.2f} %')
+    print(f'  Cluster gesamt  {geom["clusterFraction"]*100:.2f} %')
+    print(f'  rechter Rand    {geom["rightMarginFraction"]*100:.2f} %')
     print('\nNaechster Schritt: in tool/make_store_screenshots.py die '
           'gezeichneten Symbole durch das Sprite ersetzen.')
 

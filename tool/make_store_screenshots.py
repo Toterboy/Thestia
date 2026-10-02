@@ -163,14 +163,27 @@ STATUSBAR_GEOMETRY = ROOT / 'tool' / 'statusbar_geometry.json'
 STATUSBAR_ORDER = ('mute', 'wifi', 'signal', 'battery')
 
 
-def _paste_status_bar_icons(img, cy, tint):
+def _paste_status_bar_icons(img, cy, tint, draw):
     """Setzt die echten Symbole aus dem Sprite ein. True bei Erfolg.
 
-    Der Akku kommt aus dem Sprite MIT der Prozentzahl, die darin
-    steckt - deshalb wird sie nicht noch einmal gezeichnet. Bei den
-    Symbolen, die aus einem hellen Screenshot stammen, wird das Weiss
-    auf die Zielfarbe umgefärbt: die App-Oberflaeche ist hell, helle
-    Symbole waeren dort unsichtbar.
+    Der MASSSTAB ist der Quotient aus den Bildbreiten, nicht eine
+    geratene Prozentangabe. Das ist der Unterschied zwischen "Aehnlich"
+    und "skaliert":
+
+      * Die gezeichnete Fassung setzte den Cluster auf geratene 30 % der
+        Bildbreite und die Symbole auf 3,5 % Hoehe. Gemessen sind es
+        18,99 % und 2,32 %. Die Zeichnung war also um die Haelfte zu
+        gross - unabhaengig davon, wie korrekt die Formen waren.
+      * Mit dem Quotienten gilt fuer jedes Zielbild: dasselbe
+        Verhaeltnis wie auf dem Geraet des Nutzers.
+
+    Der AKKU wird gezeichnet, nicht aus dem Sprite genommen. Das Sprite
+    enthaelt eine Silhouette, und im Akku ist die Silhouette ein
+    gefuelltes Rechteck - die Prozentzahl verschwindet darin. Sie ist
+    aber der eigentliche Inhalt des Symbols, also wird sie wieder
+    gezeichnet, jetzt mit den gemessenen Proportionen statt mit
+    geratenen. Die Proportionen kommen aus derselben Datei wie die der
+    uebrigen Symbole, damit der Akku nicht auffaellt.
     """
     import json
     if not STATUSBAR_SPRITE.is_file() or not STATUSBAR_GEOMETRY.is_file():
@@ -182,63 +195,164 @@ def _paste_status_bar_icons(img, cy, tint):
         return False
 
     boxes = geom.get('sprite') or {}
-    if any(name not in boxes for name in STATUSBAR_ORDER):
+    widths = geom.get('iconWidthFraction') or {}
+    if any(n not in boxes or n not in widths for n in STATUSBAR_ORDER):
         return False
 
     target = tuple(tint[:3])
     w, h = img.size
     u = float(w)
 
-    # Zielflaeche in der Breite des Original-Statusleisten-Clusters:
-    # 30 % der Bildbreite, gemessen an der Referenz.
-    target_w = u * 0.30
-    natural = sum(boxes[n]['w'] for n in STATUSBAR_ORDER) + 3 * (u * 0.013)
-    if natural <= 0:
-        return False
-    scale = target_w / natural
+    ref_w = float(geom['sourceSize'][0])
+    scale = u / ref_w                      # exakt: Verhaeltnis der Breiten
+    gap = float(geom.get('gapFraction', 0.015)) * u
+    right_margin = float(geom.get('rightMarginFraction', 0.06)) * u
+    height = float(geom.get('iconHeightFraction', 0.023)) * u
 
-    # Hoehe aus dem Verhaeltnis des Sprites zur Breite bestimmen und
-    # zusaetzlich auf die Bandhoehe begrenzen, damit die Symbole
-    # niemals in die AppBar ragen.
-    sprite_h = max(boxes[n]['h'] for n in STATUSBAR_ORDER)
-    height = min(sprite_h * scale, h * (STATUS_BAR_DP / 800.0) * 0.80)
-    scale = height / sprite_h
-
-    gap = u * 0.013 * scale
-    cursor = w - u * 0.039
+    cursor = w - right_margin
 
     for name in reversed(STATUSBAR_ORDER):
+        icon_w = widths[name] * u
         b = boxes[name]
-        tw = b['w'] * scale
-        th = b['h'] * scale
         tile = sprite.crop((b['x'], b['y'], b['x'] + b['w'], b['y'] + b['h']))
-        tile = tile.resize((max(1, int(round(tw))), max(1, int(round(th)))),
-                           Image.LANCZOS)
 
-        # Weiss auf die Zielfarbe umfaerben, Alpha bleibt erhalten.
-        # Abstand von Weiss wird als Deckkraft genutzt: die Referenz
-        # hat weisse Symbole, die App-Oberflaeche ist hell.
-        rr, gg, bb, _alpha = tile.split()
-        mask = Image.new('L', tile.size, 0)
-        rp, gp, bpp = rr.load(), gg.load(), bb.load()
-        mp = mask.load()
-        for yy in range(tile.size[1]):
-            for xx in range(tile.size[0]):
-                dist = (255 - rp[xx, yy]) + (255 - gp[xx, yy]) + \
-                    (255 - bpp[xx, yy])
-                mp[xx, yy] = max(0, 255 - int(dist / 3))
-        flat = Image.new('L', tile.size, 0)
-        recolored = Image.merge('RGBA', (
-            Image.new('L', tile.size, target[0]),
-            Image.new('L', tile.size, target[1]),
-            Image.new('L', tile.size, target[2]),
-            mask,
-        ))
-        img.alpha_composite(
-            recolored, (int(cursor - tw), int(cy - th / 2)))
-        cursor -= tw + gap
+        if name == 'battery':
+            _draw_reference_battery(
+                draw, cursor, cy, icon_w, height, target, gap)
+        else:
+            # Hintergrundfarbe aus dem Ausschnitt schaetzen, Maske
+            # bilden, DANN den transparenten Rand wegschneiden - und
+            # zwar ueber die Alphabbox, nicht ueber eine feste
+            # Padding-Zahl.
+            #
+            # Feste Zahl war der Fehler: der Sprite-Ausschnitt ist
+            # 2*padding+1 = 11 Pixel hoch, ein 5-Pixel-Beschnitt oben
+            # und unten laesst EINE Zeile uebrig. Das ist die
+            # Mittellinie des Icons, und die sieht aus wie vier kurze
+            # Striche. Die Alphabbox schneidet genau das ab, was
+            # unsichtbar ist, und sonst nichts.
+            bg = _estimate_background(tile)
+            mask = _icon_mask(tile, bg)
+            box = mask.getbbox()
+            if box is None:
+                cursor -= icon_w + gap
+                continue
+            mask = mask.crop(box)
+            tw = max(1, int(round(icon_w)))
+            th = max(1, int(round(mask.size[1] * tw / mask.size[0])))
+            mask = mask.resize((tw, th), Image.LANCZOS)
+            recolored = Image.merge('RGBA', (
+                Image.new('L', mask.size, target[0]),
+                Image.new('L', mask.size, target[1]),
+                Image.new('L', mask.size, target[2]),
+                mask,
+            ))
+            img.alpha_composite(
+                recolored, (int(cursor - tw), int(cy - th / 2)))
+        cursor -= icon_w + gap
 
     return True
+
+
+def _estimate_background(tile):
+    """Mittlere Randfarbe eines Sprite-Ausschnitts.
+
+    Der Rand ist per Definition nur Polster und damit nur Hintergrund -
+    unabhaengig vom Motiv des Referenzfotos.
+    """
+    w, h = tile.size
+    edge = []
+    step = max(1, h // 6)
+    for yy in range(0, h, step):
+        edge.append(tile.getpixel((0, yy)))
+        edge.append(tile.getpixel((w - 1, yy)))
+    for xx in range(0, w, step):
+        edge.append(tile.getpixel((xx, 0)))
+        edge.append(tile.getpixel((xx, h - 1)))
+    if not edge:
+        return (255, 255, 255)
+    return (sum(p[0] for p in edge) / len(edge),
+            sum(p[1] for p in edge) / len(edge),
+            sum(p[2] for p in edge) / len(edge))
+
+
+def _draw_reference_battery(draw, right, cy, icon_w, height, target, gap):
+    """Akku mit den aus der Referenz gemessenen Proportionen.
+
+    Die Proportionen kommen aus `statusbar_geometry.json`: Breite
+    5,06 % der Bildbreite, Hoehe der Iconfeldhoehe. Das Seitenverhaeltnis
+    von rund 2:1 ist damit ebenfalls gemessen und nicht geraten -
+    die gezeichnete Fassung lag bei 3,4:1 und war deshalb sichtbar zu
+    breit.
+    """
+    body_h = height * 0.78
+    body_w = icon_w - gap * 0.9          # der Kontaktstift ist schmaler
+    x1 = right - gap * 0.9
+    x0 = x1 - body_w
+    y0 = cy - body_h / 2
+    stroke = max(1, int(height * 0.075))
+
+    draw.rounded_rectangle(
+        [x0, y0, x1, y0 + body_h],
+        radius=body_h * 0.30, outline=target, width=stroke)
+    # Kontaktstift nach rechts
+    nub_w = gap * 0.9
+    draw.rounded_rectangle(
+        [x1 + 1, cy - body_h * 0.20, x1 + nub_w, cy + body_h * 0.20],
+        radius=max(1, int(body_h * 0.10)), fill=target)
+
+    # Prozentzahl. Sie ist der eigentliche Inhalt dieses Symbols - ohne
+    # sie waere der Akku nur eine Form. Deshalb wird sie gezeichnet
+    # statt der Silhouette aus dem Sprite genommen zu werden, wo sie
+    # im gefuellten Rechteck verschwindet.
+    try:
+        f = ImageFont.truetype(FONT_BOLD, max(6, int(body_h * 0.62)))
+        bb = draw.textbbox((0, 0), '70', font=f)
+        tw, th = bb[2] - bb[0], bb[3] - bb[1]
+        if tw <= body_w - 2 * stroke:
+            draw.text(
+                (x0 + (body_w - tw) / 2 - bb[0],
+                 cy - th / 2 - bb[1]),
+                '70', font=f, fill=target)
+    except OSError:
+        pass
+
+
+def _icon_mask(tile, bg):
+    """Harte Silhouettenmaske eines Symbols aus dem Referenzfoto.
+
+    `bg` ist die geschaetzte Hintergrundfarbe des Fotos; Abweichung von
+    ihr ist das Signal, nicht die absolute Helligkeit.
+
+    Erster Versuch war "Abstand zu Weiss" als Deckkraft. Das
+    funktioniert nur auf weissem Grund. Die Referenz des Nutzers ist
+    ein Foto, und ein Himmelspixel liegt 185 Einheiten von Weiss weg,
+    bekam also Deckkraft 194 und blieb als graue Box stehen.
+
+    Danach wird binarisiert statt weich skaliert: die Referenz ist ein
+    auf 474 px verkleinerter Ausschnitt eines 1080-px-Screens, ihre
+    Symbole sind etwa 11 px hoch. Weich hochskaliert wird daraus
+    grauer Matsch mit Halo, der wie die alte Zeichnung aussieht, nur
+    blasser. Als Silhouette ist die Form exakt die des Originals, und
+    die Kanten werden beim Skalieren wieder sauber.
+    """
+    wpx, hpx = tile.size
+    br, bg_, bb = bg
+
+    raw = Image.new('L', tile.size, 0)
+    src = tile.load()
+    rp = raw.load()
+    for yy in range(hpx):
+        for xx in range(wpx):
+            r, g, b, _a = src[xx, yy]
+            dev = abs(r - br) + abs(g - bg_) + abs(b - bb)
+            rp[xx, yy] = 0 if dev < 45 else min(255, int(dev * 2))
+
+    # Oeffnung: entfernt einzelne verirrte Pixel aus dem
+    # Anti-Aliasing, ohne die echten Striche anzutasten.
+    cleaned = raw.filter(ImageFilter.MaxFilter(3)).filter(
+        ImageFilter.MinFilter(3))
+    return cleaned.point(lambda v: 255 if v > 128 else 0)
 
 
 def _draw_status_bar(img: Image.Image, clock='3:41', percent='70'):
@@ -286,7 +400,7 @@ def _draw_status_bar(img: Image.Image, clock='3:41', percent='70'):
         d.text((u * 0.0655, cy), clock, font=f_time, fill=ICON, anchor='lm')
 
     # --- Weg 1: echte Symbole aus dem Sprite ---------------------------
-    if _paste_status_bar_icons(img, cy, ICON):
+    if _paste_status_bar_icons(img, cy, ICON, d):
         return
 
     def centered(text, fnt, fill, left, width):

@@ -336,6 +336,22 @@ jobs:
       - name: Store-Screenshots auf Realismus pruefen
         run: python3 tool/check_store_screenshots.py
 
+      # Muss VOR allem anderen laufen.
+      #
+      # Eine ungueltige Workflow-Datei ist der stillste CI-Fehler, den
+      # es gibt: GitHub parst sie nicht und zeigt GAR KEINE Checks an -
+      # nicht einmal einen roten. Der Build sieht erfolgreich aus, es
+      # laeuft nur nichts. Am 30.09.2026 hat ein Doppelpunkt mit
+      # Leerzeichen in einem unquotierten Schrittnamen genau das
+      # ausgeloest, und es fiel nur auf, weil der Nutzer nach den
+      # Checks gefragt hat.
+      #
+      # Dieser Check kann die Datei nicht selbst pruefen - er steht in
+      # derselben Datei. Deshalb laeuft er zusaetzlich lokal vor dem
+      # Push: python tool/check_workflows.py
+      - name: "Workflow-Datei selbst ist gueltiges YAML"
+        run: python3 tool/check_workflows.py
+
       # Am 2026-09-30 lief 03_entdecken mit textScale 0.64 und
       # 04_anpassen mit 0.72, die anderen mit 1.0. Im Play Store waren
       # es drei Schriftgroessen in einer Serie. Der Harness ist
@@ -359,15 +375,22 @@ jobs:
       # Null - deshalb wird er hier gar nicht erst als Gate gefuehrt.
       #
       #   1. Der Selbsttest prueft, dass der Checker Negativfaelle
-      #      überhaupt erkennt. Das braucht keine Artefakte und ist
+      #      ueberhaupt erkennt. Das braucht keine Artefakte und ist
       #      deshalb in der CI ein echtes Gate.
       #   2. Der Artefaktcheck selbst laeuft in einem eigenen Schritt mit
       #      `continue-on-error`, damit man sein Ergebnis sieht, ohne
       #      dass die CI an einem Zustand scheitert, den sie nicht
       #      pruefen kann.
-      - name: Release-Checker: Selbsttest (Negativfaelle)
+      #
+      # Die Namen stehen in Anfuehrungszeichen, weil ein Doppelpunkt mit
+      # Leerzeichen im Wert YAML als Schluessel-Trenner gelesen wird.
+      # Ohne die Anfuehrungszeichen war die ganze Datei ungueltig - und
+      # eine ungueltige Workflow-Datei zeigt auf GitHub GAR KEINE
+      # Checks, statt rot zu werden. Das ist der stillste Fehler, den
+      # eine CI machen kann.
+      - name: "Release-Checker: Selbsttest (Negativfaelle)"
         run: python3 tool/check_release_artifacts_selftest.py
 
-      - name: Release-Artefakte (nur informativ, ohne Artefakte im CI)
+      - name: "Release-Artefakte (nur informativ, ohne Artefakte im CI)"
         continue-on-error: true
         run: python3 tool/check_release_artifacts.py

@@ -143,13 +143,45 @@ def count_indicators(im, top, left, right):
     band_top = top + int(tile_h * 0.020)
     band_bot = top + int(tile_h * 0.036)
 
+def count_indicators(im, top, left, right, status_dp):
+    """Zaehlt die System-Symbole im Statusleisten-Band.
+
+    Das Band wird aus der Statusleisten-Hoehe in dp BEREchnet, nicht
+    aus festen Prozentwerten der Bildhoehe. Die festen Prozente waren
+    falsch: sie nahmen an, die Icon-Zeile liege bei 2 bis 3,6 % der
+    Kachelhoehe, tatsaechlich liegt sie bei der Mitte der
+    Statusleiste. Bei 24 dp von 800 dp sind das 3 % der Screenhoehe und
+    damit 1,5 % der Mitte - die beiden Werte unterscheiden sich um
+    fast das Doppelte, und die Symbole fielen gerade aus dem Suchband
+    heraus. Der Schwellwert 60 war zudem an die uebergrossen gezeichneten
+    Symbole angepasst; seit die Proportionen aus der Referenz
+    gemessen sind, ist er zu hoch.
+
+    Gezählt wird in den mittleren 70 % der Statusleiste, wo die Icon-
+    Zeile liegt. Schwellwert: 12 % der Flaeche, die die Symbole laut
+    gemessener Referenz einnehmen (19 % der Breite mal 2,3 % Hoehe
+    mal 40 % Tinte in den Strichen).
+    """
+    px = im.load()
+    width = right - left
+    # dp -> physische px des Quell-Screens, dann auf die Kachel skaliert.
+    # Der Faktor 3 ist der Sprung von dp zu Pixeln (1080 px / 360 dp) und
+    # darf nicht fehlen: ohne ihn war das Band um den Faktor 3 zu klein
+    # (14 px statt 42) und die Symbole fielen aus dem Suchfenster.
+    scale = width / float(SRC_W)
+    band_h = max(4, int(status_dp * (SRC_W / (SRC_W // DPR)) * scale))
+    band_top = top + int(band_h * 0.10)
+    band_bot = top + int(band_h * 0.90)
+
     dark = 0
     for y in range(band_top, band_bot):
-        for x in range(left + 20, right - 20):
+        for x in range(left + 10, right - 10):
             r, g, b = px[x, y][:3]
             if r < 180 and g < 180 and b < 180:
                 dark += 1
-    return dark
+
+    icon_box = width * 0.19 * (width * 0.023)
+    return dark, max(20, int(icon_box * 0.12))
 
 
 def main():
@@ -264,14 +296,15 @@ def main():
                         f'Ausdehnung aber nicht messbar')
                 else:
                     left, right = xs
-                    dark = count_indicators(fim, top, left, right)
-                    if dark < 60:
+                    dark, min_dark = count_indicators(
+                        fim, top, left, right, status_dp)
+                    if dark < min_dark:
                         problems.append(
                             f'{f.name}: keine System-Symbole in der '
-                            f'Statusleiste ({dark} dunkle Pixel, >= 60 '
-                            f' erwartet) - der Screen wirkt wie ein Bild '
-                            f'statt wie ein Geraet')
-                    notes.append(f'Symbole {dark}')
+                            f'Statusleiste ({dark} dunkle Pixel, '
+                            f'>= {min_dark} erwartet) - der Screen wirkt '
+                            f'wie ein Bild statt wie ein Geraet')
+                    notes.append(f'Symbole {dark}/{min_dark}')
 
         print(f'  {f.name:<26} {"  ".join(notes)}')
 
