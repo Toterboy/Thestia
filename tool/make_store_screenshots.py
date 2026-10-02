@@ -221,6 +221,7 @@ def _draw_clock(img, d, cy, color):
     width_f = 0.0549
     left_f = 0.0717
     height_f = 0.0211
+    geom = {}
     if STATUSBAR_GEOMETRY.is_file():
         try:
             geom = json.loads(STATUSBAR_GEOMETRY.read_text(
@@ -231,9 +232,41 @@ def _draw_clock(img, d, cy, color):
             left_f = float(clock_geom.get('leftFraction', left_f))
             height_f = float(clock_geom.get('heightFraction', height_f))
         except (OSError, ValueError):
-            pass
+            geom = {}
 
-    target_w = width_f * u
+        # Akkukoerperhoehe, fuer die Strichstaerke der Uhr weiter unten.
+    body_h = float((geom.get('battery') or {}).get(
+        'bodyHeightFraction', 0.0295)) * u
+
+    # MINDESTENS so gross wie die uebrigen Symbole (Nutzerwunsch).
+    #
+    # Gemessen ist die Uhr mit 2,11 % der Bildbreite, die uebrigen
+    # Symbole sind 2,74 % (WLAN, Mobilfunk) bis 2,95 % (Akku). Die Uhr
+    # war das kleinste Element der Leiste und wirkte als zweiter
+    # Grafikstil.
+    #
+    # Fuehrendes Mass ist die HOEHE, nicht die Breite. Ein erster
+    # Versuch skalierte die Breite mit - damit wurde die Uhr 43 px
+    # breit, aber nur 15 px hoch, waehrend die Symbole 16 bis 20 px
+    # messen. Grund: die Hoehe folgt nicht aus der Breite, sondern aus
+    # der Schrift, und der Ziffern-Doppelpunkt hat ein anderes
+    # Verhaeltnis als die Ziffern. Es gibt bei einer Schrift also nur
+    # EINE frei waehlbare Groesse - wenn die Breite das Ziel
+    # vorgibt, ist die Hoehe eine Folge und nicht ein Wunsch.
+    #
+    # Die gemessene Uhrbreite (5,49 %) ist damit ueberholt. Sie ist
+    # das Mass aus dem Foto, in dem die Uhr sichtbar KLEINER war als
+    # die Symbole - genau das wird hier geaendert. Neu gemessen wird
+    # nichts; neu entschieden wird, welche Groesse gilt.
+    sym_h = max(
+        float((geom.get('battery') or {}).get('bodyHeightFraction', 0.0295)),
+        float((geom.get('wifi') or {}).get('relHeight', 0.0274)),
+        max((float(b['dyTopFraction']) + float(b['hFraction'])
+             for b in ((geom.get('signal') or {}).get('bars') or [])),
+            default=0.0),
+    )
+        # Nie kleiner als das Foto, falls die Geometrie fehlt.
+    target_h = max(sym_h, height_f) * u
 
     # STRICHSTAERKE der Uhr, aus dem Akku-Zuwachs abgeleitet. Die
     # Ziffern sind im Referenzfoto duenn, und duenner als die
@@ -247,37 +280,29 @@ def _draw_clock(img, d, cy, color):
     # Ziffernhoeh der Uhr und die Akkukoerperhoehe sind bewusst
     # verschiedene Bezugsgrossen - "so viel wie beim Akku" heisst
     # derselbe absolute Zuwachs, nicht dieselbe relative Zahl.
-    body_h = 0.0295 * u
-    if STATUSBAR_GEOMETRY.is_file():
-        try:
-            geom_c = json.loads(STATUSBAR_GEOMETRY.read_text(
-                encoding='utf-8-sig'))
-            body_h = float((geom_c.get('battery') or {}).get(
-                'bodyHeightFraction', 0.0295)) * u
-        except (OSError, ValueError):
-            pass
     stroke_px = max(1, int(round(BATTERY_STROKE_GROWTH * body_h)))
 
-    # Startgroesse aus der gemessenen Hoehe: Ziffernhoeh ist etwa
-    # 0,72 der Schriftgroesse.
-    size = max(7, int(height_f * u / 0.72))
+    # Schriftgroesse so lange nachziehen, bis die GERENDERTE Ziffernhoehe
+    # das Ziel trifft. Der Strich waechst nach aussen und wird
+    # mitgemessen, sonst waere die Uhr am Ende niedriger als geplant.
+    #
+    # Frueher wurde auf die Breite nachgezogen. Das ergab eine 43 px
+    # breite, aber nur 15 px hohe Uhr neben 16 bis 20 px hohen Symbolen -
+    # die Breite war dann das Ziel und die Hoehe bloss eine Folge davon.
+    size = max(7, int(target_h / 0.72))
     f = None
-    for _ in range(4):
+    for _ in range(5):
         try:
             f = ImageFont.truetype(FONT_REG, size)
         except OSError:
             return False
-        # Der Strich waechst nach aussen, er muss also in der
-        # Breitenanpassung mitgerechnet werden - sonst wird die Uhr
-        # breiter als das Symbol daneben und passt nicht mehr an ihren
-        # gemessenen Platz.
         bb = d.textbbox((0, 0), text, font=f, stroke_width=stroke_px)
-        got = bb[2] - bb[0]
-        if got <= 0:
+        got_h = bb[3] - bb[1]
+        if got_h <= 0:
             return False
-        if abs(got - target_w) <= 1:
+        if abs(got_h - target_h) <= 1:
             break
-        size = max(7, int(size * target_w / got))
+        size = max(7, int(size * target_h / got_h))
     if f is None:
         return False
     bb = d.textbbox((0, 0), text, font=f, stroke_width=stroke_px)

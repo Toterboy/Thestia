@@ -422,6 +422,12 @@ void main() {
   //    das war der Fehler beim SegmentedButton-Fall.
   if (_enabled) {
     testWidgets('export 03_entdecken Kacheln', (tester) async {
+      // Die View bleibt 1080x2400 bei dpr 3, also logisch 360x800 - die
+      // Groesse, in der die App die Kachel auf einem Telefon zeigt.
+      // Aufloesung kommt nicht ueber eine groessere logische View: dann
+      // bricht der Text nicht mehr um, die Kachel wird flacher (88 statt
+      // 92 px hoch) und zeigt etwas anderes als die App. Sie kommt
+      // ueber den Capture-Finder, siehe unten.
       await _pump(tester, const SwipeModeSelectionScreen(),
           outDir: outTiles, name: 'screen', size: _phone, dpr: _dpr);
       final cards = _findModeCards(tester);
@@ -438,17 +444,29 @@ void main() {
       }
 
       for (var i = 0; i < widgets.length; i++) {
-        // matchesGoldenFile auf find.byKey erfasst den VORAHEN-Frame
-        // der Kachel - auf dem vollstaendigen Screen also die ganze
-        // Gruppe mit Ueberschrift und Nachbarkacheln. Deshalb wird
-        // jede Kachel einzeln in ein eigenes Scaffold gehoben und dort
-        // als einziges Widget gerendert. Nur so ist der Export
-        // wirklich EINE Kachel.
+        // Jede Kachel einzeln in ein eigenes Scaffold heben und dort als
+        // einziges Widget rendern - nur so ist der Export wirklich EINE
+        // Kachel. Ein Capture auf find.byKey(card.key!) erfasst auf dem
+        // vollstaendigen Screen die ganze Gruppe mit Ueberschrift und
+        // Nachbarkacheln.
+        //
+        // Der Capture laeuft bewusst ueber find.byType(MaterialApp) und
+        // NICHT ueber die Kachel selbst: ein Finder-Capture auf ein
+        // einzelnes Widget schreibt LOGISCHE Pixel (312 px breite
+        // Kachel in einer 360x800-PNG), der Capture der ganzen View
+        // schreibt physische (1080x2400). Genau diese 312 px wurden
+        // in compose_modes() auf 830 px hochskaliert - Faktor 2,66,
+        // das war die Pixeligkeit in 03_entdecken.
+        //
+        // Die Datei enthaelt also die ganze View mit Scaffold-Rand um
+        // die Kachel. make_store_screenshots.py schneidet sie ueber
+        // exaktes Weiss heraus (_crop_tile) und ist damit
+        // aufloesungsunabhaengig.
         final card = widgets[i];
         await tester.pumpWidget(_soleTileHost(card));
         await tester.pumpAndSettle();
         await expectLater(
-          find.byKey(card.key!),
+          find.byType(MaterialApp),
           matchesGoldenFile('$outTiles/tile_$i.png'),
         );
       }
