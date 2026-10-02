@@ -225,6 +225,7 @@ def main():
 
     ref = find_reference(args.ref)
     im = Image.open(ref)
+    clock_text = '3:41'   # Uhrzeit, wie sie in der Referenz steht
     print(f'Referenz: {ref}  {im.size}')
 
     y, score = detect_band(im)
@@ -313,8 +314,56 @@ def main():
     geom['rightMarginFraction'] = round(
         (ref_w - right[-1][1]) / ref_w, 5)
 
+    # Die Uhr mitmessen. Sie war der Grund, warum die Leiste auch nach
+    # korrekten Icons nicht stimmte: ihre Groesse war geraten
+    # (Schriftgroesse 3 % der Bildbreite), dabei sind es 5,49 % BREITE
+    # und 2,53 % Hoehe - und die Referenzschrift ist sichtbar leichter
+    # als eine fette Sans. Beides wird jetzt gemessen.
+    clock = {}
+    left_groups = [g for g in all_groups if g[0] < ref_w * 0.55]
+    if left_groups:
+        a, b = left_groups[0]
+
+        def row_background(yy):
+            """Mittlere Hintergrundfarbe der Zeile - dieselbe Mass, mit
+            der auch die Icons erkannt werden. Ein einzelnes
+            Hintergrundpixel taugt nicht: die Referenz ist ein Foto."""
+            samples = range(0, ref_w, 7)
+            n = len(samples)
+            out = []
+            for i in range(3):
+                total = 0
+                for xx2 in samples:
+                    total += rgb.getpixel((xx2, yy))[i]
+                out.append(total / n)
+            return out
+
+        hits_x, hits_y = [], []
+        half = 8
+        for yy in range(y - half, y + half + 1):
+            bg_row = row_background(yy)
+            for xx in range(a, b):
+                p = rgb.getpixel((xx, yy))
+                if sum(abs(p[i] - bg_row[i]) for i in range(3)) > 60:
+                    hits_x.append(xx)
+                    hits_y.append(yy)
+        if hits_x:
+            cw = max(hits_x) - min(hits_x) + 1
+            ch = max(hits_y) - min(hits_y) + 1
+            clock = {
+                'widthFraction': round(cw / ref_w, 5),
+                'heightFraction': round(ch / ref_w, 5),
+                'leftFraction': round(min(hits_x) / ref_w, 5),
+                'text': clock_text,
+            }
+    geom['clock'] = clock
+
     GEOMETRY.write_text(json.dumps(geom, indent=2), encoding='utf-8')
     print(f'Geometrie geschrieben: {GEOMETRY.relative_to(ROOT)}')
+    if clock:
+        print(f'  Uhr          {clock["widthFraction"]*100:.2f} % breit, '
+              f'{clock["heightFraction"]*100:.2f} % hoch, '
+              f'linker Rand {clock["leftFraction"]*100:.2f} %')
     print(f'  Icon-Hoehe      {geom["iconHeightFraction"]*100:.2f} % der Breite')
     for n in ORDER:
         print(f'  {n:<8} Breite   '

@@ -163,6 +163,63 @@ STATUSBAR_GEOMETRY = ROOT / 'tool' / 'statusbar_geometry.json'
 STATUSBAR_ORDER = ('mute', 'wifi', 'signal', 'battery')
 
 
+def _draw_clock(img, d, cy, color):
+    """Zeichnet die Uhrzeit nach den gemessenen Werten der Referenz.
+
+    Die Geometrie steht in tool/statusbar_geometry.json unter "clock" und
+    wird von tool/make_statusbar_assets.py aus dem Referenzfoto
+    ermittelt. Fehlt sie (kein Sprite im Repository), wird auf eine
+    sinnvolle Naeherung zurueckgefallen, damit ueberhaupt eine Uhr da
+    ist.
+    """
+    import json
+    w, _h = img.size
+    u = float(w)
+
+    text = '3:41'
+    width_f = 0.0549
+    left_f = 0.0717
+    height_f = 0.0211
+    if STATUSBAR_GEOMETRY.is_file():
+        try:
+            geom = json.loads(STATUSBAR_GEOMETRY.read_text(
+                encoding='utf-8-sig'))
+            clock_geom = geom.get('clock') or {}
+            text = clock_geom.get('text') or text
+            width_f = float(clock_geom.get('widthFraction', width_f))
+            left_f = float(clock_geom.get('leftFraction', left_f))
+            height_f = float(clock_geom.get('heightFraction', height_f))
+        except (OSError, ValueError):
+            pass
+
+    target_w = width_f * u
+    # Startgroesse aus der gemessenen Hoehe: Ziffernhoeh ist etwa
+    # 0,72 der Schriftgroesse.
+    size = max(7, int(height_f * u / 0.72))
+    f = None
+    for _ in range(4):
+        try:
+            f = ImageFont.truetype(FONT_REG, size)
+        except OSError:
+            return False
+        bb = d.textbbox((0, 0), text, font=f)
+        got = bb[2] - bb[0]
+        if got <= 0:
+            return False
+        if abs(got - target_w) <= 1:
+            break
+        size = max(7, int(size * target_w / got))
+    if f is None:
+        return False
+    bb = d.textbbox((0, 0), text, font=f)
+    # Vertikale Mitte auf cy. PIL liefert die Textbox mit negativem
+    # oberem Rand bei Glyphen, die ueber die Grundlinie ragen - deshalb
+    # die Mitte aus beiden Kanten und nicht aus th allein.
+    top = cy - (bb[1] + bb[3]) / 2
+    d.text((left_f * u, top), text, font=f, fill=color)
+    return True
+
+
 def _paste_status_bar_icons(img, cy, tint, draw):
     """Setzt die echten Symbole aus dem Sprite ein. True bei Erfolg.
 
@@ -395,11 +452,23 @@ def _draw_status_bar(img: Image.Image, clock='3:41', percent='70'):
             return None
 
     # --- Uhrzeit links -------------------------------------------------
-    f_time = font(FONT_BOLD, u * 0.030)
-    if f_time is not None:
-        d.text((u * 0.0655, cy), clock, font=f_time, fill=ICON, anchor='lm')
-
-    # --- Weg 1: echte Symbole aus dem Sprite ---------------------------
+    # Nach den GEMESSENEN Werten, nicht nach einer Schriftgroesse.
+    #
+    # Bisher stand hier u*0.030 als Schriftgroesse. Gemessen ist die Uhr
+    # aber 5,49 % BREIT und 2,11 % hoch, mit einem linken Rand von
+    # 7,17 %. Aus einer Schriftgroesse folgt keine Breite - je nach
+    # Zeichensatz ist derselbe Wert 20 % breiter. Deshalb wird die
+    # Schriftgroesse so lange nachgezogen, bis die gerenderte Breite
+    # passt; drei Schritte reichen fuer jede Ziffernfolge.
+    #
+    # Zusaetzlich FONT_REG statt FONT_BOLD. Die Referenzschrift ist
+    # sichtbar leichter; die fette Variante war der zweite Grund, warum
+    # die Leiste neben echten Android-Symbolen nicht stimmte.
+    # Die Uhr wird IMMER gezeichnet. Zurueckgegeben wird nur, ob der
+    # Sprite-Einsatz klappt - dann braucht es die gezeichneten Symbole
+    # nicht mehr. Ein `return` nach der Uhr (Stand vor diesem Fix)
+    # hat die Symbole uebersprungen: die Leiste zeigte nur die Uhr.
+    _draw_clock(img, d, cy, ICON)
     if _paste_status_bar_icons(img, cy, ICON, d):
         return
 

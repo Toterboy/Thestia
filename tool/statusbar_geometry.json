@@ -45,5 +45,11 @@
   "iconHeightFraction": 0.02321,
   "gapFraction": 0.01547,
   "clusterFraction": 0.18987,
-  "rightMarginFraction": 0.0865
+  "rightMarginFraction": 0.0865,
+  "clock": {
+    "widthFraction": 0.05485,
+    "heightFraction": 0.0211,
+    "leftFraction": 0.07173,
+    "text": "3:41"
+  }
 }
