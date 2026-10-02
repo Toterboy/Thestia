@@ -181,6 +181,12 @@ CLOCK_TEXT = '12:00'
 # Randstaerke. Der Wert folgt der Rueckmeldung "die Raender duerfen
 # minimal dicker"; vorher stand hier 0,085.
 BATTERY_STROKE_RATIO = 0.13
+# Vorheriger Wert des Akkurandes. Die Differenz ist der Zuwachs, um den
+# die RENDERUNG insgesamt vergroessert wurde. Die Uhr benutzt exakt
+# denselben Zuwachs (Nutzerwunsch: "so viel dicker, wie der Akku
+# dicker geworden ist"), damit beide nicht auseinanderlaufen.
+BATTERY_STROKE_RATIO_PREV = 0.085
+BATTERY_STROKE_GROWTH = BATTERY_STROKE_RATIO - BATTERY_STROKE_RATIO_PREV
 
 # ZWEI VARIANTEN, bewusst nebeneinander (Nutzerwunsch):
 #
@@ -228,6 +234,30 @@ def _draw_clock(img, d, cy, color):
             pass
 
     target_w = width_f * u
+
+    # STRICHSTAERKE der Uhr, aus dem Akku-Zuwachs abgeleitet. Die
+    # Ziffern sind im Referenzfoto duenn, und duenner als die
+    # Nachbar-Symbole wirkt die Uhr als zweiter Grafikstil. Sie soll
+    # deshalb um genau so viel zunehmen wie der Akkurand:
+    #
+    #     Zuwachs = (0,13 - 0,085) * Akkukoerperhoehe
+    #
+    # Beide Werte kommen aus derselben Geometriedatei und sind in
+    # derselben Einheit gerechnet (Anteil der Bildbreite). Die
+    # Ziffernhoeh der Uhr und die Akkukoerperhoehe sind bewusst
+    # verschiedene Bezugsgrossen - "so viel wie beim Akku" heisst
+    # derselbe absolute Zuwachs, nicht dieselbe relative Zahl.
+    body_h = 0.0295 * u
+    if STATUSBAR_GEOMETRY.is_file():
+        try:
+            geom_c = json.loads(STATUSBAR_GEOMETRY.read_text(
+                encoding='utf-8-sig'))
+            body_h = float((geom_c.get('battery') or {}).get(
+                'bodyHeightFraction', 0.0295)) * u
+        except (OSError, ValueError):
+            pass
+    stroke_px = max(1, int(round(BATTERY_STROKE_GROWTH * body_h)))
+
     # Startgroesse aus der gemessenen Hoehe: Ziffernhoeh ist etwa
     # 0,72 der Schriftgroesse.
     size = max(7, int(height_f * u / 0.72))
@@ -237,7 +267,11 @@ def _draw_clock(img, d, cy, color):
             f = ImageFont.truetype(FONT_REG, size)
         except OSError:
             return False
-        bb = d.textbbox((0, 0), text, font=f)
+        # Der Strich waechst nach aussen, er muss also in der
+        # Breitenanpassung mitgerechnet werden - sonst wird die Uhr
+        # breiter als das Symbol daneben und passt nicht mehr an ihren
+        # gemessenen Platz.
+        bb = d.textbbox((0, 0), text, font=f, stroke_width=stroke_px)
         got = bb[2] - bb[0]
         if got <= 0:
             return False
@@ -246,12 +280,13 @@ def _draw_clock(img, d, cy, color):
         size = max(7, int(size * target_w / got))
     if f is None:
         return False
-    bb = d.textbbox((0, 0), text, font=f)
+    bb = d.textbbox((0, 0), text, font=f, stroke_width=stroke_px)
     # Vertikale Mitte auf cy. PIL liefert die Textbox mit negativem
     # oberem Rand bei Glyphen, die ueber die Grundlinie ragen - deshalb
     # die Mitte aus beiden Kanten und nicht aus th allein.
     top = cy - (bb[1] + bb[3]) / 2
-    d.text((left_f * u, top), text, font=f, fill=color)
+    d.text((left_f * u, top), text, font=f, fill=color,
+           stroke_width=stroke_px, stroke_fill=color)
     return True
 
 
