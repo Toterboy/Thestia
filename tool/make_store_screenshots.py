@@ -21,6 +21,7 @@ Voraussetzung: die App-Screens vorher rendern -
     $env:STORE_SHOTS="1"; flutter test --update-goldens test/screenshots/store_v091_shots_test.dart
 """
 
+import math
 import pathlib
 import re
 import sys
@@ -421,87 +422,111 @@ def _draw_reference_signal(draw, right, top, tint, geom, u):
     if not sig:
         return False
 
-    x1 = right
-
+    # SPIEGELN. Im Referenzfoto stehen die Balken links kurz und rechts
+    # hoch (x=386 ist der kuerzeste, x=402 der hoechste). Der Wunsch
+    # des Nutzers ist die umgekehrte Orientierung: der hoechste Balken
+    # links. Das ist eine Festlegung und keine Messung - sie weicht
+    # bewusst vom Foto ab, sonst waere sie hier stillschweigend
+    # "korrigiert" worden.
+    icon_w = float(((geom.get('cluster') or [{}])[-2] or {}).get('w', 0.0)) * u
+    bars = []
     for bar in sig:
-        bx1 = x1 - float(bar['dxFraction']) * u
-        bx0 = bx1 - float(bar['wFraction']) * u
+        dx = float(bar['dxFraction']) * u
+        w = float(bar['wFraction']) * u
+        bars.append((icon_w - (dx + w), w,
+                     float(bar['dyTopFraction']) * u,
+                     float(bar['hFraction']) * u))
+    bars.sort()
+
+    x0 = right - icon_w
+    for bx0, bw, dy, bh in bars:
         # dyTopFraction ist icon-relativ gemessen: die Oberkante des
         # Iconfelds ist `top`, die Balken waechsen von dort nach unten.
-        y0 = top + float(bar['dyTopFraction']) * u
-        y1 = y0 + float(bar['hFraction']) * u
+        y0 = top + dy
+        y1 = y0 + bh
         # Ecken minimal abrunden, damit die Balken nicht als Tabelle
         # aussehen - Android zeichnet sie mit einem kleinen Radius.
-        r = min((y1 - y0) * 0.28, (bx1 - bx0) * 0.45)
+        r = min((y1 - y0) * 0.28, bw * 0.45)
         if r >= 0.5:
-            draw.rounded_rectangle([bx0, y0, bx1, y1], radius=r, fill=tint)
+            draw.rounded_rectangle([x0 + bx0, y0, x0 + bx0 + bw, y1],
+                                   radius=r, fill=tint)
         else:
-            draw.rectangle([bx0, y0, bx1, y1], fill=tint)
+            draw.rectangle([x0 + bx0, y0, x0 + bx0 + bw, y1], fill=tint)
     return True
 
 
 def _draw_reference_wifi(draw, right, top, tint, geom, u):
-    """WLAN als zwei Boegen und ein Punkt. True bei Erfolg.
+    """WLAN als konzentriske Boegen um den Punkt. True bei Erfolg.
 
-    Die Form des Fans ist aus 13 Pixeln nicht verfolgbar - wohl aber
-    seine Huelle (Breite, hoechster Punkt) und der Punkt unten in der
-    Mitte. Beides kommt gemessen aus statusbar_geometry.json:
+    Drei Boegen und ein Punkt, alle aus einem Kreis mit Mittelpunkt im
+    Punktmittelpunkt. Das ist nicht geraten, sondern nachgerechnet an
+    den gemessenen Spalten der Referenz:
 
-      Breite 3,38 % der Bildbreite, Hoehe 2,74 %, Strichstaerke 0,53 %
-      Punkt   Mittelpunkt bei x=372 der Referenz, Radius 1,5 px
+      Spalte x=364 (linker Rand)  Tinten y=31..33
+      Spalte x=372 (Mitte)         Tinten y=29..41
+      Spalte x=379 (rechter Rand)  Tinten y=32..33
 
-    Die Boegen sind Ellipsenabschnitte, nicht Kreise: der gemessene
-    Fan ist 16 px breit und 13 px hoch, ein Kreis passt nicht in dieses
-    Verhaeltnis. Der zweite Bogen ist um den gemessenen Strich
-    eingerueckt, damit beide Striche gleich dick bleiben.
+    Ein Kreis um (372, 40) mit Radius 11 trifft alle drei: bei x=364
+    ergibt er y = 40 - Wurzel(121-64) = 32,4 und damit genau die
+    gemessenen 31..33 bei einer Strichstaerke von 2,5 px. Bei x=372
+    ergibt er y = 29, ebenfalls der gemessene oberste Wert. Der
+    Radius ist also die Strecke vom Punktmittelpunkt nach oben, nicht
+    die halbe Iconbreite - der Fan ist hoeher als breit, seine Arme
+    werden erst durch den Winkelbereich beschnitten.
+
+    Daraus folgt der Winkelbereich: so geschnitten, dass der
+    Aussenbogen genau die gemessene Iconbreite fuellt. Das ist zugleich
+    die flachste moegliche Form - ein flacherer Bogen waere im
+    gemessenen Kasten nicht unterzubringen, ohne die Breite zu
+    verlassen oder die Oberkante zu verfehlen.
+
+    Drei Boegen, nicht zwei: mit dem gemessenen Radius und der
+    Strichstaerke aus der Referenz passen genau drei uebereinander, und
+    "es fehlt ein Strich" war die Rueckmeldung dazu.
     """
     w_geom = geom.get('wifi') or {}
     if 'relHeight' not in w_geom:
         return False
 
     # Achtung: `cluster[i]['w']` ist ein ANTEIL der Bildbreite, kein
-    # Pixelwert. Ohne die Umrechnung mit u war rx = 0,017 px und damit
-    # kleiner als die Strichstaerke - beide Boegen wurden uebersprungen
-    # und nur der Punkt blieb uebrig, an falscher Stelle.
+    # Pixelwert. Ohne die Umrechnung mit u war der Radius 0,017 px und
+    # damit kleiner als die Strichstaerke - alle Boegen wurden still
+    # uebersprungen und nur der Punkt blieb uebrig, an falscher Stelle.
     icon_w = float(((geom.get('cluster') or [{}])[0] or {}).get('w', 0.0)) * u
     if icon_w <= 0:
         return False
 
     height = float(w_geom['relHeight']) * u
-    # Die gemessene Strichstaerke ist 0,53 % der Bildbreite, im Symbol
-    # also rund 19 % seiner Hoehe. Beim Fan aus zwei Boegen frisst das
-    # den Zwischenraum: die Arme verschmelzen zu einem Krumen. Fuer
-    # WLAN und Signal ist die Strichstaerke deshalb auf 8 % der
-    # Symbolhoehe begrenzt - dort ist ein duennerer Strich auch der
-    # realistischere Wert, weil ein heller Pixel auf diesem
-    # Himmelsverlauf zur Haelfte aus anti-aliastem Rand besteht und der
-    # gemessene Wert den Kern plus seinen Rand enthaelt.
-    stroke = min(float(w_geom.get('relStroke', 0.004)) * u, height * 0.11)
+    # Die gemessene Strichstaerke (0,53 % der Bildbreite) sind rund 19 %
+    # der Symbolhoehe. Auf 11 % zu deckeln war eine eigene Erfindung und
+    # machte die Straeche zu duenn - zurueck auf den Messwert, nur bei
+    # 20 % gedeckelt, damit ein blasser Messwert nicht ueberlaeuft.
+    stroke = min(float(w_geom.get('relStroke', 0.004)) * u, height * 0.20)
     dot_r = float(w_geom.get('relDotRadius', 0.003)) * u
     dot_cx = right - icon_w + float(w_geom['relDotCentreX']) * u
     top = top + float(w_geom['relTop']) * u
     dot_cy = top + height - dot_r
     stroke_i = max(1, int(round(stroke)))
 
-    # Zwei Boegen, als ELLIPSENabschnitte. Das ist der entscheidende
-    # Punkt: der gemessene Fan ist 21 px breit und 17 px hoch. Ein
-    # Kreis passt nicht in dieses Verhaeltnis - mit dem Hoehenradius
-    # als Radius fuer beide Achsen wurde der Bogen 31 px breit statt
-    # 21 und frass das Signalsymbol an (sichtbar als ein Klumpen).
-    # Deshalb bekommt jeder Bogen eine eigene Halbachse in x und y.
-    #
-    # Der Winkelbereich 210..330 begrenzt die Arme. Mit 205..335 liefen
-    # sie seitlich bis fast an die Iconbreite und wirkten flach; so
-    # laufen sie steiler nach oben und lesen sich als Fan.
-    gap = stroke * 1.6
-    for shrink in (0.0, stroke * 2 + gap * 2):
-        rx = icon_w / 2.0 - shrink
-        ry = (height - dot_r) - shrink
-        if rx <= stroke_i or ry <= stroke_i:
-            continue
-        draw.arc(
-            [dot_cx - rx, dot_cy - ry, dot_cx + rx, dot_cy + ry],
-            start=210, end=330, fill=tint, width=stroke_i)
+    # Radius des Aussenbogens: vom Punktmittelpunkt bis zur Oberkante.
+    r_outer = height - dot_r
+    half = icon_w / 2.0
+    # Winkel so, dass der Aussenbogen die halbe Iconbreite genau
+    # erreicht. PIL zaehlt Grad im Uhrzeigersinn ab 3 Uhr, die Oberseite
+    # liegt bei 270.
+    dev = math.degrees(math.acos(max(-1.0, min(1.0, half / r_outer))))
+    start, end = 270.0 - dev, 270.0 + dev
+
+    # Solange Boegen uebereinander passen, wird gezeichnet. Der Abstand
+    # ist eine halbe Strichstaerke zuzueglich einer Luecke von einer
+    # halben - so bleiben die Straeche gleich dick und der Zwischenraum
+    # sichtbar.
+    step = stroke * 1.5
+    r = r_outer
+    while r > stroke_i:
+        draw.arc([dot_cx - r, dot_cy - r, dot_cx + r, dot_cy + r],
+                 start=start, end=end, fill=tint, width=stroke_i)
+        r -= step
 
     if dot_r >= 0.6:
         draw.ellipse([dot_cx - dot_r, dot_cy - dot_r,
