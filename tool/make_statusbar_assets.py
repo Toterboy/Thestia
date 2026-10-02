@@ -323,6 +323,142 @@ def _ink_box(rgb, ref_w, y, tol, x0, x1, half=12):
     return min(hits_x), min(hits_y), max(hits_x), max(hits_y)
 
 
+def _col_extent(rgb, ref_w, y, tol, x, rows_bg, half=14):
+    """(oben, unten) der Tintenspalte, oder None."""
+    ys = [yy for yy in range(max(0, y - half), min(rgb.size[1], y + half + 1))
+          if _deviation(rgb, ref_w, x, yy, rows_bg) > tol]
+    return (min(ys), max(ys)) if ys else None
+
+
+def _measure_signal(rgb, ref_w, y, tol, group, origin):
+    """Die vier Signalbaenke einzeln messen.
+
+    Sie sind getrennte Rechtecke auf gemeinsamer Grundlinie - im
+    Referenzfoto x=386..388, 391..393, 395..398, 400..402, Oberkanten
+    bei y=36, 34, 32, 29. Genau solche Rechtecke kann man sauber
+    zeichnen; als hochskaliertes 13-px-Bild bleiben sie pixelig.
+
+    Alle Werte sind relativ zur Tintenbox des Symbols (origin), damit
+    der Zeichner sie an jeder Position einsetzen kann.
+    """
+    rows_bg = {}
+    a, b = group
+    cols = []
+    for x in range(a - 2, b + 3):
+        ext = _col_extent(rgb, ref_w, y, tol, x, rows_bg)
+        if ext:
+            cols.append((x, ext))
+    if not cols:
+        return {'bars': [], 'count': 0}
+
+    # Spalten ohne Luecke zusammenfassen = ein Balken.
+    bars, cur = [], [cols[0]]
+    for prev, nxt in zip(cols, cols[1:]):
+        if nxt[0] - prev[0] <= 1:
+            cur.append(nxt)
+        else:
+            bars.append(cur)
+            cur = [nxt]
+    bars.append(cur)
+
+    ox, oy = origin
+    out = []
+    for bar in bars:
+        xs = [c[0] for c in bar]
+        top = min(c[1][0] for c in bar)
+        bottom = max(c[1][1] for c in bar)
+        out.append({
+            'dxFraction': round((min(xs) - ox) / ref_w, 5),
+            'wFraction': round((max(xs) - min(xs) + 1) / ref_w, 5),
+            'dyTopFraction': round((top - oy) / ref_w, 5),
+            'hFraction': round((bottom - top + 1) / ref_w, 5),
+        })
+    return {'bars': out, 'count': len(out)}
+
+
+def _measure_wifi(rgb, ref_w, y, tol, group, origin):
+    """Punkt und Boegen des WLAN-Fans messen.
+
+    Der Fan besteht aus einem Punkt unten und zwei (drei) Boegen
+    darueber. Bei 13 Pixeln Gesamt Hoehe greift die Spaltensuche zu
+    kurz, um die Bogenkurve zu verfolgen; sie liefert nur eine
+    zusammenhaengende Huellkurve. Daraus sind zwei Groessen ehrlich
+    ablesbar und werden hier gemessen:
+
+      * die Huellbreite und der hoechste Punkt des Fan (x-Bereich
+        gesamt, oberste Zeile),
+      * der Punkt als eigener Klecks: die untersten Zeilen der
+        Mittelspalten, die unter dem Bogen durchragen.
+
+    Die Strichstaerke laesst sich an der Huellkurve messen, indem man
+    prueft, wie dick die Huelle in der Mitte steht - dort laufen die
+    Boegen uebereinander, am Rand ist nur ein Bogen sichtbar. Sie wird
+    als Anteil der Iconbreite gespeichert und beim Zeichnen als
+    Vektorstrich gesetzt, damit das Symbol nicht pixelig bleibt.
+    """
+    rows_bg = {}
+    a, b = group
+    cols = {}
+    for x in range(a - 2, b + 3):
+        ext = _col_extent(rgb, ref_w, y, tol, x, rows_bg)
+        if ext:
+            cols[x] = ext
+    if not cols:
+        return {}
+
+    xs = sorted(cols)
+    top = min(ext[0] for ext in cols.values())
+    bottom = max(ext[1] for ext in cols.values())
+    height = bottom - top + 1
+    mid = (min(xs) + max(xs)) / 2.0
+
+    # Der Punkt: Zeilen ganz unten, nur in den Mittelspalten. Er ragt
+    # unter den Bogen durch, waehrend die Randspalten dort enden.
+    dot_cols = [x for x in xs
+                if abs(x - mid) <= 1.5 and cols[x][1] >= bottom - 1]
+    dot_cx = (min(dot_cols) + max(dot_cols)) / 2.0 if dot_cols else mid
+    dot_top = bottom - (len(dot_cols) / 2.0 if dot_cols else 1.0) + 1
+
+    # Boegenhuellbreite: Randspalten ohne Punktanteil.
+    arc_cols = [x for x in xs if x not in dot_cols]
+    arc_x0 = min(arc_cols) if arc_cols else min(xs)
+    arc_x1 = max(arc_cols) if arc_cols else max(xs)
+
+    # Strichstaerke: wie dick steht die Huelle in der Mitte? Dort
+    # laufen die Boegen uebereinander, am Rand ist nur einer sichtbar.
+    # Gezaehlt werden die Tintenzeilen der Mittelspalte in der oberen
+    # Haelfte; durch zwei uebereinander liegende Boegen geteilt ergibt
+    # das die Einzeldicke.
+    mid_x = int(round(mid))
+    mid_ext = cols.get(mid_x)
+    stroke_px = 1.0
+    if mid_ext:
+        upper = top + max(1, int(height * 0.35))
+        mid_run = sum(1 for yy in range(top, upper + 1)
+                      if mid_ext[0] <= yy <= mid_ext[1])
+        stroke_px = max(1.0, mid_run / 2.0)
+
+    return {
+        'widthFraction': round((arc_x1 - arc_x0 + 1) / ref_w, 5),
+        'topFraction': round(top / ref_w, 5),
+        'bottomFraction': round(bottom / ref_w, 5),
+        'dotCentreXFraction': round(dot_cx / ref_w, 5),
+        'dotRadiusFraction': round(
+            (len(dot_cols) / 2.0 if dot_cols else 1.0) / ref_w, 5),
+        'dotTopFraction': round(dot_top / ref_w, 5),
+        'strokeFraction': round(stroke_px / ref_w, 5),
+        # Icon-relativ: der Zeichner setzt den Fan an der Tintenbox an
+        # und braucht daher nur die Abstaende innerhalb des Symbols.
+        'relTop': round((top - origin[1]) / ref_w, 5),
+        'relHeight': round((bottom - top + 1) / ref_w, 5),
+        'relDotCentreX': round((dot_cx - origin[0]) / ref_w, 5),
+        'relDotTop': round((dot_top - origin[1]) / ref_w, 5),
+        'relDotRadius': round(
+            (len(dot_cols) / 2.0 if dot_cols else 1.0) / ref_w, 5),
+        'relStroke': round(stroke_px / ref_w, 5),
+    }
+
+
 def main():
     ap = argparse.ArgumentParser(
         description='Statusleisten-Symbole aus einer Referenz schneiden')
@@ -447,8 +583,12 @@ def main():
     ink_boxes = {}
     for name, (a, b) in zip(ORDER, right):
         bx0, by0, bx1, by1 = _ink_box(rgb, ref_w, y, tol, a, b)
+        # x0/y0 werden mitgefuehrt: die Signalbaenke und der WLAN-Fan
+        # werden icon-relativ gemessen, damit der Zeichner sie unabhaengig
+        # vom absoluten Ausschnitt ansetzen kann.
         ink_boxes[name] = ({} if bx0 is None else
-                           {'w': bx1 - bx0 + 1, 'h': by1 - by0 + 1})
+                           {'w': bx1 - bx0 + 1, 'h': by1 - by0 + 1,
+                            'x0': bx0, 'y0': by0})
     heights = [v['h'] for v in ink_boxes.values() if v.get('h')]
     geom['iconBox'] = ink_boxes
     geom['iconHeightFraction'] = round(
@@ -547,18 +687,52 @@ def main():
             }
     geom['clock'] = clock
 
+    # --- Geometrie fuer die gezeichneten Symbole ----------------------
+    #
+    # Nicht alle vier werden aus dem Foto uebernommen. Stumm ist ein
+    # Lautsprecher mit Schraegstrich: in 11 Pixeln Hoehe ist das eine
+    # zerbrochene Kontur, und auf dem fertigen Bild ist sie nicht mehr
+    # als ein Symbol erkennbar - sie liest sich als Wecker (Aussage des
+    # Nutzers). Weglassen ist ehrlicher als etwas hinzumalen, das nicht
+    # mehr das Original ist.
+    #
+    # Signal und WLAN dagegen sind aus Messwerten sauber rekonstruierbar:
+    # das Signal sind vier getrennte Balken auf gemeinsamer Grundlinie,
+    # das WLAN zwei Boegen und ein Punkt. Beides als Vektor gezeichnet
+    # ist nicht pixelig - die Pixeligkeit kam aus dem Hochskalieren
+    # eines 13-px-Bildes.
+    geom['signal'] = _measure_signal(
+        rgb, ref_w, y, tol, right[2],
+        (ink_boxes['signal']['x0'], ink_boxes['signal']['y0']))
+    geom['wifi'] = _measure_wifi(
+        rgb, ref_w, y, tol, right[1],
+        (ink_boxes['wifi']['x0'], ink_boxes['wifi']['y0']))
+
+    # Layout der GEZEICHNETEN Symbole: von links nach rechts, mit den
+    # gemessenen Breiten und den gemessenen Abstaenden dazwischen.
+    drawn = [('wifi', right[1]), ('signal', right[2]), ('battery', right[3])]
+    cluster = [{'name': name, 'w': round(ink_boxes[name]['w'] / ref_w, 5)}
+               for name, _ in drawn]
+    gaps = [drawn[i + 1][1][0] - drawn[i][1][1]
+            for i in range(len(drawn) - 1)]
+    geom['cluster'] = cluster
+    geom['gaps'] = [round(g / ref_w, 5) for g in gaps]
+    geom['clusterFraction'] = round(
+        (sum(c['w'] for c in cluster) + sum(g / ref_w for g in gaps)), 5)
+    geom['rightMarginFraction'] = round(
+        (ref_w - right[-1][1]) / ref_w, 5)
+
     GEOMETRY.write_text(json.dumps(geom, indent=2), encoding='utf-8')
     print(f'Geometrie geschrieben: {GEOMETRY.relative_to(ROOT)}')
     if clock:
         print(f'  Uhr          {clock["widthFraction"]*100:.2f} % breit, '
               f'{clock["heightFraction"]*100:.2f} % hoch, '
               f'linker Rand {clock["leftFraction"]*100:.2f} %')
-    print(f'  Icon-Hoehe      {geom["iconHeightFraction"]*100:.2f} % der Breite')
-    for n in ORDER:
-        print(f'  {n:<8} Breite   '
-              f'{geom["iconWidthFraction"][n]*100:.2f} %')
-    print(f'  Abstand         {geom["gapFraction"]*100:.2f} %')
-    print(f'  Cluster gesamt  {geom["clusterFraction"]*100:.2f} %')
+    print('  Cluster      ' + '  '.join(
+        f'{c["name"]} {c["w"]*100:.2f} %' for c in cluster))
+    print('  Abstaende    ' + '  '.join(
+        f'{g*100:.2f} %' for g in geom['gaps']))
+    print(f'  Cluster gesamt {geom["clusterFraction"]*100:.2f} %')
     print(f'  rechter Rand    {geom["rightMarginFraction"]*100:.2f} %')
     print('\nNaechster Schritt: in tool/make_store_screenshots.py die '
           'gezeichneten Symbole durch das Sprite ersetzen.')

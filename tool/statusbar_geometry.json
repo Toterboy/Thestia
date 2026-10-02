@@ -39,19 +39,27 @@
   "iconBox": {
     "mute": {
       "w": 11,
-      "h": 11
+      "h": 11,
+      "x0": 343,
+      "y0": 31
     },
     "wifi": {
       "w": 16,
-      "h": 13
+      "h": 13,
+      "x0": 364,
+      "y0": 29
     },
     "signal": {
       "w": 17,
-      "h": 13
+      "h": 13,
+      "x0": 386,
+      "y0": 29
     },
     "battery": {
       "w": 24,
-      "h": 14
+      "h": 14,
+      "x0": 409,
+      "y0": 28
     }
   },
   "iconHeightFraction": 0.02954,
@@ -68,12 +76,74 @@
     "bodyHeightFraction": 0.02954
   },
   "gapFraction": 0.01547,
-  "clusterFraction": 0.18987,
+  "clusterFraction": 0.14557,
   "rightMarginFraction": 0.0865,
   "clock": {
     "widthFraction": 0.05485,
     "heightFraction": 0.0211,
     "leftFraction": 0.07173,
     "text": "3:41"
-  }
+  },
+  "signal": {
+    "bars": [
+      {
+        "dxFraction": 0.0,
+        "wFraction": 0.00633,
+        "dyTopFraction": 0.01477,
+        "hFraction": 0.01266
+      },
+      {
+        "dxFraction": 0.01055,
+        "wFraction": 0.00633,
+        "dyTopFraction": 0.01055,
+        "hFraction": 0.01688
+      },
+      {
+        "dxFraction": 0.01899,
+        "wFraction": 0.00844,
+        "dyTopFraction": 0.00422,
+        "hFraction": 0.02321
+      },
+      {
+        "dxFraction": 0.02954,
+        "wFraction": 0.00633,
+        "dyTopFraction": 0.0,
+        "hFraction": 0.02532
+      }
+    ],
+    "count": 4
+  },
+  "wifi": {
+    "widthFraction": 0.03376,
+    "topFraction": 0.06118,
+    "bottomFraction": 0.0865,
+    "dotCentreXFraction": 0.78481,
+    "dotRadiusFraction": 0.00316,
+    "dotTopFraction": 0.08544,
+    "strokeFraction": 0.00527,
+    "relTop": 0.0,
+    "relHeight": 0.02743,
+    "relDotCentreX": 0.01688,
+    "relDotTop": 0.02426,
+    "relDotRadius": 0.00316,
+    "relStroke": 0.00527
+  },
+  "cluster": [
+    {
+      "name": "wifi",
+      "w": 0.03376
+    },
+    {
+      "name": "signal",
+      "w": 0.03586
+    },
+    {
+      "name": "battery",
+      "w": 0.05063
+    }
+  ],
+  "gaps": [
+    0.01266,
+    0.01266
+  ]
 }

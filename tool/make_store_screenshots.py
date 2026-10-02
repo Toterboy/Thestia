@@ -245,86 +245,89 @@ def _draw_clock(img, d, cy, color):
 
 
 def _paste_status_bar_icons(img, cy, tint, draw):
-    """Setzt die echten Symbole aus dem Sprite ein. True bei Erfolg.
+    """Zeichnet die Symbole der nachgeahmten Statusleiste. True bei Erfolg.
 
     Der MASSSTAB ist der Quotient aus den Bildbreiten, nicht eine
     geratene Prozentangabe. Das ist der Unterschied zwischen "Aehnlich"
-    und "skaliert":
+    und "skaliert": mit dem Quotienten gilt fuer jedes Zielbild dasselbe
+    Verhaeltnis wie auf dem Geraet des Nutzers.
 
-      * Die gezeichnete Fassung setzte den Cluster auf geratene 30 % der
-        Bildbreite und die Symbole auf 3,5 % Hoehe. Gemessen sind es
-        18,99 % und 2,32 %. Die Zeichnung war also um die Haelfte zu
-        gross - unabhaengig davon, wie korrekt die Formen waren.
-      * Mit dem Quotienten gilt fuer jedes Zielbild: dasselbe
-        Verhaeltnis wie auf dem Geraet des Nutzers.
+    ALLE drei Symbole werden gezeichnet, nicht eingeklebt. Das ist eine
+    Aenderung aus einem konkreten Grund: als 13-px-Sprite in eine
+    1080-px-Kachel hochskaliert bleibt das Ergebnis pixelig, egal wie
+    sauber der Ausschnitt war. Gezeichnet wird mit den im Referenzfoto
+    gemessenen Proportionen, darum ist die Form scharf und die Groesse
+    trotzdem gemessen:
 
-    Der AKKU wird gezeichnet, nicht aus dem Sprite genommen. Das Sprite
-    enthaelt eine Silhouette, und im Akku ist die Silhouette ein
-    gefuelltes Rechteck - die Prozentzahl verschwindet darin. Sie ist
-    aber der eigentliche Inhalt des Symbols, also wird sie wieder
-    gezeichnet, jetzt mit den gemessenen Proportionen statt mit
-    geratenen. Die Proportionen kommen aus derselben Datei wie die der
-    uebrigen Symbole, damit der Akku nicht auffaellt.
+      * WLAN   zwei Boegen und ein Punkt, alle drei Abstaende gemessen
+      * Signal vier getrennte Balken auf gemeinsamer Grundlinie
+      * Akku   Koerper, Stift und Prozentzahl gemessen
+
+    Stumm (Lautsprecher mit Schraegstrich) entfaellt. In 11 Pixeln
+    Hoehe ist die Kontur nicht wiederzuerkennen; auf dem fertigen Bild
+    las sie sich als Wecker. Ein Symbol wegzulassen ist ehrlicher, als
+    eines hinzumalen, das nicht mehr das Original ist (Nutzerwunsch).
+
+    Reihenfolge und Abstaende stehen als "cluster"/"gaps" in der
+    Geometriedatei - von rechts nach links gezeichnet, damit die
+    rechte Kante des Akkus am gemessenen rechten Rand sitzt.
     """
     import json
     if not STATUSBAR_SPRITE.is_file() or not STATUSBAR_GEOMETRY.is_file():
         return False
     try:
         geom = json.loads(STATUSBAR_GEOMETRY.read_text(encoding='utf-8'))
-        sprite = Image.open(STATUSBAR_SPRITE).convert('RGBA')
     except (OSError, ValueError, KeyError):
         return False
 
-    boxes = geom.get('sprite') or {}
-    widths = geom.get('iconWidthFraction') or {}
-    if any(n not in boxes or n not in widths for n in STATUSBAR_ORDER):
+    cluster = geom.get('cluster') or []
+    gaps = geom.get('gaps') or []
+    if not cluster or len(gaps) != len(cluster) - 1:
         return False
 
     target = tuple(tint[:3])
     w, h = img.size
     u = float(w)
 
-    ref_w = float(geom['sourceSize'][0])
-    scale = u / ref_w                      # exakt: Verhaeltnis der Breiten
-    gap = float(geom.get('gapFraction', 0.015)) * u
     right_margin = float(geom.get('rightMarginFraction', 0.06)) * u
-    height = float(geom.get('iconHeightFraction', 0.023)) * u
-
     cursor = w - right_margin
 
-    for name in reversed(STATUSBAR_ORDER):
-        icon_w = widths[name] * u
-        b = boxes[name]
-        tile = sprite.crop((b['x'], b['y'], b['x'] + b['w'], b['y'] + b['h']))
+    # Oberkante des Iconfelds. `cy` ist die Mitte des Statusleisten-
+    # Bandes, die Messwerte in der Geometrie sind aber vom OBEREN Rand
+    # des jeweiligen Iconfelds aus gemessen. Ohne diese Umrechnung
+    # hing der ganze Cluster um halbe Symbolhoehe zu tief und stiess im
+    # Screenshot an den Text darunter ("Ueberspringen").
+    heights = []
+    wifi_h = float(((geom.get('wifi') or {}).get('relHeight', 0)) * u)
+    if wifi_h:
+        heights.append(wifi_h)
+    sig_bars = ((geom.get('signal') or {}).get('bars') or [])
+    for bar in sig_bars:
+        heights.append((float(bar['dyTopFraction'])
+                        + float(bar['hFraction'])) * u)
+    icon_top = cy - (max(heights) / 2.0 if heights else 0.0)
+
+    for i in range(len(cluster) - 1, -1, -1):
+        entry = cluster[i]
+        name = entry['name']
+        icon_w = float(entry['w']) * u
 
         if name == 'battery':
             _draw_reference_battery(draw, cursor, cy, target, geom, u)
+        elif name == 'wifi':
+            if not _draw_reference_wifi(draw, cursor, icon_top, target,
+                                        geom, u):
+                return False
+        elif name == 'signal':
+            if not _draw_reference_signal(draw, cursor, icon_top, target,
+                                          geom, u):
+                return False
         else:
-            # Die Deckkraft kommt fertig aus dem Sprite. Sie wird bei
-            # der Sprite-Erzeugung gegen den Zeilenhintergrund der
-            # GANZEN Referenz gemessen. Beim Einfuegen laesst sich das
-            # nicht mehr korrekt nachholen: der Himmel verlaufet
-            # innerhalb einer Kachel, eine mittlere Randfarbe trifft
-            # daneben, und die Kachel bleibt als grauer Kasten stehen.
-            # Das war der dritte Versuch dieser Art.
-            mask = tile.getchannel('A')
-            box = mask.getbbox()
-            if box is None:
-                cursor -= icon_w + gap
-                continue
-            mask = mask.crop(box)
-            tw = max(1, int(round(icon_w)))
-            th = max(1, int(round(mask.size[1] * tw / mask.size[0])))
-            mask = mask.resize((tw, th), Image.LANCZOS)
-            recolored = Image.merge('RGBA', (
-                Image.new('L', mask.size, target[0]),
-                Image.new('L', mask.size, target[1]),
-                Image.new('L', mask.size, target[2]),
-                mask,
-            ))
-            img.alpha_composite(
-                recolored, (int(cursor - tw), int(cy - th / 2)))
-        cursor -= icon_w + gap
+            return False
+
+        cursor -= icon_w
+        if i > 0:
+            cursor -= float(gaps[i - 1]) * u
 
     return True
 
@@ -399,6 +402,111 @@ def _draw_reference_battery(draw, right, cy, tint, geom, u):
                       BATTERY_PERCENT, font=f, fill=tint)
     except OSError:
         pass
+
+
+def _draw_reference_signal(draw, right, top, tint, geom, u):
+    """Signal aus vier gemessenen Balken. True bei Erfolg.
+
+    Im Referenzfoto sind es vier getrennte Rechtecke auf einer
+    gemeinsamen Grundlinie: x=386..388, 391..393, 395..398, 400..402,
+    Oberkanten bei y=36, 34, 32, 29. Genau diese Rechtecke werden
+    gezeichnet - als Vektor, nicht als 13-px-Bild.
+
+    Das ist der Unterschied zu den drei vorherigen Versuchen: die
+    Form ist nicht geraten, sondern abgelesen, und sie ist scharf, weil
+    sie nicht aus Pixeln besteht. Die Grundlinie ist die Oberkante des
+    Signal-Iconfelds, die Balken waechsen nach links oben.
+    """
+    sig = (geom.get('signal') or {}).get('bars') or []
+    if not sig:
+        return False
+
+    x1 = right
+
+    for bar in sig:
+        bx1 = x1 - float(bar['dxFraction']) * u
+        bx0 = bx1 - float(bar['wFraction']) * u
+        # dyTopFraction ist icon-relativ gemessen: die Oberkante des
+        # Iconfelds ist `top`, die Balken waechsen von dort nach unten.
+        y0 = top + float(bar['dyTopFraction']) * u
+        y1 = y0 + float(bar['hFraction']) * u
+        # Ecken minimal abrunden, damit die Balken nicht als Tabelle
+        # aussehen - Android zeichnet sie mit einem kleinen Radius.
+        r = min((y1 - y0) * 0.28, (bx1 - bx0) * 0.45)
+        if r >= 0.5:
+            draw.rounded_rectangle([bx0, y0, bx1, y1], radius=r, fill=tint)
+        else:
+            draw.rectangle([bx0, y0, bx1, y1], fill=tint)
+    return True
+
+
+def _draw_reference_wifi(draw, right, top, tint, geom, u):
+    """WLAN als zwei Boegen und ein Punkt. True bei Erfolg.
+
+    Die Form des Fans ist aus 13 Pixeln nicht verfolgbar - wohl aber
+    seine Huelle (Breite, hoechster Punkt) und der Punkt unten in der
+    Mitte. Beides kommt gemessen aus statusbar_geometry.json:
+
+      Breite 3,38 % der Bildbreite, Hoehe 2,74 %, Strichstaerke 0,53 %
+      Punkt   Mittelpunkt bei x=372 der Referenz, Radius 1,5 px
+
+    Die Boegen sind Ellipsenabschnitte, nicht Kreise: der gemessene
+    Fan ist 16 px breit und 13 px hoch, ein Kreis passt nicht in dieses
+    Verhaeltnis. Der zweite Bogen ist um den gemessenen Strich
+    eingerueckt, damit beide Striche gleich dick bleiben.
+    """
+    w_geom = geom.get('wifi') or {}
+    if 'relHeight' not in w_geom:
+        return False
+
+    # Achtung: `cluster[i]['w']` ist ein ANTEIL der Bildbreite, kein
+    # Pixelwert. Ohne die Umrechnung mit u war rx = 0,017 px und damit
+    # kleiner als die Strichstaerke - beide Boegen wurden uebersprungen
+    # und nur der Punkt blieb uebrig, an falscher Stelle.
+    icon_w = float(((geom.get('cluster') or [{}])[0] or {}).get('w', 0.0)) * u
+    if icon_w <= 0:
+        return False
+
+    height = float(w_geom['relHeight']) * u
+    # Die gemessene Strichstaerke ist 0,53 % der Bildbreite, im Symbol
+    # also rund 19 % seiner Hoehe. Beim Fan aus zwei Boegen frisst das
+    # den Zwischenraum: die Arme verschmelzen zu einem Krumen. Fuer
+    # WLAN und Signal ist die Strichstaerke deshalb auf 8 % der
+    # Symbolhoehe begrenzt - dort ist ein duennerer Strich auch der
+    # realistischere Wert, weil ein heller Pixel auf diesem
+    # Himmelsverlauf zur Haelfte aus anti-aliastem Rand besteht und der
+    # gemessene Wert den Kern plus seinen Rand enthaelt.
+    stroke = min(float(w_geom.get('relStroke', 0.004)) * u, height * 0.11)
+    dot_r = float(w_geom.get('relDotRadius', 0.003)) * u
+    dot_cx = right - icon_w + float(w_geom['relDotCentreX']) * u
+    top = top + float(w_geom['relTop']) * u
+    dot_cy = top + height - dot_r
+    stroke_i = max(1, int(round(stroke)))
+
+    # Zwei Boegen, als ELLIPSENabschnitte. Das ist der entscheidende
+    # Punkt: der gemessene Fan ist 21 px breit und 17 px hoch. Ein
+    # Kreis passt nicht in dieses Verhaeltnis - mit dem Hoehenradius
+    # als Radius fuer beide Achsen wurde der Bogen 31 px breit statt
+    # 21 und frass das Signalsymbol an (sichtbar als ein Klumpen).
+    # Deshalb bekommt jeder Bogen eine eigene Halbachse in x und y.
+    #
+    # Der Winkelbereich 210..330 begrenzt die Arme. Mit 205..335 liefen
+    # sie seitlich bis fast an die Iconbreite und wirkten flach; so
+    # laufen sie steiler nach oben und lesen sich als Fan.
+    gap = stroke * 1.6
+    for shrink in (0.0, stroke * 2 + gap * 2):
+        rx = icon_w / 2.0 - shrink
+        ry = (height - dot_r) - shrink
+        if rx <= stroke_i or ry <= stroke_i:
+            continue
+        draw.arc(
+            [dot_cx - rx, dot_cy - ry, dot_cx + rx, dot_cy + ry],
+            start=210, end=330, fill=tint, width=stroke_i)
+
+    if dot_r >= 0.6:
+        draw.ellipse([dot_cx - dot_r, dot_cy - dot_r,
+                      dot_cx + dot_r, dot_cy + dot_r], fill=tint)
+    return True
 
 
 def _icon_mask(tile, bg):
