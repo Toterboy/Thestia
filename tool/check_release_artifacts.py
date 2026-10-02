@@ -438,8 +438,14 @@ def main():
     print()
     marker_path = ROOT / 'build' / '.admin-artifacts.json'
     if marker_path.is_file():
+        # utf-8-sig statt utf-8: Windows PowerShell 5.1 schreibt mit
+        # Set-Content -Encoding UTF8 ein BOM, und json lehnt es ab. Ein
+        # Marker, den der Check nicht lesen kann, waere eine erfundene
+        # Stoerung - das Skript schreibt ihn inzwischen ohne BOM, aber
+        # ein aelterer Marker im Arbeitsverzeichnis soll die Pruefung
+        # nicht sprengen.
         try:
-            entries = json.loads(marker_path.read_text(encoding='utf-8'))
+            entries = json.loads(marker_path.read_text(encoding='utf-8-sig'))
         except ValueError:
             entries = {}
             problems.append(f'{marker_path.name} ist unlesbar - '

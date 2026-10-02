@@ -220,7 +220,15 @@ function Register-AdminArtifact {
         }
     }
     $list[$hash] = (Split-Path $Path -Leaf)
-    $list | ConvertTo-Json | Set-Content -LiteralPath $marker -Encoding UTF8
+    # Ohne BOM schreiben. Windows PowerShell 5.1 setzt bei
+    # Set-Content -Encoding UTF8 ein BOM, und JSON mit BOM lehnt der
+    # Python-Parser ab - die Datei waere danach unlesbar und der
+    # Check meldete "Provenienz nicht pruefbar", obwohl sie korrekt
+    # geschrieben wurde.
+    [System.IO.File]::WriteAllText(
+        (Join-Path (Get-Location) $marker),
+        (($list | ConvertTo-Json)),
+        (New-Object System.Text.UTF8Encoding($false)))
     Write-Host "    als Admin-Artefakt vermerkt: $(Split-Path $Path -Leaf)" -ForegroundColor DarkGray
 }
 
@@ -404,12 +412,16 @@ if ($SkipBuild) {
     # WICHTIG - Reihenfolge: die oeffentlichen Kopien oben passieren VOR
     # diesem Block, nie danach. Flutter leert build\app\outputs bei jedem
     # Aufruf, deshalb wird nach jedem Bau sofort kopiert.
-    if ($AdminUUID -ne "") {
+    #
+    # Quelle ist die Umgebungsvariable, nicht der Parameter: der Parameter
+    # wird oben abgewiesen, weil er im Klartext in der History landet.
+    $adminSecret = $env:ADMIN_UUID
+    if (-not [string]::IsNullOrWhiteSpace($adminSecret)) {
         $adminDir = Join-Path $OutDir "admin"
         New-Item -ItemType Directory -Force -Path $adminDir | Out-Null
         foreach ($adminFlavor in @("play", "fdroid")) {
             Write-Host "==> Baue ADMIN-Variante ($adminFlavor, nur Team-intern)..." -ForegroundColor Magenta
-            $defineArgs = @("--dart-define=ADMIN_UUID=$AdminUUID") + $ConfigDefines
+            $defineArgs = @("--dart-define=ADMIN_UUID=$adminSecret") + $ConfigDefines
             if ($adminFlavor -eq "fdroid") { $defineArgs += "--dart-define=FDROID=true" }
             # Eigenes Symbolverzeichnis. Vorher landeten die
             # Admin-Symbole in build/symbols/<flavor> - demselben Ordner
