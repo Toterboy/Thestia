@@ -505,6 +505,11 @@ def _draw_reference_wifi(draw, right, top, tint, geom, u):
     Drei Boegen, nicht zwei: mit dem gemessenen Radius und der
     Strichstaerke aus der Referenz passen genau drei uebereinander, und
     "es fehlt ein Strich" war die Rueckmeldung dazu.
+
+    Der innerste Bogen laeuft nach unten in einer Spitze aus - eine Art
+    Dreieck, dessen Oberkante genau der Bogen bleibt. Ohne Punkt
+    (Nutzerwunsch), aber nicht als leerer Raum: die Spitze fuellt den
+    Platz, den der Punkt in der Referenz einnimmt.
     """
     w_geom = geom.get('wifi') or {}
     if 'relHeight' not in w_geom:
@@ -539,29 +544,58 @@ def _draw_reference_wifi(draw, right, top, tint, geom, u):
     dev = math.degrees(math.acos(max(-1.0, min(1.0, half / r_outer))))
     start, end = 270.0 - dev, 270.0 + dev
 
-    # OHNE Punkt (Nutzerwunsch). Der Punkt sitzt in der Referenz unter
-    # den Boegen; weggelassen wird er trotzdem nicht aus dem gemessenen
-    # Kasten - der bleibt, sonst rueckt die ganze Zeile.
+    # Der Fan fuellt seinen Kasten von oben bis unten: Aussenbogen an
+    # die Oberkante, Spitze an die Unterkante.
     #
-    # Der Fan wird deshalb in seinem Kasten MITTIERT. Ohne den Punkt
-    # enden die Arme bei y = top + r*cos(Winkel), also rund 3,5 px unter
-    # der Oberkante: uebrig bliebe ein 9 px hoher Leerraum darunter und
-    # das Symbol klebte oben. Die Mitte des gezeichneten Fanbands wird
-    # darum auf die Mitte des Iconfelds gelegt.
-    apex_y = (top + (height - (r_outer * math.cos(math.radians(dev))
-                               + stroke)) / 2.0 + stroke / 2.0)
+    # Vorher wurde die Mitte des Fanbands mittiert, weil die Boegen ohne
+    # Punkt nur die oberen 3,5 px des Kastens belegten und darunter 9 px
+    # leer blieben. Mit der Spitze ist das gemittelt nicht mehr noetig
+    # und sogar schaedlich: der Bogen saehe dann oben angeklebt aus und
+    # die Spitze haette nur 1,8 px Laenge - ein Punkt, kein Dreieck.
+    # Die Oberkante des Aussenbogens liegt auf stroke/2, damit der
+    # Strich nicht ueber den Kasten hinausragt.
+    apex_y = top + stroke / 2.0
     arc_cy = apex_y + r_outer
 
-    # Solange Boegen uebereinander passen, wird gezeichnet. Der Abstand
-    # ist eine halbe Strichstaerke zuzueglich einer Luecke von einer
-    # halben - so bleiben die Straeche gleich dick und der Zwischenraum
-    # sichtbar.
+    # Die Boegen als Strich, der INNERSTE mit einer Spitze nach unten
+    # (Nutzerwunsch): der unterste kleine Halbkreis laeuft nicht als
+    # Bogen aus, sondern er endet in einer Spitze - eine Art Dreieck,
+    # dessen Oberkante genau dieser Bogen bleibt.
+    #
+    # Dazu wird der innerste Bogen als geschlossene Form gezeichnet:
+    # Bogenpunkte von `start` bis `end`, dann eine Spitze. Die beiden
+    # aeusseren bleiben normale Boegen. Die Spitze reicht bis zur
+    # Unterkante des Iconfelds - an ihre Stelle fiel sonst die Flaeche,
+    # die vorher der Punkt einnahm (siehe _draw_reference_wifi).
     step = stroke * 1.5
+    radii = []
     r = r_outer
     while r > stroke_i:
-        draw.arc([dot_cx - r, arc_cy - r, dot_cx + r, arc_cy + r],
-                 start=start, end=end, fill=tint, width=stroke_i)
+        radii.append(r)
         r -= step
+
+    for r_mid in radii[:-1]:
+        draw.arc([dot_cx - r_mid, arc_cy - r_mid,
+                  dot_cx + r_mid, arc_cy + r_mid],
+                 start=start, end=end, fill=tint, width=stroke_i)
+
+    if radii:
+        r_in = radii[-1]
+        spike_tip = top + height
+        pts = []
+        steps = 24
+        for i in range(steps + 1):
+            ang = math.radians(start + (end - start) * i / steps)
+            pts.append((dot_cx + r_in * math.cos(ang),
+                        arc_cy + r_in * math.sin(ang)))
+        pts.append((dot_cx, spike_tip))
+        draw.polygon(pts, fill=tint)
+        # Der Bogen darueber noch einmal als Strich, damit die
+        # Oberkante der Form dieselbe Staerke hat wie die beiden
+        # aeusseren Boegen und nicht als Fuellungskante abschneidet.
+        draw.arc([dot_cx - r_in, arc_cy - r_in,
+                  dot_cx + r_in, arc_cy + r_in],
+                 start=start, end=end, fill=tint, width=stroke_i)
     return True
 
 
