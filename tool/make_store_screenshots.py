@@ -21,6 +21,7 @@ Voraussetzung: die App-Screens vorher rendern -
     $env:STORE_SHOTS="1"; flutter test --update-goldens test/screenshots/store_v091_shots_test.dart
 """
 
+import json
 import math
 import pathlib
 import re
@@ -69,8 +70,17 @@ SHOTS = {
     '02_anmelden': (
         'Erst prüfen,\n'
         'dann freischalten',
-        'Mit E-Mail bestätigen, Profil ausfüllen,\n'
-        'Geburtsdatum hinterlegen, los.',
+        # Vorher: "Mit E-Mail bestätigen, Profil ausfüllen,
+        # Geburtsdatum hinterlegen, los."
+        #
+        # Das passte nicht mehr zum Bild. Die Kachel zeigt nur
+        # E-Mail-Feld, Passwort-Feld, Kontrollkästchen und
+        # "Einloggen" - dort steht kein Geburtsdatum, und der Satz
+        # versprach einen Schritt, den man auf dem Bild nicht findet.
+        # Aufgetrennt in einen Teil, den das Bild zeigt, und einen,
+        # der danach kommt.
+        'Anmelden mit E-Mail und Passwort.\n'
+        'Profilangaben gibst du später.',
         'Foto erst nach dem Funke',
     ),
     '03_entdecken': (
@@ -1394,6 +1404,141 @@ def compose_card_wqhd(shot: Image.Image, headline: str, subline: str,
     return round_corners(bg, 56)
 
 
+CARDS = ROOT / 'test' / 'screenshots' / 'store_v091' / 'cards'
+# Der Screenshot-Export laeuft mit dpr 3. Die Rechtecke in den
+# rects_*.json sind LOGISCH, die PNGs sind physisch - ohne diesen
+# Faktor wuerde jedes Rechteck um den Faktor 3 daneben liegen.
+CARDS_DPR = 3.0
+
+
+def _load_card_rects(screen):
+    """Liest die Kachelrechtecke eines Screens.
+
+    Zwei Formen werden akzeptiert, weil beide im Export vorkommen:
+
+      * {"name": [l, t, w, h]}          - ein Rechteck pro Kachel
+      * {"name": {"file": ..., "rect": [l, t, w, h]}}  - mit Screenshot
+
+    Die zweite Form ist noetig fuer 05: die Eisbrecher-Kategorien
+    stehen in einer Liste, die gescrollt werden muss. Eine Kachel kann
+    nur aus dem Bild geschnitten werden, in dem sie vollstaendig stand.
+    """
+    path = CARDS / f'rects_{screen}.json'
+    if not path.is_file():
+        return []
+    try:
+        data = json.loads(path.read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        return []
+    out = []
+    for name, value in data.items():
+        if isinstance(value, dict):
+            rect, src = value.get('rect'), value.get('file')
+        else:
+            rect, src = value, None
+        if not rect or len(rect) != 4:
+            continue
+        out.append((name, src, [float(v) for v in rect]))
+    return out
+
+
+def load_cards(screen, default_src=None):
+    """Schneidet die Kacheln eines Screens aus den exportierten Bildern.
+
+    `default_src` gilt fuer Rechtecke OHNE eigenen Dateiverweis: bei 01
+    und 02 gibt es nur einen Screenshot, aus dem alle Kacheln kommen.
+    Ohne Vorgabe wurden diese Kacheln stillschweigend verworfen und der
+    Screen als eine grosse Kachel eingesetzt - also genau die Loesung,
+    die abgeschafft werden sollte.
+    """
+    out = []
+    cache = {}
+    for name, src, rect in _load_card_rects(screen):
+        src = src or default_src
+        if not src:
+            continue
+        img_path = CARDS / src
+        if img_path not in cache:
+            if not img_path.is_file():
+                continue
+            cache[img_path] = Image.open(img_path).convert('RGB')
+        img = cache[img_path]
+        l, t, w, h = rect
+        box = (int(round(l * CARDS_DPR)), int(round(t * CARDS_DPR)),
+               int(round((l + w) * CARDS_DPR)),
+               int(round((t + h) * CARDS_DPR)))
+        box = (max(0, box[0]), max(0, box[1]),
+               min(img.size[0], box[2]), min(img.size[1], box[3]))
+        if box[2] <= box[0] or box[3] <= box[1]:
+            continue
+        out.append((name, img.crop(box)))
+    return out
+
+
+def _heading_card(text, width, sub=None):
+    """Ueberschriftskachel im Stil der uebrigen Kacheln.
+
+    Fuer 05: die Kategorien sollen unter einer Kachel mit dem
+    Seitentitel stehen, sonst ist die Liste ohne Ueberschrift. Der Text
+    kommt aus den Strings der App (`spice.title`), nicht aus dem
+    Marketing-Headline - der Screen hiess in der App "Eisbrecher-Fragen".
+    """
+    f = ImageFont.truetype(FONT_BOLD, max(14, int(width * 0.062)))
+    layer = Image.new('RGBA', (width, 10), (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    bb = d.textbbox((0, 0), text, font=f)
+    tw, th = bb[2] - bb[0], bb[3] - bb[1]
+    pad = int(width * 0.06)
+    h = th + 2 * pad
+    out = Image.new('RGBA', (width, h), (255, 255, 255, 255))
+    od = ImageDraw.Draw(out)
+    od.rounded_rectangle([0, 0, width - 1, h - 1], radius=h // 3,
+                         fill=(255, 255, 255, 255))
+    od.text(((width - tw) / 2 - bb[0], pad - bb[1]), text, font=f,
+            fill=(45, 38, 50, 255))
+    del layer
+    return out
+
+
+def compose_cards(cards, headline: str, subline: str, badge: str,
+                  heading=None):
+    """9:16: beliebig viele echte Kacheln untereinander auf dem Verlauf.
+
+    Der Aufbau ist der von compose_modes, nur mit den Kacheln, die der
+    Dart-Export aus den echten Widgets des Screens geschnitten hat -
+    nicht mit dem Screen selbst. "Ueberspringen", die AppBar und der
+    grosse Herz-Kopf des Anmeldescreens gehoeren nicht dazu, und
+    deshalb sind sie auch nicht dabei.
+    """
+    W, H = 1080, 1920
+    bg = gradient((W, H), 40).convert('RGBA')
+    draw = ImageDraw.Draw(bg)
+
+    f_head = ImageFont.truetype(FONT_BOLD, 62)
+    f_sub = ImageFont.truetype(FONT_REG, 30)
+    y = 104
+    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255), 14,
+                   W // 2, y)
+    y += 20
+    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226), 10,
+                   W // 2, y)
+
+    margin = 60
+    gap = 28
+    badge_top = H - 136
+    imgs = [c for _n, c in cards]
+    if heading:
+        # Breite wie die breiteste Kachel, damit die Ueberschrift nicht
+        # allein schmaler steht als ihr Inhalt.
+        width = max((c.width for c in imgs), default=W - 2 * margin)
+        imgs.insert(0, _heading_card(heading, width))
+    _place_tiles(bg, imgs, y + 34, badge_top - y - 70,
+                 W - 2 * margin, gap, center_w=W)
+
+    badge_pill(bg, badge, W // 2, badge_top)
+    return round_corners(bg, 56)
+
+
 def compose_modes(tiles, headline: str, subline: str, badge: str):
     """9:16: die fuenf echten Modus-Kacheln als grosse Liste.
 
@@ -1680,9 +1825,25 @@ def main():
         finally:
             globals()['OMIT_SYSTEM_UI'] = False
 
-        # Variante KACHELN: ohne Geraet, ohne Statusleiste, Inhalt als
-        # einzelne Kachel auf dem Verlauf - die Sprache von 03_entdecken.
-        # Die beiden anderen Varianten bleiben unberuehrt, es come adds.
+        # Variante KACHELN: die echten Widgets des Screens als einzelne
+        # Kacheln auf dem Verlauf. 03 hat seine fuenf Moduskacheln, die
+        # uebrigen Screens ihre eigenen - je nachdem, was der Dart-Export
+        # als Rechtecke notiert hat. Ohne Export bleibt der Screen in
+        # einem Kachelbild: dann ist es kein Fehler, nur weniger schoen.
+        prefix = name[:2]
+        cards = load_cards(prefix, default_src=f'{name}.png')
+        if cards:
+            k = compose_cards(cards, headline, subline, badge,
+                              heading='Eisbrecher-Fragen'
+                              if name == '05_eisbrecher' else None)
+            save_png(k, OUT_9x16_KACHELN / f'{name}.png')
+            kw = compose_card_wqhd(shot, headline, subline, badge)
+            save_png(kw, OUT_WQHD_KACHELN / f'{name}.png')
+            print(f'  {name}: 9x16 {a.size} + wqhd {b.size} '
+                  f'(drei Varianten, {len(cards)} Kacheln aus echten '
+                  'Widgets)')
+            continue
+
         k = compose_card(shot, headline, subline, badge)
         kw = compose_card_wqhd(shot, headline, subline, badge)
         save_png(k, OUT_9x16_KACHELN / f'{name}.png')

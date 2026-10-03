@@ -100,6 +100,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
               return Padding(
                 padding: const EdgeInsets.all(32),
                 child: Column(
+                  // Key fuer den Store-Screenshot-Export: Logo, Titel und
+                  // Text der Seite werden als EINE Kachel gebraucht, ohne
+                  // dass sich der Aufbau des Screens aendert. Ein Key
+                  // aendert das Rendering nicht.
+                  key: const Key('welcome-page-content'),
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const AppLogo(size: 120),

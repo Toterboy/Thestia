@@ -8,6 +8,7 @@
 //   $env:STORE_SHOTS="1"; flutter test --update-goldens test/screenshots/store_v091_shots_test.dart
 //
 // Ausgabe: test/screenshots/store_v091/{9x16,wqhd}/*.png
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -27,6 +28,7 @@ import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/services/secure_storage.dart';
 import 'package:thestia/theme/app_theme.dart';
 import 'package:thestia/widgets/appearance_selector.dart';
+import 'package:thestia/widgets/buttons.dart';
 import 'package:thestia/widgets/chat_background_picker.dart';
 import 'package:thestia/widgets/theme_picker.dart';
 
@@ -53,6 +55,16 @@ const double _dpr = 3.0;
 /// Zielordner der einzelnen Kacheln. make_store_screenshots.py liest
 /// daraus und setzt sie auf dem Verlauf zusammen.
 const String outTiles = 'store_v091/tiles';
+
+/// Zielordner fuer die Kacheln der Screens 01, 02, 04 und 05.
+///
+/// Anders als [outTiles] sind das KEINE gerenderten Einzelkacheln,
+/// sondern vollstaendige Screens plus rects.json. Der Aufbau ist fuer
+/// diese Screens nicht "eine Kachel pro Widget", sondern "die echten
+/// Widgets des Screens an Ort und Stelle". Deshalb wird nichts
+/// umgebaut und nichts nachgeschnitten: rects.json sagt, welcher
+/// Bildbereich zu welcher Karte gehoert.
+const String outCards = 'store_v091/cards';
 
 /// SharedPreferences-Instanz fuer die Einzel-Exporte.
 ///
@@ -279,6 +291,9 @@ Future<void> _pump(
 /// No-op-Callback fuer gerenderte Auswahl-Widgets.
 void _noop(String _) {}
 
+/// No-op-Callback fuer [ThemePicker], der ein [ThestiaTheme] liefert.
+void _noopTheme(ThestiaTheme _) {}
+
 /// Registriert einen Screen in beiden Aufloesungen.
 void _shot(
   String name,
@@ -369,6 +384,109 @@ Widget _soleTileHost(Card card) {
   );
 }
 
+/// Karte fuer den Kachel-Aufbau der Store-Screens: echter Inhalt auf
+/// leuchtendem Grund, ohne Geraeterahmen.
+///
+/// KEIN eigenes MaterialApp: _pump() haengt den Kindbaum in _harness(),
+/// und das bringt schon eines mit. Ein zweites wuerde den Capture
+/// unmoeglich machen ("matched too many widgets").
+///
+/// Anders als [_soleTileHost] wird hier nichts gestreckt: der Inhalt
+/// behaelt seine natuerliche Hoehe und steht auf dem Hintergrund. Das
+/// ist die Form, in der die Kachel spaeter erscheint.
+Widget _cardHost(Widget child, {double maxWidth = 340}) {
+  return Builder(builder: (context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: child,
+          ),
+        ),
+      ),
+    );
+  });
+}
+
+/// Zielverzeichnis fuer die Rechteck-Dateien, ABSOLUT aufgeloest.
+///
+/// `matchesGoldenFile` loest seinen Pfad relativ zur Testdatei auf, ein
+/// `File('store_v091/...')` dagegen relativ zum Prozessordner - das ist
+/// die Package-Wurzel. Die Rechtecke landeten dadurch in
+/// `<wurzel>/store_v091/cards/` statt neben den Bildern in
+/// `test/screenshots/store_v091/cards/`, und make_store_screenshots.py
+/// fand sie nicht.
+///
+/// Darum wird derselbe Zielordner wie bei den Bildern hier ausdruecklich
+/// gebildet: Package-Wurzel plus test/screenshots/.
+Directory _outCardsDir() =>
+    Directory('${Directory.current.path}/test/screenshots/$outCards');
+
+/// Stabiler Name einer Kachel aus deren Text.
+///
+/// Aus dem ExpansionTile-Titel, nicht aus der Position. Siehe die
+/// Begruendung beim Export von 05.
+String? _tileName(Widget? title) {
+  final data = title is Text ? title.data : null;
+  if (data == null || data.trim().isEmpty) return null;
+  return data
+      .trim()
+      .toLowerCase()
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+      .replaceAll(RegExp(r'^_+|_+$'), '');
+}
+
+/// Schreibt eine Liste von Kacheln als JSON.
+///
+/// Anders als [_writeCardRects] traegt jede Kachel ihren Screenshot mit
+/// sich: bei 05 wird ueber die Liste gescrollt, und eine Kachel kann nur
+/// aus dem Bild geschnitten werden, in dem sie vollstaendig stand.
+Future<void> _writeCardList(
+  WidgetTester tester,
+  String screen,
+  Map<String, Map<String, Object>> cards,
+) async {
+  final file = File('${_outCardsDir().path}/rects_$screen.json');
+  await tester.runAsync(() async {
+    await file.parent.create(recursive: true);
+    await file.writeAsString(jsonEncode(cards), flush: true);
+  });
+}
+
+/// Schreibt die Rechtecke der Kacheln eines Screens als JSON.
+///
+/// EINE Datei je Screen (`rects_<name>.json`). Eine gemeinsame Datei
+/// wuerde beim zweiten Screen ueberschrieben - die Kacheln von 04
+/// entstuenden dann aus dem Rechteck-Bild von 01.
+///
+/// `rects` in LOGISCHEN Pixeln; make_store_screenshots.py rechnet mit
+/// 3.0 auf physische Pixel um, weil der Screenshot in physischen
+/// Pixeln aufgenommen wird.
+Future<void> _writeCardRects(
+  WidgetTester tester,
+  String screen,
+  Map<String, Rect> rects,
+) async {
+  final file = File('${_outCardsDir().path}/rects_$screen.json');
+  final payload = <String, List<double>>{};
+  rects.forEach((name, r) {
+    payload[name] = [r.left, r.top, r.width, r.height];
+  });
+  // Das Schreiben muss in runAsync. flutter_test laeuft in einer
+  // FakeAsync-Zone: ein echtes Dateisystem-Versprechen wird dort nie
+  // fertig, und der Test haengt bis zum 10-Minuten-Timeout. Genau das
+  // war die Ursache der Timeouts beim ersten Versuch.
+  await tester.runAsync(() async {
+    await file.parent.create(recursive: true);
+    await file.writeAsString(jsonEncode(payload), flush: true);
+  });
+}
+
+
 /// Findet die Modus-Kacheln im gerenderten Screen, in Bildschirmreihenfolge.
 ///
 /// Die Kacheln tragen in der App den Key `mode-tile-<name>`.
@@ -390,6 +508,157 @@ List<Finder> _findModeCards(WidgetTester tester) {
 }
 
 void main() {
+  // 0) Kachel-Export fuer den Aufbau OHNE Geraet.
+  //
+  //    Die Screens 01, 02, 04 und 05 sollen im Store nicht als
+  //    Screenshot eines Screens erscheinen, sondern als KACHELN auf dem
+  //    Markenverlauf - so wie 03_entdecken seine fuenf Moduskacheln hat.
+  //
+  //    Dafuer wird nicht das Layout nachgebaut, sondern jeder echte
+  //    Widget-Bereich vermessen und als Rechteck notiert. Nachgebautes
+  //    Layout driftet von der App; das war beim SegmentedButton-Fall die
+  //    Ursache fuer ein Bild mit einem Widget, das es in der App nicht
+  //    gab.
+  //
+  //    Gespeichert wird der vollstaendige Screen (physische Pixel) plus
+  //    rects.json. make_store_screenshots.py schneidet daraus die
+  //    Kacheln heraus - es braucht also keine Farberkennung, weil die
+  //    Rechtecke exakt sind.
+  if (_enabled) {
+    testWidgets('export Kacheln 01 (Logo und Text)', (tester) async {
+      await _pump(tester, const WelcomeScreen(),
+          outDir: outCards, name: '01_willkommen', size: _phone, dpr: _dpr);
+      final content = find.byKey(const Key('welcome-page-content'));
+      expect(content, findsOneWidget,
+          reason: 'der Key welcome-page-content fehlt in WelcomeScreen');
+      await _writeCardRects(
+          tester, '01', {'willkommen_logo': tester.getRect(content)});
+      // Kein eigener Capture: _pump() hat den Screenshot unter
+      // $outCards/01_willkommen.png bereits geschrieben. Ein zweiter
+      // Capture erzeugte nur eine doppelte PNG.
+    });
+
+    testWidgets('export Kacheln 02 (Formular)', (tester) async {
+      // Die Beispieltexte werden ueber `after` gesetzt, NICHT danach.
+      // `_pump` nimmt den Screenshot am Ende auf - ein `enterText` nach
+      // `_pump` landet also in einem Bild, das schon geschrieben ist.
+      // Genau das war der Befund: beide Felder zeigten nur ihren
+      // Platzhalter "Email" und "Passwort".
+      await _pump(tester, const LoginScreen(),
+          outDir: outCards, name: '02_anmelden', size: _phone, dpr: _dpr,
+          after: (tester) async {
+        final fields = find.byType(TextFormField);
+        if (tester.widgetList(fields).length >= 2) {
+          await tester.enterText(fields.at(0), 'lena@thestia.de');
+          await tester.enterText(fields.at(1), 'geheim1234');
+        }
+      });
+
+      // Die Kachel traegt die Aussage: Felder, Kontrollkaestchen und
+      // Button. Das Formular selbst ist der ganze Screen - 1920 px hoch
+      // mit Herz, "Willkommen zurueck", "Passwort vergessen?",
+      // "Registrieren" und der Fusszeile. Deshalb wird das Rechteck aus
+      // dem ersten Feld bis zum Submit-Button gebildet, statt das
+      // Formular zu nehmen.
+      final first = find.byType(TextFormField).first;
+      final submit = find.byType(PrimaryButton);
+      expect(submit, findsOneWidget,
+          reason: 'PrimaryButton nicht gefunden - dann waere die untere '
+              'Kante der Kachel geraten');
+      final top = tester.getRect(first).top;
+      final bottom = tester.getRect(submit).bottom;
+      final full = tester.getRect(first);
+      await _writeCardRects(tester, '02', {
+        'anmelden_formular': Rect.fromLTRB(
+          full.left, top, full.right, bottom,
+        ),
+      });
+    });
+
+    testWidgets('export Kacheln 04 (drei Auswahlkacheln)',
+        (tester) async {
+      // Die drei Widgets werden einzeln in einen Host gehaengt und
+      // vermessen. Sie sind ausgelagerte Widgets und in der App noch
+      // nicht in einen Screen eingebaut - siehe die Anmerkung in
+      // compose_cards() dazu.
+      //
+      // Adressiert wird ueber den WIDGET-Typ, nicht ueber `Card`: keines
+      // der drei baut eine Card. ThemePicker ist ein Wrap, die beiden
+      // anderen Column bzw. GridView. Ein `find.byType(Card)` lieferte
+      // "No element".
+      final cards = <String, Map<String, Object>>{};
+      for (final entry in <String, Widget>{
+        'anpassen_farbschema': const ThemePicker(
+            selectedName: 'classic', onChanged: _noopTheme),
+        'anpassen_erscheinung':
+            const AppearanceSelector(value: 'light', onChanged: _noop),
+        'anpassen_chat': const ChatBackgroundPicker(),
+      }.entries) {
+        await _pump(tester, _cardHost(entry.value),
+            outDir: outCards, name: entry.key, size: _phone, dpr: _dpr);
+        final finder = find.byWidget(entry.value);
+        expect(finder, findsOneWidget,
+            reason: '${entry.key}: Widget nicht gefunden, Rect waere falsch');
+        final r = tester.getRect(finder);
+        cards[entry.key] = {
+          'file': '${entry.key}.png',
+          'rect': [r.left, r.top, r.width, r.height],
+        };
+      }
+      // Einmal am Ende: _writeCardRects pro Durchlauf wuerde die Datei
+      // bei jedem Widget ueberschreiben und am Ende nur noch das
+      // Chat-Hintergrund-Rechteck enthalten.
+      await _writeCardList(tester, '04', cards);
+    });
+
+    testWidgets('export Kacheln 05 (alle Kategorien)', (tester) async {
+      await _pump(tester, const SpiceQuestionsScreen(matchId: 1),
+          outDir: outCards, name: '05_eisbrecher', size: _phone, dpr: _dpr);
+      // Die Kategorien stehen in einem ListView.builder: gerendert wird
+      // nur, was im Viewport liegt. Also wird durch die Liste gelaufen
+      // und jede Kachel dann aufgenommen, wenn sie vollstaendig sichtbar
+      // ist.
+      //
+      // Der Name kommt aus dem KACHELTEXT, nicht aus ihrer Position. Mit
+      // einem Index als Namen war jede Kategorie nach dem Scrollen eine
+      // andere: Index 0 war die erste sichtbare, nicht die erste
+      // Kategorie. Die Liste enthielt am Ende acht Kacheln mit den
+      // Namen kat_0 bis kat_7 statt der elf Kategorien.
+      final list = find.byType(Scrollable).last;
+      final cards = <String, Map<String, Object>>{};
+      await tester.dragUntilVisible(
+          find.byType(ExpansionTile).first, list, const Offset(0, 200));
+      await tester.pumpAndSettle();
+
+      for (var step = 0; step < 40; step++) {
+        final tiles = find.byType(ExpansionTile);
+        final found = tester.widgetList(tiles).length;
+        var added = 0;
+        for (var i = 0; i < found; i++) {
+          final tile = tester.widget<ExpansionTile>(tiles.at(i));
+          final name = _tileName(tile.title);
+          if (name == null || cards.containsKey(name)) continue;
+          final r = tester.getRect(tiles.at(i));
+          final view = tester.view.physicalSize / tester.view.devicePixelRatio;
+          if (r.top < 1 || r.bottom > view.height - 1) continue;
+          cards[name] = {
+            'file': '05_$step.png',
+            'rect': [r.left, r.top, r.width, r.height],
+          };
+          added++;
+        }
+        if (added == 0) break; // nichts Neues mehr im Viewport
+
+        await expectLater(find.byType(MaterialApp).last,
+            matchesGoldenFile('$outCards/05_$step.png'));
+        await _writeCardList(tester, '05', cards);
+
+        await tester.drag(list, const Offset(0, -420));
+        await tester.pumpAndSettle();
+      }
+    });
+  }
+
   // 1) Willkommen: das Versprechen der App (Persönlichkeit vor Aussehen).
   _shot('01_willkommen', () => const WelcomeScreen());
 
@@ -450,7 +719,7 @@ void main() {
         // vollstaendigen Screen die ganze Gruppe mit Ueberschrift und
         // Nachbarkacheln.
         //
-        // Der Capture laeuft bewusst ueber find.byType(MaterialApp) und
+        // Der Capture laeuft bewusst ueber find.byType(MaterialApp).last und
         // NICHT ueber die Kachel selbst: ein Finder-Capture auf ein
         // einzelnes Widget schreibt LOGISCHE Pixel (312 px breite
         // Kachel in einer 360x800-PNG), der Capture der ganzen View
@@ -466,7 +735,7 @@ void main() {
         await tester.pumpWidget(_soleTileHost(card));
         await tester.pumpAndSettle();
         await expectLater(
-          find.byType(MaterialApp),
+          find.byType(MaterialApp).last,
           matchesGoldenFile('$outTiles/tile_$i.png'),
         );
       }

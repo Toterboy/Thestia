@@ -163,36 +163,49 @@ class _Segment extends StatelessWidget {
                   child: Padding(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                    // Der Haken liegt als OVERLAY in der oberen rechten
+                    // Ecke, nicht als Platzhalter neben dem Text.
+                    //
+                    // Vorher stand dort in ALLEN Segmenten ein
+                    // SizedBox(width: 16), damit die Zeile beim Wechsel
+                    // nicht springt. Der Preis war ein um 6 px
+                    // nach links verschobener Text: bei "Hell" faellt das
+                    // nicht auf, weil der Haken den Platz fuellt, bei
+                    // "System" und "Dunkel" stand er schief. Genau das
+                    // war die Rueckmeldung.
+                    //
+                    // Als Overlay costet der Haken keinen Platz, der
+                    // Text ist mittig - und die Segmentbreite haengt
+                    // nur noch vom Text ab, nicht mehr davon, ob gerade
+                    // etwas gewaehlt ist. Das Springen ist damit
+                    // ebenfalls weg, und zwar ohne den Trick.
+                    child: Stack(
                       children: [
-                        Icon(icon, size: 22, color: fg),
-                        const SizedBox(height: 6),
-                        Row(
+                        Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            Icon(icon, size: 22, color: fg),
+                            const SizedBox(height: 6),
                             Text(
                               title,
+                              textAlign: TextAlign.center,
                               style: theme.textTheme.labelLarge?.copyWith(
-                                color: selected ? scheme.onSurface : fg,
-                                fontWeight:
-                                    selected ? FontWeight.w700 : FontWeight.w500,
+                                color:
+                                    selected ? scheme.onSurface : fg,
+                                fontWeight: selected
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
                               ),
-                            ),
-                            const SizedBox(width: 4),
-                            // Fester Platz fuer den Haken in ALLEN
-                            // Segmenten. Ohne ihn wuerde die aktive
-                            // Option breiter und die ganze Zeile springen.
-                            SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: selected
-                                  ? Icon(Icons.check_circle,
-                                      size: 16, color: scheme.primary)
-                                  : null,
                             ),
                           ],
                         ),
+                        if (selected)
+                          Positioned(
+                            top: 2,
+                            right: 2,
+                            child: Icon(Icons.check_circle,
+                                size: 16, color: scheme.primary),
+                          ),
                       ],
                     ),
                   ),
