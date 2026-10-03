@@ -1462,6 +1462,11 @@ def load_cards(screen, default_src=None, margin=0.0):
     20 dp im Karten-Host), und der faellt beim Zuschneiden weg. Die
     Kachel bekam dadurch weisse Tinte bis an den Rand - "der weisse Rand
     um den Inhalt ist zu klein".
+
+    Auch gemalte Teile ragen ueber ihre Layout-Box hinaus: der
+    "Einloggen"-Button wird im 02-Bild halb abgeschnitten, weil seine
+    Layout-Box knapper ist als das, was der Material-Button malt. Der
+    Rand faengt das mit auf.
     """
     out = []
     cache = {}
@@ -1476,8 +1481,15 @@ def load_cards(screen, default_src=None, margin=0.0):
             cache[img_path] = Image.open(img_path).convert('RGB')
         img = cache[img_path]
         l, t, w, h = rect
-        l, t = l - margin, t - margin
-        w, h = w + 2 * margin, h + 2 * margin
+        # Der Rand ist unten, links und rechts voll, oben nur ein Drittel.
+        # Ein voller Rand nach oben griff im 02-Bild den Herzansatz ueber
+        # der Karte mit - ein dunkler Buckel auf der Oberkante. Nach oben
+        # muss nur so viel Luft sein, dass die schwebende Feldbezeichnung
+        # nicht abgeschnitten wird, und die ragt wenige Pixel heraus.
+        l -= margin
+        w += 2 * margin
+        t -= margin / 3.0
+        h += margin + margin / 3.0
         box = (int(round(l * CARDS_DPR)), int(round(t * CARDS_DPR)),
                int(round((l + w) * CARDS_DPR)),
                int(round((t + h) * CARDS_DPR)))
@@ -1961,7 +1973,8 @@ def main():
         prefix = name[:2]
         cards = load_cards(prefix, default_src=f'{name}.png',
                        margin=CARD_MARGIN_LOGICAL if name in
-                       ('01_willkommen', '04_anpassen') else 0.0)
+                       ('01_willkommen', '02_anmelden',
+                        '04_anpassen') else 0.0)
         if cards:
             k = compose_cards(cards, headline, subline, badge,
                               heading='Eisbrecher-Fragen'
