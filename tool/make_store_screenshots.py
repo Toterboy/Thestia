@@ -203,6 +203,21 @@ OMIT_SYSTEM_UI = False
 OUT_9x16_OHNE = OUT_9x16.with_name('9x16-ohne-systemleiste')
 OUT_WQHD_OHNE = OUT_WQHD.with_name('wqhd-ohne-systemleiste')
 
+# DRITTE Variante: Kacheln ohne Geraet und ohne Statusleiste.
+#
+# Der Unterschied zu "ohne-systemleiste" ist nicht die Statusleiste,
+# sondern die Komposition: dort steht der App-Screen weiterhin in
+# einem abgerundeten Geraetefeld, hier liegt er als einzelne Kachel
+# direkt auf dem Markenverlauf - genau wie die fuenf Moduskacheln in
+# 03_entdecken. Die vier uebrigen Screens sind so gebaut, dass alle
+# fuenf Bilder dieselbe Sprache sprechen.
+#
+# Die bisherigen zwei Varianten bleiben unberuehrt; es come adds. Der
+# Store-Upload bleibt eine Entscheidung des Nutzers, deshalb wird
+# hier nichts nach fastlane kopiert.
+OUT_9x16_KACHELN = OUT_9x16.with_name('9x16-kacheln')
+OUT_WQHD_KACHELN = OUT_WQHD.with_name('wqhd-kacheln')
+
 
 def _draw_clock(img, d, cy, color):
     """Zeichnet die Uhrzeit nach den gemessenen Werten der Referenz.
@@ -1021,13 +1036,18 @@ def draw_lines(draw, xy, text, font, fill, line_gap, anchor_x, y, align='center'
 
 
 def badge_pill(bg, text, cx, top, font_path=FONT_BOLD, size=34, pad_x=72,
-               pad_y=17):
+               pad_y=17, align='center'):
     """Transparentes Abzeichen-Pill MIT Text (alpha-korrekt geblendet).
 
     Wichtig: ImageDraw auf einem RGBA-Bild ERSETZT die Pixel inkl. Alpha -
     ein fill=(255,255,255,46) wuerde thus deckend weiss. Deshalb wird die
     Form auf einer eigenen Ebene gezeichnet und per alpha_composite
     darueber gelegt.
+
+    `align` ist 'center' (Pill um cx herum) oder 'left' (Pill beginnt bei
+    cx, Text linksbuendig darunter). Der 16:9-Bildaufbau hat eine
+    Textspalte und braucht die linke Variante; vorher wurde die Pille
+    dort mitten in der Spalte gesetzt und stand quer.
     """
     layer = Image.new('RGBA', bg.size, (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
@@ -1035,11 +1055,13 @@ def badge_pill(bg, text, cx, top, font_path=FONT_BOLD, size=34, pad_x=72,
     bb = d.textbbox((0, 0), text, font=font)
     tw, th = bb[2] - bb[0], bb[3] - bb[1]
     w, h = tw + 2 * pad_x, th + 2 * pad_y
-    x0, y0 = int(cx - w / 2), int(top)
+    x0 = int(cx - w / 2) if align == 'center' else int(cx)
+    y0 = int(top)
     d.rounded_rectangle([x0, y0, x0 + w, y0 + h], radius=h // 2,
                         fill=(255, 255, 255, 52),
                         outline=(255, 255, 255, 130), width=2)
-    d.text((cx - tw / 2 - bb[0], y0 + pad_y - bb[1]), text, font=font,
+    tx = cx - tw / 2 if align == 'center' else x0 + pad_x
+    d.text((tx - bb[0], y0 + pad_y - bb[1]), text, font=font,
            fill=(255, 255, 255, 250))
     bg.alpha_composite(layer)
 
@@ -1185,6 +1207,191 @@ def _place_tiles(bg, tiles, y, avail_h, max_w, gap, x=None, center_w=0):
         bg.alpha_composite(card, (x - dp, ty - dpy))
         ty += tile.height + gap
     return col_w
+
+
+# System-Insets im App-Export: 24 dp Statusleiste oben, 24 dp
+# Gesture-Navigation unten, gerendert mit dpr 3. Das sind die Werte aus
+# test/screenshots/support/store_screenshot_insets.dart.
+#
+# SICHERHEITSHALBER NICHT einfach 72 px abgeschnitten. Gemessen beginnt
+# der Inhalt bei 01_willkommen exakt auf y=72, bei 04_anpassen und
+# 05_eisbrecher aber auf y=62 - die Bildschirme mit AppBar verbrauchen
+# das Inset anders. Ein fester Schnitt von 72 px hat dort 10 px aus der
+# AppBar geschnitten, der Titel "Erscheinungsbild" stand abgeschnitten
+# im Bild. Deshalb wird die Kante gemessen, soweit sie messbar ist.
+STORE_INSET_DP = 24.0
+EXPORT_DPR = 3.0
+# Sicherheitsabstand zur gemessenen Kante. Ohne ihn faellt die Karte mit
+# der Flanke an den Inhalt.
+CONTENT_MARGIN_PX = 8
+
+# Mindestzahl abweichender Stichproben, damit eine Zeile als Inhalt
+# gilt. ABSOLUT, nicht als Anteil: bei 120 Stichproben waere ein Anteil
+# von 2 % "mindestens 3". Genau daran ist "Ueberspringen" auf
+# 01_willkommen verloren gegangen - die Schrift ist duenn, ihre oberste
+# Zeile trifft nur EINE Stichprobe, die zweite nur zwei. Mit "3" kam der
+# Schnitt bei y=80 und der Text begann bei y=66: die Haelfte der
+# Buchstaben stand abgeschnitten im Bild. Mit 2 kommt der Schnitt auf
+# y=64 und der Text bleibt heil.
+CONTENT_MIN_SAMPLES = 2
+
+
+def _content_edge(shot: Image.Image, top=True) -> int:
+    """Erste Inhaltszeile von oben bzw. letzte von unten.
+
+    Gesucht wird nicht nach einer Farbe, sondern nach einer
+    ABWEICHUNG von der Hintergrundfarbe der Zeile. Scaffold-
+    Hintergrund und Statusleisten-Inset sind dieselbe Farbe - es gibt
+    keine Kante, die man abgreifen koennte. Sichtbar wird nur, was
+    wirklich gezeichnet ist.
+
+    Nach dem ersten Fund wird bewusst ein Stueck WEITER geschnitten als
+    gemessen: lieber ein schmaler leerer Rand am Kartenanfang als ein
+    abgeschnittener Titel.
+    """
+    rgb = shot.convert('RGB')
+    w, h = rgb.size
+    px = rgb.load()
+    step = max(1, w // 120)
+    cols = range(0, w, step)
+
+    # Hintergrund aus dem oberen Rand: das erste stabile Band ist der
+    # Scaffold. Gesucht wird nach einer ABWEICHUNG von diesem Wert.
+    bg = None
+    for y in range(0, min(h, 200)):
+        r = sum(px[x, y][0] for x in cols) / len(list(cols))
+        g = sum(px[x, y][1] for x in cols) / len(list(cols))
+        b = sum(px[x, y][2] for x in cols) / len(list(cols))
+        if bg is None:
+            bg = (r, g, b)
+        if abs(r - bg[0]) + abs(g - bg[1]) + abs(b - bg[2]) > 24:
+            break
+        bg = (r, g, b)
+
+    hits = []
+    n_cols = len(list(cols))
+    for y in range(h):
+        n = 0
+        for x in cols:
+            rr, gg, bb = px[x, y]
+            if abs(rr - bg[0]) + abs(gg - bg[1]) + abs(bb - bg[2]) > 36:
+                n += 1
+        if n >= CONTENT_MIN_SAMPLES:
+            hits.append(y)
+    if not hits:
+        px_inset = int(round(STORE_INSET_DP * EXPORT_DPR))
+        return px_inset if top else h - px_inset
+    if top:
+        return max(0, min(hits[0] - CONTENT_MARGIN_PX, h // 2))
+    return max(h // 2, min(hits[-1] + CONTENT_MARGIN_PX, h))
+
+
+def _crop_store_insets(shot: Image.Image) -> Image.Image:
+    """Schneidet die leeren System-Insets aus dem App-Export heraus.
+
+    Der Export enthaelt oben und unten die reservierten Insets
+    (SafeArea), in denen nichts gezeichnet wird. Fuer die Kachel-
+    Komposition ohne Statusleiste sind sie genau das, was weg soll:
+    ein leerer Streifen oben und einer unten.
+
+    Die Kanten werden gemessen, nicht fest angesetzt - siehe
+    _content_edge. Feste 72 px schnitten Screens mit AppBar in den
+    Titel.
+    """
+    rgb = shot.convert('RGB')
+    return rgb.crop((0, _content_edge(rgb, top=True),
+                     rgb.size[0], _content_edge(rgb, top=False)))
+
+
+def _place_card(bg, card, y, avail_h, max_w, center_w=0, x=None):
+    """Eine Inhaltskachel in das Restfeld setzen.
+
+    `x` setzt die linke Kante fest (16:9 nutzt das fuer die Kartenspalte
+    neben dem Text). `center_w` mittelt die Kachel in dieser Breite -
+    im 9:16-Bild ist die Mitte die einzige sinnvolle Wahl.
+
+    Ohne beide Angaben wird die Kachel zentriert im Gesamtbild gesetzt.
+
+    Rueckgabe: die tatsaechliche Kantenbreite, damit der Aufrufer den
+    Textblock daneben setzen kann.
+    """
+    k = min(max_w / card.width, avail_h / card.height)
+    cw = max(1, int(round(card.width * k)))
+    ch = max(1, int(round(card.height * k)))
+    card = card.resize((cw, ch), Image.LANCZOS)
+    # Radius wie in der App: die Kachel ist der App-Screen, dessen
+    # Ecken im Geratebild mit 42 dp gerundet werden.
+    radius = max(2, int(round(cw * 0.042 / 0.9)))
+    layer, dp, dpy = _card_shadow(round_corners(card, radius), radius)
+    if x is None:
+        cx = center_w if center_w else bg.size[0]
+        x = (cx - cw) // 2
+    ty = y + max(0, (avail_h - ch) // 2)
+    bg.alpha_composite(layer, (x - dp, ty - dpy))
+    return cw
+
+
+def compose_card(shot: Image.Image, headline: str, subline: str, badge: str):
+    """9:16: EIN Inhaltsblock als Kachel auf dem Markenverlauf.
+
+    Das Gegenstueck zu compose_9x16 fuer die Variante OHNE Geraet und
+    OHNE Statusleiste: glecher Verlauf, gleiche Kopfzeile, gleiche
+    Badge-Pille - aber der Inhalt liegt als einzelne Kachel auf dem
+    Verlauf, genau wie die fuenf Moduskacheln in compose_modes.
+
+    Der Block ist der echte App-Screen, an den Insets beschnitten und
+    heruntergerechnet. Er wird NICHT nachgebaut: ein nachgebautes Layout
+    driftet von der App, das war beim SegmentedButton-Fall die Ursache
+    fuer ein falsches Bild.
+    """
+    W, H = 1080, 1920
+    bg = gradient((W, H), 40).convert('RGBA')
+    draw = ImageDraw.Draw(bg)
+
+    f_head = ImageFont.truetype(FONT_BOLD, 62)
+    f_sub = ImageFont.truetype(FONT_REG, 30)
+    y = 104
+    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255), 14,
+                   W // 2, y)
+    y += 20
+    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226), 10,
+                   W // 2, y)
+
+    margin = 60
+    gap = 28
+    badge_top = H - 136
+    card = _crop_store_insets(shot.convert('RGB'))
+    _place_card(bg, card, y + 34, badge_top - y - 70, W - 2 * margin,
+                center_w=W)
+
+    badge_pill(bg, badge, W // 2, badge_top)
+    return round_corners(bg, 56)
+
+
+def compose_card_wqhd(shot: Image.Image, headline: str, subline: str,
+                      badge: str):
+    """16:9: Kachel links, Text rechts - wie compose_modes_wqhd, aber mit
+    einem Inhaltsblock statt der fuenf Moduskacheln."""
+    W, H = 2560, 1440
+    bg = gradient((W, H), 25).convert('RGBA')
+    draw = ImageDraw.Draw(bg)
+
+    margin = 90
+    col_w = _place_card(bg, _crop_store_insets(shot.convert('RGB')), margin,
+                        H - 2 * margin, 980, x=margin)
+
+    f_head = ImageFont.truetype(FONT_BOLD, 78)
+    f_sub = ImageFont.truetype(FONT_REG, 38)
+    tx = margin + col_w + 90
+    y = max(200, (H - 400) // 2)
+    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255), 20,
+                   tx, y, align='left')
+    y += 24
+    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226), 14,
+                   tx, y, align='left')
+    y += 40
+    badge_pill(bg, badge, tx, y, size=36, align='left')
+    return round_corners(bg, 56)
 
 
 def compose_modes(tiles, headline: str, subline: str, badge: str):
@@ -1425,7 +1632,8 @@ def main():
         sys.exit(1)
 
     for d in (OUT_9x16, OUT_WQHD, OUT_FASTLANE,
-              OUT_9x16_OHNE, OUT_WQHD_OHNE):
+              OUT_9x16_OHNE, OUT_WQHD_OHNE,
+              OUT_9x16_KACHELN, OUT_WQHD_KACHELN):
         d.mkdir(parents=True, exist_ok=True)
 
     for name, (headline, subline, badge) in SHOTS.items():
@@ -1444,10 +1652,11 @@ def main():
                 b = compose_modes_wqhd(crops, headline, subline, badge)
                 for d, im in ((OUT_9x16, a), (OUT_WQHD, b),
                               (OUT_FASTLANE, a),
-                              (OUT_9x16_OHNE, a), (OUT_WQHD_OHNE, b)):
+                              (OUT_9x16_OHNE, a), (OUT_WQHD_OHNE, b),
+                              (OUT_9x16_KACHELN, a), (OUT_WQHD_KACHELN, b)):
                     save_png(im, d / f'{name}.png')
                 print(f'  {name}: 9x16 {a.size} + wqhd {b.size} '
-                      f'({len(tiles)} Kacheln, beide Varianten)')
+                      f'({len(tiles)} Kacheln, drei Varianten)')
                 continue
             print('  03_entdecken: keine Kacheln gefunden, Fallback auf '
                   'den Screen')
@@ -1471,7 +1680,16 @@ def main():
         finally:
             globals()['OMIT_SYSTEM_UI'] = False
 
-        print(f'  {name}: 9x16 {a.size} + wqhd {b.size} (beide Varianten)')
+        # Variante KACHELN: ohne Geraet, ohne Statusleiste, Inhalt als
+        # einzelne Kachel auf dem Verlauf - die Sprache von 03_entdecken.
+        # Die beiden anderen Varianten bleiben unberuehrt, es come adds.
+        k = compose_card(shot, headline, subline, badge)
+        kw = compose_card_wqhd(shot, headline, subline, badge)
+        save_png(k, OUT_9x16_KACHELN / f'{name}.png')
+        save_png(kw, OUT_WQHD_KACHELN / f'{name}.png')
+
+        print(f'  {name}: 9x16 {a.size} + wqhd {b.size} '
+              f'(drei Varianten, Kachel {k.size})')
 
     print('Fertig.')
 
