@@ -28,6 +28,7 @@ import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/services/secure_storage.dart';
 import 'package:thestia/theme/app_theme.dart';
 import 'package:thestia/widgets/appearance_selector.dart';
+import 'package:thestia/widgets/app_logo.dart';
 import 'package:thestia/widgets/buttons.dart';
 import 'package:thestia/widgets/chat_background_picker.dart';
 import 'package:thestia/widgets/theme_picker.dart';
@@ -531,8 +532,26 @@ void main() {
       final content = find.byKey(const Key('welcome-page-content'));
       expect(content, findsOneWidget,
           reason: 'der Key welcome-page-content fehlt in WelcomeScreen');
-      await _writeCardRects(
-          tester, '01', {'willkommen_logo': tester.getRect(content)});
+      // Das Rechteck ist die VEREINIGUNG von Logo, Titel und Text, nicht
+      // die Column. Die Column fuellt den ganzen Seitenbereich
+      // (mainAxisAlignment.center in einem Expanded), ihr Rechteck ist
+      // deshalb 574 dp hoch und die Kachel wurde ein grosses weisses
+      // Rechteck mit einem Fleck darin. Der weisse Rand kommt in
+      // make_store_screenshots.py dazu (CARD_MARGIN_LOGICAL).
+      final logo =
+          find.descendant(of: content, matching: find.byType(AppLogo));
+      expect(logo, findsOneWidget, reason: 'AppLogo nicht gefunden');
+      final texts = find.descendant(of: content, matching: find.byType(Text));
+      final boxes = <Rect>[
+        tester.getRect(logo),
+        for (final t in tester.widgetList(texts))
+          tester.getRect(find.byWidget(t)),
+      ];
+      var box = boxes.first;
+      for (final r in boxes.skip(1)) {
+        box = box.expandToInclude(r);
+      }
+      await _writeCardRects(tester, '01', {'willkommen_logo': box});
       // Kein eigener Capture: _pump() hat den Screenshot unter
       // $outCards/01_willkommen.png bereits geschrieben. Ein zweiter
       // Capture erzeugte nur eine doppelte PNG.

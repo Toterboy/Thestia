@@ -1410,6 +1410,11 @@ CARDS = ROOT / 'test' / 'screenshots' / 'store_v091' / 'cards'
 # Faktor wuerde jedes Rechteck um den Faktor 3 daneben liegen.
 CARDS_DPR = 3.0
 
+# Innenabstand um die Kacheln herum, in LOGISCHEN Pixeln. Siehe
+# load_cards: das vermessene Rechteck klebt am Widget und verliert
+# dadurch den Innenabstand, den der Screen selbst rundherum setzt.
+CARD_MARGIN_LOGICAL = 30.0
+
 
 def _load_card_rects(screen):
     """Liest die Kachelrechtecke eines Screens.
@@ -1442,7 +1447,7 @@ def _load_card_rects(screen):
     return out
 
 
-def load_cards(screen, default_src=None):
+def load_cards(screen, default_src=None, margin=0.0):
     """Schneidet die Kacheln eines Screens aus den exportierten Bildern.
 
     `default_src` gilt fuer Rechtecke OHNE eigenen Dateiverweis: bei 01
@@ -1450,6 +1455,13 @@ def load_cards(screen, default_src=None):
     Ohne Vorgabe wurden diese Kacheln stillschweigend verworfen und der
     Screen als eine grosse Kachel eingesetzt - also genau die Loesung,
     die abgeschafft werden sollte.
+
+    `margin` vergroessert das Rechteck in LOGISCHEN Pixeln. Notwendig,
+    weil das Rechteck am Widget klebt: im Screen steckt um das Widget
+    herum noch dessen eigener Innenabstand (32 dp beim Willkommens-Logo,
+    20 dp im Karten-Host), und der faellt beim Zuschneiden weg. Die
+    Kachel bekam dadurch weisse Tinte bis an den Rand - "der weisse Rand
+    um den Inhalt ist zu klein".
     """
     out = []
     cache = {}
@@ -1464,6 +1476,8 @@ def load_cards(screen, default_src=None):
             cache[img_path] = Image.open(img_path).convert('RGB')
         img = cache[img_path]
         l, t, w, h = rect
+        l, t = l - margin, t - margin
+        w, h = w + 2 * margin, h + 2 * margin
         box = (int(round(l * CARDS_DPR)), int(round(t * CARDS_DPR)),
                int(round((l + w) * CARDS_DPR)),
                int(round((t + h) * CARDS_DPR)))
@@ -1500,8 +1514,73 @@ def _heading_card(text, width, sub=None):
     return out
 
 
+def _paste_card(bg, card, x, y):
+    """Kachel mit Rundung und Schatten an eine feste Stelle setzen."""
+    cw, ch = card.size
+    radius = max(6, int(round(cw * 0.07)))
+    layer, dp, dpy = _card_shadow(round_corners(card.convert('RGBA'), radius),
+                                 radius)
+    bg.alpha_composite(layer, (int(x) - dp, int(y) - dpy))
+    return cw, ch
+
+
+def _place_grid(bg, cards, y, avail_h, max_w, cols=2, gap=24, min_gap=18,
+                center_w=0):
+    """Kacheln in `cols` Spalten, ueber die Hoehe verteilt.
+
+    Anders als [_place_tiles] wird die Kachelgroesse zuerst von der
+    BREITE bestimmt und der uebrige Raum anschliessend als Zeilenabstand
+    verteilt. [_place_tiles] verteilt einen gemeinsamen Faktor ueber alle
+    Kacheln und laesst danach den Rest ungenutzt - bei zehn flachen
+    Kacheln (Eisbrecher-Kategorien, 72 dp hoch) shrank dadurch jede auf
+    ein paar Pixel Hoehe, und die Beschriftung war nicht mehr lesbar.
+
+    Zwei Spalten statt einer: eine Spule mit zehn Kacheln braucht
+    fuenfzehn Zeilen, zwei Spalten nur sechs. Das ist der Unterschied
+    zwischen unlesbar und lesbar, unabhaengig von der Bildbreite.
+    """
+    if not cards:
+        return 0
+    n = len(cards)
+    rows = (n + cols - 1) // cols
+    col_w = (max_w - (cols - 1) * gap) / float(cols)
+    widest = max(c.width for c in cards)
+    tallest = max(c.height for c in cards)
+    # Nur die Breite begrenzt; die Hoehe greift nur, wenn sie wirklich
+    # nicht passt. Sonst wuerde ein einziger zu hoher Rest die Kacheln
+    # kleiner machen, obwohl sie waagerecht Platz haetten.
+    k = min(col_w / widest,
+            avail_h / float(rows * tallest + (rows - 1) * min_gap))
+
+    row_h = tallest * k
+    used = rows * row_h
+    # Restlicher Raum wird auf die Zeilenabstaende verteilt: leere
+    # Zwischenraeume sind hier ausdruecklich gewollt.
+    v_gap = gap if rows < 2 else max(gap, (avail_h - used) / (rows - 1))
+
+    # Mittig ueber die GESAMTE Rasterbreite, nicht ueber eine Spalte:
+    # zwei Spalten a 466 px plus 28 px Abstand sind 960 px breit und
+    # muessen bei 1080 px Bildbreite bei x=60 beginnen. Ueber die
+    # Spaltenbreite mitteln liess die zweite Spalte bei x=801 beginnen
+    # und damit 187 px aus dem Bild ragen.
+    grid_w = cols * col_w + (cols - 1) * gap
+    cx = (center_w - grid_w) / 2.0 if center_w else 0.0
+
+    for i, card in enumerate(cards):
+        r, c = divmod(i, cols)
+        if c >= cols:
+            break
+        x = cx + c * (col_w + gap)
+        cw = max(1, int(round(card.width * k)))
+        ch = max(1, int(round(card.height * k)))
+        img = card.resize((cw, ch), Image.LANCZOS)
+        ty = y + r * (row_h + v_gap)
+        _paste_card(bg, img, x + (col_w - cw) / 2.0, ty)
+    return col_w
+
+
 def compose_cards(cards, headline: str, subline: str, badge: str,
-                  heading=None):
+                  heading=None, cols=1):
     """9:16: beliebig viele echte Kacheln untereinander auf dem Verlauf.
 
     Der Aufbau ist der von compose_modes, nur mit den Kacheln, die der
@@ -1526,14 +1605,25 @@ def compose_cards(cards, headline: str, subline: str, badge: str,
     margin = 60
     gap = 28
     badge_top = H - 136
-    imgs = [c for _n, c in cards]
+    top = y + 34
+    avail_h = badge_top - y - 70
+
     if heading:
-        # Breite wie die breiteste Kachel, damit die Ueberschrift nicht
-        # allein schmaler steht als ihr Inhalt.
+        imgs = [c for _n, c in cards]
         width = max((c.width for c in imgs), default=W - 2 * margin)
-        imgs.insert(0, _heading_card(heading, width))
-    _place_tiles(bg, imgs, y + 34, badge_top - y - 70,
-                 W - 2 * margin, gap, center_w=W)
+        head = _heading_card(heading, W - 2 * margin)
+        head_h = int(head.height * (W - 2 * margin) / width)
+        head = head.resize((W - 2 * margin, head_h), Image.LANCZOS)
+        _paste_card(bg, head, margin, top)
+        top += head_h + gap
+
+    if cols > 1:
+        _place_grid(bg, [c for _n, c in cards], top,
+                    avail_h - (top - (y + 34)), W - 2 * margin,
+                    cols=cols, gap=gap, min_gap=18, center_w=W)
+    else:
+        imgs = [c for _n, c in cards]
+        _place_tiles(bg, imgs, top, avail_h, W - 2 * margin, gap, center_w=W)
 
     badge_pill(bg, badge, W // 2, badge_top)
     return round_corners(bg, 56)
@@ -1831,11 +1921,14 @@ def main():
         # als Rechtecke notiert hat. Ohne Export bleibt der Screen in
         # einem Kachelbild: dann ist es kein Fehler, nur weniger schoen.
         prefix = name[:2]
-        cards = load_cards(prefix, default_src=f'{name}.png')
+        cards = load_cards(prefix, default_src=f'{name}.png',
+                       margin=CARD_MARGIN_LOGICAL if name in
+                       ('01_willkommen', '04_anpassen') else 0.0)
         if cards:
             k = compose_cards(cards, headline, subline, badge,
                               heading='Eisbrecher-Fragen'
-                              if name == '05_eisbrecher' else None)
+                              if name == '05_eisbrecher' else None,
+                              cols=2 if name == '05_eisbrecher' else 1)
             save_png(k, OUT_9x16_KACHELN / f'{name}.png')
             kw = compose_card_wqhd(shot, headline, subline, badge)
             save_png(kw, OUT_WQHD_KACHELN / f'{name}.png')
