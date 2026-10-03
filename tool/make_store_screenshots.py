@@ -1524,23 +1524,17 @@ def _paste_card(bg, card, x, y):
     return cw, ch
 
 
-def _place_grid(bg, cards, y, avail_h, max_w, cols=2, gap=24, min_gap=18,
-                center_w=0):
-    """Kacheln in `cols` Spalten, ueber die Hoehe verteilt.
+def _grid_metrics(cards, avail_h, max_w, cols=2, gap=24, min_gap=18):
+    """Rechnet Spaltenbreite, Skalierung und Abstaende aus, ohne zu zeichnen.
 
-    Anders als [_place_tiles] wird die Kachelgroesse zuerst von der
-    BREITE bestimmt und der uebrige Raum anschliessend als Zeilenabstand
-    verteilt. [_place_tiles] verteilt einen gemeinsamen Faktor ueber alle
-    Kacheln und laesst danach den Rest ungenutzt - bei zehn flachen
-    Kacheln (Eisbrecher-Kategorien, 72 dp hoch) shrank dadurch jede auf
-    ein paar Pixel Hoehe, und die Beschriftung war nicht mehr lesbar.
-
-    Zwei Spalten statt einer: eine Spule mit zehn Kacheln braucht
-    fuenfzehn Zeilen, zwei Spalten nur sechs. Das ist der Unterschied
-    zwischen unlesbar und lesbar, unabhaengig von der Bildbreite.
+    Getrennt von [_place_grid], weil der Aufrufer die Blockhoehe kennen
+    muss, BEVOR er die Ueberschrift darueber setzt - und die Hoehe
+    haengt von der Skalierung ab. Ein Aufruf zum Zeichnen als "Probe"
+    wuerde die Kacheln zweimal in den Hintergrund schreiben.
     """
     if not cards:
-        return 0
+        return {'k': 1.0, 'col_w': max_w, 'row_h': 0, 'v_gap': gap,
+                'block_h': 0, 'rows': 0}
     n = len(cards)
     rows = (n + cols - 1) // cols
     col_w = (max_w - (cols - 1) * gap) / float(cols)
@@ -1551,12 +1545,41 @@ def _place_grid(bg, cards, y, avail_h, max_w, cols=2, gap=24, min_gap=18,
     # kleiner machen, obwohl sie waagerecht Platz haetten.
     k = min(col_w / widest,
             avail_h / float(rows * tallest + (rows - 1) * min_gap))
-
     row_h = tallest * k
-    used = rows * row_h
-    # Restlicher Raum wird auf die Zeilenabstaende verteilt: leere
-    # Zwischenraeume sind hier ausdruecklich gewollt.
-    v_gap = gap if rows < 2 else max(gap, (avail_h - used) / (rows - 1))
+
+    # Der uebrige Raum wird auf die Zeilenabstaende verteilt, aber nur
+    # begrenzt. Unbegrenzt verteilt lagen zwischen den fuenf Zeilen
+    # riesige Leerraeume - die Gruppen zerfielen optisch in fuenf
+    # einzelne Reihen statt als eine Liste zu lesen ("nicht so viel
+    # Platz zwischen den Gruppen"). 1,5x der Grundabstand ist der
+    # Kompromiss: etwas Luft, aber eine erkennbare Liste.
+    v_gap = gap
+    if rows > 1:
+        spread = (avail_h - rows * row_h) / (rows - 1)
+        v_gap = max(gap, min(spread, gap * 1.5))
+    return {'k': k, 'col_w': col_w, 'row_h': row_h, 'v_gap': v_gap,
+            'block_h': rows * row_h + (rows - 1) * v_gap, 'rows': rows}
+
+
+def _place_grid(bg, cards, y, avail_h, max_w, cols=2, gap=24, min_gap=18,
+                center_w=0):
+    """Kacheln in `cols` Spalten setzen. Rueckgabe: Blockhoehe.
+
+    Anders als [_place_tiles] wird die Kachelgroesse zuerst von der
+    BREITE bestimmt und der uebrige Raum anschliessend (begrenzt) als
+    Zeilenabstand verteilt. [_place_tiles] verteilt einen gemeinsamen
+    Faktor ueber alle Kacheln und laesst danach den Rest ungenutzt - bei
+    zehn flachen Kacheln (Eisbrecher-Kategorien, 72 dp hoch) schrumpfte
+    dadurch jede auf ein paar Pixel Hoehe und die Beschriftung war nicht
+    mehr lesbar.
+
+    Zwei Spalten statt einer: eine Spalte mit zehn Kacheln braucht
+    fuenfzehn Zeilen, zwei Spalten nur sechs.
+    """
+    if not cards:
+        return 0
+    m = _grid_metrics(cards, avail_h, max_w, cols, gap, min_gap)
+    k, col_w, row_h, v_gap = m['k'], m['col_w'], m['row_h'], m['v_gap']
 
     # Mittig ueber die GESAMTE Rasterbreite, nicht ueber eine Spalte:
     # zwei Spalten a 466 px plus 28 px Abstand sind 960 px breit und
@@ -1576,7 +1599,7 @@ def _place_grid(bg, cards, y, avail_h, max_w, cols=2, gap=24, min_gap=18,
         img = card.resize((cw, ch), Image.LANCZOS)
         ty = y + r * (row_h + v_gap)
         _paste_card(bg, img, x + (col_w - cw) / 2.0, ty)
-    return col_w
+    return m['block_h']
 
 
 def compose_cards(cards, headline: str, subline: str, badge: str,
@@ -1608,21 +1631,36 @@ def compose_cards(cards, headline: str, subline: str, badge: str,
     top = y + 34
     avail_h = badge_top - y - 70
 
+    imgs = [c for _n, c in cards]
+    head_h = 0
+    head = None
     if heading:
-        imgs = [c for _n, c in cards]
         width = max((c.width for c in imgs), default=W - 2 * margin)
         head = _heading_card(heading, W - 2 * margin)
         head_h = int(head.height * (W - 2 * margin) / width)
         head = head.resize((W - 2 * margin, head_h), Image.LANCZOS)
-        _paste_card(bg, head, margin, top)
-        top += head_h + gap
 
     if cols > 1:
-        _place_grid(bg, [c for _n, c in cards], top,
-                    avail_h - (top - (y + 34)), W - 2 * margin,
-                    cols=cols, gap=gap, min_gap=18, center_w=W)
+        # Ueberschrift und Raster als EINEN Block mittig setzen. Nur das
+        # Raster zu mitteln liess die Ueberschrift oben kleben und ein
+        # Loch darunter.
+        #
+        # Die Rasterhoehe haengt von der Skalierung ab und die Skalierung
+        # vom verfuegbaren Raum - vorher mitteln waere zirkulaer. Deshalb
+        # wird die Hoehe einmal vorab berechnet (reines Rechnen, ohne zu
+        # zeichnen) und der Block danach einmal verschoben.
+        probe = _grid_metrics(imgs, avail_h, W - 2 * margin, cols, gap, 18)
+        block = head_h + (gap if heading else 0) + probe['block_h']
+        start = top + max(0, (avail_h - block) / 2.0)
+        if head is not None:
+            _paste_card(bg, head, margin, start)
+        _place_grid(bg, imgs, start + head_h + (gap if heading else 0),
+                    avail_h, W - 2 * margin, cols=cols, gap=gap, min_gap=18,
+                    center_w=W)
     else:
-        imgs = [c for _n, c in cards]
+        if head is not None:
+            _paste_card(bg, head, margin, top)
+            top += head_h + gap
         _place_tiles(bg, imgs, top, avail_h, W - 2 * margin, gap, center_w=W)
 
     badge_pill(bg, badge, W // 2, badge_top)
