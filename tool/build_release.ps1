@@ -370,6 +370,35 @@ function Copy-Aab {
 # Aufruf. Deshalb wird nach JEDEM Bau sofort kopiert, sonst fehlen die
 # zuvor gebauten Artefakte.
 # ---------------------------------------------------------------------
+# -------------------------------------------------------------------------
+# WARNUNG zu den Schaltern - hier sind zwei schon fast untergegangen
+# -------------------------------------------------------------------------
+# Ohne -UniversalApk und ohne -SplitPerAbi baut dieses Skript GAR NICHTS
+# und meldet am Ende trotzdem "Fertig". Ein Lauf ohne diese Schalter hat
+# die Universal-APKs unangetastet gelassen, sodass .apk und .aab aus
+# verschiedenen Staenden stammten. -SplitPerAbi allein baut NUR die
+# Split-APKs, die universellen werden dabei nicht angefasst.
+#
+# Deshalb vor und nach dem Bauen die Zeitstempel der Artefakte lesbar
+# ausgeben. Bei Release-Artefakten ist ein gemischter Build-Stand das
+# teuerstemoegliche Detail: man glaubt, man haette eine Aenderung
+# ausgeliefert, und hat sie nicht.
+$vorher = @{}
+if (Test-Path $OutDir) {
+    Get-ChildItem $OutDir -File | ForEach-Object {
+        $vorher[$_.Name] = $_.LastWriteTime
+    }
+}
+Write-Host ""
+Write-Host "==> Zeitstempel VOR dem Bauen:" -ForegroundColor DarkGray
+if ($vorher.Count -eq 0) { Write-Host "    (Ausgabeordner leer)" -ForegroundColor DarkGray }
+else {
+    $vorher.GetEnumerator() | Sort-Object Name | ForEach-Object {
+        Write-Host ("    {0,-34} {1}" -f $_.Key, $_.Value.ToString('dd.MM HH:mm'))
+    }
+}
+# -------------------------------------------------------------------------
+
 if ($SkipBuild) {
     Write-Host "==> -SkipBuild: verwende vorhandene APKs." -ForegroundColor Yellow
 } else {
@@ -480,6 +509,35 @@ if ($SkipBuild) {
     if ($Aab -and $Flavor -in @("both", "play")) { Copy-Aab -FlavorName "play" }
 }
 
+Write-Host ""
+Write-Host ""
+Write-Host "==> Zeitstempel NACH dem Bauen (Vergleich!):" -ForegroundColor DarkGray
+if (Test-Path $OutDir) {
+    $geaendert = @()
+    Get-ChildItem $OutDir -File | Sort-Object Name | ForEach-Object {
+        $alt = if ($vorher.ContainsKey($_.Name)) { $vorher[$_.Name] } else { $null }
+        $neu = $_.LastWriteTime
+        if ($null -eq $alt) {
+            $geaendert += $_.Name
+            Write-Host ("    {0,-34} {1}  NEU" -f $_.Name, $neu.ToString('dd.MM HH:mm')) -ForegroundColor Cyan
+        }
+        elseif ($alt -ne $neu) {
+            $geaendert += $_.Name
+            Write-Host ("    {0,-34} {1}  (vorher {2})" -f $_.Name, $neu.ToString('dd.MM HH:mm'), $alt.ToString('dd.MM HH:mm')) -ForegroundColor Green
+        }
+        else {
+            Write-Host ("    {0,-34} {1}  UNVERAENDERT" -f $_.Name, $neu.ToString('dd.MM HH:mm')) -ForegroundColor Yellow
+        }
+    }
+    # Bei -SkipBuild ist "nichts erneuert" das erwartete Ergebnis und
+    # kein Fehler. Die Warnung darf nur bei einem echten Build lauten.
+    if ($geaendert.Count -eq 0 -and -not $SkipBuild) {
+        Write-Host ""
+        Write-Host "    WARNUNG: Kein einziges Artefakt wurde erneuert." -ForegroundColor Red
+        Write-Host "    Wahrscheinlich fehlte -UniversalApk und/oder -SplitPerAbi." -ForegroundColor Red
+        Write-Host "    Der Skriptlauf war dann wirkungslos, meldet aber 'Fertig'." -ForegroundColor Red
+    }
+}
 Write-Host ""
 Write-Host "==> Fertig: v$VersionName liegt unter $OutDir" -ForegroundColor Cyan
 Write-Host "    Hinweis: Vor dem Verteilen DB-Migrationen (123-130) und" 
