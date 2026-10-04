@@ -67,21 +67,21 @@ SHOTS = {
         'und siehst ein Foto erst nach dem Funke.',
         'Kein Foto vor dem Kennenlernen',
     ),
-    '02_anmelden': (
-        'Erst prüfen,\n'
-        'dann freischalten',
-        # Vorher: "Mit E-Mail bestätigen, Profil ausfüllen,
-        # Geburtsdatum hinterlegen, los."
+    '02_chat': (
+        # Ersetzt das Anmelde-Bild ("Erst pruefen, dann freischalten").
+        # Das zeigte ein Formular - etwas, das man genau einmal macht. Der
+        # Chat ist das staerkste Versprechen der App UND der Alltag
+        # dazwischen: 01 zeigt den Einstieg, 03 die Modi, 04 die
+        # Personalisierung, 05 die Eisbrecher. Was zwischen zwei Treffen
+        # passiert, zeigte kein Bild.
         #
-        # Das passte nicht mehr zum Bild. Die Kachel zeigt nur
-        # E-Mail-Feld, Passwort-Feld, Kontrollkästchen und
-        # "Einloggen" - dort steht kein Geburtsdatum, und der Satz
-        # versprach einen Schritt, den man auf dem Bild nicht findet.
-        # Aufgetrennt in einen Teil, den das Bild zeigt, und einen,
-        # der danach kommt.
-        'Anmelden mit E-Mail und Passwort.\n'
-        'Profilangaben gibst du später.',
-        'Foto erst nach dem Funke',
+        # "verschluesselt" ist am Bild belegbar: der Screenshot zeigt das
+        # E2E-Schild in der Kopfzeile.
+        'Euer Chat bleibt\n'
+        'bei euch',
+        'Ende-zu-Ende-verschlüsselt, auch über das Relay.\n'
+        'Eure Nachrichten werden unterwegs mitgelesen - von niemandem.',
+        'Schreib, was wirklich wichtig ist',
     ),
     '03_entdecken': (
         'Fünf Wege,\n'
@@ -1417,16 +1417,14 @@ CARD_MARGIN_LOGICAL = 30.0
 
 
 def _load_card_rects(screen):
-    """Liest die Kachelrechtecke eines Screens.
+    """Liest die Kachelrechtecke EINES Screens.
 
-    Zwei Formen werden akzeptiert, weil beide im Export vorkommen:
-
-      * {"name": [l, t, w, h]}          - ein Rechteck pro Kachel
-      * {"name": {"file": ..., "rect": [l, t, w, h]}}  - mit Screenshot
-
-    Die zweite Form ist noetig fuer 05: die Eisbrecher-Kategorien
-    stehen in einer Liste, die gescrollt werden muss. Eine Kachel kann
-    nur aus dem Bild geschnitten werden, in dem sie vollstaendig stand.
+    Der Dateiname traegt den VOLLEN Screen-Namen, nicht nur die ersten
+    zwei Zeichen. Mit der Kuerze teilten sich 02_anmelden und 02_chat
+    eine Datei: die Rechtecke des Anmelde-Screens wurden auf das
+    Chat-Bild angewendet und zerschnitten es mittendrin. Ein
+    umbenannter Screen ist damit kein Datenleck mehr, sondern ein
+    sichtbar falsches Bild.
     """
     path = CARDS / f'rects_{screen}.json'
     if not path.is_file():
@@ -1451,10 +1449,19 @@ def load_cards(screen, default_src=None, margin=0.0):
     """Schneidet die Kacheln eines Screens aus den exportierten Bildern.
 
     `default_src` gilt fuer Rechtecke OHNE eigenen Dateiverweis: bei 01
-    und 02 gibt es nur einen Screenshot, aus dem alle Kacheln kommen.
-    Ohne Vorgabe wurden diese Kacheln stillschweigend verworfen und der
+    gibt es nur einen Screenshot, aus dem alle Kacheln kommen. Ohne
+    Vorgabe wurden diese Kacheln stillschweigend verworfen und der
     Screen als eine grosse Kachel eingesetzt - also genau die Loesung,
     die abgeschafft werden sollte.
+
+    Zwei Formen werden akzeptiert, weil beide im Export vorkommen:
+
+      * {"name": [l, t, w, h]}          - ein Rechteck pro Kachel
+      * {"name": {"file": ..., "rect": [l, t, w, h]}}  - mit Screenshot
+
+    Die zweite Form ist noetig fuer 05: die Eisbrecher-Kategorien
+    stehen in einer Liste, die gescrollt werden muss. Eine Kachel kann
+    nur aus dem Bild geschnitten werden, in dem sie vollstaendig stand.
 
     `margin` vergroessert das Rechteck in LOGISCHEN Pixeln. Notwendig,
     weil das Rechteck am Widget klebt: im Screen steckt um das Widget
@@ -1971,10 +1978,9 @@ def main():
         # als Rechtecke notiert hat. Ohne Export bleibt der Screen in
         # einem Kachelbild: dann ist es kein Fehler, nur weniger schoen.
         prefix = name[:2]
-        cards = load_cards(prefix, default_src=f'{name}.png',
+        cards = load_cards(name, default_src=f'{name}.png',
                        margin=CARD_MARGIN_LOGICAL if name in
-                       ('01_willkommen', '02_anmelden',
-                        '04_anpassen') else 0.0)
+                       ('01_willkommen', '04_anpassen') else 0.0)
         if cards:
             k = compose_cards(cards, headline, subline, badge,
                               heading='Eisbrecher-Fragen'
@@ -1997,6 +2003,37 @@ def main():
               f'(drei Varianten, Kachel {k.size})')
 
     print('Fertig.')
+    _remove_stale(SHOTS.keys())
+
+
+def _remove_stale(names):
+    """Entfernt PNGs in den Ausgabeordnern, die zu keinem Screen mehr gehoeren.
+
+    Wichtig fuer den Store: in `fastlane/metadata/.../phoneScreenshots`
+    liegt, was hochgeladen wird. Ein Screenshot, dessen Screen umbenannt
+    oder ersetzt wurde (02_anmelden -> 02_chat), bleibt dort sonst als
+    Datei liegen und wird beim naechsten `fastlane upload` mitgeschickt -
+    als Bild eines Screens, den es nicht mehr gibt.
+
+    Die Pruefung meldet jede entfernte Datei, damit das nicht unbemerkt
+    passiert.
+    """
+    expected = {f'{n}.png' for n in names}
+    targets = (OUT_9x16, OUT_WQHD, OUT_FASTLANE, OUT_9x16_OHNE,
+               OUT_WQHD_OHNE, OUT_9x16_KACHELN, OUT_WQHD_KACHELN)
+    for folder in targets:
+        if not folder.is_dir():
+            continue
+        for png in sorted(folder.glob('*.png')):
+            if png.name in expected:
+                continue
+            if folder == OUT_FASTLANE and 'phoneScreenshots' not in png.parts:
+                # Fastlane hat ausser phoneScreenshots noch 7"- und
+                # 10"-Tabletshots; die werden hier nicht erzeugt und
+                # nicht angefasst.
+                continue
+            png.unlink()
+            print(f'  verwaiste Datei entfernt: {folder.name}/{png.name}')
 
 
 if __name__ == '__main__':

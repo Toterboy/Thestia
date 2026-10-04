@@ -41,7 +41,10 @@ Datenschutz-URL).
 
 ---
 
-## 2. Blocker
+## 2. Blocker (ungeprueft nach dem Umbau)
+
+Dieser Abschnitt beschreibt den Ausgangszustand. Was seither behoben
+wurde, steht in Abschnitt 6.
 
 ### 2.1 Mikrofon ohne prominente Offenlegung — Play-Richtlinie
 
@@ -149,3 +152,93 @@ Diese Punkte kann kein Code im Repository erfüllen:
 6. BOM aus `title.txt` und `short_description.txt` entfernen.
 7. Data-Safety-, Inhaltsbewertungs- und Zielgruppenformular anhand
    `docs/DSFA.md` ausfüllen.
+
+---
+
+## 6. Nachtrag: was umgesetzt wurde
+
+Alles gegen das **gemergte Manifest** geprueft, nicht gegen die
+ Quelldatei. Der Nachweis:
+
+    :app:processPlayReleaseManifest
+    -> build/app/intermediates/merged_manifests/playRelease/
+       processPlayReleaseManifest/AndroidManifest.xml
+
+### Mikrofon-Offenlegung: erledigt
+
+`chat_detail_screen.dart` zeigt vor der ersten Aufnahme einen Dialog
+(`chat.micDisclosureTitle/Body/Accept`) und fragt die Berechtigung erst
+nach dessen Bestaetigung an. Bestaetigt wird in `AppSettings`
+(`micDisclosureAccepted`, geraete-lokal, nicht in `ui_prefs`).
+
+Vorher stand dort nur `hasPermission()`; das Plugin fragte an, ohne
+dass die App vorher etwas gesagt hatte. Das Mikrofon-Formular im Play
+Console muss trotzdem ausgefuellt werden - das ist eine Formular-
+angabe und kein Code.
+
+### ACCESS_FINE_LOCATION: entfernt
+
+`tools:node="remove"` im Manifest; im gemergten Manifest **nicht mehr
+vorhanden**. Die Begruendung fuer Play steht als Kommentar im Manifest:
+Entfernungsanzeige, Standortverifikation und Transit Spark kommen
+alle mit ungefaehrer Genauigkeit aus.
+
+Dazu passend `LocationAccuracy.high` -> `medium` in
+`location_verification_service.dart`. `high` liefert ohne GPS-Signal
+gar keine Position, die Standortverifikation waere also nicht
+moeglich gewesen - sie ist mit `medium` stabiler, nicht schwaecher.
+
+### Legacy-Speicherzugriffe: begrenzt
+
+`READ_EXTERNAL_STORAGE` traegt jetzt `maxSdkVersion="32"`,
+`WRITE_EXTERNAL_STORAGE` `maxSdkVersion="28"` - im gemergten Manifest
+nachgewiesen.
+
+### targetSdk: fest verdrahtet
+
+`build.gradle.kts`: `targetSdk = 36` statt `flutter.targetSdkVersion`.
+Im gemergten Manifest steht `android:targetSdkVersion="36"`.
+
+### BOM: entfernt
+
+`title.txt` und `short_description.txt` sind jetzt BOM-frei, Zeilenenden
+vereinheitlicht.
+
+### Verwaiste Dateien: werden entfernt
+
+`make_store_screenshots.py` loescht PNGs in den Ausgabeordnern, die zu
+keinem Screen mehr gehoeren, und meldet jeden Loeschvorgang. Vorher
+blieb `02_anmelden.png` im Fastlane-Ordner liegen und waere beim
+Upload mitgegangen.
+
+### Rechteck-Dateien: keine Namenskollision mehr
+
+Die Dateien heissen `rects_<voller Screen-Name>.json`. Vorher teilten
+sich `02_anmelden` und `02_chat` eine Datei `rects_02.json`: die
+Rechtecke des Anmelde-Screens wurden auf das Chat-Bild angewendet und
+zerschnitten es. Ein umbenannter Screen erzeugte damit ein sichtbar
+falsches Bild.
+
+### Drei echte Fehler im Chat, gefunden beim Rendern
+
+1. `initState` schrieb Provider-State (`activeChatIdProvider`,
+   `hydrateHistory`). Riverpod verbietet das in Lebenszyklus-Phasen und
+   nennt `initState` in der Fehlermeldung. Der Start liegt jetzt im
+   ersten `addPostFrameCallback`.
+2. `dispose()` las `ref` nach der Freigabe des Consumer-States.
+3. `EncryptionService.dispose()` griff auf Hive-Boxen zu, die nie
+   initialisiert waren, wenn `initialize()` scheiterte - der
+   Folgefehler kam beim Abbau und verdeckte die eigentliche Ursache.
+
+### Offen
+
+- **Datenschutz-URL.** Datei im Repository, keine oeffentliche
+  Adresse. Ohne sie keine Veroeffentlichung. Laesst sich nur ausserhalb
+  des Codes erledigen.
+- **Play-Console-Formulare:** Data Safety, IARC-Inhaltsbewertung,
+  Zielgruppe, Kategorie Dating, keine Anzeigen.
+- **Mikrofon- und Kamera-Formular** in der Abnahme.
+- **Kamera-Offenlegung:** Die Kamera kommt aus dem `camera`-Plugin
+  (Videoanrufe). Fuer `CAMERA` verlangt Play dieselbe prominente
+  Offenlegung wie fuer das Mikrofon. Der Dialog deckt nur das
+  Mikrofon ab - die Kamera ist damit noch nicht abgedeckt.

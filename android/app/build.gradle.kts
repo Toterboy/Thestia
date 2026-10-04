@@ -59,7 +59,21 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 28
-        targetSdk = flutter.targetSdkVersion
+
+        // FEST auf 36, nicht `flutter.targetSdkVersion`.
+        //
+        // Google Play verlangt fuer neue Apps und Updates einen aktuellen
+        // targetSdk; der Wert ist die hoechste API, deren Verhalten die
+        // App ausdruecklich beherrscht. Mit dem Flutter-Default kam
+        // automatisch die Version des jeweils installierten Flutter-SDK.
+        // Das ist eine stille Abhaengigkeit: ein Flutter-Update aendert
+        // die Play-Faehigkeit, ohne dass im Repository etwas zu sehen ist -
+        // und genau so ist die targetSdk-Anforderung schon einmal
+        // unterschritten worden.
+        //
+        // Beim Flutter-Upgrade pruefen: Ist die neue Version hoeher, wird
+        // hier nachgezogen und die App gegen die neuen Pflichten geprueft.
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         // Ohne --flavor wird die "play"-Variante gebaut (Firebase aktiv) -

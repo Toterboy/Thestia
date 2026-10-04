@@ -14,13 +14,19 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:hive/hive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'support/store_screenshot_insets.dart';
 import 'package:thestia/providers/user_preferences_provider.dart';
-import 'package:thestia/screens/auth/login_screen.dart';
+import 'package:thestia/models/match.dart';
+import 'package:thestia/models/message.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/screens/chat/chat_detail_screen.dart';
+import 'package:thestia/services/chat_service.dart';
 import 'package:thestia/screens/spice/spice_questions_screen.dart';
 import 'package:thestia/screens/swipe/swipe_mode_selection_screen.dart';
 import 'package:thestia/screens/welcome/welcome_screen.dart';
@@ -29,7 +35,6 @@ import 'package:thestia/services/secure_storage.dart';
 import 'package:thestia/theme/app_theme.dart';
 import 'package:thestia/widgets/appearance_selector.dart';
 import 'package:thestia/widgets/app_logo.dart';
-import 'package:thestia/widgets/buttons.dart';
 import 'package:thestia/widgets/chat_background_picker.dart';
 import 'package:thestia/widgets/theme_picker.dart';
 
@@ -162,7 +167,8 @@ class _FakeSecureProfileStore extends SecureProfileStore {
 // Harness
 // ---------------------------------------------------------------------------
 
-Widget _harness(Widget child, SharedPreferences prefs) {
+Widget _harness(Widget child, SharedPreferences prefs,
+    [List<Override> extra = const []]) {
   // Card-SchattEN nur fuer den Store-Render abschalten: der Test-Rasterizer
   // zeichnet den Drop-Shadow als harte graue Kontur statt weich - im Play Store
   // sieht das nach einem Renderfehler aus ("grauer Rahmen"). Auf dem Geraet ist
@@ -174,6 +180,7 @@ Widget _harness(Widget child, SharedPreferences prefs) {
       securePrefsProvider.overrideWithValue(_FakeSecurePrefs()),
       secureProfileStoreProvider.overrideWithValue(_FakeSecureProfileStore()),
       sharedPrefsProvider.overrideWithValue(prefs),
+      ...extra,
     ],
     child: MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -201,6 +208,7 @@ Future<void> _pump(
   required double dpr,
   double textScale = 1.0,
   Future<void> Function(WidgetTester)? after,
+  List<Override> extra = const [],
 }) async {
   await tester.runAsync(_loadFontsOnce);
   tester.view.physicalSize = size;
@@ -246,7 +254,7 @@ Future<void> _pump(
       // Nur fuer Screens, die sonst ueber den unteren Rand hinauslaufen
       // (Entdecken-Liste): echtes UI, kompakter gesetzt.
       data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
-      child: _harness(child, prefs),
+      child: _harness(child, prefs, extra),
     ),
   );
   for (var i = 0; i < 3; i++) {
@@ -508,6 +516,71 @@ List<Finder> _findModeCards(WidgetTester tester) {
   return out;
 }
 
+/// ChatService mit erfundenem Match und erfundenem Verlauf.
+///
+/// Der Chat-Screen liest aus dem echten [ChatService], der aus Supabase
+/// fuellt. Im Test gibt es keine Verbindung, also waere der Screen leer -
+/// und ein leerer Chat ist als Store-Bild wertlos.
+///
+/// Ueberschrieben werden nur [getMatches] und [getMessages].
+class _FakeChatService extends ChatService {
+  _FakeChatService(this._partner, this._messages);
+
+  final UserProfile _partner;
+  final List<Message> _messages;
+
+  @override
+  List<Match> getMatches() => [
+        Match(
+          id: 'store-shot-match',
+          partner: _partner,
+          matchedAt: DateTime(2026, 1, 1),
+        ),
+      ];
+
+  @override
+  Match? getMatchById(String matchId) =>
+      matchId == 'store-shot-match' ? getMatches().first : null;
+
+  @override
+  List<Message> getMessages(String matchId) =>
+      matchId == 'store-shot-match' ? _messages : const [];
+}
+
+UserProfile _chatPartner() => const UserProfile(
+      id: 'store-shot-peer',
+      name: 'Mara',
+      bio: 'Bücher, Rad, Kaffee.',
+      city: 'Köln',
+      interests: ['Fotografieren', 'Wandern', 'Kochen'],
+      isVerified: true,
+      introText: 'Erzähl mir etwas, das nicht auf deinem Profil steht.',
+    );
+
+List<Message> _chatHistory() {
+  final now = DateTime(2026, 1, 2, 20, 15);
+  Message m(String id, String from, String text, int min) => Message(
+        id: id,
+        senderId: from,
+        receiverId: from == 'me' ? 'store-shot-peer' : 'me',
+        text: text,
+        timestamp: now.add(Duration(minutes: min)),
+      );
+
+  // 'me' ist die Demo-ID, die AppConstants.currentUserId ohne
+  // Supabase-Session zurueckgibt. Nachrichten mit dieser Absender-ID
+  // landen auf der eigenen Seite, die anderen beim Partner.
+  return [
+    m('1', 'store-shot-peer', 'Hey! Dein Profil hat mich neugierig gemacht.', 0),
+    m('2', 'me', 'Gern. Was hat dich neugierig gemacht?', 2),
+    m('3', 'store-shot-peer',
+        'Dass du offen schreibst, was du wirklich suchst.', 4),
+    m('4', 'me', 'Das ist der Punkt. Andernfalls verabredet man sich aus '
+        'Höflichkeit und merkt erst beim Treffen, dass es nicht passt.', 6),
+    m('5', 'store-shot-peer', 'Das kenne ich. Also: Kaffee am Wochenende?', 8),
+  ];
+}
+
 void main() {
   // 0) Kachel-Export fuer den Aufbau OHNE Geraet.
   //
@@ -551,47 +624,10 @@ void main() {
       for (final r in boxes.skip(1)) {
         box = box.expandToInclude(r);
       }
-      await _writeCardRects(tester, '01', {'willkommen_logo': box});
+      await _writeCardRects(tester, '01_willkommen', {'willkommen_logo': box});
       // Kein eigener Capture: _pump() hat den Screenshot unter
       // $outCards/01_willkommen.png bereits geschrieben. Ein zweiter
       // Capture erzeugte nur eine doppelte PNG.
-    });
-
-    testWidgets('export Kacheln 02 (Formular)', (tester) async {
-      // Die Beispieltexte werden ueber `after` gesetzt, NICHT danach.
-      // `_pump` nimmt den Screenshot am Ende auf - ein `enterText` nach
-      // `_pump` landet also in einem Bild, das schon geschrieben ist.
-      // Genau das war der Befund: beide Felder zeigten nur ihren
-      // Platzhalter "Email" und "Passwort".
-      await _pump(tester, const LoginScreen(),
-          outDir: outCards, name: '02_anmelden', size: _phone, dpr: _dpr,
-          after: (tester) async {
-        final fields = find.byType(TextFormField);
-        if (tester.widgetList(fields).length >= 2) {
-          await tester.enterText(fields.at(0), 'lena@thestia.de');
-          await tester.enterText(fields.at(1), 'geheim1234');
-        }
-      });
-
-      // Die Kachel traegt die Aussage: Felder, Kontrollkaestchen und
-      // Button. Das Formular selbst ist der ganze Screen - 1920 px hoch
-      // mit Herz, "Willkommen zurueck", "Passwort vergessen?",
-      // "Registrieren" und der Fusszeile. Deshalb wird das Rechteck aus
-      // dem ersten Feld bis zum Submit-Button gebildet, statt das
-      // Formular zu nehmen.
-      final first = find.byType(TextFormField).first;
-      final submit = find.byType(PrimaryButton);
-      expect(submit, findsOneWidget,
-          reason: 'PrimaryButton nicht gefunden - dann waere die untere '
-              'Kante der Kachel geraten');
-      final top = tester.getRect(first).top;
-      final bottom = tester.getRect(submit).bottom;
-      final full = tester.getRect(first);
-      await _writeCardRects(tester, '02', {
-        'anmelden_formular': Rect.fromLTRB(
-          full.left, top, full.right, bottom,
-        ),
-      });
     });
 
     testWidgets('export Kacheln 04 (drei Auswahlkacheln)',
@@ -627,7 +663,7 @@ void main() {
       // Einmal am Ende: _writeCardRects pro Durchlauf wuerde die Datei
       // bei jedem Widget ueberschreiben und am Ende nur noch das
       // Chat-Hintergrund-Rechteck enthalten.
-      await _writeCardList(tester, '04', cards);
+      await _writeCardList(tester, '04_anpassen', cards);
     });
 
     testWidgets('export Kacheln 05 (alle Kategorien)', (tester) async {
@@ -670,7 +706,7 @@ void main() {
 
         await expectLater(find.byType(MaterialApp).last,
             matchesGoldenFile('$outCards/05_$step.png'));
-        await _writeCardList(tester, '05', cards);
+        await _writeCardList(tester, '05_eisbrecher', cards);
 
         await tester.drag(list, const Offset(0, -420));
         await tester.pumpAndSettle();
@@ -678,18 +714,98 @@ void main() {
     });
   }
 
+  // 0b) Chat: ersetzt das Anmelde-Bild. Der Chat traegt das staerkste
+  //      Versprechen der App und zeigt den Alltag, den die uebrigen
+  //      Bilder nicht zeigen - 01 Willkommen, 03 Modi, 04 Personalisierung,
+  //      05 Eisbrecher.
+  if (_enabled) {
+    testWidgets('export Kacheln 02 (Chat)', (tester) async {
+      // Der Chat startet ueber EncryptionService die Signal-Boxen, und
+      // SecureHive holt seinen Schluessel direkt aus dem
+      // flutter_secure_storage-Plugin - nicht ueber die Provider-
+      // Attrappe des Harness. Im Test gibt es dafuer keine
+      // Implementierung, also bricht initialize() mit
+      // MissingPluginException ab.
+      //
+      // Der Kanal wird deshalb hier als leerer Speicher beantwortet:
+      // read -> null (kein Schluessel hinterlegt), write/delete -> true.
+      // Das entspricht einem frisch installierten Geraet.
+      // Hive braucht einen Pfad fuer die verschluesselten Boxen
+      // (Identity-Key, PreKeys, Session-Ratchet). Im Test geht das in
+      // ein temporaeres Verzeichnis.
+      final hiveDir =
+          Directory.systemTemp.createTempSync('thestia_store_chat');
+      Hive.init(hiveDir.path);
+      addTearDown(() {
+        try {
+          hiveDir.deleteSync(recursive: true);
+        } catch (_) {
+          // Dateienkoepfe bleiben unter Windows gern kurz offen - fuer
+          // einen Temp-Ordner ist das kein Fehler.
+        }
+      });
+
+      const secure = MethodChannel('plugins.it_nomads.com/'
+          'flutter_secure_storage');
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        secure,
+        (call) async => switch (call.method) {
+          'read' => null,
+          'write' || 'delete' => true,
+          'containsKey' => false,
+          _ => null,
+        },
+      );
+      addTearDown(() => tester.binding.defaultBinaryMessenger
+          .setMockMethodCallHandler(secure, null));
+
+      // Auch in den Phone-Ordner: make_store_screenshots.py liest den
+      // Store-Screen 02 von dort, nicht aus cards/. Beide Aufrufe
+      // nutzen denselben Provider-Override - ohne ihn waere der Screen
+      // in einem der beiden Ordner leer.
+      await _pump(
+        tester,
+        const ChatDetailScreen(matchId: 'store-shot-match'),
+        outDir: 'store_v091/phone',
+        name: '02_chat',
+        size: _phone,
+        dpr: _dpr,
+        extra: [
+          chatServiceProvider.overrideWithValue(
+              _FakeChatService(_chatPartner(), _chatHistory())),
+        ],
+      );
+      await _pump(
+        tester,
+        const ChatDetailScreen(matchId: 'store-shot-match'),
+        outDir: outCards,
+        name: '02_chat',
+        size: _phone,
+        dpr: _dpr,
+        extra: [
+          chatServiceProvider.overrideWithValue(
+              _FakeChatService(_chatPartner(), _chatHistory())),
+        ],
+      );
+      expect(find.byType(ChatDetailScreen), findsOneWidget);
+      expect(find.text('Mara'), findsWidgets,
+          reason: 'der Partner-Name fehlt - die Attrappe greift nicht');
+    });
+  }
+
   // 1) Willkommen: das Versprechen der App (Persönlichkeit vor Aussehen).
   _shot('01_willkommen', () => const WelcomeScreen());
 
-  // 2) Anmelden/Registrieren: mit beispielhaften Eingaben.
-  _shot('02_anmelden', () => const LoginScreen(), after: (tester) async {
-        final fields = find.byType(TextFormField);
-        if (tester.widgetList(fields).length >= 2) {
-          await tester.enterText(fields.at(0), 'lena@thestia.de');
-          await tester.enterText(fields.at(1), 'geheim1234');
-          await tester.pump(const Duration(milliseconds: 400));
-        }
-      });
+  // 2) Anmelden/Registrieren: KEIN Store-Screenshot mehr.
+  //
+  //    Bis v0.9.2 war das Bild 02 ("Erst prüfen, dann freischalten").
+  //    Es zeigt ein Formular - etwas, das man genau einmal macht, und
+  //    damit den schwächsten der fuenf Bilder. Ersetzt durch 02_chat.
+  //
+  //    Der Screen wird hier NICHT mehr gerendert. Das ist Absicht: ein
+  //    Export, den niemand im Store braucht, wird auch nicht gepflegt,
+  //    und make_store_screenshots.py laesst nichts mehr von ihm
+  //    unerwartet im Fastlane-Ordner auftauchen.
 
   // 3) Entdecken: die fuenf Modus-Kacheln, einzeln exportiert.
   //

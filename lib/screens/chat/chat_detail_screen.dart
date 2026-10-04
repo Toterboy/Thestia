@@ -181,12 +181,37 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // NUTZERWUNSCH: Unterdrückt die Lokal-Benachrichtigung für eingehende
-    // Nachrichten, solange dieser Chat geöffnet ist (Nachricht sichtbar).
-    ref.read(activeChatIdProvider.notifier).state = widget.matchId;
-    unawaited(_bootstrap());
-    unawaited(_loadQuizGate());
-    unawaited(_loadIdeaWheelHidden());
+
+    // Alles, was Provider-State anfasst, wartet auf den ersten Frame.
+    //
+    // Riverpod verbietet das Aendern eines Providers in einer
+    // Lebenszyklus-Phase ausdruecklich und nennt initState in der
+    // Fehlermeldung: "Tried to modify a provider while the widget tree
+    // was building". Zwei Stellen taten genau das hier:
+    //
+    //   * activeChatIdProvider wird unten synchron gesetzt - das ist ein
+    //     Schreibzugriff WHaehrend des Aufbaus, und die Zuhoerer des
+    //     Providers haengen zu diesem Zeitpunkt noch nicht.
+    //   * _bootstrap() beginnt mit hydrateHistory(), das den State des
+    //     ChatNotifier setzt; die Microtask-Aufloesung landete dadurch
+    //     mitten im Aufbau.
+    //
+    // In der App faellt beides nicht auf, weil der Screen normalerweise
+    // ueber eine Route geoeffnet wird und ein Frame vergeht. Sichtbar
+    // wird es, sobald der Screen als erstes gerendert wird - etwa im
+    // Screenshot-Render. Der Fix ist unabhaengig davon richtig: Provider
+    // gehoeren nach dem Frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // NUTZERWUNSCH: Unterdrückt die Lokal-Benachrichtigung für
+      // eingehende Nachrichten, solange dieser Chat geöffnet ist
+      // (Nachricht sichtbar).
+      ref.read(activeChatIdProvider.notifier).state = widget.matchId;
+      unawaited(_bootstrap());
+      unawaited(_loadQuizGate());
+      unawaited(_loadIdeaWheelHidden());
+    });
+
     // Relay-Polling (5 s, Fix "Nachrichten kommen nicht an"): Der Partner
     // pingt nach relay_store sofort, aber falls der Ping verloren geht,
     // holt der Timer spätestens nach 5 s nach. Pausiert im Hintergrund.
@@ -886,16 +911,75 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     }
   }
 
+  /// Zeigt vor der ersten Sprachnachricht die prominente Offenlegung.
+///
+/// Google Play verlangt fuer RECORD_AUDIO, dass die App sichtbar
+/// erklaert, warum aufgenommen wird, BEVOR der Systemdialog erscheint.
+/// Ein Aufruf von `hasPermission()` mit anschliessendem Start reicht
+/// nicht: das Plugin fragt an, ohne dass vorher etwas gesagt wurde.
+///
+/// `true` heisst: weitermachen darf. `false` heisst: nichts aufnehmen.
+/// Ein Nein wird nicht erinnert - wer zweimal ablehnt, wird nicht
+/// weiter gefragt.
+Future<bool> _ensureMicDisclosure() async {
+  final settings = ref.read(settingsProvider);
+  if (settings.micDisclosureAccepted) return true;
+  if (!mounted) return false;
+
+  final accepted = await showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(L10n.t(context, 'chat.micDisclosureTitle')),
+      content: Text(L10n.t(context, 'chat.micDisclosureBody')),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Text(L10n.t(context, 'common.cancel')),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: Text(L10n.t(context, 'chat.micDisclosureAccept')),
+        ),
+      ],
+    ),
+  );
+
+  if (accepted != true) return false;
+  await ref.read(settingsProvider.notifier).setMicDisclosureAccepted(true);
+  return true;
+}
+
+/// Hebt die Markierungen "dieser Chat ist gerade sichtbar" auf.
+  ///
+  /// Getrennt von [dispose], weil dort `ref` nicht mehr benutzt werden
+  /// darf. Vor super.dispose() aufgerufen ist es erlaubt.
+  void _clearActiveChatFlags() {
+    if (!mounted) return;
+    try {
+      if (ref.read(activeChatIdProvider) == widget.matchId) {
+        ref.read(activeChatIdProvider.notifier).state = null;
+      }
+      if (ref.read(activeChatPeerIdProvider) == _activePeerId) {
+        ref.read(activeChatPeerIdProvider.notifier).state = null;
+      }
+    } on Object {
+      // Container schon abgeräumt: dann gibt es nichts mehr freizugeben.
+    }
+  }
+
   @override
   void dispose() {
     // Aktiven Chat freigeben (sonst bliebe die Notification-Unterdrückung
     // für diese Chat-ID aktiv, obwohl der Screen weg ist).
-    if (ref.read(activeChatIdProvider) == widget.matchId) {
-      ref.read(activeChatIdProvider.notifier).state = null;
-    }
-    if (ref.read(activeChatPeerIdProvider) == _activePeerId) {
-      ref.read(activeChatPeerIdProvider.notifier).state = null;
-    }
+    //
+    // `ref` wird VOR super.dispose() ausgewertet, und nur, wenn der
+    // Container noch lebt. Riverpod hat den Consumer-State zum Zeitpunkt
+    // von dispose() bereits abgeräumt: ein ref.read() hier wirft
+    // "Cannot use ref after the widget was disposed" - sichtbar wurde das
+    // beim Wechsel aus dem Chat heraus (Route pop, Test-Teardown), nicht
+    // im Normalbetrieb, weil dort der Screen seltener abgeräumt wird
+    // während ein Chat aktiv ist.
+    _clearActiveChatFlags();
     _icebreakerSuggestTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _msgSub?.cancel();
@@ -1289,6 +1373,19 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     } else {
       // Aufnahme starten.
       try {
+        // PROMINENTE OFFENLEGUNG (Google-Play-Richtlinie fuer Mikrofon):
+        // Bevor ueberhaupt der Systemdialog erscheint, muss in der App
+        // erklaert werden, WARUM aufgenommen wird. Vorher stand hier nur
+        // eine hasPermission()-Pruefung; die Berechtigung fragte das
+        // Plugin an, ohne dass die App vorher etwas sagte. Play verlangt
+        // fuer RECORD_AUDIO eine sichtbare Begruendung UND die Anfrage
+        // im Kontext der Funktion - ohne das gibt die Abnahme nicht.
+        //
+        // Die Offenlegung wird nur einmal gezeigt (der Nutzer kann sie
+        // im Verlauf nicht wiederholen muessen); danach fragt der
+        // Systemdialog. Bei Ablehnung wird nichts aufgenommen.
+        if (!await _ensureMicDisclosure()) return;
+
         final hasPermission = await _audioRecorder.hasPermission();
         if (!hasPermission) {
           if (mounted) {

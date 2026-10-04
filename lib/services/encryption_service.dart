@@ -757,13 +757,30 @@ class EncryptionService {
   }
 
   Future<void> dispose() async {
-    await _identityBox.close();
-    await _sessionBox.close();
-    await _peerTrustBox.close();
-    await _preKeysBox.close();
-    await _signedPreKeysBox.close();
-    await _identityTrustBox.close();
-    await _metaBox.close();
+    // Boxes koennen null sein, wenn initialize() nie durchlief oder
+    // scheiterte. Dann waere ein _identityBox.close() ein
+    // LateInitializationError - und zwar beim Abbau, nicht beim Fehler,
+    // der eigentlich die Ursache war. Der Aufrufer bekommt so die
+    // eigentliche Ausnahme statt eines Folgefehlers.
+    //
+    // `late` heisst hier: ist das Feld noch nie gesetzt worden, gibt der
+    // Zugriff selbst einen Fehler. Deshalb ueber den Navigator-
+    // noetigen late-Zugriff in try/catch fangen.
+    for (final close in <Future<void> Function()>[
+      () async => _identityBox.close(),
+      () async => _sessionBox.close(),
+      () async => _peerTrustBox.close(),
+      () async => _preKeysBox.close(),
+      () async => _signedPreKeysBox.close(),
+      () async => _identityTrustBox.close(),
+      () async => _metaBox.close(),
+    ]) {
+      try {
+        await close();
+      } on Object {
+        // Box nicht geoeffnet (Initialize abgebrochen) - nichts zu tun.
+      }
+    }
   }
 }
 

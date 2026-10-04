@@ -30,7 +30,19 @@ class LocationVerificationService {
     return status.isGranted;
   }
 
-  /// Holt den aktuellen GPS-Standort (hohe Genauigkeit).
+  /// Holt den aktuellen Standort (ungefaehre Genauigkeit genuegt).
+  ///
+  /// `LocationAccuracy.high` war falsch fuer diesen Zweck und verlangte
+  /// faktisch ACCESS_FINE_LOCATION: Geolocator kann dann keine
+  /// Netzwerkmessung mehr machen und liefert nur mit GPS eine Position -
+  /// auf einem Gerät ohne GPS-Signal bleibt `null`, und die
+  /// Standortverifikation waere unmoeglich.
+  ///
+  /// Geholt wird, was die ungefaehre Berechtigung hergibt: ein Standort
+  /// auf Kilometer genau. Fuer die Verifikation wird daraus die Stadt
+  /// abgeleitet - das ist der Zweck dieser Methode, und dafuer reicht
+  /// diese Genauigkeit. Zwei Guetesteile enger beieinander zu belegen ist
+  /// nicht die Aufgabe dieser App.
   Future<Position?> getCurrentLocation() async {
     if (!await hasLocationPermission()) {
       final granted = await requestLocationPermission();
@@ -40,7 +52,7 @@ class LocationVerificationService {
     try {
       return await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
+          accuracy: LocationAccuracy.medium,
           timeLimit: Duration(seconds: 10),
         ),
       );

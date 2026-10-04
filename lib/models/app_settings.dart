@@ -82,6 +82,19 @@ class AppSettings {
   /// unangemessenen Inhalten; Antippen zeigt nach Warnung das Bild).
   final bool blurChatImages;
 
+  /// Hat der Nutzer die prominente Mikrofon-Offenlegung bestaetigt?
+  ///
+  /// Google Play verlangt fuer RECORD_AUDIO eine in der App sichtbare
+  /// Begruendung, BEVOR die Berechtigung angefragt wird. Damit die
+  /// Offenlegung nicht bei jeder Sprachnachricht erneut erscheint, wird
+  /// die Bestaetigung hier gespeichert - es ist eine Einstellung und
+  /// gehoert neben die anderen datenschutzrelevanten Schalter.
+  ///
+  /// `false` ist der sichere Standard: wer die App frisch installiert,
+  /// sieht die Erklaerung beim ersten Versuch eine Sprachnachricht zu
+  /// schreiben.
+  final bool micDisclosureAccepted;
+
   /// Gewähltes Farbschema (Name aus ThestiaTheme, Default 'classic').
   final String themeName;
 
@@ -131,6 +144,7 @@ class AppSettings {
     this.datingHourAutoJoin = false,
     this.mfaSetupDismissed = false,
     this.blurChatImages = true,
+    this.micDisclosureAccepted = false,
     this.themeName = 'classic',
     this.paused = false,
     this.habitsDealbreaker = false,
@@ -174,6 +188,8 @@ class AppSettings {
       datingHourAutoJoin: json['datingHourAutoJoin'] as bool? ?? false,
       mfaSetupDismissed: json['mfaSetupDismissed'] as bool? ?? false,
       blurChatImages: json['blurChatImages'] as bool? ?? true,
+    micDisclosureAccepted:
+        json['micDisclosureAccepted'] as bool? ?? false,
       themeName: json['themeName'] as String? ?? 'classic',
       paused: json['paused'] as bool? ?? false,
       habitsDealbreaker: json['habitsDealbreaker'] as bool? ?? false,
@@ -209,6 +225,7 @@ class AppSettings {
     'datingHourAutoJoin': datingHourAutoJoin,
     'mfaSetupDismissed': mfaSetupDismissed,
     'blurChatImages': blurChatImages,
+    'micDisclosureAccepted': micDisclosureAccepted,
     'themeName': themeName,
     'paused': paused,
     'habitsDealbreaker': habitsDealbreaker,
@@ -255,6 +272,7 @@ class AppSettings {
     bool? datingHourAutoJoin,
     bool? mfaSetupDismissed,
     bool? blurChatImages,
+    bool? micDisclosureAccepted,
     String? themeName,
     bool? paused,
     bool? habitsDealbreaker,
@@ -292,6 +310,7 @@ class AppSettings {
       datingHourAutoJoin: datingHourAutoJoin ?? this.datingHourAutoJoin,
       mfaSetupDismissed: mfaSetupDismissed ?? this.mfaSetupDismissed,
       blurChatImages: blurChatImages ?? this.blurChatImages,
+    micDisclosureAccepted: micDisclosureAccepted ?? this.micDisclosureAccepted,
       themeName: themeName ?? this.themeName,
       paused: paused ?? this.paused,
       habitsDealbreaker: habitsDealbreaker ?? this.habitsDealbreaker,

@@ -1925,6 +1925,16 @@ const Map<String, Map<String, String>> _strings = {
     'chat.retry': 'Wiederholen',
     'chat.voiceTooShort': 'Aufnahme zu kurz (< 1 s), verworfen.',
     'chat.voiceRecordFailed': 'Aufnahme fehlgeschlagen: {error}',
+    // Prominente Mikrofon-Offenlegung (Google Play verlangt eine
+    // sichtbare Begruendung VOR der Berechtigungsanfrage).
+    'chat.micDisclosureTitle': 'Sprachnachricht aufnehmen',
+    'chat.micDisclosureBody':
+        'Um eine Sprachnachricht aufzunehmen, braucht die App Zugriff auf '
+        'das Mikrofon. Die Aufnahme startet erst, wenn du unten '
+        'bestätigst, und läuft nur während des Aufnehmens. '
+        'Sie wird als Datei verschlüsselt gespeichert und nur an deinen '
+        'Gegenüber gesendet. Ohne Mikrofon kannst du weiter schreiben.',
+    'chat.micDisclosureAccept': 'Mikrofon freigeben',
     'chat.voiceStartFailed': 'Aufnahme konnte nicht gestartet werden: {error}',
     'chat.voiceCancelled': 'Aufnahme abgebrochen',
     'chat.voiceStopSend': 'Aufnahme beenden & senden',
@@ -4554,6 +4564,14 @@ const Map<String, Map<String, String>> _strings = {
     'chat.retry': 'Retry',
     'chat.voiceTooShort': 'Recording too short (< 1 s), discarded.',
     'chat.voiceRecordFailed': 'Recording failed: {error}',
+    'chat.micDisclosureTitle': 'Record a voice message',
+    'chat.micDisclosureBody':
+        'To record a voice message, the app needs access to the '
+        'microphone. Recording starts only after you confirm below '
+        'and runs only while you are recording. It is stored as an '
+        'encrypted file and sent only to your match. Without the '
+        'microphone you can keep typing.',
+    'chat.micDisclosureAccept': 'Allow microphone',
     'chat.voiceStartFailed': 'Recording could not be started: {error}',
     'chat.voiceCancelled': 'Recording cancelled',
     'chat.voiceStopSend': 'Stop recording & send',

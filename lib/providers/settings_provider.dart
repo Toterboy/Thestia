@@ -452,6 +452,18 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     await _persist();
   }
 
+  /// Mikrofon-Offenlegung bestaetigt (Google-Play-Richtlinie).
+  ///
+  /// Wird gesetzt, nachdem der Nutzer im Chat-Dialog gelesen hat, WARUM
+  /// die App aufnimmt. Erst danach wird die Berechtigung angefragt.
+  /// Ohne diesen Schalter wuerde die Offenlegung bei jeder einzelnen
+  /// Sprachnachricht erneut erscheinen - nervend und fuer den Nutzer
+  /// ein Grund, alles abzulehnen.
+  Future<void> setMicDisclosureAccepted(bool value) async {
+    state = state.copyWith(micDisclosureAccepted: value);
+    await _persist();
+  }
+
   /// Chat-Hintergrund wählen (v0.9.1): 'none', Muster oder 'custom'.
   /// Unbekannte IDs fallen auf 'none' zurück.
   Future<void> setChatBackground(String id) async {
@@ -532,6 +544,10 @@ void scheduleUiPrefsServerSync(AppSettings settings) {
             'notifyMessages': settings.notifyMessages,
             'notifyDatingHour': settings.notifyDatingHour,
             'blurChatImages': settings.blurChatImages,
+            // Geraete-lokal gedrueckt, nicht in ui_prefs: die
+            // Mikrofon-Offenlegung gehoert zur Einwilligung auf diesem
+            // Geraet und soll nicht in andere Konten wandern.
+            'micDisclosureAccepted': settings.micDisclosureAccepted,
             'chatBackground': settings.chatBackground,
           },
         });
