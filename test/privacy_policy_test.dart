@@ -1,7 +1,15 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/generated/privacy_policy_de.dart';
 import 'package:thestia/screens/privacy/privacy_policy_text_screen.dart';
+
+/// Publish-Verzeichnis des Netlify-Projekts fuer thestia.de. Dieselbe
+/// Datei wird live ausgeliefert, deshalb wird sie hier geprueft und
+/// nicht nur der Dart-Text fuer die App.
+final String publishPath =
+    '${Directory.current.path}/passkey-assets/datenschutz.html';
 
 /// Google Play verlangt die Datenschutzerklaerung an ZWEI Stellen:
 ///
@@ -38,6 +46,51 @@ void main() {
             'aus wie Fliesstext statt wie eine Tabelle.',
       );
     }
+  });
+
+  test('Die veroeffentlichte HTML-Datei hat keine Doppelungen', () {
+    // Ein echter Fehler: im Renderer fehlte nach dem Heading-Zweig ein
+    // `continue`, wodurch jede Ueberschrift ZWEIMAL ausgegeben wurde -
+    // einmal als h2 und einmal als Absatz mit demselben Text. Im
+    // Play-Eintrag steht so eine Erklaerung, in der jeder Abschnitt
+    // zweimal beginnt. Der Dart-Text fuer die App war nicht betroffen.
+    final html = File(publishPath).readAsStringSync();
+
+    final headings = RegExp(r'<h[123]>(.*?)</h[123]>', dotAll: true)
+        .allMatches(html)
+        .map((m) => m.group(1)!.trim())
+        .toList();
+    final paragraphs = RegExp(r'<p>(.*?)</p>', dotAll: true)
+        .allMatches(html)
+        .map((m) => m.group(1)!.replaceAll(RegExp(r'<[^>]+>'), '').trim())
+        .toSet();
+
+    expect(headings, isNotEmpty);
+    for (final h in headings) {
+      expect(
+        paragraphs.contains(h),
+        isFalse,
+        reason: 'Ueberschrift steht auch als Absatz da: "$h"',
+      );
+    }
+  });
+
+  test('Die HTML-Datei enthaelt die Entitaet aus dem Store-Eintrag', () {
+    final html = File(publishPath).readAsStringSync();
+    expect(html, contains('Verantwortliche Stelle im Sinne der DSGVO '
+        'ist <strong>Thestia</strong>'),
+        reason: 'Play verlangt, dass die im Store-Eintrag genannte '
+            'Entitaet in der Erklaerung auftaucht. Store: "Thestia".');
+  });
+
+  test('Die HTML-Datei ist statisch - kein Skript, keine externen Requests',
+      () {
+    final html = File(publishPath).readAsStringSync();
+    expect(html, isNot(contains('<script')));
+    expect(RegExp(r'src\s*=\s*"http').hasMatch(html), isFalse);
+    expect(RegExp(r'href\s*=\s*"https?://(?!thestia)').hasMatch(html), isFalse,
+        reason: 'Externe Requests wuerden die Seite verlangsamen und '
+            'einen Besuch bei Dritten registrieren.');
   });
 
   test('Tabellenzeilen haben Zellen, andere Bloecke keinen', () {

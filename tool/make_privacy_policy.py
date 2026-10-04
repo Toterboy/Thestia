@@ -319,6 +319,13 @@ def render_html(blocks):
         if kind in ('h1', 'h2', 'h3'):
             out.append('<%s>%s</%s>'
                        % (kind, _inline_html(b['text']), kind))
+            # continue ist hier Pflicht: ohne es faellt der Block unten
+            # noch in den Absatz-Zweig und die Ueberschrift steht
+            # ZWEIMAL da - einmal als h2 und einmal als p mit demselben
+            # Text. Im HTML war das sichtbar; die Dart-Ausgabe fuer die
+            # App ist nicht betroffen, weil sie die Bloecke direkt
+            # uebernimmt und nicht durch diesen Renderer laeuft.
+            continue
         elif kind == 'li':
             # Aufeinanderfolgende Listenpunkte zu EINER Liste
             # zusammenfassen. Sonst bekommt jeder Punkt eine eigene
@@ -333,6 +340,10 @@ def render_html(blocks):
                        % ''.join('<li>%s</li>' % _inline_html(t)
                                  for t in items))
             skip_until = j
+            continue
+
+        if b['text'].strip() in ('---', '***', '___'):
+            out.append('<hr>')
             continue
 
         out.append('<p>%s</p>' % _inline_html(b['text']))

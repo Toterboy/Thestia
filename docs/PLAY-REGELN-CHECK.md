@@ -315,12 +315,54 @@ benannte Stelle und findet eine Formel. Ersetzt.
 
 ### Noch offen
 
-- **Hosting der HTML-Datei.** Die Datei ist fertig, es fehlt nur eine
-  oeffentliche Adresse. Ohne sie keine Veroeffentlichung.
 - **Play-Console-Formulare:** Data Safety, IARC-Inhaltsbewertung,
   Zielgruppe, Kategorie Dating, keine Anzeigen.
 - **Mikrofon- und Kamera-Formular** in der Abfrage. Die Bedienoberflaeche
   ist vorbereitet, die Formularangaben nicht.
+
+### Die richtige URL (verifiziert)
+
+    https://thestia.de/datenschutz
+
+Geprueft am 04.10.2026: HTTP 200, `Server: Netlify`, Inhalt ist die
+Erklaerlaerung. Auch mit Schraegstrich erreichbar.
+
+Zwei Dinge, die dabei herauskamen und die falsch einzuschaetzen leicht
+sind:
+
+**`www.thestia.de` gibt es nicht.** DNS liefert keinen A-Record. In
+Netlify steht die Domain zudem schon auf einem anderen Projekt -
+Domains sind dort eindeutig, ein zweites Projekt kann sie nie bekommen.
+Ein eigener Netlify-Auftritt fuer die Erklaerung ist damit vom Tisch;
+sie liegt im bestehenden Projekt, das die `.well-known`-Dateien fuer die
+App-Link-Verifikation ausliefert. Das war auch technisch richtig: eine
+eigene Site koennte diese Pfade nicht mitausliefern.
+
+**Das Projekt haengt am Repository.** Nach dem Push war die Datei
+Minuten spaeter live - kein manueller Upload noetig. Das Netlify-Projekt
+arbeitet also mit *Deploy from repository* und Publish-Verzeichnis
+`passkey-assets`. Fuer kuenftige Aenderungen: `python
+tool/make_privacy_policy.py`, dann pushen. Fertig.
+
+### Renderfehler im veroeffentlichten HTML
+
+Beim Abgleich des Live-Dokuments mit der lokalen Datei fiel auf: **jede
+Ueberschrift stand doppelt** - einmal als `h2` und einmal als Absatz mit
+demselben Text. Ursache war ein fehlendes `continue` im Heading-Zweig des
+Generators: nach dem Eintrag lief die Ausfuehrung in den
+Absatz-Zweig weiter.
+
+Der Dart-Text fuer die App war **nicht** betroffen, weil er die Bloecke
+direkt uebernimmt und nicht durch den HTML-Renderer laeuft. Sichtbar war
+der Fehler nur im Store-Dokument - also genau dort, wo er am meisten
+aergert.
+
+Dazu kam eine Trennlinie `---`, die als Absatz mit dem Text `---`
+ausgegeben wurde; sie ist jetzt ein `<hr>`.
+
+`test/privacy_policy_test.dart` prueft die veroeffentlichte Datei
+deshalb direkt: keine Ueberschrift darf zugleich als Absatz vorkommen.
+Sonst waere der Fehler beim naechsten Umbau still zurueckgekehrt.
 
 ### Dritter Dispose-Fehler derselben Art
 
