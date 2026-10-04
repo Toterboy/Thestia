@@ -264,7 +264,31 @@ Future<_BootstrapInit?> _initializeApp() async {
 
     // Migration (Keystore-Zugriff) im Hintergrund: EncryptedSharedPreferences
     // können auf manchen Geräten träge sein.
-    unawaited(SecureLocationStorage.migrateFromSharedPreferences(prefs));
+    // v0.9.2: derselbe Keystore, zweite Angriffsstelle.
+    //
+    // Die erste Stelle (Namespaces-Migration, Zeile 121) hat try/catch
+    // und ein 8-Sekunden-Limit. Diese hier hatte nichts - und liegt
+    // im Startfenster, in dem die App laut Beobachtung ohne
+    // Fehlermeldung stirbt: ein hängender oder nativ abstürzender
+    // Zugriff auf EncryptedSharedPreferences reißt den Prozess mit,
+    // und `unawaited` bedeutet, dass niemand auf das Ergebnis wartet
+    // und niemand den Fehler sieht.
+    //
+    // Das passt zu beiden beobachteten Absturzstellen: einmal an der
+    // Namespace-Migration ("keystore"), einmal hier ("ui"). Es ist
+    // plausibel dieselbe Ursache - ein Keystore, auf dem genau diese
+    // beiden Zugriffe klemmen.
+    //
+    // Der Kommentar oben nennt das Risiko bereits ("Encrypted-
+    // Preferences können auf manchen Geräten träge sein") - es war nur
+    // nie abgesichert.
+    unawaited(
+      SecureLocationStorage.migrateFromSharedPreferences(prefs)
+          .timeout(const Duration(seconds: 8))
+          .catchError((Object e) {
+        debugPrint('[MAIN] Standort-Migration uebersprungen: $e');
+      }),
+    );
 
     // Firebase (FCM) im Hintergrund: Push ist optional und darf den Start
     // nie verzögern; ohne Timeout kann es ohne Google-Dienste hängen.
