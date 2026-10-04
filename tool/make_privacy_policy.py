@@ -14,9 +14,25 @@ docs/DATENSCHUTZ.md, und zwei Ableitungen:
   Markdown-String: die App soll das Markdown nicht zur Laufzeit
   zerlegen, und der Bildschirm soll Absaetze, Listen und Tabellen
   lesbar darstellen koennen.
-* ``site/datenschutz.html`` - eine einzelne, statische HTML-Datei fuer
-  den Store-Eintrag. Ohne JavaScript, ohne externe Requests, ohne
-  Tracking: die Datei ist das gesamte Dokument.
+* ``passkey-assets/datenschutz.html`` - eine einzelne, statische
+  HTML-Datei fuer den Store-Eintrag. Ohne JavaScript, ohne externe
+  Requests, ohne Tracking: die Datei ist das gesamte Dokument.
+
+Das ist das Publish-Verzeichnis des bestehenden Netlify-Projekts fuer
+thestia.de - aus zwei Gruenden der richtige Ort und nicht eine eigene
+Site:
+
+1. **Die Domain ist vergeben.** Netlify meldet fuer www.thestia.de
+   "Another project is already using this domain". Domains sind ueber
+   Netlify eindeutig; eine zweite Site kann sie nicht bekommen.
+2. **Dort liegt bereits, was Android prueft.** `netlify.toml` liefert
+   die .well-known-Dateien fuer die App-Link-Verifikation. Eine eigene
+   Site koennte diese Pfade nicht mitausliefern und wuerde die
+   Verifikation gefaehrden.
+
+Ein eigenes ``index.html`` wird hier bewusst NICHT geschrieben:
+`passkey-assets/index.html` ist die bestehende Startseite und darf
+nicht ueberschrieben werden.
 
 Beide Dateien werden erzeugt und nicht gepflegt. Aenderungen gehoeren
 in docs/DATENSCHUTZ.md, danach::
@@ -37,8 +53,8 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SOURCE = os.path.join(ROOT, 'docs', 'DATENSCHUTZ.md')
 DART_OUT = os.path.join(
     ROOT, 'lib', 'generated', 'privacy_policy_de.dart')
-HTML_OUT = os.path.join(ROOT, 'site', 'datenschutz.html')
-INDEX_OUT = os.path.join(ROOT, 'site', 'index.html')
+# Publish-Verzeichnis des bestehenden Netlify-Projekts fuer thestia.de.
+HTML_OUT = os.path.join(ROOT, 'passkey-assets', 'datenschutz.html')
 
 CSS = """
     :root { color-scheme: light dark; }
@@ -328,42 +344,6 @@ def render_html(blocks):
     return '\n'.join(out) + '\n'
 
 
-def render_index():
-    """Startseite fuer www.thestia.de.
-
-    Netlify zeigt ohne index.html "Page Not Found" auf /. Das ist
-    technisch harmlos - Google Play ruft nur /datenschutz ab, nicht die
-    Wurzel. Eine leere 404-Seite auf der eigenen Domain ist aber genau
-    das, was einen Besucher (oder ein pruefendes Auge) als "unfertig"
-    einstuft, und die Domain steht im Impressum.
-
-    Deshalb eine schlichte Seite mit dem App-Namen und einem Link zur
-    Datenschutzerklaerung. KEIN Redirect auf /datenschutz: wer die
-    Domain eintippt, will nicht ausgerechnet das Impressum sehen.
-    """
-    return '\n'.join([
-        '<!DOCTYPE html>',
-        '<html lang="de">',
-        '<head>',
-        '<meta charset="utf-8">',
-        '<meta name="viewport" content="width=device-width, '
-        'initial-scale=1">',
-        '<meta name="robots" content="noindex">',
-        '<title>Thestia</title>',
-        '<style>%s</style>' % CSS,
-        '</head>',
-        '<body>',
-        '<main>',
-        '  <h1>Thestia</h1>',
-        '  <p>Datenschutzerklärung</p>',
-        '  <p><a href="/datenschutz">Zur Datenschutzerklärung</a></p>',
-        '</main>',
-        '</body>',
-        '</html>',
-        '',
-    ])
-
-
 # --------------------------------------------------------------------------
 
 def main():
@@ -396,8 +376,6 @@ def main():
     with io.open(HTML_OUT, 'w', encoding='utf-8', newline='\n') as fh:
         fh.write(render_html(blocks))
 
-    with io.open(INDEX_OUT, 'w', encoding='utf-8', newline='\n') as fh:
-        fh.write(render_index())
 
     kinds = {}
     for b in blocks:
@@ -408,7 +386,6 @@ def main():
         print('  %-6s %d' % (k, kinds[k]))
     print('  -> %s' % os.path.relpath(DART_OUT, ROOT))
     print('  -> %s' % os.path.relpath(HTML_OUT, ROOT))
-    print('  -> %s' % os.path.relpath(INDEX_OUT, ROOT))
     return 0
 
 

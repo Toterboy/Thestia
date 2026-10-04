@@ -1,0 +1,24 @@
+# Netlify-Weiterleitungen fuer thestia.de (Publish-Verzeichnis).
+#
+# AWUFMERUNG: Diese Datei und die [[redirects]]-Bloecke in netlify.toml
+# werden von Netlify ZUSAMMEN verarbeitet: erst _redirects, dann
+# netlify.toml, von oben nach unten, erster Treffer gewinnt. Die beiden
+# Quellen duerfen sich also nicht dieselbe Adresse nennen - sonst
+# schattiert die _redirects-Regel die TOML-Regel lautlos.
+#
+# Hier wird deshalb nur /datenschutz bedient; die .well-known-Pfade fuer
+# die App-Link-Verifikation stehen weiter in netlify.toml.
+#
+# Warum ueberhaupt eine Regel: Netlify liefert datenschutz.html unter
+# /datenschutz.html aus. Ohne Regel gibt es unter /datenschutz einen
+# 404 - und genau /datenschutz wird als Privacy-Policy-URL im Play
+# Console eingetragen.
+#
+# Es ist eine Rewriteregel (status 200), kein Redirect: die Adresse
+# existiert danach wirklich, ohne dass der Browser folgt und ohne dass
+# die .html im Link steht. Die Regel ist absichtlich explizit, obwohl
+# Netlify "Pretty URLs" schon per Default beherrscht - dann haengt die
+# Adresse an einer Dashboard-Einstellung, die jemand aus schalten kann.
+
+/datenschutz    /datenschutz.html  200
+/datenschutz/   /datenschutz.html  200
