@@ -41,6 +41,15 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
+
+  /// Wie lange ein Anmelde- oder Registrierungsversuch dauern darf.
+  ///
+  /// 20 Sekunden: genug fuer eine langsame Verbindung, kurz genug, damit
+  /// der Nutzer nicht denkt, die App haengt. Ohne Limit war das Verhalten
+  /// "endlos warten" - der Aufruf kehrt nicht zurueck, es gibt weder
+  /// Erfolg noch Fehler, und der Button dreht sich unbegrenzt. Im Log
+  /// stand danach nichts, was sich wie ein haengendes Programm anfuehlt.
+  static const Duration _authTimeout = Duration(seconds: 20);
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -192,7 +201,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           gender: _gender.value,
           birthDate: _birthDate!,
           captchaToken: captchaToken,
-        );
+          // v0.9.2: 20 Sekunden Limit.
+          //
+          // Ohne das kehrt der Aufruf auf einem Geraet ohne erreichbaren
+          // Server nie zurueck: weder Erfolg noch Fehler, der Button
+          // dreht sich endlos. Im Log stand danach nichts - und genau so
+          // sah es aus: "Registriere Nutzer..." und Stille.
+          //
+          // Die Meldung sagt dem Nutzer, was wirklich passiert ist, statt
+          // "Server fehlgeschlagen": wenn 20 Sekunden nichts kommen, ist
+          // es der Server, den es nicht erreicht - nicht der Nutzer,
+          // der sich geirrt haette.
+        ).timeout(_authTimeout);
         // Profil wurde bereits in AuthNotifier.register() via setProfile()
         // gesetzt – kein redundantes update() nötig.
       } else {
@@ -217,7 +237,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           email: _emailCtrl.text.trim(),
           password: _passwordCtrl.text,
           captchaToken: captchaToken,
-        );
+        ).timeout(_authTimeout);
       }
 
       final result = ref.read(authProvider);

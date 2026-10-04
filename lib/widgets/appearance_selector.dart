@@ -180,6 +180,21 @@ class _Segment extends StatelessWidget {
                     // etwas gewaehlt ist. Das Springen ist damit
                     // ebenfalls weg, und zwar ohne den Trick.
                     child: Stack(
+                      // v0.9.2: `alignment: Alignment.center`.
+                      //
+                      // Ein Stack richtet sein nicht positioniertes Kind
+                      // standardmaessig oben links aus. Die Column hier
+                      // ist schmal (bei "Hell" rund 40 px), waehrend der
+                      // Kasten durch die Mindestbreite von 92 px breiter
+                      // ist. Der Inhalt stand deshalb in jedem kurzen
+                      // Segment links - Symbol UND Text. Bei "Dunkel"
+                      // fiel es kaum auf, weil der Text fast die
+                      // Mindestbreite fuellt.
+                      //
+                      // Der Haken ist Positioned und damit von diesem
+                      // Alignment nicht betroffen; er sitzt weiterhin in
+                      // der oberen rechten Ecke.
+                      alignment: Alignment.center,
                       children: [
                         Column(
                           mainAxisSize: MainAxisSize.min,

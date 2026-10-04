@@ -117,4 +117,59 @@ void main() {
       );
     }
   });
+
+// ---------------------------------------------------------------------------
+// Zweiter Befund, eigene Ursache.
+// ---------------------------------------------------------------------------
+// Der erste Test verglich Textmitte gegen ICONmitte. Beide lagen
+// korrekt uebereinander - nur an der FALSCHEN Stelle: beide waren im
+// Segment nach links verschoben.
+//
+// Ursache: ein Stack richtet sein nicht positioniertes Kind standard-
+// maessig oben links aus. Die Column ist schmal, der Kasten ist durch
+// die Mindestbreite (92 px) breiter. Bei "Hell" ist der Unterschied am
+// groessten.
+//
+// Dieser Test misst deshalb gegen die Segmentkante, nicht gegen das
+// Symbol: genau die Groesse, die ein Nutzer als "nicht mittig" sieht.
+testWidgets('Symbol und Beschriftung sitzen mittig IM Segment',
+    (tester) async {
+  await tester.pumpWidget(_host('light'));
+  await tester.pumpAndSettle();
+
+  for (final entry in {
+    'Hell': Icons.light_mode_outlined,
+    'System': Icons.brightness_auto_outlined,
+    'Dunkel': Icons.dark_mode_outlined,
+  }.entries) {
+    final icon = find.byIcon(entry.value);
+    final text = caption(entry.key);
+
+    // Das Segment ist der Vorfahr mit dem AnimatedContainer. Gesucht
+    // wird der naechste Container, der breiter ist als der Inhalt -
+    // das ist genau der, der den sichtbaren Rahmen zeichnet.
+    final box = find.ancestor(
+      of: icon,
+      matching: find.byType(AnimatedContainer),
+    );
+    expect(box, findsWidgets, reason: 'Segment-Rahmen fuer ${entry.key} fehlt');
+
+    final ink = tester.getRect(box.first);
+    final iconRect = tester.getRect(icon);
+
+    // 1 px Toleranz: halbe Pixel und Rundung im Text-Layout.
+    expect(
+      (iconRect.center.dx - ink.center.dx).abs(),
+      lessThanOrEqualTo(1.0),
+      reason: 'Symbol "${entry.key}" ist um '
+          '${(iconRect.center.dx - ink.center.dx).toStringAsFixed(1)} px '
+          'aus der Segmentmitte verschoben.',
+    );
+    expect(
+      (_center(tester, text) - ink.center.dx).abs(),
+      lessThanOrEqualTo(1.0),
+      reason: 'Text "${entry.key}" ist nicht mittig im Segment.',
+    );
+  }
+});
 }
