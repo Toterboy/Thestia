@@ -579,13 +579,17 @@ List<Message> _chatHistory() {
 //
 // Bewusst ohne Schwaeren ("Kaffee am Wochenende?") - der Screenshot
 // soll Spass machen, nicht kraenkend sein.
+//
+// Die letzte Nachricht beantwortet die davor ("Gewinnst du meistens?")
+// und bleibt im selben Thema. Ein Themenwechsel auf eine Date-Einladung
+// an der letzten Zeile wirkt, als haette man den Faden verloren - und
+// genau so gelesen wird das Bild zuerst.
   return [
     m('1', 'store-shot-peer', 'Ich muss dir was Beunruhigendes sagen.', 0),
     m('2', 'me', 'Jetzt bin ich neugierig.', 2),
     m('3', 'store-shot-peer', 'Ich verhandle nachts mit meinem Toaster.', 4),
     m('4', 'me', 'Gewinnst du meistens?', 6),
-    m('5', 'store-shot-peer',
-        'Kaffee am Wochenende? Ich bringe die Verträge mit.', 8),
+    m('5', 'store-shot-peer', 'Selten. Er akzeptiert nur exakt zwei Scheiben.', 8),
   ];
 }
 
