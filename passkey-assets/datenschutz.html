@@ -29,11 +29,11 @@
 </head>
 <body>
 <h1>Datenschutzerklärung für Thestia</h1>
-<p><strong>Stand: September 2026</strong> · Version 4 (v0.8.x)</p>
+<p><strong>Stand: Oktober 2026</strong> · Version 5 (v0.9.2)</p>
 <p>Thestia ist ein datenschutzorientiertes Open-Source-Projekt (AGPLv3). Der Schutz deiner persönlichen Sphäre steht an erster Stelle: Es werden keine Werbetracker eingesetzt, keine Verhaltensprofile erstellt und keine Nutzerdaten an Dritte verkauft.</p>
 <hr>
 <h2>1. Grundsatz und Verantwortliche Stelle</h2>
-<p>Verantwortliche Stelle im Sinne der DSGVO ist <strong>Thestia</strong>, die Anwendung, die Sie gerade benutzen (Store-Eintrag: *Thestia*). Kontaktaufnahme für alle datenschutzbezogenen Anliegen: über das <strong>In-App-Bug-Report-Formular</strong> (Einstellungen) oder das Issue-Tracker des öffentlichen Projekt-Repositorys.</p>
+<p>Verantwortliche Stelle im Sinne der DSGVO ist <strong>Thestia</strong>, die Anwendung, die du gerade benutzen (Store-Eintrag: *Thestia*). Kontaktaufnahme für alle datenschutzbezogenen Anliegen: über das <strong>In-App-Bug-Report-Formular</strong> (Einstellungen) oder das Issue-Tracker des öffentlichen Projekt-Repositorys.</p>
 <p>Die serverseitige Verarbeitung erfolgt in der EU-Region von Supabase (Vertragspflichten als Auftragsverarbeiter nach Art. 28 DSGVO, siehe Abschnitt 6). Der Quellcode ist öffentlich einsehbar und selbst hostbar; betreibt jemand eine eigene Instanz, ist diese Instanz selbst Verantwortliche Stelle, und zwar unter ihrem eigenen Namen.</p>
 <p><strong>Prinzipien (Art. 5 DSGVO):</strong> Datenminimierung, Zweckbindung, Speicherbegrenzung, Datenschutz durch Technik (E2E, on-device) und Transparenz. Es gibt <strong>keine</strong> Werbe-Ökosystem-Integration, <strong>kein</strong> Tracking-Pixel und <strong>keine</strong> nutzerübergreifende Verhaltensanalyse.</p>
 <h2>2. Erhobene Daten und Verarbeitungszwecke</h2>
@@ -42,12 +42,12 @@
 <tbody>
 <tr><td>Kontodaten</td><td>Name, E-Mail, Geburtsdatum, Geschlecht</td><td>Kontoverwaltung, Jugendschutzfilter (serverseitig erzwungen)</td><td>Mit Account-Löschung</td></tr>
 <tr><td>Standortdaten</td><td>Koordinaten (einmalig bei Freigabe)</td><td>Entfernungsberechnung; exakte Koordinaten verlassen den Server nicht</td><td>Mit Account-Löschung</td></tr>
-<tr><td>Standortanzeige</td><td>5-km-gerundete Entfernung (~11 km Genauigkeit für Koordinaten-Näherung)</td><td>Andere Nutzer sehen nur gerundete Werte</td><td>–</td></tr>
+<tr><td>Standortanzeige</td><td>Entfernung in 5-km-Schritten gerundet (unter 2,5 km ergibt sich 0)</td><td>Andere Nutzer sehen nur gerundete Werte, nie die exakte Position</td><td>–</td></tr>
 <tr><td>Profilangaben</td><td>Bio, Interessen, Audio-Vorstellung, Gewohnheiten (Rauchen/Alkohol/Drogen), Mood, Musik-Geschmack, <strong>Profilbild</strong> (siehe Abschnitt 3a)</td><td>Vermittlung passender Kontakte („Funken")</td><td>Mit Account-Löschung</td></tr>
 <tr><td>Geräte-Liste</td><td>Gerätemodell (Hersteller + Modellkennung, z. B. „Samsung SM-S921B"), Plattform, App-Version, Zeitstempel der letzten Anmeldung</td><td>Anzeige „Wo bin ich eingeloggt?" + „Überall abmelden" (Migration 071/078); kein Standort, keine Seriennummer, keine Werbe-ID</td><td>Automatisch beim Abmelden; mit Account-Löschung</td></tr>
 <tr><td>Präferenzen</td><td>Suchradius, Altersspanne, Geschlechts-Filter, „Ich suche", Farbwelt, UI-Schalter (Blind Mode, Sichtbarkeit, Benachrichtigungen)</td><td>Wiederherstellung nach Neuinstallation (Migration 066/071/074/076)</td><td>Mit Account-Löschung</td></tr>
 <tr><td>Push-Tokens</td><td>FCM-Token (nur Play) bzw. UnifiedPush-Endpunkt (F-Droid)</td><td>Zustellung von Push-Signalen <strong>ohne Nachrichteninhalt</strong></td><td>Mit Account-Löschung / Abmelden</td></tr>
-<tr><td>Verifizierung</td><td>Beta-Funktion, derzeit deaktiviert</td><td>–</td><td>–</td></tr>
+<tr><td>Verifizierung</td><td>Selbstaufnahme mit Bild <strong>und Ton</strong> zur Schätzung des Alters</td><td>Altersprüfung für den Jugendschutz und die 18+-Freigabe von Transit Spark</td><td>Videodatei verschlüsselt nur auf dem Gerät, Löschung nach spätestens 7 Tagen (Abschnitt 7)</td></tr>
 </tbody>
 </table>
 <h2>3. Ende-zu-Ende-Verschlüsselung (Signal-Protokoll)</h2>
@@ -65,7 +65,8 @@
 <p><strong>Keine Ortung:</strong> Transit Spark ermittelt keine Position per Funk. Der Standort wird nur für die Entfernungsanzeige der Profile verwendet und dient serverseitig nach 30 Tagen der Löschung (Migration 129).</p>
 <h2>4. Lokaler Chat-Verlauf (optional) und lokaler KI-Reflexions-Chat (Sanctuary, geplant ab v0.10.0)</h2>
 <p><strong>Lokaler Chat-Verlauf (seit v0.8.x):</strong> Auf Wunsch speichert die App Chats verschlüsselt (AES-256, SecureHive; Schlüssel im Keystore) lokal auf dem Gerät – wählbar zwischen „Aus", „200 Nachrichten pro Chat" und „Kompletter Verlauf" (Standard). Die Daten verlassen das Gerät nicht und können jederzeit durch Deaktivieren gelöscht werden. Der JSON-Datenexport enthält den Verlauf (Einsicht/Übertragbarkeit), der Import stellt ihn wieder her.</p>
-<p>Der integrierte Reflexions-Assistent läuft vollständig lokal („On-Device") auf deinem Smartphone. Sämtliche Texteingaben, hochgeladene Screenshots und generierte Antworten verbleiben ausschließlich auf deinem Gerät und werden zu keinem Zeitpunkt an externe Server übertragen.</p>
+<p>Der folgende Reflexions-Assistent ist <strong>geplant für v0.10.0</strong> und noch nicht Teil dieser Version; die Beschreibung gilt dem geplanten Stand. Sämtliche Zusagen dieses Abschnitts - lokal, ohne Übertragung - sind erst mit der Veröffentlichung einschlägig.</p>
+<p>Geplant läuft er vollständig lokal („On-Device") auf deinem Smartphone. Sämtliche Texteingaben, hochgeladene Screenshots und generierte Antworten verbleiben ausschließlich auf deinem Gerät und werden zu keinem Zeitpunkt an externe Server übertragen.</p>
 <ul><li>Chatverläufe verbleiben <strong>flüchtig im RAM</strong> oder werden optional <strong>rein lokal AES-verschlüsselt</strong> in Hive abgelegt (Standard: flüchtig).</li><li>Die Krisen-Erkennung (Regex auf suizidbezogene Begriffe) läuft ausschließlich lokal; angezeigt werden dann Notfallkontaktdaten (Telefonseelsorge 0800 111 0 111 / 0800 111 0 222, Nummer gegen Kummer 116 111). Es werden <strong>keine</strong> Analyse- oder Meldungsdaten erzeugt.</li><li>Die „Modellqualität beanstanden"-Funktion übermittelt ausschließlich den vom Nutzer freigegebenen Textauszug sowie Modell-Metadaten (Modellname, Quantisierung, App-Version) – niemals vollständige Chatverläufe.</li><li>Modell-Downloads (GGUF) sind nutzerinitiiert und erfolgen direkt von Hugging Face; die App übermittelt dabei keine zusätzlichen Metadaten.</li></ul>
 <h2>5. Meldesystem und Missbrauchsschutz</h2>
 <ul><li>Chat-Bilder werden im Regelbetrieb <strong>niemals serverseitig gescannt</strong>.</li><li>Meldet ein Empfänger ein empfangenes Bild, wird dieses <strong>lokal auf dem Gerät</strong> per ONNX-Modell vorbewertet. Der Meldende sieht das Ergebnis und entscheidet: Nur nach expliziter Bestätigung wird das betroffene Bild nebst den <strong>letzten drei Textnachrichten</strong> verschlüsselt an die Administration zur manuellen Prüfung übertragen.</li><li>Meldungen sind <strong>pseudonymisiert</strong>: Die Identität des Meldenden wird dem Gemeldeten niemals offengelegt (technisch SHA-256-Hash, Migration 069).</li><li>Berichte über unzureichende Modellqualität im Reflexions-Chat enthalten ausschließlich den vom Nutzer freigegebenen Textauszug sowie Modell-Metadaten.</li></ul>
@@ -91,6 +92,9 @@
 <ul><li><strong>Auskunft (Art. 15):</strong> Der In-App-Datenexport („Meine Daten exportieren") liefert alle personenbezogenen Daten als JSON-Download.</li><li><strong>Berichtigung (Art. 16):</strong> Alle Profilfelder sind in der App frei editier- und löschbar.</li><li><strong>Löschung (Art. 17):</strong> Siehe Abschnitt 7.</li><li><strong>Einschränkung/Widerspruch (Art. 18/21):</strong> Über die Kontaktwege in Abschnitt 1.</li><li><strong>Datenübertragbarkeit (Art. 20):</strong> JSON-Export über die In-App- Funktion.</li><li><strong>Beschwerderecht (Art. 77):</strong> Bei einer Aufsichtsbehörde, z. B. der Landesdatenschutzbehörde.</li></ul>
 <h2>9. Kinder- und Jugendschutz</h2>
 <p>Die Nutzung ist ab <strong>16 Jahren</strong> gestattet. 16- und 17-Jährige sind serverseitig strikt getrennt: Sie sehen ausschließlich andere Minderjährige, Fotos sind für Erwachsene technisch unsichtbar (Blind Mode erzwungen), und die Altersfilter sind serverseitig begrenzt (Migration 056). Geburtsdaten werden zur Durchsetzung dieses Jugendschutzes verarbeitet (Art. 6 Abs. 1 lit. c/f) und gegenüber anderen Nutzern nie angezeigt (nur gerundetes Alter).</p>
+<p><strong>Transit Spark ist davon ausgenommen und nur ab 18 Jahren nutzbar.</strong> Die Sperre sitzt an zwei Stellen, weil eine allein nichts taugt:</p>
+<ul><li><strong>Im Gerät</strong>, fail-closed: fehlt das Geburtsdatum, gilt die Person nicht als nachgewiesen volljährig und wird gesperrt - nicht etwa freigelassen.</li><li><strong>In der Datenbank</strong>, für den Radar, das Matching und die Kontaktaufnahme (`transit_spark_adult()`, Migration 131). Geprüft wird dort zusätzlich die gefundene Person, weil die übliche Altersband-Regel sonst auch 16-Jährige zuließe. Alte RPC-Signaturen wurden entfernt, weil sie die Sperre umgangen hätten.</li></ul>
+<p>Voraussetzung für die Freigabe ist die Altersverifikation aus Abschnitt 2: Sie nutzt Kamera <strong>und</strong> Mikrofon und fragt beide erst nach einem erklärenden Dialog an, der verrät, wofür sie gebraucht werden.</p>
 <h2>10. Angriffsbild und Risikoabschätzung</h2>
 <p>Die technische Bewertung der Verarbeitung ist öffentlich: Angriffsbild in [THREAT-MODEL.md](THREAT-MODEL.md), Risiken nach Art. 35 DSGVO in [DSFA.md](DSFA.md) (Entwurf, rechtlich noch nicht geprüft). Dort sind auch die Punkte benannt, die Thestia bewusst <strong>nicht</strong> zusichert: Funk-Metadaten sind technisch beobachtbar, und Ende-zu-Ende- Verschlüsselung schützt Inhalte, nicht Kommunikationsmuster.</p>
 <h2>11. Änderungen dieser Erklärung</h2>
@@ -100,6 +104,7 @@
 <table>
 <thead><tr><th>Version</th><th>Datum</th><th>Änderung</th></tr></thead>
 <tbody>
+<tr><td>5</td><td>2026-10</td><td>v0.9.2: Altersprüfung mit Kamera <strong>und</strong> Ton korrekt als aktiv beschrieben (war als "deaktiviert" geführt), 18+-Sperre für Transit Spark, Entfernungsangabe korrigiert, Sanctuary als geplant für v0.10.0 gekennzeichnet</td></tr>
 <tr><td>4</td><td>2026-09</td><td>Verschlüsselte Profilbilder + on-device NSFW-Vorprüfung (3a), lokaler Chat-Verlauf (3 Modi), Gerätemodell in der Geräte-Liste (078), Präferenzen-/UI-Sync (074/076) ergänzt</td></tr>
 <tr><td>3</td><td>2026-09</td><td>Sanctuary (on-device KI), Geräte-Liste (071), Web-Bridge/Codeberg (0.11.0-Ausblick), Rechte-Kapitel ergänzt</td></tr>
 <tr><td>2</td><td>2026-08</td><td>UnifiedPush, NSFW-Melde-Workflow, Ban-Einträge</td></tr>

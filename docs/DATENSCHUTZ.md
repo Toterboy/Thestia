@@ -1,6 +1,6 @@
 # Datenschutzerklärung für Thestia
 
-**Stand: September 2026** · Version 4 (v0.8.x)
+**Stand: Oktober 2026** · Version 5 (v0.9.2)
 
 Thestia ist ein datenschutzorientiertes Open-Source-Projekt (AGPLv3).
 Der Schutz deiner persönlichen Sphäre steht an erster Stelle: Es werden
@@ -12,7 +12,7 @@ Nutzerdaten an Dritte verkauft.
 ## 1. Grundsatz und Verantwortliche Stelle
 
 Verantwortliche Stelle im Sinne der DSGVO ist **Thestia**, die
-Anwendung, die Sie gerade benutzen (Store-Eintrag: *Thestia*).
+Anwendung, die du gerade benutzen (Store-Eintrag: *Thestia*).
 Kontaktaufnahme für alle datenschutzbezogenen Anliegen: über das
 **In-App-Bug-Report-Formular** (Einstellungen) oder das Issue-Tracker
 des öffentlichen Projekt-Repositorys.
@@ -34,12 +34,12 @@ Tracking-Pixel und **keine** nutzerübergreifende Verhaltensanalyse.
 |---|---|---|---|
 | Kontodaten | Name, E-Mail, Geburtsdatum, Geschlecht | Kontoverwaltung, Jugendschutzfilter (serverseitig erzwungen) | Mit Account-Löschung |
 | Standortdaten | Koordinaten (einmalig bei Freigabe) | Entfernungsberechnung; exakte Koordinaten verlassen den Server nicht | Mit Account-Löschung |
-| Standortanzeige | 5-km-gerundete Entfernung (~11 km Genauigkeit für Koordinaten-Näherung) | Andere Nutzer sehen nur gerundete Werte | – |
+| Standortanzeige | Entfernung in 5-km-Schritten gerundet (unter 2,5 km ergibt sich 0) | Andere Nutzer sehen nur gerundete Werte, nie die exakte Position | – |
 | Profilangaben | Bio, Interessen, Audio-Vorstellung, Gewohnheiten (Rauchen/Alkohol/Drogen), Mood, Musik-Geschmack, **Profilbild** (siehe Abschnitt 3a) | Vermittlung passender Kontakte („Funken") | Mit Account-Löschung |
 | Geräte-Liste | Gerätemodell (Hersteller + Modellkennung, z. B. „Samsung SM-S921B"), Plattform, App-Version, Zeitstempel der letzten Anmeldung | Anzeige „Wo bin ich eingeloggt?" + „Überall abmelden" (Migration 071/078); kein Standort, keine Seriennummer, keine Werbe-ID | Automatisch beim Abmelden; mit Account-Löschung |
 | Präferenzen | Suchradius, Altersspanne, Geschlechts-Filter, „Ich suche", Farbwelt, UI-Schalter (Blind Mode, Sichtbarkeit, Benachrichtigungen) | Wiederherstellung nach Neuinstallation (Migration 066/071/074/076) | Mit Account-Löschung |
 | Push-Tokens | FCM-Token (nur Play) bzw. UnifiedPush-Endpunkt (F-Droid) | Zustellung von Push-Signalen **ohne Nachrichteninhalt** | Mit Account-Löschung / Abmelden |
-| Verifizierung | Beta-Funktion, derzeit deaktiviert | – | – |
+| Verifizierung | Selbstaufnahme mit Bild **und Ton** zur Schätzung des Alters | Altersprüfung für den Jugendschutz und die 18+-Freigabe von Transit Spark | Videodatei verschlüsselt nur auf dem Gerät, Löschung nach spätestens 7 Tagen (Abschnitt 7) |
 
 ## 3. Ende-zu-Ende-Verschlüsselung (Signal-Protokoll)
 
@@ -123,7 +123,13 @@ können jederzeit durch Deaktivieren gelöscht werden. Der JSON-Datenexport
 enthält den Verlauf (Einsicht/Übertragbarkeit), der Import stellt ihn
 wieder her.
 
-Der integrierte Reflexions-Assistent läuft vollständig lokal
+Der folgende Reflexions-Assistent ist **geplant für v0.10.0** und
+noch nicht Teil dieser Version; die Beschreibung gilt dem
+geplanten Stand. Sämtliche Zusagen dieses Abschnitts - lokal,
+ohne Übertragung - sind erst mit der Veröffentlichung
+einschlägig.
+
+Geplant läuft er vollständig lokal
 („On-Device") auf deinem Smartphone. Sämtliche Texteingaben, hochgeladene
 Screenshots und generierte Antworten verbleiben ausschließlich auf deinem
 Gerät und werden zu keinem Zeitpunkt an externe Server übertragen.
@@ -217,6 +223,23 @@ erzwungen), und die Altersfilter sind serverseitig begrenzt (Migration
 verarbeitet (Art. 6 Abs. 1 lit. c/f) und gegenüber anderen Nutzern nie
 angezeigt (nur gerundetes Alter).
 
+**Transit Spark ist davon ausgenommen und nur ab 18 Jahren nutzbar.**
+Die Sperre sitzt an zwei Stellen, weil eine allein nichts taugt:
+
+- **Im Gerät**, fail-closed: fehlt das Geburtsdatum, gilt die Person
+  nicht als nachgewiesen volljährig und wird gesperrt - nicht etwa
+  freigelassen.
+- **In der Datenbank**, für den Radar, das Matching und die
+  Kontaktaufnahme (`transit_spark_adult()`, Migration 131). Geprüft
+  wird dort zusätzlich die gefundene Person, weil die übliche
+  Altersband-Regel sonst auch 16-Jährige zuließe. Alte
+  RPC-Signaturen wurden entfernt, weil sie die Sperre umgangen hätten.
+
+Voraussetzung für die Freigabe ist die Altersverifikation aus
+Abschnitt 2: Sie nutzt Kamera **und** Mikrofon und fragt beide erst
+nach einem erklärenden Dialog an, der verrät, wofür sie gebraucht
+werden.
+
 ## 10. Angriffsbild und Risikoabschätzung
 
 Die technische Bewertung der Verarbeitung ist öffentlich: Angriffsbild
@@ -239,6 +262,7 @@ Git-Historie nachvollziehbar.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 5 | 2026-10 | v0.9.2: Altersprüfung mit Kamera **und** Ton korrekt als aktiv beschrieben (war als "deaktiviert" geführt), 18+-Sperre für Transit Spark, Entfernungsangabe korrigiert, Sanctuary als geplant für v0.10.0 gekennzeichnet |
 | 4 | 2026-09 | Verschlüsselte Profilbilder + on-device NSFW-Vorprüfung (3a), lokaler Chat-Verlauf (3 Modi), Gerätemodell in der Geräte-Liste (078), Präferenzen-/UI-Sync (074/076) ergänzt |
 | 3 | 2026-09 | Sanctuary (on-device KI), Geräte-Liste (071), Web-Bridge/Codeberg (0.11.0-Ausblick), Rechte-Kapitel ergänzt |
 | 2 | 2026-08 | UnifiedPush, NSFW-Melde-Workflow, Ban-Einträge |
