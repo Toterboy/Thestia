@@ -385,15 +385,36 @@ Future<void> _initializeSupabase() async {
   // `AppConstants.supabaseUrlBase` macht es seit jeher richtig:
   // erst Define, dann dotenv nur wenn geladen, sonst leer. Genau diese
   // Reihenfolge wird hierher uebernommen.
-  String envOr(String key) {
-    final fromDefine = String.fromEnvironment(key);
-    if (fromDefine.isNotEmpty) return fromDefine.trim();
-    if (dotenv.isInitialized) return (dotenv.env[key] ?? '').trim();
-    return '';
-  }
+  // ACHTUNG: `String.fromEnvironment` funktioniert NUR mit einem
+  // Compile-Zeit-Konstanten als Argument. Mit einer Laufzeitvariablen
+  // liefert sie "" - nicht den Define-Wert.
+  //
+  // Genau das war der Fehler in der ersten Fassung dieses Fixes: eine
+  // Helferfunktion mit `key` als Parameter. Ergebnis war, dass beide
+  // Defines leer ankamen, _initializeSupabase() per `return`
+  // ausstieg, ohne einen einzigen Netzwerkversuch zu machen, und die
+  // App im Limit-Modus ohne Auth-Backend im Blackscreen endete.
+  //
+  // Also: keine Schleife, kein Map, kein dynamischer Schluessel.
+  // Jeder Zugriff ist ein eigenes literal.
+  final supabaseUrl = () {
+    const v = String.fromEnvironment('SUPABASE_URL');
+    return v.isNotEmpty
+        ? v.trim()
+        : (dotenv.isInitialized
+            ? (dotenv.env['SUPABASE_URL'] ?? '').trim()
+            : '');
+  }();
 
-  final supabaseUrl = envOr('SUPABASE_URL');
-  final supabaseAnonKey = envOr('SUPABASE_PUBLISHABLE_KEY');
+  final supabaseAnonKey = () {
+    const v = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
+    return v.isNotEmpty
+        ? v.trim()
+        : (dotenv.isInitialized
+            ? (dotenv.env['SUPABASE_PUBLISHABLE_KEY'] ?? '').trim()
+            : '');
+  }();
+
 
   if (supabaseUrl.isEmpty ||
       supabaseUrl.contains('example.com') ||
