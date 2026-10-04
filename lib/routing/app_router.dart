@@ -32,6 +32,7 @@ import 'package:thestia/screens/core/whats_new_screen.dart';
 import 'package:thestia/services/whats_new_service.dart';
 import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/screens/privacy/privacy_screen.dart';
+import 'package:thestia/screens/privacy/privacy_policy_text_screen.dart';
 import 'package:thestia/screens/settings/devices_screen.dart';
 import 'package:thestia/screens/profile/profile_edit_screen.dart';
 import 'package:thestia/screens/profile/profile_screen.dart';
@@ -100,6 +101,11 @@ class AppRoutes {
   static const String whatsNew = '/whats-new';
   // Datenschutz & Account (DSGVO)
   static const String privacy = '/privacy';
+
+  /// Volltext der Datenschutzerklärung als eigene Route, damit der
+  /// Privacy-Screen nicht 250 Zeilen Fließtext in einer ListView
+  /// versteckt und der Text trotzdem vollständig erreichbar bleibt.
+  static const String privacyPolicy = '/privacy/policy';
   static const String safetyCenter = '/safety-center';
   // Geräte & Sitzungen ("Wo bin ich eingeloggt?")
   static const String devices = '/devices';
@@ -667,6 +673,12 @@ GoRouter createRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.privacy,
         builder: (context, state) => const PrivacyScreen(),
+      ),
+      // Volltext der Datenschutzerklärung (Google Play verlangt den Text
+      // auch IN der App, nicht nur als Link im Store).
+      GoRoute(
+        path: AppRoutes.privacyPolicy,
+        builder: (context, state) => const PrivacyPolicyTextScreen(),
       ),
       // Safety Center: Hilfe bei Belästigung/Stalking + In-App-Maßnahmen
       GoRoute(

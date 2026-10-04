@@ -246,15 +246,81 @@ das waere eine unvollstaendige Offenlegung. Der Dialog nennt deshalb
 beides und setzt beide Einwilligungen.
 
 Damit ist der Kamera-Teil erledigt. Was bleibt, ist ausserhalb des
-Codes:
+Codes - und eine Haelflfte davon ist es nicht.
 
-- **Datenschutz-URL.** Datei im Repository, keine oeffentliche
-  Adresse. Ohne sie keine Veroeffentlichung. Laesst sich nur ausserhalb
-  des Codes erledigen.
+### Datenschutz-URL: der Irrtum
+
+Der steht hier, weil er im Play Console sehr leicht passiert und
+unbezahlbar ist.
+
+Im Store-Eintrag gibt es **zwei verschiedene Felder**:
+
+- *Website* - freiwillig, leer ist in Ordnung.
+- *Datenschutzrichtlinie* unter *App-Inhalt* - **Pflicht**, und
+  voellig unabhaengig von der Website.
+
+Wer bei der Website nichts eintragt, hat die Datenschutzpflicht damit
+**nicht abgewahlt** - man ist nur auf ein anderes Feld gestossen.
+
+Und die Domain ist nicht zu wenig. Play verlangt keine Website,
+sondern eine einzelne oeffentlich erreichbare HTML-Seite:
+
+> aktiv, oeffentlich zugaenglich, nicht geo-gesperrt, **keine PDF**
+
+`https://domain/datenschutz.html` genuegt. Kein CMS, keine Startseite,
+kein Impressum. Will man die Domain gar nicht nutzen, gibt es kostenlose
+statische Hosts (GitHub Pages, Cloudflare Pages, Netlify); das
+Repository liegt bereits auf GitHub.
+
+Play formuliert es ohne Ausnahme: *„Apps, die auf keine personen-
+bezogenen sensiblen Nutzerdaten zugreifen, muessen dennoch eine
+Datenschutzrichtlinie einreichen."* Die einzige Ausnahme sind Apps,
+die **ausschliesslich** im internen Testtrack liegen - also genau
+nicht beim Veroeffentlichen.
+
+### Erklaerung in der App: erledigt
+
+Die zweite Haelflfte der Pflicht wird oft uebersehen. Play verlangt
+den Text **zusaetzlich in der App** - als Link *oder* als Text.
+
+Der Bildschirm *Datenschutz & Account* hatte Export, Import und
+Kontoloeschung, aber keinen Richtlinientext. Jetzt gibt es dort den
+Eintrag *Datenschutzerklaerung*, der auf `/privacy/policy` fuehrt und
+den vollstaendigen Text aus `lib/generated/privacy_policy_de.dart`
+rendert.
+
+Bewusst als **Text und nicht als Link**: eine URL kann falsch
+eingetragen, umgezogen oder schlicht nicht erreichbar sein. Der Text im
+Binary nicht.
+
+Eine Quelle, zwei Ausgaben: `tool/make_privacy_policy.py` erzeugt aus
+`docs/DATENSCHUTZ.md` den App-Text und `site/datenschutz.html` fuer den
+Store. Damit koennen App und Store nicht auseinanderlaufen.
+
+### Entitaets-Name
+
+Play: *„Die im Store-Eintrag genannte Entitaet muss in der
+Datenschutzrichtlinie erscheinen oder die App muss dort benannt sein."*
+
+Der Store-Eintrag lautet *Thestia*, und genau das steht jetzt in
+Abschnitt 1 und in der Fusszeile der HTML-Datei. Ein echter buergerlicher
+Name wird dafuer **nicht** verlangt - gefordert ist Uebereinstimmung,
+nicht Identitaetsnachweis. Der Entwicklername ist Google ohnehin aus
+dem Konto bekannt.
+
+Vorher stand dort *„der Betreiber der Thestia-Instanz"* mit dem
+Zusatz, die kontaktierbare Stelle koenne je nach Instanz variieren. Das
+haette weder formal noch juristisch etwas gebracht: Play sucht eine
+benannte Stelle und findet eine Formel. Ersetzt.
+
+### Noch offen
+
+- **Hosting der HTML-Datei.** Die Datei ist fertig, es fehlt nur eine
+  oeffentliche Adresse. Ohne sie keine Veroeffentlichung.
 - **Play-Console-Formulare:** Data Safety, IARC-Inhaltsbewertung,
   Zielgruppe, Kategorie Dating, keine Anzeigen.
 - **Mikrofon- und Kamera-Formular** in der Abfrage. Die Bedienoberflaeche
-  ist jetzt vorbereitet, die Formularangaben nicht.
+  ist vorbereitet, die Formularangaben nicht.
 
 ### Dritter Dispose-Fehler derselben Art
 

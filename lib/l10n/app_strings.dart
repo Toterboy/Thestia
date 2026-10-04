@@ -2391,6 +2391,9 @@ const Map<String, Map<String, String>> _strings = {
     'privacy.validator.invalidEmail': 'Ungültig',
     'privacy.validator.tooShort': 'Zu kurz',
     'privacy.validator.mismatch': 'Nicht identisch',
+    'privacy.policyTitle': 'Datenschutzerklärung',
+    'privacy.policySub':
+        'Was wir erheben, warum, und wie lange. Vollständiger Text.',
     'privacy.yourData': 'Deine Daten',
     'privacy.dataInfo':
         'Thestia speichert Profilinformationen, Standortdaten (nur wenn du '
@@ -5024,6 +5027,9 @@ const Map<String, Map<String, String>> _strings = {
     'privacy.validator.invalidEmail': 'Invalid',
     'privacy.validator.tooShort': 'Too short',
     'privacy.validator.mismatch': 'Does not match',
+    'privacy.policyTitle': 'Privacy policy',
+    'privacy.policySub':
+        'What we collect, why, and for how long. Full text.',
     'privacy.yourData': 'Your data',
     'privacy.dataInfo':
         'Thestia stores profile information, location data (only if you '

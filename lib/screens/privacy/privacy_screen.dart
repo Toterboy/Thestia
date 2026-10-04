@@ -528,6 +528,18 @@ class PrivacyScreen extends ConsumerWidget {
             onTap: () => _changePassword(context, ref),
           ),
           const Divider(height: 32),
+          // Google Play verlangt die Datenschutzerklaerung als Text
+          // INNERHALB der App, nicht nur als Link im Store. Deshalb
+          // steht hier ein eigener Eintrag und nicht nur ein Hinweis
+          // auf das Impressum.
+          ListTile(
+            leading: const Icon(Icons.description_outlined),
+            title: Text(L10n.t(context, 'privacy.policyTitle')),
+            subtitle: Text(L10n.t(context, 'privacy.policySub')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.privacyPolicy),
+          ),
+          const Divider(height: 32),
           _SectionTitle(L10n.t(context, 'privacy.processors')),
           _InfoCard(text: L10n.t(context, 'privacy.processorsInfo')),
           const SizedBox(height: 8),

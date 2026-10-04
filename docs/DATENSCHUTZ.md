@@ -11,13 +11,17 @@ Nutzerdaten an Dritte verkauft.
 
 ## 1. Grundsatz und Verantwortliche Stelle
 
-Verantwortliche Stelle im Sinne der DSGVO ist der Betreiber der
-Thestia-Instanz (Hosting Supabase EU-Region). Kontaktaufnahme für alle
-datenschutzbezogenen Anliegen: über das **In-App-Bug-Report-Formular**
-(Einstellungen) oder das Issue-Tracker des öffentlichen
-Projekt-Repositorys. Da Thestia als Community-Projekt betrieben wird,
-kann die kontaktierbare Stelle je nach Instanz variieren; der Code ist
-jederzeit öffentlich einsehbar und selbst hostbar.
+Verantwortliche Stelle im Sinne der DSGVO ist **Thestia**, die
+Anwendung, die Sie gerade benutzen (Store-Eintrag: *Thestia*).
+Kontaktaufnahme für alle datenschutzbezogenen Anliegen: über das
+**In-App-Bug-Report-Formular** (Einstellungen) oder das Issue-Tracker
+des öffentlichen Projekt-Repositorys.
+
+Die serverseitige Verarbeitung erfolgt in der EU-Region von Supabase
+(Vertragspflichten als Auftragsverarbeiter nach Art. 28 DSGVO, siehe
+Abschnitt 6). Der Quellcode ist öffentlich einsehbar und selbst
+hostbar; betreibt jemand eine eigene Instanz, ist diese Instanz
+selbst Verantwortliche Stelle, und zwar unter ihrem eigenen Namen.
 
 **Prinzipien (Art. 5 DSGVO):** Datenminimierung, Zweckbindung,
 Speicherbegrenzung, Datenschutz durch Technik (E2E, on-device) und
