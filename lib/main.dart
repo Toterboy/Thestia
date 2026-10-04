@@ -98,6 +98,27 @@ Future<void> main() async {
   final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   StartupWatchdog.reached(1);
 
+  // v0.9.2: Der Plattform-Fehlerbehandler steht hier und nicht weiter
+  // unten bei runApp.
+  //
+  // Vorher war die Luecke genau das, was wir jetzt suchen: zwischen
+  // ensureInitialized() und runApp() - also ueber der Keystore-
+  // Migration - gab es keinen Handler fuer Platform-Fehler.
+  // FlutterError.onError (Widget-/Framework-Fehler) kam erst bei
+  // runApp(). Eine PlatformException aus einem Plugin in diesem Fenster
+  // hatte damit nirgends eine Adresse: nicht im Crash-Journal, nicht
+  // im Fehlerbildschirm. Der Watchdog meldete nur "keystore" -
+  // ohne Fehlertext, und genau so sieht ein echter Absturz aus.
+  //
+  // `return false` heisst: an die Standardbehandlung weitergeben. Das
+  // Verhalten der App bleibt unveraendert, nur die Sichtbarkeit kommt
+  // dazu.
+  PlatformDispatcher.instance.onError = (error, stack) {
+    unawaited(CrashJournal.capture(error, stack));
+    debugPrint('[MAIN] Platform-Fehler: $error');
+    return false;
+  };
+
   // Security (Audit 2026-09-26): Keystore-Werte einmalig aus dem alten
   // Default-Namespace in die neuen, getrennten Namespaces verschieben.
   // Ohne das waeren nach dem Update alle Tokens unlesbar (Massen-Logout).
@@ -179,11 +200,8 @@ Future<void> main() async {
   // mit drehendem Kreis) präsentiert wird - danach übernimmt Flutter.
   // (Das Binding steht seit v0.9.2 oben, VOR der Keystore-Migration.)
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-  // Plattform-Fehler (außerhalb der Widget-UI) ebenfalls journalesieren.
-  PlatformDispatcher.instance.onError = (error, stack) {
-    unawaited(CrashJournal.capture(error, stack));
-    return false;
-  };
+  // Der Plattform-Fehlerbehandler ist bewusst NICHT hier, sondern
+  // direkt nach ensureInitialized() gesetzt - siehe Kommentar dort.
 
   // Supabase-User-ID-Getter registrieren, damit AppConstants.currentUserId
   // die echte User-ID liefert, sobald eine Session aktiv ist.
