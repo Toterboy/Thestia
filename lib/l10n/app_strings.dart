@@ -1885,10 +1885,11 @@ const Map<String, Map<String, String>> _strings = {
         'Hinweis: Ihr seid {my} und {other} Jahre alt. Profile können '
         'falsche Angaben enthalten. Bleib vorsichtig, triff dich nur '
         'öffentlich und melde Verdacht auf falsches Alter.',
-    'chat.relayBannerShort': 'Keine direkte Verbindung',
+    'chat.relayBannerShort': 'Kein P2P möglich',
     'chat.relayBanner':
-        'Keine direkte Verbindung. Nachrichten sind Ende-zu-Ende '
-        'verschlüsselt und kommen an, sobald der Chat geöffnet wird.',
+        'Kein P2P möglich. Nachrichten sind Ende-zu-Ende verschlüsselt, '
+        'laufen über das Relay und kommen an, sobald der Chat geöffnet '
+        'wird.',
     'chat.relayStored':
         'Verschlüsselt zwischengespeichert. Wird zugestellt, sobald der '
         'Chat geöffnet wird.',
@@ -4539,10 +4540,10 @@ const Map<String, Map<String, String>> _strings = {
         'Note: you are {my} and {other} years old. Profiles may contain '
         'false information. Stay cautious, only meet in public and report '
         'suspected false age.',
-    'chat.relayBannerShort': 'No direct connection',
+    'chat.relayBannerShort': 'No P2P available',
     'chat.relayBanner':
-        'No direct connection. Messages stay end-to-end encrypted and '
-        'arrive once the chat is opened.',
+        'No P2P available. Messages stay end-to-end encrypted, travel '
+        'via the relay and arrive once the chat is opened.',
     'chat.relayStored':
         'Stored encrypted. Will be delivered once the chat is opened.',
     'chat.sendFailed': 'Message could not be sent: {error}',

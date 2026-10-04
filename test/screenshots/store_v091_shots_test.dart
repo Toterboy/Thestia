@@ -570,14 +570,22 @@ List<Message> _chatHistory() {
   // 'me' ist die Demo-ID, die AppConstants.currentUserId ohne
   // Supabase-Session zurueckgibt. Nachrichten mit dieser Absender-ID
   // landen auf der eigenen Seite, die anderen beim Partner.
+  // Absurder und nicht/generischer Chat-Inhalt fuer den Store-Screenshot.
+//
+// "Hey, schreib mir" verkauft eine App nicht. Der Text soll zeigen,
+// dass hier Menschen miteinander reden und nicht miteinander
+// ausfuellen - und er soll auf den ersten Blick ungewoehnlich genug
+// sein, dass jemand innehaelt und weiterklickt.
+//
+// Bewusst ohne Schwaeren ("Kaffee am Wochenende?") - der Screenshot
+// soll Spass machen, nicht kraenkend sein.
   return [
-    m('1', 'store-shot-peer', 'Hey! Dein Profil hat mich neugierig gemacht.', 0),
-    m('2', 'me', 'Gern. Was hat dich neugierig gemacht?', 2),
-    m('3', 'store-shot-peer',
-        'Dass du offen schreibst, was du wirklich suchst.', 4),
-    m('4', 'me', 'Das ist der Punkt. Andernfalls verabredet man sich aus '
-        'Höflichkeit und merkt erst beim Treffen, dass es nicht passt.', 6),
-    m('5', 'store-shot-peer', 'Das kenne ich. Also: Kaffee am Wochenende?', 8),
+    m('1', 'store-shot-peer', 'Ich muss dir was Beunruhigendes sagen.', 0),
+    m('2', 'me', 'Jetzt bin ich neugierig.', 2),
+    m('3', 'store-shot-peer', 'Ich verhandle nachts mit meinem Toaster.', 4),
+    m('4', 'me', 'Gewinnst du meistens?', 6),
+    m('5', 'store-shot-peer',
+        'Kaffee am Wochenende? Ich bringe die Verträge mit.', 8),
   ];
 }
 

@@ -2171,68 +2171,73 @@ Future<bool> _ensureMicDisclosure() async {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                // Name und E2E-Badge in EINER zentrierten Zeile (v0.9.2).
+                //
+                // Vorher stand das Badge in einer eigenen, zentrierten
+                // Zeile unter dem Namen. Dadurch war der Name links
+                // buendig und die Kopfzeile zweizeilig - bei einem
+                // Namen wie "Mara" sah das nach einem Zufall aus und
+                // nicht nach einer Absicht.
+                //
+                // Jetzt bilden Name und Badge eine Einheit und werden
+                // gemeinsam zentriert. Der Name bleibt Flexible, damit
+                // ein langer Name mit Auslassungspunkten endet, statt
+                // das Badge aus dem Titel zu druecken.
+                //
+                // Bewusst KEIN Online-Status / "schreibt..." /
+                // Lesebestaetigung - siehe ADR-0007 (Praesenz-frei).
+                // KEINE Streaks/Flammen-Zaehlung (v0.9.0-Feedback:
+                // "Es soll keine Streaks geben").
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Row(mainAxisSize: MainAxisSize.min, children: [
-                      Flexible(
-                        child: Text(
-                          partner.name,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                    Flexible(
+                      child: Text(
+                        partner.name,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      // KEINE Streaks/Flammen-Zählung (v0.9.0-Feedback:
-                      // "Es soll keine Streaks geben") - nur der Name.
-                    ]),
-                    // Bewusst KEIN Online-Status / „schreibt…“ /
-                    // Lesebestätigung - siehe ADR-0007 (Präsenz-frei).
-                    // E2E + P2P-Status-Badge (v0.9.1: zentriert im
-                    // verfügbaren Titel-Raum statt rechtsbündig am Rand -
-                    // nutzt den Leerraum zwischen Avatar und Actions sauber
-                    // aus und wird bei langen Namen nicht abgeschnitten).
-                    const SizedBox(height: 2),
-                    Center(
-                      child: Tooltip(
-                        message: _p2pConnected
-                            ? L10n.t(context, 'chat.e2eReady')
-                            : L10n.t(context, 'chat.e2eWaiting'),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: _p2pConnected
-                                ? Colors.green.withValues(alpha: 0.15)
-                                : Colors.orange.withValues(alpha: 0.15),
-                            borderRadius:
-                                BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment:
-                                MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                _p2pConnected
-                                    ? Icons.lock
-                                    : Icons.lock_open,
-                                size: 13,
+                    ),
+                    const SizedBox(width: 6),
+                    Tooltip(
+                      message: _p2pConnected
+                          ? L10n.t(context, 'chat.e2eReady')
+                          : L10n.t(context, 'chat.e2eWaiting'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: _p2pConnected
+                              ? Colors.green.withValues(alpha: 0.15)
+                              : Colors.orange.withValues(alpha: 0.15),
+                          borderRadius:
+                              BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment:
+                              MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              _p2pConnected
+                                  ? Icons.lock
+                                  : Icons.lock_open,
+                              size: 13,
+                              color: _p2pConnected
+                                  ? Colors.green
+                                  : Colors.orange,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'E2E',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
                                 color: _p2pConnected
                                     ? Colors.green
                                     : Colors.orange,
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'E2E',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: _p2pConnected
-                                      ? Colors.green
-                                      : Colors.orange,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

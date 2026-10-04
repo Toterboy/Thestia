@@ -80,7 +80,7 @@ SHOTS = {
         'Euer Chat bleibt\n'
         'bei euch',
         'Ende-zu-Ende-verschlüsselt, auch über das Relay.\n'
-        'Eure Nachrichten werden unterwegs mitgelesen - von niemandem.',
+        'Außer ihr beiden kann niemand mitlesen.',
         'Schreib, was wirklich wichtig ist',
     ),
     '03_entdecken': (
