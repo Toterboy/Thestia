@@ -372,13 +372,31 @@ Future<void> _initializeFirebase() async {
 /// startet die App im Limit-Modus weiter
 /// ([SupabaseService.isInitialized] == false).
 Future<void> _initializeSupabase() async {
-  final supabaseUrl = dotenv.env['SUPABASE_URL'];
-  final supabaseAnonKey = dotenv.env['SUPABASE_PUBLISHABLE_KEY'];
+  // v0.9.2: `dotenv.env` WIRFT, wenn die Datei nicht geladen wurde -
+  // genauer: der Zugriff auf die Map tut es (NotInitializedError).
+  //
+  // In Release-Builds ist `.env` bewusst NICHT gebuendelt; die Werte
+  // kommen als --dart-define herein. Dieser Zugriff hat deshalb
+  // ausnahmslos geworfen und die App starb in JEDEM Release-Build -
+  // unabhaengig vom Geraet. Der Fehlerbildschirm meldete daraufhin die
+  // Schritte "keystore" und "ui"; das war die Position, an der die
+  // Initialisierung gerade stand, nicht die Fehlerursache.
+  //
+  // `AppConstants.supabaseUrlBase` macht es seit jeher richtig:
+  // erst Define, dann dotenv nur wenn geladen, sonst leer. Genau diese
+  // Reihenfolge wird hierher uebernommen.
+  String envOr(String key) {
+    final fromDefine = String.fromEnvironment(key);
+    if (fromDefine.isNotEmpty) return fromDefine.trim();
+    if (dotenv.isInitialized) return (dotenv.env[key] ?? '').trim();
+    return '';
+  }
 
-  if (supabaseUrl == null ||
-      supabaseUrl.isEmpty ||
+  final supabaseUrl = envOr('SUPABASE_URL');
+  final supabaseAnonKey = envOr('SUPABASE_PUBLISHABLE_KEY');
+
+  if (supabaseUrl.isEmpty ||
       supabaseUrl.contains('example.com') ||
-      supabaseAnonKey == null ||
       supabaseAnonKey.isEmpty) {
     return;
   }
