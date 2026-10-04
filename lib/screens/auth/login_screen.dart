@@ -222,9 +222,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       final result = ref.read(authProvider);
       if (result.hasError) {
-        if (kDebugMode) {
-          debugPrint('[LoginScreen] Auth-Provider hat Fehler: ${result.error}');
-        }
+        // v0.9.2: IMMER loggen, nicht nur im Debug-Build.
+        //
+        // Vorher stand hier `if (kDebugMode)`. In einem Release-Build
+        // ist kDebugMode false, und damit wurde der Serverfehler
+        // verworfen: der Nutzer sah eine Snackbar mit "Server
+        // fehlgeschlagen", und im Logcat stand nach
+        // "_submit aufgerufen" nichts mehr. Genau daran ist eine
+        // Einrueckungs-Diagnose gescheitert - der Fehler war da, er
+        // wurde nur nirgends festgehalten.
+        //
+        // Geloggt wird der Fehlertext, kein Passwort und kein Token:
+        // AppException.message bzw. der Servertext (z. B. "User already
+        // registered", Captcha-Fehler). Das sind Meldungen, die fuer
+        // die Fehlersuche gebraucht werden und keine Geheimnisse.
+        debugPrint('[LoginScreen] Auth-Provider hat Fehler '
+            '(${_isRegister ? 'Registrierung' : 'Login'}): ${result.error}');
         if (mounted) {
           final message = result.error is AppException
               ? (result.error as AppException).message
