@@ -7,7 +7,7 @@ und folgt der [Semantic Versioning Specification (SemVer)](https://semver.org/la
 Solange die Versionsnummer mit `0.` beginnt (Initial Development Phase nach SemVer §4),
 können sich Schnittstellen und Verhalten jederzeit ändern.
 
-## [0.9.2] – Unreleased (Build 30)
+## [0.9.2] – 2026-10-04 (Build 30)
 
 ### Sicherheit
 
@@ -47,8 +47,12 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 - **Rotierende Vorstellungs-Prompts**: 4 Themen mit je drei offenen Fragen
   statt vier fester Chips
-- **Mindest-Build-Gate auf 29** gesetzt (Migration 130) – Support ab
-  v0.9.1, wie in den 0.9.1-Release-Notes angekuendigt
+- **Mindest-Build-Gate auf 30** gesetzt (Migration 132) – Support **ab
+  v0.9.2**, alle aelteren Builds (v0.8.x, v0.9.0, v0.9.1) sind ohne
+  Security-Fixes. Grund ist nicht Versionspolitik, sondern die
+  Alterssperre fuer Transit Spark: aeltere Clients enthalten sie
+  nicht und wuerden sie umgehen. Migration 130 (Gate 29) galt fuer
+  v0.9.1 und wurde hiermit ueberschrieben
 - **Naehefunk (Transit Spark) gehaertet**: Advertising mit
   unregelmaessigen Abstaenden statt starrem ~100-ms-Takt, Token-Rotation
   ohne festes Raster, Scan-Filter auf die eigene Hersteller-ID, gepulstes
