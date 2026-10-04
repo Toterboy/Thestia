@@ -2661,6 +2661,20 @@ const Map<String, Map<String, String>> _strings = {
         'Video wird ausgewertet. Bitte kurz warten, das kann bis zu '
         'einer halben Minute dauern.',
     'verify.cameraError': 'Kamera konnte nicht initialisiert werden: {error}',
+// Prominente Kamera-Offenlegung: Google Play verlangt fuer CAMERA
+    // dieselbe vorangezeigte Begruendung wie fuer das Mikrofon. Ohne
+    // Kamera ist die Alterspruefung nicht moeglich - deshalb endet eine
+    // Ablehnung in einem erklaerenden Zustand und nicht in einer Sackgasse.
+    // Der Text nennt auch den Ton: die Challenge "speakNumber" verlangt
+    // eine gesprochene Zahl, und die Aufnahme laeuft mit
+    // enableAudio: true. Wer nur die Kamera ankündigt, haelt RECORD_AUDIO
+    // fuer mitgeteilt - das waere eine unvollstaendige Offenlegung.
+    'verify.cameraDeclined':
+        'Ohne Kamera koennen wir dein Alter nicht einschaetzen. Du kannst sie jederzeit in den Einstellungen erlauben.',
+    'verify.cameraDisclosureTitle': 'Kamera und Mikrofon fuer die Alterspruefung',
+    'verify.cameraDisclosureBody':
+        'Um dein Alter zu schaetzen, braucht die App Zugriff auf Kamera und Mikrofon. Die Aufnahme startet erst, wenn du unten bestaetigst. Das Bild wird ausgewertet und danach nicht gespeichert.',
+    'verify.cameraDisclosureAccept': 'Kamera freigeben',
     'verify.challenge.base.speakNumber': 'Sage die angezeigte Zahl laut vor.',
     'verify.challenge.base.makeGesture': 'Mache die angezeigte Geste.',
     'verify.challenge.base.turnHead': 'Drehe den Kopf langsam.',
@@ -5264,6 +5278,19 @@ const Map<String, Map<String, String>> _strings = {
         'Processing your video. Please wait, this can take up to half '
         'a minute.',
     'verify.cameraError': 'Camera could not be initialized: {error}',
+    // Prominent camera disclosure: Google Play requires the same up-front
+    // explanation for CAMERA as for the microphone. Without a camera the
+    // age check is impossible, so declining ends in an explanatory state
+    // rather than a dead end. The text names audio too: the "speakNumber"
+    // challenge needs a spoken number and recording runs with
+    // enableAudio: true. Announcing only the camera would leave
+    // RECORD_AUDIO undisclosed.
+    'verify.cameraDeclined':
+        'Without the camera we cannot estimate your age. You can allow it in the settings at any time.',
+    'verify.cameraDisclosureTitle': 'Camera and microphone for age verification',
+    'verify.cameraDisclosureBody':
+        'To estimate your age, the app needs access to the camera and the microphone. Capture starts only after you confirm below. The image is evaluated and not saved afterwards.',
+    'verify.cameraDisclosureAccept': 'Allow camera',
     'verify.challenge.base.speakNumber': 'Say the displayed number out loud.',
     'verify.challenge.base.makeGesture': 'Do the displayed gesture.',
     'verify.challenge.base.turnHead': 'Slowly turn your head.',

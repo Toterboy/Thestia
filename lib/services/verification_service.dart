@@ -669,7 +669,14 @@ class VerificationService {
   }
 
   void dispose() {
-    _box.close();
+    // Gleiches Problem wie in EncryptionService.dispose(): _box ist ein
+    // late-Feld und existiert erst nach initialize(). Wurde der Dienst
+    // abgebaut, bevor initialize() durchlief, waere _box.close() ein
+    // LateInitializationError - und zwar beim Abbau. Damit der
+    // Aufrufer die eigentliche Ausnahme sieht und nicht einen
+    // Folgefehler aus dem Shutdown.
+    if (!_initialized) return;
+    unawaited(_box.close().catchError((_) => _box));
   }
 }
 

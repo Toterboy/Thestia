@@ -464,6 +464,18 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     await _persist();
   }
 
+  /// Kamera-Offenlegung bestaetigt (Google-Play-Richtlinie).
+  ///
+  /// Gegenteil von [setMicDisclosureAccepted]: wird gesetzt, nachdem der
+  /// Nutzer im Verifikationsschritt gelesen hat, warum die Kamera
+  /// genutzt wird. Die Verifikation oeffnet die Kamera direkt beim
+  /// Betreten - ohne diese Bestaetigung waere das ein Antrag, den der
+  /// Nutzer nicht erwartet.
+  Future<void> setCameraDisclosureAccepted(bool value) async {
+    state = state.copyWith(cameraDisclosureAccepted: value);
+    await _persist();
+  }
+
   /// Chat-Hintergrund wählen (v0.9.1): 'none', Muster oder 'custom'.
   /// Unbekannte IDs fallen auf 'none' zurück.
   Future<void> setChatBackground(String id) async {
@@ -548,6 +560,7 @@ void scheduleUiPrefsServerSync(AppSettings settings) {
             // Mikrofon-Offenlegung gehoert zur Einwilligung auf diesem
             // Geraet und soll nicht in andere Konten wandern.
             'micDisclosureAccepted': settings.micDisclosureAccepted,
+            'cameraDisclosureAccepted': settings.cameraDisclosureAccepted,
             'chatBackground': settings.chatBackground,
           },
         });

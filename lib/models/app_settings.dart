@@ -95,6 +95,15 @@ class AppSettings {
   /// schreiben.
   final bool micDisclosureAccepted;
 
+  /// Hat der Nutzer die prominente Kamera-Offenlegung bestaetigt?
+  ///
+  /// Wie [micDisclosureAccepted], aber fuer CAMERA. Die Kamera wird in
+  /// der Alters-/Identitaetsverifikation direkt beim Oeffnen benutzt -
+  /// ohne Offenlegung waere das ein Antrag im Hintergrund, den der
+  /// Nutzer nicht erwartet. Google Play verlangt fuer beides eine
+  /// sichtbare Begruendung VOR der Anfrage.
+  final bool cameraDisclosureAccepted;
+
   /// Gewähltes Farbschema (Name aus ThestiaTheme, Default 'classic').
   final String themeName;
 
@@ -145,6 +154,7 @@ class AppSettings {
     this.mfaSetupDismissed = false,
     this.blurChatImages = true,
     this.micDisclosureAccepted = false,
+    this.cameraDisclosureAccepted = false,
     this.themeName = 'classic',
     this.paused = false,
     this.habitsDealbreaker = false,
@@ -190,6 +200,8 @@ class AppSettings {
       blurChatImages: json['blurChatImages'] as bool? ?? true,
     micDisclosureAccepted:
         json['micDisclosureAccepted'] as bool? ?? false,
+    cameraDisclosureAccepted:
+        json['cameraDisclosureAccepted'] as bool? ?? false,
       themeName: json['themeName'] as String? ?? 'classic',
       paused: json['paused'] as bool? ?? false,
       habitsDealbreaker: json['habitsDealbreaker'] as bool? ?? false,
@@ -226,6 +238,7 @@ class AppSettings {
     'mfaSetupDismissed': mfaSetupDismissed,
     'blurChatImages': blurChatImages,
     'micDisclosureAccepted': micDisclosureAccepted,
+    'cameraDisclosureAccepted': cameraDisclosureAccepted,
     'themeName': themeName,
     'paused': paused,
     'habitsDealbreaker': habitsDealbreaker,
@@ -273,6 +286,7 @@ class AppSettings {
     bool? mfaSetupDismissed,
     bool? blurChatImages,
     bool? micDisclosureAccepted,
+    bool? cameraDisclosureAccepted,
     String? themeName,
     bool? paused,
     bool? habitsDealbreaker,
@@ -311,6 +325,8 @@ class AppSettings {
       mfaSetupDismissed: mfaSetupDismissed ?? this.mfaSetupDismissed,
       blurChatImages: blurChatImages ?? this.blurChatImages,
     micDisclosureAccepted: micDisclosureAccepted ?? this.micDisclosureAccepted,
+    cameraDisclosureAccepted:
+        cameraDisclosureAccepted ?? this.cameraDisclosureAccepted,
       themeName: themeName ?? this.themeName,
       paused: paused ?? this.paused,
       habitsDealbreaker: habitsDealbreaker ?? this.habitsDealbreaker,

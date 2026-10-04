@@ -154,6 +154,13 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  # Nur fuer die Tests: die Kamera-Offenlegung muss beweisen koennen,
+  # dass die Kamera vor der Bestaetigung gar nicht erst angefragt wird.
+  # Das geht nur ueber die Plattform-Schnittstelle, nicht ueber einen
+  # MethodChannel. camera_platform_interface ist bereits indirekt ueber
+  # camera vorhanden; hier explizit, damit der Test es importieren darf.
+  camera_platform_interface: 2.13.1
+
   # Lint-Regeln für sauberen, modernen Code
   flutter_lints: ^6.0.0
 

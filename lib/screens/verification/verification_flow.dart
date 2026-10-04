@@ -11,6 +11,7 @@ import 'package:video_thumbnail/video_thumbnail.dart' as thumb;
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/providers/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/services/age_estimation_service.dart';
 import 'package:thestia/services/local_storage.dart';
@@ -263,9 +264,74 @@ class _VerificationVideoScreenState
   @override
   void initState() {
     super.initState();
-    _initializeCamera();
     _generateChallenge();
+    // Kamera erst NACH der Offenlegung oeffnen - siehe _initializeCamera.
+    //
+    // Das Holen des ersten Frames ist zugleich der Grund, warum das
+    // ueberhaupt noetig war: in initState hat der Context noch keinen
+    // Frame, ein Dialog kann dort nicht zuverlaessig stehen.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_ensureCameraDisclosureThenOpen());
+    });
   }
+
+  /// Zeigt die prominente Kamera-Offenlegung und oeffnet danach die
+  /// Kamera.
+  ///
+  /// Google Play verlangt fuer CAMERA dieselbe vorangezeigte
+  /// Begruendung wie fuer das Mikrofon: die App muss erklaeren, warum
+  /// sie aufnimmt bzw. filmt, BEVOR der Systemdialog erscheint.
+  /// Gerade dieser Schritt oeffnete die Kamera bislang sofort beim
+  /// Betreten - der Nutzer sah den Kamera-Dialog, ohne vorher zu
+  /// erfahren, worum es ging.
+  ///
+  /// Ohne Kamera ist die Verifikation nicht moeglich, deshalb endet der
+  /// Dialog mit einer Ablehnung in einem erklaerenden Zustand statt in
+  /// einem Absturz: der bestehende Fehlerpfad zeigt den Grund an.
+  Future<void> _ensureCameraDisclosureThenOpen() async {
+    final settings = ref.read(settingsProvider);
+    if (!settings.cameraDisclosureAccepted) {
+      final accepted = await _askCameraDisclosure();
+      if (accepted != true || !mounted) {
+        if (mounted) {
+          setState(() => _error = L10n.t(context, 'verify.cameraDeclined'));
+        }
+        return;
+      }
+      // Beide Flaggen setzen, nicht nur die Kamera: der Dialog hat oben
+      // ausdruecklich fuer Kamera UND Mikrofon gewarnt, weil die
+      // Aufnahme mit enableAudio laeuft. Wer hier bestaetigt, weiss
+      // also beides und soll im Chat nicht denselben Hinweis nochmal
+      // bekommen. Das Mikrofon-Flag bleibt ansonsten unberuehrt - wer
+      // nur verifiziert und nie chattet, sieht den Hinweis spaeter
+      // genau dann, wenn er ihn braucht.
+      await ref
+          .read(settingsProvider.notifier)
+          .setCameraDisclosureAccepted(true);
+      await ref
+          .read(settingsProvider.notifier)
+          .setMicDisclosureAccepted(true);
+    }
+    await _initializeCamera();
+  }
+
+  Future<bool?> _askCameraDisclosure() => showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(L10n.t(context, 'verify.cameraDisclosureTitle')),
+          content: Text(L10n.t(context, 'verify.cameraDisclosureBody')),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text(L10n.t(context, 'common.cancel')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(L10n.t(context, 'verify.cameraDisclosureAccept')),
+            ),
+          ],
+        ),
+      );
 
   Future<void> _initializeCamera() async {
     try {

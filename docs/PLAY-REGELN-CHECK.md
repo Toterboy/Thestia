@@ -230,15 +230,37 @@ falsches Bild.
    initialisiert waren, wenn `initialize()` scheiterte - der
    Folgefehler kam beim Abbau und verdeckte die eigentliche Ursache.
 
-### Offen
+### Kamera-Offenlegung: erledigt
+
+`VerificationVideoScreen` holte die Kameraliste in `initState` - der
+Nutzer sah den Systemdialog, ohne vorher zu erfahren, warum die App
+filmt. Jetzt steht davor `verify.cameraDisclosure*`, und die Kamera
+oeffnet erst nach der Bestaetigung. Bestaetigung in
+`AppSettings.cameraDisclosureAccepted`.
+
+Wichtig und leicht uebersehen: die Aufnahme laeuft mit
+`enableAudio: true`, und die Challenge `speakNumber` verlangt eine
+gesprochene Zahl. Die App nutzt hier also **beide** Berechtigungen.
+Ein Text, der nur die Kamera nennt, laesst `RECORD_AUDIO` unangezeigt -
+das waere eine unvollstaendige Offenlegung. Der Dialog nennt deshalb
+beides und setzt beide Einwilligungen.
+
+Damit ist der Kamera-Teil erledigt. Was bleibt, ist ausserhalb des
+Codes:
 
 - **Datenschutz-URL.** Datei im Repository, keine oeffentliche
   Adresse. Ohne sie keine Veroeffentlichung. Laesst sich nur ausserhalb
   des Codes erledigen.
 - **Play-Console-Formulare:** Data Safety, IARC-Inhaltsbewertung,
   Zielgruppe, Kategorie Dating, keine Anzeigen.
-- **Mikrofon- und Kamera-Formular** in der Abnahme.
-- **Kamera-Offenlegung:** Die Kamera kommt aus dem `camera`-Plugin
-  (Videoanrufe). Fuer `CAMERA` verlangt Play dieselbe prominente
-  Offenlegung wie fuer das Mikrofon. Der Dialog deckt nur das
-  Mikrofon ab - die Kamera ist damit noch nicht abgedeckt.
+- **Mikrofon- und Kamera-Formular** in der Abfrage. Die Bedienoberflaeche
+  ist jetzt vorbereitet, die Formularangaben nicht.
+
+### Dritter Dispose-Fehler derselben Art
+
+Beim Bauen des Kamera-Tests fiel auf: `VerificationService.dispose()`
+ruft `_box.close()` auf einem `late`-Feld ohne Absicherung. Wurde der
+Dienst abgebaut, bevor `initialize()` durchlief, war das ein
+`LateInitializationError` - und zwar beim Abbau, nicht beim Fehler,
+der eigentlich die Ursache war. Derselbe Fehlertyp wie in
+`EncryptionService.dispose()`, jetzt mit derselben Absicherung.
