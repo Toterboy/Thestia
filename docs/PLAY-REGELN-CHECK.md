@@ -1,5 +1,41 @@
 # Google-Play-Vorgaben: Prüfstand v0.9.2 (versionCode 30)
 
+> **AKTUELLER STAND (05.10.2026).** Der Text weiter unten beschreibt den
+> Ausgangszustand vom 02.10. und ist als Geschichte stehen geblieben.
+> Aktuell gilt:
+>
+> 1. **Alle drei Code-Blocker sind behoben** und im gemergten Manifest
+>    nachgewiesen: Mikrofon- und Kamera-Offenlegung,
+>    `ACCESS_FINE_LOCATION` entfernt, `targetSdk` 36, Legacy-
+>    Speicherzugriffe begrenzt.
+> 2. **Migrationen 131 und 132 sind angewendet.** Verifiziert per
+>    `supabase migration list`: beide stehen mit `remote` = Nummer.
+>    Das 18+-Gate fuer Transit Spark gilt damit serverseitig, und
+>    aeltere Clients werden abgewiesen. Der Abschnitt weiter unten,
+>    der sie als offen fuehrt, ist ueberholt.
+> 3. **Die Datenschutz-URL ist live:**
+>    `https://thestia.de/datenschutz` (HTTP 200, Server Netlify).
+>    `www.thestia.de` gibt es nicht - im DNS fehlt der A-Record, und
+>    die Domain haengt bereits am bestehenden Netlify-Projekt.
+> 4. **Offen sind nur noch die Play-Console-Formulare:** Data Safety,
+>    IARC-Inhaltsbewertung, Zielgruppe, Kategorie. Das ist Handarbeit
+>    im Console und keine Codeaufgabe.
+>
+> **Dazu eine Erkenntnis, die sich nicht auf den Play bezog, aber hier
+> hingehört:** In einem Release-Build war die App ueberhaupt nicht
+> startfaehig. `dotenv.env` wirft, sobald `.env` nicht geladen wurde -
+> und `.env` wird in Release-Builds absichtlich nicht gebuendelt. Die
+> Initialisierung las dort unbedingt, also warf sie immer, und der
+> Nutzer sah nur den Fehlerbildschirm. Drei weitere Fehler kamen
+> hinzu: die Logeintraege zur Schrittanzeige wurden im Release verworfen
+> (`kDebugMode`), der Serverfehler der Registrierung ebenfalls, und
+> `auth.register` hatte kein Timeout, sodass der Aufruf endlos lief.
+> Alles behoben, mit Tests. Fuer die naechste Version ist die Lehre:
+> **Pfade, die im Debug-Build funktionieren, muessen im Release
+> getestet werden** - ein Simulator oder ein Debug-Build haette keinen
+> dieser vier Fehler gezeigt.
+
+
 Geprüft am 02.10.2026 gegen das tatsächlich gebaute Artefakt
 (`releases/v0.9.2/Thestia-v0.9.2-play.apk` und `.aab`), nicht gegen die
 Konfiguration allein. Grund: `targetSdk` steht nicht im Buildskript,
