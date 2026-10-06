@@ -113,7 +113,7 @@ $adb = "C:\Users\Thoralf\AppData\Local\Android\Sdk\platform-tools\adb.exe"
 | --- | --- | --- | --- | --- |
 | 4.1 | **Release-APK auf echtem Geraet installieren und starten** | `& $adb -s a86fc552 uninstall com.thestia.app` (falls vorhanden), dann die **Universal-APK** aus `releases\v0.9.2\` installieren, Start per Hand | Startet durch. Kein Absturz, kein schwarzer Bildschirm, kein Force-Close. | **Das ist der Test, der 3.1 findet.** Nicht den Debug-Build starten. Wenn die Universal-APK nicht startet, erst die Split-APK derselben Version probieren - dann ist es ein ABI-Problem. |
 | 4.2 | **Erster Start bis zum ersten Frame** | App kalt starten (vorher `& $adb -s a86fc552 shell am force-stop com.thestia.app`), Zeit stoppen | Logo erscheint, Splash mit Version, **kein Schwarz**, Weiterleitung zum Willkommens-Screen. Dauer plausibel (Groessenordnung: wenige Sekunden). | Schwarzes Bild = der Fehler aus 3.1. `logcat` nach `flutter` und `AndroidRuntime` filtern. |
-| 4.3 | **Registrierung meldet in 20 s einen Fehler** | Registrierung mit **unbekannter** E-Mail starten, Uhr stoppen. Optional mit Flugmodus, um den Fall ohne Server zu erzwingen | Spatestens nach 20 s eine Meldung. **Bitte den exakten Wortlaut notieren** - er unterscheidet Netz von CAPTCHA von Serverfehler. Erwartet sind drei verschiedene Texte: `error.serverUnreachable` (Timeout), `error.captchaRejected` (CAPTCHA), `error.signupFailed` (Server). | Endloses Drehen = Timeout fehlt oder greift nicht (`login_screen.dart`, `authTimeout`). Meldung „Etwas ist schiefgelaufen" = der Timeout landet im generischen Fallback; das ist seit v0.9.3 behoben, ein solcher Text bedeutet dann, dass ein **anderer** Fehler vorliegt. |
+| 4.3 | **Registrierung meldet in 20 s einen Fehler** | Registrierung mit **unbekannter** E-Mail starten, Uhr stoppen. Optional mit Flugmodus, um den Fall ohne Server zu erzwingen | Spatestens nach 20 s eine Meldung. Erwartet sind drei verschiedene Texte: `error.serverUnreachable` (Timeout), `error.captchaRejected` (CAPTCHA), `error.signupFailed` (Server). Nach Migration 134 **sollte die Registrierung durchlaufen** und zum E-Mail-Bestaetigungs-Screen fuehren. | Endloses Drehen = Timeout fehlt oder greift nicht (`login_screen.dart`, `authTimeout`). „Etwas ist schiefgelaufen" = ein anderer Fehler als der Timeout; im Server-Log nach `500` und `42703` filtern — das war bis Migration 134 der Normalfall. |
 | 4.4 | Login | Bekanntes Konto anmelden | Anmeldung erfolgreich, Home-Screen. Bei falschem Passwort: verstaendliche Meldung, kein Absturz. | Fehlermeldung im Log pruefen. |
 | 4.5 | **Eigener Chat** | Chat mit dem eigenen zweiten Konto öffnen | Historie laedt, Zeitstempel korrekt, Senden funktioniert. | Leere Historie bei echten Nachrichten = Relay-Problem, `relay_fetch` pruefen. |
 | 4.6 | **Chat mit zweitem Konto** | Vom zweiten Konto eine Nachricht senden, in der ersten App öffnen | Nachricht erscheint innerhalb von ~6 s, entschluesselt lesbar. | Laenger als 6 s: Backoff-Stufe im Log (`[RelayInbox]`) pruefen. |
@@ -124,20 +124,39 @@ $adb = "C:\Users\Thoralf\AppData\Local\Android\Sdk\platform-tools\adb.exe"
 
 ### 4.11 Was der Wortlaut der Registrierungsmeldung verraet
 
-Nicht Kosmetik. Die drei Meldungen schliessen einander aus, und die
-Unterscheidung ist die halbe Registrierungsdiagnose:
+**ERLEDIGT seit v0.9.3 / Migration 134 (06.10.2026).** Die Registrierung ist
+behoben; die Ursache war *nicht* Netz und *nicht* CAPTCHA, sondern ein
+Datenbank-Trigger. Deshalb ist die Registrierung hier als Blocker gestrichen
+und die Zeile davor ergaenzt.
 
-| Angezeigter Text | L10n-Key | Bedeutung | Naechster Schritt |
-| --- | --- | --- | --- |
-| „Der Server hat nicht geantwortet. Prüfe deine Internetverbindung…" | `error.serverUnreachable` | Kein Server erreichbar, oder die Anfrage haengt im Netz | Geraet ohne WLAN testen. Bleibt es dabei: `supabase` Erreichbarkeit vom Geraet pruefen. |
-| „Der Sicherheitscheck wurde vom Server abgelehnt…" | `error.captchaRejected` | Turnstile hat abgelehnt (Netz oder Schluessel falsch) | Sitekey im Build gegen das Dashboard pruefen. |
-| „Registrierung auf dem Server fehlgeschlagen…" | `error.signupFailed` | Server hat geantwortet und den Nutzer abgelehnt (`handle_new_user`) | Trigger-Fehler in den Supabase-Logs. |
-| „Zu viele Anfragen in kurzer Zeit…" | `error.rateLimited` | Rate-Limit greift | Testkonto zuruecksetzen. |
-| „Etwas ist schiefgelaufen…" | `error.generic` | Unbekannt | `logcat` nach `[LoginScreen]` filtern - der Servertext steht dort. |
+| Angezeigter Text | L10n-Key | Bedeutung |
+| --- | --- | --- |
+| „Der Server hat nicht geantwortet. Prüfe deine Internetverbindung…" | `error.serverUnreachable` | Kein Server erreichbar, oder die Anfrage haengt im Netz |
+| „Der Sicherheitscheck wurde vom Server abgelehnt…" | `error.captchaRejected` | Turnstile hat abgelehnt |
+| „Registrierung auf dem Server fehlgeschlagen…" | `error.signupFailed` | Server hat geantwortet und den Nutzer abgelehnt |
+| „Zu viele Anfragen in kurzer Zeit…" | `error.rateLimited` | Rate-Limit greift |
+| „Etwas ist schiefgelaufen…" | `error.generic` | Unbekannt – `logcat` nach `[LoginScreen]` filtern |
 
-Im `logcat` steht beim Timeout zusaetzlich eine Zeile mit der Sekundenzahl und
-dem Pfad (Registrierung oder Login). Die fehlt, wurde nicht der 20-Sekunden-
-Timeout ausgeloest, sondern ein anderer Fehler.
+#### Die behobene Ursache (v0.9.2-Befund)
+
+Seit der Migration 128 gab es einen Trigger `trg_init_profile_auth_flags`
+auf `public.profiles`, dessen Funktion `NEW.id` las. **`profiles` hat keine
+Spalte `id`**, sein Schluessel heisst `user_id`. Postgres brach den
+`handle_new_user`-Pfad mit `42703 record "new" has no field "id"` ab, die
+Transaktion wurde mit `25P02` vergiftet, und GoTrue gab **500** statt einer
+Anmeldung zurueck. Die App meldete das als `error.signupFailed` — daher war
+die Registrierung seit v0.9.2 kaputt.
+
+Zwei fast identische Funktionen aus Migration 128 spiegelten
+`email_verified_at`: eine korrekt auf `auth.users` (dort *gibt* es `id`),
+eine als Kopie auf `profiles`. Die Kopie war der Fehler. Migration 134
+ersetzt sie und setzt den Wert direkt aus `NEW.email_confirmed_at` (eine echte
+`profiles`-Spalte).
+
+Belegt am Geraet: der Server-Log vom 06.10.2026, 17:38:16 zeigt genau
+`500`, `42703` und `25P02`. Nach Migration 134 liefert derselbe Aufruf
+`captcha_failed` (HTTP 400) — der Trigger bricht nicht mehr ab, es greift
+nur noch die Turnstile-Pruefung, die ein echter Client mit Token besteht.
 
 ## 5. Store-Material
 
@@ -184,7 +203,7 @@ hält - nicht, damit sie übersprungen werden.
 
 | Punkt | Stand | Wirkung auf die Abnahme |
 | --- | --- | --- |
-| Registrierung auf dem Testgeraet | `auth.register()` kehrt nicht zurueck, Ursache unbekannt | **Blocker.** Die Meldungen sind seit diesem Stand unterscheidbar (4.11). Der Wortlaut entscheidet: Netz, CAPTCHA, Server oder Rate-Limit. Faellt weiterhin „Etwas ist schiefgelaufen", ist es ein anderer Fehler als der Timeout. |
+| Registrierung | **BEHOBEN** (Migration 134, 06.10.2026). Ursache war ein DB-Trigger, kein Netz und kein CAPTCHA. Nachweis: 500+42703 im Server-Log, nach dem Fix `captcha_failed`. | **Punkt 4.3 einmal auf dem Geraet bestaetigen**, dann ist er durch. |
 | Alterspruefung | nie mit echten Gesichtern getestet | **Blocker** (4.9). |
 | Transit Spark | [BLE-GERAETETEST.md](BLE-GERAETETEST.md) Status OFFEN | **Blocker** fuer die Behauptung „stabil". |
 | Admin-APKs | tragen die als kompromittiert dokumentierte UUID, bewusst nicht neu gebaut | Kein Blocker fuer den oeffentlichen Release. Erst nach Rotation neu bauen. |
