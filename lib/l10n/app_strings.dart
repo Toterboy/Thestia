@@ -443,7 +443,11 @@ const Map<String, Map<String, String>> _strings = {
     'setup.openAll': 'Offen für alles',
     'setup.photoTooltip': 'Profilbild wählen',
     'setup.pleasePick': 'Bitte wählen',
-    'setup.locationDone': 'Standort erkannt und übernommen (GPS-Koordinaten).',
+    'setup.locationDone': 'Bundesland erkannt und übernommen.',
+    // v0.9.3: GPS ohne Geocoder-Treffer. Nicht raten: das Bundesland
+    // bleibt leer und der Nutzer wählt es von Hand aus der Liste.
+    'setup.locationStateUnknown':
+        'Dein Bundesland wurde nicht erkannt. Bitte wähle es unten aus.',
     'setup.passkeyDone':
         'Passkey eingerichtet. Du kannst dich künftig damit anmelden.',
     // Erst-Einrichtung als Interview (Thestia-Fragen-Bubbles)
@@ -495,6 +499,8 @@ const Map<String, Map<String, String>> _strings = {
     'setupp.locationLabel': 'Dein Standort / Stadt',
     'setupp.locationHint': 'z. B. Berlin',
     'setupp.locationGps': 'Standort erkennen (GPS)',
+    // v0.9.3: Es wird kein Ort mehr abgefragt, nur das Bundesland.
+    'setupp.detectState': 'Mein Bundesland automatisch erkennen',
     'setupp.bioLabel': 'Über mich (Bio)',
     'setupp.bioHint': 'z. B. Hobbys, was dir wichtig ist',
     'setupp.stateOptional': 'Bundesland (optional)',
@@ -3223,7 +3229,11 @@ const Map<String, Map<String, String>> _strings = {
     'setup.openAll': 'Open to everything',
     'setup.photoTooltip': 'Choose profile picture',
     'setup.pleasePick': 'Please choose',
-    'setup.locationDone': 'Location detected and applied (GPS coordinates).',
+    'setup.locationDone': 'State detected and applied.',
+    // v0.9.3: GPS without a geocoder hit. Not guessed: the state stays
+    // empty and the user picks it from the list.
+    'setup.locationStateUnknown':
+        'Your state could not be detected. Please pick it below.',
     'setup.passkeyDone': 'Passkey set up. You can now sign in with it.',
     // One-time setup as interview (Thestia question bubbles)
     'setupq.visibility':
@@ -4386,6 +4396,8 @@ const Map<String, Map<String, String>> _strings = {
     'setupp.locationLabel': 'Your location / city',
     'setupp.locationHint': 'e.g. Berlin',
     'setupp.locationGps': 'Detect location (GPS)',
+    // v0.9.3: No city is asked for any more, only the state.
+    'setupp.detectState': 'Detect my state automatically',
     'setupp.bioLabel': 'About me (bio)',
     'setupp.bioHint': 'e.g. hobbies, what matters to you',
     'setupp.stateOptional': 'Federal state (optional)',

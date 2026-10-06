@@ -4,8 +4,11 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:thestia/utils/avatar_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:geolocator/geolocator.dart';
+// v0.9.3: geocoding und geolocator sind hier nicht mehr noetig.
+// Der Standort kommt aus locationVerificationService (Position) und
+// describeStateFor (Bundesland) - beide ohne eigene Geokodierung im
+// Screen. Vorher stand hier locationFromAddress() fuer die
+// Ortseingabe per Freitext.
 import 'package:go_router/go_router.dart';
 
 import 'package:thestia/models/gender.dart';
@@ -27,6 +30,7 @@ import 'package:thestia/services/supabase_storage_service.dart';
 import 'package:thestia/utils/age_safety_rules.dart';
 import 'package:thestia/utils/constants.dart';
 import 'package:thestia/utils/geo_names.dart';
+import 'package:thestia/utils/location_privacy.dart';
 import 'package:thestia/widgets/age_range_sliders.dart';
 import 'package:thestia/widgets/appearance_selector.dart';
 import 'package:thestia/widgets/birthday_style.dart';
@@ -52,26 +56,28 @@ class SettingsPrivacyOnceScreen extends ConsumerStatefulWidget {
 class _SettingsPrivacyOnceScreenState
     extends ConsumerState<SettingsPrivacyOnceScreen> {
   final _pageController = PageController();
-  final _locationCtrl = TextEditingController();
-  // EIGENER Controller für das Bundesland-Textfeld (Filter-Seite):
-  // Es teilte sich vorher _locationCtrl mit dem Orts-Feld - Tippen
-  // spiegelte sich in beiden Feldern, GPS/Validierung löschte beide.
-  final _stateCtrl = TextEditingController();
 
   int _currentPage = 0;
   bool _isDetectingLocation = false;
   String? _locationError;
-  String? _locationValidationError;
-  // Debounce für die Orts-Eingabe: Geokodieren erst bei Tipppause.
-  // Vorher lief der Platform-Geocoder bei JEDEM Tastenanschlag und
-  // brandete Teil-Eingaben ("Berl") fälschlich als Fehler - inklusive
-  // Löschung des getippten Texts.
-  Timer? _locationDebounce;
-  // Sequenz-Token: Nur die Antwort zur NEUESTEN Eingabe gilt.
-  int _locationSeq = 0;
+
+  // v0.9.3: Entfernt wurden der Orts-Textfeld-Controller (_locationCtrl),
+  // der Bundesland-Freitext-Controller (_stateCtrl) und der ganze
+  // Debounce-Pfad (_locationDebounce, _locationSeq, _locateTypedPlace,
+  // _locationValidationError).
+  //
+  // Der Debounce existierte nur, weil der Nutzer einen Ort FREI tippen
+  // konnte und der Plattform-Geocoder bei jedem Tastenanschlag lief.
+  // Ohne Eingabefeld gibt es nichts zu entprellen: die Standortangabe
+  // kommt jetzt aus der GPS-Position und liefert nur das Bundesland.
+  //
+  // Der Freitext fuer den Bundesland-Filter ist einem Dropdown gewichen
+  // - damit kann kein Tippfehler mehr die Filterung stillschweigend
+  // aufheben ("bayrn" traf nie auf "Bayern").
+
   // v0.9.3: 10 Seiten statt 8. Neu sind der Geburtstags-Stil (mit
   // GROSSER Vorschau) und der Musik-Geschmack - beide wurden bei einer
-  // Registrierung nie abgefragt. Dazu kommen die Drei Fortschrittsschritte
+  // Registrierung nie abgefragt. Dazu kommen die drei Fortschrittsschritte
   // von unten.
   static const int _pageCount = 10;
   static const int _profilePage = 1;
@@ -122,13 +128,10 @@ class _SettingsPrivacyOnceScreenState
   @override
   void initState() {
     super.initState();
-    final prefs = ref.read(userPreferencesProvider);
-    if (prefs.location != null && _locationCtrl.text.isEmpty) {
-      _locationCtrl.text = prefs.location!;
-    }
-    if (prefs.preferredState != null && _stateCtrl.text.isEmpty) {
-      _stateCtrl.text = prefs.preferredState!;
-    }
+    // v0.9.3: Kein Vorbelegen von Textfeldern mehr - die beiden
+    // Controller (_locationCtrl, _stateCtrl) sind mit dem Orts-Feld
+    // entfallen. Der Bundesland-Filter liest jetzt direkt aus
+    // userPreferences.preferredState (siehe das Dropdown auf Seite 1).
     // Vorhandene Konsum-Präferenzen vorbelegen, falls bereits gesetzt.
     final profile = ref.read(profileProvider);
     _smoking = profile.smoking;
@@ -151,10 +154,7 @@ class _SettingsPrivacyOnceScreenState
 
   @override
   void dispose() {
-    _locationDebounce?.cancel();
     _pageController.dispose();
-    _locationCtrl.dispose();
-    _stateCtrl.dispose();
     _bioCtrl.dispose();
     _songCtrl.dispose();
     _bandCtrl.dispose();
@@ -463,20 +463,11 @@ class _SettingsPrivacyOnceScreenState
       await settingsNotifier.acceptCommunityGuidelines();
     }
     final prefsNotifier = ref.read(userPreferencesProvider.notifier);
-    final city = _locationCtrl.text.trim();
-    if (city.isNotEmpty) {
-      await prefsNotifier.setLocation(city);
-      await ref.read(profileProvider.notifier).update(city: city);
-      if (SupabaseService.isInitialized) {
-        try {
-          await ref.read(supabaseDatabaseServiceProvider).updateOwnProfile({
-            'city': city,
-          });
-        } catch (_) {
-          // Best-Effort: Stadt-Sync darf den Abschluss nicht blockieren.
-        }
-      }
-    }
+    // v0.9.3: Der Stadt-Sync ist entfallen. Der Ortsname war das
+    // eigentlich sensible Datum - oeffentlich lesbar fuer jeden
+    // angemeldeten Nutzer (Migration 135). Das Bundesland wird ueber
+    // _saveProfileExtras geschrieben, die Koordinaten ueber
+    // _detectLocation.
     await _saveHabitudes();
     await _saveBirthdayStyle();
     await _saveMusicTaste();
@@ -489,9 +480,10 @@ class _SettingsPrivacyOnceScreenState
     // ANGEZEIGT (bisher: stiller debugPrint, weshalb die Einrichtung
     // bei der nächsten Anmeldung wieder kam, obwohl sie "fertig" war).
     final flagsSaved = await _persistSetupFlagsToServer();
-    // Präferenzen (Entfernung, "Ich suche", Bundesland, Ort, Altersspanne)
+    // Präferenzen (Entfernung, "Ich suche", Bundesland, Altersspanne)
     // zusätzlich serverseitig sichern ("Nichts geht verloren"-Garantie,
-    // Migration 066).
+    // Migration 066). Kein city mehr - die Spalte wird in Migration 136
+    // entfernt.
     if (SupabaseService.isInitialized) {
       try {
         final s = ref.read(settingsProvider);
@@ -499,7 +491,6 @@ class _SettingsPrivacyOnceScreenState
         await prefsNotifier.savePreferencesToServer(
           ageRangeMin: s.ageRangeMin,
           ageRangeMax: s.ageRangeMax,
-          city: city.isNotEmpty ? city : null,
           stateStr: profileState,
         );
       } catch (_) {
@@ -593,38 +584,6 @@ class _SettingsPrivacyOnceScreenState
     }
   }
 
-  /// Geokodiert einen getippten Ort. Ergebnis: [place] (null = Ort
-  /// unbekannt/Geocoder-Fehler) und [tooFar] (echte >15-km-Abweichung
-  /// von der GPS-Position). Mit GPS-Permission muss der Ort im
-  /// 15-km-Umkreis der echten Position liegen (Anti-Fake); ohne GPS
-  /// gilt der angegebene Ort direkt - so rechnet die Entfernung IMMER
-  /// vom angegebenen Standort, nicht von einer alten GPS-Position.
-  Future<({Location? place, bool tooFar})> _locateTypedPlace(
-    String location,
-  ) async {
-    try {
-      final List<Location> locations = await locationFromAddress(location);
-      if (locations.isEmpty) return (place: null, tooFar: false);
-      final manualPos = locations.first;
-      final locationService = ref.read(locationVerificationServiceProvider);
-      if (await locationService.hasLocationPermission()) {
-        final position = await locationService.getCurrentLocation();
-        if (position != null) {
-          final distanceInMeters = Geolocator.distanceBetween(
-            position.latitude,
-            position.longitude,
-            manualPos.latitude,
-            manualPos.longitude,
-          );
-          if (distanceInMeters > 15000) return (place: null, tooFar: true);
-        }
-      }
-      return (place: manualPos, tooFar: false);
-    } catch (_) {
-      return (place: null, tooFar: false); // Bei Fehler: als unbekannt behandeln
-    }
-  }
-
   Future<void> _detectLocation() async {
     // Doppelaufruf verhindern: setState wirkt erst naechsten Frame,
     // daher ist _isDetectingLocation hier noch false.
@@ -663,25 +622,32 @@ class _SettingsPrivacyOnceScreenState
         return;
       }
 
-      // Audit N-1 / UX: Im "Stadt"-Feld steht ein ORTSNAME (Plattform-
-      // Reverse-Geocoder), nie ein Koordinaten-Paar. Fallback: grobe
-      // Regionsangabe. Exakte Werte gehen nur in die dafür vorgesehenen
-      // Server-Spalten.
-      final locationText = await describePlace(
+      // v0.9.3: Nur noch das Bundesland als Anzeige. Frueher stand hier
+      // der ORTSNAME (via der Geocoder-Hilfe in geo_names.dart) und wurde
+      // nach profiles.city geschrieben - damit war der Aufenthaltsort
+      // bis auf ~11 km genau oeffentlich, auch direkt per PostgREST
+      // (Migration 135).
+      //
+      // Die Koordinaten werden auf 5-km-Raster gerundet, BEVOR sie
+      // gespeichert werden. Der Server rundet ebenfalls; identisch zu
+      // sein ist wichtig, sonst springt die Entfernungsanzeige.
+      final snapped = LocationPrivacy.snapToGrid(
         position.latitude,
         position.longitude,
       );
+      // Bundesland fuer die Anzeige. Ohne Treffer wird NICHT geraten -
+      // der Nutzer waehlt es dann von Hand aus der Liste.
+      final detectedState = await describeStateFor(snapped.lat, snapped.lng);
       if (!mounted) return;
-      _locationCtrl.text = locationText;
 
       // Koordinaten lokal UND serverseitig persistieren - sonst koennen
       // Entfernungen zu anderen Nutzern nicht berechnet werden.
       await ref
           .read(profileProvider.notifier)
           .update(
-            city: locationText,
-            locationLat: position.latitude,
-            locationLng: position.longitude,
+            stateStr: detectedState,
+            locationLat: snapped.lat,
+            locationLng: snapped.lng,
           );
       if (SupabaseService.isInitialized) {
         try {
@@ -692,16 +658,16 @@ class _SettingsPrivacyOnceScreenState
                   .read(locationCheckServiceProvider)
                   .processLocationCheck(
                     userId: userId,
-                    newLatitude: position.latitude,
-                    newLongitude: position.longitude,
+                    newLatitude: snapped.lat,
+                    newLongitude: snapped.lng,
                   ),
             );
-            // Stadt/Ort serverseitig sichern, damit ein späterer
+            // Bundesland serverseitig sichern, damit ein späterer
             // Profil-Sync (fetchOwnProfile) den Wert nicht mit leer
-            // überschreibt.
+            // überschreibt. Kein city: den gibt es nicht mehr.
             unawaited(
               ref.read(supabaseDatabaseServiceProvider).updateOwnProfile({
-                'city': locationText,
+                'state': detectedState,
               }),
             );
           }
@@ -710,15 +676,23 @@ class _SettingsPrivacyOnceScreenState
         }
       }
 
-      setState(() {
+setState(() {
         _isDetectingLocation = false;
         _locationError = null;
+        // Das erkannte Bundesland in die Auswahl uebernehmen, damit der
+        // Nutzer es bestaetigen oder korrigieren kann. Ohne Treffer
+        // bleibt die bisherige Wahl stehen.
+        if (detectedState != null) _selectedState = detectedState;
       });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(L10n.t(context, 'setup.locationDone')),
+            content: Text(
+              detectedState == null
+                  ? L10n.t(context, 'setup.locationStateUnknown')
+                  : L10n.t(context, 'setup.locationDone'),
+            ),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -949,35 +923,48 @@ class _SettingsPrivacyOnceScreenState
                           if (userPrefs.distanceFilterMode ==
                               DistanceFilterMode.state) ...[
                             const SizedBox(height: 20),
-                            TextFormField(
-                              controller: _stateCtrl,
-                              keyboardType: TextInputType.text,
-                              // Feld beim Tippen über der Tastatur halten
-                              // (wie im Intro-Editor).
-                              scrollPadding: const EdgeInsets.only(bottom: 180),
+                            // v0.9.3: Auswahl statt Freitext.
+                            //
+                            // Vorher stand hier ein Textfeld. Damit konnte
+                            // jeder beliebige String gespeichert werden -
+                            // "Bayern", "bayrn", "Bayern " oder "Irgendwas".
+                            // Der Filter vergleicht danach exakt, also
+                            // funktionierte die Entfernungsfilterung dann
+                            // einfach nicht, ohne dass man es merkte.
+                            //
+                            // Eine Liste aus kGermanStates kann keinen
+                            // Tippfehler produzieren. Und sie ist neben der
+                            // Dropdown-Auswahl auf der Profilseite derselbe
+                            // Katalog - vorher standen hier Vollnamen
+                            // ("Bayern") und im Profil-Edit Kuerzel ("BY"),
+                            // was die Filterung ebenfalls aushebte.
+                            DropdownButtonFormField<String>(
+                              initialValue:
+                                  userPrefs.preferredState?.trim().isEmpty ??
+                                      true
+                                  ? null
+                                  : userPrefs.preferredState!.trim(),
+                              borderRadius: BorderRadius.circular(16),
                               decoration: InputDecoration(
-                                labelText: L10n.t(context, 'setupp.stateLabel'),
-                                hintText: L10n.t(context, 'setupp.stateHint'),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(16),
+                                labelText: L10n.t(
+                                  context,
+                                  'setupp.stateLabel',
                                 ),
                               ),
+                              hint: Text(L10n.t(context, 'setup.pleasePick')),
+                              items: kGermanStates
+                                  .map(
+                                    (st) => DropdownMenuItem(
+                                      value: st,
+                                      child: Text(st),
+                                    ),
+                                  )
+                                  .toList(),
                               onChanged: (v) async {
-                                final trimmed = v.trim();
-                                if (trimmed.isEmpty) {
-                                  userPrefsNotifier.setPreferredState(null);
-                                  _locationValidationError = null;
-                                  return;
-                                }
-                                setState(() {
-                                  _locationValidationError = null;
-                                });
-                                await userPrefsNotifier.setPreferredState(
-                                  trimmed,
-                                );
+                                // Kein Fehlerhinweis mehr noetig: eine
+                                // Liste kann nicht falsch getippt werden.
+                                await userPrefsNotifier
+                                    .setPreferredState(v);
                               },
                             ),
                             const SizedBox(height: 20),
@@ -991,150 +978,43 @@ class _SettingsPrivacyOnceScreenState
                             ),
                             const SizedBox(height: 20),
                           ],
-                          Text(
-                            L10n.t(context, 'setupp.location'),
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 12),
-                          // GPS-Button als suffixIcon: immer perfekt
-                          // ausgerichtet, auch bei grosser Schrift (a11y).
-                          TextFormField(
-                            controller: _locationCtrl,
-                            keyboardType: TextInputType.text,
-                            // Feld beim Tippen über der Tastatur halten
-                            // (wie im Intro-Editor).
-                            scrollPadding: const EdgeInsets.only(bottom: 180),
-                            decoration: InputDecoration(
-                              labelText: L10n.t(
-                                context,
-                                'setupp.locationLabel',
-                              ),
-                              hintText: L10n.t(context, 'setupp.locationHint'),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  width: 2,
-                                ),
-                              ),
-                              suffixIcon: _isDetectingLocation
-                                  ? const Padding(
-                                      padding: EdgeInsets.all(14),
-                                      child: SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      ),
-                                    )
-                                  : IconButton(
-                                      tooltip: L10n.t(
-                                        context,
-                                        'setupp.locationGps',
-                                      ),
-                                      onPressed: _detectLocation,
-                                      icon: const Icon(Icons.my_location),
+                          // v0.9.3: Standort. Kein Ort-Textfeld mehr.
+                          //
+                          // Vorher stand hier ein Freitextfeld fuer die
+                          // Stadt, mit 600-ms-Debounce, Geokodierung und
+                          // 15-km-Abgleich zur GPS-Position. Das ergab einen
+                          // Ort mit ~11 km Genauigkeit - oeffentlich, weil
+                          // profiles.city fuer jeden angemeldeten Nutzer
+                          // lesbar war (Migration 135).
+                          //
+                          // Jetzt gibt es nur noch die GPS-Erkennung, und
+                          // die liefert ausschliesslich das Bundesland. Das
+                          // Bundesland steht bereits auf der naechsten Seite
+                          // (Profil) zur Auswahl - doppelt fragen waere
+                          // nur eine weitere Pflichtangabe.
+                          OutlinedButton.icon(
+                            onPressed: _isDetectingLocation
+                                ? null
+                                : _detectLocation,
+                            icon: _isDetectingLocation
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
                                     ),
+                                  )
+                                : const Icon(Icons.my_location),
+                            label: Text(
+                              L10n.t(context, 'setupp.detectState'),
                             ),
-                            onChanged: (v) async {
-                              final trimmed = v.trim();
-                              _locationDebounce?.cancel();
-                              _locationSeq++;
-                              if (trimmed.isEmpty) {
-                                userPrefsNotifier.setLocation(null);
-                                _locationValidationError = null;
-                                return;
-                              }
-                              // Wenn _detectLocation gerade laeuft, wurde der
-                              // Text programmatisch gesetzt – kein zweiter
-                              // GPS-Aufruf noetig (verhindert App-Hang).
-                              if (_isDetectingLocation) return;
-                              // Debounce: Geokodieren erst bei 600-ms-
-                              // Tipppause - der Platform-Geocoder darf NICHT
-                              // bei jedem Tastenanschlag laufen (Teil-Eingaben
-                              // wie "Berl" wuerden sonst sofort als Fehler
-                              // erscheinen). Sequenz-Token: Nur die Antwort
-                              // zur neuesten Eingabe gilt.
-                              final seq = _locationSeq;
-                              final typed = trimmed;
-                              _locationDebounce =
-                                  Timer(const Duration(milliseconds: 600),
-                                      () async {
-                                final current = _locationCtrl.text.trim();
-                                if (seq != _locationSeq ||
-                                    current.isEmpty ||
-                                    current != typed) {
-                                  return;
-                                }
-                                final result =
-                                    await _locateTypedPlace(current);
-                                if (!mounted || seq != _locationSeq) return;
-                                if (_locationCtrl.text.trim() != current) {
-                                  return;
-                                }
-                                final place = result.place;
-                                if (place == null) {
-                                  // Getippten Text NICHT loeschen - der
-                                  // Nutzer tippt ggf. weiter. Nur klar
-                                  // unterscheiden: echt zu weit weg vs.
-                                  // Ort unbekannt.
-                                  userPrefsNotifier.setLocation(null);
-                                  setState(() {
-                                    _locationValidationError = L10n.t(
-                                      context,
-                                      result.tooFar
-                                          ? 'setup.locationTooFar'
-                                          : 'setup.locationNotFound',
-                                    );
-                                  });
-                                  return;
-                                }
-                                // Angegebener Ort: Text + Koordinaten
-                                // persistieren (lokal + Server), damit
-                                // Entfernungen von HIER aus rechnen.
-                                userPrefsNotifier.setLocation(current);
-                                await ref
-                                    .read(profileProvider.notifier)
-                                    .update(
-                                      city: current,
-                                      locationLat: place.latitude,
-                                      locationLng: place.longitude,
-                                    );
-                                if (SupabaseService.isInitialized) {
-                                  try {
-                                    await ref
-                                        .read(supabaseDatabaseServiceProvider)
-                                        .updateOwnProfile({
-                                      'city': current,
-                                      'location_lat': place.latitude,
-                                      'location_lng': place.longitude,
-                                    });
-                                  } catch (_) {}
-                                }
-                                if (!mounted) return;
-                                if (_locationCtrl.text.trim() != current) {
-                                  return;
-                                }
-                                setState(() {
-                                  _locationValidationError = null;
-                                });
-                              });
-                            },
+                            style: OutlinedButton.styleFrom(
+                              minimumSize: const Size.fromHeight(48),
+                            ),
                           ),
                           if (_locationError != null) ...[
                             const SizedBox(height: 8),
                             _LocationNotice(text: _locationError!),
-                          ],
-                          if (_locationValidationError != null) ...[
-                            const SizedBox(height: 8),
-                            _LocationNotice(text: _locationValidationError!),
                           ],
                           const SizedBox(height: 20),
                           Text(
