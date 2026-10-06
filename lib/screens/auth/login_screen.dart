@@ -50,6 +50,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   /// Erfolg noch Fehler, und der Button dreht sich unbegrenzt. Im Log
   /// stand danach nichts, was sich wie ein haengendes Programm anfuehlt.
   static const Duration _authTimeout = Duration(seconds: 20);
+
+  /// Oeffentlich, damit der Test die 20 Sekunden als Zahl pruefen kann.
+  ///
+  /// Die Konstante ist Teil der Zusage an den Nutzer ("spaetestens nach
+  /// 20 Sekunden meldet die App einen Fehler"). Ein stilles Aendern auf 8
+  /// oder 60 Sekunden waere ein Rueckschritt, den kein Test fangen wuerde,
+  /// weil beide Werte "irgendwann" sind. Als Zeichenkette ist der Wert
+  /// zusaetzlich im L10n sichtbar, damit der gemeldete Text zur Haertung
+  /// passt.
+  static const Duration authTimeout = _authTimeout;
+
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -295,6 +306,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           // Entsperrungs-Flow statt generischer Fehlermeldung.
           context.go(AppRoutes.unbanRequest, extra: e.email);
           return;
+        } else if (e is TimeoutException) {
+          // Eigener Zweig fuer [_authTimeout]. Vorher landete der Timeout
+          // im generischen else und meldete "Etwas ist schiefgelaufen" -
+          // nicht unterscheidbar von einem CAPTCHA-Fehler oder einem
+          // echten Serverfehler. Fuer die offene Registrierungsfrage ist
+          // genau das der Unterschied: dieser Text sagt, dass der Server
+          // nicht erreichbar war, und schliesst CAPTCHA und Passwort aus.
+          //
+          // `duration` ist bewusst nicht im Text: die Snackbar steht nach
+          // 20 Sekunden, nicht "irgendwann". Eine Sekundenzahl im Text
+          // waere eine Zusage, die der Nutzer nicht nachzaehlen kann.
+          debugPrint('[LoginScreen] Timeout nach ${authTimeout.inSeconds} s '
+              '(${_isRegister ? "Registrierung" : "Login"}) - Server nicht '
+              'erreichbar oder Anfrage haengt. '
+              'Supabase-URL und Netzverbindung pruefen.');
+          message = L10n.t(context, 'error.serverUnreachable');
         } else if (e is AppException) {
           // Duplikat-Marker aus SupabaseAuthService.register übersetzen
           // (Supabase selbst meldet bei existierender E-Mail keinen
