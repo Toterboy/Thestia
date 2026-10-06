@@ -7,6 +7,7 @@ import 'package:flutter/widgets.dart'
 import 'package:thestia/models/message.dart';
 import 'package:thestia/providers/chat_provider.dart';
 import 'package:thestia/services/random_chat_service.dart';
+import 'package:thestia/services/relay_poll_backoff.dart';
 import 'package:thestia/services/relay_service.dart';
 import 'package:thestia/services/supabase_service.dart';
 
@@ -56,22 +57,12 @@ class GlobalRelayInbox with WidgetsBindingObserver {
   ({String sessionId, String partnerId})? _activeRandomChat;
   DateTime? _activeRandomChatAt;
 
-  static const Duration _pollInterval = Duration(seconds: 6);
-  static const Duration _maxInterval = Duration(seconds: 45);
+  /// Poll-Takt: Leerfall UND Fehlerfall strecken das Intervall bis 45 s,
+  /// erfolgreiche Zustellung geht sofort auf 6 s zurueck. Die Logik
+  /// liegt in [RelayPollBackoff] (dort testbar, ohne Widget-Binding).
+  final RelayPollBackoff _backoff = RelayPollBackoff();
 
-  /// Leerer-Backoff: Solange nichts kommt, wird das Intervall gestreckt
-  /// (bis [_maxInterval]). Vorher pollte der Eingang stur alle 6 s, auch
-  /// wenn seit Stunden keine Relay-Zeile existiert - das war einer der
-  /// größten Dauer-Verbraucher im Vordergrund. Kommt wieder etwas an,
-  /// geht es sofort auf [_pollInterval] zurück (Latenz bleibt erhalten).
-  static const List<Duration> _backoffLadder = [
-    _pollInterval,
-    Duration(seconds: 12),
-    Duration(seconds: 25),
-    _maxInterval,
-  ];
   static const Duration _sessionCacheTtl = Duration(seconds: 30);
-  int _backoffStep = 0;
 
   /// Benachrichtigungs-Hook (wird vom App-Wurzel-Widget gesetzt, da der
   /// Inbox-Pfad kein WidgetRef hat).
@@ -99,8 +90,7 @@ class GlobalRelayInbox with WidgetsBindingObserver {
     _timer?.cancel();
     _timer = null;
     if (!_running || !_foreground) return;
-    final step = _backoffStep.clamp(0, _backoffLadder.length - 1);
-    _timer = Timer(_backoffLadder[step], () async {
+    _timer = Timer(_backoff.next, () async {
       await _tick();
       _schedule();
     });
@@ -114,7 +104,7 @@ class GlobalRelayInbox with WidgetsBindingObserver {
     if (fg == _foreground) return;
     _foreground = fg;
     if (fg) {
-      _backoffStep = 0;
+      _backoff.reset();
       _schedule();
       unawaited(_tick());
     } else {
@@ -125,8 +115,8 @@ class GlobalRelayInbox with WidgetsBindingObserver {
 
   /// Backoff eine Stufe zurücksetzen (Zustellung war erfolgreich).
   void _resetBackoff() {
-    if (_backoffStep != 0) {
-      _backoffStep = 0;
+    if (_backoff.step != 0) {
+      _backoff.onDelivered();
       _schedule();
     }
   }
@@ -146,43 +136,72 @@ class GlobalRelayInbox with WidgetsBindingObserver {
       // braucht).
       final pending =
           await _ref.read(relayServiceProvider).fetchPending(ack: false);
-      if (pending.isEmpty) {
-        // Leer -> eine Stufe langsamer. Ruhezustand kostet fast nichts.
-        if (_backoffStep < _backoffLadder.length - 1) {
-          _backoffStep++;
-        } else if (_backoffLadder.last < _maxInterval) {
-          _backoffStep = _backoffLadder.length - 1;
-        }
-        return;
-      }
-      _resetBackoff();
-      final acked = <int>[];
-      for (final r in pending) {
-        final routed = await _route(r);
-        if (routed == null) continue; // Unroutierbar: Zeile bleibt liegen.
-        final msg = Message(
-          id: 'relay_${r.id}',
-          senderId: r.senderId,
-          receiverId: SupabaseService.currentUser?.id ?? '',
-          text: r.text,
-          timestamp: r.createdAt,
-          type: r.kind == 'icebreaker'
-              ? MessageType.icebreaker
-              : MessageType.text,
-        );
-        // Ohne WidgetRef: addMessage ohne ref (kein _maybeNotifyMessage);
-        // die Benachrichtigung läuft über den Hook unten.
-        _ref.read(chatProvider.notifier).addMessage(routed, msg);
-        unawaited(_notifyIncoming(routed, msg));
-        acked.add(r.id);
-      }
-      await _ref.read(relayServiceProvider).ackRows(acked);
+      await _handlePending(pending);
     } catch (e) {
+      // WICHTIG: auch der Fehlerfall streckt das Intervall. Vorher stand
+      // hier nur ein debugPrint, der Backoff-Step blieb 0 - bei totem
+      // Netz pollte der Eingang dauerhaft alle 6 s, ohne Leere und ohne
+      // Zustellung als Gegenwert. Genau das erzeugte die Dauerlast.
+      _backoff.onFailure();
       debugPrint('[RelayInbox] Poll fehlgeschlagen: $e');
     } finally {
       _busy = false;
     }
   }
+
+  /// Zustellungs-Logik. Wirft absichtlich NICHT - [_tick] und
+  /// [debugPollOnce] fangen beide und strecken den Backoff.
+  Future<void> _handlePending(List<RelayMessage> pending) async {
+    if (pending.isEmpty) {
+      // Leer -> eine Stufe langsamer. Ruhezustand kostet fast nichts.
+      _backoff.onEmpty();
+      return;
+    }
+    _resetBackoff();
+    final acked = <int>[];
+    for (final r in pending) {
+      final routed = await _route(r);
+      if (routed == null) continue; // Unroutierbar: Zeile bleibt liegen.
+      final msg = Message(
+        id: 'relay_${r.id}',
+        senderId: r.senderId,
+        receiverId: SupabaseService.currentUser?.id ?? '',
+        text: r.text,
+        timestamp: r.createdAt,
+        type: r.kind == 'icebreaker'
+            ? MessageType.icebreaker
+            : MessageType.text,
+      );
+      // Ohne WidgetRef: addMessage ohne ref (kein _maybeNotifyMessage);
+      // die Benachrichtigung läuft über den Hook unten.
+      _ref.read(chatProvider.notifier).addMessage(routed, msg);
+      unawaited(_notifyIncoming(routed, msg));
+      acked.add(r.id);
+    }
+    await _ref.read(relayServiceProvider).ackRows(acked);
+  }
+
+  /// Ein Poll-Durchlauf mit beliebigem Fetch-Ergebnis, ohne Supabase und
+  /// ohne Widget-Binding. Nur fuer Tests - ruft bewusst denselben
+  /// Fehlerpfad wie [_tick], damit die Regression dort unten (Fehler
+  /// streckt das Intervall nicht) tatsaechlich auffällt.
+  @visibleForTesting
+  Future<int> debugPollOnce({
+    required List<RelayMessage> pending,
+    bool throwBeforeHandling = false,
+  }) async {
+    try {
+      if (throwBeforeHandling) throw StateError('kein Netz');
+      await _handlePending(pending);
+    } catch (e) {
+      _backoff.onFailure();
+    }
+    return _backoff.step;
+  }
+
+  /// Aktuelle Backoff-Stufe (0 = schnellstes Intervall). Nur fuer Tests.
+  @visibleForTesting
+  int get debugBackoffStep => _backoff.step;
 
   /// Ordnet eine Relay-Nachricht einer Chat-Session zu. Liefert die
   /// Session-/Match-ID oder null (= nicht zustellbar, nicht acken).
