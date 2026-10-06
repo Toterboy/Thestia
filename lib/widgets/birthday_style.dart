@@ -33,30 +33,62 @@ class BirthdayStyle {
 /// ein stil-eigener EFFEKTRAND (metallic Schein bei Midnight/Mono,
 /// sanftes Schimmern bei Rose/Sage/Gold). Der Effekt lebt IM Stil und
 /// ist nie nur eine Farbänderung.
+/// Vorschaukarte für einen Geburtstags-Stil.
+///
+/// v0.9.3: War eine Mini-Kachel (128 px) mit gestauchten Profilbalken.
+/// Nutzerfeedback: "zeigt kein Vollbild, nur das kleine Bild". Jetzt
+/// eine echte Profil-Vorschau in Phone-Breite, mit frei wählbarer
+/// Groesse ([large]) und optional echtem Profilbild ([avatarPath]) statt
+/// eines Platzhalter-Symbols.
+///
+/// Zwei Betriebsarten, beide mit demselben Aufbau:
+///  * [large] = false - Kachel im Auswahl-Wrap (WhatsNew, Profil-Edit).
+///  * [large] = true - eine Zeile, die zur Laufzeit des Stils die
+///    tatsächliche Breite einnimmt. Für die Einrichtung, wo es eine
+///    Entscheidung ist und nicht nur eine Nebenheit.
 class BirthdayStylePreview extends StatelessWidget {
   const BirthdayStylePreview({
     required this.style,
     required this.selected,
     required this.onTap,
     super.key,
+    this.large = false,
+    this.avatarPath,
   });
 
   final String style;
   final bool selected;
   final VoidCallback onTap;
 
+  /// Vollbreite statt 128-px-Kachel.
+  final bool large;
+
+  /// Pfad des Profilbilds. `null` = Platzhalter-Symbol.
+  ///
+  /// Bewusst ein Pfad und kein Bild-Provider: die Aufloesung gehoert in
+  /// den Aufrufer, der die Signierlogik kennt. So haelt dieses Widget
+  /// keine Abhaengigkeit vom Storage.
+  final String? avatarPath;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final fg = _foregroundFor(style, context);
+
+    final avatarSize = large ? 64.0 : 30.0;
+    final radius = large ? 24.0 : 16.0;
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        width: 128,
+        width: large ? null : 128,
+        padding: large
+            ? const EdgeInsets.fromLTRB(16, 16, 16, 18)
+            : EdgeInsets.zero,
         decoration: BoxDecoration(
           gradient: _gradientFor(style, context),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(radius),
           border: Border.all(
             color: selected
                 ? scheme.primary
@@ -67,47 +99,53 @@ class BirthdayStylePreview extends StatelessWidget {
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Mini-Profil-Kopf (wie ein Profil-Screen gestaucht).
             Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 10, vertical: 10),
+              padding: large
+                  ? const EdgeInsets.all(14)
+                  : const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               decoration: BoxDecoration(
                 gradient: _headerWashFor(style, context),
-                borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(15)),
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(radius - 1),
+                ),
               ),
               child: Row(
                 children: [
                   Container(
-                    width: 30,
-                    height: 30,
+                    width: avatarSize,
+                    height: avatarSize,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: fg.withValues(alpha: 0.25),
                       border: Border.all(
-                          color: fg.withValues(alpha: 0.6)),
+                        color: fg.withValues(alpha: 0.6),
+                        width: large ? 2 : 1,
+                      ),
                     ),
-                    child: Icon(Icons.person, size: 17, color: fg),
+                    clipBehavior: Clip.antiAlias,
+                    child: _avatarChild(fg),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: large ? 14 : 8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Name-Zeile (weicher Balken).
                         Container(
-                          width: 52,
-                          height: 5,
+                          width: large ? 120 : 52,
+                          height: large ? 10 : 5,
                           decoration: BoxDecoration(
                             color: fg.withValues(alpha: 0.7),
                             borderRadius: BorderRadius.circular(3),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: large ? 7 : 4),
                         Container(
-                          width: 38,
-                          height: 3,
+                          width: large ? 88 : 38,
+                          height: large ? 7 : 3,
                           decoration: BoxDecoration(
                             color: fg.withValues(alpha: 0.35),
                             borderRadius: BorderRadius.circular(2),
@@ -118,33 +156,38 @@ class BirthdayStylePreview extends StatelessWidget {
                   ),
                   Icon(
                     Icons.cake_outlined,
-                    size: 15,
+                    size: large ? 26 : 15,
                     color: fg.withValues(alpha: 0.9),
                   ),
                 ],
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(8),
+              padding: large
+                  ? const EdgeInsets.fromLTRB(16, 14, 16, 0)
+                  : const EdgeInsets.all(8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Interessen-Zeile (zwei Chips andeuten).
                   Row(
                     children: [
-                      _miniChip(fg),
-                      const SizedBox(width: 4),
-                      _miniChip(fg),
+                      _miniChip(fg, large),
+                      SizedBox(width: large ? 8 : 4),
+                      _miniChip(fg, large),
                     ],
                   ),
-                  const SizedBox(height: 5),
-                  _line(fg, 64, 0.35),
-                  const SizedBox(height: 4),
-                  _line(fg, 46, 0.25),
-                  const SizedBox(height: 8),
+                  SizedBox(height: large ? 12 : 5),
+                  _line(fg, large ? 200 : 64, 0.35, large),
+                  SizedBox(height: large ? 8 : 4),
+                  _line(fg, large ? 150 : 46, 0.25, large),
+                  SizedBox(height: large ? 14 : 8),
                   Text(
                     L10n.t(context, BirthdayStyle.labelKey(style)),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    style: (large
+                            ? Theme.of(context).textTheme.titleMedium
+                            : Theme.of(context).textTheme.labelSmall)
+                        ?.copyWith(
                           fontWeight:
                               selected ? FontWeight.bold : FontWeight.normal,
                           color: fg,
@@ -159,21 +202,50 @@ class BirthdayStylePreview extends StatelessWidget {
     );
   }
 
+  /// Echtes Profilbild, wenn einer da ist, sonst das Person-Symbol.
+  Widget _avatarChild(Color fg) {
+    final path = avatarPath;
+    if (path == null || path.isEmpty) {
+      return _placeholder(fg);
+    }
+    // Ein Klartext-Signed-Storage-Pfad (drei Teile durch '|') kann
+    // hier nicht aufgeloest werden - das Aufloesen gehoert in den
+    // Aufrufer mit Storage-Zugriff. Dann bleibt das Symbol, statt ein
+    // kaputtes Bild zu zeigen.
+    if (path.contains('|')) {
+      return _placeholder(fg);
+    }
+    return Image.network(
+      path,
+      fit: BoxFit.cover,
+      // Das Bild ist hier Andeutung, nicht Inhalt: wenige Pixel reichen
+      // und der Decode kostet auf schwachen Geraeten nichts.
+      cacheWidth: (large ? 64 : 30) * 3,
+      errorBuilder: (_, _, _) => _placeholder(fg),
+    );
+  }
+
+  Widget _placeholder(Color fg) => Icon(
+        Icons.person,
+        size: large ? 34 : 17,
+        color: fg,
+      );
+
   /// Kleine Interessen-Chip-Andeutung in der Vorschau.
-  Widget _miniChip(Color fg) => Container(
-        width: 30,
-        height: 12,
+  Widget _miniChip(Color fg, bool large) => Container(
+        width: large ? 68 : 30,
+        height: large ? 26 : 12,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(large ? 13 : 6),
           color: fg.withValues(alpha: 0.22),
           border: Border.all(color: fg.withValues(alpha: 0.4)),
         ),
       );
 
   /// Feiner Balken (Platzhalter für Textzeilen).
-  Widget _line(Color fg, double w, double alpha) => Container(
+  Widget _line(Color fg, double w, double alpha, bool large) => Container(
         width: w,
-        height: 3,
+        height: large ? 8 : 3,
         decoration: BoxDecoration(
           color: fg.withValues(alpha: alpha),
           borderRadius: BorderRadius.circular(2),
@@ -321,19 +393,37 @@ class BirthdayStylePreview extends StatelessWidget {
   }
 }
 
-/// Auswahl-Zeile für die 5 Geburtstags-Stile (Einrichtung + Bearbeiten).
+/// Auswahl für die 5 Geburtstags-Stile.
+///
+/// Zwei Betriebsarten:
+///
+///  * [large] = false (Standard) - fünf 128-px-Kacheln im Wrap.
+///    fuer Nebenschauplätze (Profil bearbeiten, Was ist neu).
+///  * [large] = true - EINE Vorschau in voller Breite mit den Styles
+///    als Segment-Reihe darunter. fuer die Einrichtung: dort ist der
+///    Stil eine Entscheidung, und 128 px waren die Ursache der
+///    Rueckmeldung "das ist nur ein kleines Bild".
 class BirthdayStylePicker extends StatelessWidget {
   const BirthdayStylePicker({
     required this.selected,
     required this.onSelected,
     super.key,
+    this.large = false,
+    this.avatarPath,
   });
 
   final String selected;
   final ValueChanged<String> onSelected;
 
+  /// Volle Breite statt Kachel-Wrap.
+  final bool large;
+
+  /// Pfad des Profilbilds fuer die Vorschau (nur bei [large] genutzt).
+  final String? avatarPath;
+
   @override
   Widget build(BuildContext context) {
+    final current = BirthdayStyle.orDefault(selected);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -347,19 +437,86 @@ class BirthdayStylePicker extends StatelessWidget {
           style: const TextStyle(fontSize: 12, color: Colors.grey),
         ),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            for (final style in BirthdayStyle.values)
-              BirthdayStylePreview(
-                style: style,
-                selected: BirthdayStyle.orDefault(selected) == style,
-                onTap: () => onSelected(style),
-              ),
-          ],
-        ),
+        if (!large) ...[
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (final style in BirthdayStyle.values)
+                BirthdayStylePreview(
+                  style: style,
+                  selected: current == style,
+                  onTap: () => onSelected(style),
+                ),
+            ],
+          ),
+        ] else ...[
+          // Eine breite Vorschau des AKTUELLEN Stils. Wechseln tut die
+          // Segment-Reihe darunter - nicht durch Antippen der Vorschau.
+          // Bei 5 Stilen nebeneinander wuerde die Vorschau sonst selbst
+          // zur Kachelreihe schrumpfen.
+          BirthdayStylePreview(
+            style: current,
+            selected: true,
+            large: true,
+            avatarPath: avatarPath,
+            onTap: () {},
+          ),
+          const SizedBox(height: 14),
+          // Segment-Reihe: Wrap statt Row, weil die deutschen Stilnamen
+          // bei 1,5-facher Schrift sonst ueberlaufen wuerden.
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final style in BirthdayStyle.values)
+                _LargeStyleChip(
+                  label: L10n.t(context, BirthdayStyle.labelKey(style)),
+                  selected: current == style,
+                  onTap: () => onSelected(style),
+                ),
+            ],
+          ),
+        ],
       ],
+    );
+  }
+}
+
+/// Stil-Chip fuer die grosse Vorschau. Radius 24 wie die Kacheln der App.
+class _LargeStyleChip extends StatelessWidget {
+  const _LargeStyleChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: selected
+          ? scheme.primaryContainer
+          : scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+      borderRadius: BorderRadius.circular(24),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: selected ? scheme.onPrimaryContainer : scheme.onSurface,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                ),
+          ),
+        ),
+      ),
     );
   }
 }

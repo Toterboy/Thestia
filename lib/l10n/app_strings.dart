@@ -630,6 +630,14 @@ const Map<String, Map<String, String>> _strings = {
         'Was macht dich aus? Ein Bild, ein paar Worte, deine Interessen.',
     'setupq.intro': 'Wie klingst du? Erzähl von dir, als Text und gesprochen.',
     'setupq.habits': 'Wie stehst du zu Rauchen, Alkohol und Drogen?',
+    // v0.9.3: Geburtstags-Stil als eigene Seite der Einrichtung.
+    'setupq.birthday':
+        'Wie soll dein Profil an deinem Geburtstag aussehen?',
+    'setup.birthdaySub':
+        'Einmal im Jahr, an einem einzigen Tag. Waehle eine Richtung.',
+    'setupq.music': 'Was hoerst du gern?',
+    'setup.musicSub':
+        'Gemaeckte, die du magst und solche, die du nicht magst.',
     'setupq.passkey':
         'Magst du dein Konto mit einem Passkey absichern? Geht schnell.',
     'setupq.mfa': 'Magst du zusätzlich einen zweiten Faktor einrichten?',
@@ -1373,6 +1381,15 @@ const Map<String, Map<String, String>> _strings = {
         '{min} bis {max} Sekunden. Du kannst jede Aufnahme vor dem '
         'Speichern anhören.',
     'intro.record': 'Aufnehmen',
+    // Stille-Erkennung (v0.9.3): eine Aufnahme kann die Mindestlaenge
+    // haben und trotzdem nichts enthalten. Diese Texte sind die einzige
+    // Stelle, an der der Nutzer davon erfaehrt wird.
+    'intro.silenceHint': 'Noch kein Ton - bitte sprechen',
+    'intro.voiceDetected': 'Stimme erkannt',
+    'intro.silentTitle': 'Da war nichts zu hören',
+    'intro.silentBody':
+        'In dieser Aufnahme wurde nichts gesagt. Sprich ein paar '
+        'Worte und versuch es noch einmal.',
     'intro.rerecord': 'Neu aufnehmen',
     'intro.recordingState': 'Aufnahme läuft …',
     'intro.pausedState': 'Pausiert',
@@ -3217,6 +3234,14 @@ const Map<String, Map<String, String>> _strings = {
     'setupq.intro':
         'How do you sound? Tell about yourself - in text and voice.',
     'setupq.habits': 'How do you feel about smoking, alcohol and drugs?',
+    // v0.9.3: birthday style as its own setup page.
+    'setupq.birthday':
+        'How should your profile look on your birthday?',
+    'setup.birthdaySub':
+        'Once a year, on a single day. Pick a direction.',
+    'setupq.music': 'What do you like to listen to?',
+    'setup.musicSub':
+        'Tastes you enjoy, and ones you would rather skip.',
     'setupq.passkey':
         'Would you like to secure your account with a passkey? It is quick.',
     'setupq.mfa': 'Would you like to add a second factor on top?',
@@ -3931,6 +3956,15 @@ const Map<String, Map<String, String>> _strings = {
         '{min} to {max} seconds. You can listen to every recording '
         'before saving.',
     'intro.record': 'Record',
+    // Silence detection (v0.9.3): a recording can meet the minimum
+    // length and still contain nothing. These strings are the only
+    // place the user is told about it.
+    'intro.silenceHint': 'No sound yet - please speak',
+    'intro.voiceDetected': 'Voice detected',
+    'intro.silentTitle': 'There was nothing to hear',
+    'intro.silentBody':
+        'Nothing was said in this recording. Say a few words '
+        'and try again.',
     'intro.rerecord': 'Re-record',
     'intro.recordingState': 'Recording …',
     'intro.pausedState': 'Paused',

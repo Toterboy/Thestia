@@ -29,11 +29,13 @@ import 'package:thestia/utils/constants.dart';
 import 'package:thestia/utils/geo_names.dart';
 import 'package:thestia/widgets/age_range_sliders.dart';
 import 'package:thestia/widgets/appearance_selector.dart';
+import 'package:thestia/widgets/birthday_style.dart';
 import 'package:thestia/widgets/buttons.dart';
 import 'package:thestia/widgets/gender_preference_selector.dart';
 import 'package:thestia/widgets/habitude_selector.dart';
 import 'package:thestia/widgets/intro_editor.dart';
 import 'package:thestia/widgets/interview_bubble.dart';
+import 'package:thestia/widgets/music_taste_widgets.dart';
 import 'package:thestia/widgets/selectable_tile.dart';
 import 'package:thestia/widgets/theme_picker.dart';
 
@@ -67,10 +69,34 @@ class _SettingsPrivacyOnceScreenState
   Timer? _locationDebounce;
   // Sequenz-Token: Nur die Antwort zur NEUESTEN Eingabe gilt.
   int _locationSeq = 0;
-  static const int _pageCount = 8;
+  // v0.9.3: 10 Seiten statt 8. Neu sind der Geburtstags-Stil (mit
+  // GROSSER Vorschau) und der Musik-Geschmack - beide wurden bei einer
+  // Registrierung nie abgefragt. Dazu kommen die Drei Fortschrittsschritte
+  // von unten.
+  static const int _pageCount = 10;
   static const int _profilePage = 1;
   static const int _introPage = 2;
-  static const int _habitudesPage = 3;
+  static const int _birthdayPage = 3;
+  static const int _musicPage = 4;
+  static const int _habitudesPage = 5;
+
+  /// Geburtstags-Stil (v0.9.3, eigene Seite in der Einrichtung).
+  ///
+  /// Frueher nur beim App-Update nachfragbar (whats_new_screen.dart) und
+  /// im Profil-Edit. In der Einrichtung stand er nie - wer sich frisch
+  /// registriert hat, hatte den Default, ohne es gewaehlt zu haben.
+  String _birthdayStyle = BirthdayStyle.values.first;
+
+  /// Musik-Geschmack (v0.9.3).
+  ///
+  /// [musicLiked]/[musicDisliked] enthalten SLUGS (z. B. `hip_hop`), nicht
+  /// die deutschen Labels. Der alte Onboarding-Screen schrieb hier
+  /// Labels in `profiles.music_liked`, die das Matching nicht erkannte -
+  /// siehe [kMusicGenres].
+  Set<String> _musicLiked = {};
+  Set<String> _musicDisliked = {};
+  final _songCtrl = TextEditingController();
+  final _bandCtrl = TextEditingController();
 
   // Schritt "Deine Vorstellung" (überspringbar): Werte des IntroEditor.
   String _introText = '';
@@ -113,6 +139,14 @@ class _SettingsPrivacyOnceScreenState
     _bioCtrl.text = profile.bio;
     _selectedState = profile.state;
     _selectedInterests = {...profile.interests};
+    // Vorbelegen: sonst zeigt die Stilauswahl immer classic, auch wenn
+    // jemand bereits einen anderen gesetzt hat (z. B. beim Update).
+    _birthdayStyle = BirthdayStyle.orDefault(profile.birthdayStyle);
+    // Musik ebenfalls vorbelegen (Slug-Form, siehe _musicLiked).
+    _musicLiked = {...profile.musicLiked};
+    _musicDisliked = {...profile.musicDisliked};
+    _songCtrl.text = profile.favoriteSong ?? '';
+    _bandCtrl.text = profile.favoriteBand ?? '';
   }
 
   @override
@@ -122,6 +156,8 @@ class _SettingsPrivacyOnceScreenState
     _locationCtrl.dispose();
     _stateCtrl.dispose();
     _bioCtrl.dispose();
+    _songCtrl.dispose();
+    _bandCtrl.dispose();
     super.dispose();
   }
 
@@ -149,6 +185,12 @@ class _SettingsPrivacyOnceScreenState
   }
 
   void _prevPage() {
+    if (_currentPage == _musicPage) {
+      unawaited(_saveMusicTaste());
+    }
+    if (_currentPage == _birthdayPage) {
+      unawaited(_saveBirthdayStyle());
+    }
     if (_currentPage == _habitudesPage) {
       unawaited(_saveHabitudes());
     }
@@ -181,6 +223,12 @@ class _SettingsPrivacyOnceScreenState
         return;
       }
       _saveIntro();
+    }
+    if (_currentPage == _birthdayPage) {
+      unawaited(_saveBirthdayStyle());
+    }
+    if (_currentPage == _musicPage) {
+      unawaited(_saveMusicTaste());
     }
     if (_currentPage == _habitudesPage) {
       unawaited(_saveHabitudes());
@@ -248,6 +296,60 @@ class _SettingsPrivacyOnceScreenState
     }
   }
 
+  /// Speichert den Geburtstags-Stil (v0.9.3). Eigene Seite, deshalb
+  /// eigener Save - sonst muesste die Style-Seite in [_saveProfileExtras]
+  /// aufgewaecht werden, obwohl sie an einem anderen Ort steht.
+  Future<void> _saveBirthdayStyle() async {
+    try {
+      await ref
+          .read(profileProvider.notifier)
+          .update(birthdayStyle: _birthdayStyle);
+      if (SupabaseService.isInitialized) {
+        await SupabaseDatabaseService(
+          SupabaseService.client,
+        ).updateOwnProfile({'birthday_style': _birthdayStyle});
+      }
+    } catch (e) {
+      debugPrint('[SettingsPrivacyOnce] Geburtstags-Stil speichern '
+          'fehlgeschlagen: $e');
+    }
+  }
+
+  /// Speichert den Musik-Geschmack (v0.9.3).
+  ///
+  /// Gespeichert werden SLUGS. Der alte Onboarding-Screen hat hier
+  /// deutsche Labels ("Hip-Hop") geschrieben; das Matching vergleicht
+  /// aber Slugs (`hip_hop`) - die Angabe war damit wirkungslos.
+  ///
+  /// Leeres Lieblingssong/-band wird als leerer String gespeichert, weil
+  /// die Spalten `NOT NULL DEFAULT ''` sind (Migration 092/119).
+  Future<void> _saveMusicTaste() async {
+    try {
+      final song = _songCtrl.text.trim();
+      final band = _bandCtrl.text.trim();
+      await ref
+          .read(profileProvider.notifier)
+          .update(
+            musicLiked: _musicLiked.toList(),
+            musicDisliked: _musicDisliked.toList(),
+            favoriteSong: song,
+            favoriteBand: band,
+          );
+      if (SupabaseService.isInitialized) {
+        await SupabaseDatabaseService(
+          SupabaseService.client,
+        ).updateOwnProfile({
+          'music_liked': _musicLiked.toList(),
+          'music_disliked': _musicDisliked.toList(),
+          'favorite_song': song,
+          'favorite_band': band,
+        });
+      }
+    } catch (e) {
+      debugPrint('[SettingsPrivacyOnce] Musik speichern fehlgeschlagen: $e');
+    }
+  }
+
   /// Speichert Bio, Bundesland und Interessen der Profil-Seite lokal UND
   /// serverseitig (gleiche Felder wie "Profil bearbeiten").
   Future<void> _saveProfileExtras() async {
@@ -288,6 +390,17 @@ class _SettingsPrivacyOnceScreenState
       final storage = ref.read(supabaseStorageServiceProvider);
       final path = await storage.uploadAvatar(bytes);
       await ref.read(profileProvider.notifier).update(photos: [path]);
+
+      // v0.9.3: Serverseitiger Write fehlte hier vollstaendig. Das Bild
+      // lag in Storage und lokal - aber `profiles.photos` wurde nie
+      // gesetzt. Beim naechsten fetchOwnProfile stand dort wieder der
+      // alte Stand, das Bild verschwand. Von aussen sah es damit aus,
+      // als frage die Einrichtung gar kein Profilbild ab.
+      if (SupabaseService.isInitialized) {
+        await ref
+            .read(supabaseDatabaseServiceProvider)
+            .updateOwnProfile({'photos': [path]});
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(L10n.t(context, 'setupp.photoDone'))),
@@ -365,6 +478,8 @@ class _SettingsPrivacyOnceScreenState
       }
     }
     await _saveHabitudes();
+    await _saveBirthdayStyle();
+    await _saveMusicTaste();
     await settingsNotifier.completeOneTimeSettings();
     // UI-Einstellungen (Blind Mode, Sichtbarkeit, Dark Mode, ...) einmalig
     // serverseitig spiegeln (v0.8.0, ui_prefs) - best effort.
@@ -443,9 +558,11 @@ class _SettingsPrivacyOnceScreenState
     if (!mounted) return;
     switch (choice) {
       case 'passkey':
-        _pageController.jumpToPage(5); // Passkey-Seite
+        // v0.9.3: Zwei neue Seiten (Geburtstag, Musik) sitzen vor
+        // Passkey/MFA, deshalb sind die Zielseiten um zwei gewandert.
+        _pageController.jumpToPage(7); // Passkey-Seite
       case 'mfa':
-        _pageController.jumpToPage(6); // 2FA-Seite
+        _pageController.jumpToPage(8); // 2FA-Seite
       default:
         await _finish();
     }
@@ -1191,7 +1308,86 @@ class _SettingsPrivacyOnceScreenState
                         },
                       ),
                     ),
-                    // Page 4: Gewohnheiten (Rauchen, Alkohol, Drogen)
+                    // Page 4 (v0.9.3): Geburtstags-Stil mit GROSSER Vorschau.
+                    // Eigene Seite, weil die 128-px-Kacheln aus dem
+                    // Wrap als "nur ein kleines Bild" gemeldet wurden -
+                    // und der Stil eine Entscheidung ist, keine
+                    // Nebenheit.
+                    _Page(
+                      questionKey: 'setupq.birthday',
+                      subtitle: L10n.t(context, 'setup.birthdaySub'),
+                      child: SingleChildScrollView(
+                        child: BirthdayStylePicker(
+                          selected: _birthdayStyle,
+                          large: true,
+                          // Kein echtes Profilbild in der Vorschau:
+                          // das Bild liegt verschluesselt als
+                          // "pfad|key|iv" im Storage und laesst sich ohne
+                          // Signier-URL hier nicht laden. Die Vorschau
+                          // zeigt deshalb das Person-Symbol. Die Ausgabe
+                          // "nur ein kleines Bild" bezog sich auf die
+                          // Groesse der Kachel, nicht aufs Motiv.
+                          avatarPath: null,
+                          onSelected: (v) => setState(() {
+                            _birthdayStyle = v;
+                          }),
+                        ),
+                      ),
+                    ),
+                    // Page 5 (v0.9.3): Musik-Geschmack. War im toten
+                    // onboarding_screen und wurde dort mit deutschen
+                    // Labels statt Slugs gespeichert, sodass das
+                    // Matching nichts dazu fand.
+                    _Page(
+                      questionKey: 'setupq.music',
+                      subtitle: L10n.t(context, 'setup.musicSub'),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            MusicTasteEditor(
+                              liked: _musicLiked.toList(),
+                              disliked: _musicDisliked.toList(),
+                              onChanged: (liked, disliked) {
+                                setState(() {
+                                  _musicLiked = liked.toSet();
+                                  _musicDisliked = disliked.toSet();
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _songCtrl,
+                              maxLength: 120,
+                              scrollPadding:
+                                  const EdgeInsets.only(bottom: 180),
+                              decoration: InputDecoration(
+                                labelText: L10n.t(
+                                  context,
+                                  'profile.edit.favoriteSong',
+                                ),
+                                counterText: '',
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              controller: _bandCtrl,
+                              maxLength: 120,
+                              scrollPadding:
+                                  const EdgeInsets.only(bottom: 180),
+                              decoration: InputDecoration(
+                                labelText: L10n.t(
+                                  context,
+                                  'profile.edit.favoriteBand',
+                                ),
+                                counterText: '',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Page 6: Gewohnheiten (Rauchen, Alkohol, Drogen)
                     _Page(
                       questionKey: 'setupq.habits',
                       subtitle: L10n.t(context, 'setupp.habitsSub'),
