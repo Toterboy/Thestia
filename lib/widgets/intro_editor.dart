@@ -7,6 +7,7 @@ import 'package:record/record.dart';
 
 import 'package:thestia/data/intro_prompt_catalog.dart';
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/services/speech_level_detector.dart';
 import 'package:thestia/services/supabase_storage_service.dart';
 import 'package:thestia/widgets/audio_review_sheet.dart';
 
@@ -58,6 +59,13 @@ class IntroEditor extends ConsumerStatefulWidget {
 
   /// Abfrage-Intervall der Amplitude (ms).
   static const int ampIntervalMs = 100;
+
+  /// Fenster der Stille-Erkennung in Messungen (10 Hz => 60 = 6 Sekunden).
+  ///
+  /// Fenster bewusst kleiner als die Mindestlaenge: Wer 10 Sekunden
+  /// aufnimmt und erst in der letzten Sekunde spricht, soll das noch
+  /// merken, aber 10 Sekunden Stille am Stueck nicht.
+  static const int speechWindow = 60;
 }
 
 class _IntroEditorState extends ConsumerState<IntroEditor> {
@@ -70,6 +78,19 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
   int _recordSeconds = 0;
   Timer? _recordTimer;
   bool _uploading = false;
+
+  /// Stille-Erkennung der laufenden Aufnahme.
+  ///
+  /// Gefuellt von [_AmplitudeBars] ueber [IntroEditor.consumeLevel], weil
+  /// dort der Amplitude-Stream bereits angehaengt ist. Haelt die
+  /// Entscheidung "wurde etwas gesagt" an EINER Stelle, statt sie aus
+  /// der Balken-Anzeige zu erraten.
+  final SpeechLevelDetector _speech = SpeechLevelDetector(
+    window: IntroEditor.speechWindow,
+  );
+
+  /// Vom Balken-Widget gemeldeter Wechsel "Ton <-> Stille".
+  bool _silent = true;
 
   /// Rotations-Seed fuer die Prompt-Chips. Einmal in initState
   /// gezogen und gehalten: die Chips duerfen waehrend des
@@ -129,15 +150,32 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
         await _recorder.stop();
         return;
       }
+      _speech.reset();
       setState(() {
         _recording = true;
         _paused = false;
         _recordSeconds = 0;
+        _silent = true;
       });
       _startTimer();
     } catch (e) {
       debugPrint('[IntroEditor] Start fehlgeschlagen: $e');
       if (mounted) setState(() => _recording = false);
+    }
+  }
+
+  /// Vom [_AmplitudeBars]-Widget bei jedem Pegelwert aufgerufen.
+  ///
+  /// Der Balken-Subscriber ist die EINZIGE Quelle fuer Pegel: dort
+  /// haengt `onAmplitudeChanged`. Das hier nimmt die Werte entgegen und
+  /// entscheidet. So braucht die Erkennung keinen zweiten
+  /// Recorder-Zugriff.
+  void _onLevel(double? rawDb) {
+    final changed = _speech.addSample(rawDb);
+    // Nur bei einem Wechsel "Ton <-> Stille" neu bauen. Sonst wuerde
+    // der komplette Editor 10-mal pro Sekunde neu aufbauen.
+    if (changed || _silent != _speech.hasSpeech) {
+      if (mounted) setState(() => _silent = !_speech.hasSpeech);
     }
   }
 
@@ -190,9 +228,50 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
         if (mounted) setState(() => _uploading = false);
         return;
       }
-      final file = File(recordedPath);
+      final File file = File(recordedPath);
       if (!mounted) {
         if (await file.exists()) await file.delete();
+        return;
+      }
+
+      // STILLE-PRUEFUNG (v0.9.3): Vor dem Review-Sheet. Eine Aufnahme
+      // ohne verstaendlichen Ton kann 10+ Sekunden dauern und trotzdem
+      // nichts enthalten - der Mindestlaengen-Check im Review-Sheet
+      // sieht das nicht. Hier wird abgefangen, BEVOR der Nutzer sich
+      // eine stille Aufnahme anhoert und "Senden" klickt.
+      if (!_speech.hasSpeech) {
+        if (await file.exists()) await file.delete();
+        if (!mounted) {
+          setState(() => _uploading = false);
+          return;
+        }
+        setState(() => _uploading = false);
+        final again = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            icon: Icon(
+              Icons.mic_off_outlined,
+              color: Theme.of(ctx).colorScheme.error,
+              size: 40,
+            ),
+            title: Text(L10n.t(ctx, 'intro.silentTitle')),
+            content: Text(L10n.t(ctx, 'intro.silentBody')),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: Text(L10n.t(ctx, 'common.cancel')),
+              ),
+              FilledButton.icon(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                icon: const Icon(Icons.mic),
+                label: Text(L10n.t(ctx, 'intro.record')),
+              ),
+            ],
+          ),
+        );
+        if (again == true) {
+          await _startRecording();
+        }
         return;
       }
 
@@ -450,8 +529,22 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
           recorder: _recorder,
           active: _recording && !_paused,
           color: liveColor,
+          onLevel: _onLevel,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 6),
+        // Live-Anzeige, ob bisher etwas gesagt wurde. Wird im
+        // Stop-Dialog zur Entscheidung gebraucht und hilft SOFORT,
+        // statt erst nach 10 Sekunden.
+        Text(
+          _silent
+              ? L10n.t(context, 'intro.silenceHint')
+              : L10n.t(context, 'intro.voiceDetected'),
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: _silent ? scheme.error : scheme.primary,
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+        const SizedBox(height: 8),
         Row(
           children: [
             IconButton(
@@ -561,11 +654,17 @@ class _AmplitudeBars extends StatefulWidget {
     required this.recorder,
     required this.active,
     required this.color,
+    this.onLevel,
   });
 
   final AudioRecorder recorder;
   final bool active;
   final Color color;
+
+  /// Meldet jeden Pegel nach aussen, damit der Editor die
+  /// Stille-Entscheidung treffen kann, ohne den Recorder ein zweites Mal
+  /// abzufragen.
+  final void Function(double? rawDb)? onLevel;
 
   @override
   State<_AmplitudeBars> createState() => _AmplitudeBarsState();
@@ -603,6 +702,9 @@ class _AmplitudeBarsState extends State<_AmplitudeBars> {
             const Duration(milliseconds: IntroEditor.ampIntervalMs))
         .listen((amp) {
       if (!mounted) return;
+      // Rohwert weiterreichen, nicht den normalisierten - die
+      // Normalisierung gehoert in eine Stelle, dem Detector.
+      widget.onLevel?.call(amp.current);
       // dBFS (-60..0) auf 0..1 normieren.
       final db = amp.current.clamp(-60.0, 0.0);
       setState(() {
