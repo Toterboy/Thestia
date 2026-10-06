@@ -2540,6 +2540,13 @@ const Map<String, Map<String, String>> _strings = {
     'error.captchaRejected':
         'Der Sicherheitscheck wurde vom Server '
         'abgelehnt. Bitte versuche es erneut.',
+    // eigener Fall fuer den 20-Sekunden-Timeout aus login_screen.dart:
+    // er sagt "der Server ist nicht erreichbar", nicht "irgendetwas ist
+    // schiefgelaufen". Ohne diesen Zweig landet der Timeout in
+    // error.generic und ist von einem CAPTCHA-Fehler nicht zu unterscheiden.
+    'error.serverUnreachable':
+        'Der Server hat nicht geantwortet. Prüfe deine Internetverbindung '
+        'und versuche es erneut.',
     'error.signupFailed':
         'Registrierung auf dem Server fehlgeschlagen. '
         'Bitte versuche es später erneut.',
@@ -2848,6 +2855,31 @@ const Map<String, Map<String, String>> _strings = {
     'admin.statusApproved': 'Freigegeben',
     'admin.statusRejected': 'Abgelehnt',
     'admin.statusNotified': 'Quittiert',
+    // Admin-Überarbeitung (ROADMAP Zeile 807): Kennzahlen-Zeile,
+    // Suche im Sperren-Tab, einheitliche Leerzustände.
+    'admin.metricsTitle': 'Kennzahlen',
+    'admin.metricOpenReports': 'Offene Meldungen',
+    'admin.metricNewBugs': 'Neue Bugs',
+    'admin.metricNewBugsSub': 'letzte 24 Stunden',
+    'admin.metricPendingChecks': 'Offene Prüfungen',
+    'admin.metricBans': 'Aktive Sperren',
+    'admin.metricNone': 'Nichts offen',
+    'admin.searchBans': 'Sperren durchsuchen',
+    'admin.searchBansHint': 'E-Mail, Begründung oder Person',
+    'admin.searchBansResult': '{count} von {total} Sperren',
+    'admin.searchBansEmpty':
+        'Keine Sperre passt zu dieser Suche. Suchbegriff loeschen oder '
+        'anders schreiben.',
+    'admin.searchBansClear': 'Suche leeren',
+    'admin.noReportsSearch':
+        'Keine offenen Meldungen. Gesuchte Meldung wurde bereits '
+        'bearbeitet oder nie gemeldet.',
+    'admin.emptyReportsTitle': 'Nichts zu bearbeiten',
+    'admin.emptyBugsTitle': 'Keine neuen Bugs',
+    'admin.emptyModerationTitle': 'Keine offenen Moderationen',
+    'admin.emptyAppealsTitle': 'Keine Einsprueche',
+    'admin.emptyBansTitle': 'Keine Sperren',
+    'admin.emptyVerificationsTitle': 'Keine offenen Verifizierungen',
   },
   'en': {
     'auth.login': 'Log in',
@@ -5170,6 +5202,13 @@ const Map<String, Map<String, String>> _strings = {
     'error.captchaRejected':
         'The security check was rejected by the server. '
         'Please try again.',
+    // Own case for the 20-second timeout in login_screen.dart: it says
+    // "the server did not answer", not "something went wrong". Without
+    // this branch the timeout lands in error.generic and cannot be told
+    // apart from a CAPTCHA failure.
+    'error.serverUnreachable':
+        'The server did not respond. Check your internet connection '
+        'and try again.',
     'error.signupFailed':
         'Sign-up failed on the server. Please try again '
         'later.',
@@ -5464,5 +5503,30 @@ const Map<String, Map<String, String>> _strings = {
     'admin.statusApproved': 'Approved',
     'admin.statusRejected': 'Rejected',
     'admin.statusNotified': 'Acknowledged',
+    // Admin rework (ROADMAP line 807): metrics row,
+    // search in the bans tab, uniform empty states.
+    'admin.metricsTitle': 'Key figures',
+    'admin.metricOpenReports': 'Open reports',
+    'admin.metricNewBugs': 'New bugs',
+    'admin.metricNewBugsSub': 'last 24 hours',
+    'admin.metricPendingChecks': 'Open checks',
+    'admin.metricBans': 'Active bans',
+    'admin.metricNone': 'Nothing open',
+    'admin.searchBans': 'Search bans',
+    'admin.searchBansHint': 'Email, reason or person',
+    'admin.searchBansResult': '{count} of {total} bans',
+    'admin.searchBansEmpty':
+        'No ban matches this search. Clear the search term or try a '
+        'different one.',
+    'admin.searchBansClear': 'Clear search',
+    'admin.noReportsSearch':
+        'No open reports. The report you are looking for was already '
+        'handled or never submitted.',
+    'admin.emptyReportsTitle': 'Nothing to handle',
+    'admin.emptyBugsTitle': 'No new bugs',
+    'admin.emptyModerationTitle': 'No open moderations',
+    'admin.emptyAppealsTitle': 'No appeals',
+    'admin.emptyBansTitle': 'No bans',
+    'admin.emptyVerificationsTitle': 'No open verifications',
   },
 };

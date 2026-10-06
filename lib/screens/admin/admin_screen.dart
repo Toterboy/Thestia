@@ -7,12 +7,16 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/screens/admin/admin_counts.dart';
 import 'package:thestia/services/photo_moderation_service.dart';
 import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/services/supabase_storage_service.dart';
 import 'package:thestia/utils/constants.dart';
+import 'package:thestia/widgets/admin_metric_row.dart';
 import 'package:thestia/widgets/ai_badge.dart';
+import 'package:thestia/widgets/pill_tab_bar.dart';
+import 'package:thestia/widgets/states.dart';
 
 /// Hilfsfunktion: Prueft, ob der aktuell eingeloggte Nutzer der Admin ist.
 ///
@@ -110,63 +114,174 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
 
     return DefaultTabController(
       length: 6,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(L10n.t(context, 'admin.title')),
-          bottom: TabBar(
-            isScrollable: true,
-            // Abgerundete Klick-Animation (kein eckiger Aufblitzer).
-            splashBorderRadius: const BorderRadius.all(Radius.circular(24)),
-            tabs: [
-              Tab(
-                text: L10n.t(context, 'admin.tabReports'),
-                icon: const Icon(Icons.flag),
+      child: Builder(
+        builder: (context) {
+          final counts = ref.watch(adminCountsProvider).valueOrNull;
+          final controller = DefaultTabController.of(context);
+          final openReports = counts?.openReports ?? 0;
+          final newBugs = counts?.bugsLast24h ?? 0;
+
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(L10n.t(context, 'admin.title')),
+              // Pillen-Indikator statt TabBar: der TabBar-Indikator ist
+              // ein Unterstrich zwischen den Labels und damit bei sechs
+              // Tabs mit Icon mehrdeutig. Die Pille sitzt HINTER dem
+              // aktiven Tab und traegt dieselbe Zahl wie die Kennzahlen-
+              // Zeile, sodass man von beiden Stellen sieht, wo Arbeit
+              // wartet.
+              //
+              // PillTabBar baut seinen AnimatedBuilder selbst: die
+              // Auswahl ist Teilzustand des Widgets, nicht des Aufrufers.
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(52),
+                child: PillTabBar(
+                  controller: controller,
+                  tabs: [
+                    PillTab(
+                      label: L10n.t(context, 'admin.tabReports'),
+                      icon: Icons.flag,
+                      count: openReports > 0 ? openReports : null,
+                    ),
+                    PillTab(
+                      label: L10n.t(context, 'admin.tabBugs'),
+                      icon: Icons.bug_report,
+                      count: newBugs > 0 ? newBugs : null,
+                    ),
+                    PillTab(
+                      label: L10n.t(context, 'admin.tabVerification'),
+                      icon: Icons.verified,
+                      count: (counts?.pendingVerifications ?? 0) > 0
+                          ? counts!.pendingVerifications
+                          : null,
+                    ),
+                    PillTab(
+                      label: L10n.t(context, 'admin.tabModeration'),
+                      icon: Icons.photo_library,
+                    ),
+                    PillTab(
+                      label: L10n.t(context, 'admin.tabAppeals'),
+                      icon: Icons.image_search,
+                      count: (counts?.pendingAppeals ?? 0) > 0
+                          ? counts!.pendingAppeals
+                          : null,
+                    ),
+                    PillTab(
+                      label: L10n.t(context, 'admin.tabBans'),
+                      icon: Icons.block,
+                      count: (counts?.bans ?? 0) > 0 ? counts!.bans : null,
+                    ),
+                  ],
+                ),
               ),
-              Tab(
-                text: L10n.t(context, 'admin.tabBugs'),
-                icon: const Icon(Icons.bug_report),
-              ),
-              Tab(
-                text: L10n.t(context, 'admin.tabVerification'),
-                icon: const Icon(Icons.verified),
-              ),
-              Tab(
-                text: L10n.t(context, 'admin.tabModeration'),
-                icon: const Icon(Icons.photo_library),
-              ),
-              Tab(
-                text: L10n.t(context, 'admin.tabAppeals'),
-                icon: const Icon(Icons.image_search),
-              ),
-              Tab(
-                text: L10n.t(context, 'admin.tabBans'),
-                icon: const Icon(Icons.block),
-              ),
-            ],
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.logout),
-              tooltip: L10n.t(context, 'admin.close'),
-              // WICHTIG: context.go statt Navigator.pop - der Admin-Screen
-              // wird per GoRouter-go erreicht (kein Stack-Eintrag), ein
-              // Navigator.pop ging hinter die Root-Route und erzeugte
-              // einen Blackscreen.
-              onPressed: () => context.go(AppRoutes.home),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.logout),
+                  tooltip: L10n.t(context, 'admin.close'),
+                  // WICHTIG: context.go statt Navigator.pop - der
+                  // Admin-Screen wird per GoRouter-go erreicht (kein
+                  // Stack-Eintrag), ein Navigator.pop ging hinter die
+                  // Root-Route und erzeugte einen Blackscreen.
+                  onPressed: () => context.go(AppRoutes.home),
+                ),
+              ],
             ),
-          ],
-        ),
-        body: const TabBarView(
-          children: [
-            _UserReportsTab(),
-            _BugReportsTab(),
-            _VerificationTab(),
-            _PhotoModerationList(),
-            _PhotoAppealsTab(),
-            _BansTab(),
-          ],
-        ),
+            body: const Column(
+              children: [
+                // Kennzahlen-Zeile: beantwortet "wo liegt Arbeit" ohne
+                // Durchklicken. Die Tabs melden dem Provider nach einer
+                // Aktion ueber `refreshAdminCounts(ref)`, damit die Zeile
+                // nicht bis zum naechsten Oeffnen falsch bleibt.
+                _AdminMetricsBar(),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      _UserReportsTab(),
+                      _BugReportsTab(),
+                      _VerificationTab(),
+                      _PhotoModerationList(),
+                      _PhotoAppealsTab(),
+                      _BansTab(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
+    );
+  }
+}
+
+/// Kennzahlen-Zeile ueber dem Tab-Inhalt.
+///
+/// Eigene kleine Consumer-Widget, weil sie auf `adminCountsProvider`
+/// hoert. Nach einer Aktion in einem Tab wird der Provider invalidiert -
+/// das gehoert an die eine Stelle, an der die Zeile gezeichnet wird, sonst
+/// vergisst es einer der sechs Tabs.
+class _AdminMetricsBar extends ConsumerWidget {
+  const _AdminMetricsBar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(adminCountsProvider);
+    final counts = async.valueOrNull;
+    // Der TabController kommt aus dem DefaultTabController ueber den
+    // Kontext, nicht ueber eine Property: die Zeile wird neu gebaut, wenn
+    // sich die Kennzahlen aendern, und haelt sonst einen Controller fest,
+    // den der DefaultTabController beim Screenwechsel schon freigegeben hat.
+    final controller = DefaultTabController.of(context);
+
+    // Ladezustand: keine Zeilen aus Platzhaltern bauen. "-1" waere eine
+    // gelogene Zahl; die Zeile erscheint, sobald echte Werte da sind.
+    if (counts == null) {
+      return async.hasError
+          ? const SizedBox.shrink()
+          : const Padding(
+              padding: EdgeInsets.symmetric(vertical: 14),
+              child: Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            );
+    }
+
+    void goToTab(int index) {
+      // Leere Tabs sind keine Arbeit: nur springen, wenn dort etwas liegt.
+      if (index >= controller.length) return;
+      controller.animateTo(index);
+    }
+
+    final openReports = counts.openReports;
+    final newBugs = counts.bugsLast24h;
+    final pendingChecks = counts.pendingVerifications + counts.pendingAppeals;
+
+    return AdminMetricRow(
+      metrics: [
+        AdminMetric(
+          label: L10n.t(context, 'admin.metricOpenReports'),
+          value: '$openReports',
+          urgent: openReports > 0,
+          onTap: () => goToTab(0),
+        ),
+        AdminMetric(
+          label: L10n.t(context, 'admin.metricNewBugs'),
+          value: '$newBugs',
+          subtitle: L10n.t(context, 'admin.metricNewBugsSub'),
+          urgent: counts.bugsRising,
+          onTap: () => goToTab(1),
+        ),
+        AdminMetric(
+          label: L10n.t(context, 'admin.metricPendingChecks'),
+          value: '$pendingChecks',
+          urgent: pendingChecks > 0,
+          onTap: () => goToTab(2),
+        ),
+      ],
     );
   }
 }
@@ -179,15 +294,30 @@ class _AsyncList extends StatelessWidget {
     required this.loading,
     required this.error,
     required this.items,
+    required this.emptyIcon,
+    required this.emptyTitle,
     required this.emptyText,
     required this.itemBuilder,
     required this.onRetry,
+    this.header,
   });
 
   final bool loading;
   final String? error;
   final List<Map<String, dynamic>> items;
+
+  /// Symbol des Leerzustands. Bewusst Teil des Geraests: die drei Tabs, die
+  /// sich vorher je ein eigenes `Center(child: Text(...))` gebaut hatten,
+  /// zeigten dasselbe Nichts ohne Hinweis, was dort normalerweise steht.
+  final IconData emptyIcon;
+
+  final String emptyTitle;
   final String emptyText;
+
+  /// Optionale Leiste ueber der Liste (z. B. das Suchfeld im Sperren-Tab).
+  /// Gehoert in den Scroll-Bereich, damit Pull-to-refresh sie mitzieht.
+  final Widget? header;
+
   final Widget Function(BuildContext, Map<String, dynamic>) itemBuilder;
   final Future<void> Function() onRetry;
 
@@ -195,45 +325,48 @@ class _AsyncList extends StatelessWidget {
   Widget build(BuildContext context) {
     if (loading) return const Center(child: CircularProgressIndicator());
     if (error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(L10n.tf(context, 'admin.error', {'error': '$error'})),
-            const SizedBox(height: 8),
-            TextButton.icon(
-              onPressed: () => onRetry(),
-              icon: const Icon(Icons.refresh),
-              label: Text(L10n.t(context, 'admin.retry')),
-            ),
-          ],
-        ),
+      return ErrorState(
+        message: L10n.tf(context, 'admin.error', {'error': '$error'}),
+        onRetry: () => onRetry(),
       );
     }
-    if (items.isEmpty) return Center(child: Text(emptyText));
+    if (items.isEmpty) {
+      return EmptyState(
+        icon: emptyIcon,
+        title: emptyTitle,
+        message: emptyText,
+      );
+    }
     return RefreshIndicator(
       onRefresh: onRetry,
       child: ListView.separated(
         padding: const EdgeInsets.all(12),
-        itemCount: items.length,
+        itemCount: items.length + (header == null ? 0 : 1),
         separatorBuilder: (_, _) => const SizedBox(height: 8),
-        // Card-Look konsistent zur restlichen Nutzeroberfläche.
-        itemBuilder: (context, i) => Card(
-          margin: EdgeInsets.zero,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(
-              color: Theme.of(
-                context,
-              ).colorScheme.outlineVariant.withValues(alpha: 0.5),
+        // Card-Look konsistent zur restlichen Nutzeroberflaeche. Radius 12
+        // ist hier Absicht und nicht der 24er der Kacheln: eine Liste von
+        // dicht gestapelten Eintraegen braucht eine engere Rundung, sonst
+        // wirken die Zeilen wie Kacheln.
+        itemBuilder: (context, i) {
+          if (header != null && i == 0) return header!;
+          final index = i - (header == null ? 0 : 1);
+          return Card(
+            margin: EdgeInsets.zero,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(
+                color: Theme.of(
+                  context,
+                ).colorScheme.outlineVariant.withValues(alpha: 0.5),
+              ),
             ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 2),
-            child: itemBuilder(context, items[i]),
-          ),
-        ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: itemBuilder(context, items[index]),
+            ),
+          );
+        },
       ),
     );
   }
@@ -293,6 +426,9 @@ class _UserReportsTabState extends ConsumerState<_UserReportsTab> {
       final db = ref.read(supabaseDatabaseServiceProvider);
       await db.resolveUserReport(id);
       await _load();
+      // Kennzahlen nachziehen: "Offene Meldungen" steht oben und waere
+      // sonst bis zum naechsten Oeffnen um genau diese eine zu hoch.
+      refreshAdminCounts(ref);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -312,6 +448,8 @@ class _UserReportsTabState extends ConsumerState<_UserReportsTab> {
       loading: _loading,
       error: _error,
       items: _items,
+      emptyIcon: Icons.flag_outlined,
+      emptyTitle: L10n.t(context, 'admin.emptyReportsTitle'),
       emptyText: L10n.t(context, 'admin.noReports'),
       onRetry: _load,
       itemBuilder: (context, data) {
@@ -324,76 +462,77 @@ class _UserReportsTabState extends ConsumerState<_UserReportsTab> {
         final reporterShort = '${data['reporterId'] ?? '?'}';
         final messagesCount =
             (data['messages'] as List<dynamic>? ?? <dynamic>[]).length;
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Chip(
-                      label: Text(
-                        status == 'pending'
-                            ? L10n.t(context, 'admin.statusPending')
-                            : status,
-                      ),
-                      backgroundColor: status == 'pending'
-                          ? theme.colorScheme.primaryContainer
-                          : theme.colorScheme.surfaceContainerHighest,
+        // Die Karte liefert _AsyncList. Hier steht nur der INHALT - vorher
+        // lag ein zweites Card() in diesem Builder, sodass jede Meldung
+        // zweimal gerahmt war (ausserhalb der Liste noch einmal 12/6
+        // eingerueckt, also drei Ringe).
+        return Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Chip(
+                    label: Text(
+                      status == 'pending'
+                          ? L10n.t(context, 'admin.statusPending')
+                          : status,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        type,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                    backgroundColor: status == 'pending'
+                        ? theme.colorScheme.primaryContainer
+                        : theme.colorScheme.surfaceContainerHighest,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      type,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                SelectableText(
-                  L10n.tf(context, 'admin.reportedUser', {'id': reportedId}),
-                ),
-                SelectableText(
-                  L10n.tf(context, 'admin.reporter', {
-                    'id': reporterShort.length > 12
-                        ? '${reporterShort.substring(0, 12)}…'
-                        : reporterShort,
-                  }),
-                ),
-                Text(
-                  L10n.tf(context, 'admin.messagesAttached', {
-                    'count': '$messagesCount',
-                  }),
-                ),
-                if (description.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  SelectableText(description),
+                  ),
                 ],
+              ),
+              const SizedBox(height: 8),
+              SelectableText(
+                L10n.tf(context, 'admin.reportedUser', {'id': reportedId}),
+              ),
+              SelectableText(
+                L10n.tf(context, 'admin.reporter', {
+                  'id': reporterShort.length > 12
+                      ? '${reporterShort.substring(0, 12)}…'
+                      : reporterShort,
+                }),
+              ),
+              Text(
+                L10n.tf(context, 'admin.messagesAttached', {
+                  'count': '$messagesCount',
+                }),
+              ),
+              if (description.isNotEmpty) ...[
                 const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _fmtTs(context, data['createdAt']),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
+                SelectableText(description),
+              ],
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _fmtTs(context, data['createdAt']),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    if (status == 'pending')
-                      TextButton(
-                        onPressed: () => _resolve(data['id'] as String),
-                        child: Text(L10n.t(context, 'admin.resolved')),
-                      ),
-                  ],
-                ),
-              ],
-            ),
+                  ),
+                  if (status == 'pending')
+                    TextButton(
+                      onPressed: () => _resolve(data['id'] as String),
+                      child: Text(L10n.t(context, 'admin.resolved')),
+                    ),
+                ],
+              ),
+            ],
           ),
         );
       },
@@ -449,6 +588,8 @@ class _BugReportsTabState extends ConsumerState<_BugReportsTab> {
       loading: _loading,
       error: _error,
       items: _items,
+      emptyIcon: Icons.bug_report_outlined,
+      emptyTitle: L10n.t(context, 'admin.emptyBugsTitle'),
       emptyText: L10n.t(context, 'admin.noBugs'),
       onRetry: _load,
       itemBuilder: (context, data) {
@@ -457,45 +598,43 @@ class _BugReportsTabState extends ConsumerState<_BugReportsTab> {
         final deviceInfo = (data['deviceInfo'] as String? ?? '').trim();
         final attachments = data['attachmentCount'] as int? ?? 0;
         final userId = data['userId'] as String? ?? '';
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+        // Wie im Meldungs-Tab: kein eigenes Card(), die Liste rahmt.
+        return Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SelectableText(
+                description.isNotEmpty
+                    ? description
+                    : L10n.t(context, 'admin.noDescription'),
+                style: theme.textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                L10n.tf(context, 'admin.attachments', {
+                  'count': '$attachments',
+                  'time': _fmtTs(context, data['createdAt']),
+                }),
+                style: theme.textTheme.bodySmall,
+              ),
+              if (deviceInfo.isNotEmpty) ...[
+                const SizedBox(height: 4),
                 SelectableText(
-                  description.isNotEmpty
-                      ? description
-                      : L10n.t(context, 'admin.noDescription'),
-                  style: theme.textTheme.bodyMedium,
+                  deviceInfo,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
-                const SizedBox(height: 8),
+              ],
+              if (userId.isNotEmpty) ...[
+                const SizedBox(height: 4),
                 Text(
-                  L10n.tf(context, 'admin.attachments', {
-                    'count': '$attachments',
-                    'time': _fmtTs(context, data['createdAt']),
-                  }),
+                  L10n.tf(context, 'admin.user', {'id': userId}),
                   style: theme.textTheme.bodySmall,
                 ),
-                if (deviceInfo.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  SelectableText(
-                    deviceInfo,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-                if (userId.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  SelectableText(
-                    L10n.tf(context, 'admin.user', {'id': userId}),
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ],
               ],
-            ),
+            ],
           ),
         );
       },
@@ -586,6 +725,7 @@ class _VerificationTabState extends ConsumerState<_VerificationTab> {
         },
       );
       await _load();
+      refreshAdminCounts(ref);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -651,11 +791,24 @@ class _VerificationTabState extends ConsumerState<_VerificationTab> {
             'est': est.toStringAsFixed(0),
             'dev': dev.toStringAsFixed(0),
           });
+    // Abweichung > 2 Jahre faerbt die Karte rot. Das ist die einzige
+    // Stelle im Screen, die eine semantische Farbe benutzt - sie markiert
+    // den Fall, der vor allen anderen zu pruefen ist.
+    final flagged = dev > 2;
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      color: dev > 2
+      margin: EdgeInsets.zero,
+      elevation: 0,
+      color: flagged
           ? Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.35)
           : null,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Theme.of(
+            context,
+          ).colorScheme.outlineVariant.withValues(alpha: 0.5),
+        ),
+      ),
       child: ListTile(
         title: Text(name),
         subtitle: Column(
@@ -665,9 +818,7 @@ class _VerificationTabState extends ConsumerState<_VerificationTab> {
             SelectableText(userId),
             Text(
               ageLine,
-              style: TextStyle(
-                fontWeight: dev > 2 ? FontWeight.bold : FontWeight.normal,
-              ),
+              style: TextStyle(fontWeight: flagged ? FontWeight.bold : null),
             ),
           ],
         ),
@@ -707,42 +858,34 @@ class _VerificationTabState extends ConsumerState<_VerificationTab> {
       return const Center(child: CircularProgressIndicator());
     }
     if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(L10n.tf(context, 'admin.error', {'error': '$_error'})),
-            const SizedBox(height: 8),
-            TextButton.icon(
-              onPressed: _load,
-              icon: const Icon(Icons.refresh),
-              label: Text(L10n.t(context, 'admin.retry')),
-            ),
-          ],
-        ),
+      return ErrorState(
+        message: L10n.tf(context, 'admin.error', {'error': '$_error'}),
+        onRetry: _load,
+      );
+    }
+    // Beide Queues leer: EIN Leerzustand statt zweierhalber. Vorher stand
+    // "Keine offenen Verifizierungen" oben und "Keine Auto-Freigaben" darunter
+    // - zwei Saetze fuer den Zustand "nichts zu tun".
+    if (_items.isEmpty && _auditItems.isEmpty) {
+      return EmptyState(
+        icon: Icons.verified_outlined,
+        title: L10n.t(context, 'admin.emptyVerificationsTitle'),
+        message: L10n.t(context, 'admin.noVerifications'),
       );
     }
     // Pending-Queue UND Auto-Stichproben in EINER scrollbaren Liste
-    // (v0.9.0, Manipulationsschutz): Auto-Freigaben wurden bisher
-    // nirgends mehr angezeigt - jetzt sind sie nachträglich prüfbar
-    // (Video ansehen, bei Missbrauch entziehen).
+    // (v0.9.0, Manipulationsschutz): Auto-Freigaben werden weiterhin
+    // nachtraeglich pruefbar gehalten (Video ansehen, bei Missbrauch
+    // entziehen).
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
         padding: const EdgeInsets.all(12),
         children: [
-          if (_items.isEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                child: Text(L10n.t(context, 'admin.noVerifications')),
-              ),
-            )
-          else
-            for (final data in _items) ...[
-              _verificationCard(context, data),
-              const SizedBox(height: 8),
-            ],
+          for (final data in _items) ...[
+            _verificationCard(context, data),
+            const SizedBox(height: 8),
+          ],
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
@@ -754,10 +897,15 @@ class _VerificationTabState extends ConsumerState<_VerificationTab> {
             ),
           ),
           if (_auditItems.isEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Text(L10n.t(context, 'admin.auditEmpty')),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: Text(
+                  L10n.t(context, 'admin.auditEmpty'),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ),
             )
           else
@@ -785,6 +933,7 @@ class _PhotoModerationList extends ConsumerStatefulWidget {
 class _PhotoModerationListState extends ConsumerState<_PhotoModerationList> {
   List<Map<String, dynamic>> _entries = [];
   bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -793,14 +942,24 @@ class _PhotoModerationListState extends ConsumerState<_PhotoModerationList> {
   }
 
   Future<void> _load() async {
-    if (mounted) setState(() => _loading = true);
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
     final service = ref.read(photoModerationServiceProvider);
     // Ohne try/catch blieb `_loading` bei einem Netzwerkfehler dauerhaft
     // true (Endlos-Spinner) und der Fehler landete unhandled.
     try {
       _entries = await service.fetchPendingReviews();
     } catch (e) {
+      // Fehler merken statt schlucken: fetchPendingReviews liefert zwar
+      // selbst [] statt zu werfen, aber der Admin soll einen Ladefehler
+      // von einer leeren Queue unterscheiden koennen - die Kennzahl
+      // oben zaehlt naemlich die Queue mit.
       if (kDebugMode) debugPrint('[Admin] Reviews laden fehlgeschlagen: $e');
+      if (mounted) _error = e.toString();
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -812,6 +971,7 @@ class _PhotoModerationListState extends ConsumerState<_PhotoModerationList> {
     final service = ref.read(photoModerationServiceProvider);
     await service.approvePhoto(id, adminId);
     await _load();
+    refreshAdminCounts(ref);
   }
 
   Future<void> _reject(int id) async {
@@ -820,30 +980,34 @@ class _PhotoModerationListState extends ConsumerState<_PhotoModerationList> {
     final service = ref.read(photoModerationServiceProvider);
     await service.rejectPhoto(id, adminId);
     await _load();
+    refreshAdminCounts(ref);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Center(child: CircularProgressIndicator());
-    if (_entries.isEmpty) {
-      return Center(child: Text(L10n.t(context, 'admin.noModeration')));
-    }
-    return ListView.separated(
-      itemCount: _entries.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
-      itemBuilder: (context, i) {
-        final entry = _entries[i];
-        final userId = entry['user_id'] as String? ?? '?';
-        final userName = entry['user']?['name'] as String? ?? userId;
-        final hashFull = entry['photo_hash'] as String? ?? '';
+    // Ueber _AsyncList statt eigenes ListView: das war der einzige Tab mit
+    // einem abweichenden Rahmen (Divider zwischen Zeilen statt Karten) und
+    // ohne Pull-to-refresh.
+    return _AsyncList(
+      loading: _loading,
+      error: _error,
+      items: _entries,
+      emptyIcon: Icons.photo_library_outlined,
+      emptyTitle: L10n.t(context, 'admin.emptyModerationTitle'),
+      emptyText: L10n.t(context, 'admin.noModeration'),
+      onRetry: _load,
+      itemBuilder: (context, data) {
+        final userId = data['user_id'] as String? ?? '?';
+        final userName = data['user']?['name'] as String? ?? userId;
+        final hashFull = data['photo_hash'] as String? ?? '';
         // Guard: kuerzerer Hash darf keinen RangeError werfen.
         final hash = hashFull.length > 12
             ? '${hashFull.substring(0, 12)}…'
             : hashFull;
-        final created = entry['created_at'] as String? ?? '';
+        final created = data['created_at'] as String? ?? '';
         // Cloud-KI-Befund (HuggingFace) - nur wenn ein echter Cloud-
         // Check lief (kein 'moderation_disabled'-Marker).
-        final hfLabel = entry['hf_label'] as String?;
+        final hfLabel = data['hf_label'] as String?;
 
         return ListTile(
           title: Text('$userName ($hash...)'),
@@ -866,12 +1030,12 @@ class _PhotoModerationListState extends ConsumerState<_PhotoModerationList> {
               IconButton(
                 icon: const Icon(Icons.check, color: Colors.green),
                 tooltip: L10n.t(context, 'admin.approveTooltip'),
-                onPressed: () => _approve(entry['id'] as int),
+                onPressed: () => _approve(data['id'] as int),
               ),
               IconButton(
                 icon: const Icon(Icons.close, color: Colors.red),
                 tooltip: L10n.t(context, 'admin.rejectTooltip'),
-                onPressed: () => _reject(entry['id'] as int),
+                onPressed: () => _reject(data['id'] as int),
               ),
             ],
           ),
@@ -897,12 +1061,27 @@ class _BansTabState extends ConsumerState<_BansTab> {
   String? _error;
   bool _busy = false;
 
+  /// Suchbegriff fuer E-Mail, Begruendung und Person. Leer = keine Filterung.
+  final _searchCtrl = TextEditingController();
+  String _query = '';
+
   @override
   void initState() {
     super.initState();
     _load();
   }
 
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  /// Filtert die Sperren clientseitig ueber alle drei sichtbaren Felder:
+  /// der Admin sucht meistens einen Teil der E-Mail, manchmal aber das
+  /// Stichwort aus der Begruendung ("Beleidigung"), weil ihm der Absender
+  /// unbekannt ist. Die Logik selbst liegt in [filterBans] und ist dort
+  /// getestet.
   Future<void> _load() async {
     setState(() {
       _loading = true;
@@ -1033,6 +1212,7 @@ class _BansTabState extends ConsumerState<_BansTab> {
                   }, actionFailed);
                   if (ctx.mounted) Navigator.of(ctx).pop();
                   await _load();
+                  refreshAdminCounts(ref);
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
@@ -1086,6 +1266,7 @@ class _BansTabState extends ConsumerState<_BansTab> {
     try {
       await _invoke({'action': 'unban', 'emailOrUserId': email}, actionFailed);
       await _load();
+      refreshAdminCounts(ref);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1114,26 +1295,85 @@ class _BansTabState extends ConsumerState<_BansTab> {
 
   @override
   Widget build(BuildContext context) {
+    // Gefiltert schon im build, nicht in einem Setter: die Liste ist die
+    // Quelle der Wahrheit, der Suchbegriff ist nur ein Blick darauf.
+    final filtered = filterBans(_items, _query);
+    final searching = _query.trim().isNotEmpty;
+
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton.icon(
-              onPressed: _busy ? null : _showBanDialog,
-              icon: const Icon(Icons.person_add_disabled),
-              label: Text(L10n.t(context, 'admin.banUser')),
-            ),
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchCtrl,
+                  onChanged: (v) => setState(() => _query = v),
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    isDense: true,
+                    prefixIcon: const Icon(Icons.search),
+                    hintText: L10n.t(context, 'admin.searchBansHint'),
+                    labelText: L10n.t(context, 'admin.searchBans'),
+                    border: const OutlineInputBorder(),
+                    suffixIcon: searching
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            tooltip: L10n.t(context, 'admin.searchBansClear'),
+                            onPressed: () {
+                              _searchCtrl.clear();
+                              setState(() => _query = '');
+                            },
+                          )
+                        : null,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Der Knopf bleibt neben dem Feld, damit er bei aktiver
+              // Suche nicht aus dem Bild gescrollt ist.
+              FilledButton.icon(
+                onPressed: _busy ? null : _showBanDialog,
+                icon: const Icon(Icons.person_add_disabled),
+                label: Text(L10n.t(context, 'admin.banUser')),
+              ),
+            ],
           ),
         ),
         Expanded(
           child: _AsyncList(
             loading: _loading,
             error: _error,
-            items: _items,
-            emptyText: L10n.t(context, 'admin.noBans'),
+            items: filtered,
+            emptyIcon: Icons.block,
+            emptyTitle: L10n.t(context, 'admin.emptyBansTitle'),
+            // Zwei verschiedene Leerfaelle: "keine Sperren ueberhaupt" und
+            // "deine Suche passt zu nichts". Zusammen in einem Text war
+            // genau das, was die Suche unbrauchbar machte - der Admin
+            // las "Keine Sperren vorhanden" und dachte, die Datenbank sei leer.
+            emptyText: searching
+                ? L10n.t(context, 'admin.searchBansEmpty')
+                : L10n.t(context, 'admin.noBans'),
             onRetry: _load,
+            // Trefferzahl, solange gefiltert wird. Ohne sie weiss der
+            // Admin nicht, ob er 2 von 300 oder 2 von 2 sieht.
+            header: searching && filtered.isNotEmpty
+                ? Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Text(
+                      L10n.tf(context, 'admin.searchBansResult', {
+                        'count': '${filtered.length}',
+                        'total': '${_items.length}',
+                      }),
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  )
+                : null,
             itemBuilder: (context, data) {
               final email = data['email'] as String? ?? '?';
               final reason = (data['reason'] as String? ?? '').trim();
@@ -1222,6 +1462,7 @@ class _PhotoAppealsTabState extends ConsumerState<_PhotoAppealsTab> {
       final db = SupabaseDatabaseService(SupabaseService.client);
       await db.adminDecidePhotoAppeal(id: id, approve: approve);
       await _load();
+      refreshAdminCounts(ref);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1239,40 +1480,18 @@ class _PhotoAppealsTabState extends ConsumerState<_PhotoAppealsTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Center(child: CircularProgressIndicator());
-    if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(L10n.tf(context, 'admin.error', {'error': '$_error'})),
-            const SizedBox(height: 8),
-            TextButton.icon(
-              onPressed: _load,
-              icon: const Icon(Icons.refresh),
-              label: Text(L10n.t(context, 'admin.retry')),
-            ),
-          ],
-        ),
-      );
-    }
-    if (_appeals.isEmpty) {
-      return Center(child: Text(L10n.t(context, 'admin.noAppeals')));
-    }
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: ListView.separated(
-        padding: const EdgeInsets.all(12),
-        itemCount: _appeals.length,
-        separatorBuilder: (_, _) => const Divider(height: 1),
-        itemBuilder: (context, i) {
-          final a = _appeals[i];
-          return _AppealCard(
-            appeal: a,
-            busy: _busy.contains(a['id']),
-            onDecide: (approve) => _decide(a, approve),
-          );
-        },
+    return _AsyncList(
+      loading: _loading,
+      error: _error,
+      items: _appeals,
+      emptyIcon: Icons.image_search,
+      emptyTitle: L10n.t(context, 'admin.emptyAppealsTitle'),
+      emptyText: L10n.t(context, 'admin.noAppeals'),
+      onRetry: _load,
+      itemBuilder: (context, data) => _AppealCard(
+        appeal: data,
+        busy: _busy.contains(data['id']),
+        onDecide: (approve) => _decide(data, approve),
       ),
     );
   }
@@ -1301,17 +1520,16 @@ class _AppealCard extends ConsumerWidget {
         DateTime.tryParse(appeal['createdAt'] as String? ?? '') ??
         DateTime.now();
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
+    // Rahmen kommt von _AsyncList; hier nur der Inhalt.
+    return Padding(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: SizedBox(
                     width: 96,
@@ -1355,27 +1573,26 @@ class _AppealCard extends ConsumerWidget {
                 ),
               ],
             ),
-            if (status == 'pending') ...[
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: busy ? null : () => onDecide(false),
-                    icon: const Icon(Icons.close),
-                    label: Text(L10n.t(context, 'admin.rejectTooltip')),
-                  ),
-                  const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed: busy ? null : () => onDecide(true),
-                    icon: const Icon(Icons.check),
-                    label: Text(L10n.t(context, 'admin.approve')),
-                  ),
-                ],
-              ),
-            ],
+          if (status == 'pending') ...[
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: busy ? null : () => onDecide(false),
+                  icon: const Icon(Icons.close),
+                  label: Text(L10n.t(context, 'admin.rejectTooltip')),
+                ),
+                const SizedBox(width: 8),
+                FilledButton.icon(
+                  onPressed: busy ? null : () => onDecide(true),
+                  icon: const Icon(Icons.check),
+                  label: Text(L10n.t(context, 'admin.approve')),
+                ),
+              ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
