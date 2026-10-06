@@ -7,6 +7,41 @@
 -- 29 Funktionen in diesem Schema sind SECURITY DEFINER, legen aber keinen
 -- search_path fest.
 --
+-- ERGEBNIS DES PUSHES (2026-10-06): 0 Funktionen geaendert.
+--
+-- Der Befund oben hat sich gegen die Datenbank NICHT bestaetigt. Die
+-- Abfrage vor dem Push ergab:
+--
+--   SECURITY DEFINER gesamt                107
+--   davon mit gepinntem search_path        107
+--   davon OHNE search_path                   0
+--
+-- Aufteilung der gepinnten Pfade:
+--   search_path = ''            30  (am strengsten: nichts aufloesbar)
+--   search_path = public, pg_temp 56
+--   search_path = public        19
+--   search_path = pg_catalog     1
+--   search_path = pg_temp        1
+--
+-- Die Schleife unten lief also durch und aenderte nichts; der
+-- Sicherheitscheck am Dateiende ist bestanden, aber er hat hier nichts
+-- nachzuweisen gehabt. Er bleibt trotzdem drin: fuer die naechste
+-- Migration, die doch eine Funktion ohne gesetzten Pfad findet, ist er der
+-- Beweis, statt der Annahme.
+--
+-- WARUM DER BEFUND ZUR DB NICHT PASST (nicht ueberschreiben, sondern merken):
+-- Die 29 Funktionen hatten den Befund vermutlich aus dem QUELLTEXT
+-- abgeleitet, nicht aus der Datenbank. Im Repo stehen aeltere
+-- CREATE-Funktionen ohne SET search_path; die spaeteren Migrationen
+-- haben sie per ALTER nachgezogen. Der Quelltext sagt also "29 ohne
+-- Pfad", die Datenbank sagt "0 ohne Pfad" - weil die ALTERungen aus
+-- 120 bis 132 genau das nachgeholt haben.
+--
+-- KONSEQUENZ FUER DIE AUFSICHT: Ein Befund dieser Art gehoert gegen die
+-- Datenbank geprueft, nicht gegen die Datei. Sonst wird eine Migration
+-- geschrieben, die nichts tut, und ihr Sicherheitscheck bestaetigt
+-- genau das - man haelt sich fuer bestaetigt, statt geprueft zu haben.
+--
 -- WARUM DAS EIN BEFUND IST UND KOSMETISCHER LOOKUP KEINER:
 -- SECURITY DEFINER laeuft mit den Rechten des Erstellers. Ohne
 -- gepinnten search_path sucht Postgres nach Tabellen, Funktionen und
@@ -121,11 +156,26 @@ $$;
 --   check_email_ban_status(text) - eine boolesche Abfrage für die
 --   Registrierung, die vor dem Login stattfinden muss. Die ist korrekt.
 --
--- NACH DEM PUSH ZU PRÜFEN:
---   supabase db push --include-seed   (bzw. der normale Push)
---   Anschließend einmal die App: Registrierung, Login, Chat, Radar.
---   Diese Migration ist die erste, die ich nicht gegen eine echte
---   Datenbank testen konnte - dafür fehlte das Passwort. Sie ist deshalb
---   so gebaut, dass sie bei einem unerwarteten Ergebnis ABRICHT und
---   ihren Befund ausgibt, statt still weiterzulaufen.
+-- NACH DEM PUSH ZU PRÜFEN (Stand 2026-10-06, erledigt):
+--   supabase db push
+--   Registrierung, Login, Chat, Radar.
+--
+-- Push und Pruefung:
+--   133 angewendet (`migration list`: local 133 / remote 133).
+--   0 Funktionen geaendert, Sicherheitscheck bestanden.
+--   pgcrypto erreichbar: extensions.gen_random_uuid() und
+--     extensions.crypt() liefern Werte.
+--   Registrierung: check_email_ban_status() antwortet.
+--   Chat:        relay_fetch() laeuft (wirft ohne JWT erwartungsgemaess
+--                "Nicht eingeloggt" - der Auth-Guard greift).
+--   Zufallschat: get_my_active_random_chat() laeuft, gleiche Guards.
+--   Radar:       transit_spark_adult() laeuft.
+--   Admin:       admin_list_user_reports / _bug_reports / _banned_emails /
+--                _pending_verifications antworten alle.
+--
+-- Es war die erste Migration, die gegen eine echte Datenbank laufen
+-- musste. Sie hat nichts angefasst - das war das guenstigste Ergebnis,
+-- das man sich fuer eine Härtung wuenschen kann, aber man haette es
+-- auch an der Quelle sehen koennen. Genau deshalb steht der Befund
+-- oben jetzt mit dem Gegenergebnis drin.
 -- =============================================================================
