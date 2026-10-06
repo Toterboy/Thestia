@@ -130,6 +130,28 @@ class AppSettings {
   /// Einmalig nach E-Mail-Bestaetigung, danach direkt Einrichtung.
   final bool signupWelcomeSeen;
 
+  /// Chat-Hintergrund-Auswahl beim ersten Chat gezeigt (v0.9.3)?
+  ///
+  /// Bewusst KEIN Teil der Einrichtung: der Hintergrund ist eine
+  /// Geschmacksfrage, und die Einrichtung war mit zehn Seiten lang
+  /// genug. Die Abfrage kommt stattdessen beim ersten geoeffneten Chat
+  /// (Dialog) - dort sieht der Nutzer auch, worum es geht.
+  ///
+  /// Einmalig: nach dem Schliessen bleibt es in den Einstellungen
+  /// erreichbar und wird nicht erneut angeboten.
+  final bool chatBackgroundSeen;
+
+  /// Veroeffentlichen, dass andere meine (grobe) Entfernung sehen
+  /// duerfen (v0.9.3)?
+  ///
+  /// Standard `false`: es wird nichts veroeffentlicht, solange der
+  /// Nutzer das nicht ausdruecklich erlaubt hat. Wer es einschaltet,
+  /// sieht danach eine Entfernung in 10-km-Stufen ("unter 10 km",
+  /// "10 bis 20 km") - nie den genauen Standort.
+  ///
+  /// Serverseitig gespiegelt, weil die Anzeegeraete fremd entscheiden.
+  final bool showDistance;
+
   const AppSettings({
     this.blindModeEnabled = true,
     this.revealPhotosAfterMatch = true,
@@ -162,6 +184,10 @@ class AppSettings {
     this.chatBackground = 'none',
     this.chatBackgroundPath,
     this.signupWelcomeSeen = false,
+    this.chatBackgroundSeen = false,
+    // v0.9.3: Datenschutz-Vorgabe. Nichts veroeffentlichen, was der
+    // Nutzer nicht ausdruecklich erlaubt hat.
+    this.showDistance = false,
   });
 
   /// Standard-Einstellungen für einen neuen Nutzer.
@@ -210,6 +236,10 @@ class AppSettings {
       chatBackground: json['chatBackground'] as String? ?? 'none',
       chatBackgroundPath: json['chatBackgroundPath'] as String?,
       signupWelcomeSeen: json['signupWelcomeSeen'] as bool? ?? false,
+      chatBackgroundSeen: json['chatBackgroundSeen'] as bool? ?? false,
+      // Fehlende Schluessel (alte Installation) gelten als "aus" -
+      // das ist die datenschutzfreundliche Richtung.
+      showDistance: json['showDistance'] as bool? ?? false,
     );
   }
 
@@ -246,6 +276,8 @@ class AppSettings {
     'chatBackground': chatBackground,
     'chatBackgroundPath': chatBackgroundPath,
     'signupWelcomeSeen': signupWelcomeSeen,
+    'chatBackgroundSeen': chatBackgroundSeen,
+    'showDistance': showDistance,
   };
 
   /// Immutabele Kopie mit veränderten Werten.
@@ -294,6 +326,8 @@ class AppSettings {
     String? chatBackground,
     Object? chatBackgroundPath = _chatBackgroundPathUnset,
     bool? signupWelcomeSeen,
+    bool? chatBackgroundSeen,
+    bool? showDistance,
   }) {
     return AppSettings(
       blindModeEnabled: blindModeEnabled ?? this.blindModeEnabled,
@@ -338,6 +372,8 @@ class AppSettings {
               ? this.chatBackgroundPath
               : chatBackgroundPath as String?,
       signupWelcomeSeen: signupWelcomeSeen ?? this.signupWelcomeSeen,
+      chatBackgroundSeen: chatBackgroundSeen ?? this.chatBackgroundSeen,
+      showDistance: showDistance ?? this.showDistance,
     );
   }
 }

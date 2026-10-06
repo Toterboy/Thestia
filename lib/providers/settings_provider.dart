@@ -510,6 +510,37 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     await _persist();
   }
 
+  /// Chat-Hintergrund-Auswahl beim ersten Chat wurde gezeigt (v0.9.3).
+  Future<void> markChatBackgroundSeen() async {
+    state = state.copyWith(chatBackgroundSeen: true);
+    await _persist();
+  }
+
+  /// Entfernungs-Anzeige ein- oder ausschalten (v0.9.3).
+  ///
+  /// Ueber den Server gespiegelt, weil die Anzeegeraete fremd
+  /// entscheiden: ein eingeschalteter Schalter muss auch auf einem
+  /// anderen Geraet gelten.
+  Future<void> setShowDistance(bool value) async {
+    if (state.showDistance == value) return;
+    state = state.copyWith(showDistance: value);
+    await _persist();
+    unawaited(_syncShowDistanceServer(value));
+  }
+
+  Future<void> _syncShowDistanceServer(bool value) async {
+    try {
+      if (!SupabaseService.isInitialized) return;
+      await SupabaseDatabaseService(
+        SupabaseService.client,
+      ).updateOwnProfile({'show_distance': value});
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Settings] show_distance-Sync fehlgeschlagen: $e');
+      }
+    }
+  }
+
   /// Setzt alle Einstellungen auf die Standardwerte zurück
   /// (z. B. nach Account-Löschung – keine Alt-Daten im neuen Account).
   Future<void> resetToDefaults() async {
