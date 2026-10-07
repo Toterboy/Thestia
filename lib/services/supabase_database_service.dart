@@ -45,7 +45,9 @@ class SupabaseDatabaseService {
   /// Lädt das eigene Profil aus der Supabase-Datenbank.
   ///
   /// Es werden nur die für die App benötigten Spalten selektiert; sensible
-  /// Felder wie location_lat/location_lng bleiben in der Regel serverseitig.
+  /// Felder wie der Standort stehen nicht in profiles (v0.9.3), sondern in
+  /// profile_locations und werden nur bei Bedarf über [fetchDistanceKm]
+  /// abgefragt - nie im eigenen Profil.
   Future<UserProfile?> fetchOwnProfile() async {
     final userId = _currentUser?.id;
     if (userId == null) return null;
@@ -65,14 +67,14 @@ class SupabaseDatabaseService {
         'interests, photos, personality_type, max_distance_km, '
         'age_range_min, age_range_max, smoking, alcohol, drugs, '
         'is_verified, is_location_suspicious, state, country, '
-        'intro_text, intro_audio_path, location_lat, location_lng, '
+        'intro_text, intro_audio_path, '
         'created_at, updated_at, music_liked, music_disliked';
     const columnsWithoutPhotos =
         'user_id, name, gender, gender_preferences, birth_date, bio, '
         'interests, personality_type, max_distance_km, age_range_min, '
         'age_range_max, smoking, alcohol, drugs, is_verified, '
         'is_location_suspicious, state, country, intro_text, '
-        'intro_audio_path, location_lat, location_lng, created_at, '
+        'intro_audio_path, created_at, '
         'updated_at, music_liked, music_disliked';
     for (final columns in [columnsWithPhotos, columnsWithoutPhotos]) {
       for (var attempt = 0; attempt < 2; attempt++) {
@@ -115,13 +117,10 @@ class SupabaseDatabaseService {
                 ? null
                 : response['birth_date'] as String,
             'personalityType': response['personality_type'],
-            'location_lat': response['location_lat'],
-            'location_lng': response['location_lng'],
             'is_verified': response['is_verified'],
             'is_location_suspicious': response['is_location_suspicious'],
-            // v0.9.3: city wird nicht mehr gelesen. Die Spalte wird
-            // erst mit dem Contract-Schritt (Migration 137) entfernt,
-            // wird hier aber bewusst nicht mehr angefordert.
+            // v0.9.3: city wird nicht mehr gelesen. Die Spalte ist mit
+            // Migration 138 aus profiles entfernt.
             'state': response['state'],
             'country': response['country'] ?? 'Deutschland',
             'introText': response['intro_text'] ?? '',

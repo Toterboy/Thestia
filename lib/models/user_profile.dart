@@ -6,6 +6,7 @@
 
 import 'package:thestia/models/habitude_level.dart';
 import 'package:thestia/utils/age_calculator.dart';
+import 'package:thestia/utils/distance_bucket.dart';
 
 class UserProfile {
   /// Eindeutige ID des Nutzers.
@@ -464,12 +465,19 @@ class UserProfile {
       );
 }
 
-/// Einheitliches Distanz-Label (5-km-Schritte, serverseitig berechnet).
+/// Einheitliches Distanz-Label fuer andere Nutzer (v0.9.3).
+///
+/// Die Entfernung wird NICHT als Zahl ausgegeben, sondern als 10-km-Stufe
+/// ("10 bis 20 km"). Der genaue Wert bleibt beim Betrachter - er sieht
+/// nur die Stufe, und unterhalb von 5 km gar nichts.
+///
+/// [t] ist [L10n.t] als Funktion, damit das Modell ohne BuildContext
+/// auskommt (und der Text in Tests pruefbar ist).
+///
+/// Rueckgabe: leerer String, wenn nichts angezeigt werden darf. Aufrufende
+/// Widgets SHOULD den Wert nur einsetzen, wenn er nicht leer ist - sonst
+/// entstehen fuehrende Leerzeichen.
 extension UserProfileDistanceLabel on UserProfile {
-  String get distanceLabel {
-    if (distanceKm <= 0) return '';
-    final km = distanceKm.round();
-    // Rundung auf 5-km-Schritte: Werte unter 2.5 km runden auf 0.
-    return km == 0 ? 'unter 5 km entfernt' : 'ca. $km km entfernt';
-  }
+  String distanceLabel(String Function(String key) t) =>
+      DistanceBucket.labelForKm(distanceKm, t) ?? '';
 }

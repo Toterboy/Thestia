@@ -189,6 +189,20 @@ class SettingsScreen extends ConsumerWidget {
                       },
                     ),
                   const SizedBox(height: 8),
+                  const Divider(),
+                  // v0.9.3: Entfernungs-Anzeige. Aus ist der Default und
+                  // bleibt es auch nach einem Geraetewechsel - der Schalter
+                  // wird serverseitig gespiegelt, nicht nur lokal.
+                  SwitchListTile.adaptive(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(L10n.t(context, 'settings.showDistance')),
+                    subtitle: Text(
+                      L10n.t(context, 'settings.showDistanceSub'),
+                    ),
+                    value: settings.showDistance,
+                    onChanged: (v) => notifier.setShowDistance(v),
+                  ),
+                  const SizedBox(height: 8),
                   Text(
                     L10n.t(context, 'settings.localDataNote'),
                     style: const TextStyle(fontSize: 12, color: Colors.grey),

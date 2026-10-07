@@ -121,6 +121,8 @@ $adb = "C:\Users\Thoralf\AppData\Local\Android\Sdk\platform-tools\adb.exe"
 | 4.8 | **Einstellungen: Chat-Verlauf-Modi** | Jeden Verlauf-Modus durchschalten (z. B. unbegrenzt / 7 Tage / 30 Tage / aus) | Auswahl greift sichtbar, kein Absturz. | Modus ohne Wirkung: Logik in den Chat-Screens. |
 | 4.9 | **Alterspruefung mit ECHTEM Gesicht** | Alterpruefung mit dem **Gesicht der testenden Person** durchlaufen | Pruefung laeuft durch und erkennt das Alter (bzw. stuft korrekt ein). | **Groesste offene Luecke: nie mit echten Gesichtern getestet.** Die App verkauft die Alterspruefung. Ein Fehler hier ist ein Release-Blocker, kein Nice-to-have. |
 | 4.10 | **Transit Spark mit zwei Geraeten** | Vollstaendiges Protokoll: [BLE-GERAETETEST.md](BLE-GERAETETEST.md) | Drei Kriterien bestanden, beide Richtungen. | Ergebnis dort eintragen. Transit Spark gilt laut ROADMAP erst mit zwei Geraeten verschiedener Hersteller als stabil. |
+| 4.12 | **Standort ohne Ortsangabe** (neu, Migrationen 137-142) | In der Einrichtung bzw. im Profil-Edit auf "Standort erkennen" tippen, dann das eigene Profil ansehen | Das Bundesland steht im Profil, **kein Ortsname**. Nach einem Neustart steht es noch immer da. Der GPS-Knopf dreht einen Ladeindikator und endet ohne Fehlermeldung. | Bundesland fehlt: Standort wurde nicht in `profile_locations` geschrieben (denk an den fehlenden Guard-Push). Ein Ortsname, der irgendwo auftaucht, ist ein Rueckschritt - die Spalte existiert nicht mehr. |
+| 4.13 | **Entfernungsanzeige nur nach Zustimmung** (neu) | Schalter "Entfernung anzeigen" in den Einstellungen einschalten, mit dem **zweiten** Konto das eigene Profil öffnen | Nur die zweite Person sieht ueberhauppt eine Entfernung, und zwar als Stufe ("unter 10 km", "20 bis 30 km"), nie als Zahl. Nach dem Ausschalten verschwindet sie wieder. | Zahl statt Stufe: die Bucket-Umrechnung greift nicht. Entfernung trotz ausgeschaltetem Schalter: `show_distance` wird am Server nicht geprueft (Migration 138, `profile_distance_km`). |
 
 ### 4.11 Was der Wortlaut der Registrierungsmeldung verraet
 
@@ -196,6 +198,21 @@ Nach `db push` sind **Registrierung, Login, Chat und Radar** erneut zu pruefen
 eine, die `search_path` an `SECURITY DEFINER`-Funktionen setzt - faellt dort
 auf, weil die Funktion ihre Rechte verliert.
 
+### Standort-Umstellung (Migrationen 137 bis 142)
+
+Seit 137 bis 142 ist die Standortverwaltung umgebaut. Fuer die Abnahme zaehlt
+daraus genau eines: **die Spalten `city`, `location_lat` und `location_lng` in
+`profiles` existieren nicht mehr**, und `process-location-check` liest und
+schreibt `profile_locations`.
+
+Deshalb ist nach diesen Migrationen **4.12** verpflichtend. Ohne diesen Punkt
+lässt sich nicht sagen, ob der Standort funktioniert - die App zeigt keine
+Fehlermeldung, wenn der Schreibpfad ins Leere läuft.
+
+Wer eine Umgebung spiegeln will: `profile_locations` ist nur für den
+Eigentümer lesbar. Ein Test mit zwei Konten ist der einzige Weg, die
+Entfernungsanzeige wirklich zu sehen; mit einem Konto ist sie immer leer.
+
 ## 7. Bekannte offene Punkte (kein Grund, die Prüfung zu überspringen)
 
 Diese Punkte sind **offen**. Sie stehen hier, damit niemand sie für erledigt
@@ -205,6 +222,7 @@ hält - nicht, damit sie übersprungen werden.
 | --- | --- | --- |
 | Registrierung | **BEHOBEN** (Migration 134, 06.10.2026). Ursache war ein DB-Trigger, kein Netz und kein CAPTCHA. Nachweis: 500+42703 im Server-Log, nach dem Fix `captcha_failed`. | **Punkt 4.3 einmal auf dem Geraet bestaetigen**, dann ist er durch. |
 | Alterspruefung | nie mit echten Gesichtern getestet | **Blocker** (4.9). |
+| Standort-Umstellung 137-142 | Code und Migrationen fertig, **nie auf einem Geraet durchlaufen**. Der Serverzustand ist geprueft (Migration 142 laeuft durch), der Client-Pfad nicht. | **Blocker fuer jede Aussage ueber den Standort** (4.12, 4.13). Besonders: der allererste GPS-Aufruf eines neuen Kontos schreibt ueber einen Pfad, der vorher nie lief. |
 | Transit Spark | [BLE-GERAETETEST.md](BLE-GERAETETEST.md) Status OFFEN | **Blocker** fuer die Behauptung „stabil". |
 | Admin-APKs | tragen die als kompromittiert dokumentierte UUID, bewusst nicht neu gebaut | Kein Blocker fuer den oeffentlichen Release. Erst nach Rotation neu bauen. |
 

@@ -254,12 +254,15 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
                                            style: const TextStyle(
                                                color: Colors.grey),
                                          ),
-                                      // Distanz in 5-km-Schritten (ohne
-                                      // exakten Standort, serverseitig
-                                      // berechnet).
-                                      if (current.distanceKm > 0)
-                                        Text(
-                                          current.distanceLabel,
+// Distanz als 10-km-Stufe (v0.9.3),
+                                       // serverseitig berechnet. Ohne
+                                       // Freigabe der anderen Person
+                                       // kommt der Wert nicht an.
+                                       if (current.distanceKm > 0)
+                                         Text(
+                                           current.distanceLabel(
+                                             (key) => L10n.t(context, key),
+                                           ),
                                           style: Theme.of(context)
                                               .textTheme
                                               .bodySmall

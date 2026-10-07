@@ -1,7 +1,47 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:thestia/models/app_settings.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/utils/distance_bucket.dart';
 import 'package:thestia/utils/location_privacy.dart';
+
+/// Laedt die Texte direkt aus app_strings.dart.
+///
+/// Bewusst geparst statt ueber [L10n]: der Test soll ohne Widget-Baum
+/// laufen. Aufgebaut wird derselbe Block, den app_strings.dart fuer
+/// [L10nScope] bereitstellt - Key-Zeilen und Folgezeilen (Zeilenumbruch
+/// in der Quelle) werden zusammengefuegt.
+Map<String, String> _sprache(String sprache) {
+  final src = File('lib/l10n/app_strings.dart').readAsStringSync();
+  final start = src.indexOf("'$sprache': {");
+  expect(start, greaterThan(-1), reason: 'Kein $sprache-Block gefunden');
+  final end = src.indexOf('\n  },', start);
+  final block = src.substring(start, end);
+
+  final out = <String, String>{};
+  final keyRe = RegExp(
+    r"(?:^|[{,]) *'([A-Za-z0-9_.]+)':", multiLine: true);
+  final matches = keyRe.allMatches(block).toList();
+  for (var i = 0; i < matches.length; i++) {
+    final key = matches[i].group(1)!;
+    final von = matches[i].end;
+    final bis = i + 1 < matches.length ? matches[i + 1].start : block.length;
+    var wert = block.substring(von, bis).trim();
+    // "  'Text Teil 1 '\n 'Text Teil 2',\n" -> zusammensetzen, Quotes weg.
+    wert = wert.replaceAll('\n', '').trim();
+    if (wert.endsWith(',')) wert = wert.substring(0, wert.length - 1);
+    wert = wert.trim();
+    if (wert.startsWith("'") && wert.endsWith("'") && wert.length >= 2) {
+      wert = wert.substring(1, wert.length - 1);
+    }
+    out[key] = wert;
+  }
+  return out;
+}
+
+final Map<String, String> _de = _sprache('de');
+final Map<String, String> _en = _sprache('en');
 
 /// Tests fuer die Standort-Privatisierung.
 ///
@@ -239,6 +279,71 @@ void main() {
       // wenigstens nicht mehr gelesen.
       expect(db.contains("'city': response['city']"), isFalse);
       expect(db.contains('is_location_suspicious, city'), isFalse);
+    });
+  });
+
+  // Die Anzeige ist die zweite Haelfte der Zusage: gespeichert wird auf
+  // 5-km-Raster, ANGEZEIGT wird in 10-km-Stufen, und unterhalb von 5 km
+  // gar nicht. Ein zurueckgerutschter Meter-Zaehler waere genauso schlimm
+  // wie der alte Ortsname.
+  group('Die Entfernung wird in Stufen angezeigt, nicht in Metern', () {
+    UserProfile mit(double km) => UserProfile(
+          id: 'x',
+          name: 'X',
+          bio: '',
+          distanceKm: km,
+        );
+
+    String? label(double km) =>
+        DistanceBucket.labelForKm(km, (k) => _de[k] ?? k);
+
+    test('unter 5 km wird gar nichts angezeigt', () {
+      expect(label(0), isNull);
+      expect(label(4.9), isNull);
+      // Auch exakt 5 ist die erste zeigbare Stufe.
+      expect(label(5), isNotNull);
+    });
+
+    test('die Stufen sind 10 km breit', () {
+      expect(label(5), 'unter 10 km');
+      expect(label(9.9), 'unter 10 km');
+      // Grenze gehoert nach oben: 10,0 ist schon "10 bis 20".
+      expect(label(10), '10 bis 20 km');
+      expect(label(19.99), '10 bis 20 km');
+      expect(label(20), '20 bis 30 km');
+      expect(label(95), '90 bis 100 km');
+    });
+
+    test('ab 100 km nur noch "ueber"', () {
+      expect(label(100), 'über 100 km');
+      expect(label(4000), 'über 100 km');
+    });
+
+    test('das Modell-Label ist bei 0 km leer (kein "0 km entfernt")', () {
+      expect(mit(0).distanceLabel((k) => _de[k] ?? k), '');
+      expect(mit(3).distanceLabel((k) => _de[k] ?? k), '');
+      expect(mit(37).distanceLabel((k) => _de[k] ?? k), '30 bis 40 km');
+    });
+
+    test('der Server liefert null, wenn niemand zugestimmt hat', () {
+      // show_distance ist der Default aus - der Client darf daraus keinen
+      // Text bauen, wenn nichts kommt.
+      expect(const AppSettings().showDistance, isFalse);
+    });
+
+    test('alle vier Bucket-Keys gibt es auf Deutsch und Englisch', () {
+      for (final k in const [
+        'distance.bucketUnder',
+        'distance.bucketRange',
+        'distance.bucketOver',
+        'distance.bucketUnknown',
+      ]) {
+        expect(_de[k], isNotNull, reason: 'DE fehlt: $k');
+        expect(_en[k], isNotNull, reason: 'EN fehlt: $k');
+      }
+      // Platzhalter muessen in beiden Sprachen gleich sein.
+      expect(_de['distance.bucketRange'], contains('{from}'));
+      expect(_en['distance.bucketRange'], contains('{from}'));
     });
   });
 }

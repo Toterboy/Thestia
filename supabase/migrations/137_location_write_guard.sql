@@ -50,6 +50,13 @@
 -- 1) Guard-Funktion
 --
 -- SECURITY INVOKER (Default): sie braucht keine Rechte, sie rechnet nur.
+--
+-- Zwei skalare Variablen statt "v_snapped snap_location_to_grid%ROWTYPE":
+-- PL/pgSQL loest %ROWTYPE ueber den Relations-Katalog auf, und fuer eine
+-- Funktion mit RETURNS TABLE gibt es keinen benannten Composite-Typ. Der
+-- erste Versuch dieser Migration scheiterte genau daran mit
+-- 'relation public.snap_location_to_grid does not exist' - obwohl die
+-- Funktion existiert. SELECT ... FROM func() ist der Weg, der geht.
 -- -----------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.guard_profile_location_snap()
 RETURNS trigger
@@ -57,7 +64,8 @@ LANGUAGE plpgsql
 SET search_path = ''
 AS $$
 DECLARE
-  v_snapped public.snap_location_to_grid%ROWTYPE;
+  v_lat double precision;
+  v_lng double precision;
 BEGIN
   -- Aus ungueltigen Werten darf keine Zeile entstehen. Ohne diese
   -- Pruefung wuerde snap_location_to_grid() auf NULL rechnen und die
@@ -74,11 +82,11 @@ BEGIN
       NEW.lat, NEW.lng USING ERRCODE = '22023';
   END IF;
 
-  SELECT s.lat, s.lng INTO v_snapped
+  SELECT s.lat, s.lng INTO v_lat, v_lng
   FROM public.snap_location_to_grid(NEW.lat, NEW.lng) AS s;
 
-  NEW.lat := v_snapped.lat;
-  NEW.lng := v_snapped.lng;
+  NEW.lat := v_lat;
+  NEW.lng := v_lng;
 
   -- updated_at nicht nur per Default setzen: bei einem UPDATE soll man
   -- sehen, wann zuletzt gespeichert wurde, auch wenn der Client die
@@ -140,12 +148,20 @@ BEGIN
 
   -- b) Genau EINE Guard-Funktion, und sie nutzt das geschuetzte
   --    search_path-Muster der anderen Funktionen aus 133.
+  --
+  --    Geprueft wird ueber unnest(proconfig) - ein Array-Vergleich wie
+  --    "proconfig @> ARRAY['search_path=']" greift nicht, weil Postgres
+  --    den leeren Pfad als search_path="" ablegt, mit Anfuehrungszeichen.
+  --    (Genau daran ist der erste Push dieser Migration gescheitert.)
   SELECT count(*) INTO v_fn_count
   FROM pg_proc p
   JOIN pg_namespace n ON n.oid = p.pronamespace
   WHERE n.nspname = 'public'
     AND p.proname = 'guard_profile_location_snap'
-    AND p.proconfig @> ARRAY['search_path='];
+    AND EXISTS (
+      SELECT 1 FROM unnest(coalesce(p.proconfig, '{}')) cfg
+       WHERE cfg LIKE 'search_path=%'
+    );
 
   IF v_fn_count <> 1 THEN
     RAISE EXCEPTION

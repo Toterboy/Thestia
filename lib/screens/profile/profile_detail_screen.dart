@@ -12,6 +12,7 @@ import 'package:thestia/providers/chat_provider.dart';
 import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/providers/settings_provider.dart';
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/utils/distance_bucket.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/supabase_service.dart';
@@ -62,7 +63,13 @@ class ProfileDetailScreen extends ConsumerStatefulWidget {
 
 class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
   UserProfile? _profile;
-  double? _distanceKm;
+  /// Fertiger Anzeigetext fuer die Entfernung (v0.9.3).
+  ///
+  /// Gespeichert wird der TEXT, nicht die Kilometerzahl: die Umrechnung
+  /// in eine 10-km-Stufe soll genau einmal passieren, direkt nach dem
+  /// Server-Aufruf. Ein zweiter Aufbau-Punkt (andere Sprache, anderer
+  /// Wert) kann sonst einen veralteten Text zeigen.
+  String? _distanceLabel;
   bool _loading = true;
 
   @override
@@ -92,11 +99,20 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
       // Kein Supabase verfügbar oder User nicht gefunden.
     }
 
-    // Distanz in km (5-km-Schritte, serverseitig berechnet) - optional.
+    // Distanz serverseitig berechnet, Anzeige als 10-km-Stufe.
+    //   Der Server liefert null, wenn die andere Person die Anzeige
+    //   nicht freigegeben hat - dann steht hier nichts.
     try {
       final db = ref.read(supabaseDatabaseServiceProvider);
       final distance = await db.fetchDistanceKm(userId);
-      if (mounted) setState(() => _distanceKm = distance);
+      if (mounted) {
+        setState(() {
+          _distanceLabel = DistanceBucket.labelForKm(
+            distance,
+            (key) => L10n.t(context, key),
+          );
+        });
+      }
     } catch (_) {}
 
     if (mounted) {
@@ -308,14 +324,16 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
                 ],
               ),
             ),
-            if (_distanceKm != null) ...[
+            // v0.9.3: Nur anzeigen, wenn der Wert ueberhaupt eine
+            // sichtbare Stufe ergibt. Unterhalb von 5 km liefert
+            // labelForKm null - das ist Absicht: der Unterschied zwischen
+            // 2 und 4 km verrate sonst den Nachbarn. Bei fehlendem
+            // Label bleibt die Zeile weg, statt "0 km" zu zeigen.
+            if (_distanceLabel != null) ...[
               const SizedBox(height: 8),
               Center(
                 child: Text(
-                  // Nur die gerundete Entfernung - nie der exakte Standort.
-                  _distanceKm!.round() == 0
-                      ? 'unter 5 km entfernt'
-                      : 'ca. ${_distanceKm!.round()} km entfernt',
+                  _distanceLabel!,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.primary,
                   ),

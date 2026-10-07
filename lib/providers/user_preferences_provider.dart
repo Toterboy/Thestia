@@ -276,8 +276,8 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
   /// 066) und werden hier in den lokalen Stand übernommen. Fehlende/null
   /// Werte lassen den bisherigen lokalen Stand unangetastet.
   ///
-  /// v0.9.3: Der Ort wird nicht mehr übernommen - die Spalte city im
-  /// Server wird bis zum Contract-Schritt ignoriert und danach entfernt.
+  /// v0.9.3: Der Ort wird nicht mehr übernommen - die Spalte city ist
+  /// mit Migration 138 aus profiles entfernt.
   Future<void> applyServerValues(Map<String, dynamic> p) async {
     RelationshipType? relationshipType = state.relationshipType;
     final rtRaw = p['relationship_type'] as String?;

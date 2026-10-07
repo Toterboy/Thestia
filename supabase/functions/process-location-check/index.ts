@@ -131,30 +131,59 @@ serve(async (req) => {
       : `Bearer ${token}`;
 
     // 1) Alte Position aus der Datenbank lesen
+    //
+    // v0.9.3: Die Koordinaten liegen in profile_locations, nicht mehr in
+    // profiles. profiles behaelt nur noch die Flags (is_location_suspicious,
+    // location_checked_at) - die sind kein Standort und muessen fuer die
+    // Discovery-Filter lesbar bleiben.
+    //
+    // Zwei getrennte Lesevorgaenge, weil die Zeilen in profile_locations
+    // optional sind: Ein Nutzer, der den Standort zum ersten Mal setzt,
+    // hat dort noch keine Zeile. Das ist der Normalfall und kein Fehler -
+    // der Pfad "keine alte Position" (unten) behandelt ihn. Ein 404 waere
+    // hier falsch und wuerde den allerersten GPS-Aufruf fehlschlagen lassen.
     const { data, error } = await supabaseAdmin
-      .from("profiles")
-      .select("location_lat, location_lng, location_checked_at")
+      .from("profile_locations")
+      .select("lat, lng")
       .eq("user_id", userId)
       .maybeSingle();
 
     if (error) {
-      console.error("Fehler beim Lesen des Profils:", error);
+      console.error("Fehler beim Lesen des Standorts:", error);
+      return new Response(JSON.stringify({ error: "Standort konnte nicht gelesen werden." }), {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Der Zeitstempel steht weiter in profiles. Sein Fehlen ist kein Fehler
+    // - nur das Profil selbst muss existieren (sonst waeren die Flags und
+    // das Profil kaputt).
+    const { data: profileRow, error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .select("location_checked_at")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error("Fehler beim Lesen des Profils:", profileError);
       return new Response(JSON.stringify({ error: "Profil konnte nicht gelesen werden." }), {
         status: 500,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    if (!data) {
+    if (!profileRow) {
       return new Response(JSON.stringify({ error: "Profil nicht gefunden." }), {
         status: 404,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    const previousLat = (data["location_lat"] as number) ?? null;
-    const previousLon = (data["location_lng"] as number) ?? null;
-    const previousCheckedAt = (data["location_checked_at"] as string) ?? null;
+    const previousLat = (data?.["lat"] as number) ?? null;
+    const previousLon = (data?.["lng"] as number) ?? null;
+    const previousCheckedAt =
+      (profileRow["location_checked_at"] as string) ?? null;
 
     if (previousLat == null || previousLon == null) {
       // Keine alte Position vorhanden, daher keine Prüfung möglich.
@@ -162,12 +191,30 @@ serve(async (req) => {
       const { error: updateError } = await supabaseAdmin
         .from("profiles")
         .update({
-          location_lat: newLatitude,
-          location_lng: newLongitude,
           is_location_suspicious: false,
           location_checked_at: new Date().toISOString(),
         })
         .eq("user_id", userId);
+
+      // Koordinaten separat. Der BEFORE-Trigger aus Migration 137 rastet
+      // hier noch einmal auf 5 km - unabhaengig davon, was dieser Aufruf
+      // schickt.
+      if (!updateError) {
+        const { error: locError } = await supabaseAdmin
+          .from("profile_locations")
+          .upsert({
+            user_id: userId,
+            lat: newLatitude,
+            lng: newLongitude,
+          });
+        if (locError) {
+          console.error("Fehler beim Schreiben des Standorts:", locError);
+          return new Response(
+            JSON.stringify({ error: "Standort konnte nicht gespeichert werden." }),
+            { status: 500, headers: { "Content-Type": "application/json" } },
+          );
+        }
+      }
 
       if (updateError) {
         console.error("Fehler beim Aktualisieren des Profils:", updateError);
@@ -291,12 +338,23 @@ serve(async (req) => {
     const { error: updateError } = await supabaseAdmin
       .from("profiles")
       .update({
-        location_lat: newLatitude,
-        location_lng: newLongitude,
         is_location_suspicious: isSuspicious,
         location_checked_at: new Date().toISOString(),
       })
       .eq("user_id", userId);
+
+    if (!updateError) {
+      const { error: locError } = await supabaseAdmin
+        .from("profile_locations")
+        .upsert({
+          user_id: userId,
+          lat: newLatitude,
+          lng: newLongitude,
+        });
+      if (locError) {
+        console.error("Fehler beim Schreiben des Standorts:", locError);
+      }
+    }
 
     if (updateError) {
       console.error("Fehler beim Aktualisieren des Profils:", updateError);

@@ -482,7 +482,7 @@ class _SettingsPrivacyOnceScreenState
     final flagsSaved = await _persistSetupFlagsToServer();
     // Präferenzen (Entfernung, "Ich suche", Bundesland, Altersspanne)
     // zusätzlich serverseitig sichern ("Nichts geht verloren"-Garantie,
-    // Migration 066). Kein city mehr - die Spalte wird in Migration 136
+    // Migration 066). Kein city mehr - die Spalte ist mit Migration 138
     // entfernt.
     if (SupabaseService.isInitialized) {
       try {

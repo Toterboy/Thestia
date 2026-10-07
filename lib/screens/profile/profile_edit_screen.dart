@@ -793,19 +793,20 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       // Koordinaten serverseitig persistieren (Basis fuer die
       // Distanzberechnung zu anderen Nutzern).
       if (SupabaseService.isInitialized) {
+        // v0.9.3: In profiles landen nur noch das Bundesland und die
+        // Flags. Die Koordinaten gehen in profile_locations - dort ist
+        // die RLS auf den Eigentuemer begrenzt, in profiles kann sie
+        // das nicht (die Spalte waere fuer jeden angemeldeten Nutzer
+        // ueber PostgREST lesbar).
         try {
           await SupabaseDatabaseService(SupabaseService.client).updateOwnProfile({
-            'location_lat': snapped.lat,
-            'location_lng': snapped.lng,
             'state': detectedState,
           });
         } catch (e) {
-          debugPrint('[ProfileEdit] Standort-Sync fehlgeschlagen: $e');
+          debugPrint('[ProfileEdit] Bundesland-Sync fehlgeschlagen: $e');
         }
 
-        // v0.9.3: Der eigentliche Ort fuer die Koordinaten. profiles
-        // behaelt die Werte nur noch bis zum Contract-Schritt (138);
-        // profile_locations ist die privat lesbare Tabelle.
+        // Der eigentliche Ort fuer die Koordinaten.
         try {
           await SupabaseDatabaseService(SupabaseService.client)
               .saveOwnLocation(snapped.lat, snapped.lng);

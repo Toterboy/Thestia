@@ -279,8 +279,12 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
                     title: Text(profile.name),
                     subtitle: Text([
                       '${profile.age ?? '?'} Jahre',
-                      // Serverseitig berechnete Distanz (5-km-Schritte).
-                      if (profile.distanceKm > 0) profile.distanceLabel,
+                      // Serverseitig berechnet, angezeigt als
+                      // 10-km-Stufe (v0.9.3).
+                      if (profile.distanceKm > 0)
+                        profile.distanceLabel(
+                          (key) => L10n.t(context, key),
+                        ),
                     ].join(' · ')),
                     trailing: IconButton(
                       icon: const Icon(Icons.close, color: Colors.red),
@@ -443,7 +447,10 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
                     ),
                     title: Text([
                       '${profile.name}, ${profile.age ?? '?'}',
-                      if (profile.distanceKm > 0) profile.distanceLabel,
+                      if (profile.distanceKm > 0)
+                        profile.distanceLabel(
+                          (key) => L10n.t(context, key),
+                        ),
                     ].join(' · ')),
                     subtitle: Text(
                       profile.introText.isNotEmpty
@@ -1264,7 +1271,8 @@ class _MatchTile extends ConsumerWidget {
             Expanded(
               child: Text([
                 '${p.name}, ${p.age ?? '?'}',
-                if (p.distanceKm > 0) p.distanceLabel,
+                if (p.distanceKm > 0)
+                  p.distanceLabel((key) => L10n.t(context, key)),
               ].join(' · ')),
             ),
             // KEINE Streaks/Flammen-Zählung (v0.9.0-Feedback).

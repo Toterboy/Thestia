@@ -1441,6 +1441,15 @@ const Map<String, Map<String, String>> _strings = {
     // Settings (Vollständigkeit)
     'settings.privacySection': 'Privatsphäre',
     'settings.whoCanSee': 'Wer kann mein Profil sehen?',
+    'settings.showDistance': 'Entfernung anzeigen',
+    'settings.showDistanceSub':
+        'Zeigt anderen nur ungefähr, wie weit weg du bist - in Stufen '
+        'von 10 km. Aus ist der Standard; dein genauer Standort bleibt '
+        'immer privat.',
+    'distance.bucketUnder': 'unter {km} km',
+    'distance.bucketRange': '{from} bis {to} km',
+    'distance.bucketOver': 'über {km} km',
+    'distance.bucketUnknown': 'Entfernung unbekannt',
     'settings.localDataNote':
         'Deine Daten werden nur lokal auf diesem Gerät gespeichert. Es '
         'werden keine unnötigen Berechtigungen angefordert.',
@@ -4015,6 +4024,14 @@ const Map<String, Map<String, String>> _strings = {
     // Settings (Vollständigkeit)
     'settings.privacySection': 'Privacy',
     'settings.whoCanSee': 'Who can see my profile?',
+    'settings.showDistance': 'Show distance',
+    'settings.showDistanceSub':
+        'Shows others roughly how far away you are, in 10 km steps. '
+        'Off by default; your exact location stays private.',
+    'distance.bucketUnder': 'under {km} km',
+    'distance.bucketRange': '{from} to {to} km',
+    'distance.bucketOver': 'over {km} km',
+    'distance.bucketUnknown': 'Distance unknown',
     'settings.localDataNote':
         'Your data is stored only locally on this device. No unnecessary '
         'permissions are requested.',
