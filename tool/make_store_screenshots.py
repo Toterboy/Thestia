@@ -109,12 +109,20 @@ SHOTS = {
     #    merkmal: die Entscheidung liegt beim Nutzer, nicht beim
     #    Plattform-Standard.
     '06_datenschutz': (
-        'Du bestimmst,\n'
+        # Text in reinem Deutsch, mit echten Umlauten. Die uebrigen
+        # fuenf Screens benutzen sie auch - eine Transliteration fiel
+        # im Store sofort auf.
+        #
+        # "Du bestimmst, wer was sieht" und "Kein Ort gespeichert, kein
+        # Wert verraten" waren der erste Versuch und klangen nach
+        # Werbespruch mit Reim. Jetzt: beschreibend, in der Formulierung
+        # der App selbst ("Nur Personen, mit denen du einen Funken hast").
+        'Du entscheidest,\n'
         'wer was sieht.',
-        'Dein Profil fuer alle oder nur fuer Funken - und die '
-        'Entfernungs-\nanzeige bleibt aus, bis du sie einschaltest.\n'
-        'Wer sie sieht, bekommt Stufen von 10 km.',
-        'Kein Ort gespeichert, kein Wert verraten',
+        'Dein Profil für alle – oder nur für die Menschen,\n'
+        'mit denen du einen Funken hast. Die Entfernung zeigt\n'
+        'erst, wenn du sie erlaubst: nur Stufen von 10 km.',
+        'Kein Ort gespeichert',
     ),
     '05_eisbrecher': (
         '60 Fragen gegen\n'
