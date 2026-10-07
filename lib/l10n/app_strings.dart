@@ -356,6 +356,11 @@ const Map<String, Map<String, String>> _strings = {
     'chatbg.tooLarge':
         'Bild zu groß (max. 8 MB), bitte ein kleineres wählen.',
     'chatbg.badImage': 'Diese Datei ist kein unterstütztes Bild.',
+    'chatbg.hintTitle': 'Chat-Hintergrund',
+    'chatbg.hintBody':
+        'Wähle einen Hintergrund für eure Chats. Das ändert nichts an den '
+        'Nachrichten - es ist nur eine Fläche hinter dem Text.',
+    'chatbg.hintDone': 'Hintergrund gesetzt.',
     'paused.homeTitle': 'Dein Profil ist pausiert',
     'paused.homeBody':
         'Du bist für neue Personen unsichtbar. Tippen zum Entpausieren.',
@@ -450,6 +455,8 @@ const Map<String, Map<String, String>> _strings = {
         'Dein Bundesland wurde nicht erkannt. Bitte wähle es unten aus.',
     'setup.passkeyDone':
         'Passkey eingerichtet. Du kannst dich künftig damit anmelden.',
+    'setup.passkeyAlreadyThere':
+        'Passkey ist schon eingerichtet.',
     // Erst-Einrichtung als Interview (Thestia-Fragen-Bubbles)
     'setupq.visibility':
         'Wie privat magst du bleiben, und wie soll die App aussehen?',
@@ -2542,6 +2549,7 @@ const Map<String, Map<String, String>> _strings = {
     'common.check': 'Prüfen',
     'common.discard': 'Verwerfen',
     'common.done': 'Fertig',
+    'common.later': 'Später',
     'common.whatHappened': 'Was ist passiert?',
     'nav.unsavedTitle': 'Ungespeicherte Änderungen',
     'nav.unsavedBody':
@@ -3144,6 +3152,11 @@ const Map<String, Map<String, String>> _strings = {
     'chatbg.tooLarge':
         'Image too large (max. 8 MB), please choose a smaller one.',
     'chatbg.badImage': 'This file is not a supported image.',
+    'chatbg.hintTitle': 'Chat background',
+    'chatbg.hintBody':
+        'Pick a background for your chats. It changes nothing about the '
+        'messages - it is just a surface behind the text.',
+    'chatbg.hintDone': 'Background set.',
     'paused.homeTitle': 'Your profile is paused',
     'paused.homeBody':
         'You are invisible to new people. Tap to unpause.',
@@ -3235,6 +3248,7 @@ const Map<String, Map<String, String>> _strings = {
     'setup.locationStateUnknown':
         'Your state could not be detected. Please pick it below.',
     'setup.passkeyDone': 'Passkey set up. You can now sign in with it.',
+    'setup.passkeyAlreadyThere': 'Passkey is already set up.',
     // One-time setup as interview (Thestia question bubbles)
     'setupq.visibility':
         'How private would you like to stay - and how should the app look?',
@@ -5227,6 +5241,7 @@ const Map<String, Map<String, String>> _strings = {
     'common.check': 'Check',
     'common.discard': 'Discard',
     'common.done': 'Done',
+    'common.later': 'Later',
     'common.whatHappened': 'What happened?',
     'nav.unsavedTitle': 'Unsaved changes',
     'nav.unsavedBody':

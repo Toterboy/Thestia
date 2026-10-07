@@ -19,6 +19,7 @@ import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/gender.dart' show RelationshipType;
 import 'package:thestia/models/message.dart';
 import 'package:thestia/utils/chat_backgrounds.dart';
+import 'package:thestia/widgets/chat_background_picker.dart';
 import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/models/find_match_models.dart';
 import 'package:thestia/providers/chat_provider.dart';
@@ -210,12 +211,74 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
       unawaited(_bootstrap());
       unawaited(_loadQuizGate());
       unawaited(_loadIdeaWheelHidden());
+      unawaited(_maybeShowBackgroundHint());
     });
 
     // Relay-Polling (5 s, Fix "Nachrichten kommen nicht an"): Der Partner
     // pingt nach relay_store sofort, aber falls der Ping verloren geht,
     // holt der Timer spätestens nach 5 s nach. Pausiert im Hintergrund.
     _startRelayTimer();
+  }
+
+  /// Zeigt beim ersten Chat einmalig den Hinweis auf den Hintergrund.
+  ///
+  /// v0.9.3: Der Hintergrund liess sich bisher nur ueber die Einstellungen
+  /// oder die Einrichtung setzen. Wer direkt in einen Chat tappt, sah
+  /// nie, dass es die Option gibt.
+  ///
+  /// Bewusst ein Dialog mit dem Picker statt eines Snackbars: die Auswahl
+  /// braucht Platz, und ein Snackbar waere nach einer Sekunde weg, bevor
+  /// jemand entschieden hat. "Spaeter" ist ein gleichwertiger Weg
+  /// raus - der Hinweis kommt beim naechsten Chat wieder, aber erst,
+  /// wenn jemand ihn wegklickt.
+  Future<void> _maybeShowBackgroundHint() async {
+    final settings = ref.read(settingsProvider);
+    if (settings.chatBackgroundSeen) return;
+
+    // Der Dialog darf nicht im Dialog landen, wenn zwischen den Frames
+    // schon einer aufgegangen ist (Schnelltippen durch die Liste).
+    if (!mounted) return;
+
+    final settingsNotifier = ref.read(settingsProvider.notifier);
+
+    final gewaehlt = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: Text(L10n.t(ctx, 'chatbg.hintTitle')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(L10n.t(ctx, 'chatbg.hintBody')),
+            const SizedBox(height: 16),
+            const ChatBackgroundPicker(),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(L10n.t(ctx, 'common.later')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(L10n.t(ctx, 'common.done')),
+          ),
+        ],
+      ),
+    );
+
+    // Auch bei "Spaeter" merken: sonst kommt derselbe Dialog bei jedem
+    // Chat erneut, und das nervt schneller als der Hinweis selbst.
+    await settingsNotifier.markChatBackgroundSeen();
+    if (gewaehlt == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.t(context, 'chatbg.hintDone')),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   /// Relay-Ticker als Einmal-Timer mit variablem Intervall.

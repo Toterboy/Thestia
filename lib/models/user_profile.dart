@@ -199,9 +199,16 @@ class UserProfile {
 
   /// Erzeugt ein [UserProfile] aus der public_profiles-View.
   ///
-  /// Mapped `age` → birthDate (rückgerechnet), `lat_approx`/`lng_approx` →
-  /// locationLat/locationLng. Alle sensiblen Felder sind in der View nicht
-  /// enthalten und werden mit Defaults belegt.
+  /// Mappt `age` → birthDate (rückgerechnet). Alle sensiblen Felder sind
+  /// in der View nicht enthalten und werden mit Defaults belegt.
+  ///
+  /// v0.9.3: Die View liefert keine Koordinaten mehr. Bis Migration 138
+  /// standen hier `lat_approx`/`lng_approx` (1 Dezimal, ~11 km) - sie
+  /// wurden auf locationLat/locationLng abgebildet und damit in Profile
+  /// geschrieben, die man in die Lokalitaet anderer brachte. Die
+  /// Zuordnungen sind bewusst entfernt und nicht auf null gesetzt: ein
+  /// stillschweigend befuelltes locationLat sieht nach Standort aus und
+  /// waere es nicht.
   factory UserProfile.fromPublicView(Map<String, dynamic> json) {
     // Alter rückrechnen: ungefähres Geburtsjahr.
     final age = json['age'] as int?;
@@ -222,8 +229,6 @@ class UserProfile {
           .toList(),
       gender: json['gender'] as String?,
       personalityType: json['personality_type'] as String?,
-      locationLat: (json['lat_approx'] as num?)?.toDouble(),
-      locationLng: (json['lng_approx'] as num?)?.toDouble(),
       birthDate: birthDate,
       mood: json['mood'] as String?,
       favoriteSong: (json['favorite_song'] as String?)?.trim().isNotEmpty == true

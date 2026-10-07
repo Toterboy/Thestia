@@ -424,6 +424,23 @@ class _SettingsPrivacyOnceScreenState
     if (_passkeyBusy || _passkeyCreated) return;
     setState(() => _passkeyBusy = true);
     try {
+      // v0.9.3: Vorher ungeprueft registrieren. Bei einem Geraetewechsel
+      // oder einem zweiten Durchlauf der Einrichtung lag schon ein
+      // Passkey auf dem Konto - der native Dialog kam dann ein zweites
+      // Mal und endete in einer Fehlermeldung, die nichts kaputtgemacht
+      // hat. Der Schritt ist damit abgeschlossen, nicht gescheitert.
+      if (await PasskeyAuth.hasRegisteredPasskey()) {
+        if (!mounted) return;
+        setState(() => _passkeyCreated = true);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(L10n.t(context, 'setup.passkeyAlreadyThere')),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+
       await PasskeyAuth.register();
       if (!mounted) return;
       setState(() => _passkeyCreated = true);

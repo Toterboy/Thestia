@@ -185,3 +185,40 @@ python -c "import base64;print('android:apk-key-hash:'+base64.urlsafe_b64encode(
 | `User enrollments disabled` | Passkeys im Dashboard nicht aktiviert | Dashboard → Passkeys aktivieren |
 | Native Dialog lehnt ab (`SecurityError`) | assetlinks.json passt nicht | Hash in `auth.thestia.de/.well-known/assetlinks.json` ergänzen |
 | Passkey in Google-Passwortmanager sichtbar, aber Login schlägt fehl | Credential auf Gerät, nie serverseitig registriert (Verifikation schlug fehl) | Eintrag im Passwortmanager löschen; nach Origin-Fix neu anlegen |
+
+## Warum der Client kein AAL2 erzwingen kann (v0.9.3)
+
+Bei der Durchsicht kam die Frage auf, ob die Passkey-Registrierung im
+Client auf AAL2 gehärtet werden müsste — also ob man `userVerification:
+required` und `authenticatorAttachment: platform` selbst setzen kann.
+
+**Nein, und der Grund ist nicht nachvollziehbar-lösbar auf der
+Client-Seite.** Der Request an das Gerät entsteht aus den Optionen, die
+der Server schickt:
+
+```dart
+// supabase_flutter/lib/src/supabase_passkey.dart
+final registration = await passkey.startRegistration();
+final response = await authenticator.register(
+  passkeyRegisterRequestFromOptions(registration.options),
+);
+```
+
+`RegisterRequestType` (passkeys_platform_interface) hat **kein** Feld für
+`userVerification` oder `authenticatorAttachment`. Der Client kann die
+Anforderung also nicht verschärfen, nur abschwächen — und das wäre ohne
+Nutzen, weil GoTrue die Ceremonie abschließend prüft.
+
+AAL2 kommt damit wie in der Tabelle oben beschrieben über die 2FA des
+Accounts. Wer AAL2 erzwingen will, muss die betroffene Aktion auf einen
+AAL2-geprüften RPC legen (`aal2` im Funktionsnamen oder
+`auth.jwt()->>'aal'` prüfen) — nicht auf die Registrierung selbst.
+
+Als Client-seitiges Gegenstück gibt es seit v0.9.3
+`PasskeyAuth.hasRegisteredPasskey()`: die Einrichtung prüft vor der
+Registrierung, ob bereits ein Passkey auf dem Konto liegt. Vorher lief
+sie blind und bekam auf einem Gerät mit vorhandenem Passkey einen zweiten
+nativen Dialog mit anschließender Fehlermeldung — die Meldung war falsch,
+es war nichts kaputt. Der Check fängt Fehler beim Lesen der Liste als
+„unbekannt" auf: Verlangt das Lesen selbst AAL2, darf die Einrichtung
+deshalb **nicht** abbrechen.

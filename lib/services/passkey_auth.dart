@@ -98,6 +98,43 @@ class PasskeyAuth {
     return SupabaseService.client.auth.passkey.list();
   }
 
+  /// Prüft, ob auf dem Konto bereits mindestens ein Passkey liegt.
+  ///
+  /// v0.9.3: Die Einrichtung rief blind [register] auf. Wer das Gerät
+  /// wechselt - oder dieselbe Einrichtung nach einem Update erneut
+  /// durchläuft - bekam daraufhin einen zweiten nativen Dialog und
+  /// danach je nach Plattform eine Fehlermeldung, weil der Credential
+  /// schon existiert. Beides ist eine vermeidbare Sackgasse, und die
+  /// Meldung ("Einrichtung fehlgeschlagen") lag falsch: es wurde nichts
+  /// kaputtgemacht.
+  ///
+  /// Bewusst NICHT `listRegistered().isNotEmpty`:
+  ///
+  ///  * Die Liste zu lesen verlangt auf manchen Plattformen AAL2. Fehlt
+  ///    die biometrische Anmeldung, wirft der Aufruf - und die
+  ///    Einrichtung wuerde dann einen Passkey ablehnen, nur weil das
+  ///    Lesen fehlschlug. Ein false lautet hier "unbekannt", nicht
+  ///    "nicht vorhanden".
+  ///  * Die Liste kann aus anderen Gruenden fehlschlagen (Netz, alte
+  ///    Supabase-Version). Auch dann darf die Registrierung laufen.
+  ///
+  /// Deshalb wird jeder Fehler als "kein Passkey bekannt" behandelt, und
+  /// der Aufrufer bekommt `true` fuer den Fehlerfall nur ueber
+  /// [register] zurueckgemeldet.
+  ///
+  /// Rueckgabe: true = mindestens ein Passkey vorhanden (Fehlerfall: false).
+  static Future<bool> hasRegisteredPasskey() async {
+    if (!SupabaseService.isInitialized) return false;
+    try {
+      final list = await SupabaseService.client.auth.passkey.list();
+      return list.isNotEmpty;
+    } catch (_) {
+      // Unbekannt ist nicht "nein" - der Aufrufer soll trotzdem
+      // registrieren duerfen.
+      return false;
+    }
+  }
+
   /// Löscht einen Passkey vom Konto (z. B. Alt-Gerät / doppelte Einträge).
   ///
   /// WICHTIG bei der Fehlersuche ("Der Server konnte den Passkey nicht
