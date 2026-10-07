@@ -43,10 +43,15 @@ gezeigt. Sie stehen in [Nur im Release pruefen](#nur-im-release-pruefen).
 > Ablageort und ist **nicht mehr verteilen** – ihr Datenbankschema ist
 > mit Migration 138 weggebrochen.
 >
-> **Admin-Builds:** 0 Stück, mit Absicht. Sie tragen die als kompromittiert
-> dokumentierte UUID und werden bis zu deren Rotation nicht neu gebaut
-> (siehe Abschnitt 7 und `docs/ADMIN-UUID.md`). Deshalb meldet 2.4 neun
-> statt elf Artefakte.
+> **Admin-Builds:** 2 Stück, in `releases\v0.10.0\admin\` (gitignoriert,
+> `.gitignore:104`). Gebaut mit der **rotierten** UUID – die alte gilt als
+> kompromittiert und wurde nicht wiederverwendet. Deshalb meldet 2.4
+> **elf** statt neun Artefakte. Der Inhaltscheck greift nur mit gesetzter
+> Umgebungsvariable; ohne sie prüft das Skript nur Signatur und
+> Admin-Trennung. Siehe `docs/ADMIN-UUID.md`.
+>
+> Der Ablageort `releases\v0.9.2\admin\` ist davon **nicht** betroffen und
+> enthält womöglich noch die alte UUID. Vor einem Admin-Einsatz prüfen.
 
 ---
 
@@ -245,7 +250,7 @@ hält - nicht, damit sie übersprungen werden.
 | Standort-Umstellung 137-142 | Code und Migrationen fertig, **nie auf einem Geraet durchlaufen**. Der Serverzustand ist geprueft (Migration 142 laeuft durch), der Client-Pfad nicht. | **Blocker fuer jede Aussage ueber den Standort** (4.12, 4.13). Besonders: der allererste GPS-Aufruf eines neuen Kontos schreibt ueber einen Pfad, der vorher nie lief. |
 | Chat-Hintergrund-Hinweis, Passkey-Bestandspruefung | Code fertig, **nie auf einem Geraet durchlaufen**. Beide brauchen einen nativen Dialog bzw. ein vorhandenes Credential. | **Blocker fuer die Abnahme** (4.14, 4.15). Ein Dialog, der sich nicht schliessen laesst, ist schlimmer als keiner. |
 | Transit Spark | [BLE-GERAETETEST.md](BLE-GERAETETEST.md) Status OFFEN | **Blocker** fuer die Behauptung „stabil". |
-| Admin-APKs | tragen die als kompromittiert dokumentierte UUID, bewusst nicht neu gebaut | Kein Blocker fuer den oeffentlichen Release. Erst nach Rotation neu bauen. |
+| Admin-APKs | **BEHOBEN** (v0.10.0, 07.10.2026). Neu gebaut mit rotierter UUID; Inhalt per `check_release_artifacts.py` mit gesetzter Umgebungsvariable geprueft: UUID in beiden Admin-APKs, in keinem oeffentlichen. | Kein Blocker fuer den oeffentlichen Release. Vor einem echten Admin-Einsatz `releases\v0.9.2\admin\` pruefen - dort koennen noch die alten APKs liegen. |
 
 ## 8. Werkzeug-Fallen
 

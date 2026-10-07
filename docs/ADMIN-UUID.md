@@ -41,25 +41,51 @@ sie den Admin-Zugang enthielten und redundant waren.
 `tool/check_release_artifacts.py` erkennt diesen Fall jetzt über alle
 Versionen hinweg und lässt die CI bei einem Treffer fehlschlagen.
 
-## Offen: UUID gilt als bekannt
+## Erledigt: Rotation und Neubau (v0.10.0)
 
-Es ist **nicht geklärt, ob v0.9.1 bereits an Nutzer ausgeliefert wurde**
-(weder Play Store noch F-Droid). Bis das geklärt ist, wird die UUID
-**als kompromittiert behandelt**.
+Die drei Punkte sind abgearbeitet. Der Wert der neuen UUID steht
+**bewusst nicht in diesem Dokument** – dieses File ist versioniert, und
+eine UUID, die Admin-Zugriff freischaltet, gehört da nicht hinein.
 
-Daraus folgt:
+1. **Neues Admin-Konto** – angelegt, neue User-ID, die alte wird nicht
+   wiederverwendet.
+2. **Admin-APKs neu gebaut** für v0.10.0, nach
+   `releases/v0.10.0/admin/` (gitignoriert, `.gitignore:104`).
+   Geprüft mit gesetzter Umgebungsvariable:
+   `OK 11 Artefakte: Signatur und Admin-Trennung stimmen.` Die neue
+   UUID steckt in beiden Admin-APKs und in **keinem** öffentlichen.
+3. **Öffentliche APKs unverändert** – sie enthalten die UUID nachweislich
+   nicht. Das ist keine Vermutung, sondern jedes Mal das Ergebnis von
+   `check_release_artifacts.py`.
 
-1. **Neues Admin-Konto in Supabase anlegen** – die bisherige User-ID
-   nicht wiederverwenden.
-2. **Admin-APKs neu bauen** mit der neuen UUID. Die v0.9.2-Admin-APKs
-   tragen ebenfalls die alte und sind damit genauso betroffen; sie sind
-   nur nicht öffentlich verteilt (`releases/*/admin/` ist gitignoriert).
-3. **Öffentliche APKs müssen nicht neu gebaut werden** – sie enthalten die
-   UUID nachweislich nicht (durch `tool/check_release_artifacts.py`
-   geprüft).
+Die v0.9.2-Admin-APKs tragen die alte UUID und bleiben kompromittiert.
+Sie sind nur deshalb nicht im Umlauf, weil `releases/*/admin/` ignoriert
+ist. **Vor einem Admin-Einsatz prüfen, ob der alte Ablageort noch APKs
+enthält** – der Bump von 0.9.2 auf 0.10.0 hat den Ordner
+`releases/v0.9.2/admin/` nicht automatisch mitgenommen.
 
-Der öffentliche Pfad ist damit sauber, die Admin-Funktion muss vor einem
-echten Admin-Einsatz neu aufgesetzt werden.
+### Handhabung beim Bauen
+
+Der Wert gehört in die Umgebungsvariable, nicht als Parameter:
+
+```powershell
+$env:ADMIN_UUID = "…"
+powershell -NoProfile -ExecutionPolicy Bypass `
+  -File ".\tool\build_release.ps1" -Flavor both -UniversalApk
+Remove-Item Env:\ADMIN_UUID
+```
+
+`build_release.ps1` bricht ab, wenn `-AdminUUID` gesetzt ist: der Wert
+landete achtmal unredigiert in der PowerShell-History und war während
+des Laufs in der Prozessliste sichtbar. Für den Weg über die
+Zwischenablage-/Temp-Datei geht derselbe Weg ohne beide Spuren.
+
+## Offen: alte UUID gilt weiter als bekannt
+
+Unabhängig von der Rotation bleibt offen, **ob v0.9.1 bereits an
+Nutzer ausgeliefert wurde** (weder Play Store noch F-Droid). Die alte
+UUID wird deshalb weiter als kompromittiert behandelt und nie wieder
+verwendet – auch nicht für Testzwecke.
 
 ## Prüfen
 
