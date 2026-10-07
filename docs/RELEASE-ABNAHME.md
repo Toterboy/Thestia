@@ -22,26 +22,31 @@ gezeigt. Sie stehen in [Nur im Release pruefen](#nur-im-release-pruefen).
 
 | Feld | Wert |
 | --- | --- |
-| Version (`pubspec.yaml`) | `0.9.2+30` |
-| Commit | `d6119c3` (**lokal, nicht gepusht** - GitHub lehnt den Push mit `Internal Server Error` ab) |
+| Version (`pubspec.yaml`) | `0.10.0+31` |
+| Commit | `04066db` |
 | Branch | `main` |
 | Geraet(e) | `a86fc552` |
 | Zweitgeraet fuer Transit Spark | siehe [BLE-GERAETETEST.md](BLE-GERAETETEST.md) |
 | Datum der Abnahme | ____________ |
 | Abgenommen von | ____________ |
 
-> **Zur Version:** Der Build traegt weiter `0.9.2`, enthaelt aber den
-> kompletten Standort-Contract (Migrationen 137-142). Das ist fuer die
-> Geraeteabnahme in Ordnung - getestet wird der aktuelle Stand - und
-> **nicht** fuer eine Veroeffentlichung: dieselbe Versionsnummer wie
-> der Stand vom 05.10. bei voellig veraendertem Datenbankschema. Vor
-> einem Store-Upload gehoert ein eigener Versionsschritt.
+> **Warum 0.10.0 und nicht 0.9.3:** Die Roadmap hat eine eigene Regel –
+> „Neue Nutzerfunktionen sind immer MINOR-Bumps; nur Fixes gehen in
+> PATCH" – und definiert Kern-Funktion als Änderung des Funktionsumfangs
+> **oder der Datenverarbeitung für Nutzende**. Die Standort-Umstellung
+> fällt exakt darunter und war als PATCH geführt. Der MINOR-Bump löst
+> diesen Widerspruch, statt ihn ein drittes Mal stehenzulassen.
 >
-> **Zur fehlenden Push:** Abschnitt 1.1 verlangt einen sauberen
-> Arbeitsbaum - den hat der Build. Aber `d6119c3` liegt nur lokal.
-> Wer diesen Stand in einem anderen Checkout prueft, bekommt den
-> Vorgaenger. Der Push gehoert nach, bevor die Abnahme-Unterschrift
-> etwas wert ist.
+> **versionCode:** Die Splits tragen 1031 / 2031 / 4031 (Basis 31) und
+> liegen damit streng über den 1030 / 2030 / 4030 des Vorgängers. Für
+> einen Play-Upload ist das Pflicht. `releases\v0.9.2\` liegt noch im
+> Ablageort und ist **nicht mehr verteilen** – ihr Datenbankschema ist
+> mit Migration 138 weggebrochen.
+>
+> **Admin-Builds:** 0 Stück, mit Absicht. Sie tragen die als kompromittiert
+> dokumentierte UUID und werden bis zu deren Rotation nicht neu gebaut
+> (siehe Abschnitt 7 und `docs/ADMIN-UUID.md`). Deshalb meldet 2.4 neun
+> statt elf Artefakte.
 
 ---
 
@@ -68,7 +73,7 @@ Alle laufen aus dem Repo-Wurzelverzeichnis, kein Setup ausser `.env`.
 | 2.1 | `powershell -NoProfile -ExecutionPolicy Bypass -File ".\tool\build_release.ps1" -Flavor both -UniversalApk -SplitPerAbi -Aab` | „Fertig" **und** 9 Dateien in `releases\<version>\` | **Alle drei Schalter sind Pflicht.** Ohne einen davon baut das Skript nichts und meldet trotzdem „Fertig". Das ist zweimal passiert. Bei leerem Ablageort: Schalter pruefen, nicht das Skript. |
 | 2.2 | `Get-ChildItem "releases\v0.9.2" -Filter *.apk` | 8 APKs + 1 AAB (`play`, `fdroid`, jeweils universal + armv7/arm64/x86_64) | Fehlende Datei: der jeweilige `--split-per-abi`-Lauf fehlte. Neu bauen. |
 | 2.3 | `python tool\check_release_consistency.py` | `OK  9 Artefakte: ein Build, Berechtigungen, Versionen, Screenshots stimmen.` und Exitcode `0` | Release stoppen. Der Befund nennt, ob ein Build, eine Berechtigung, eine Version oder ein Screenshot falsch ist. |
-| 2.4 | `python tool\check_release_artifacts.py` | `OK  11 Artefakte: Signatur und Admin-Trennung stimmen.` | Release stoppen. Besonders `Kein Admin-Build im oeffentlichen Ablageort` ist ein Blocker. |
+| 2.4 | `python tool\check_release_artifacts.py` | `OK 9 Artefakte: Signatur und Admin-Trennung stimmen.` | Release stoppen. Besonders `Kein Admin-Build im oeffentlichen Ablageort` ist ein Blocker. **Zaehlt 11, sind Admin-Builds mitgebaut worden** – dann aber nur nach Abschnitt „Admin-UUID setzen", und nie im selben Ordner wie der oeffentliche Release. |
 
 ### 2.5 Gegen das Binaer-Manifest pruefen, nicht gegen die Quelle
 
