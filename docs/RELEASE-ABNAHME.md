@@ -23,12 +23,25 @@ gezeigt. Sie stehen in [Nur im Release pruefen](#nur-im-release-pruefen).
 | Feld | Wert |
 | --- | --- |
 | Version (`pubspec.yaml`) | `0.9.2+30` |
-| Commit | `0b1888a` |
+| Commit | `d6119c3` (**lokal, nicht gepusht** - GitHub lehnt den Push mit `Internal Server Error` ab) |
 | Branch | `main` |
 | Geraet(e) | `a86fc552` |
 | Zweitgeraet fuer Transit Spark | siehe [BLE-GERAETETEST.md](BLE-GERAETETEST.md) |
 | Datum der Abnahme | ____________ |
 | Abgenommen von | ____________ |
+
+> **Zur Version:** Der Build traegt weiter `0.9.2`, enthaelt aber den
+> kompletten Standort-Contract (Migrationen 137-142). Das ist fuer die
+> Geraeteabnahme in Ordnung - getestet wird der aktuelle Stand - und
+> **nicht** fuer eine Veroeffentlichung: dieselbe Versionsnummer wie
+> der Stand vom 05.10. bei voellig veraendertem Datenbankschema. Vor
+> einem Store-Upload gehoert ein eigener Versionsschritt.
+>
+> **Zur fehlenden Push:** Abschnitt 1.1 verlangt einen sauberen
+> Arbeitsbaum - den hat der Build. Aber `d6119c3` liegt nur lokal.
+> Wer diesen Stand in einem anderen Checkout prueft, bekommt den
+> Vorgaenger. Der Push gehoert nach, bevor die Abnahme-Unterschrift
+> etwas wert ist.
 
 ---
 
