@@ -97,6 +97,24 @@ SHOTS = {
         'Chat-Hintergrund – alles bleibt erhalten.',
         'Auch 6 Muster im Chat',
     ),
+    # 6) Datenschutz. Eigenes Bild, weil die Entfernungs-Anzeige die
+    #    inhaltlich wichtigste Aenderung dieses Releases ist und in einer
+    #    von vier gleichwertigen Kacheln neben Farbschema und
+    #    Chat-Hintergrund untergeht.
+    #
+    #    Die Texte sind nach den Kriterien oben gebaut: alles am Code
+    #    nachpruefbar (show_distance ist Default false, Anzeige in
+    #    10-km-Stufen, Ort wird nicht erhoben), keine Mengenangabe ohne
+    #    Beleg, und der Punkt beschreibt ein echtes Alleinstellungs-
+    #    merkmal: die Entscheidung liegt beim Nutzer, nicht beim
+    #    Plattform-Standard.
+    '06_datenschutz': (
+        'Dein Standort.\n'
+        'Deine Entscheidung.',
+        'Die Entfernungsanzeige bleibt aus, bis du sie einschaltest.\n'
+        'Wer sie sieht, bekommt Stufen von 10 km - kein Ort, kein Wert.',
+        'Dein Wohnort wird nicht gespeichert',
+    ),
     '05_eisbrecher': (
         '60 Fragen gegen\n'
         'das Schweigen',
@@ -111,6 +129,18 @@ SHOTS = {
         'Antippen, senden, plaudern',
     ),
 }
+
+
+def darken(img, amount=0.26):
+    """Zieht den Markenverlauf Richtung Schwarz.
+
+    Fuer das Datenschutz-Bild. Kein eigener Look, sondern derselbe
+    Verlauf mit verschobener Gewichtung: die Seite soll hervorgehen,
+    ohne aus der Reihe der fuenf anderen Bilder zu fallen. 0 = unveraendert,
+    1 = rein schwarz.
+    """
+    base = img.convert('RGB')
+    return Image.blend(base, Image.new('RGB', base.size, (0, 0, 0)), amount)
 
 
 def gradient(size, angle=35.0):
@@ -1341,7 +1371,8 @@ def _place_card(bg, card, y, avail_h, max_w, center_w=0, x=None):
     return cw
 
 
-def compose_card(shot: Image.Image, headline: str, subline: str, badge: str):
+def compose_card(shot: Image.Image, headline: str, subline: str, badge: str,
+                dark: bool = False):
     """9:16: EIN Inhaltsblock als Kachel auf dem Markenverlauf.
 
     Das Gegenstueck zu compose_9x16 fuer die Variante OHNE Geraet und
@@ -1355,7 +1386,10 @@ def compose_card(shot: Image.Image, headline: str, subline: str, badge: str):
     fuer ein falsches Bild.
     """
     W, H = 1080, 1920
-    bg = gradient((W, H), 40).convert('RGBA')
+    verlauf = gradient((W, H), 40)
+    if dark:
+        verlauf = darken(verlauf)
+    bg = verlauf.convert('RGBA')
     draw = ImageDraw.Draw(bg)
 
     f_head = ImageFont.truetype(FONT_BOLD, 62)
@@ -1379,11 +1413,14 @@ def compose_card(shot: Image.Image, headline: str, subline: str, badge: str):
 
 
 def compose_card_wqhd(shot: Image.Image, headline: str, subline: str,
-                      badge: str):
+                      badge: str, dark: bool = False):
     """16:9: Kachel links, Text rechts - wie compose_modes_wqhd, aber mit
     einem Inhaltsblock statt der fuenf Moduskacheln."""
     W, H = 2560, 1440
-    bg = gradient((W, H), 25).convert('RGBA')
+    verlauf = gradient((W, H), 25)
+    if dark:
+        verlauf = darken(verlauf)
+    bg = verlauf.convert('RGBA')
     draw = ImageDraw.Draw(bg)
 
     margin = 90
@@ -1622,7 +1659,7 @@ def _place_grid(bg, cards, y, avail_h, max_w, cols=2, gap=24, min_gap=18,
 
 
 def compose_cards(cards, headline: str, subline: str, badge: str,
-                  heading=None, cols=1):
+                  heading=None, cols=1, dark: bool = False):
     """9:16: beliebig viele echte Kacheln untereinander auf dem Verlauf.
 
     Der Aufbau ist der von compose_modes, nur mit den Kacheln, die der
@@ -1632,7 +1669,10 @@ def compose_cards(cards, headline: str, subline: str, badge: str,
     deshalb sind sie auch nicht dabei.
     """
     W, H = 1080, 1920
-    bg = gradient((W, H), 40).convert('RGBA')
+    verlauf = gradient((W, H), 40)
+    if dark:
+        verlauf = darken(verlauf)
+    bg = verlauf.convert('RGBA')
     draw = ImageDraw.Draw(bg)
 
     f_head = ImageFont.truetype(FONT_BOLD, 62)
@@ -1771,9 +1811,12 @@ def compose_modes_wqhd(tiles, headline: str, subline: str, badge: str):
     return round_corners(bg, 56)
 
 
-def compose_9x16(shot: Image.Image, headline: str, subline: str, badge: str):
+def compose_9x16(shot: Image.Image, headline: str, subline: str, badge: str, dark: bool = False):
     W, H = 1080, 1920
-    bg = gradient((W, H), 40).convert('RGBA')
+    verlauf = gradient((W, H), 40)
+    if dark:
+        verlauf = darken(verlauf)
+    bg = verlauf.convert('RGBA')
     draw = ImageDraw.Draw(bg)
 
     # --- Textblock oben -------------------------------------------------
@@ -1806,9 +1849,12 @@ def compose_9x16(shot: Image.Image, headline: str, subline: str, badge: str):
     return round_corners(bg, 56)
 
 
-def compose_wqhd(shot: Image.Image, headline: str, subline: str, badge: str):
+def compose_wqhd(shot: Image.Image, headline: str, subline: str, badge: str, dark: bool = False):
     W, H = 2560, 1440
-    bg = gradient((W, H), 25).convert('RGBA')
+    verlauf = gradient((W, H), 25)
+    if dark:
+        verlauf = darken(verlauf)
+    bg = verlauf.convert('RGBA')
     draw = ImageDraw.Draw(bg)
 
     # App-Bild links, ohne Mockup. Hoehe so skalieren, dass es mit Rand
@@ -1953,8 +1999,11 @@ def main():
             print('  03_entdecken: keine Kacheln gefunden, Fallback auf '
                   'den Screen')
         shot = Image.open(src)
-        a = compose_9x16(shot, headline, subline, badge)
-        b = compose_wqhd(shot, headline, subline, badge)
+        # Nur das Datenschutz-Bild wird abgedunkelt. Ein zweites dunkles
+        # Bild wuerde die Wirkung aufheben.
+        dunkel = name == '06_datenschutz'
+        a = compose_9x16(shot, headline, subline, badge, dark=dunkel)
+        b = compose_wqhd(shot, headline, subline, badge, dark=dunkel)
 
         # Variante MIT nachgeahmter Systemleiste.
         for d, im in ((OUT_9x16, a), (OUT_WQHD, b), (OUT_FASTLANE, a)):
@@ -1965,8 +2014,8 @@ def main():
         # Screens werden nicht zweimal geladen.
         globals()['OMIT_SYSTEM_UI'] = True
         try:
-            a2 = compose_9x16(shot, headline, subline, badge)
-            b2 = compose_wqhd(shot, headline, subline, badge)
+            a2 = compose_9x16(shot, headline, subline, badge, dark=dunkel)
+            b2 = compose_wqhd(shot, headline, subline, badge, dark=dunkel)
             save_png(a2, OUT_9x16_OHNE / f'{name}.png')
             save_png(b2, OUT_WQHD_OHNE / f'{name}.png')
         finally:
@@ -1985,22 +2034,25 @@ def main():
             k = compose_cards(cards, headline, subline, badge,
                               heading='Eisbrecher-Fragen'
                               if name == '05_eisbrecher' else None,
-                              cols=2 if name == '05_eisbrecher' else 1)
+                              cols=2 if name == '05_eisbrecher' else 1,
+                              dark=dunkel)
             save_png(k, OUT_9x16_KACHELN / f'{name}.png')
-            kw = compose_card_wqhd(shot, headline, subline, badge)
+            kw = compose_card_wqhd(shot, headline, subline, badge,
+                                   dark=dunkel)
             save_png(kw, OUT_WQHD_KACHELN / f'{name}.png')
             print(f'  {name}: 9x16 {a.size} + wqhd {b.size} '
                   f'(drei Varianten, {len(cards)} Kacheln aus echten '
                   'Widgets)')
             continue
 
-        k = compose_card(shot, headline, subline, badge)
-        kw = compose_card_wqhd(shot, headline, subline, badge)
+        k = compose_card(shot, headline, subline, badge, dark=dunkel)
+        kw = compose_card_wqhd(shot, headline, subline, badge, dark=dunkel)
         save_png(k, OUT_9x16_KACHELN / f'{name}.png')
         save_png(kw, OUT_WQHD_KACHELN / f'{name}.png')
 
         print(f'  {name}: 9x16 {a.size} + wqhd {b.size} '
-              f'(drei Varianten, Kachel {k.size})')
+              f'(drei Varianten, Kachel {k.size}'
+              f'{", abgedunkelt" if dunkel else ""})')
 
     print('Fertig.')
     _remove_stale(SHOTS.keys())

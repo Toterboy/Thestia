@@ -189,12 +189,14 @@ nur noch die Turnstile-Pruefung, die ein echter Client mit Token besteht.
 
 | # | Pruefbefehl | Erwartetes Ergebnis | Bei Abweichung |
 | --- | --- | --- | --- |
-| 5.1 | `Get-ChildItem "fastlane\metadata\android\de-DE\images\phoneScreenshots" -Filter *.png` | **5** PNGs: `01_willkommen`, `02_chat`, `03_entdecken`, `04_anpassen`, `05_eisbrecher` | Fehlt einer: neu rendern (5.3). |
+| 5.1 | `Get-ChildItem "fastlane\metadata\android\de-DE\images\phoneScreenshots" -Filter *.png` | **6** PNGs: `01_willkommen`, `02_chat`, `03_entdecken`, `04_anpassen`, `05_eisbrecher`, `06_datenschutz` | Fehlt einer: neu rendern (5.3). |
 | 5.2 | `python tool\check_store_screenshots.py` | `OK  Seitenverhaeltnis, Statusleisten-Reserve und System-Indikatoren stimmen.` | Screenshots neu rendern (5.3). |
-| 5.3 | Neu rendern: `$env:STORE_SHOTS="1"; flutter test --update-goldens test/screenshots/store_v091_shots_test.dart`, danach `python tool\make_store_screenshots.py` und `python tool\check_store_screenshots.py` | 5 PNGs in `fastlane\...\phoneScreenshots` | **Ohne `$env:STORE_SHOTS="1"` meldet `flutter test` „All tests skipped" und die PNGs bleiben alt.** Der Composer setzt dann alte Bilder zu neuen Dateinamen zusammen - ohne Fehler. Das ist der Grund, warum hier „leer" nicht als Erfolg gilt. |
+| 5.3 | Neu rendern: `$env:STORE_SHOTS="1"; flutter test --update-goldens test/screenshots/store_v091_shots_test.dart`, danach `python tool\make_store_screenshots.py` und `python tool\check_store_screenshots.py` | 6 PNGs in `fastlane\...\phoneScreenshots` | **Ohne `$env:STORE_SHOTS="1"` meldet `flutter test` „All tests skipped" und die PNGs bleiben alt.** Der Composer setzt dann alte Bilder zu neuen Dateinamen zusammen - ohne Fehler. Das ist der Grund, warum hier „leer" nicht als Erfolg gilt. |
 | 5.4 | `python tool\check_screenshot_consistency.py` | Exitcode `0` | Uebergroesse Schrift in mindestens einem Screenshot. |
 | 5.5 | Screenshots gegen **diesen** Build pruefen | Jeder Screenshot zeigt den aktuellen Stand: kein veralteter Screen, keine alte Versionsnummer | Screenshot stammt aus einem aelteren Build: 5.3 wiederholen. |
 | 5.6 | `python tool\check_png_integrity.py` | Exitcode `0` | Beschaedigte PNG-Datei. Neu rendern. |
+| 5.7 | **Datenschutz-Bild zeigt den echten Schalter** | `06_datenschutz.png` ansehen | „Entfernung anzeigen" ist **schwarz und nicht ausgegraut**. | Der Schalter ist ausgegraut, weil im Render `readOnly: true` gesetzt war. Ein ausgegrautet Schalter heißt „geht nicht" - das widerspricht der Bildunterschrift („bleibt aus, bis du sie einschaltest"). Bei `readOnly` den Schalter deshalb **nicht** sperren, nur den Sichtbarkeits-Teil. |
+| 5.8 | **Datenschutz-Bild ist abgedunkelt** | Pixel vergleichen, nicht das Auge: `$a=(Get-Content tool\make_store_screenshots.py -Raw); $a -match 'def darken'` **und** die Fastlane-PNG muss dunkler sein als `04_anpassen.png` | Hintergrund von 06 ist sichtbar dunkler, Markenverlauf bleibt erkennbar | Der Verlauf wird in **vier** Composern gebildet (`compose_card`, `compose_cards`, `compose_modes`, `compose_9x16`). Nur einer davon zu ändern lässt den Store-Export unverändert - der kommt aus `compose_9x16`. `a.size` im Log sagt nichts über die Farbe aus. |
 
 ## 6. Freigabe
 

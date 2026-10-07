@@ -14,7 +14,6 @@ import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show Passkey;
 
-import 'package:thestia/models/profile_visibility.dart';
 import 'package:thestia/providers/auth_provider.dart';
 import 'package:thestia/providers/chat_provider.dart';
 import 'package:thestia/providers/profile_provider.dart';
@@ -34,7 +33,7 @@ import 'package:thestia/utils/age_safety_rules.dart';
 import 'package:thestia/widgets/appearance_selector.dart';
 import 'package:thestia/widgets/buttons.dart';
 import 'package:thestia/widgets/chat_background_picker.dart';
-import 'package:thestia/widgets/selectable_tile.dart';
+import 'package:thestia/widgets/privacy_section.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/widgets/language_switch.dart';
 import 'package:thestia/widgets/theme_picker.dart';
@@ -105,113 +104,11 @@ class SettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         children: [
           const SizedBox(height: 16),
-          _SectionTitle(L10n.t(context, 'settings.privacySection')),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    L10n.t(context, 'settings.whoCanSee'),
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  for (final v in ProfileVisibility.values)
-                    SelectableTile<ProfileVisibility>(
-                      value: v,
-                      groupValue: settings.profileVisibility,
-                      title: L10n.t(context, v.labelKey),
-                      subtitle: switch (v) {
-                        ProfileVisibility.everyone =>
-                          L10n.t(context, 'settings.visEveryoneSub'),
-                        ProfileVisibility.matchesOnly =>
-                          L10n.t(context, 'settings.visMatchesSub'),
-                        ProfileVisibility.hidden =>
-                          L10n.t(context, 'settings.visHiddenSub'),
-                      },
-                      onChanged: (val) async {
-                        if (val == null || val == settings.profileVisibility) {
-                          return;
-                        }
-                        // 'Unsichtbar (Pausiert)' bestätigen lassen, damit
-                        // kein versehentlicher Tap das Profil versteckt.
-                        if (val == ProfileVisibility.hidden) {
-                          final confirmed = await showDialog<bool>(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                              icon: Icon(
-                                Icons.pause_circle,
-                                color: Theme.of(ctx).colorScheme.primary,
-                                size: 40,
-                              ),
-                              title: Text(
-                                  L10n.t(ctx, 'settings.pauseConfirmTitle')),
-                              content:
-                                  Text(L10n.t(ctx, 'settings.pauseConfirmBody')),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.of(ctx).pop(false),
-                                  child:
-                                      Text(L10n.t(ctx, 'common.cancel')),
-                                ),
-                                FilledButton(
-                                  onPressed: () => Navigator.of(ctx).pop(true),
-                                  child: Text(
-                                      L10n.t(ctx, 'settings.pauseConfirmBtn')),
-                                ),
-                              ],
-                            ),
-                          );
-                          if (confirmed != true) return;
-                        }
-                        await notifier.setProfileVisibility(val);
-                        if (context.mounted) {
-                          // Meldung nur bei echten Pause-UEBERGAENGEn -
-                          // der Wechsel Jeder <-> Nur Funken hat mit der
-                          // Pause nichts zu tun.
-                          final wasPause = settings.profileVisibility ==
-                              ProfileVisibility.hidden;
-                          final isPause = val == ProfileVisibility.hidden;
-                          if (isPause != wasPause) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  isPause
-                                      ? L10n.t(context, 'settings.pauseOn')
-                                      : L10n.t(context, 'settings.pauseOff'),
-                                ),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                        }
-                      },
-                    ),
-                  const SizedBox(height: 8),
-                  const Divider(),
-                  // v0.10.0: Entfernungs-Anzeige. Aus ist der Default und
-                  // bleibt es auch nach einem Geraetewechsel - der Schalter
-                  // wird serverseitig gespiegelt, nicht nur lokal.
-                  SwitchListTile.adaptive(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(L10n.t(context, 'settings.showDistance')),
-                    subtitle: Text(
-                      L10n.t(context, 'settings.showDistanceSub'),
-                    ),
-                    value: settings.showDistance,
-                    onChanged: (v) => notifier.setShowDistance(v),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    L10n.t(context, 'settings.localDataNote'),
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
+          // v0.10.0: Der Datenschutz-Abschnitt ist als eigenes Widget
+          // ausgelagert, damit der Store-Screenshot dasselbe rendert
+          // wie die App. Ein im Screenshot-Test nachgebautes Layout
+          // zeigt sonst etwas, das es in der App nicht gibt.
+          const PrivacySection(),
           _SectionTitle(L10n.t(context, 'settings.communitySafety')),
           Card(
             child: Padding(

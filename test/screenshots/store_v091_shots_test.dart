@@ -36,6 +36,7 @@ import 'package:thestia/theme/app_theme.dart';
 import 'package:thestia/widgets/appearance_selector.dart';
 import 'package:thestia/widgets/app_logo.dart';
 import 'package:thestia/widgets/chat_background_picker.dart';
+import 'package:thestia/widgets/privacy_section.dart';
 import 'package:thestia/widgets/theme_picker.dart';
 
 /// Ohne STORE_SHOTS=1 werden diese Tests uebersprungen (kein Goldens-Vergleich
@@ -678,6 +679,30 @@ void main() {
       await _writeCardList(tester, '04_anpassen', cards);
     });
 
+    // 6) Datenschutz. Eigenes Bild statt vierte Kachel in 04: die
+    //    Entfernungs-Anzeige ist die inhaltlich wichtigste Aenderung
+    //    dieses Releases, und sie verschwindet in einer von vier
+    //    gleichwertigen Kacheln neben Farbschema und Chat-Hintergrund.
+    //
+    //    Rendert `PrivacySection` - dasselbe Widget wie in der App, nicht
+    //    ein nachgebautes Layout. Der Screenshot soll etwas zeigen, das
+    //    es wirklich gibt.
+    testWidgets('export 06_datenschutz Kachel', (tester) async {
+      final cards = <String, Map<String, Object>>{};
+      const section = PrivacySection(readOnly: true);
+      await _pump(tester, _cardHost(section),
+          outDir: outCards, name: '06_datenschutz', size: _phone, dpr: _dpr);
+      final finder = find.byWidget(section);
+      expect(finder, findsOneWidget,
+          reason: 'Datenschutz-Abschnitt nicht gefunden, Rect waere falsch');
+      final r = tester.getRect(finder);
+      cards['datenschutz'] = {
+        'file': 'datenschutz.png',
+        'rect': [r.left, r.top, r.width, r.height],
+      };
+      await _writeCardList(tester, '06_datenschutz', cards);
+    });
+
     testWidgets('export Kacheln 05 (alle Kategorien)', (tester) async {
       await _pump(tester, const SpiceQuestionsScreen(matchId: 1),
           outDir: outCards, name: '05_eisbrecher', size: _phone, dpr: _dpr);
@@ -939,6 +964,31 @@ void main() {
           ),
         ),
       ));
+
+  // 6) Datenschutz. Eigenes Bild, weil die Entfernungs-Anzeige die
+  // inhaltlich wichtigste Aenderung dieses Releases ist und als vierte
+  // Kachel in 04 zwischen Farbschema und Chat-Hintergrund verschwindet.
+  //
+  // `readOnly: true` heisst: der Render tippt nichts an, und der
+  // Pause-Bestaetigungsdialog (der einen Navigator braucht) wird nicht
+  // geoeffnet. Der Composer dunkelt dieses Bild zusaetzlich ab, damit es
+  // in der Reihe der sechs auffaellt.
+  // Scaffold + AppBar wie bei 04: ohne sie rendert der Inhalt bis unter
+  // den oberen Rand, und check_store_screenshots.py meldet zwei
+  // Befunde - sichtbarer App-Inhalt im Statusleisten-Band und fehlende
+  // System-Symbole. Das ist kein Kosmetikfehler, sondern das Bild sähe
+  // aus wie ein Bild statt wie ein Gerät.
+  // `const` steht hier nur vor `Padding`, nicht vor dem Scaffold: der
+// AppBar-Konstruktor dieser Material-Version ist nicht const. Beides
+// zusammen verlangt der Analyzer nicht - er verlangt const fuer
+// `SingleChildScrollView`, weil dessen Parameter alle konstant sind.
+_shot('06_datenschutz', () => Scaffold(
+      appBar: AppBar(title: const Text('Einstellungen')),
+      body: const SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+        child: PrivacySection(readOnly: true),
+      ),
+    ));
 
   // 5) Eisbrecher-Fragen (Spice Questions): das Herzstueck im Chat.
   //    Erste Kategorie aufgeklappt, damit echte Fragen sichtbar sind.
