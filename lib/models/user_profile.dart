@@ -26,9 +26,6 @@ class UserProfile {
   /// Liste von Foto-URLs bzw. lokalen Pfaden.
   final List<String> photos;
 
-  /// Wohnort / Stadt (für Distanz-Anzeige).
-  final String city;
-
   /// Bundesland (für Filter nach Bundesland).
   final String? state;
 
@@ -120,7 +117,6 @@ class UserProfile {
     required this.bio,
     this.interests = const <String>[],
     this.photos = const <String>[],
-    this.city = '',
     this.state,
     this.country = 'Deutschland',
     this.distanceKm = 0,
@@ -271,7 +267,6 @@ class UserProfile {
       photos: (json['photos'] as List<dynamic>? ?? <dynamic>[])
           .map((e) => e as String)
           .toList(),
-      city: json['city'] as String? ?? '',
       state: json['state'] as String?,
       country: json['country'] as String? ?? 'Deutschland',
       distanceKm: (json['distanceKm'] as num? ?? 0).toDouble(),
@@ -320,7 +315,6 @@ class UserProfile {
         'bio': bio,
         'interests': interests,
         'photos': photos,
-        'city': city,
         'state': state,
         'country': country,
         'distanceKm': distanceKm,
@@ -371,7 +365,6 @@ class UserProfile {
     String? bio,
     List<String>? interests,
     List<String>? photos,
-    String? city,
     String? state,
     String? country,
     double? distanceKm,
@@ -408,7 +401,6 @@ class UserProfile {
       bio: bio ?? this.bio,
       interests: interests ?? this.interests,
       photos: photos ?? this.photos,
-      city: city ?? this.city,
       state: state ?? this.state,
       country: country ?? this.country,
       distanceKm: distanceKm ?? this.distanceKm,
@@ -450,7 +442,6 @@ class UserProfile {
           other.name == name &&
           other.birthDate == birthDate &&
           other.bio == bio &&
-          other.city == city &&
           other.gender == gender &&
           other.genderPreference == genderPreference &&
           other.personalityType == personalityType &&
@@ -464,7 +455,6 @@ class UserProfile {
         name,
         birthDate,
         bio,
-        city,
         gender,
         genderPreference,
         personalityType,

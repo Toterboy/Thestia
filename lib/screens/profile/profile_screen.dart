@@ -34,6 +34,26 @@ import 'package:thestia/widgets/scroll_more_hint.dart';
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
+  /// Das Bundesland fuer die Kopfzeile, oder null wenn keines gesetzt ist.
+  ///
+  /// v0.9.3: Ersetzt den Ort in derselben Zeile. Bewusst eine kleine
+  /// Funktion statt zweier Inline-Ausdruecke: die Zeile stand zweimal im
+  /// File, und bei zwei Kopien zeigt eine gern das Bundesland und die
+  /// andere keines.
+  static String? _stateLabel(UserProfile profile) {
+    final st = profile.state?.trim();
+    if (st == null || st.isEmpty) return null;
+    return st;
+  }
+
+  /// Haelt den Bundesland-Teil der Kopfzeile zusammen - inklusive
+  /// fuehrendem Trennzeichen, damit die Zeile nicht mit einem "·" endet,
+  /// wenn es kein Bundesland gibt.
+  static String stateSuffix(UserProfile profile) {
+    final st = _stateLabel(profile);
+    return st == null ? '' : ' · $st';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(profileProvider);
@@ -115,7 +135,10 @@ class ProfileScreen extends ConsumerWidget {
                 child: Text(
                   '${profile.age != null ? '${profile.age} ${L10n.t(context, 'profile.years')}' : L10n.t(context, 'profile.ageUnknown')}'
                   '${genderLabel.isNotEmpty ? ' · $genderLabel' : ''}'
-                  '${profile.city.isNotEmpty ? ' · ${profile.city}' : ''}',
+                  // v0.9.3: Bundesland statt Ort. Der Ort war
+                  // der eigentlich sensible Teil und wird nicht
+                  // mehr gespeichert (Migration 135/136).
+                  '${stateSuffix(profile)}',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),
@@ -433,7 +456,7 @@ class ProfileScreen extends ConsumerWidget {
                   return Text(
                     '${profile.name}${profile.age != null ? ', ${profile.age}' : ''}'
                     '${genderName.isNotEmpty ? ' · $genderName' : ''}'
-                    '${profile.city.isNotEmpty ? ' · ${profile.city}' : ''}',
+                    '${stateSuffix(profile)}',
                     style: Theme.of(context).textTheme.titleMedium,
                     textAlign: TextAlign.center,
                   );

@@ -274,8 +274,12 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
                     child: Text(
                       '${profile.name}${profile.age != null && profile.age! > 0 ? ', ${profile.age}' : ''}'
                       '${genderLabel.isNotEmpty ? ' · $genderLabel' : ''}'
-                      '${(profile.state ?? '').isNotEmpty ? ' · ${profile.state}' : ''}'
-                      '${profile.city.isNotEmpty && (profile.state ?? '').isEmpty ? ' · ${profile.city}' : ''}',
+                      '${(profile.state ?? '').isNotEmpty ? ' · ${profile.state}' : ''}',
+                      // v0.9.3: Der Ortsname ist entfallen. Vorher stand
+                      // hier ein Fallback "Stadt, wenn kein Bundesland
+                      // gesetzt war" - damit stand der genauere Ort genau
+                      // dann im Profil, wenn die grobe Angabe fehlte. Das
+                      // war die unguenstigste Reihenfolge.
                       style: Theme.of(context).textTheme.titleMedium,
                       textAlign: TextAlign.center,
                     ),

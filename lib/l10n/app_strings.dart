@@ -495,10 +495,6 @@ const Map<String, Map<String, String>> _strings = {
     'setupp.stateLabel': 'Bundesland',
     'setupp.stateHint': 'z. B. Bayern',
     'setupp.germanyNote': 'Es werden Profile aus ganz Deutschland angezeigt.',
-    'setupp.location': 'Standort',
-    'setupp.locationLabel': 'Dein Standort / Stadt',
-    'setupp.locationHint': 'z. B. Berlin',
-    'setupp.locationGps': 'Standort erkennen (GPS)',
     // v0.9.3: Es wird kein Ort mehr abgefragt, nur das Bundesland.
     'setupp.detectState': 'Mein Bundesland automatisch erkennen',
     'setupp.bioLabel': 'Über mich (Bio)',
@@ -1632,8 +1628,6 @@ const Map<String, Map<String, String>> _strings = {
     'profile.edit.lookingFor': 'Ich suche',
     'profile.edit.relationship': 'Was suchst du?',
     'profile.edit.location': 'Standort',
-    'profile.edit.city': 'Ort / Stadt',
-    'profile.edit.cityHint': 'z. B. Berlin',
     'profile.edit.gpsTooltip': 'Standort erkennen (GPS)',
     'profile.edit.country': 'Land',
     'profile.edit.state': 'Bundesland',
@@ -2352,9 +2346,6 @@ const Map<String, Map<String, String>> _strings = {
         'Deine Profiländerungen wurden noch nicht gespeichert. Was '
         'möchtest du tun?',
     'profile.edit.unsavedDiscard': 'Verwerfen',
-    'profile.edit.farAway':
-        'Der Ort liegt mehr als 15 km von deinem aktuellen Standort '
-        'entfernt ({meters} m). Bitte gib einen nahegelegenen Ort ein.',
     'profile.edit.distanceKm': 'Entfernung in km',
     'profile.edit.modeGermany': 'Ganz Deutschland',
     'profile.edit.habitsDealbreaker': 'Dealbreaker: gleicher Konsum',
@@ -4195,8 +4186,6 @@ const Map<String, Map<String, String>> _strings = {
     'profile.edit.lookingFor': 'I am looking for',
     'profile.edit.relationship': 'What are you looking for?',
     'profile.edit.location': 'Location',
-    'profile.edit.city': 'City',
-    'profile.edit.cityHint': 'e.g. Berlin',
     'profile.edit.gpsTooltip': 'Detect location (GPS)',
     'profile.edit.country': 'Country',
     'profile.edit.state': 'Federal state',
@@ -4392,10 +4381,6 @@ const Map<String, Map<String, String>> _strings = {
     'setupp.stateLabel': 'Federal state',
     'setupp.stateHint': 'e.g. Bavaria',
     'setupp.germanyNote': 'Profiles from all over Germany are shown.',
-    'setupp.location': 'Location',
-    'setupp.locationLabel': 'Your location / city',
-    'setupp.locationHint': 'e.g. Berlin',
-    'setupp.locationGps': 'Detect location (GPS)',
     // v0.9.3: No city is asked for any more, only the state.
     'setupp.detectState': 'Detect my state automatically',
     'setupp.bioLabel': 'About me (bio)',
@@ -5043,9 +5028,6 @@ const Map<String, Map<String, String>> _strings = {
         'Your profile changes have not been saved yet. What would you '
         'like to do?',
     'profile.edit.unsavedDiscard': 'Discard',
-    'profile.edit.farAway':
-        'The place is more than 15 km away from your current location '
-        '({meters} m). Please enter a nearby place.',
     'profile.edit.distanceKm': 'Distance in km',
     'profile.edit.modeGermany': 'All of Germany',
     'profile.edit.habitsDealbreaker': 'Dealbreaker: same consumption',

@@ -551,7 +551,7 @@ UserProfile _chatPartner() => const UserProfile(
       id: 'store-shot-peer',
       name: 'Mara',
       bio: 'Bücher, Rad, Kaffee.',
-      city: 'Köln',
+      state: 'Nordrhein-Westfalen',
       interests: ['Fotografieren', 'Wandern', 'Kochen'],
       isVerified: true,
       introText: 'Erzähl mir etwas, das nicht auf deinem Profil steht.',

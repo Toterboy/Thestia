@@ -42,7 +42,6 @@ class UserPreferences {
     required this.distanceFilterMode,
     required this.maxDistanceKm,
     required this.preferredState,
-    this.location,
     this.relationshipType,
   });
 
@@ -54,7 +53,6 @@ class UserPreferences {
   final DistanceFilterMode distanceFilterMode;
   final int maxDistanceKm;
   final String? preferredState;
-  final String? location;
   final RelationshipType? relationshipType;
 
   /// Erzeugt eine Kopie mit geänderten Feldern.
@@ -63,16 +61,13 @@ class UserPreferences {
     DistanceFilterMode? distanceFilterMode,
     int? maxDistanceKm,
     String? preferredState,
-    String? location,
     RelationshipType? relationshipType,
-    bool clearLocation = false,
   }) {
     return UserPreferences(
       genderPreferences: genderPreferences ?? this.genderPreferences,
       distanceFilterMode: distanceFilterMode ?? this.distanceFilterMode,
       maxDistanceKm: maxDistanceKm ?? this.maxDistanceKm,
       preferredState: preferredState ?? this.preferredState,
-      location: clearLocation ? null : (location ?? this.location),
       relationshipType: relationshipType ?? this.relationshipType,
     );
   }
@@ -83,7 +78,6 @@ class UserPreferences {
         'distanceFilterMode': distanceFilterMode.name,
         'maxDistanceKm': maxDistanceKm,
         'preferredState': preferredState,
-        'location': location,
         'relationshipType': relationshipType?.value,
       };
 
@@ -100,7 +94,6 @@ class UserPreferences {
       ),
       maxDistanceKm: json['maxDistanceKm'] as int? ?? 100,
       preferredState: json['preferredState'] as String?,
-      location: json['location'] as String?,
       relationshipType: RelationshipType.values.byName(
         json['relationshipType'] as String? ?? 'open',
       ),
@@ -127,7 +120,6 @@ class UserPreferences {
         distanceFilterMode: DistanceFilterMode.distanceKm,
         maxDistanceKm: 100,
         preferredState: null,
-        location: null,
         relationshipType: RelationshipType.open,
       );
 }
@@ -271,12 +263,6 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
     queueServerSync();
   }
 
-  Future<void> setLocation(String? location) async {
-    state = state.copyWith(location: location);
-    await _persist();
-    queueServerSync();
-  }
-
   Future<void> setRelationshipType(RelationshipType? type) async {
     state = state.copyWith(relationshipType: type);
     await _persist();
@@ -285,10 +271,13 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
 
   /// Übernimmt Präferenzen aus dem Server-Profil (nach Login/Neuinstallation).
   ///
-  /// "Nichts geht verloren"-Garantie: Entfernung, "Ich suche", Bundesland,
-  /// Ort und Geschlechts-Filter stehen serverseitig in profiles (Migration
+  /// "Nichts geht verloren"-Garantie: Entfernung, "Ich suche", Bundesland
+  /// und Geschlechts-Filter stehen serverseitig in profiles (Migration
   /// 066) und werden hier in den lokalen Stand übernommen. Fehlende/null
   /// Werte lassen den bisherigen lokalen Stand unangetastet.
+  ///
+  /// v0.9.3: Der Ort wird nicht mehr übernommen - die Spalte city im
+  /// Server wird bis zum Contract-Schritt ignoriert und danach entfernt.
   Future<void> applyServerValues(Map<String, dynamic> p) async {
     RelationshipType? relationshipType = state.relationshipType;
     final rtRaw = p['relationship_type'] as String?;
@@ -297,7 +286,6 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
         if (t.value == rtRaw) relationshipType = t;
       }
     }
-    final city = (p['city'] as String? ?? '').trim();
     var filterMode = state.distanceFilterMode;
     final fmRaw = p['distance_filter_mode'] as String?;
     if (fmRaw != null && fmRaw.isNotEmpty) {
@@ -311,7 +299,6 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
           (p['max_distance_km'] as num?)?.toInt() ?? state.maxDistanceKm,
       preferredState: p['preferred_state'] as String? ?? state.preferredState,
       relationshipType: relationshipType,
-      location: city.isNotEmpty ? city : state.location,
       genderPreferences:
           (p['gender_preferences'] as List?)?.whereType<String>().toList() ??
               state.genderPreferences,
@@ -322,16 +309,15 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
   /// Pusht die Präferenzen serverseitig in profiles (Migration 066) und
   /// verifiziert per Zurücklesen (gleiche Methode wie bei den Setup-Flags).
   ///
-  /// [ageRangeMin]/[ageRangeMax] und [city]/[stateStr] können mitgegeben
-  /// werden, wenn der Aufrufer sie gerade geändert hat (Einrichtung/
-  /// Profil-Edit) - sie landen in denselben Server-Spalten.
+  /// [ageRangeMin]/[ageRangeMax] und [stateStr] können mitgegeben werden,
+  /// wenn der Aufrufer sie gerade geändert hat (Einrichtung/Profil-Edit)
+  /// - sie landen in denselben Server-Spalten.
   ///
   /// Rückgabe: true bei Erfolg (false = fehlgeschlagen, Aufrufer kann
   /// warnen; die lokalen Werte bleiben trotzdem gespeichert).
   Future<bool> savePreferencesToServer({
     int? ageRangeMin,
     int? ageRangeMax,
-    String? city,
     String? stateStr,
   }) async {
     if (!SupabaseService.isInitialized) return true;
@@ -349,7 +335,6 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
       };
       if (ageRangeMin != null) body['age_range_min'] = ageRangeMin;
       if (ageRangeMax != null) body['age_range_max'] = ageRangeMax;
-      if (city != null && city.trim().isNotEmpty) body['city'] = city.trim();
       if (stateStr != null && stateStr.trim().isNotEmpty) {
         body['state'] = stateStr.trim();
       }

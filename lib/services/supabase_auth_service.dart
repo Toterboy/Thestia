@@ -288,7 +288,6 @@ class SupabaseAuthService implements AppAuthService {
       bio: '',
       interests: const [],
       photos: const [],
-      city: '',
       gender: gender,
       genderPreference: 'all',
       birthDate: birthDate,

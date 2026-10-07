@@ -238,7 +238,6 @@ class _RandomChatScreenState extends ConsumerState<RandomChatScreen>
                     L10n.t(context, 'random.fallbackPartnerName'),
               bio: '',
               interests: const [],
-              city: row['city'] as String? ?? '',
             );
           });
         }

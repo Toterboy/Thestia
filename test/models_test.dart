@@ -16,7 +16,7 @@ void main() {
         bio: 'Hallo',
         interests: ['Musik', 'Reisen'],
         photos: ['a.png'],
-        city: 'Berlin',
+        state: 'Berlin',
         distanceKm: 5,
       );
       final json = profile.toJson();
@@ -38,7 +38,7 @@ void main() {
       expect(restored.bio, '');
       expect(restored.interests, isEmpty);
       expect(restored.photos, isEmpty);
-      expect(restored.city, '');
+      expect(restored.state, isNull);
       expect(restored.distanceKm, 0.0);
       expect(restored.genderPreference, 'all');
       expect(restored.country, 'Deutschland');
@@ -53,7 +53,7 @@ void main() {
         bio: '',
         interests: ['A', 'B'],
         photos: ['x.png'],
-        city: 'Berlin',
+        state: 'Berlin',
         distanceKm: 5.0,
         gender: 'male',
         genderPreference: 'all',
@@ -65,7 +65,7 @@ void main() {
       expect(updated.bio, '');
       expect(updated.interests, equals(['A', 'B']));
       expect(updated.photos, equals(['x.png']));
-      expect(updated.city, 'Berlin');
+      expect(updated.state, 'Berlin');
       expect(updated.distanceKm, 5.0);
       expect(updated.gender, 'male');
       expect(updated.genderPreference, 'all');
@@ -80,12 +80,12 @@ void main() {
       );
       final updated = p.copyWith(
         name: 'B',
-        city: 'Muenchen',
+        state: 'Muenchen',
         distanceKm: 10.0,
         country: 'Österreich',
       );
       expect(updated.name, 'B');
-      expect(updated.city, 'Muenchen');
+      expect(updated.state, 'Muenchen');
       expect(updated.distanceKm, 10.0);
       expect(updated.country, 'Österreich');
     });
@@ -103,7 +103,7 @@ void main() {
         bio: 'Hallo',
         interests: ['Musik'],
         photos: ['a.png'],
-        city: 'Berlin',
+        state: 'Berlin',
         distanceKm: 5.0,
         gender: 'female',
         genderPreference: 'male',
@@ -120,7 +120,7 @@ void main() {
       expect(json['bio'], 'Hallo');
       expect(json['interests'], equals(['Musik']));
       expect(json['photos'], equals(['a.png']));
-      expect(json['city'], 'Berlin');
+      expect(json['state'], 'Berlin');
       expect(json['distanceKm'], 5.0);
       expect(json['gender'], 'female');
       expect(json['genderPreference'], 'male');
@@ -133,27 +133,27 @@ void main() {
       expect(json['favoriteSong'], 'Song X');
     });
 
-    test('Gleichheit basiert auf id, name, birthDate, bio, city', () {
+    test('Gleichheit basiert auf id, name, birthDate, bio, state', () {
       final p1 = UserProfile(
         id: '1',
         name: 'A',
         birthDate: DateTime(2000, 1, 1),
         bio: 'Bio',
-        city: 'Berlin',
+        state: 'Berlin',
       );
       final p2 = UserProfile(
         id: '1',
         name: 'A',
         birthDate: DateTime(2000, 1, 1),
         bio: 'Bio',
-        city: 'Berlin',
+        state: 'Berlin',
       );
       final p3 = UserProfile(
         id: '1',
         name: 'B',
         birthDate: DateTime(2000, 1, 1),
         bio: 'Bio',
-        city: 'Berlin',
+        state: 'Berlin',
       );
       expect(p1, equals(p2));
       expect(p1, isNot(equals(p3)));

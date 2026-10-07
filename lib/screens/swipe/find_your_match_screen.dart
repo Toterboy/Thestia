@@ -243,12 +243,17 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
                                                  fontWeight: FontWeight.bold,
                                                ),
                                          ),
-                                      if (current.city.isNotEmpty)
-                                        Text(
-                                          current.city,
-                                          style: const TextStyle(
-                                              color: Colors.grey),
-                                        ),
+                                       // v0.9.3: Der Ortsname ist
+                                       // entfallen. Stattdessen das
+                                       // Bundesland - die grobe
+                                       // Angabe, die ohnehin fuer
+                                       // andere sichtbar ist.
+                                       if ((current.state ?? '').isNotEmpty)
+                                         Text(
+                                           current.state!,
+                                           style: const TextStyle(
+                                               color: Colors.grey),
+                                         ),
                                       // Distanz in 5-km-Schritten (ohne
                                       // exakten Standort, serverseitig
                                       // berechnet).

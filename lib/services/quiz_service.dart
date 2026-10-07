@@ -137,7 +137,6 @@ class QuizService {
       interests: (row['interests'] as List<dynamic>? ?? <dynamic>[])
           .map((e) => e.toString())
           .toList(),
-      city: row['city'] as String? ?? '',
       gender: row['gender'] as String?,
       birthDate: birthDate,
       personalityType: row['personality_type'] as String?,

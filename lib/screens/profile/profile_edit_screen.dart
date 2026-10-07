@@ -3,8 +3,6 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geocoding/geocoding.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:thestia/utils/avatar_image.dart';
 
@@ -25,6 +23,7 @@ import 'package:thestia/services/supabase_storage_service.dart';
 import 'package:thestia/utils/age_safety_rules.dart';
 import 'package:thestia/utils/constants.dart';
 import 'package:thestia/utils/geo_names.dart';
+import 'package:thestia/utils/location_privacy.dart';
 import 'package:thestia/utils/validators.dart';
 import 'package:thestia/widgets/ai_badge.dart';
 import 'package:thestia/widgets/birthday_style.dart';
@@ -143,17 +142,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _bioCtrl = TextEditingController();
-  final _cityCtrl = TextEditingController();
   final _stateCtrl = TextEditingController();
   final _songCtrl = TextEditingController();
   final _bandCtrl = TextEditingController();
-
-  /// Stadt beim Oeffnen des Screens (fuer Change-Detection beim Speichern).
-  String? _loadedCity;
-
-  /// Stadt-Wert, mit dem die Felder vorbelegt wurden (Quelle:
-  /// prefs.location ?? profile.city) - Dirty-Vergleichsreferenz.
-  String? _prefillCity;
 
   /// true, waehrend _save() laeuft (Spinner im Speichern-Button).
   bool _saving = false;
@@ -173,10 +164,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   String _countryValue = 'Deutschland';
   bool _isDetectingLocation = false;
   String? _locationError;
-  // Debounce für die Stadt-Eingabe: GPS-Gegenprüfung erst bei Tipppause
-  // (vorher lief Geokodieren+GPS bei JEDEM Tastenanschlag).
-  Timer? _cityDebounce;
-  int _citySeq = 0;
   Future<Uint8List?>? _avatarBytesFuture;
   ProviderSubscription<UserProfile>? _profileSub;
 
@@ -252,7 +239,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     final settings = ref.read(settingsProvider);
     _nameCtrl.text = p.name;
     _bioCtrl.text = p.bio;
-    _cityCtrl.text = prefs.location ?? p.city;
     _stateCtrl.text = p.state ?? '';
     _songCtrl.text = p.favoriteSong ?? '';
     _bandCtrl.text = p.favoriteBand ?? '';
@@ -276,11 +262,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     _gender = Gender.fromValue(p.gender) ?? Gender.diverse;
     _relationshipType = prefs.relationshipType ?? RelationshipType.open;
     _birthDate = p.birthDate;
-    // Gemerkter Ausgangswert: GPS-Gegenpruefung beim Speichern nur bei
-    // geaenderter Stadt ausfuehren (Performance).
-    _loadedCity = p.city;
-    // Dirty-Referenz: exakt der Wert, mit dem das Stadt-Feld belegt wurde.
-    _prefillCity = _cityCtrl.text;
 
     // Dirty-Snapshot einfrieren (siehe Feld-Kommentar).
     _initialBirthDate = p.birthDate;
@@ -297,7 +278,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     for (final controller in [
       _nameCtrl,
       _bioCtrl,
-      _cityCtrl,
       _stateCtrl,
       _songCtrl,
       _bandCtrl,
@@ -343,9 +323,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       }
       if (_bioCtrl.text != next.bio) {
         _bioCtrl.text = next.bio;
-      }
-      if (_cityCtrl.text != next.city) {
-        _cityCtrl.text = next.city;
       }
       if (next.state != null && _stateCtrl.text != next.state) {
         _stateCtrl.text = next.state!;
@@ -410,7 +387,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     // auslösen. Der Microtask läuft erst NACH abgeschlossenem Unmount.
     _nsfwWarmupTimer?.cancel();
     _nsfwWarmupTimer = null;
-    _cityDebounce?.cancel();
     final dirtyController = _dirtyController;
     _dirtyController = null;
     if (dirtyController != null) {
@@ -425,7 +401,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     _profileSub?.close();
     _nameCtrl.dispose();
     _bioCtrl.dispose();
-    _cityCtrl.dispose();
     _stateCtrl.dispose();
     _songCtrl.dispose();
     _bandCtrl.dispose();
@@ -794,21 +769,25 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         return;
       }
 
-      // Audit N-1 / UX: Im "Stadt"-Feld steht ein ORTSNAME (Plattform-
-      // Reverse-Geocoder), nie ein Koordinaten-Paar. Fallback: grobe
-      // Regionsangabe. Exakte Werte gehen ausschließlich in die dafür
-      // vorgesehenen Server-Spalten (dort serverseitig auf ~1 km gerundet).
-      final locationText = await describePlace(
+      // v0.9.3: Nur noch das Bundesland, keine Ortsangabe. Vorher stand
+      // hier der Ortsname aus dem Reverse-Geocoder und landete in
+      // profiles.city - fuer jeden angemeldeten Nutzer lesbar.
+      //
+      // Die Koordinaten werden auf 5-km-Raster gerundet, BEVOR sie
+      // gespeichert werden. Der Server rastet ebenfalls; identisch zu
+      // sein ist wichtig, sonst springt die Entfernungsanzeige.
+      final snapped = LocationPrivacy.snapToGrid(
         position.latitude,
         position.longitude,
       );
+      final detectedState = await describeStateFor(snapped.lat, snapped.lng);
       if (!mounted) return;
-      _cityCtrl.text = locationText;
 
-      // Profil mit den neuen Koordinaten aktualisieren.
+      // Profil mit den neuen Koordinaten und dem Bundesland aktualisieren.
       await ref.read(profileProvider.notifier).update(
-            locationLat: position.latitude,
-            locationLng: position.longitude,
+            stateStr: detectedState,
+            locationLat: snapped.lat,
+            locationLng: snapped.lng,
           );
 
       // Koordinaten serverseitig persistieren (Basis fuer die
@@ -816,11 +795,22 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       if (SupabaseService.isInitialized) {
         try {
           await SupabaseDatabaseService(SupabaseService.client).updateOwnProfile({
-            'location_lat': position.latitude,
-            'location_lng': position.longitude,
+            'location_lat': snapped.lat,
+            'location_lng': snapped.lng,
+            'state': detectedState,
           });
         } catch (e) {
           debugPrint('[ProfileEdit] Standort-Sync fehlgeschlagen: $e');
+        }
+
+        // v0.9.3: Der eigentliche Ort fuer die Koordinaten. profiles
+        // behaelt die Werte nur noch bis zum Contract-Schritt (138);
+        // profile_locations ist die privat lesbare Tabelle.
+        try {
+          await SupabaseDatabaseService(SupabaseService.client)
+              .saveOwnLocation(snapped.lat, snapped.lng);
+        } catch (e) {
+          debugPrint('[ProfileEdit] Standort-Tabelle fehlgeschlagen: $e');
         }
       }
 
@@ -830,8 +820,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         unawaited(
           ref.read(locationCheckServiceProvider).processLocationCheck(
                 userId: auth.id,
-                newLatitude: position.latitude,
-                newLongitude: position.longitude,
+                newLatitude: snapped.lat,
+                newLongitude: snapped.lng,
               ),
         );
       }
@@ -858,43 +848,12 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     }
   }
 
-  Future<void> _validateLocationAgainstGps(String manualLocation) async {
-    try {
-      final locationService = ref.read(locationVerificationServiceProvider);
-      if (!await locationService.hasLocationPermission()) {
-        return;
-      }
-
-      final position = await locationService.getCurrentLocation();
-      if (position == null) return;
-
-      final List<Location> locations = await locationFromAddress(manualLocation);
-      if (locations.isEmpty) return;
-
-      final manualPos = locations.first;
-      final distanceInMeters = Geolocator.distanceBetween(
-        position.latitude,
-        position.longitude,
-        manualPos.latitude,
-        manualPos.longitude,
-      );
-
-      if (distanceInMeters > 15000) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(L10n.tf(context, 'profile.edit.farAway',
-                  {'meters': '$distanceInMeters'})),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-          _cityCtrl.clear();
-        }
-      }
-    } catch (_) {
-      // Validierungsfehler nicht an den Nutzer weitergeben.
-    }
-  }
+  // v0.9.3: _validateLocationAgainstGps ist entfallen. Die Methode
+  // verglich einen von Hand getippten Ortsnamen mit der GPS-Position
+  // und meldete Abweichungen ueber 15 km. Mit dem Wegfall der
+  // Ortsangabe gibt es nichts mehr zu vergleichen; sinnvollerweise
+  // bleibt stattdessen die Abweichung zum Bundesland, und die faellt
+  // ohnehin weg, weil _detectLocation das Bundesland selbst setzt.
 
   /// Prüft, ob das Formular vom Stand beim Öffnen abweicht
   /// (Grundlage für den ungespeicherte-Änderungen-Schutz).
@@ -907,13 +866,13 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     final p = ref.read(profileProvider);
     final prefs = ref.read(userPreferencesProvider);
     final settings = ref.read(settingsProvider);
-    final city = _cityCtrl.text.trim();
+    // v0.9.3: Die Ortsangabe ist entfallen, damit auch kein Dirty-Vergleich
+    // mehr noetig ist. Das Bundesland wird weiterhin verglichen.
     return _pendingAvatarBytes != null ||
         _pendingExtraBytes.isNotEmpty ||
         _removedPhotoSlots.isNotEmpty ||
         _nameCtrl.text.trim() != p.name ||
         _bioCtrl.text.trim() != p.bio ||
-        city != (_prefillCity ?? '').trim() ||
         _stateCtrl.text.trim() != (p.state ?? '').trim() ||
         _countryValue != (p.country.isEmpty ? 'Deutschland' : p.country) ||
         _gender != (Gender.fromValue(p.gender) ?? Gender.diverse) ||
@@ -1106,16 +1065,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       // Nicht abbrechen: die Textänderungen trotzdem speichern.
     }
 
-    final location = _cityCtrl.text.trim().isEmpty
-        ? null
-        : _cityCtrl.text.trim();
-    // GPS-Gegenpruefung NUR wenn der Ort geaendert wurde - der Geocoding-
-    // Netzwerk-Call hat bei jedem Speichern sonst mehrere Sekunden gedauert.
-    final cityChanged =
-        location != null && location != (_loadedCity?.trim() ?? '');
-    if (cityChanged) {
-      await _validateLocationAgainstGps(location);
-    }
+    // v0.9.3: Die GPS-Gegenpruefung des Ortsnamens ist entfallen. Sie
+    // verglich den getippten Ort mit der GPS-Position - ohne Ortseingabe
+    // gibt es nichts zu vergleichen. Die Plausibilitaet wird jetzt beim
+    // Ermitteln des Standorts selbst geprueft (isLocationSuspicious in
+    // _detectLocation).
 
     // Intro-Guard (v0.9.0-Fix): Intro-Felder nur übernehmen/schreiben,
     // wenn sie in DIESEM Screen geändert wurden. Ein veralteter Zustand
@@ -1129,7 +1083,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           name: _nameCtrl.text.trim(),
           birthDate: _birthDate,
           bio: _bioCtrl.text.trim(),
-          city: location,
           stateStr: _stateCtrl.text.trim().isEmpty ? null : _stateCtrl.text.trim(),
           country: _countryValue,
           gender: _gender.value,
@@ -1190,7 +1143,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               ref.read(userPreferencesProvider).distanceFilterMode.name,
           'preferred_state':
               ref.read(userPreferencesProvider).preferredState,
-          'city': ?location,
         });
         // Dealbreaker-Schalter in die Settings spiegeln (Restore-Pfad).
         await ref
@@ -1211,7 +1163,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
               .savePreferencesToServer(
                 ageRangeMin: s.ageRangeMin,
                 ageRangeMax: s.ageRangeMax,
-                city: location,
                 stateStr: _stateCtrl.text.trim().isEmpty
                     ? null
                     : _stateCtrl.text.trim(),
@@ -1232,8 +1183,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     if (!mounted) return true;
     // Dirty-Referenzen nachführen: alles ist jetzt gespeichert.
     setState(() => _showValidationError = false);
-    _prefillCity = location;
-    _loadedCity = location;
     _initialAgeMin = ref.read(settingsProvider).ageRangeMin;
     _initialAgeMax = ref.read(settingsProvider).ageRangeMax;
     final prefsNow = ref.read(userPreferencesProvider);
@@ -1522,53 +1471,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
-              // GPS-Button als suffixIcon: immer perfekt am Eingabefeld
-              // ausgerichtet, auch bei grosser Systemschrift (a11y).
-              _field(
-                child: TextFormField(
-                  controller: _cityCtrl,
-                  keyboardType: TextInputType.text,
-                  decoration: InputDecoration(
-                    labelText: L10n.t(context, 'profile.edit.city'),
-                    hintText: L10n.t(context, 'profile.edit.cityHint'),
-                    suffixIcon: _isDetectingLocation
-                        ? const Padding(
-                            padding: EdgeInsets.all(14),
-                            child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child:
-                                  CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          )
-                        : IconButton(
-                            tooltip: L10n.t(context, 'profile.edit.gpsTooltip'),
-                            onPressed: _detectLocation,
-                            icon: const Icon(Icons.my_location),
-                          ),
-                  ),
-                  onChanged: (v) {
-                    // Debounce: GPS-Gegenprüfung (Geokodieren + Fix) erst
-                    // bei 600-ms-Tipppause; nur die Antwort zur neuesten
-                    // Eingabe gilt (Sequenz-Token).
-                    _cityDebounce?.cancel();
-                    _citySeq++;
-                    if (v.trim().isEmpty) return;
-                    final seq = _citySeq;
-                    final typed = v.trim();
-                    _cityDebounce = Timer(const Duration(milliseconds: 600),
-                        () {
-                      final current = _cityCtrl.text.trim();
-                      if (seq != _citySeq ||
-                          current.isEmpty ||
-                          current != typed) {
-                        return;
-                      }
-                      _validateLocationAgainstGps(current);
-                    });
-                  },
-                ),
-              ),
+              // v0.9.3: Das Stadtfeld ist entfallen. Uebrig bleibt ein
+              // Knopf, der das Bundesland aus dem aktuellen GPS-Standort
+              // ableitet. Er sitzt jetzt am Bundesland-Dropdown, weil ein
+              // Knopf ohne Eingabefeld keinen Platz hat.
               if (_locationError != null) ...[
                 const SizedBox(height: 8),
                 _LocationNotice(text: _locationError!),
@@ -1610,6 +1516,22 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
+                      suffixIcon: _isDetectingLocation
+                          ? const Padding(
+                              padding: EdgeInsets.all(14),
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            )
+                          : IconButton(
+                              tooltip:
+                                  L10n.t(context, 'profile.edit.gpsTooltip'),
+                              onPressed: _detectLocation,
+                              icon: const Icon(Icons.my_location),
+                            ),
                     ),
                     items: kGermanStates
                         .map((s) => DropdownMenuItem(

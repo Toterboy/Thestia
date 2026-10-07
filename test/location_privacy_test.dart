@@ -149,6 +149,38 @@ void main() {
     });
   });
 
+  // v0.9.3: Der Profil-Edit-Screen hatte ein eigenes Ortsfeld mit
+  // Tippvorschlag "Berlin", Debounce und einer GPS-Gegenpruefung
+  // ("liegt mehr als 15 km entfernt"). Genau dort landete der Ort
+  // wieder in profiles.city - nur eben beim Bearbeiten, nicht bei der
+  // Einrichtung. Der Test haelt beide Wege dicht.
+  group('Auch der Profil-Edit-Screen kennt keinen Ortsnamen', () {
+    final src = File('lib/screens/profile/profile_edit_screen.dart')
+        .readAsStringSync();
+
+    test('kein Orts-Textfeld und kein city-Parameter', () {
+      expect(src.contains('describePlace'), isFalse);
+      expect(src.contains("'city':"), isFalse);
+      expect(src.contains('city: city'), isFalse);
+      // Der Controller selbst darf nicht mehr existieren.
+      expect(src.contains('_cityCtrl'), isFalse);
+    });
+
+    test('GPS leitet nur das Bundesland ab und rastet vorher', () {
+      expect(src.contains('describeStateFor'), isTrue);
+      // Ohne vorheriges Raster wuerden die ungerundeten Koordinaten
+      // gespeichert - der Server rastet zwar auch, aber ein Client,
+      // der ungerundet schickt, macht das Rastering von sich abhaengig.
+      expect(src.contains('LocationPrivacy.snapToGrid'), isTrue);
+    });
+
+    test('der Server bekommt kein city-Feld mehr', () {
+      // Auch der Praeferenz-Sync darf den Ort nicht mehr mitschicken.
+      expect(src.contains('savePreferencesToServer'), isTrue);
+      expect(src.contains('city: location'), isFalse);
+    });
+  });
+
   group('Bundesland statt Ortsname', () {
     final src = File('lib/screens/onboarding/settings_privacy_once_screen.dart')
         .readAsStringSync();
@@ -157,6 +189,56 @@ void main() {
       // Der Aufruf muss die administrativeArea-Version nutzen, nicht
       // describePlace().
       expect(src.contains('describeStateFor'), isTrue);
+    });
+  });
+
+  group('Der Praeferenz-Provider fuehrt keinen Ort mit', () {
+    final src = File('lib/providers/user_preferences_provider.dart')
+        .readAsStringSync();
+
+    test('kein location-Feld in den Praeferenzen', () {
+      expect(src.contains('setLocation'), isFalse);
+      expect(src.contains("'location'"), isFalse);
+    });
+
+    test('kein city im Server-Sync der Praeferenzen', () {
+      expect(src.contains("p['city']"), isFalse);
+      expect(src.contains("body['city']"), isFalse);
+    });
+  });
+
+  // Ohne diesen Schritt bleibt profile_locations fuer neue Accounts leer
+  // und die Entfernungsanzeige faellt aus. Migration 135 hat die Tabelle
+  // nur fuer Bestandsprofile gefuellt.
+  group('Die Koordinaten landen in profile_locations', () {
+    final db = File('lib/services/supabase_database_service.dart')
+        .readAsStringSync();
+
+    test('der Service schreibt per upsert in profile_locations', () {
+      expect(db.contains('saveOwnLocation'), isTrue);
+      // insert wuerde beim zweiten Speichern (GPS-Knopf) scheitern.
+      expect(db.contains("from('profile_locations').upsert"), isTrue);
+    });
+
+    test('der Client rastert vor dem Senden', () {
+      // beider Aufrufer
+      for (final pfad in const [
+        'lib/screens/onboarding/settings_privacy_once_screen.dart',
+        'lib/screens/profile/profile_edit_screen.dart',
+      ]) {
+        final s = File(pfad).readAsStringSync();
+        expect(s.contains('saveOwnLocation'), isTrue,
+            reason: '$pfad schreibt nicht nach profile_locations');
+        expect(s.contains('snapToGrid'), isTrue,
+            reason: '$pfad sendet ungerundete Koordinaten');
+      }
+    });
+
+    test('die Datenbank fragt city nicht mehr ab', () {
+      // Solange die Spalte noch existiert (Contract-Schritt 138) wird sie
+      // wenigstens nicht mehr gelesen.
+      expect(db.contains("'city': response['city']"), isFalse);
+      expect(db.contains('is_location_suspicious, city'), isFalse);
     });
   });
 }

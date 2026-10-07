@@ -670,6 +670,16 @@ class _SettingsPrivacyOnceScreenState
                 'state': detectedState,
               }),
             );
+
+            // v0.9.3: Die Koordinaten gehoeren nach profile_locations -
+            // die einzige Tabelle, in der die exakten Werte liegen und
+            // die nur der Eigentuemer lesen kann. Ohne diesen Schritt
+            // bleibt die Tabelle leer und die Entfernungsanzeige
+            // entfaellt (Migration 135 hatte sie nur befuellt fuer
+            // Bestandsprofile, nicht fuer neue Accounts).
+            await ref
+                .read(supabaseDatabaseServiceProvider)
+                .saveOwnLocation(snapped.lat, snapped.lng);
           }
         } catch (_) {
           // Best-Effort: Standort-Sync darf den Flow nicht blockieren.

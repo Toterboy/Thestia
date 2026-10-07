@@ -64,14 +64,14 @@ class SupabaseDatabaseService {
         'user_id, name, gender, gender_preferences, birth_date, bio, '
         'interests, photos, personality_type, max_distance_km, '
         'age_range_min, age_range_max, smoking, alcohol, drugs, '
-        'is_verified, is_location_suspicious, city, state, country, '
+        'is_verified, is_location_suspicious, state, country, '
         'intro_text, intro_audio_path, location_lat, location_lng, '
         'created_at, updated_at, music_liked, music_disliked';
     const columnsWithoutPhotos =
         'user_id, name, gender, gender_preferences, birth_date, bio, '
         'interests, personality_type, max_distance_km, age_range_min, '
         'age_range_max, smoking, alcohol, drugs, is_verified, '
-        'is_location_suspicious, city, state, country, intro_text, '
+        'is_location_suspicious, state, country, intro_text, '
         'intro_audio_path, location_lat, location_lng, created_at, '
         'updated_at, music_liked, music_disliked';
     for (final columns in [columnsWithPhotos, columnsWithoutPhotos]) {
@@ -119,7 +119,9 @@ class SupabaseDatabaseService {
             'location_lng': response['location_lng'],
             'is_verified': response['is_verified'],
             'is_location_suspicious': response['is_location_suspicious'],
-            'city': response['city'] ?? '',
+            // v0.9.3: city wird nicht mehr gelesen. Die Spalte wird
+            // erst mit dem Contract-Schritt (Migration 137) entfernt,
+            // wird hier aber bewusst nicht mehr angefordert.
             'state': response['state'],
             'country': response['country'] ?? 'Deutschland',
             'introText': response['intro_text'] ?? '',
@@ -167,15 +169,15 @@ class SupabaseDatabaseService {
     // Restore still auf dem Default (v0.9.1-Fix).
     for (final columns in const [
       'max_distance_km, age_range_min, age_range_max, '
-          'gender_preferences, relationship_type, preferred_state, city, '
+          'gender_preferences, relationship_type, preferred_state, '
           'distance_filter_mode, theme_name',
       'max_distance_km, age_range_min, age_range_max, '
-          'gender_preferences, relationship_type, preferred_state, city, '
+          'gender_preferences, relationship_type, preferred_state, '
           'theme_name',
       'max_distance_km, age_range_min, age_range_max, '
-          'gender_preferences, city, distance_filter_mode',
+          'gender_preferences, distance_filter_mode',
       'max_distance_km, age_range_min, age_range_max, '
-          'gender_preferences, city',
+          'gender_preferences',
     ]) {
       try {
         return await _fetchOwnPreferencesRaw(columns);
@@ -401,13 +403,43 @@ class SupabaseDatabaseService {
     return Map<String, dynamic>.from(res);
   }
 
+  /// Schreibt die eigenen Koordinaten nach profile_locations.
+  ///
+  /// v0.9.3: Das ist der eigentliche Ort fuer die exakten Werte. Die
+  /// Tabelle ist per RLS auf den Eigentuemer begrenzt und hat seit
+  /// Migration 137 einen BEFORE-Trigger, der lat/lng auf das 5-km-Raster
+  /// setzt - unabhaengig davon, was der Client schickt.
+  ///
+  /// Der Client snappt trotzdem vorher (LocationPrivacy.snapToGrid): die
+  /// Anzeige soll sofort stimmen, und das Raster ist idempotent, der
+  /// zweite Lauf aendert nichts.
+  ///
+  /// `upsert` statt insert/update: ein zweiter Speicher-Vorgang (z. B.
+  /// GPS-Knopf im Profil-Edit) darf keine Duplikate erzeugen und keine
+  /// Fehlermeldung, weil die Zeile schon existiert.
+  ///
+  /// Wirft [AppException], wenn nicht eingeloggt. Fehler aus dem Netz
+  /// werden NICHT geschluckt: dann bleibt der alte Standort stehen und
+  /// der Aufrufer kann das melden - ein still veralteter Standort waere
+  /// schlimmer als eine sichtbare Fehlermeldung.
+  Future<void> saveOwnLocation(double lat, double lng) async {
+    final userId = _currentUser?.id;
+    if (userId == null) throw AppException('Nicht eingeloggt');
+
+    await _client.from('profile_locations').upsert({
+      'user_id': userId,
+      'lat': lat,
+      'lng': lng,
+    });
+  }
+
   /// Aktualisiert das eigene Profil in der Supabase-Datenbank.
   ///
   /// Robust gegenüber unvollständigen Migrationen (v0.8.1): Liefert
   /// PostgREST "Could not find the 'X' column", wird X aus dem Body
   /// entfernt und erneut geschrieben - EINE fehlende Spalte (z. B.
   /// `photos` ohne Migration 077) darf nie den GESAMTEN Schreibvorgang
-  /// auslöschen (Name/Bio/Präferenzen wären sonst alle verloren).
+  /// auslösen (Name/Bio/Präferenzen wären sonst alle verloren).
   Future<void> updateOwnProfile(Map<String, dynamic> updates) async {
     final userId = _currentUser?.id;
     if (userId == null) throw AppException('Nicht eingeloggt');
