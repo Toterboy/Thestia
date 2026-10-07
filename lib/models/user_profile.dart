@@ -202,7 +202,7 @@ class UserProfile {
   /// Mappt `age` → birthDate (rückgerechnet). Alle sensiblen Felder sind
   /// in der View nicht enthalten und werden mit Defaults belegt.
   ///
-  /// v0.9.3: Die View liefert keine Koordinaten mehr. Bis Migration 138
+  /// v0.10.0: Die View liefert keine Koordinaten mehr. Bis Migration 138
   /// standen hier `lat_approx`/`lng_approx` (1 Dezimal, ~11 km) - sie
   /// wurden auf locationLat/locationLng abgebildet und damit in Profile
   /// geschrieben, die man in die Lokalitaet anderer brachte. Die
@@ -470,7 +470,7 @@ class UserProfile {
       );
 }
 
-/// Einheitliches Distanz-Label fuer andere Nutzer (v0.9.3).
+/// Einheitliches Distanz-Label fuer andere Nutzer (v0.10.0).
 ///
 /// Die Entfernung wird NICHT als Zahl ausgegeben, sondern als 10-km-Stufe
 /// ("10 bis 20 km"). Der genaue Wert bleibt beim Betrachter - er sieht

@@ -3,7 +3,7 @@ import 'package:geocoding/geocoding.dart';
 
 /// Liefert das BUNDESLAND zu einer Position - bewusst NICHT den Ort.
 ///
-/// v0.9.3: `describePlace` lieferte "Bremen, Bremen" (locality +
+/// v0.10.0: `describePlace` lieferte "Bremen, Bremen" (locality +
 /// administrativeArea) und wurde nach `profiles.city` geschrieben. Damit
 /// war der Aufenthaltsort bis auf ~11 km genau oeffentlich, obwohl das
 /// Bundesland als Anzeige voellig ausreicht.
@@ -40,7 +40,7 @@ Future<String?> describeStateFor(double latitude, double longitude) async {
 /// Audit N-1 / UX: Nach der automatischen Standorterkennung soll im
 /// "Stadt"-Feld ein ORTSNAME stehen, nie ein Koordinaten-Paar.
 ///
-/// VERALTET seit v0.9.3 - die Einrichtung speichert keine Orte mehr.
+/// VERALTET seit v0.10.0 - die Einrichtung speichert keine Orte mehr.
 /// Aufrufer dieser Funktion gibt es im aktiven Code nicht mehr; sie
 /// bleibt nur als Quelle fuer describeStateFor dokumentiert und ist
 /// dort NICHT mehr aufrufbar.

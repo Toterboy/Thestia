@@ -130,7 +130,7 @@ class AppSettings {
   /// Einmalig nach E-Mail-Bestaetigung, danach direkt Einrichtung.
   final bool signupWelcomeSeen;
 
-  /// Chat-Hintergrund-Auswahl beim ersten Chat gezeigt (v0.9.3)?
+  /// Chat-Hintergrund-Auswahl beim ersten Chat gezeigt (v0.10.0)?
   ///
   /// Bewusst KEIN Teil der Einrichtung: der Hintergrund ist eine
   /// Geschmacksfrage, und die Einrichtung war mit zehn Seiten lang
@@ -142,7 +142,7 @@ class AppSettings {
   final bool chatBackgroundSeen;
 
   /// Veroeffentlichen, dass andere meine (grobe) Entfernung sehen
-  /// duerfen (v0.9.3)?
+  /// duerfen (v0.10.0)?
   ///
   /// Standard `false`: es wird nichts veroeffentlicht, solange der
   /// Nutzer das nicht ausdruecklich erlaubt hat. Wer es einschaltet,
@@ -185,7 +185,7 @@ class AppSettings {
     this.chatBackgroundPath,
     this.signupWelcomeSeen = false,
     this.chatBackgroundSeen = false,
-    // v0.9.3: Datenschutz-Vorgabe. Nichts veroeffentlichen, was der
+    // v0.10.0: Datenschutz-Vorgabe. Nichts veroeffentlichen, was der
     // Nutzer nicht ausdruecklich erlaubt hat.
     this.showDistance = false,
   });

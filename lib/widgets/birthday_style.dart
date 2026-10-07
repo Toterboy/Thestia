@@ -35,7 +35,7 @@ class BirthdayStyle {
 /// ist nie nur eine Farbänderung.
 /// Vorschaukarte für einen Geburtstags-Stil.
 ///
-/// v0.9.3: War eine Mini-Kachel (128 px) mit gestauchten Profilbalken.
+/// v0.10.0: War eine Mini-Kachel (128 px) mit gestauchten Profilbalken.
 /// Nutzerfeedback: "zeigt kein Vollbild, nur das kleine Bild". Jetzt
 /// eine echte Profil-Vorschau in Phone-Breite, mit frei wählbarer
 /// Groesse ([large]) und optional echtem Profilbild ([avatarPath]) statt

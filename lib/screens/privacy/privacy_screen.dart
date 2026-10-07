@@ -210,7 +210,7 @@ class PrivacyScreen extends ConsumerWidget {
         await notifier.setDistanceFilterMode(prefs.distanceFilterMode);
         await notifier.setMaxDistanceKm(prefs.maxDistanceKm);
         await notifier.setPreferredState(prefs.preferredState);
-        // v0.9.3: prefs.location entfaellt - der Import darf keinen
+        // v0.10.0: prefs.location entfaellt - der Import darf keinen
         // Ortsnamen aus einer alten Datensicherung zurueckbringen.
         await notifier.setRelationshipType(prefs.relationshipType);
       }

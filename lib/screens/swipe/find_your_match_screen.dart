@@ -243,7 +243,7 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
                                                  fontWeight: FontWeight.bold,
                                                ),
                                          ),
-                                       // v0.9.3: Der Ortsname ist
+                                       // v0.10.0: Der Ortsname ist
                                        // entfallen. Stattdessen das
                                        // Bundesland - die grobe
                                        // Angabe, die ohnehin fuer
@@ -254,7 +254,7 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
                                            style: const TextStyle(
                                                color: Colors.grey),
                                          ),
-// Distanz als 10-km-Stufe (v0.9.3),
+// Distanz als 10-km-Stufe (v0.10.0),
                                        // serverseitig berechnet. Ohne
                                        // Freigabe der anderen Person
                                        // kommt der Wert nicht an.

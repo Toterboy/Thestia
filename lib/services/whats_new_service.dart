@@ -42,6 +42,17 @@ class WhatsNewService {
   /// 0.9.2 - fehlte vollstaendig. Zusaetzlich war der Text nicht
   /// uebersetzt; englische Nutzer sahen Deutsch.
   static const Map<int, List<String>> contentByBuild = {
+    // v0.10.0 (Build 31): Standort-Privatisierung. Die drei Punkte sind
+    // bewusst ueber die Waechter-Begrenzung gesetzt - es sind die
+    // einzigen Aenderungen, bei denen jemand in einer alten App
+    // zurueckblinzelt ("wo ist mein Ort hin?") und deshalb NICHT auf
+    // einen späteren Release vertrauen sollte.
+    31: [
+      'whatsnew.v1000.noCity',
+      'whatsnew.v1000.grid',
+      'whatsnew.v1000.distanceOptIn',
+    ],
+
     30: [
       'whatsnew.v092.rotatingPrompts',
       'whatsnew.v092.emailRequired',

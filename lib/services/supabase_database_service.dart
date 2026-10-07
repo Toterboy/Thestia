@@ -45,7 +45,7 @@ class SupabaseDatabaseService {
   /// Lädt das eigene Profil aus der Supabase-Datenbank.
   ///
   /// Es werden nur die für die App benötigten Spalten selektiert; sensible
-  /// Felder wie der Standort stehen nicht in profiles (v0.9.3), sondern in
+  /// Felder wie der Standort stehen nicht in profiles (v0.10.0), sondern in
   /// profile_locations und werden nur bei Bedarf über [fetchDistanceKm]
   /// abgefragt - nie im eigenen Profil.
   Future<UserProfile?> fetchOwnProfile() async {
@@ -119,7 +119,7 @@ class SupabaseDatabaseService {
             'personalityType': response['personality_type'],
             'is_verified': response['is_verified'],
             'is_location_suspicious': response['is_location_suspicious'],
-            // v0.9.3: city wird nicht mehr gelesen. Die Spalte ist mit
+            // v0.10.0: city wird nicht mehr gelesen. Die Spalte ist mit
             // Migration 138 aus profiles entfernt.
             'state': response['state'],
             'country': response['country'] ?? 'Deutschland',
@@ -404,7 +404,7 @@ class SupabaseDatabaseService {
 
   /// Schreibt die eigenen Koordinaten nach profile_locations.
   ///
-  /// v0.9.3: Das ist der eigentliche Ort fuer die exakten Werte. Die
+  /// v0.10.0: Das ist der eigentliche Ort fuer die exakten Werte. Die
   /// Tabelle ist per RLS auf den Eigentuemer begrenzt und hat seit
   /// Migration 137 einen BEFORE-Trigger, der lat/lng auf das 5-km-Raster
   /// setzt - unabhaengig davon, was der Client schickt.

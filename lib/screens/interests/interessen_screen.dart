@@ -280,7 +280,7 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
                     subtitle: Text([
                       '${profile.age ?? '?'} Jahre',
                       // Serverseitig berechnet, angezeigt als
-                      // 10-km-Stufe (v0.9.3).
+                      // 10-km-Stufe (v0.10.0).
                       if (profile.distanceKm > 0)
                         profile.distanceLabel(
                           (key) => L10n.t(context, key),

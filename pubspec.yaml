@@ -1,7 +1,7 @@
 name: thestia
 description: Eine moderne, datenschutzfreundliche Dating-App mit Blind Mode (Persönlichkeit zuerst).
 publish_to: 'none'
-version: 0.9.2+30
+version: 0.10.0+31
 
 environment:
   sdk: ^3.10.0

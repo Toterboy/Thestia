@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:thestia/utils/avatar_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// v0.9.3: geocoding und geolocator sind hier nicht mehr noetig.
+// v0.10.0: geocoding und geolocator sind hier nicht mehr noetig.
 // Der Standort kommt aus locationVerificationService (Position) und
 // describeStateFor (Bundesland) - beide ohne eigene Geokodierung im
 // Screen. Vorher stand hier locationFromAddress() fuer die
@@ -61,7 +61,7 @@ class _SettingsPrivacyOnceScreenState
   bool _isDetectingLocation = false;
   String? _locationError;
 
-  // v0.9.3: Entfernt wurden der Orts-Textfeld-Controller (_locationCtrl),
+  // v0.10.0: Entfernt wurden der Orts-Textfeld-Controller (_locationCtrl),
   // der Bundesland-Freitext-Controller (_stateCtrl) und der ganze
   // Debounce-Pfad (_locationDebounce, _locationSeq, _locateTypedPlace,
   // _locationValidationError).
@@ -75,7 +75,7 @@ class _SettingsPrivacyOnceScreenState
   // - damit kann kein Tippfehler mehr die Filterung stillschweigend
   // aufheben ("bayrn" traf nie auf "Bayern").
 
-  // v0.9.3: 10 Seiten statt 8. Neu sind der Geburtstags-Stil (mit
+  // v0.10.0: 10 Seiten statt 8. Neu sind der Geburtstags-Stil (mit
   // GROSSER Vorschau) und der Musik-Geschmack - beide wurden bei einer
   // Registrierung nie abgefragt. Dazu kommen die drei Fortschrittsschritte
   // von unten.
@@ -86,14 +86,14 @@ class _SettingsPrivacyOnceScreenState
   static const int _musicPage = 4;
   static const int _habitudesPage = 5;
 
-  /// Geburtstags-Stil (v0.9.3, eigene Seite in der Einrichtung).
+  /// Geburtstags-Stil (v0.10.0, eigene Seite in der Einrichtung).
   ///
   /// Frueher nur beim App-Update nachfragbar (whats_new_screen.dart) und
   /// im Profil-Edit. In der Einrichtung stand er nie - wer sich frisch
   /// registriert hat, hatte den Default, ohne es gewaehlt zu haben.
   String _birthdayStyle = BirthdayStyle.values.first;
 
-  /// Musik-Geschmack (v0.9.3).
+  /// Musik-Geschmack (v0.10.0).
   ///
   /// [musicLiked]/[musicDisliked] enthalten SLUGS (z. B. `hip_hop`), nicht
   /// die deutschen Labels. Der alte Onboarding-Screen schrieb hier
@@ -128,7 +128,7 @@ class _SettingsPrivacyOnceScreenState
   @override
   void initState() {
     super.initState();
-    // v0.9.3: Kein Vorbelegen von Textfeldern mehr - die beiden
+    // v0.10.0: Kein Vorbelegen von Textfeldern mehr - die beiden
     // Controller (_locationCtrl, _stateCtrl) sind mit dem Orts-Feld
     // entfallen. Der Bundesland-Filter liest jetzt direkt aus
     // userPreferences.preferredState (siehe das Dropdown auf Seite 1).
@@ -296,7 +296,7 @@ class _SettingsPrivacyOnceScreenState
     }
   }
 
-  /// Speichert den Geburtstags-Stil (v0.9.3). Eigene Seite, deshalb
+  /// Speichert den Geburtstags-Stil (v0.10.0). Eigene Seite, deshalb
   /// eigener Save - sonst muesste die Style-Seite in [_saveProfileExtras]
   /// aufgewaecht werden, obwohl sie an einem anderen Ort steht.
   Future<void> _saveBirthdayStyle() async {
@@ -315,7 +315,7 @@ class _SettingsPrivacyOnceScreenState
     }
   }
 
-  /// Speichert den Musik-Geschmack (v0.9.3).
+  /// Speichert den Musik-Geschmack (v0.10.0).
   ///
   /// Gespeichert werden SLUGS. Der alte Onboarding-Screen hat hier
   /// deutsche Labels ("Hip-Hop") geschrieben; das Matching vergleicht
@@ -391,7 +391,7 @@ class _SettingsPrivacyOnceScreenState
       final path = await storage.uploadAvatar(bytes);
       await ref.read(profileProvider.notifier).update(photos: [path]);
 
-      // v0.9.3: Serverseitiger Write fehlte hier vollstaendig. Das Bild
+      // v0.10.0: Serverseitiger Write fehlte hier vollstaendig. Das Bild
       // lag in Storage und lokal - aber `profiles.photos` wurde nie
       // gesetzt. Beim naechsten fetchOwnProfile stand dort wieder der
       // alte Stand, das Bild verschwand. Von aussen sah es damit aus,
@@ -424,7 +424,7 @@ class _SettingsPrivacyOnceScreenState
     if (_passkeyBusy || _passkeyCreated) return;
     setState(() => _passkeyBusy = true);
     try {
-      // v0.9.3: Vorher ungeprueft registrieren. Bei einem Geraetewechsel
+      // v0.10.0: Vorher ungeprueft registrieren. Bei einem Geraetewechsel
       // oder einem zweiten Durchlauf der Einrichtung lag schon ein
       // Passkey auf dem Konto - der native Dialog kam dann ein zweites
       // Mal und endete in einer Fehlermeldung, die nichts kaputtgemacht
@@ -480,7 +480,7 @@ class _SettingsPrivacyOnceScreenState
       await settingsNotifier.acceptCommunityGuidelines();
     }
     final prefsNotifier = ref.read(userPreferencesProvider.notifier);
-    // v0.9.3: Der Stadt-Sync ist entfallen. Der Ortsname war das
+    // v0.10.0: Der Stadt-Sync ist entfallen. Der Ortsname war das
     // eigentlich sensible Datum - oeffentlich lesbar fuer jeden
     // angemeldeten Nutzer (Migration 135). Das Bundesland wird ueber
     // _saveProfileExtras geschrieben, die Koordinaten ueber
@@ -566,7 +566,7 @@ class _SettingsPrivacyOnceScreenState
     if (!mounted) return;
     switch (choice) {
       case 'passkey':
-        // v0.9.3: Zwei neue Seiten (Geburtstag, Musik) sitzen vor
+        // v0.10.0: Zwei neue Seiten (Geburtstag, Musik) sitzen vor
         // Passkey/MFA, deshalb sind die Zielseiten um zwei gewandert.
         _pageController.jumpToPage(7); // Passkey-Seite
       case 'mfa':
@@ -639,7 +639,7 @@ class _SettingsPrivacyOnceScreenState
         return;
       }
 
-      // v0.9.3: Nur noch das Bundesland als Anzeige. Frueher stand hier
+      // v0.10.0: Nur noch das Bundesland als Anzeige. Frueher stand hier
       // der ORTSNAME (via der Geocoder-Hilfe in geo_names.dart) und wurde
       // nach profiles.city geschrieben - damit war der Aufenthaltsort
       // bis auf ~11 km genau oeffentlich, auch direkt per PostgREST
@@ -688,7 +688,7 @@ class _SettingsPrivacyOnceScreenState
               }),
             );
 
-            // v0.9.3: Die Koordinaten gehoeren nach profile_locations -
+            // v0.10.0: Die Koordinaten gehoeren nach profile_locations -
             // die einzige Tabelle, in der die exakten Werte liegen und
             // die nur der Eigentuemer lesen kann. Ohne diesen Schritt
             // bleibt die Tabelle leer und die Entfernungsanzeige
@@ -950,7 +950,7 @@ setState(() {
                           if (userPrefs.distanceFilterMode ==
                               DistanceFilterMode.state) ...[
                             const SizedBox(height: 20),
-                            // v0.9.3: Auswahl statt Freitext.
+                            // v0.10.0: Auswahl statt Freitext.
                             //
                             // Vorher stand hier ein Textfeld. Damit konnte
                             // jeder beliebige String gespeichert werden -
@@ -1005,7 +1005,7 @@ setState(() {
                             ),
                             const SizedBox(height: 20),
                           ],
-                          // v0.9.3: Standort. Kein Ort-Textfeld mehr.
+                          // v0.10.0: Standort. Kein Ort-Textfeld mehr.
                           //
                           // Vorher stand hier ein Freitextfeld fuer die
                           // Stadt, mit 600-ms-Debounce, Geokodierung und
@@ -1215,7 +1215,7 @@ setState(() {
                         },
                       ),
                     ),
-                    // Page 4 (v0.9.3): Geburtstags-Stil mit GROSSER Vorschau.
+                    // Page 4 (v0.10.0): Geburtstags-Stil mit GROSSER Vorschau.
                     // Eigene Seite, weil die 128-px-Kacheln aus dem
                     // Wrap als "nur ein kleines Bild" gemeldet wurden -
                     // und der Stil eine Entscheidung ist, keine
@@ -1241,7 +1241,7 @@ setState(() {
                         ),
                       ),
                     ),
-                    // Page 5 (v0.9.3): Musik-Geschmack. War im toten
+                    // Page 5 (v0.10.0): Musik-Geschmack. War im toten
                     // onboarding_screen und wurde dort mit deutschen
                     // Labels statt Slugs gespeichert, sodass das
                     // Matching nichts dazu fand.

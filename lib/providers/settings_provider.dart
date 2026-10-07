@@ -510,13 +510,13 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     await _persist();
   }
 
-  /// Chat-Hintergrund-Auswahl beim ersten Chat wurde gezeigt (v0.9.3).
+  /// Chat-Hintergrund-Auswahl beim ersten Chat wurde gezeigt (v0.10.0).
   Future<void> markChatBackgroundSeen() async {
     state = state.copyWith(chatBackgroundSeen: true);
     await _persist();
   }
 
-  /// Entfernungs-Anzeige ein- oder ausschalten (v0.9.3).
+  /// Entfernungs-Anzeige ein- oder ausschalten (v0.10.0).
   ///
   /// Ueber den Server gespiegelt, weil die Anzeegeraete fremd
   /// entscheiden: ein eingeschalteter Schalter muss auch auf einem

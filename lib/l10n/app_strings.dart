@@ -449,7 +449,7 @@ const Map<String, Map<String, String>> _strings = {
     'setup.photoTooltip': 'Profilbild wählen',
     'setup.pleasePick': 'Bitte wählen',
     'setup.locationDone': 'Bundesland erkannt und übernommen.',
-    // v0.9.3: GPS ohne Geocoder-Treffer. Nicht raten: das Bundesland
+    // v0.10.0: GPS ohne Geocoder-Treffer. Nicht raten: das Bundesland
     // bleibt leer und der Nutzer wählt es von Hand aus der Liste.
     'setup.locationStateUnknown':
         'Dein Bundesland wurde nicht erkannt. Bitte wähle es unten aus.',
@@ -502,7 +502,7 @@ const Map<String, Map<String, String>> _strings = {
     'setupp.stateLabel': 'Bundesland',
     'setupp.stateHint': 'z. B. Bayern',
     'setupp.germanyNote': 'Es werden Profile aus ganz Deutschland angezeigt.',
-    // v0.9.3: Es wird kein Ort mehr abgefragt, nur das Bundesland.
+    // v0.10.0: Es wird kein Ort mehr abgefragt, nur das Bundesland.
     'setupp.detectState': 'Mein Bundesland automatisch erkennen',
     'setupp.bioLabel': 'Über mich (Bio)',
     'setupp.bioHint': 'z. B. Hobbys, was dir wichtig ist',
@@ -639,7 +639,7 @@ const Map<String, Map<String, String>> _strings = {
         'Was macht dich aus? Ein Bild, ein paar Worte, deine Interessen.',
     'setupq.intro': 'Wie klingst du? Erzähl von dir, als Text und gesprochen.',
     'setupq.habits': 'Wie stehst du zu Rauchen, Alkohol und Drogen?',
-    // v0.9.3: Geburtstags-Stil als eigene Seite der Einrichtung.
+    // v0.10.0: Geburtstags-Stil als eigene Seite der Einrichtung.
     'setupq.birthday':
         'Wie soll dein Profil an deinem Geburtstag aussehen?',
     'setup.birthdaySub':
@@ -1390,7 +1390,7 @@ const Map<String, Map<String, String>> _strings = {
         '{min} bis {max} Sekunden. Du kannst jede Aufnahme vor dem '
         'Speichern anhören.',
     'intro.record': 'Aufnehmen',
-    // Stille-Erkennung (v0.9.3): eine Aufnahme kann die Mindestlaenge
+    // Stille-Erkennung (v0.10.0): eine Aufnahme kann die Mindestlaenge
     // haben und trotzdem nichts enthalten. Diese Texte sind die einzige
     // Stelle, an der der Nutzer davon erfaehrt wird.
     'intro.silenceHint': 'Noch kein Ton - bitte sprechen',
@@ -1901,6 +1901,19 @@ const Map<String, Map<String, String>> _strings = {
         'whatsnew.v092.proximityJitter':
             'Nähefunk sendet jetzt unregelmäßig statt im festen Takt und '
             'hört nur noch Signale von Thestia.',
+        // v0.10.0 (Build 31): Standort-Privatisierung
+        'whatsnew.v1000.noCity':
+            'Dein Profil nennt jetzt nur noch dein Bundesland. Ein Ort, eine '
+            'Stadt oder ein Adressbereich wird nicht mehr gespeichert und '
+            'niemandem angezeigt.',
+        'whatsnew.v1000.grid':
+            'Deine Position wird nur als Rasterpunkt im Abstand von 5 km '
+            'gespeichert. Die Rasterung passiert auf dem Server, nicht nur '
+            'in der App.',
+        'whatsnew.v1000.distanceOptIn':
+            'Andere sehen erst dann eine ungefähre Entfernung, wenn du das '
+            'einschaltest. Selbst dann nur grobe Stufen von 10 km, nie eine '
+            'Zahl.',
     // Sprachnachrichten im Chat (Einmal-Anhören, M-17)
     'chat.voiceOnce':
         'Diese Sprachnachricht wurde bereits angehört und entfernt '
@@ -3243,7 +3256,7 @@ const Map<String, Map<String, String>> _strings = {
     'setup.photoTooltip': 'Choose profile picture',
     'setup.pleasePick': 'Please choose',
     'setup.locationDone': 'State detected and applied.',
-    // v0.9.3: GPS without a geocoder hit. Not guessed: the state stays
+    // v0.10.0: GPS without a geocoder hit. Not guessed: the state stays
     // empty and the user picks it from the list.
     'setup.locationStateUnknown':
         'Your state could not be detected. Please pick it below.',
@@ -3258,7 +3271,7 @@ const Map<String, Map<String, String>> _strings = {
     'setupq.intro':
         'How do you sound? Tell about yourself - in text and voice.',
     'setupq.habits': 'How do you feel about smoking, alcohol and drugs?',
-    // v0.9.3: birthday style as its own setup page.
+    // v0.10.0: birthday style as its own setup page.
     'setupq.birthday':
         'How should your profile look on your birthday?',
     'setup.birthdaySub':
@@ -3980,7 +3993,7 @@ const Map<String, Map<String, String>> _strings = {
         '{min} to {max} seconds. You can listen to every recording '
         'before saving.',
     'intro.record': 'Record',
-    // Silence detection (v0.9.3): a recording can meet the minimum
+    // Silence detection (v0.10.0): a recording can meet the minimum
     // length and still contain nothing. These strings are the only
     // place the user is told about it.
     'intro.silenceHint': 'No sound yet - please speak',
@@ -4412,7 +4425,7 @@ const Map<String, Map<String, String>> _strings = {
     'setupp.stateLabel': 'Federal state',
     'setupp.stateHint': 'e.g. Bavaria',
     'setupp.germanyNote': 'Profiles from all over Germany are shown.',
-    // v0.9.3: No city is asked for any more, only the state.
+    // v0.10.0: No city is asked for any more, only the state.
     'setupp.detectState': 'Detect my state automatically',
     'setupp.bioLabel': 'About me (bio)',
     'setupp.bioHint': 'e.g. hobbies, what matters to you',
@@ -4620,6 +4633,16 @@ const Map<String, Map<String, String>> _strings = {
         'whatsnew.v092.proximityJitter':
             'Proximity now sends at irregular intervals instead of a fixed '
             'rhythm, and listens only for Thestia signals.',
+        // v0.10.0 (Build 31): location privacy
+        'whatsnew.v1000.noCity':
+            'Your profile now names only your state. No city, place or '
+            'address area is stored or shown to anyone.',
+        'whatsnew.v1000.grid':
+            'Your position is stored only as a grid point at 5 km. The '
+            'snapping happens on the server, not just in the app.',
+        'whatsnew.v1000.distanceOptIn':
+            'Others see an approximate distance only after you switch it '
+            'on. Even then just coarse 10 km steps, never a number.',
     // Voice messages (listen once, M-17)
     'chat.voiceOnce':
         'This voice message was already listened to and removed (privacy: '

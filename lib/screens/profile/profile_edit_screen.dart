@@ -769,7 +769,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         return;
       }
 
-      // v0.9.3: Nur noch das Bundesland, keine Ortsangabe. Vorher stand
+      // v0.10.0: Nur noch das Bundesland, keine Ortsangabe. Vorher stand
       // hier der Ortsname aus dem Reverse-Geocoder und landete in
       // profiles.city - fuer jeden angemeldeten Nutzer lesbar.
       //
@@ -793,7 +793,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       // Koordinaten serverseitig persistieren (Basis fuer die
       // Distanzberechnung zu anderen Nutzern).
       if (SupabaseService.isInitialized) {
-        // v0.9.3: In profiles landen nur noch das Bundesland und die
+        // v0.10.0: In profiles landen nur noch das Bundesland und die
         // Flags. Die Koordinaten gehen in profile_locations - dort ist
         // die RLS auf den Eigentuemer begrenzt, in profiles kann sie
         // das nicht (die Spalte waere fuer jeden angemeldeten Nutzer
@@ -849,7 +849,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     }
   }
 
-  // v0.9.3: _validateLocationAgainstGps ist entfallen. Die Methode
+  // v0.10.0: _validateLocationAgainstGps ist entfallen. Die Methode
   // verglich einen von Hand getippten Ortsnamen mit der GPS-Position
   // und meldete Abweichungen ueber 15 km. Mit dem Wegfall der
   // Ortsangabe gibt es nichts mehr zu vergleichen; sinnvollerweise
@@ -867,7 +867,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     final p = ref.read(profileProvider);
     final prefs = ref.read(userPreferencesProvider);
     final settings = ref.read(settingsProvider);
-    // v0.9.3: Die Ortsangabe ist entfallen, damit auch kein Dirty-Vergleich
+    // v0.10.0: Die Ortsangabe ist entfallen, damit auch kein Dirty-Vergleich
     // mehr noetig ist. Das Bundesland wird weiterhin verglichen.
     return _pendingAvatarBytes != null ||
         _pendingExtraBytes.isNotEmpty ||
@@ -1066,7 +1066,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       // Nicht abbrechen: die Textänderungen trotzdem speichern.
     }
 
-    // v0.9.3: Die GPS-Gegenpruefung des Ortsnamens ist entfallen. Sie
+    // v0.10.0: Die GPS-Gegenpruefung des Ortsnamens ist entfallen. Sie
     // verglich den getippten Ort mit der GPS-Position - ohne Ortseingabe
     // gibt es nichts zu vergleichen. Die Plausibilitaet wird jetzt beim
     // Ermitteln des Standorts selbst geprueft (isLocationSuspicious in
@@ -1472,7 +1472,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
-              // v0.9.3: Das Stadtfeld ist entfallen. Uebrig bleibt ein
+              // v0.10.0: Das Stadtfeld ist entfallen. Uebrig bleibt ein
               // Knopf, der das Bundesland aus dem aktuellen GPS-Standort
               // ableitet. Er sitzt jetzt am Bundesland-Dropdown, weil ein
               // Knopf ohne Eingabefeld keinen Platz hat.

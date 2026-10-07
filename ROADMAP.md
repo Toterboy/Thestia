@@ -13,9 +13,14 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
   neue Kern-Feature
 - **0.9.1** – veröffentlicht: E-Mail-Bestätigungspflicht, Safety Number,
   Nähfunk-Jitter, Standort-TTL, rotierende Vorstellungs-Prompts
-- **0.10.0** – Emotionaler Rückzugsort (Sanctuary) & lokaler
+- **0.10.0** – **in Arbeit:** Standort-Privatisierung (Ort entfällt,
+  5-km-Raster serverseitig erzwungen, Entfernung nur zustimmungspflichtig
+  und in Stufen), Transit Spark auf echten Geräten, Auslieferungs-
+  Hygiene. MINOR-Bump **nach Regel** – eine Änderung der
+  Datenverarbeitung für Nutzende ist eine Kern-Funktion
+- **0.11.0** – Emotionaler Rückzugsort (Sanctuary) & lokaler
   KI-Reflexions-Chat (rein on-device)
-- **0.11.0** – Web-Bridge, Transit-Reachability & Zero-Install
+- **0.12.0** – Web-Bridge, Transit-Reachability & Zero-Install
   Gast-Verbindungen (Flutter Web, Codeberg Pages)
 - Neue Nutzerfunktionen sind immer MINOR-Bumps; nur Fixes gehen in PATCH.
 - **Regel „neue Nutzerfunktion = MINOR" ist zweimal gebrochen worden**,
@@ -28,7 +33,11 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
 - „Kern-Funktion" im Sinne dieser Regel: eine Änderung des
   Funktionsumfangs **oder** der Datenverarbeitung für Nutzende. Vorlagen,
   Polish und Sprachausbau sind es nicht. Diese Abgrenzung war vorher
-  nirgends festgelegt und hat in 0.9.2 zu einem Widerspruch geführt.
+  nirgends festgelegt – und hat dazu geführt, dass die
+  Standort-Privatisierung unter der Nummer 0.9.2 als PATCH geführt
+  wurde, obwohl sie genau in diese Definition fällt. Mit dem Bump auf
+  **0.10.0** ist der Widerspruch aufgelöst, statt ihn ein drittes Mal
+  stehenzulassen. Die Abgrenzung ist damit erstmals angewendet worden.
 
 ## Erledigt
 
@@ -127,12 +136,12 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
 
 - [ ] Applogo & Branding-Feinschliff – Quelle ist
       `assets/images/thestia_icon_base.png` (941×941, im Repo vorhanden);
-      Größen/Masken/Farbwelt-Abstimmung folgen. **Ziel: 0.9.2.**
+      Größen/Masken/Farbwelt-Abstimmung folgen. **Ziel: 0.10.0.**
       Store-Icon (512×512) und Feature Graphic (1024×500) sind bereits
       erzeugt, siehe `tool/make_play_icon.py` und
       `tool/make_feature_graphic.py`
 - [ ] F-Droid-Einreichung (google-freier Flavor, UnifiedPush, Fastlane-
-      Metadaten liegen vor; Einreichung steht aus). **Ziel: 0.9.2**,
+      Metadaten liegen vor; Einreichung steht aus). **Ziel: 0.10.0**,
       unabhängig vom Play-Upload
 - [ ] **Vorstellungs-Vorlagen (Text + Audio)**: Prompt-Karten (rotierend,
       z. B. „Erzähl von einem Moment, der dich zuletzt zum Lachen gebracht
@@ -142,8 +151,8 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       Aufnehmen (Wer bist du? / Was macht dich aus? / Warum bist du hier?).
       Ziel: natürliche, persönliche Vorstellungen statt stumpfer Daten-
       Aufzählung – zahlt direkt auf das Audio-first-Matching von
-      Find your Match ein. **Ziel: 0.9.2**, ausformuliert unter
-      „Geplant für 0.9.2".
+      Find your Match ein. **Ziel: 0.10.0**, ausformuliert unter
+      „Geplant für 0.10.0".
 
 ## 0.8.0 – Geschmack & Matching (umgesetzt, inkl. Nachträge 1–2)
 
@@ -332,22 +341,60 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       KI-Kennzeichnung an Bildprüfungen, Video-Verifizierung mit lokaler
   KI-Alters-Triage (095, 2-Jahre-Regel, manuelle Queue für Abweichler)
 
-## Geplant für 0.9.2 – Transit Spark auf echten Geräten & Qualitätssicherung
+## Geplant für 0.10.0 – Standort-Privatisierung, Transit Spark auf echten Geräten & Qualitätssicherung
 
-> Status: 0.9.1 ist veröffentlicht. 0.9.2 enthält **kein neues
-> Kern-Feature** und **keine neue Datenerhebung** – hier wird Transit
-> Spark erst belastbar gemacht und die Auslieferungs-Hygiene nachgezogen.
-> Die Abgrenzung zu „Kern-Feature" lautet: Eine Kern-Funktion verändert
-> den Funktionsumfang oder die Datenverarbeitung für Nutzende. Vorlagen
-> und Polish tun beides nicht.
+> Status: 0.9.1 ist veröffentlicht.
 >
-> **Bedingung für den Release von 0.9.2:** Der BLE-Gerätetest ist der
+> **Dieses Release ist ein MINOR-Bump, und zwar nach der eigenen Regel
+> dieser Roadmap.** Die Regel sagt: „Neue Nutzerfunktionen sind immer
+> MINOR-Bumps; nur Fixes gehen in PATCH" – und definiert Kern-Funktion
+> als eine Änderung des Funktionsumfangs **oder der Datenverarbeitung für
+> Nutzende**. Die Standort-Umstellung ist genau das: der Ort wird nicht
+> mehr erhoben, die Entfernungsanzeige ist zustimmungspflichtig und
+> gestuft. Das war bis 0.9.2 als PATCH geführt – ein Widerspruch, der mit
+> der Umbenennung auf 0.10.0 aufgelöst ist. Die frühere Begründung „kein
+> neues Kern-Feature und keine neue Datenerhebung" galt für den
+> ursprünglichen Zuschnitt und ist seit der Standort-Arbeit überholt.
+>
+> Transit Spark wird in diesem Release ebenfalls erst belastbar gemacht
+> und die Auslieferungs-Hygiene nachgezogen.
+>
+> **Bedingung für den Release von 0.10.0:** Der BLE-Gerätetest ist der
 > einzige Punkt, der den Release blockiert. Ist er bis dahin nicht
 > bestanden, wird Transit Spark serverseitig für Neuregistrierungen
 > gesperrt (Flag in `app_config`, wirkt über die bestehende RPC) – und
 > **nicht** so getan, als wäre der Release durch das offene Kriterium
 > erlaubt. Die Entscheidung wird vor dem Upload getroffen, nicht danach.
 
+- [x] **Standort-Privatisierung (expand → client → contract)** – der
+      eigentliche Grund für den MINOR-Bump. Umgesetzt in Migrationen
+      135 bis 143:
+      - Der Ort (Stadt) wird **nicht mehr erhoben**, gespeichert oder
+        angezeigt. Sichtbar ist ausschließlich das Bundesland.
+      - Koordinaten liegen auf einem **5-km-Raster** in
+        `profile_locations`, einer per RLS nur für den Eigentümer
+        lesbaren Tabelle. Das Raster wird **serverseitig erzwungen**
+        (BEFORE-Trigger, Migration 137) – nicht nur in der App.
+      - Die Spalten `city`, `location_lat` und `location_lng` sind aus
+        `profiles` **entfernt** (Migration 138). Das war nötig, weil die
+        RLS über Zeilen und nicht über Spalten entscheidet.
+      - Die Entfernungsanzeige ist **aus und zustimmungspflichtig**
+        (`show_distance`, serverseitig geprüft). Eingeschaltet zeigt sie
+        Stufen von 10 km, unter 5 km gar nichts.
+      - Die Löschung nach 30 Tagen läuft wieder (Migration 143 – siehe
+        Statusblock unten).
+      - Datenschutzerklärung auf Version 6 aktualisiert.
+      > **Offen:** nichts davon ist je auf einem Gerät durchlaufen
+      > worden. Der Serverzustand ist durch Migration 142 verifiziert,
+      > der Client-Pfad nicht. Prüfpunkte 4.12 bis 4.15 in
+      > `docs/RELEASE-ABNAHME.md`.
+- [ ] **Folge des Contract-Schritts prüfen** – Migration 138 macht
+      **jede** bereits gebaute App unbrauchbar, die `city` oder
+      `location_*` aus `profiles` liest. Das ist kein Absturz, sondern
+      ein stillschweigend fehlgeschlagener Profilabgleich – die schlimmste
+      Fehlerform, weil niemand etwas meldet. Vor einem Upload ist zu
+      entscheiden, ob eine Mindestversion durchgesetzt wird (z. B. über
+      `auth.jwt()->>'ver'` im RPC) oder ob der Play-Zwang genügt.
 - [ ] **BLE-Gerätetest als HARTER Release-Blocker** – Transit Spark gilt
       erst als stabil, wenn Reichweite, Advertise-Abdeckung und der
       komplette Match-Flow auf MINDESTENS 2 echten Geräten verschiedener
@@ -360,7 +407,7 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
 - [ ] **BLE-Tracking-Härtung (Privacy im Funk)** – *vorgezogen, steht
       vor den kosmetischen Punkten, weil die Exposition bereits
       gegenwärtig für jeden Nutzer mit aktivem Transit Spark besteht.*
-      Umgesetzt in 0.9.2: rotierende Encounter-Tokens mit Jitter,
+      Umgesetzt in 0.10.0: rotierende Encounter-Tokens mit Jitter,
       Herstellerfilter, gepulstes Scanning. **Offen und zuerst zu
       klären:** die Plattform-Frage. Resolvable Private Addresses
       rotieren auf Android als **Plattformverhalten**; eine App kann sie
@@ -404,11 +451,11 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       Vorschläge stehen in Abschnitt 5 der DSFA, sie sind fachlich
       begründet und rechtlich nicht geprüft
 - [ ] **Vorstellungs-Vorlagen (Text + Audio)** – hier verbindlich für
-      0.9.2 eingeplant; Ausformulierung siehe „In Arbeit". Kleines
+      0.10.0 eingeplant; Ausformulierung siehe „In Arbeit". Kleines
       Feature, aber es hebt die Profilqualität der frühen Nutzerschaft
       direkt, solange das Match-Erlebnis noch ohne Stimmen auskommt
 
-## Geplant für 0.10.0 – Emotionaler Rückzugsort (Sanctuary) & Lokaler KI-Reflexions-Chat
+## Geplant für 0.11.0 – Emotionaler Rückzugsort (Sanctuary) & Lokaler KI-Reflexions-Chat
 
 > Vision: Ein vollständig offlinefähiger, geschützter Raum zur
 > Selbstreflexion bei Frust, Zurückweisung oder emotionalen Tiefs –
@@ -456,11 +503,11 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       Serververbindung
 - [ ] **Hugging-Face-Downloader: Drittlandproblem lösen.** Modelle über
       Hugging Face zu beziehen ist die einfachste Variante und die
-      bequemste, aber der Anbieter ist US-gestützt, während 0.11.0
+      bequemste, aber der Anbieter ist US-gestützt, während 0.12.0
       US-Cloud-Abhängigkeit ausdrücklich als Ausschlusskriterium führt
       (CLOUD Act). Zusätzlich übermittelt jeder Metadatenabruf die
       IP-Adresse des Nutzers an einen US-Dienst. Zu entscheiden:
-      eigener EU-Spiegel, oder die Aussage in 0.11.0 relativieren.
+      eigener EU-Spiegel, oder die Aussage in 0.12.0 relativieren.
       Spark-X2.5 stammt von iFlytek (CN) – die Governance-Frage ist
       damit nicht auf US-Anbieter begrenzt
 - [ ] **Modellgrößen gegen den Speicher dokumentieren** (Gemma 4 E2B
@@ -525,7 +572,7 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       Stärke dargestellt zu werden
 
 
-### Begleitend in 0.10.0 – Begegnung statt Bildschirm
+### Begleitend in 0.11.0 – Begegnung statt Bildschirm
 
 - [ ] **Sync-Dates** (Distanz-taugliche Mini-Dates im Ideen-Rad): Katalog
       von gemeinsamen Aktivitäten für denselben Zeitpunkt trotz Distanz –
@@ -544,13 +591,13 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       Chat-Header die Vorfreude („Treffen am Samstag!") statt
       Chat-Metriken.
 
-### Vorschläge zu 0.10.0 (nicht terminiert, nicht eingeplant)
+### Vorschläge zu 0.11.0 (nicht terminiert, nicht eingeplant)
 
 > Die folgenden drei Punkte sind **Ideen, keine Zusagen**. Sie standen
 > bisher in derselben Liste wie die fest eingeplanten Einträge und waren
 > daran nur durch das Präfix „VORSCHLAG" erkennbar. Sie sind jetzt
 > getrennt, damit der Status auf einen Blick stimmt. Jeder bekommt vor
-> einer Aufnahme in 0.10.0 eine Entscheidung: angenommen, abgelehnt oder
+> einer Aufnahme in 0.11.0 eine Entscheidung: angenommen, abgelehnt oder
 > vertagt – mit Begründung, nicht nur mit Häkchen.
 
 - [ ] **VORSCHLAG: Date-Safety-Check-in** (Anschluss ans Safety Center):
@@ -562,7 +609,7 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       wo das Treffen stattfindet, noch ob ein Check-in unterblieben ist.
       Damit kann aus dem Safety-Feature kein Überwachungs- oder
       Ortungsdruck entstehen
-      - **Offener Konflikt:** siehe 0.11.0 §4 (BSSID- und
+      - **Offener Konflikt:** siehe 0.12.0 §4 (BSSID- und
         Geschwindigkeitsabgleich). Solange dort kontinuierliche
         präzise Standortdaten erhoben werden, ist die Zusage dieses
         Vorschlags nicht haltbar. Beides muss entschieden werden
@@ -586,7 +633,7 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       binden – das Gegenteil von Streak, Read-Receipt und
       Reaktivierungskampagnen. Ablehnung ist selbstverständlich und ohne
       jede Konsequenz; es gibt ausdrücklich keinen „Ablehnungen"-Zähler
-- [ ] **Öffentliches Threat-Model & SECURITY.md**: **nach 0.9.2
+- [ ] **Öffentliches Threat-Model & SECURITY.md**: **nach 0.10.0
       vorgezogen** (dort als eigener Eintrag geführt). `SECURITY.md` ist
       bereits öffentlich und nennt `security@thestia.de` mit
       72-Stunden-Eingangsbestätigung – der Meldeweg steht also, das
@@ -597,7 +644,7 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       dasselbe Vorhaben nennt
 
 
-## Geplant für 0.11.0 – Web-Bridge, Transit-Reachability & Zero-Install Gast-Verbindungen
+## Geplant für 0.12.0 – Web-Bridge, Transit-Reachability & Zero-Install Gast-Verbindungen
 
 > Vision: Nutzer können Menschen im Alltag und im Nahverkehr (z. B. im
 > Zug, Bus oder Café) direkt erreichen – unabhängig davon, ob die andere
@@ -684,7 +731,7 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
 > **ZWEIFELHAFT – steht in Konflikt zur eigenen Datenschutzposition.
 > Vor Umsetzung entscheiden, nicht während.** Die beiden folgenden
 > Verfahren erzeugen präzise Standort- und Bewegungsdaten. Der
-> Date-Safety-Check-in in 0.10.0 sagt ausdrücklich zu: „KEINE
+> Date-Safety-Check-in in 0.11.0 sagt ausdrücklich zu: „KEINE
 > Standort-Übertragung: Thestia erfährt weder, wo das Treffen
 > stattfindet". Beides kann nicht gleichzeitig gelten.
 >
@@ -762,7 +809,7 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
 - [ ] **Eingehende Gast-Nachrichten** unterliegen denselben
       Sicherheitsregeln (Bild-Blur, Meldung mit manueller Admin-Prüfung)
 
-### 8. Begleitend in 0.11.0 – „Mittendrin": Treffpunkt-Orchestrator
+### 8. Begleitend in 0.12.0 – „Mittendrin": Treffpunkt-Orchestrator
 
 - [ ] **Fairer Treffpunkt für Distanz-Funken**: Aus den gerundeten
       Standorten beider Personen Städte-Vorschläge als real erreichbare
@@ -816,7 +863,7 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       „langweilig" wird
 - [ ] **Drittanbieter als eigenes Betriebsrisiko führen**: Brevo
       (E-Mail), Cloudflare (Turnstile), Netlify (Passkey-Assets),
-      Firebase (FCM) und für 0.11.0 Codeberg. Offen sind je Anbieter
+      Firebase (FCM) und für 0.12.0 Codeberg. Offen sind je Anbieter
       Auftragsverarbeitungsvertrag, Drittlandtransfer und
       Fähigkeit des Anbieters, die US-EU-Data-Privacy-Framework-
       Zertifizierung zu tragen. Dazu ein Notfallplan: Was passiert,
@@ -838,7 +885,7 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       Altersband-Unschärfe und keine Aufbewahrung der
       Verifizierungsmedien. Für eine App mit Jugendschutz ist das die
       zentrale rechtliche Voraussetzung, kein Feature
-- Öffentliches Threat-Model: **nach 0.9.2 vorgezogen**, dort geführt
+- Öffentliches Threat-Model: **nach 0.10.0 vorgezogen**, dort geführt
 
 ## Versionierungsprinzip
 

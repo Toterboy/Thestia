@@ -222,7 +222,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
 
   /// Zeigt beim ersten Chat einmalig den Hinweis auf den Hintergrund.
   ///
-  /// v0.9.3: Der Hintergrund liess sich bisher nur ueber die Einstellungen
+  /// v0.10.0: Der Hintergrund liess sich bisher nur ueber die Einstellungen
   /// oder die Einrichtung setzen. Wer direkt in einen Chat tappt, sah
   /// nie, dass es die Option gibt.
   ///

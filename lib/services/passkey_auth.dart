@@ -100,7 +100,7 @@ class PasskeyAuth {
 
   /// Prüft, ob auf dem Konto bereits mindestens ein Passkey liegt.
   ///
-  /// v0.9.3: Die Einrichtung rief blind [register] auf. Wer das Gerät
+  /// v0.10.0: Die Einrichtung rief blind [register] auf. Wer das Gerät
   /// wechselt - oder dieselbe Einrichtung nach einem Update erneut
   /// durchläuft - bekam daraufhin einen zweiten nativen Dialog und
   /// danach je nach Plattform eine Fehlermeldung, weil der Credential

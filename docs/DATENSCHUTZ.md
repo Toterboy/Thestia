@@ -1,6 +1,6 @@
 # Datenschutzerklärung für Thestia
 
-**Stand: Oktober 2026** · Version 5 (v0.9.2)
+**Stand: Oktober 2026** · Version 6 (v0.10.0)
 
 Thestia ist ein datenschutzorientiertes Open-Source-Projekt (AGPLv3).
 Der Schutz deiner persönlichen Sphäre steht an erster Stelle: Es werden
@@ -33,8 +33,9 @@ Tracking-Pixel und **keine** nutzerübergreifende Verhaltensanalyse.
 | Kategorie | Daten | Zweck | Löschung |
 |---|---|---|---|
 | Kontodaten | Name, E-Mail, Geburtsdatum, Geschlecht | Kontoverwaltung, Jugendschutzfilter (serverseitig erzwungen) | Mit Account-Löschung |
-| Standortdaten | Koordinaten (einmalig bei Freigabe) | Entfernungsberechnung; exakte Koordinaten verlassen den Server nicht | Mit Account-Löschung |
-| Standortanzeige | Entfernung in 5-km-Schritten gerundet (unter 2,5 km ergibt sich 0) | Andere Nutzer sehen nur gerundete Werte, nie die exakte Position | – |
+| Standortdaten | Bundesland sowie Koordinaten, vor dem Speichern auf ein 5-km-Raster gerundet | Entfernungsberechnung; die Koordinaten liegen ausschließlich in einer nur für den Eigentümer lesbaren Tabelle und verlassen den Server nicht | 30 Tage nach dem letzten Standortschreiben; mit Account-Löschung |
+| Standortanzeige | Entfernung in Stufen von 10 km, nur wenn die betroffene Person das **eingeschaltet** hat; unter 5 km wird nichts angezeigt | Andere Nutzer sehen nur die Stufe, nie einen Wert in Metern oder Kilometern. Ohne Einschaltung sehen sie gar keine Entfernung | – |
+| Ortsangabe | Wird nicht erhoben | Seit v0.10.0 wird kein Ort, keine Stadt und kein Postleitzahl-Bereich gespeichert oder angezeigt – nur das Bundesland | – |
 | Profilangaben | Bio, Interessen, Audio-Vorstellung, Gewohnheiten (Rauchen/Alkohol/Drogen), Mood, Musik-Geschmack, **Profilbild** (siehe Abschnitt 3a) | Vermittlung passender Kontakte („Funken") | Mit Account-Löschung |
 | Geräte-Liste | Gerätemodell (Hersteller + Modellkennung, z. B. „Samsung SM-S921B"), Plattform, App-Version, Zeitstempel der letzten Anmeldung | Anzeige „Wo bin ich eingeloggt?" + „Überall abmelden" (Migration 071/078); kein Standort, keine Seriennummer, keine Werbe-ID | Automatisch beim Abmelden; mit Account-Löschung |
 | Präferenzen | Suchradius, Altersspanne, Geschlechts-Filter, „Ich suche", Farbwelt, UI-Schalter (Blind Mode, Sichtbarkeit, Benachrichtigungen) | Wiederherstellung nach Neuinstallation (Migration 066/071/074/076) | Mit Account-Löschung |
@@ -111,9 +112,23 @@ Funkmedium und im Umfeld beobachtbar.
 
 **Keine Ortung:** Transit Spark ermittelt keine Position per Funk. Der
 Standort wird nur für die Entfernungsanzeige der Profile verwendet und
-dient serverseitig nach 30 Tagen der Löschung (Migration 129).
+dient serverseitig nach 30 Tagen der Löschung (Migration 129, Cron
+`purge_stale_locations`).
 
-## 4. Lokaler Chat-Verlauf (optional) und lokaler KI-Reflexions-Chat (Sanctuary, geplant ab v0.10.0)
+**Gespeichert wird nicht der Standort, sondern ein Rasterpunkt:** Seit
+v0.10.0 werden Koordinaten vor dem Speichern auf ein Raster von 5 km
+gerundet – serverseitig erzwungen, nicht nur in der App. Wer in einem
+Land mit Millionen Einwohnern wohnt, kann aus diesen Daten keinen
+Wohnort ableiten. Der Ort selbst wird nicht erhoben, angezeigt oder
+gespeichert; sichtbar ist ausschließlich das Bundesland.
+
+**Entfernungsanzeige ist Zustimmungssache:** Die Anzeige ist
+standardmäßig aus und muss pro Person eingeschaltet werden. Aus bedeutet
+serverseitig `null` – es wird keine Restentfernung aus dem Bundesland
+zurückgerechnet. Eingeschaltet bedeutet: andere sehen eine Stufe von
+10 km, keine Zahl.
+
+## 4. Lokaler Chat-Verlauf (optional) und lokaler KI-Reflexions-Chat (Sanctuary, geplant ab v0.11.0)
 
 **Lokaler Chat-Verlauf (seit v0.8.x):** Auf Wunsch speichert die App
 Chats verschlüsselt (AES-256, SecureHive; Schlüssel im Keystore) lokal
@@ -123,7 +138,7 @@ können jederzeit durch Deaktivieren gelöscht werden. Der JSON-Datenexport
 enthält den Verlauf (Einsicht/Übertragbarkeit), der Import stellt ihn
 wieder her.
 
-Der folgende Reflexions-Assistent ist **geplant für v0.10.0** und
+Der folgende Reflexions-Assistent ist **geplant für v0.11.0** und
 noch nicht Teil dieser Version; die Beschreibung gilt dem
 geplanten Stand. Sämtliche Zusagen dieses Abschnitts - lokal,
 ohne Übertragung - sind erst mit der Veröffentlichung
@@ -172,7 +187,7 @@ Gerät und werden zu keinem Zeitpunkt an externe Server übertragen.
 | Cloudflare | CAPTCHA-Token (Turnstile), TURN-Relay für WebRTC | Bot-Schutz; Relais sieht **keine** Inhalte (E2E) | Global (EU-PoP bevorzugt) |
 | Netlify | CAPTCHA-Zwischenseite | Hosting der Anmelde-/CAPTCHA-Seite | Global |
 | Hugging Face | Keine Nutzerdaten | Ausschließlich für den optionalen, nutzerinitiierten Download frei verfügbarer KI-Modelldateien (GGUF) | Global |
-| Codeberg e.V. (geplant ab v0.11.0) | Keine personenbezogenen Daten | Trackerfreies Hosting der Flutter-Web-Artefakte (statische Dateien) | Berlin, Deutschland |
+| Codeberg e.V. (geplant ab v0.12.0) | Keine personenbezogenen Daten | Trackerfreies Hosting der Flutter-Web-Artefakte (statische Dateien) | Berlin, Deutschland |
 
 **Keine** Weitergabe an Werbenetzwerke, Datenbroker oder
 Analyse-Dienste. **Keine** Nutzung von Google Analytics, Crashlytics oder
@@ -196,7 +211,7 @@ Du hast jederzeit das Recht auf vollständige Löschung deines Kontos
   Jugendschutz-Sperren) werden nur so lange gespeichert, wie gesetzlich
   bzw. zweckgebunden erforderlich (Art. 6 Abs. 1 lit. f DSGVO) und
   anschließend gelöscht.
-- Flüchtige Web-Gast-Sitzungen (geplant ab v0.11.0) zerstören sich
+- Flüchtige Web-Gast-Sitzungen (geplant ab v0.12.0) zerstören sich
   serverseitig nach 24–48 Stunden rückstandslos.
 
 ## 8. Deine Rechte (Art. 15–21 DSGVO)
@@ -262,8 +277,9 @@ Git-Historie nachvollziehbar.
 
 | Version | Datum | Änderung |
 |---|---|---|
-| 5 | 2026-10 | v0.9.2: Altersprüfung mit Kamera **und** Ton korrekt als aktiv beschrieben (war als "deaktiviert" geführt), 18+-Sperre für Transit Spark, Entfernungsangabe korrigiert, Sanctuary als geplant für v0.10.0 gekennzeichnet |
+| 6 | 2026-10 | **v0.10.0 – Standort neu:** Der Ort (Stadt) wird nicht mehr erhoben, gespeichert oder angezeigt; sichtbar ist nur das Bundesland. Koordinaten liegen vor dem Speichern auf einem 5-km-Raster in einer nur für den Eigentümer lesbaren Tabelle. Die Entfernungsanzeige ist aus und muss eingeschaltet werden; eingeschaltet zeigt sie Stufen von 10 km, unter 5 km gar nichts. Die Spalten `city`, `location_lat` und `location_lng` wurden aus `profiles` entfernt. Löschung nach 30 Tagen bleibt bestehen |
+| 5 | 2026-10 | v0.9.2: Altersprüfung mit Kamera **und** Ton korrekt als aktiv beschrieben (war als "deaktiviert" geführt), 18+-Sperre für Transit Spark, Entfernungsangabe korrigiert, Sanctuary als geplant für v0.11.0 gekennzeichnet |
 | 4 | 2026-09 | Verschlüsselte Profilbilder + on-device NSFW-Vorprüfung (3a), lokaler Chat-Verlauf (3 Modi), Gerätemodell in der Geräte-Liste (078), Präferenzen-/UI-Sync (074/076) ergänzt |
-| 3 | 2026-09 | Sanctuary (on-device KI), Geräte-Liste (071), Web-Bridge/Codeberg (0.11.0-Ausblick), Rechte-Kapitel ergänzt |
+| 3 | 2026-09 | Sanctuary (on-device KI), Geräte-Liste (071), Web-Bridge/Codeberg (0.12.0-Ausblick), Rechte-Kapitel ergänzt |
 | 2 | 2026-08 | UnifiedPush, NSFW-Melde-Workflow, Ban-Einträge |
 | 1 | 2026-07 | Erste öffentliche Fassung (Beta) |

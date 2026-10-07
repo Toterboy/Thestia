@@ -36,7 +36,7 @@ class ProfileScreen extends ConsumerWidget {
 
   /// Das Bundesland fuer die Kopfzeile, oder null wenn keines gesetzt ist.
   ///
-  /// v0.9.3: Ersetzt den Ort in derselben Zeile. Bewusst eine kleine
+  /// v0.10.0: Ersetzt den Ort in derselben Zeile. Bewusst eine kleine
   /// Funktion statt zweier Inline-Ausdruecke: die Zeile stand zweimal im
   /// File, und bei zwei Kopien zeigt eine gern das Bundesland und die
   /// andere keines.
@@ -135,7 +135,7 @@ class ProfileScreen extends ConsumerWidget {
                 child: Text(
                   '${profile.age != null ? '${profile.age} ${L10n.t(context, 'profile.years')}' : L10n.t(context, 'profile.ageUnknown')}'
                   '${genderLabel.isNotEmpty ? ' · $genderLabel' : ''}'
-                  // v0.9.3: Bundesland statt Ort. Der Ort war
+                  // v0.10.0: Bundesland statt Ort. Der Ort war
                   // der eigentlich sensible Teil und wird nicht
                   // mehr gespeichert (Migration 135/136).
                   '${stateSuffix(profile)}',

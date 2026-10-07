@@ -63,7 +63,7 @@ class ProfileDetailScreen extends ConsumerStatefulWidget {
 
 class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
   UserProfile? _profile;
-  /// Fertiger Anzeigetext fuer die Entfernung (v0.9.3).
+  /// Fertiger Anzeigetext fuer die Entfernung (v0.10.0).
   ///
   /// Gespeichert wird der TEXT, nicht die Kilometerzahl: die Umrechnung
   /// in eine 10-km-Stufe soll genau einmal passieren, direkt nach dem
@@ -291,7 +291,7 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
                       '${profile.name}${profile.age != null && profile.age! > 0 ? ', ${profile.age}' : ''}'
                       '${genderLabel.isNotEmpty ? ' · $genderLabel' : ''}'
                       '${(profile.state ?? '').isNotEmpty ? ' · ${profile.state}' : ''}',
-                      // v0.9.3: Der Ortsname ist entfallen. Vorher stand
+                      // v0.10.0: Der Ortsname ist entfallen. Vorher stand
                       // hier ein Fallback "Stadt, wenn kein Bundesland
                       // gesetzt war" - damit stand der genauere Ort genau
                       // dann im Profil, wenn die grobe Angabe fehlte. Das
@@ -324,7 +324,7 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
                 ],
               ),
             ),
-            // v0.9.3: Nur anzeigen, wenn der Wert ueberhaupt eine
+            // v0.10.0: Nur anzeigen, wenn der Wert ueberhaupt eine
             // sichtbare Stufe ergibt. Unterhalb von 5 km liefert
             // labelForKm null - das ist Absicht: der Unterschied zwischen
             // 2 und 4 km verrate sonst den Nachbarn. Bei fehlendem

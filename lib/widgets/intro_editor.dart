@@ -234,7 +234,7 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
         return;
       }
 
-      // STILLE-PRUEFUNG (v0.9.3): Vor dem Review-Sheet. Eine Aufnahme
+      // STILLE-PRUEFUNG (v0.10.0): Vor dem Review-Sheet. Eine Aufnahme
       // ohne verstaendlichen Ton kann 10+ Sekunden dauern und trotzdem
       // nichts enthalten - der Mindestlaengen-Check im Review-Sheet
       // sieht das nicht. Hier wird abgefangen, BEVOR der Nutzer sich

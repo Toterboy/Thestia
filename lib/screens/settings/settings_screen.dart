@@ -190,7 +190,7 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   const SizedBox(height: 8),
                   const Divider(),
-                  // v0.9.3: Entfernungs-Anzeige. Aus ist der Default und
+                  // v0.10.0: Entfernungs-Anzeige. Aus ist der Default und
                   // bleibt es auch nach einem Geraetewechsel - der Schalter
                   // wird serverseitig gespiegelt, nicht nur lokal.
                   SwitchListTile.adaptive(
