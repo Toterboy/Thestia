@@ -61,8 +61,12 @@ SHOT_DIR = os.path.join(ROOT, 'fastlane', 'metadata', 'android', 'de-DE',
 # "gestern gebaut" zu erkennen.
 FRESHNESS_WINDOW_S = 2 * 3600
 
+# v0.10.0: 06_datenschutz ist dazugekommen. Ohne diesen Eintrag haette
+# der Check das sechste Bild stillschweigend ignoriert - er meldet nur
+# FEHLENDE Bilder, keine ueberzaehligen, und die Erfolgsmeldung stand
+# fest auf "5".
 EXPECTED_SHOTS = ['01_willkommen', '02_chat', '03_entdecken',
-                  '04_anpassen', '05_eisbrecher']
+                  '04_anpassen', '05_eisbrecher', '06_datenschutz']
 
 FORBIDDEN_PERMISSIONS = ['android.permission.ACCESS_FINE_LOCATION']
 MAXSDK_PERMISSIONS = {
@@ -293,7 +297,8 @@ def main():
         if fehlend:
             rep.fail('Screenshots fehlen: %s' % ', '.join(fehlend))
         else:
-            rep.ok('alle 5 Store-Screenshots vorhanden')
+            rep.ok('alle %d Store-Screenshots vorhanden'
+                     % len(EXPECTED_SHOTS))
 
     print('')
     if rep.failures:

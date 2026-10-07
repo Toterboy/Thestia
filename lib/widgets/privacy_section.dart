@@ -8,6 +8,26 @@ import 'package:thestia/models/profile_visibility.dart';
 import 'package:thestia/providers/settings_provider.dart';
 import 'package:thestia/widgets/selectable_tile.dart';
 
+/// Schwarzflaeche fuer den Entfernungs-Schalter.
+///
+/// Fast schwarz statt #000: reines Schwarz neben dem warmen
+/// Markenlila wirkt wie ein Loch im Bild. Der Wert liegt auch im
+/// Theme-nahen Bereich des Dunkelmodus, damit der Kasten in beiden
+/// Erscheinungsbildern nicht aufällt.
+const Color _abgesetzterKasten = Color(0xFF17141C);
+
+/// Farbe des aktiven Schalters auf dem Kasten.
+///
+/// Die Markenfarbe aus `make_store_screenshots.py` (0xFF2E74) als
+/// Flutter-Literal - die Screenshot-Datei kann hier nicht herangezogen
+/// werden, und ein zweiter, abweichender Markenwert waere hier der
+/// falsche Ort fuer ihn.
+class AppSettingsFarbe {
+  const AppSettingsFarbe._();
+
+  static const Color aktiv = Color(0xFFD218B4);
+}
+
 /// Datenschutz-Abschnitt der Einstellungen (Sichtbarkeit + Entfernung).
 ///
 /// Ausgelagert aus `settings_screen.dart`, damit der Store-Screenshot
@@ -131,23 +151,62 @@ class PrivacySectionCard extends ConsumerWidget {
                     unawaited(_handleVisibility(context, ref, val)),
               ),
             const SizedBox(height: 8),
-            const Divider(),
-            // v0.10.0: Entfernungs-Anzeige. Aus ist der Default und
-            // bleibt es auch nach einem Geraetewechsel - der Schalter
-            // wird serverseitig gespiegelt, nicht nur lokal.
+
+            // v0.10.0: Entfernungs-Anzeige als schwarze Kachel.
             //
-            // [readOnly] sperrt hier bewusst NICHT. Der Screenshot zeigt
-            // den Schalter sonst ausgegraut, und das widerspricht der
-            // Bildunterschrift ("bleibt aus, bis du sie einschaltest"):
-            // Ein deaktivierter Schalter heisst "geht nicht", ein
-            // ausgeschalteter heisst "war aus". Der Render tippt ohnehin
-            // nichts an, und der Handler ist eine Provider-Methode, die
-            // ohne Klick nicht feuert.
+            // Der Abschnitt ist der einzige, bei dem es nicht um "wer
+            // sieht mich" geht, sondern um "was erfährt er von mir" -
+            // und der einzige, der per Schalter eine
+            // Fremdentscheidung betrifft. Beides rechtfertigt, ihn vom
+            // Rest zu trennen: Schwarz zieht den Blick darauf, ohne
+            // einen Warnton zu brauchen.
+            //
+            // Die schwarze Fläche sitzt am TILE selbst (`tileColor`),
+            // nicht in einem DecoratedBox darum. Flutter laesst ein
+            // ListTile in einem DecoratedBox mit Hintergrund nicht zu
+            // ("ListTile background color or ink splashes may be
+            // invisible") - zu Recht, die Beruehrungstinte waere auf
+            // schwarzem Grund unsichtbar. Mit `tileColor` faerbt das Tile
+            // mit und die Inks bleiben sichtbar.
+            //
+            // Bewusst Teil des echten Widgets und nicht nur eine
+            // Markierung fuer den Screenshot. Ein nachgebautes Layout im
+            // Render zeigt sonst etwas, das es in der App nicht gibt -
+            // bei einer Datenschutzaussage die falsche Richtung.
+            //
+            // Der Schalter bleibt anfassbar: "aus" und "nicht
+            // verfuegbar" sind verschiedene Aussagen, und der Kasten
+            // soll keine Abschaltung suggerieren.
             SwitchListTile.adaptive(
-              contentPadding: EdgeInsets.zero,
-              title: Text(L10n.t(context, 'settings.showDistance')),
+              tileColor: _abgesetzterKasten,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              contentPadding: const EdgeInsets.fromLTRB(14, 2, 10, 2),
+              activeThumbColor: Colors.white,
+              thumbColor: WidgetStateProperty.resolveWith((s) =>
+                  s.contains(WidgetState.selected)
+                      ? Colors.white
+                      : const Color(0xFFE8E4EE)),
+              trackColor: WidgetStateProperty.resolveWith((s) =>
+                  s.contains(WidgetState.selected)
+                      ? AppSettingsFarbe.aktiv
+                      : const Color(0xFF3A3644)),
+              // Auf schwarzem Grund muss der Text hell sein - die
+              // Theme-Farben sind fuer den hellen Modus gesetzt.
+              title: Text(
+                L10n.t(context, 'settings.showDistance'),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               subtitle: Text(
                 L10n.t(context, 'settings.showDistanceSub'),
+                style: const TextStyle(
+                  color: Color(0xFFC9C4D2),
+                  height: 1.35,
+                ),
               ),
               value: settings.showDistance,
               onChanged: (v) => notifier.setShowDistance(v),

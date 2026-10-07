@@ -109,11 +109,12 @@ SHOTS = {
     #    merkmal: die Entscheidung liegt beim Nutzer, nicht beim
     #    Plattform-Standard.
     '06_datenschutz': (
-        'Dein Standort.\n'
-        'Deine Entscheidung.',
-        'Die Entfernungsanzeige bleibt aus, bis du sie einschaltest.\n'
-        'Wer sie sieht, bekommt Stufen von 10 km - kein Ort, kein Wert.',
-        'Dein Wohnort wird nicht gespeichert',
+        'Du bestimmst,\n'
+        'wer was sieht.',
+        'Dein Profil fuer alle oder nur fuer Funken - und die '
+        'Entfernungs-\nanzeige bleibt aus, bis du sie einschaltest.\n'
+        'Wer sie sieht, bekommt Stufen von 10 km.',
+        'Kein Ort gespeichert, kein Wert verraten',
     ),
     '05_eisbrecher': (
         '60 Fragen gegen\n'
