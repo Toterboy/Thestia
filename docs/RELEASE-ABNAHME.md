@@ -23,12 +23,31 @@ gezeigt. Sie stehen in [Nur im Release pruefen](#nur-im-release-pruefen).
 | Feld | Wert |
 | --- | --- |
 | Version (`pubspec.yaml`) | `0.10.0+31` |
-| Commit | `04066db` |
+| Commit | `a2b0259` |
 | Branch | `main` |
 | Geraet(e) | `a86fc552` |
 | Zweitgeraet fuer Transit Spark | siehe [BLE-GERAETETEST.md](BLE-GERAETETEST.md) |
 | Datum der Abnahme | ____________ |
 | Abgenommen von | ____________ |
+
+## Ablaufstand 09.10.2026 (automatische Prüfungen)
+
+Alles, was ohne Geraet laeuft, ist durch.
+
+| Abschnitt | Punkte | Stand |
+| --- | --- | --- |
+| 1 Automatische Prüfungen | 1.1–1.9 | **grün**. Arbeitsbaum leer, Analyzer ohne Befund, 689 Tests grün, sechs Werkzeug-Prüfungen mit Exitcode 0, keine Mojibake-Spuren. |
+| 2 Release bauen | 2.1–2.5 | **grün**. 8 APKs + 1 AAB, `OK 9 Artefakte` (Konsistenz), `OK 11 Artefakte` (Signatur + Admin-Trennung, mit gesetzter Umgebungsvariable). Manifest: `com.thestia.app`, alle benötigten Berechtigungen, keine `.env`, versionCodes 1031/2031/4031. |
+| 3 Nur im Release prüfen | 3.1–3.4 | **offen** – brauchen die APK auf einem Gerät. 3.5 (Symbolordner `play`, `fdroid`, `admin-play`, `admin-fdroid`) ist erledigt. |
+| 4 Geräteprüfung | 4.1–4.8, 4.12–4.15 | **offen** – brauchen ein Geraet, 4.13 zusätzlich ein zweites Konto. |
+| 5 Store-Material | 5.1–5.8 | **grün**. Sechs PNGs, inklusive `06_datenschutz`. |
+| 6 Freigabe | | **nicht erteilt** |
+
+Die vorherige Artefakt-Sammlung war veraltet: sie stammte von vor der
+schwarzen Datenschutz-Kachel (`b017b96`) und zeigte damit genau das
+nicht, was der Screenshot zeigt. Beide Läufe (öffentlich und Admin)
+sind deshalb am 09.10. neu gebaut worden; die Admin-UUID ging weiter über
+eine Temp-Datei in die Umgebungsvariable, nicht als Parameter.
 
 > **Warum 0.10.0 und nicht 0.9.3:** Die Roadmap hat eine eigene Regel –
 > „Neue Nutzerfunktionen sind immer MINOR-Bumps; nur Fixes gehen in
