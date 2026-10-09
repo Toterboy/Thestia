@@ -214,13 +214,10 @@ class _Segment extends StatelessWidget {
                             ),
                           ],
                         ),
-                        if (selected)
-                          Positioned(
-                            top: 2,
-                            right: 2,
-                            child: Icon(Icons.check_circle,
-                                size: 16, color: scheme.primary),
-                          ),
+                        // Kein Haken: die Auswahl traegt die Kachel
+                        // selbst (gefuelltes Icon-Feld, Titelfarbe,
+                        // Hintergrund). Ein zusaetzliches Symbol war ein
+                        // drittes Signal fuer dieselbe Aussage.
                       ],
                     ),
                   ),

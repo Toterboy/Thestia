@@ -330,13 +330,13 @@ const Map<String, Map<String, String>> _strings = {
         'Gespeicherte Daten, Einwilligungen, Account löschen',
     'settings.pause': 'Profil pausieren',
     'settings.pauseSub':
-        'Unsichtbar in Entdecken und Find your Match. Funken und Chats '
+        'Unsichtbar in Entdecken und Find your Spark. Funken und Chats '
         'bleiben bestehen.',
     'settings.pauseActive':
         'Profil ist pausiert und für neue Personen unsichtbar.',
     'settings.pauseConfirmTitle': 'Profil pausieren?',
     'settings.pauseConfirmBody':
-        'Dein Profil wird in Entdecken und Find your Match nicht mehr '
+        'Dein Profil wird in Entdecken und Find your Spark nicht mehr '
         'angezeigt. Bestehende Funken und Chats bleiben bestehen. Du kannst '
         'die Pause jederzeit beenden.',
     'settings.pauseConfirmBtn': 'Pausieren',
@@ -375,7 +375,7 @@ const Map<String, Map<String, String>> _strings = {
         'los - Schritt für Schritt, alles kann später geändert werden.',
     'signup.start': 'Jetzt einrichten',
     'settings.visEveryoneSub':
-        'Dein Profil erscheint in Entdecken und Find your Match.',
+        'Dein Profil erscheint in Entdecken und Find your Spark.',
     'settings.visMatchesSub':
         'Nur Personen, mit denen du einen Funken hast, sehen dein Profil.',
     'settings.visHiddenSub':
@@ -399,7 +399,7 @@ const Map<String, Map<String, String>> _strings = {
     'theme.colorScheme': 'Farbschema',
     'dm.discovery': 'Entdecken',
     'dm.discoveryDesc': 'Profile entdecken, Funken versenden, chatten',
-    'dm.findMatch': 'Find your Match',
+    'dm.findMatch': 'Find your Spark',
     'dm.findMatchDesc': 'Vorstellung anhören oder lesen, dann entscheiden',
     'dm.randomChat': 'Zufallschat',
     'dm.randomChatDesc': 'Direkter Text-Chat mit zufällig passender Person',
@@ -520,7 +520,7 @@ const Map<String, Map<String, String>> _strings = {
         'überspringen.',
     'setupp.habitsSub':
         'Wie stehst du zu Rauchen, Alkohol und Drogen? Diese Angaben '
-        'beeinflussen, wen du bei "Find your Match" siehst.',
+        'beeinflussen, wen du bei "Find your Spark" siehst.',
     'setupp.habitsHint':
         'Es werden nur Personen gezeigt, die maximal so viel konsumieren '
         'wie du. Du kannst das später in den Einstellungen oder im Profil '
@@ -568,7 +568,7 @@ const Map<String, Map<String, String>> _strings = {
     'interests.tabSparks': 'Funken',
     'interests.emptySentTitle': 'Du hast noch niemanden geliked',
     'interests.emptySentBody':
-        'Lerne Leute über ihre Vorstellung kennen ("Find your Match") oder '
+        'Lerne Leute über ihre Vorstellung kennen ("Find your Spark") oder '
         'swipe blind durch Profile.',
     'interests.emptyReceivedTitle': 'Noch keine erhaltenen Likes',
     'interests.emptyReceivedBody':
@@ -2294,7 +2294,7 @@ const Map<String, Map<String, String>> _strings = {
     'profile.edit.habits': 'Gewohnheiten',
     'profile.edit.habitsSub':
         'Wie stehst du dazu? Diese Angaben beeinflussen, wen du bei '
-        '"Find your Match" siehst. Es werden nur Personen gezeigt, die '
+        '"Find your Spark" siehst. Es werden nur Personen gezeigt, die '
         'maximal so viel konsumieren wie du.',
     'profile.edit.interests': 'Interessen',
     'profile.edit.personality': 'Persönlichkeitstest',
@@ -2647,7 +2647,7 @@ const Map<String, Map<String, String>> _strings = {
     'home.randomChat': 'Zufallschat starten',
     // Find your Match
     'match.required': 'Text UND Audio sind Pflicht.',
-    'match.title': 'Find your Match',
+    'match.title': 'Find your Spark',
     'match.editIntro': 'Meine Vorstellung bearbeiten',
     'match.createFirst': 'Erstelle zuerst deine eigene Vorstellung',
     'match.createSub':
@@ -3140,7 +3140,7 @@ const Map<String, Map<String, String>> _strings = {
     'settings.privacyAccountSub': 'Stored data, consents, delete account',
     'settings.pause': 'Pause profile',
     'settings.pauseSub':
-        'Invisible in Discovery and Find your Match. Sparks and chats '
+        'Invisible in Discovery and Find your Spark. Sparks and chats '
         'remain.',
     'settings.pauseActive': 'Profile is paused and invisible to new people.',
     'settings.pauseConfirmTitle': 'Pause profile?',
@@ -3184,7 +3184,7 @@ const Map<String, Map<String, String>> _strings = {
         'everything can be changed later.',
     'signup.start': 'Start setup',
     'settings.visEveryoneSub':
-        'Your profile appears in Discovery and Find your Match.',
+        'Your profile appears in Discovery and Find your Spark.',
     'settings.visMatchesSub':
         'Only people you have a spark with can see your profile.',
     'settings.visHiddenSub':
@@ -3207,7 +3207,7 @@ const Map<String, Map<String, String>> _strings = {
     'theme.colorScheme': 'Color scheme',
     'dm.discovery': 'Discover',
     'dm.discoveryDesc': 'Browse profiles, send sparks, chat',
-    'dm.findMatch': 'Find your Match',
+    'dm.findMatch': 'Find your Spark',
     'dm.findMatchDesc': 'Listen to or read the intro, then decide',
     'dm.randomChat': 'Random chat',
     'dm.randomChatDesc': 'Direct text chat with a randomly matched person',
@@ -4441,7 +4441,7 @@ const Map<String, Map<String, String>> _strings = {
         'before they see your photo. You can skip this step.',
     'setupp.habitsSub':
         'How do you feel about smoking, alcohol and drugs? These answers '
-        'influence who you see in "Find your Match".',
+        'influence who you see in "Find your Spark".',
     'setupp.habitsHint':
         'Only people who consume at most as much as you are shown. You can '
         'change this later in settings or in your profile.',
@@ -4484,7 +4484,7 @@ const Map<String, Map<String, String>> _strings = {
     'interests.tabSparks': 'Sparks',
     'interests.emptySentTitle': 'You have not liked anyone yet',
     'interests.emptySentBody':
-        'Meet people through their intro ("Find your Match") or swipe '
+        'Meet people through their intro ("Find your Spark") or swipe '
         'profiles blindly.',
     'interests.emptyReceivedTitle': 'No received likes yet',
     'interests.emptyReceivedBody':
@@ -5004,7 +5004,7 @@ const Map<String, Map<String, String>> _strings = {
     'profile.edit.habits': 'Habits',
     'profile.edit.habitsSub':
         'How do you feel about these? Your answers influence who you see '
-        'in "Find your Match". Only people who consume at most as much '
+        'in "Find your Spark". Only people who consume at most as much '
         'as you do are shown.',
     'profile.edit.interests': 'Interests',
     'profile.edit.personality': 'Personality test',
@@ -5344,7 +5344,7 @@ const Map<String, Map<String, String>> _strings = {
     'home.randomChat': 'Start random chat',
     // Find your Match
     'match.required': 'Text AND audio are required.',
-    'match.title': 'Find your Match',
+    'match.title': 'Find your Spark',
     'match.editIntro': 'Edit my intro',
     'match.createFirst': 'First create your own intro',
     'match.createSub':

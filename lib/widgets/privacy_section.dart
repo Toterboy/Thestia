@@ -16,29 +16,6 @@ import 'package:thestia/widgets/selectable_tile.dart';
 /// Erscheinungsbildern nicht aufällt.
 const Color _abgesetzterKasten = Color(0xFF17141C);
 
-/// Farbe des aktiven Schalters auf dem Kasten.
-///
-/// Die Markenfarbe aus `make_store_screenshots.py` (0xFF2E74) als
-/// Flutter-Literal - die Screenshot-Datei kann hier nicht herangezogen
-/// werden, und ein zweiter, abweichender Markenwert waere hier der
-/// falsche Ort fuer ihn.
-class AppSettingsFarbe {
-  const AppSettingsFarbe._();
-
-  static const Color aktiv = Color(0xFFD218B4);
-}
-
-/// Datenschutz-Abschnitt der Einstellungen (Sichtbarkeit + Entfernung).
-///
-/// Ausgelagert aus `settings_screen.dart`, damit der Store-Screenshot
-/// (6. Bild) **dasselbe** Widget rendert, das in der App laeuft. Ein im
-/// Test nachgebautes Layout driftet sonst von der App weg - bei einem
-/// Datenschutz-Versprechen ist genau das die falsche Richtung: Das Bild
-/// zeigt dann etwas, das es in der App nicht gibt.
-///
-/// [readOnly] sperrt die Bedienung fuer den Screenshot-Render: dort wird
-/// nicht getippt, und der Pause-Bestaetigungsdialog braucht einen
-/// Navigator, den der Render nicht aufbaut.
 class PrivacySectionCard extends ConsumerWidget {
   const PrivacySectionCard({
     super.key,
@@ -121,6 +98,7 @@ class PrivacySectionCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
+    final scheme = Theme.of(context).colorScheme;
 
     final karte = Card(
       child: Padding(
@@ -153,45 +131,39 @@ class PrivacySectionCard extends ConsumerWidget {
             const SizedBox(height: 8),
 
             // v0.10.0: Entfernungs-Anzeige als schwarze Kachel.
+            // ...
             //
-            // Der Abschnitt ist der einzige, bei dem es nicht um "wer
-            // sieht mich" geht, sondern um "was erfährt er von mir" -
-            // und der einzige, der per Schalter eine
-            // Fremdentscheidung betrifft. Beides rechtfertigt, ihn vom
-            // Rest zu trennen: Schwarz zieht den Blick darauf, ohne
-            // einen Warnton zu brauchen.
+            // Die Schalterfarben kommen aus dem Theme (`scheme.primary`,
+            // `scheme.onPrimary`, `scheme.outline`, `scheme.outlineVariant`)
+            // und nicht aus eigenen Werten. Der erste Entwurf hatte die
+            // Markenmagenta direkt als Konstante verdrahtet - der
+            // Schalter bekam damit eine Farbe, die es sonst nirgends in
+            // der App gibt, und bei einem anderen Farbschema fug er
+            // heraus. Jetzt wechselt er mit denselben Farben wie jeder
+            // andere Schalter der App.
             //
-            // Die schwarze Fläche sitzt am TILE selbst (`tileColor`),
-            // nicht in einem DecoratedBox darum. Flutter laesst ein
-            // ListTile in einem DecoratedBox mit Hintergrund nicht zu
-            // ("ListTile background color or ink splashes may be
-            // invisible") - zu Recht, die Beruehrungstinte waere auf
-            // schwarzem Grund unsichtbar. Mit `tileColor` faerbt das Tile
-            // mit und die Inks bleiben sichtbar.
-            //
-            // Bewusst Teil des echten Widgets und nicht nur eine
-            // Markierung fuer den Screenshot. Ein nachgebautes Layout im
-            // Render zeigt sonst etwas, das es in der App nicht gibt -
-            // bei einer Datenschutzaussage die falsche Richtung.
-            //
-            // Der Schalter bleibt anfassbar: "aus" und "nicht
-            // verfuegbar" sind verschiedene Aussagen, und der Kasten
-            // soll keine Abschaltung suggerieren.
+            // Outline statt surfaceVariant fuer den ausgeschalteten
+            // Zustand: die Kachel ist immer dunkel, auch im hellen
+            // Erscheinungsbild. `surfaceVariant` waere dort fast
+            // unsichtbar.
             SwitchListTile.adaptive(
               tileColor: _abgesetzterKasten,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
               contentPadding: const EdgeInsets.fromLTRB(14, 2, 10, 2),
-              activeThumbColor: Colors.white,
-              thumbColor: WidgetStateProperty.resolveWith((s) =>
-                  s.contains(WidgetState.selected)
-                      ? Colors.white
-                      : const Color(0xFFE8E4EE)),
-              trackColor: WidgetStateProperty.resolveWith((s) =>
-                  s.contains(WidgetState.selected)
-                      ? AppSettingsFarbe.aktiv
-                      : const Color(0xFF3A3644)),
+              activeThumbColor: scheme.onPrimary,
+              activeTrackColor: scheme.primary,
+              thumbColor: WidgetStateProperty.resolveWith(
+                (zustaende) => zustaende.contains(WidgetState.selected)
+                    ? scheme.onPrimary
+                    : scheme.outline,
+              ),
+              trackColor: WidgetStateProperty.resolveWith(
+                (zustaende) => zustaende.contains(WidgetState.selected)
+                    ? scheme.primary
+                    : scheme.outlineVariant,
+              ),
               // Auf schwarzem Grund muss der Text hell sein - die
               // Theme-Farben sind fuer den hellen Modus gesetzt.
               title: Text(

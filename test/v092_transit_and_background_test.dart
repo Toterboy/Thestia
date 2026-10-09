@@ -244,11 +244,25 @@ void main() {
     });
 
     testWidgets('markiert die Auswahl eindeutig', (tester) async {
+      // v0.10.0: kein Haken mehr. Die Kachel traegt die Auswahl selbst
+      // (gefuelltes Icon-Feld, 2-px-Rand in der Primärfarbe, schattierte
+      // Fläche). Geprüft wird deshalb, dass GENAU EINE Kachel den
+      // Primärrand hat - bei beiden wäre die Auswahl mehrdeutig.
       await tester.pumpWidget(_host(TransitMode.convention));
 
-      // Genau ein Haken - bei beiden Optionen waere die Auswahl
-      // mehrdeutig.
-      expect(find.byIcon(Icons.check_circle), findsOneWidget);
+      expect(find.byIcon(Icons.check_circle), findsNothing,
+          reason: 'der Haken sollte nicht mehr da sein');
+
+// Die Auswahl traegt die Kachel selbst; das Semantics-Flag ist das
+      // verlässliche Kriterium (siehe unten).
+      // Zwei Container mit Rahmen sind hier Container mit Rahmen - kein
+      // Auswahlkritium.
+      expect(
+        find.byWidgetPredicate((w) =>
+            w is Semantics && (w.properties.selected ?? false)),
+        findsOneWidget,
+        reason: 'genau eine Kachel muss als ausgewählt gelten',
+      );
     });
 
     testWidgets('meldet den Wechsel nach außen', (tester) async {
@@ -281,13 +295,40 @@ void main() {
       expect(calls, lessThanOrEqualTo(1));
     });
 
-    testWidgets('zeigt die RSSI-Schwellen an', (tester) async {
+    testWidgets('zeigt KEINE dBm-Schwellen mehr an', (tester) async {
+      // v0.10.0: der Zahlenwert ist weg. Nutzer koennen mit "Signal ab
+      // -100 dBm" nichts anfangen, die Balken dahinter zeigen dasselbe
+      // Verhaeltnis und brauchen keine Erklaerung.
+      //
+      // Geprueft wird bewusst die ABWESENHEIT: vorher standen die Werte
+      // hier als Test, und ein Rueckfall waere sonst unsichtbar.
       await tester.pumpWidget(_host(TransitMode.transit));
+      expect(find.textContaining('dBm'), findsNothing);
+      expect(find.textContaining('-100'), findsNothing);
+      expect(find.textContaining('-75'), findsNothing);
 
-      // Die Schwellen unterscheiden die Modi konkret - genau das war
-      // mit dem SegmentedButton nicht sichtbar.
-      expect(find.textContaining('-100 dBm'), findsOneWidget);
-      expect(find.textContaining('-75 dBm'), findsOneWidget);
+      // Die Balken muessen aber da sein - sie sind die Information.
+      await tester.pumpWidget(_host(TransitMode.convention));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('transit-threshold-bars')),
+          findsWidgets);
+    });
+
+    testWidgets('verkuendet die Schwelle weiterhin fuer Screenreader',
+        (tester) async {
+      // Der Wert bleibt in der Semantics-Beschreibung: "transit: ...
+      // Signal ab -100 dBm". Nur das SICHTBARE Text-Widget ist weg.
+      // Geprueft wird das Semantics-Widget direkt - ueber `label`, weil
+      // `value` intern als String gehalten wird.
+      await tester.pumpWidget(_host(TransitMode.transit));
+      expect(
+        find.byWidgetPredicate((w) =>
+            w is Semantics &&
+            w.properties.selected == true &&
+            (w.properties.label?.contains('dBm') ?? false)),
+        findsOneWidget,
+        reason: 'die Schwelle muss weiterhin fuer Screenreader stehen',
+      );
     });
 
     test('die beiden Modi zeigen unterschiedlich starke Signale', () {

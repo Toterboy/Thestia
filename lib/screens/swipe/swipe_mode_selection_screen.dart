@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/widgets/mode_icons.dart';
 import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/providers/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
@@ -188,22 +189,52 @@ void _showAdultOnlyDialog(
 
 /// Enum für die Entdeckungs-Modi (v0.9.0: gruppiert nach Zweck).
 enum DiscoveryMode {
-  findMatch('Find your Match', 'dm.findMatch', 'dm.findMatchDesc', Icons.headphones),
-  datingHour('Dating Hour (Event)', 'dm.datingHour', 'dm.datingHourDesc', Icons.event),
-  randomChat('Zufallschat', 'dm.randomChat', 'dm.randomChatDesc', Icons.chat_bubble),
-  qrScan('QR Code scannen', 'dm.qrScan', 'dm.qrScanDesc', Icons.qr_code_scanner),
-  transitSpark('Transit Spark', 'dm.transitSpark', 'dm.transitSparkDesc', Icons.radar);
+  findMatch('Find your Spark', 'dm.findMatch', 'dm.findMatchDesc'),
+  datingHour('Dating Hour (Event)', 'dm.datingHour', 'dm.datingHourDesc'),
+  randomChat('Zufallschat', 'dm.randomChat', 'dm.randomChatDesc'),
+  qrScan('QR Code scannen', 'dm.qrScan', 'dm.qrScanDesc'),
+  transitSpark('Transit Spark', 'dm.transitSpark', 'dm.transitSparkDesc');
 
-  const DiscoveryMode(this.label, this.labelKey, this.descriptionKey, this.icon);
+  const DiscoveryMode(this.label, this.labelKey, this.descriptionKey);
+
   final String label;
 
-  /// L10n-Schlüssel (EN-Übersetzung der Entdecken-Modi).
+  /// L10n-Schluessel (EN-Uebersetzung der Entdecken-Modi).
   final String labelKey;
   final String descriptionKey;
-  final IconData icon;
 
   /// Zeigt den NEU-Badge (frischer Modus in 0.9.0).
   bool get isNew => this == DiscoveryMode.transitSpark;
+}
+
+/// Symbole der Modi (v0.10.0).
+///
+/// Drei eigene [CustomPainter] fuer Transit Spark, Find your Spark und
+/// Zufallschat; Dating Hour und QR-Scan bleiben bei den Material-Symbolen.
+///
+/// Als Extension und nicht als Feld im Enum: ein Enum-Konstruktor ist
+/// immer const, und ein Funktionsaufruf wie `_material(Icons.event)` ist
+/// darin nicht erlaubt - der erste Versuch lag genau daran. Die
+/// Extension hat ausserdem den Vorteil, dass das Symbol nur dort gebaut
+/// wird, wo es gebraucht wird; im Enum stand vorher ein Painter, der
+/// auch dann erzeugt wurde, wenn das Symbol nicht angezeigt wurde.
+extension DiscoveryModeSymbol on DiscoveryMode {
+  Widget symbol(Color color, {double size = 28}) => switch (this) {
+        DiscoveryMode.findMatch => ModeSymbol((c) => FindSparkPainter(c),
+            size: size, color: color),
+        DiscoveryMode.transitSpark => ModeSymbol(
+            (c) => TransitSparkPainter(c),
+            size: size,
+            color: color),
+        DiscoveryMode.randomChat => ModeSymbol(
+            (c) => QuestionChatPainter(c),
+            size: size,
+            color: color),
+        DiscoveryMode.datingHour =>
+          Icon(Icons.event, color: color, size: size),
+        DiscoveryMode.qrScan =>
+          Icon(Icons.qr_code_scanner, color: color, size: size),
+      };
 }
 
 /// Gruppenkopf + Karten einer Zweck-Gruppe (v0.9.0).
@@ -293,12 +324,10 @@ class _ModeCard extends StatelessWidget {
                       : Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  mode.icon,
-                  color: isSelected
+                child: mode.symbol(
+                  isSelected
                       ? Theme.of(context).colorScheme.onPrimary
                       : Theme.of(context).colorScheme.onSurfaceVariant,
-                  size: 28,
                 ),
               ),
               const SizedBox(width: 16),

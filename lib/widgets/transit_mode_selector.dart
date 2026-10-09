@@ -176,22 +176,6 @@ class _RangeCard extends StatelessWidget {
                                             fontWeight: FontWeight.w600),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                // Fester Platz fuer den Haken in jedem
-                                // Zustand. Ohne ihn bekaeme der Titel der
-                                // gewaehlten Kachel 18 px weniger und
-                                // kaeme ein Zeilenumbruch an anderer Stelle
-                                // zustande - die Beschreibung waere dann
-                                // unterschiedlich umbrochen, je nachdem ob
-                                // gerade gewaehlt ist.
-                                SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: selected
-                                      ? Icon(Icons.check_circle,
-                                          size: 18, color: scheme.primary)
-                                      : null,
-                                ),
                               ],
                             ),
                             const SizedBox(height: 2),
@@ -204,8 +188,8 @@ class _RangeCard extends StatelessWidget {
                             ),
                             const SizedBox(height: 10),
                             _Threshold(
-                              label: thresholdLabel,
-                              filled: TransitModeSelector.filledBars(mode.rssiThreshold),
+                              filled:
+                                  TransitModeSelector.filledBars(mode.rssiThreshold),
                             ),
                           ],
                         ),
@@ -261,35 +245,28 @@ class _ModeBadge extends StatelessWidget {
 /// und Tests als Text auffindbar bleibt - der Zahler ist aber nicht
 /// mehr in einem Chip versteckt, sondern steht als Klartext neben den
 /// Balken.
-class _Threshold extends StatelessWidget {
-  const _Threshold({required this.label, required this.filled});
+/// Die gefuellten Balken einer Schwelle.
+  ///
+  /// Ohne Zahlenwert. "Signal ab -100 dBm" sagt einem Nutzer nichts -
+  /// die Einheit gehoert zu Funktechnik, nicht zu einer Dating-App. Die
+  /// Balken zeigen dasselbe Verhaeltnis und brauchen keine Uebersetzung:
+  /// mehr Balken = staerkeres Signal noetig = weniger Reichweite.
+  ///
+  /// Der Wert bleibt in der Semantics-Beschreibung der Kachel (oben im
+  /// `Semantics(... label: ...)`), damit Screenreader ihn vorlesen. Er
+  /// ist nur nicht mehr sichtbar.
+  class _Threshold extends StatelessWidget {
+  const _Threshold({required this.filled});
 
-  final String label;
   final int filled;
-
-
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final scheme = Theme.of(context).colorScheme;
 
     return Row(
+      key: const Key('transit-threshold-bars'),
       children: [
-        // Der Zahler bleibt ein einzelner Text: die Tests suchen
-        // 'dBm' und erwarten exakt zwei Treffer pro Bildschirm, und
-        // Screenreader lesen "Signal ab -100 dBm" als einen Satz.
-        Flexible(
-          child: Text(
-            label,
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: scheme.onSurface,
-              fontWeight: FontWeight.w600,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
         for (var i = 0; i < TransitModeSelector.bars; i++)
           Padding(
             padding: const EdgeInsets.only(left: 4),

@@ -131,8 +131,13 @@ void main() {
         // {value} muss ersetzt sein, nicht als Literal dastehen.
         expect(find.textContaining('{value}'), findsNothing,
             reason: '$locale: Platzhalter nicht gefuellt');
-        expect(find.textContaining('dBm'), findsNWidgets(2),
-            reason: '$locale: beide Schwellen muessen sichtbar sein');
+        // Die Schwelle in dBm ist seit v0.10.0 NICHT mehr sichtbar -
+        // Nutzer koennen mit dBm nichts anfangen, die Balken zeigen
+        // dasselbe Verhaeltnis. Der Wert steht nur noch in der
+        // Semantics-Beschreibung der Kachel. Deshalb: KEIN sichtbarer
+        // dBm-Text mehr.
+        expect(find.textContaining('dBm'), findsNothing,
+            reason: '$locale: dBm sollte nicht mehr sichtbar sein');
       }
     });
   });
@@ -183,12 +188,22 @@ void main() {
       expect(find.textContaining('Folgt deinem Gerät'), findsNothing);
     });
 
-    testWidgets('genau eine Option ist als gewählt markiert', (tester) async {
+    testWidgets('genau eine Option ist als gewaehlt markiert', (tester) async {
+      // v0.10.0: kein Haken mehr. Die Kachel traegt die Auswahl selbst
+      // (gefuelltes Icon-Feld, Titelfarbe, Hintergrund). Geprueft wird
+      // das Semantics-Flag "selected" - genau eine Karte muss es haben,
+      // sonst ist die Auswahl mehrdeutig.
       for (final mode in ['light', 'system', 'dark']) {
         await tester.pumpWidget(_appearanceHost(mode: mode));
         await tester.pumpAndSettle();
-        expect(find.byIcon(Icons.check_circle), findsOneWidget,
-            reason: 'Modus $mode: Auswahl nicht eindeutig');
+        expect(find.byIcon(Icons.check_circle), findsNothing,
+            reason: 'Modus $mode: der Haken sollte nicht mehr da sein');
+        expect(
+          find.byWidgetPredicate(
+              (w) => w is Semantics && (w.properties.selected ?? false)),
+          findsOneWidget,
+          reason: 'Modus $mode: Auswahl nicht eindeutig',
+        );
       }
     });
 
