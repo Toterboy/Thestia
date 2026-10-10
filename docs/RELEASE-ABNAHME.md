@@ -23,7 +23,7 @@ gezeigt. Sie stehen in [Nur im Release pruefen](#nur-im-release-pruefen).
 | Feld | Wert |
 | --- | --- |
 | Version (`pubspec.yaml`) | `0.10.0+31` |
-| Commit | `a2b0259` |
+| Commit | `a41edf8` |
 | Branch | `main` |
 | Geraet(e) | `a86fc552` |
 | Zweitgeraet fuer Transit Spark | siehe [BLE-GERAETETEST.md](BLE-GERAETETEST.md) |
@@ -48,6 +48,22 @@ schwarzen Datenschutz-Kachel (`b017b96`) und zeigte damit genau das
 nicht, was der Screenshot zeigt. Beide Läufe (öffentlich und Admin)
 sind deshalb am 09.10. neu gebaut worden; die Admin-UUID ging weiter über
 eine Temp-Datei in die Umgebungsvariable, nicht als Parameter.
+
+### Nachtrag 10.10.2026: Splash-Schatten (Icon)
+
+Neu gebaut, weil `android/app/src/main/res/drawable*/android12splash.png`
+ersetzt wurde: Das Startbild zeigte einen Schatten um das runde Symbol.
+`windowSplashScreenAnimatedIcon` zeigte auf `@mipmap/ic_launcher`, also
+auf das adaptive Icon, dessen Vordergrund in der 72-dp-Safe-Zone einer
+108-dp-Leinwand liegt und damit zu viel transparenten Rand hat. Die
+Systemmaske zeichnet darum einen Schatten.
+
+Das Icon ist jetzt ein Kreis, der die Leinwand voll ausfüllt (Deckung
+78,7 % = π/4). Im APK verifiziert: `resource drawable/android12splash`
+vorhanden, und `0x0101062d` (`windowSplashScreenAnimatedIcon`) zeigt in
+beiden Themes darauf.
+
+Nach diesem Build ist **4.16** dazugekommen — steht unten.
 
 > **Warum 0.10.0 und nicht 0.9.3:** Die Roadmap hat eine eigene Regel –
 > „Neue Nutzerfunktionen sind immer MINOR-Bumps; nur Fixes gehen in
@@ -167,6 +183,8 @@ $adb = "C:\Users\Thoralf\AppData\Local\Android\Sdk\platform-tools\adb.exe"
 | 4.13 | **Entfernungsanzeige nur nach Zustimmung** (neu) | Schalter "Entfernung anzeigen" in den Einstellungen einschalten, mit dem **zweiten** Konto das eigene Profil öffnen | Nur die zweite Person sieht ueberhauppt eine Entfernung, und zwar als Stufe ("unter 10 km", "20 bis 30 km"), nie als Zahl. Nach dem Ausschalten verschwindet sie wieder. | Zahl statt Stufe: die Bucket-Umrechnung greift nicht. Entfernung trotz ausgeschaltetem Schalter: `show_distance` wird am Server nicht geprueft (Migration 138, `profile_distance_km`). |
 | 4.14 | **Chat-Hintergrund-Hinweis (neu)** | Den ersten Chat oeffnen, dann denselben Chat erneut oeffnen | Beim ersten Chat erscheint einmal ein Dialog mit der Hintergrund-Auswahl. "Spaeter" schliesst ihn. Beim zweiten Oeffnen kommt **kein** Dialog mehr - auch nicht nach einem App-Neustart. | Dialog kommt erneut: `chatBackgroundSeen` wird nicht persistiert (Hive-Key `chatBackgroundSeen`). Dialog kommt nie: `markChatBackgroundSeen()` wird zu frueh aufgerufen. |
 | 4.15 | **Passkey-Einrichtung mit vorhandenem Passkey** (neu) | Auf einem Geraet, auf dem bereits ein Passkey fuer das Konto existiert, die Einrichtung erneut durchlaufen | Es kommt **kein** zweiter nativer Systemdialog. Der Schritt meldet "Passkey ist schon eingerichtet" und gilt als erledigt, nicht als fehlgeschlagen. | Zweiter Systemdialog und danach eine Fehlermeldung: `hasRegisteredPasskey()` liefert faelsch. Dann den Passkey testweise loeschen und erneut pruefen - der Fall "kein Passkey vorhanden" muss weiterhin sauber durchlaufen. |
+| 4.16 | **Splash-Symbol ohne Schatten** (neu, seit 10.10.) | App kalt starten (vorher `am force-stop`), auf das runde Symbol beim Start achten | Rundes Symbol, **kein** dunkler Rand an den unteren Ecken. Danach das eckige Symbol in der App, wie bisher. | Rand wieder da: `values-v31/styles.xml` und `values-night-v31/styles.xml` muessen auf `@drawable/android12splash` zeigen (nicht `@mipmap/ic_launcher`), und die Datei in `drawable-*` muss ein **voll ausgefuellter Kreis** sein (Deckung 78,7 % = pi/4). Ein Squircle auf weissem Grund oder ein adaptives Icon mit leerem Rand erzeugen beide denselben Schatten. |
+| 4.17 | **Passkey-Einrichtung** - Meldung ist blind | Einrichtung versuchen; schlaegt sie fehl, die Logcat-Zeile notieren | Erfolg. Wenn nicht: die Zeile `[PasskeyAuth] Einrichtung fehlgeschlagen: <Fehlertext>` auslesen. | Derzeit unbekannt. Der Text faellt in den unbekannt-Zweig, der nur "versuche es spaeter erneut" zeigt. Die zwei neuen Faelle (MissingPluginException, RP-ID/Hostname) decken ab, was am wahrscheinlichsten ist - ist es ein anderer, steht er in dieser Zeile. |
 
 ### 4.11 Was der Wortlaut der Registrierungsmeldung verraet
 
