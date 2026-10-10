@@ -281,6 +281,38 @@ class PasskeyAuth {
         messageKey: '${k}verificationFailed',
       );
     }
+    // Vor den AuthApiError-Prüfungen: Fehler, die NICHTS mit dem Server
+    // zu tun haben, aber bisher in den „unbekannt"-Zweig fielen.
+    //
+    // Ein MissingPluginException heißt: das Passkey-Plugin ist in DIESEM
+    // Build nicht registiert. Die Meldung lautete vorher „versuche es
+    // später erneut" - das ist die unnützigste aller Meldungen, weil der
+    // Nutzer nichts tun kann und das Team keinen Hinweis hat. Aufgetreten
+    // ist genau das beim Release-Bauen: der Text landete im unbekannten
+    // Zweig, weil er keinen der bekannten Fehlertypen enthält.
+    if (text.contains('MissingPluginException')) {
+      debugPrint('[PasskeyAuth] Plugin fehlt: $e');
+      return AppException(
+        'Die Passkey-Funktion ist in dieser Version der App nicht '
+        'verfügbar. Bitte melde es dem Support - es ist ein Fehler im '
+        'Build, nicht auf deinem Gerät.',
+        messageKey: '${k}pluginMissing',
+      );
+    }
+    // RP-ID / Hostname: Der Server akzeptiert den Ursprung nicht. Das ist
+    // NICHT dasselbe wie „verification failed" - hier scheitert schon die
+    // Prüfung der Domain, bevor ein Credential entsteht.
+    if (text.toLowerCase().contains('hostname') ||
+        text.toLowerCase().contains('rp id') ||
+        text.toLowerCase().contains('relying party')) {
+      debugPrint('[PasskeyAuth] RP-ID-Hostname: $e');
+      return AppException(
+        'Die Server-Konfiguration passt nicht zur App (RP-ID/Hostname). '
+        'Bitte melde es dem Support.',
+        messageKey: '${k}rpIdMismatch',
+      );
+    }
+
     final isAuthApiError = text.contains('AuthApiException') ||
         RegExp(r'\bstatus: 4\d\d\b').hasMatch(text) ||
         text.toLowerCase().contains('webauthn');

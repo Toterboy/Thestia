@@ -1514,6 +1514,13 @@ const Map<String, Map<String, String>> _strings = {
         'Der Server hat die Passkey-Anfrage abgelehnt. Bitte prüfe in '
         'den Supabase-Einstellungen, ob "Passkeys" aktiviert ist und die '
         'RP-ID auf auth.thestia.de gesetzt ist.{reason}',
+    'passkey.err.pluginMissing':
+        'Die Passkey-Funktion ist in dieser Version der App nicht '
+        'verfügbar. Bitte melde es dem Support - es ist ein Fehler im '
+        'Build, nicht auf deinem Gerät.',
+    'passkey.err.rpIdMismatch':
+        'Die Server-Konfiguration passt nicht zur App (RP-ID/Hostname). '
+        'Bitte melde es dem Support.',
     'passkey.err.unknownRegister':
         'Passkey-Einrichtung fehlgeschlagen. Bitte versuche es später '
         'erneut.',
@@ -4115,6 +4122,13 @@ const Map<String, Map<String, String>> _strings = {
         'The server rejected the passkey request. Please check in the '
         'Supabase settings whether "Passkeys" is enabled and the RP ID '
         'is set to auth.thestia.de.{reason}',
+    'passkey.err.pluginMissing':
+        'The passkey feature is not available in this version of the app. '
+        'Please report it to support - it is a build error, not a problem '
+        'on your device.',
+    'passkey.err.rpIdMismatch':
+        'The server configuration does not match the app (RP ID / '
+        'hostname). Please report it to support.',
     'passkey.err.unknownRegister':
         'Passkey setup failed. Please try again later.',
     'passkey.err.unknownLogin':

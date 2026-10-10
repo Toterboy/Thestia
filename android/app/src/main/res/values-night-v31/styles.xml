@@ -7,13 +7,29 @@
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
         <item name="android:windowSplashScreenBackground">#121212</item>
-        <!-- v0.9.2: @mipmap/ic_launcher statt @drawable/android12splash.
-         Android 12+ zeichnet NUR adaptive Icons selbst; eine flache
-         PNG bekommt den System-Rahmen und erscheint mit einem
-         Schatten, den man nicht wegbekommt - genau der Befund. Die
-         Dateien android12splash.png bleiben unangetastet, weil sie
-         weiterhin als Asset referenziert werden. -->
-        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+<!-- v0.10.0: @drawable/android12splash statt @mipmap/ic_launcher.
+             Der Schatten am Splash-Symbol kam NICHT vom Logo, sondern
+             davon, dass ein ADAPTIVES Icon zu viel transparenten Rand
+             hat: sein Vordergrund liegt in der 72-dp-Safe-Zone einer
+             108-dp-Leinwand, ein Drittel ist also leer. Die Systemmaske
+             zeichnet den sichtbaren Kreis mit einem Schatten - genau das,
+             was man am Start sah.
+
+             android12splash.png ist deshalb jetzt ein Kreis, der die
+             Leinwand VOLL ausfuellt (Kanten in der Mitte jeder Seite,
+             Ecken transparent). Die Systemmaske hat damit nichts zu
+             beschneiden und keinen Rand, an dem ein Schatten entstehen
+             koennte. Erzeugt aus thestia_icon_base.png - siehe
+             docs/ICONS.md.
+
+             Vorher stand hier der umgekehrte Weg: @drawable/android12-
+             splash wurde zugunsten von @mipmap/ic_launcher aufgegeben,
+             weil die DAMALige android12splash.png ein Squircle auf
+             weissem Grund war - sichtbar kleiner als der Kreis, also
+             derselbe Schatten. Die Datei hatte nicht die Form, die das
+             Splash braucht. Jetzt hat sie sie.
+             -->
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/android12splash</item>
     </style>
     <!-- Theme applied to the Android Window as soon as the process has started.
          This theme determines the color of the Android Window while your
