@@ -692,72 +692,11 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
   /// so beibehalten"). Gespeicherte Entscheidung wird ohne Dialog
   /// angewendet; Abbrechen bleibt auf der Seite.
   Future<bool> _confirmExitWhileActive() async {
-    final transit = ref.read(transitProvider);
-    if (!transit.active) return true;
-
-    final storage = ref.read(localStorageProvider);
-    try {
-      final saved = await storage.getString(kTransitExitPolicyKey);
-      if (saved == 'stop') {
-        await ref.read(transitProvider.notifier).deactivate();
-        await _maybeOfferRadioCleanup();
-        return true;
-      }
-      if (saved == 'keep') return true;
-    } catch (_) {
-      // Kein Storage -> immer fragen.
-    }
-    if (!mounted) return false;
-
-    var remember = false;
-    final choice = await showDialog<String>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          icon: Icon(Icons.radar,
-              color: Theme.of(ctx).colorScheme.primary, size: 40),
-          title: Text(L10n.t(ctx, 'transit.exitTitle')),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(L10n.t(ctx, 'transit.exitBody')),
-              const SizedBox(height: 8),
-              CheckboxListTile(
-                value: remember,
-                onChanged: (v) => setDialogState(() => remember = v ?? false),
-                title: Text(L10n.t(ctx, 'transit.exitRemember')),
-                contentPadding: EdgeInsets.zero,
-                dense: true,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop('keep'),
-              child: Text(L10n.t(ctx, 'transit.exitKeep')),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(ctx).pop('stop'),
-              child: Text(L10n.t(ctx, 'transit.exitStop')),
-            ),
-          ],
-        ),
-      ),
+    return confirmTransitExit(
+      context,
+      ref,
+      onStopped: _maybeOfferRadioCleanup,
     );
-    if (choice == null) return false; // Bleiben.
-    if (remember && mounted) {
-      try {
-        await ref
-            .read(localStorageProvider)
-            .saveString(kTransitExitPolicyKey, choice);
-      } catch (_) {}
-    }
-    if (choice == 'stop') {
-      await ref.read(transitProvider.notifier).deactivate();
-      await _maybeOfferRadioCleanup();
-    }
-    return true; // 'keep' oder 'stop': Seite verlassen.
   }
 
   @override
@@ -1419,7 +1358,8 @@ class _SoftPingInbox extends ConsumerStatefulWidget {
   ConsumerState<_SoftPingInbox> createState() => _SoftPingInboxState();
 }
 
-class _SoftPingInboxState extends ConsumerState<_SoftPingInbox> {
+class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
+    with WidgetsBindingObserver {
   List<Map<String, dynamic>>? _pings;
   Timer? _refreshTimer;
   int _idleTicks = 0;
@@ -1436,8 +1376,23 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _load();
     _scheduleRefresh();
+  }
+
+  /// Eine Benachrichtigung ueber einen neuen Funke holt den Nutzer aus der
+  /// App heraus. Ohne diesen Haken wartete die Liste im ungünstigsten Fall
+  /// bis zu zwei Minuten - der Timer streckt im Leerlauf bewusst ab, und
+  /// im Hintergrund liefert er ohnehin nichts Verlässliches. Beim
+  /// Zurückkommen in die App sofort nachladen.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    _idleTicks = 0;
+    _load().then((_) {
+      if (mounted) _scheduleRefresh();
+    });
   }
 
   void _scheduleRefresh() {
@@ -1459,6 +1414,7 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _refreshTimer?.cancel();
     super.dispose();
   }
@@ -1494,7 +1450,20 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox> {
         );
       }
     } catch (e) {
-      if (mounted) _load();
+      // Vorher wurde der Fehler KOMPLETT verschluckt: kein Log, keine
+      // Meldung. Der Nutzer tippte auf "annehmen" und es passierte
+      // sichtbar nichts - genau der Befund. Ohne eine Ausgabe ist das
+      // nicht von einem wirkungsnlosen Aufruf zu unterscheiden.
+      debugPrint('[TransitRadar] Funke annehmen fehlgeschlagen: $e');
+      if (!mounted) return;
+      final messenger = ScaffoldMessenger.of(context);
+      final message =
+          '${L10n.t(context, 'transit.inboxTitle')}: '
+          '${L10n.tf(context, 'common.errorWith', {'error': '$e'})}';
+      await _load();
+      messenger.showSnackBar(
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+      );
     }
   }
 
@@ -1564,4 +1533,89 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox> {
       ],
     );
   }
+}
+
+/// Radar laeuft und der Nutzer verlaesst die Seite: nachfragen, ob der
+/// Scan gestoppt oder weiterlaufen soll - mit Merk-Checkbox ("zukuenftig
+/// automatisch so beibehalten"). Eine gespeicherte Entscheidung wird ohne
+/// Dialog angewendet; Abbrechen liefert `false` und der Aufrufer bleibt.
+///
+/// Bewusst eine Top-Level-Funktion und keine Screen-Methode: derselbe
+/// Dialog muss auch greifen, wenn der Wechsel ueber die Bottom-Navigation
+/// laeuft. Dort wird der Radar-Screen nicht disposed, sein `dispose()`
+/// also nicht aufgerufen - vorher lief der Presence-Leave beim Tabsprung
+/// deshalb am vorbei und das Token blieb serverseitig liegen.
+Future<bool> confirmTransitExit(
+  BuildContext context,
+  WidgetRef ref, {
+  Future<void> Function()? onStopped,
+}) async {
+  if (!ref.read(transitProvider).active) return true;
+
+  final storage = ref.read(localStorageProvider);
+  try {
+    final saved = await storage.getString(kTransitExitPolicyKey);
+    if (saved == 'stop') {
+      await ref.read(transitProvider.notifier).deactivate();
+      await onStopped?.call();
+      return true;
+    }
+    if (saved == 'keep') return true;
+  } catch (_) {
+    // Kein Storage -> immer fragen.
+  }
+  if (!context.mounted) return false;
+
+  var remember = false;
+  final choice = await showDialog<String>(
+    context: context,
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setDialogState) => AlertDialog(
+        icon: Icon(
+          Icons.radar,
+          color: Theme.of(ctx).colorScheme.primary,
+          size: 40,
+        ),
+        title: Text(L10n.t(ctx, 'transit.exitTitle')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(L10n.t(ctx, 'transit.exitBody')),
+            const SizedBox(height: 8),
+            CheckboxListTile(
+              value: remember,
+              onChanged: (v) => setDialogState(() => remember = v ?? false),
+              title: Text(L10n.t(ctx, 'transit.exitRemember')),
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop('keep'),
+            child: Text(L10n.t(ctx, 'transit.exitKeep')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop('stop'),
+            child: Text(L10n.t(ctx, 'transit.exitStop')),
+          ),
+        ],
+      ),
+    ),
+  );
+  if (choice == null) return false; // Bleiben.
+  if (remember && context.mounted) {
+    try {
+      await ref
+          .read(localStorageProvider)
+          .saveString(kTransitExitPolicyKey, choice);
+    } catch (_) {}
+  }
+  if (choice == 'stop') {
+    await ref.read(transitProvider.notifier).deactivate();
+    await onStopped?.call();
+  }
+  return true; // 'keep' oder 'stop': Seite verlassen.
 }

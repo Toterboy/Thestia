@@ -9,6 +9,8 @@ import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/routing/route_restore.dart';
 import 'package:thestia/screens/profile/profile_edit_screen.dart'
     show profileEditDirtyProvider, profileEditNavigateAfterSaveProvider;
+import 'package:thestia/screens/swipe/transit_radar_screen.dart'
+    show confirmTransitExit;
 import 'package:thestia/services/local_storage.dart';
 
 /// Sichert die Route für die Wiederherstellung nach Prozesstod (v0.9.1).
@@ -171,7 +173,16 @@ class MainNavigation extends ConsumerWidget {
       }
     }
     if (!context.mounted) return;
+    // Radar laeuft und der Wechsel verlaesst den Transit-Tab: gleiche
+    // Rueckfrage wie beim Screen-Pop. Ohne diesen Haken blieb der Scan
+    // beim Tabsprung still im Hintergrund aktiv und adressierbar.
+    if (GoRouterState.of(context).uri.path.startsWith('/transit')) {
+      final mayLeave = await confirmTransitExit(context, ref);
+      if (!mayLeave) return;
+    }
+    if (!context.mounted) return;
     ref.read(currentNavIndexProvider.notifier).state = i;
+    if (!context.mounted) return;
     context.go(_tabs[i].route);
   }
 

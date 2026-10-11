@@ -84,56 +84,71 @@ def split_logo(src: Image.Image) -> tuple[np.ndarray, np.ndarray]:
 
 def build_background(src: Image.Image, rgb: np.ndarray,
                      art_a: np.ndarray, size: int) -> Image.Image:
-    """Rekonstruiert den Markenverlauf des Logos.
+    """Baut den Hintergrund des adaptiven Icons als smooth Gradient.
 
-    Nur die Nicht-Artwork-Pixel gehen ein. Sie werden auf ein Gitter
-    gemittelt und bicubics hochskaliert - dadurch entsteht ein glatter
-    Verlauf, der stufenlos an das Artwork angrenzt (der urspruengliche
-    Verlauf ist mehrstufig: pink -> magenta -> violett).
+    Frueher wurde der Verlauf aus dem Quellbild rekonstruiert: die
+    Nicht-Artwork-Pixel wurden auf ein 24x24-Gitter gemittelt und
+    hochskaliert. Das hatte einen Fehler, der auf dem Geraet als
+    SCHATTEN zu sehen war:
+
+    Eine Gitterzelle, in der fast nur Artwork liegt (Herz, Koepfe,
+    Schriftzug), hat nur wenige Nicht-Artwork-Pixel - und ihr Mittelwert
+    ist dadurch deutlich dunkler als der Verlauf an der Stelle. Das
+    Ergebnis war ein Hintergrund mit dunklen Stellen GENAU DA, WO DAS
+    ARTWORK LIEGT. Da das Artwork halbtransparente Raender hat, schimmerte
+    das durch - die "komischen Schatten".
+
+    Gemessen: 7,8 % der Flaeche unter Luma 40, und der Bereich deckte
+    sich mit dem Artwork.
+
+    Jetzt wird der Verlauf nicht mehr gemittelt, sondern GEPASST: aus den
+    Pixeln des Aussenrings (dort gibt es kein Artwork, nur Verlauf) wird
+    je Farbkanal eine Ebene farbe = a*x + b*y + c per kleinster Quadrate
+    bestimmt. Ein smooth Gradient in einer Richtung ist damit exakt
+    beschrieben, und es gibt keine Zellen, die durch Artwork verfaelscht
+    werden koennen.
+
+    Voraussetzung ist, dass der Verlauf in der Tat smooth ist - das ist er
+    (pink -> magenta -> violett, diagonal).
     """
     h, w = art_a.shape
-    sel = (np.asarray(src.convert('RGBA'))[:, :, 3] >= 200) & (art_a <= 0.02)
-    if not sel.any():
-        raise SystemExit('Kein Hintergrund erkannt - Schwellen pruefen.')
+    src_alpha = np.asarray(src.convert('RGBA'))[:, :, 3]
 
     ys, xs = np.mgrid[0:h, 0:w]
-    cell = (np.clip(ys / h * GRID, 0, GRID - 1).astype(int) * GRID
-            + np.clip(xs / w * GRID, 0, GRID - 1).astype(int))
-    acc = np.zeros((GRID * GRID, 3))
-    cnt = np.zeros(GRID * GRID)
-    np.add.at(acc, cell[sel], rgb[sel])
-    np.add.at(cnt, cell[sel], 1.0)
+    mitte_y, mitte_x = (h - 1) / 2.0, (w - 1) / 2.0
+    abstand = np.hypot(xs - mitte_x, ys - mitte_y) / (min(w, h) / 2.0)
 
-    grid = np.zeros((GRID, GRID, 3))
-    filled = cnt > 0
-    for gy in range(GRID):
-        for gx in range(GRID):
-            if filled[gy * GRID + gx]:
-                grid[gy, gx] = acc[gy * GRID + gx] / cnt[gy * GRID + gx]
+    # Aussenring: 42 % bis 50 % vom Zentrum. Dort ist kein Artwork, nur
+    # Verlauf - und der Ring deckt alle Richtungen ab, also auch die
+    # komplette Bandbreite des Verlaufs.
+    ring = (abstand > 0.42) & (abstand < 0.50) & (src_alpha >= 250)
+    if ring.sum() < 100:
+        raise SystemExit('Aussenring zu duenn - Schwellen pruefen.')
 
-    # Leere Zellen (z. B. von der runden Form weggeschnitten) aus den
-    # Nachbarzellen fuellen, sonst entstehen Löcher im Verlauf.
-    filled = (cnt > 0).reshape(GRID, GRID)
-    filled_grid = grid
-    for _ in range(GRID):
-        if filled.all():
-            break
-        holes = np.argwhere(~filled)
-        for gy, gx in holes:
-            n, total = 0, np.zeros(3)
-            for dy in (-1, 0, 1):
-                for dx in (-1, 0, 1):
-                    ny, nx = gy + dy, gx + dx
-                    if 0 <= ny < GRID and 0 <= nx < GRID and filled[ny, nx]:
-                        total += filled_grid[ny, nx]
-                        n += 1
-            if n:
-                filled_grid[gy, gx] = total / n
-                filled[gy, gx] = True
+    # Kleinste Quadrate fuer farbe = a*x + b*y + c, je Kanal.
+    x = xs[ring].astype(np.float64)
+    y = ys[ring].astype(np.float64)
+    ones = np.ones_like(x)
+    design = np.stack([x, y, ones], axis=1)
+    farben = rgb[ring]                      # (n, 3)
 
-    small = Image.fromarray(np.clip(filled_grid, 0, 255).astype(np.uint8),
-                            'RGB')
-    return small.resize((size, size), Image.BICUBIC).convert('RGBA')
+    # Normalgleichungen: (D^T D) p = D^T f. 3x3, numerisch stabil.
+    ata = design.T @ design
+    if abs(np.linalg.det(ata)) < 1e-6:
+        raise SystemExit('Aussenring ist entartet - Verlauf nicht fassbar.')
+    koeff = np.linalg.solve(ata, design.T @ farben)   # (3, 3)
+
+    def ebene(groesse: int) -> np.ndarray:
+        gy, gx = np.mgrid[0:groesse, 0:groesse]
+        gx = gx.astype(np.float64) * (w - 1) / (groesse - 1)
+        gy = gy.astype(np.float64) * (h - 1) / (groesse - 1)
+        out = (koeff[0][None, None, :] * gx[:, :, None]
+               + koeff[1][None, None, :] * gy[:, :, None]
+               + koeff[2][None, None, :])
+        return np.clip(out, 0, 255)
+
+    bild = Image.fromarray(ebene(size).astype(np.uint8), 'RGB')
+    return bild.convert('RGBA')
 
 
 def build_foreground(src: Image.Image, rgb: np.ndarray, art_a: np.ndarray,
