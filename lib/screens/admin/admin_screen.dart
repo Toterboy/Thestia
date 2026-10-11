@@ -71,6 +71,20 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
 
   void _enforceAdmin() {
     if (!isCurrentUserAdmin() && mounted) {
+      // Fail-closed bleibt (Audit H6), aber der Grund gehoert ins Log.
+      // Ohne das ist die häufigste Ursache - die FALSCHE APK - nur daran
+      // zu erkennen, dass der Screen sofort wieder zugeht, und das sieht
+      // wie ein Fehler der App aus statt wie ein Baufehler.
+      if (kDebugMode) {
+        final eingeloggt = SupabaseService.currentUser?.id;
+        debugPrint('[AdminScreen] Client-Check abgelehnt. '
+            'adminUserId konfiguriert: '
+            '${AppConstants.adminUserId.isNotEmpty}, '
+            'eingeloggt: $eingeloggt. '
+            'Haeufigste Ursache: oeffentliche APK statt ADMIN-APK '
+            'installiert - die oeffentliche enthaelt die Admin-UUID '
+            'absichtlich nicht.');
+      }
       context.go(AppRoutes.home);
     }
   }

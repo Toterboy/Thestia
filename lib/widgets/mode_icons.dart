@@ -210,62 +210,81 @@ Path fragezeichenBogen(Offset c, double s) {
         c.dx + s * 0.18, c.dy + s * 0.44);
 }
 
-// ---------------------------------------------------------------------------
-// Transit Spark: Bahn unter einem Funken
-// ---------------------------------------------------------------------------
-
-/// Transit Spark — eine Bahn, darüber ein Funke **mit Schleier**.
+/// Transit Spark — Bahn mit Funken-Schleier.
 ///
-/// Aufbau im 17er-Feld:
-///   * Bahn unten als UMRISS: Körper, zwei gefüllte Fenster, zwei Räder
-///   * Funke oben mit Schleier, der nach links oben ausläuft
+/// Die Geschichte dieses Zeichners, weil sie den Weg erklaert: der
+/// Wagen ist fuenfmal ueberarbeitet worden — gefuellt, dann im
+/// Umriss mit zwei Fenstern, dann mit drei und 3:1-Proportion, dann
+/// mit Materials Frontansicht statt der gezeichneten, dann mit Dach
+/// und Fahrwerk. Jedes Mal lautete das Urteil "sieht komisch aus"
+/// bzw. "keine wirkliche Bahn".
 ///
-/// Die Bahn ist im Umriss gezeichnet, nicht gefüllt. Als gefüllter
-/// Block war sie die Ursache für „wirkt grauenhalt": neben
-/// `Icons.event`, einem reinen Umriss, hing eine geschlossene schwarze
-/// Fläche in der Liste - gleiche Ausdehnung, doppelte optische Schwere.
+/// Zwei Versuche mit Material waren ebenfalls falsch und stehen
+/// hier festgehalten, damit sie nicht wiederholt werden:
+/// `Icons.train` und `Icons.directions_bus` zeigen BEIDE eine
+/// Frontansicht. Beide sind damit schmal und fuellen ein
+/// quadratisches Feld zur Haelfte der Breite, wirken klein und
+/// wirken nicht wie "unterwegs".
+///
+/// Was am Ende den Unterschied macht, sind drei Kleinigkeiten und
+/// nicht die Proportion: ein Strich ueber dem Kasten (Dach), Raeder,
+/// die am Kasten ANSTOSSEN, und eine Deichsel zwischen ihnen. Ohne
+/// die beiden letzteren liest sich das als Spielzeug.
 class TransitSparkPainter extends _ModeSymbolPainter {
   TransitSparkPainter(super.color);
 
   @override
   void draw(Canvas canvas) {
-    final linie = strich(color, 1.35);
+    final linie = strich(color, 1.3);
+    final dick = strich(color, 1.5);
 
-    // --- Bahn ---------------------------------------------------------------
-    // Körper als Umriss. Die Fenster sind gefüllt: als weitere Umrisse
-    // wären sie bei dieser Größe nur noch vier Striche, die mit dem
-    // Körper verschwimmen.
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        // Seitenverhältnis 13.4 zu 4.4, also etwa 3:1. Die vorherige
-        // Fassung war 2,15:1 - das liest sich nicht als Bahn, sondern
-        // als Briefkasten mit Rädern.
-        const Rect.fromLTWH(1.8, 7.2, 13.4, 4.4),
-        const Radius.circular(1.5),
-      ),
+    // --- Dach ---------------------------------------------------------------
+    // Ein Strich ueber dem Kasten. Ohne ihn ist der Wagen ein
+    // Rechteck mit Fenstern; mit ihm ist es ein Fahrzeug mit Dach. Das
+    // ist der Unterschied, an dem "keine wirkliche Bahn" haengt.
+    canvas.drawLine(
+      const Offset(3.6, 6.0),
+      const Offset(13.4, 6.0),
       linie,
     );
-    // Drei Fenster in gleichmäßigem Abstand, mittig im Körper. Zwei
-    // große Fenster auf einem breiten Körper sahen aus wie zwei
-    // Schlitze; sitzen sie zu hoch, kippt der Körper optisch.
-    for (final x in [4.4, 8.5, 12.6]) {
+
+    // --- Kasten -------------------------------------------------------------
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        const Rect.fromLTWH(2.2, 6.4, 12.6, 5.0),
+        const Radius.circular(1.5),
+      ),
+      dick,
+    );
+
+    // Drei Fenster, gleichmaessig verteilt, mittig im Kasten.
+    for (final x in [4.6, 8.5, 12.4]) {
       canvas.drawRect(
-        Rect.fromCenter(center: Offset(x, 9.4), width: 3.0, height: 1.6),
+        Rect.fromCenter(center: Offset(x, 8.9), width: 3.1, height: 1.8),
         flaeche(color),
       );
     }
-    // Räder gefüllt. Als Ring mit derselben Strichstärke bleibt innen
-    // nur ein Loch von 0.3 Einheiten - das las sich als Auge mit Pupille,
-    // nicht als Rad.
-    for (final x in [5.0, 12.0]) {
-      canvas.drawCircle(Offset(x, 12.9), 0.9, flaeche(color));
+
+    // --- Fahrwerk -----------------------------------------------------------
+    // Die Raeder muessen am Kasten ANSTOSSEN und untereinander durch
+    // eine Deichsel verbunden sein. Zwei lose Kreise unter einem
+    // Rechteck lesen sich als Spielzeug, nicht als Bahn.
+    canvas.drawLine(
+      const Offset(5.6, 12.7),
+      const Offset(11.4, 12.7),
+      linie,
+    );
+    for (final x in [5.6, 11.4]) {
+      canvas.drawCircle(Offset(x, 12.7), 1.4, linie);
     }
 
     // --- Funke mit Schleier -------------------------------------------------
-    funkeMitSchleier(canvas, const Offset(11.6, 3.2), 2.2, color);
+    // Im selben Painter, nicht als Stapel ueber dem Kasten: als
+    // eigener Stapel hing der Funk in der Ecke und der Wagen stand
+    // unten links, die Kachel war also unten lastig und oben leer.
+    funkeMitSchleier(canvas, const Offset(12.3, 2.6), 2.0, color);
   }
 }
-
 // ---------------------------------------------------------------------------
 // Find your Spark: ein Funke sucht den anderen
 // ---------------------------------------------------------------------------
@@ -340,9 +359,15 @@ class QuestionChatPainter extends _ModeSymbolPainter {
     // Zwei Fragezeichen, das grosse links oben, das kleine rechts
     // unten. Versetzt, weil sie sich sonst zu einer Lesezeichenreihe
     // zusammenschliessen - die Blase ist hochkant.
-    const gross = (c: Offset(5.8, 6.0), h: 5.0);
-    const klein = (c: Offset(11.4, 8.6), h: 3.4);
-    final s = strich(color, 1.15);
+    //
+    // Stroeke 0.95 statt 1.15 und etwas kleiner gesetzt: bei 1.15
+    // liefen die Fragezeichen bei 40dp in einen Block, und das kleine
+    // stiess mit Bogen UND Punkt ueber den Innenrand der Blase, also
+    // sichtbar abgeschnitten. Beides kam als "zu dick und abgeschnitten"
+    // zurueck.
+    const gross = (c: Offset(5.6, 5.8), h: 4.4);
+    const klein = (c: Offset(10.9, 8.3), h: 3.0);
+    final s = strich(color, 0.95);
     for (final frage in [gross, klein]) {
       final r = frage.h / 2.0;
       canvas.drawPath(fragezeichenBogen(frage.c, r), s);

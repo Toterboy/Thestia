@@ -114,8 +114,9 @@ if (Test-Path -LiteralPath $EnvFile) {
             $key = $Matches[1]
             $val = $Matches[2].Trim('"').Trim("'")
             # Nur die vier oeffentlichen Konfigurationswerte - KEINE Secrets.
-            if ($key -in @("SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY",
-                           "CAPTCHA_PROVIDER", "CAPTCHA_SITEKEY")) {
+if ($key -in @("SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY",
+                           "CAPTCHA_PROVIDER", "CAPTCHA_SITEKEY",
+                           "LIBERAPAY_URL")) {
                 $ConfigDefines += "--dart-define=$key=$val"
             }
         }

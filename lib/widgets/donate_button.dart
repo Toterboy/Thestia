@@ -14,13 +14,25 @@ import 'package:thestia/l10n/app_strings.dart';
 ///
 /// ZIEL EINSTELLEN
 ///
-/// [kDonateUrl] ist bewusst leer. Solange sie leer ist, passiert beim
-/// Antippen nichts weiter als ein Hinweis - es wird KEIN Platzhalter
-/// aufgerufen und nichts angezeigt, was so aussieht, als haette
-/// gespendet. Erst eine echte Zieladresse (z. B. bei einem
-/// Zahlungsanbieter oder auf einem eigenen Unterstuetzungs-Bereich)
-/// macht den Button vollstaendig.
-const String kDonateUrl = '';
+/// Die Adresse kommt aus dem Build, nicht aus dem Quelltext:
+///
+///     .env:  LIBERAPAY_URL=https://liberapay.com/<dein-name>/
+///     bauen: powershell -File tool\build_release.ps1 ...
+///
+/// Warum als Build-Wert und nicht als Konstante hier: die Kuerzel des
+/// Zahlungsanbieters sind oeffentlich, aber sie aendern sich je Konto.
+/// Wer sie fest in den Quelltext schreibt, muss fuer jeden Wechsel eine
+/// Aenderung einchecken und danach den Build erneut verteilen - das ist
+/// genau der Fehler, den [kDonateUrl] als Leerstring ueber Jahre
+/// konserviert hat: niemand wusste mehr, dass hier etwas einzutragen war.
+///
+/// Bleibt der Wert leer, passiert beim Antippen nichts weiter als ein
+/// Hinweis. Es wird KEIN Platzhalter aufgerufen und nichts angezeigt,
+/// was so aussieht, als haette gespendet.
+const String kDonateUrl = String.fromEnvironment('LIBERAPAY_URL');
+
+/// Ist ein Zahlungsziel hinterlegt?
+bool get donateConfigured => kDonateUrl.trim().isNotEmpty;
 
 class DonateButton extends StatelessWidget {
   const DonateButton({super.key, this.icon});
@@ -81,7 +93,7 @@ class DonateButton extends StatelessWidget {
     final messenger = ScaffoldMessenger.maybeOf(context);
     final failedText = L10n.t(context, 'profile.donateOpenFailed');
 
-    if (kDonateUrl.isEmpty) {
+    if (!donateConfigured) {
       await _explainMissingLink(context);
       return;
     }
@@ -203,7 +215,7 @@ class _GiftPainter extends CustomPainter {
 /// Kleiner Helfer fuer Screens, die den Button nur als Textzeile
 /// einbauen wollen.
 Future<void> openDonateLink(BuildContext context) async {
-  if (kDonateUrl.isEmpty) {
+  if (!donateConfigured) {
     await HapticFeedback.selectionClick();
     return;
   }
