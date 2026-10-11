@@ -159,35 +159,55 @@ void funkeMitSchleier(
   double r,
   Color color, {
   double richtung = -2.36, // nach links oben
-  double stufen = 0.62,
   double mager = 0.34,
 }) {
   final d = Offset(math.cos(richtung), math.sin(richtung));
-  for (final anteil in [0.72, 1.42]) {
-    final pos = c + d * (r * stufen * anteil);
+  // Spur als feste Groessen, NICHT aus r abgeleitet.
+  //
+  // Die erste Fassung rechnete die Spurgroesse als r * (1.45 - anteil)
+  // * 0.42 und lief dabei ueber zwei Stuetzstellen. Bei der zweiten
+  // Stufe ergab das r * 0.03 * 0.42 - praktisch null. Ein Stern mit
+  // Nichts am Schweif ist ein Stern, und genau so ist es angekommen:
+  // "der Schleier hat nicht funktioniert".
+  //
+  // Abstand und Groesse stehen deshalb jetzt nebeneinander: der
+  // hintere Stern muss sichtbar bleiben, sonst ist es wieder kein
+  // Schleier, sondern ein Punkt.
+  const spur = [
+    (abstand: 1.50, groesse: 0.28),
+    (abstand: 0.82, groesse: 0.46),
+  ];
+  for (final s in spur) {
     canvas.drawPath(
-      stern(pos, r * (1.45 - anteil) * 0.42, mager),
+      stern(c + d * (r * s.abstand), r * s.groesse, mager),
       flaeche(color),
     );
   }
   canvas.drawPath(stern(c, r, mager), flaeche(color));
 }
 
-/// Ein Fragezeichen aus einem Strich und einem Punkt.
+/// Ein Fragezeichen als Bogen — der Punkt kommt separat dazu.
 ///
 /// Gezeichnet, nicht per [TextPainter]: ein TextPainter braucht eine
 /// [TextStyle] und damit eine Schriftart, deren Fragezeichen bei dieser
-/// Größe auf anderen Dichten anders aussehen. Die Kurve ist bewusst
-/// kantig - bei 3 Einheiten Höhe verschwindet jede Rundung als Wulst.
+/// Größe auf anderen Dichten anders aussehen.
+///
+/// [s] ist die halbe Höhe des Zeichens, der Bogen endet bei `cy + 0.44s`.
+/// Der Punkt sitzt bei `cy + 0.82s` — die Lücke dazwischen ist
+/// Pflicht: hängt der Punkt am Bogen, ist es kein Fragezeichen mehr,
+/// sondern ein Haken mit Klecks. Genau daran ist die erste Fassung
+/// gescheitert, der Bogen lief ohne sichtbare Lücke in den Punkt.
 Path fragezeichenBogen(Offset c, double s) {
   return Path()
-    ..moveTo(c.dx - s * 0.46, c.dy - s * 0.16)
-    ..cubicTo(c.dx - s * 0.58, c.dy - s * 0.92,
-        c.dx + s * 0.58, c.dy - s * 0.92,
-        c.dx + s * 0.58, c.dy - s * 0.10)
-    ..cubicTo(c.dx + s * 0.58, c.dy + s * 0.26,
-        c.dx + s * 0.05, c.dy + s * 0.24,
-        c.dx + s * 0.05, c.dy + s * 0.54);
+    ..moveTo(c.dx - s * 0.44, c.dy - s * 0.18)
+    // Bogen nach oben und über die rechte Schulter.
+    ..cubicTo(c.dx - s * 0.56, c.dy - s * 0.88,
+        c.dx + s * 0.56, c.dy - s * 0.88,
+        c.dx + s * 0.56, c.dy - s * 0.26)
+    // Herunter und zur Mitte, dort endet der Bogen als kurzer Stamm.
+    ..cubicTo(c.dx + s * 0.56, c.dy + s * 0.12,
+        c.dx + s * 0.18, c.dy + s * 0.10,
+        c.dx + s * 0.18, c.dy + s * 0.44);
 }
 
 // ---------------------------------------------------------------------------
@@ -217,23 +237,32 @@ class TransitSparkPainter extends _ModeSymbolPainter {
     // Körper verschwimmen.
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        const Rect.fromLTWH(2.8, 6.7, 11.4, 5.3),
-        const Radius.circular(1.8),
+        // Seitenverhältnis 13.4 zu 4.4, also etwa 3:1. Die vorherige
+        // Fassung war 2,15:1 - das liest sich nicht als Bahn, sondern
+        // als Briefkasten mit Rädern.
+        const Rect.fromLTWH(1.8, 7.2, 13.4, 4.4),
+        const Radius.circular(1.5),
       ),
       linie,
     );
-    for (final x in [5.25, 11.75]) {
+    // Drei Fenster in gleichmäßigem Abstand, mittig im Körper. Zwei
+    // große Fenster auf einem breiten Körper sahen aus wie zwei
+    // Schlitze; sitzen sie zu hoch, kippt der Körper optisch.
+    for (final x in [4.4, 8.5, 12.6]) {
       canvas.drawRect(
-        Rect.fromCenter(center: Offset(x, 9.3), width: 3.5, height: 1.6),
+        Rect.fromCenter(center: Offset(x, 9.4), width: 3.0, height: 1.6),
         flaeche(color),
       );
     }
-    for (final x in [5.25, 11.75]) {
-      canvas.drawCircle(Offset(x, 13.5), 1.1, linie);
+    // Räder gefüllt. Als Ring mit derselben Strichstärke bleibt innen
+    // nur ein Loch von 0.3 Einheiten - das las sich als Auge mit Pupille,
+    // nicht als Rad.
+    for (final x in [5.0, 12.0]) {
+      canvas.drawCircle(Offset(x, 12.9), 0.9, flaeche(color));
     }
 
     // --- Funke mit Schleier -------------------------------------------------
-    funkeMitSchleier(canvas, const Offset(12.2, 3.0), 2.2, color);
+    funkeMitSchleier(canvas, const Offset(11.6, 3.2), 2.2, color);
   }
 }
 
@@ -308,21 +337,19 @@ class QuestionChatPainter extends _ModeSymbolPainter {
       flaeche(color),
     );
 
-    // Zwei Fragezeichen, das große links, das kleine rechts versetzt.
-    // Versetzt, damit sie sich nicht zu einer Lesezeichenreihe
-    // zusammenschließen - die Blase ist hochkant.
-    const gross = Offset(5.9, 6.3);
-    const klein = Offset(11.2, 8.4);
+    // Zwei Fragezeichen, das grosse links oben, das kleine rechts
+    // unten. Versetzt, weil sie sich sonst zu einer Lesezeichenreihe
+    // zusammenschliessen - die Blase ist hochkant.
+    const gross = (c: Offset(5.8, 6.0), h: 5.0);
+    const klein = (c: Offset(11.4, 8.6), h: 3.4);
     final s = strich(color, 1.15);
-    for (final frage in [
-      (c: gross, h: 4.6),
-      (c: klein, h: 3.2),
-    ]) {
+    for (final frage in [gross, klein]) {
       final r = frage.h / 2.0;
       canvas.drawPath(fragezeichenBogen(frage.c, r), s);
+      // Punkt mit sichtbarem Abstand zum Bogen.
       canvas.drawCircle(
-        Offset(frage.c.dx, frage.c.dy + r * 0.86),
-        r * 0.17,
+        Offset(frage.c.dx + r * 0.18, frage.c.dy + r * 0.82),
+        r * 0.16,
         flaeche(color),
       );
     }
