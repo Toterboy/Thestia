@@ -17,35 +17,35 @@ Ziel bedient - damit niemand drei Stellen gleichzeitig anfasst.
 |---|---|---|
 | App-Liste des Geräts (Android 8+) | adaptives Icon (`ic_launcher.xml`) | Rund/Squircle, je nach Launcher |
 | App-Liste (vor Android 8) | `mipmap-*/ic_launcher.png` | Rund (vom Werkzeug gebaut) |
-| Startbildschirm (Android 12+) | `drawable/android12splash.png` | **Kreis, füllt die Leinwand** |
+| Startbildschirm (Android 12+) | `drawable/android12splash.png` | **Kreis, 240 dp in 288 dp Leinwand** |
 | In der App (Willkommen etc.) | `assets/images/thestia_icon_base.png` über `AppLogo` | Squircle, 34 px transparenter Rand |
 | Play-Store-Eintrag | `fastlane/.../icon.png` | Squircle (Play maskiert selbst) |
 
-## Der Schatten am Start (v0.10.0)
+## Der Schatten am Start und die Größe des Kreises (v0.10.0)
 
 **Befund:** Beim App-Start erschien das Symbol erst rund und groß, mit
 einem dunklen Rand an den unteren Ecken - wie ein Schatten. Danach
-erschien das eckige Symbol in der App, ohne Schatten.
+erschien das eckige Symbol in der App, ohne Schatten. Später kam die
+zweite Beschwerde: der Kreis sei **zu groß aufgezoomt**.
 
-**Ursache:** `android:windowSplashScreenAnimatedIcon` zeigte auf
-`@mipmap/ic_launcher`, also auf das **adaptive** Icon. Dessen Vordergrund
-liegt in der 72-dp-Safe-Zone einer 108-dp-Leinwand - ein Drittel der
-Fläche ist transparent. Die Systemmaske des Splash zeichnet den
-sichtbaren Teil mit einem Schatten. Der Schatten gehört also nicht zum
-Logo, sondern kommt von der Maskierung.
+**Ursache des Schattens:** `android:windowSplashScreenAnimatedIcon`
+zeigte auf `@mipmap/ic_launcher`, also auf das **adaptive** Icon. Dessen
+Vordergrund liegt in der 72-dp-Safe-Zone einer 108-dp-Leinwand - ein
+Drittel der Fläche ist transparent. Die Systemmaske des Splash zeichnet
+den sichtbaren Teil mit einem Schatten. Der Schatten gehört also nicht
+zum Logo, sondern kommt von der Maskierung.
 
-**Was vorher schon versucht wurde und warum es nicht half:** Der
-entgegengesetzte Weg - `@drawable/android12splash` statt
-`@mipmap/ic_launcher`. Die `android12splash.png` von damals war ein
-Squircle **auf weissem Grund**, sichtbar kleiner als der Kreis des
-Systems. Genau dieser Zwischenraum erzeugte denselben Schatten. Die
-Datei hatte nicht die Form, die das Splash braucht.
+**Ursache der zu großen Darstellung:** Der Splash zeichnet in ein
+Fenster von 288 dp × 288 dp, die sichtbare Maske ist ein Kreis von
+**240 dp**. `android12splash.png` füllte die 288-dp-Leinwand mit einem
+randlosen Kreis - er kam damit mit 288 dp statt 240 dp auf dem Gerät.
 
-**Lösung:** `android12splash.png` ist jetzt ein Kreis, der die Leinwand
-voll ausfüllt - die Kante berührt die Mitte jeder Seite, die Ecken sind
-transparent (Deckung 78,7 % = π/4, exakt eingeschrieben). Die Systemmaske
-hat damit nichts zu beschneiden und keinen Rand, an dem ein Schatten
-entstehen kann.
+**Lösung (aktuell):** `android12splash.png` ist ein Kreis von exakt
+240 dp, mittig in einer 288-dp-Leinwand, der Rand (24 dp je Seite)
+transparent. Die Systemmaske greift, ohne etwas zu beschneiden, und der
+Kreis erscheint in der vorgesehenen Größe. Der Rand ist weich
+ausgeblendet - ein harter Alphaschnitt zeigt nach dem Downsample des
+Systems eine Treppe am Kreisrand.
 
 ## Wartung
 
@@ -54,16 +54,15 @@ Splash, App-Liste und Store verschiedene Bilder:
 
 ```powershell
 python tool\generate_launcher_icon.py   # adaptive Icons + App-Liste
+python tool\make_splash_icon.py         # Splash (240-dp-Kreis)
 python tool\make_play_icon.py           # Play-Store-Eintrag
-# android12splash.png: siehe unten
 ```
 
-`android12splash.png` hat noch **kein** Werkzeug - es wurde einmalig aus
-der Basis-Datei erzeugt. Wer es ändert, muss den Kreischarakter
-beibehalten: eingeschriebener Kreis, Kanten in der Seitenmitte, Ecken
-transparent. Ein undurchsichtiges Rechteck darum würde im Nachtmodus als
-helle Kante auffallen, weil der Splash-Hintergrund aus dem Theme kommt
-(`#ffffff` hell, `#121212` dunkel).
+`android12splash.png` wird von `tool/make_splash_icon.py` erzeugt und
+darf **nicht** von Hand editiert werden: Das Skript kennt die
+Systemgeometrie (240/288) und den weichen Rand. Wer die Datei manuell
+verändert, verliert beides - und genau das war der Grund, warum der
+Kreis zu groß war: Es gab vorher kein Werkzeug.
 
 Die `-night`-Varianten sind identisch zur Tag-Variante: das Logo ist ein
 Farbverlauf und braucht keine Anpassung. Sie existieren, weil Android
