@@ -30,9 +30,24 @@ ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / 'android' / 'app' / 'src' / 'main' / 'res'
 SRC = ROOT / 'assets' / 'images' / 'thestia_icon_base.png'
 
-# Splash-Fenster und Sichtkreis in dp (Android 12 Splash-Spezifikation).
+# Splash-Fenster in dp (Android-12-Splash-Spezifikation).
 SPLASH_DP = 288
-CIRCLE_DP = 240
+
+# Sichtkreis des Splash.
+#
+# Die Android-Spezifikation nennt 240dp als Sichtkreis bei 288dp Fenster.
+# Das ist die Geometrie, nach der das SYSTEM skaliert - sie sagt aber
+# nichts darueber, wie gross das Logo im Kreis wirken soll.
+#
+# Der Splash sah trotz 240dp-Kreis "gezoomt" aus. Grund: das Logo fuellt
+# seinen Kreis zu 100 %. Das adaptive Icon in der App-Liste dagegen
+# legt seinen Inhalt in die 72-dp-Safe-Zone einer 108-dp-Leinwand, also
+# auf zwei Drittel. Beide Seite an Seite wirkt der Splash deshalb
+# ausgezoomt, obwohl die technische Kreisgroesse stimmte.
+#
+# Deshalb folgt der Kreis demselben Verhaeltnis wie die Safe-Zone:
+# 288 * 2/3 = 192dp.
+CIRCLE_DP = 192
 
 # Der Kreis sitzt mittig. 288 - 240 = 48dp Rand, also 24dp je Seite.
 PADDING_DP = (SPLASH_DP - CIRCLE_DP) // 2

@@ -12,40 +12,50 @@ typedef ModeSymbolBuilder = CustomPainter Function(Color color);
 /// Alle drei sind [CustomPainter], kein Bild-Asset: sie skalieren scharf
 /// auf jede Dichte und nehmen die Theme-Farbe des Containers an.
 ///
-/// ## Ein Motiv pro Symbol
+/// ## Umriss statt Fläche
 ///
-/// Die zweite Fassung zeichnete in dasselbe Feld mehrere Motive
-/// nebeneinander - Transit Spark bekam Radar-Bögen UND Funke UND Zug,
-/// Find your Spark zwei Funken plus Lupe. In der echten Liste wirkt das
-/// nicht reichhaltig, sondern unruhig: neben `Icons.event` und
-/// `Icons.qr_code_scanner`, die je EIN Motiv haben und deshalb sofort
-/// lesbar sind, zerfielen die Eigenzeichen in Klecks. Zurück auf je ein
-/// Motiv, das den Namen trägt.
+/// Die dritte Fassung füllte den Zugkörper als geschlossene Fläche. In
+/// der Liste daneben stehen `Icons.event` und `Icons.qr_code_scanner` —
+/// reine Umrisse mit viel Weiß darin. Eine gefüllte Masse wiegt bei
+/// gleicher Ausdehnung deutlich schwerer und wirkt dadurch größer. Alle
+/// drei sind jetzt Umrisse.
 ///
-/// ## Gleiche Größe wie die Material-Symbole
+/// ## Größe
 ///
-/// Material-Symbole sind in einem 24x24-Viewport gezeichnet, ihr Inhalt
-/// liegt aber in einem 20x20-Feld in der Mitte - zwei Einheiten Luft auf
-/// jeder Seite. Die erste Fassung dieser Symbole füllte das volle 24er-
-/// Feld und wirkte dadurch rund 20 % größer als die Nachbarn.
+/// „Gleiche Größe wie Material" war zwei Fassungen lang geraten und
+/// trotzdem daneben. Nachgemessen ist `Icons.event` bei 40 dp nur 30 dp
+/// breit — die Konstruktionsangabe (20 Einheiten im 24er-Viewport)
+/// beschreibt den Bau der Glyphe, nicht ihre Tinte. Deshalb das Feld
+/// auf 17 verkleinert.
 ///
-/// Deshalb zeichnen alle drei in ein [inhalt]-Quadrat, das zentral im
-/// 24er-Viewport liegt. [ModeSymbol] skaliert es entsprechend.
+/// ## Schleier
 ///
-/// ## Strichstärke
+/// Funke und Funke-mit-Schleier sind zwei verschiedene Dinge: ein
+/// einzelner Stern steht still, ein Stern mit Schleier fliegt. Der
+/// Schleier läuft als Kette kleinerer Sterne hinter dem Hauptstern her
+/// und ist bei Find your Spark und Transit Spark dasselbe Motiv.
 ///
-/// Material nutzt 2 Einheiten auf 24, also gut ein Zehntel der Kanten-
-/// länge. Auf das 20er-Feld übertragen sind das 1.67. Die Eigenzeichen
-/// lagen mit 1.5-1.6 knapp darunter und wirkten dadurch optisch schwerer
-/// als die Nachbarn - bei gleicher Farbe und Fläche liest sich das als
-/// "dicker". Hier jetzt 1.45.
+/// Die Formen sind absichtlich auf wenige Striche reduziert: bei 40 dp
+/// sieht man keine Feinheiten mehr, und überladene Pfade werden zu Grau.
 
 /// Kantenlänge des 24x24-Viewports.
 const double _viewport = 24.0;
 
-/// Seitenlänge des Inhaltsfelds. 20 lässt wie bei Material-Symbolen zwei
-/// Einheiten Luft auf jeder Seite.
-const double inhalt = 20.0;
+/// Seitenlänge des Inhaltsfelds.
+///
+/// NICHT 20, obwohl Material-Symbole im 24er-Viewport meist ein 20er-
+/// Feld nutzen: der Wert beschreibt die Konstruktion der Glyphe, nicht
+/// ihre Tinte. Nachgemessen ist `Icons.event` bei 40 dp nur 30 dp breit,
+/// und die Nachbarn wirken in der Liste trotzdem kleiner als die eigenen
+/// Symbole. Der Unterschied ist die **Fläche**: Kalender und QR-Code
+/// sind Umrisse mit viel Weiss darin, ein gefuellter Zugkoerper ist eine
+/// kompakte schwarze Masse und wiegt optisch schwerer als dieselbe
+/// Ausdehnung in Strichzeichnung.
+///
+/// Darum zwei Eingriffe statt einer Zahl: das Feld auf 17 verkleinert
+/// (Innenabstand von 3.3 auf jeder Seite) UND alle drei Symbole als
+/// Umriss gezeichnet, nicht gefuellt.
+const double inhalt = 17.0;
 
 /// Versatz des Inhaltsfelds im Viewport.
 const double _inset = (_viewport - inhalt) / 2.0;
@@ -130,53 +140,100 @@ Paint strich(Color color, double breite) => Paint()
 /// Flächiger Pinsel.
 Paint flaeche(Color color) => Paint()..color = color;
 
+/// Funke **mit Schleier** — ein Stern und zwei kleinere, die ihm nachlaufen.
+///
+/// Der Schleier ist kein Beiwerk, sondern die Bewegung: ein einzelner
+/// Stern steht still, ein Stern mit Schleier fliegt. Ohne ihn liest sich
+/// „Spark" als statisches Sternsymbol, mit ihm als Funkenausbruch.
+///
+/// Gezeichnet wird der Schleier von hinten nach vorn: erst der
+/// kleinste, dann der mittlere, zuletzt der Hauptstern. Wer die
+/// Reihenfolge umkehrt, überlagert die grossen Flächen die kleinen und
+/// die Spur zerfällt zu einem Klecks.
+///
+/// [richtung] ist die Flugrichtung; der Schleier liegt auf der
+/// Gegenseite. [stufen] ist die Länge der Spur in Sternradien.
+void funkeMitSchleier(
+  Canvas canvas,
+  Offset c,
+  double r,
+  Color color, {
+  double richtung = -2.36, // nach links oben
+  double stufen = 0.62,
+  double mager = 0.34,
+}) {
+  final d = Offset(math.cos(richtung), math.sin(richtung));
+  for (final anteil in [0.72, 1.42]) {
+    final pos = c + d * (r * stufen * anteil);
+    canvas.drawPath(
+      stern(pos, r * (1.45 - anteil) * 0.42, mager),
+      flaeche(color),
+    );
+  }
+  canvas.drawPath(stern(c, r, mager), flaeche(color));
+}
+
+/// Ein Fragezeichen aus einem Strich und einem Punkt.
+///
+/// Gezeichnet, nicht per [TextPainter]: ein TextPainter braucht eine
+/// [TextStyle] und damit eine Schriftart, deren Fragezeichen bei dieser
+/// Größe auf anderen Dichten anders aussehen. Die Kurve ist bewusst
+/// kantig - bei 3 Einheiten Höhe verschwindet jede Rundung als Wulst.
+Path fragezeichenBogen(Offset c, double s) {
+  return Path()
+    ..moveTo(c.dx - s * 0.46, c.dy - s * 0.16)
+    ..cubicTo(c.dx - s * 0.58, c.dy - s * 0.92,
+        c.dx + s * 0.58, c.dy - s * 0.92,
+        c.dx + s * 0.58, c.dy - s * 0.10)
+    ..cubicTo(c.dx + s * 0.58, c.dy + s * 0.26,
+        c.dx + s * 0.05, c.dy + s * 0.24,
+        c.dx + s * 0.05, c.dy + s * 0.54);
+}
+
 // ---------------------------------------------------------------------------
 // Transit Spark: Bahn unter einem Funken
 // ---------------------------------------------------------------------------
 
-/// Transit Spark — eine Bahn, darüber ein Funke.
+/// Transit Spark — eine Bahn, darüber ein Funke **mit Schleier**.
 ///
-/// Aufbau im 20er-Feld:
-///   * Bahn unten: Körper mit zwei Fenstern und zwei Rädern
-///   * Funke oben, leicht rechts versetzt
+/// Aufbau im 17er-Feld:
+///   * Bahn unten als UMRISS: Körper, zwei gefüllte Fenster, zwei Räder
+///   * Funke oben mit Schleier, der nach links oben ausläuft
 ///
-/// Die frühere Fassung ergänzte zwei Radar-Bögen links oben. Sie fielen
-/// gegen die kräftige Bahnfarbe nicht auf, machten aber aus einem Motiv
-/// drei und füllten die obere Hälfte, in der vorher nur der Funke stand.
+/// Die Bahn ist im Umriss gezeichnet, nicht gefüllt. Als gefüllter
+/// Block war sie die Ursache für „wirkt grauenhalt": neben
+/// `Icons.event`, einem reinen Umriss, hing eine geschlossene schwarze
+/// Fläche in der Liste - gleiche Ausdehnung, doppelte optische Schwere.
 class TransitSparkPainter extends _ModeSymbolPainter {
   TransitSparkPainter(super.color);
 
   @override
   void draw(Canvas canvas) {
-    // --- Bahn (unten, dominiert) ------------------------------------------
-    // Der Körper ist eine gefüllte Fläche; die Fenster sind echte Löcher
-    // über evenOdd, damit der Container durchscheint.
-    final koerper = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        const Rect.fromLTWH(2.8, 7.4, 14.4, 6.2),
-        const Radius.circular(2.2),
-      ));
-    for (final x in [6.4, 13.6]) {
-      koerper.addRect(
-        Rect.fromCenter(center: Offset(x, 10.5), width: 4.4, height: 2.6),
+    final linie = strich(color, 1.35);
+
+    // --- Bahn ---------------------------------------------------------------
+    // Körper als Umriss. Die Fenster sind gefüllt: als weitere Umrisse
+    // wären sie bei dieser Größe nur noch vier Striche, die mit dem
+    // Körper verschwimmen.
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        const Rect.fromLTWH(2.8, 6.7, 11.4, 5.3),
+        const Radius.circular(1.8),
+      ),
+      linie,
+    );
+    for (final x in [5.25, 11.75]) {
+      canvas.drawRect(
+        Rect.fromCenter(center: Offset(x, 9.3), width: 3.5, height: 1.6),
+        flaeche(color),
       );
     }
-    canvas.drawPath(
-      Path.from(koerper)..fillType = PathFillType.evenOdd,
-      flaeche(color),
-    );
-
-    // Räder: gefüllte Kreise, kein Ring. Bei dieser Größe verschwindet
-    // der Ring, gefüllt liest er sich als Rad.
-    for (final x in [6.4, 13.6]) {
-      canvas.drawCircle(Offset(x, 15.3), 1.35, flaeche(color));
+    for (final x in [5.25, 11.75]) {
+      canvas.drawCircle(Offset(x, 13.5), 1.1, linie);
     }
 
-    // --- Funke (oben) ------------------------------------------------------
-    canvas.drawPath(
-      stern(const Offset(15.6, 3.7), 3.1, 0.34),
-      flaeche(color),
-    );
+    // --- Funke mit Schleier -------------------------------------------------
+    funkeMitSchleier(canvas, const Offset(12.2, 3.0), 2.2, color);
   }
 }
 
@@ -184,33 +241,32 @@ class TransitSparkPainter extends _ModeSymbolPainter {
 // Find your Spark: ein Funke sucht den anderen
 // ---------------------------------------------------------------------------
 
-/// Find your Spark — eine Lupe, in deren Linse ein Funke liegt.
+/// Find your Spark — eine Lupe, in deren Linse ein Funke **mit Schleier**
+/// liegt.
 ///
-/// Die Lupe ist das „suchen", der Funke darin das „gefundene". Die
-/// frühere Fassung setzte zusätzlich einen zweiten, kleineren Funken
-/// links außen - der war neben dem Funken in der Linse ein gleichwer-
-/// tiger Klotz ohne eigene Bedeutung, und beide zusammen machten die
-/// Linse voll. Jetzt ein Motiv: der Funke liegt exakt im Mittelpunkt der
-/// Linse, das Auge findet ihn sofort.
+/// Die Lupe ist das „suchen", der Funke darin das „gefundene". Der
+/// Schleier läuft nach links oben aus und zeigt die Flugrichtung — so
+/// war der Hinweis auf Bewegung schon da, er war nur nicht als
+/// Schleier erkennbar.
 class FindSparkPainter extends _ModeSymbolPainter {
   FindSparkPainter(super.color);
 
   @override
   void draw(Canvas canvas) {
-    const c = Offset(8.8, 8.8);
+    const c = Offset(7.1, 7.1);
 
-    // Funke im Zentrum der Linse.
-    canvas.drawPath(stern(c, 2.7, 0.34), flaeche(color));
+    // Funke mit Schleier im Zentrum der Linse.
+    funkeMitSchleier(canvas, c, 2.35, color);
 
     // Lupenring um den Funken.
-    canvas.drawCircle(c, 5.8, strich(color, 1.45));
+    canvas.drawCircle(c, 5.1, strich(color, 1.35));
 
     // Stiel: startet auf dem Ring (45°) und läuft nach rechts unten bis
-    // in die Ecke des 20er-Felds.
+    // in die Ecke des 17er-Felds.
     canvas.drawLine(
-      const Offset(12.9, 12.9),
-      const Offset(17.7, 17.7),
-      strich(color, 1.6),
+      const Offset(10.7, 10.7),
+      const Offset(15.0, 15.0),
+      strich(color, 1.5),
     );
   }
 }
@@ -219,44 +275,56 @@ class FindSparkPainter extends _ModeSymbolPainter {
 // Zufallschat: leere Sprechblase
 // ---------------------------------------------------------------------------
 
-/// Zufallschat — eine leere Sprechblase.
+/// Zufallschat — Sprechblase mit Fragezeichen.
 ///
-/// Die frühere Fassung trug zusätzlich ein gezeichnetes Fragezeichen und
-/// einen Schwanz aus drei freistehenden Linien. Der Schwanz war das
-/// eigentliche Problem: drei Linien neben einer Rounded-Box lesen sich als
-/// Schrägstrich, nicht als Blase, und die Verbindungsstelle klaffte. Das
-/// Fragezeichen füllte die Blase zusätzlich, ohne Information zu tragen —
-/// die Kachel darunter heißt ohnehin „Zufallschat".
-///
-/// Jetzt nur noch die Blase. Der Schwanz entsteht über
-/// [Path.combine]: Außenkontur (Rounded-Box ∪ Dreieck) minus
-/// Innenkontur (um die halbe Strichstärke nach innen versetzte Box).
-/// Dadurch ist der Schwanz Teil derselben Fläche und kann keine Naht
-/// bekommen — genau das war vorher der Grund für das Krumme.
+/// Das Fragezeichen ist die Information, die vorher fehlte: die Kachel
+/// heißt „Zufallschat", eine leere Blase sagt davon nichts. Zwei Frage-
+/// zeichen, weil der Zufall zielt, nicht eine offene Frage.
 class QuestionChatPainter extends _ModeSymbolPainter {
   QuestionChatPainter(super.color);
 
   @override
   void draw(Canvas canvas) {
-    const st = 1.45;
+    const st = 1.35;
     final aussen = Path()
       ..addRRect(RRect.fromRectAndRadius(
-        const Rect.fromLTWH(2.2, 2.6, 15.6, 12.2),
-        const Radius.circular(3.4),
+        const Rect.fromLTWH(1.9, 2.2, 13.2, 10.4),
+        const Radius.circular(3.0),
       ));
     final schwanz = Path()
-      ..moveTo(6.0, 13.4)
-      ..lineTo(4.0, 18.4)
-      ..lineTo(10.4, 15.0)
+      ..moveTo(4.8, 11.4)
+      ..lineTo(3.0, 15.6)
+      ..lineTo(8.4, 12.4)
       ..close();
     final mitSchwanz = Path.combine(PathOperation.union, aussen, schwanz);
 
     final innen = Path()
       ..addRRect(RRect.fromRectAndRadius(
-        const Rect.fromLTWH(2.2 + st, 2.6 + st, 15.6 - 2 * st, 12.2 - 2 * st),
-        const Radius.circular(3.4 - st / 2),
+        const Rect.fromLTWH(1.9 + st, 2.2 + st, 13.2 - 2 * st, 10.4 - 2 * st),
+        const Radius.circular(3.0 - st / 2),
       ));
-    final ring = Path.combine(PathOperation.difference, mitSchwanz, innen);
-    canvas.drawPath(ring, flaeche(color));
+    canvas.drawPath(
+      Path.combine(PathOperation.difference, mitSchwanz, innen),
+      flaeche(color),
+    );
+
+    // Zwei Fragezeichen, das große links, das kleine rechts versetzt.
+    // Versetzt, damit sie sich nicht zu einer Lesezeichenreihe
+    // zusammenschließen - die Blase ist hochkant.
+    const gross = Offset(5.9, 6.3);
+    const klein = Offset(11.2, 8.4);
+    final s = strich(color, 1.15);
+    for (final frage in [
+      (c: gross, h: 4.6),
+      (c: klein, h: 3.2),
+    ]) {
+      final r = frage.h / 2.0;
+      canvas.drawPath(fragezeichenBogen(frage.c, r), s);
+      canvas.drawCircle(
+        Offset(frage.c.dx, frage.c.dy + r * 0.86),
+        r * 0.17,
+        flaeche(color),
+      );
+    }
   }
 }
