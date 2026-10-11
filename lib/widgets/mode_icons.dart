@@ -12,19 +12,33 @@ typedef ModeSymbolBuilder = CustomPainter Function(Color color);
 /// Alle drei sind [CustomPainter], kein Bild-Asset: sie skalieren scharf
 /// auf jede Dichte und nehmen die Theme-Farbe des Containers an.
 ///
+/// ## Ein Motiv pro Symbol
+///
+/// Die zweite Fassung zeichnete in dasselbe Feld mehrere Motive
+/// nebeneinander - Transit Spark bekam Radar-Bögen UND Funke UND Zug,
+/// Find your Spark zwei Funken plus Lupe. In der echten Liste wirkt das
+/// nicht reichhaltig, sondern unruhig: neben `Icons.event` und
+/// `Icons.qr_code_scanner`, die je EIN Motiv haben und deshalb sofort
+/// lesbar sind, zerfielen die Eigenzeichen in Klecks. Zurück auf je ein
+/// Motiv, das den Namen trägt.
+///
 /// ## Gleiche Größe wie die Material-Symbole
 ///
 /// Material-Symbole sind in einem 24x24-Viewport gezeichnet, ihr Inhalt
 /// liegt aber in einem 20x20-Feld in der Mitte - zwei Einheiten Luft auf
 /// jeder Seite. Die erste Fassung dieser Symbole füllte das volle 24er-
-/// Feld und wirkte dadurch rund 20 % größer als `Icons.event` und
-/// `Icons.qr_code_scanner` neben sich.
+/// Feld und wirkte dadurch rund 20 % größer als die Nachbarn.
 ///
-/// Deshalb zeichnen alle drei in ein [INHALT]-Quadrat, das zentral im
+/// Deshalb zeichnen alle drei in ein [inhalt]-Quadrat, das zentral im
 /// 24er-Viewport liegt. [ModeSymbol] skaliert es entsprechend.
 ///
-/// Die Formen sind absichtlich auf wenige Striche reduziert: bei 28 dp
-/// sieht man keine Feinheiten mehr, und überladene Pfade werden zu Grau.
+/// ## Strichstärke
+///
+/// Material nutzt 2 Einheiten auf 24, also gut ein Zehntel der Kanten-
+/// länge. Auf das 20er-Feld übertragen sind das 1.67. Die Eigenzeichen
+/// lagen mit 1.5-1.6 knapp darunter und wirkten dadurch optisch schwerer
+/// als die Nachbarn - bei gleicher Farbe und Fläche liest sich das als
+/// "dicker". Hier jetzt 1.45.
 
 /// Kantenlänge des 24x24-Viewports.
 const double _viewport = 24.0;
@@ -117,39 +131,34 @@ Paint strich(Color color, double breite) => Paint()
 Paint flaeche(Color color) => Paint()..color = color;
 
 // ---------------------------------------------------------------------------
-// Transit Spark: Funke + Bahn + Radar
+// Transit Spark: Bahn unter einem Funken
 // ---------------------------------------------------------------------------
 
-/// Transit Spark — ein Funke über einer Bahn, mit Radar-Bögen.
+/// Transit Spark — eine Bahn, darüber ein Funke.
 ///
 /// Aufbau im 20er-Feld:
-///   * Bahn unten: Körper mit zwei Fenstern und Radsatz
-///   * Funke oben rechts, als „Spark"
-///   * zwei Radar-Bögen links, die vom Funken weg laufen
+///   * Bahn unten: Körper mit zwei Fenstern und zwei Rädern
+///   * Funke oben, leicht rechts versetzt
 ///
-/// Die Bahn ist das dominierende Element — sie trägt die Bedeutung
-/// „unterwegs". Der Funke sitzt darüber und zeigt den Treffer.
+/// Die frühere Fassung ergänzte zwei Radar-Bögen links oben. Sie fielen
+/// gegen die kräftige Bahnfarbe nicht auf, machten aber aus einem Motiv
+/// drei und füllten die obere Hälfte, in der vorher nur der Funke stand.
 class TransitSparkPainter extends _ModeSymbolPainter {
   TransitSparkPainter(super.color);
 
   @override
   void draw(Canvas canvas) {
-    final linie = strich(color, 1.5);
-
     // --- Bahn (unten, dominiert) ------------------------------------------
-    // Körper mit den Fenstern ALS Löcher im Pfad, nicht über
-    // BlendMode.dstOut. Der erste Entwurf stanzte mit dstOut aus - das
-    // arbeitet aber auf der Ebene des CustomPaint, und die ausgestanzten
-    // Stellen wurden SCHWARZ statt durchsichtig. Über evenOdd sind es
-    // echte Löcher: der Container zeigt durch.
+    // Der Körper ist eine gefüllte Fläche; die Fenster sind echte Löcher
+    // über evenOdd, damit der Container durchscheint.
     final koerper = Path()
       ..addRRect(RRect.fromRectAndRadius(
-        const Rect.fromLTWH(2.6, 11.6, 14.8, 5.0),
-        const Radius.circular(2.5),
+        const Rect.fromLTWH(2.8, 7.4, 14.4, 6.2),
+        const Radius.circular(2.2),
       ));
-    for (final x in [4.6, 8.4, 12.2, 16.0]) {
+    for (final x in [6.4, 13.6]) {
       koerper.addRect(
-        Rect.fromCenter(center: Offset(x, 13.2), width: 1.9, height: 2.1),
+        Rect.fromCenter(center: Offset(x, 10.5), width: 4.4, height: 2.6),
       );
     }
     canvas.drawPath(
@@ -157,31 +166,17 @@ class TransitSparkPainter extends _ModeSymbolPainter {
       flaeche(color),
     );
 
-    // Radsatz: zwei Räder als Ringe. Ringe lesen bei dieser Größe besser
-    // als Kreuze.
-    for (final x in [5.4, 14.6]) {
-      canvas.drawCircle(Offset(x, 17.8), 1.5, linie);
+    // Räder: gefüllte Kreise, kein Ring. Bei dieser Größe verschwindet
+    // der Ring, gefüllt liest er sich als Rad.
+    for (final x in [6.4, 13.6]) {
+      canvas.drawCircle(Offset(x, 15.3), 1.35, flaeche(color));
     }
 
-    // --- Funke (oben rechts, größer) --------------------------------------
+    // --- Funke (oben) ------------------------------------------------------
     canvas.drawPath(
-      stern(const Offset(14.4, 4.2), 4.6, 0.34),
+      stern(const Offset(15.6, 3.7), 3.1, 0.34),
       flaeche(color),
     );
-
-    // --- Radar-Bögen (links oben) -----------------------------------------
-    // Vom Funken weg laufend. Halbkreise mit wachsendem Radius, gleicher
-    // Winkel — die klassische Radar-Lesart.
-    for (var i = 0; i < 2; i++) {
-      final r = 2.6 + i * 2.0;
-      canvas.drawArc(
-        Rect.fromCircle(center: const Offset(4.4, 7.4), radius: r),
-        math.pi * 0.85,
-        math.pi * 0.55,
-        false,
-        linie,
-      );
-    }
   }
 }
 
@@ -189,85 +184,79 @@ class TransitSparkPainter extends _ModeSymbolPainter {
 // Find your Spark: ein Funke sucht den anderen
 // ---------------------------------------------------------------------------
 
-/// Find your Spark — ein Funke mit Lupe, in der ein zweiter liegt.
+/// Find your Spark — eine Lupe, in deren Linse ein Funke liegt.
 ///
-/// Die Lupe ist das „suchen", der Funke darin das „gefundene". Ein
-/// dritter, kleiner Funke links außen zeigt die Menge, in der gesucht
-/// wird. Alle drei sind Sterne mit demselben [stern]-Helfer, nur in
-/// verschiedener Größe — dadurch liest es sich als Familie, nicht als
-/// drei verschiedene Objekte.
+/// Die Lupe ist das „suchen", der Funke darin das „gefundene". Die
+/// frühere Fassung setzte zusätzlich einen zweiten, kleineren Funken
+/// links außen - der war neben dem Funken in der Linse ein gleichwer-
+/// tiger Klotz ohne eigene Bedeutung, und beide zusammen machten die
+/// Linse voll. Jetzt ein Motiv: der Funke liegt exakt im Mittelpunkt der
+/// Linse, das Auge findet ihn sofort.
 class FindSparkPainter extends _ModeSymbolPainter {
   FindSparkPainter(super.color);
 
   @override
   void draw(Canvas canvas) {
-    final lupe = strich(color, 1.6);
+    const c = Offset(8.8, 8.8);
 
-    // Kleiner Funke links — die Menge, in der gesucht wird.
-    canvas.drawPath(
-      stern(const Offset(3.6, 3.4), 3.4, 0.36),
-      flaeche(color),
-    );
+    // Funke im Zentrum der Linse.
+    canvas.drawPath(stern(c, 2.7, 0.34), flaeche(color));
 
-    // Funke in der Lupe — deutlich kleiner als der andere, damit „groß
-    // sucht klein" lesbar ist.
-    canvas.drawPath(
-      stern(const Offset(11.6, 11.4), 2.9, 0.34),
-      flaeche(color),
-    );
+    // Lupenring um den Funken.
+    canvas.drawCircle(c, 5.8, strich(color, 1.45));
 
-    // Lupe: Ring um den gefundenen Funken.
-    canvas.drawCircle(const Offset(11.6, 11.4), 5.6, lupe);
-
-    // Stiel nach rechts unten. Endet innerhalb des 20er-Felds.
+    // Stiel: startet auf dem Ring (45°) und läuft nach rechts unten bis
+    // in die Ecke des 20er-Felds.
     canvas.drawLine(
-      const Offset(15.7, 15.5),
-      const Offset(19.2, 19.0),
-      lupe,
+      const Offset(12.9, 12.9),
+      const Offset(17.7, 17.7),
+      strich(color, 1.6),
     );
   }
 }
 
 // ---------------------------------------------------------------------------
-// Zufallschat: Sprechblase mit Fragezeichen
+// Zufallschat: leere Sprechblase
 // ---------------------------------------------------------------------------
 
-/// Zufallschat — Sprechblase mit Fragezeichen.
+/// Zufallschat — eine leere Sprechblase.
 ///
-/// Das Fragezeichen ist gezeichnet, nicht per TextPainter gesetzt: ein
-/// TextPainter braucht eine TextStyle und damit eine Schriftart, die bei
-/// 28 dp auf anderen Dichten anders aussieht.
+/// Die frühere Fassung trug zusätzlich ein gezeichnetes Fragezeichen und
+/// einen Schwanz aus drei freistehenden Linien. Der Schwanz war das
+/// eigentliche Problem: drei Linien neben einer Rounded-Box lesen sich als
+/// Schrägstrich, nicht als Blase, und die Verbindungsstelle klaffte. Das
+/// Fragezeichen füllte die Blase zusätzlich, ohne Information zu tragen —
+/// die Kachel darunter heißt ohnehin „Zufallschat".
+///
+/// Jetzt nur noch die Blase. Der Schwanz entsteht über
+/// [Path.combine]: Außenkontur (Rounded-Box ∪ Dreieck) minus
+/// Innenkontur (um die halbe Strichstärke nach innen versetzte Box).
+/// Dadurch ist der Schwanz Teil derselben Fläche und kann keine Naht
+/// bekommen — genau das war vorher der Grund für das Krumme.
 class QuestionChatPainter extends _ModeSymbolPainter {
   QuestionChatPainter(super.color);
 
   @override
   void draw(Canvas canvas) {
-    final s = strich(color, 1.5);
-
-    // Blase. Rundrechteck mit deutlichem Eckenradius — bei 20 Einheiten
-    // wirkt ein zu kleiner Radius wie ein Button statt wie eine Blase.
-    const blase = Rect.fromLTWH(2.2, 2.6, 15.6, 12.0);
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(blase, const Radius.circular(3.6)),
-      s,
-    );
-
-    // Schwanz nach links unten. Gerade, nicht gebogen — bei dieser Größe
-    // verschwindet eine Kurve.
+    const st = 1.45;
+    final aussen = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        const Rect.fromLTWH(2.2, 2.6, 15.6, 12.2),
+        const Radius.circular(3.4),
+      ));
     final schwanz = Path()
-      ..moveTo(6.4, 14.2)
-      ..lineTo(4.6, 18.6)
-      ..lineTo(10.2, 15.0);
-    canvas.drawPath(schwanz, s);
+      ..moveTo(6.0, 13.4)
+      ..lineTo(4.0, 18.4)
+      ..lineTo(10.4, 15.0)
+      ..close();
+    final mitSchwanz = Path.combine(PathOperation.union, aussen, schwanz);
 
-    // Fragezeichen. Der Bogen oben, dann die Kurve nach unten; der Punkt
-    // sitzt mittig darunter.
-    final frage = Path()
-      ..moveTo(7.6, 5.4)
-      ..cubicTo(7.6, 3.6, 12.4, 3.4, 12.4, 7.0)
-      ..cubicTo(12.4, 9.0, 10.0, 9.4, 10.0, 11.4);
-    canvas.drawPath(frage, s);
-
-    canvas.drawCircle(const Offset(10.0, 13.2), 1.1, flaeche(color));
+    final innen = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        const Rect.fromLTWH(2.2 + st, 2.6 + st, 15.6 - 2 * st, 12.2 - 2 * st),
+        const Radius.circular(3.4 - st / 2),
+      ));
+    final ring = Path.combine(PathOperation.difference, mitSchwanz, innen);
+    canvas.drawPath(ring, flaeche(color));
   }
 }
