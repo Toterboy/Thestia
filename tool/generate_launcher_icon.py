@@ -40,7 +40,7 @@ import pathlib
 import sys
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = ROOT / 'assets' / 'images' / 'thestia_icon_base.png'
@@ -148,7 +148,42 @@ def build_background(src: Image.Image, rgb: np.ndarray,
         return np.clip(out, 0, 255)
 
     bild = Image.fromarray(ebene(size).astype(np.uint8), 'RGB')
-    return bild.convert('RGBA')
+    return _rund(bild.convert('RGBA'), size)
+
+
+def _rund(rgb: Image.Image, size: int, weich: float = 1.2) -> Image.Image:
+    """Schneidet ein Quadrat zu einem Kreis mit weichem Rand.
+
+    WARUM: `android:background` einer adaptiven Datei ist ein RECHTECK.
+    Der Launcher legt seine eigene Form darueber - je nach Geraet ein
+    Squircle, ein Kreis, ein abgerundetes Quadrat. Der Verlauf im
+    Hintergrund fuellt aber die ganze Leinwand, also zeigt das Icon
+    IMMER in der Form des Launchers. Wer ein rundes Icon will, kann das
+    dem Launcher nicht vorschreiben: der legt die Form fest.
+
+    Der Weg, der unabhaengig vom Launcher rund aussieht: der Hintergrund
+    ist selbst schon ein Kreis und die Ecken sind transparent. Dann
+    beschnitten die meisten Masken nichts Sichtbares - der sichtbare
+    Teil ist der Kreis, gleichgueltig ob die Maske rund oder
+    squirclig ist.
+
+    Der Rand ist weich, weil der Launcher die Maske bei den meisten
+    Geraeten noch zusaetzlich antialiaset. Ein harter Alphaschnitt
+    zeigte sich sonst als helle oder dunkle Linie am Kreis.
+
+    Der Kreis sitzt zentriert und fuellt die Leinwand zu 100 %. Das ist
+    Absicht: kleiner ergaebe ringsum eine Luecke, in der die Form des
+    Launchers wieder sichtbar wuerde - also genau das, was hier
+    vermieden werden soll.
+    """
+    mask = Image.new('L', (size, size), 0)
+    ImageDraw.Draw(mask).ellipse([0, 0, size - 1, size - 1], fill=255)
+    if weich > 0:
+        mask = mask.filter(ImageFilter.GaussianBlur(radius=weich))
+
+    out = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    out.paste(rgb, (0, 0), mask)
+    return out
 
 
 def build_foreground(src: Image.Image, rgb: np.ndarray, art_a: np.ndarray,

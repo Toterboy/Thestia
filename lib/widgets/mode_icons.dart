@@ -235,54 +235,53 @@ class TransitSparkPainter extends _ModeSymbolPainter {
 
   @override
   void draw(Canvas canvas) {
-    final linie = strich(color, 1.3);
-    final dick = strich(color, 1.5);
-
-    // --- Dach ---------------------------------------------------------------
-    // Ein Strich ueber dem Kasten. Ohne ihn ist der Wagen ein
-    // Rechteck mit Fenstern; mit ihm ist es ein Fahrzeug mit Dach. Das
-    // ist der Unterschied, an dem "keine wirkliche Bahn" haengt.
-    canvas.drawLine(
-      const Offset(3.6, 6.0),
-      const Offset(13.4, 6.0),
-      linie,
-    );
-
-    // --- Kasten -------------------------------------------------------------
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        const Rect.fromLTWH(2.2, 6.4, 12.6, 5.0),
-        const Radius.circular(1.5),
-      ),
-      dick,
-    );
-
-    // Drei Fenster, gleichmaessig verteilt, mittig im Kasten.
-    for (final x in [4.6, 8.5, 12.4]) {
-      canvas.drawRect(
-        Rect.fromCenter(center: Offset(x, 8.9), width: 3.1, height: 1.8),
-        flaeche(color),
-      );
-    }
-
-    // --- Fahrwerk -----------------------------------------------------------
-    // Die Raeder muessen am Kasten ANSTOSSEN und untereinander durch
-    // eine Deichsel verbunden sein. Zwei lose Kreise unter einem
-    // Rechteck lesen sich als Spielzeug, nicht als Bahn.
-    canvas.drawLine(
-      const Offset(5.6, 12.7),
-      const Offset(11.4, 12.7),
-      linie,
-    );
-    for (final x in [5.6, 11.4]) {
-      canvas.drawCircle(Offset(x, 12.7), 1.4, linie);
-    }
+    // --- Zug ----------------------------------------------------------------
+    // `Icons.train` ist die Frontansicht eines Zuges. Sie ist schmal,
+    // fuellt die Breite des Feldes also nicht - aber genau DARIN liegt
+    // das Argument fuer die Frontansicht: ein schmales Zeichen mittig
+    // unter einem Funken ist ruhiger als ein breiter Wagen, der mit dem
+    // Funken um die Breite kaempft.
+    final zug = Icons.train.fontFamily;
+    // Links der Mitte und leicht ueber der Feldmitte: der Funke sitzt
+    // rechts oben, und ein Zug genau in der Mitte laege unter ihm wie
+    // schief. Die Diagonale Zug-unten-links nach Funke-oben-rechts
+    // traegt die Kachel, ohne dass eines der beiden Elemente untergeht.
+    _glyphe(canvas, Icons.train.codePoint, zug!, const Offset(7.6, 9.9), 10.0);
 
     // --- Funke mit Schleier -------------------------------------------------
-    // Im selben Painter, nicht als Stapel ueber dem Kasten: als
-    // eigener Stapel hing der Funk in der Ecke und der Wagen stand
-    // unten links, die Kachel war also unten lastig und oben leer.
-    funkeMitSchleier(canvas, const Offset(12.3, 2.6), 2.0, color);
+    funkeMitSchleier(canvas, const Offset(12.9, 4.0), 2.4, color);
+  }
+
+  /// Zeichnet eine Material-Glyphe in das 17er-Feld.
+  ///
+  /// Ueber [TextPainter] gesetzt, weil ein `Icon`-Widget innerhalb eines
+  /// [CustomPainter] nicht zur Verfuegung steht - der Zeichner hat nur
+  /// eine [Canvas]. Die Groesse ist bewusst ueber [skalierung] gesetzt:
+  /// Material-Glyphen tragen ihre Strichstaerke nicht mit, wenn man sie
+  /// skaliert, sie werden einfach dicker oder duenner. Darum wird fuer
+  /// die gewuenschte Sichtgroesse ueberhaupt erst der Maler gebaut und
+  /// das Ergebnis auf die Zielflaeche skaliert.
+  void _glyphe(
+    Canvas canvas,
+    int codePoint,
+    String family,
+    Offset mitte,
+    double groesse,
+  ) {
+    final tp = TextPainter(
+      text: TextSpan(
+        text: String.fromCharCode(codePoint),
+        style: TextStyle(fontFamily: family, fontSize: 100, color: color),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final sk = groesse / 100.0;
+    canvas.save();
+    canvas.translate(mitte.dx - (tp.width * sk) / 2,
+        mitte.dy - (tp.height * sk) / 2);
+    canvas.scale(sk);
+    tp.paint(canvas, Offset.zero);
+    canvas.restore();
   }
 }
 // ---------------------------------------------------------------------------
@@ -356,27 +355,22 @@ class QuestionChatPainter extends _ModeSymbolPainter {
       flaeche(color),
     );
 
-    // Zwei Fragezeichen, das grosse links oben, das kleine rechts
-    // unten. Versetzt, weil sie sich sonst zu einer Lesezeichenreihe
-    // zusammenschliessen - die Blase ist hochkant.
-    //
-    // Stroeke 0.95 statt 1.15 und etwas kleiner gesetzt: bei 1.15
-    // liefen die Fragezeichen bei 40dp in einen Block, und das kleine
-    // stiess mit Bogen UND Punkt ueber den Innenrand der Blase, also
-    // sichtbar abgeschnitten. Beides kam als "zu dick und abgeschnitten"
-    // zurueck.
-    const gross = (c: Offset(5.6, 5.8), h: 4.4);
-    const klein = (c: Offset(10.9, 8.3), h: 3.0);
-    final s = strich(color, 0.95);
-    for (final frage in [gross, klein]) {
-      final r = frage.h / 2.0;
-      canvas.drawPath(fragezeichenBogen(frage.c, r), s);
-      // Punkt mit sichtbarem Abstand zum Bogen.
-      canvas.drawCircle(
-        Offset(frage.c.dx + r * 0.18, frage.c.dy + r * 0.82),
-        r * 0.16,
-        flaeche(color),
-      );
-    }
+    // EIN Fragezeichen, gross und mittig. Die Vorgaengerversion hatte zwei
+    // versetzte und kam als "unvollstaendig" und dann "zu dick"
+    // zurueck: zwei Fragezeichen in einer hochkanten Blase lesen sich
+    // als Reihenzeichen, nicht als Zufall. Ein einziges, gross
+    // gesetztes Zeichen hat einen klaren Blickpunkt - das ist die
+    // Empfehlung, die fuer eine Icon-Liste ohnehin gilt: EIN
+    // Fokuspunkt, nicht mehrere.
+    const frage = (c: Offset(8.5, 7.2), h: 7.4);
+    final r = frage.h / 2.0;
+    final s = strich(color, 1.05);
+    canvas.drawPath(fragezeichenBogen(frage.c, r), s);
+    // Punkt mit sichtbarem Abstand zum Bogen.
+    canvas.drawCircle(
+      Offset(frage.c.dx + r * 0.18, frage.c.dy + r * 0.82),
+      r * 0.15,
+      flaeche(color),
+    );
   }
 }
