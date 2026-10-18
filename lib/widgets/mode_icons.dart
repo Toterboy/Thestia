@@ -235,55 +235,53 @@ class TransitSparkPainter extends _ModeSymbolPainter {
 
   @override
   void draw(Canvas canvas) {
-    // --- Zug ----------------------------------------------------------------
-    // `Icons.train` ist die Frontansicht eines Zuges. Sie ist schmal,
-    // fuellt die Breite des Feldes also nicht - aber genau DARIN liegt
-    // das Argument fuer die Frontansicht: ein schmales Zeichen mittig
-    // unter einem Funken ist ruhiger als ein breiter Wagen, der mit dem
-    // Funken um die Breite kaempft.
-    final zug = Icons.train.fontFamily;
-    // Links der Mitte und leicht ueber der Feldmitte: der Funke sitzt
-    // rechts oben, und ein Zug genau in der Mitte laege unter ihm wie
-    // schief. Die Diagonale Zug-unten-links nach Funke-oben-rechts
-    // traegt die Kachel, ohne dass eines der beiden Elemente untergeht.
-    _glyphe(canvas, Icons.train.codePoint, zug!, const Offset(7.6, 9.9), 10.0);
+    // Alle drei Symbole mit DIESER Strichstaerke. Das ist die einzige
+    // Zahl, die die Liste zusammenhaelt - die Apple-HIG nennt genau das
+    // (gleiche Strichstaerke, gleiche Detailtiefe, gleiche Perspektive).
+    //
+    // Ein Material-Glyph haelt sich nicht daran: `Icons.train` hat 2
+    // Einheiten auf 24, auf dieses Feld skaliert sind das 0.83. Deshalb
+    // sah die Material-Variante haeller aus als die anderen, obwohl sie
+    // die richtige Form hatte.
+    final linie = strich(color, 1.35);
+
+    // --- Zug ---------------------------------------------------------------
+    // Mittig auf 8.5: Kasten 2.6 bis 14.4, Raeder bei 5.6 und 11.4,
+    // ihr Mittelwert ist ebenfalls 8.5. Vorher stand der Wagen links
+    // unter dem Funken und wirkte dadurch schief.
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        const Rect.fromLTWH(1.8, 8.2, 13.4, 5.0),
+        const Radius.circular(1.5),
+      ),
+      linie,
+    );
+    for (final x in [5.1, 8.5, 11.9]) {
+      canvas.drawRect(
+        Rect.fromCenter(center: Offset(x, 10.7), width: 3.3, height: 1.9),
+        flaeche(color),
+      );
+    }
+    // Deichsel zwischen den Raedern: ohne sie lesen sich zwei lose
+    // Kreise als Spielzeug, nicht als Fahrwerk.
+    canvas.drawLine(
+      const Offset(5.4, 14.9),
+      const Offset(11.6, 14.9),
+      linie,
+    );
+    for (final x in [5.4, 11.6]) {
+      canvas.drawCircle(Offset(x, 14.9), 1.35, linie);
+    }
 
     // --- Funke mit Schleier -------------------------------------------------
-    funkeMitSchleier(canvas, const Offset(12.9, 4.0), 2.4, color);
-  }
-
-  /// Zeichnet eine Material-Glyphe in das 17er-Feld.
-  ///
-  /// Ueber [TextPainter] gesetzt, weil ein `Icon`-Widget innerhalb eines
-  /// [CustomPainter] nicht zur Verfuegung steht - der Zeichner hat nur
-  /// eine [Canvas]. Die Groesse ist bewusst ueber [skalierung] gesetzt:
-  /// Material-Glyphen tragen ihre Strichstaerke nicht mit, wenn man sie
-  /// skaliert, sie werden einfach dicker oder duenner. Darum wird fuer
-  /// die gewuenschte Sichtgroesse ueberhaupt erst der Maler gebaut und
-  /// das Ergebnis auf die Zielflaeche skaliert.
-  void _glyphe(
-    Canvas canvas,
-    int codePoint,
-    String family,
-    Offset mitte,
-    double groesse,
-  ) {
-    final tp = TextPainter(
-      text: TextSpan(
-        text: String.fromCharCode(codePoint),
-        style: TextStyle(fontFamily: family, fontSize: 100, color: color),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    final sk = groesse / 100.0;
-    canvas.save();
-    canvas.translate(mitte.dx - (tp.width * sk) / 2,
-        mitte.dy - (tp.height * sk) / 2);
-    canvas.scale(sk);
-    tp.paint(canvas, Offset.zero);
-    canvas.restore();
+    // Kleiner und naeher an die Ecke als der Zug: die Kachel ist ein
+    // Ganzes, und ein gleich grosser Funke neben einem Zug teilt es in
+    // zwei gleich starke Motive. Der Zug traegt die Kachel, der Funke
+    // markiert sie.
+    funkeMitSchleier(canvas, const Offset(13.6, 3.5), 1.9, color);
   }
 }
+
 // ---------------------------------------------------------------------------
 // Find your Spark: ein Funke sucht den anderen
 // ---------------------------------------------------------------------------
@@ -332,45 +330,54 @@ class QuestionChatPainter extends _ModeSymbolPainter {
 
   @override
   void draw(Canvas canvas) {
+    // --- Blase -----------------------------------------------------------
+    // Nach links unten ausgelagert: rechts oben sitzt der Funke, und
+    // eine Blase, die beide Raelder gleich verteilt, wirkt zerstueckelt.
     const st = 1.35;
     final aussen = Path()
       ..addRRect(RRect.fromRectAndRadius(
-        const Rect.fromLTWH(1.9, 2.2, 13.2, 10.4),
-        const Radius.circular(3.0),
+        const Rect.fromLTWH(1.2, 5.6, 10.8, 9.6),
+        const Radius.circular(2.8),
       ));
     final schwanz = Path()
-      ..moveTo(4.8, 11.4)
-      ..lineTo(3.0, 15.6)
-      ..lineTo(8.4, 12.4)
+      ..moveTo(3.8, 14.0)
+      ..lineTo(2.4, 17.0)
+      ..lineTo(7.0, 15.0)
       ..close();
     final mitSchwanz = Path.combine(PathOperation.union, aussen, schwanz);
 
     final innen = Path()
       ..addRRect(RRect.fromRectAndRadius(
-        const Rect.fromLTWH(1.9 + st, 2.2 + st, 13.2 - 2 * st, 10.4 - 2 * st),
-        const Radius.circular(3.0 - st / 2),
+        const Rect.fromLTWH(1.2 + st, 5.6 + st, 10.8 - 2 * st, 9.6 - 2 * st),
+        const Radius.circular(2.8 - st / 2),
       ));
     canvas.drawPath(
       Path.combine(PathOperation.difference, mitSchwanz, innen),
       flaeche(color),
     );
 
-    // EIN Fragezeichen, gross und mittig. Die Vorgaengerversion hatte zwei
-    // versetzte und kam als "unvollstaendig" und dann "zu dick"
-    // zurueck: zwei Fragezeichen in einer hochkanten Blase lesen sich
-    // als Reihenzeichen, nicht als Zufall. Ein einziges, gross
-    // gesetztes Zeichen hat einen klaren Blickpunkt - das ist die
-    // Empfehlung, die fuer eine Icon-Liste ohnehin gilt: EIN
-    // Fokuspunkt, nicht mehrere.
-    const frage = (c: Offset(8.5, 7.2), h: 7.4);
+    // --- Fragezeichen ------------------------------------------------------
+    // EIN Zeichen, gross und mittig in der Blase. Zwei versetzte lasen
+    // sich als Reihenzeichen; der Blickfang gehoert einem Motiv.
+    // Etwas duenner als die Blase (1.15), weil die geschlossenen Kurven
+    // eines Fragezeichens bei gleicher Staerke sichtbar schwerer wirken
+    // als eine offene Kontur - sonst ist die Tinte, nicht die Form, das
+    // was die Liste zusammenhaelt.
+    const frage = (c: Offset(6.6, 10.4), h: 5.8);
     final r = frage.h / 2.0;
-    final s = strich(color, 1.05);
-    canvas.drawPath(fragezeichenBogen(frage.c, r), s);
+    canvas.drawPath(fragezeichenBogen(frage.c, r), strich(color, 1.15));
     // Punkt mit sichtbarem Abstand zum Bogen.
     canvas.drawCircle(
       Offset(frage.c.dx + r * 0.18, frage.c.dy + r * 0.82),
-      r * 0.15,
+      r * 0.16,
       flaeche(color),
     );
+
+    // --- Funke mit Schleier -------------------------------------------------
+    // Ganz rechts oben, ohne die Blase zu beruehren: Blasenrand bei
+    // x = 12.0, Funkenkante bei 12.1. Beruehrten sie sich, laesst sich
+    // nicht mehr unterscheiden, ob es zwei Motive sind oder eines mit
+    // einem Klecks.
+    funkeMitSchleier(canvas, const Offset(14.2, 3.2), 2.1, color);
   }
 }
