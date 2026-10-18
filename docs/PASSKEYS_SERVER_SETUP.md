@@ -141,21 +141,77 @@ sind demnach **kein Sicherheitsrisiko** und bleiben absichtlich im Repo.
 
 ## Konfiguration setzen
 
-GoTrue (Quelle: `internal/conf/configuration.go`) verlangt bei aktivem
-WebAuthn/Passkeys zwingend:
+### ZUERST: Hosted oder Self-Hosted?
 
-| Env/Setting | Wert für Thestia |
+Die Datei beschreibt beide Wege. Sie unterscheiden sich an EINER Sache,
+und an ihr entscheidet sich, ob Passkeys ueberhaupt funktionieren:
+
+| | Hosted (Supabase Cloud) | Self-Hosted |
+|---|---|---|
+| `GOTRUE_WEBEAUTHN_RP_ID` setzbar | **nein** (kein Env-Zugriff) | ja |
+| RP-ID abstimmbar | nur ueber die Domain | frei |
+| Digital Asset Links auslieferbar | **nur fuer eigene Domain** | ja |
+
+**Auf Hosted ist die RP-ID nicht frei waehlbar.** GoTrue leitet sie aus
+der Auth-URL ab. Solange die App auf
+`https://<projekt>.supabase.co/auth/v1` zeigt, ist die RP-ID
+`<projekt>.supabase.co` - und Android laegt die assetlinks.json GENAU von
+dort. Die Datei liegt aber auf `auth.thestia.de` und wird nie abgerufen.
+Das ist kein Konfigurationsfehler, sondern ein Architekturfehler, und er
+laesst sich auf Hosted nicht durch Raten beheben.
+
+### Loesung: Custom Domain fuer den Auth-Dienst
+
+Supabase kann den Auth-Endpunkt unter einer eigenen Domain betreiben.
+Danach gilt automatisch:
+
+- Auth-Endpunkt: `https://auth.thestia.de/auth/v1`
+- RP-ID: `auth.thestia.de`
+- `assetlinks.json`: `https://auth.thestia.de/.well-known/assetlinks.json`
+
+...und DAS ist die Datei, die bereits gepflegt ist. Sie muss nur noch an
+der richtigen Adresse liegen.
+
+Ablauf:
+
+1. Dashboard -> **Settings -> API -> Custom Domains** -> `auth.thestia.de`
+   hinzufuegen. Supabase nennt das CNAME-Ziel, das beim DNS-Provider
+   gesetzt werden muss.
+2. DNS-CNAME bei `thestia.de` setzen, warten bis Supabase die Domain als
+   verifiziert markiert.
+3. Dashboard -> **Authentication -> URL Configuration -> Site URL** auf
+   `https://auth.thestia.de` stellen.
+4. `.env`: `SUPABASE_URL=https://auth.thestia.de`
+5. Neu bauen.
+
+Custom Domains sind eine Pro-Funktion. Auf Free gibt es diesen Weg nicht -
+dann bleiben Passkeys auf Android unmoeglich, weil die
+Digital-Asset-Links-Pruefung fuer `*.supabase.co` nicht eigene Daten sind.
+
+> WICHTIG fuer die Fehlersuche: `https://auth.thestia.de/` mit HTTP 200 zu
+> beantworten beweist NICHTS, dass die Domain als Auth-Endpunkt haengt -
+> ein normaler Webserver liefert auch 200. Der Beweis ist
+> `https://auth.thestia.de/auth/v1/settings`. Antwortet das mit 404, ist es
+> kein Auth-Endpunkt, sondern nur irgendein Host, der die
+> assetlinks.json ausliefert.
+
+### GoTrue (Quelle: `internal/conf/configuration.go`)
+
+Verlangt bei aktivem WebAuthn/Passkeys zwingend:
+
+| Env/Setting | Wert fuer Thestia |
 |---|---|
-| `GOTRUE_WEBAUTHN_RP_ID` | `auth.thestia.de` |
-| `GOTRUE_WEBAUTHN_RP_DISPLAY_NAME` | z. B. `Thestia` |
-| `GOTRUE_WEBAUTHN_RP_ORIGINS` | kommaseparierte Liste – MUSS den `android:apk-key-hash:`-Origin des Release-Keys, `https://auth.thestia.de` und ggf. `https://thestia.de` enthalten (Debug-Hash nur lokal, nicht in Produktion) |
+| `GOTRUE_WEBEAUTHN_RP_ID` | `auth.thestia.de` |
+| `GOTRUE_WEBEAUTHN_RP_DISPLAY_NAME` | z. B. `Thestia` |
+| `GOTRUE_WEBEAUTHN_RP_ORIGINS` | kommaseparierte Liste - MUSS den `android:apk-key-hash:`-Origin des Release-Keys und `https://auth.thestia.de` enthalten (Debug-Hash nur lokal, nicht in Produktion) |
 
-**Supabase (Hosted):** Dashboard → **Authentication → Sign In / Providers →
-Passkeys (Beta)** → dort **RP ID**, **Display Name** und **Origins** pflegen.
-Nach dem Speichern sofort wirksam (kein Redeploy nötig).
-
-**Self-Hosted:** die drei `GOTRUE_WEBAUTHN_*`-Variablen setzen und den
+**Self-Hosted:** die drei `GOTRUE_WEBEAUTHN_*`-Variablen setzen und den
 Auth-Dienst neu starten.
+
+**Hosted:** es gibt keine Env-Variablen. RP-ID und Origins folgen
+automatisch aus Custom Domain und Site URL - siehe oben. Ein RP-ID-Feld
+von Hand gibt es dort nicht; wer eines sieht, hat ein selbstgehostetes
+oder ein anderes Projekt vor sich.
 
 ## Verifikation (was sendet das Gerät wirklich?)
 
