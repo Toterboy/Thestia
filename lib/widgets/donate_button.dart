@@ -103,11 +103,12 @@ class DonateButton extends StatelessWidget {
       _toast(messenger, failedText);
       return;
     }
-    final ok = await canLaunchUrl(uri);
-    if (!ok) {
-      _toast(messenger, failedText);
-      return;
-    }
+    // Kein canLaunchUrl() davor. Die Abfrage gilt seit Android 11 als
+    // unzuverlaessig: ohne <queries> im Manifest liefert sie `false`,
+    // obwohl ein Browser installiert ist und der Aufruf funktionieren
+    // wuerde. Sie als Tor zu benutzen hiess hier, jede Web-Seite als
+    // "kann nicht geoeffnet werden" zu melden. Der Aufruf selbst
+    // entscheidet, nicht die Vorabfrage.
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!opened) {
       _toast(messenger, failedText);

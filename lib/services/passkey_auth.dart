@@ -195,6 +195,24 @@ class PasskeyAuth {
     // FlutterError - daher String-basiert auf den Fehlertyp prüfen.
     final text = e.toString();
 
+    // Der ROHE Fehlertext gehoert ins Log, und zwar VOR jeder Zuordnung.
+    //
+    // Grund: die Zuordnung unten ist eine Whitelist. Was nicht auf eines
+    // ihrer Muster passt, landet in der generischen Meldung
+    // "Einrichtung fehlgeschlagen" - und die nennt die Ursache nicht.
+    // Damit war die Meldung "Passkey-Einrichtung fehlgeschlagen" die
+    // Gesamtaussage des Problems, obwohl Android eine sehr genaue
+    // Fehlerklasse liefert (SecurityError, NotAllowedError,
+    // android-sync-account-not-available, GetCredentialProvider-
+    // ConfigurationException ...). Ohne diesen Log ist nicht
+    // unterscheidbar, ob die Domain-Verknüpfung, der Sperrbildschirm,
+    // die Play Services oder der Server die Ursache ist - und jede
+    // dieser vier Klassen sieht in der Oberflaeche gleich aus.
+    if (kDebugMode) {
+      debugPrint('[PasskeyAuth] $action ROHER Fehler '
+          '(${e.runtimeType}): $text');
+    }
+
     if (text.contains('cancelled') ||
         text.toLowerCase().contains('cancellationexception')) {
       return AppException(
@@ -328,6 +346,43 @@ class PasskeyAuth {
         'RP-ID auf auth.thestia.de gesetzt ist.$reason',
         messageKey: '${k}serverRejected',
         params: {'reason': reason},
+      );
+    }
+
+    // Digital Asset Links: Androids eigene Fehlerklasse fuer genau den
+    // Fall, in dem die Zeremonie gar nicht erst beginnt.
+    //
+    // WICHTIG - das ist NICHT dasselbe wie "SecurityError" weiter oben.
+    // "SecurityError" ist die WebAuthn-Fehlermeldung, wenn der Browser
+    // eine nicht verknuepfte Domain sieht. Android Credential Manager
+    // laesst die Zeremonie aber schon vorher scheitern und wirft dann
+    // aus dem StatementService:
+    //
+    //     Unable to verify package. Digital Asset Links verification failed.
+    //     GetCredentialProviderConfigurationException
+    //     AssetLinkError
+    //
+    // Dieser Text enthielt vorher keines der Muster und landete
+    // deshalb im "unbekannt"-Zweig mit der Meldung "Passkey-Einrichtung
+    // fehlgeschlagen" - ohne jeden Hinweis darauf, dass die Ursache an
+    // der assetlinks.json liegt. Genau das war der Fall: die Datei war
+    // erreichbar und korrekt, aber die Verknuepfung schlug fehl, und
+    // die Meldung sagte nichts darueber.
+    final dalText = text.toLowerCase();
+    if (dalText.contains('asset link') ||
+        dalText.contains('assetlink') ||
+        dalText.contains('digital asset') ||
+        dalText.contains('verify package') ||
+        dalText.contains('getcredentialproviderconfiguration')) {
+      debugPrint('[PasskeyAuth] Digital Asset Links: $e');
+      return AppException(
+        'Die App konnte sich nicht mit auth.thestia.de verknuepfen '
+        '(Digital Asset Links). Die Verknuepfung prueft den '
+        'Fingerabdruck des Signaturzertifikats der installierten App. '
+        'Bei einer Neuinstallation aus dem Play Store ist das ein '
+        'anderes Zertifikat als bei einem lokalen Build - dann passt '
+        'der Fingerabdruck in der Datei noch nicht.',
+        messageKey: '${k}assetLinks',
       );
     }
 

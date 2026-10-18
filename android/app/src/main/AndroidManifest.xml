@@ -195,5 +195,30 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!--
+            Sichtbarkeit fuer das Oeffnen von Web-Links (Button
+            "Unterstuetzen").
+
+            Seit Android 11 (API 30) gilt Package-Visibility: eine App
+            sieht nur die Pakete, die sie ausdruecklich per <queries>
+            anmeldet. Ohne diesen Eintrag liefert canLaunchUrl() fuer
+            einen https://-Link `false` - auch dann, wenn ein Browser
+            installiert ist. Der Button meldete daraufhin "Die Seite
+            konnte nicht geoeffnet werden", obwohl der Browser da war.
+
+            `data` ohne host gilt fuer alle Hosts. Das ist hier richtig:
+            der Link ist zur Laufzeit konfigurierbar (LIBERAPAY_URL),
+            und ein auf liberapay.com festgelegtes Manifest wuerde mit
+            jeder anderen Zahlungsadresse wieder genau diesen Fehler
+            erzeugen.
+        -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="http"/>
+        </intent>
     </queries>
 </manifest>

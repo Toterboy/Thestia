@@ -1514,6 +1514,13 @@ const Map<String, Map<String, String>> _strings = {
         'Der Server hat die Passkey-Anfrage abgelehnt. Bitte prüfe in '
         'den Supabase-Einstellungen, ob "Passkeys" aktiviert ist und die '
         'RP-ID auf auth.thestia.de gesetzt ist.{reason}',
+    'passkey.err.assetLinks':
+        'Die App konnte sich nicht mit auth.thestia.de verkn\u00fcpfen '
+        '(Digital Asset Links). Die Verkn\u00fcpfung pr\u00fcft den '
+        'Fingerabdruck des Signaturzertifikats der installierten App. '
+        'Bei einer Neuinstallation aus dem Play Store ist das ein '
+        'anderes Zertifikat als bei einem lokalen Build - dann passt '
+        'der Fingerabdruck in der Datei noch nicht.',
     'passkey.err.pluginMissing':
         'Die Passkey-Funktion ist in dieser Version der App nicht '
         'verfügbar. Bitte melde es dem Support - es ist ein Fehler im '
@@ -4122,6 +4129,12 @@ const Map<String, Map<String, String>> _strings = {
         'The server rejected the passkey request. Please check in the '
         'Supabase settings whether "Passkeys" is enabled and the RP ID '
         'is set to auth.thestia.de.{reason}',
+    'passkey.err.assetLinks':
+        'The app could not associate itself with auth.thestia.de '
+        '(Digital Asset Links). The association checks the fingerprint '
+        'of the installed app\u2019s signing certificate. A fresh install '
+        'from the Play Store carries a different certificate than a '
+        'local build - the fingerprint in the file does not match yet.',
     'passkey.err.pluginMissing':
         'The passkey feature is not available in this version of the app. '
         'Please report it to support - it is a build error, not a problem '
