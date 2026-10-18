@@ -208,10 +208,41 @@ Verlangt bei aktivem WebAuthn/Passkeys zwingend:
 **Self-Hosted:** die drei `GOTRUE_WEBEAUTHN_*`-Variablen setzen und den
 Auth-Dienst neu starten.
 
-**Hosted:** es gibt keine Env-Variablen. RP-ID und Origins folgen
-automatisch aus Custom Domain und Site URL - siehe oben. Ein RP-ID-Feld
-von Hand gibt es dort nicht; wer eines sieht, hat ein selbstgehostetes
-oder ein anderes Projekt vor sich.
+**Hosted (Free und Pro):** es gibt keine Env-Variablen, ABER das Dashboard
+stellt genau dieselben Felder bereit. Nach der Supabase-Doku
+(guides/auth/passkeys) werden RP ID und Origins vorbelegt und lassen
+sich dort pflegen:
+
+> "The dashboard pre-fills these from your project's Site URL and project
+> name. Adjust them if your production app is served from a different
+> domain."
+
+Weg: **Dashboard -> Authentication -> Sign In / Providers -> Passkeys
+(Beta)**. Dort eintragen:
+
+| Feld | Wert |
+|---|---|
+| RP ID | `auth.thestia.de` |
+| Display Name | `Thestia` |
+| Origins | `https://auth.thestia.de,android:apk-key-hash:jL730I-GZlQuHVO5tCbFRq-CR5Ma3-ggYZ4X95E_Pho` |
+
+Nach dem Speichern sofort wirksam, ohne Redeploy.
+
+Der RP-ID ist auf Free nicht frei waehlbar - er muss eine Domain sein,
+deren `assetlinks.json` man selbst ausliefert. Genau deshalb ist hier
+`auth.thestia.de` richtig und NICHT die Projekt-Domain: der Auth-Endpunkt
+muss nicht unter dieser Domain liegen, es muss nur die
+Digital-Asset-Links-Datei dort liegen.
+
+Fuer lokale Tests mit einem Debug-Build zusaetzlich - und nur lokal:
+
+    android:apk-key-hash:WrjQ1eUdTGnHEeMSAqhA6tqoMFqd6yOINSrNwVwwqXk
+
+Vor dem Play-Upload kommt ein DRITTER Origin dazu: der SHA-256 aus
+**Play Console -> Setup -> App-Integritaet**, ebenfalls als
+`android:apk-key-hash:`. Von Play signierte Builds tragen einen anderen
+Schluessel als der lokale Release-Build, sonst schlaegt die
+Digital-Asset-Links-Pruefung dort fehl.
 
 ## Verifikation (was sendet das Gerät wirklich?)
 
