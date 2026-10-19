@@ -2,6 +2,8 @@
 // Beta-Feature) - bewusst genutzt, Ignorieren der Warnung projectweit.
 // ignore_for_file: experimental_member_use
 
+import 'dart:developer' as developer;
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -204,14 +206,25 @@ class PasskeyAuth {
     // Gesamtaussage des Problems, obwohl Android eine sehr genaue
     // Fehlerklasse liefert (SecurityError, NotAllowedError,
     // android-sync-account-not-available, GetCredentialProvider-
-    // ConfigurationException ...). Ohne diesen Log ist nicht
-    // unterscheidbar, ob die Domain-Verknüpfung, der Sperrbildschirm,
+    // ConfigurationException ...). Ohne dieses Log ist nicht
+    // unterscheidbar, ob die Domain-Verknuepfung, der Sperrbildschirm,
     // die Play Services oder der Server die Ursache ist - und jede
     // dieser vier Klassen sieht in der Oberflaeche gleich aus.
+    //
+    // `developer.log` statt `debugPrint`: debugPrint steht in
+    // Release-Builds in einem `if (kDebugMode)`-Zweig, und der Compiler
+    // wirft den Zweig samt Aufruf weg. Die Diagnose waere damit genau
+    // in den Builds weg, die der Nutzer tatsaechlich testet. log() aus
+    // dart:developer ueberlebt und landet im Logcat.
+    developer.log(
+      'Passkey $action ROHER Fehler (${e.runtimeType}): $text',
+      name: 'PasskeyAuth',
+    );
     if (kDebugMode) {
       debugPrint('[PasskeyAuth] $action ROHER Fehler '
           '(${e.runtimeType}): $text');
     }
+
 
     if (text.contains('cancelled') ||
         text.toLowerCase().contains('cancellationexception')) {
