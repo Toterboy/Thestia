@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -7,6 +8,7 @@ import 'package:thestia/models/habitude_level.dart';
 import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/services/secure_storage.dart';
+import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/utils/constants.dart';
 
 /// Verwaltet das eigene Nutzerprofil und persistiert es lokal.
@@ -64,6 +66,52 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
         await _storage.remove(AppConstants.prefsProfileKey);
         state = UserProfile(id: AppConstants.currentUserId, name: '', bio: '');
       }
+    }
+
+    // Serververwaltete Felder nachziehen.
+    //
+    // BUG (Nutzerbefund): Nach der Admin-Freigabe blieb das eigene
+    // Profil auf "nicht verifiziert". Ursache: Das Profil kommt
+    // ausschliesslich aus dem LOKALEN Secure-Store. `is_verified` wird
+    // aber serverseitig gesetzt (Admin-Freigabe), und nichts holte
+    // diesen Wert nach. Die lokale Kopie blieb fuer immer auf false.
+    //
+    // Betroffen ist nicht nur das Badge: auch die Modus-Sperren und
+    // die Anzeige "wird ueberprueft" lesen dieses Feld.
+    unawaited(_refreshServerManagedFields());
+  }
+
+  /// Holt die Felder, die der Server verwaltet, und schreibt sie in den
+  /// lokalen Stand.
+  ///
+  /// Abgefragt wird nur `is_verified` - bewusst. Der Rest des Profils
+  /// ist nutzereigen und kommt aus dem Secure-Store; der Server ist
+  /// fuer ihn nicht die Quelle.
+  ///
+  /// Fehler werden verschluckt: ohne Server bleibt der lokale Stand
+  /// stehen, und die App ist offline benutzbar.
+  Future<void> _refreshServerManagedFields() async {
+    try {
+      if (!SupabaseService.isInitialized) return;
+      final userId = SupabaseService.currentUser?.id;
+      if (userId == null || userId.isEmpty) return;
+
+      final res = await SupabaseService.client
+          .from('profiles')
+          .select('is_verified')
+          .eq('user_id', userId)
+          .maybeSingle();
+      if (res == null) return;
+
+      final serverVerified = res['is_verified'] as bool? ?? false;
+      if (serverVerified == state.isVerified) return;
+
+      debugPrint('[ProfileNotifier] is_verified vom Server: '
+          '${state.isVerified} -> $serverVerified');
+      state = state.copyWith(isVerified: serverVerified);
+      await _persist();
+    } catch (e) {
+      debugPrint('[ProfileNotifier] Serverstatus nicht abrufbar: $e');
     }
   }
 

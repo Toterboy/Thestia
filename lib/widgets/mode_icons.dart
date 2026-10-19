@@ -238,47 +238,105 @@ class TransitSparkPainter extends _ModeSymbolPainter {
     // Alle drei Symbole mit DIESER Strichstaerke. Das ist die einzige
     // Zahl, die die Liste zusammenhaelt - die Apple-HIG nennt genau das
     // (gleiche Strichstaerke, gleiche Detailtiefe, gleiche Perspektive).
+
+    // --- Zug (Frontansicht) -------------------------------------------------
+    // GEAENDERT: der Zug ist wieder die FRONTansicht - schmal, mit
+    // Windschutzscheibe und zwei Scheinwerfern. Die Seitenansicht
+    // (Kasten mit drei Fenstern) war handgezeichnet und wirkte wie
+    // ein Spielzeug; die Frontansicht liest sich sofort als Zug.
     //
-    // Ein Material-Glyph haelt sich nicht daran: `Icons.train` hat 2
-    // Einheiten auf 24, auf dieses Feld skaliert sind das 0.83. Deshalb
-    // sah die Material-Variante haeller aus als die anderen, obwohl sie
-    // die richtige Form hatte.
-    final linie = strich(color, 1.35);
+    // Die Frontansicht ist schmal, deshalb ist sie zentriert und
+    // dominant: sie steht exakt auf der Feldmitte 8.5, der Funke
+    // laeuft als Streifen DURCH sie hindurch statt daneben zu stehen.
+    //
+    // GLYPHE per TextPainter, weil in einem CustomPainter kein
+    // Icon-Widget zur Verfuegung steht.
+    //
+    // Die Groesse ist so gewaehlt, dass die Strichstaerke der Glyphe
+    // zur der der Nachbarn passt: Material zeichnet mit 2 Einheiten auf
+    // 24. Fuer 1.35 im 17er-Feld braucht es 1.35/2*24 = 16.2
+    // Einheiten. Genau so gross wird gezeichnet - und damit ist die
+    // Strichstaerke deckungsgleich mit den anderen Symbolen, statt
+    // 0.83 zu betragen.
+    final zug = Icons.train;
+    // Der Zug wird in eine Ebene gezeichnet, aus der der Streifen
+    // wieder AUSSCHNITTE. Ein saveLayer ueber dem fertigen Bild
+    // wuerde nichts loeschen - die neue Ebene enthaelt den Zug nicht.
+    canvas.saveLayer(null, Paint());
+    _glyphe(canvas, zug.codePoint, zug.fontFamily!, zug.fontPackage,
+        const Offset(8.5, 8.5), 16.2);
 
-    // --- Zug ---------------------------------------------------------------
-    // Mittig auf 8.5: Kasten 2.6 bis 14.4, Raeder bei 5.6 und 11.4,
-    // ihr Mittelwert ist ebenfalls 8.5. Vorher stand der Wagen links
-    // unter dem Funken und wirkte dadurch schief.
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        const Rect.fromLTWH(1.8, 8.2, 13.4, 5.0),
-        const Radius.circular(1.5),
+    // --- Spark als Streifen durch den Zug ----------------------------------
+    // Der Funke zieht als Diagonale durch das Feld und durch den Zug
+    // hindurch. Das erzaehlt die Verbindung: der Funke BEWEGT sich, und
+    // er zieht an dir vorbei, ohne dass du ihn greifen kannst.
+    //
+    // Der Streifen schneidet die Zugkontur aus, statt darueberzuliegen:
+    // sonst verschmilzt er mit dem Zug zu einem undeutlichen Gebilde.
+    // Der Ausschnitt ist transparent, es kommt also die Farbe des
+    // Containers zum Vorschein - unabhaengig davon, welche das ist.
+    final diagonale = Path()
+      ..moveTo(3.0, 15.2)
+      ..lineTo(13.6, 2.0);
+    canvas.drawPath(
+      diagonale,
+      Paint()
+        ..style = PaintingStyle.stroke
+        // Duenner als der Zugstrich: bei 2.9 schnitt die Diagonale den
+        // Wagen in zwei Haelften, das las sich als zerschnitten, nicht
+        // als durchfahrender Funke. 1.9 laesst die Kontur erkennbar und
+        // trennt sie zugleich vom Streifen.
+        ..strokeWidth = 1.9
+        ..strokeCap = StrokeCap.round
+        ..blendMode = BlendMode.clear
+        ..color = const Color(0xFF000000),
+    );
+    canvas.restore();
+
+    // Spark-Sterne auf der Diagonalen: der grosse mittig, der kleine
+    // scherzt davor her. Sie liegen auf dem ausgeschnittenen Streifen
+    // und fallen deshalb frei auf dem Hintergrund.
+    canvas.drawPath(stern(const Offset(9.2, 7.8), 2.7, 0.34), flaeche(color));
+    canvas.drawPath(stern(const Offset(6.3, 11.2), 1.3, 0.34), flaeche(color));
+  }
+
+  /// Zeichnet eine Material-Glyphe in das 17er-Feld, mittig auf [mitte].
+  ///
+  /// `fontPackage` ist nicht optional: die Material-Schrift liegt im
+  /// Paket `flutter`, und ein [TextPainter] ohne dieses Paket findet
+  /// sie nicht. Es wird dann kein Zug gezeichnet, sondern ein
+  /// Ersatzkaestchen - im Test sichtbar, in der App genauso.
+  void _glyphe(
+    Canvas canvas,
+    int codePoint,
+    String family,
+    String? paket,
+    Offset mitte,
+    double groesse,
+  ) {
+    final tp = TextPainter(
+      text: TextSpan(
+        text: String.fromCharCode(codePoint),
+        style: TextStyle(
+          fontFamily: family,
+          // Der Parameter heisst hier `package`, nicht `fontPackage` -
+          // den gibt es nur auf IconData. Die Material-Schrift liegt im
+          // Paket `flutter`; ohne sie findet der TextPainter die
+          // Glyphe nicht und malt ein Ersatzkaestchen.
+          package: paket,
+          fontSize: 100,
+          color: color,
+        ),
       ),
-      linie,
-    );
-    for (final x in [5.1, 8.5, 11.9]) {
-      canvas.drawRect(
-        Rect.fromCenter(center: Offset(x, 10.7), width: 3.3, height: 1.9),
-        flaeche(color),
-      );
-    }
-    // Deichsel zwischen den Raedern: ohne sie lesen sich zwei lose
-    // Kreise als Spielzeug, nicht als Fahrwerk.
-    canvas.drawLine(
-      const Offset(5.4, 14.9),
-      const Offset(11.6, 14.9),
-      linie,
-    );
-    for (final x in [5.4, 11.6]) {
-      canvas.drawCircle(Offset(x, 14.9), 1.35, linie);
-    }
-
-    // --- Funke mit Schleier -------------------------------------------------
-    // Kleiner und naeher an die Ecke als der Zug: die Kachel ist ein
-    // Ganzes, und ein gleich grosser Funke neben einem Zug teilt es in
-    // zwei gleich starke Motive. Der Zug traegt die Kachel, der Funke
-    // markiert sie.
-    funkeMitSchleier(canvas, const Offset(13.6, 3.5), 1.9, color);
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final sk = groesse / 100.0;
+    canvas.save();
+    canvas.translate(mitte.dx - (tp.width * sk) / 2,
+        mitte.dy - (tp.height * sk) / 2);
+    canvas.scale(sk);
+    tp.paint(canvas, Offset.zero);
+    canvas.restore();
   }
 }
 
@@ -331,25 +389,33 @@ class QuestionChatPainter extends _ModeSymbolPainter {
   @override
   void draw(Canvas canvas) {
     // --- Blase -----------------------------------------------------------
-    // Nach links unten ausgelagert: rechts oben sitzt der Funke, und
-    // eine Blase, die beide Raelder gleich verteilt, wirkt zerstueckelt.
-    const st = 1.35;
+    // MITTIG: vorher stand die Blase links unten, weil der Funke rechts
+    // oben Platz brauchte. Der Funke gehoert jetzt IN die Blase, also
+    // kann die Blase wieder mittig stehen - auf 8.5, wie die anderen
+    // Motive.
+    //
+    // Die Kontur ist duenner als bei den anderen Symbolen (1.15 gegen
+    // 1.35). Das ist keine Willkuer: eine geschlossene Kontur traegt
+    // mehr Tinte pro Laenge als eine offene, und der Umriss einer
+    // Sprechblase ist die laengste geschlossene Kontur in der Liste.
+    // Bei gleicher Staerke wirkt sie deshalb breiter als der Zug.
+    const st = 1.15;
     final aussen = Path()
       ..addRRect(RRect.fromRectAndRadius(
-        const Rect.fromLTWH(1.2, 5.6, 10.8, 9.6),
-        const Radius.circular(2.8),
+        const Rect.fromLTWH(1.9, 1.9, 13.2, 12.4),
+        const Radius.circular(3.4),
       ));
     final schwanz = Path()
-      ..moveTo(3.8, 14.0)
-      ..lineTo(2.4, 17.0)
-      ..lineTo(7.0, 15.0)
+      ..moveTo(4.6, 13.2)
+      ..lineTo(3.0, 16.6)
+      ..lineTo(8.0, 14.2)
       ..close();
     final mitSchwanz = Path.combine(PathOperation.union, aussen, schwanz);
 
     final innen = Path()
       ..addRRect(RRect.fromRectAndRadius(
-        const Rect.fromLTWH(1.2 + st, 5.6 + st, 10.8 - 2 * st, 9.6 - 2 * st),
-        const Radius.circular(2.8 - st / 2),
+        const Rect.fromLTWH(1.9 + st, 1.9 + st, 13.2 - 2 * st, 12.4 - 2 * st),
+        const Radius.circular(3.4 - st / 2),
       ));
     canvas.drawPath(
       Path.combine(PathOperation.difference, mitSchwanz, innen),
@@ -357,15 +423,13 @@ class QuestionChatPainter extends _ModeSymbolPainter {
     );
 
     // --- Fragezeichen ------------------------------------------------------
-    // EIN Zeichen, gross und mittig in der Blase. Zwei versetzte lasen
-    // sich als Reihenzeichen; der Blickfang gehoert einem Motiv.
-    // Etwas duenner als die Blase (1.15), weil die geschlossenen Kurven
-    // eines Fragezeichens bei gleicher Staerke sichtbar schwerer wirken
-    // als eine offene Kontur - sonst ist die Tinte, nicht die Form, das
-    // was die Liste zusammenhaelt.
-    const frage = (c: Offset(6.6, 10.4), h: 5.8);
+    // KLEINER und duenner als vorher. Das Fragezeichen war so gross,
+    // dass es die Blase ausfuellte und zusammen mit dem Funken gar
+    // nichts mehr uebrig blieb. Jetzt sitzt es links oben in der
+    // Blase und laesst rechts Platz fuer den Funken.
+    const frage = (c: Offset(6.0, 7.4), h: 4.4);
     final r = frage.h / 2.0;
-    canvas.drawPath(fragezeichenBogen(frage.c, r), strich(color, 1.15));
+    canvas.drawPath(fragezeichenBogen(frage.c, r), strich(color, 1.05));
     // Punkt mit sichtbarem Abstand zum Bogen.
     canvas.drawCircle(
       Offset(frage.c.dx + r * 0.18, frage.c.dy + r * 0.82),
@@ -373,11 +437,11 @@ class QuestionChatPainter extends _ModeSymbolPainter {
       flaeche(color),
     );
 
-    // --- Funke mit Schleier -------------------------------------------------
-    // Ganz rechts oben, ohne die Blase zu beruehren: Blasenrand bei
-    // x = 12.0, Funkenkante bei 12.1. Beruehrten sie sich, laesst sich
-    // nicht mehr unterscheiden, ob es zwei Motive sind oder eines mit
-    // einem Klecks.
-    funkeMitSchleier(canvas, const Offset(14.2, 3.2), 2.1, color);
+    // --- Funke IN der Blase ------------------------------------------------
+    // Rechts unten in der Blase, nicht neben ihr. Der Funke war
+    // vorher ein zweites Motiv neben der Blase und hat die Kachel in
+    // zwei Teile geteilt; in der Blase ist es ein Aufdruck und traegt
+    // die Aussage "Funke in einem Chat".
+    funkeMitSchleier(canvas, const Offset(10.9, 10.7), 1.9, color);
   }
 }
