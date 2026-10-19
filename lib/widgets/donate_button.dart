@@ -72,11 +72,18 @@ class DonateButton extends StatelessWidget {
               else
                 const _GiftGlyph(),
               const SizedBox(width: 10),
-              Text(
-                L10n.t(context, 'profile.donateBtn'),
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: scheme.primary,
-                  fontWeight: FontWeight.w600,
+              // Flexible: der Text darf den Button nicht ueber den
+              // verfuegbaren Platz hinaus schieben (RenderFlex-Overflow
+              // bei grosser Systemschrift).
+              Flexible(
+                child: Text(
+                  L10n.t(context, 'profile.donateBtn'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: scheme.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],

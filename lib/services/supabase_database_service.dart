@@ -62,20 +62,31 @@ class SupabaseDatabaseService {
     // geladen. Eine fehlende neue Spalte darf NIE das komplette Profil
     // leeren (Name/Bio/Theme wären sonst nach App-Start weg).
     Object? lastError;
+    // favorite_song, favorite_band und birthday_style MUSSTEN hier
+    // stehen (v0.10.0, Security-Audit).
+    //
+    // BUG (Datenverlust): Diese drei Felder wurden nicht gelesen. Der
+    // lokale Secure-Store wurde beim Login mit `setProfile` KOMPLETT
+    // ueberschrieben - der Serverwert fehlte im Leseergebnis, also
+    // auch im lokalen Profil. Nach dem ersten Neustart war der
+    // Lieblingssong weg und der Geburtstagsstil auf dem Default. Und
+    // weil das Profil-Edit den (leeren) lokalen Wert zurueckschreibt,
+    // wurde der SERVERwert dabei gleich mit ueberschrieben.
     const columnsWithPhotos =
         'user_id, name, gender, gender_preferences, birth_date, bio, '
         'interests, photos, personality_type, max_distance_km, '
         'age_range_min, age_range_max, smoking, alcohol, drugs, '
         'is_verified, is_location_suspicious, state, country, '
         'intro_text, intro_audio_path, '
+        'favorite_song, favorite_band, birthday_style, '
         'created_at, updated_at, music_liked, music_disliked';
     const columnsWithoutPhotos =
         'user_id, name, gender, gender_preferences, birth_date, bio, '
         'interests, personality_type, max_distance_km, age_range_min, '
         'age_range_max, smoking, alcohol, drugs, is_verified, '
         'is_location_suspicious, state, country, intro_text, '
-        'intro_audio_path, created_at, '
-        'updated_at, music_liked, music_disliked';
+        'intro_audio_path, favorite_song, favorite_band, birthday_style, '
+        'created_at, updated_at, music_liked, music_disliked';
     for (final columns in [columnsWithPhotos, columnsWithoutPhotos]) {
       for (var attempt = 0; attempt < 2; attempt++) {
         if (attempt > 0) {
@@ -125,6 +136,17 @@ class SupabaseDatabaseService {
             'country': response['country'] ?? 'Deutschland',
             'introText': response['intro_text'] ?? '',
             'introAudioPath': response['intro_audio_path'],
+            // v0.10.0: diese drei Felder wurden gelesen, aber nie
+            // GESPEICHERT. Beim Login wurde der lokale Secure-Store
+            // komplett ueberschrieben - der Serverwert fehlte im
+            // Leseergebnis, also auch im lokalen Profil. Ergebnis:
+            // Lieblingssong, Lieblingsband und Geburtstagsstil waren
+            // nach dem ersten Neustart weg, und weil das Profil-Edit
+            // den leeren lokalen Wert zurueckschreibt, wurde der
+            // SERVERwert dabei gleich mit ueberschrieben.
+            'favoriteSong': response['favorite_song'] ?? '',
+            'favoriteBand': response['favorite_band'] ?? '',
+            'birthdayStyle': response['birthday_style'] ?? 'classic',
             'smoking': response['smoking'],
             'alcohol': response['alcohol'],
             'drugs': response['drugs'],

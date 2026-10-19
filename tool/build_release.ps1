@@ -464,11 +464,21 @@ if ($SkipBuild) {
             flutter build apk --release --flavor $adminFlavor @defineArgs --obfuscate --split-debug-info=$adminSymbols
             if ($LASTEXITCODE -ne 0) { throw "Admin-Build ($adminFlavor) fehlgeschlagen." }
             $src = Join-Path "build\app\outputs\flutter-apk" "app-$adminFlavor-release.apk"
-            Copy-Item -LiteralPath $src -Destination (Join-Path $adminDir "Thestia-v$VersionName-$adminFlavor-ADMIN.apk") -Force
-            Write-Host "    OK: $(Join-Path $adminDir "Thestia-v$VersionName-$adminFlavor-ADMIN.apk")" -ForegroundColor Green
 
             # Erste Schicht gegen die UUID im oeffentlichen Ablageort.
+            #
+            # REIHENFOLGE WICHTIG (Security-Audit 2026-10-19): der Marker
+            # wird VOR dem Kopieren registriert. Vorher stand die
+            # Registrierung danach - wirft sie, bleibt der Admin-Build
+            # im Flutter-Output liegen, ist NICHT im Marker, und ein
+            # spaeterer -SkipBuild-Lauf kopiert ihn unter oeffentlichem
+            # Namen. Der Provenienz-Check ist genau der Check, der ohne
+            # Kenntnis des Geheimnisses greifen soll - er muss also
+            # VOR der Kopie stehen.
             Register-AdminArtifact -Path $src
+
+            Copy-Item -LiteralPath $src -Destination (Join-Path $adminDir "Thestia-v$VersionName-$adminFlavor-ADMIN.apk") -Force
+            Write-Host "    OK: $(Join-Path $adminDir "Thestia-v$VersionName-$adminFlavor-ADMIN.apk")" -ForegroundColor Green
 
             # Admin-Baum restlos entfernen, NICHT nur die flutter-apk-
             # Kopie. Flutter kopiert outputs\apk\** nach

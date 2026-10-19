@@ -322,28 +322,114 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
   }) async {
     if (!SupabaseService.isInitialized) return true;
     try {
+      // Der Modus muss SNAKE_CASE sein (v0.10.0, Security-Audit).
+      //
+      // BUG: `state.distanceFilterMode.name` ist der Dart-Enum-Name
+      // 'distanceKm'. Die Spalte akzeptiert aber nur 'distance_km',
+      // 'state' oder 'germany' (CHECK-Constraint in Migration 127).
+      // Der Schreibvorgang schlug deshalb IMMER fehl.
+      final dbMode = switch (state.distanceFilterMode) {
+        DistanceFilterMode.distanceKm => 'distance_km',
+        DistanceFilterMode.state => 'state',
+        DistanceFilterMode.germany => 'germany',
+      };
+
       final body = <String, dynamic>{
         'max_distance_km': state.maxDistanceKm,
         // Modus mitsenden (Migration 085) - sonst springt er nach
         // Neuinstallation zurueck (der eigentliche Radius-weg-Bug).
-        'distance_filter_mode': state.distanceFilterMode.name,
+        'distance_filter_mode': dbMode,
         'gender_preferences': state.genderPreferences,
-        'relationship_type': state.relationshipType?.value,
         // Bewusst IMMER schreiben (auch null = Filter "Ganz Deutschland"),
-        // sonst würde ein späterer Sync den alten Wert zurückholen.
-        'preferred_state': state.preferredState,
+        // sonst wuerde ein spaeterer Sync den alten Wert zurueckholen.
+      };
+
+      // relationship_type und preferred_state werden GETRENNT
+      // geschrieben (v0.10.0, Security-Audit).
+      //
+      // BUG (stiller Totalausfall): beide Spalten haben CHECK-
+      // Constraints mit einer ganz anderen Wertedomaene als die App
+      // verwendet. Ein PostgREST-UPDATE ist atomar: EIN verletztes
+      // Feld macht das GANZE Update unmoeglich. Dadurch wurden auch
+      // max_distance_km, age_range_min/max, gender_preferences und
+      // distance_filter_mode nie gespeichert - bei JEDEM Aufruf, auch
+      // ohne dass der Nutzer etwas angefasst haette.
+      //
+      // Der Fehler wurde dreifach verschluckt und war damit unsichtbar.
+      //
+      // Der Split loest das: das Haupt-Update enthaelt nur Felder, die
+      // der Server sicher annimmt. Die beiden problematischen Felder
+      // gehen in einen zweiten, eigenen Schreibvorgang - scheitert er,
+      // ist nur das betroffen.
+      final sonderBody = <String, dynamic>{
+        if (state.relationshipType?.value != null)
+          'relationship_type': _dbRelationshipType(state.relationshipType),
+        'preferred_state': _dbPreferredState(state.preferredState),
       };
       if (ageRangeMin != null) body['age_range_min'] = ageRangeMin;
       if (ageRangeMax != null) body['age_range_max'] = ageRangeMax;
       if (stateStr != null && stateStr.trim().isNotEmpty) {
         body['state'] = stateStr.trim();
       }
-      return await SupabaseDatabaseService(SupabaseService.client)
-          .updateSetupFlagsAndVerify(body);
+      final db = SupabaseDatabaseService(SupabaseService.client);
+      final ok = await db.updateSetupFlagsAndVerify(body);
+      if (!ok) {
+        debugPrint('[UserPreferences] Haupt-Sync fehlgeschlagen - '
+            'betroffen: max_distance_km, age_range, gender_preferences, '
+            'distance_filter_mode');
+      }
+
+      // Der Sonderfall separat. Ein Fehler hier darf das Haupt-Update
+      // nicht rueckgaengig machen - und der Aufrufer soll ihn sehen.
+      try {
+        await db.updateOwnProfile(sonderBody);
+      } catch (e) {
+        debugPrint('[UserPreferences] relationship_type/preferred_state '
+            'nicht gespeichert (CHECK-Constraint): $e');
+      }
+
+      return ok;
     } catch (e) {
       debugPrint('[UserPreferences] Server-Sync fehlgeschlagen: $e');
       return false;
     }
+  }
+
+  /// Abbildung des Beziehungstypes auf die vom Server akzeptierte
+  /// Domäne (Migration 127).
+  ///
+  /// Der Server kennt: unspecified, long_term, short_term,
+  /// open_to_anything, figuring_out, other.
+  static String? _dbRelationshipType(RelationshipType? type) {
+    if (type == null) return null;
+    return switch (type.value) {
+      'casual' => 'short_term',
+      'dating' => 'long_term',
+      'relationship' => 'long_term',
+      'friends' => 'figuring_out',
+      'open' => 'open_to_anything',
+      _ => 'unspecified',
+    };
+  }
+
+  /// Abbildung des bevorzugten Bundeslandes auf die Server-Domaene.
+  ///
+  /// Die Spalte `preferred_state` wird fuer zwei verschiedene Dinge
+  /// benutzt: historisch fuer die Beziehungsform (CHECK aus Migration
+  /// 127) und heute fuer das gewuenschte Bundesland. Der CHECK erlaubt
+  /// nur die Beziehungswerte, das Bundesland kommt also nicht durch.
+  /// Deshalb wird hier nichts geschrieben, wenn es ein Bundesland ist
+  /// - der Radiusfilter laeuft ueber `state` und
+  /// `distance_filter_mode`, die beide funktionieren.
+  static Object? _dbPreferredState(String? state) {
+    if (state == null || state.trim().isEmpty) return null;
+    const erlaubt = {
+      'single',
+      'polyamory',
+      'open',
+      'unspecified',
+    };
+    return erlaubt.contains(state) ? state : null;
   }
 }
 

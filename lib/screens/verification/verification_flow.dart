@@ -109,6 +109,49 @@ class VerificationInfoScreen extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      // KI-Hinweis (v0.10.0).
+                      //
+                      // Die Altersschaetzung im Video ist eine
+                      // KI-Schaetzung. Sie ist ein Hinweis, kein
+                      // Beweis - und der Nutzer soll wissen, dass eine
+                      // Handpruefung dazugehoeren kann. Ohne diesen
+                      // Hinweis wirkt die automatische Freigabe
+                      // belastbarer, als sie ist.
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.tertiaryContainer,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.smart_toy_outlined,
+                              size: 20,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onTertiaryContainer,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                L10n.t(context, 'verify.infoAiLimits'),
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onTertiaryContainer,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       _InfoBullet(L10n.t(context, 'verify.info.1')),
                       _InfoBullet(L10n.t(context, 'verify.info.2')),
                       _InfoBullet(L10n.t(context, 'verify.info.3')),

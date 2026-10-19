@@ -317,6 +317,27 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
                   // wertvoll: bei einem neuen Account ist eine
                   // ungefragte Nachricht mit hoher Wahrscheinlichkeit
                   // Missbrauch. Die RPC liefert created_at bereits mit.
+                  // Verifikations-Hinweis bei ANDEREN Personen
+                  // (v0.10.0). Nur wenn die Person NICHT verifiziert
+                  // ist - ein "wird geprueft" ist eine Information, ein
+                  // "verifiziert" hat bereits das Abzeichen.
+                  //
+                  // Drei Zustaende, bewusst getrennt: wer sich geprueft
+                  // hat, aber die Freigabe noch nicht hat, ist nicht
+                  // "nicht verifiziert", sondern "wird geprueft".
+                  if (!profile.isVerified &&
+                      profile.verificationState ==
+                          VerificationState.underReview) ...[
+                    const SizedBox(width: 6),
+                    Tooltip(
+                      message: L10n.t(context, 'verify.otherUnderReview'),
+                      child: Icon(
+                        Icons.hourglass_top,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ),
+                  ],
                   if (profile.isRecentlyCreated) ...[
                     const SizedBox(width: 6),
                     NewAccountBadge(profile: profile),

@@ -8,6 +8,54 @@ import 'package:thestia/models/habitude_level.dart';
 import 'package:thestia/utils/age_calculator.dart';
 import 'package:thestia/utils/distance_bucket.dart';
 
+/// Verifikationszustand einer Person.
+///
+/// DREI Zustaende, nicht zwei. Der Unterschied ist der Kern der
+/// Anzeige: wer sich geprueft hat, aber die Freigabe noch nicht
+/// bekommen hat, ist NICHT "nicht verifiziert" - er ist "wird
+/// geprueft". Beides zu vermischen fuehrt zu zwei falschen Aussagen:
+/// "Deine Verifizierung fehlt" (falsch, sie liegt vor) und
+/// "Du bist nicht verifiziert" (falsch, die Pruefung laeuft).
+enum VerificationState {
+  /// Kein Video eingereicht, keine Pruefung.
+  unverified,
+
+  /// Eingereicht, Pruefung laeuft oder ausstehend.
+  underReview,
+
+  /// Freigegeben - manuell oder automatisch.
+  verified;
+
+  /// Ist der Vollzugang moeglich? Nur bei [verified].
+  bool get grantsFullAccess => this == VerificationState.verified;
+
+  /// Liest den Zustand aus der oeffentlichen Projektion.
+  ///
+  /// Erwartet wird `verification_state` (Migration 144). Fehlt das
+  /// Feld - aeltere Server, oder ein Aufruf, der die Projektion nicht
+  /// nutzt -, wird auf [isVerified] zurueckgefallen, damit das
+  /// verifizierte Abzeichen nicht verloren geht.
+  static VerificationState fromJson(
+    Map<String, dynamic> json, {
+    bool isVerified = false,
+  }) {
+    final raw = json['verification_state'];
+    if (raw is String) {
+      switch (raw) {
+        case 'verified':
+          return VerificationState.verified;
+        case 'under_review':
+          return VerificationState.underReview;
+        case 'unverified':
+          return VerificationState.unverified;
+      }
+    }
+    return isVerified
+        ? VerificationState.verified
+        : VerificationState.unverified;
+  }
+}
+
 class UserProfile {
   /// Eindeutige ID des Nutzers.
   final String id;
@@ -69,6 +117,12 @@ class UserProfile {
   /// Nutzer wurde verifiziert.
   final bool isVerified;
 
+  /// Dreistufiger Verifikationszustand (v0.10.0, Migration 144).
+  ///
+  /// Aus `is_verified` allein ist "wird geprueft" nicht ableitbar -
+  /// dafuer braucht es den Rohstatus aus der Projektion.
+  final VerificationState verificationState;
+
   /// Standort des Nutzers wurde als verdächtig eingestuft.
   final bool isLocationSuspicious;
 
@@ -118,6 +172,7 @@ class UserProfile {
     required this.bio,
     this.interests = const <String>[],
     this.photos = const <String>[],
+    this.verificationState = VerificationState.unverified,
     this.state,
     this.country = 'Deutschland',
     this.distanceKm = 0,
@@ -262,6 +317,32 @@ class UserProfile {
   }
 
   /// Erzeugt ein [UserProfile] aus einem JSON-Map (Persistenz).
+  /// Liest den gespeicherten Verifikationszustand.
+  ///
+  /// Der Zustand wird als ENUM-NAME gespeichert, nicht als der
+  /// Server-Wert ('under_review'). Beim Lesen wird deshalb zuerst der
+  /// eigene Name versucht, danach der Server-Wert, und zuletzt der
+  /// Rueckfall auf [isVerified].
+  static VerificationState _stateFromStorage(
+    Object? raw,
+    bool isVerified,
+  ) {
+    if (raw is String) {
+      for (final st in VerificationState.values) {
+        if (st.name == raw) return st;
+      }
+      switch (raw) {
+        case 'under_review':
+          return VerificationState.underReview;
+        case 'verified':
+          return VerificationState.verified;
+        case 'unverified':
+          return VerificationState.unverified;
+      }
+    }
+    return VerificationState.fromJson(const {}, isVerified: isVerified);
+  }
+
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
       id: json['id'] as String,
@@ -294,6 +375,10 @@ class UserProfile {
           ? null
           : (json['location_lng'] as num).toDouble(),
       isVerified: json['is_verified'] as bool? ?? false,
+      verificationState: _stateFromStorage(
+        json['verification_state'],
+        json['is_verified'] as bool? ?? false,
+      ),
       isLocationSuspicious:
           json['is_location_suspicious'] as bool? ?? false,
       mood: json['mood'] as String?,
@@ -336,6 +421,10 @@ class UserProfile {
         'location_lat': locationLat,
         'location_lng': locationLng,
         'is_verified': isVerified,
+      // Der Dreifachzustand wird mitgespeichert. Ohne das faellt er
+      // nach dem Neustart auf is_verified zurueck - und "wird geprueft"
+      // waere dann nicht mehr von "nicht verifiziert" zu unterscheiden.
+      'verification_state': verificationState.name,
         'is_location_suspicious': isLocationSuspicious,
         'mood': mood,
         'introText': introText,
@@ -385,6 +474,7 @@ class UserProfile {
     double? locationLat,
     double? locationLng,
     bool? isVerified,
+    VerificationState? verificationState,
     bool? isLocationSuspicious,
     String? mood,
     String? introText,
@@ -421,6 +511,7 @@ class UserProfile {
       locationLat: locationLat ?? this.locationLat,
       locationLng: locationLng ?? this.locationLng,
       isVerified: isVerified ?? this.isVerified,
+      verificationState: verificationState ?? this.verificationState,
       isLocationSuspicious:
           isLocationSuspicious ?? this.isLocationSuspicious,
       mood: mood ?? this.mood,
@@ -452,6 +543,7 @@ class UserProfile {
           other.genderPreference == genderPreference &&
           other.personalityType == personalityType &&
           other.isVerified == isVerified &&
+      other.verificationState == verificationState &&
           other.isLocationSuspicious == isLocationSuspicious &&
           other.mood == mood;
 

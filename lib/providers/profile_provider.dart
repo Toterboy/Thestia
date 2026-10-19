@@ -6,7 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/models/habitude_level.dart';
 import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/notification_service.dart';
 import 'package:thestia/services/secure_storage.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/utils/constants.dart';
@@ -81,6 +83,28 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
     unawaited(_refreshServerManagedFields());
   }
 
+  /// Meldet die Freigabe der Verifizierung lokal.
+  ///
+  /// Bewusst als lokale Meldung und nicht als Push: die Freigabe
+  /// entsteht, wenn der Admin sie im Backend setzt, und der Nutzer
+  /// bekommt den Wechsel beim naechsten Abgleich mit. Eine
+  /// Push-Benachrichtigung wuerde einen Server-Push-Kanal voraussetzen,
+  /// den es hier nicht gibt.
+  Future<void> _notifyVerified() async {
+    try {
+      await NotificationService.instance.showSystemNotice(
+        // Feste ID: Es gibt nur eine Verifizierungs-Meldung, und eine
+        // zweite wuerde die erste ersetzen statt daneben zu stehen.
+        id: 90001,
+        title: L10n.tWithoutContext('verify.autoTitle'),
+        body: L10n.tWithoutContext('verify.autoBody'),
+      );
+    } catch (e) {
+      debugPrint('[ProfileNotifier] Verifizierungs-Meldung fehlgeschlagen: '
+          '$e');
+    }
+  }
+
   /// Holt die Felder, die der Server verwaltet, und schreibt sie in den
   /// lokalen Stand.
   ///
@@ -108,8 +132,20 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
 
       debugPrint('[ProfileNotifier] is_verified vom Server: '
           '${state.isVerified} -> $serverVerified');
+      final warVerifiziert = state.isVerified;
       state = state.copyWith(isVerified: serverVerified);
       await _persist();
+
+      // Benachrichtigung ueber die Freigabe (v0.10.0).
+      //
+      // Die Freigabe passiert serverseitig durch einen Admin. Der
+      // Nutzer sitzt derweil in der App und bekommt sonst nichts mit -
+      // das Profil bleibt lokal auf "nicht verifiziert", bis die App
+      // neu startet. Der Uebergang unveraendert -> verifiziert ist
+      // deshalb das Signal fuer eine Meldung.
+      if (!warVerifiziert && serverVerified) {
+        unawaited(_notifyVerified());
+      }
     } catch (e) {
       debugPrint('[ProfileNotifier] Serverstatus nicht abrufbar: $e');
     }

@@ -79,7 +79,9 @@ class _PersonalityTestScreenState
     // fire-and-forget: Schlägt das still fehl, erscheint der Test nach der
     // nächsten Neuinstallation erneut - deshalb bei Misserfolg derselbe
     // sichtbare Hinweis wie im Einstellungs-Screen.
-    final flagsSaved = await _persistSetupFlagsToServer();
+    final flagsSaved = await _persistSetupFlagsToServer(
+      personalityType: type,
+    );
     if (mounted && !flagsSaved) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -134,13 +136,30 @@ class _PersonalityTestScreenState
 
   /// Schreibt den Test-Flag verifiziert in die profiles-Tabelle
   /// (siehe [SupabaseDatabaseService.updateSetupFlagsAndVerify]).
-  Future<bool> _persistSetupFlagsToServer() async {
+  /// Sichert die Setup-Flags und - falls vorhanden - den Persoenlichkeitstyp.
+///
+/// Der TYP wird mitgeschrieben (v0.10.0, Security-Audit).
+///
+/// BUG: `profiles.personality_type` wurde NIE auf den Server
+/// geschrieben - der Test speicherte den Typ nur lokal. Die Spalte
+/// behielt damit dauerhaft den Default 'INTJ'. Das ist schlimmer als
+/// es aussieht: `profile_to_jsonb` und `get_match_partner_profile`
+/// liefern `personality_type` an ALLE anderen weiter. Der letzte
+/// Schritt der Einrichtung war damit fuer niemanden sichtbar, und das
+/// Matching lief gegen den Default.
+///
+/// Ohne Typ (Ueberspringen) wird nichts geschrieben - es gibt dann
+/// keinen, und 'INTJ' als Platzhalter zu erfinden waere eine
+/// erfundene Tatsache.
+Future<bool> _persistSetupFlagsToServer({String? personalityType}) async {
     if (!SupabaseService.isInitialized) return true;
     try {
       return await SupabaseDatabaseService(SupabaseService.client)
           .updateSetupFlagsAndVerify({
         'personality_test_completed': true,
         'onboarding_done': true,
+        if (personalityType != null && personalityType.isNotEmpty)
+          'personality_type': personalityType,
       });
     } catch (e) {
       debugPrint('[PersonalityTest] Server-Flag fehlgeschlagen: $e');
@@ -245,9 +264,36 @@ class _PersonalityTestScreenState
                   TextButton(
                     onPressed: () async {
                       final router = GoRouter.of(context);
+                      // Texte und Messenger VOR dem ersten await holen:
+                      // danach kann der Context weg sein, und der
+                      // Analyzer moniert zu Recht, ihn dann noch zu
+                      // benutzen.
+                      final messenger = ScaffoldMessenger.maybeOf(context);
+                      final failText = L10n.t(context, 'pt.saveFailed');
                       await ref
                           .read(settingsProvider.notifier)
                           .completePersonalityTest();
+                      // Flags auch beim Ueberspringen serverseitig sichern
+                      // (v0.10.0, Security-Audit).
+                      //
+                      // BUG: der Skip-Pfad speicherte nur lokal. Nach
+                      // Neuinstallation oder Login auf einem zweiten
+                      // Geraet lieferte der Server
+                      // personality_test_completed=false, und der
+                      // Router zeigte den Test erneut - obwohl die
+                      // Kommentare das als behoben beschrieben.
+                      //
+                      // Der Typ wird hier bewusst NICHT geschrieben:
+                      // beim Ueberspringen gibt es keinen.
+                      final flagsSaved = await _persistSetupFlagsToServer();
+                      if (!flagsSaved) {
+                        messenger?.showSnackBar(
+                          SnackBar(
+                            content: Text(failText),
+                            duration: const Duration(seconds: 6),
+                          ),
+                        );
+                      }
                       if (mounted) router.go(AppRoutes.home);
                     },
                     child: Text(L10n.t(context, 'common.skip')),

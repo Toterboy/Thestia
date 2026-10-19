@@ -245,6 +245,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
+        // scrollable: Der Inhalt (Text + Hintergrund-Auswahl) ist bei
+        // grosser Systemschrift hoeher als der Dialog. Ohne
+        // Scrollview laeuft die Column unten ueber (RenderFlex-Overflow).
+        scrollable: true,
         title: Text(L10n.t(ctx, 'chatbg.hintTitle')),
         content: Column(
           mainAxisSize: MainAxisSize.min,

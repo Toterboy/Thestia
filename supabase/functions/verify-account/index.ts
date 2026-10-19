@@ -35,6 +35,14 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 // Migration 122 (SELECT-Grants) live verifiziert (GoTrue listUsers OK +
 // PostgREST-DELETE 204). Legacy-JWTs sind entfernt. Reihenfolge:
 // SUPABASE_SECRET_KEY ('default') zuerst, Reserve SUPABASE_SECRET_KEYS.
+// Ab diesem Alter wird IMMER von Hand geprueft, nie automatisch
+// freigegeben. 21 (nicht 18): zwischen 18 und 21 sind die meisten
+// Nutzer volljuehrig, aber es gibt genug 18- bis 21-Jaehrige, bei
+// denen ein Altersfehler das Schlimmste bedeutet. "ab 22" entspricht
+// der Grenze, ab der ein videoverifiziertes Alter fuer eine
+// Dating-App als belastbar gilt.
+const MINOR_REVIEW_AGE = 21;
+
 function _pickApiKey(autoDict: string, custom: string): string {
   const single = Deno.env.get(custom) ?? "";
   if (single.length > 0) return single;
@@ -337,11 +345,29 @@ serve(async (req) => {
         estimatedAge <= 120 && faceCount !== null && faceCount >= 0 &&
         faceCount <= 10;
 
+      // Minderjaehrigkeits-Vermerk (v0.10.0, Migration 144).
+      //
+      // Das Alter kommt aus dem GEBURSTTAG im Profil, nicht aus der
+      // KI-Schaetzung - die ist ein Client-Wert und damit nicht
+      // belastbar. Wer 21 oder juenger ist, wird von Hand geprueft und
+      // nie automatisch freigegeben. Der Status wird schon bei der
+      // Einreichung gesetzt, damit der Admin die Warteschlange sofort
+      // sieht und nicht erst nach dem Triage-Versuch.
+      const { data: ageProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("birth_date")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      const statedAge = statedAgeFromBirthDate(
+        (ageProfile as { birth_date?: string } | null)?.birth_date ?? null,
+      );
+      const isMinor = statedAge !== null && statedAge <= MINOR_REVIEW_AGE;
+
       const { error: updateError } = await supabaseAdmin
         .from("profiles")
         .update({
           verification_video_path: videoPath,
-          verification_status: "pending",
+          verification_status: isMinor ? "pending_minor" : "pending",
           ...(estimateOk ? { verification_estimated_age: estimatedAge } : {}),
         })
         .eq("user_id", user.id);
@@ -352,9 +378,14 @@ serve(async (req) => {
           status: 500, headers: { "Content-Type": "application/json" },
         });
       }
-      return new Response(JSON.stringify({ ok: true, status: "pending" }), {
-        status: 200, headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          status: isMinor ? "pending_minor" : "pending",
+          minorReview: isMinor,
+        }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
     }
 
     // ------------------------------------------------------------------
@@ -364,10 +395,13 @@ serve(async (req) => {
     //   - Video-Objekt existiert (gegen leere Auto-Calls),
     //   - genau 1 Gesicht, Liveness ok (Client-Claim),
     //   - Abweichung |KI - angegebenes Alter| <= 2 Jahre,
-    //   - Play Integrity (v0.9.0): WENN ein Token mitgeschickt wurde
-    //     (nur Play-Builds), MUSS das Google-Verdict bestehen, sonst
-    //     manuelle Prüfung. KEIN Token (F-Droid, iOS, alte Builds)
-    //     ändert nichts - die Stichprobe (Migration 120) bleibt das Netz.
+    //   - Play Integrity (v0.9.0): das Google-Verdict MUSS bestehen.
+    //     Ohne Token (F-Droid, iOS, alte Builds) gibt es KEINE
+    //     automatische Freigabe mehr, sondern manuelle Pruefung
+    //     (v0.10.0, Security-Audit: die KI-Angaben sind Client-Werte
+    //     und damit nicht belastbar).
+    //   - juengere Personen (bis 21) werden immer von Hand geprueft
+    //     (Status 'pending_minor'), nie automatisch freigegeben.
     //   - aktueller Status 'none' oder 'rejected' (kein Ueberspringen
     //     einer laufenden manuellen Pruefung, kein Doppel-Badge).
     // Wirkung: Badge sofort (is_verified), Status 'auto', Video bleibt
@@ -394,26 +428,43 @@ serve(async (req) => {
           { status: 400, headers: { "Content-Type": "application/json" } },
         );
       }
-      // Play Integrity (v0.9.0): Token MITgeschickt -> Verdict MUSS
-      // bestehen, sonst manuelle Prüfung (fail-closed dorthin). KEIN
-      // Token (F-Droid, iOS, alte Builds, Fehler) -> bisheriger Pfad.
+      // Play Integrity (v0.9.0, verschaerft in v0.10.0): Das Verdict
+      // MUSS bestehen, sonst manuelle Pruefung (fail-closed dorthin).
+      //
+      // BISHER: ohne Token (F-Droid, iOS, alte Builds, Fehler) ging es
+      // direkt zur Auto-Freigabe. Damit war das Alters-Badge faktisch
+      // selbst ausgefuellt: estimatedAge und faceCount sind Client-Werte,
+      // und ein modifizierter Client konnte beide passend senden. In
+      // einer App mit Jugendschutz ist das die entscheidende Luecke.
+      //
+      // JETZT: ohne bestandenes Verdict gibt es keine automatische
+      // Freigabe. Der Fall geht in die manuelle Pruefung. Das ist
+      // strenger als vorher - Bewusst. F-Droid- und iOS-Nutzer koennen
+      // weiterhin verifiziert werden, aber eben nur von Hand.
       const integrityToken = typeof body.integrityToken === "string"
         ? body.integrityToken
         : null;
       const integrityNonce = typeof body.integrityNonce === "string"
         ? body.integrityNonce
         : null;
+      let integrityOk = false;
       if (integrityToken && integrityNonce) {
-        const integrityOk = await verifyPlayIntegrity(
+        integrityOk = await verifyPlayIntegrity(
           integrityToken,
           integrityNonce,
         );
-        if (!integrityOk) {
-          return new Response(
-            JSON.stringify({ error: "Manuelle Pruefung erforderlich" }),
-            { status: 422, headers: { "Content-Type": "application/json" } },
-          );
-        }
+      }
+      if (!integrityOk) {
+        console.log(
+          "Auto abgelehnt: kein bestandenes Play-Integrity-Verdict",
+        );
+        return new Response(
+          JSON.stringify({
+            error: "Manuelle Pruefung erforderlich",
+            reason: integrityToken ? "integrity_failed" : "integrity_missing",
+          }),
+          { status: 422, headers: { "Content-Type": "application/json" } },
+        );
       }
       // Server-seitige Abweichung (Fix: client-gelieferte `deviation` wird
       // IGNORIERT - modifizierte Clients konnten eine passende Abweichung
@@ -456,7 +507,20 @@ serve(async (req) => {
         .eq("user_id", user.id)
         .maybeSingle();
       const currentStatus = profile?.verification_status ?? "none";
-      if (profile?.is_verified === true || currentStatus === "pending") {
+      // 'rejected' blockiert die Auto-Freigabe ebenfalls.
+      //
+      // BUG (Security-Audit 2026-10-19): nach einer Admin-Ablehnung war
+      // der Status 'rejected' und 'auto' liess sich trotzdem aufrufen -
+      // das Badge war binnen Minuten wieder da. Eine Ablehnung muss
+      // klebend sein: wer abgelehnt wurde, geht ueber die manuelle
+      // Pruefung. Neu einreichen ist erlaubt (submit), das fuehrt aber
+      // in 'pending'/'pending_minor', nicht in ein Badge.
+      if (
+        profile?.is_verified === true ||
+        currentStatus === "pending" ||
+        currentStatus === "pending_minor" ||
+        currentStatus === "rejected"
+      ) {
         return new Response(
           JSON.stringify({ error: "Keine Auto-Freigabe moeglich" }),
           { status: 409, headers: { "Content-Type": "application/json" } },

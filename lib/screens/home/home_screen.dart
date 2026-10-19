@@ -96,6 +96,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
+    // Verifikationsstatus fuer den Hinweis (v0.10.0).
+    final verificationState = ref.watch(profileProvider).verificationState;
     final profile = ref.watch(profileProvider);
     final matches = ref.watch(chatProvider);
     // Seen-Version beobachten: Badges nach Ansehen neu berechnen.
@@ -173,6 +175,80 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         },
         child: CustomScrollView(
           slivers: [
+            // Verifikations-Hinweis (v0.10.0).
+            //
+            // Zwei Zustaende, zwei Texte: wer noch gar nicht geprueft
+            // hat, wird zur Verifizierung eingeladen; wer die Pruefung
+            // schon beantragt hat, wartet - dafuer gibt es nichts zu
+            // tun, und das steht so da.
+            //
+            // Der Hinweis verschwindet, sobald freigegeben wurde. Er
+            // steht bewusst OBEN, nicht in einer eigenen Sektion: er
+            // betrifft den Vollzugang, und der ist die Voraussetzung
+            // fuer die Modi.
+            if (verificationState != VerificationState.verified)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  child: Card(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    child: ListTile(
+                      leading: Icon(
+                        verificationState ==
+                                VerificationState.underReview
+                            ? Icons.hourglass_top
+                            : Icons.verified_user_outlined,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onPrimaryContainer,
+                      ),
+                      title: Text(
+                        L10n.t(
+                          context,
+                          verificationState ==
+                                  VerificationState.underReview
+                              ? 'verify.stateUnderReview'
+                              : 'verify.stateUnverified',
+                        ),
+                        style: TextStyle(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onPrimaryContainer,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: Text(
+                        L10n.t(
+                          context,
+                          verificationState ==
+                                  VerificationState.underReview
+                              ? 'dm.lockedBodyReview'
+                              : 'dm.lockedBody',
+                        ),
+                        style: TextStyle(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onPrimaryContainer,
+                        ),
+                      ),
+                      trailing: verificationState ==
+                              VerificationState.underReview
+                          ? null
+                          : Icon(
+                              Icons.chevron_right,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onPrimaryContainer,
+                            ),
+                      onTap: verificationState ==
+                              VerificationState.underReview
+                          ? null
+                          : () =>
+                              context.push(AppRoutes.verificationInfo),
+                    ),
+                  ),
+                ),
+              ),
             // Pausiert-Hinweis (v0.9.1): Profil unsichtbar – mit Abkürzung
             // zu den Einstellungen zum Entpausieren.
             if (settings.paused)
@@ -619,11 +695,18 @@ class _SectionHeader extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+        // Expanded: der Titel gibt dem Button Platz, statt selbst
+        // ueber den Rand zu laufen (RenderFlex-Overflow bei grosser
+        // Systemschrift).
+        Expanded(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
         ),
         if (onTap != null)
           TextButton.icon(

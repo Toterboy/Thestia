@@ -168,6 +168,16 @@ def uuids_in_artifact(path):
     return found
 
 
+def admin_uuid_known() -> bool:
+    """Ist die Admin-UUID fuer den Inhaltscheck bekannt?
+
+    Aus der Umgebungsvariable - bewusst NICHT aus einer Datei im
+    Repo. Die UUID ist ein Geheimnis (sie schaltet den Admin-Zugang
+    frei) und darf deshalb nicht im Arbeitsverzeichnis liegen.
+    """
+    return bool(ADMIN_UUID.strip())
+
+
 def admin_uuids_all(uuid_sets, admin):
     """Vereinigung aller UUID-Mengen der Admin-Builds."""
     return set().union(*(uuid_sets[p.relative_to(ROOT).as_posix()]
@@ -223,6 +233,37 @@ def main():
         # Kommandozeile mit 0 enden. Genau dieser Fehler ist im
         # Selbsttest aufgefallen.
         sys.exit(1)
+
+    # UNGEPRUEFT-FALL (Security-Audit 2026-10-19).
+    #
+    # Bisher: ohne Admin-Build im Ordner wurde die geheimnisfreie
+    # Kontaminationspruefung einfach uebersprungen, und am Ende stand
+    # "OK". Das ist eine gruene, inhaltslose Zeile: genau der Vorfall,
+    # bei dem 2026-10-05 ein Admin-Build unter oeffentlichem Namen
+    # landete, waere in einem frischen Clone, nach "flutter clean" oder
+    # nach dem Loeschen des Admin-Ordners NICHT mehr erkennbar.
+    #
+    # Ohne Admin-Build UND ohne bekannte Admin-UUID gibt es schlicht
+    # keine Moeglichkeit zu pruefen. Das wird als "ungeprueft"
+    # gemeldet und beendet den Lauf mit Fehler - nicht mit "OK".
+    if not admin and not admin_uuid_known():
+        print()
+        print('FEHLER: Kontamination nicht pruefbar.')
+        print('  Es gibt keinen Admin-Build unter '
+              f'{(admin_dir).relative_to(ROOT).as_posix()}/')
+        print('  UND die Admin-UUID ist nicht als Umgebungsvariable')
+        print('  gesetzt. Damit kann der Check nicht feststellen, ob')
+        print('  sich ein Admin-Build im oeffentlichen Ablageort')
+        print('  befindet - der v0.9.1-Vorfall waere genau so')
+        print('  durchgerutscht.')
+        print()
+        print('  Beides bereitstellen:')
+        print("    $env:ADMIN_UUID = '<uuid>'   # fuer den Inhaltscheck")
+        print('    und den Admin-Build bauen:')
+        print('    powershell -NoProfile -ExecutionPolicy Bypass '
+              '-File tool\\build_release.ps1')
+        sys.exit(1)
+
 
     print('=' * 78)
     print(f'RELEASE-ARTEFAKTE v{version} (build {code})')

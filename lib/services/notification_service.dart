@@ -227,6 +227,50 @@ class NotificationService {
     );
   }
 
+  /// Eine systemeigene Meldung ohne Kategorie-Schalter und ohne
+  /// WidgetRef.
+  ///
+  /// Wofuer: Meldungen ueber den eigenen Zustand, die der Nutzer
+  /// ausloest und die deshalb niemandem abgeschaltet werden sollen -
+  /// z.B. die Freigabe der Altersverifizierung. Die Freigabe entsteht
+  /// serverseitig durch einen Admin, und der Nutzer sieht sonst nichts
+  /// davon, bis die App neu startet.
+  ///
+  /// Bewusst ohne die Kategorie-Schalter der [show]-Methode: ein
+  /// Schalter "Likes" darf die Meldung "Dein Alter ist bestaetigt"
+  /// nicht unterdruecken. Und ohne WidgetRef, weil der Ausloeser ein
+  /// StateNotifier ist und dort kein WidgetRef zur Verfuegung steht.
+  Future<void> showSystemNotice({
+    required int id,
+    required String title,
+    required String body,
+    String channelId = 'system',
+  }) async {
+    if (!_initialized) await initialize();
+    final details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        channelId,
+        'Systemmeldungen',
+        channelDescription: 'Meldungen ueber dein eigenes Konto',
+        icon: 'notification_icon',
+        color: const Color(0xFFFF6B9D),
+        importance: Importance.high,
+        priority: Priority.high,
+      ),
+      iOS: const DarwinNotificationDetails(
+        presentSound: true,
+        presentBadge: true,
+        presentAlert: true,
+      ),
+    );
+    await _plugin.show(
+      id: id,
+      title: title,
+      body: body,
+      notificationDetails: details,
+    );
+  }
+
   Future<void> showMessageNotification({
     required int id,
     required String title,

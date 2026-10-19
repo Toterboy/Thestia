@@ -33,6 +33,19 @@ class L10n {
     return _strings[locale]?[key] ?? _strings['de']![key] ?? key;
   }
 
+  /// Wie [t], aber ohne [BuildContext].
+  ///
+  /// fuer Stellen, die keinen Kontext haben: ein StateNotifier kann
+  /// keinen Widget-Kontext bauen, ein Hintergrund-Task gar nicht. Ohne
+  /// diese Variante muesste dort entweder ein deutscher Klartext
+  /// stehen (und damit die englische Fassung vergessen werden) oder
+  /// der Aufrufer auf den naechsten Bildschirm warten.
+  ///
+  /// Es wird immer DEUZSCH gewaehlt - die Sprache des Geraets ist hier
+  /// nicht ermittelbar, und Deutsch ist die Quellsprache der Datei.
+  static String tWithoutContext(String key) =>
+      _strings['de']?[key] ?? _strings['en']?[key] ?? key;
+
   /// Wie [t], ersetzt aber {platzhalter} im Text, z. B.
   /// tf(context, 'profile.edit.maxDistance', {'km': '42'}).
   static String tf(
@@ -412,6 +425,17 @@ const Map<String, Map<String, String>> _strings = {
     'dm.transitSparkDesc':
         'Blicke getauscht, sich nicht getraut? Später funken - auch wenn '
         'ihr längst weitergefahren seid.',
+    'dm.lockedTitle': 'Verifizierung erforderlich',
+    'dm.lockedBody':
+        'Für diesen Modus musst du dein Alter mit einem kurzen Video '
+        'bestätigen. Die Prüfung dauert meist nur einen Moment, '
+        'manche Fälle werden von Hand geprüft.',
+    'dm.lockedBodyReview':
+        'Deine Prüfung läuft bereits - du musst erst auf das '
+        'Ergebnis warten. In der Zwischenzeit kannst du Zufallschat und '
+        'QR-Code-Scannen nutzen.',
+    'dm.lockedAction': 'Jetzt verifizieren',
+    'dm.lockedBadge': 'Gesperrt',
     'dm.groupMeet': 'Menschen kennenlernen',
     'dm.groupDirect': 'Direkt verbinden',
     'dm.groupOnTheGo': 'Unterwegs',
@@ -1061,6 +1085,15 @@ const Map<String, Map<String, String>> _strings = {
         'Konto bleibt bis dahin voll nutzbar.',
     'verify.toApp': 'Zur App',
     'verify.badge': 'Verifiziert',
+    'verify.stateUnverified': 'Nicht verifiziert',
+    'verify.stateUnderReview': 'Wird geprüft',
+    'verify.stateVerified': 'Verifiziert',
+    'verify.otherUnverified': 'Nicht verifiziert',
+    'verify.otherUnderReview': 'Verifizierung läuft',
+    'verify.infoAiLimits':
+        'Die Altersschätzung ist eine KI-Schätzung und kann '
+        'ungenau sein. Sie ersetzt keine Prüfung durch Menschen: '
+        'Abweichungen und Zweifelsfälle werden von Hand geprüft.',
     'verify.pendingChip': 'Prüfung läuft',
     'verify.pendingReason.deviation':
         'Warum manuell? Die KI-Schätzung weicht {years} Jahre von deinem '
@@ -3234,6 +3267,16 @@ const Map<String, Map<String, String>> _strings = {
     'dm.transitSparkDesc':
         'Exchanged glances but too shy? Spark later - even after you have '
         'both moved on.',
+    'dm.lockedTitle': 'Verification required',
+    'dm.lockedBody':
+        'For this mode you need to confirm your age with a short video. '
+        'Verification usually takes only a moment; some cases are '
+        'reviewed by hand.',
+    'dm.lockedBodyReview':
+        'Your verification is already running - please wait for the '
+        'result. Meanwhile you can use random chat and QR code scanning.',
+    'dm.lockedAction': 'Verify now',
+    'dm.lockedBadge': 'Locked',
     'dm.groupMeet': 'Meet people',
     'dm.groupDirect': 'Connect directly',
     'dm.groupOnTheGo': 'On the go',
@@ -3697,6 +3740,15 @@ const Map<String, Map<String, String>> _strings = {
         'fully usable until then.',
     'verify.toApp': 'To the app',
     'verify.badge': 'Verified',
+    'verify.stateUnverified': 'Not verified',
+    'verify.stateUnderReview': 'Under review',
+    'verify.stateVerified': 'Verified',
+    'verify.otherUnverified': 'Not verified',
+    'verify.otherUnderReview': 'Verification in progress',
+    'verify.infoAiLimits':
+        'The age estimate is an AI estimate and can be inaccurate. It '
+        'does not replace a check by a person: deviations and doubtful '
+        'cases are reviewed by hand.',
     'verify.pendingChip': 'Review in progress',
     'verify.pendingReason.deviation':
         'Why manual? The AI estimate deviates {years} years from your '

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/widgets/mode_icons.dart';
 import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/providers/settings_provider.dart';
@@ -17,6 +18,12 @@ class SwipeModeSelectionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Verifikationsstatus fuer die Modus-Sperren (v0.10.0).
+    //
+    // Der Status wird BEWACHTET, nicht gelesen: nach der Freigabe
+    // durch den Admin soll die Sperre ohne Neustart verschwinden.
+    final verificationState = ref.watch(profileProvider).verificationState;
+
     return Scaffold(
       appBar: AppBar(
         // K: "Entdecken" ist ein Haupt-Tab der Bottom-Navigation, kein
@@ -32,29 +39,37 @@ class SwipeModeSelectionScreen extends ConsumerWidget {
           // Unübersichtlichkeit ein.
           _ModeGroup(
             headerKey: 'dm.groupMeet',
+            verificationState: verificationState,
             modes: [
               (DiscoveryMode.findMatch,
-                  () => _openMode(context, ref, AppRoutes.findYourMatch)),
+                  () => _openMode(context, ref, DiscoveryMode.findMatch,
+                          AppRoutes.findYourMatch)),
               (DiscoveryMode.datingHour,
-                  () => _openMode(context, ref, AppRoutes.datingHourEvent)),
+                  () => _openMode(context, ref, DiscoveryMode.datingHour,
+                          AppRoutes.datingHourEvent)),
             ],
           ),
           const SizedBox(height: 16),
           _ModeGroup(
             headerKey: 'dm.groupDirect',
+            verificationState: verificationState,
             modes: [
               (DiscoveryMode.randomChat,
-                  () => _openMode(context, ref, AppRoutes.randomChat)),
+                  () => _openMode(context, ref, DiscoveryMode.randomChat,
+                          AppRoutes.randomChat)),
             ],
           ),
           const SizedBox(height: 16),
           _ModeGroup(
             headerKey: 'dm.groupOnTheGo',
+            verificationState: verificationState,
             modes: [
               (DiscoveryMode.qrScan,
-                  () => _openMode(context, ref, AppRoutes.qrScan)),
+                  () => _openMode(context, ref, DiscoveryMode.qrScan,
+                          AppRoutes.qrScan)),
               (DiscoveryMode.transitSpark,
-                  () => _openMode(context, ref, AppRoutes.transitRadar)),
+                  () => _openMode(context, ref, DiscoveryMode.transitSpark,
+                          AppRoutes.transitRadar)),
             ],
           ),
           const SizedBox(height: 24),
@@ -108,7 +123,21 @@ style: Theme.of(context).textTheme.titleMedium?.copyWith(
 /// dem Absprung geprueft, damit die Sperre nicht erst auf der
 /// Radarseite sichtbar wird. Fail-closed - ohne Geburtsdatum bleibt
 /// der Modus zu, genau wie in der Datenbank (Migration 131).
-void _openMode(BuildContext context, WidgetRef ref, String route) {
+void _openMode(BuildContext context, WidgetRef ref, DiscoveryMode mode,
+    String route) {
+  // Verifikationssperre (v0.10.0).
+  //
+  // Geprueft wird der DREISTUFIGE Zustand: wer "wird geprueft" ist,
+  // hat die Pruefung bereits beantragt und wartet - das ist kein
+  // Mangel, sondern ein laufender Vorgang. Gesperrt ist nur, wer
+  // noch gar nicht geprueft hat.
+  if (_modeNeedsVerification(mode)) {
+    final state = ref.read(profileProvider).verificationState;
+    if (state != VerificationState.verified) {
+      _showVerificationRequiredDialog(context, state);
+      return;
+    }
+  }
   if (route == AppRoutes.transitRadar) {
     final age = ref.read(profileProvider).age;
     if (age == null || age < 18) {
@@ -207,6 +236,28 @@ enum DiscoveryMode {
   bool get isNew => this == DiscoveryMode.transitSpark;
 }
 
+/// Modi, die eine verifizierte Person voraussetzen (v0.10.0).
+///
+/// WAEHLREGEL: QR-Code-Scannen und Zufallschat bleiben ohne
+/// Verifizierung zugaenglich. Beide sind "direkt" - man verbindet sich
+/// mit einer Person, die man kennt oder deren Code man hat. Alle
+/// anderen Modi setzen voraus, dass man alt genug und wirklich die
+/// Person ist, die man behauptet: Find your Spark (Vorstellung),
+/// Dating Hour (Gespraech mit einer fremden Person) und Transit Spark
+/// (Begegnung unterwegs, ohne dass man sich vorher sieht).
+///
+/// Ohne diese Sperre waere die Alterspruefung an einer Stelle, an der
+/// niemand sie prueft - die Verifizierung waere dann nur noch Dekoration.
+const Set<DiscoveryMode> _modesRequiringVerification = {
+  DiscoveryMode.findMatch,
+  DiscoveryMode.datingHour,
+  DiscoveryMode.transitSpark,
+};
+
+/// Braucht dieser Modus eine verifizierte Person?
+bool _modeNeedsVerification(DiscoveryMode mode) =>
+    _modesRequiringVerification.contains(mode);
+
 /// Symbole der Modi (v0.10.0).
 ///
 /// Drei eigene [CustomPainter] fuer Transit Spark, Find your Spark und
@@ -242,10 +293,19 @@ class _ModeGroup extends StatelessWidget {
   const _ModeGroup({
     required this.headerKey,
     required this.modes,
+    required this.verificationState,
   });
 
   final String headerKey;
   final List<(DiscoveryMode, VoidCallback)> modes;
+
+  /// Status des Betrachtenden - entscheidet, welche Kachel gesperrt ist.
+  ///
+  /// PRO MODUS, nicht pro Gruppe: die Gruppe "Unterwegs" enthaelt
+  /// QR-Scan (offen) und Transit Spark (gesperrt). Eine Gruppen-Sperre
+  /// wuerde den QR-Scan mitsperren, obwohl er ohne Verifizierung
+  /// bleiben soll.
+  final VerificationState verificationState;
 
   @override
   Widget build(BuildContext context) {
@@ -264,6 +324,8 @@ class _ModeGroup extends StatelessWidget {
           _ModeCard(
             mode: mode,
             isSelected: false,
+            isLocked: _modeNeedsVerification(mode) &&
+                verificationState != VerificationState.verified,
             onTap: onTap,
           ),
           const SizedBox(height: 12),
@@ -273,16 +335,60 @@ class _ModeGroup extends StatelessWidget {
   }
 }
 
+/// Erklaert, warum ein Modus gesperrt ist, und bietet den Weg zur
+/// Verifizierung an.
+void _showVerificationRequiredDialog(
+    BuildContext context, VerificationState state) {
+  final router = GoRouter.of(context);
+  showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      icon: Icon(
+        Icons.verified_user_outlined,
+        color: Theme.of(ctx).colorScheme.primary,
+        size: 40,
+      ),
+      title: Text(L10n.t(ctx, 'dm.lockedTitle')),
+      content: Text(state == VerificationState.underReview
+          ? L10n.t(ctx, 'dm.lockedBodyReview')
+          : L10n.t(ctx, 'dm.lockedBody')),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: Text(L10n.t(ctx, 'common.close')),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.of(ctx).pop();
+            router.push(AppRoutes.verificationInfo);
+          },
+          child: Text(L10n.t(ctx, 'dm.lockedAction')),
+        ),
+      ],
+    ),
+  );
+}
+
 /// Karte für einen Entdeckungs-Modus.
 class _ModeCard extends StatelessWidget {
   const _ModeCard({
     required this.mode,
     required this.isSelected,
     required this.onTap,
+    this.isLocked = false,
   });
 
   final DiscoveryMode mode;
   final bool isSelected;
+
+  /// Gesperrt mangels Verifizierung (v0.10.0).
+  ///
+  /// Gesperrt heisst: der Modus ist sichtbar, aber nicht bedienbar.
+  /// Die Kachel wird ausgegraut und traegt ein Schloss - ein
+  /// voelliges Verstecken wuerde den Nutzer raten lassen, ob es den
+  /// Modus ueberhaupt gibt.
+  final bool isLocked;
+
   final VoidCallback onTap;
 
   @override
@@ -311,9 +417,14 @@ class _ModeCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
+        child: Opacity(
+          // Ausgegraut: die Kachel bleibt sichtbar, wirkt aber nicht
+          // bedienbar. 0,45 ist der Wert, bei dem Text noch lesbar
+          // bleibt - bei 0,38 verschwinden die Details.
+          opacity: isLocked ? 0.45 : 1.0,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
             children: [
               Container(
                 width: 56,
@@ -337,6 +448,14 @@ class _ModeCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
+                        if (isLocked) ...[
+                          Icon(
+                            Icons.lock_outline,
+                            size: 16,
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
+                          const SizedBox(width: 6),
+                        ],
                         Flexible(
                           child: Text(
                             L10n.t(context, mode.labelKey),
@@ -396,6 +515,7 @@ class _ModeCard extends StatelessWidget {
               // Q: Bewusst KEIN Haken-Icon. Die Karten sind reine
               // Auswahl-Kacheln; ein Tap führt direkt in den Modus.
             ],
+          ),
           ),
         ),
       ),

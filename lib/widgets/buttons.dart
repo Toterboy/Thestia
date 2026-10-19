@@ -30,7 +30,17 @@ class PrimaryButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icon != null) ...[icon!, const SizedBox(width: 8)],
-              Text(label),
+              // Flexible: ein langer Label-Text (z. B. "Persönlichkeitstest
+              // starten") darf den Button nicht horizontal aus dem
+              // verfügbaren Platz herausschieben - er wird stattdessen
+              // gekürzt.
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           );
 
