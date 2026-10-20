@@ -45,111 +45,176 @@ Play-Fingerabdruck noch rein (Abschnitt 3).
 
 ---
 
-## 2. TURN-Relay: coturn aufsetzen
+## 2. TURN-Relay: Optionen ohne eigenes Geraet und ohne Kreditkarte
 
-**Warum:** Die `ice-config`-Edge-Function ist deployed, liefert aber
-**nur STUN**. Ohne `TURN_URL` und `TURN_SECRET` faellt sie still auf
-vier oeffentliche STUN-Server zurueck. Hinter symmetrischen NATs
-(some Firmen, viele Mobilfunknetze) kommt dann keine Verbindung
-zustande - Video- und Sprachanrufe brechen ab. Die Datenschutz-
-Erklaerung listet TURN bisher als genutzt; sie nennt inzwischen die
-tatsaechlich genutzten STUN-Anbieter (Abschnitt 6).
+**Warum ueberhaupt:** Die `ice-config`-Edge-Function ist deployed, liefert
+aber **nur STUN**. Ohne TURN kommt hinter symmetrischen NATs (Firmen-
+netze, viele Mobilfunknetze) keine Verbindung zustande - Video- und
+Sprachanrufe bleiben bei "verbinde..." stehen. Die Datenschutz-
+Erklaerung nennt inzwischen die tatsaechlich genutzten STUN-Anbieter
+(Abschnitt 6); mit TURN kommt eine Zeile fuer den Relay-Anbieter dazu.
 
-**Schritt 1 - coturn auf einem eigenen Server:**
+Die Function erzeugt **kurzlebige REST-Credentials** nach dem
+Standard-Schema: Benutzername = `Ablaufzeit:User-ID`, Kennwort =
+base64(HMAC-SHA1(Geheimnis, Benutzername)). Das Schema ist das, was
+coturn mit `use-auth-secret` erwartet - und auch das, was die
+managed Anbieter unten nutzen. Es muss also NICHTS am Code geaendert
+werden, es braucht nur die passenden zwei Werte.
 
-```bash
-# Debian/Ubuntu
-sudo apt install coturn
-```
+### Option A (empfohlen): Metered Open Relay
 
-`/etc/turnserver.conf` (Auszug, wichtig sind die markierten Zeilen):
+**Kostenlos, ohne Kreditkarte.** Metered betreibt einen oeffentlichen
+TURN-Relay mit 20 GB im Monat. Das Konto ist kostenlos und verlangt
+**keine** Kreditkarte.
 
-```ini
-listening-ip=0.0.0.0
-listening-port=3478
-# WICHTIG: eine IP, KEIN Domainname. coturn loest sonst seine eigene
-# IP nicht auf und die Credentials sind unbrauchbar.
-external-ip=<DEINE-OEFFENTLICHE-IP>
+1. Konto anlegen: <https://app.metered.ca> (Free-Tarif, keine Karte)
+2. Im Dashboard den **TURN-Relay-Schluessel** (shared secret /
+   "auth key") holen. Der Schlüssel ist der zweite Wert fuer
+   `TURN_SECRET`.
+3. Relay-Adresse aus dem Dashboard uebernehmen. Open Relay laeuft
+   bewusst ueber **Port 80 und 443** - damit kommen die Verbindungen
+   auch durch strenge Firmen-Firewalls. Beide URLs setzen:
 
-# use-auth-secret ist Pflicht: die Function kann statische
-# Credentials nicht - sie erzeugt kurzlebige REST-Credentials.
-use-auth-secret
-static-auth-secret=<LANGES-ZUFALLSGEHEIMNIS>
-realm=thestia.de
-
-# TLS ist optional, aber fuer manche Netze noetig
-# cert=/etc/letsencrypt/live/thestia.de/fullchain.pem
-# pkey=/etc/letsencrypt/live/thestia.de/privkey.pem
-```
-
-Neustarten:
-
-```bash
-sudo systemctl restart coturn
-sudo systemctl enable coturn
-```
-
-Pruefen:
-
-```bash
-sudo ss -lnup | grep 3478
-```
-
-**Schritt 2 - Secrets in Supabase setzen:**
-
-```bash
-supabase secrets set TURN_URL="turn:<DEINE-IP>:3478?transport=udp" TURN_SECRET="<DAS-GEHEIMNIS-AUS-DER-CONFIG>" TURN_TTL=3600
-```
-
-`TURN_URL` **muss eine IP-Adresse enthalten**, kein Hostname.
-
-**Schritt 3 - pruefen:** In der App anrufen und im Logcat nachsehen:
-
-```powershell
-adb -s <GERAETE-ID> logcat -v time | Select-String "WebRTC"
-```
-
-Erwartet: `[WebRTC] ICE-Server geladen: N Eintraege` mit **mehr** als
-den STUN-Eintraegen. Bei nur STUN steht dort `urls: stun:...`.
-
-**Schritt 4 - Datenschutz nachziehen:** Steht TURN in der Erklaerung
-jetzt wieder als genutzter Anbieter, gehoert eine Zeile "TURN-Relay
-(eigener Server)" in die Drittanbieter-Tabelle in `docs/DATENSCHUTZ.md`
-(Abschnitt 6). Danach:
-
-```powershell
-python tool\make_privacy_policy.py
-```
-
----
-
-## 3. Passkeys: dritter Fingerabdruck in `assetlinks.json`
-
-**Warum:** Von Play installierte Apps tragen **Gogs** Signaturzertifikat,
-nicht deins. Die Digital-Asset-Links-Pruefung schlaegt ohne dessen
-Fingerabdruck fehl - Passkeys funktionieren dann auf Play-Installationen
-nicht, obwohl sie lokal funktionieren.
-
-**So geht's:**
-
-1. Play Console -> deine App -> **Setup** -> **App-Integritaet**.
-2. Unter **App-Signatur-Schluessel** steht der **SHA-256** des
-   Google-Play-Signaturzertifikats. Kopieren.
-3. In `passkey-assets/assetlinks.json` den Wert in
-   `sha256_cert_fingerprints` **als dritten Eintrag** ergaenzen
-   (Grossbuchstaben, Doppelpunkte).
-4. `assetlinks.json` auf Netlify hochladen (Abschnitt 1).
-5. Pruefen:
-
-   ```powershell
-   (Invoke-WebRequest https://auth.thestia.de/.well-known/assetlinks.json).Content
+   ```bash
+   supabase secrets set \
+     TURN_URL="turn:openrelay.metered.ca:80?transport=tcp" \
+     TURN_SECRET="<der TURN-Schluessel aus dem Dashboard>"
    ```
 
-Der Debug-Fingerabdruck (`5A:B8:D0:D5:...`) und der Release-Fingerabdruck
-(`8C:BE:F7:D0:...`) sind bereits drin - die bleiben, weil lokal
-installierte Builds weiterhin funktionieren sollen.
+   Optional zusaetzlich ueber 443 (TLS):
 
----
+   ```bash
+   supabase secrets set TURN_URL="turn:openrelay.metered.ca:80?transport=tcp,turns:openrelay.metered.ca:443?transport=tcp"
+   ```
+
+4. Pruefen, ob die Function jetzt TURN liefert:
+
+   ```bash
+   supabase functions logs ice-config
+   ```
+
+   Erwartet wird ein Eintrag mit "ICE-Server geladen: 5 Eintraege"
+   (4 STUN + 1 TURN). Bleibt es bei 4, ist eines der beiden Secrets
+   nicht gesetzt.
+
+**Grenzen:** 20 GB pro Monat. Jede weitergeleitete Minute zaehlt
+doppelt (ein- und ausgehend). Fuer eine App mit wenigen gleichzeitigen
+Anrufen reicht das; bei vielen Videocalls laeuft das Volumen schnell
+voll. Ausserdem: der Anbieter sieht die IP-Adressen der Nutzer - das
+ist in der Erklaerung zu nennen.
+
+### Option B: ein gemieteter Server (nicht "bei mir zu Hause")
+
+Wenn dir 20 GB nicht reichen: ein kleiner VPS mit coturn. Das ist ein
+fremder Server, kein Geraet von dir, aber mit Abo.
+
+- **Ein Server mit eigener IPv4** ist Pflicht. NAT-Plaene akzeptieren
+  von aussen nur SSH - TURN lebt aber genau von eingehenden
+  Verbindungen auf vielen Ports.
+- **coturn ab Version 4.13.0.** Darunter gibt es zwei gemeldete
+  Luecken: eine Loopback-Umgehung, ueber die ein angemeldeter TURN-
+  Nutzer Dienste freilegen kann, die nur auf dem Host an localhost
+  gebunden sind (CVE-2026-53450), und eine Format-String-Injektion
+  ueber den TURN-Benutzernamen in den Redis-Befehl (CVE-2026-68522).
+  Beide sind mit 4.13.0 behoben.
+- Konfiguration wie in der urspruenglichen Fassung dieser Datei:
+  `use-auth-secret`, `static-auth-secret`, `external-ip` als **IP**
+  (kein Domainname - sonst loest coturn seine eigene IP nicht auf),
+  Ports 3478 (UDP/TCP) und 49152-65535 (UDP) freigeben.
+
+Beispiel einer Anbieter-Auswahl ohne Kreditkartenpflicht und ohne
+Kontoerfassung: EQVPS rechnet in Krypto, ohne KYC, ab rund 8 EUR pro
+Monat fuer einen Plan mit eigener IP.
+
+### Option C: Xirsys
+
+Kostenloser TURN-Account mit festem Limit. **Pruefen, ob statische
+Credentials** angeboten werden - die Function kann nur kurzlebige
+REST-Credentials. Falls statisch angeboten wird, braucht es eine
+Aenderung an der Function (einen zusaetzlichen Secret-Pfad fuer
+`username`/`credential` statt HMAC).
+
+### Nicht passend
+
+| Anbieter | Warum nicht |
+|---|---|
+| Cloudflare TURN | Du willst keine Kreditkarte hinterlegen. Ausserdem ist Cloudflare fuer TURN ueber Cloudflare Calls gebunden. |
+| ngTurn | Kein kostenloser Tarif, und jeder Tarif startet mit einer Kartenpruefung. |
+| Twilio TURN | STUN ist kostenlos, TURN kostet pro GB. Das Konto laesst sich ohne Karte anlegen, der TURN-Preis aber nicht umgehen. |
+
+## 3. Google Play Console: App anlegen und den Fingerabdruck holen
+
+**Warum:** Von Play installierte Apps tragen **Gogs** Signaturzertifikat,
+nicht deins. Die Digital-Asset-Links-Pruefung fuer Passkeys schlaegt ohne
+dessen Fingerabdruck fehl - Passkeys funktionieren dann auf
+Play-Installationen nicht, obwohl sie lokal funktionieren. Und solange
+es die App in der Console nicht gibt, kann es auch keine
+Play-Signatur geben.
+
+Die beiden Fingerabdruecke im Bild sind verschiedene Dinge:
+
+| Zertifikat | Wessen Fingerabdruck | Wo in der Console |
+|---|---|---|
+| **Upload key certificate** | Dein eigener Release-/Upload-Schluessel | Setup -> App-Integritaet (nur sichtbar, wenn der eigene Schluessel hochgeladen wurde) |
+| **App signing key certificate** | **Gogs** Schluessel, mit dem Play die App umsigniert | Setup -> App-Integritaet -> "App-Signatur-Schluessel" |
+
+**In die `assetlinks.json` gehoert der zweite** - der von Google. Mit dem
+Upload-Key-Fingerabdruck funktionieren die Passkeys auf Play-Builds
+nicht.
+
+### 3.1 App in der Console anlegen
+
+1. <https://play.google.com/console> anmelden (Google-Konto).
+2. **App erstellen**.
+   - **App-Name:** Thestia
+   - **Standardsprache:** Deutsch
+   - **App oder Spiel:** App
+   - **Kostenlos oder bezahlt:** Kostenlos
+   - Die vier Deklarationen (Datenschutz, Datenschutzrichtlinie,
+     Werbung, Zielgruppe) beantworten. Auf die Datenschutzrichtlinie
+     kommt die URL der veroeffentlichten Erklaerung - siehe Abschnitt 1.
+3. Nach dem Anlegen bist du in der **App-Uebersicht**. Es geht direkt
+   weiter mit 3.2, auch wenn die App noch nicht fertig konfiguriert
+   ist - der Fingerabdruck ist unabhaengig davon verfuegbar.
+
+### 3.2 Fingerabdruck holen
+
+1. **Setup** (in der linken Leiste) -> **App-Integritaet**.
+2. Unter **App-Signatur-Schluessel** steht eine Zeile
+   "App-Signatur-Schluessel-Zertifikat" mit dem **SHA-256**-Fingerabdruck
+   (Format `AA:BB:CC:...`).
+   - Ist der Abschnitt leer, hat Play das Signieren noch nicht
+     eingerichtet. Das passiert beim ersten Hochladen einer AAB - dann
+     zuerst hochladen und danach wiederkommen.
+3. Den Fingerabdruck in `passkey-assets/assetlinks.json` als
+   **dritten Eintrag** in `sha256_cert_fingerprints` eintragen
+   (Grossbuchstaben, Doppelpunkte, gleiche Formatierung wie die
+   beiden anderen).
+4. `assetlinks.json` auf Netlify hochladen (Abschnitt 1).
+
+### 3.3 Was sonst noch in der Console konfiguriert werden muss
+
+Das ist der Teil, der beim Upload auffaellt - der Fingerabdruck
+allein reicht nicht:
+
+- **Store-Eintrag** mit Text, Bildern (Icon 512x512, Feature Graphic
+  1024x500, Screenshots je Formfaktor) und der
+  **Datenschutzrichtlinien-URL**.
+- **App-Inhalte**: Altersfreigabe. Hier wird die Altersgrenze eingetragen
+  - die App hat ein 16+-System, Transit Spark zusaetzlich 18+.
+- **Zielgruppe und Inhalt**: Altersgruppen, keine Werbung, keine
+  Datenerhebung durch Dritte ausser den in der Erklaerung genannten.
+- **Daten sicherheit** (Data Safety): Hier ankreuzen, welche Daten
+  erhoben werden. Das muss mit der Datenschutzerklaerung uebereinstimmen
+  - **die Erklaerung nennt "Land", "Geraetekennung", "Bild-Pruefhash",
+  "Standort-Zeitstempel" und das Kontomerkzeichen**; die vergessenen
+  Punkte sind im Audit als B10 notiert und sollten hier mit angegeben
+  werden, sonst widersprechen sich die beiden Formulare.
+- **Datenschutzrichtlinie**: URL der veroeffentlichten Erklaerung.
+- **Konto loeschen**: eine URL, auf der ein Konto geloescht werden
+  kann. Die App hat die Funktion bereits im Datenschutz-Bereich - die
+  Play-Konfiguration verlangt aber eine oeffentlich erreichbare Seite,
+  nicht nur einen Screen in der App.
 
 ## 4. Secrets rotieren
 
