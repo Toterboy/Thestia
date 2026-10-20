@@ -305,72 +305,92 @@ $$;
 -- Person wird er hier ergaenzt. Die Funktion liest direkt aus
 -- profiles und umgeht RLS als SECURITY DEFINER - deshalb ist die
 -- Verkleinerung der profiles-Policy aus Teil 1 fuer sie unkritisch.
-CREATE OR REPLACE FUNCTION public.get_match_partner_profile(
-  p_match_id bigint,
-  p_level integer DEFAULT 0
-)
+
+-- WICHTIG: die Signatur ist (p_match_id bigint) - GENAU die, die die
+-- App ruft. Eine zusaetzliche Variante (p_match_id bigint, p_level
+-- integer) waere eine NEUE Ueberladung, keine Ersetzung:
+-- "CREATE OR REPLACE" kann die Signatur nicht aendern. Und sie waere
+-- fuer `anon` aufrufbar, weil Migration 123 den Entzug nur fuer die
+-- damals vorhandenen Ueberladungen vorgenommen hat. Ausserdem naeme
+-- sie den Unlock-Level vom Aufrufer entgegen - das waere eine
+-- Rechteausweitung. Der Level wird hier intern aus
+-- match_quiz_state berechnet, wie in Migration 139.
+CREATE OR REPLACE FUNCTION public.get_match_partner_profile(p_match_id bigint)
 RETURNS jsonb
 LANGUAGE plpgsql
-STABLE
 SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
 DECLARE
   v_partner uuid;
-  v_level integer;
+  v_level int := 0;
 BEGIN
-  SELECT CASE WHEN m.initiator_id = auth.uid() THEN m.partner_id
-              ELSE m.initiator_id END,
-         CASE WHEN m.initiator_id = auth.uid() THEN m.quiz_level
-              ELSE m.quiz_completed_level END
-    INTO v_partner, v_level
+  SELECT case when m.user_one_id = auth.uid() then m.user_two_id else m.user_one_id end
+    INTO v_partner
     FROM public.matches m
    WHERE m.id = p_match_id
-     AND (m.initiator_id = auth.uid() OR m.partner_id = auth.uid())
-     AND public.profile_discovery_visible(auth.uid(),
-           CASE WHEN m.initiator_id = auth.uid() THEN m.partner_id
-                ELSE m.initiator_id END);
+     AND (m.user_one_id = auth.uid() OR m.user_two_id = auth.uid());
 
   IF v_partner IS NULL THEN
-    RETURN jsonb_build_object('unlockLevel', v_level, 'unlocked', false,
-                              'profile', NULL);
+    RAISE EXCEPTION 'Kein Match oder keine Teilnahme';
   END IF;
 
-  IF v_level >= 1 THEN
+  SELECT s.unlock_level INTO v_level
+    FROM public.match_quiz_state s
+   WHERE s.match_id = p_match_id;
+
+  IF v_level IS NULL THEN
+    v_level := 0;
+  END IF;
+
+  IF v_level >= 2 THEN
+    -- Whitelist (049) minus birth_date/is_location_suspicious (M-3):
+    -- Das exakte Geburtsdatum bleibt beim Besitzer, der Partner erhaelt
+    -- nur das Alter in Jahren. is_location_suspicious ist ein interner
+    -- Anti-Fraud-Indikator.
+    --
+    -- v0.9.3: 'city' entfernt (Spalte existiert nicht mehr). Das
+    -- Bundesland stand bereits eine Zeile darunter.
+    --
+    -- v0.10.0 (Migration 144): 'verification_state' ergaenzt. Die
+    -- Unterscheidung "nicht verifiziert" vs. "wird geprueft" wird auch
+    -- am Match-Partner angezeigt - vorher war der Status dort
+    -- unsichtbar.
     RETURN jsonb_build_object(
       'unlockLevel', v_level,
       'unlocked', true,
-      'profile', (
-        SELECT jsonb_build_object(
-                 'user_id', p.user_id,
-                 'name', p.name,
-                 'interests', coalesce(p.interests, '[]'::jsonb),
-                 'state', p.state,
-                 'country', p.country,
-                 'gender', p.gender,
-                 'age', public.profile_age(p.birth_date),
-                 'personality_type', p.personality_type,
-                 'intro_text', p.intro_text,
-                 'intro_audio_path', p.intro_audio_path,
-                 'is_verified', coalesce(p.is_verified, false),
-                 'verification_state', CASE
-                   WHEN coalesce(p.is_verified, false) THEN 'verified'
-                   WHEN p.verification_status IN ('pending', 'pending_minor') THEN 'under_review'
-                   ELSE 'unverified'
-                 END
-               )
-          FROM public.profiles p
-         WHERE p.user_id = v_partner
+      'profile', jsonb_build_object(
+        'user_id',               p.user_id,
+        'name',                  p.name,
+        'bio',                   p.bio,
+        'interests',             p.interests,
+        'state',                 p.state,
+        'country',               p.country,
+        'gender',                p.gender,
+        'age',                   public.profile_age(p.birth_date),
+        'personality_type',      p.personality_type,
+        'intro_text',            p.intro_text,
+        'intro_audio_path',      p.intro_audio_path,
+        'is_verified',           coalesce(p.is_verified, false),
+        'verification_state',    CASE
+          WHEN coalesce(p.is_verified, false) THEN 'verified'
+          WHEN p.verification_status IN ('pending', 'pending_minor') THEN 'under_review'
+          ELSE 'unverified'
+        END
       )
-    );
+    )
+    FROM public.profiles p
+   WHERE p.user_id = v_partner;
   END IF;
 
   -- Gesperrt: die ganze oeffentliche View. Nach 138 ohne Koordinaten.
   RETURN jsonb_build_object(
     'unlockLevel', v_level,
     'unlocked', false,
-    'profile', NULL
-  );
+    'profile', row_to_json(p.*)
+  )
+  FROM public.public_profiles p
+  WHERE p.user_id = v_partner;
 END;
 $$;
 

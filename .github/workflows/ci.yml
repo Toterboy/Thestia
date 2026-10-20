@@ -126,8 +126,19 @@ jobs:
       # uebereinstimmen. Live stand laengere Zeit eine aeltere Fassung
       # (v0.9.2) mit falschen Angaben zur Standortlogik - ohne diesen
       # Schritt faellt das nicht auf, weil das Repo in Ordnung war.
-      # Offline (kein Netz) ueberspringt das Skript selbst.
-      - name: Datenschutzerklaerung: Repo vs. live
+      #
+      # continue-on-error, und zwar bewusst: der Vergleich geht gegen
+      # einen Zustand AUSSERHALB des Repos. Netlify wird per Drag-&-Drop
+      # aktualisiert, nicht per Deployment aus diesem Repo - der
+      # Check kann also von einem Commit gar nicht erfuellt werden.
+      # Als harter Schritt wuerde er jeden PR rot setzen, bis der
+      # Upload von Hand passiert ist, und die eigentlichen Checks
+      # verschwinden hinter einem Zustand, den niemand im PR beeinflussen
+      # kann.
+      #
+      # Er meldet die Abweichung trotzdem - nur nicht als Blocker.
+      - name: "Datenschutzerklaerung: Repo vs. live"
+        continue-on-error: true
         run: python tool/check_privacy_deployment.py
 
       # Ein Namespace-Wechsel im Keystore OHNE Migrations-Eintrag bedeutet:

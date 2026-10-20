@@ -115,7 +115,14 @@ for f in NEW:
 # revokt wird. Normale Signatur-Listen fuer Client-RPCs sind korrekt.
 overloads = {}
 for f in ALL:
-    c = read(f)
+    # WICHTIG: mit strip_comments. Sonst zaehlt eine AUSKOMMENTIERTE
+    # Definition als Ueberladung - eine Migration, die in ihrem
+    # Kommentar ein Beispiel fuer eine alte Signatur nennt, erzeugt so
+    # ein Phantom, und der Check meldet eine Variante als offen, die
+    # es nie gab. Genau das ist passiert: die Erklaerung in Migration
+    # 145 nennt die alte Signatur, und der Check flaggte daraufhin
+    # genau diese - obwohl sie im Kommentar stand.
+    c = strip_comments(read(f))
     for m in pat_fn.finditer(c):
         _, args = sig_at(c, m.start())
         overloads.setdefault(m.group(1).lower(), set()).add(tuple(a[1] for a in args))

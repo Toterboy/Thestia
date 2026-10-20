@@ -2,8 +2,8 @@
 # Wird vom Supabase CLI und der Plattform für Edge Functions verwendet.
 #
 # Benötigte Secrets (supabase secrets set ...):
-#   WISP_INTERNAL_SECRET     – NEU rotieren (altes war im Repo)! Muss zum
-#                              Vault-Secret 'wisp_internal_secret' passen
+#   THESTIA_INTERNAL_SECRET     – NEU rotieren (altes war im Repo)! Muss zum
+#                              Vault-Secret 'thestia_internal_secret' passen
 #                              (Migration 040, Audit K1).
 #   INTERNAL_SECRET          – für den internen Aufruf von check-location.
 #   FIREBASE_SERVICE_ACCOUNT_JSON – FCM-Push (Service-Account-JSON).

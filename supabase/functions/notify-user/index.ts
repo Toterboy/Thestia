@@ -6,7 +6,7 @@
 //
 // Aufrufer:
 //   1. DB-Trigger (likes/matches via pg_net) mit Header
-//      "x-wisp-internal: <WISP_INTERNAL_SECRET>"
+//      "x-thestia-internal: <THESTIA_INTERNAL_SECRET>"
 //   2. Authentifizierter Client (JWT) – z. B. beim Senden einer
 //      Chat-Nachricht (NUR Metadaten, niemals Nachrichteninhalte – E2E).
 //
@@ -20,7 +20,7 @@
 //      Generate new private key)
 //
 // Secrets:
-//   WISP_INTERNAL_SECRET          – muss zum Vault-Secret 'wisp_internal_secret'
+//   THESTIA_INTERNAL_SECRET          – muss zum Vault-Secret 'thestia_internal_secret'
 //                                   passen (Migration 040). KEIN hartcodierter
 //                                   Fallback: fehlt das Env, ist die Funktion
 //                                   für interne Aufrufe geschlossen (fail-closed).
@@ -32,7 +32,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.0";
 
-const WISP_INTERNAL_SECRET = Deno.env.get("WISP_INTERNAL_SECRET") ?? "";
+const THESTIA_INTERNAL_SECRET = Deno.env.get("THESTIA_INTERNAL_SECRET") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 // API-Keys: sb_-Keys (secret_jwt_template -> service_role). Nach
 // Migration 122 (SELECT-Grants) live verifiziert (GoTrue listUsers OK +
@@ -298,11 +298,11 @@ serve(async (req) => {
   }
 
   // Auth: interner Trigger-Aufruf ODER authentifizierter Client (JWT).
-  const internal = req.headers.get("x-wisp-internal") ?? "";
+  const internal = req.headers.get("x-thestia-internal") ?? "";
   const isInternal =
-    WISP_INTERNAL_SECRET !== "" &&
+    THESTIA_INTERNAL_SECRET !== "" &&
     internal !== "" &&
-    timingSafeEqual(internal, WISP_INTERNAL_SECRET);
+    timingSafeEqual(internal, THESTIA_INTERNAL_SECRET);
 
   let callerId = "";
   if (!isInternal) {

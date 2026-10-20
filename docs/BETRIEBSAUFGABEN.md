@@ -106,7 +106,7 @@ supabase secrets set TURN_URL="turn:<DEINE-IP>:3478?transport=udp" TURN_SECRET="
 **Schritt 3 - pruefen:** In der App anrufen und im Logcat nachsehen:
 
 ```powershell
-adb -s a86fc552 logcat -v time | Select-String "WebRTC"
+adb -s <GERAETE-ID> logcat -v time | Select-String "WebRTC"
 ```
 
 Erwartet: `[WebRTC] ICE-Server geladen: N Eintraege` mit **mehr** als
@@ -153,30 +153,57 @@ installierte Builds weiterhin funktionieren sollen.
 
 ## 4. Secrets rotieren
 
-**Warum:** `docs/KOMPROMITIERTE-GEHEIMNISSE.md` nennt drei Secrets aus
-der Git-Historie, die dort als **offen** gefuehrt werden. Zwei davon
-haben echte Wirkungen:
+**Erledigt:** `THESTIA_INTERNAL_SECRET` ist umbenannt **und rotiert**
+(20.10.2026). Verifiziert: Vault und Function-Secret haben denselben
+SHA-256-Hash, das alte `WISP_INTERNAL_SECRET` ist aus beiden Stores
+entfernt.
 
-| Secret | Wirkung, wenn es noch gilt |
-|---|---|
-| `HOOK_SECRET` | `send-confirmation-email` laeuft mit `verify_jwt = false`. Mit dem Secret kann jeder gefaelschte Auth-Hooks senden - Bestaetigungs- und Reset-Mails an fremde Adressen. |
-| `WISP_INTERNAL_SECRET` | `notify-user` erlaubt damit Push ohne Beziehungspruefung an beliebige User-IDs - Push-Phishing. |
-| Firebase-API-Key | Nur relevant, falls Firebase-Notifications genutzt werden. |
+Die Umbenennung war noetig, weil "wisp" ein Fremdname aus einem
+anderen Projekt war - und sie musste **vor** der Rotation passieren,
+sonst haette die Function in der Zwischenzeit ohne Secret
+dagestanden (fail-closed, also kein Push). Migration 146 macht den
+Umbenennen im Vault und im Trigger, Migration 146 ist live.
 
-**Rotation:**
+**Offen: `HOOK_SECRET`.** Das kann **nicht** von hier aus gedreht
+werden: GoTrue vergleicht den Hook-Signatur-Wert gegen seine eigene
+Konfiguration (`GOTRUE_HOOK_SECRET`), und die verwalte nur das
+Supabase-Dashboard. Ein blindes Drehen des Function-Secrets wuerde
+alle Bestaetigungs- und Reset-Mails sofort zerstoeren.
 
-```bash
-supabase secrets list          # was ist gesetzt?
-supabase secrets set HOOK_SECRET="<NEUER-WERT>" WISP_INTERNAL_SECRET="<NEUER-WERT>"
-```
+**Deshalb hier, in dieser Reihenfolge:**
 
-Den neuen Wert danach **in der GoTrue-/Auth-Konfiguration** des Projekts
-nachtragen, damit die signierte Webhook-Variante weiter funktioniert -
-sonst kommen keine Bestaetigungs-Mails mehr an.
+1. **Dashboard:** Supabase -> **Project Settings** -> **Authentication**
+   -> **Hooks** (bzw. *Email Auth Hooks*) -> dort den geheimen Wert
+   erneuern. Einen neuen, zufaelligen Wert erzeugen:
 
-Anschliessend in `docs/KOMPROMITIERTE-GEHEIMNISSE.md` die Rotation mit
-Datum bestaetigen. Das Dokument ist die Selbstauskunft; eine Rotation,
-die dort nicht steht, ist fuer niemanden nachvollziehbar.
+   ```powershell
+   python -c "import secrets; print(secrets.token_hex(32))"
+   ```
+
+2. **Derselbe Wert** als Function-Secret setzen:
+
+   ```bash
+   supabase secrets set HOOK_SECRET="<DER WERT AUS SCHRITT 1>"
+   ```
+
+   Die Reihenfolge ist egal, beide muessen innerhalb weniger Minuten
+   gesetzt sein - dazwischen sind die Hooks unbenutzbar.
+
+3. **Pruefen:** Eine Registrierung ausloesen und pruefen, ob die
+   Bestaetigungs-Mail ankommt. Der Versand laeuft ueber den Auth-Hook,
+   nicht ueber die App - eine kaputte Konfiguration faellt erst dort
+   auf.
+
+4. **Dokumentieren:** In `docs/KOMPROMITIERTE-GEHEIMNISSE.md` die
+   Rotation mit Datum bestaetigen. Das Dokument ist die Selbstauskunft;
+   eine Rotation, die dort nicht steht, ist fuer niemanden
+   nachvollziehbar.
+
+**Firebase-API-Key:** Nur relevant, falls Firebase-Notifications
+genutzt werden. Im Projekt laeuft der Push ueber den eigenen
+UnifiedPush-/FCM-Weg; der Key ist damit kein Zugriffsschluessel auf
+Nutzertaten, sollte aber aus den KOMPROMITIERTEN-Listen-Eintraegen
+herausrotiert werden, wenn Firebase tatsaechlich genutzt wird.
 
 ---
 
@@ -187,7 +214,8 @@ die dort nicht steht, ist fuer niemanden nachvollziehbar.
 - [x] `profile_to_jsonb` gesperrt - live verifiziert
 - [ ] Netlify neu hochgeladen, `check_privacy_deployment.py` sagt "OK"
 - [ ] Dritter Fingerabdruck (Play) in `assetlinks.json`
-- [ ] `HOOK_SECRET` / `WISP_INTERNAL_SECRET` rotiert und dokumentiert
+- [x] `THESTIA_INTERNAL_SECRET` umbenannt und rotiert - verifiziert
+- [ ] `HOOK_SECRET` rotiert (Dashboard zuerst, siehe Abschnitt 4)
 - [ ] `profiles.is_admin` fuer dein Konto gesetzt
 - [ ] TURN laeuft, oder die Erklaerung nennt weiterhin nur STUN
 - [ ] Admin-Screen im Admin-APK: Warteschlange zeigt Namen und Alter,
