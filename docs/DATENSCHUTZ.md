@@ -40,6 +40,11 @@ Tracking-Pixel und **keine** nutzerübergreifende Verhaltensanalyse.
 | Geräte-Liste | Gerätemodell (Hersteller + Modellkennung, z. B. „Samsung SM-S921B"), Plattform, App-Version, Zeitstempel der letzten Anmeldung | Anzeige „Wo bin ich eingeloggt?" + „Überall abmelden" (Migration 071/078); kein Standort, keine Seriennummer, keine Werbe-ID | Automatisch beim Abmelden; mit Account-Löschung |
 | Präferenzen | Suchradius, Altersspanne, Geschlechts-Filter, „Ich suche", Farbwelt, UI-Schalter (Blind Mode, Sichtbarkeit, Benachrichtigungen) | Wiederherstellung nach Neuinstallation (Migration 066/071/074/076) | Mit Account-Löschung |
 | Push-Tokens | FCM-Token (nur Play) bzw. UnifiedPush-Endpunkt (F-Droid) | Zustellung von Push-Signalen **ohne Nachrichteninhalt** | Mit Account-Löschung / Abmelden |
+| Land | Wohnsitzland (DE, AT, CH und weitere) | Anzeige des Landes im Profil und bei Match-Partnern | Mit Account-Löschung |
+| Gerätekennung | Zufällige Kennung des Geräts (UUID, keine MAC-Adresse, keine Werbe-ID) | Anmeldung deiner eigenen Geräte für die Ende-zu-Ende-Verschlüsselung | Automatisch beim Abmelden; mit Account-Löschung |
+| Bild-Prüfhash | SHA-256-Hash eines von dir gesendeten Chatbildes, zusammen mit der Kennung des Empfängers | Nachweis, dass ein gemeldetes Bild tatsächlich in einem Chat geflossen ist (Missbrauchsschutz gegen willkürliche Meldungen) | Mit Account-Löschung |
+| Standort-Zeitstempel | Zeitpunkt der letzten Standortprüfung | Plausibilitätsprüfung (unplausible Ortswechsel) | Mit Account-Löschung |
+| Merkzeichen des Kontos | MD5-Hash der Kontokennung | Verhinderung, dass ein gelöschtes Konto erneut registriert wird | Bleibt dauerhaft bestehen, ohne Klarnamen |
 | Verifizierung | Selbstaufnahme mit Bild **und Ton** zur Schätzung des Alters | Altersprüfung für den Jugendschutz und die 18+-Freigabe von Transit Spark | Videodatei verschlüsselt nur auf dem Gerät, Löschung nach spätestens 7 Tagen (Abschnitt 7) |
 
 ## 3. Ende-zu-Ende-Verschlüsselung (Signal-Protokoll)
@@ -98,8 +103,12 @@ ausschließlich auf dem Gerät gespeichert, mit einer Vorhaltezeit von
 45 Minuten, danach automatische Löschung. Sie werden nicht an den Server
 übertragen.
 
-**Was der Server sieht:** erst wenn beide Personen ausdrücklich bestätigen,
-werden die zuletzt beobachteten Tokens zur Prüfung übermittelt. Der Server
+**Was der Server sieht:** sobald eine Person den Radarscan startet, wird deren
+eigenes anonymes Token auf dem Server hinterlegt – ohne das könnte gar
+keine Begegnung zustande kommen. Erst wenn beide Personen ausdrücklich
+bestätigen ("Blicke getauscht"), werden die zuletzt beobachteten Tokens,
+die gewählten Merkmale und die von der Person angegebene
+Selbstbeschreibung zur Prüfung übermittelt. Der Server
 prüft Alter, Geschlecht und Blockierstatus. Aus einem Token lässt sich keine
 Geräte-Identität ableiten.
 
@@ -168,8 +177,11 @@ Gerät und werden zu keinem Zeitpunkt an externe Server übertragen.
 - Meldet ein Empfänger ein empfangenes Bild, wird dieses **lokal auf dem
   Gerät** per ONNX-Modell vorbewertet. Der Meldende sieht das Ergebnis
   und entscheidet: Nur nach expliziter Bestätigung wird das betroffene
-  Bild nebst den **letzten drei Textnachrichten** verschlüsselt an die
-  Administration zur manuellen Prüfung übertragen.
+  Bild an die
+  Administration zur manuellen Prüfung übertragen. Der Bildinhalt wird
+  dabei zur automatischen Einordnung an einen **externen KI-Dienst**
+  (Abschnitt 6) weitergegeben; eine automatische Entscheidung über eine
+  Meldung wird daraus nicht getroffen.
 - Meldungen sind **pseudonymisiert**: Die Identität des Meldenden wird dem
   Gemeldeten niemals offengelegt (technisch SHA-256-Hash, Migration 069).
 - Berichte über unzureichende Modellqualität im Reflexions-Chat enthalten
@@ -183,10 +195,12 @@ Gerät und werden zu keinem Zeitpunkt an externe Server übertragen.
 | Supabase (EU-Region) | Kontodaten, verschlüsselte Authentifizierungs-Token, Profildaten | Hosting von Accounts, DB, Auth | EU (Verarbeitungsvertrag über Supabase Europe B.V.) |
 | Firebase Cloud Messaging (nur Play-Store-Version) | Push-Token, „stumme" Push-Signale | Zustellsignal; Inhalte werden danach lokal per WebRTC/E2E geladen | Google-Infrastruktur (verarbeitet nur das Token) |
 | UnifiedPush (F-Droid-Version, z. B. ntfy) | Push-Endpunkt | Google-freie Push-Zustellung | Selbst wählbar (kann vollständig selbst gehostet sein) |
-| Brevo | E-Mail-Adresse | Transaktions-E-Mails (Bestätigung, Passwort-Reset, Bug-Report-Kopie) | EU |
-| Cloudflare | CAPTCHA-Token (Turnstile), TURN-Relay für WebRTC | Bot-Schutz; Relais sieht **keine** Inhalte (E2E) | Global (EU-PoP bevorzugt) |
-| Netlify | CAPTCHA-Zwischenseite | Hosting der Anmelde-/CAPTCHA-Seite | Global |
-| Hugging Face | Keine Nutzerdaten | Ausschließlich für den optionalen, nutzerinitiierten Download frei verfügbarer KI-Modelldateien (GGUF) | Global |
+| Brevo | E-Mail-Adresse; bei einem Bug-Report zusätzlich die von dir angegebene Beschreibung, Geräteinformationen, deine User-ID und bis zu fünf Screenshots; bei einer Bildmeldung das gemeldete Bild | Transaktions-E-Mails (Bestätigung, Passwort-Reset, Bug-Report), Kopie an den Support, manuelle Sichtung gemeldeter Bilder | EU |
+| Mailjet | E-Mail-Adresse, Bestätigungs- und Bestätigungslinks | Versand der Transaktions-E-Mails (Registrierungsbestätigung, Passwort-Reset) | Frankreich (EU) |
+| Cloudflare | CAPTCHA-Token (Turnstile) | Bot-Schutz | Global (EU-PoP bevorzugt) |
+| Netlify | CAPTCHA-Zwischenseite, Datenschutzerklärung | Hosting der Anmelde-/CAPTCHA-Seite und der veröffentlichten Datenschutzerklärung | Global |
+| Hugging Face | Beim Melden eines Bildes: der **Bildinhalt** (zur automatischen Einordnung als anständig oder unauffällig); beim Download einer KI-Modelldatei: keine personenbezogenen Daten | Automatische Vorauswertung gemeldeter Bilder; ansonsten ausschließlich der optionale, nutzerinitiiierte Download frei verfügbarer KI-Modelldateien (GGUF) | Global |
+| STUN-Server (nextcloud/Hetzner, miwifi/OVH, voipgate, voipstunt) | Deine IP-Adresse | Ermittlung der öffentlichen Adresse für den Direktverbindungsversuch bei Video- und Sprachanrufen; über diese Server wird kein Inhalt übertragen | Deutschland, Frankreich, Niederlande (EU) |
 | Codeberg e.V. (geplant ab v0.12.0) | Keine personenbezogenen Daten | Trackerfreies Hosting der Flutter-Web-Artefakte (statische Dateien) | Berlin, Deutschland |
 
 **Keine** Weitergabe an Werbenetzwerke, Datenbroker oder
@@ -217,7 +231,10 @@ Du hast jederzeit das Recht auf vollständige Löschung deines Kontos
 ## 8. Deine Rechte (Art. 15–21 DSGVO)
 
 - **Auskunft (Art. 15):** Der In-App-Datenexport („Meine Daten
-  exportieren") liefert alle personenbezogenen Daten als JSON-Download.
+  exportieren") liefert die auf deinem Gerät gespeicherten personenbezogenen
+  Daten als JSON-Download. Daten, die ausschließlich auf dem Server liegen
+  (z. B. Matches, Likes, gemeldete Inhalte, deine Geräteliste), holen wir
+  auf Anfrage bei uns nach – schreibe uns dazu.
 - **Berichtigung (Art. 16):** Alle Profilfelder sind in der App frei
   editier- und löschbar.
 - **Löschung (Art. 17):** Siehe Abschnitt 7.

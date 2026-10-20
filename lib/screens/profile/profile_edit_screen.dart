@@ -35,30 +35,6 @@ import 'package:thestia/widgets/habitude_selector.dart';
 import 'package:thestia/widgets/intro_editor.dart';
 
 /// Unterstützte Wohnsitzländer (Auswahl für die Profilangabe).
-const kSupportedCountries = <String>[
-  'Deutschland',
-  'Österreich',
-  'Schweiz',
-  'Luxemburg',
-  'Belgien',
-  'Niederlande',
-  'Frankreich',
-  'Italien',
-  'Spanien',
-  'Portugal',
-  'Polen',
-  'Tschechien',
-  'Dänemark',
-  'Schweden',
-  'Norwegen',
-  'Finnland',
-  'Vereinigtes Königreich',
-  'Irland',
-  'USA',
-  'Kanada',
-  'Australien',
-  'Anderes Land',
-];
 
 // kGermanStates ist zentral in lib/utils/constants.dart definiert.
 
@@ -1920,6 +1896,13 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                       // wirksam nur am Geburtstag.
                       BirthdayStylePicker(
                         selected: _birthdayStyle,
+                        // GROSSE Vorschau (v0.10.0). Ohne dieses Flag
+                        // zeigt der Picker fuenf kleine Kacheln - das war
+                        // die Beanstandung "nur ein kleines Bild". Die
+                        // grosse Vorschau zeigt den Stil in voller
+                        // Profilbreite, darunter die Segment-Reihe zum
+                        // Wechseln.
+                        large: true,
                         onSelected: (style) {
                           setState(() => _birthdayStyle = style);
                           _syncDirtyFlag();

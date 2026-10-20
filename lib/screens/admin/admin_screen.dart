@@ -796,6 +796,13 @@ class _VerificationTabState extends ConsumerState<_VerificationTab> {
     final est = (data['estimatedAge'] as num?)?.toDouble();
     final stated = (data['statedAge'] as num?)?.toDouble();
     final dev = _VerificationTabState._deviation(data);
+    // Minderjaehrigkeitsfall (v0.10.0, Migration 144).
+    //
+    // 'pending_minor' heisst: die Person ist 21 oder juenger und wird
+    // IMMER von Hand geprueft. Ohne eigene Anzeige steht sie in der
+    // Warteschlange wie jeder andere Fall - und genau die Person, um
+    // die es am meisten geht, ist damit am leichtesten zu uebersehen.
+    final isMinorCase = data['status'] == 'pending_minor';
     final ageLine = (est == null || stated == null)
         ? L10n.tf(context, 'admin.ageNoAi', {
             'stated': stated?.toStringAsFixed(0) ?? '?',
@@ -812,7 +819,7 @@ class _VerificationTabState extends ConsumerState<_VerificationTab> {
     return Card(
       margin: EdgeInsets.zero,
       elevation: 0,
-      color: flagged
+      color: (flagged || isMinorCase)
           ? Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.35)
           : null,
       shape: RoundedRectangleBorder(
@@ -824,7 +831,19 @@ class _VerificationTabState extends ConsumerState<_VerificationTab> {
         ),
       ),
       child: ListTile(
-        title: Text(name),
+        title: Row(
+          children: [
+            if (isMinorCase) ...[
+              Icon(
+                Icons.child_care,
+                size: 18,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              const SizedBox(width: 6),
+            ],
+            Flexible(child: Text(name)),
+          ],
+        ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -834,6 +853,17 @@ class _VerificationTabState extends ConsumerState<_VerificationTab> {
               ageLine,
               style: TextStyle(fontWeight: flagged ? FontWeight.bold : null),
             ),
+            if (isMinorCase)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  L10n.t(context, 'admin.minorCase'),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
           ],
         ),
         trailing: busy

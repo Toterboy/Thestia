@@ -51,26 +51,6 @@ class InterestChips extends StatelessWidget {
 }
 
 /// Visueller Distanz-/Info-Badge.
-class InfoBadge extends StatelessWidget {
-  const InfoBadge({required this.text, super.key});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(color: Colors.white, fontSize: 12),
-      ),
-    );
-  }
-}
 
 /// Platzhalter-Bild für den Blind Mode (kein Foto sichtbar).
 class BlindPhotoPlaceholder extends StatelessWidget {

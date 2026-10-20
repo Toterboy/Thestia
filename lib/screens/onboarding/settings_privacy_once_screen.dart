@@ -108,9 +108,11 @@ class _SettingsPrivacyOnceScreenState
   String _introText = '';
   String? _introAudioPath;
 
-  // Schritt "Profil & Interessen": Bio, Bundesland, Interessen, Avatar.
+  // Schritt "Profil & Interessen": Bio, Land, Bundesland, Interessen,
+  // Avatar.
   final _bioCtrl = TextEditingController();
   String? _selectedState;
+  String? _selectedCountry;
   Set<String> _selectedInterests = {};
   bool _uploadingAvatar = false;
   Uint8List? _avatarBytes;
@@ -218,11 +220,16 @@ class _SettingsPrivacyOnceScreenState
       unawaited(_saveProfileExtras());
     }
     if (_currentPage == _introPage) {
-      if (!IntroEditor.isValid(text: _introText, audioPath: _introAudioPath)) {
-        _showStepHint(L10n.t(context, 'setup.hintIntro'));
-        return;
+      // OPTIONAL (v0.10.0). Vorher blockierte dieser Schritt die
+      // Einrichtung: ohne 10 Sekunden Audio ging es nicht weiter, obwohl
+      // der Schrittentext "du kannst diesen Schritt auch ueberspringen"
+      // versprach. Jetzt: leer ist erlaubt, und was eingegeben wurde,
+      // wird gespeichert.
+      if (IntroEditor.isValid(text: _introText, audioPath: _introAudioPath)) {
+        _saveIntro();
+      } else {
+        _clearIntro();
       }
-      _saveIntro();
     }
     if (_currentPage == _birthdayPage) {
       unawaited(_saveBirthdayStyle());
@@ -245,6 +252,32 @@ class _SettingsPrivacyOnceScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
+  }
+
+  /// Leert die Vorstellung, wenn der Schritt uebersprungen wurde.
+  ///
+  /// Ohne das bliebe eine halbfertige Aufnahme (Text ohne Ton oder
+  /// Ton ohne Text) im Profil stehen, obwohl der Schritt nie
+  /// abgeschlossen wurde.
+  void _clearIntro() {
+    if (_introText.isEmpty && _introAudioPath == null) return;
+    setState(() {
+      _introText = '';
+      _introAudioPath = null;
+    });
+    unawaited(
+      ref
+          .read(profileProvider.notifier)
+          .update(introText: '', introAudioPath: null, clearIntroAudio: true),
+    );
+    if (SupabaseService.isInitialized) {
+      unawaited(
+        SupabaseDatabaseService(SupabaseService.client).updateOwnProfile({
+          'intro_text': '',
+          'intro_audio_path': null,
+        }),
+      );
+    }
   }
 
   /// Speichert Text + Audio der Vorstellung (best effort, optionaler
@@ -359,12 +392,14 @@ class _SettingsPrivacyOnceScreenState
           .update(
             bio: _bioCtrl.text.trim(),
             stateStr: _selectedState,
+            country: _selectedCountry ?? 'Deutschland',
             interests: _selectedInterests.toList(),
           );
       if (SupabaseService.isInitialized) {
         await SupabaseDatabaseService(SupabaseService.client).updateOwnProfile({
           'bio': _bioCtrl.text.trim(),
           'state': _selectedState,
+          'country': _selectedCountry ?? 'Deutschland',
           'interests': _selectedInterests.toList(),
         });
       }
@@ -1151,6 +1186,34 @@ setState(() {
                             ),
                           ),
                           const SizedBox(height: 12),
+                          // ---- Land ----
+                          // Das Land war bisher nirgends in der
+                          // Einrichtung erfragt - nur im Profil-Edit.
+                          // Fuer neue Konten blieb es damit fest auf
+                          // 'Deutschland', obwohl die App 23 Laender
+                          // anbietet. Die Erklaerung nennt das Land
+                          // als erhobene Daten, also wird es hier
+                          // erfragt.
+                          DropdownButtonFormField<String>(
+                            initialValue: _selectedCountry ?? 'Deutschland',
+                            isExpanded: true,
+                            borderRadius: BorderRadius.circular(16),
+                            decoration: InputDecoration(
+                              labelText:
+                                  L10n.t(context, 'setupp.countryLabel'),
+                            ),
+                            items: kSupportedCountries
+                                .map(
+                                  (c) => DropdownMenuItem(
+                                    value: c,
+                                    child: Text(c),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (v) =>
+                                setState(() => _selectedCountry = v),
+                          ),
+                          const SizedBox(height: 12),
                           // ---- Bundesland ----
                           DropdownButtonFormField<String>(
                             initialValue:
@@ -1206,7 +1269,7 @@ setState(() {
                       child: IntroEditor(
                         initialText: _introText,
                         initialAudioPath: _introAudioPath,
-                        required: true,
+                        required: false,
                         onChanged: (text, audioPath) {
                           setState(() {
                             _introText = text;

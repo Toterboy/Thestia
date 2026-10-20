@@ -167,7 +167,6 @@ const Map<String, Map<String, String>> _strings = {
     'auth.toRegister': 'Noch kein Konto? Registrieren',
     'auth.toLogin': 'Schon ein Konto? Einloggen',
     'auth.passkey': 'Mit Passkey anmelden',
-    'auth.passkeyCreate': 'Passkey erstellen',
     'auth.captcha': 'Sicherheitscheck',
     'auth.registerTitle': 'Konto erstellen',
     'auth.welcomeBack': 'Willkommen zurück',
@@ -302,9 +301,6 @@ const Map<String, Map<String, String>> _strings = {
     // Settings (Kern)
     'settings.title': 'Einstellungen',
     'settings.appearance': 'Darstellung',
-    'settings.system': 'System',
-    'settings.light': 'Hell',
-    'settings.dark': 'Dunkel',
     // AppearanceSelector: Wert + Erklaerung je Modus. Die Erklaerung
     // sagt, was die Wahl TUT - das unterscheidet 'System' (folgt dem
     // Geraet) von 'Hell'/'Dunkel' (erzwingen etwas). Ohne das sind drei
@@ -337,16 +333,9 @@ const Map<String, Map<String, String>> _strings = {
     'settings.e2e': 'E2E-Identität',
     'settings.backupCreate': 'Backup erstellen',
     'settings.backupRestore': 'Backup wiederherstellen',
-    'settings.passkeyDiagnose': 'Passkey-Diagnose',
     'settings.privacyAccount': 'Datenschutz & Account',
     'settings.privacyAccountSub':
         'Gespeicherte Daten, Einwilligungen, Account löschen',
-    'settings.pause': 'Profil pausieren',
-    'settings.pauseSub':
-        'Unsichtbar in Entdecken und Find your Spark. Funken und Chats '
-        'bleiben bestehen.',
-    'settings.pauseActive':
-        'Profil ist pausiert und für neue Personen unsichtbar.',
     'settings.pauseConfirmTitle': 'Profil pausieren?',
     'settings.pauseConfirmBody':
         'Dein Profil wird in Entdecken und Find your Spark nicht mehr '
@@ -410,8 +399,6 @@ const Map<String, Map<String, String>> _strings = {
     'theme.lavender': 'Lavendel',
     'theme.slate': 'Schiefer',
     'theme.colorScheme': 'Farbschema',
-    'dm.discovery': 'Entdecken',
-    'dm.discoveryDesc': 'Profile entdecken, Funken versenden, chatten',
     'dm.findMatch': 'Find your Spark',
     'dm.findMatchDesc': 'Vorstellung anhören oder lesen, dann entscheiden',
     'dm.randomChat': 'Zufallschat',
@@ -435,11 +422,9 @@ const Map<String, Map<String, String>> _strings = {
         'Ergebnis warten. In der Zwischenzeit kannst du Zufallschat und '
         'QR-Code-Scannen nutzen.',
     'dm.lockedAction': 'Jetzt verifizieren',
-    'dm.lockedBadge': 'Gesperrt',
     'dm.groupMeet': 'Menschen kennenlernen',
     'dm.groupDirect': 'Direkt verbinden',
     'dm.groupOnTheGo': 'Unterwegs',
-    'dm.pickHint': 'Wähle einen Modus, um neue Leute zu entdecken:',
     'common.new': 'NEU',
     'transit.title': 'Transit Spark',
     'transit.start': 'Radar aktivieren',
@@ -467,9 +452,7 @@ const Map<String, Map<String, String>> _strings = {
     'dm.appbarTitle': 'Entdeckungsmodus wählen',
     'fym.introSaved': 'Vorstellung gespeichert. Viel Spaß beim Kennenlernen!',
     'setup.appbarTitle': 'Einstellungen & Privatsphäre',
-    'setup.filterTitle': 'Filter & Präferenzen',
     'setup.filterSub': 'Wen möchtest du kennenlernen?',
-    'setup.openAll': 'Offen für alles',
     'setup.photoTooltip': 'Profilbild wählen',
     'setup.pleasePick': 'Bitte wählen',
     'setup.locationDone': 'Bundesland erkannt und übernommen.',
@@ -508,11 +491,6 @@ const Map<String, Map<String, String>> _strings = {
         'Standorten auf diesem Gerät ab. Falls das stimmt, wähle ihn '
         'trotzdem - andernfalls gib deinen Ort bitte manuell ein.',
     'setup.locationError': 'Fehler bei der Standortermittlung: {error}',
-    'setup.locationTooFar':
-        'Der Ort liegt mehr als 15 km von deinem aktuellen Standort entfernt.',
-    'setup.locationNotFound':
-        'Ort nicht gefunden. Bitte schreibe ihn so, wie er auf einer Karte '
-        'heißt (z. B. "Berlin").',
     // Setup: Seiten-Inhalte
     'setupp.visibilitySub':
         'Wer darf dein Profil sehen? Wie soll die App aussehen?',
@@ -524,24 +502,25 @@ const Map<String, Map<String, String>> _strings = {
     'setupp.filterLabel': 'Filter',
     'setupp.maxDistance': 'Maximale Entfernung: {km} km',
     'setupp.stateLabel': 'Bundesland',
-    'setupp.stateHint': 'z. B. Bayern',
     'setupp.germanyNote': 'Es werden Profile aus ganz Deutschland angezeigt.',
     // v0.10.0: Es wird kein Ort mehr abgefragt, nur das Bundesland.
     'setupp.detectState': 'Mein Bundesland automatisch erkennen',
     'setupp.bioLabel': 'Über mich (Bio)',
     'setupp.bioHint': 'z. B. Hobbys, was dir wichtig ist',
+    'setupp.countryLabel': 'Land',
     'setupp.stateOptional': 'Bundesland (optional)',
     'setupp.profileSub':
         'Ein Bild, ein paar Worte über dich und deine Interessen helfen '
-        'anderen, dich kennenzulernen. Alles optional und später änderbar.',
+        'anderen, dich kennenzulernen. Bio und mindestens ein Interesse '
+        'braucht die App - alles Weitere kannst du später ändern.',
     'setupp.photoDone': 'Profilbild hochgeladen.',
     'setupp.photoFail':
         'Upload fehlgeschlagen. Du kannst das Bild jederzeit später im '
         'Profil festlegen.',
     'setupp.introSub':
         'Erzähl von dir, als Text und gesprochen. Beides wird anderen '
-        'gezeigt, bevor sie dein Foto sehen. Du kannst diesen Schritt auch '
-        'überspringen.',
+        'gezeigt, bevor sie dein Foto sehen. Du kannst den Schritt mit '
+        '"Überspringen" auch auslassen.',
     'setupp.habitsSub':
         'Wie stehst du zu Rauchen, Alkohol und Drogen? Diese Angaben '
         'beeinflussen, wen du bei "Find your Spark" siehst.',
@@ -795,42 +774,6 @@ const Map<String, Map<String, String>> _strings = {
         'Für Transit Spark brauchen wir dein Geburtsdatum. Hinterlege es '
         'in deinen Profildaten, dann prüfen wir dein Alter - solange das '
         'nicht belegt ist, bleibt die Funktion gesperrt.',
-    'onboarding.appbarTitle': 'Kurz kennengelernt',
-    'onboarding.skipAll': 'Überspringen',
-    'onboarding.fillLater': 'Später ausfüllen',
-    'onboarding.next': 'Weiter',
-    'onboarding.hello.title': 'Hi, ich bin Thestia!',
-    'onboarding.hello.body':
-        'In den nächsten Minuten richten wir dein Profil zusammen - '
-        'als kurzes Gespräch statt Formular. Alles ist überspringbar, '
-        'nichts ist falsch.',
-    'onboarding.blind.title': 'Persönlichkeit vor Aussehen',
-    'onboarding.blind.body':
-        'Standardmäßig siehst du zuerst nur Name, Alter, Bio und '
-        'Interessen - keine Fotos. So entscheidest du mit dem Kopf, '
-        'nicht nur mit den Augen. Jederzeit abschaltbar.',
-    'onboarding.connections.title': 'Echte Verbindungen',
-    'onboarding.connections.body':
-        'Ein Funke entsteht nur, wenn ihr euch beide wählt. Erst dann '
-        'werden Fotos freigeschaltet und ihr könnt loschatten - fair '
-        'statt oberflächlich.',
-    'onboarding.q.photo':
-        'Magst du ein Profilbild von dir zeigen? Kein Stress - Fotos '
-        'sind bei uns ohnehin erst nach einem Funke sichtbar.',
-    'onboarding.photoLater': 'Du kannst später ein Profilbild hochladen.',
-    'onboarding.q.music': 'Gibt es einen Song, der dich gerade begleitet?',
-    'onboarding.q.musicGenres': 'Welche Musik-Genres magst du?',
-    'onboarding.q.musicHint': 'z. B. Lieblingssong …',
-    'onboarding.q.bandHint': 'z. B. Lieblingsband oder Künstler …',
-    'onboarding.q.birthday':
-        'Welcher Stil soll dein Profil an deinem Geburtstag haben?',
-    'onboarding.q.chatbg':
-        'Wie sollen deine Chats aussehen? Wähle einen Hintergrund - '
-        'später jederzeit änderbar.',
-    'onboarding.done.title': 'Geschafft - schön, dass du da bist!',
-    'onboarding.done.body':
-        'Dein Profil steht. Alles kannst du später jederzeit in den '
-        'Einstellungen ändern. Viel Spaß beim Entdecken!',
     'welcome.t1': 'Willkommen bei Thestia',
     'welcome.b1':
         'Hier lernst du Menschen wirklich kennen, bevor du ihr Foto '
@@ -1087,8 +1030,6 @@ const Map<String, Map<String, String>> _strings = {
     'verify.badge': 'Verifiziert',
     'verify.stateUnverified': 'Nicht verifiziert',
     'verify.stateUnderReview': 'Wird geprüft',
-    'verify.stateVerified': 'Verifiziert',
-    'verify.otherUnverified': 'Nicht verifiziert',
     'verify.otherUnderReview': 'Verifizierung läuft',
     'verify.infoAiLimits':
         'Die Altersschätzung ist eine KI-Schätzung und kann '
@@ -1131,7 +1072,6 @@ const Map<String, Map<String, String>> _strings = {
     'interests.sparkConfirmBtn': 'Funke bestätigen',
     'interests.resparkDone': 'Funke mit {name} glüht wieder ✨',
     'interests.matchesSub': 'Bestätigte gegenseitige Likes',
-    'qr.openingChat': 'Chat mit {name} wird geöffnet...',
     // Gespeicherte Profile (lokal, max. 5, zum Nachschreiben)
     'qr.limitTitle': 'Maximum erreicht',
     'qr.limitBody':
@@ -1214,9 +1154,6 @@ const Map<String, Map<String, String>> _strings = {
         '(110) bzw. 116 006 kontaktieren.',
     'safety.exportData': 'Meine Daten exportieren',
     'safety.exportDataSub': 'JSON-Export aller gespeicherten Daten',
-    'spice.answerSent': 'Antwort gesendet. Dein Gegenüber antwortet bald.',
-    'spice.answerEdit': 'Antwort ändern',
-    'spice.answer': 'Antworten',
     'spice.title': 'Eisbrecher-Fragen',
     'spice.searchHint': 'In Kategorien suchen …',
     'spice.copied': 'Kopiert - füge die Frage im Chat ein.',
@@ -1292,11 +1229,6 @@ const Map<String, Map<String, String>> _strings = {
     'random.errorEnded': 'Der Zufallschat wurde beendet.',
     'random.errorOffline':
         'Der Zufallschat ist ohne Verbindung nicht verfügbar.',
-    'random.errorConnectTimeout':
-        'Die direkte Verbindung zum Partner konnte nicht aufgebaut '
-        'werden. Hinweis: In Mobilfunknetzen wird der Zufallschat '
-        'derzeit nicht unterstützt, weil es keinen Relay-Server (TURN) '
-        'gibt. Bitte nutze stattdessen WLAN.',
     'random.relayStatus':
         'E2E über Server (verschlüsselt, kein direkter Kanal)',
     'random.waitingForPartner':
@@ -1307,10 +1239,6 @@ const Map<String, Map<String, String>> _strings = {
         'Direktverbindung vom Netzwerk blockiert (typisch: AP-Isolation im '
         'Router oder Mobilfunk). Nachrichten kommen sicher über den '
         'Server (E2E-verschlüsselt) an.',
-    'random.infoBlind':
-        'Zufallschat: Du bist blind mit einer zufälligen Person verbunden.',
-    'random.infoE2e':
-        'Gespräche sind Ende zu Ende verschlüsselt und laufen Peer zu Peer.',
     'meet.metBody':
         'Wir hoffen, ihr hattet eine schöne Zeit. Echte Verbindungen '
         'statt nur Online-Reden.',
@@ -1477,7 +1405,6 @@ const Map<String, Map<String, String>> _strings = {
     'mood.change': 'Ändern',
     'mood.select': 'Wählen',
     'settings.logout': 'Abmelden',
-    'settings.deleteAccount': 'Konto löschen',
     // Settings (Vollständigkeit)
     'settings.privacySection': 'Privatsphäre',
     'settings.whoCanSee': 'Wer kann mein Profil sehen?',
@@ -1686,7 +1613,6 @@ const Map<String, Map<String, String>> _strings = {
     'profile.edit.birthDate': 'Geburtsdatum',
     'profile.edit.birthDateHint': 'TT. MM. JJJJ',
     'profile.edit.birthDatePick': 'Bitte auswählen',
-    'profile.edit.birthDateHelp': 'Wähle dein Geburtsdatum',
     'profile.edit.gender': 'Geschlecht',
     'profile.edit.lookingFor': 'Ich suche',
     'profile.edit.relationship': 'Was suchst du?',
@@ -1855,17 +1781,10 @@ const Map<String, Map<String, String>> _strings = {
         'Verstöße können über den Melde-Button in Profil und Chat gemeldet '
         'werden. Wiederholter oder schwerer Verstoß führt zur Sperrung des '
         'Accounts.',
-    'onb.page1.title': 'Privatsphäre & Darstellung',
-    'onb.page2.title': 'Dein Profil',
-    'onb.page3.title': 'Fertig',
     'onb.next': 'Weiter',
-    'onb.back': 'Zurück',
-    'onb.finish': 'Fertig werden',
     'chat.hint': 'Nachricht...',
-    'chat.send': 'Senden',
     'chat.empty': 'Schreib die erste Nachricht! 😊',
 
-    'chat.report': 'Bild melden',
     'chat.block': 'Nutzer blockieren',
     'chat.blockSub':
         'Keine Nachrichten, Likes oder Funken mehr von dieser Person.',
@@ -1900,7 +1819,6 @@ const Map<String, Map<String, String>> _strings = {
         ' verdient einen ehrlichen Respekt.',
     'milestone.title': 'Erinnere dich daran',
     'milestone.dismiss': 'Schließen',
-    'friends.toggleTitle': 'Freundschaft',
     'friends.toggleHint':
         'Diese Verbindung ist eine Freundschaft - kein romantischer '
         'Funke. Ihr könnt es jederzeit umschalten.',
@@ -1983,10 +1901,6 @@ const Map<String, Map<String, String>> _strings = {
         'Kein P2P möglich. Nachrichten sind Ende-zu-Ende verschlüsselt, '
         'laufen über das Relay und kommen an, sobald der Chat geöffnet '
         'wird.',
-    'chat.relayStored':
-        'Verschlüsselt zwischengespeichert. Wird zugestellt, sobald der '
-        'Chat geöffnet wird.',
-    'chat.sendFailed': 'Nachricht konnte nicht gesendet werden: {error}',
     'chat.queuedHint':
         'Offline - Nachricht wartet in der Warteschlange und wird bei der '
         'nächsten direkten Verbindung zugestellt.',
@@ -2056,7 +1970,6 @@ const Map<String, Map<String, String>> _strings = {
         'Wir teilen das Interesse "{interest}". Erzähl mir davon: was war '
         'dein Highlight dazu? 😊',
     'chat.dateIdea': 'Idee für ein Date: {idea} ✨ Was meinst du?',
-    'chat.ideaSendFailed': 'Vorschlag konnte nicht gesendet werden.',
     'chat.endSparkTitle': 'Funke beenden: ehrlich und freundlich',
     'chat.endSparkBody':
         'Der Funke wandert bei euch beiden in "Erschlossene Funken", ganz '
@@ -2108,13 +2021,10 @@ const Map<String, Map<String, String>> _strings = {
     'chat.more': 'Weitere Optionen',
     'chat.requireVerifiedTitle': 'Schluessel immer pruefen',
     'chat.requireVerifiedHint': 'Senden erst erlauben, wenn ihr die Safety-Nummern verglichen habt. Das schuetzt davor, dass jemand die Schluessel eurer Chats ersetzt und mitliest.',
-    'chat.peerUnverifiedBlocked': 'Ihr habt die Safety-Nummern fuer {name} noch nicht verglichen. Unter Sicherheit im Chat kannst du das pruefen und freischalten.',
     'dh.event.startingSoon': 'Dating Hour startet gleich',
     'dh.event.cancelledToday':
         'Heute fällt die Dating Hour aus: Es haben sich nicht genug '
         'Personen angemeldet.',
-    'dh.event.serverTimeWarn':
-        'Die Server-Zeit konnte nicht verifiziert werden.',
     'dh.event.loadErrorFull': 'Fehler beim Laden: {error}',
     'dh.event.autoJoinFailed': 'Auto-Beitritt fehlgeschlagen: {error}',
     'dh.event.autoJoinAsk':
@@ -2137,8 +2047,6 @@ const Map<String, Map<String, String>> _strings = {
     'dh.event.participatingWaiting': 'Du nimmst teil! Warte auf den Start.',
 
     'dh.rules.title': 'Dating Hour Regeln',
-    'dh.rules.intro':
-        'Bitte lies diese Regeln aufmerksam durch, bevor du teilnimmst.',
     'dh.rules.acceptedTitle': 'Regeln akzeptiert',
     'dh.rules.next': 'Weiter',
     'dh.how.title': 'Wie funktioniert Dating Hour?',
@@ -2205,9 +2113,6 @@ const Map<String, Map<String, String>> _strings = {
     'dh.chat.stay': 'Bleiben',
     'dh.chat.leaveDecline': 'Verlassen & Ablehnen',
     'dh.chat.sayHello': 'Sag hallo zu {name}!',
-    'dh.chat.fiveMinutes':
-        'Ihr habt 5 Minuten Zeit, euch kennenzulernen. Danach entscheidet '
-        'ihr beide: Funke oder weitersuchen?',
     'dh.chat.icebreakerBtn': 'Gesprächsstarter senden',
     'dh.chat.hint': 'Nachricht...',
     'dh.chat.timeUp': 'Die 5 Minuten sind um!\nMöchtest du euch wiedersehen?',
@@ -2226,18 +2131,8 @@ const Map<String, Map<String, String>> _strings = {
     'dh.gender.nonBinary': 'Nichtbinäre Personen',
     'dh.prefs.title': 'Dating Hour: Präferenzen',
     'dh.prefs.header': 'Deine Dating Hour Präferenzen',
-    'dh.prefs.headerSub':
-        'Diese Einstellungen helfen uns, dich mit passenden Personen zu '
-        'verbinden. Du kannst sie vor jedem Event anpassen.',
     'dh.prefs.ageRange': '{min} bis {max} Jahre',
-    'dh.prefs.sectionJoin': 'Teilnahme',
     'dh.prefs.autoJoin': 'Automatisch wieder dabei sein',
-    'dh.prefs.autoJoinSub':
-        'Wenn aktiviert, nimmst du am nächsten Dating Hour Event '
-        'automatisch teil.',
-    'dh.prefs.traitHint':
-        'Wähle eine Eigenschaft oder gib deine eigene ein. Dies fließt '
-        'als weicher Faktor bei den Funken-Vorschlägen ein.',
     'dh.prefs.traitOwn': 'Eigene Eigenschaft eingeben',
     'dh.prefs.traitHintField':
         'z. B. "Gute Laune", "Tiefgründige Gespräche"...',
@@ -2271,16 +2166,7 @@ const Map<String, Map<String, String>> _strings = {
     'dh.prefs.trait.passion': 'Leidenschaft',
     'dh.prefs.trait.openness': 'Offenheit',
     'dh.prefs.trait.downToEarth': 'Bodenständigkeit',
-    'dh.prefs.habitsSub':
-        'Personen mit passenden Gewohnheiten werden dir bei den '
-        'Funken-Vorschlägen zuerst vorgeschlagen, ausgeschlossen wird niemand.',
     'dh.prefs.save': 'Präferenzen speichern',
-    'dh.prefs.saveNote':
-        'Speichern meldet dich NICHT an. Deine Teilnahme bestätigst du '
-        'separat mit "Ich bin dabei" auf dem Event-Screen.',
-    'dh.prefs.saved':
-        'Präferenzen gespeichert. Deine Teilnahme meldest du über "Ich '
-        'bin dabei" am Event-Tag an.',
     'dh.event.joinConfirmTitle': 'Am Event teilnehmen?',
     'dh.event.join': 'Ich bin dabei',
     'dh.event.joined': 'Du nimmst am Dating Hour Event teil!',
@@ -2292,18 +2178,12 @@ const Map<String, Map<String, String>> _strings = {
     'dh.event.ended': 'Dating Hour beendet',
     'dh.event.joinNow': 'Jetzt beitreten & chatten',
     'dh.event.leave': 'Raus',
-    'dh.event.setPrefs': 'Präferenzen festlegen',
-    'dh.event.nextIn': 'Nächstes Event in {d}',
-    'dh.event.searching': 'Suche läuft...',
     'dh.event.loadError': 'Fehler beim Laden',
     'dh.event.searchingPartner': 'Wir suchen gerade einen Partner...',
     'dh.event.toChat': 'Zum Chat',
     'dh.event.nonePlanned': 'Aktuell ist kein Dating Hour Event geplant.',
     'dh.event.remaining': 'Noch {d}',
     'dh.event.startIn': 'Start in {d}',
-    'dh.event.chatsRunning': 'Chats laufen.',
-    'dh.event.waitStart': 'Warte auf den Start.',
-    'dh.event.participating': 'Du nimmst teil!',
     // Dating-Hour-Regeln-Detailzeilen (Event-Screen, Regeln-Karte)
     'dh.event.rulesTitle': 'Wichtige Regeln',
     'dh.event.rule.1':
@@ -2331,8 +2211,6 @@ const Map<String, Map<String, String>> _strings = {
     'profile.edit.filters': 'Filter & Präferenzen',
     'profile.edit.radiusMode': 'Suchradius definieren über',
     'profile.edit.maxDistance': 'Maximale Entfernung: {km} km',
-    'profile.edit.minAge': 'Mindestalter: {age} Jahre',
-    'profile.edit.maxAge': 'Höchstalter: {age} Jahre',
     'profile.edit.bio': 'Bio',
     'profile.edit.music': 'Musik',
     'profile.edit.musicSub':
@@ -2362,16 +2240,11 @@ const Map<String, Map<String, String>> _strings = {
         'Es fehlen noch Angaben oder einige Felder sind fehlerhaft (rot '
         'markiert). Bitte prüfe das Formular.',
     'profile.edit.birthDateMissing': 'Bitte wähle dein Geburtsdatum',
-    'profile.edit.photoUpdated': 'Profilbild aktualisiert.',
     'profile.edit.photoUploadError': 'Fehler beim Hochladen: {error}',
-    'profile.edit.photoPolicyBlocked':
-        'Dieses Bild entspricht nicht unseren Richtlinien und wurde nicht '
-        'hochgeladen.',
     'profile.edit.photoNsfwTitle': 'Bild nicht freigegeben',
     'profile.edit.photoNsfwBody':
         'Dieses Bild wurde lokal auf deinem Gerät als potenziell '
         'anstößig eingestuft und wird nicht hochgeladen.',
-    'profile.edit.photoNsfwChoice': 'Was möchtest du tun?',
     'profile.edit.photoNsfwAppeal': 'Einspruch einlegen',
     'profile.edit.photoNsfwUnderstood': 'Verstanden',
     'profile.edit.photoNsfwVerdict': 'Lokaler Befund: {label} ({score} %).',
@@ -2416,7 +2289,6 @@ const Map<String, Map<String, String>> _strings = {
     'profile.edit.locationSuspicious':
         'Hinweis: Dieser Standort weicht deutlich von deinen bisherigen '
         'Standorten auf diesem Gerät ab.',
-    'profile.edit.locationError': 'Fehler bei der Standortermittlung: {error}',
     'profile.edit.unsavedTitle': 'Ungespeicherte Änderungen',
     'profile.edit.unsavedBody':
         'Deine Profiländerungen wurden noch nicht gespeichert. Was '
@@ -2540,12 +2412,10 @@ const Map<String, Map<String, String>> _strings = {
     'privacy.locationSub':
         'Du kannst die Standortfreigabe in den Systemeinstellungen deines '
         'Geräts jederzeit widerrufen.',
-    'privacy.openLocationSettings': 'Standort-Einstellungen öffnen',
     'privacy.push': 'Push Benachrichtigungen',
     'privacy.pushSub':
         'Öffnet die App-Einstellungen deines Geräts, dort kannst du die '
         'Benachrichtigungen steuern.',
-    'privacy.openAppSettings': 'App-Einstellungen öffnen',
     'privacy.dangerZone': 'Gefahrenzone',
     'privacy.deleteAccount': 'Account dauerhaft löschen',
     'privacy.deleteAccountSub':
@@ -2560,8 +2430,6 @@ const Map<String, Map<String, String>> _strings = {
     'common.save': 'Speichern',
     'common.cancel': 'Abbrechen',
     'common.ok': 'OK',
-    'common.yes': 'Ja',
-    'common.no': 'Nein',
     'common.continue': 'Weiter',
     'common.back': 'Zurück',
     'whatsnew.title': 'Neu in dieser Version',
@@ -2884,6 +2752,9 @@ const Map<String, Map<String, String>> _strings = {
     'admin.noVerifications': 'Keine offenen Verifizierungen.',
     'admin.auditTitle': 'Stichproben: Auto-Freigaben',
     'admin.auditEmpty': 'Keine Auto-Freigaben zur Stichprobe.',
+    'admin.minorCase':
+        'Minderjaehrigenfall - bitte von Hand pruefen. Personen bis 21 '
+        'Jahre werden nie automatisch freigegeben.',
     'admin.ageNoAi': 'Alter: Angabe {stated} (keine KI-Schätzung)',
     'admin.ageAi': 'Alter: Angabe {stated}, KI {est} (Abweichung {dev})',
     'admin.noModeration': 'Keine ausstehenden Moderationen.',
@@ -2948,13 +2819,10 @@ const Map<String, Map<String, String>> _strings = {
     'admin.statusNotified': 'Quittiert',
     // Admin-Überarbeitung (ROADMAP Zeile 807): Kennzahlen-Zeile,
     // Suche im Sperren-Tab, einheitliche Leerzustände.
-    'admin.metricsTitle': 'Kennzahlen',
     'admin.metricOpenReports': 'Offene Meldungen',
     'admin.metricNewBugs': 'Neue Bugs',
     'admin.metricNewBugsSub': 'letzte 24 Stunden',
     'admin.metricPendingChecks': 'Offene Prüfungen',
-    'admin.metricBans': 'Aktive Sperren',
-    'admin.metricNone': 'Nichts offen',
     'admin.searchBans': 'Sperren durchsuchen',
     'admin.searchBansHint': 'E-Mail, Begründung oder Person',
     'admin.searchBansResult': '{count} von {total} Sperren',
@@ -2962,9 +2830,6 @@ const Map<String, Map<String, String>> _strings = {
         'Keine Sperre passt zu dieser Suche. Suchbegriff loeschen oder '
         'anders schreiben.',
     'admin.searchBansClear': 'Suche leeren',
-    'admin.noReportsSearch':
-        'Keine offenen Meldungen. Gesuchte Meldung wurde bereits '
-        'bearbeitet oder nie gemeldet.',
     'admin.emptyReportsTitle': 'Nichts zu bearbeiten',
     'admin.emptyBugsTitle': 'Keine neuen Bugs',
     'admin.emptyModerationTitle': 'Keine offenen Moderationen',
@@ -3029,7 +2894,6 @@ const Map<String, Map<String, String>> _strings = {
     'auth.toRegister': 'No account yet? Sign up',
     'auth.toLogin': 'Already have an account? Log in',
     'auth.passkey': 'Sign in with Passkey',
-    'auth.passkeyCreate': 'Create Passkey',
     'auth.captcha': 'Security check',
     'auth.registerTitle': 'Create account',
     'auth.welcomeBack': 'Welcome back',
@@ -3154,9 +3018,6 @@ const Map<String, Map<String, String>> _strings = {
     'nav.profile': 'Profile',
     'settings.title': 'Settings',
     'settings.appearance': 'Appearance',
-    'settings.system': 'System',
-    'settings.light': 'Light',
-    'settings.dark': 'Dark',
     'appearance.light': 'Light',
     'appearance.system': 'System',
     'appearance.dark': 'Dark',
@@ -3182,14 +3043,8 @@ const Map<String, Map<String, String>> _strings = {
     'settings.e2e': 'E2E identity',
     'settings.backupCreate': 'Create backup',
     'settings.backupRestore': 'Restore backup',
-    'settings.passkeyDiagnose': 'Passkey diagnostics',
     'settings.privacyAccount': 'Privacy & account',
     'settings.privacyAccountSub': 'Stored data, consents, delete account',
-    'settings.pause': 'Pause profile',
-    'settings.pauseSub':
-        'Invisible in Discovery and Find your Spark. Sparks and chats '
-        'remain.',
-    'settings.pauseActive': 'Profile is paused and invisible to new people.',
     'settings.pauseConfirmTitle': 'Pause profile?',
     'settings.pauseConfirmBody':
         'Your profile will no longer appear in Discovery and Find your '
@@ -3252,8 +3107,6 @@ const Map<String, Map<String, String>> _strings = {
     'theme.lavender': 'Lavender',
     'theme.slate': 'Slate',
     'theme.colorScheme': 'Color scheme',
-    'dm.discovery': 'Discover',
-    'dm.discoveryDesc': 'Browse profiles, send sparks, chat',
     'dm.findMatch': 'Find your Spark',
     'dm.findMatchDesc': 'Listen to or read the intro, then decide',
     'dm.randomChat': 'Random chat',
@@ -3276,11 +3129,9 @@ const Map<String, Map<String, String>> _strings = {
         'Your verification is already running - please wait for the '
         'result. Meanwhile you can use random chat and QR code scanning.',
     'dm.lockedAction': 'Verify now',
-    'dm.lockedBadge': 'Locked',
     'dm.groupMeet': 'Meet people',
     'dm.groupDirect': 'Connect directly',
     'dm.groupOnTheGo': 'On the go',
-    'dm.pickHint': 'Choose a mode to discover new people:',
     'common.new': 'NEW',
     'transit.title': 'Transit Spark',
     'transit.start': 'Activate radar',
@@ -3307,9 +3158,7 @@ const Map<String, Map<String, String>> _strings = {
     'dm.appbarTitle': 'Choose discovery mode',
     'fym.introSaved': 'Intro saved. Enjoy getting to know each other!',
     'setup.appbarTitle': 'Settings & privacy',
-    'setup.filterTitle': 'Filters & preferences',
     'setup.filterSub': 'Who would you like to meet?',
-    'setup.openAll': 'Open to everything',
     'setup.photoTooltip': 'Choose profile picture',
     'setup.pleasePick': 'Please choose',
     'setup.locationDone': 'State detected and applied.',
@@ -3500,42 +3349,6 @@ const Map<String, Map<String, String>> _strings = {
         'Transit Spark needs your date of birth. Add it to your profile '
         'so we can check your age - until that is confirmed, the feature '
         'stays locked.',
-    'onboarding.appbarTitle': 'Nice to meet you',
-    'onboarding.skipAll': 'Skip',
-    'onboarding.fillLater': 'Fill in later',
-    'onboarding.next': 'Continue',
-    'onboarding.hello.title': 'Hi, I am Thestia!',
-    'onboarding.hello.body':
-        'Over the next few minutes we will set up your profile - as a '
-        'short conversation instead of a form. Everything is skippable, '
-        'nothing is wrong.',
-    'onboarding.blind.title': 'Personality before looks',
-    'onboarding.blind.body':
-        'By default you will see only name, age, bio and interests '
-        'first - no photos. Decide with your head, not just your eyes. '
-        'Switchable at any time.',
-    'onboarding.connections.title': 'Real connections',
-    'onboarding.connections.body':
-        'A spark is created only if you both choose each other. Photos '
-        'unlock then and you can start chatting - fair instead of '
-        'superficial.',
-    'onboarding.q.photo':
-        'Would you like to show a profile picture? No pressure - '
-        'photos are only visible after a spark anyway.',
-    'onboarding.photoLater': 'You can upload a profile picture later.',
-    'onboarding.q.music': 'Is there a song accompanying you right now?',
-    'onboarding.q.musicGenres': 'Which music genres do you like?',
-    'onboarding.q.musicHint': 'e.g. favorite song …',
-    'onboarding.q.bandHint': 'e.g. favorite band or artist …',
-    'onboarding.q.birthday':
-        'Which style should your profile have on your birthday?',
-    'onboarding.q.chatbg':
-        'How should your chats look? Pick a background - '
-        'changeable anytime later.',
-    'onboarding.done.title': 'Done - glad you are here!',
-    'onboarding.done.body':
-        'Your profile is set up. You can change everything later in '
-        'the settings. Enjoy discovering!',
     'welcome.t1': 'Welcome to Thestia',
     'welcome.b1':
         'Here you really get to know people before you see their photo. '
@@ -3742,8 +3555,6 @@ const Map<String, Map<String, String>> _strings = {
     'verify.badge': 'Verified',
     'verify.stateUnverified': 'Not verified',
     'verify.stateUnderReview': 'Under review',
-    'verify.stateVerified': 'Verified',
-    'verify.otherUnverified': 'Not verified',
     'verify.otherUnderReview': 'Verification in progress',
     'verify.infoAiLimits':
         'The age estimate is an AI estimate and can be inaccurate. It '
@@ -3784,7 +3595,6 @@ const Map<String, Map<String, String>> _strings = {
     'interests.sparkConfirmBtn': 'Confirm spark',
     'interests.resparkDone': 'Spark with {name} is glowing again ✨',
     'interests.matchesSub': 'Confirmed mutual likes',
-    'qr.openingChat': 'Opening chat with {name}...',
     // Saved profiles (local, max. 5, for writing later)
     'qr.limitTitle': 'Maximum reached',
     'qr.limitBody':
@@ -3861,9 +3671,6 @@ const Map<String, Map<String, String>> _strings = {
         'afraid: contact the police (110) or 116 006.',
     'safety.exportData': 'Export my data',
     'safety.exportDataSub': 'JSON export of all stored data',
-    'spice.answerSent': 'Answer sent. Your partner will answer soon.',
-    'spice.answerEdit': 'Edit answer',
-    'spice.answer': 'Answer',
     'spice.title': 'Icebreaker questions',
     'spice.searchHint': 'Search categories …',
     'spice.copied': 'Copied - paste the question into the chat.',
@@ -3934,11 +3741,6 @@ const Map<String, Map<String, String>> _strings = {
     'random.errorUnavailable': 'Random chat not available.',
     'random.errorEnded': 'The random chat has ended.',
     'random.errorOffline': 'Random chat is not available without connection.',
-    'random.errorConnectTimeout':
-        'The direct connection to your partner could not be established. '
-        'Note: Random chat is currently not supported on mobile data '
-        'because there is no relay server (TURN). Please use WiFi '
-        'instead.',
     'random.relayStatus': 'E2E via server (encrypted, no direct channel)',
     'random.waitingForPartner':
         'Waiting for the partner device (keys are being prepared there). '
@@ -3948,10 +3750,6 @@ const Map<String, Map<String, String>> _strings = {
         'Direct connection blocked by the network (typically AP isolation '
         'on the router or mobile data). Messages arrive securely via the '
         'server (E2E encrypted).',
-    'random.infoBlind':
-        'Random chat: you are blindly connected with a random person.',
-    'random.infoE2e':
-        'Conversations are end-to-end encrypted and run peer to peer.',
     'meet.metBody':
         'We hope you had a great time. Real connections instead of just '
         'chatting online.',
@@ -4113,7 +3911,6 @@ const Map<String, Map<String, String>> _strings = {
     'mood.change': 'Change',
     'mood.select': 'Choose',
     'settings.logout': 'Log out',
-    'settings.deleteAccount': 'Delete account',
     // Settings (Vollständigkeit)
     'settings.privacySection': 'Privacy',
     'settings.whoCanSee': 'Who can see my profile?',
@@ -4304,7 +4101,6 @@ const Map<String, Map<String, String>> _strings = {
     'profile.edit.birthDate': 'Date of birth',
     'profile.edit.birthDateHint': 'DD. MM. YYYY',
     'profile.edit.birthDatePick': 'Please select',
-    'profile.edit.birthDateHelp': 'Choose your date of birth',
     'profile.edit.gender': 'Gender',
     'profile.edit.lookingFor': 'I am looking for',
     'profile.edit.relationship': 'What are you looking for?',
@@ -4486,11 +4282,6 @@ const Map<String, Map<String, String>> _strings = {
         'on this device. If that is correct, choose it anyway - otherwise '
         'please enter your place manually.',
     'setup.locationError': 'Location detection failed: {error}',
-    'setup.locationTooFar':
-        'The place is more than 15 km away from your current location.',
-    'setup.locationNotFound':
-        'Place not found. Please spell it the way it appears on a map '
-        '(e.g. "Berlin").',
     // Setup: page content
     'setupp.visibilitySub':
         'Who may see your profile? How should the app look?',
@@ -4502,22 +4293,24 @@ const Map<String, Map<String, String>> _strings = {
     'setupp.filterLabel': 'Filter',
     'setupp.maxDistance': 'Maximum distance: {km} km',
     'setupp.stateLabel': 'Federal state',
-    'setupp.stateHint': 'e.g. Bavaria',
     'setupp.germanyNote': 'Profiles from all over Germany are shown.',
     // v0.10.0: No city is asked for any more, only the state.
     'setupp.detectState': 'Detect my state automatically',
     'setupp.bioLabel': 'About me (bio)',
     'setupp.bioHint': 'e.g. hobbies, what matters to you',
+    'setupp.countryLabel': 'Country',
     'setupp.stateOptional': 'Federal state (optional)',
     'setupp.profileSub':
-        'A photo, a few words about you and your interests help others get '
-        'to know you. All optional and changeable later.',
+        'A photo, a few words about you and your interests help others '
+        'get to know you. The app needs a bio and at least one interest '
+        '- everything else you can change later.',
     'setupp.photoDone': 'Profile photo uploaded.',
     'setupp.photoFail':
         'Upload failed. You can set the photo later in your profile.',
     'setupp.introSub':
-        'Tell about yourself, as text and voice. Both are shown to others '
-        'before they see your photo. You can skip this step.',
+        'Tell people about yourself, in text and out loud. Both are shown '
+        'before they see your photo. You can skip this step with '
+        '"Skip".',
     'setupp.habitsSub':
         'How do you feel about smoking, alcohol and drugs? These answers '
         'influence who you see in "Find your Spark".',
@@ -4625,17 +4418,10 @@ const Map<String, Map<String, String>> _strings = {
     'qr.savedOffline':
         'No internet - profile saved locally. You can write to the person '
         'later ("Saved profiles").',
-    'onb.page1.title': 'Privacy & appearance',
-    'onb.page2.title': 'Your profile',
-    'onb.page3.title': 'Done',
     'onb.next': 'Next',
-    'onb.back': 'Back',
-    'onb.finish': 'Finish',
     'chat.hint': 'Message...',
-    'chat.send': 'Send',
     'chat.empty': 'Write the first message! 😊',
 
-    'chat.report': 'Report image',
     'chat.block': 'Block user',
     'chat.blockSub': 'No messages, likes or sparks from this person anymore.',
     'chat.end': 'End spark',
@@ -4669,7 +4455,6 @@ const Map<String, Map<String, String>> _strings = {
         'deserves honest respect.',
     'milestone.title': 'Remember this',
     'milestone.dismiss': 'Close',
-    'friends.toggleTitle': 'Friendship',
     'friends.toggleHint':
         'This connection is a friendship - not a romantic spark. You '
         'can switch it back at any time.',
@@ -4743,9 +4528,6 @@ const Map<String, Map<String, String>> _strings = {
     'chat.relayBanner':
         'No P2P available. Messages stay end-to-end encrypted, travel '
         'via the relay and arrive once the chat is opened.',
-    'chat.relayStored':
-        'Stored encrypted. Will be delivered once the chat is opened.',
-    'chat.sendFailed': 'Message could not be sent: {error}',
     'chat.queuedHint':
         'Offline - message is queued and will be delivered on the next '
         'direct connection.',
@@ -4812,7 +4594,6 @@ const Map<String, Map<String, String>> _strings = {
         'We share the interest "{interest}". Tell me about it: what was '
         'your highlight there? 😊',
     'chat.dateIdea': 'Date idea: {idea} ✨ What do you think?',
-    'chat.ideaSendFailed': 'Suggestion could not be sent.',
     'chat.endSparkTitle': 'End spark - honestly & kindly',
     'chat.endSparkBody':
         'The spark moves to "Cooled sparks" for both of you - without '
@@ -4861,11 +4642,9 @@ const Map<String, Map<String, String>> _strings = {
     'chat.more': 'More options',
     'chat.requireVerifiedTitle': 'Always verify keys',
         'chat.requireVerifiedHint': 'Only allow sending after you compared the safety numbers. This protects against someone substituting your chat keys.',
-        'chat.peerUnverifiedBlocked': 'You have not compared the safety numbers for {name} yet. Open "Security" in the chat to check and unlock.',
     'dh.event.startingSoon': 'Dating Hour starts soon',
     'dh.event.cancelledToday':
         "Today's Dating Hour is cancelled: not enough people signed up.",
-    'dh.event.serverTimeWarn': 'The server time could not be verified.',
     'dh.event.loadErrorFull': 'Loading failed: {error}',
     'dh.event.autoJoinFailed': 'Auto-join failed: {error}',
     'dh.event.autoJoinAsk':
@@ -4886,7 +4665,6 @@ const Map<String, Map<String, String>> _strings = {
     'dh.event.participatingWaiting': "You're in! Waiting for the start.",
 
     'dh.rules.title': 'Dating Hour rules',
-    'dh.rules.intro': 'Please read these rules carefully before joining.',
     'dh.rules.acceptedTitle': 'Rules accepted',
     'dh.rules.next': 'Next',
     'dh.how.title': 'How does Dating Hour work?',
@@ -4953,9 +4731,6 @@ const Map<String, Map<String, String>> _strings = {
     'dh.chat.stay': 'Stay',
     'dh.chat.leaveDecline': 'Leave & decline',
     'dh.chat.sayHello': 'Say hi to {name}!',
-    'dh.chat.fiveMinutes':
-        'You have 5 minutes to get to know each other. Afterwards you '
-        'both decide: match or keep searching?',
     'dh.chat.icebreakerBtn': 'Send conversation starter',
     'dh.chat.hint': 'Message...',
     'dh.chat.timeUp':
@@ -4973,18 +4748,8 @@ const Map<String, Map<String, String>> _strings = {
     'dh.gender.nonBinary': 'Non-binary people',
     'dh.prefs.title': 'Dating Hour: preferences',
     'dh.prefs.header': 'Your Dating Hour preferences',
-    'dh.prefs.headerSub':
-        'These settings help us connect you with matching people. You can '
-        'adjust them before every event.',
     'dh.prefs.ageRange': '{min} to {max} years',
-    'dh.prefs.sectionJoin': 'Participation',
     'dh.prefs.autoJoin': 'Automatically join again',
-    'dh.prefs.autoJoinSub':
-        'If enabled, you will automatically take part in the next Dating '
-        'Hour event.',
-    'dh.prefs.traitHint':
-        'Pick a trait or type your own. It flows into matching as a soft '
-        'factor.',
     'dh.prefs.traitOwn': 'Enter custom trait',
     'dh.prefs.traitHintField': 'e.g. "Good vibes", "Deep conversations"...',
     'dh.prefs.habits': 'Habits (optional)',
@@ -5017,16 +4782,7 @@ const Map<String, Map<String, String>> _strings = {
     'dh.prefs.trait.passion': 'Passion',
     'dh.prefs.trait.openness': 'Openness',
     'dh.prefs.trait.downToEarth': 'Down-to-earth attitude',
-    'dh.prefs.habitsSub':
-        'People with matching habits are suggested to you first during '
-        'matching, nobody is excluded.',
     'dh.prefs.save': 'Save preferences',
-    'dh.prefs.saveNote':
-        'Saving does NOT sign you up. You confirm your participation '
-        'separately with "I am in" on the event screen.',
-    'dh.prefs.saved':
-        'Preferences saved. You confirm your participation with "I am '
-        'in" on the event day.',
     'dh.event.joinConfirmTitle': 'Join the event?',
     'dh.event.join': 'I am in',
     'dh.event.joined': "You're in for the Dating Hour event!",
@@ -5038,18 +4794,12 @@ const Map<String, Map<String, String>> _strings = {
     'dh.event.ended': 'Dating hour ended',
     'dh.event.joinNow': 'Join now & chat',
     'dh.event.leave': 'Leave',
-    'dh.event.setPrefs': 'Set preferences',
-    'dh.event.nextIn': 'Next event in {d}',
-    'dh.event.searching': 'Searching...',
     'dh.event.loadError': 'Loading error',
     'dh.event.searchingPartner': 'Looking for a partner for you...',
     'dh.event.toChat': 'To chat',
     'dh.event.nonePlanned': 'Currently no Dating Hour event is planned.',
     'dh.event.remaining': '{d} left',
     'dh.event.startIn': 'Starts in {d}',
-    'dh.event.chatsRunning': 'Chats are running.',
-    'dh.event.waitStart': 'Waiting for the start.',
-    'dh.event.participating': 'You are in!',
     // Dating Hour rules detail lines (event screen, rules card)
     'dh.event.rulesTitle': 'Important rules',
     'dh.event.rule.1':
@@ -5073,8 +4823,6 @@ const Map<String, Map<String, String>> _strings = {
     'profile.edit.filters': 'Filters & preferences',
     'profile.edit.radiusMode': 'Define search radius by',
     'profile.edit.maxDistance': 'Maximum distance: {km} km',
-    'profile.edit.minAge': 'Minimum age: {age} years',
-    'profile.edit.maxAge': 'Maximum age: {age} years',
     'profile.edit.bio': 'Bio',
     'profile.edit.music': 'Music',
     'profile.edit.musicSub':
@@ -5102,15 +4850,11 @@ const Map<String, Map<String, String>> _strings = {
         'Some information is missing or some fields are invalid (marked '
         'in red). Please check the form.',
     'profile.edit.birthDateMissing': 'Please choose your date of birth',
-    'profile.edit.photoUpdated': 'Profile picture updated.',
     'profile.edit.photoUploadError': 'Upload failed: {error}',
-    'profile.edit.photoPolicyBlocked':
-        'This image does not meet our guidelines and was not uploaded.',
     'profile.edit.photoNsfwTitle': 'Image not approved',
     'profile.edit.photoNsfwBody':
         'This image was classified on your device as potentially '
         'inappropriate and will not be uploaded.',
-    'profile.edit.photoNsfwChoice': 'What would you like to do?',
     'profile.edit.photoNsfwAppeal': 'Appeal',
     'profile.edit.photoNsfwUnderstood': 'Understood',
     'profile.edit.photoNsfwVerdict': 'Local verdict: {label} ({score} %).',
@@ -5155,7 +4899,6 @@ const Map<String, Map<String, String>> _strings = {
     'profile.edit.locationSuspicious':
         'Note: This location differs greatly from your previous locations '
         'on this device.',
-    'profile.edit.locationError': 'Location detection failed: {error}',
     'profile.edit.unsavedTitle': 'Unsaved changes',
     'profile.edit.unsavedBody':
         'Your profile changes have not been saved yet. What would you '
@@ -5278,12 +5021,10 @@ const Map<String, Map<String, String>> _strings = {
     'privacy.locationSub':
         'You can revoke location sharing at any time in your device\'s '
         'system settings.',
-    'privacy.openLocationSettings': 'Open location settings',
     'privacy.push': 'Push notifications',
     'privacy.pushSub':
         'Opens your device\'s app settings, where you can control '
         'notifications.',
-    'privacy.openAppSettings': 'Open app settings',
     'privacy.dangerZone': 'Danger zone',
     'privacy.deleteAccount': 'Delete account permanently',
     'privacy.deleteAccountSub':
@@ -5297,8 +5038,6 @@ const Map<String, Map<String, String>> _strings = {
     'common.save': 'Save',
     'common.cancel': 'Cancel',
     'common.ok': 'OK',
-    'common.yes': 'Yes',
-    'common.no': 'No',
     'common.continue': 'Continue',
     'common.back': 'Back',
     'whatsnew.title': 'New in this version',
@@ -5605,6 +5344,9 @@ const Map<String, Map<String, String>> _strings = {
     'admin.noVerifications': 'No pending verifications.',
     'admin.auditTitle': 'Spot checks: auto approvals',
     'admin.auditEmpty': 'No auto approvals to spot-check.',
+    'admin.minorCase':
+        'Minor case - please review by hand. People aged 21 or younger '
+        'are never approved automatically.',
     'admin.ageNoAi': 'Age: stated {stated} (no AI estimate)',
     'admin.ageAi': 'Age: stated {stated}, AI {est} (deviation {dev})',
     'admin.noModeration': 'No pending moderation.',
@@ -5667,13 +5409,10 @@ const Map<String, Map<String, String>> _strings = {
     'admin.statusNotified': 'Acknowledged',
     // Admin rework (ROADMAP line 807): metrics row,
     // search in the bans tab, uniform empty states.
-    'admin.metricsTitle': 'Key figures',
     'admin.metricOpenReports': 'Open reports',
     'admin.metricNewBugs': 'New bugs',
     'admin.metricNewBugsSub': 'last 24 hours',
     'admin.metricPendingChecks': 'Open checks',
-    'admin.metricBans': 'Active bans',
-    'admin.metricNone': 'Nothing open',
     'admin.searchBans': 'Search bans',
     'admin.searchBansHint': 'Email, reason or person',
     'admin.searchBansResult': '{count} of {total} bans',
@@ -5681,9 +5420,6 @@ const Map<String, Map<String, String>> _strings = {
         'No ban matches this search. Clear the search term or try a '
         'different one.',
     'admin.searchBansClear': 'Clear search',
-    'admin.noReportsSearch':
-        'No open reports. The report you are looking for was already '
-        'handled or never submitted.',
     'admin.emptyReportsTitle': 'Nothing to handle',
     'admin.emptyBugsTitle': 'No new bugs',
     'admin.emptyModerationTitle': 'No open moderations',

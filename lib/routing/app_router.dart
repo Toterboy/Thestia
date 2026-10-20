@@ -24,7 +24,6 @@ import 'package:thestia/screens/core/error_screen.dart';
 import 'package:thestia/screens/home/home_screen.dart';
 import 'package:thestia/screens/core/main_navigation.dart';
 import 'package:thestia/screens/interests/interessen_screen.dart';
-import 'package:thestia/screens/onboarding/onboarding_screen.dart';
 import 'package:thestia/screens/onboarding/personality_test_screen.dart';
 import 'package:thestia/screens/onboarding/settings_privacy_once_screen.dart';
 import 'package:thestia/screens/mood/mood_picker_screen.dart';
@@ -146,10 +145,6 @@ class AppRoutes {
   /// Baut die Dating Hour Chat URL.
   static String datingHourChatPath(String sessionId) =>
       '/dating-hour/chat/$sessionId';
-
-  /// Baut die Verifizierungs-Info URL mit Code-Parameter.
-  static String verificationInfoPath(String code) =>
-      '/verification/info?code=$code';
 }
 
 /// Benachrichtigt den [GoRouter], sobald sich der Auth-Status ODER die
@@ -600,10 +595,6 @@ GoRouter createRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.settingsPrivacyOnce,
         builder: (context, state) => const SettingsPrivacyOnceScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.onboarding,
-        builder: (context, state) => const OnboardingScreen(),
       ),
       GoRoute(
         path: AppRoutes.settings,

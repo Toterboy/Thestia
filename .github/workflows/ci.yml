@@ -122,6 +122,14 @@ jobs:
       - name: Security-Invarianten
         run: python tool/check_security_invariants.py
 
+      # Die veroeffentlichte Datenschutzerklaerung muss mit der im Repo
+      # uebereinstimmen. Live stand laengere Zeit eine aeltere Fassung
+      # (v0.9.2) mit falschen Angaben zur Standortlogik - ohne diesen
+      # Schritt faellt das nicht auf, weil das Repo in Ordnung war.
+      # Offline (kein Netz) ueberspringt das Skript selbst.
+      - name: Datenschutzerklaerung: Repo vs. live
+        run: python tool/check_privacy_deployment.py
+
       # Ein Namespace-Wechsel im Keystore OHNE Migrations-Eintrag bedeutet:
       # beim Update sind die Daten unerreichbar (alle Nutzer abgemeldet bzw.
       # neuer Hive-Schluessel -> verschluesselte Boxen unlesbar). Das ist im

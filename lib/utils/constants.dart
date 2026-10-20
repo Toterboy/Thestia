@@ -217,6 +217,36 @@ class AppConstants {
 
 /// Deutsche Bundesländer (Vollnamen, für die Auswahl im Profil und in der
 /// Einrichtung - zentrale Definition, damit beide Screens identisch sind).
+/// Laender, in denen die App verfuegbar ist.
+///
+/// Stand hier vorher im Profil-Edit-Screen - dort war es nur fuer die
+/// Auswahl zustaendig. Die Einrichtung fragt das Land jetzt auch ab,
+/// also gehoert die Liste zu den Konstanten.
+const kSupportedCountries = <String>[
+  'Deutschland',
+  'Österreich',
+  'Schweiz',
+  'Luxemburg',
+  'Belgien',
+  'Niederlande',
+  'Frankreich',
+  'Italien',
+  'Spanien',
+  'Portugal',
+  'Polen',
+  'Tschechien',
+  'Dänemark',
+  'Schweden',
+  'Norwegen',
+  'Finnland',
+  'Vereinigtes Königreich',
+  'Irland',
+  'USA',
+  'Kanada',
+  'Australien',
+  'Anderes Land',
+];
+
 const kGermanStates = <String>[
   'Baden-Württemberg',
   'Bayern',

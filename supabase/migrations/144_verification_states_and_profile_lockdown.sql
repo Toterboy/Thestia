@@ -193,29 +193,44 @@ CREATE INDEX IF NOT EXISTS profiles_verification_open_idx
 --
 -- Zusaetzlich wird der Status mitgeliefert, damit der Admin sieht,
 -- ob es ein Minderjaehrigkeitsfall ist oder eine normale Pruefung.
+--
+-- WICHTIG - die Form der Funktion bleibt unveraendert:
+--   * jsonb (KEIN RETURNS TABLE). Der Client liest camelCase-Keys
+--     (data['userId'], data['estimatedAge'], ...). Eine Table-Variante
+--     mit snake_case liefert genau diese Schluessel nicht.
+--   * public.is_current_user_admin() als Bedingung. Ohne den Guard
+--     kann JEDER angemeldete Nutzer die RPC aufrufen und sieht alle
+--     offenen Faelle samt Alter. Die Funktion steht in der
+--     authenticated-Allowlist von Migration 123.
+--   * p.verification_video_path IS NOT NULL. Sonst stehen Profile ohne
+--     eingereichtes Video in der Pruefliste, die der Admin gar nicht
+--     pruefen kann.
 CREATE OR REPLACE FUNCTION public.admin_list_pending_verifications()
-RETURNS TABLE (
-  user_id uuid,
-  name text,
-  submitted_at timestamptz,
-  estimated_age int,
-  stated_age int,
-  status text
-)
+RETURNS jsonb
 LANGUAGE sql
-STABLE
 SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
-  SELECT p.user_id,
-         coalesce(p.name, ''),
-         p.updated_at,
-         p.verification_estimated_age,
-         public.profile_age(p.birth_date),
-         p.verification_status
-    FROM public.profiles p
-   WHERE p.verification_status IN ('pending', 'pending_minor')
-   ORDER BY p.updated_at ASC;
+  SELECT COALESCE(jsonb_agg(
+           jsonb_build_object(
+             'userId', p.user_id,
+             'name', p.name,
+             'videoPath', p.verification_video_path,
+             'submittedAt', COALESCE(p.updated_at, p.created_at),
+             'estimatedAge', p.verification_estimated_age,
+             'statedAge', date_part('year', age(COALESCE(p.birth_date, '2000-01-01'::date)))::int,
+             -- NEU (v0.10.0): der Rohstatus, damit der Admin einen
+             -- Minderjaehrigkeitsfall als solchen erkennt. Ohne das ist
+             -- genau die Person, um die es am meisten geht, im Bild am
+             -- leichtesten zu uebersehen.
+             'status', p.verification_status
+           ) ORDER BY COALESCE(p.updated_at, p.created_at) ASC), '[]'::jsonb)
+  FROM public.profiles p
+  WHERE public.is_current_user_admin()
+    -- 'pending_minor' MIT aufnehmen: die Minderjaehrigkeitsfaelle sind
+    -- genau die, die zuerst geprueft werden muessen.
+    AND p.verification_status IN ('pending', 'pending_minor')
+    AND p.verification_video_path IS NOT NULL;
 $$;
 
 -- Oeffentliche Projektion: abgeleiteter Status statt der Rohspalten.
@@ -358,5 +373,101 @@ BEGIN
   );
 END;
 $$;
+
+-- ===========================================================================
+-- 4) Entfernungsanzeige: 10-km-Stufen SERVERSEITIG erzwingen
+-- ===========================================================================
+--
+-- BEFUND (Security-Audit 2026-10-19, Abgleich der Erklaerung mit dem
+-- Code): die Erklaerung sagt "andere sehen nur die Stufe, nie einen Wert
+-- in Metern oder Kilometern". Server-seitig war das NICHT der Fall:
+--
+--   * profile_distance_km rundete auf 5 km und gab einen ZAHLENWERT
+--     zurueck. Ein angemeldeter Nutzer konnte die RPC direkt aufrufen
+--     und 5-km-Praezision erzwingen.
+--   * Der Client bucketete erst LOKAL (lib/utils/distance_bucket.dart) -
+--     die eigentliche Aussage "nur die Stufe" galt also nur fuer die
+--     Oberflaeche, nicht fuer die Schnittstelle.
+--
+-- Die passende Funktion public.distance_bucket_km() existierte bereits
+-- seit Migration 135 (10-km-Stufen, unter 5 km NULL) - sie wurde nur in
+-- KEINEM Ausgabepfad verwendet, nur in ihrem eigenen Selbsttest.
+--
+-- JETZT: profile_distance_km rechnet ueber distance_bucket_km() und
+-- liefert die UNTERE Grenze der Stufe. Damit gilt die Zusage der
+-- Erklaerung auch fuer einen direkten RPC-Aufruf: ein Aufrufer bekommt
+-- 10, 20, 30 ... und kann daraus keinen genaueren Wert rekonstruieren.
+-- Unter 5 km kommt NULL zurueck - das ist Absicht, kein Fehler.
+--
+-- Der Rueckgabetyp bleibt double precision. Der Client liest eine Zahl
+-- und bucketet sie selbst; ein Wechsel auf jsonb wuerde jeden Aufrufer
+-- brechen, der auf "eine Zahl" prueft. Die Genauigkeit sinkt, die
+-- Form bleibt.
+
+CREATE OR REPLACE FUNCTION public.profile_distance_km(p_other uuid)
+RETURNS double precision
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path to 'public', 'pg_temp'
+AS $function$
+DECLARE
+  v_distance float8;
+  v_bucket record;
+BEGIN
+  IF auth.uid() IS NULL OR p_other IS NULL OR p_other = auth.uid() THEN
+    RETURN NULL;
+  END IF;
+
+  -- Trilaterations-Schutz: wiederholte Abfragen gegen dasselbe Opfer.
+  IF NOT public.consume_rate_limit(
+       'dist_pair:' || auth.uid()::text || ':' || p_other::text, 60, 3600) THEN
+    RETURN NULL;
+  END IF;
+
+  -- Einwilligung der ANDEREN Person. Ohne sie: keine Auskunft.
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles o
+     WHERE o.user_id = p_other
+       AND o.show_distance
+  ) THEN
+    RETURN NULL;
+  END IF;
+
+  SELECT (6371 * acos(least(1.0,
+             cos(radians(me.lat)) * cos(radians(o.lat))
+             * cos(radians(o.lng) - radians(me.lng))
+             + sin(radians(me.lat)) * sin(radians(o.lat))
+           )))::float8
+    INTO v_distance
+    FROM public.profile_locations me
+    JOIN public.profile_locations o ON o.user_id = p_other
+   WHERE me.user_id = auth.uid();
+
+  IF v_distance IS NULL THEN
+    RETURN NULL;
+  END IF;
+
+  -- Auf die Stufe runden. Unter 5 km: keine Auskunft (NULL).
+  SELECT * INTO v_bucket FROM public.distance_bucket_km(v_distance);
+  IF v_bucket IS NULL OR v_bucket.km IS NULL THEN
+    RETURN NULL;
+  END IF;
+
+  -- Die untere Grenze der Stufe. Der Wert ist damit ein Vielfaches von
+  -- 10 und gibt keine Praezision preis.
+  RETURN v_bucket.km::float8;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.profile_distance_km(uuid) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.profile_distance_km(uuid) TO authenticated;
+
+COMMENT ON FUNCTION public.profile_distance_km(uuid) IS
+  'Grobe Entfernung in 10-km-Stufen (Migration 144). Der Rueckgabewert '
+  'ist die UNTERE Grenze der Stufe (10, 20, 30 ...), nie ein genauerer '
+  'Wert. Unter 5 km kommt NULL zurueck - das ist Absicht, kein Fehler. '
+  'Die Erklaerung sagt, andere sehen nur die Stufe; das gilt seit '
+  'dieser Migration auch fuer einen direkten RPC-Aufruf.';
 
 COMMIT;
