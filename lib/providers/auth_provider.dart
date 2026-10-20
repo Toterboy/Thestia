@@ -306,6 +306,18 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
               .read(settingsProvider.notifier)
               .applyServerUiPrefs(uiPrefs);
         }
+        // Schalter in eigenen Spalten: show_distance (Entfernungsanzeige)
+        // und die fuenf Push-Spalten (v0.10.0).
+        //
+        // BUG (still, seit langem): show_distance wurde NUR geschrieben,
+        // nie gelesen. Nach einer Neuinstallation zeigte der Schalter
+        // "aus", waehrend der Server weiter true hatte - der Nutzer
+        // glaubte, die Entfernung sei verborgen, und sie wurde
+        // angezeigt. Die Push-Schalter waren ueber ui_prefs gespiegelt,
+        // aber notify-user wertet die Einzelspalten aus, die dauerhaft
+        // auf true standen: die Schalter hatten keine Wirkung.
+        await _ref.read(settingsProvider.notifier).refreshServerSwitches();
+
         // Pausenmodus + Habit-Dealbreaker (Migration 076): Server gewinnt.
         await _ref.read(settingsProvider.notifier).applyServerFlags(
               paused: flags['paused'] is bool ? flags['paused'] as bool : null,

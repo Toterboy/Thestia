@@ -541,6 +541,84 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     }
   }
 
+  /// Uebernimmt die serverseitig gespiegelten Schalter, die in eigenen
+  /// Spalten stehen (v0.10.0).
+  ///
+  /// BETROFFEN:
+  ///   * show_distance - die Entfernungsanzeige. Der Schalter wurde
+  ///     bisher NUR geschrieben, nie gelesen. Nach einer Neuinstallation
+  ///     oder auf einem zweiten Geraet zeigte der Schalter "aus", waehrend
+  ///     der Server weiter true hatte: der Nutzer glaubte, die Entfernung
+  ///     sei verborgen, und sie wurde trotzdem angezeigt.
+  ///   * notifications_enabled, notify_matches, notify_likes,
+  ///     notify_messages, notify_dating_hour - die Push-Schalter.
+  ///
+  /// "Server gewinnt" bei vorhandenen Werten. Fehlende Spalten (alter
+  /// Serverstand) lassen den lokalen Stand unangetastet.
+  Future<void> applyServerSwitches(Map<String, dynamic>? row) async {
+    if (row == null || row.isEmpty) return;
+    var next = state;
+    var changed = false;
+
+    T? read<T>(String key) => row[key] is T ? row[key] as T : null;
+
+    final showDistance = read<bool>('show_distance');
+    if (showDistance != null && showDistance != next.showDistance) {
+      next = next.copyWith(showDistance: showDistance);
+      changed = true;
+    }
+
+    final notif = read<bool>('notifications_enabled');
+    if (notif != null && notif != next.notificationsEnabled) {
+      next = next.copyWith(notificationsEnabled: notif);
+      changed = true;
+    }
+    final matches = read<bool>('notify_matches');
+    if (matches != null && matches != next.notifyMatches) {
+      next = next.copyWith(notifyMatches: matches);
+      changed = true;
+    }
+    final likes = read<bool>('notify_likes');
+    if (likes != null && likes != next.notifyLikes) {
+      next = next.copyWith(notifyLikes: likes);
+      changed = true;
+    }
+    final messages = read<bool>('notify_messages');
+    if (messages != null && messages != next.notifyMessages) {
+      next = next.copyWith(notifyMessages: messages);
+      changed = true;
+    }
+    final datingHour = read<bool>('notify_dating_hour');
+    if (datingHour != null && datingHour != next.notifyDatingHour) {
+      next = next.copyWith(notifyDatingHour: datingHour);
+      changed = true;
+    }
+
+    if (changed) {
+      state = next;
+      await _persist();
+    }
+  }
+
+  /// Laedt die servergehaltenen Schalter und wendet sie an.
+  ///
+  /// Liest die EIGENE Zeile - mit der verengten profiles-Policy
+  /// (Migration 144) ist das genau die Zeile, die der Nutzer sehen darf.
+  Future<void> refreshServerSwitches() async {
+    try {
+      if (!SupabaseService.isInitialized) return;
+      final userId = SupabaseService.currentUser?.id;
+      if (userId == null || userId.isEmpty) return;
+      final row = await SupabaseDatabaseService(SupabaseService.client)
+          .fetchOwnSwitches();
+      await applyServerSwitches(row);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Settings] Server-Schalter nicht lesbar: $e');
+      }
+    }
+  }
+
   /// Setzt alle Einstellungen auf die Standardwerte zurück
   /// (z. B. nach Account-Löschung – keine Alt-Daten im neuen Account).
   Future<void> resetToDefaults() async {
@@ -575,6 +653,26 @@ void scheduleUiPrefsServerSync(AppSettings settings) {
       try {
           await SupabaseDatabaseService(SupabaseService.client)
               .updateOwnProfile({
+            // DIE ECHTEN SPALTEN (v0.10.0).
+            //
+            // Die Push-Einstellungen standen bisher NUR in ui_prefs.
+            // Die Edge Function notify-user liest aber die fuenf
+            // Einzelspalten (notifications_enabled, notify_matches,
+            // notify_likes, notify_messages, notify_dating_hour) - und
+            // die blieben dauerhaft auf ihrem Default true.
+            //
+            // Folge: die fuenf Schalter in den Einstellungen waren
+            // sichtbar und bedienbar, hatten aber KEINE Wirkung. Wer
+            // Push fuer "Likes" abgeschaltet hat, bekam weiter welche.
+            //
+            // ui_prefs bleibt unberuehrt - dort steht die Spiegelung
+            // fuer den schnellen Zugriff, aber die Serverlogik wertet
+            // die Spalten aus.
+            'notifications_enabled': settings.notificationsEnabled,
+            'notify_matches': settings.notifyMatches,
+            'notify_likes': settings.notifyLikes,
+            'notify_messages': settings.notifyMessages,
+            'notify_dating_hour': settings.notifyDatingHour,
             'ui_prefs': {
               'blindModeEnabled': settings.blindModeEnabled,
               'revealPhotosAfterMatch': settings.revealPhotosAfterMatch,

@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:thestia/models/gender.dart';
@@ -177,6 +177,40 @@ class SupabaseDatabaseService {
   /// `theme_name` aus Migration 071 noch nicht eingespielt), wird die
   /// Kern-Migration-066-Auswahl ohne `theme_name` geladen - die
   /// Präferenz-Wiederherstellung hängt nicht an der neuesten Migration.
+  /// Laedt die Schalter, die in eigenen Spalten liegen (v0.10.0).
+  ///
+  /// BETROFFEN: show_distance (Entfernungsanzeige) und die fuenf
+  /// Push-Spalten. Diese standen bisher nur in `ui_prefs` bzw. wurden
+  /// gar nicht zurueckgelesen - dadurch zeigte der Schalter nach einer
+  /// Neuinstallation "aus", waehrend der Server weiter true hatte.
+  ///
+  /// Liest ausschliesslich die EIGENE Zeile. Mit der verengten
+  /// profiles-Policy (Migration 144) ist das genau die Zeile, die der
+  /// angemeldete Nutzer sehen darf.
+  Future<Map<String, dynamic>?> fetchOwnSwitches() async {
+    final userId = _currentUser?.id;
+    if (userId == null) return null;
+    try {
+      final response = await _client
+          .from('profiles')
+          .select(
+            'show_distance, notifications_enabled, notify_matches, '
+            'notify_likes, notify_messages, notify_dating_hour',
+          )
+          .eq('user_id', userId)
+          .maybeSingle();
+      if (response == null) return null;
+      return Map<String, dynamic>.from(response);
+    } catch (e) {
+      // Spalte fehlt (alter Serverstand) - kein Grund, den ganzen
+      // Vorgang abzubrechen.
+      if (kDebugMode) {
+        debugPrint('[DB] Schalter nicht lesbar: $e');
+      }
+      return null;
+    }
+  }
+
   Future<Map<String, dynamic>?> fetchOwnPreferences() async {
     final userId = _currentUser?.id;
     if (userId == null) return null;
