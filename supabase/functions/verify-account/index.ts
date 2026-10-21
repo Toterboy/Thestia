@@ -43,6 +43,18 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 // Dating-App als belastbar gilt.
 const MINOR_REVIEW_AGE = 21;
 
+/** Base64-dekodiert; liefert null bei ungueltigem Input. */
+function atobSafe(b64: string): Uint8Array | null {
+  try {
+    const raw = atob(b64);
+    const out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  } catch {
+    return null;
+  }
+}
+
 function _pickApiKey(autoDict: string, custom: string): string {
   const single = Deno.env.get(custom) ?? "";
   if (single.length > 0) return single;
@@ -318,13 +330,14 @@ serve(async (req) => {
       }
       // Der Pfad kommt NICHT aus dem Body - er wird serverseitig aus dem
       // JWT-Subject gebaut. Manipulierte Pfade sind damit unmoeglich.
-      const videoPath = `${user.id}/video.mp4`;
+      // v0.10.0 (Migration 151): Das Video liegt verschluesselt.
+      const videoPath = `${user.id}/video.mp4.enc`;
 
       // Existiert das hochgeladene Objekt wirklich?
       const { data: obj } = await supabaseAdmin.storage
         .from("verification-videos")
         .list(user.id, { limit: 10 });
-      if (!obj || !obj.some((o) => o.name === "video.mp4")) {
+      if (!obj || !obj.some((o) => o.name === "video.mp4.enc")) {
         return new Response(
           JSON.stringify({ error: "Video nicht gefunden (Upload fehlt)" }),
           { status: 400, headers: { "Content-Type": "application/json" } },
@@ -333,6 +346,46 @@ serve(async (req) => {
 
       // Optionale KI-Schaetzung (nur Orientierung fuer die manuelle
       // Pruefung, Plausibilitaets-Grenzen werden serverseitig geprüft).
+      // Schluessel des Videos entgegennehmen und ablegen
+      // (v0.10.0, Migration 151).
+      //
+      // Der Chiffrat liegt im Bucket, der Schluessel hier. Die Tabelle hat
+      // bewusst KEINE Policy fuer den Client - er darf den Schluessel
+      // weder sehen noch selbst setzen.
+      const videoKey = typeof body.videoKey === "string" ? body.videoKey : "";
+      const videoIv = typeof body.videoIv === "string" ? body.videoIv : "";
+      if (!videoKey || !videoIv) {
+        return new Response(
+          JSON.stringify({ error: "Video-Schluessel fehlt" }),
+          { status: 400, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      // Format pruefen: Base64 mit 32 Byte Schluessel und 12 Byte IV.
+      const keyBytes = atobSafe(videoKey);
+      const ivBytes = atobSafe(videoIv);
+      if (!keyBytes || keyBytes.length !== 32 || !ivBytes || ivBytes.length !== 12) {
+        return new Response(
+          JSON.stringify({ error: "Video-Schluessel ungueltig" }),
+          { status: 400, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      {
+        const { error: keyError } = await supabaseAdmin
+          .from("verification_video_keys")
+          .upsert({
+            user_id: user.id,
+            key_b64: videoKey,
+            iv_b64: videoIv,
+          });
+        if (keyError) {
+          console.error("Video-Schluessel nicht speicherbar:", keyError);
+          return new Response(
+            JSON.stringify({ error: "Video-Schluessel nicht speicherbar" }),
+            { status: 500, headers: { "Content-Type": "application/json" } },
+          );
+        }
+      }
+
       const rawEstimate = Number(body.estimatedAge);
       const rawFaces = Number(body.faceCount);
       const estimatedAge = Number.isFinite(rawEstimate)
@@ -576,6 +629,16 @@ serve(async (req) => {
         ...(isVerified ? {} : { verification_video_path: null }),
       })
       .eq("user_id", targetUserId);
+
+    // Bei Ablehnung auch den Schluessel loeschen (v0.10.0, Migration
+    // 151). Sonst bleibt der Schluessel liegen, obwohl das Video weg
+    // ist - und der Schluessel waere die wertvollere Haelfte.
+    if (!isVerified) {
+      await supabaseAdmin
+        .from("verification_video_keys")
+        .delete()
+        .eq("user_id", targetUserId);
+    }
 
     if (updateError) {
       console.error("Update error:", updateError);

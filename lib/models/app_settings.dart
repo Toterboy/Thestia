@@ -159,8 +159,15 @@ class AppSettings {
     this.useDarkMode,
     this.onboardingCompleted = true,
     this.maxDistanceKm = AppConstants.defaultDistanceKm,
-    this.ageRangeMin = 16,
-    this.ageRangeMax = 99,
+    // v0.10.0: Die Spanne war 16-99 und damit praktisch "keine
+    // Grenze" - ein 20-Jaehriger bekam 99-Jaehrige vorgeschlagen.
+    //
+    // 18-65 ist die Spanne, die ein Vermittlungsdienst realistisch
+    // bedienen kann: unter 18 ist Transit Spark ohnehin gesperrt, und
+    // ueber 65 ist die Erfolgsquote erfahrungsgemaess sehr niedrig.
+    // Beide Grenzen bleiben frei einstellbar.
+    this.ageRangeMin = 18,
+    this.ageRangeMax = 65,
     this.personalityTestCompleted = false,
     this.oneTimeSettingsCompleted = false,
     this.communityGuidelinesAccepted = false,

@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:geolocator/geolocator.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/services/verification_crypto.dart';
 import 'package:thestia/services/secure_hive.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/services/supabase_storage_service.dart';
@@ -552,13 +553,29 @@ class VerificationService {
       }
       final bytes = await file.readAsBytes();
 
+      // v0.10.0: Das Video wird VOR dem Upload verschluesselt.
+      //
+      // Ohne Verschluesselung liegt das Rohvideo (Gesicht und Stimme)
+      // im Bucket. "Privater Bucket" heisst nicht "verschluesselt" -
+      // wer den Bucket lesen kann, hat die biometrischen Daten. Der
+      // Chiffrat kommt hochgeladen, der Schluessel getrennt in die
+      // Schluesseltabelle, auf die der Client keinen Zugriff hat.
+      final encrypted = VerificationCrypto.encrypt(bytes);
+
       final storage = SupabaseStorageService(SupabaseService.client);
       await storage
-          .uploadVerificationVideo(bytes)
+          .uploadVerificationVideo(encrypted.cipher)
           .timeout(const Duration(seconds: 60));
 
       // 2) Serverseitige Einreichung vermerken (KI-Schätzung optional).
-      final submitBody = <String, dynamic>{'action': 'submit'};
+      final submitBody = <String, dynamic>{
+        'action': 'submit',
+        // Der Schluessel reist getrennt vom Chiffrat: der Chiffrat
+        // liegt im Bucket, der Schluessel in der Tabelle, die nur die
+        // Edge Function liest.
+        'videoKey': encrypted.keyB64,
+        'videoIv': encrypted.ivB64,
+      };
       final est = estimatedAge;
       if (est != null && est.isFinite) submitBody['estimatedAge'] = est;
       final fc = faceCount;

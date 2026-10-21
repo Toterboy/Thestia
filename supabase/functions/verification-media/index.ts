@@ -37,6 +37,18 @@ const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
+/** Base64-dekodiert; liefert null bei ungueltigem Input. */
+function atobSafe(b64: string): Uint8Array | null {
+  try {
+    const raw = atob(b64);
+    const out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  } catch {
+    return null;
+  }
+}
+
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -86,9 +98,96 @@ serve(async (req) => {
       });
     }
 
+    // v0.10.0 (Migration 151): Das Video liegt VERSCHLUESSELT im Bucket.
+    //
+    // Der Chiffrat wird hier entschluesselt und als Klartext-Vorschau
+    // unter einem zweiten Pfad abgelegt. Der Admin bekommt eine
+    // signierte URL DARAUF - so bleibt der Browser-Pfad unveraendert.
+    //
+    // Warum eine Vorschau und nicht direkt der Chiffrat: Der Browser
+    // kann kein Chiffrat abspielen. Die Vorschau ist eine
+    // Klartextdatei im SELBEN privaten Bucket, sie wird aber per Cron
+    // (cleanup-verification-previews) nach kurzer Zeit wieder entfernt.
+    // Der Dauerzustand im Bucket ist damit ausschliesslich Chiffrat.
+    const { data: cipherFile, error: cipherError } = await supabaseAdmin.storage
+      .from("verification-videos")
+      .download(`${targetUserId}/video.mp4.enc`);
+
+    if (cipherError || !cipherFile) {
+      return new Response(JSON.stringify({ error: "Video nicht gefunden" }), {
+        status: 404, headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    // Schluessel holen. Die Tabelle hat keine Policy fuer den Client -
+    // nur service_role (also diese Function) kommt hierher.
+    const { data: keyRow, error: keyError } = await supabaseAdmin
+      .from("verification_video_keys")
+      .select("key_b64, iv_b64")
+      .eq("user_id", targetUserId)
+      .maybeSingle();
+
+    if (keyError || !keyRow) {
+      return new Response(
+        JSON.stringify({ error: "Video-Schluessel fehlt" }),
+        { status: 404, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    const keyBytes = atobSafe(keyRow.key_b64);
+    const ivBytes = atobSafe(keyRow.iv_b64);
+    if (!keyBytes || !ivBytes) {
+      return new Response(
+        JSON.stringify({ error: "Video-Schluessel ungueltig" }),
+        { status: 500, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    // AES-256-GCM entschluesseln. Das Auth-Tag haengt am Ciphertext -
+    // so liefert es der Dart-Client (pointycastle) und so erwartet es
+    // WebCrypto hier. Bei Manipulation schlaegt decrypt fehl.
+    let plain: ArrayBuffer;
+    try {
+      const cryptoKey = await crypto.subtle.importKey(
+        "raw",
+        keyBytes,
+        { name: "AES-GCM" },
+        false,
+        ["decrypt"],
+      );
+      plain = await crypto.subtle.decrypt(
+        { name: "AES-GCM", iv: ivBytes, tagLength: 128 },
+        cryptoKey,
+        await cipherFile.arrayBuffer(),
+      );
+    } catch (e) {
+      console.error("Entschluesselung fehlgeschlagen:", e);
+      return new Response(
+        JSON.stringify({ error: "Video nicht lesbar" }),
+        { status: 500, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    // Vorschau ablegen. Der Pfad endet auf .preview.mp4 und wird vom
+    // Cron nach wenigen Minuten wieder geloescht.
+    const previewPath = `${targetUserId}/preview.mp4`;
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from("verification-videos")
+      .uploadBinary(previewPath, new Uint8Array(plain), {
+        contentType: "video/mp4",
+        upsert: true,
+      });
+    if (uploadError) {
+      console.error("Vorschau nicht ablegbar:", uploadError);
+      return new Response(
+        JSON.stringify({ error: "Video nicht abspielbar" }),
+        { status: 500, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
     const { data: signed, error } = await supabaseAdmin.storage
       .from("verification-videos")
-      .createSignedUrl(`${targetUserId}/video.mp4`, URL_EXPIRES_IN);
+      .createSignedUrl(previewPath, URL_EXPIRES_IN);
 
     if (error || !signed) {
       return new Response(JSON.stringify({ error: "Video nicht gefunden" }), {

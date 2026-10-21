@@ -414,7 +414,10 @@ class SupabaseStorageService {
       throw AppException('Das Video ist leer.');
     }
 
-    final path = '$userId/video.mp4';
+    // v0.10.0: Das Video liegt VERSCHLUESSELT im Bucket. Der Pfad
+    // endet auf .enc, damit ein unverschluesselter Altbestand nicht
+    // versehentlich als vollstaendig gelesen gilt.
+    final path = '$userId/video.mp4.enc';
     if (kDebugMode) {
       log('[SupabaseStorageService] Upload verification video: '
           'size=${data.length}');
@@ -427,7 +430,11 @@ class SupabaseStorageService {
           path,
           Uint8List.fromList(data),
           fileOptions: const FileOptions(
-            contentType: 'video/mp4',
+            // application/octet-stream statt video/mp4: der Inhalt ist
+            // Chiffrat, kein abspielbares Video. Wer ihn als MP4
+            // ausliefert, erhaelt eine Datei, die der Browser nicht
+            // spielen kann - das ist beabsichtigt.
+            contentType: 'application/octet-stream',
             upsert: true,
           ),
         );
