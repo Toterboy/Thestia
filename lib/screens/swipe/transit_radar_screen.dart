@@ -496,195 +496,20 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
     String? customHintKey,
     String initialCustomText = '',
   }) {
-    final selected = <String>{};
-    final colors = <String, String?>{};
-    final customCtrl = TextEditingController(text: initialCustomText);
-    final future = showModalBottomSheet<({List<String> tags, String note})>(
+    // v0.10.0: Die Auswahl ist in einen eigenen Widget gezogen. Sie
+    // braucht Suchfeld, Kategoriefilter und einen Zaehler - das passt
+    // nicht mehr in einen StatefulBuilder-Block.
+    return showModalBottomSheet<({List<String> tags, String note})>(
       context: context,
       isScrollControlled: true,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setSheetState) {
-          final pickedTags = TransitTag.catalog
-              .where((t) => selected.contains(t.slug))
-              .toList();
-          return Padding(
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 20,
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    L10n.t(ctx, titleKey),
-                    style: Theme.of(ctx)
-                        .textTheme
-                        .titleMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    L10n.t(ctx, hintKey),
-                    style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
-                          color:
-                              Theme.of(ctx).colorScheme.onSurfaceVariant,
-                        ),
-                  ),
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final tag in TransitTag.catalog)
-                        FilterChip(
-                          avatar: Icon(tag.icon, size: 18),
-                          label: Text(L10n.t(ctx, tag.labelKey)),
-                          selected: selected.contains(tag.slug),
-                          // NUTZERWUNSCH: mindestens 2, maximal 5 Merkmale.
-                          onSelected: (sel) {
-                            setSheetState(() {
-                              if (sel) {
-                                if (selected.length < 5) {
-                                  selected.add(tag.slug);
-                                  if (tag.colorizable) {
-                                    colors[tag.slug] = null;
-                                  }
-                                }
-                              } else {
-                                selected.remove(tag.slug);
-                                colors.remove(tag.slug);
-                              }
-                            });
-                          },
-                        ),
-                    ],
-                  ),
-                  // Farbschritt: nur fuer gewaehlte farbige Merkmale,
-                  // bewusst OPTIONAL (Farbe vergessen = einfach lassen).
-                  for (final tag in pickedTags)
-                    if (tag.colorizable) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        '${L10n.t(ctx, tag.labelKey)}: '
-                        '${L10n.t(ctx, 'transit.colorOptional')}',
-                        style: Theme.of(ctx).textTheme.labelLarge,
-                      ),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          // NUTZERWUNSCH: Farbkleckse (runde Farbflächen)
-                          // statt Text-Chips - die passende Farbe ist
-                          // direkt erkennbar statt über Bezeichnungen.
-                          for (final color in TransitTag.colors)
-                            Tooltip(
-                              message:
-                                  L10n.t(ctx, TransitTag.colorLabelKey(color)),
-                              child: GestureDetector(
-                                onTap: () {
-                                  setSheetState(() {
-                                    colors[tag.slug] =
-                                        (colors[tag.slug] == color)
-                                            ? null
-                                            : color;
-                                  });
-                                },
-                                child: AnimatedContainer(
-                                  duration: const Duration(
-                                      milliseconds: 150),
-                                  width: 34,
-                                  height: 34,
-                                  decoration: BoxDecoration(
-                                    color: TransitTag.swatchOf(color),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: color == 'white'
-                                          ? Theme.of(ctx)
-                                              .colorScheme
-                                              .outline
-                                          : Colors.transparent,
-                                      width: 1,
-                                    ),
-                                    // Ausgewählt: dunklerer Ring
-                                    // (Klecksskalierung bei Auswahl).
-                                    boxShadow:
-                                        colors[tag.slug] == color
-                                            ? [
-                                                BoxShadow(
-                                                  color: Theme.of(ctx)
-                                                      .colorScheme
-                                                      .primary
-                                                      .withValues(
-                                                          alpha: 0.9),
-                                                  blurRadius: 0,
-                                                  spreadRadius: 3,
-                                                ),
-                                              ]
-                                            : null,
-                                  ),
-                                  child: colors[tag.slug] == color
-                                      ? const Icon(Icons.check,
-                                          size: 16,
-                                          color: Colors.white)
-                                      : null,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  // Eigenes Textfeld zur Ergänzung (v0.9.1, optional).
-                  if (customHintKey != null) ...[
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: customCtrl,
-                      maxLength: 140,
-                      maxLines: 2,
-                      decoration: InputDecoration(
-                        hintText: L10n.t(ctx, customHintKey),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        counterText: '',
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 20),
-                  // NUTZERWUNSCH: mindestens 2 Merkmale Pflicht (max. 5).
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: (requireSelection && selected.length < 2)
-                          ? null
-                          : () {
-                              final out = <String>[];
-                              for (final slug in selected) {
-                                final c = colors[slug];
-                                out.add(
-                                    (c != null && c.isNotEmpty) ? '$slug:$c' : slug);
-                              }
-                              Navigator.of(ctx).pop((
-                                tags: out,
-                                note: customCtrl.text.trim(),
-                              ));
-                            },
-                      child: Text(L10n.t(ctx, 'transit.sheetSend')),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
+      builder: (ctx) => _TransitTagPickerSheet(
+        titleKey: titleKey,
+        hintKey: hintKey,
+        requireSelection: requireSelection,
+        customHintKey: customHintKey,
+        initialCustomText: initialCustomText,
       ),
     );
-    future.whenComplete(customCtrl.dispose);
-    return future;
   }
 
   /// Radar läuft: Beim Verlassen der Seite nachfragen, ob es gestoppt
@@ -1618,4 +1443,377 @@ Future<bool> confirmTransitExit(
     await onStopped?.call();
   }
   return true; // 'keep' oder 'stop': Seite verlassen.
+}
+
+// ===========================================================================
+// Merkmalsauswahl mit Kategorien und Suche (v0.10.0)
+// ===========================================================================
+//
+// BISHER: eine flache Liste von 15 Chips, ohne Suche und ohne
+// Kategorien. "T-Shirt", "Hoodie" und "Oberteil" standen gleichrangig
+// nebeneinander, ohne erkennbar zu sein, dass drei davon Oberteile sind.
+// Wer "Hemd" suchte, musste alles durchsehen.
+//
+// JETZT:
+//   * Suche ueber Slug, Schreibweise und Uebersetzung
+//   * Filter je Kategorie
+//   * Anzeige gruppiert nach Kategorie
+//   * hoechstens EIN Wert je Kategorie - "Hemd" und "Bluse" gleichzeitig
+//     waere keine Angabe, sondern Unsinn. Die Server-Regel (Migration
+//     149) sagt dasselbe, sonst lehnt die RPC ab.
+//   * eigene Farbpaletten fuer Haar und Augen
+class _TransitTagPickerSheet extends StatefulWidget {
+  const _TransitTagPickerSheet({
+    required this.titleKey,
+    required this.hintKey,
+    required this.requireSelection,
+    this.customHintKey,
+    this.initialCustomText = '',
+  });
+
+  final String titleKey;
+  final String hintKey;
+  final bool requireSelection;
+  final String? customHintKey;
+  final String initialCustomText;
+
+  @override
+  State<_TransitTagPickerSheet> createState() => _TransitTagPickerSheetState();
+}
+
+class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
+  /// Grenzen (v0.10.0). Gespiegelt in Migration 149 - der Server
+  /// lehnt mit "Bitte 2-8 Merkmale waehlen" ab, wenn der Client mehr
+  /// oder weniger schickt.
+  static const int minMerkmale = 2;
+  static const int maxMerkmale = 8;
+
+  final Set<String> _selected = <String>{};
+  final Map<String, String?> _colors = <String, String?>{};
+  final TextEditingController _searchCtrl = TextEditingController();
+  final TextEditingController _customCtrl =
+      TextEditingController(text: '');
+  String _query = '';
+  String _kategorie = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _customCtrl.text = widget.initialCustomText;
+  }
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    _customCtrl.dispose();
+    super.dispose();
+  }
+
+  /// Merkmale, die der Suche und dem Kategoriefilter entsprechen.
+  ///
+  /// Gesucht wird im Slug, in den Schreibweisen UND in der Uebersetzung.
+  /// Die Uebersetzung braucht den Kontext, deshalb kann sie nicht im
+  /// Modell passieren.
+  List<TransitTag> _gefiltert() {
+    final q = _query.trim().toLowerCase();
+    final ohneSuche = TransitTag.catalog.where((t) {
+      if (_kategorie.isNotEmpty && t.category != _kategorie) return false;
+      if (q.isEmpty) return true;
+      if (t.slug.toLowerCase().contains(q)) return true;
+      for (final a in t.searchAliases) {
+        if (a.toLowerCase().contains(q)) return true;
+      }
+      final label = L10n.t(context, t.labelKey).toLowerCase();
+      return label.contains(q);
+    }).toList();
+    return ohneSuche;
+  }
+
+  void _waehlen(TransitTag tag, bool gewaehlt) {
+    setState(() {
+      if (gewaehlt) {
+        // Maximal EIN Wert je Kategorie: ein neuer Wert in einer
+        // belegten Kategorie ersetzt den bisherigen.
+        _selected.removeWhere((s) {
+          final t = TransitTag.bySlug(s);
+          return t != null && t.category == tag.category;
+        });
+        _colors.removeWhere((slug, _) {
+          final t = TransitTag.bySlug(slug);
+          return t != null && t.category == tag.category;
+        });
+        if (_selected.length < maxMerkmale) {
+          _selected.add(tag.slug);
+          if (tag.colorizable) _colors[tag.slug] = null;
+        }
+      } else {
+        _selected.remove(tag.slug);
+        _colors.remove(tag.slug);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theming = Theme.of(context);
+    final treffer = _gefiltert();
+    final kategorien = TransitTagCategory.values
+        .where((k) => TransitTag.byCategory(k.slug).isNotEmpty)
+        .toList();
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              L10n.t(context, widget.titleKey),
+              style: theming.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              L10n.t(context, widget.hintKey),
+              style: theming.textTheme.bodySmall?.copyWith(
+                color: theming.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+            // ---- Suche
+            TextField(
+              controller: _searchCtrl,
+              onChanged: (v) => setState(() => _query = v),
+              decoration: InputDecoration(
+                hintText: L10n.t(context, 'transit.searchHint'),
+                prefixIcon: const Icon(Icons.search, size: 20),
+                isDense: true,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            // ---- Kategoriefilter
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: FilterChip(
+                      label: Text(L10n.t(context, 'transit.categoryAll')),
+                      selected: _kategorie.isEmpty,
+                      onSelected: (_) => setState(() => _kategorie = ''),
+                    ),
+                  ),
+                  for (final k in kategorien)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: FilterChip(
+                        avatar: Icon(k.icon, size: 16),
+                        label: Text(L10n.t(context, k.labelKey)),
+                        selected: _kategorie == k.slug,
+                        onSelected: (_) => setState(
+                          () => _kategorie =
+                              _kategorie == k.slug ? '' : k.slug,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            // ---- Zaehler
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    L10n.tf(
+                      context,
+                      'transit.selectedCount',
+                      {'count': '${_selected.length}'},
+                    ),
+                    style: theming.textTheme.bodySmall,
+                  ),
+                ),
+                if (_selected.isNotEmpty)
+                  Text(
+                    L10n.t(context, 'transit.limitHint'),
+                    style: theming.textTheme.bodySmall?.copyWith(
+                      color: theming.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            if (treffer.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: Text(
+                    L10n.tf(
+                      context,
+                      'transit.searchEmpty',
+                      {'query': _query},
+                    ),
+                    style: theming.textTheme.bodyMedium?.copyWith(
+                      color: theming.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              )
+            else
+              // ---- Merkmale, gruppiert nach Kategorie
+              for (final kategorie in kategorien) ...[
+                if (treffer.any((t) => t.category == kategorie.slug)) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(
+                        kategorie.icon,
+                        size: 16,
+                        color: theming.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        L10n.t(context, kategorie.labelKey),
+                        style: theming.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theming.colorScheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final tag in treffer.where(
+                        (t) => t.category == kategorie.slug,
+                      ))
+                        FilterChip(
+                          avatar: Icon(tag.icon, size: 18),
+                          label: Text(L10n.t(context, tag.labelKey)),
+                          selected: _selected.contains(tag.slug),
+                          onSelected: (sel) => _waehlen(tag, sel),
+                        ),
+                    ],
+                  ),
+                ],
+              ],
+            // ---- Farbschritt: nur fuer gewaehlte farbige Merkmale
+            for (final tag in _selected
+                .map(TransitTag.bySlug)
+                .whereType<TransitTag>()
+                .where((t) => t.colorizable))
+              ...[
+                const SizedBox(height: 12),
+                Text(
+                  '${L10n.t(context, tag.labelKey)}: '
+                  '${L10n.t(context, 'transit.colorOptional')}',
+                  style: theming.textTheme.labelLarge,
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final color in tag.availableColors)
+                      Tooltip(
+                        message: L10n.t(
+                          context,
+                          TransitTag.colorLabelKey(color),
+                        ),
+                        child: GestureDetector(
+                          onTap: () => setState(() {
+                            _colors[tag.slug] = _colors[tag.slug] == color
+                                ? null
+                                : color;
+                          }),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            width: 34,
+                            height: 34,
+                            decoration: BoxDecoration(
+                              color: TransitTag.swatchOf(color),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: color == 'white'
+                                    ? theming.colorScheme.outline
+                                    : Colors.transparent,
+                                width: 1,
+                              ),
+                              boxShadow: _colors[tag.slug] == color
+                                  ? [
+                                      BoxShadow(
+                                        color: theming.colorScheme.primary
+                                            .withValues(alpha: 0.9),
+                                        blurRadius: 0,
+                                        spreadRadius: 3,
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                            child: _colors[tag.slug] == color
+                                ? const Icon(Icons.check,
+                                    size: 16, color: Colors.white)
+                                : null,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            // ---- Eigenes Textfeld zur Ergaenzung (optional)
+            if (widget.customHintKey != null) ...[
+              const SizedBox(height: 16),
+              TextField(
+                controller: _customCtrl,
+                maxLength: 140,
+                maxLines: 2,
+                decoration: InputDecoration(
+                  hintText: L10n.t(context, widget.customHintKey!),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  counterText: '',
+                ),
+              ),
+            ],
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: (widget.requireSelection &&
+                        _selected.length < minMerkmale)
+                    ? null
+                    : () {
+                        final out = <String>[];
+                        for (final slug in _selected) {
+                          final c = _colors[slug];
+                          out.add((c != null && c.isNotEmpty)
+                              ? '$slug:$c'
+                              : slug);
+                        }
+                        Navigator.of(context).pop((
+                          tags: out,
+                          note: _customCtrl.text.trim(),
+                        ));
+                      },
+                child: Text(L10n.t(context, 'transit.sheetSend')),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
