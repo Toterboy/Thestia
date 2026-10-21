@@ -616,13 +616,26 @@ serve(async (req) => {
         );
       }
 
+      // verified_age mitschreiben (v0.10.0, Migration 155).
+      //
+      // Das ist das Alter, das im Jugendschutz-Filter zaehlt. Ohne
+      // dieses Feld wuerde weiterhin das DEKLARIERTE birth_date
+      // entscheiden - und damit waere die Verifizierung fuer den
+      // Jugendschutz irrelevant (Nutzer-Einwand vom 21.10.2026).
+      //
+      // Gesetzt wird die KI-Schaetzung, nicht die Angabe des Nutzers:
+      // die Schätzung wurde gerade gegen die Angabe geprueft (max. 2
+      // Jahre Abweichung) und war fuer eine Minderjaehrigkeits-
+      // Abweichung vorgesehen. Die KI-Schaetzung ist die
+      // unabhaengigere Groesse.
       const { error: updateError } = await supabaseAdmin
         .from("profiles")
         .update({
-          verification_video_path: `${user.id}/video.mp4`,
+          verification_video_path: `${user.id}/video.mp4.enc`,
           verification_estimated_age: estimatedAge,
           verification_status: "auto",
           is_verified: true,
+          verified_age: estimatedAge,
         })
         .eq("user_id", user.id);
 
@@ -656,6 +669,26 @@ serve(async (req) => {
       );
     }
 
+    // Bei einer Freigabe das verifizierte Alter mitschreiben
+    // (v0.10.0, Migration 155). Massgeblich ist die KI-Schaetzung,
+    // wenn sie vorliegt - der Admin hat das Video gesehen, die
+    // Schaetzung stuetzt sein Urteil. Ohne Schaetzung (etwa bei
+    // manueller Freigabe eines alten Falls) bleibt es beim
+    // deklarierten Alter.
+    let verifiedAge: number | null = null;
+    if (isVerified) {
+      const { data: alt } = await supabaseAdmin
+        .from("profiles")
+        .select("verification_estimated_age")
+        .eq("user_id", targetUserId)
+        .maybeSingle();
+      const est = (alt as { verification_estimated_age?: number } | null)
+        ?.verification_estimated_age;
+      verifiedAge = typeof est === "number" && est >= 16 && est <= 100
+        ? Math.round(est)
+        : null;
+    }
+
     const { error: updateError } = await supabaseAdmin
       .from("profiles")
       .update({
@@ -663,6 +696,9 @@ serve(async (req) => {
         verification_status: isVerified ? "approved" : "rejected",
         // Bei Ablehnung Pfad entfernen (Video wird unten geloescht).
         ...(isVerified ? {} : { verification_video_path: null }),
+        // Bei Ablehnung das verifizierte Alter wieder loeschen - ein
+        // abgelehntes Konto darf kein verifiziertes Alter behalten.
+        ...(isVerified ? { verified_age: verifiedAge } : { verified_age: null }),
       })
       .eq("user_id", targetUserId);
 

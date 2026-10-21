@@ -235,6 +235,7 @@ Details: [SUPPORT.md](SUPPORT.md).
 - **Serverzeit** als Single Source of Truth für die Dating Hour (Anti-Cheat gegen Manipulation der Geräteuhr); Warn-Banner im Event-Screen bei unverifizierter Serverzeit
 - **Altersschutz-System (v0.10.0, Migration 154):**
   - **BEIDSEITIG** gefiltert: 16- und 17-Jaehrige sehen ausschliesslich Gleichaltrige, nie einen Erwachsenen - und umgekehrt. Ein 18-Jaehriger sieht keinen Minderjaehrigen, ein 30-Jaehriger ebenfalls nicht. Vorher war die Pruefung einseitig, ein 18-Jaehriger sah 16- und 17-Jaehrige, diese sahen ihn nie
+  - **Das verifizierte Alter ist massgeblich** (v0.10.0, Migration 155): Der Filter rechnet mit dem Alter, das per Video bestaetigt wurde, nicht mit der Angabe im Profil. Konten ohne Verifizierung erscheinen in keiner Begegnungsliste - die Altersangabe wirkt erst nach der Verifizierung. Ohne das liesse sich jede Altersangabe ungeprueft durchsetzen
   - Die Altersspanne ist nach unten auf **10 Jahre unter dem eigenen Alter** begrenzt (und nie unter 18, sobald der Nutzer volljuehrig ist). Nach oben bleibt sie frei bis 99. Die App bietet keine Werte an, die der Server nicht liefert
   - Serverseitig erzwungen (`age_compatible_bidirectional`, `max_age_range_min`) - die App ist nur die Anzeige, nicht die Entscheidung. Vier unabhaengige Server-Schichten: View, `profile_discovery_visible_full`, `profile_discovery_visible`, `age_compatible_bidirectional`
   - Profilfotos von 16-17-Jaehrigen nur für Gleichaltrige sichtbar
