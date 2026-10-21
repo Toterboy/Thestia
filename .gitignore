@@ -175,3 +175,10 @@ passkey-assets/.netlify/
 # Repo. `*.log` deckt die .bat-Ausgabe nicht, weil sie .txt schreibt.
 tools/*.txt
 android-log*.txt
+
+# Interne Betriebs- und Arbeitsdokumentation. Die Dokumente bleiben
+# lokal im Arbeitsverzeichnis, werden aber nicht mit veroeffentlicht.
+# Ausnahme: das Gefaehrdungsmodell liegt in passkey-assets/ und wird
+# bewusst veroeffentlicht - die oeffentliche Datenschutzerklaerung
+# verweist darauf.
+docs/
