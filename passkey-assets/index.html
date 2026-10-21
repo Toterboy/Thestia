@@ -3,7 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; frame-src https://challenges.cloudflare.com; connect-src https://challenges.cloudflare.com; img-src 'self' data:">
+  <!--
+    CSP fuer Turnstile (v0.10.0, korrigiert).
+
+    Die alte Fassung erlaubte NUR script-src, style-src, frame-src und
+    connect-src fuer challenges.cloudflare.com. Damit fehlten drei
+    Dinge, die Turnstile zum Arbeiten braucht:
+
+      * worker-src: faellt auf default-src 'self' zurueck, und damit
+        ist der Blob-Worker der Turnstile-Engine blockiert. api.js
+        scheitert bei der Initialisierung, WINDOW.TURNSTILE wird nie
+        gesetzt - die Seite meldet dann genau das:
+        "typeof turnstile === 'undefined'" (ERROR:SCRIPT_NOT_LOADED).
+      * img-src ohne Cloudflare: die Icons und Hintergrundbilder des
+        Widgets werden nicht geladen.
+      * connect-src ohne 'self': eigene Requests der Seite an ihre
+        eigene Herkunft sind blockiert.
+
+    Das ist die wahrscheinlichste Ursache dafuer, dass thestia.de die
+    Registrierung verweigert hat: der Captcha-Block bleibt leer.
+  -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; child-src https://challenges.cloudflare.com; connect-src 'self' https://challenges.cloudflare.com; img-src 'self' data: https://challenges.cloudflare.com; font-src 'self' https://challenges.cloudflare.com; worker-src 'self' blob:">
   <title>Sicherheitscheck – Thestia</title>
   <!-- Kein async: zusammen mit DOMContentLoaded-Race führe das sonst zu
        "typeof turnstile === 'undefined'" (ERROR:SCRIPT_NOT_LOADED), weil
@@ -29,6 +49,19 @@
   <!-- Nur sichtbar bei Browser-/Debug-Tests ohne WebView-Channel. -->
   <div id="debug-output" style="display:none; margin-top:16px; color:#4ade80; font-family:monospace;"></div>
 
+  <!--
+    Sichtbarer Hinweis, wenn der Captcha-Block nicht startet. Ohne das
+    sieht der Nutzer nur eine schwarze Flaeche und weiss nicht, was
+    los ist. Der Text erscheint nur im Fehlerfall.
+  -->
+  <div id="captcha-error"
+       style="display:none; margin-top:16px; max-width:320px; color:#f87171;
+              font-family:system-ui,sans-serif; font-size:14px; text-align:center;">
+    Der Sicherheitscheck konnte nicht geladen werden. Bitte Internetverbindung
+    pr&uum;fen und die Seite neu laden. Falls ein Werbeblocker aktiv ist,
+    muss er f&uum;r <code>challenges.cloudflare.com</code> erlaubt sein.
+  </div>
+
   <script>
     // Zustellung an die App: webview_flutter (Captcha.postMessage) ODER
     // flutter_inappwebview (callHandler). Ohne Channel (Browser-Test) wird
@@ -51,6 +84,12 @@
       if (out) {
         out.style.display = 'block';
         out.textContent = message;
+      }
+      // Sichtbarer Hinweis im Fehlerfall (SCRIPT_NOT_LOADED /
+      // CAPTCHA_ERROR). Ohne ihn bleibt nur eine schwarze Flaeche.
+      if (message && message.indexOf('ERROR:') === 0) {
+        var err = document.getElementById('captcha-error');
+        if (err) err.style.display = 'block';
       }
     }
 
@@ -82,7 +121,10 @@
             'error-callback': onError,
             'expired-callback': onExpired
           });
-        } else if (attempts < 20) {
+        } else if (attempts < 48) {
+          // 12 s statt 5 s: auf mobilen Verbindungen war die alte
+          // Frist zu knapp - der Fehler kam, obwohl das Script noch
+          // kam.
           attempts++;
           setTimeout(tryRender, 250);
         } else {

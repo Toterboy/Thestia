@@ -6,6 +6,7 @@
 // - 19+: kann 17+ sehen.
 // - 20+: kann 18+ sehen.
 
+import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 
 /// Repräsentiert die Altersgruppe eines Nutzers für Schutz-Regeln.
@@ -80,21 +81,39 @@ class AgeSafetyRules {
 
   /// Gibt die maximal erlaubte obere Altersgrenze für den Filter-Slider zurück.
   ///
-  /// - 16-17: maximal 19 Jahre
-  /// - 18: maximal 99 Jahre
-  /// - 19: maximal 99 Jahre
-  /// - 20+: maximal 99 Jahre
+  /// - 16-17: maximal 17 Jahre. Der Server liefert fuer Minderjaehrige
+  ///   ausschliesslich 16 und 17 (age_compatible_bidirectional), ein
+  ///   Wert darueber waere ein toter Filter.
+  /// - 18+: maximal 99 Jahre. Die Obergrenze bleibt bewusst offen - wer
+  ///   aeltere Menschen sehen will, soll das koennen.
   static int maxFilterAge(int viewerAge) {
     final group = ageGroup(viewerAge);
-    if (group == AgeGroup.minor) return 19;
+    if (group == AgeGroup.minor) return 17;
     return 99;
   }
 
   /// Gibt die minimal erlaubte untere Altersgrenze für den Filter-Slider zurück.
   ///
-  /// - Alle Nutzer: 16 Jahre (Mindestalter der App)
+  /// - 16-17: 16 Jahre (untereinander ja)
+  /// - 18: 16 Jahre (der Server erlaubt einem 18-Jaehrigen, 16-Jaehrige
+  ///   zu sehen - allerdings nicht umgekehrt, siehe [canViewProfile])
+  /// - 19: 17 Jahre
+  /// - 20+: hoechstens 10 Jahre unter dem eigenen Alter, aber nie
+  ///   unter 18. Der Server erzwingt dasselbe (max_age_range_min,
+  ///   Migration 154) - ohne diese Grenze war der Filter tot, ohne
+  ///   dass die UI das erklaert haette.
+  ///
+  /// WICHTIG: Der Server filtert BEIDSEITIG (Migration 154). Ein
+  /// 18-Jaehriger sieht also in der Praxis KEINE 16- und 17-Jaehrigen,
+  /// auch wenn der Regler es erlauben wuerde. Die Grenze hier ist so
+  /// gewaehlt, dass die App keine Werte anbietet, die der Server nicht
+  /// liefert - sonst stellt der Nutzer einen Filter ein und wundert
+  /// sich ueber leere Ergebnisse.
   static int minFilterAge(int viewerAge) {
-    return 16;
+    if (viewerAge < 18) return 16;
+    if (viewerAge == 18) return 16;
+    if (viewerAge == 19) return 17;
+    return math.max(18, viewerAge - 10);
   }
 
   /// Prüft, ob der Nutzer die "Persönlichkeit vor Aussehen" (Blind Mode) Einstellung

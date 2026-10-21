@@ -27,7 +27,7 @@ class PrivacyBlock {
 /// Reihenfolge von docs/DATENSCHUTZ.md.
 const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
   PrivacyBlock('h1', 'Datenschutzerklärung für Thestia'),
-  PrivacyBlock('p', '**Stand: Oktober 2026** · Version 8 (v0.10.0)'),
+  PrivacyBlock('p', '**Stand: Oktober 2026** · Version 9 (v0.10.0)'),
   PrivacyBlock('p', 'Thestia ist ein datenschutzorientiertes Open-Source-Projekt (AGPLv3). Der Schutz deiner persönlichen Sphäre steht an erster Stelle: Es werden keine Werbetracker eingesetzt, keine Verhaltensprofile erstellt und keine Nutzerdaten an Dritte verkauft.'),
   PrivacyBlock('p', '---'),
   PrivacyBlock('h2', '1. Grundsatz und Verantwortliche Stelle'),
@@ -117,6 +117,7 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
   PrivacyBlock('li', '**Im Gerät**, fail-closed: fehlt das Geburtsdatum, gilt die Person nicht als nachgewiesen volljährig und wird gesperrt - nicht etwa freigelassen.'),
   PrivacyBlock('li', '**In der Datenbank**, für den Radar, das Matching und die Kontaktaufnahme (`transit_spark_adult()`, Migration 131). Geprüft wird dort zusätzlich die gefundene Person, weil die übliche Altersband-Regel sonst auch 16-Jährige zuließe. Alte RPC-Signaturen wurden entfernt, weil sie die Sperre umgangen hätten.'),
   PrivacyBlock('p', 'Voraussetzung für die Freigabe ist die Altersverifikation aus Abschnitt 2: Sie nutzt Kamera **und** Mikrofon und fragt beide erst nach einem erklärenden Dialog an, der verrät, wofür sie gebraucht werden.'),
+  PrivacyBlock('p', '**Beidseitige Sichtbarkeit (v0.10.0):** Wer 16 oder 17 Jahre alt ist, sieht ausschließlich Personen, die ebenfalls 16 oder 17 Jahre alt sind – niemals einen Erwachsenen. Und ein Erwachsener sieht niemals eine Person unter 18. Das gilt in beide Richtungen, nicht nur in einer: der Filter beruht auf einem Vergleich beider Altersangaben. Die Altersspanne im Profil ist nach unten auf 10 Jahre unter dem eigenen Alter begrenzt (und nie unter 18, sobald du volljährig bist) - wer eine grössere Altersdifferenz wählt, bekommt sie serverseitig nicht geliefert.'),
   PrivacyBlock('h2', '10. Angriffsbild und Risikoabschätzung'),
   PrivacyBlock('p', 'Die technische Bewertung der Verarbeitung ist öffentlich: das Angriffsbild findest du unter <https://auth.thestia.de/threat-model.md>. Die Risiken nach Art. 35 DSGVO nach Art. 35 DSGVO (Datenschutz-Folgenabschätzung) liegen als Entwurf vor und sind noch nicht rechtlich geprüft; wir stellen sie auf Anfrage zur Verfügung. Dort sind auch die Punkte benannt, die Thestia bewusst **nicht** zusichert: Funk-Metadaten sind technisch beobachtbar, und Ende-zu-Ende- Verschlüsselung schützt Inhalte, nicht Kommunikationsmuster.'),
   PrivacyBlock('h2', '11. Änderungen dieser Erklärung'),
@@ -124,6 +125,7 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
   PrivacyBlock('p', '---'),
   PrivacyBlock('h3', 'Historie'),
   PrivacyBlock('table_head', '', cells: <String>['Version', 'Datum', 'Änderung']),
+  PrivacyBlock('table', '', cells: <String>['9', '2026-10', '**Jugendschutz verschaerft:** Die Sichtbarkeit ist jetzt beidseitig gefiltert - 16- und 17-Jährige sehen nur Gleichaltrige, nie einen Erwachsenen, und ein Erwachsener sie nie. Die Altersspanne ist nach unten auf 10 Jahre unter dem eigenen Alter begrenzt. Minderjährige werden bei der Video-Verifizierung immer von Hand geprüft']),
   PrivacyBlock('table', '', cells: <String>['8', '2026-10', '**Video verschlüsselt:** Das Verifikations-Video wird auf dem Gerät mit AES-256-GCM verschlüsselt; im Speicher liegt nur der Chiffrat. Der Schlüssel liegt in einer Tabelle ohne Client-Zugriff. Die früheren Angaben „verschlüsselt nur auf dem Gerät“ und „7 Tage“ waren falsch']),
   PrivacyBlock('table', '', cells: <String>['7', '2026-10', '**v0.10.0 – Aussehen-Merkmale:** Die Merkmale in Transit Spark sind jetzt in Kategorien gegliedert (Oberteil, Unterteil, Kopf, Schuhe, Accessoires, Haar, Augen) mit je einem Wert pro Kategorie, einer Suche und eigenen Farbpaletten für Haar- und Augenfarbe. Die Merkmale liegen im Klartext in `transit_signals` – anders als Chat-Inhalte, die als Chiffrat transportiert werden – und werden nach 24 Stunden gelöscht. Merkmale, die du an einer anderen Person bemerkt hast, werden nur für das Matching verwendet, nicht angezeigt und nicht an Dritte weitergegeben']),
   PrivacyBlock('table', '', cells: <String>['6', '2026-10', '**v0.10.0 – Standort neu:** Der Ort (Stadt) wird nicht mehr erhoben, gespeichert oder angezeigt; sichtbar ist nur das Bundesland. Koordinaten liegen vor dem Speichern auf einem 5-km-Raster in einer nur für den Eigentümer lesbaren Tabelle. Die Entfernungsanzeige ist aus und muss eingeschaltet werden; eingeschaltet zeigt sie Stufen von 10 km, unter 5 km gar nichts. Die Spalten `city`, `location_lat` und `location_lng` wurden aus `profiles` entfernt. Löschung nach 30 Tagen bleibt bestehen']),

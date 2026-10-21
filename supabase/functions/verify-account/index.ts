@@ -537,6 +537,42 @@ serve(async (req) => {
           { status: 422, headers: { "Content-Type": "application/json" } },
         );
       }
+      // MINDERJAEHRIGKEITS-PRUEFUNG (v0.10.0, Security-Audit).
+      //
+      // Der submit-Pfad setzt den Status 'pending_minor'; der auto-Pfad
+      // pruefte das Alter bis jetzt NICHT. Wer direkt action:"auto"
+      // aufrief, bekam is_verified=true ohne jede Alterspruefung - die
+      // Konstante MINOR_REVIEW_AGE war im Kommentar beschrieben, im
+      // Code aber nur an einer Stelle verwendet.
+      //
+      // ZWEI Pruefungen, weil man sich als aelter ausgeben kann:
+      //
+      // 1) Das ANGEGEBENE Alter (aus dem Geburtsdatum) ist juenger als
+      //    21 -> nie automatisch freigeben, immer von Hand pruefen.
+      //
+      // 2) Die KI-Schaetzung deutet auf juenger als 22 hin, obwohl
+      //    das angegebene Alter erlaubt, dass es passt. Das ist genau
+      //    die Konstellation eines Luegners: er gibt 30 an, sieht aber
+      //    20 aus. In dem Fall ist die Abweichung zwar kleiner als zwei
+      //    Jahre, die Sache selbst ist aber ein Fall fuer die Hand.
+      const deklariertJuenger = statedAge !== null &&
+        statedAge <= MINOR_REVIEW_AGE;
+      const geschaetztJuenger = estimatedAge < MINOR_REVIEW_AGE + 1;
+
+      if (deklariertJuenger || geschaetztJuenger) {
+        await supabaseAdmin
+          .from("profiles")
+          .update({ verification_status: "pending_minor" })
+          .eq("user_id", user.id);
+        return new Response(
+          JSON.stringify({
+            error: "Manuelle Pruefung erforderlich",
+            reason: deklariertJuenger ? "minor_declared" : "minor_estimated",
+          }),
+          { status: 422, headers: { "Content-Type": "application/json" } },
+        );
+      }
+
       if (faceCount !== 1 || Math.abs(estimatedAge - statedAge) > 2) {
         return new Response(
           JSON.stringify({ error: "Manuelle Pruefung erforderlich" }),

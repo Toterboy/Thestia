@@ -212,8 +212,11 @@ class AppSettings {
       onboardingCompleted: json['onboardingCompleted'] as bool? ?? true,
       maxDistanceKm:
           json['maxDistanceKm'] as int? ?? AppConstants.defaultDistanceKm,
-      ageRangeMin: json['ageRangeMin'] as int? ?? 16,
-      ageRangeMax: json['ageRangeMax'] as int? ?? 99,
+      // v0.10.0: 18-65 wie im Konstruktor. Vorher stand hier 16-99 -
+      // der ausJson-Pfad hat damit die Server-Vorgabe wieder
+      // ueberschrieben, sobald der lokale Stand fehlte.
+      ageRangeMin: json['ageRangeMin'] as int? ?? 18,
+      ageRangeMax: json['ageRangeMax'] as int? ?? 65,
       personalityTestCompleted:
           json['personalityTestCompleted'] as bool? ?? false,
       oneTimeSettingsCompleted:

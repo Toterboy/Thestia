@@ -5,6 +5,11 @@
 > installieren**, die alte App aktualisiert sich nicht von selbst. Konto
 > und Daten bleiben erhalten (Login genügt), nur Passkeys müssen einmal
 > neu registriert werden. Details: [Release Notes v0.9.1](releases/v0.9.1/RELEASE_NOTES.md).
+>
+> **Aktuelle Version: v0.10.0** (Build 31). Die Download-Version
+> v0.10.0 ist **noch nicht veroeffentlicht** - sie geht in den Store,
+> sobald die offenen Punkte geschlossen sind. Bis dahin gilt v0.9.2 als
+> die unterstuetzte Fassung.
 
 ![CI](https://github.com/Toterboy/Thestia/actions/workflows/ci.yml/badge.svg)
 [![Lizenz: AGPL v3](https://img.shields.io/badge/Lizenz-AGPL_v3-blue.svg)](LICENSE)
@@ -76,15 +81,22 @@ Thestia ist für Android konzipiert (iOS/Web/Desktop folgen) und basiert auf Flu
 
 | Variante | Datei | Push |
 | --- | --- | --- |
-| Standard (empfohlen) | `Thestia-v0.9.1-play.apk` | Firebase/FCM |
-| Google-frei (F-Droid-Stil) | `Thestia-v0.9.1-fdroid.apk` | optional via UnifiedPush |
+| Standard (empfohlen) | `Thestia-v0.9.2-play.apk` | Firebase/FCM |
+| Google-frei (F-Droid-Stil) | `Thestia-v0.9.2-fdroid.apk` | optional via UnifiedPush |
 
-Beide finden sich unter [Releases](https://github.com/Toterboy/Thestia/releases) (Build-Artefakte liegen lokal unter `releases/v0.9.1/`). Hinweis: Beide Varianten nutzen dieselbe App-ID und können nicht parallel installiert werden. Ältere Dateien (`WispDating-v0.9.0-*.apk` unter `releases/v0.9.0/`) gehören zur Vorgänger-Version – bitte **Thestia neu installieren** (kein Update-Pfad, neue App-ID).
+Beide finden sich unter [Releases](https://github.com/Toterboy/Thestia/releases) (Build-Artefakte liegen lokal unter `releases/v0.9.2/`). Hinweis: Beide Varianten nutzen dieselbe App-ID und können nicht parallel installiert werden. Ältere Dateien (`WispDating-v0.9.0-*.apk` unter `releases/v0.9.0/`) gehören zur Vorgänger-Version – bitte **Thestia neu installieren** (kein Update-Pfad, neue App-ID).
+
+**v0.10.0 (Build 31) ist in Vorbereitung** und liegt unter
+`releases/v0.10.0/`. Die veroeffentlichte Fassung ist weiterhin
+**v0.9.2** - v0.10.0 geht in den Store, sobald die offenen Punkte
+geschlossen sind.
 
 ## Unterstützte Versionen
 
 | Version | Status |
 | --- | --- |
+| unter v0.9.2 (Build < 30, inkl. aller WispDating-Builds) | **End of Support** - keine Fixes mehr, bitte Thestia neu installieren |
+| v0.9.2 (Build 30) | **Unterstuetzt**, bis v0.10.0 veroeffentlicht ist - Bug-Reports willkommen, Security-Fixes |
 | v0.9.2 und höher (Build 30+) | **Unterstützt** – Bug-Reports willkommen, Security-Fixes |
 | unter v0.9.2 (Build < 30, inkl. aller WispDating-Builds) | **End of Support** – keine Fixes mehr, bitte Thestia neu installieren |
 
@@ -221,12 +233,13 @@ Details: [SUPPORT.md](SUPPORT.md).
 - **Verschlüsseltes Key-Backup**: die Signal-Identität wird passwortbasiert gesichert (PBKDF2 + AES-256-GCM, frische IVs) – der Server sieht das Backup nie unverschlüsselt
 - **Pseudonymisierung**: Reporter-IDs werden gehasht (SHA-256), kein PII in lokalen Hive-Keys
 - **Serverzeit** als Single Source of Truth für die Dating Hour (Anti-Cheat gegen Manipulation der Geräteuhr); Warn-Banner im Event-Screen bei unverifizierter Serverzeit
-- **Altersschutz-System:**
-  - Ab 20 Jahren keine Sichtbarkeit von 16-/17-Jährigen mehr
-  - Minderjährige (16–17) können ihren Filter nur bis max. 20 Jahre einstellen
-  - Profilfotos von 16–17-Jährigen nur für Gleichaltrige sichtbar
-  - Profilfotos von 18–19-Jährigen nur nach Funke sichtbar (nicht deaktivierbar)
-  - Automatische Freischaltung aller Funktionen mit Erreichen des 20. Lebensjahres
+- **Altersschutz-System (v0.10.0, Migration 154):**
+  - **BEIDSEITIG** gefiltert: 16- und 17-Jaehrige sehen ausschliesslich Gleichaltrige, nie einen Erwachsenen - und umgekehrt. Ein 18-Jaehriger sieht keinen Minderjaehrigen, ein 30-Jaehriger ebenfalls nicht. Vorher war die Pruefung einseitig, ein 18-Jaehriger sah 16- und 17-Jaehrige, diese sahen ihn nie
+  - Die Altersspanne ist nach unten auf **10 Jahre unter dem eigenen Alter** begrenzt (und nie unter 18, sobald der Nutzer volljuehrig ist). Nach oben bleibt sie frei bis 99. Die App bietet keine Werte an, die der Server nicht liefert
+  - Serverseitig erzwungen (`age_compatible_bidirectional`, `max_age_range_min`) - die App ist nur die Anzeige, nicht die Entscheidung. Vier unabhaengige Server-Schichten: View, `profile_discovery_visible_full`, `profile_discovery_visible`, `age_compatible_bidirectional`
+  - Profilfotos von 16-17-Jaehrigen nur für Gleichaltrige sichtbar
+  - Minderjaehrige werden bei der Video-Verifizierung **immer von Hand geprueft**, nie automatisch freigegeben - auch dann nicht, wenn die Altersschaetzung zum angegebenen Alter passt
+  - Das Verifikations-Video wird **clientseitig verschluesselt** gespeichert (nur Chiffrat im Bucket)
 - **Foto-Moderation**: NSFW-Prüfung über ein Hugging-Face-Inference-Modell (EU-Router, cert-gepinnt) – aktuell **standardmäßig deaktiviert** (Aktivierung per Build-Flag, siehe „Hinweis zum Entwicklungsstand"); Moderationsergebnisse landen in einer Admin-Warteschlange
 - **Session-Restore** synchron (kein Netzwerk beim App-Start), serverseitige Validierung im Hintergrund
 - **Passkey-/WebAuthn-Konfiguration**: Die GoTrue-Ursprungs-Liste (`Relying Party Origins`) muss den **SHA-256**-Signatur-Hash der installierten APK enthalten (`android:apk-key-hash:…`, 43 Base64URL-Zeichen) – SHA-1-Fingerprints matchen nie. Exakte Werte, Diagnose und Symptom-Tabelle: [docs/PASSKEYS_SERVER_SETUP.md](docs/PASSKEYS_SERVER_SETUP.md)

@@ -57,9 +57,12 @@ void main() {
   });
 
   group('AgeSafetyRules - maxFilterAge', () {
-    test('Minor (16-17) max filter = 19', () {
-      expect(AgeSafetyRules.maxFilterAge(16), equals(19));
-      expect(AgeSafetyRules.maxFilterAge(17), equals(19));
+    // v0.10.0 (Migration 154): Die Alterspruefung ist beidseitig.
+    // Minderjaehrige sehen ausschliesslich 16 und 17 - ein Wert
+    // darueber waere ein toter Filter (der Server liefert ihn nie).
+    test('Minor (16-17) max filter = 17', () {
+      expect(AgeSafetyRules.maxFilterAge(16), equals(17));
+      expect(AgeSafetyRules.maxFilterAge(17), equals(17));
     });
 
     test('Adult (18+) max filter = 99', () {
@@ -72,13 +75,30 @@ void main() {
   });
 
   group('AgeSafetyRules - minFilterAge', () {
-    test('All ages (16+) min filter = 16', () {
+    // v0.10.0 (Migration 154): Die Untergrenze ist hoechstens 10
+    // Jahre unter dem eigenen Alter und nie unter 18, sobald der
+    // Nutzer volljuehrig ist. Das entspricht dem Server
+    // (max_age_range_min) - die App bietet keine Werte an, die der
+    // Server nicht liefert.
+    test('Minderjaehrige (16-17) min filter = 16', () {
       expect(AgeSafetyRules.minFilterAge(16), equals(16));
       expect(AgeSafetyRules.minFilterAge(17), equals(16));
+    });
+
+    test('18-Jaehriger: 16 (Server erlaubt es)', () {
       expect(AgeSafetyRules.minFilterAge(18), equals(16));
-      expect(AgeSafetyRules.minFilterAge(19), equals(16));
-      expect(AgeSafetyRules.minFilterAge(20), equals(16));
-      expect(AgeSafetyRules.minFilterAge(25), equals(16));
+    });
+
+    test('19-Jaehriger: 17 (Server beginnt bei 17)', () {
+      expect(AgeSafetyRules.minFilterAge(19), equals(17));
+    });
+
+    test('Volljaehrige: eigenes Alter minus 10, mindestens 18', () {
+      expect(AgeSafetyRules.minFilterAge(20), equals(18));
+      expect(AgeSafetyRules.minFilterAge(25), equals(18));
+      expect(AgeSafetyRules.minFilterAge(30), equals(20));
+      expect(AgeSafetyRules.minFilterAge(40), equals(30));
+      expect(AgeSafetyRules.minFilterAge(65), equals(55));
     });
   });
 
@@ -213,40 +233,56 @@ void main() {
   });
 
   group('AgeSafetyRules - clampFilterAge', () {
-    test('Minor filter clamped to 16-19', () {
+    // v0.10.0 (Migration 154): Minderjaehrige sehen nur 16 und 17.
+    test('Minor filter clamped to 16-17', () {
       expect(AgeSafetyRules.clampFilterAge(viewerAge: 16, filterMin: 16, filterMax: 99),
-          equals((16, 19)));
+          equals((16, 17)));
       expect(AgeSafetyRules.clampFilterAge(viewerAge: 17, filterMin: 10, filterMax: 30),
-          equals((16, 19)));
+          equals((16, 17)));
+      // Obergrenze fuer Minderjaehrige ist jetzt 17 - beides wird
+      // auf 17 geklemmt.
       expect(AgeSafetyRules.clampFilterAge(viewerAge: 16, filterMin: 18, filterMax: 19),
-          equals((18, 19)));
+          equals((17, 17)));
     });
 
-    test('Adult filter clamped to 16-99', () {
+    // v0.10.0 (Migration 154): nach unten max. 10 Jahre unter dem
+    // eigenen Alter, mindestens 18.
+    test('Adult filter clamped to eigenes Alter minus 10', () {
       expect(AgeSafetyRules.clampFilterAge(viewerAge: 18, filterMin: 16, filterMax: 99),
           equals((16, 99)));
       expect(AgeSafetyRules.clampFilterAge(viewerAge: 20, filterMin: 16, filterMax: 99),
-          equals((16, 99)));
+          equals((18, 99)));
       expect(AgeSafetyRules.clampFilterAge(viewerAge: 25, filterMin: 16, filterMax: 30),
-          equals((16, 30)));
+          equals((18, 30)));
+      expect(AgeSafetyRules.clampFilterAge(viewerAge: 40, filterMin: 16, filterMax: 99),
+          equals((30, 99)));
+      // Untergrenze fuer 25-Jaehrige ist max(18, 25-10) = 18.
       expect(AgeSafetyRules.clampFilterAge(viewerAge: 25, filterMin: 10, filterMax: 5),
-          equals((16, 16)));
+          equals((18, 18)));
     });
   });
 
   group('AgeSafetyRules - isValidFilterAge', () {
     test('Valid filter ranges', () {
-      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 16, filterMin: 16, filterMax: 19), isTrue);
+      // v0.10.0 (Migration 154): Minderjaehrige duerfen hoechstens
+      // bis 17; Volljaehrige hoechstens 10 Jahre unter ihr eigenes
+      // Alter.
+      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 16, filterMin: 16, filterMax: 17), isTrue);
       expect(AgeSafetyRules.isValidFilterAge(viewerAge: 18, filterMin: 16, filterMax: 30), isTrue);
-      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 20, filterMin: 16, filterMax: 35), isTrue);
+      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 20, filterMin: 18, filterMax: 35), isTrue);
       expect(AgeSafetyRules.isValidFilterAge(viewerAge: 20, filterMin: 18, filterMax: 25), isTrue);
+      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 40, filterMin: 30, filterMax: 60), isTrue);
     });
 
     test('Invalid filter ranges', () {
+      // Minderjaehrige ueber 17 hinaus, unter 16 hinunter, bei
+      // Volljaehrigen mehr als 10 Jahre unter das eigene Alter.
       expect(AgeSafetyRules.isValidFilterAge(viewerAge: 16, filterMin: 16, filterMax: 20), isFalse);
-      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 16, filterMin: 15, filterMax: 19), isFalse);
+      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 16, filterMin: 15, filterMax: 17), isFalse);
       expect(AgeSafetyRules.isValidFilterAge(viewerAge: 20, filterMin: 15, filterMax: 35), isFalse);
       expect(AgeSafetyRules.isValidFilterAge(viewerAge: 16, filterMin: 20, filterMax: 16), isFalse);
+      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 20, filterMin: 16, filterMax: 35), isFalse);
+      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 40, filterMin: 25, filterMax: 60), isFalse);
     });
   });
 }

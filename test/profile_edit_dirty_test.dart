@@ -148,7 +148,7 @@ void main() {
 
     // Zum Altersspannen-Bereich scrollen (Form ist lang) und den
     // Mindestalter-Slider antippen (Mitte des Tracks = neuer Wert).
-    final minLabel = find.text('Mindestalter: 16 Jahre');
+    final minLabel = find.text('Mindestalter: 18 Jahre');
     await tester.scrollUntilVisible(minLabel, 300,
         scrollable: find.byType(Scrollable).first);
     await tester.pumpAndSettle();

@@ -225,6 +225,44 @@ serve(async (req) => {
       });
     } else {
       // Intro: Zielprofil muss existieren und eine Vorstellung haben.
+      //
+      // v0.10.0 (Security-Audit): Der Intro-Pfad pruefte weder das Alter
+      // noch den Discovery-Filter. Ein angemeldeter Nutzer, der die
+      // UUID eines Minderjaehrigen hatte (sie leckt bei Meldungen, bei
+      // geteilten Matches und in Deep-Links), konnte dessen
+      // Intro-Audio als signierte URL ziehen - und umgekehrt.
+      //
+      // Der Filter ist derselbe wie in der Discovery, und er ist
+      // BEIDSEITIG: 16- und 17-Jaehrige sehen nur einander, nie einen
+      // Erwachsenen.
+      const { data: targetAgeRows } = await supabaseAdmin
+        .from("profiles")
+        .select("birth_date")
+        .eq("user_id", targetUserId)
+        .maybeSingle();
+      const { data: viewerAgeRows } = await supabaseAdmin
+        .from("profiles")
+        .select("birth_date")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const targetBirth = (targetAgeRows as { birth_date?: string } | null)
+        ?.birth_date ?? null;
+      const viewerBirth = (viewerAgeRows as { birth_date?: string } | null)
+        ?.birth_date ?? null;
+
+      if (!targetBirth || !viewerBirth) {
+        return json({ error: "Alter nicht feststellbar" }, 403);
+      }
+
+      const { data: kompatibel } = await supabaseAdmin.rpc(
+        "age_compatible_bidirectional",
+        { v_birth_date_a: viewerBirth, v_birth_date_b: targetBirth },
+      );
+      if (kompatibel !== true) {
+        return json({ error: "Nicht zugaengig" }, 403);
+      }
+
       const { data: target } = await supabaseAdmin
         .from("profiles")
         .select("intro_audio_path")

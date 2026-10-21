@@ -333,8 +333,10 @@ void main() {
       expect(s.revealPhotosAfterMatch, isTrue);
       expect(s.onboardingCompleted, isTrue);
       expect(s.maxDistanceKm, equals(50));
-      expect(s.ageRangeMin, 16);
-      expect(s.ageRangeMax, 99);
+      // v0.10.0: 18-65. Vorher 16-99 - das war praktisch keine
+      // Grenze, ein 20-Jaehriger bekam 99-Jaehrige vorgeschlagen.
+      expect(s.ageRangeMin, 18);
+      expect(s.ageRangeMax, 65);
     });
 
     test('persistenz via json', () {
