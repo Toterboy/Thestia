@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Konto löschen – Thestia</title>
+  <meta name="robots" content="noindex">
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+    }
+    h1 { font-size: 1.5rem; margin-bottom: .25rem; }
+    h2 { font-size: 1.05rem; margin-top: 2rem; }
+    p.lead { opacity: .8; margin-top: 0; }
+    ol, ul { padding-left: 1.25rem; }
+    li { margin-bottom: .5rem; }
+    .box {
+      border: 1px solid rgba(128,128,128,.35);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin: 1.25rem 0;
+    }
+    .klein { font-size: .875rem; opacity: .85; }
+    a { color: inherit; }
+    hr { border: 0; border-top: 1px solid rgba(128,128,128,.3); margin: 2rem 0; }
+  </style>
+</head>
+<body>
+
+<h1>Konto löschen</h1>
+<p class="lead">So löschst du dein Thestia-Konto – und was dabei mit deinen Daten passiert.</p>
+
+<div class="box">
+  <strong>In der App löschen</strong>
+  <p style="margin-bottom:.5rem">Der schnellste Weg führt direkt in der App:</p>
+  <ol>
+    <li>App öffnen und anmelden.</li>
+    <li><strong>Profil → Zahnrad (Einstellungen) → Datenschutz</strong> öffnen.</li>
+    <li><strong>„Konto löschen“</strong> antippen.</li>
+    <li>Mit deinem Passwort und – falls aktiviert – dem zweiten
+        Faktor bestätigen.</li>
+  </ol>
+  <p class="klein" style="margin-bottom:0">Die Löschung wird mit einem
+  zweiten Faktor bestätigt, damit niemand sonst dein Konto entfernen
+  kann.</p>
+</div>
+
+<h2>Was gelöscht wird</h2>
+<p>Nach der Bestätigung werden entfernt:</p>
+<ul>
+  <li>Dein Profil, deine Fotos, deine Vorstellungen und deine
+      Interessen</li>
+  <li>Alle Likes, Matches und Chats mit deinem Konto</li>
+  <li>Dein Standort und deine Geräteliste</li>
+  <li>Dein Verifikationsvideo samt Verschlüsselungsschlüssel</li>
+  <li>Dein Push-Token und deine Signal-VorpreKeys</li>
+  <li>Die lokalen Daten auf deinem Gerät (Profil, Einstellungen,
+      Chatverlauf)</li>
+</ul>
+
+<h2>Was aus technischen Gründen bleibt</h2>
+<p>Einige Angaben lassen sich nicht rückstandslos entfernen, weil
+Datenbanken Kopien behalten:</p>
+<ul>
+  <li><strong>Ein Merkmal deiner User-ID</strong> (ein MD5-Hash) bleibt
+      erhalten. Damit wird verhindert, dass sich ein gelöschtes Konto
+      sofort wieder registrieren lässt. Der Hash enthält keine
+      wiederherstellbaren Angaben.</li>
+  <li><strong>Gemeldete Inhalte</strong> bleiben in der Form erhalten, in
+      der sie zur Einordnung des Vorfalls nötig waren – ohne deinen
+      Namen und ohne die Inhalte selbst, soweit sie nicht zur
+      rechtlichen Pflicht gehören.</li>
+  <li><strong>Spam-Sperren</strong> behalten die gesperrte
+      E-Mail-Adresse, damit gesperrte Konten nicht durch eine neue
+      Registrierung umgangen werden können.</li>
+</ul>
+
+<div class="box">
+  <strong>Fragen dazu?</strong>
+  <p style="margin-bottom:0">Schreib uns über den Bug-Report in der App
+  oder über die Kontaktadresse in der
+  <a href="/datenschutz">Datenschutzerklärung</a>. Wir löschen
+  auf Wunsch auch das, was nach obiger Auflistung zurückbleibt –
+  nenne dazu deine User-ID.</p>
+</div>
+
+<hr>
+<p class="klein">Diese Seite ist Teil des Impressums und der
+Datenschutzerklärung von Thestia. Stand: Oktober 2026.</p>
+
+</body>
+</html>

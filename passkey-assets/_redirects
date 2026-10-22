@@ -22,3 +22,16 @@
 
 /datenschutz    /datenschutz.html  200
 /datenschutz/   /datenschutz.html  200
+
+# Konto-Loesch-URL (Pflichtfeld im Play Console).
+#
+# Play verlangt eine oeffentlich erreichbare WEB-Seite, auf der ein
+# Konto geloescht werden kann. Eine eigene Website ist dafuer nicht
+# noetig - die Datei liegt einfach bei Netlify neben der
+# Datenschutz-Erklaerung.
+#
+# Es ist eine Rewriteregel (status 200), kein Redirect: die Adresse
+# existiert danach wirklich, ohne dass der Browser folgt und ohne
+# dass die .html im Link steht.
+/konto-loeschen    /konto-loeschen.html  200
+/konto-loeschen/   /konto-loeschen.html  200
