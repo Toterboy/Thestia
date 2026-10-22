@@ -29,7 +29,7 @@
 </head>
 <body>
 <h1>Datenschutzerklärung für Thestia</h1>
-<p><strong>Stand: Oktober 2026</strong> · Version 13 (v0.10.0)</p>
+<p><strong>Stand: Oktober 2026</strong> · Version 14 (v0.10.0)</p>
 <p>Thestia ist ein datenschutzorientiertes Open-Source-Projekt (AGPLv3). Der Schutz deiner persönlichen Sphäre steht an erster Stelle: Es werden keine Werbetracker eingesetzt, keine Verhaltensprofile erstellt und keine Nutzerdaten an Dritte verkauft.</p>
 <hr>
 <h2>1. Grundsatz und Verantwortliche Stelle</h2>
@@ -111,6 +111,9 @@
 <p>Voraussetzung für die Freigabe ist die Altersverifikation aus Abschnitt 2: Sie nutzt Kamera <strong>und</strong> Mikrofon und fragt beide erst nach einem erklärenden Dialog an, der verrät, wofür sie gebraucht werden.</p>
 <p><strong>Massgebliches Alter (v0.10.0):</strong> Fuer den Jugendschutz zählt das Alter, das per Video <strong>verifiziert</strong> wurde - nicht die Angabe im Profil. Ein Konto ohne Verifizierung erscheint in keiner Begegnungsliste; die Angabe im Profil wirkt erst nach der Verifizierung. Wer sich mit einem falschen Geburtsdatum anmeldet, wird deshalb nicht als erwachsen behandelt, sondern gar nicht erst vorgeschlagen.</p>
 <p><strong>Beidseitige Sichtbarkeit (v0.10.0):</strong> Wer 16 oder 17 Jahre alt ist, sieht ausschließlich Personen, die ebenfalls 16 oder 17 Jahre alt sind – niemals einen Erwachsenen. Und ein Erwachsener sieht niemals eine Person unter 18. Das gilt in beide Richtungen, nicht nur in einer: der Filter beruht auf einem Vergleich beider Altersangaben. Die Altersspanne im Profil ist nach unten auf 10 Jahre unter dem eigenen Alter begrenzt (und nie unter 18, sobald du volljährig bist) - wer eine grössere Altersdifferenz wählt, bekommt sie serverseitig nicht geliefert.</p>
+<p><strong>Verpflichtende Kinderschutz-Standards (v0.10.0):</strong> Google Play verlangt für Dating-, Social- und Random-Chat-Apps unabhängig von einer Altersbeschränkung vier Dinge, die wir über die App und über eine öffentliche Seite bereitstellen:</p>
+<ul><li>Ein <strong>ausdrückliches Verbot</strong> von Kindesmissbrauch und sexueller Ausbeutung von Kindern (CSAE/CSAM) in den in der App akzeptierten Community-Standards.</li><li>Eine <strong>benannte Kontaktperson</strong> für Hinweise auf Kindesmissbrauch.</li><li>Ein <strong>beschriebener Meldeweg</strong>: in der App über die Meldung mit dem Grund „Hinweis auf Kindesmissbrauch (CSAE/CSAM)“, per E-Mail an die Kontaktperson oder bei unmittelbarer Gefahr direkt an Polizei oder Notruf.</li><li>Ein dokumentierter <strong>Prozess bei Bekanntwerden</strong> solcher Fälle: vorrangige Prüfung, Sperre des Kontos bis zum Abschluss, Entfernung des Inhalts und Meldung bestätigter Fälle an die zuständigen Stellen.</li></ul>
+<p>Die öffentliche Seite liegt unter &lt;https://auth.thestia.de/kinderschutz&gt;. Die Kontaktperson wird auf dieser Seite namentlich genannt.</p>
 <h2>10. Angriffsbild und Risikoabschätzung</h2>
 <p>Die technische Bewertung der Verarbeitung ist öffentlich: das Angriffsbild findest du unter &lt;https://auth.thestia.de/threat-model.md&gt;. Die Risiken nach Art. 35 DSGVO nach Art. 35 DSGVO (Datenschutz-Folgenabschätzung) liegen als Entwurf vor und sind noch nicht rechtlich geprüft; wir stellen sie auf Anfrage zur Verfügung. Dort sind auch die Punkte benannt, die Thestia bewusst <strong>nicht</strong> zusichert: Funk-Metadaten sind technisch beobachtbar, und Ende-zu-Ende- Verschlüsselung schützt Inhalte, nicht Kommunikationsmuster.</p>
 <h2>11. Änderungen dieser Erklärung</h2>
@@ -120,6 +123,7 @@
 <table>
 <thead><tr><th>Version</th><th>Datum</th><th>Änderung</th></tr></thead>
 <tbody>
+<tr><td>14</td><td>2026-10</td><td><strong>Kinderschutz-Standards:</strong> Verbot von Kindesmissbrauch (CSAE/CSAM) in den Community-Standards, eigene Meldeart in der App, oeffentliche Kinderschutz-Seite mit benannter Kontaktperson und Meldeweg an die zustaendigen Stellen. Von Google Play fuer Dating-Apps unabhaengig von einer Altersbeschraenkung verlangt</td></tr>
 <tr><td>13</td><td>2026-10</td><td><strong>Lösch-URL und Kontaktweg:</strong> Die Löschung des Kontos ist über die Webseite &lt;https://auth.thestia.de/konto-loeschen&gt; beschrieben (Pflichtfeld im Play Console) und der Kontaktweg für Auskunft, Berichtigung und Löschung auf Anfrage ist in Abschnitt 1 genannt</td></tr>
 <tr><td>12</td><td>2026-10</td><td><strong>Kein TURN-Relay:</strong> Fuer Video- und Sprachanrufe wird weiterhin ausschliesslich STUN verwendet - es gibt aktuell keinen Relay-Anbieter, der ohne Kreditkarte und ohne Eigenbetrieb nutzbar waere. Der TURN-Support ist als Aufgabe auf der Roadmap hinterlegt und wird erst mit Anbieter und Datenschutz-Eintrag umgesetzt</td></tr>
 <tr><td>11</td><td>2026-10</td><td><strong>TURN-Relay aufgeführt:</strong> Der bei Video- und Sprachanrufen eingesetzte Relay-Server (Metered Open Relay) ist jetzt als Drittanbieter benannt - mit den Daten, die er sieht (IP-Adresse, Zeitpunkt, Dauer der Weiterleitung) und der Aussage, dass die übertragenen Medien Ende-zu-Ende verschlüsselt bleiben</td></tr>

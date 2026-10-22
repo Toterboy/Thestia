@@ -35,3 +35,15 @@
 # dass die .html im Link steht.
 /konto-loeschen    /konto-loeschen.html  200
 /konto-loeschen/   /konto-loeschen.html  200
+
+# Kinderschutz-Seite (Play Child Safety Standards).
+#
+# Play verlangt fuer Dating-, Social- und Random-Chat-Apps einen
+# oeffentlich erreichbaren Bereich mit Verbot von Kindesmissbrauch,
+# benannter Kontaktperson und beschriebenem Meldeweg - unabhaengig
+# davon, ob die App altersbeschaenkt ist.
+#
+# Wie die Konto-Loesch-URL: eine eigene Website ist nicht noetig, die
+# Datei liegt einfach bei Netlify neben der Datenschutz-Erklaerung.
+/kinderschutz    /kinderschutz.html  200
+/kinderschutz/   /kinderschutz.html  200

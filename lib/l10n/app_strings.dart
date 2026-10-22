@@ -1818,6 +1818,27 @@ const Map<String, Map<String, String>> _strings = {
         'Teile keine fremden privaten Daten (Adressen, Telefonnummern, '
         'Dokumente) ohne Zustimmung. Der Schutz Minderjähriger hat oberste '
         'Priorität.',
+    'cg.6.title': 'Null-Toleranz bei Kindesmissbrauch',
+    'cg.6.body':
+        'Die Nennung, das Androhen oder das Verbreiten von Kindesmissbrauch '
+        'und sexueller Ausbeutung von Kindern (CSAE/CSAM) ist in Thestia '
+        'verboten - ohne Ausnahme und unabhaengig davon, ob es in einem '
+        'Chat, in einem Profil, in einem Bild oder in einer Beschreibung '
+        'vorkommt. Solche Inhalte werden entfernt, das Konto gesperrt und '
+        'der Vorgang an die zustaendigen Stellen gemeldet. Wir dulden '
+        'keinerlei Kontakte oder Vermittlungen zu Minderjaehrigen. Wenn du '
+        'Hinweise auf Kindesmissbrauch hast, melde sie ueber die '
+        'Meldung-Funktion in der App (Grund: Kindesmissbrauch) oder ueber '
+        'die Kontaktadresse auf der Kinderschutz-Seite.',
+    'cg.childSafetyLink.title': 'Kinderschutz und Meldestelle',
+    'cg.childSafetyLink.body':
+        'Hinweise auf Kindesmissbrauch und Minderjaehrige in Kontakt zu '
+        'bringen: Dafuer gibt es eine eigene oeffentliche Seite mit einer '
+        'benannten Kontaktperson und dem Meldeweg an die zustaendigen '
+        'Stellen.',
+    'cg.childSafetyLink.open': 'Kinderschutz-Seite öffnen',
+    'report.type.childSafety':
+        'Hinweis auf Kindesmissbrauch (CSAE/CSAM)',
     'cg.5.title': '§5 Melden & Konsequenzen',
     'cg.5.titleShort':
         'Ehrlichkeit zahlt sich aus: Sei authentisch in deinem Profil.',
@@ -4342,6 +4363,24 @@ const Map<String, Map<String, String>> _strings = {
         'Do not share other people\'s private data (addresses, phone '
         'numbers, documents) without consent. Protecting minors has '
         'top priority.',
+    'cg.6.title': 'Zero tolerance for child sexual abuse',
+    'cg.6.body':
+        'Naming, threatening or distributing child sexual abuse and '
+        'exploitation (CSAE/CSAM) is prohibited in Thestia - without '
+        'exception, and regardless of whether it occurs in a chat, a '
+        'profile, an image or a description. Such content is removed, the '
+        'account is suspended and the case is reported to the competent '
+        'authorities. We do not tolerate any contact with or introduction '
+        'of minors. If you have information about child sexual abuse, '
+        'report it via the in-app reporting function (reason: child sexual '
+        'abuse) or via the contact address on the child safety page.',
+    'cg.childSafetyLink.title': 'Child safety and reporting',
+    'cg.childSafetyLink.body':
+        'To report child sexual abuse or concerns about a minor: there is '
+        'a dedicated public page with a named contact person and the '
+        'route for reporting to the competent authorities.',
+    'cg.childSafetyLink.open': 'Open child safety page',
+    'report.type.childSafety': 'Child sexual abuse concern (CSAE/CSAM)',
     'cg.5.title': '§5 Reporting & consequences',
     'cg.5.titleShort': 'Honesty pays off: Be authentic in your profile.',
     'cg.5.body':

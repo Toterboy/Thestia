@@ -83,6 +83,8 @@ class ReportTypeAdapter extends TypeAdapter<ReportType> {
         return ReportType.other;
       case 5:
         return ReportType.wrongAge;
+      case 6:
+        return ReportType.childSafety;
       default:
         return ReportType.harassment;
     }
@@ -108,6 +110,9 @@ class ReportTypeAdapter extends TypeAdapter<ReportType> {
         break;
       case ReportType.wrongAge:
         writer.writeByte(5);
+        break;
+      case ReportType.childSafety:
+        writer.writeByte(6);
         break;
     }
   }
