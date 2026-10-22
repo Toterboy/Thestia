@@ -29,7 +29,7 @@
 </head>
 <body>
 <h1>Datenschutzerklärung für Thestia</h1>
-<p><strong>Stand: Oktober 2026</strong> · Version 10 (v0.10.0)</p>
+<p><strong>Stand: Oktober 2026</strong> · Version 11 (v0.10.0)</p>
 <p>Thestia ist ein datenschutzorientiertes Open-Source-Projekt (AGPLv3). Der Schutz deiner persönlichen Sphäre steht an erster Stelle: Es werden keine Werbetracker eingesetzt, keine Verhaltensprofile erstellt und keine Nutzerdaten an Dritte verkauft.</p>
 <hr>
 <h2>1. Grundsatz und Verantwortliche Stelle</h2>
@@ -94,6 +94,7 @@
 <tr><td>Netlify</td><td>CAPTCHA-Zwischenseite, Datenschutzerklärung</td><td>Hosting der Anmelde-/CAPTCHA-Seite und der veröffentlichten Datenschutzerklärung</td><td>Global</td></tr>
 <tr><td>Hugging Face</td><td>Beim Melden eines Bildes: der <strong>Bildinhalt</strong> (zur automatischen Einordnung als anständig oder unauffällig); beim Download einer KI-Modelldatei: keine personenbezogenen Daten</td><td>Automatische Vorauswertung gemeldeter Bilder; ansonsten ausschließlich der optionale, nutzerinitiiierte Download frei verfügbarer KI-Modelldateien (GGUF)</td><td>Global</td></tr>
 <tr><td>STUN-Server (nextcloud/Hetzner, miwifi/OVH, voipgate, voipstunt)</td><td>Deine IP-Adresse</td><td>Ermittlung der öffentlichen Adresse für den Direktverbindungsversuch bei Video- und Sprachanrufen; über diese Server wird kein Inhalt übertragen</td><td>Deutschland, Frankreich, Niederlande (EU)</td></tr>
+<tr><td>TURN-Relay (Metered Open Relay)</td><td>Deine IP-Adresse, Zeitpunkt und Dauer der Weiterleitung</td><td><strong>Weiterleitung von Medien</strong>, wenn keine Direktverbindung möglich ist (symmetrisches NAT, strenge Firmen-Firewalls). Der Relay-Server überträgt dabei die verschlüsselten Medien - <strong>Inhalte bleiben gegenüber dem Ende-zu-Ende-Schutz unlesbar</strong>; sichtbar sind für den Anbieter die Verbindungsdaten und der Medienstrom in verschlüsselter Form. Nur über diesen Relay fließen Medien, wenn keine direkte Verbindung zustande kommt</td><td>Global (Metered, International; Serverstandort je nach Tarif)</td></tr>
 <tr><td>Codeberg e.V. (geplant ab v0.12.0)</td><td>Keine personenbezogenen Daten</td><td>Trackerfreies Hosting der Flutter-Web-Artefakte (statische Dateien)</td><td>Berlin, Deutschland</td></tr>
 </tbody>
 </table>
@@ -119,6 +120,7 @@
 <table>
 <thead><tr><th>Version</th><th>Datum</th><th>Änderung</th></tr></thead>
 <tbody>
+<tr><td>11</td><td>2026-10</td><td><strong>TURN-Relay aufgeführt:</strong> Der bei Video- und Sprachanrufen eingesetzte Relay-Server (Metered Open Relay) ist jetzt als Drittanbieter benannt - mit den Daten, die er sieht (IP-Adresse, Zeitpunkt, Dauer der Weiterleitung) und der Aussage, dass die übertragenen Medien Ende-zu-Ende verschlüsselt bleiben</td></tr>
 <tr><td>10</td><td>2026-10</td><td><strong>Verifiziertes Alter ist massgeblich:</strong> Der Jugendschutz-Filter rechnet jetzt mit dem per Video bestätigten Alter statt mit der Angabe im Profil, und Konten ohne Verifizierung erscheinen in keiner Begegnungsliste. Vorher konnte jede Altersangabe ungeprüft durchgesetzt werden</td></tr>
 <tr><td>9</td><td>2026-10</td><td><strong>Jugendschutz verschaerft:</strong> Die Sichtbarkeit ist jetzt beidseitig gefiltert - 16- und 17-Jährige sehen nur Gleichaltrige, nie einen Erwachsenen, und ein Erwachsener sie nie. Die Altersspanne ist nach unten auf 10 Jahre unter dem eigenen Alter begrenzt. Minderjährige werden bei der Video-Verifizierung immer von Hand geprüft</td></tr>
 <tr><td>8</td><td>2026-10</td><td><strong>Video verschlüsselt:</strong> Das Verifikations-Video wird auf dem Gerät mit AES-256-GCM verschlüsselt; im Speicher liegt nur der Chiffrat. Der Schlüssel liegt in einer Tabelle ohne Client-Zugriff. Die früheren Angaben „verschlüsselt nur auf dem Gerät“ und „7 Tage“ waren falsch</td></tr>

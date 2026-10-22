@@ -133,7 +133,7 @@ $$;
 
 COMMENT ON FUNCTION public.age_compatible_bidirectional_ages(int, int) IS
   'Beidseitige Alterspruefung auf JAHRESZAHLEN (v0.10.0, Migration 155). '
-  'N��tig, weil mit dem verifizierten Alter gerechnet wird und das '
+  'Noetig, weil mit dem verifizierten Alter gerechnet wird und das '
   'Geburtsdatum als Datum nicht in die Alterslogik passt. Identisch zur '
   'Regel von age_compatible_bidirectional, nur auf Jahreszahlen.';
 

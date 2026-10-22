@@ -27,7 +27,7 @@ class PrivacyBlock {
 /// Reihenfolge von docs/DATENSCHUTZ.md.
 const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
   PrivacyBlock('h1', 'Datenschutzerklärung für Thestia'),
-  PrivacyBlock('p', '**Stand: Oktober 2026** · Version 10 (v0.10.0)'),
+  PrivacyBlock('p', '**Stand: Oktober 2026** · Version 11 (v0.10.0)'),
   PrivacyBlock('p', 'Thestia ist ein datenschutzorientiertes Open-Source-Projekt (AGPLv3). Der Schutz deiner persönlichen Sphäre steht an erster Stelle: Es werden keine Werbetracker eingesetzt, keine Verhaltensprofile erstellt und keine Nutzerdaten an Dritte verkauft.'),
   PrivacyBlock('p', '---'),
   PrivacyBlock('h2', '1. Grundsatz und Verantwortliche Stelle'),
@@ -94,6 +94,7 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
   PrivacyBlock('table', '', cells: <String>['Netlify', 'CAPTCHA-Zwischenseite, Datenschutzerklärung', 'Hosting der Anmelde-/CAPTCHA-Seite und der veröffentlichten Datenschutzerklärung', 'Global']),
   PrivacyBlock('table', '', cells: <String>['Hugging Face', 'Beim Melden eines Bildes: der **Bildinhalt** (zur automatischen Einordnung als anständig oder unauffällig); beim Download einer KI-Modelldatei: keine personenbezogenen Daten', 'Automatische Vorauswertung gemeldeter Bilder; ansonsten ausschließlich der optionale, nutzerinitiiierte Download frei verfügbarer KI-Modelldateien (GGUF)', 'Global']),
   PrivacyBlock('table', '', cells: <String>['STUN-Server (nextcloud/Hetzner, miwifi/OVH, voipgate, voipstunt)', 'Deine IP-Adresse', 'Ermittlung der öffentlichen Adresse für den Direktverbindungsversuch bei Video- und Sprachanrufen; über diese Server wird kein Inhalt übertragen', 'Deutschland, Frankreich, Niederlande (EU)']),
+  PrivacyBlock('table', '', cells: <String>['TURN-Relay (Metered Open Relay)', 'Deine IP-Adresse, Zeitpunkt und Dauer der Weiterleitung', '**Weiterleitung von Medien**, wenn keine Direktverbindung möglich ist (symmetrisches NAT, strenge Firmen-Firewalls). Der Relay-Server überträgt dabei die verschlüsselten Medien - **Inhalte bleiben gegenüber dem Ende-zu-Ende-Schutz unlesbar**; sichtbar sind für den Anbieter die Verbindungsdaten und der Medienstrom in verschlüsselter Form. Nur über diesen Relay fließen Medien, wenn keine direkte Verbindung zustande kommt', 'Global (Metered, International; Serverstandort je nach Tarif)']),
   PrivacyBlock('table', '', cells: <String>['Codeberg e.V. (geplant ab v0.12.0)', 'Keine personenbezogenen Daten', 'Trackerfreies Hosting der Flutter-Web-Artefakte (statische Dateien)', 'Berlin, Deutschland']),
   PrivacyBlock('p', '**Keine** Weitergabe an Werbenetzwerke, Datenbroker oder Analyse-Dienste. **Keine** Nutzung von Google Analytics, Crashlytics oder ähnlichen Produkten (Bug-Reports laufen über das In-App-Formular und enthalten nur die vom Nutzer geprüften Angaben).'),
   PrivacyBlock('h2', '7. Speicherfristen und Kontolöschung'),
@@ -126,6 +127,7 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
   PrivacyBlock('p', '---'),
   PrivacyBlock('h3', 'Historie'),
   PrivacyBlock('table_head', '', cells: <String>['Version', 'Datum', 'Änderung']),
+  PrivacyBlock('table', '', cells: <String>['11', '2026-10', '**TURN-Relay aufgeführt:** Der bei Video- und Sprachanrufen eingesetzte Relay-Server (Metered Open Relay) ist jetzt als Drittanbieter benannt - mit den Daten, die er sieht (IP-Adresse, Zeitpunkt, Dauer der Weiterleitung) und der Aussage, dass die übertragenen Medien Ende-zu-Ende verschlüsselt bleiben']),
   PrivacyBlock('table', '', cells: <String>['10', '2026-10', '**Verifiziertes Alter ist massgeblich:** Der Jugendschutz-Filter rechnet jetzt mit dem per Video bestätigten Alter statt mit der Angabe im Profil, und Konten ohne Verifizierung erscheinen in keiner Begegnungsliste. Vorher konnte jede Altersangabe ungeprüft durchgesetzt werden']),
   PrivacyBlock('table', '', cells: <String>['9', '2026-10', '**Jugendschutz verschaerft:** Die Sichtbarkeit ist jetzt beidseitig gefiltert - 16- und 17-Jährige sehen nur Gleichaltrige, nie einen Erwachsenen, und ein Erwachsener sie nie. Die Altersspanne ist nach unten auf 10 Jahre unter dem eigenen Alter begrenzt. Minderjährige werden bei der Video-Verifizierung immer von Hand geprüft']),
   PrivacyBlock('table', '', cells: <String>['8', '2026-10', '**Video verschlüsselt:** Das Verifikations-Video wird auf dem Gerät mit AES-256-GCM verschlüsselt; im Speicher liegt nur der Chiffrat. Der Schlüssel liegt in einer Tabelle ohne Client-Zugriff. Die früheren Angaben „verschlüsselt nur auf dem Gerät“ und „7 Tage“ waren falsch']),

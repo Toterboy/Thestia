@@ -38,6 +38,56 @@ const MAX_TIMESTAMP_SKEW_SECONDS = 300;
 /// "whsec_<base64>" (im Dashboard mit "v1,"-Präfix hinterlegt:
 /// "v1,whsec_<base64>"). GoTrue streift "v1," und "whsec_" ab und
 /// dekodiert den Rest als Standard-Base64 - hier identisch.
+/// Leitet die moeglichen HMAC-Schluesselbytes aus dem Secret ab.
+///
+/// Siehe die Erklaerung in [verifyWebhookSignature]: das Dashboard
+/// liefert 64 Hex-Zeichen, der Standard-Webhooks-Text erwartet
+/// "whsec_<base64>". Beide Formen muessen funktionieren.
+function secretKeyCandidates(secret: string): Uint8Array[] {
+  const out: Uint8Array[] = [];
+  const trimmed = secret.startsWith("whsec_")
+    ? secret.slice("whsec_".length)
+    : secret;
+  if (trimmed.length === 0) return out;
+
+  const push = (bytes: Uint8Array) => {
+    if (bytes.length === 0) return;
+    for (const b of out) {
+      if (b.length === bytes.length && b.every((x, i) => x === bytes[i])) return;
+    }
+    out.push(bytes);
+  };
+
+  // 1) Base64 (Standard-Webhooks)
+  try {
+    const binary = atob(trimmed);
+    push(Uint8Array.from(binary, (c) => c.charCodeAt(0)));
+  } catch {
+    // kein Base64 - die anderen Wege greifen
+  }
+
+  // 2) Hex (Supabase-Dashboard: 64 Hex-Zeichen = 32 Byte)
+  if (/^[0-9a-fA-F]+$/.test(trimmed) && trimmed.length % 2 === 0) {
+    const bytes = new Uint8Array(trimmed.length / 2);
+    for (let i = 0; i < bytes.length; i++) {
+      bytes[i] = parseInt(trimmed.slice(i * 2, i * 2 + 2), 16);
+    }
+    push(bytes);
+  }
+
+  // 3) Die rohen Bytes des Strings - falls der Secret gar nicht
+  // kodiert ist.
+  //
+  // WICHTIG: TextEncoder.encode() liefert bereits ein Uint8Array
+  // (Zahlen). Uint8Array.from(..., (c) => c.charCodeAt(0)) waere ein
+  // TypeError, weil c eine Zahl und keine Zeichenkette ist. Genau
+  // dieser Fehler hat jeden Aufruf mit Signatur-Header mit einem 500
+  // beantwortet, waehrend die Funktion selbst fehlerfrei startete.
+  push(new TextEncoder().encode(secret));
+
+  return out;
+}
+
 async function verifyWebhookSignature(
   secret: string,
   webhookId: string,
@@ -48,16 +98,28 @@ async function verifyWebhookSignature(
   if (!webhookId || !webhookTimestamp || !signatureHeader) return false;
 
   // "whsec_"-Präfix entfernen, Rest als Base64 in Bytes dekodieren (HMAC-Key).
-  const trimmedSecret = secret.startsWith("whsec_")
-    ? secret.slice("whsec_".length)
-    : secret;
-  let keyBytes: Uint8Array;
-  try {
-    const binary = atob(trimmedSecret);
-    keyBytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
-  } catch {
-    return false;
-  }
+  // Der HMAC-Schluessel wird aus dem Secret abgeleitet. PROBLEM (war ein
+  // echter Bug, 21.10.2026): Es gab nur EINEN Weg - "whsec_" abschneiden
+  // und den Rest als Base64 dekodieren.
+  //
+  // Das Supabase-Dashboard liefert den Hook-Secret aber als 64
+  // HEX-Zeichen (32 Byte Rohschluessel). Hex-Zeichen sind gueltige
+  // Base64-Zeichen, atob() gibt also KEINEN Fehler zurueck, sondern
+  // 48 Byte Muell. Die Signatur passte damit NIE, die Function
+  // antwortete immer mit 401, und GoTrue meldete den Hook als
+  // fehlgeschlagen - ohne dass irgendwo eine Mail als nicht
+  // zugestellt auffiel.
+  //
+  // Deshalb werden jetzt alle gaengigen Interpretationen gebildet und
+  // die Signatur gegen jede davon geprueft:
+  //   * Base64 (Standard-Webhooks, "whsec_<base64>")
+  //   * Hex (Supabase-Dashboard, 64 Hex-Zeichen)
+  //   * die rohen Bytes des Strings
+  //
+  // Der Aufrufer muss also nicht wissen, in welchem Format das
+  // Dashboard den Secret anzeigt.
+  const candidates = secretKeyCandidates(secret);
+  if (candidates.length === 0) return false;
 
   const signatures = signatureHeader
     .split(",")
@@ -65,20 +127,30 @@ async function verifyWebhookSignature(
     .filter((s) => s.length > 0);
   const content = `${webhookId}.${webhookTimestamp}.${rawBody}`;
   const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    keyBytes,
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(content));
-  const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig)));
-  // Header-Format (Standard Webhooks): "v1,<sig1>, v1,<sig2>" – ein Eintrag
-  // pro konfiguriertem Secret. Die "v1"-Marker entfernen und die berechnete
-  // Base64-Signatur gegen die Einträge vergleichen.
+
+  // Header-Format (Standard Webhooks): "v1,<sig1>, v1,<sig2>" - ein
+  // Eintrag pro konfiguriertem Secret. Die "v1"-Marker entfernen und
+  // die berechnete Base64-Signatur gegen die Eintraege vergleichen.
   const provided = signatures.filter((s) => s !== "v1");
-  return provided.includes(sigB64);
+  if (provided.length === 0) return false;
+
+  for (const keyBytes of candidates) {
+    const key = await crypto.subtle.importKey(
+      "raw",
+      keyBytes,
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"],
+    );
+    const sig = await crypto.subtle.sign(
+      "HMAC",
+      key,
+      encoder.encode(content),
+    );
+    const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig)));
+    if (provided.includes(sigB64)) return true;
+  }
+  return false;
 }
 
 /// Zeitkonstanter String-Vergleich (N-10) - length-leak ist hier

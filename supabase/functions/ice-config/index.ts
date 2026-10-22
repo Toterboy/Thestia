@@ -12,7 +12,16 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.0";
 //   TURN_SECRET   Shared Secret des coturn (NUR hier serverseitig!)
 //   TURN_TTL      Gültigkeit der Credentials in Sekunden (Default 3600)
 //
-// Ohne TURN_URL verhält sich die Funktion wie bisher (nur STUN).
+// Ohne TURN_URL (oder ohne passende Zugangsdaten) verhält sich die
+// Funktion wie bisher (nur STUN).
+//
+// Hinweis zur Zieladresse: TURN braucht eine TURN-Adresse im Format
+// turn:host:port oder turns:host:port. Eine wss://-Adresse ist KEIN
+// ICE-Server, sondern ein Signalisierungskanal - darueber laesst sich
+// kein Medienstrom routen. Bei den geprueften Anbietern war nur
+// relay.metered.ca:80 als TURN-Host erreichbar (STUN-Antwort
+// verifiziert); openrelay.metered.ca zeigt auf Test-Net-Adressen
+// (192.0.2.1 / 100::1) und ist nicht direkt benutzbar.
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 // API-Keys: sb_-Keys (secret_jwt_template -> service_role). Nach
@@ -35,9 +44,34 @@ function _pickApiKey(autoDict: string, custom: string): string {
 
 const SUPABASE_SERVICE_ROLE_KEY = _pickApiKey("SUPABASE_SECRET_KEYS", "SUPABASE_SECRET_KEY");
 
+// TURN-Konfiguration. ZWEI Modi, weil die Anbieter verschiedene
+// Zugangsdaten liefern:
+//
+//   * TURN_SECRET (geteiltes Geheimnis): Die Function erzeugt
+//     kurzlebige REST-Credentials (Benutzername = Ablaufzeit, Kennwort
+//     = HMAC-SHA1 ueber das Geheimnis). Das ist das Schema von
+//     coturn mit use-auth-secret. KURZLIEBIG, besser.
+//
+//   * TURN_USERNAME + TURN_CREDENTIAL (statisch): Manche Anbieter
+//     geben im Dashboard feste Zugangsdaten aus. Die Function reicht
+//     sie unveraendert durch.
+//
+// Es gilt, was gesetzt ist: mit TURN_SECRET wird der REST-Modus
+// benutzt, sonst der statische. Ohne beides bleibt es bei STUN.
+//
+// TURN_URL kann MEHERE Adressen enthalten, kommagetrennt. Jede wird
+// als eigener ICE-Server-Eintrag geliefert - der Client probiert sie
+// durch, und ein Relay, das von einer Firewall blockiert wird, faellt
+// nicht gleich auf, weil ein zweiter daneben steht.
 const TURN_URL = Deno.env.get("TURN_URL") ?? "";
 const TURN_SECRET = Deno.env.get("TURN_SECRET") ?? "";
+const TURN_USERNAME = Deno.env.get("TURN_USERNAME") ?? "";
+const TURN_CREDENTIAL = Deno.env.get("TURN_CREDENTIAL") ?? "";
 const TURN_TTL = Number(Deno.env.get("TURN_TTL") ?? "3600") || 3600;
+
+const TURN_URLS = TURN_URL.split(",")
+  .map((u) => u.trim())
+  .filter((u) => u.length > 0);
 
 const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
@@ -83,11 +117,28 @@ serve(async (req) => {
     { urls: "stun:stun.voipstunt.com:3478" },  // NL
   ];
 
-  // Optionaler TURN-Relay mit kurzlebigen REST-Credentials.
-  if (TURN_URL && TURN_SECRET) {
+  // Optionaler TURN-Relay.
+  //
+  // REST-Modus (TURN_SECRET gesetzt): kurzlebige Credentials, die
+  // nur fuer die Laufzeit des Tokens gelten. Der Benutzername traegt
+  // die Nutzer-ID, damit ein Relay-Mitschnitt nachvollziehbar bleibt,
+  // ohne dass der Server etwas ueber den Nutzer wissen muss, was
+  // nicht im Token steht.
+  if (TURN_URLS.length > 0 && TURN_SECRET) {
     const username = `${Math.floor(Date.now() / 1000) + ttlSeconds}:${user.id}`;
     const credential = await hmacSha1Base64(TURN_SECRET, username);
-    iceServers.push({ urls: TURN_URL, username, credential });
+    for (const url of TURN_URLS) {
+      iceServers.push({ urls: url, username, credential });
+    }
+  } else if (TURN_URLS.length > 0 && TURN_USERNAME && TURN_CREDENTIAL) {
+    // Statischer Modus: feste Zugangsdaten aus dem Dashboard.
+    for (const url of TURN_URLS) {
+      iceServers.push({
+        urls: url,
+        username: TURN_USERNAME,
+        credential: TURN_CREDENTIAL,
+      });
+    }
   }
 
   return json({ iceServers, ttlSeconds });
