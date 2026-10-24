@@ -91,12 +91,41 @@ for name in ('match_proximity_spark', 'send_soft_ping'):
 
 # Die Hilfsfunktion selbst muss fail-closed sein: ohne birth_date darf
 # sie NICHT "erwachsen" liefern (public.profile_age coalesct auf 2000).
+#
+# Migration 159 hat transit_spark_adult() um die Notbremse erweitert und
+# die Alterspruefung in transit_spark_is_adult() ausgelagert. Die
+# Invariante bleibt dieselbe - nur der Ort, an dem sie steht, hat sich
+# geaendert. Geprueft wird deshalb BEIDES: die Delegation muss da sein
+# (sonst waere die Bremse umgangen) UND die Alterspruefung muss
+# fail-closed sein.
 helper = defs.get('transit_spark_adult', '')
-helper_ok = ('birth_date IS NOT NULL' in helper
-             and re.search(r'::int\s*>=\s*18', helper) is not None)
+alt_helper = defs.get('transit_spark_is_adult', '')
+
+age_body = helper if ('birth_date IS NOT NULL' in helper
+                      and re.search(r'::int\s*>=\s*18', helper)) else alt_helper
+helper_ok = ('birth_date IS NOT NULL' in age_body
+             and re.search(r'::int\s*>=\s*18', age_body) is not None)
 print(f'  {"transit_spark_adult":28} {"OK" if helper_ok else "FEHLT":6} '
       f'(fail-closed, >= 18)')
 ok &= helper_ok
+
+# Die Notbremse muss im Gate hängen: entweder direkt über den
+# app_config-Schalter oder über die ausgelagerte Altersfunktion, die
+# ihrerseits den Schalter abfragt.
+schalter_ok = ('transit_spark_enabled()' in helper
+                or 'transit_spark_is_adult(' in helper)
+print(f'  {"transit_spark_adult":28} {"OK" if schalter_ok else "FEHLT":6} '
+      f'(Notbremse im Gate)')
+ok &= bool(schalter_ok)
+
+# Und wenn transit_spark_adult die Alterspruefung auslagert, muss der
+# Schalter trotzdem im Gate selbst stehen: die Freigabe ist
+# "Schalter UND Alter", nicht "Alter UND Schalter irgendwo".
+if 'transit_spark_is_adult(' in helper:
+    brake_ok = 'transit_spark_enabled()' in helper
+    print(f'  {"transit_spark_adult":28} {"OK" if brake_ok else "FEHLT":6} '
+          f'(Schalter UND Alter im Gate)')
+    ok &= bool(brake_ok)
 
 # Fail-Fast-Guard vorhanden?
 all_sql = '\n'.join(f.read_text(encoding='utf-8', errors='replace') for f in files)
