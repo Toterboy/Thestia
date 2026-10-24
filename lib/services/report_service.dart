@@ -23,6 +23,26 @@ import 'package:thestia/utils/constants.dart';
 /// ein Brute-Force über den Hash ist praktisch ausgeschlossen.
 String hashPii(String value) => sha256.convert(utf8.encode(value)).toString();
 
+/// Ergebnis einer Meldung.
+///
+/// [serverAccepted] ist false, wenn die Meldung lokal gespeichert wurde,
+/// aber beim Support nicht ankam (kein Netz, Serverfehler, abgewiesener
+/// Meldetyp).
+///
+/// Der Unterschied ist für den Nutzer wichtig: Eine Meldung zu
+/// Kindesmissbrauch, die nicht ankommt, ist keine Meldung. Die App
+/// zeigte lange Zeit in beiden Fällen die grüne Bestätigung
+/// (Security-Audit 22.10.2026).
+class ReportSubmission {
+  const ReportSubmission({
+    required this.report,
+    required this.serverAccepted,
+  });
+
+  final UserReport report;
+  final bool serverAccepted;
+}
+
 /// Eigene Meldungen mit Status (v0.8.0 Meldungs-Feedback).
 class MyReportEntry {
   const MyReportEntry({
@@ -136,7 +156,13 @@ class ReportService {
     }
   }
 
-  Future<UserReport> createReport({
+  /// Erstellt eine Meldung: lokal (Hive) und – wenn möglich – beim
+  /// Support.
+  ///
+  /// Das Ergebnis sagt, ob der Server die Meldung angenommen hat. Local
+  /// gespeichert ist sie in jedem Fall; [ReportSubmission.serverAccepted]
+  /// ist false, wenn die Übermittlung nicht geklappt hat.
+  Future<ReportSubmission> createReport({
     required String reporterId,
     required String reporterUserName,
     required String reportedUserId,
@@ -161,25 +187,33 @@ class ReportService {
     );
     await _box.put(report.id, report);
 
-    // Zentrale Ablage beim Support (best effort). Nur dieser Weg
+    // Zentrale Ablage beim Support. Nur dieser Weg
     // übermittelt Nachrichten-Inhalte an Dritte – der Rest des Chats
     // bleibt Ende-zu-Ende-verschlüsselt auf den Geräten.
-    unawaited(_submitToServer(
+    //
+    // Das Ergebnis wird NICHT mehr verschluckt (Security-Audit
+    // 22.10.2026): der Server wies vier von sieben Meldetypen ab
+    // (darunter childSafety), die App zeigte trotzdem die grüne
+    // Bestätigung. Eine Meldung, die nicht ankommt, ist keine Meldung -
+    // der Nutzer muss das wissen.
+    final serverAccepted = await _submitToServer(
       report,
       messages,
       reportedUserIdRaw: reportedUserId,
-    ));
-    return report;
+    );
+    return ReportSubmission(report: report, serverAccepted: serverAccepted);
   }
 
   /// Übermittelt die Meldung inkl. der letzten (lokal entschlüsselten)
   /// Nachrichten an Supabase (Tabelle user_reports).
-  Future<void> _submitToServer(
+  ///
+  /// Gibt zurück, ob der Server die Meldung angenommen hat.
+  Future<bool> _submitToServer(
     UserReport report,
     List<Message>? messages, {
     required String reportedUserIdRaw,
   }) async {
-    if (!SupabaseService.isInitialized) return;
+    if (!SupabaseService.isInitialized) return false;
     try {
       await SupabaseService.client.rpc(
         'submit_report',
@@ -200,8 +234,10 @@ class ReportService {
         },
       );
       debugPrint('[ReportService] Meldung an den Support übermittelt.');
+      return true;
     } catch (e) {
       debugPrint('[ReportService] Server-Meldung fehlgeschlagen: $e');
+      return false;
     }
   }
 
@@ -385,22 +421,32 @@ Future<void> showReportUserDialog({
                         ref.read(profileProvider).name.isNotEmpty
                             ? ref.read(profileProvider).name
                             : AppConstants.currentUserId;
-                    await ref.read(reportServiceProvider).createReport(
-                      reporterId: AppConstants.currentUserId,
-                      reporterUserName: reporterName,
-                      reportedUserId: reportedUserId,
-                      reportedUserName: reportedUserName,
-                      type: selectedType!,
-                      description: descriptionController.text.trim().isEmpty
-                          ? null
-                          : descriptionController.text.trim(),
-                      messages: messages,
-                    );
+                    final ergebnis = await ref
+                        .read(reportServiceProvider)
+                        .createReport(
+                          reporterId: AppConstants.currentUserId,
+                          reporterUserName: reporterName,
+                          reportedUserId: reportedUserId,
+                          reportedUserName: reportedUserName,
+                          type: selectedType!,
+                          description:
+                              descriptionController.text.trim().isEmpty
+                                  ? null
+                                  : descriptionController.text.trim(),
+                          messages: messages,
+                        );
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                            content:
-                                Text(L10n.t(context, 'report.sendDone'))),
+                          content: Text(
+                            L10n.t(
+                              context,
+                              ergebnis.serverAccepted
+                                  ? 'report.sendDone'
+                                  : 'report.sendNotDelivered',
+                            ),
+                          ),
+                        ),
                       );
                     }
                   },

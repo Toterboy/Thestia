@@ -1,0 +1,33 @@
+More security, more clarity
+
+Verification that actually means something
+Your video is now stored encrypted - nobody else can see it. And an
+approval only counts if it was really granted: approval, rejection and
+a running review are now told apart properly. Your verified age is what
+counts, not what you entered.
+
+Child safety that works when it matters
+Concerns about child sexual abuse now have their own reporting path, and
+it actually works. There is also a dedicated page with the contact
+person and the reporting address: kinderschutz.thestia.de
+
+Describable traits
+In nearby mode you can now describe exactly what someone looks like -
+from the shirt down to the shoes and hair colour. The traits are sorted
+by category, and you get a badge once your description is complete.
+
+A bigger privacy promise
+No TURN server any more, no location data that is kept longer than
+needed, and a visible notice when someone sees your distance. You can
+delete your data yourself at any time - without asking support.
+
+Access only for verified accounts
+Without verification you no longer see any suggestions. That protects
+against age entries that are not true.
+
+Fixes
+- Reporting works again - including for inappropriate images
+- Password reset and resending the confirmation mail work
+- Profiles are no longer shown with the wrong age
+- Favourite song, favourite band and birthday style are kept
+- Several places where text was cut off

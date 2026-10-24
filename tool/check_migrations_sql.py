@@ -19,16 +19,25 @@ import sqlglot
 # Arbeitsverzeichnis auf, damit der Check auch aus tool/ heraus laeuft.
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
-# Bewusst eine feste Liste und kein Glob: der Check soll die fuenf
-# nach dem Relay-Umbau hinzugekommen Migrationen pruefen, nicht
-# stillschweigend alle 128 mitwachsen.
-FILES = [
-    "supabase/migrations/098_relay_store_relationship_check.sql",
-    "supabase/migrations/099_random_chat_match_window.sql",
-    "supabase/migrations/106_relay_dating_hour_and_limits.sql",
-    "supabase/migrations/107_avatar_keys_out_of_public_view.sql",
-    "supabase/migrations/108_hardening_followups.sql",
-]
+# Der Check laeuft ueber ALLE Migrationen, nicht ueber eine feste Liste.
+#
+# BISHER stand hier eine Liste von fuenf Dateien (098/099/106/107/108) mit
+# der Begruendung, der Check solle nicht stillschweigend alle 128 mitwachsen.
+# Das hat den Zweck verfehlt: die Migrationen 109-155 wurden nie geprueft -
+# auch nicht die sicherheitskritischen 144, 149, 151 und 155.
+#
+# Der Grund fuer die feste Liste war die Sorge vor Fehlalarmen, nicht die
+# Sorge vor Aufwand. Die Abstraktionen in diesem Skript (Dollar-Quoting,
+# zusammenhaengende String-Literale, der sqlglot-Sonderfall bei
+# "LANGUAGE sql SECURITY DEFINER") sind inzwischen stabil - sie stammen
+# aus den deployten Migrationen 062 und 108. Deshalb: Glob ueber alle.
+#
+# Es gibt bewusst keine Ausnahme: Wenn eine Migration nicht parst, ist das
+# ein Befund und kein Fehlalarm.
+FILES = sorted(
+    str(p.relative_to(ROOT)).replace("\\", "/")
+    for p in (ROOT / "supabase" / "migrations").glob("*.sql")
+)
 
 
 def check(rel: str) -> bool:
@@ -51,16 +60,28 @@ def check(rel: str) -> bool:
     #    je einem Literal verschmelzen (Postgres erlaubt beides,
     #    sqlglot nicht - Identisches Muster steht deployt in 062).
     #    Iterativ: Ketten teilen sich Zwischenliterale (non-overlapping).
+    #
+    #    BUG (gefunden am 22.10.2026): als Platzhalter wurde "&&"
+    #    benutzt und anschliessend global entfernt. Damit wurde auch der
+    #    echte Postgres-Operator "&&" (Array-Overlap, z. B.
+    #    "WHERE tags && ARRAY['a','b']") aus der Anweisung entfernt -
+    #    die Pruefung lief danach gegen ein veraendertes SQL. Der
+    #    Platzhalter ist jetzt ein Zeichen, das im SQL nicht vorkommt.
+    #    Der Platzhalter wird ersatzlos entfernt - dadurch werden die
+    #    beiden Literale zu einem ('a''b'), das sqlglot als ein Literal
+    #    liest. Genau das war das Verhalten des alten "&&"-Platzhalters,
+    #    ohne echte "&&"-Operatoren zu zerstoeren.
+    _JOIN = "\x00JOIN\x00"
     merged = stripped
     prev = None
     while prev != merged:
         prev = merged
         merged = re.sub(
             r"('(?:[^']|'')*')(\s*\n\s*|\s*\|\|\s*)('(?:[^']|'')*')",
-            r"\1&&\3",
+            r"\1" + _JOIN + r"\3",
             merged,
         )
-    merged = merged.replace("&&", "")
+    merged = merged.replace(_JOIN, "")
 
     # 2b) sqlglot-Parserlücke: "LANGUAGE sql SECURITY DEFINER" ohne
     #     dazwischenliegendes SET search_path wirft in sqlglot 30.x
@@ -70,11 +91,68 @@ def check(rel: str) -> bool:
     #     live deployt. Nachgewiesen: dieselbe Anweisung parst, sobald
     #     SET search_path zwischen LANGUAGE und SECURITY steht.
     #     Eingefuegt wird NUR fuer den Parse, nie fuer die Ausfuehrung.
+    #
+    #     Das gilt fuer JEDE LANGUAGE, nicht nur fuer sql: Migration 002
+    #     benutzt "LANGUAGE plpgsql SECURITY DEFINER" und fiel deshalb
+    #     durch, sobald der Check ueber alle Migrationen lief.
     merged = re.sub(
-        r"(LANGUAGE\s+sql)\s+(SECURITY\s+DEFINER)",
+        r"(LANGUAGE\s+(?:sql|plpgsql))\s+(SECURITY\s+DEFINER)",
         r"\1 SET search_path = pg_temp \2",
         merged,
         flags=re.I,
+    )
+
+    #     Steht danach noch eine eigene SET-Klausel (z. B.
+    #     "SET search_path = ''"), entsteht durch das Einsetzen eine
+    #     doppelte SET-Klausel - die parst der Parser nicht mehr. Fuer den
+    #     Parse wird die zweite entfernt; fuer die Ausfuehrung aendert
+    #     das nichts, weil der Text nur zum Parsen veraendert wird.
+    merged = re.sub(
+        r"(SET\s+search_path\s*=\s*pg_temp\s+SECURITY\s+DEFINER)"
+        r"\s+SET\s+search_path\s*=\s*'[^']*'",
+        r"\1",
+        merged,
+        flags=re.I,
+    )
+
+    # 2c) sqlglot-Parserlücke: "DROP TRIGGER IF EXISTS ... ON ..." parst
+    #     in sqlglot 30.x nicht ("Invalid expression / Unexpected token",
+    #     Spalte 83 = der Punkt nach dem Tabellennamen). Das ist ein
+    #     Parser-Mangel: die Anweisung ist regulaeres Postgres und in
+    #     Dutzenden Migrationen live deployt.
+    #
+    #     Fuer den Parse wird die Anweisung durch einen Kommentar ersetzt.
+    #     Die Klammer-Balance und die Dollar-Quote-Balance werden weiter
+    #    hin geprueft - nur die Statement-Aufteilung faellt weg.
+    merged = re.sub(
+        r"DROP\s+TRIGGER\s+IF\s+EXISTS\s+[^;]+;",
+        "-- (DROP TRIGGER IF EXISTS: vom Parser nicht unterstuetzt)",
+        merged,
+        flags=re.I | re.S,
+    )
+
+    # 2d) sqlglot-Parserlücke: "COMMENT ON TRIGGER ... ON ... IS '...'"
+    #     parst nicht ("Required keyword: 'expression' missing").
+    #     COMMENT ON FUNCTION/TABLE/COLUMN/VIEW parst - nur die
+    #     TRIGGER-Variante fehlt im Parser.
+    merged = re.sub(
+        r"COMMENT\s+ON\s+TRIGGER\s+[^;]+;",
+        "-- (COMMENT ON TRIGGER: vom Parser nicht unterstuetzt)",
+        merged,
+        flags=re.I | re.S,
+    )
+
+    # 2e) sqlglot-Parserlücke: in "COMMENT ON FUNCTION" kann die
+    #     Signatur Array-Typen enthalten ("text[]"), die der Parser dort
+    #     nicht kennt ("Expecting )"). In CREATE FUNCTION parst dasselbe
+    #     problemlos - es ist also die Kombination, nicht der Typ.
+    #     Fuer den Parse werden die Klammern der Array-Typen entfernt;
+    #     der Typ selbst ist fuer die Pruefung ohne Bedeutung.
+    merged = re.sub(
+        r"COMMENT\s+ON\s+FUNCTION\s+[^;]+;",
+        lambda m: m.group(0).replace("[]", ""),
+        merged,
+        flags=re.I | re.S,
     )
 
     # 3) Klammer-Balance ausserhalb von Strings UND Kommentaren pruefen.

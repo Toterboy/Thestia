@@ -452,18 +452,31 @@ Future<void> _runAiCheck({
 }) async {
   // Parallel: Klassischen Report-Eintrag erzeugen (Admin-Sicht
   // „Meldungen"), damit die Bild-Meldung dort ebenfalls auftaucht.
+  //
+  // Das Ergebnis wird ausgewertet (Security-Audit 22.10.2026): der
+  // Server wies den Typ 'inappropriateContent' vorher ab, weil er nur
+  // snake_case kannte - die Meldung kam nie an, ohne dass der Nutzer
+  // etwas bemerkt hat.
   final reporterName = ref.read(profileProvider).name.isNotEmpty
       ? ref.read(profileProvider).name
       : AppConstants.currentUserId;
   unawaited(
-    ref.read(reportServiceProvider).createReport(
+    ref
+        .read(reportServiceProvider)
+        .createReport(
           reporterId: AppConstants.currentUserId,
           reporterUserName: reporterName,
           reportedUserId: reportedUserId,
           reportedUserName: reportedUserName,
           type: ReportType.inappropriateContent,
-          description: 'Bild-Meldung: $reason${details.isEmpty ? '' : ' - $details'}',
-        ),
+          description:
+              'Bild-Meldung: $reason${details.isEmpty ? '' : ' - $details'}',
+        )
+        .then((ergebnis) {
+      if (ergebnis.serverAccepted) return;
+      debugPrint('[ImageReportService] Meldung nicht beim Support '
+          'angekommen: ${ergebnis.report.type.value}');
+    }),
   );
 
   // Lade-Dialog (nicht abbrechbar - der Scan dauert wenige Sekunden).

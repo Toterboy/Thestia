@@ -428,6 +428,9 @@ const Map<String, Map<String, String>> _strings = {
     'common.new': 'NEU',
     'transit.title': 'Transit Spark',
     'transit.start': 'Radar aktivieren',
+    'transit.featureDisabled':
+        'Transit Spark ist gerade eingeschränkt. Bitte versuche es später '
+        'noch einmal.',
     'transit.stop': 'Radar stoppen',
     'transit.active':
         'Radar aktiv - du bist sichtbar für Thestia-Geräte in der Nähe.',
@@ -963,6 +966,7 @@ const Map<String, Map<String, String>> _strings = {
     'chathist.dialogTitle': 'Chat-Verlauf speichern',
     'chathist.modeWord': 'Modus:',
     'chat.safetyNumber': 'Sicherheitsnummer',
+    'chat.securityHeader': 'Sicherheit',
     'chat.safetyNumberTooltip': 'Sicherheitsnummer (E2E-Verifikation)',
     'chat.safetyChangedTitle': 'Sicherheitsnummer hat sich geändert',
     'chat.safetyChangedBody':
@@ -2759,6 +2763,10 @@ const Map<String, Map<String, String>> _strings = {
     'report.userTitle': 'Nutzer melden: {name}',
     'report.userTooltip': 'Nutzer melden',
     'report.sendDone': 'Meldung gesendet. Danke für deine Hilfe!',
+    'report.sendNotDelivered':
+        'Meldung gespeichert, aber nicht an unser Team übermittelt. Bitte '
+        'versuche es erneut. Bei einem Hinweis auf Kindesmissbrauch '
+        'schreib bitte zusätzlich an kinderschutz@thestia.de.',
     'report.imageTitle': 'Bild melden: {name}',
     'report.imageUnavailable': 'Dieses Bild kann leider nicht gemeldet werden.',
     'report.sendReport': 'Meldung absenden',
@@ -3200,6 +3208,8 @@ const Map<String, Map<String, String>> _strings = {
     'common.new': 'NEW',
     'transit.title': 'Transit Spark',
     'transit.start': 'Activate radar',
+    'transit.featureDisabled':
+        'Transit Spark is currently unavailable. Please try again later.',
     'transit.stop': 'Stop radar',
     'transit.active': 'Radar active - visible to nearby Thestia devices.',
     'transit.inactive': 'Radar off. Activate it when you are on the go.',
@@ -3595,6 +3605,7 @@ const Map<String, Map<String, String>> _strings = {
     'chathist.dialogTitle': 'Save chat history',
     'chathist.modeWord': 'Mode:',
     'chat.safetyNumber': 'Safety number',
+    'chat.securityHeader': 'Security',
     'chat.safetyNumberTooltip': 'Safety number (E2E verification)',
     'chat.safetyChangedTitle': 'Safety number has changed',
     'chat.safetyChangedBody':
@@ -5413,6 +5424,10 @@ const Map<String, Map<String, String>> _strings = {
     'report.userTitle': 'Report user: {name}',
     'report.userTooltip': 'Report user',
     'report.sendDone': 'Report sent. Thank you for your help!',
+    'report.sendNotDelivered':
+        'Report saved, but not delivered to our team. Please try again. '
+        'In case of a child safety concern, also write to '
+        'kinderschutz@thestia.de.',
     'report.imageTitle': 'Report image: {name}',
     'report.imageUnavailable': 'This image cannot be reported, unfortunately.',
     'report.sendReport': 'Send report',

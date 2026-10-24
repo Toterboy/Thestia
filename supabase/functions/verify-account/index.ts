@@ -6,7 +6,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.0";
 // Drei Aktionen (body.action):
 //   "submit"  – Eingeloggter Nutzer reicht sein Verifizierungs-Video ein.
 //               Das Video wurde VORHER direkt in den privaten Bucket
-//               `verification-videos/<userId>/video.mp4` hochgeladen
+//               `verification-videos/<userId>/video.mp4.enc` hochgeladen -
+//               seit v0.10.0 verschluesselt (AES-256-GCM, Schluessel in
+//               `verification_video_keys`), NICHT im Klartext.
 //               (Storage-Policy erlaubt nur den eigenen Ordner). Hier
 //               wird nur der Pfad + Status 'pending' vermerkt. Optional
 //               kann die lokale KI-Schätzung mitgegeben werden
@@ -583,7 +585,11 @@ serve(async (req) => {
       const { data: obj } = await supabaseAdmin.storage
         .from("verification-videos")
         .list(user.id, { limit: 10 });
-      if (!obj || !obj.some((o) => o.name === "video.mp4")) {
+      // BUG (Security-Audit 22.10.2026): hier wurde auf 'video.mp4'
+      // geprueft. Seit v0.10.0 (Migration 151) laedt der Client das Video
+      // aber verschluesselt als 'video.mp4.enc' hoch - die automatische
+      // Freigabe endete deshalb IMMER mit HTTP 400 "Video nicht gefunden".
+      if (!obj || !obj.some((o) => o.name === "video.mp4.enc")) {
         return new Response(
           JSON.stringify({ error: "Video nicht gefunden (Upload fehlt)" }),
           { status: 400, headers: { "Content-Type": "application/json" } },
@@ -623,11 +629,20 @@ serve(async (req) => {
       // entscheiden - und damit waere die Verifizierung fuer den
       // Jugendschutz irrelevant (Nutzer-Einwand vom 21.10.2026).
       //
-      // Gesetzt wird die KI-Schaetzung, nicht die Angabe des Nutzers:
-      // die Schätzung wurde gerade gegen die Angabe geprueft (max. 2
-      // Jahre Abweichung) und war fuer eine Minderjaehrigkeits-
-      // Abweichung vorgesehen. Die KI-Schaetzung ist die
-      // unabhaengigere Groesse.
+      // KONSERVATIV (Security-Audit 22.10.2026): die KI-Schaetzung ist ein
+      // CLIENT-Wert - sie wird im Browser ausgewertet und gemeldet. Sie
+      // ist damit keine unabhaengige Messung, auch wenn der Code hier
+      // das behauptet hat. Gesetzt wird deshalb das JUENGERE der beiden
+      // Werte: estimatedAge und statedAge.
+      //
+      // Der Grund ist die Richtung des Risikos. Eine zu junge Angabe
+      // schliesst Begegnungen aus, die erlaubt waeren - unangenehm, aber
+      // nicht gefaehrlich. Eine zu alte Angabe dagegen wuerde eine
+      // minderjaehrige Person als erwachsen behandeln und damit genau
+      // den Schutzwall aushebeln, den diese Funktion aufbauen soll.
+      // Der kleinere Wert kann nur zu streng sein, nie zu lax.
+      const verifiedAge = Math.min(estimatedAge, statedAge);
+
       const { error: updateError } = await supabaseAdmin
         .from("profiles")
         .update({
@@ -635,7 +650,7 @@ serve(async (req) => {
           verification_estimated_age: estimatedAge,
           verification_status: "auto",
           is_verified: true,
-          verified_age: estimatedAge,
+          verified_age: verifiedAge,
         })
         .eq("user_id", user.id);
 
@@ -675,18 +690,29 @@ serve(async (req) => {
     // Schaetzung stuetzt sein Urteil. Ohne Schaetzung (etwa bei
     // manueller Freigabe eines alten Falls) bleibt es beim
     // deklarierten Alter.
+    //
+    // KONSERVATIV (Security-Audit 22.10.2026): die KI-Schaetzung stammt
+    // vom Client und ist keine unabhaengige Messung. Gesetzt wird das
+    // JUENGERE von Schaetzung und deklariertem Alter - so kann das
+    // Ergebnis nie zu alt ausfallen. Ein zu junges Alter schliesst
+    // Begegnungen aus, die erlaubt waeren; ein zu altes wuerde eine
+    // minderjaehrige Person als erwachsen behandeln.
     let verifiedAge: number | null = null;
     if (isVerified) {
       const { data: alt } = await supabaseAdmin
         .from("profiles")
-        .select("verification_estimated_age")
+        .select("verification_estimated_age, birth_date")
         .eq("user_id", targetUserId)
         .maybeSingle();
       const est = (alt as { verification_estimated_age?: number } | null)
         ?.verification_estimated_age;
-      verifiedAge = typeof est === "number" && est >= 16 && est <= 100
-        ? Math.round(est)
-        : null;
+      const declared = statedAgeFromBirthDate(
+        (alt as { birth_date?: string } | null)?.birth_date ?? null,
+      );
+      if (typeof est === "number" && est >= 16 && est <= 100) {
+        const gerundet = Math.round(est);
+        verifiedAge = declared != null ? Math.min(gerundet, declared) : gerundet;
+      }
     }
 
     const { error: updateError } = await supabaseAdmin
@@ -720,10 +746,14 @@ serve(async (req) => {
     }
 
     // Bei Ablehnung das private Video endgueltig loeschen (DSGVO).
+    //
+    // BUG (Security-Audit 22.10.2026): hier wurde 'video.mp4' geloescht.
+    // Seit Migration 151 liegt aber das Chiffrat 'video.mp4.enc' im
+    // Bucket - es blieb zurueck, obwohl der Nutzer abgelehnt wurde.
     if (!isVerified) {
       await supabaseAdmin.storage
         .from("verification-videos")
-        .remove([`${targetUserId}/video.mp4`]);
+        .remove([`${targetUserId}/video.mp4.enc`]);
     }
 
     return new Response(JSON.stringify({

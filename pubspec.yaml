@@ -1,4 +1,4 @@
-name: thestia
+﻿name: thestia
 description: Eine moderne, datenschutzfreundliche Dating-App mit Blind Mode (Persönlichkeit zuerst).
 publish_to: 'none'
 version: 0.10.0+31
@@ -29,7 +29,7 @@ dependencies:
   go_router: ^17.3.0
 
   # Lokale, sichere Datenspeicherung (Einstellungen, Profil, Auth-Token)
-  shared_preferences: 2.5.5
+  shared_preferences: 2.5.6
 
   # Schöne Icons & Utilities
   # 0.20.2 ist von flutter_localizations (Flutter SDK) gepinnt - eine
@@ -47,7 +47,7 @@ dependencies:
   device_info_plus: ^13.2.0
 
   # Öffnen externer Links (GitHub Issues)
-  url_launcher: 6.3.2
+  url_launcher: 6.3.3
 
   # Bildauswahl für Bug-Reports
   image_picker: ^1.1.2
@@ -72,14 +72,14 @@ dependencies:
   crypto: 3.0.7
 
   # Sichere, verschlüsselte lokale Speicherung von Tokens (statt SharedPreferences)
-  flutter_secure_storage: 11.0.0
+  flutter_secure_storage: 11.2.0
 
   # Hive für lokale verschlüsselte Speicherung der Signal-Keys
   hive: ^2.2.3
   hive_flutter: ^1.1.0
 
   # Kamera & Video für Verifizierung
-  camera: 0.12.0+2
+  camera: 0.12.1
   video_player: ^2.9.1
   # Frame-Entnahme aus dem Verifizierungsvideo (Mehrframe-Median der
   # Altersschätzung, MIT): Thumbnails direkt aus der MP4-Datei, kein
@@ -87,7 +87,7 @@ dependencies:
   video_thumbnail: ^0.5.6
 
   # Berechtigungen
-  permission_handler: 13.0.1
+  permission_handler: 13.0.2
 
   # Standort
   geolocator: ^14.0.3
@@ -96,7 +96,7 @@ dependencies:
   geocoding: ^4.0.0
 
   # Bildverarbeitung für Moderation (Placeholder für ML-Kit)
-  image: 4.10.1
+  image: 4.12.0
 
   # NSFW on-device (v0.8.0): lokale Inferenz des Bild-Sicherheits-Modells
   # (image-safety-classifier-xs, ONNX-Format) - nur bei manueller Meldung.
@@ -106,7 +106,7 @@ dependencies:
   path_provider: 2.1.6
 
   # Benachrichtigungen (Nachrichten, Likes, Matches, Event-Erinnerungen)
-  flutter_local_notifications: 22.3.0
+  flutter_local_notifications: 22.3.2
 
   # EU-Push über Supabase Push (Verarbeitung in eu-central-1, Free Tier).
   # FCM dient nur als Zustell-Transport (kostenloses Firebase-Konto nötig).
@@ -127,7 +127,7 @@ dependencies:
 
   # Supabase für Auth + Datenbank (RLS-abgesichert) + Supabase Push (EU)
   flutter_dotenv: ^6.0.1
-  supabase_flutter: ^2.17.1
+  supabase_flutter: ^2.18.3
 
   # Passkeys (WebAuthn): native Passkey-Dialoge (FaceID/TouchID/Biometrie).
   # Der Plugin-Code läuft auf iOS 16+ / Android; es reicht die
@@ -139,7 +139,7 @@ dependencies:
   # NUR das Platform-Interface wird direkt gebraucht - das konkrete
   # passkeys-Paket kommt transitiv über supabase_flutter (Security 2026-09-26:
   # ungenutzte Direkt-Abhängigkeiten = unnötige Angriffsfläche).
-  passkeys_platform_interface: ^2.9.0
+  passkeys_platform_interface: ^2.10.0
 
   # QR-Code (Profil teilen + Scannen)
   qr_flutter: ^4.1.0

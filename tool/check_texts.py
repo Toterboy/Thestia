@@ -21,6 +21,28 @@ pats = [
 
 skip_files = {"app_strings.dart"}
 
+# Ausnahmen: Texte, die bewusst NICHT uebersetzt werden.
+#
+# Drei Faenge, alle mit Begründung - sonst wird die Ausnahme stillschweigend
+# zur Regel:
+#   1. Eigennamen von Firmen und Diensten ("Supabase Inc.", "Brevo"):
+#      die bleiben in jeder Sprache gleich.
+#   2. Fehlercodes aus dem Backend ("moderation_disabled"): das sind
+#      Schluessel, keine Woert fuer die Anzeige.
+#   3. Aufzaehlungszeichen ("•"): das ist ein Glyph, kein Text.
+ALLOWED = {
+    "Supabase Inc.",
+    "Google LLC (Firebase)",
+    "Brevo",
+    "Cloudflare Inc.",
+    "Netlify Inc.",
+    "Apple Inc.",
+    "moderation_disabled",
+    "moderation_unavailable",
+}
+
+findings = []
+
 for root, dirs, files in os.walk("lib"):
     for f in files:
         if not f.endswith(".dart") or f in skip_files:
@@ -39,6 +61,23 @@ for root, dirs, files in os.walk("lib"):
                 m = pat.search(line)
                 if m:
                     t = m.group(1)
-                    if t.strip() and t not in ("…", "...", "000000"):
-                        print(p, i, "|", t[:85])
+                    # Interpolationen ("$maxValue") sind keine festen
+                    # Texte - sie stammen aus Werten und nicht aus einem
+                    # Wortlaut im Code.
+                    if "$" in t:
+                        break
+                    # Reine Glyphen (Aufzaehlungszeichen) sind keine Texte.
+                    if all(ord(ch) > 0x2000 or ch in " \t" for ch in t):
+                        break
+                    if t.strip() and t not in ("…", "...", "000000") \
+                            and t not in ALLOWED:
+                        findings.append("%s:%d | %s" % (p, i, t[:85]))
                     break
+
+print("\n".join(findings) if findings else "KEINE festen Texte ohne L10n")
+print("TOTAL:", len(findings))
+
+# BUG (gefunden am 22.10.2026): dieses Skript hatte keinen Exit-Code.
+# Ein Treffer hat die CI nicht rot werden lassen - die Pruefung hat
+# nichts gemeldet und nichts verhindert.
+sys.exit(1 if findings else 0)

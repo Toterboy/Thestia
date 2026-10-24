@@ -240,22 +240,72 @@ serve(async (req) => {
       });
     }
 
-    if (actionType !== "signup") {
-      return new Response(JSON.stringify({ reason: actionType }), {
-        status: 422, headers: { "Content-Type": "application/json" },
-      });
+    // BUG (Security-Audit 22.10.2026): hier stand ein 422 fuer jede
+    // Aktion ausser "signup".
+    //
+    // GoTrue wertet eine Nicht-2xx-Antwort des Send-Email-Hooks als
+    // Fehler: der Auth-Request bricht ab. Betroffen waren
+    //   * "recovery"  - der Passwort-Reset (die App hat eine
+    //                   /forgot-password-Seite und ruft
+    //                   resetPasswordForEmail auf),
+    //   * "resend"    - das erneute Senden der Bestaetigungsmail.
+    // Es kam keine Mail an, und der Nutzer sah einen Fehler.
+    //
+    // JETZT: jede Aktion bekommt ihre eigene Mail mit passendem Link.
+    // Unbekannte Aktionen werden nicht abgewiesen, sondern wie eine
+    // Bestaetigung behandelt - eine Mail, die ankommt, ist besser als
+    // ein abgewiesener Auth-Request.
+    const emailData = (body.email_data ?? {}) as Record<string, unknown>;
+    const actionType = String(
+      emailData.email_action_type ?? "signup",
+    );
+    const redirectTo = String(
+      emailData.redirect_to ?? emailData.site_url ?? "",
+    );
+    const encodedToken = encodeURIComponent(token);
+
+    let subject = "Bestätige deine E-Mail-Adresse – Thestia";
+    let confirmUrl = `https://confirm.thestia.de/?token=${encodedToken}` +
+      `&type=signup`;
+    let heading = "Bestätige deine E-Mail-Adresse";
+    let intro = "Klicke auf den Button, um deinen Account zu aktivieren:";
+    let buttonLabel = "E-Mail bestätigen";
+    let validity = "Link ist 24 Std. gültig.";
+
+    if (actionType === "recovery") {
+      // Das Ziel muss in der Redirect-Allowlist des Projekts stehen -
+      // die App uebergibt genau 'thestia://reset-password'.
+      const target = redirectTo || "thestia://reset-password";
+      confirmUrl = `https://confirm.thestia.de/?token=${encodedToken}` +
+        `&type=recovery&redirect=${encodeURIComponent(target)}`;
+      subject = "Setze dein neues Passwort – Thestia";
+      heading = "Neues Passwort festlegen";
+      intro = "Klicke auf den Button, um ein neues Passwort zu setzen:";
+      buttonLabel = "Neues Passwort setzen";
+      validity = "Link ist 60 Std. gültig.";
+    } else if (actionType === "email_change") {
+      confirmUrl = `https://confirm.thestia.de/?token=${encodedToken}` +
+        `&type=email_change`;
+      subject = "Bestätige deine neue E-Mail-Adresse – Thestia";
+      heading = "Neue E-Mail-Adresse bestätigen";
+      intro = "Klicke auf den Button, um die Änderung zu bestätigen:";
+      buttonLabel = "Änderung bestätigen";
+    } else if (actionType === "magiclink") {
+      confirmUrl = `https://confirm.thestia.de/?token=${encodedToken}` +
+        `&type=magiclink`;
+      subject = "Dein Magic Link für Thestia";
+      heading = "Einmal-Anmeldung";
+      intro = "Klicke auf den Button, um dich anzumelden:";
+      buttonLabel = "Anmelden";
+    } else if (actionType !== "signup" && actionType !== "resend") {
+      // Unbekannte Aktion: nicht ablehnen. Die Standard-Mail schicken
+      // und im Log vermerken, damit der Fall auffällt.
+      console.log("Unbekannte Hook-Aktion, Standard-Mail gesendet:", actionType);
     }
 
-    // Schöner Bestätigungs-Link über die eigene Subdomain (Spaceship-Redirect,
-    // Typ 301, NICHT masked). confirm.thestia.de leitet auf
-    // <SUPABASE_URL>/functions/v1/confirm weiter – die Landing-Page liest
-    // token/type aus den Query-Parametern (getestet: Parameter, Pfad und
-    // HTTPS werden korrekt durchgereicht).
-    const confirmUrl = `https://confirm.thestia.de/?token=${encodeURIComponent(token)}&type=signup`;
-    const html = buildHtml(confirmUrl);
+    const html = buildHtml(confirmUrl, heading, intro, buttonLabel, validity);
     const text =
-      `Bestätige deine E-Mail-Adresse bei Thestia:\n${confirmUrl}\n\n` +
-      "Der Link ist 24 Stunden gültig.";
+      `${heading} – Thestia:\n${confirmUrl}\n\n${validity}`;
 
     // --- 1) Primär: Mailjet (EU, Frankreich; Free-Tier) ---------------------
     // WICHTIG: TrackClicks/TrackOpens = "none" => KEIN Link-Wrapping.
@@ -279,7 +329,7 @@ serve(async (req) => {
             Messages: [{
               From: { Email: "support@thestia.de", Name: "Thestia" },
               To: [{ Email: email }],
-              Subject: "Bestätige deine E-Mail-Adresse – Thestia",
+              Subject: subject,
               HTMLPart: html,
               TextPart: text,
               TrackClicks: "none",
@@ -326,7 +376,7 @@ serve(async (req) => {
           body: JSON.stringify({
             sender: { email: "support@thestia.de", name: "Thestia" },
             to: [{ email }],
-            subject: "Bestätige deine E-Mail-Adresse – Thestia",
+            subject: subject,
             htmlContent: html,
             textContent: text,
           }),
@@ -365,7 +415,13 @@ serve(async (req) => {
   }
 });
 
-function buildHtml(confirmUrl: string): string {
+function buildHtml(
+  confirmUrl: string,
+  heading: string,
+  intro: string,
+  buttonLabel: string,
+  validity: string,
+): string {
   return `<!DOCTYPE html>
 <html lang="de">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
@@ -377,10 +433,10 @@ function buildHtml(confirmUrl: string): string {
 <h1 style="color:#fff;font-size:28px;margin:0;font-weight:600;letter-spacing:1px">Thestia</h1>
 </td></tr>
 <tr><td style="padding:40px 30px;text-align:center">
-<h2 style="color:#2d2d2d;font-size:22px;margin:0 0 10px">Bestätige deine E-Mail-Adresse</h2>
-<p style="color:#666;font-size:15px;line-height:1.6;margin:0 0 30px">Klicke auf den Button, um deinen Account zu aktivieren:</p>
-<a href="${confirmUrl}" style="display:inline-block;background:linear-gradient(135deg,#ff8fab,#ff6b9d);color:#fff;text-decoration:none;padding:14px 40px;border-radius:30px;font-size:16px;font-weight:600;box-shadow:0 4px 12px rgba(255,107,157,0.3)">E-Mail bestätigen</a>
-<p style="color:#999;font-size:13px;margin:30px 0 0;line-height:1.5">Link ist 24 Std. gültig.</p>
+<h2 style="color:#2d2d2d;font-size:22px;margin:0 0 10px">${heading}</h2>
+<p style="color:#666;font-size:15px;line-height:1.6;margin:0 0 30px">${intro}</p>
+<a href="${confirmUrl}" style="display:inline-block;background:linear-gradient(135deg,#ff8fab,#ff6b9d);color:#fff;text-decoration:none;padding:14px 40px;border-radius:30px;font-size:16px;font-weight:600;box-shadow:0 4px 12px rgba(255,107,157,0.3)">${buttonLabel}</a>
+<p style="color:#999;font-size:13px;margin:30px 0 0;line-height:1.5">${validity}</p>
 </td></tr>
 <tr><td style="background:#fdf0ee;padding:20px 30px;text-align:center">
 <p style="color:#b0b0b0;font-size:12px;margin:0">Thestia &middot; Alle Rechte vorbehalten</p>

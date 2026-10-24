@@ -388,13 +388,20 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       > worden. Der Serverzustand ist durch Migration 142 verifiziert,
       > der Client-Pfad nicht. Prüfpunkte 4.12 bis 4.15 in
       > `docs/RELEASE-ABNAHME.md`.
-- [ ] **Folge des Contract-Schritts prüfen** – Migration 138 macht
+- [x] **Folge des Contract-Schritts prüfen** – Migration 138 macht
       **jede** bereits gebaute App unbrauchbar, die `city` oder
       `location_*` aus `profiles` liest. Das ist kein Absturz, sondern
       ein stillschweigend fehlgeschlagener Profilabgleich – die schlimmste
       Fehlerform, weil niemand etwas meldet. Vor einem Upload ist zu
       entscheiden, ob eine Mindestversion durchgesetzt wird (z. B. über
       `auth.jwt()->>'ver'` im RPC) oder ob der Play-Zwang genügt.
+      > **Umgesetzt (Migration 156):** `min_app_version_build` steht jetzt
+      > auf **31**. Build 30 fragt die in Migration 138 entfernten Spalten
+      > ab und bekommt deshalb einen Fehler – der Profilabgleich blieb
+      > stillschweigend unvollständig. Build 31 ist der erste Stand, der
+      > die Verifikationssperren, die Transit-Merkmale und das
+      > Datenschutz-Modell kennt. Ältere Clients bekommen jetzt den
+      > Update-Hinweis beim Start.
 - [ ] **BLE-Gerätetest als HARTER Release-Blocker** – Transit Spark gilt
       erst als stabil, wenn Reichweite, Advertise-Abdeckung und der
       komplette Match-Flow auf MINDESTENS 2 echten Geräten verschiedener
@@ -404,6 +411,15 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       ausstehend" vermerkte Punkt bleibt bis dahin offen – er ist kein
       Nice-to-have, sondern Abnahmekriterium. **Durchsetzung: siehe
       Statusblock oben.** Protokoll: `docs/BLE-GERAETETEST.md`
+      > **Notbremse ist jetzt vorbereitet (Migration 159):** Der im
+      > Statusblock geforderte Schalter in `app_config` existiert:
+      > `transit_spark_enabled`. Auf `false` gesetzt ist Transit Spark
+      > serverseitig für alle gesperrt – ohne Deploy und ohne App-Update,
+      > weil der Schalter in `transit_spark_adult()` sitzt und damit
+      > Radar, Matching und Kontaktversand gemeinsam trifft. Die App
+      > fragt den Stand ab und zeigt eine klare Meldung, statt eine
+      > Alters-Begründung zu geben, die nicht zutrifft. Der Wert steht
+      > im Auslieferungszustand auf `true`.
 - [ ] **BLE-Tracking-Härtung (Privacy im Funk)** – *vorgezogen, steht
       vor den kosmetischen Punkten, weil die Exposition bereits
       gegenwärtig für jeden Nutzer mit aktivem Transit Spark besteht.*

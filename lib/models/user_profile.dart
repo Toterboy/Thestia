@@ -54,6 +54,34 @@ enum VerificationState {
         ? VerificationState.verified
         : VerificationState.unverified;
   }
+
+  /// Liest den Zustand aus der Spalte `verification_status` der Tabelle
+  /// `profiles` (Migration 144/155).
+  ///
+  /// Das ist ein anderes Format als die oeffentliche Projektion: hier
+  /// stehen die Rohwerte 'none', 'pending', 'pending_minor', 'approved',
+  /// 'rejected' und 'auto'.
+  ///
+  /// Wichtig: der Status wird nur GELESEN. Ein 'rejected' ist fuer die
+  /// Anzeige "nicht verifiziert" - die Meldung, dass die Verifizierung
+  /// fehlt, ist damit korrekt; der Nutzer kann sie erneut einreichen.
+  static VerificationState fromServerStatus(
+    Object? status, {
+    bool isVerified = false,
+  }) {
+    if (isVerified) return VerificationState.verified;
+    if (status is String) {
+      switch (status) {
+        case 'pending':
+        case 'pending_minor':
+          return VerificationState.underReview;
+        case 'approved':
+        case 'auto':
+          return VerificationState.verified;
+      }
+    }
+    return VerificationState.unverified;
+  }
 }
 
 class UserProfile {
@@ -271,6 +299,18 @@ class UserProfile {
         ? DateTime(DateTime.now().year - age, 1, 1)
         : null;
 
+    // Verifikationsstatus (v0.10.0, Migration 144).
+    //
+    // BUG (Security-Audit 22.10.2026): die oeffentliche Projektion
+    // liefert is_verified und verification_state mit - sie wurden hier
+    // aber nie gelesen. Dadurch zeigte die App bei fremden Profilen
+    // nie das Verifikations-Abzeichen, obwohl der Server die Information
+    // hatte. Die Modus-Sperre (Verifikation noetig) blieb dadurch auch
+    // bei verifizierten Personen bestehen.
+    final publicVerified = json['is_verified'] as bool? ?? false;
+    final publicState =
+        VerificationState.fromJson(json, isVerified: publicVerified);
+
     return UserProfile(      id: json['user_id'] as String,
       name: json['name'] as String,
       bio: json['bio'] as String? ?? '',
@@ -313,6 +353,8 @@ class UserProfile {
       // Die RPC liefert created_at mit (profile_to_jsonb), es wurde nur
       // nie gelesen. Wird fuer den Hinweis "neuer Account" gebraucht.
       createdAt: _parseCreatedAt(json['created_at']),
+      isVerified: publicVerified,
+      verificationState: publicState,
     );
   }
 

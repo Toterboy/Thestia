@@ -7,6 +7,129 @@ und folgt der [Semantic Versioning Specification (SemVer)](https://semver.org/la
 Solange die Versionsnummer mit `0.` beginnt (Initial Development Phase nach SemVer §4),
 können sich Schnittstellen und Verhalten jederzeit ändern.
 
+## [0.10.0] – 2026-10-24 (Build 31)
+
+### Sicherheit
+
+- **Client-Schreibschutz fuer Verifikationsfelder repariert** (Migration 156):
+  Migration 155 hatte die Trigger-Funktion mit `pg_has_role(current_user, …)`
+  neu definiert. Im `SECURITY DEFINER`-Kontext ist `current_user` der
+  Owner der Funktion, nicht die aufrufende Rolle – die Prüfung war damit
+  **fail-open** und die `RAISE EXCEPTION` wurde nie ausgelöst. Jeder
+  angemeldete Nutzer konnte per Data API `is_verified = true`,
+  `verified_age = 100` oder `verification_status = 'approved'` selbst
+  setzen – Badge, Modus-Sperren und der Jugendschutz-Filter waren damit
+  client-kontrolliert. Der Trigger liest jetzt wieder den Role-Claim aus
+  dem JWT (Muster aus 056/061/095); `is_location_suspicious` ist wieder
+  geschützt
+- **Meldeweg für Kindesmissbrauch funktioniert wieder** (Migration 156):
+  Der Client sendet `ReportType.name` (camelCase), die Server-Whitelist
+  kannte nur snake_case – **vier von sieben** Meldetypen wurden serverseitig
+  abgewiesen, darunter `childSafety` und `inappropriateContent` (NSFW-
+  Bildmeldungen). Die App zeigte trotzdem die grüne Bestätigung, weil der
+  Fehler nur geloggt wurde. Die Whitelist kennt jetzt beide Schreibweisen,
+  Meldungen vom Typ `childSafety` stehen in der Admin-Liste vorn, und
+  der Nutzer wird gewarnt, wenn die Übermittlung nicht geklappt hat
+- **Automatische Verifikations-Freigabe war tot** (seit Migration 151):
+  Der Client lädt das Video verschlüsselt als `video.mp4.enc` hoch,
+  `verify-account` prüfte aber auf `video.mp4` – der Auto-Pfad endete
+  immer mit HTTP 400. Bei einer Ablehnung wurde zusätzlich das falsche
+  Objekt gelöscht, das Chiffrat blieb liegen (DSGVO Art. 17)
+- **Verifiziertes Alter ist konservativ** (Migration 156): `verified_age`
+  wird als das **jüngere** von KI-Schätzung und angegebener Alter
+  gesetzt. Die KI-Schätzung ist ein Client-Wert und keine unabhängige
+  Messung; ein zu junges Ergebnis schließt nur Begegnungen aus, ein zu
+  altes hätte eine minderjährige Person als erwachsen behandelt
+- **Verifikationsstatus wird vom Server gelesen**: `is_verified` war der
+  einzige serverseitige Wert, der nachgezogen wurde. Der Dreifachzustand
+  (unverifiziert / wird geprüft / verifiziert) blieb lokal stehen – wer
+  eingereicht hatte, sah weiterhin „nicht verifiziert“ und die
+  Modus-Sperren blieben ohne erkennbaren Grund bestehen. Zusätzlich zeigt
+  die App das Verifikations-Abzeichen bei fremden Profilen jetzt an – die
+  Information lieferte der Server, sie wurde nur nie gelesen
+- **Kein TURN-Server mehr**: `ice-config` liefert nur noch STUN. Der
+  TURN-Provider (Betreiber, Server-Standort) fiel in der
+  Datenschutzerklärung weg; die Messung ergab, dass der eingesetzte
+  TURN-Dienst auf einen Test-Netz-Bereich zeigte. Wiedereinführung steht
+  als offener Punkt in der Roadmap
+- **Alle 7 Overflows behoben** und die stillen Funktionsausfälle
+  gefunden: `favorite_song`, `favorite_band` und `birthday_style` wurden
+  gelesen, aber nie gespeichert – der Profil-Edit schrieb sie mit einem
+  leeren Wert zurück. Ebenso `distance_filter_mode` (Snake-Case),
+  `relationship_type`/`preferred_state` (zwei Writes statt einem) und
+  `personality_type` (serverseitig statt lokal). `show_distance` und die
+  Push-Schalter lesen ihre Werte jetzt tatsächlich vom Server
+
+### Datenschutz
+
+- **Datenschutzerklärung Version 14** mit Klartext-Hinweisen zu
+  Transit-Merkmalen, 24-h-Frist, verifiziertem Alter, beidseitiger
+  Sichtbarkeit, Kontaktweg und Lösch-URL
+- **Öffentliche Kontakt- und Löscheseiten**: `kinderschutz.thestia.de`
+  (Kontaktperson Thoralf Illg, `kinderschutz@thestia.de`),
+  `konto-loeschen.thestia.de` und die Datenschutzerklärung unter
+  `datenschutz.thestia.de` – jeweils mit Rewrite auf der Website
+- **Video-Verschlüsselung**: AES-256-GCM clientseitig, der Schlüssel
+  liegt in `verification_video_keys` (ohne Client-Zugriff), im Bucket
+  nur Chiffrat. Die Admin-Sichtung erzeugt eine 20-Minuten-Vorschau, die
+  ein Cron wieder entfernt
+- **Jugendschutz**: das verifizierte Alter ist maßgeblich, die
+  Altersspanne wird beidseitig geprüft, die Untergrenze liegt bei
+  (eigenes Alter − 10), und Vorschlagslisten gibt es nur für
+  verifizierte Konten
+
+### Features
+
+- **Transit-Merkmale mit Kategorien** (top/bottom/head/shoes/accessory/
+  hair/eyes): die Beschreibung einer Person ist jetzt über eine
+  serverseitige Katalogtabelle definiert, mit Suche, Kategoriefilter,
+  höchstens einem Wert je Kategorie und höchstens acht insgesamt
+- **Nähefunk-Icons**: eigene Symbole für Transit Spark, Zufallschat und
+  „Find your Spark“, dazu ein rundes Launcher-Icon
+- **Play-Child-Safety-Standards**: eigener Meldetyp
+  (`ReportType.childSafety`), eigener Abschnitt in den Community-
+  Richtlinien mit Link auf die Kontaktseite, `cg.6` in den Richtlinien
+  auf Deutsch und Englisch
+
+### Behoben
+
+- **Passwort-Reset und erneutes Senden der Bestätigungsmail**: der
+  E-Mail-Hook antwortete auf alle Aktionen außer „signup“ mit HTTP 422 –
+  GoTrue wertet das als Fehler und bricht den Auth-Request ab. Es kam
+  keine Mail an, und der Nutzer sah eine Fehlermeldung. Der Hook
+  versendet jetzt je Aktion die passende Mail (Bestätigung, Reset,
+  E-Mail-Wechsel, Magic Link)
+- **HOOK_SECRET**: das Secret war 64 Hex-Zeichen, die Function hat
+  Base64 dekodiert – die Signaturprüfung schlug deshalb immer fehl
+  (401). Die Function akzeptiert jetzt Base64, Hex und Rohbytes;
+  `tool/check_hook_secret.py` prüft den Dashboard-Wert gegen die
+  laufende Function
+- **Neue Tabellen brauchen ein GRANT**: Supabase gibt ab 30.10.2026
+  neuen Tabellen im Schema `public` keine automatischen Data-API-Rechte
+  mehr. `profile_locations` und `transit_soft_pings` hatten dadurch gar
+  kein Grant – der Standort wurde nie gespeichert und eine Funke
+  konnte nicht weggeklickt werden (Migration 147)
+- **Build-30-Clients sind abgeschaltet**: Migration 138 hat die Spalten
+  `city`/`location_lat`/`location_lng` entfernt, Build 30 fragt sie aber
+  ab. `min_app_version_build` steht jetzt auf 31
+- **Anzeigealter = Filteralter**: die Projektion zeigte das deklarierte
+  Alter, gefiltert wurde nach dem effektiven
+- **Mehrere Überläufe**: fünf Auswahlfelder, die Fotoleiste, die
+  Abschnittsüberschrift, die Chat-Hintergrund-Schaltfläche und die
+  Knöpfe im Kopfzeile
+
+### Geändert
+
+- **Toter Code entfernt**: sieben Dateien, 90 ungenutzte Sprachschlüssel,
+  zwei Widgetklassen und die Route `/onboarding`
+- **CI repariert**: ungültiges YAML ließ alle Jobs ausfallen, der
+  Datenschutz-Check ist jetzt `continue-on-error` (Netlify ist ein
+  externer Zustand)
+- **Paket-Updates**: `camera`, `flutter_local_notifications`,
+  `permission_handler`, `shared_preferences`, `url_launcher`,
+  `flutter_secure_storage` und `image` auf die aktuellen
+  Sicherheits-Patches gehoben
+
 ## [0.9.2] – 2026-10-04 (Build 30)
 
 ### Sicherheit

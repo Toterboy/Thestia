@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/models/transit_models.dart';
+import 'package:thestia/services/app_config_service.dart';
 import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/supabase_service.dart';
@@ -26,6 +27,7 @@ class TransitState {
     this.selfTags = const [],
     this.selfNote = '',
     this.lastError,
+    this.featureDisabled = false,
   });
 
   /// Taegliche Selbst-Angaben (v0.9.0): 1-3 Merkmale zu sich selbst,
@@ -52,6 +54,14 @@ class TransitState {
   /// Fehlerursache des letzten Signal-Versands (Snackbar-Diagnose).
   final String? lastError;
 
+  /// Der Server hat Transit Spark abgeschaltet (Migration 159).
+  ///
+  /// Der Schalter in `app_config` ist die Notbremse fuer den Fall, dass
+  /// der BLE-Gerätetest nicht besteht. Der Client fragt den Stand ab,
+  /// damit der Nutzer eine klare Begruendung sieht und nicht nur eine
+  /// Alters-Meldung, obwohl es um etwas anderes geht.
+  final bool featureDisabled;
+
   TransitState copyWith({
     bool? active,
     TransitMode? mode,
@@ -63,6 +73,7 @@ class TransitState {
     List<String>? selfTags,
     String? selfNote,
     String? lastError,
+    bool? featureDisabled,
   }) {
     return TransitState(
       active: active ?? this.active,
@@ -75,6 +86,7 @@ class TransitState {
       selfTags: selfTags ?? this.selfTags,
       selfNote: selfNote ?? this.selfNote,
       lastError: lastError,
+      featureDisabled: featureDisabled ?? this.featureDisabled,
     );
   }
 }
@@ -85,6 +97,23 @@ class TransitState {
 class TransitNotifier extends StateNotifier<TransitState> {
   TransitNotifier() : super(const TransitState()) {
     _encounters.load();
+    unawaited(_refreshFeatureFlag());
+  }
+
+  /// Fragt den Schalterstand ab (Migration 159).
+  ///
+  /// Fail-open: Wenn der Stand nicht gelesen werden kann, bleibt das
+  /// Feature aktiv - der Server entscheidet ohnehin, und ein Lesefehler
+  /// soll das Feature nicht ungefragt stilllegen.
+  Future<void> _refreshFeatureFlag() async {
+    try {
+      final aktiv = await AppConfigService.fetchTransitSparkEnabled();
+      if (aktiv != state.featureDisabled) {
+        state = state.copyWith(featureDisabled: !aktiv);
+      }
+    } catch (e) {
+      debugPrint('[Transit] Schalterstand nicht gelesen: $e');
+    }
   }
 
   TransitEncounterService? _encountersField;
@@ -135,6 +164,10 @@ class TransitNotifier extends StateNotifier<TransitState> {
   /// nicht starten konnte (z. B. Bluetooth aus / Berechtigung fehlt).
   Future<bool> activate() async {
     if (state.active) return true;
+    // Der Server kann Transit Spark abschalten (Migration 159). Dann
+    // wird das BLE gar nicht erst gestartet - ein Funkgerät, das nichts
+    // bewirkt, ist nur Datenschutz-Aufwand ohne Gegenwert.
+    if (state.featureDisabled) return false;
     final token = TransitEncounterService.generateToken();
     final ok = await TransitBleService.instance.start(
       token: token,
@@ -296,6 +329,7 @@ class TransitNotifier extends StateNotifier<TransitState> {
   /// vorgehalten.
   Future<TransitSparkResult?> sendSpark(List<String> tags) async {
     if (!state.active || state.busy) return null;
+    if (state.featureDisabled) return null;
     state = state.copyWith(busy: true, clearResult: true);
     try {
       final tokens = _encounters.freshTokens();

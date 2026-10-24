@@ -187,6 +187,22 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
     final age = ref.read(profileProvider).age;
     if (age == null || age < 18) return;
 
+    // Der Server kann Transit Spark abschalten (Migration 159 - die
+    // Notbremse fuer den Fall, dass der BLE-Gerätetest nicht besteht).
+    // Dann wird nicht nur der Funk unterlassen: der Nutzer bekommt
+    // eine klare Begruendung statt einer Alters-Meldung, die nicht
+    // zutrifft.
+    if (ref.read(transitProvider).featureDisabled) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.t(context, 'transit.featureDisabled')),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     // Taegliche Selbst-Angaben (v0.9.0): Pflicht vor dem Start - andere
     // koennen dich nur darueber finden. Jeden Tag neu angeben. Plus
     // optionale freie Ergänzung (v0.9.1, eigenes Textfeld).

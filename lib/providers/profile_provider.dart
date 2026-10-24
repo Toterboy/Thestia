@@ -108,9 +108,16 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
   /// Holt die Felder, die der Server verwaltet, und schreibt sie in den
   /// lokalen Stand.
   ///
-  /// Abgefragt wird nur `is_verified` - bewusst. Der Rest des Profils
-  /// ist nutzereigen und kommt aus dem Secure-Store; der Server ist
-  /// fuer ihn nicht die Quelle.
+  /// Abgefragt werden `is_verified` und `verification_status`.
+  ///
+  /// BUG (Security-Audit 22.10.2026): es wurde nur `is_verified`
+  /// gelesen. Der Dreifachzustand (unverified / under_review / verified)
+  /// blieb dadurch lokal stehen - wer eine Einreichung gemacht hatte,
+  /// sah weiterhin "nicht verifiziert" und die Modus-Sperren blieben
+  /// ohne erkennbaren Grund bestehen.
+  ///
+  /// Der Rest des Profils ist nutzereigen und kommt aus dem Secure-Store;
+  /// der Server ist fuer ihn nicht die Quelle.
   ///
   /// Fehler werden verschluckt: ohne Server bleibt der lokale Stand
   /// stehen, und die App ist offline benutzbar.
@@ -122,18 +129,30 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
 
       final res = await SupabaseService.client
           .from('profiles')
-          .select('is_verified')
+          .select('is_verified, verification_status')
           .eq('user_id', userId)
           .maybeSingle();
       if (res == null) return;
 
       final serverVerified = res['is_verified'] as bool? ?? false;
-      if (serverVerified == state.isVerified) return;
+      final serverStatus = res['verification_status'] as String?;
+      final serverState = VerificationState.fromServerStatus(
+        serverStatus,
+        isVerified: serverVerified,
+      );
+      if (serverVerified == state.isVerified &&
+          serverState == state.verificationState) {
+        return;
+      }
 
-      debugPrint('[ProfileNotifier] is_verified vom Server: '
-          '${state.isVerified} -> $serverVerified');
+      debugPrint('[ProfileNotifier] Verifikation vom Server: '
+          'is_verified ${state.isVerified} -> $serverVerified, '
+          'status ${state.verificationState.name} -> ${serverState.name}');
       final warVerifiziert = state.isVerified;
-      state = state.copyWith(isVerified: serverVerified);
+      state = state.copyWith(
+        isVerified: serverVerified,
+        verificationState: serverState,
+      );
       await _persist();
 
       // Benachrichtigung ueber die Freigabe (v0.10.0).

@@ -2388,13 +2388,17 @@ Future<bool> _ensureMicDisclosure() async {
                 ),
               ),
               const PopupMenuDivider(),
-              const PopupMenuItem(
+              // Kein 'const': L10n.t braucht den Kontext und ist damit
+              // keine konstante Ausdruecksform.
+              PopupMenuItem(
                 enabled: false,
                 child: Padding(
-                  padding: EdgeInsets.only(left: 16, top: 4, bottom: 4),
-                  child: Text('Sicherheit',
-                      style: TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.bold)),
+                  padding: const EdgeInsets.only(left: 16, top: 4, bottom: 4),
+                  child: Text(
+                    L10n.t(context, 'chat.securityHeader'),
+                    style: const TextStyle(
+                        fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
               PopupMenuItem(

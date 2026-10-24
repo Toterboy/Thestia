@@ -402,7 +402,7 @@ class SupabaseStorageService {
   static const _verificationBucket = 'verification-videos';
 
   /// Lädt das Verifizierungs-Video in den PRIVATEN Bucket und gibt den
-  /// Storage-Pfad zurück (`{userId}/video.mp4`). Lesen kann die Datei nur
+  /// Storage-Pfad zurück (`{userId}/video.mp4.enc`). Lesen kann die Datei nur
   /// der Eigentümer; Admins erhalten kurzlebige signierte URLs über die
   /// Edge Function `verification-media`.
   Future<String> uploadVerificationVideo(List<int> data) async {
@@ -443,13 +443,17 @@ class SupabaseStorageService {
   }
 
   /// Entfernt das eigene Verifizierungs-Video (z. B. bei Abbruch).
+  ///
+  /// BUG (Security-Audit 22.10.2026): hier wurde 'video.mp4' geloescht.
+  /// Seit v0.10.0 (Migration 151) liegt das Video aber verschluesselt als
+  /// 'video.mp4.enc' im Bucket - der Aufruf ins Leere tat nichts.
   Future<void> deleteVerificationVideo() async {
     final userId = _currentUser?.id;
     if (userId == null) {
       throw AppException('Nicht eingeloggt.');
     }
     await _client.storage.from(_verificationBucket).remove([
-      '$userId/video.mp4',
+      '$userId/video.mp4.enc',
     ]);
   }
 }

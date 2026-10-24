@@ -29,18 +29,34 @@ serve(async (req) => {
   const token = url.searchParams.get("token") ?? "";
   const type = url.searchParams.get("type") ?? "signup";
 
-  // Nach der Verifikation landet der Nutzer ohne Token wieder hier ->
+  // Weiterleitungsziel (v0.10.0, Security-Audit 22.10.2026).
+  //
+  // Beim Passwort-Reset muss der Nutzer nach der Verifikation in der
+  // App landen ('thestia://reset-password'), nicht wieder in diesem
+  // Browser-Fenster. Deshalb kann der Link ein 'redirect' mitgeben.
+  //
+  // Der Parameter ist frei formulierbar - deshalb wird er hier
+  // beschraenkt: nur das eigene App-Schema ist erlaubt. Alles andere
+  // faellt auf die Standard-Weiterleitung zurueck. (Zusaetzlich prueft
+  // GoTrue selbst gegen die Redirect-Allowlist des Projekts.)
+  const rawRedirect = url.searchParams.get("redirect") ?? "";
+  const redirectTarget = rawRedirect.startsWith("thestia://")
+    ? rawRedirect
+    : CONFIRM_URL;
+
+  // Nach erfolgreicher Verifikation landet der Nutzer ohne Token wieder hier ->
   // Erfolgsmeldung als Klartext anzeigen (text/plain wird korrekt gerendert).
   if (!token) {
     return new Response(
-      "Deine E-Mail-Adresse wurde bestätigt. ✅\n\n" +
-        "Du kannst dieses Fenster schließen und zur Thestia-App zurückkehren – " +
-        "sie erkennt die Bestätigung automatisch und geht weiter.",
+      "Deine E-Mail-Adresse wurde bestätigt. Alles klar.\n\n" +
+        "Du kannst dieses Fenster schließen und zur Thestia-App " +
+        "zurückkehren - sie erkennt die Bestätigung automatisch und " +
+        "geht weiter.",
       { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } },
     );
   }
 
-  const verifyUrl = `${SUPABASE_URL}/auth/v1/verify?token=${encodeURIComponent(token)}&type=${encodeURIComponent(type)}&redirect_to=${encodeURIComponent(CONFIRM_URL)}`;
+  const verifyUrl = `${SUPABASE_URL}/auth/v1/verify?token=${encodeURIComponent(token)}&type=${encodeURIComponent(type)}&redirect_to=${encodeURIComponent(redirectTarget)}`;
 
   return Response.redirect(verifyUrl, 302);
 });

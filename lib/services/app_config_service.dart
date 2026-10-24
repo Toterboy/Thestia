@@ -13,6 +13,38 @@ class AppConfigService {
   AppConfigService._();
 
   static const String _minVersionKey = 'min_app_version_build';
+  static const String _transitEnabledKey = 'transit_spark_enabled';
+
+  /// Ob Transit Spark serverseitig freigeschaltet ist.
+  ///
+  /// Der Server kann Transit Spark per `app_config`-Eintrag abschalten
+  /// (Migration 159) - ohne Deploy und ohne App-Update. Das ist die
+  /// Notbremse fuer den Fall, dass der BLE-Gerätetest nicht besteht
+  /// (ROADMAP, Bedingung fuer das Release von 0.10.0).
+  ///
+  /// Fail-open: Bei Netz- oder Schema-Fehlern kommt `true` zurueck. Die
+  /// App laesst den Nutzer den Radar starten - der Server entscheidet
+  /// dann ohnehin. Ein Fehler beim Lesen des Schalters darf das Feature
+  /// nicht ungefragt stilllegen.
+  static Future<bool> fetchTransitSparkEnabled() async {
+    if (!SupabaseService.isInitialized) return true;
+    try {
+      final response = await SupabaseService.client
+          .from('app_config')
+          .select('value')
+          .eq('key', _transitEnabledKey)
+          .maybeSingle()
+          .timeout(const Duration(seconds: 6));
+      if (response == null) return true;
+      final wert = ((response['value'] as String?) ?? '').trim().toLowerCase();
+      return !const ['false', '0', 'off', 'no'].contains(wert);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[AppConfig] transit_spark_enabled fehlgeschlagen: $e');
+      }
+      return true;
+    }
+  }
 
   /// Mindest-Build-Nummer oder `null` (nicht gesetzt / Fehler).
   static Future<int?> fetchMinAppVersionBuild() async {

@@ -235,14 +235,22 @@ serve(async (req) => {
       // Der Filter ist derselbe wie in der Discovery, und er ist
       // BEIDSEITIG: 16- und 17-Jaehrige sehen nur einander, nie einen
       // Erwachsenen.
+      //
+      // v0.10.0 (Security-Audit 22.10.2026): gerechnet wird jetzt mit
+      // dem EFFEKTIVEN Alter (verifiziertes Alter, sonst deklariertes) -
+      // vorher stand hier das deklarierte Geburtsdatum. Damit konnte
+      // jemand mit manipuliertem Geburtsdatum (das ist bis zur
+      // Migration 155 selbst setzbar gewesen) den Intro-Pfad umgehen.
+      // Die Funktionen dafuer hat Migration 156 fuer service_role
+      // freigegeben.
       const { data: targetAgeRows } = await supabaseAdmin
         .from("profiles")
-        .select("birth_date")
+        .select("birth_date, verified_age")
         .eq("user_id", targetUserId)
         .maybeSingle();
       const { data: viewerAgeRows } = await supabaseAdmin
         .from("profiles")
-        .select("birth_date")
+        .select("birth_date, verified_age")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -250,14 +258,33 @@ serve(async (req) => {
         ?.birth_date ?? null;
       const viewerBirth = (viewerAgeRows as { birth_date?: string } | null)
         ?.birth_date ?? null;
+      const targetVerified = (targetAgeRows as { verified_age?: number } | null)
+        ?.verified_age ?? null;
+      const viewerVerified = (viewerAgeRows as { verified_age?: number } | null)
+        ?.verified_age ?? null;
 
       if (!targetBirth || !viewerBirth) {
         return json({ error: "Alter nicht feststellbar" }, 403);
       }
 
+      const { data: targetEffective } = await supabaseAdmin.rpc(
+        "profile_effective_age",
+        { v_birth_date: targetBirth, v_verified_age: targetVerified },
+      );
+      const { data: viewerEffective } = await supabaseAdmin.rpc(
+        "profile_effective_age",
+        { v_birth_date: viewerBirth, v_verified_age: viewerVerified },
+      );
+
+      const targetAge = Number(targetEffective);
+      const viewerAge = Number(viewerEffective);
+      if (!Number.isFinite(targetAge) || !Number.isFinite(viewerAge)) {
+        return json({ error: "Alter nicht feststellbar" }, 403);
+      }
+
       const { data: kompatibel } = await supabaseAdmin.rpc(
-        "age_compatible_bidirectional",
-        { v_birth_date_a: viewerBirth, v_birth_date_b: targetBirth },
+        "age_compatible_bidirectional_ages",
+        { v_viewer_age: Math.round(viewerAge), v_target_age: Math.round(targetAge) },
       );
       if (kompatibel !== true) {
         return json({ error: "Nicht zugaengig" }, 403);

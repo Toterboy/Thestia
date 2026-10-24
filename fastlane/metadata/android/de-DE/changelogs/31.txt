@@ -1,0 +1,35 @@
+Mehr Sicherheit, mehr Klarheit
+
+Verifizierung, die wirklich etwas bedeutet
+Dein Video wird jetzt verschluesselt gespeichert - niemand sonst kann es
+sehen. Und eine Freigabe gilt nur, wenn sie auch wirklich erteilt wurde:
+Freigabe, Ablehnung und laufende Pruefung werden jetzt sauber
+unterschieden. Dein verifiziertes Alter ist massgeblich, nicht deine
+Angabe.
+
+Kinderschutz, der im Ernstfall funktioniert
+Hinweise auf Kindesmissbrauch haben jetzt einen eigenen Meldeweg, der
+auch funktioniert. Ausserdem gibt es eine eigene Seite mit Kontaktperson
+und Meldeadresse: kinderschutz.thestia.de
+
+Beschreibbare Merkmale
+Im Naehefunk kannst du jetzt genau beschreiben, wie jemand aussieht -
+vom Shirt ueber die Schuhe bis zur Haarfarbe. Die Merkmale sind nach
+Kategorien sortiert, und du bekommst ein Abzeichen, wenn deine
+Beschreibung vollstaendig ist.
+
+Grosseres Datenschutz-Versprechen
+Kein TURN-Server mehr, keine Standortdaten, die lager bleiben als noetig,
+und ein sichtbarer Hinweis, wenn jemand deine Entfernung sieht. Deine
+Daten kannst du jederzeit selbst loeschen - auch ohne Support.
+
+Zugang nur fuer gepruefte Konten
+Ohne Verifizierung siehst du keine Begegnungsvorschlaege mehr. Das
+schuetzt vor Altersangaben, die nicht stimmen.
+
+Fehlerbehebungen
+- Der Meldeweg funktioniert wieder - auch fuer NSFW-Bilder
+- Passwort-Reset und erneutes Senden der Bestaetigungsmail klappen
+- Profile werden nicht mehr mit dem falschen Alter angezeigt
+- Lieblingssong, Lieblingsband und Geburtstagsstil bleiben erhalten
+- Mehrere Stellen, an denen Text abgeschnitten wurde
