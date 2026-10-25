@@ -128,6 +128,35 @@ for f in ALL:
         overloads.setdefault(m.group(1).lower(), set()).add(tuple(a[1] for a in args))
 multi = {k for k, v in overloads.items() if len(v) > 1}
 
+# Per Signatur gedroppte Überladungen gelten als unschädlich: ein
+# DROP entfernt die aufrufbare Variante vollständig, ein Revoke
+# allein nicht. Sonst würde jede saubere Bereinigung (Migration 131
+# droppt die alten match_proximity_spark-Signaturen) fälschlich als
+# offene Variante gemeldet - und die alte Signatur würde nur
+# zusätzlich REVOKt, obwohl es sie nicht mehr gibt.
+#
+# BUG (gefunden am 24.10.2026, in der CI sichtbar): Diese Sammlung stand
+# INNERHALB der Datei-Schleife und wurde pro Datei neu geleert. Die im
+# Kommentar beschriebene Ausnahme ("Migration 131 dropt die alten
+# Signaturen") hat damit nie gegriffen: als Migration 156 die Rechte
+# der FUNKTIONIERENDEN Variante verengte, war der `dropped`-Stand leer
+# und die seit 131 geloeschten Signaturen wurden als "weiter aufrufbar"
+# gemeldet. Die Sammlung laeuft jetzt ueber ALLE Migrationen, genau wie
+# `overloads` - ein DROP irgendwo entfernet die Variante fuer alles,
+# was danach kommt.
+dropped = {}
+for f in ALL:
+    code_d = strip_comments(read(f))
+    for m in re.finditer(
+            r'DROP\s+FUNCTION\s+(?:IF\s+EXISTS\s+)?(?:public\.)?([a-z_0-9]+)\s*\(([^)]*)\)',
+            code_d, re.I | re.S):
+        name = m.group(1).lower()
+        types = tuple(
+            re.sub(r'\s+', ' ', re.split(r'\bDEFAULT\b', a, flags=re.I)[0]
+                   .strip().lower()).split()[-1]
+            for a in split_top(m.group(2)))
+        dropped.setdefault(name, set()).add(types)
+
 for f in NEW:
     code = strip_comments(read(f))
     dynamic = 'regprocedure' in code
@@ -142,23 +171,6 @@ for f in NEW:
                    .strip().lower()).split()[-1]
             for a in split_top(m.group(2)))
         revoked.setdefault(name, set()).add(types)
-
-    # Per Signatur gedroppte Überladungen gelten als unschädlich: ein
-    # DROP entfernt die aufrufbare Variante vollständig, ein Revoke
-    # allein nicht. Sonst würde jede saubere Bereinigung (Migration 131
-    # droppt die alten match_proximity_spark-Signaturen) fälschlich als
-    # offene Variante gemeldet - und die alte Signatur würde nur
-    # zusätzlich REVOKt, obwohl es sie nicht mehr gibt.
-    dropped = {}
-    for m in re.finditer(
-            r'DROP\s+FUNCTION\s+(?:IF\s+EXISTS\s+)?(?:public\.)?([a-z_0-9]+)\s*\(([^)]*)\)',
-            code, re.I | re.S):
-        name = m.group(1).lower()
-        types = tuple(
-            re.sub(r'\s+', ' ', re.split(r'\bDEFAULT\b', a, flags=re.I)[0]
-                   .strip().lower()).split()[-1]
-            for a in split_top(m.group(2)))
-        dropped.setdefault(name, set()).add(types)
 
     for name, sigs in revoked.items():
         if name not in multi or dynamic:
