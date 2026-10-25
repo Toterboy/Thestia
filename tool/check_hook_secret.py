@@ -80,13 +80,20 @@ def ruf(headers):
 
 
 def main():
-    if len(sys.argv) < 2:
-        print(__doc__)
-        print('Beispiel:')
-        print('  python tool\\check_hook_secret.py "v1,whsec_..."')
-        return 2
+    if len(sys.argv) >= 2:
+        secret = sys.argv[1].strip()
+    else:
+        # Ohne Argument: versteckt nachfragen. So landet der Wert weder
+        # im Shell-Verlauf noch auf dem Bildschirm. Genau fuer den Fall
+        # gedacht, dass das Dashboard den Wert nur maskiert anzeigt -
+        # kopieren genuegt, angezeigt werden muss er nie.
+        import getpass
+        print('Dashboard-Wert einfuegen (Eingabe bleibt unsichtbar):')
+        secret = getpass.getpass('> ').strip()
+        if not secret:
+            print('Abgebrochen: kein Wert eingegeben.')
+            return 2
 
-    secret = sys.argv[1].strip()
     # Das Dashboard zeigt den Wert teils mit "v1,"-Praefix.
     if secret.startswith('v1,'):
         secret = secret[3:].strip()

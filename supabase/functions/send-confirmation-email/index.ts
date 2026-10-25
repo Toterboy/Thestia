@@ -45,9 +45,18 @@ const MAX_TIMESTAMP_SKEW_SECONDS = 300;
 /// "whsec_<base64>". Beide Formen muessen funktionieren.
 function secretKeyCandidates(secret: string): Uint8Array[] {
   const out: Uint8Array[] = [];
-  const trimmed = secret.startsWith("whsec_")
-    ? secret.slice("whsec_".length)
-    : secret;
+  // Der Dashboard-Wert kann in drei Gestalten kommen:
+  //   "v1,whsec_<base64>" (voll, mit Versions-Marker),
+  //   "whsec_<base64>"    (ohne Marker) oder
+  //   "<base64>"          (nur der Schluessel).
+  // Alle drei muessen zum selben Schluessel fuehren - deshalb werden
+  // BEIDE Praefixe hier entfernt (Security-Audit 24.10.2026: der
+  // "v1,"-Marker wurde vorher nicht entfernt; ein voll eingefuegter
+  // Wert produzierte dann statt eines Schluessels nur Muell und die
+  // Function antwortete weiter mit 401).
+  let trimmed = secret.trim();
+  if (trimmed.startsWith("v1,")) trimmed = trimmed.slice(3);
+  if (trimmed.startsWith("whsec_")) trimmed = trimmed.slice("whsec_".length);
   if (trimmed.length === 0) return out;
 
   const push = (bytes: Uint8Array) => {
@@ -232,7 +241,6 @@ serve(async (req) => {
     // GET /auth/v1/verify akzeptiert NUR den token-Parameter und wertet ihn
     // als HASH aus - ein roher JWT würde dort nicht funktionieren.
     const token = body.email_data?.token_hash ?? body.email_data?.token;
-    const actionType = body.email_data?.email_action_type ?? "signup";
 
     if (!email || !token) {
       return new Response(JSON.stringify({ error: "Missing email or token" }), {
