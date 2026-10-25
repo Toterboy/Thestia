@@ -5,16 +5,34 @@ Der CI-Fehler war: die Dateiliste enthielt Windows-Rawstrings
 bezeichnen. Ein solches Skript "laeuft" auf Windows und faellt erst auf
 dem Runner auf.
 
-Dieser Test prueft die Pfad-Konvention, ohne die Dateien zu oeffnen:
-- kein Backslash in den Pfaden der FILES-Liste
-- jeder Pfad laesst sich unter POSIX-Normen als PurePath lesen
-- die Liste bleibt die gleiche (nicht etwa stillschweigend leer)
-- relative Pfade, nicht absolute Maschinenpfade
+Der Check ist seit dem umbenannt: FILES wird nicht mehr als feste Liste
+geschrieben, sondern per Glob ueber das Migrationsverzeichnis erzeugt.
+Der Grund (22.10.2026): die feste Liste hielt den Stand bei fuenf
+Dateien fest, waehrend die Migrationen auf 158 weiterwuchsen - 109 bis
+155 wurden also NIE geprueft, auch nicht die sicherheitskritischen 144,
+149, 151 und 155. Der Glob waechst automatisch mit.
+
+Der Test laeuft deshalb zweistufig:
+
+1) Quelltext-Konvention: der Glob muss im Skript stehen, die
+   Backslash-Formung muss dabei sein (das ist die eigentliche
+   Linux-Reparatur), und die Pruefung muss am Repo-Root haengen.
+
+2) Ergebnis-Konvention: der Check wird als eigener Prozess ausgefuehrt
+   und die Anzahl seiner geprueften Dateien gegen eine unabhaengige
+   Aufzaehlung des Verzeichnisses gestellt. So ist bewiesen, dass der
+   Glob wirklich ALLE Migrationen erfasst - und nicht wieder eine
+   stillschweigende Teilmenge.
+
+Ein Import von check_migrations_sql als Modul ist bewusst KEIN Weg: das
+Skript laeuft beim Import komplett durch und endet mit sys.exit - ein
+abgebrochener Import liefert das Modulobjekt nicht zurueck.
 """
+import os
 import pathlib
 import re
+import subprocess
 import sys
-import types
 
 SRC = pathlib.Path(__file__).resolve().parent / 'check_migrations_sql.py'
 src = SRC.read_text(encoding='utf-8')
@@ -34,42 +52,56 @@ def check(name: str, ok: bool, detail: str = '') -> None:
         print(f'         {detail}')
 
 
-# 1) die FILES-Liste extrahieren
-m = re.search(r'FILES\s*=\s*\[(.*?)\]', src, re.S)
-check('FILES-Liste vorhanden', bool(m))
-if not m:
-    sys.exit(1)
-entries = re.findall(r'["\']([^"\']+)["\']', m.group(1))
-print(f'         {len(entries)} Eintraege')
-
-# 2) kein Backslash - genau der Fehler, der die CI gerissen hat
-bs = [e for e in entries if '\\' in e]
-check('keine Backslashes in den Pfaden', not bs,
-      f'gefunden: {bs}' if bs else 'alle Eintraege mit Forward-Slash')
-
-# 3) jeder Pfad ist unter POSIX lesbar und zeigt auf die echte Datei
-pure = [pathlib.PurePosixPath(e) for e in entries]
-check('alle Eintraege als POSIX-Pfad lesbar', len(pure) == len(entries))
 root = SRC.resolve().parent.parent
-missing = [e for e in entries if not (root / e).exists()]
-check('jeder Pfad zeigt auf eine existierende Datei', not missing,
-      f'fehlt: {missing}' if missing else f'geprueft gegen {root.name}/')
 
-# 4) keine absoluten Pfade und kein CWD-Referenz
-abs_ = [e for e in entries if e.startswith(('/', '\\') ) or ':' in e]
-check('keine absoluten Pfade in der Liste', not abs_, f'{abs_}' if abs_ else '')
+# ---------------------------------------------------------------- Stufe 1: Quelltext
+check('FILES wird per Glob erzeugt',
+      re.search(r'FILES\s*=\s*sorted\(', src) is not None
+      and 'glob("*.sql")' in src)
 
-# 5) die Pruefung ist am Repo-Root verankert, nicht ans CWD gebunden
+# Kein Backslash im Ergebnis - genau der Fehler, der die CI gerissen
+# hat. Die Formung muss deshalb im Quelltext stehen.
+check('Backslash-Formung ist im Quelltext verankert',
+      'replace("\\\\", "/")' in src)
+
 check('am __file__ verankert statt ans Arbeitsverzeichnis',
       'ROOT = pathlib.Path(__file__)' in src)
 
-# 6) das Skript meldet eine fehlende Datei, statt sie zu ueberspringen
 check('fehlende Datei wird als Fehler gemeldet',
       'FEHLER - Datei nicht gefunden' in src)
+
+# ---------------------------------------------------------------- Stufe 2: Ergebnis
+# Unabhaengige Aufzaehlung des Migrationsverzeichnisses.
+tatsaechlich = sorted(
+    n for n in os.listdir(root / 'supabase' / 'migrations')
+    if n.endswith('.sql')
+)
+erwartet = sorted(
+    str(pathlib.PurePosixPath('supabase/migrations') / n)
+    for n in tatsaechlich
+)
+check('jeder erwartete Pfad zeigt auf eine existierende Datei',
+      all((root / e).exists() for e in erwartet),
+      f'{len(erwartet)} Migrationen gezaehlt')
+
+# Und der echte Lauf: exit 0 UND genau so viele "OK"-Zeilen wie Dateien.
+proc = subprocess.run(
+    [sys.executable, str(SRC)], cwd=root, capture_output=True,
+    text=True, encoding='utf-8', errors='replace', timeout=300,
+)
+ok_zeilen = [l for l in proc.stdout.splitlines() if ': OK - ' in l]
+check('der Check laeuft fehlerfrei', proc.returncode == 0,
+      '' if proc.returncode == 0 else proc.stdout[-400:])
+check('der Check prueft alle Migrationen', len(ok_zeilen) == len(erwartet),
+      f'geprueft: {len(ok_zeilen)}, vorhanden: {len(erwartet)}')
+if len(ok_zeilen) != len(erwartet):
+    fehlen = sorted(set(erwartet) - {l.split(':')[0] for l in ok_zeilen})
+    check('keine Migration wird uebersprungen', not fehlen,
+          f'nicht geprueft: {fehlen[:5]}')
 
 print()
 if bad:
     print(f'{bad} Fall(e) falsch.')
     sys.exit(1)
-print('OK: die Pfade sind plattformneutral und repo-relativ.')
+print('OK: die Pfade sind plattformneutral, repo-relativ und lueckenlos.')
 sys.exit(0)
