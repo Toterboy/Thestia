@@ -607,6 +607,150 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       Chat-Header die Vorfreude („Treffen am Samstag!") statt
       Chat-Metriken.
 
+## Entwurf: 16- und 17-Jährige mit nachweisbarer Einwilligung der Sorgeberechtigten
+
+> **Status: Entwurf, nicht eingeplant, nicht im Play-Release.**
+> Aufgeschrieben am 24.10.2026 auf Wunsch des Betreibers. Der Wunsch ist
+> klar: 16- und 17-Jährige sollen die App nutzen können – mit Zustimmung
+> der Eltern, die die App herunterladen und dem Kind zur Verfügung
+> stellen. Eine Weitergabe an Personen, die nicht geeignet sind (etwa
+> unter 16-Jährige), ist in keinem Fall erlaubt.
+>
+> Dieser Block hält fest, was das rechtlich und technisch bedeutet, was
+> Google Play zulässt und was es nicht zulässt. Er ist eine
+> Entscheidungsgrundlage, kein Umsetzungsplan.
+
+### 1. Was Google Play zulässt – und was nicht
+
+Die maßgebliche Regel ist die „Age-Restricted Content and Functionality"
+im Developer Programme Policy. Sie kennt **zwei** Fälle:
+
+1. **„Apps whose core functionality is to facilitate matchmaking or
+   dating."** → Diese Apps **müssen** Play-Werkzeuge benutzen, um
+   Minderjährige auszusperren (Restrict Minor Access, Zielgruppe 18+).
+   Eine Ausnahme gibt es hier nicht.
+2. **„Apps where matchmaking or dating is an incidental feature are not
+   required to block minors, provided that they implement appropriate
+   age-verification safeguards to prevent minors from accessing those
+   specific features."** → Nur wenn die Begegnungsfunktion **nicht** der
+   Kern der App ist. Dann genügt ein belastbarer Altersnachweis, statt
+   die Minderjährigen komplett zu sperren.
+
+Thestia ist eine Dating-App mit Dating-Kern → **Fall 1**. Die
+Eltern-Einwilligung öffnet den Play-Kanal also **nicht** für 16-Jährige.
+Das ist keine Auslegungsfrage und keine Verhandlungsposition: Play hat
+das in der Policy formuliert, und der Support hat es am 24.10.2026
+bestätigt (es gibt keine Vorab-Prüfung, nur die reguläre Prüfung bei
+Einreichung).
+
+Interessant für das technische Design ist trotzdem Fall 2, denn Play
+formuliert dort die Anforderung, an der sich das Modell messen lassen
+muss: *„It is your responsibility to ensure that your age-gating
+mechanism is robust and effective. Simple age gates that can be easily
+circumvented may not be considered reasonable."* Ein einfaches Häkchen
+„ich bin 16“ wäre also weder für Play noch für den Jugendschutz
+ausreichend. Genau das ist der Maßstab, an dem unten entworfen wird.
+
+**Folge für die Verteilung:**
+
+- **Play-Kanal:** Zielgruppe 18+, Restrict Minor Access aktiv. Die
+  16+-Pfade sind im Play-Build nicht erreichbar. Ob die F-Droid-Variante
+  (eigener Build ohne Firebase/Play Integrity) neben dem Play-Build
+  vertrieben werden darf, ist eine Rechtsfrage, die vor einer
+  Entscheidung juristisch zu klären ist – hier steht sie offen.
+- **Nicht-Play-Kanäle:** Dort gilt nicht die Play-Policy, sondern das
+  deutsche Recht. Das ist der Ort, an dem das Modell unten seinen Sinn
+  hätte.
+
+### 2. Der juristische Anker (Deutschland)
+
+- **DSGVO Art. 8:** Die Einwilligung für Dienste, die sich an Kinder
+  richten, bedarf bei Minderjährigen der Zustimmung der
+  Sorgeberechtigten; die Mitgliedstaaten dürfen das Alter selbst
+  festlegen.
+- **§ 3a JUG** (früher § 5 TMG): In Deutschland kann eine Person ab dem
+  **vollendeten 16. Lebensjahr** selbst einwilligen. Darunter ist die
+  Zustimmung der Sorgeberechtigten erforderlich.
+
+Damit deckt sich das Modell mit dem bestehenden Altersdesign der App
+(16 ↔ 16/17 erlaubt, Erwachsene untereinander): Die App müsste also
+**zwei** getrennte Nachweiswege haben – einen elterlichen
+Einwilligungsweg für 13–15 (nur wenn das überhaupt gewollt wird) und
+einen Selbsteinwilligungsweg ab 16. Der Vorschlag des Betreibers deckt
+sich mit dem Gesetz für 16 und 17: dort genügt die eigene Einwilligung,
+die Zustimmung der Eltern ist freiwillig, aber der **Nachweis** des
+Alters bleibt zwingend.
+
+> **Rechtlich prüfen lassen (Medienrecht/Datenschutz), bevor das
+> umgesetzt wird.** Dieser Block ist keine Rechtsberatung. Zu prüfen sind
+> mindestens: Art. 8 DSGVO, § 3a JUG, die Einwilligungsform, die
+> Nachweispflicht des Betreibers, die Frage der Weitergabe des Kontos
+> und die Frage, ob eine Dating-App besondere Kategorien personenbezogener
+> Daten verarbeitet.
+
+### 3. Technischer Entwurf: was „mit Zustimmung der Eltern" serverseitig heißen muss
+
+Die Anforderung des Betreibers enthält die entscheidende Einschränkung
+selbst: **keine Weitergabe an nicht geeignete Personen.** Ein
+Einwilligungs-Häkchen im Registrierungsformular wäre wertlos, weil es
+sich kopieren ließe. Der Nachweis muss also serverseitig hängen.
+
+**Kernpunkt: Das Konto gehört dem verifizierten Kind, nicht dem
+Elternteil.** Der Elternteil ist Genehmiger, nicht Nutzer. Damit ist die
+Weitergabe technisch ausgeschlossen: Ein Konto, das einem 16-Jährigen
+gehört, wird von einem anderen nicht benutzt – es existiert nur für
+diesen einen, verifizierten Menschen.
+
+Vorgesehene Bausteine (noch nicht umgesetzt):
+
+| Baustein | Zweck | Aufwand |
+|---|---|---|
+| `profiles.supervised` (bool) | Konto steht unter Aufsicht | klein |
+| `profiles.consent_state` (`none`/`pending`/`granted`/`revoked`) | Stand der Einwilligung, serverseitig | klein |
+| `profiles.consent_parent_ref` | Verweis auf den Einwilligungsdatensatz, **kein** Konto des Elternteils | klein |
+| `profiles.consent_verified_at` / `consent_revoked_at` | Nachweiszeitpunkt und Widerruf | klein |
+| Einwilligungs-Flow (Elternseite) | Eltern bestätigen per Einmal-Link an ihre eigene Adresse; der Link ist an die **konkrete, verifizierte** Minderperson gebunden | mittel |
+| Widerrufs-Flow | Eltern widerrufen per Link; der Server setzt `consent_state='revoked'` und sperrt die Funktionen | mittel |
+| Kopplung an die Altersprüfung | Das bestehende Video-Alter entscheidet; die Einwilligung gilt **nur** für das Alter 16/17 und **nur** für dieses Konto | mittel |
+| Aufsichtsmodus | Eltern können einzelne Funktionen abschalten (BLE/Transit Spark, Zufallschat, Standort) | groß |
+| Audit-Trail | Jede Einwilligung und jeder Widerruf wird protokolliert (wer, wann, für wen) | mittel |
+
+**Regeln, die daraus zwingend folgen:**
+
+1. Ein 16-/17-Jähriger muss sein Alter **serverseitig verifiziert**
+   haben (das gibt es bereits: Video-Verifikation). Eine Einwilligung
+   ohne Altersnachweis ist wertlos – sonst bestätigt ein 14-Jähriger
+   einfach, er sei 16.
+2. Die Einwilligung ist an **eine** Minderperson und **eine** Elternadresse
+   gebunden. Sie ist nicht übertragbar und nicht wiederholbar.
+3. Die Einwilligung ist **widerrufbar**, und der Widerruf wirkt
+   serverseitig sofort – nicht erst beim nächsten Login.
+4. **Keine Vollversion.** Ein beaufsichtigtes Konto bekommt keine
+   Funktionen, die für diese Altersgruppe grundsätzlich gesperrt sind
+   (Transit Spark/BLE ist bereits serverseitig auf 18+ gesperrt,
+   Migration 131; der Zufallschat ist für Volljährige gedacht).
+5. Der **Kontaktweg** bleibt bei den Sorgeberechtigten: Meldungen zu
+   einem beaufsichtigten Konto gehen an die Eltern, nicht an das Kind.
+6. Kein Volltext-Profil, keine exakte Standortanzeige, keine
+   Weitergabe der Kontaktdaten an Minderjährige (Datenschutz-Folgen).
+
+### 4. Offene Entscheidungen (bewusst nicht getroffen)
+
+- [ ] Wird das Modell **überhaupt** umgesetzt – oder bleibt es bei 18+
+      und wird nur dokumentiert?
+- [ ] Gilt es nur für 16/17 (Selbsteinwilligung ab 16) oder auch für
+      13–15 (elterliche Einwilligung)? Play erlaubt in keinem Fall
+      unter 18; die Entscheidung betrifft also nur Nicht-Play-Kanäle.
+- [ ] Welche Kanäle dürfen das beaufsichtigte Konto ausliefern, und ist
+      das rechtlich sauber?
+- [ ] Aufsichtsmodus: welche Funktionen werden per Elternentscheid
+      abgeschaltet, und wie wird das im Kind-Account sichtbar gemacht,
+      ohne dass es wie eine Überwachung wirkt?
+- [ ] Wie verhält sich das Modell zur Verifikation (Video) und zur
+      Altersspanne? Ein beaufsichtigtes Konto braucht eigene Regeln im
+      Jugendschutz-Filter.
+- [ ] Prüfung durch eine Rechtsberatung (Medienrecht/Datenschutz), bevor
+      irgendetwas davon live geht.
 ### Vorschläge zu 0.11.0 (nicht terminiert, nicht eingeplant)
 
 > Die folgenden drei Punkte sind **Ideen, keine Zusagen**. Sie standen
