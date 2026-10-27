@@ -77,8 +77,26 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
   /// Dashboard muss der Hostname `auth.thestia.de` registriert sein.
   static const String _captchaPageUrl = 'https://auth.thestia.de/';
 
-  /// Fehlertext, falls Turnstile einen Fehler meldet (z. B. abgelaufen).
+  /// Fehlerursache: Der Nutzer hat abgebrochen.
   String? _error;
+
+  /// Ob schon ein zweiter Versuch MIT Drittanbieter-Cookies lief.
+  bool _zweitVersuchMitCookies = false;
+
+  /// Kann bei diesem Fehler das Freischalten der Drittanbieter-Cookies
+  /// helfen?
+  ///
+  /// Ja bei Netz- und Timeout-Fehlern - dort ist die Challenge-Session
+  /// das Naheliegende. Nein bei "invalid-domain" und "invalid-sitekey":
+  /// das sind Konfigurationsfehler in Cloudflare, die keine App-Einstellung
+  /// loest. "unsupported-browser" ist ebenfalls unabhaengig von Cookies -
+  /// dort hilft nur eine andere WebView-Umgebung.
+  static bool _errorHilftCookies(String text) {
+    return text.contains('network-error') ||
+        text.contains('timeout-or-duplicate') ||
+        text.contains('CAPTCHA_TIMEOUT') ||
+        text.contains('unknown-error');
+  }
 
   void _handleMessage(String message) {
     if (!mounted) return;
@@ -93,6 +111,35 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
       // Ohne diesen Code laesst sich der Fehler in der WebView nicht
       // zuordnen - der Browser zeigt nur ein leeres Feld.
       debugPrint('[CAPTCHA] Fehler aus der WebView: $text');
+
+      // EINZIGER Zweitversuch MIT Drittanbieter-Cookies (24.10.2026).
+      //
+      // Warum nicht von Anfang an: Der Android-WebView hat
+      // Drittanbieter-Cookies per Voreinstellung aus, und Turnstile legt
+      // seine Challenge-Session genau dort ab. Ob das die Ursache des
+      // Fehlers ist, war NICHT BEWIESEN - es ist eine Hypothese aus
+      // "im Browser geht's, in der WebView nicht".
+      //
+      // Deshalb: erst OHNE die Erweiterung versuchen (der Normalfall
+      // bleibt cookie-frei), und nur wenn die Challenge scheitert, EIN
+      // zweiter Versuch mit der Erweiterung. Schlaegt auch der fehl,
+      // steht der Code im Fenster und der Nutzer weiss, woran es liegt.
+      //
+      // Zur Datensammlung: In dieser WebView ist Cloudflare der EINZIGE
+      // Drittanbieter - die Navigationssperre laesst keine anderen
+      // Domains zu, und Cloudflare bekommt die Challenge-Anfragen ohnehin.
+      // Die Erweiterung fuehrt also KEINEN neuen Empfaenger ein; sie
+      // erlaubt nur dem vorhandenen, sein eigenes Sitzungs-Cookie zu
+      // setzen.
+      if (!_zweitVersuchMitCookies && _errorHilftCookies(text)) {
+        _zweitVersuchMitCookies = true;
+        setState(() => _error = null);
+        unawaited(enableCaptchaCookies(_controller).then((_) {
+          if (mounted) _controller.reload();
+        }));
+        return;
+      }
+
       setState(() => _error = text.substring('ERROR:'.length));
       return;
     }
@@ -130,22 +177,8 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
             return NavigationDecision.prevent;
           },
         ),
-      );
-
-    // Cookies freischalten, BEVOR die Seite geladen wird (24.10.2026).
-    //
-    // Der Android-WebView hat Drittanbieter-Cookies per Voreinstellung
-    // aus. Turnstile legt seine Challenge-Session genau dort ab - ohne
-    // die Erlaubnis bleibt der Widget haengen und meldet einen Fehler,
-    // ohne dass man die Ursache sieht.
-    //
-    // Der Aufruf ist asynchron, das Laden der Seite darf deshalb nicht
-    // darauf warten: sonst waere die Challenge schon vorbei, bevor die
-    // Cookies freigeschaltet sind. Das Setzen wirkt auf die WebView
-    // selbst und damit auch auf die noch ladende Seite.
-    unawaited(enableCaptchaCookies(_controller));
-
-    _controller.loadRequest(Uri.parse(_captchaPageUrl));
+      )
+      ..loadRequest(Uri.parse(_captchaPageUrl));
   }
 
   @override
