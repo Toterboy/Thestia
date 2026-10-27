@@ -47,3 +47,19 @@
 # Datei liegt einfach bei Netlify neben der Datenschutz-Erklaerung.
 /kinderschutz    /kinderschutz.html  200
 /kinderschutz/   /kinderschutz.html  200
+
+# Impressum (Par. 5 DDG).
+#
+# Die Datenschutzerklaerung verweist auf /impressum - die Adresse muss
+# also tatsaechlich existieren, sonst laeuft der Verweis ins Leere.
+# Dieselbe Regel wie bei der Konto-Loesch-URL und der Kinderschutz-Seite.
+#
+# WICHTIG: Die Datei enthaelt noch Platzhalter (siehe Kommentar in
+# impressum.html). Sie erst hochladen, wenn sie ausgefuellt ist - sonst
+# steht ein unvollstaendiges Impressum oeffentlich.
+#
+# Die Privatadresse muss nicht die eigene sein: Impressumsdienst
+# (c/o-Adresse), Geschaeftsadresse oder eine tatsaechlich zustellbare
+# Anschrift einer dritten Person sind alles zulaessige Wege.
+/impressum    /impressum.html  200
+/impressum/   /impressum.html  200
