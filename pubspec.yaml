@@ -147,6 +147,12 @@ dependencies:
   record: ^7.1.1
   just_audio: ^0.10.6
   webview_flutter: ^4.14.1
+  # Direkte Abhaengigkeit, obwohl webview_flutter_android es bereits
+  # mitzieht: die CAPTCHA-WebView braucht
+  # setAcceptThirdPartyCookies, und das bietet nur die
+  # Android-Implementierung. Ohne Drittanbieter-Cookies bleibt die
+  # Turnstile-Challenge im WebView haengen (24.10.2026).
+  webview_flutter_android: ^4.14.0
   image_cropper: ^12.2.1
   unifiedpush: ^6.2.0
 

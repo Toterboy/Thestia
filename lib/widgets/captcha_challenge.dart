@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/utils/captcha_cookies.dart';
 import 'package:thestia/utils/constants.dart';
 
 /// CAPTCHA-Challenge für Registrierung & Login (Bot-Schutz).
@@ -84,6 +87,12 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
     if (text.startsWith('ERROR:')) {
       // Fehler von onError/onExpired/fehlendem Script: Dialog offen lassen,
       // Nutzer kann erneut versuchen oder abbrechen.
+      //
+      // Der Text enthaelt jetzt den Turnstile-Code (24.10.2026), z. B.
+      // "CAPTCHA_ERROR:invalid-domain" oder "CAPTCHA_ERROR:network-error".
+      // Ohne diesen Code laesst sich der Fehler in der WebView nicht
+      // zuordnen - der Browser zeigt nur ein leeres Feld.
+      debugPrint('[CAPTCHA] Fehler aus der WebView: $text');
       setState(() => _error = text.substring('ERROR:'.length));
       return;
     }
@@ -121,8 +130,22 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
             return NavigationDecision.prevent;
           },
         ),
-      )
-      ..loadRequest(Uri.parse(_captchaPageUrl));
+      );
+
+    // Cookies freischalten, BEVOR die Seite geladen wird (24.10.2026).
+    //
+    // Der Android-WebView hat Drittanbieter-Cookies per Voreinstellung
+    // aus. Turnstile legt seine Challenge-Session genau dort ab - ohne
+    // die Erlaubnis bleibt der Widget haengen und meldet einen Fehler,
+    // ohne dass man die Ursache sieht.
+    //
+    // Der Aufruf ist asynchron, das Laden der Seite darf deshalb nicht
+    // darauf warten: sonst waere die Challenge schon vorbei, bevor die
+    // Cookies freigeschaltet sind. Das Setzen wirkt auf die WebView
+    // selbst und damit auch auf die noch ladende Seite.
+    unawaited(enableCaptchaCookies(_controller));
+
+    _controller.loadRequest(Uri.parse(_captchaPageUrl));
   }
 
   @override

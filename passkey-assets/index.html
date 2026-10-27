@@ -96,8 +96,23 @@
     function onSuccess(token) {
       sendToApp(token);
     }
-    function onError() {
-      sendToApp('ERROR:CAPTCHA_ERROR');
+    // FEHLERCODE MITGEBEN (24.10.2026).
+    //
+    // Bisher wurde der Code verworfen und immer nur "CAPTCHA_ERROR"
+    // gemeldet. Turnstile liefert aber einen sprechenden Code:
+    // "invalid-domain", "invalid-sitekey", "network-error",
+    // "timeout-or-duplicate", "unsupported-browser", "unknown-error".
+    // Ohne den Code laesst sich nicht unterscheiden, ob der Fehler an
+    // der Domain-Bindung, am Netz oder am Browser liegt - und genau
+    // diese Information fehlte beim Debuggen im WebView.
+    function onError(code) {
+      sendToApp('ERROR:CAPTCHA_ERROR:' + (code || 'unbekannt'));
+    }
+    function onUnsupported(code) {
+      sendToApp('ERROR:CAPTCHA_UNSUPPORTED:' + (code || 'unbekannt'));
+    }
+    function onTimeout() {
+      sendToApp('ERROR:CAPTCHA_TIMEOUT');
     }
     function onExpired() {
       sendToApp('ERROR:CAPTCHA_EXPIRED');
@@ -119,7 +134,12 @@
             sitekey: el.getAttribute('data-sitekey'),
             callback: onSuccess,
             'error-callback': onError,
-            'expired-callback': onExpired
+            'expired-callback': onExpired,
+            // Die beiden weiteren Callbacks liefern eigene Codes - ohne
+            // sie waere ein "timeout" nicht von einem "unsupported" zu
+            // unterscheiden.
+            'timeout-callback': onTimeout,
+            'unsupported-callback': onUnsupported
           });
         } else if (attempts < 48) {
           // 12 s statt 5 s: auf mobilen Verbindungen war die alte
