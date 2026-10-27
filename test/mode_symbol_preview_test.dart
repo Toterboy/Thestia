@@ -19,8 +19,10 @@ void main() {
     // Nur wenn der Ablageort benutzbar ist. Ein fester Windows-Pfad wuerde
     // auf einer Linux-Pipeline (F-Droid-CI) das ganze Testlauf abbrechen -
     // und ein Preview istoptional, ein gruener Lauf ist es nicht.
-    final out = Directory(r'C:\Users\Thoralf\AppData\Local\Temp\opencode'
-        r'\m133\symbole');
+    // SystemTemp statt eines festen Windows-Pfads: auf einer
+    // Linux-Pipeline wuerde ein fester Pfad ein Verzeichnis mit
+    // Backslashes im Arbeitsverzeichnis anlegen.
+    final out = Directory('${Directory.systemTemp.path}/opencode/m133/symbole');
     try {
       if (!out.existsSync()) out.createSync(recursive: true);
     } catch (_) {

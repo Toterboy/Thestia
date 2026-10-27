@@ -227,43 +227,53 @@ Path fragezeichenBogen(Offset c, double s) {
 /// Konturstaerke und einem Haarlinienstrich.
 const double fragezeichenBogenStaerke = 0.92;
 
-/// Transit Spark — Bahn mit Funken-Schleier.
+/// Transit Spark — Zug mit echtem Funken.
 ///
-/// Die Geschichte dieses Zeichners, weil sie den Weg erklaert: der
-/// Wagen ist fuenfmal ueberarbeitet worden — gefuellt, dann im
+/// Der Zug ist die Material-Glyphe `Icons.train` (Frontansicht eines
+/// Triebwagens). Die selbst gezeichneten Entwuerfe — gefuellt, dann im
 /// Umriss mit zwei Fenstern, dann mit drei und 3:1-Proportion, dann
-/// mit Materials Frontansicht statt der gezeichneten, dann mit Dach
-/// und Fahrwerk. Jedes Mal lautete das Urteil "sieht komisch aus"
-/// bzw. "keine wirkliche Bahn".
+/// mit Dach und Fahrwerk — waren fuenfmal ueberarbeitet worden und
+/// lauteten jedes Mal "sieht komisch aus" bzw. "keine wirkliche Bahn".
+/// Die Material-Glyphe liest sich sofort als Zug, deshalb blieb sie.
 ///
-/// Zwei Versuche mit Material waren ebenfalls falsch und stehen
-/// hier festgehalten, damit sie nicht wiederholt werden:
-/// `Icons.train` und `Icons.directions_bus` zeigen BEIDE eine
-/// Frontansicht. Beide sind damit schmal und fuellen ein
-/// quadratisches Feld zur Haelfte der Breite, wirken klein und
-/// wirken nicht wie "unterwegs".
+/// Der **Funke** ist jetzt dasselbe Motiv wie in "Find your Spark":
+/// ein vierstrahliger Stern mit zwei kleineren Sternen im Schweif.
+/// Vorher stand dort ein Streifen mit zwei Sternen darauf - der
+/// Streifen las sich als Feder und zog eine Linie quer durch das
+/// Bild ("ein Strich durch den Zug"). Der Nutzerwunsch war: "Neben
+/// dem Zug ist kein Funke, sondern was anderes" und "das Icon muss
+/// auch mittig sein, also der Zug mittig".
 ///
-/// Was am Ende den Unterschied macht, sind drei Kleinigkeiten und
-/// nicht die Proportion: ein Strich ueber dem Kasten (Dach), Raeder,
-/// die am Kasten ANSTOSSEN, und eine Deichsel zwischen ihnen. Ohne
-/// die beiden letzteren liest sich das als Spielzeug.
+/// Die Zahlen in diesem Zeichner sind GEMESSEN, nicht geraten: die
+/// echte Material-Schrift laesst sich in `flutter_test` mit dem
+/// FontLoader nachladen (siehe
+/// test/mode_symbol_realfont_preview_test.dart), danach stimmt die
+/// Geometrie der Glyphe und damit auch die Platzierung von Zug und
+/// Funke.
 class TransitSparkPainter extends _ModeSymbolPainter {
   TransitSparkPainter(super.color);
 
+  /// Groesse der Zug-Glyphe im 17er-Feld.
+  ///
+  /// GEMESSEN (27.10.2026, mit der echten Material-Schrift nachgeladen
+  /// und der Glyphe vermessen): `Icons.train` hat eine Tinte von
+  /// x = 17..82 und y = 8..86 je 100er-Em - also 0,66 em breit und
+  /// 0,79 em hoch, und sie liegt MITTIG auf der Em (Mitte der Tinte:
+  /// x = 49,5 von 100).
+  ///
+  /// Bei Groesse 12,6 ist die Tinte damit 8,3 Einheiten breit und 10,0
+  /// hoch. Das passt in die Mitte des 17er-Felds und laesst oben Platz
+  /// fuer den Funken. Die alte Groesse 15,0 ergab 9,8 x 11,7 Einheiten
+  /// - damit war kein Platz mehr fuer einen Funken neben dem Zug.
+  static const double zugGroesse = 12.6;
+
   @override
   void draw(Canvas canvas) {
-    // Alle drei Symbole mit DIESER Strichstaerke. Das ist die einzige
-    // Zahl, die die Liste zusammenhaelt - die Apple-HIG nennt genau das
-    // (gleiche Strichstaerke, gleiche Detailtiefe, gleiche Perspektive).
-
     // --- Zug (Frontansicht) -------------------------------------------------
-    // GEAENDERT: der Zug ist wieder die FRONTansicht - schmal, mit
-    // Windschutzscheibe und zwei Scheinwerfern. Die Seitenansicht
-    // (Kasten mit drei Fenstern) war handgezeichnet und wirkte wie
-    // ein Spielzeug; die Frontansicht liest sich sofort als Zug.
-    //
-    // Die Frontansicht ist schmal, deshalb ist sie zentriert und
-    // dominant: sie steht exakt auf der Feldmitte 8.5.
+    // Der Zug steht jetzt MITTIG auf der Feldmitte 8.5 (NUTZERWUNSCH
+    // 27.10.2026: "das Icon muss auch mittig sein, also der Zug
+    // mittig"). Vorher stand er rechts bei 11.2, damit links der
+    // Funke Platz hatte - das Icon war dadurch schief.
     //
     // GLYPHE per TextPainter, weil in einem CustomPainter kein
     // Icon-Widget zur Verfuegung steht.
@@ -275,65 +285,32 @@ class TransitSparkPainter extends _ModeSymbolPainter {
     // Strichstaerke deckungsgleich mit den anderen Symbolen, statt
     // 0.83 zu betragen.
     final zug = Icons.train;
-
-    // --- Funke (NEBEN dem Zug, nicht durch ihn) ----------------------------
-    //
-    // GEAENDERT (Nutzerwunsch, 27.10.2026): der Funke zog vorher als
-    // Diagonale DURCH den Zug und schnitt ihn dabei aus. Das las sich
-    // nicht wie ein vorbeifahrender Funke, sondern wie ein durch-
-    // gestrichener Wagen - der Zug war nicht mehr als Zug erkennbar.
-    //
-    // Die Anordnung ist jetzt: Zug rechts, Funke links, mit sichtbarer
-    // Luecke dazwischen. Der Streifen laeuft von unten links nach oben
-    // rechts - die Bewegungsrichtung des Funkens bleibt.
-    //
-    // DIE GEOMETRIE (27.10.2026, nachgemessen):
-    //
-    // Die Material-Glyphe `Icons.train` ist eine FRONTansicht und damit
-    // schmal: ihre Tinte belegt etwa die Haelfte der 24er-Em (rund 50
-    // von 100 Einheiten) und liegt MITTIG auf dem uebergebenen
-    // Mittelpunkt. Bei Groesse 15.0 sind das 7.5 Einheiten, bei
-    // Mitte 11.2 also 7.5..15.0.
-    //
-    // WICHTIG - was sich NICHT messen laesst: in `flutter_test` fehlt
-    // die echte Material-Schrift, dort zeichnet der TextPainter ein
-    // ERSATZKAESTCHEN (siehe test/mode_icon_metrics_test.dart). Man
-    // kann die echte Glyphe also nur auf dem Geraet beurteilen. Die
-    // Werte oben sind aus der Glyphengeometrie abgeleitet, nicht aus
-    // einem Messwert - das ist der Grund, warum der Zug hier bewusst
-    // etwas kleiner und weiter rechts steht als vorher: so bleibt die
-    // Luecke auch dann bestehen, wenn die echte Glyphe breiter
-    // ausfaellt als erwartet.
-    //
-    // Der Zug wird ZUERST gezeichnet und der Streifen DANACH darueber,
-    // ohne Ausschnitt. Ein Ausschnitt (BlendMode.clear) wuerde die
-    // Zugkontur wieder aufreissen, genau das wird hier vermieden.
     _glyphe(canvas, zug.codePoint, zug.fontFamily!, zug.fontPackage,
-        const Offset(11.2, 8.5), 15.0);
+        const Offset(8.5, 10.6), zugGroesse);
 
-    // Der Funken-Streifen: von unten links nach oben rechts, am Zug
-    // vorbei. Er endet bei 4.4, der Zug beginnt bei 7.5 - die Luecke
-    // ist damit rund drei Einheiten breit und deutlich sichtbar.
-    final diagonale = Path()
-      ..moveTo(1.0, 8.2)
-      ..lineTo(4.4, 3.6);
-    canvas.drawPath(
-      diagonale,
-      Paint()
-        ..style = PaintingStyle.stroke
-        // Duenner als der Zugstrich: bei 2.9 schnitt die Diagonale den
-        // Wagen in zwei Haelften. 1.6 laesst die Kontur erkennbar und
-        // setzt den Streifen deutlich vom Zug ab.
-        ..strokeWidth = 1.6
-        ..strokeCap = StrokeCap.round
-        ..color = color,
-    );
-
-    // Spark-Sterne auf der Diagonalen: der grosse mittig, der kleine
-    // scherzt davor her. Sie liegen auf dem Streifen und fallen deshalb
-    // frei auf dem Hintergrund.
-    canvas.drawPath(stern(const Offset(3.4, 4.8), 1.9, 0.34), flaeche(color));
-    canvas.drawPath(stern(const Offset(1.7, 6.6), 0.9, 0.34), flaeche(color));
+    // --- Funke (ECHTER Funke, oben rechts) --------------------------------
+    //
+    // GEAENDERT (Nutzerwunsch, 27.10.2026): "Neben dem Zug ist kein
+    // Funke, sondern was anderes." Richtig war das: dort stand ein
+    // Streifen mit zwei Sternen darauf. Der Streifen las sich als
+    // Feder und zog sich als Linie quer durch das Bild - er war
+    // genau das, was der Nutzer mit "ein Strich durch den Zug"
+    // beschrieben hat.
+    //
+    // Jetzt ist es dasselbe Motiv wie in "Find your Spark": ein
+    // vierstrahliger Stern mit zwei kleineren Sternen im Schweif.
+    // Kein Streifen, keine Linie, keine Beruehrung des Zuges.
+    //
+    // Die Position ist die freie Flaeche oben rechts. Der Schweif
+    // laeuft nach links oben, also von der Icon-Mitte weg - so zeigt
+    // er die Bewegung des Funkens und laeuft weder ueber das Zugdach
+    // noch an ihm vorbei.
+    //
+    // Der Abstand zum Zug betraegt rund 1,3 Einheiten an der engsten
+    // Stelle (linker Strahl des Sterns gegen die rechte Dachschulter
+    // des Zuges) - sichtbar, aber ohne die beiden Elemente
+    // verschmelzen zu lassen.
+    funkeMitSchleier(canvas, const Offset(13.5, 4.6), 1.85, color);
   }
 
   /// Zeichnet eine Material-Glyphe in das 17er-Feld, mittig auf [mitte].
