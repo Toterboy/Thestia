@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -189,6 +190,24 @@ class MainNavigation extends ConsumerWidget {
   /// Zuletzt gesicherte Route (schreibt Prefs nur bei Wechsel, v0.9.1).
   static String? _lastSavedRoute;
 
+  /// System-Overlay passend zur Helligkeit (Nutzerwunsch, 27.10.2026).
+  ///
+  /// Die Statusleiste wird nur dann richtig, wenn die Icon-Helligkeit
+  /// zum Theme passt: dunkle Icons auf hellem Grund, helle auf dunklem.
+  /// Ohne diese Angabe bleiben sie in Flutter weiss - im Light-Mode
+  /// unlesbar.
+  static SystemUiOverlayStyle _overlayStyle(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+      statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+      systemNavigationBarColor: Theme.of(context).colorScheme.surface,
+      systemNavigationBarIconBrightness:
+          isDark ? Brightness.light : Brightness.dark,
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final routerState = GoRouterState.of(context);
@@ -217,45 +236,63 @@ class MainNavigation extends ConsumerWidget {
     // Bottom-Bar (Touch-Targets bleiben, Maus-Nutzung wird natürlicher).
     final useRail = MediaQuery.sizeOf(context).width >= 1000;
 
-    final navBar = NavigationBar(
-      selectedIndex: index,
-      // Hintergrund + Schatten kommen vom schwebenden Container unten;
-      // die Bar selbst ist transparent (kein Doppel-Rand).
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      onDestinationSelected: (i) => _goToTab(context, ref, i),
-      destinations: _tabs
-          .map(
-            (t) => NavigationDestination(
-              icon: Icon(t.icon),
-              label: L10n.t(context, t.label),
-            ),
-          )
-          .toList(),
+    // Eigene Reiter-Leiste statt Material-NavigationBar.
+    //
+    // NUTZERWUNSCH (27.10.2026): "der aktuell ausgewählte Reiter soll
+    // besser aussehen, als nur das Logo farblich wie aktuell
+    // hervorzuheben. Das soll ein besseres und ikonisches Design
+    // haben."
+    //
+    // Die Material-NavigationBar hebt den aktiven Reiter nur farblich
+    // hervor - auf dem schwebenden, fast durchsichtigen Container der
+    // App geht das unter: man sieht nicht, wo man ist.
+    //
+    // Die eigene Leiste gibt dem aktiven Reiter eine GEFUELLTE PILLE
+    // um das Symbol, plus die Label-Farbe und eine fette Schrift. Das ist
+    // dieselbe Sprache wie die Pillen-Leiste im Admin-Screen und im
+    // Interessen-Screen - eine Form, ein Material.
+    final navBar = _BottomTabBar(
+      index: index,
+      tabs: _tabs,
+      onSelected: (i) => _goToTab(context, ref, i),
     );
 
     return Scaffold(
-      body: useRail && !hideNav
-          ? Row(
-              children: [
-                NavigationRail(
-                  selectedIndex: index,
-                  onDestinationSelected: (i) => _goToTab(context, ref, i),
-                  labelType: NavigationRailLabelType.all,
-                  destinations: _tabs
-                      .map(
-                        (t) => NavigationRailDestination(
-                          icon: Icon(t.icon),
-                          label: Text(L10n.t(context, t.label)),
-                        ),
-                      )
-                      .toList(),
-                ),
-                const VerticalDivider(width: 1, thickness: 1),
-                Expanded(child: child),
-              ],
-            )
-          : child,
+      // STATUSLEISTE (Nutzerwunsch, 27.10.2026).
+      //
+      // Die AppBar setzt die Icon-Helligkeit ueber das Theme - aber
+      // nicht jeder Screen hat eine AppBar (Startseite, Profil). Ohne
+      // diese Angabe bleiben die System-Icons dann weiss, auch im
+      // Light-Mode, und Akkustand, Uhrzeit und Empfangsanzeige sind
+      // auf hellem Grund unlesbar.
+      //
+      // AnnotatedRegion schlaegt die AppBar-Angabe fuer die Bildschirm-
+      // Flaeche, in der sie sitzt - deshalb steht sie HIER, einmal fuer
+      // die ganze App, statt in jedem Screen einzeln.
+      body: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: _overlayStyle(context),
+        child: useRail && !hideNav
+            ? Row(
+                children: [
+                  NavigationRail(
+                    selectedIndex: index,
+                    onDestinationSelected: (i) => _goToTab(context, ref, i),
+                    labelType: NavigationRailLabelType.all,
+                    destinations: _tabs
+                        .map(
+                          (t) => NavigationRailDestination(
+                            icon: Icon(t.icon),
+                            label: Text(L10n.t(context, t.label)),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                  const VerticalDivider(width: 1, thickness: 1),
+                  Expanded(child: child),
+                ],
+              )
+            : child,
+      ),
       bottomNavigationBar: (hideNav || useRail)
           ? null
           // Schwebende Reiter-Leiste (Nutzerwunsch): abgerundeter
@@ -289,5 +326,128 @@ class _NavItem {
   final String route;
   final IconData icon;
   final String label;
+}
+
+/// Die Reiter-Leiste unten (v0.10.0, NUTZERWUNSCH 27.10.2026).
+///
+/// EIGENE Zeichnung statt Material-`NavigationBar`.
+///
+/// Grund: die Material-Leiste hebt den aktiven Reiter nur farblich
+/// hervor. Auf dem schwebenden, fast durchsichtigen Container der App
+/// geht das unter - man sieht nicht mehr, wo man ist. Der Nutzerwunsch
+/// war ausdruecklich: der aktive Reiter soll "besseres und ikonisches
+/// Design" haben, nicht nur ein farbiges Logo.
+///
+/// Was diese Leiste anders macht:
+///   * eine GEFUELLTE Pille hinter dem aktiven Symbol (nicht nur eine
+///     Farbaenderung am Icon),
+///   * das Label des aktiven Reiters in der Akzentfarbe und fett,
+///   * die Pille waechst sanft mit (AnimatedContainer), statt hart
+///     umzuschalten.
+///
+/// Die Pille hat dieselbe Form wie die Pillen-Leiste im Admin-Screen
+/// und im Interessen-Screen (Radius 999 = vollstaendig rund).
+class _BottomTabBar extends StatelessWidget {
+  const _BottomTabBar({
+    required this.index,
+    required this.tabs,
+    required this.onSelected,
+  });
+
+  final int index;
+  final List<_NavItem> tabs;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (var i = 0; i < tabs.length; i++)
+          Expanded(
+            child: _BottomTabItem(
+              tab: tabs[i],
+              selected: i == index,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onSelected(i);
+              },
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _BottomTabItem extends StatelessWidget {
+  const _BottomTabItem({
+    required this.tab,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _NavItem tab;
+  final bool selected;
+  final VoidCallback onTap;
+
+  /// Radius der Pille. 999 macht aus jedem Rechteck eine Pille
+  /// unabhaengig von der Hoehe.
+  static const double _pilleRadius = 999;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    final symbolFarbe = selected ? scheme.onPrimary : scheme.onSurfaceVariant;
+    final textFarbe = selected ? scheme.primary : scheme.onSurfaceVariant;
+
+    return Semantics(
+      selected: selected,
+      button: true,
+      label: L10n.t(context, tab.label),
+      child: ExcludeSemantics(
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(_pilleRadius),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Die Pille: gefuellt beim aktiven Reiter, transparent
+                // sonst. AnimatedContainer faehrt die Farbe weich.
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOutCubic,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? scheme.primary
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(_pilleRadius),
+                  ),
+                  child: Icon(tab.icon, size: 22, color: symbolFarbe),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  L10n.t(context, tab.label),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: textFarbe,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 

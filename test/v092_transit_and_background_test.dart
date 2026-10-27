@@ -343,9 +343,15 @@ void main() {
 
       expect(transit, isNot(convention),
           reason: 'die Modi muessen sich optisch unterscheiden');
-      // Grenzen: -100 dBm -> 1, -60 dBm (voller Empfang) -> 5.
-      expect(transit, 1);
-      expect(convention, 4);
+      // Grenzen: -100 dBm -> 5, -60 dBm (nur sehr nah) -> 1.
+      //
+      // NUTZERWUNSCH (27.10.2026): die Abbildung war UMGEKEHRT. Der Modus
+      // mit der niedrigen Schwelle (-100 dBm, normale Reichweite) zeigte
+      // nur 1 von 5 Balken, der mit der hohen (-75 dBm) dagegen 4. Ein
+      // Nutzer liest "mehr Balken" aber als "empfaengt mehr" - und genau
+      // umgekehrt ist es. Die Balken zeigen jetzt die REICHWEITE.
+      expect(transit, 5);
+      expect(convention, 2);
       for (final mode in TransitMode.values) {
         final bars = TransitModeSelector.filledBars(mode.rssiThreshold);
         expect(bars, inInclusiveRange(1, TransitModeSelector.bars),

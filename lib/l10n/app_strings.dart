@@ -1236,8 +1236,8 @@ const Map<String, Map<String, String>> _strings = {
         'Problem dort als Issue ein.',
     'bug.privateBody':
         'Alternativ kannst du den Bug auch direkt und privat per Email '
-        'melden. Die Meldung wird über Brevo an eine Proton Mail Adresse '
-        'gesendet. Sie ist nicht öffentlich einsehbar.',
+        'melden. Die Meldung wird über Brevo an das Support-Team '
+        'weitergeleitet. Sie ist nicht öffentlich einsehbar.',
     'bug.descLabel': 'Beschreibung *',
     'bug.descMissing': 'Bitte gib eine kurze Beschreibung ein.',
     'bug.descShort': 'Beschreibung zu kurz.',
@@ -3824,7 +3824,7 @@ const Map<String, Map<String, String>> _strings = {
         'issue there.',
     'bug.privateBody':
         'Alternatively you can report the bug directly and privately by '
-        'email. The report is sent via Brevo to a Proton Mail address. '
+        'email. The report is forwarded via Brevo to the support team. '
         'It is not publicly visible.',
     'bug.descLabel': 'Description *',
     'bug.descMissing': 'Please enter a short description.',

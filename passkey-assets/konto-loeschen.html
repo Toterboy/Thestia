@@ -6,7 +6,7 @@
   <title>Konto löschen – Thestia</title>
   <meta name="robots" content="noindex">
   <style>
-    :root { color-scheme: light dark; }
+    
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
                    "Helvetica Neue", Arial, sans-serif;
@@ -29,9 +29,103 @@
     .klein { font-size: .875rem; opacity: .85; }
     a { color: inherit; }
     hr { border: 0; border-top: 1px solid rgba(128,128,128,.3); margin: 2rem 0; }
-  </style>
+  
+    /* modus-knopf (tool/web_theme.py) - Dark-/Light-Mode ohne JavaScript.
+       Der Schalter ist eine echte Checkbox; die Pseudo-Klasse :has()
+       schaltet die Variablen um. Siehe tool/web_theme.py. */
+    :root {
+      color-scheme: light dark;
+      --bg: #ffffff;
+      --fg: #2d2d2d;
+      --muted: #6b6b74;
+      --card: #f7f5f8;
+      --card-fg: #2d2d2d;
+      --line: #e3e0ea;
+      --accent: #c4236c;
+      --accent-fg: #ffffff;
+      --shadow: 0 1px 3px rgba(0,0,0,.08);
+    }
+    html:has(#modus-umschalter:checked) {
+      --bg: #121212;
+      --fg: #ece8f0;
+      --muted: #a8a4b0;
+      --card: #1d1b20;
+      --card-fg: #ece8f0;
+      --line: #2f2c34;
+      --accent: #ff8fab;
+      --accent-fg: #121212;
+      --shadow: 0 1px 3px rgba(0,0,0,.5);
+    }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      transition: background .2s ease, color .2s ease;
+    }
+    a { color: var(--accent); }
+    h1, h2, h3 { color: var(--fg); }
+    p.lead, .klein, footer { color: var(--muted); }
+
+    /* Tabellen als abgerundete Karten - passend zu den Karten der App
+       (Radius 24) statt als Gitter aus harten Kanten. */
+    table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      margin: 1.1rem 0;
+      font-size: 0.94rem;
+      background: var(--card);
+      color: var(--card-fg);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+    th, td { border: 0; padding: 0.6rem 0.7rem; text-align: left;
+             vertical-align: top; }
+    th { font-weight: 600; }
+    tr + tr td { border-top: 1px solid var(--line); }
+    thead th { border-bottom: 1px solid var(--line); }
+
+    /* Der Umschalt-Knopf: kleine runde Flaeche oben rechts. Die
+       Checkbox darueber ist unsichtbar, aber fokussierbar - deshalb
+       liegt sie mit z-index ueber dem Label und faengt den Klick ab. */
+    .modus-schalter {
+      position: fixed;
+      top: 12px; right: 12px;
+      width: 38px; height: 38px;
+      margin: 0;
+      opacity: 0;
+      z-index: 2;
+      cursor: pointer;
+    }
+    .modus-knopf {
+      position: fixed;
+      top: 12px; right: 12px;
+      width: 38px; height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--card);
+      color: var(--card-fg);
+      box-shadow: var(--shadow);
+      font-size: 1.05rem;
+      line-height: 1;
+      user-select: none;
+      transition: transform .15s ease, background .2s ease;
+    }
+    .modus-knopf:hover { transform: scale(1.06); }
+    .modus-schalter:focus-visible + .modus-knopf {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    .modus-knopf .mond { display: none; }
+    html:has(#modus-umschalter:checked) .modus-knopf .sonne { display: none; }
+    html:has(#modus-umschalter:checked) .modus-knopf .mond { display: inline; }
+</style>
 </head>
 <body>
+<input type="checkbox" id="modus-umschalter" class="modus-schalter" aria-label="Dark- und Light-Mode umschalten">
+<label for="modus-umschalter" class="modus-knopf" title="Dark- und Light-Mode umschalten"><span class="sonne" aria-hidden="true">&#9789;</span><span class="mond" aria-hidden="true">&#9790;</span></label>
 
 <h1>Konto löschen</h1>
 <p class="lead">So löschst du dein Thestia-Konto – und was dabei mit deinen Daten passiert.</p>

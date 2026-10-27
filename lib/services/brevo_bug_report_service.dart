@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:thestia/services/supabase_service.dart';
 
@@ -34,7 +36,7 @@ class BrevoBugReportService {
       }
       final images = base64Images?.take(5).toList() ?? const <String>[];
 
-      final deviceInfo = _collectDeviceInfo();
+      final deviceInfo = await _collectDeviceInfo();
       final userId = SupabaseService.currentUser?.id;
 
       final body = <String, dynamic>{
@@ -77,7 +79,16 @@ class BrevoBugReportService {
   }
 
   /// Sammelt grundlegende Geräteinformationen für den Report.
-  String _collectDeviceInfo() {
+  ///
+  /// NUTZERWUNSCH (27.10.2026): es soll nicht nur "Android" dastehen,
+  /// sondern die GENAUE Version - "Android 16" statt "Android". Ohne die
+  /// Version ist ein Report nicht zuordenbar, weil sich das Verhalten
+  /// zwischen den Android-Versionen unterscheidet (Splash-Screen ab
+  /// Android 12, Randverhalten ab Android 15).
+  ///
+  /// Ergaenzt sind Geraetemodell und die App-Version: der Report nennt
+  /// damit genau die Konstellation, in der der Fehler aufgetreten ist.
+  Future<String> _collectDeviceInfo() async {
     final buffer = StringBuffer();
     if (kIsWeb) {
       buffer.writeln('Plattform: Web');
@@ -88,6 +99,29 @@ class BrevoBugReportService {
         buffer.writeln('Plattform: unbekannt');
       }
     }
+
+    // Genaue Systemversion.
+    try {
+      if (!kIsWeb && Platform.isAndroid) {
+        final info = await DeviceInfoPlugin().androidInfo;
+        buffer.writeln(
+            'Android: ${info.version.release} (API ${info.version.sdkInt})');
+        buffer.writeln('Geraet: ${info.brand} ${info.model}');
+      } else if (!kIsWeb && Platform.isIOS) {
+        final info = await DeviceInfoPlugin().iosInfo;
+        buffer.writeln('iOS: ${info.systemVersion}');
+        buffer.writeln('Geraet: ${info.model}');
+      }
+    } catch (_) {
+      // Ohne die Angabe ist der Report trotzdem brauchbar.
+    }
+
+    // App-Version: zu welchem Build der Fehler gehoert.
+    try {
+      final info = await PackageInfo.fromPlatform();
+      buffer.writeln('App: ${info.version} (Build ${info.buildNumber})');
+    } catch (_) {}
+
     return buffer.toString().trim();
   }
 }

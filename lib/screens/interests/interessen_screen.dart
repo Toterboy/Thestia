@@ -20,6 +20,7 @@ import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/widgets/end_spark_dialog.dart';
 import 'package:thestia/widgets/funke_overlay.dart';
 import 'package:thestia/widgets/intro_audio_player.dart';
+import 'package:thestia/widgets/pill_tab_bar.dart';
 import 'package:thestia/widgets/states.dart';
 import 'package:thestia/l10n/app_strings.dart';
 
@@ -118,6 +119,17 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Der Stift gehoert zum Verwalten der Funken - also nur auf dem
+    // Funken-Tab. Auf "Gesendet" und "Erhalten" tut er nichts, und
+    // genau das war der Befund: "Der Stift funktioniert nicht, wenn
+    // keine Daten dort vorhanden sind."
+    final aufFunken = _tabController.index == 2;
+    final funkenVorhanden = (ref.watch(serverMatchesProvider).valueOrNull
+            ?.length ??
+        0) >
+        0;
+    final stiftSichtbar = aufFunken && funkenVorhanden;
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -126,30 +138,64 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen>
         // Funken-Liste (sparte Platz; der Ein-/Ausgang des Auswähl-Modus
         // bleibt in der Liste selbst).
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            tooltip: L10n.t(context, 'interests.manage'),
-            onPressed: () =>
-                ref.read(matchSelectModeProvider.notifier).state = true,
-          ),
+          // Der Stift erscheint nur, wenn er etwas zu tun hat: auf dem
+          // Funken-Tab UND wenn es Funken gibt. Ein Knopf, der nichts
+          // bewirkt, ist schlechter als kein Knopf.
+          if (stiftSichtbar)
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: L10n.t(context, 'interests.manage'),
+              onPressed: () =>
+                  ref.read(matchSelectModeProvider.notifier).state = true,
+            ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          // Abgerundete Klick-Animation (kein eckiger Aufblitzer).
-          splashBorderRadius: const BorderRadius.all(Radius.circular(24)),
-          tabs: [
-            Tab(text: L10n.t(context, 'interests.tabSent')),
-            Tab(text: L10n.t(context, 'interests.tabReceived')),
-            Tab(text: L10n.t(context, 'interests.tabSparks')),
-          ],
-        ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [
-          _OwnLikesTab(),
-          _ReceivedLikesTab(),
-          _MatchesTab(),
+      // Die drei Kategorien als Pillen-Leiste UNTER der AppBar statt
+      // als Text-TabBar IN der AppBar.
+      //
+      // NUTZERWUNSCH (27.10.2026): "Die Interessen Seite sieht nicht gut
+      // aus. Das mit den Kategorien Gesendet, Erhalten und Funken muss
+      // anders gelöst werden."
+      //
+      // Gruende: Die Text-Reiter in der AppBar waren klein, ohne Icon
+      // und ohne Kennzahl - man musste sie suchen. Die Pillen-Leiste
+      // (dieselbe wie im Admin-Screen) traegt zusaetzlich ein Symbol
+      // und die Anzahl, und sie sitzt als eigener Block, nicht
+      // eingequetscht zwischen Titel und Stift.
+      //
+      // Das Wischen zwischen den Reitern bleibt erhalten: die Leiste
+      // bedient denselben TabController, mit dem die TabBarView
+      // synchronisiert ist.
+      body: Column(
+        children: [
+          PillTabBar(
+            controller: _tabController,
+            tabs: [
+              PillTab(
+                label: L10n.t(context, 'interests.tabSent'),
+                icon: Icons.outgoing_mail,
+              ),
+              PillTab(
+                label: L10n.t(context, 'interests.tabReceived'),
+                icon: Icons.call_received,
+              ),
+              PillTab(
+                label: L10n.t(context, 'interests.tabSparks'),
+                icon: Icons.flash_on,
+                count: ref.watch(serverMatchesProvider).valueOrNull?.length,
+              ),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: const [
+                _OwnLikesTab(),
+                _ReceivedLikesTab(),
+                _MatchesTab(),
+              ],
+            ),
+          ),
         ],
       ),
     );

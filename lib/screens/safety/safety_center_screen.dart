@@ -105,47 +105,27 @@ class _SafetyCenterScreenState extends ConsumerState<SafetyCenterScreen> {
           Text(L10n.t(context, 'safety.sectionProtect'),
               style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
-          ExpansionTile(
-            leading: const Icon(Icons.flag_outlined),
-            title: Text(L10n.t(context, 'safety.reportSomeone')),
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: Text(L10n.t(context, 'safety.reportSomeoneBody')),
-              ),
-            ],
+          const _SchutzKachel(
+            icon: Icons.flag_outlined,
+            titelKey: 'safety.reportSomeone',
+            textKey: 'safety.reportSomeoneBody',
           ),
-          ExpansionTile(
-            leading: const Icon(Icons.block_outlined),
-            title: Text(L10n.t(context, 'safety.blockSomeone')),
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: Text(L10n.t(context, 'safety.blockSomeoneBody')),
-              ),
-            ],
+          const _SchutzKachel(
+            icon: Icons.block_outlined,
+            titelKey: 'safety.blockSomeone',
+            textKey: 'safety.blockSomeoneBody',
           ),
-          ExpansionTile(
-            leading: const Icon(Icons.lock_person_outlined),
-            title: Text(L10n.t(context, 'safety.protectOwnImages')),
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: Text(L10n.t(context, 'safety.protectOwnImagesBody')),
-              ),
-            ],
+          const _SchutzKachel(
+            icon: Icons.lock_person_outlined,
+            titelKey: 'safety.protectOwnImages',
+            textKey: 'safety.protectOwnImagesBody',
           ),
           // Alter & Täuschung (v0.9.1, Jugendschutz): Warnung vor falschen
           // Altersangaben, Meldegrund "Falsches Alter", Treffen-Regeln.
-          ExpansionTile(
-            leading: const Icon(Icons.cake_outlined),
-            title: Text(L10n.t(context, 'safety.ageTitle')),
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: Text(L10n.t(context, 'safety.ageBody')),
-              ),
-            ],
+          const _SchutzKachel(
+            icon: Icons.cake_outlined,
+            titelKey: 'safety.ageTitle',
+            textKey: 'safety.ageBody',
           ),
           const _BlockedUsersSection(),
           const SizedBox(height: 8),
@@ -167,6 +147,63 @@ class _SafetyCenterScreenState extends ConsumerState<SafetyCenterScreen> {
             style: const TextStyle(height: 1.4),
           ),
           const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+}
+
+/// Ein aufklappbarer Schutz-Punkt als weiche Kachel.
+///
+/// NUTZERWUNSCH (27.10.2026): beim Aufklappen eines Punktes im Bereich
+/// "Schutz in Thestia" zogen sich Linien UEBER und UNTER den Punkt.
+/// Das ist die Standardzeichnung des Material-3-ExpansionTile im
+/// aufgeklappten Zustand und passte nicht zum weichen Design der App.
+///
+/// Zwei Aenderungen, beide im Projekt schon bewaehrt (Dating Hour
+/// "So funktioniert's", Spice-Fragen):
+///   * die Kachel sitzt in einer Card mit dem Radius der App (24),
+///   * shape/collapsedShape OHNE BorderSide - dadurch zeichnet das
+///     ExpansionTile keine Linien.
+///
+/// Statt der Linien gibt es jetzt eine weiche Card, die sich beim
+/// Aufklappen mit aufflaechen traegt. Das ist dasselbe Muster wie in
+/// den beiden anderen Screens - die App sieht damit an allen drei
+/// Stellen gleich aus.
+class _SchutzKachel extends StatelessWidget {
+  const _SchutzKachel({
+    required this.icon,
+    required this.titelKey,
+    required this.textKey,
+  });
+
+  final IconData icon;
+  final String titelKey;
+  final String textKey;
+
+  @override
+  Widget build(BuildContext context) {
+    // Ohne BorderSide. Mit BorderSide zeichnet das ExpansionTile die
+    // Linien, die der Nutzer bemerkt hat.
+    final kachelForm = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(24),
+    );
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        shape: kachelForm,
+        collapsedShape: kachelForm,
+        leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
+        title: Text(
+          L10n.t(context, titelKey),
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Text(L10n.t(context, textKey)),
+          ),
         ],
       ),
     );

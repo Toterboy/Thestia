@@ -197,18 +197,35 @@ void funkeMitSchleier(
 /// Pflicht: hängt der Punkt am Bogen, ist es kein Fragezeichen mehr,
 /// sondern ein Haken mit Klecks. Genau daran ist die erste Fassung
 /// gescheitert, der Bogen lief ohne sichtbare Lücke in den Punkt.
+///
+/// FEINJUSTIERUNG (Nutzerwunsch, 27.10.2026): der Bogen war zu dick
+/// und der Punkt zu klein und zu nah. Der Bogen bekommt deshalb eine
+/// eigene, duennere Strichstaerke ([fragezeichenBogenStaerke]) und
+/// laeuft flacher: die Hoehe der Oberschleife ist von 0.88 auf 0.82
+/// gesenkt, damit der Bogen nicht wie ein dicker Haken wirkt.
+/// Der Punkt sitzt jetzt weiter unten (0.94 statt 0.82) und hat
+/// dieselbe optische Staerke wie der Bogen - er ist der
+/// Gegenstrich des Fragezeichens, kein Punkt.
 Path fragezeichenBogen(Offset c, double s) {
   return Path()
     ..moveTo(c.dx - s * 0.44, c.dy - s * 0.18)
     // Bogen nach oben und über die rechte Schulter.
-    ..cubicTo(c.dx - s * 0.56, c.dy - s * 0.88,
-        c.dx + s * 0.56, c.dy - s * 0.88,
+    ..cubicTo(c.dx - s * 0.56, c.dy - s * 0.82,
+        c.dx + s * 0.56, c.dy - s * 0.82,
         c.dx + s * 0.56, c.dy - s * 0.26)
     // Herunter und zur Mitte, dort endet der Bogen als kurzer Stamm.
     ..cubicTo(c.dx + s * 0.56, c.dy + s * 0.12,
         c.dx + s * 0.18, c.dy + s * 0.10,
         c.dx + s * 0.18, c.dy + s * 0.44);
 }
+
+/// Strichstaerke des Fragezeichen-Bogens.
+///
+/// Getrennt von der uebrigen Zeichenstaerke (1.35), weil ein Fragezeichen
+/// als geschlossene Kurve mehr Tinte pro Laenge traegt als ein offener
+/// Strich. Mit 1.35 wirkte es fett; 0.92 liegt zwischen der uebrigen
+/// Konturstaerke und einem Haarlinienstrich.
+const double fragezeichenBogenStaerke = 0.92;
 
 /// Transit Spark — Bahn mit Funken-Schleier.
 ///
@@ -246,8 +263,7 @@ class TransitSparkPainter extends _ModeSymbolPainter {
     // ein Spielzeug; die Frontansicht liest sich sofort als Zug.
     //
     // Die Frontansicht ist schmal, deshalb ist sie zentriert und
-    // dominant: sie steht exakt auf der Feldmitte 8.5, der Funke
-    // laeuft als Streifen DURCH sie hindurch statt daneben zu stehen.
+    // dominant: sie steht exakt auf der Feldmitte 8.5.
     //
     // GLYPHE per TextPainter, weil in einem CustomPainter kein
     // Icon-Widget zur Verfuegung steht.
@@ -259,45 +275,65 @@ class TransitSparkPainter extends _ModeSymbolPainter {
     // Strichstaerke deckungsgleich mit den anderen Symbolen, statt
     // 0.83 zu betragen.
     final zug = Icons.train;
-    // Der Zug wird in eine Ebene gezeichnet, aus der der Streifen
-    // wieder AUSSCHNITTE. Ein saveLayer ueber dem fertigen Bild
-    // wuerde nichts loeschen - die neue Ebene enthaelt den Zug nicht.
-    canvas.saveLayer(null, Paint());
-    _glyphe(canvas, zug.codePoint, zug.fontFamily!, zug.fontPackage,
-        const Offset(8.5, 8.5), 16.2);
 
-    // --- Spark als Streifen durch den Zug ----------------------------------
-    // Der Funke zieht als Diagonale durch das Feld und durch den Zug
-    // hindurch. Das erzaehlt die Verbindung: der Funke BEWEGT sich, und
-    // er zieht an dir vorbei, ohne dass du ihn greifen kannst.
+    // --- Funke (NEBEN dem Zug, nicht durch ihn) ----------------------------
     //
-    // Der Streifen schneidet die Zugkontur aus, statt darueberzuliegen:
-    // sonst verschmilzt er mit dem Zug zu einem undeutlichen Gebilde.
-    // Der Ausschnitt ist transparent, es kommt also die Farbe des
-    // Containers zum Vorschein - unabhaengig davon, welche das ist.
+    // GEAENDERT (Nutzerwunsch, 27.10.2026): der Funke zog vorher als
+    // Diagonale DURCH den Zug und schnitt ihn dabei aus. Das las sich
+    // nicht wie ein vorbeifahrender Funke, sondern wie ein durch-
+    // gestrichener Wagen - der Zug war nicht mehr als Zug erkennbar.
+    //
+    // Die Anordnung ist jetzt: Zug rechts, Funke links, mit sichtbarer
+    // Luecke dazwischen. Der Streifen laeuft von unten links nach oben
+    // rechts - die Bewegungsrichtung des Funkens bleibt.
+    //
+    // DIE GEOMETRIE (27.10.2026, nachgemessen):
+    //
+    // Die Material-Glyphe `Icons.train` ist eine FRONTansicht und damit
+    // schmal: ihre Tinte belegt etwa die Haelfte der 24er-Em (rund 50
+    // von 100 Einheiten) und liegt MITTIG auf dem uebergebenen
+    // Mittelpunkt. Bei Groesse 15.0 sind das 7.5 Einheiten, bei
+    // Mitte 11.2 also 7.5..15.0.
+    //
+    // WICHTIG - was sich NICHT messen laesst: in `flutter_test` fehlt
+    // die echte Material-Schrift, dort zeichnet der TextPainter ein
+    // ERSATZKAESTCHEN (siehe test/mode_icon_metrics_test.dart). Man
+    // kann die echte Glyphe also nur auf dem Geraet beurteilen. Die
+    // Werte oben sind aus der Glyphengeometrie abgeleitet, nicht aus
+    // einem Messwert - das ist der Grund, warum der Zug hier bewusst
+    // etwas kleiner und weiter rechts steht als vorher: so bleibt die
+    // Luecke auch dann bestehen, wenn die echte Glyphe breiter
+    // ausfaellt als erwartet.
+    //
+    // Der Zug wird ZUERST gezeichnet und der Streifen DANACH darueber,
+    // ohne Ausschnitt. Ein Ausschnitt (BlendMode.clear) wuerde die
+    // Zugkontur wieder aufreissen, genau das wird hier vermieden.
+    _glyphe(canvas, zug.codePoint, zug.fontFamily!, zug.fontPackage,
+        const Offset(11.2, 8.5), 15.0);
+
+    // Der Funken-Streifen: von unten links nach oben rechts, am Zug
+    // vorbei. Er endet bei 4.4, der Zug beginnt bei 7.5 - die Luecke
+    // ist damit rund drei Einheiten breit und deutlich sichtbar.
     final diagonale = Path()
-      ..moveTo(3.0, 15.2)
-      ..lineTo(13.6, 2.0);
+      ..moveTo(1.0, 8.2)
+      ..lineTo(4.4, 3.6);
     canvas.drawPath(
       diagonale,
       Paint()
         ..style = PaintingStyle.stroke
         // Duenner als der Zugstrich: bei 2.9 schnitt die Diagonale den
-        // Wagen in zwei Haelften, das las sich als zerschnitten, nicht
-        // als durchfahrender Funke. 1.9 laesst die Kontur erkennbar und
-        // trennt sie zugleich vom Streifen.
-        ..strokeWidth = 1.9
+        // Wagen in zwei Haelften. 1.6 laesst die Kontur erkennbar und
+        // setzt den Streifen deutlich vom Zug ab.
+        ..strokeWidth = 1.6
         ..strokeCap = StrokeCap.round
-        ..blendMode = BlendMode.clear
-        ..color = const Color(0xFF000000),
+        ..color = color,
     );
-    canvas.restore();
 
     // Spark-Sterne auf der Diagonalen: der grosse mittig, der kleine
-    // scherzt davor her. Sie liegen auf dem ausgeschnittenen Streifen
-    // und fallen deshalb frei auf dem Hintergrund.
-    canvas.drawPath(stern(const Offset(9.2, 7.8), 2.7, 0.34), flaeche(color));
-    canvas.drawPath(stern(const Offset(6.3, 11.2), 1.3, 0.34), flaeche(color));
+    // scherzt davor her. Sie liegen auf dem Streifen und fallen deshalb
+    // frei auf dem Hintergrund.
+    canvas.drawPath(stern(const Offset(3.4, 4.8), 1.9, 0.34), flaeche(color));
+    canvas.drawPath(stern(const Offset(1.7, 6.6), 0.9, 0.34), flaeche(color));
   }
 
   /// Zeichnet eine Material-Glyphe in das 17er-Feld, mittig auf [mitte].
@@ -427,13 +463,24 @@ class QuestionChatPainter extends _ModeSymbolPainter {
     // dass es die Blase ausfuellte und zusammen mit dem Funken gar
     // nichts mehr uebrig blieb. Jetzt sitzt es links oben in der
     // Blase und laesst rechts Platz fuer den Funken.
+    //
+    // FEINJUSTIERUNG (Nutzerwunsch, 27.10.2026): duennerer Bogen, und
+    // der Punkt ist weiter unten und GROSSER - er hat jetzt dieselbe
+    // optische Staerke wie der Bogen. Vorher war er ein kleines
+    // Nadeloehr direkt unter dem Bogen; das las sich als verschmutzter
+    // Haken und nicht als Fragezeichen.
     const frage = (c: Offset(6.0, 7.4), h: 4.4);
     final r = frage.h / 2.0;
-    canvas.drawPath(fragezeichenBogen(frage.c, r), strich(color, 1.05));
-    // Punkt mit sichtbarem Abstand zum Bogen.
+    canvas.drawPath(
+      fragezeichenBogen(frage.c, r),
+      strich(color, fragezeichenBogenStaerke),
+    );
+    // Punkt mit sichtbarem Abstand zum Bogen und in derselben
+    // optischen Staerke: der Radius entspricht der halben Bogenstaerke,
+    // der Punkt wirkt damit wie der Gegenstrich des Fragezeichens.
     canvas.drawCircle(
-      Offset(frage.c.dx + r * 0.18, frage.c.dy + r * 0.82),
-      r * 0.16,
+      Offset(frage.c.dx + r * 0.18, frage.c.dy + r * 0.94),
+      fragezeichenBogenStaerke * 0.5,
       flaeche(color),
     );
 

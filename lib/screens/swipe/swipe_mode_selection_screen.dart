@@ -233,7 +233,15 @@ enum DiscoveryMode {
   final String descriptionKey;
 
   /// Zeigt den NEU-Badge (frischer Modus in 0.9.0).
-  bool get isNew => this == DiscoveryMode.transitSpark;
+  ///
+  /// ENTFERNT (Nutzerwunsch, 27.10.2026): der Badge wird nicht mehr
+  /// angezeigt. Transit Spark ist kein neuer Modus mehr, sondern ein
+  /// etablierter - ein dauerhaft stehendes "NEU" ist nur noch Dekor.
+  /// Die Eigenschaft bleibt erhalten, damit der Aufrufer sie nicht
+  /// umbauen muss, wenn sie wieder gebraucht wird; sie wird aber
+  /// nirgends mehr ausgewertet.
+  @Deprecated('Der NEU-Badge wird nicht mehr angezeigt (27.10.2026).')
+  bool get isNew => false;
 }
 
 /// Modi, die eine verifizierte Person voraussetzen (v0.10.0).
@@ -472,29 +480,11 @@ class _ModeCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (mode.isNew) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              L10n.t(context, 'common.new'),
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onPrimary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                          ),
-                        ],
+                        // Der NEU-Badge ist entfernt (Nutzerwunsch,
+                        // 27.10.2026): "Das neu bei Transit Spark kann weg."
+                        // Der Modus ist seit dem Release nicht mehr neu,
+                        // und ein Badge, der dauerhaft steht, ist keiner
+                        // mehr - er wird zum Dekor und stoert nur.
                       ],
                     ),
                     const SizedBox(height: 4),

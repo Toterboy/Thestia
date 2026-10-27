@@ -8,6 +8,7 @@
         <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
         <item name="android:windowSplashScreenBackground">#ffffff</item>
 <!-- v0.10.0: @drawable/android12splash statt @mipmap/ic_launcher.
+
              Der Schatten am Splash-Symbol kam NICHT vom Logo, sondern
              davon, dass ein ADAPTIVES Icon zu viel transparenten Rand
              hat: sein Vordergrund liegt in der 72-dp-Safe-Zone einer
@@ -15,19 +16,22 @@
              zeichnet den sichtbaren Kreis mit einem Schatten - genau das,
              was man am Start sah.
 
-             android12splash.png ist deshalb jetzt ein Kreis, der die
-             Leinwand VOLL ausfuellt (Kanten in der Mitte jeder Seite,
-             Ecken transparent). Die Systemmaske hat damit nichts zu
-             beschneiden und keinen Rand, an dem ein Schatten entstehen
-             koennte. Erzeugt aus thestia_icon_base.png - siehe
-             docs/ICONS.md.
+             android12splash.png ist deshalb jetzt ein Kreis auf
+             TRANSPARENTEM Grund, mit der Geometrie "App-Icon MIT
+             Hintergrund" aus der Android-Spezifikation: 240-dp-Leinwand
+             mit einem Kreis von exakt 160 dp.
 
-             Vorher stand hier der umgekehrte Weg: @drawable/android12-
-             splash wurde zugunsten von @mipmap/ic_launcher aufgegeben,
-             weil die DAMALige android12splash.png ein Squircle auf
-             weissem Grund war - sichtbar kleiner als der Kreis, also
-             derselbe Schatten. Die Datei hatte nicht die Form, die das
-             Splash braucht. Jetzt hat sie sie.
+             WARUM 240/160 und nicht 288/192 (Befund 27.10.2026, auf
+             Android 16): das System zeichnet das Drawable 1:1 in sein
+             288-dp-Fenster und maskiert es mit dem 160-dp-Kreis. Ein
+             192-dp-Kreis ragt damit an vier Stellen ueber die Maske
+             hinaus - das war der Beschnitt an den vier Ecken, und das
+             Logo war zugleich zu gross. Mit 160 dp passt der Kreis in
+             die Maske, und auf aelteren Versionen skaliert das System
+             das Drawable auf den Icon-Bereich - auch dort passt es.
+
+             Erzeugt aus thestia_icon_base.png - siehe
+             tool/make_splash_icon.py.
              -->
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/android12splash</item>
     </style>

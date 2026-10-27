@@ -15,8 +15,118 @@ import 'package:thestia/screens/interests/interessen_screen.dart'
     show interessenInitialTabProvider;
 import 'package:thestia/services/seen_service.dart';
 import 'package:thestia/utils/age_safety_rules.dart';
-import 'package:thestia/widgets/buttons.dart';
 import 'package:thestia/l10n/app_strings.dart';
+
+/// Hat der Nutzer schon wirklich jemanden angeschrieben?
+///
+/// NUTZERWUNSCH (27.10.2026): der Einstie in "Leute entdecken" soll
+/// auf Aktuelles so lange stehen, bis der Nutzer einen Modus wirklich
+/// BENUTZT hat - und damit gemeint ist nicht "angefasst", sondern
+/// "mit jemandem geschrieben".
+///
+/// Die Definition im Auftrag war: "bis man eine der modi einmal genutzt
+/// hat und dabei auch so richtig, also mit jemandem geschrieben hat".
+///
+/// Zwei Signale, und beide zaehlen:
+///
+///   * Es gibt einen **Funke** (Match). Dann hat der Nutzer die App
+///     benutzt - das ist der ausdruecklich genannte Fall ("Funke ->
+///     der Button geht weg").
+///   * In einem Chat liegt eine **von mir gesendete** Nachricht. Dann
+///     war es kein blosses Anschauen, sondern ein Gespraech.
+///
+/// Gesendet wird ueber [Message.senderId] verglichen - ungelesene
+/// Nachrichten zaehlen NICHT, sonst waere der Button schon nach dem
+/// ersten erhaltenen Funke weg, obwohl nie geschrieben wurde.
+final hatJemandenAngeschriebenProvider = Provider<bool>((ref) {
+  final meineId = ref.watch(profileProvider).id;
+  if (meineId.isEmpty) return false;
+
+  // 1) Funke? Dann ist die App benutzt.
+  final funken = ref.watch(serverMatchesProvider).valueOrNull;
+  if (funken != null && funken.isNotEmpty) return true;
+
+  // 2) Selbst geschrieben? Dann gab es ein echtes Gespraech.
+  final matches = ref.watch(chatProvider);
+  if (matches.isEmpty) return false;
+  final notifier = ref.read(chatProvider.notifier);
+  for (final m in matches) {
+    for (final nachricht in notifier.messagesFor(m.id)) {
+      if (nachricht.senderId == meineId) return true;
+    }
+  }
+  return false;
+});
+
+/// Der Einstieg in die Begegnungs-Modi (NUTZERWUNSCH, 27.10.2026).
+///
+/// Bewusst eine Karte und kein PrimaryButton: die Karte kann Erklaerung
+/// und Icon aufnehmen und sitzt dabei in derselben Spalte wie die
+/// Abschnitte darunter - der bisherige Button am Seitenende sah aus wie
+/// ein Anhang.
+///
+/// Der Einstieg verschwindet, sobald der Nutzer wirklich jemanden
+/// angeschrieben hat (siehe [hatJemandenAngeschriebenProvider]).
+class _EntdeckeCard extends StatelessWidget {
+  const _EntdeckeCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      color: scheme.primaryContainer,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: scheme.onPrimaryContainer.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.favorite, color: scheme.onPrimaryContainer),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      L10n.t(context, 'home.discover'),
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(
+                            color: scheme.onPrimaryContainer,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      L10n.t(context, 'home.discoverSub'),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: scheme.onPrimaryContainer),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: scheme.onPrimaryContainer),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// Öffnet Interessen auf dem passenden Tab per Push (v0.9.1): Likes ->
 /// Erhalten (1), Funken/Nachrichten -> Funken (2). Zurück landet wieder
@@ -331,27 +441,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             profile,
           ),
 
-          // AKTIONS-BUTTONS: Leute entdecken & Zufallschat
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-              child: Column(
-                children: [
-                  PrimaryButton(
-                    label: L10n.t(context, 'home.discover'),
-                    icon: const Icon(Icons.favorite),
-                    onPressed: () => context.go(AppRoutes.swipeModeSelection),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.chat_bubble),
-                    label: Text(L10n.t(context, 'home.randomChat')),
-                    onPressed: () => context.go(AppRoutes.randomChat),
-                  ),
-                ],
+          // AKTIONS-BUTTON: Leute entdecken
+          //
+          // NUTZERWUNSCH (27.10.2026): die beiden Buttons am ENDE der
+          // Seite ("Leute entdecken" und "Zufallschat starten") sollen
+          // verschwinden. Der Einstieg gehoert nach oben - direkt unter
+          // den Verifikations-Hinweis, wo er im Blick ist.
+          //
+          // Er bleibt stehen, bis der Nutzer wirklich jemanden
+          // angeschrieben hat (siehe
+          // [hatJemandenAngeschriebenProvider]). Wer nur empfaengt,
+          // hat die App noch nicht benutzt - da hilft der Einstieg noch.
+          //
+          // Der Zufallschat-BUTTON ist entfallen: er war eine zweite
+          // Aktion auf derselben Flaeche, ohne erkennbaren Grund -
+          // "Zufallschat" ist ein Modus und laesst sich im Auswahl-
+          // screen waehlen, der ohnehin ueber "Leute entdecken" erreicht
+          // wird.
+          if (!ref.watch(hatJemandenAngeschriebenProvider))
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: _EntdeckeCard(
+                  onTap: () => context.go(AppRoutes.swipeModeSelection),
+                ),
               ),
             ),
-          ),
 
           // Abstand unten für SafeArea
           const SliverToBoxAdapter(child: SizedBox(height: 24)),

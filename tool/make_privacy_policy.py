@@ -56,28 +56,16 @@ DART_OUT = os.path.join(
 # Publish-Verzeichnis des bestehenden Netlify-Projekts fuer thestia.de.
 HTML_OUT = os.path.join(ROOT, 'passkey-assets', 'datenschutz.html')
 
-CSS = """
-    :root { color-scheme: light dark; }
-    body {
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto,
-                   Helvetica, Arial, sans-serif;
-      line-height: 1.65;
-      max-width: 46rem;
-      margin: 0 auto;
-      padding: 1.5rem 1.1rem 4rem;
-    }
-    h1 { font-size: 1.7rem; line-height: 1.25; }
-    h2 { font-size: 1.25rem; margin-top: 2.4rem; line-height: 1.3; }
-    h3 { font-size: 1.05rem; margin-top: 1.6rem; }
-    p  { margin: 0.85rem 0; }
-    li { margin: 0.3rem 0; }
-    table { border-collapse: collapse; width: 100%; margin: 0.9rem 0;
-            font-size: 0.94rem; }
-    th, td { border: 1px solid #8888; padding: 0.45rem 0.55rem;
-             text-align: left; vertical-align: top; }
-    th { font-weight: 600; }
-    footer { margin-top: 3rem; font-size: 0.85rem; opacity: 0.75; }
-"""
+# Design und Umschalt-Knopf kommen aus tool/web_theme.py - damit sind
+# alle Seiten im Publish-Verzeichnis wirklich gleich aufgebaut.
+#
+# Die Datenschutzerklaerung ist eine statische Datei OHNE JavaScript
+# (Projektregel, geprueft von test/privacy_policy_test.dart). Der
+# Dark-/Light-Umschalter ist deshalb reines CSS.
+import pathlib as _pathlib
+import sys as _sys
+_sys.path.insert(0, str(_pathlib.Path(__file__).resolve().parent))
+from web_theme import CSS, KNOPF_HTML  # noqa: E402
 
 FOOTER_DE = (
     'Verantwortliche Stelle im Sinne der DSGVO ist Thestia. Kontakt '
@@ -282,7 +270,9 @@ def render_html(blocks):
            'initial-scale=1">',
            '<title>Datenschutzerklärung für Thestia</title>',
            '<style>%s</style>' % CSS,
-           '</head>', '<body>']
+           '</head>', '<body>',
+           # Der Umschalt-Knopf: reine CSS-Variante, kein Skript.
+           *KNOPF_HTML.split('\n')]
 
     table_open = False
 

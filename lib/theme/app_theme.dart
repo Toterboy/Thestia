@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Verfügbare Farbschemata ("Erscheinungsbilder").
 ///
@@ -138,7 +139,26 @@ class AppTheme {
           // schwarz bleiben, sonst ist sie auf dunklem Grund unlesbar.
           foregroundColor: isDark ? Colors.white : Colors.black87,
           surfaceTintColor: Colors.transparent,
+          // STATUSLEISTE (Nutzerwunsch, 27.10.2026).
+          //
+          // Ohne diese Angabe setzt Flutter in der AppBar die WEISSEN
+          // System-Icons - auch im Light-Mode. Auf hellem Grund sind
+          // Uhrzeit, Akkustand und Empfangsanzeige dann unlesbar.
+          // Deshalb wird die Icon-Helligkeit aus dem Theme-Modus
+          // abgeleitet: dunkle Icons auf hell, helle Icons auf dunkel.
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness:
+                isDark ? Brightness.light : Brightness.dark,
+            statusBarBrightness:
+                isDark ? Brightness.dark : Brightness.light,
+          ),
         ),
+        // Die Navigationsleiste unten laeuft ueber SystemUiOverlayStyle -
+        // ThemeData kennt dafuer kein eigenes Feld. Die passende Angabe
+        // steht in der AnnotatedRegion der Hauptnavigation
+        // (main_navigation.dart), damit sie fuer den ganzen Bildschirm
+        // gilt.
         bottomNavigationBarTheme: BottomNavigationBarThemeData(
           elevation: 8,
           selectedItemColor:

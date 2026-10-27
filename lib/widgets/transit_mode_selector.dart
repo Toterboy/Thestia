@@ -43,15 +43,28 @@ class TransitModeSelector extends StatelessWidget {
   ///
   /// Oeffentlich, weil das der eigentliche Inhalt des Widgets ist: die
   /// beiden Modi unterscheiden sich fuer den Nutzer nur dadurch, dass
-  /// hier 1 und 4 Balken stehen. Die Abbildung ist aus der Schwelle
-  /// abgeleitet und nicht fest verdrahtet, damit ein geaenderter
-  /// Grenzwert die Anzeige mitzieht.
+  /// hier unterschiedlich viele Balken stehen. Die Abbildung ist aus der
+  /// Schwelle abgeleitet und nicht fest verdrahtet, damit ein
+  /// geaenderter Grenzwert die Anzeige mitzieht.
   ///
-  /// -100 dBm (Grenze der normalen Reichweite) -> 1 von 5,
-  /// -60 dBm (voller Empfang) -> 5 von 5.
+  /// DIE LOGIK (Nutzerwunsch, 27.10.2026): die Balken zeigen die
+  /// **REICHWEITE** des Modus - nicht, wie hart die Schwelle steht.
+  ///
+  /// Vorher war die Abbildung genau umgekehrt und damit widersprüchlich:
+  /// der Modus mit der NIEDRIGEN Schwelle (-100 dBm, normale
+  /// Reichweite, nimmt auch schwache Signale an) zeigte nur **1 von 5**
+  /// Balken, der mit der HOHEN Schwelle (-75 dBm, im Messbetrieb werden
+  /// nur ganz nah dran erkennbare Geraete genommen) **4 von 5**.
+  ///
+  /// Ein Nutzer liest "mehr Balken" aber als "empfaengt mehr" - und die
+  /// Rechnung sagt genau das Gegenteil. Die Abbildung ist deshalb
+  /// invertiert:
+  ///
+  /// -100 dBm (normale Reichweite) -> 5 von 5,
+  ///  -60 dBm (nur sehr nah)        -> 1 von 5.
   static int filledBars(int rssiThreshold) {
     final t = ((rssiThreshold + 100) / 40).clamp(0.0, 1.0);
-    return 1 + (t * 4).round();
+    return bars - (t * (bars - 1)).round();
   }
 
   /// Balken gesamt in der Schwellenanzeige.
