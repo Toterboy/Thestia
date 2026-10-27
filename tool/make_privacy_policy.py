@@ -65,7 +65,7 @@ HTML_OUT = os.path.join(ROOT, 'passkey-assets', 'datenschutz.html')
 import pathlib as _pathlib
 import sys as _sys
 _sys.path.insert(0, str(_pathlib.Path(__file__).resolve().parent))
-from web_theme import CSS, KNOPF_HTML  # noqa: E402
+from web_theme import CSS, KOPF_HTML  # noqa: E402
 
 FOOTER_DE = (
     'Verantwortliche Stelle im Sinne der DSGVO ist Thestia. Kontakt '
@@ -186,9 +186,36 @@ def group_tables(blocks):
 
 
 def _inline_html(text):
-    """Maskiert HTML und wandelt **fett** in <strong>."""
+    """Maskiert HTML und wandelt Auszeichnung um.
+
+    Unterstuetzt werden:
+      * **fett**      -> <strong>
+      * *kursiv*     -> <em>
+      * <https://..>  -> Link (die Markdown-Autolink-Schreibweise)
+
+    VORHER standen die Sternchen und spitzen Klammern als Text auf der
+    Seite: "(*Einstellungen -> Datenschutz -> Bug melden*)" und
+    "<https://auth.thestia.de/impressum>". Das sah nach einem
+    Fehler aus, ist aber nur eine nicht behandelte Auszeichnung.
+    """
     s = html.escape(text, quote=False)
-    return re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', s)
+
+    # Autolinks zuerst: <https://...> -> <a href="...">...</a>
+    s = re.sub(
+        r'&lt;(https?://[^\s&]+)&gt;',
+        r'<a href="\1">\1</a>',
+        s)
+
+    # **fett** zuerst, danach *kursiv* (sonst frisst das Kursiv die
+    # Sternchen des Fetts).
+    s = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', s)
+    s = re.sub(r'(?<![\*\w])\*([^*\n]+?)\*(?!\*)', r'<em>\1</em>', s)
+
+    # Datum mit geschuetztem Bindestrich: "2026-10" wurde in der
+    # schmalen Spalte der Versions-Tabelle als "2026-" / "10"
+    # umgebrochen. U+2011 (geschuetzter Bindestrich) verhindert das.
+    s = re.sub(r'(\d{4})-(\d{2})', '\\1&#8209;\\2', s)
+    return s
 
 
 # --------------------------------------------------------------------------
@@ -271,8 +298,11 @@ def render_html(blocks):
            '<title>Datenschutzerklärung für Thestia</title>',
            '<style>%s</style>' % CSS,
            '</head>', '<body>',
-           # Der Umschalt-Knopf: reine CSS-Variante, kein Skript.
-           *KNOPF_HTML.split('\n')]
+           # Kopfzeile mit Marke und Umschalt-Knopf: reine CSS-Variante,
+           # kein Skript.
+           *KOPF_HTML.split('\n'),
+           # Der Inhalt liegt in einer Karte - wie die Karten der App.
+           '<div class="inhalt">']
 
     table_open = False
 
@@ -290,20 +320,22 @@ def render_html(blocks):
         if kind == 'table_rows':
             rows = b['rows']
             head = b.get('head')
+            # Die Huelle erlaubt das seitliche Scrollen auf schmalen
+            # Bildschirmen, ohne dass die Tabelle die Seite sprengt.
+            out.append('<div class="tabellen-huelle">')
+            out.append('<table>')
             if head:
-                out.append('<table>')
                 out.append('<thead><tr>%s</tr></thead>'
                            % ''.join('<th>%s</th>' % _inline_html(c)
                                      for c in head))
-                out.append('<tbody>')
-            else:
-                out.append('<table><tbody>')
+            out.append('<tbody>')
             for r in rows:
                 out.append('<tr>%s</tr>'
                            % ''.join('<td>%s</td>' % _inline_html(c)
                                      for c in r))
             out.append('</tbody>')
             out.append('</table>')
+            out.append('</div>')
             continue
 
         if kind in ('h1', 'h2', 'h3'):
@@ -333,11 +365,18 @@ def render_html(blocks):
             continue
 
         if b['text'].strip() in ('---', '***', '___'):
-            out.append('<hr>')
+            # Die Trennlinien aus dem Markdown werden NICHT ausgegeben:
+            # jede Ueberschrift traegt inzwischen selbst eine Trennlinie
+            # (Rand oben). Beides zusammen ergab zwei Linien
+            # untereinander.
             continue
 
         out.append('<p>%s</p>' % _inline_html(b['text']))
 
+    # Die Karte wird VOR dem Fuss geschlossen: der Fuss steht auf dem
+    # Seitenhintergrund, nicht in der Karte - so wie die Fusszeile der
+    # App unter der Karte steht.
+    out.append('</div>')
     out.append('<footer>%s</footer>' % html.escape(FOOTER_DE, quote=False))
     out.append('</body>')
     out.append('</html>')

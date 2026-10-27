@@ -88,9 +88,17 @@ void main() {
     final html = File(publishPath).readAsStringSync();
     expect(html, isNot(contains('<script')));
     expect(RegExp(r'src\s*=\s*"http').hasMatch(html), isFalse);
-    expect(RegExp(r'href\s*=\s*"https?://(?!thestia)').hasMatch(html), isFalse,
-        reason: 'Externe Requests wuerden die Seite verlangsamen und '
-            'einen Besuch bei Dritten registrieren.');
+    // Erlaubt sind Links zur eigenen Domain - auch Unterseiten wie
+    // auth.thestia.de. Vorher stand hier "(?!thestia)": das liess nur
+    // Links, die mit "thestia" BEGINNEN, und flaggerte den Link auf
+    // die eigene Seite auth.thestia.de als "externen Request".
+    expect(
+      RegExp(r'href\s*=\s*"https?://(?!([a-z0-9-]+\.)*thestia\.de)')
+          .hasMatch(html),
+      isFalse,
+      reason: 'Externe Requests wuerden die Seite verlangsamen und '
+          'einen Besuch bei Dritten registrieren.',
+    );
   });
 
   test('Tabellenzeilen haben Zellen, andere Bloecke keinen', () {
