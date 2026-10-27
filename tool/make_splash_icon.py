@@ -24,15 +24,21 @@ WAS FALSCH WAR (Befund vom 27.10.2026, Android 16 und Android 11):
 
 DIE LOESUNG:
 
-  * `android12splash.png`: 240-dp-Leinwand mit einem Kreis von exakt
-    160 dp. Das ist die Geometrie "App-Icon MIT Hintergrund" aus der
-    Android-Spezifikation - sie passt zur Maske des Systems auf JEDER
-    Version, gleichguelt ob das System das Drawable 1:1 zeichnet oder
-    es auf den Icon-Bereich skaliert. Der Kreis ist damit nie zu
-    gross und kann nicht beschnitten werden.
-  * `splash.png`: DASSELBE Logo, aber auf TRANSPARENTEM Grund statt auf
+  * `android12splash.png`: 240-dp-Leinwand mit einem Kreis von 120 dp.
+    Das System maskiert den Splash mit einem Kreis von 160 dp - ein
+    Abzeichen, das kleiner ist, kann nicht beschnitten werden. 120 dp
+    passen zur Legacy-Variante (110 dp), damit beide Splashs dasselbe
+    Abzeichen in derselben Groesse zeigen.
+  * `splash.png`: DASSELBE Abzeichen, aber auf TRANSPARENTEM Grund statt auf
     schwarzem. Der weisse Hintergrund (bzw. der dunkle in der
     Nachtvariante) kommt aus `background.png` und liegt dahinter.
+
+DAS ABZEICHEN selbst ist jetzt ein echter KREIS: der runde Farbverlauf
+(`thestia_icon_background.png`) plus das Motiv aus der Vordergrund-Ebene
+(`thestia_icon_foreground.png`), mittig darueber. BISHER wurde das
+Quadrat-Logo in den Kreis geschnitten - dabei schnitten die Ober- und
+Unterkante des Quadrats mitten durch den Kreis und es blieb ein
+dunkler Saum oben und unten stehen.
 
 Die Groesse des Legacy-Logos bleibt unveraendert: der Kreis belegt
 dieselben 43,75 % der Leinwand wie bisher. Das Logo selbst wird also
@@ -47,14 +53,44 @@ from PIL import Image, ImageDraw, ImageFilter
 ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / 'android' / 'app' / 'src' / 'main' / 'res'
 SRC = ROOT / 'assets' / 'images' / 'thestia_icon_base.png'
+# Runder Farbverlauf und Motiv getrennt - so entsteht ein echter Kreis
+# ohne beschnittene Kanten (siehe _rundes_artwork).
+BG = ROOT / 'assets' / 'images' / 'thestia_icon_background.png'
+FG = ROOT / 'assets' / 'images' / 'thestia_icon_foreground.png'
+
+# Anteil des Motivs (Herz + Schriftzug) am Kreisdurchmesser.
+#
+# Das Motiv belegt in der Vordergrund-Ebene 462 von 1024 px = 45,1 % der
+# Ebene. 62 % vom Kreis bedeuten fuer die Ebene also das 1,375-fache
+# des Kreisdurchmessers. Der Wert ist so gewaehlt, dass der
+# Schriftzug noch lesbar bleibt, aber nicht zu klein wirkt.
+ART_ANTEIL = 0.62
+ART_ANTEIL_EBENE = 0.451
 
 # --------------------------------------------------------------------------
 # Android 12+ (windowSplashScreenAnimatedIcon)
 # --------------------------------------------------------------------------
 # Leinwand = Icon-Bereich des Systems (240 dp), darin der sichtbare
-# Kreis von 160 dp. Rand also 40 dp je Seite.
+# Kreis.
+#
+# WARUM 120 dp UND NICHT 160 dp (NUTZERWUNSCH 27.10.2026: "Es ist zudem
+# zu gross. Das zweite passt aber."):
+#
+# Das System zeichnet das Drawable 1:1 in sein Fenster und maskiert es
+# mit einem Kreis von 160 dp. Ein Kreis, der groesser als 160 dp ist,
+# wird an vier Stellen beschnitten - das war der urspruengliche
+# Fehler (192 dp Kreis in einer 288-dp-Leinwand). Die alte Fassung
+# dieses Skripts hatte den Kreis auf exakt 160 dp gesetzt: damit ist
+# zwar nichts beschnitten, das Abzeichen ist aber sichtbar groesser
+# als das der Legacy-Variante (110 dp) - und genau das hat der Nutzer
+# bemerkt.
+#
+# 120 dp liegen 20 dp innerhalb der Maske (kein Beschnitt unter jeder
+# Auslegung des Systems) und sind mit den 110 dp der Legacy-Variante
+# praktisch gleich gross. Beide Splashs zeigen damit dasselbe
+# Abzeichen in derselben Groesse.
 ICON_DP = 240
-CIRCLE_DP = 160
+CIRCLE_DP = 120
 PADDING_DP = (ICON_DP - CIRCLE_DP) // 2
 
 # --------------------------------------------------------------------------
@@ -100,10 +136,33 @@ def _circle_mask(size: int, diameter: int, edge: int) -> Image.Image:
 
 
 def _rundes_artwork(src: Image.Image, diameter: int) -> Image.Image:
-    """Das Basis-Logo als Kreis, ohne Rand."""
-    box = min(src.width, src.height)
-    square = src.crop((0, 0, box, box)).convert('RGBA')
-    return square.resize((diameter, diameter), Image.LANCZOS)
+    """Das Abzeichen als echter Kreis: Verlauf + Motiv, ohne Schnitte.
+
+    BISHER (Befund 27.10.2026): das Logo wurde als Quadrat in den
+    Kreis geschnitten. Weil die Logo-Grafik selbst ein abgerundetes
+    Quadrat ist, schnitt der Kreis ihre Ober- und Unterkante an - im
+    Splash blieb ein dunkler Saum oben und unten stehen.
+
+    JETZT: der Kreis kommt aus dem RUNDEN Verlauf
+    (`thestia_icon_background.png`), das Motiv (Herz + Schriftzug) aus
+    der Vordergrund-Ebene wird mittig darueber gelegt. Damit ist die
+    Form rund und sauber - ohne beschnittene Kanten.
+
+    [src] wird nicht mehr benutzt - die Parameter bleiben aber, damit
+    die Aufrufer unveraendert bleiben.
+    """
+    verlauf = Image.open(BG).convert('RGBA')
+    verlauf = verlauf.resize((diameter, diameter), Image.LANCZOS)
+
+    if FG.exists():
+        vordergrund = Image.open(FG).convert('RGBA')
+        # Ebene so gross, dass das Motiv ART_ANTEIL des Kreises einnimmt.
+        ebene = int(round(diameter * ART_ANTEIL / ART_ANTEIL_EBENE))
+        vordergrund = vordergrund.resize((ebene, ebene), Image.LANCZOS)
+        versatz = (diameter - ebene) // 2
+        verlauf.alpha_composite(vordergrund, (versatz, versatz))
+
+    return verlauf
 
 
 def build_icon_splash(src: Image.Image, size: int) -> Image.Image:

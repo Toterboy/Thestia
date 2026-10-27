@@ -70,14 +70,21 @@ def newest_app_source_mtime():
     # JEDEM Build neu geschrieben werden - sie wuerden eine Frische-
     # Pruefung, die sich selbst erfuellt, erzeugen.
     ausgeschlossen = {'.gradle', '.kotlin', 'build', '.cxx', '.idea'}
-    for basis in ('lib', 'android'):
+    # BILDER UND SCHRIFTEN sind genauso Teil des Builds wie der Code:
+    # ein geaendertes Statusleisten-Icon oder ein neuer Splash macht
+    # die APKs genauso alt wie eine geaenderte .dart-Datei. Vorher
+    # standen hier nur Code-Endungen - ein neues Icon wurde deshalb
+    # als "frisch" gemeldet, obwohl es im APK noch das alte war.
+    endungen = ('.dart', '.yaml', '.kt', '.kts', '.xml', '.gradle',
+                '.properties', '.png', '.webp', '.jpg', '.jpeg', '.svg',
+                '.ttf', '.otf')
+    for basis in ('lib', 'android', 'assets'):
         wurzel = ROOT / basis
         if wurzel.is_dir():
             for p in wurzel.rglob('*'):
                 if any(teil in ausgeschlossen for teil in p.parts):
                     continue
-                if p.is_file() and p.suffix in ('.dart', '.yaml', '.kt', '.kts',
-                                                '.xml', '.gradle', '.properties'):
+                if p.is_file() and p.suffix.lower() in endungen:
                     kandidaten.append(p)
     pubspec = ROOT / 'pubspec.yaml'
     if pubspec.is_file():
