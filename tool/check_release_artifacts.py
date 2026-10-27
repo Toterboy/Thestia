@@ -56,6 +56,44 @@ def find_apksigner():
     return None
 
 
+def newest_app_source_mtime():
+    """Juengste Aenderung am App-Quellstand: (mtime, pfad).
+
+    Beruecksichtigt werden nur die Verzeichnisse, aus denen der
+    Build besteht: lib/, android/ und pubspec.yaml. Die Edge Functions
+    (supabase/functions) sind NICHT Teil der APKs - ein neues Deploy
+    dort macht die APKs nicht alt.
+    """
+    kandidaten = []
+    # Verzeichnisse, die KEIN Quellcode sind, sondern Build-Artefakte
+    # oder Cache. android/.gradle/ enthaelt Zeitstempel-Dateien, die bei
+    # JEDEM Build neu geschrieben werden - sie wuerden eine Frische-
+    # Pruefung, die sich selbst erfuellt, erzeugen.
+    ausgeschlossen = {'.gradle', '.kotlin', 'build', '.cxx', '.idea'}
+    for basis in ('lib', 'android'):
+        wurzel = ROOT / basis
+        if wurzel.is_dir():
+            for p in wurzel.rglob('*'):
+                if any(teil in ausgeschlossen for teil in p.parts):
+                    continue
+                if p.is_file() and p.suffix in ('.dart', '.yaml', '.kt', '.kts',
+                                                '.xml', '.gradle', '.properties'):
+                    kandidaten.append(p)
+    pubspec = ROOT / 'pubspec.yaml'
+    if pubspec.is_file():
+        kandidaten.append(pubspec)
+    if not kandidaten:
+        return None
+    juengste = max(kandidaten, key=lambda p: p.stat().st_mtime)
+    return juengste.stat().st_mtime, juengste
+
+
+def format_mtime(ts):
+    """Zeitstempel lesbar - ohne zoneinfo (laeuft auf Windows und Linux)."""
+    import datetime
+    return datetime.datetime.fromtimestamp(ts).strftime('%d.%m. %H:%M')
+
+
 def sha256(path):
     h = hashlib.sha256()
     with open(path, 'rb') as f:
@@ -270,6 +308,36 @@ def main():
     print('=' * 78)
     print(f'öffentlich: {len(public)} Dateien   Admin: {len(admin)} Dateien')
     print(f'ADMIN_UUID: {"gesetzt (wird geprüft)" if ADMIN_UUID else "NICHT gesetzt - nur Muster-/Provenienzprüfung"}')
+    print()
+
+    # ------------------------------------------------------------------
+    # FRISCHE: passen die Artefakte zum aktuellen Quellstand?
+    # ------------------------------------------------------------------
+    # Die Frage "sind die APKs aktuell gebaut?" war bisher nur durch
+    # Handarbeit beantwortbar - und die Antwort lautete zweimal "ja",
+    # obwohl 17 Quelldateien zwischen Build und Frage geaendert
+    # worden waren. Der Zeitstempel der Artefakte wird hier gegen den
+    # juengsten App-Quellstand gestellt.
+    #
+    # Bewusst als WARNUNG und nicht als Fehler: ein Rebuild ist nicht
+    # immer noetig (z. B. wenn nur die Dokumentation geaendert wurde),
+    # und der Check soll den Zustand melden, nicht die Auslieferung
+    # blockieren. Der Admin-Build wird getrennt betrachtet, weil er
+    # aus einem anderen Grund gebaut wird (mit Admin-UUID).
+    newest_source = newest_app_source_mtime()
+    if newest_source:
+        print(f'Jüngste App-Quelldatei: '
+              f'{format_mtime(newest_source[0])}  '
+              f'({newest_source[1].relative_to(ROOT).as_posix()})')
+        for label, artefakte in (('öffentlich', public), ('Admin', admin)):
+            if not artefakte:
+                continue
+            aeltester = min(artefakte, key=lambda p: p.stat().st_mtime)
+            if aeltester.stat().st_mtime < newest_source[0]:
+                warnings.append(
+                    f'{label}: {aeltester.name} ist älter als der '
+                    f'Quellstand - neu bauen'
+                )
     print()
 
     uuid_sets.setdefault('__init__', set())
