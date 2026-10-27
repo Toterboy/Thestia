@@ -1,4 +1,4 @@
-"""Prueft, ob das Hook-Secret in den Function-Secrets zum Dashboard-Wert passt.
+r"""Prueft, ob das Hook-Secret in den Function-Secrets zum Dashboard-Wert passt.
 
 Hintergrund (21.10.2026): Die Function send-confirmation-email prueft die
 Standard-Webhooks-Signatur von GoTrue. Dafuer muss das Secret in den
@@ -16,10 +16,43 @@ angeglichen werden.
 
 AUFRUF
 ------
+    python tool/check_hook_secret.py
+
+Ohne Argument fragt das Skript den Wert VERSTECKT ab (getpass). So
+landet er weder im Shell-Verlauf noch auf dem Bildschirm - noetig, weil
+das Dashboard den Wert nur maskiert anzeigt. Kopieren genuegt, sehen
+muss man ihn nie.
+
+Mit Argument geht es auch:
     python tool\check_hook_secret.py "<Wert aus dem Dashboard>"
 
 Der Wert wird NICHT gespeichert, nur zum Signieren eines Testaufrufs
 verwendet. Das Skript gibt ihn nirgends aus.
+
+WAS DIE AUSGABE BEDEUTET (24.10.2026)
+-------------------------------------
+    HTTP 401 {"error":"Unauthorized"}  = Signatur ABGEWIESEN.
+        Das Secret passt nicht. Das ist der Fehlerfall.
+
+    HTTP 400 {"error":"Missing email or token"}  = Signatur ANGENOMMEN.
+        Das Secret passt. Die Function ist nach der Signaturpruefung
+        weitergekommen und hat sich nur ueber das abgespeckte Testpayload
+        beschwert. DAS IST DER TREFFER - wer HTTP 400 als Fehler liest,
+        haelt eine korrekte Kette fuer kaputt.
+
+Das Skript sagt am Ende ausdruecklich PASS oder FAIL.
+
+WENN ES NICHT PASST
+-------------------
+    * Wert im Dashboard MASKIERT kopiert? Sternchen und Auslassungs-
+      punkte werden von der Base64-Dekodierung stillschweigend ignoriert
+      und ergeben einen scheinbar gueltigen, aber falschen Schluessel.
+      Das Kopier-Symbol nutzen, nicht den Text markieren.
+    * Die laufende Function nimmt eine Secret-Aenderung erst beim
+      naechsten Deploy an (supabase/supabase#51535). Danach muss
+      `supabase functions deploy send-confirmation-email` laufen.
+    * Am einfachsten ist alles zusammen:
+      tool\set_hook_secret.ps1
 """
 import base64
 import hashlib
@@ -120,6 +153,10 @@ def ruf(headers):
 
 
 def main():
+    if len(sys.argv) >= 2 and sys.argv[1] in ('-h', '--help', '/?'):
+        print(__doc__)
+        return 0
+
     if len(sys.argv) >= 2:
         secret = sys.argv[1].strip()
     else:
