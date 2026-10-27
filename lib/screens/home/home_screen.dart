@@ -417,6 +417,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
           ),
 
+          // AKTIONS-BUTTON: Leute entdecken
+          //
+          // NUTZERWUNSCH (27.10.2026): die beiden Buttons am ENDE der
+          // Seite ("Leute entdecken" und "Zufallschat starten") sollen
+          // verschwinden. Der Einstieg gehoert nach OBEN - direkt unter
+          // die Begruessung, wo er im Blick ist, bevor die Liste
+          // beginnt. Frueher stand die Karte am Seitenende; das war
+          // genau die Stelle, von der sie weg sollte.
+          //
+          // Er bleibt stehen, bis der Nutzer wirklich jemanden
+          // angeschrieben hat (siehe
+          // [hatJemandenAngeschriebenProvider]). Wer nur empfaengt,
+          // hat die App noch nicht benutzt - da hilft der Einstieg noch.
+          //
+          // Der Zufallschat-BUTTON ist entfallen: er war eine zweite
+          // Aktion auf derselben Flaeche, ohne erkennbaren Grund -
+          // "Zufallschat" ist ein Modus und laesst sich im Auswahl-
+          // screen waehlen, der ohnehin ueber "Leute entdecken" erreicht
+          // wird.
+          if (!ref.watch(hatJemandenAngeschriebenProvider))
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: _EntdeckeCard(
+                  onTap: () => context.go(AppRoutes.swipeModeSelection),
+                ),
+              ),
+            ),
+
           // BEREICH 1: Neue Nachrichten
           _buildMessagesSection(
             context,
@@ -440,33 +469,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             newMatches,
             profile,
           ),
-
-          // AKTIONS-BUTTON: Leute entdecken
-          //
-          // NUTZERWUNSCH (27.10.2026): die beiden Buttons am ENDE der
-          // Seite ("Leute entdecken" und "Zufallschat starten") sollen
-          // verschwinden. Der Einstieg gehoert nach oben - direkt unter
-          // den Verifikations-Hinweis, wo er im Blick ist.
-          //
-          // Er bleibt stehen, bis der Nutzer wirklich jemanden
-          // angeschrieben hat (siehe
-          // [hatJemandenAngeschriebenProvider]). Wer nur empfaengt,
-          // hat die App noch nicht benutzt - da hilft der Einstieg noch.
-          //
-          // Der Zufallschat-BUTTON ist entfallen: er war eine zweite
-          // Aktion auf derselben Flaeche, ohne erkennbaren Grund -
-          // "Zufallschat" ist ein Modus und laesst sich im Auswahl-
-          // screen waehlen, der ohnehin ueber "Leute entdecken" erreicht
-          // wird.
-          if (!ref.watch(hatJemandenAngeschriebenProvider))
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: _EntdeckeCard(
-                  onTap: () => context.go(AppRoutes.swipeModeSelection),
-                ),
-              ),
-            ),
 
           // Abstand unten für SafeArea
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
