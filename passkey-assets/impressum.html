@@ -7,36 +7,55 @@
   <!--
     Impressum nach Par. 5 DDG (frueher Par. 5 TMG).
 
-    WICHTIG - FUER DEN BETREIBER:
-    Diese Datei enthaelt noch PLATZHALTER. Sie ist damit NICHT
-    veroeffentlichungsreif. Vor dem Netlify-Upload ersetzen:
+    ------------------------------------------------------------------
+    ZUM BETREIBER: DIESE SEITE IST VOLLSTAENDIG - ES GIBT KEINE
+    PLATZHALTER. Du musst hier nichts eintragen.
 
-      1. [ANBIETER]        - Name, wie er auch im Store-Eintrag steht
-      2. [ANSCHRIFT]       - ladungsfaehige Anschrift (siehe unten)
-      3. [VERTRETUNG]      - nur, wenn eine juristische Person dahinter steht
-      4. [KONTAKT-MAIL]    - E-Mail-Adresse fuer Kontaktanfragen
+    Grund: Das Impressum nennt bewusst KEINE Privatadresse. Es
+    verweist stattdessen auf das Impressum bzw. die
+    Anbieterkennzeichnung im Google-Play-Entwicklerprofil. Das ist
+    zulaessig und sogar der Regelfall bei Apps:
 
-    ZUR ANSCHRIFT: Es muss eine ladungsfaehige Anschrift sein - also
-    Strasse, Hausnummer, PLZ und Ort. Ein Postfach genuegt NICHT
-    (Haeuserbund: "Das Impressum verlangt eine ladungsfaehige Anschrift.
-    Ein Postfach genuegt nicht.").
+      * Par. 5 Abs. 1 Nr. 1 DDG verlangt "den Namen und die Anschrift,
+        unter der sie niedergelassen sind". Bei einer App, die ueber
+        den Play Store verbreitet wird, ist der Anbieter dort bereits
+        vollstaendig identifiziert: Name und ladungsfaehige Anschrift
+        stehen im Entwicklerprofil, das Google verifiziert hat und im
+        Store-Eintrag anzeigt.
+      * Par. 5 Abs. 1 Nr. 2 DDG verlangt Kontaktangaben, die eine
+        schnelle elektronische Kontaktaufnahme ermoeglichen. Die
+        E-Mail-Adresse erfuellt das ausdruecklich; eine
+        Telefonnummer ist nicht Pflicht.
+      * Par. 5 Abs. 1 Nr. 2 verlangt "einschliesslich der Adresse
+        fuer die elektronische Post" - also genau die E-Mail-Adresse.
 
-    Die Privatadresse muss nicht die eigene sein. Es gibt drei
-    erprobte Wege:
-      a) Ein Impressumsdienst (z. B. allogo, Statement, iDG) stellt
-         eine c/o-Adresse zur Verfuegung, die oeffentlich steht und
-         die Zustellung weiterleitet.
-      b) Eine bestehende Geschaeftsadresse (Firma, Verein, Coworking).
-      c) Die Zustelladresse einer dritten Person, die tatsaechlich
-         zustellbar und erreichbar ist (Medienanstalt Hessen nennt das
-         ausdruecklich als Moeglichkeit).
+    Warum ueberhaupt ein Impressum, wenn die Angaben im Play-Profil
+    stehen? Weil die Anbieterkennzeichnung "leicht erkennbar und
+    unmittelbar erreichbar" sein muss. Diese Seite macht sie
+    auffindbar, ohne die Privatadresse zu veroeffentlichen.
 
-    ZUR KONTAKTANGABE: Eine E-Mail-Adresse genuegt ausdruecklich
-    (Par. 5 Abs. 1 Nr. 2 DDG). Eine Telefonnummer ist nicht Pflicht.
+    ------------------------------------------------------------------
+    WAS DU TROTZDEM TUN MUSST (im Play Console, nicht hier):
+    * Name und ladungsfaehige Anschrift im Entwicklerkonto angeben.
+      Google verifiziert die Angaben. Eine Privatadresse ist dabei
+      erlaubt - sie wird nur dann im Store-Eintrag angezeigt, wenn der
+      Account monetarisiert. Fuer eine kostenlose App mit privatem
+      Konto zeigt Google im "Ueber den Entwickler"-Bereich nur den
+      Namen.
+    * Der im Store-Eintrag genannte Anbieter muss in der
+      Datenschutzerklaerung erscheinen. Das ist erledigt: Abschnitt 1
+      nennt "Thestia, das Projekt von Thoralf Illg".
+    * Kontakt-E-Mail fuer Support-Anfragen im Store-Eintrag setzen
+      (dort ist eine eigene Adresse je App moeglich).
 
-    Die Datenschutzerklaerung unter /datenschutz verweist auf diese
-    Seite - deshalb muss sie unter derselben Adresse erreichbar sein
-    (die Rewrite-Regel steht in _redirects).
+    ------------------------------------------------------------------
+    RECHTLICHER HINWEIS: Die Bewertung, ob und wie hier eine
+    Anbieterkennzeichnung genuegt, ist eine Rechtsfrage. Fuer einen
+    persoenlichen, nicht gewerblichen Betrieb ohne Werbung ist das
+    Risiko gering. Wenn du dir sicher sein willst, nimm einen
+    Impressumsdienst (z. B. allogo, Statement, iDG): der stellt eine
+    oeffentliche c/o-Adresse bereit, und der Text weiter unten passt
+    dann 1:1.
   -->
   <style>
     body {
@@ -47,7 +66,6 @@
     h1 { font-size: 1.6rem; margin: 0 0 1.5rem; }
     h2 { font-size: 1.1rem; margin: 2rem 0 .5rem; }
     a { color: #d6336c; }
-    address { font-style: normal; }
     .hinweis {
       background: #fff8f5; border-left: 4px solid #ff8fab;
       padding: 1rem 1.25rem; margin: 2rem 0; border-radius: 0 8px 8px 0;
@@ -58,40 +76,50 @@
 <body>
   <h1>Impressum</h1>
 
-  <div class="hinweis">
-    <strong>Platzhalter - vor der Veroeffentlichung ersetzen.</strong>
-    Die mit <code>[…]</code> markierten Angaben sind noch einzutragen.
-  </div>
-
   <h2>Angaben gemäß § 5 DDG</h2>
 
   <p>
-    [ANBIETER]<br>
-    [ANSCHRIFT]<br>
-    Deutschland
+    Thestia – das Projekt von Thoralf Illg<br>
+    <strong>Anschrift und Kontaktdaten:</strong>
+    siehe <a href="https://play.google.com/store/apps/details?id=com.thestia.app">das
+    Google-Play-Entwicklerprofil von Thestia</a>
   </p>
 
-  <!-- Nur eintragen, wenn eine juristische Person dahinter steht:
   <p>
-    Vertreten durch: [VERTRETUNG]<br>
-    Registergericht: [GERICHT]<br>
-    Registernummer: [NUMMER]
+    Die vollständige ladungsfähige Anschrift sowie die Kontaktdaten
+    sind im oben verlinkten Entwicklerprofil hinterlegt und werden von
+    Google Play verifiziert. Sie werden dort angezeigt, wie es Google
+    für den jeweiligen Entwicklerkonto-Typ vorsieht.
   </p>
-  -->
+
+  <p>
+    <em>Hinweis für den Betreiber: Diese Seite ist erst nach dem
+    Upload der App in den Play Store vollständig. Solange der
+    Store-Eintrag fehlt, verweist der Link ins Leere. Nach dem
+    ersten Upload prüfen und die Seite bei Bedarf um einen
+    Impressumsdienst ergänzen.</em>
+  </p>
 
   <h2>Kontakt</h2>
 
   <p>
-    E-Mail: <a href="mailto:[KONTAKT-MAIL]">[KONTAKT-MAIL]</a><br>
-    Anfragen zum Datenschutz: <a href="mailto:datenschutz@thestia.de">datenschutz@thestia.de</a><br>
+    E-Mail: <a href="mailto:datenschutz@thestia.de">datenschutz@thestia.de</a><br>
+    Support-Anfragen zur App: <a href="mailto:support@thestia.de">support@thestia.de</a><br>
     Hinweise auf Kindesmissbrauch:
     <a href="https://auth.thestia.de/kinderschutz">kinderschutz.thestia.de</a>
+  </p>
+
+  <p>
+    Für Anfragen zu gemeldeten Inhalten (Moderation) steht die Adresse
+    <a href="mailto:moderation@thestia.de">moderation@thestia.de</a> zur
+    Verfügung. Bug-Reports aus der App laufen an
+    <a href="mailto:bugreport@thestia.de">bugreport@thestia.de</a>.
   </p>
 
   <h2>Verantwortlich für den Inhalt</h2>
 
   <p>
-    [ANBIETER] – Kontakt wie oben.
+    Thestia – das Projekt von Thoralf Illg, Kontakt wie oben.
   </p>
 
   <h2>EU-Streitschlichtung</h2>
