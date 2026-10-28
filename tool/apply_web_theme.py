@@ -36,6 +36,13 @@ ASSETS = ROOT / 'passkey-assets'
 # heller Fleck auf.
 SEITEN = ['kinderschutz.html', 'konto-loeschen.html', 'impressum.html']
 
+# index.html: die Captcha-Seite. Sie hat ZWEI Ansichten (Sicherheitscheck
+# fuer auth.thestia.de, Landing-Seite fuer die Wurzel-Domain) und bringt
+# ihre eigene Kopfzeile mit. Deshalb bekommt sie nur das gemeinsame CSS,
+# keine Kopfzeile und keine Inhalts-Huelle - die wuerde den
+# Sicherheitscheck in eine Karte packen.
+NUR_CSS = ['index.html']
+
 
 def main() -> int:
     geaendert = 0
@@ -52,10 +59,23 @@ def main() -> int:
         pfad.write_text(nachher, encoding='utf-8', newline='\n')
         print(f'  {name}: Design angewendet')
         geaendert += 1
+    for name in NUR_CSS:
+        pfad = ASSETS / name
+        if not pfad.exists():
+            print(f'  {name}: fehlt - uebersprungen')
+            continue
+        vorher = pfad.read_text(encoding='utf-8')
+        nachher = apply_theme(vorher, insert_chrome=False)
+        if nachher == vorher:
+            print(f'  {name}: bereits bearbeitet - unveraendert')
+            continue
+        pfad.write_text(nachher, encoding='utf-8', newline='\n')
+        print(f'  {name}: Design angewendet (nur CSS)')
+        geaendert += 1
+
     print()
     print(f'{geaendert} Seite(n) angepasst.')
     return 0
-
 
 if __name__ == '__main__':
     sys.exit(main())

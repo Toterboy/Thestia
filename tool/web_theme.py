@@ -64,8 +64,9 @@ Konvention und die einzige, die man nicht nachschlagen muss.
 
 # Die Variablen und das, was der Knopf braucht.
 THEME_CSS = """
+    /* Web-Design (tool/web_theme.py) */
     /* ---------------------------------------------------------------
-       Web-Design (tool/web_theme.py) - eine Quelle fuer alle Seiten.
+       Eine Quelle fuer alle Seiten.
 
        Die Farben kommen aus der App: Primaer #E9457B, heller
        Grund #F7F7FB, Karten weiss, dunkler Grund #121212, Karten
@@ -384,23 +385,35 @@ CSS = THEME_CSS
 
 # Marker: daran erkennt apply_theme(), dass eine Seite schon bearbeitet
 # wurde. Ohne ihn waere jeder Lauf ein zweiter Durchgang.
-MARKER = '/* Web-Design (tool/web_theme.py)'
+MARKER = '/* Web-Design (tool/web_theme.py) */'
 
 # AELTERE Marker. Das Design wurde zweimal ueberarbeitet; wer eine Seite
 # mit einer aelteren Fassung bearbeitet, traegt deren CSS sonst ZUSAETZLICH
 # zum neuen - zwei Umschalter-Regeln und ein Knopf an zwei Stellen.
 # Deshalb werden beim Entfernen alle bekannten Marker beruecksichtigt.
 AELTERE_MARKER = [
+    # Fassung 0 (28.10.2026, erste Fassung des Themes).
     '/* modus-knopf (tool/web_theme.py)',
+    # Fassung 1 (28.10.2026, die "eine Quelle"-Fassung). Ihr Marker
+    # war NICHT exakt der Anfang des CSS-Blocks - deshalb hat
+    # strip_theme() sie nicht gefunden und jede Ausfuehrung hat eine
+    # weitere Kopie eingefuegt (am Ende waren es sieben in einer
+    # Seite). Deshalb stehen HIER alle bekannten Fassungen.
+    'Web-Design (tool/web_theme.py) - eine Quelle',
 ]
 
 
-def strip_theme(html: str) -> str:
+def strip_theme(html: str, remove_chrome: bool = True) -> str:
     """Entfernt ein bereits eingespieltes Design samt Schalter.
 
     Nötig, weil das Design nachgebessert wurde: ohne dieses Entfernen
     stuende in jeder Seite zweimal das alte Theme-CSS und der alte
     Schalter daneben - zwei Umschalter auf einer Seite.
+
+    [remove_chrome] = False: die Kopfzeile und die Inhalts-Huelle
+    bleiben stehen. Das braucht die Captcha-Seite (index.html): ihre
+    Kopfzeile ist Teil der Seite (sie traegt die Landing-Ansicht), und
+    ihre Huelle wird nicht eingefuegt.
     """
     import re
 
@@ -415,34 +428,44 @@ def strip_theme(html: str) -> str:
         if j >= 0:
             html = html[:i] + html[j:]
 
-    # 2) Alten Schalter und altes Label entfernen.
-    html = re.sub(r'<input[^>]*id="modus-umschalter"[^>]*>\s*', '', html)
-    html = re.sub(
-        r'<label[^>]*for="modus-umschalter"[^>]*>.*?</label>\s*', '', html,
-        flags=re.S)
-    # 3) Die alte Kopfzeile entfernen, falls sie schon existiert.
-    html = re.sub(r'<header class="kopf">.*?</header>\s*', '', html,
-                  flags=re.S)
-    # 4) Die alte Inhalts-Huelle entfernen. Ohne diesen Schritt
-    #    stapelt sich bei jedem Lauf eine weitere Huelle - der Inhalt
-    #    saehe dann in einer Karte in einer Karte in einer Karte aus.
-    html = html.replace('<div class="inhalt">\n', '')
-    html = html.replace('<div class="inhalt">', '')
-    html = re.sub(r'</div>\s*(<footer)', r'\1', html)
-    html = re.sub(r'</div>\s*</body>', '</body>', html)
+    if remove_chrome:
+        # 2) Alten Schalter und altes Label entfernen.
+        html = re.sub(r'<input[^>]*id="modus-umschalter"[^>]*>\s*', '', html)
+        html = re.sub(
+            r'<label[^>]*for="modus-umschalter"[^>]*>.*?</label>\s*', '', html,
+            flags=re.S)
+        # 3) Die alte Kopfzeile entfernen, falls sie schon existiert.
+        html = re.sub(r'<header class="kopf">.*?</header>\s*', '', html,
+                      flags=re.S)
+        # 4) Die alte Inhalts-Huelle entfernen. Ohne diesen Schritt
+        #    stapelt sich bei jedem Lauf eine weitere Huelle - der Inhalt
+        #    saehe dann in einer Karte in einer Karte in einer Karte aus.
+        html = html.replace('<div class="inhalt">\n', '')
+        html = html.replace('<div class="inhalt">', '')
+        html = re.sub(r'</div>\s*(<footer)', r'\1', html)
+        html = re.sub(r'</div>\s*</body>', '</body>', html)
     return html
 
 
-def apply_theme(html: str, css_extra: str = '') -> str:
+def apply_theme(html: str, css_extra: str = '',
+                insert_chrome: bool = True) -> str:
     """Haengt Design, Kopfzeile und Umschalt-Knopf in eine HTML-Seite ein.
 
     [css_extra] sind seiten-eigene Regeln, die VOR den gemeinsamen
     kommen - die gemeinsamen gewinnen dann, weil sie spaeter im
     Style-Block stehen.
+
+    [insert_chrome] = False: nur das gemeinsame CSS, keine Kopfzeile
+    und keine Inhalts-Huelle. Das braucht die Captcha-Seite
+    (index.html): sie hat ZWEI Ansichten (Sicherheitscheck und
+    Landing-Seite) und bringt ihre eigene Kopfzeile mit - die
+    gemeinsame Huelle wuerde den Sicherheitscheck in eine Karte
+    packen.
     """
     # Ein altes Design wird entfernt, damit die Seite nie zweimal
-    # gestyled wird.
-    html = strip_theme(html)
+    # gestyled wird. Die Kopfzeile wird nur entfernt, wenn sie auch
+    # automatisch eingefuegt wurde.
+    html = strip_theme(html, remove_chrome=insert_chrome)
 
     # 1) Die alte :root-Zeile ersetzen (sie setzt nur color-scheme).
     alt_root = ':root { color-scheme: light dark; }'
@@ -459,6 +482,11 @@ def apply_theme(html: str, css_extra: str = '') -> str:
         html = html.replace('</head>',
                             '<style>%s</style></head>' % (css_extra + THEME_CSS),
                             1)
+
+    # Ohne Chrome (Captcha-Seite) ist hier Schluss: die Seite hat ihre
+    # eigene Kopfzeile und zwei Ansichten.
+    if not insert_chrome:
+        return html
 
     # 3) Kopfzeile direkt nach <body>, Inhalt in die Karte.
     kopf = KOPF_HTML + '\n<div class="inhalt">\n'

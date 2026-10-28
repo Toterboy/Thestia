@@ -133,6 +133,43 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
       ..loadRequest(Uri.parse(_captchaPageUrl));
   }
 
+  /// Übersetzt den Turnstile-Fehlercode in eine verständliche Meldung.
+  ///
+  /// Die Codes stammen aus Cloudflare (dokumentiert unter
+  /// "Client-side errors"): die ersten drei Ziffern nennen die Familie
+  /// (100 = Start, 110 = Konfiguration, 200 = Netz/Cache, 300/600 =
+  /// Challenge abgewiesen).
+  ///
+  /// BEISPIEL (28.10.2026, live gemessen): 110200 = "Domain not
+  /// authorized" - der Turnstile-Sitekey kennt nur auth.thestia.de.
+  /// Auf der Wurzel-Domain thestia.de kam genau dieser Code. Deshalb
+  /// bekommt die Wurzel-Domain jetzt eine eigene Seite und der
+  /// Sicherheitscheck laeuft nur noch unter auth.thestia.de.
+  String _errorText(BuildContext context) {
+    final roh = _error ?? '';
+    final code = roh.contains(':') ? roh.split(':').last.trim() : '';
+
+    String? hinweis;
+    if (code == '110200') {
+      hinweis = L10n.t(context, 'captcha.err.domainNotAuthorized');
+    } else if (code == '110100' || code == '110110' || code == '400020') {
+      hinweis = L10n.t(context, 'captcha.err.badSitekey');
+    } else if (code == '200500') {
+      hinweis = L10n.t(context, 'captcha.err.blocked');
+    } else if (code.startsWith('300') || code.startsWith('600')) {
+      hinweis = L10n.t(context, 'captcha.err.botDetected');
+    } else if (code == '200100') {
+      hinweis = L10n.t(context, 'captcha.err.clock');
+    } else if (code.startsWith('1106')) {
+      hinweis = L10n.t(context, 'captcha.err.timeout');
+    }
+
+    // Der Code bleibt IMMER sichtbar - nur mit Erklaerung, nicht
+    // versteckt. Ohne ihn laesst sich der Fehler nicht zuordnen.
+    if (hinweis == null) return roh;
+    return '$roh\n\n$hinweis';
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -150,7 +187,7 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
             children: [
               if (_error != null) ...[
                 Text(
-                  _error!,
+                  _errorText(context),
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.error,

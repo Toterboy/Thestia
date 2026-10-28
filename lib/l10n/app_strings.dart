@@ -290,7 +290,25 @@ const Map<String, Map<String, String>> _strings = {
     'auth.captchaLogin':
         'Bitte schließe den Sicherheitscheck ab, um dich '
         'anzumelden.',
-    'captcha.retry': 'Erneut versuchen',
+
+    'captcha.err.domainNotAuthorized':
+        'Diese Adresse ist fuer den Sicherheitscheck nicht freigegeben. '
+        'Der Sicherheitscheck laeuft unter auth.thestia.de.',
+    'captcha.err.badSitekey':
+        'Der Sicherheitscheck ist serverseitig nicht korrekt konfiguriert. '
+        'Bitte melde es dem Support.',
+    'captcha.err.blocked':
+        'Der Sicherheitscheck wird blockiert. Bitte erlaube '
+        'challenges.cloudflare.com und versuche es erneut.',
+    'captcha.err.botDetected':
+        'Der Sicherheitscheck hat die Anfrage als Bot-Verhalten '
+        'eingestuft. Bitte versuche es gleich noch einmal.',
+    'captcha.err.clock':
+        'Die Uhrzeit des Geraets stimmt nicht. Bitte stelle automatische '
+        'Zeit ein und versuche es erneut.',
+    'captcha.err.timeout':
+        'Der Sicherheitscheck hat zu lange gebraucht. Bitte versuche es '
+        'noch einmal.',    'captcha.retry': 'Erneut versuchen',
     'language.german': 'Deutsch',
     'language.english': 'Englisch',
     // Navigation
@@ -3086,7 +3104,24 @@ const Map<String, Map<String, String>> _strings = {
     'auth.hidePassword': 'Hide password',
     'auth.captchaRegister': 'Please complete the security check to sign up.',
     'auth.captchaLogin': 'Please complete the security check to log in.',
-    'captcha.retry': 'Try again',
+
+    'captcha.err.domainNotAuthorized':
+        'This address is not allowed for the security check. The security '
+        'check runs on auth.thestia.de.',
+    'captcha.err.badSitekey':
+        'The security check is not configured correctly on the server. '
+        'Please report it to support.',
+    'captcha.err.blocked':
+        'The security check is being blocked. Please allow '
+        'challenges.cloudflare.com and try again.',
+    'captcha.err.botDetected':
+        'The security check classified the request as bot behaviour. '
+        'Please try again in a moment.',
+    'captcha.err.clock':
+        'The device clock is wrong. Please enable automatic time and try '
+        'again.',
+    'captcha.err.timeout':
+        'The security check took too long. Please try again.',    'captcha.retry': 'Try again',
     'language.german': 'German',
     'language.english': 'English',
     'nav.home': 'Home',
