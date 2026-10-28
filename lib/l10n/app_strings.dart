@@ -610,6 +610,8 @@ const Map<String, Map<String, String>> _strings = {
     'interests.tabSent': 'Gesendet',
     'interests.tabReceived': 'Erhalten',
     'interests.tabSparks': 'Funken',
+    'interests.sparksSub':
+        'Deine Begegnungen - sie stehen immer hier, unter den Likes.',
     'interests.emptySentTitle': 'Du hast noch niemanden geliked',
     'interests.emptySentBody':
         'Lerne Leute über ihre Vorstellung kennen ("Find your Spark") oder '
@@ -1356,6 +1358,8 @@ const Map<String, Map<String, String>> _strings = {
     'profile.preview.note':
         'Hinweis: Die tatsächliche Sichtbarkeit hängt vom Alter und den Einstellungen der jeweiligen Betrachter ab.',
     'profile.preview.type': 'Typ',
+    'profile.preview.modeNormal': 'Normal',
+    'profile.preview.modeBirthday': 'Geburtstag',
     'profile.intro.title': 'Meine Vorstellung',
     'profile.intro.empty': 'Du hast noch keine Text-Vorstellung hinterlegt.',
     'profile.intro.hint':
@@ -3937,6 +3941,8 @@ const Map<String, Map<String, String>> _strings = {
     'profile.preview.note':
         'Note: Actual visibility depends on the age and settings of each viewer.',
     'profile.preview.type': 'Type',
+    'profile.preview.modeNormal': 'Normal',
+    'profile.preview.modeBirthday': 'Birthday',
     'profile.intro.title': 'My intro',
     'profile.intro.empty': 'You have not added a text intro yet.',
     'profile.intro.hint':
@@ -4492,6 +4498,8 @@ const Map<String, Map<String, String>> _strings = {
     'interests.tabSent': 'Sent',
     'interests.tabReceived': 'Received',
     'interests.tabSparks': 'Sparks',
+    'interests.sparksSub':
+        'Your encounters - they are always here, below the likes.',
     'interests.emptySentTitle': 'You have not liked anyone yet',
     'interests.emptySentBody':
         'Meet people through their intro ("Find your Spark") or swipe '

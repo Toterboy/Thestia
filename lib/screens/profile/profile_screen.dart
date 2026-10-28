@@ -3,6 +3,8 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show ValueListenable, ValueNotifier;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -28,6 +30,150 @@ import 'package:thestia/utils/age_safety_rules.dart';
 import 'package:thestia/utils/constants.dart';
 import 'package:thestia/widgets/profile_widgets.dart';
 import 'package:thestia/widgets/scroll_more_hint.dart';
+
+/// Form der Profil-Dialoge (Profil-Menü, Profil-Vorschau, Vorstellung).
+///
+/// NUTZERWUNSCH (28.10.2026): "Beim Reiter Profil, soll wenn man auf
+/// den Profil Button drückt, das Popup mit Profil bearbeiten, Profil
+/// vorschau und Vorstellung vorschau auch unten abgerundet sein".
+///
+/// Standardmaessig ist ein Bottom-Sheet nur OBEN abgerundet - unten
+/// stossen die Ecken an den Bildschirmrand. Mit einem Radius an allen
+/// vier Ecken schliesst das Blatt sichtbar ab.
+ShapeBorder profilDialogForm() => RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(28),
+    );
+
+/// Der kleine Streifen oben in den Profil-Dialogen.
+///
+/// NUTZERWUNSCH (28.10.2026): "und oben diesen kleinen streifen haben,
+/// der zeigt, dass man das Pop up wie gerade auch schon, nach unten weg
+/// schieben kann".
+///
+/// Ein dünner Balken in der Mitte - die uebliche Sprache fuer
+/// "wegschieben".
+Widget profilGriffleiste(BuildContext context) => Center(
+      child: Container(
+        width: 40,
+        height: 4,
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.outlineVariant,
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+    );
+
+/// Umschalter in der Profil-Vorschau: normal oder Geburtstag.
+///
+/// NUTZERWUNSCH (28.10.2026): "Unter Profil Vorschau soll man
+/// zwischen der normalen Profil Vorschau und der Profil Vorschau fuer
+/// den Geburtstag wechseln koennen."
+///
+/// Zwei Pillen statt eines Schalters: der Geburtstags-Zustand ist ein
+/// ZWEITER Zustand, kein An-Aus - man will sehen, wie das Profil in
+/// beiden Varianten aussieht.
+class ProfilVorschauUmschalter extends StatelessWidget {
+  const ProfilVorschauUmschalter({
+    required this.geburtstag,
+    required this.onChanged,
+    super.key,
+  });
+
+  /// Zustand: true = Geburtstags-Vorschau.
+  final ValueListenable<bool> geburtstag;
+
+  /// Wird bei jedem Wechsel aufgerufen.
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: geburtstag,
+      builder: (context, istGeburtstag, _) {
+        return Row(
+          children: [
+            _Pill(
+              label: L10n.t(context, 'profile.preview.modeNormal'),
+              icon: Icons.person_outline,
+              selected: !istGeburtstag,
+              onTap: () => onChanged(false),
+            ),
+            const SizedBox(width: 8),
+            _Pill(
+              label: L10n.t(context, 'profile.preview.modeBirthday'),
+              icon: Icons.auto_awesome,
+              selected: istGeburtstag,
+              onTap: () => onChanged(true),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Eine Pille des Umschalters.
+class _Pill extends StatelessWidget {
+  const _Pill({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final fg = selected ? scheme.onPrimaryContainer : scheme.onSurfaceVariant;
+
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(999),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(999),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: selected
+                  ? scheme.primaryContainer
+                  : scheme.surfaceContainerHighest.withValues(alpha: 0.45),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 18, color: fg),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: fg,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// Profil-Anzeige des eigenen Nutzers mit Schnellzugriff auf Bearbeiten
 /// und Einstellungen.
@@ -246,10 +392,14 @@ class ProfileScreen extends ConsumerWidget {
   ) {
     showModalBottomSheet<void>(
       context: context,
+      shape: profilDialogForm(),
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Der kleine Streifen oben: er sagt "das kannst du nach
+            // unten wegschieben" (NUTZERWUNSCH, 28.10.2026).
+            profilGriffleiste(context),
             ListTile(
               leading: const Icon(Icons.edit),
               title: Text(L10n.t(context, 'profile.menu.edit')),
@@ -289,6 +439,7 @@ class ProfileScreen extends ConsumerWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      shape: profilDialogForm(),
       builder: (ctx) => DraggableScrollableSheet(
         initialChildSize: 0.6,
         maxChildSize: 0.9,
@@ -300,17 +451,7 @@ class ProfileScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.outline,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
+              profilGriffleiste(context),
               Text(
                 L10n.t(context, 'profile.intro.title'),
                 style: Theme.of(context).textTheme.titleLarge,
@@ -373,9 +514,22 @@ class ProfileScreen extends ConsumerWidget {
         ? ref.read(supabaseStorageServiceProvider).loadAvatarBytes(photoRef)
         : Future<Uint8List?>.value(null);
 
+    // Zustand des Umschalters: normale Vorschau oder Geburtstags-Vorschau.
+    //
+    // NUTZERWUNSCH (28.10.2026): "Unter Profil Vorschau soll man
+    // zwischen der normalen Profil Vorschau und der Profil Vorschau
+    // fuer den Geburtstag wechseln koennen."
+    //
+    // Ein ValueNotifier statt eines StatefulBuilder: der Dialog wird bei
+    // jeder Aenderung neu gebaut, ein StatefulBuilder wuerde den
+    // ganzen Blatt-Baum neu aufbauen - der Notifier hoert nur auf die
+    // Teile, die sich aendern.
+    final geburtstag = ValueNotifier<bool>(false);
+
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      shape: profilDialogForm(),
       builder: (ctx) => DraggableScrollableSheet(
         initialChildSize: 0.85,
         maxChildSize: 0.95,
@@ -387,17 +541,7 @@ class ProfileScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.outline,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
+              profilGriffleiste(context),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -418,30 +562,59 @@ class ProfileScreen extends ConsumerWidget {
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
           ),
+          const SizedBox(height: 16),
+          // Umschalter: normale Vorschau oder Geburtstag.
+          ProfilVorschauUmschalter(
+            geburtstag: geburtstag,
+            onChanged: (v) => geburtstag.value = v,
+          ),
           const SizedBox(height: 24),
-          Center(
-            child: CircleAvatar(
-              radius: 56,
-              backgroundColor: isPhotosVisible
-                  ? Theme.of(context).colorScheme.primaryContainer
-                  : Colors.grey.shade300,
-              child: !isPhotosVisible
-                  ? const Icon(Icons.visibility_off, size: 48, color: Colors.white)
-                  : FutureBuilder<Uint8List?>(
-                      future: avatarFuture,
-                      builder: (context, snap) {
-                        final bytes = snap.data;
-                        if (bytes != null) {
-                          return ClipOval(
-                            child: Image.memory(bytes,
-                                width: 112, height: 112, fit: BoxFit.cover),
-                          );
-                        }
-                        return const Icon(Icons.person,
-                            size: 56, color: Colors.white);
-                      },
-                    ),
-            ),
+          // Der Avatar reagiert auf den Umschalter: im Geburtstags-Modus
+          // bekommt er den Stil-Rahmen (Verlauf) wie im echten Profil.
+          ValueListenableBuilder<bool>(
+            valueListenable: geburtstag,
+            builder: (context, istGeburtstag, _) {
+              final avatar = CircleAvatar(
+                radius: 56,
+                backgroundColor: isPhotosVisible
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : Colors.grey.shade300,
+                child: !isPhotosVisible
+                    ? const Icon(Icons.visibility_off,
+                        size: 48, color: Colors.white)
+                    : FutureBuilder<Uint8List?>(
+                        future: avatarFuture,
+                        builder: (context, snap) {
+                          final bytes = snap.data;
+                          if (bytes != null) {
+                            return ClipOval(
+                              child: Image.memory(bytes,
+                                  width: 112, height: 112, fit: BoxFit.cover),
+                            );
+                          }
+                          return const Icon(Icons.person,
+                              size: 56, color: Colors.white);
+                        },
+                      ),
+              );
+              if (!istGeburtstag) return avatar;
+              return BirthdayStyleFrame(
+                style: profile.birthdayStyle,
+                active: true,
+                borderRadius: 56,
+                child: avatar,
+              );
+            },
+          ),
+          // Der Chip weist den aktiven Stil aus (wie im echten Profil).
+          ValueListenableBuilder<bool>(
+            valueListenable: geburtstag,
+            builder: (context, istGeburtstag, _) => istGeburtstag
+                ? const Padding(
+                    padding: EdgeInsets.only(top: 10),
+                    child: Center(child: BirthdayChip()),
+                  )
+                : const SizedBox.shrink(),
           ),
               const SizedBox(height: 16),
               Center(

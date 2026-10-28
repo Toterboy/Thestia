@@ -286,31 +286,34 @@ class TransitSparkPainter extends _ModeSymbolPainter {
     // 0.83 zu betragen.
     final zug = Icons.train;
     _glyphe(canvas, zug.codePoint, zug.fontFamily!, zug.fontPackage,
-        const Offset(8.5, 10.6), zugGroesse);
+        const Offset(8.5, 10.9), zugGroesse);
 
-    // --- Funke (ECHTER Funke, oben rechts) --------------------------------
+    // --- Funke (ECHTER Funke, mittig ueber dem Zug) ------------------
     //
-    // GEAENDERT (Nutzerwunsch, 27.10.2026): "Neben dem Zug ist kein
-    // Funke, sondern was anderes." Richtig war das: dort stand ein
-    // Streifen mit zwei Sternen darauf. Der Streifen las sich als
-    // Feder und zog sich als Linie quer durch das Bild - er war
-    // genau das, was der Nutzer mit "ein Strich durch den Zug"
-    // beschrieben hat.
+    // GEAENDERT (Nutzerwunsch, 28.10.2026): "Beim Icon fuer Transit
+    // Spark muss es nur noch so verschoben werden, sodass der Zug in
+    // der Mitte ist, dann passt es."
     //
-    // Jetzt ist es dasselbe Motiv wie in "Find your Spark": ein
-    // vierstrahliger Stern mit zwei kleineren Sternen im Schweif.
-    // Kein Streifen, keine Linie, keine Beruehrung des Zuges.
+    // Der Funke stand previously rechts OBEN. Damit war das ganze
+    // Zeichen 1,35 Einheiten zu weit rechts - der Zug wirkte deshalb
+    // nach links verschoben, obwohl er geometrisch genau auf der
+    // Feldmitte stand (8,5 von 17).
     //
-    // Die Position ist die freie Flaeche oben rechts. Der Schweif
-    // laeuft nach links oben, also von der Icon-Mitte weg - so zeigt
-    // er die Bewegung des Funkens und laeuft weder ueber das Zugdach
-    // noch an ihm vorbei.
+    // Die Anordnung ist jetzt: der Funke sitzt MITTIG ueber dem Zug.
+    // Damit ist die Gesamtkomposition symmetrisch zur Zugachse, der
+    // Zug steht optisch in der Mitte, und es gibt weiterhin keine
+    // Beruehrung und keine Linie durch den Zug.
     //
-    // Der Abstand zum Zug betraegt rund 1,3 Einheiten an der engsten
-    // Stelle (linker Strahl des Sterns gegen die rechte Dachschulter
-    // des Zuges) - sichtbar, aber ohne die beiden Elemente
-    // verschmelzen zu lassen.
-    funkeMitSchleier(canvas, const Offset(13.5, 4.6), 1.85, color);
+    // Der Abstand zum Zug betraegt rund 0,7 Einheiten (unterer
+    // Strahl des Sterns gegen das Dach) - sichtbar, aber ohne die
+    // beiden Elemente verschmelzen zu lassen.
+    //
+    // Der Schweif steigt SENKRECHT nach oben (Richtung -pi/2). Mit
+    // der Standardrichtung ("nach links oben") laege die Masse des
+    // Funkens links neben der Zugachse - der Zug wirkte dann wieder
+    // verschoben, nur jetzt nach unten statt nach oben.
+    funkeMitSchleier(canvas, const Offset(8.5, 3.3), 1.7, color,
+        richtung: -math.pi / 2);
   }
 
   /// Zeichnet eine Material-Glyphe in das 17er-Feld, mittig auf [mitte].

@@ -92,43 +92,96 @@ class InteressenScreen extends ConsumerStatefulWidget {
 
 class _InteressenScreenState extends ConsumerState<InteressenScreen>
     with SingleTickerProviderStateMixin {
+  /// Reiter fuer "Gesendet" und "Erhalten".
+  ///
+  /// NUTZERWUNSCH (28.10.2026): die drei Kategorien werden zwei. Die
+  /// "Funken" sind kein Reiter mehr, sondern stehen IMMER unter dem
+  /// Inhalt - deshalb hat der Controller nur noch zwei Plaetze und
+  /// es gibt keine TabBarView mehr, also auch kein Wischen zwischen
+  /// den Reitern.
   late final TabController _tabController;
+
+  /// Schluessel fuer die Abschnitte - sie muessen ueberleben, wenn
+  /// der Reiter wechselt (sonst waere die Liste bei jedem Wechsel
+  /// neu geladen und der Pull-to-Refresh waere hin).
+  final _sentKey = GlobalKey<_OwnLikesTabState>();
+  final _receivedKey = GlobalKey<_ReceivedLikesTabState>();
+  final _matchesKey = GlobalKey<_MatchesTabState>();
+
+  /// Anker des Funken-Abschnitts (fuer den Sprung aus dem Chat).
+  final _funkenAnker = GlobalKey();
+
+  final _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    // NUTZERWUNSCH: Der Reiter "Interessen" landet IMMER beim Funken-Tab
-    // (Index 2) - bei "Eigene Likes" entstand der Eindruck, man hoffe auf
-    // neue Likes; im Funken-Tab sieht man die aktuellen Kontakte. Der
-    // interessenInitialTabProvider (z. B. "Funke kühlen") behält Vorrang,
-    // er zeigt ohnehin auf den Funken-Tab.
-    final initial =
-        ref.read(interessenInitialTabProvider).clamp(0, 2).toInt();
-    _tabController =
-        TabController(length: 3, vsync: this, initialIndex: initial == 0 ? 2 : initial);
-    if (initial != 0) {
-      ref.read(interessenInitialTabProvider.notifier).state = 0;
-    }
+    // Der Initial-Reiter aus dem Aufrufer:
+    //   1 = "Erhalten" (z. B. aus "Neue Likes" auf der Startseite),
+    //   2 = "Funken" (z. B. nach einem Match) - der ist jetzt kein
+    //       Reiter mehr, sondern ein Sprung zum Funken-Abschnitt,
+    //   0 = "Gesendet".
+    final gewaehlt = ref.read(interessenInitialTabProvider);
+    _tabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: gewaehlt == 1 ? 1 : 0,
+    );
+    // Der alte Initial-Reiter "2" war der Funken-Tab. Funken sind
+    // jetzt immer sichtbar - deshalb springt die Seite dorthin,
+    // statt einen Reiter zu waehlen.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (gewaehlt == 2) {
+        _scrollToFunken();
+        ref.read(interessenInitialTabProvider.notifier).state = 0;
+      }
+    });
+  }
+
+  /// Springt zum Funken-Abschnitt.
+  ///
+  /// Von dort aus wird der "Funke kühlen"-Weg geoeffnet (Chat-Screens
+  /// setzen den Initial-Reiter auf 2 und navigieren dann hierher).
+  void _scrollToFunken() {
+    final ziel = _funkenAnker.currentContext;
+    if (ziel == null) return;
+    Scrollable.ensureVisible(
+      ziel,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+      alignment: 0.1,
+    );
+  }
+
+  /// Aktualisiert alle drei Abschnitte (Pull-to-Refresh der Seite).
+  Future<void> _refreshAlle() async {
+    await Future.wait(<Future<void>>[
+      if (_sentKey.currentState != null) _sentKey.currentState!.refresh(),
+      if (_receivedKey.currentState != null)
+        _receivedKey.currentState!.refresh(),
+      if (_matchesKey.currentState != null) _matchesKey.currentState!.refresh(),
+    ]);
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Der Stift gehoert zum Verwalten der Funken - also nur auf dem
-    // Funken-Tab. Auf "Gesendet" und "Erhalten" tut er nichts, und
+    // Der Stift gehoert zum Verwalten der Funken - also nur, wenn es
+    // Funken gibt. Auf "Gesendet" und "Erhalten" tut er nichts, und
     // genau das war der Befund: "Der Stift funktioniert nicht, wenn
     // keine Daten dort vorhanden sind."
-    final aufFunken = _tabController.index == 2;
     final funkenVorhanden = (ref.watch(serverMatchesProvider).valueOrNull
             ?.length ??
         0) >
         0;
-    final stiftSichtbar = aufFunken && funkenVorhanden;
+    final stiftSichtbar = funkenVorhanden;
 
     return Scaffold(
       appBar: AppBar(
@@ -138,9 +191,9 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen>
         // Funken-Liste (sparte Platz; der Ein-/Ausgang des Auswähl-Modus
         // bleibt in der Liste selbst).
         actions: [
-          // Der Stift erscheint nur, wenn er etwas zu tun hat: auf dem
-          // Funken-Tab UND wenn es Funken gibt. Ein Knopf, der nichts
-          // bewirkt, ist schlechter als kein Knopf.
+          // Der Stift erscheint nur, wenn er etwas zu tun hat: wenn es
+          // Funken gibt. Ein Knopf, der nichts bewirkt, ist schlechter
+          // als kein Knopf.
           if (stiftSichtbar)
             IconButton(
               icon: const Icon(Icons.edit_outlined),
@@ -150,22 +203,14 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen>
             ),
         ],
       ),
-      // Die drei Kategorien als Pillen-Leiste UNTER der AppBar statt
-      // als Text-TabBar IN der AppBar.
+      // NUTZERWUNSCH (28.10.2026): "Gesendet und Erhalten als Icon oder
+      // mit Schrift ... oben behalten und Funken generell immer dadrunter
+      // anzeigen." Und: das Wischen zwischen den Reitern soll NICHT
+      // mehr gehen - sondern zwischen den grossen Reitern der App.
       //
-      // NUTZERWUNSCH (27.10.2026): "Die Interessen Seite sieht nicht gut
-      // aus. Das mit den Kategorien Gesendet, Erhalten und Funken muss
-      // anders gelöst werden."
-      //
-      // Gruende: Die Text-Reiter in der AppBar waren klein, ohne Icon
-      // und ohne Kennzahl - man musste sie suchen. Die Pillen-Leiste
-      // (dieselbe wie im Admin-Screen) traegt zusaetzlich ein Symbol
-      // und die Anzahl, und sie sitzt als eigener Block, nicht
-      // eingequetscht zwischen Titel und Stift.
-      //
-      // Das Wischen zwischen den Reitern bleibt erhalten: die Leiste
-      // bedient denselben TabController, mit dem die TabBarView
-      // synchronisiert ist.
+      // Deshalb: zwei Pillen oben (ohne Wischgeste), darunter ein
+      // einziger Scrollbereich, in dem erst die gewaehlte Liste und
+      // dann IMMER der Funken-Abschnitt steht.
       body: Column(
         children: [
           PillTabBar(
@@ -179,21 +224,54 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen>
                 label: L10n.t(context, 'interests.tabReceived'),
                 icon: Icons.call_received,
               ),
-              PillTab(
-                label: L10n.t(context, 'interests.tabSparks'),
-                icon: Icons.flash_on,
-                count: ref.watch(serverMatchesProvider).valueOrNull?.length,
-              ),
             ],
           ),
           Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: const [
-                _OwnLikesTab(),
-                _ReceivedLikesTab(),
-                _MatchesTab(),
-              ],
+            child: RefreshIndicator(
+              onRefresh: _refreshAlle,
+              child: ListView(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
+                children: [
+                  // Die gewaehlte Liste. AnimatedBuilder haelt sie mit
+                  // der Pillen-Leiste synchron - ohne ihn zeigte die
+                  // Leiste nach einem Klick erst beim naechsten
+                  // Fremd-Rebuild die neue Auswahl.
+                  //
+                  // Offstage statt Conditional: die unsichtbare Liste
+                  // bleibt am Leben (kein Neuladen beim Wechsel), nimmt
+                  // aber keinen Platz in Anspruch.
+                  AnimatedBuilder(
+                    animation: _tabController,
+                    builder: (context, _) => Column(
+                      children: [
+                        Offstage(
+                          offstage: _tabController.index != 0,
+                          child: _OwnLikesTab(key: _sentKey, embedded: true),
+                        ),
+                        Offstage(
+                          offstage: _tabController.index != 1,
+                          child:
+                              _ReceivedLikesTab(key: _receivedKey, embedded: true),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Trennlinie zum Funken-Abschnitt.
+                  const SizedBox(height: 24),
+                  Padding(
+                    key: _funkenAnker,
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: _SectionHeader(
+                      icon: Icons.auto_awesome,
+                      title: L10n.t(context, 'interests.tabSparks'),
+                      subtitle: L10n.t(context, 'interests.sparksSub'),
+                    ),
+                  ),
+                  _MatchesTab(key: _matchesKey, embedded: true),
+                ],
+              ),
             ),
           ),
         ],
@@ -207,7 +285,16 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen>
 // ---------------------------------------------------------------------------
 
 class _OwnLikesTab extends ConsumerStatefulWidget {
-  const _OwnLikesTab();
+  const _OwnLikesTab({this.embedded = false, super.key});
+
+  /// Eingebettet: Der Abschnitt steht in einem fremden Scrollbereich
+  /// (der Seite) und scrollt deshalb NICHT selbst.
+  ///
+  /// NUTZERWUNSCH (28.10.2026): die Funken stehen immer unter dem
+  /// Inhalt - dafuer braucht es EINEN Scrollbereich fuer die ganze
+  /// Seite. Ohne dieses Flag haette jeder Abschnitt einen eigenen,
+  /// und die Seite waere zweimal scrollbar.
+  final bool embedded;
 
   @override
   ConsumerState<_OwnLikesTab> createState() => _OwnLikesTabState();
@@ -239,6 +326,9 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
 
   @override
   Future<void> reloadTab() => _load();
+
+  /// Laedt neu - vom Pull-to-Refresh der Seite aufgerufen.
+  Future<void> refresh() => _load();
 
   Future<void> _load() async {
     setState(() => _loading = true);
@@ -283,6 +373,20 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
       // AlwaysScrollableScrollPhysics (sonst löst Pull bei kurzer/leerer
       // Liste nie aus, auf Android 16 mit enforced edge-to-edge fiel das
       // besonders auf).
+      //
+      // Eingebettet scrollt die SEITE - der Leerzustand braucht dann
+      // keine eigene RefreshIndicator und keine 60 %-Bildschirmhoehe
+      // (das waere ein riesiger Leerraum in der Mitte).
+      if (widget.embedded) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: EmptyState(
+            icon: Icons.favorite_border,
+            title: L10n.t(context, 'interests.emptySentTitle'),
+            message: L10n.t(context, 'interests.emptySentBody'),
+          ),
+        );
+      }
       return RefreshIndicator(
         onRefresh: _load,
         child: SingleChildScrollView(
@@ -298,14 +402,17 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
         ),
       );
     }
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: ListView.separated(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        itemCount: _likes.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 12),
-        itemBuilder: (context, i) {
+    final liste = ListView.separated(
+      // Eingebettet scrollt die SEITE - der Abschnitt selbst darf nicht
+      // scrollen, sonst haette man zwei Scrollbereiche ineinander.
+      shrinkWrap: widget.embedded,
+      physics: widget.embedded
+          ? const NeverScrollableScrollPhysics()
+          : const AlwaysScrollableScrollPhysics(),
+      padding: widget.embedded ? EdgeInsets.zero : const EdgeInsets.all(16),
+      itemCount: _likes.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      itemBuilder: (context, i) {
           final like = _likes[i];
           final profile = like.profile;
           return Card(
@@ -347,8 +454,12 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
             ),
           );
         },
-      ),
     );
+
+    // Eingebettet zieht die Seite den RefreshIndicator - ein zweiter
+    // darin waere wirkungslos (und wuerde beim Ziehen kämpfen).
+    if (widget.embedded) return liste;
+    return RefreshIndicator(onRefresh: _load, child: liste);
   }
 }
 
@@ -357,7 +468,11 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
 // ---------------------------------------------------------------------------
 
 class _ReceivedLikesTab extends ConsumerStatefulWidget {
-  const _ReceivedLikesTab();
+  const _ReceivedLikesTab({this.embedded = false, super.key});
+
+  /// Eingebettet: Der Abschnitt steht im Scrollbereich der Seite und
+  /// scrollt deshalb nicht selbst (siehe [_OwnLikesTab.embedded]).
+  final bool embedded;
 
   @override
   ConsumerState<_ReceivedLikesTab> createState() => _ReceivedLikesTabState();
@@ -390,6 +505,9 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
 
   @override
   Future<void> reloadTab() => _load();
+
+  /// Laedt neu - vom Pull-to-Refresh der Seite aufgerufen.
+  Future<void> refresh() => _load();
 
   Future<void> _load() async {
     setState(() => _loading = true);
@@ -450,6 +568,18 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
       return const Center(child: CircularProgressIndicator());
     }
     if (_likes.isEmpty) {
+      // Eingebettet scrollt die SEITE - kein eigener Leerraum von
+      // 60 % Bildschirmhoehe (der waere ein Loch in der Seite).
+      if (widget.embedded) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: EmptyState(
+            icon: Icons.favorite_border,
+            title: L10n.t(context, 'interests.emptyReceivedTitle'),
+            message: L10n.t(context, 'interests.emptyReceivedBody'),
+          ),
+        );
+      }
       return RefreshIndicator(
         onRefresh: _load,
         child: SingleChildScrollView(
@@ -465,14 +595,15 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
         ),
       );
     }
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: ListView.separated(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        itemCount: _likes.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 12),
-        itemBuilder: (context, i) {
+    final liste = ListView.separated(
+      shrinkWrap: widget.embedded,
+      physics: widget.embedded
+          ? const NeverScrollableScrollPhysics()
+          : const AlwaysScrollableScrollPhysics(),
+      padding: widget.embedded ? EdgeInsets.zero : const EdgeInsets.all(16),
+      itemCount: _likes.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      itemBuilder: (context, i) {
           final like = _likes[i];
           final profile = like.profile;
           final busy = _busyLikeId == like.likeId;
@@ -546,8 +677,12 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
             ),
           );
         },
-      ),
     );
+
+    // Eingebettet zieht die Seite den RefreshIndicator - ein zweiter
+    // darin waere wirkungslos.
+    if (widget.embedded) return liste;
+    return RefreshIndicator(onRefresh: _load, child: liste);
   }
 }
 
@@ -556,7 +691,11 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
 // ---------------------------------------------------------------------------
 
 class _MatchesTab extends ConsumerStatefulWidget {
-  const _MatchesTab();
+  const _MatchesTab({this.embedded = false, super.key});
+
+  /// Eingebettet: Der Abschnitt steht im Scrollbereich der Seite und
+  /// scrollt deshalb nicht selbst (siehe [_OwnLikesTab.embedded]).
+  final bool embedded;
 
   @override
   ConsumerState<_MatchesTab> createState() => _MatchesTabState();
@@ -592,6 +731,9 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
 
   @override
   Future<void> reloadTab() => _load();
+
+  /// Laedt neu - vom Pull-to-Refresh der Seite aufgerufen.
+  Future<void> refresh() => _load();
 
   Future<void> _load() async {
     setState(() => _loading = true);
@@ -938,6 +1080,16 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
       return const Center(child: CircularProgressIndicator());
     }
     if (_serverMatches.isEmpty && qrContacts.isEmpty) {
+      if (widget.embedded) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: EmptyState(
+            icon: Icons.auto_awesome,
+            title: L10n.t(context, 'interests.emptySparksTitle'),
+            message: L10n.t(context, 'interests.emptySparksBody'),
+          ),
+        );
+      }
       return RefreshIndicator(
         onRefresh: _load,
         child: SingleChildScrollView(
@@ -945,7 +1097,7 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
           child: SizedBox(
             height: MediaQuery.sizeOf(context).height * 0.6,
             child: EmptyState(
-              icon: Icons.chat_bubble_outline,
+              icon: Icons.auto_awesome,
               title: L10n.t(context, 'interests.emptySparksTitle'),
               message: L10n.t(context, 'interests.emptySparksBody'),
             ),
@@ -954,14 +1106,15 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
       );
     }
 
-    return RefreshIndicator(
-      onRefresh: _load,
-      child: ListView(
-        // v0.9.1-Fix (Android 16): Ohne AlwaysScrollable löst Pull bei
-        // kurzer Liste nie aus - Tab 1/2 hatten die Physics, Tab 3 nicht.
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        children: [
+    final liste = ListView(
+      // v0.9.1-Fix (Android 16): Ohne AlwaysScrollable löst Pull bei
+      // kurzer Liste nie aus - Tab 1/2 hatten die Physics, Tab 3 nicht.
+      shrinkWrap: widget.embedded,
+      physics: widget.embedded
+          ? const NeverScrollableScrollPhysics()
+          : const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      children: [
           if (_serverMatches.isNotEmpty) ...[
             // NUTZERWUNSCH: Der "Verwalten"-Textbutton nahm zu viel Platz
             // ein. Er lebt jetzt als Icon-Button in der AppBar (aktiver
@@ -1120,8 +1273,12 @@ subtitle: L10n.t(context, 'interests.matchesSub'),
                 )),
           ],
         ],
-      ),
     );
+
+    // Eingebettet zieht die Seite den RefreshIndicator - ein zweiter
+    // darin waere wirkungslos.
+    if (widget.embedded) return liste;
+    return RefreshIndicator(onRefresh: _load, child: liste);
   }
 }
 

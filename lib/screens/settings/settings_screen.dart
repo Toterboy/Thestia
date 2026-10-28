@@ -27,6 +27,7 @@ import 'package:thestia/services/mfa_service.dart';
 import 'package:thestia/services/passkey_auth.dart';
 import 'package:thestia/services/prekey_service.dart';
 import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/widgets/captcha_challenge.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/services/unified_push_service.dart';
 import 'package:thestia/utils/age_safety_rules.dart';
@@ -779,7 +780,25 @@ class _PasskeyTileState extends ConsumerState<_PasskeyTile> {
         if (proceed != true || !mounted) return;
       }
 
-      await PasskeyAuth.register();
+      // CAPTCHA-Token holen: GoTrue verlangt es fuer die
+      // Passkey-Registrierung (28.10.2026, live geprueft). Ohne Token
+      // lehnt der Server die Challenge-Anfrage ab, BEVOR der native
+      // Dialog erscheint - die Einrichtung schlug deshalb immer fehl.
+      if (!mounted) return;
+      final captchaToken = await showCaptchaChallenge(context);
+      if (captchaToken == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(L10n.t(context, 'auth.captchaRegister')),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
+      }
+
+      await PasskeyAuth.register(captchaToken: captchaToken);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -139,6 +139,26 @@ class AppConstants {
     return '';
   }
 
+  /// Öffentlicher Schlüssel des Projekts (früher „anon key“).
+  ///
+  /// Wird für direkte Aufrufe an die Auth-API gebraucht, die das
+  /// Supabase-Paket nicht abdeckt - etwa die Passkey-Challenge mit
+  /// CAPTCHA-Token (28.10.2026). Der Schlüssel ist per Definition
+  /// öffentlich: er steht im APK und in jeder Anfrage.
+  ///
+  /// Quellen (in dieser Reihenfolge):
+  ///  1. `--dart-define=SUPABASE_PUBLISHABLE_KEY=...` (Release)
+  ///  2. `.env`-Eintrag `SUPABASE_PUBLISHABLE_KEY` (lokale Entwicklung)
+  static String get supabasePublishableKey {
+    const fromDefine = String.fromEnvironment('SUPABASE_PUBLISHABLE_KEY');
+    if (fromDefine.isNotEmpty) return fromDefine.trim();
+    if (_dotenvReady) {
+      final v = dotenv.env['SUPABASE_PUBLISHABLE_KEY']?.trim() ?? '';
+      if (v.isNotEmpty) return v;
+    }
+    return '';
+  }
+
   // ===========================================================================
   // CAPTCHA bei der Registrierung (Bot-Schutz)
   // ===========================================================================

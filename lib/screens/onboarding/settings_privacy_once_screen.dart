@@ -35,6 +35,7 @@ import 'package:thestia/widgets/age_range_sliders.dart';
 import 'package:thestia/widgets/appearance_selector.dart';
 import 'package:thestia/widgets/birthday_style.dart';
 import 'package:thestia/widgets/buttons.dart';
+import 'package:thestia/widgets/captcha_challenge.dart';
 import 'package:thestia/widgets/gender_preference_selector.dart';
 import 'package:thestia/widgets/habitude_selector.dart';
 import 'package:thestia/widgets/intro_editor.dart';
@@ -476,7 +477,25 @@ class _SettingsPrivacyOnceScreenState
         return;
       }
 
-      await PasskeyAuth.register();
+      // CAPTCHA-Token holen: GoTrue verlangt es fuer die
+      // Passkey-Registrierung (28.10.2026, live geprueft). Ohne Token
+      // lehnt der Server die Challenge-Anfrage ab, BEVOR der native
+      // Dialog erscheint - die Einrichtung schlug deshalb immer fehl.
+      if (!mounted) return;
+      final captchaToken = await showCaptchaChallenge(context);
+      if (captchaToken == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(L10n.t(context, 'auth.captchaRegister')),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
+      }
+
+      await PasskeyAuth.register(captchaToken: captchaToken);
       if (!mounted) return;
       setState(() => _passkeyCreated = true);
       ScaffoldMessenger.of(context).showSnackBar(

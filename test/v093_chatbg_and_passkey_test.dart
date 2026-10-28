@@ -69,7 +69,22 @@ void main() {
       // Die Pruefung muss VOR dem Register kommen.
       expect(
         src.indexOf('hasRegisteredPasskey()'),
-        lessThan(src.indexOf('await PasskeyAuth.register()')),
+        lessThan(src.indexOf('await PasskeyAuth.register(')),
+      );
+    });
+
+    test('die Einrichtung schickt ein CAPTCHA-Token mit', () {
+      // Warum (28.10.2026): GoTrue verlangt fuer die Passkey-
+      // Registrierung ein CAPTCHA-Token und lehnt die Challenge-Anfrage
+      // sonst mit "captcha_failed" ab - BEVOR der native Dialog
+      // erscheint. Die Einrichtung schlug deshalb immer fehl.
+      final src = File('lib/screens/onboarding/settings_privacy_once_screen.dart')
+          .readAsStringSync();
+
+      expect(src.contains('showCaptchaChallenge(context)'), isTrue);
+      expect(
+        src.contains('PasskeyAuth.register(captchaToken: captchaToken)'),
+        isTrue,
       );
     });
 

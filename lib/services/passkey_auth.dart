@@ -2,14 +2,18 @@
 // Beta-Feature) - bewusst genutzt, Ignorieren der Warnung projectweit.
 // ignore_for_file: experimental_member_use
 
+import 'dart:convert';
 import 'dart:developer' as developer;
 
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'package:passkeys_platform_interface/types/types.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:thestia/services/auth_exception.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/services/thestia_passkey_authenticator.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// Kapselt die native Passkey-Anmeldung/-Registrierung.
 ///
@@ -77,17 +81,136 @@ class PasskeyAuth {
   }
 
   /// Registriert ein neues Passkey für den bereits eingeloggten Nutzer.
-  static Future<void> register() {
+  ///
+  /// [captchaToken]: GoTrue verlangt für die Passkey-REGISTRIERUNG ein
+  /// CAPTCHA-Token. Ohne Token lehnt der Server die Challenge-Anfrage
+  /// ab - live geprüft am 28.10.2026:
+  ///
+  ///   POST /auth/v1/passkeys/registration/options  (ohne Token)
+  ///   -> HTTP 400 {"error_code":"captcha_failed",
+  ///                "msg":"captcha protection: request disallowed
+  ///                       (no captcha_token found)"}
+  ///
+  /// Das Paket `registerPasskey()` kann kein Token mitschicken:
+  /// `startRegistration()` sendet einen LEEREN Body ({}). Deshalb
+  /// scheiterte die Einrichtung seit jeher - der Server lehnte ab,
+  /// BEVOR der native Dialog überhaupt erschien.
+  ///
+  /// Mit Token wird der erste Schritt deshalb hier selbst gemacht; der
+  /// Rest (native Zeremonie, Verifikation) nutzt die Paket-API.
+  static Future<void> register({String? captchaToken}) {
     return _runSingle(() async {
       if (!SupabaseService.isInitialized) {
         throw AppException('Passkey-Setup ist derzeit nicht verfügbar.');
       }
       try {
-        await SupabaseService.client.auth.registerPasskey(_authenticator);
+        if (captchaToken != null && captchaToken.isNotEmpty) {
+          await _registerMitCaptcha(captchaToken);
+        } else {
+          await SupabaseService.client.auth.registerPasskey(_authenticator);
+        }
       } catch (e) {
         throw _explain(e, login: false);
       }
     });
+  }
+
+  /// Registrierung MIT CAPTCHA-Token: Challenge selbst holen, dann die
+  /// native Zeremonie, dann verifizieren.
+  ///
+  /// Der Aufbau entspricht dem von `registerPasskey()` im Paket - nur
+  /// mit dem einen Unterschied, dass der Challenge-Aufruf das Token
+  /// mitschickt. Das Body-Feld ist verschachtelt
+  /// (`gotrue_meta_security.captcha_token`); mit einem flachen
+  /// `captcha_token` lehnt GoTrue weiterhin ab.
+  static Future<void> _registerMitCaptcha(String captchaToken) async {
+    final session = SupabaseService.client.auth.currentSession;
+    if (session == null) {
+      throw AppException(
+        'Bitte zuerst anmelden - ein Passkey gehört zu einem Konto.',
+      );
+    }
+
+    final url =
+        '${AppConstants.supabaseUrlBase}/auth/v1/passkeys/registration/options';
+    final antwort = await http.post(
+      Uri.parse(url),
+      headers: {
+        'apikey': AppConstants.supabasePublishableKey,
+        'Authorization': 'Bearer ${session.accessToken}',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'gotrue_meta_security': {'captcha_token': captchaToken},
+      }),
+    );
+
+    if (antwort.statusCode != 200) {
+      throw _explain(
+        'AuthApiException: HTTP ${antwort.statusCode} ${antwort.body}',
+        login: false,
+      );
+    }
+
+    final daten = jsonDecode(antwort.body) as Map<String, dynamic>;
+    final challengeId = daten['challenge_id'] as String;
+    final optionen = Map<String, dynamic>.from(daten['options'] as Map);
+
+    // Native Zeremonie (Fingerabdruck / Face-ID / Geräte-PIN).
+    final response = await _authenticator.register(_requestAusOptionen(optionen));
+
+    // Fertigstellen: der Server prüft die Signatur.
+    await SupabaseService.client.auth.passkey.verifyRegistration(
+      challengeId: challengeId,
+      credential: response.toJson(),
+    );
+  }
+
+  /// Wandelt die Server-Optionen in das Format des Passkey-Plugins.
+  ///
+  /// Gleiche Aufgabe wie `passkeyRegisterRequestFromOptions` im Paket -
+  /// dieses ist aber nicht oeffentlich exportiert, deshalb hier die
+  /// (kurze) eigene Umsetzung:
+  ///   * die Challenge kommt base64url MIT Fuellzeichen; das Plugin
+  ///     lehnt gefuellte Werte ab,
+  ///   * jedes excluded Credential braucht eine (leere) Transport-Liste.
+  static RegisterRequestType _requestAusOptionen(Map<String, dynamic> optionen) {
+    final json = Map<String, dynamic>.of(optionen);
+
+    final challenge = json['challenge'];
+    if (challenge is String) {
+      json['challenge'] = _ohneFuellzeichen(challenge);
+    }
+
+    final ausgeschlossen = json['excludeCredentials'];
+    if (ausgeschlossen is List) {
+      json['excludeCredentials'] = ausgeschlossen
+          .whereType<Map<dynamic, dynamic>>()
+          .map((credential) {
+            final normalisiert = Map<String, dynamic>.from(credential);
+            final id = normalisiert['id'];
+            if (id is String) {
+              normalisiert['id'] = _ohneFuellzeichen(id);
+            }
+            final transports = normalisiert['transports'];
+            normalisiert['transports'] = transports is List
+                ? transports.whereType<String>().toList()
+                : <String>[];
+            return normalisiert;
+          })
+          .toList();
+    }
+
+    return RegisterRequestType.fromJson(json);
+  }
+
+  /// Entfernt die base64url-Fuellzeichen ('=') am Ende.
+  static String _ohneFuellzeichen(String wert) {
+    var ende = wert.length;
+    while (ende > 0 && wert[ende - 1] == '=') {
+      ende--;
+    }
+    return wert.substring(0, ende);
   }
 
   /// Liste der Passkeys, die auf dem Konto registriert sind.

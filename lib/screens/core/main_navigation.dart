@@ -13,6 +13,7 @@ import 'package:thestia/screens/profile/profile_edit_screen.dart'
 import 'package:thestia/screens/swipe/transit_radar_screen.dart'
     show confirmTransitExit;
 import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/widgets/dock_tab_bar.dart';
 
 /// Sichert die Route für die Wiederherstellung nach Prozesstod (v0.9.1).
 Future<void> _saveLastRoute(WidgetRef ref, String path) async {
@@ -36,10 +37,16 @@ class MainNavigation extends ConsumerWidget {
   final Widget child;
 
   static const _tabs = [
-    _NavItem(AppRoutes.home, Icons.newspaper, 'nav.home'),
-    _NavItem(AppRoutes.swipeModeSelection, Icons.favorite, 'nav.discover'),
-    _NavItem(AppRoutes.interessen, Icons.people, 'nav.interests'),
-    _NavItem(AppRoutes.profile, Icons.person, 'nav.profile'),
+    DockTab(
+        route: AppRoutes.home, icon: Icons.newspaper, labelKey: 'nav.home'),
+    DockTab(
+        route: AppRoutes.swipeModeSelection,
+        icon: Icons.favorite,
+        labelKey: 'nav.discover'),
+    DockTab(
+        route: AppRoutes.interessen, icon: Icons.people, labelKey: 'nav.interests'),
+    DockTab(
+        route: AppRoutes.profile, icon: Icons.person, labelKey: 'nav.profile'),
   ];
 
   static const _routes = [
@@ -251,11 +258,16 @@ class MainNavigation extends ConsumerWidget {
     // um das Symbol, plus die Label-Farbe und eine fette Schrift. Das ist
     // dieselbe Sprache wie die Pillen-Leiste im Admin-Screen und im
     // Interessen-Screen - eine Form, ein Material.
-    final navBar = _BottomTabBar(
+    final navBar = DockTabBar(
       index: index,
       tabs: _tabs,
       onSelected: (i) => _goToTab(context, ref, i),
     );
+
+    // Wischen zwischen den Haupt-Reitern (NUTZERWUNSCH 28.10.2026).
+    // Nur wenn die Leiste sichtbar ist - im Chat wuerde ein Wischen
+    // sonst unerwartet den Reiter wechseln.
+    final swipeAktiv = !hideNav && !useRail;
 
     return Scaffold(
       // STATUSLEISTE (Nutzerwunsch, 27.10.2026).
@@ -282,7 +294,7 @@ class MainNavigation extends ConsumerWidget {
                         .map(
                           (t) => NavigationRailDestination(
                             icon: Icon(t.icon),
-                            label: Text(L10n.t(context, t.label)),
+                            label: Text(L10n.t(context, t.labelKey)),
                           ),
                         )
                         .toList(),
@@ -291,7 +303,15 @@ class MainNavigation extends ConsumerWidget {
                   Expanded(child: child),
                 ],
               )
-            : child,
+            : _TabSwipe(
+                enabled: swipeAktiv,
+                onSwipe: (richtung) {
+                  final ziel = index + richtung;
+                  if (ziel < 0 || ziel >= _tabs.length) return;
+                  _goToTab(context, ref, ziel);
+                },
+                child: child,
+              ),
       ),
       bottomNavigationBar: (hideNav || useRail)
           ? null
@@ -300,19 +320,46 @@ class MainNavigation extends ConsumerWidget {
           // Cards (24) und Dialogen im Rest der App.
           : SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: Material(
-                  elevation: 8,
-                  shadowColor: Theme.of(context)
-                      .colorScheme
-                      .shadow
-                      .withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(28),
-                  color:
-                      Theme.of(context).colorScheme.surfaceContainer,
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                // Der Schatten ist ausdruecklich ein BoxShadow und NICHT
+                // die Elevation des Material: die Material-Elevation
+                // zeichnet ihren Schatten je nach Geraet unterschiedlich
+                // (manchmal als harter Ring). Ein BoxShadow sieht
+                // ueberall gleich aus - und das Dock soll auf jedem
+                // Geraet dasselbe schwebende Objekt sein.
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(32),
+                    // Eine feine Lichtkante: sie hebt das Dock vom
+                    // Hintergrund ab, ohne die Kanten zu ueberzeichnen.
+                    border: Border.all(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outlineVariant
+                          .withValues(alpha: 0.5),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .shadow
+                            .withValues(alpha: 0.20),
+                        blurRadius: 26,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
-                    child: navBar,
+                    borderRadius: BorderRadius.circular(32),
+                    // MaterialType.transparency: nur fuer die
+                    // Farb-Pinsel des InkWell - der Schatten kommt von
+                    // aussen.
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: navBar,
+                    ),
                   ),
                 ),
               ),
@@ -321,133 +368,79 @@ class MainNavigation extends ConsumerWidget {
   }
 }
 
-class _NavItem {
-  const _NavItem(this.route, this.icon, this.label);
-  final String route;
-  final IconData icon;
-  final String label;
-}
-
-/// Die Reiter-Leiste unten (v0.10.0, NUTZERWUNSCH 27.10.2026).
+/// Wischen zwischen den Haupt-Reitern der App.
 ///
-/// EIGENE Zeichnung statt Material-`NavigationBar`.
+/// NUTZERWUNSCH (28.10.2026): das Wischen soll NICHT mehr zwischen den
+/// Unterreitern der Interessen-Seite gehen, sondern zwischen den vier
+/// grossen Reitern der App (Aktuelles, Entdecken, Interessen, Profil).
 ///
-/// Grund: die Material-Leiste hebt den aktiven Reiter nur farblich
-/// hervor. Auf dem schwebenden, fast durchsichtigen Container der App
-/// geht das unter - man sieht nicht mehr, wo man ist. Der Nutzerwunsch
-/// war ausdruecklich: der aktive Reiter soll "besseres und ikonisches
-/// Design" haben, nicht nur ein farbiges Logo.
+/// Umsetzung: ein waeregender Geste-Erkner ueber dem Seiteninhalt. Er
+/// wird nur aktiv, wenn die Reiterleiste sichtbar ist - im Chat oder
+/// im Quiz wuerde ein Wischen sonst unerwartet den Reiter wechseln.
 ///
-/// Was diese Leiste anders macht:
-///   * eine GEFUELLTE Pille hinter dem aktiven Symbol (nicht nur eine
-///     Farbaenderung am Icon),
-///   * das Label des aktiven Reiters in der Akzentfarbe und fett,
-///   * die Pille waechst sanft mit (AnimatedContainer), statt hart
-///     umzuschalten.
-///
-/// Die Pille hat dieselbe Form wie die Pillen-Leiste im Admin-Screen
-/// und im Interessen-Screen (Radius 999 = vollstaendig rund).
-class _BottomTabBar extends StatelessWidget {
-  const _BottomTabBar({
-    required this.index,
-    required this.tabs,
-    required this.onSelected,
+/// Das Kind wandert beim Ziehen leicht mit (gedaempft auf 18 %), damit
+/// die Geste als "die Seite schiebt sich" lesbar wird, und die
+/// Reitergrenze wird mit einem kurzen Ticken angekuendigt.
+class _TabSwipe extends StatefulWidget {
+  const _TabSwipe({
+    required this.child,
+    required this.onSwipe,
+    required this.enabled,
   });
 
-  final int index;
-  final List<_NavItem> tabs;
-  final ValueChanged<int> onSelected;
+  final Widget child;
+
+  /// Richtung: -1 = zurueck (nach links wischen), +1 = vor.
+  final ValueChanged<int> onSwipe;
+
+  final bool enabled;
+
+  @override
+  State<_TabSwipe> createState() => _TabSwipeState();
+}
+
+class _TabSwipeState extends State<_TabSwipe> {
+  /// Weg der aktuellen Geste in Pixeln.
+  double _weg = 0;
+
+  /// Ob die Reitergrenze in dieser Geste schon ueberschritten wurde.
+  bool _geTickt = false;
+
+  /// Ab dieser Wegerstrecke wird gewechselt.
+  static const double _schwelle = 64;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        for (var i = 0; i < tabs.length; i++)
-          Expanded(
-            child: _BottomTabItem(
-              tab: tabs[i],
-              selected: i == index,
-              onTap: () {
-                HapticFeedback.selectionClick();
-                onSelected(i);
-              },
-            ),
-          ),
-      ],
-    );
-  }
-}
+    if (!widget.enabled) return widget.child;
 
-class _BottomTabItem extends StatelessWidget {
-  const _BottomTabItem({
-    required this.tab,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final _NavItem tab;
-  final bool selected;
-  final VoidCallback onTap;
-
-  /// Radius der Pille. 999 macht aus jedem Rechteck eine Pille
-  /// unabhaengig von der Hoehe.
-  static const double _pilleRadius = 999;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
-
-    final symbolFarbe = selected ? scheme.onPrimary : scheme.onSurfaceVariant;
-    final textFarbe = selected ? scheme.primary : scheme.onSurfaceVariant;
-
-    return Semantics(
-      selected: selected,
-      button: true,
-      label: L10n.t(context, tab.label),
-      child: ExcludeSemantics(
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(_pilleRadius),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Die Pille: gefuellt beim aktiven Reiter, transparent
-                // sonst. AnimatedContainer faehrt die Farbe weich.
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeOutCubic,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? scheme.primary
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(_pilleRadius),
-                  ),
-                  child: Icon(tab.icon, size: 22, color: symbolFarbe),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  L10n.t(context, tab.label),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: textFarbe,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragStart: (_) {
+        _weg = 0;
+        _geTickt = false;
+      },
+      onHorizontalDragUpdate: (details) {
+        setState(() => _weg += details.delta.dx);
+        if (!_geTickt && _weg.abs() >= _schwelle) {
+          _geTickt = true;
+          HapticFeedback.selectionClick();
+        }
+      },
+      onHorizontalDragEnd: (_) {
+        final gewickt = _weg.abs() >= _schwelle;
+        final richtung = _weg < 0 ? -1 : 1;
+        setState(() => _weg = 0);
+        if (gewickt) widget.onSwipe(richtung);
+      },
+      onHorizontalDragCancel: () {
+        setState(() => _weg = 0);
+      },
+      child: Transform.translate(
+        // Gedaempft: die Seite schiebt sich nur an - sonst wirkt die
+        // Geste wie ein Ruck.
+        offset: Offset(_weg * 0.18, 0),
+        child: widget.child,
       ),
     );
   }
 }
-
