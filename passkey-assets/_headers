@@ -1,13 +1,73 @@
+# Cache- und Inhalts-Header fuer die veroeffentlichten Seiten.
+#
+# WARUM DIESE DATEI (28.10.2026): der Nutzer meldete, dass das
+# Besuchen der Seiten Netlify-Credits frisst. Gemessen: ein Besuch
+# kostet 1 Anfrage und ~6 KB (Brotli) - das kann keine Credits
+# auffressen. Zwei Dinge liess sich aber verbessern:
+#
+# 1) Netlify lieferte jede Seite mit "cache-control: public,
+#    max-age=0, must-revalidate". Der Browser MUSS damit bei jedem
+#    Reload nachfragen (304-Antwort, aber trotzdem eine Anfrage und
+#    Bandbreite). Mit einem kleinen max-age fragt der Browser im
+#    Besuchszeitraum gar nicht mehr nach - ein wiederholter Besuch
+#    kostet dann 0 Byte.
+#
+# 2) Die Pfade stehen doppelt (mit und ohne .html), weil Netlify die
+#    _headers-Regeln je nach Rewrite entweder am aufgerufenen oder am
+#    ausgelieferten Pfad anwendet. So ist es egal, ob der Besucher
+#    "/impressum" oder "/impressum.html" aufruft.
+#
+# JEDER PFAD STEHT NUR EINMAL hier: Netlify wendet bei mehrfach
+# genannten Pfaden die Bloecke zusammen an, aber darauf ist kein
+# Verlass zu bauen - lieber eindeutig.
+
+# --- Pflichtdateien fuer die App-Link-Verifikation -----------------
 /.well-known/*
   Content-Type: application/json
 
-# Beim 200-Rewrite (netlify.toml) wird die Datei aus dem Root ausgeliefert –
-# dort greifen diese Regeln für den tatsächlich bedienten Pfad:
 /assetlinks.json
   Content-Type: application/json
+  Cache-Control: public, max-age=86400
 
 /apple-app-site-association
   Content-Type: application/json
+  Cache-Control: public, max-age=86400
 
+# --- Die CAPTCHA-Seite (Arbeitsblatt des Sicherheitschecks) --------
+#
+# Bewusst OHNE Cache-Angabe: die Seite wird von der App bei jeder
+# Registrierung geladen und muss immer die aktuelle Sitekey-Datei
+# ausliefern. Das ist der Default des Systems.
 /index.html
   Content-Type: text/html; charset=utf-8
+
+# --- Die Rechts- und Pflichtseiten ----------------------------------
+#
+# Fuenf Minuten Cache: genug, damit ein wiederholter Besuch (Reload,
+# Link aus dem Chat, Zurueck-Button) nichts kostet, aber kurz genug,
+# dass eine Aenderung nach dem Hochladen nicht ewig verdeckt bleibt.
+# Wer ganz sicher sein will, laedt mit Strg+F5.
+/datenschutz
+  Cache-Control: public, max-age=300
+/datenschutz.html
+  Cache-Control: public, max-age=300
+
+/impressum
+  Cache-Control: public, max-age=300
+/impressum.html
+  Cache-Control: public, max-age=300
+
+/kinderschutz
+  Cache-Control: public, max-age=300
+/kinderschutz.html
+  Cache-Control: public, max-age=300
+
+/konto-loeschen
+  Cache-Control: public, max-age=300
+/konto-loeschen.html
+  Cache-Control: public, max-age=300
+
+# Das Threat Model ist oeffentlich (Transparenz) und aendert sich
+# selten.
+/threat-model.md
+  Cache-Control: public, max-age=86400

@@ -1,0 +1,24 @@
+# robots.txt fuer auth.thestia.de
+#
+# WARUM (28.10.2026): der Nutzer meldete, dass das Besuchen der Seiten
+# Netlify-Credits frisst. Gemessen kostet ein Besuch ~6 KB - das
+# koennen Visits nicht sein. Was die Credits frisst, sind zu einem
+# grossen Teil automatisierte Zugriffe: die Domain zeigt per CNAME
+# direkt auf Netlify, jeder Bot-Hit ist also ein Netlify-Request.
+#
+# Diese Datei weist die Maschinen von der CAPTCHA-Seite weg. Die Seite
+# unter "/" ist das Arbeitsblatt des Sicherheitschecks der App: fuer
+# Suchmaschinen und Scanner ohne Nutzen, und jeder Aufruf laesst
+# zusaetzlich den Turnstile-Script von Cloudflare nachladen.
+#
+# Die Rechts- und Pflichtseiten bleiben ausdruecklich erlaubt - sie
+# sollen auffindbar bleiben (Impressum, Datenschutz, Kinderschutz,
+# Konto-Loeschung, Threat Model).
+
+User-agent: *
+Disallow: /
+Allow: /datenschutz
+Allow: /impressum
+Allow: /kinderschutz
+Allow: /konto-loeschen
+Allow: /threat-model.md

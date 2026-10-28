@@ -265,6 +265,18 @@ jobs:
       - name: Passkey-Assets pruefen
         run: python3 tool/check_passkey_assetlinks.py
 
+      # Bandbreite der veroeffentlichten Seiten (28.10.2026).
+      #
+      # Anlass: "Ich verliere credits von netlify, wenn ich die
+      # Websiten besuche." Gemessen war ein Besuch nur 6 KB - die
+      # Ursache mussten also woanders liegen. Was sich aber sichern
+      # laesst: Cache-Angaben (sonst fragt der Browser bei JEDEM
+      # Besuch nach), robots.txt (sonst laufen Bots ueber jede
+      # Adresse) und die Groesse der Seiten (jede Verdreifachung
+      # faellt hier auf).
+      - name: Web-Payload und Cache pruefen
+        run: python3 tool/check_web_payload.py
+
   # Von 15 Pruefern unter tool/ liefen vor diesem Job nur vier in der CI.
   # check_migrations_sql, check_migration_safety und check_push_readiness
   # wurden ausschliesslich lokal ausgefuehrt - und genau dort ist etwas
