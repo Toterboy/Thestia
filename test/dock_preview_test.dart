@@ -29,23 +29,31 @@ void main() {
     // Die echten Schriften nachladen: ohne sie malt der Test das
     // Ersatzkaestchen (Ahem) statt Text und Icons - man kann das Dock
     // dann nicht beurteilen.
+    //
+    // WICHTIG: Die Dateien gibt es nur auf dem Rechner des
+    // Entwicklers. Fehlen sie (Linux-CI), ueberspringt der Test das
+    // Nachladen - er darf dort nicht scheitern.
     final sdk = r'C:\Users\Thoralf\Flutter_SDK\flutter\bin\cache\artifacts'
         r'\material_fonts';
-    for (final datei in ['materialicons-regular.otf', 'roboto-regular.ttf']) {
-      final f = File('$sdk\\$datei');
-      if (!f.existsSync()) continue;
-      final bytes = f.readAsBytesSync();
-      final loader = FontLoader(
-        datei.startsWith('material') ? 'MaterialIcons' : 'Roboto',
-      )..addFont(
-          Future.value(ByteData.view(Uint8List.fromList(bytes).buffer)));
+    final material = File('$sdk\\materialicons-regular.otf');
+    if (material.existsSync()) {
+      final bytes = Uint8List.fromList(material.readAsBytesSync());
+      for (final familie in [
+        'MaterialIcons',
+        'packages/flutter/MaterialIcons',
+      ]) {
+        final loader = FontLoader(familie)
+          ..addFont(Future.value(ByteData.view(bytes.buffer)));
+        await loader.load();
+      }
+    }
+    final roboto = File('$sdk\\roboto-regular.ttf');
+    if (roboto.existsSync()) {
+      final bytes = Uint8List.fromList(roboto.readAsBytesSync());
+      final loader = FontLoader('Roboto')
+        ..addFont(Future.value(ByteData.view(bytes.buffer)));
       await loader.load();
     }
-    final loader2 = FontLoader('packages/flutter/MaterialIcons')
-      ..addFont(Future.value(ByteData.view(
-          Uint8List.fromList(
-              File('$sdk\\materialicons-regular.otf').readAsBytesSync()).buffer)));
-    await loader2.load();
 
     final tabs = [
       const DockTab(

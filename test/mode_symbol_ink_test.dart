@@ -23,8 +23,8 @@ import 'package:thestia/widgets/mode_icons.dart';
 ///   flutter test test/mode_symbol_ink_test.dart
 void main() {
   testWidgets('Tinten-Boxen messen', (tester) async {
-    final out = Directory(r'C:\Users\Thoralf\AppData\Local\Temp\opencode'
-        r'\m133\symbole');
+    final out = Directory(
+        '${Directory.systemTemp.path}/opencode/m133/symbole');
     try {
       if (!out.existsSync()) out.createSync(recursive: true);
     } catch (_) {
