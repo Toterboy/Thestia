@@ -10,6 +10,7 @@ import 'package:thestia/models/match.dart';
 import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/providers/chat_provider.dart';
 import 'package:thestia/providers/find_your_match_provider.dart';
+import 'package:thestia/providers/pinned_matches_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/services/find_your_match_service.dart';
 import 'package:thestia/services/report_service.dart';
@@ -215,6 +216,10 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen>
         children: [
           PillTabBar(
             controller: _tabController,
+            // Die beiden Reiter mittig (NUTZERWUNSCH, 28.10.2026):
+            // "Gesendet und Erhalten die beiden buttons zentriert oben
+            // in der reihe sein".
+            centered: true,
             tabs: [
               PillTab(
                 label: L10n.t(context, 'interests.tabSent'),
@@ -283,6 +288,30 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen>
 // ---------------------------------------------------------------------------
 // Tab 1: Eigene Likes
 // ---------------------------------------------------------------------------
+
+/// Formatiert das Datum, an dem ein Like rausging.
+///
+/// NUTZERWUNSCH (28.10.2026): "kann ... auch sehen, an welchem Tag
+/// man den Like gesendet hat".
+///
+/// Angezeigt wird das KALENDERDATUM (12.10.2026) - bei einem Like ist
+/// das eindeutiger als "vor 3 Tagen" (das wandert mit der Zeit).
+String _likeDatum(BuildContext context, DateTime zeit) {
+  final lokal = zeit.toLocal();
+  final jetzt = DateTime.now();
+  final heute = DateTime(jetzt.year, jetzt.month, jetzt.day);
+  final tag = DateTime(lokal.year, lokal.month, lokal.day);
+  final tage = heute.difference(tag).inDays;
+
+  if (tage == 0) return L10n.t(context, 'interests.likeToday');
+  if (tage == 1) return L10n.t(context, 'interests.likeYesterday');
+  if (tage < 7) {
+    return L10n.tf(context, 'interests.likeDaysAgo', {'days': '$tage'});
+  }
+  return L10n.tf(context, 'interests.likeOn', {
+    'date': '${lokal.day}.${lokal.month}.${lokal.year}',
+  });
+}
 
 class _OwnLikesTab extends ConsumerStatefulWidget {
   const _OwnLikesTab({this.embedded = false, super.key});
@@ -438,6 +467,11 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
                         profile.distanceLabel(
                           (key) => L10n.t(context, key),
                         ),
+                      // WANN der Like rausging (NUTZERWUNSCH,
+                      // 28.10.2026: "kann ... auch sehen, an welchem
+                      // Tag man den Like gesendet hat").
+                      if (like.createdAt != null)
+                        _likeDatum(context, like.createdAt!),
                     ].join(' · ')),
                     trailing: IconButton(
                       icon: const Icon(Icons.close, color: Colors.red),
@@ -562,6 +596,45 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
     }
   }
 
+  /// Mag die Person zurueck - ohne daraus sofort einen Funke zu machen.
+  ///
+  /// NUTZERWUNSCH (28.10.2026): "also zurück liken ... kann".
+  ///
+  /// Der Unterschied zu "Funke bestätigen": dort entsteht der Funke
+  /// SOFORT (die Gegenseite hat ja schon geliked). Hier schicke ich
+  /// mein Like zurueck - sie bekommt eine Benachrichtigung, und wenn
+  /// sie meinen Like annimmt, steht der Funke.
+  ///
+  /// Das Like bleibt in der Liste: ihr Like ist noch unbeantwortet,
+  /// und ich kann es weiterhin zum Funken machen.
+  Future<void> _likeBack(ReceivedLike like) async {
+    setState(() => _busyLikeId = like.likeId);
+    try {
+      await ref.read(findYourMatchServiceProvider).likeUser(like.profile.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.tf(context, 'interests.likeBackDone',
+              {'name': like.profile.name})),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      await _load();
+    } catch (e) {
+      debugPrint('[Interessen] Zurueck-Liken fehlgeschlagen: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text(L10n.tf(context, 'common.errorWith', {'error': '$e'})),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _busyLikeId = null);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -646,15 +719,30 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
                   const SizedBox(height: 8),
                   Row(
                     children: [
+                      // IGNORIEREN (NUTZERWUNSCH, 28.10.2026: "auch den
+                      // like ignorieren kann"). Bewusst ein Icon-Button
+                      // und kein Text-Button: es ist die LEISE Variante
+                      // - sie nimmt den Like aus der Liste, ohne dass
+                      // daraus etwas wird.
+                      IconButton(
+                        icon: const Icon(Icons.visibility_off_outlined),
+                        tooltip: L10n.t(context, 'interests.decline'),
+                        onPressed:
+                            busy ? null : () => _respond(like, accept: false),
+                      ),
+                      const SizedBox(width: 8),
+                      // ZURÜCK LIKEN (NUTZERWUNSCH, 28.10.2026: "also
+                      // zurück liken ... kann"). Ich mag sie auch - aber
+                      // ohne sofort einen Funken daraus zu machen. Der
+                      // Funke entsteht, wenn sie meinen Like annimmt.
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed:
-                              busy ? null : () => _respond(like, accept: false),
-                          icon: const Icon(Icons.close, color: Colors.red),
-                          label: Text(L10n.t(context, 'interests.decline')),
+                          onPressed: busy ? null : () => _likeBack(like),
+                          icon: const Icon(Icons.favorite_border, size: 18),
+                          label: Text(L10n.t(context, 'interests.likeBack')),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: FilledButton.icon(
                           onPressed:
@@ -958,6 +1046,82 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
   }
 
   /// Funke direkt in der Liste entfernen (ausblenden, nur für mich).
+  /// Oeffnet den Chat zu einem Funken.
+  ///
+  /// Eigene Methode, weil der Ablauf jetzt an zwei Stellen gebraucht
+  /// wird (fixierte Funken und die uebrigen): als gelesen markieren,
+  /// als gesehen markieren, dann den Chat oeffnen. Push: Zurueck landet
+  /// wieder exakt hier (gleicher Tab).
+  void _openMatch(BuildContext context, WidgetRef ref, MatchWithState m) {
+    ref.read(chatProvider.notifier).markRead(m.matchId.toString());
+    unawaited(ref.read(seenProvider.notifier).markMatchesSeen([m.matchId]));
+    context.push(AppRoutes.chatDetailPath(m.matchId.toString()));
+  }
+
+  /// Fixiert einen Funken (NUTZERWUNSCH, 28.10.2026: "fixieren").
+  ///
+  /// Lokal, nicht serverseitig: eine Fixierung ist eine Anordnung,
+  /// keine Beziehung. Sie gehört dem Geraet, auf dem man sie macht.
+  Future<void> _pin(MatchWithState match) async {
+    final an = await ref
+        .read(pinnedMatchesProvider.notifier)
+        .umschalten(match.matchId);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(L10n.t(
+            context, an ? 'interests.pinSparkOn' : 'interests.pinSparkOff')),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  /// Löscht einen Funken endgültig (NUTZERWUNSCH, 28.10.2026:
+  /// "Funke löschen").
+  ///
+  /// Anders als "Archivieren" (kühlen) ist das endgültig: der
+  /// Funke kann nicht wieder entzündet werden. Der Chat bleibt
+  /// erhalten - es geht nur die Verbindung weg.
+  Future<void> _delete(MatchWithState match) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(L10n.t(ctx, 'interests.deleteSparkTitle')),
+        content: Text(L10n.t(ctx, 'interests.deleteSparkBody')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(L10n.t(ctx, 'common.cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(L10n.t(ctx, 'interests.deleteSpark')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    try {
+      await ref.read(findYourMatchServiceProvider).endMatch(match.matchId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.t(context, 'interests.deleteSparkDone')),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      await _load();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.tf(context, 'common.errorWith', {'error': '$e'})),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   Future<void> _hide(MatchWithState match) async {
     try {
       await ref.read(findYourMatchServiceProvider).hideMatch(match.matchId);
@@ -1075,6 +1239,16 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
         _serverMatches.where((m) => m.status == 'active').toList();
     final cooledMatches =
         _serverMatches.where((m) => m.status == 'cooled').toList();
+
+    // Fixierte Funken stehen oben (NUTZERWUNSCH, 28.10.2026:
+    // "sowie Einstellungen haben, wie Funke löschen, fixieren,
+    // archivieren"). Die Fixierung ist lokal - sie gehört dem
+    // Geraet, nicht dem Konto.
+    final gepinnt = ref.watch(pinnedMatchesProvider);
+    final fixierteFunken =
+        activeMatches.where((m) => gepinnt.contains(m.matchId)).toList();
+    final uebrigeFunken =
+        activeMatches.where((m) => !gepinnt.contains(m.matchId)).toList();
 
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
@@ -1201,13 +1375,36 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
             const SizedBox(height: 8),
             const Divider(indent: 16, endIndent: 16),
           ],
-          if (activeMatches.isNotEmpty) ...[
-_SectionHeader(
-icon: Icons.favorite,
-title: L10n.t(context, 'interests.sparksTitle'),
-subtitle: L10n.t(context, 'interests.matchesSub'),
-),
-            ...activeMatches.map((m) {
+          // Fixierte Funken stehen in ihrem eigenen Abschnitt ganz oben
+          // (NUTZERWUNSCH, 28.10.2026: "fixieren").
+          if (fixierteFunken.isNotEmpty) ...[
+            _SectionHeader(
+              icon: Icons.push_pin,
+              title: L10n.t(context, 'interests.pinnedSection'),
+              subtitle: L10n.t(context, 'interests.pinnedSub'),
+            ),
+            ...fixierteFunken.map((m) => _MatchTile(
+                  match: m,
+                  pinned: true,
+                  onTap: () => _openMatch(context, ref, m),
+                  onProfile: () => context.push(
+                    AppRoutes.profileDetailPath(m.partner.id),
+                  ),
+                  onCool: () => _cool(m),
+                  onHide: () => _hide(m),
+                  onPin: () => _pin(m),
+                  onDelete: () => _delete(m),
+                )),
+            const SizedBox(height: 8),
+            const Divider(indent: 16, endIndent: 16),
+          ],
+          if (uebrigeFunken.isNotEmpty) ...[
+            _SectionHeader(
+              icon: Icons.favorite,
+              title: L10n.t(context, 'interests.sparksTitle'),
+              subtitle: L10n.t(context, 'interests.matchesSub'),
+            ),
+            ...uebrigeFunken.map((m) {
               if (selectMode) {
                 return CheckboxListTile(
                   value: _selected.contains(m.matchId),
@@ -1218,6 +1415,7 @@ subtitle: L10n.t(context, 'interests.matchesSub'),
               }
               return _MatchTile(
                 match: m,
+                pinned: gepinnt.contains(m.matchId),
                 // v0.9.0-Feedback: "Auf die Person klicken -> kommt direkt
                 // das Kennenlern-Quiz" - jetzt öffnet die Kachel IMMER den
                 // Chat; das Quiz ist als Button im Chat erreichbar (es
@@ -1225,21 +1423,14 @@ subtitle: L10n.t(context, 'interests.matchesSub'),
                 // Vorstellung) ist über den Personen-Button erreichbar.
                 // Kühlen/Entfernen geht direkt über das Menü (v0.9.1).
                 // Push: Zurück landet wieder exakt hier (gleicher Tab).
-                onTap: () {
-                  ref.read(chatProvider.notifier).markRead(
-                        m.matchId.toString(),
-                      );
-                  unawaited(ref
-                      .read(seenProvider.notifier)
-                      .markMatchesSeen([m.matchId]));
-                  context.push(
-                      AppRoutes.chatDetailPath(m.matchId.toString()));
-                },
+                onTap: () => _openMatch(context, ref, m),
                 onProfile: () => context.push(
                   AppRoutes.profileDetailPath(m.partner.id),
                 ),
                 onCool: () => _cool(m),
                 onHide: () => _hide(m),
+                onPin: () => _pin(m),
+                onDelete: () => _delete(m),
               );
             }),
           ],
@@ -1270,6 +1461,7 @@ subtitle: L10n.t(context, 'interests.matchesSub'),
                     AppRoutes.profileDetailPath(m.partner.id),
                   ),
                   onRespark: () => _respark(m),
+                  onDelete: () => _delete(m),
                 )),
           ],
         ],
@@ -1290,12 +1482,19 @@ class _CooledMatchTile extends StatelessWidget {
     required this.onOpen,
     required this.onProfile,
     required this.onRespark,
+    required this.onDelete,
   });
 
   final MatchWithState match;
   final VoidCallback onOpen;
   final VoidCallback onProfile;
   final VoidCallback onRespark;
+
+  /// Endgültig löschen (NUTZERWUNSCH, 28.10.2026: "Funke
+  /// löschen"). Bei einem archivierten Funke ist das die einzige
+  /// Möglichkeit, ihn wegzuräumen - "Archivieren" waere
+  /// sinnlos, er ist ja schon archiviert.
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -1329,6 +1528,12 @@ class _CooledMatchTile extends StatelessWidget {
               onPressed: onRespark,
               icon: const Icon(Icons.local_fire_department, size: 18),
               label: Text(L10n.t(context, 'interests.resparkBtn')),
+            ),
+            // Endgueltig loeschen (NUTZERWUNSCH, 28.10.2026).
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              tooltip: L10n.t(context, 'interests.deleteSpark'),
+              onPressed: onDelete,
             ),
           ],
         ),
@@ -1380,6 +1585,9 @@ class _MatchTile extends ConsumerWidget {
     required this.onProfile,
     required this.onCool,
     required this.onHide,
+    required this.onPin,
+    required this.onDelete,
+    this.pinned = false,
   });
 
   final MatchWithState match;
@@ -1387,6 +1595,16 @@ class _MatchTile extends ConsumerWidget {
   final VoidCallback onProfile;
   final VoidCallback onCool;
   final VoidCallback onHide;
+
+  /// Fixiert (NUTZERWUNSCH, 28.10.2026: "fixieren").
+  final VoidCallback onPin;
+
+  /// Endgültig löschen (NUTZERWUNSCH, 28.10.2026: "Funke
+  /// löschen").
+  final VoidCallback onDelete;
+
+  /// Ist der Funke fixiert? Dann steht er oben und traegt eine Nadel.
+  final bool pinned;
 
   /// Blockieren aus dem Funken-Menü (NUTZERWUNSCH): Gleicher Dialog und
   /// Ablauf wie im Chat (Bestätigung -> blockUser -> Funken-Tab).
@@ -1478,6 +1696,13 @@ class _MatchTile extends ConsumerWidget {
                   p.distanceLabel((key) => L10n.t(context, key)),
               ].join(' · ')),
             ),
+            // Die Nadel: der Funke ist fixiert und steht deshalb oben.
+            if (pinned)
+              Icon(
+                Icons.push_pin,
+                size: 16,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             // KEINE Streaks/Flammen-Zählung (v0.9.0-Feedback).
           ],
         ),
@@ -1507,8 +1732,12 @@ class _MatchTile extends ConsumerWidget {
               tooltip: L10n.t(context, 'chat.more'),
               onSelected: (value) {
                 switch (value) {
+                  case 'pin':
+                    onPin();
                   case 'cool':
                     onCool();
+                  case 'delete':
+                    onDelete();
                   case 'hide':
                     onHide();
                   case 'report':
@@ -1523,11 +1752,33 @@ class _MatchTile extends ConsumerWidget {
                 }
               },
               itemBuilder: (ctx) => [
+                // Fixieren (NUTZERWUNSCH, 28.10.2026: "fixieren").
+                PopupMenuItem(
+                  value: 'pin',
+                  child: ListTile(
+                    leading: Icon(pinned
+                        ? Icons.push_pin_outlined
+                        : Icons.push_pin),
+                    title: Text(L10n.t(context, 'interests.pinSpark')),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                // Archivieren (frueher "kühlen" - der Name war
+                // missverstaendlich, der Funke wird ja nicht geloescht).
                 PopupMenuItem(
                   value: 'cool',
                   child: ListTile(
-                    leading: const Icon(Icons.ac_unit_outlined),
-                    title: Text(L10n.t(context, 'interests.coolBtn')),
+                    leading: const Icon(Icons.archive_outlined),
+                    title: Text(L10n.t(context, 'interests.archiveSpark')),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                // Endgueltig loeschen.
+                PopupMenuItem(
+                  value: 'delete',
+                  child: ListTile(
+                    leading: const Icon(Icons.delete_outline, color: Colors.red),
+                    title: Text(L10n.t(context, 'interests.deleteSpark')),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),

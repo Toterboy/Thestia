@@ -428,7 +428,14 @@ class _TabSwipeState extends State<_TabSwipe> {
       },
       onHorizontalDragEnd: (_) {
         final gewickt = _weg.abs() >= _schwelle;
-        final richtung = _weg < 0 ? -1 : 1;
+        // RICHTUNG (NUTZERWUNSCH 28.10.2026: "das Swipen ... ist noch
+        // verbuggt und glaube ich auch falsch herum").
+        //
+        // Nach links wischen schiebt die Seite nach links - man
+        // kommt zum naechsten Reiter. Nach rechts waere es der
+        // vorherige. Vorher war es genau anders herum (nach links =
+        // zurueck), das war der Fehler.
+        final richtung = _weg < 0 ? 1 : -1;
         setState(() => _weg = 0);
         if (gewickt) widget.onSwipe(richtung);
       },

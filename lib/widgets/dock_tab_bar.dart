@@ -75,20 +75,29 @@ class DockTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      // Die Reiter sind unterschiedlich breit (der aktive waechst), der
-      // freie Raum wird deshalb zwischen ihnen verteilt statt in
-      // gleichen Spalten - so sitzt der aktive Reiter dort, wo der
-      // Finger ihn erwartet.
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         for (var i = 0; i < tabs.length; i++)
-          _DockTabItem(
-            tab: tabs[i],
-            selected: i == index,
-            onTap: () {
-              HapticFeedback.selectionClick();
-              onSelected(i);
-            },
+          // FESTE SLOTS: Jeder Reiter bekommt genau ein Viertel der
+          // Breite. Dadurch stehen die Symbole IMMER an derselben
+          // Stelle - beim Wechsel rutscht nichts.
+          //
+          // Vorher war die Leiste "spaceEvenly" mit unterschiedlich
+          // breiten Reitern: der aktive Reiter wuchs (Symbol + Text)
+          // und schob thereby alle anderen beiseite. Das Symbol
+          // selbst wanderte innerhalb seiner Pille nach links, der
+          // aktive Reiter saß dadurch "komisch" (NUTZERWUNSCH
+          // 28.10.2026: "wenn man auf einen Punkt klickt diese
+          // Animationsverfärbung besser passend machen, da sie
+          // komisch sitzt").
+          Expanded(
+            child: _DockTabItem(
+              tab: tabs[i],
+              selected: i == index,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onSelected(i);
+              },
+            ),
           ),
       ],
     );
@@ -123,60 +132,62 @@ class _DockTabItem extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(DockTabBar._pilleRadius),
           child: Padding(
-            // Links/Rechts je 4 dp: damit ist auch der inaktive Reiter
-            // ein ordentliches Ziel (mindestens 44 x 44 dp).
-            padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 4),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 240),
-              curve: Curves.easeOutCubic,
-              padding: EdgeInsets.symmetric(
-                horizontal: selected ? 14 : 10,
-                vertical: 8,
-              ),
-              decoration: BoxDecoration(
-                color: selected ? scheme.primary : Colors.transparent,
-                borderRadius: BorderRadius.circular(DockTabBar._pilleRadius),
-                // Ein weicher Schein unter der aktiven Pille: sie
-                // hebt sich vom Dock ab, ohne aufzutragen.
-                boxShadow: selected
-                    ? [
-                        BoxShadow(
-                          color: scheme.primary.withValues(alpha: 0.28),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(tab.icon, size: 22, color: symbolFarbe),
-                  // Der Text des aktiven Reiters laeuft seitlich ein.
-                  // AnimatedSize laesst die Pille dabei weich mitwachsen.
-                  AnimatedSize(
-                    duration: const Duration(milliseconds: 240),
-                    curve: Curves.easeOutCubic,
-                    alignment: Alignment.centerLeft,
-                    child: selected
-                        ? Padding(
-                            padding: const EdgeInsets.only(left: 8),
-                            child: Text(
-                              beschriftung,
-                              maxLines: 1,
-                              softWrap: false,
-                              overflow: TextOverflow.ellipsis,
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                color: scheme.onPrimary,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.1,
-                              ),
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Der Punkt hinter dem Symbol: ein Kreis, der IMMER
+                // mittig auf dem Symbol sitzt (nicht auf Symbol+Text).
+                // Das Symbol bleibt dadurch beim Wechsel exakt an
+                // derselben Stelle stehen.
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOutCubic,
+                  width: 40,
+                  height: 32,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: selected ? scheme.primary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(999),
+                    // Ein weicher Schein: der Punkt hebt sich vom Dock
+                    // ab, ohne aufzutragen.
+                    boxShadow: selected
+                        ? [
+                            BoxShadow(
+                              color: scheme.primary.withValues(alpha: 0.30),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
                             ),
-                          )
-                        : const SizedBox.shrink(),
+                          ]
+                        : null,
                   ),
-                ],
-              ),
+                  child: Icon(tab.icon, size: 21, color: symbolFarbe),
+                ),
+                const SizedBox(height: 3),
+                // Das Label: nur beim aktiven Reiter sichtbar. Der
+                // Platz bleibt aber IMMER reserviert, damit die Leiste
+                // beim Wechsel nicht springt.
+                SizedBox(
+                  height: 16,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 200),
+                    opacity: selected ? 1 : 0,
+                    child: Text(
+                      beschriftung,
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.clip,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: scheme.primary,
+                        fontWeight: FontWeight.w700,
+                        height: 1.1,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

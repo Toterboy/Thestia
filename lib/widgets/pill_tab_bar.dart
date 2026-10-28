@@ -22,12 +22,25 @@ class PillTabBar extends StatelessWidget {
     super.key,
     required this.controller,
     required this.tabs,
+    this.centered = false,
   });
 
   final TabController controller;
 
   /// Ein Eintrag je Tab: Label, Symbol und optionale Kennzahl-Badges.
   final List<PillTab> tabs;
+
+  /// Die Pillen mittig statt linksbuendig anordnen.
+  ///
+  /// NUTZERWUNSCH (28.10.2026): "Gesendet und Erhalten die beiden
+  /// buttons zentriert oben in der reihe sein". Bei zwei Reitern
+  /// sieht eine linksbuendige Leiste nach Rest aus - sie haengt links
+  /// und laesst die rechte Haelfte leer. Mittig sitzt sie ruhig.
+  ///
+  /// Fuer Reiter, die nicht passen (mehrere, lange Labels), bleibt die
+  /// Leiste scrollbar und linksbuendig - dort waere eine Zentrierung
+  /// nicht sinnvoll.
+  final bool centered;
 
   /// Eckenradius der Pille. 999 macht aus jedem Rechteck eine Pille
   /// unabhaengig von der Hoehe.
@@ -45,21 +58,37 @@ class PillTabBar extends StatelessWidget {
       height: 52,
       child: AnimatedBuilder(
         animation: controller,
-        builder: (context, _) => ListView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          children: [
-            for (var i = 0; i < tabs.length; i++)
-              _PillTabItem(
-                tab: tabs[i],
-                selected: controller.index == i,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  controller.animateTo(i);
-                },
+        builder: (context, _) => centered
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (var i = 0; i < tabs.length; i++)
+                    _PillTabItem(
+                      tab: tabs[i],
+                      selected: controller.index == i,
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        controller.animateTo(i);
+                      },
+                    ),
+                ],
+              )
+            : ListView(
+                scrollDirection: Axis.horizontal,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                children: [
+                  for (var i = 0; i < tabs.length; i++)
+                    _PillTabItem(
+                      tab: tabs[i],
+                      selected: controller.index == i,
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        controller.animateTo(i);
+                      },
+                    ),
+                ],
               ),
-          ],
-        ),
       ),
     );
   }

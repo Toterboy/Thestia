@@ -428,8 +428,8 @@ const Map<String, Map<String, String>> _strings = {
         'Samstags 20 bis 21 Uhr: 5-Minuten-Chats mit Entscheidungsphase',
     'dm.transitSpark': 'Transit Spark',
     'dm.transitSparkDesc':
-        'Blicke getauscht, sich nicht getraut? Später funken - auch wenn '
-        'ihr längst weitergefahren seid.',
+        'Ihr seid zur selben Zeit unterwegs. Spürt ihr beide denselben '
+        'Moment, entsteht ein Funke.',
     'dm.lockedTitle': 'Verifizierung erforderlich',
     'dm.lockedBody':
         'Für diesen Modus musst du dein Alter mit einem kurzen Video '
@@ -644,7 +644,29 @@ const Map<String, Map<String, String>> _strings = {
         'direkt chatten und optional das Kennenlern-Quiz für das Foto '
         'spielen.',
     'interests.likedYou': 'Hat dich geliked',
-    'interests.decline': 'Ablehnen',
+
+    'interests.likeToday': 'Heute gesendet',
+    'interests.likeYesterday': 'Gestern gesendet',
+    'interests.likeDaysAgo': 'Vor {days} Tagen gesendet',
+    'interests.likeOn': 'Gesendet am {date}',
+    'interests.likeBack': 'Zurück liken',
+    'interests.likeBackDone':
+        'Dein Like ist bei {name}. Ein Funke entsteht, sobald sie dich '
+        'auch mag.',
+    'interests.pinSpark': 'Fixieren',
+    'interests.pinSparkOn': 'Funke fixiert',
+    'interests.pinSparkOff': 'Fixierung aufgehoben',
+
+    'interests.pinnedSub': 'Deine ausgewählten Funken - immer oben.',    'interests.pinnedSection': 'Fixiert',
+    'interests.deleteSpark': 'Funke löschen',
+    'interests.deleteSparkTitle': 'Funke löschen?',
+    'interests.deleteSparkBody':
+        'Der Funke verschwindet aus deiner Liste. Der Chat bleibt erhalten, '
+        'der Funke kann nicht wieder entzündet werden.',
+    'interests.deleteSparkDone': 'Funke gelöscht.',
+    'interests.archiveSpark': 'Archivieren',
+    'interests.archiveSparkDone': 'Funke archiviert.',
+    'interests.unarchiveSpark': 'Wieder aktivieren',    'interests.decline': 'Ignorieren',
     'interests.sparkAccepted':
         'Ein Funke mit {name} ist entstanden! Ihr könnt direkt chatten.',
     'interests.likeDeclined': 'Like von {name} abgelehnt.',
@@ -660,10 +682,10 @@ const Map<String, Map<String, String>> _strings = {
     'interests.resparkBtn': 'Re-Funke',
     'interests.resparkFailed':
         'Re-Funke fehlgeschlagen. Bitte erneut versuchen.',
-    'interests.cooledTitle': 'Erschlossene Funken',
+    'interests.cooledTitle': 'Archivierte Funken',
     'interests.cooledSub':
-        'Ruhig beendet - auch automatisch nach 3 Tagen ohne Nachricht. '
-        'Der Chat bleibt erhalten, jederzeit wieder entzündbar',
+        'Funken, die eine Weile ruhen. Der Chat bleibt erhalten - jederzeit '
+        'wieder entzündbar.',
     'interests.savedTitle': 'Gespeicherte Profile',
     'interests.savedSub':
         'Lokal gespeichert (max. 5) - zum Nachschreiben, wenn du unterwegs '
@@ -1138,7 +1160,7 @@ const Map<String, Map<String, String>> _strings = {
     'interests.likeWithdrawn': 'Like zurückgezogen.',
     'interests.likeWithdrawTooltip': 'Like zurückziehen',
     'interests.sparkConfirmBtn': 'Funke bestätigen',
-    'interests.resparkDone': 'Funke mit {name} glüht wieder ✨',
+    'interests.resparkDone': 'Funke mit {name} ist wieder aktiv.',
     'interests.matchesSub': 'Bestätigte gegenseitige Likes',
     // Gespeicherte Profile (lokal, max. 5, zum Nachschreiben)
     'qr.limitTitle': 'Maximum erreicht',
@@ -3230,8 +3252,8 @@ const Map<String, Map<String, String>> _strings = {
         'Saturdays 8 to 9 pm: 5-minute chats with a decision phase',
     'dm.transitSpark': 'Transit Spark',
     'dm.transitSparkDesc':
-        'Exchanged glances but too shy? Spark later - even after you have '
-        'both moved on.',
+        'You are out and about at the same time. If you both feel the same '
+        'moment, a spark forms.',
     'dm.lockedTitle': 'Verification required',
     'dm.lockedBody':
         'For this mode you need to confirm your age with a short video. '
@@ -3752,7 +3774,7 @@ const Map<String, Map<String, String>> _strings = {
     'interests.likeWithdrawn': 'Like withdrawn.',
     'interests.likeWithdrawTooltip': 'Withdraw like',
     'interests.sparkConfirmBtn': 'Confirm spark',
-    'interests.resparkDone': 'Spark with {name} is glowing again ✨',
+    'interests.resparkDone': 'Spark with {name} is active again.',
     'interests.matchesSub': 'Confirmed mutual likes',
     // Saved profiles (local, max. 5, for writing later)
     'qr.limitTitle': 'Maximum reached',
@@ -4548,7 +4570,29 @@ const Map<String, Map<String, String>> _strings = {
         'Confirm received likes to get sparks. Afterwards you can chat '
         'right away and optionally play the quiz for the photo.',
     'interests.likedYou': 'Liked you',
-    'interests.decline': 'Decline',
+
+    'interests.likeToday': 'Sent today',
+    'interests.likeYesterday': 'Sent yesterday',
+    'interests.likeDaysAgo': 'Sent {days} days ago',
+    'interests.likeOn': 'Sent on {date}',
+    'interests.likeBack': 'Like back',
+    'interests.likeBackDone':
+        'Your like reached {name}. A spark forms as soon as they like you '
+        'too.',
+    'interests.pinSpark': 'Pin',
+    'interests.pinSparkOn': 'Spark pinned',
+    'interests.pinSparkOff': 'Unpinned',
+
+    'interests.pinnedSub': 'Your chosen sparks - always on top.',    'interests.pinnedSection': 'Pinned',
+    'interests.deleteSpark': 'Delete spark',
+    'interests.deleteSparkTitle': 'Delete spark?',
+    'interests.deleteSparkBody':
+        'The spark disappears from your list. The chat is kept, the spark '
+        'cannot be re-lit.',
+    'interests.deleteSparkDone': 'Spark deleted.',
+    'interests.archiveSpark': 'Archive',
+    'interests.archiveSparkDone': 'Spark archived.',
+    'interests.unarchiveSpark': 'Make active again',    'interests.decline': 'Ignore',
     'interests.sparkAccepted':
         'A spark with {name} was created! You can chat right away.',
     'interests.likeDeclined': 'Like from {name} declined.',
@@ -4562,7 +4606,7 @@ const Map<String, Map<String, String>> _strings = {
         '{failed} of {total} could not be removed. Please try again.',
     'interests.resparkBtn': 'Re-spark',
     'interests.resparkFailed': 'Re-spark failed. Please try again.',
-    'interests.cooledTitle': 'Cooled sparks',
+    'interests.cooledTitle': 'Archived sparks',
     'interests.cooledSub':
         'Quietly ended - also automatically after 3 days without a '
         'message. The chat is kept, can be re-sparked any time',
