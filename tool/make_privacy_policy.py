@@ -386,6 +386,26 @@ def render_html(blocks):
 
 # --------------------------------------------------------------------------
 
+def _schreibe_wenn_geaendert(pfad: str, inhalt: str) -> None:
+    """Schreibt nur, wenn sich der Inhalt wirklich aendert.
+
+    WARUM (28.10.2026): der Generator schrieb die Dart-Datei bei JEDEM
+    Lauf neu - auch wenn sie unveraendert blieb. Die Datei bekam dadurch
+    einen neuen Zeitstempel, und die Frische-Pruefung der Release-
+    Artefakte meldete daraufhin "APK aelter als der Quellstand",
+    obwohl der Inhalt identisch war. Ein Fehlalarm, der zum Rebuild
+    verleitet.
+    """
+    alt = None
+    if os.path.exists(pfad):
+        with io.open(pfad, encoding='utf-8') as fh:
+            alt = fh.read()
+    if alt == inhalt:
+        return
+    with io.open(pfad, 'w', encoding='utf-8', newline='\n') as fh:
+        fh.write(inhalt)
+
+
 def main():
     if not os.path.exists(SOURCE):
         print('FEHLER: Quelle fehlt: %s' % SOURCE)
@@ -409,12 +429,10 @@ def main():
                 return 1
 
     os.makedirs(os.path.dirname(DART_OUT), exist_ok=True)
-    with io.open(DART_OUT, 'w', encoding='utf-8', newline='\n') as fh:
-        fh.write(render_dart(blocks))
+    _schreibe_wenn_geaendert(DART_OUT, render_dart(blocks))
 
     os.makedirs(os.path.dirname(HTML_OUT), exist_ok=True)
-    with io.open(HTML_OUT, 'w', encoding='utf-8', newline='\n') as fh:
-        fh.write(render_html(blocks))
+    _schreibe_wenn_geaendert(HTML_OUT, render_html(blocks))
 
 
     kinds = {}

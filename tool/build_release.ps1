@@ -434,6 +434,16 @@ if ($SkipBuild) {
     # --- 3) Play-App-Bundle (Pflichtformat fuer den Store) ---
     if ($Aab -and $Flavor -in @("both", "play")) {
         Write-Host "==> Baue Play App-Bundle (.aab)..." -ForegroundColor Cyan
+        # Das alte Bundle vorher loeschen. Grund: Gradle haelt den
+        # Task sonst fuer "up-to-date" und schreibt die Datei NICHT
+        # neu - der Zeitstempel des AAB blieb dann vom letzten Build
+        # stehen. Die Frische-Pruefung meldete daraufhin einen
+        # veralteten Store-Upload, obwohl der Inhalt aktuell war
+        # (28.10.2026).
+        $bundleDir = Join-Path "build\app\outputs" "bundle"
+        if (Test-Path -LiteralPath $bundleDir) {
+            Remove-Item -LiteralPath $bundleDir -Recurse -Force
+        }
         flutter build appbundle --release --flavor play @ConfigDefines --obfuscate --split-debug-info=build/symbols/play
         if ($LASTEXITCODE -ne 0) { throw "App-Bundle-Build fehlgeschlagen." }
         Copy-Aab -FlavorName "play"
