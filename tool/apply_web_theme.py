@@ -41,7 +41,7 @@ SEITEN = ['kinderschutz.html', 'konto-loeschen.html', 'impressum.html']
 # ihre eigene Kopfzeile mit. Deshalb bekommt sie nur das gemeinsame CSS,
 # keine Kopfzeile und keine Inhalts-Huelle - die wuerde den
 # Sicherheitscheck in eine Karte packen.
-NUR_CSS = ['index.html']
+NUR_CSS = ['index.html', 'bestaetigt.html']
 
 
 def main() -> int:

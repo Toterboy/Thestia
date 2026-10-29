@@ -47,12 +47,9 @@ serve(async (req) => {
   // Nach erfolgreicher Verifikation landet der Nutzer ohne Token wieder hier ->
   // Erfolgsmeldung als Klartext anzeigen (text/plain wird korrekt gerendert).
   if (!token) {
-    return new Response(
-      "Deine E-Mail-Adresse wurde bestätigt. Alles klar.\n\n" +
-        "Du kannst dieses Fenster schließen und zur Thestia-App " +
-        "zurückkehren - sie erkennt die Bestätigung automatisch und " +
-        "geht weiter.",
-      { status: 200, headers: { "Content-Type": "text/plain; charset=utf-8" } },
+    return Response.redirect(
+      "https://auth.thestia.de/bestaetigt",
+      302,
     );
   }
 

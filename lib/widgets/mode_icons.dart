@@ -261,19 +261,27 @@ class TransitSparkPainter extends _ModeSymbolPainter {
   /// 0,79 em hoch, und sie liegt MITTIG auf der Em (Mitte der Tinte:
   /// x = 49,5 von 100).
   ///
-  /// Bei Groesse 12,6 ist die Tinte damit 8,3 Einheiten breit und 10,0
-  /// hoch. Das passt in die Mitte des 17er-Felds und laesst oben Platz
-  /// fuer den Funken. Die alte Groesse 15,0 ergab 9,8 x 11,7 Einheiten
-  /// - damit war kein Platz mehr fuer einen Funken neben dem Zug.
-  static const double zugGroesse = 12.6;
+  /// Bei Groesse 13,0 ist die Tinte 8,6 Einheiten breit und 10,3 hoch.
+  static const double zugGroesse = 13.0;
+
+  /// Mittelpunkt des Zuges im 17er-Feld.
+  ///
+  /// Die Tinte der Glyphe sitzt nicht mittig auf der uebergebenen
+  /// Mitte: bei y = 8..86 (je 100er-Em) liegt der Tinkenmittelpunkt
+  /// 0,42 Einheiten OEBER dem Mittelpunkt des Kastens. Fuer einen
+  /// wirklich mittigen Zug (NUTZERWUNSCH 29.10.2026: "Der Zug selbst
+  /// soll mittig zentriert sein") liegt er deshalb bei 8,9.
+  static const double zugMitteX = 8.5;
+  static const double zugMitteY = 8.9;
 
   @override
   void draw(Canvas canvas) {
     // --- Zug (Frontansicht) -------------------------------------------------
-    // Der Zug steht jetzt MITTIG auf der Feldmitte 8.5 (NUTZERWUNSCH
-    // 27.10.2026: "das Icon muss auch mittig sein, also der Zug
-    // mittig"). Vorher stand er rechts bei 11.2, damit links der
-    // Funke Platz hatte - das Icon war dadurch schief.
+    // GEAENDERT (Nutzerwunsch, 29.10.2026): der Zug stand zu tief.
+    // Durch den Funken ueber ihm war die ganze Komposition nach oben
+    // geschoben - der Zug selbst war damit NICHT mittig, obwohl er
+    // rechnerisch auf der Feldmitte stand. Jetzt sitzt die Tinte des
+    // Zuges genau in der Mitte des Feldes (siehe [zugMitteY]).
     //
     // GLYPHE per TextPainter, weil in einem CustomPainter kein
     // Icon-Widget zur Verfuegung steht.
@@ -282,38 +290,70 @@ class TransitSparkPainter extends _ModeSymbolPainter {
     // zur der der Nachbarn passt: Material zeichnet mit 2 Einheiten auf
     // 24. Fuer 1.35 im 17er-Feld braucht es 1.35/2*24 = 16.2
     // Einheiten. Genau so gross wird gezeichnet - und damit ist die
-    // Strichstaerke deckungsgleich mit den anderen Symbolen, statt
-    // 0.83 zu betragen.
+    // Strichstaerke deckungsgleich mit den anderen Symbolen.
     final zug = Icons.train;
     _glyphe(canvas, zug.codePoint, zug.fontFamily!, zug.fontPackage,
-        const Offset(8.5, 10.9), zugGroesse);
+        const Offset(zugMitteX, zugMitteY), zugGroesse);
 
-    // --- Funke (ECHTER Funke, mittig ueber dem Zug) ------------------
+    // --- Funke (ueber dem Zug) ---------------------------------------------
     //
-    // GEAENDERT (Nutzerwunsch, 28.10.2026): "Beim Icon fuer Transit
-    // Spark muss es nur noch so verschoben werden, sodass der Zug in
-    // der Mitte ist, dann passt es."
+    // GEAENDERT (Nutzerwunsch, 29.10.2026): "Der Spark dadrueber soll
+    // nicht nach unten komisch zeigen."
     //
-    // Der Funke stand previously rechts OBEN. Damit war das ganze
-    // Zeichen 1,35 Einheiten zu weit rechts - der Zug wirkte deshalb
-    // nach links verschoben, obwohl er geometrisch genau auf der
-    // Feldmitte stand (8,5 von 17).
+    // Mit dem vollen vierstrahligen Stern zeigte der Funke einen langen
+    // Strahl NACH UNTEN - der stach wie ein Stachel in das Zugdach.
+    // [_funkeOhneUnterspitze] zeichnet denselben Stern, aber mit kurzer
+    // unterer Spitze: der Funke funkelt nach oben, nicht in den Zug.
     //
-    // Die Anordnung ist jetzt: der Funke sitzt MITTIG ueber dem Zug.
-    // Damit ist die Gesamtkomposition symmetrisch zur Zugachse, der
-    // Zug steht optisch in der Mitte, und es gibt weiterhin keine
-    // Beruehrung und keine Linie durch den Zug.
-    //
-    // Der Abstand zum Zug betraegt rund 0,7 Einheiten (unterer
-    // Strahl des Sterns gegen das Dach) - sichtbar, aber ohne die
-    // beiden Elemente verschmelzen zu lassen.
-    //
-    // Der Schweif steigt SENKRECHT nach oben (Richtung -pi/2). Mit
-    // der Standardrichtung ("nach links oben") laege die Masse des
-    // Funkens links neben der Zugachse - der Zug wirkte dann wieder
-    // verschoben, nur jetzt nach unten statt nach oben.
-    funkeMitSchleier(canvas, const Offset(8.5, 3.3), 1.7, color,
-        richtung: -math.pi / 2);
+    // Der Abstand zum Zug betraegt rund 0,9 Einheiten - sichtbar
+    // getrennt, aber nicht weit auseinander.
+    _funkeOhneUnterspitze(
+      canvas,
+      const Offset(zugMitteX, 1.45),
+      1.15,
+      color,
+      mager: 0.50,
+      kurz: 0.55,
+    );
+  }
+
+  /// Vierstrahliger Funke, dessen untere Spitze kuerzer bleibt.
+  ///
+  /// Der normale Stern ([stern]) hat vier gleich lange Strahlen. Ueber
+  /// dem Zug zeigte der untere Strahl wie ein Stachel, der in das Dach
+  /// sticht (NUTZERWUNSCH, 29.10.2026: "Der Spark dadrueber soll nicht
+  /// nach unten komisch zeigen").
+  ///
+  /// Hier bleibt die untere Spitze bei [kurz] Anteilen von [r] (0,55),
+  /// waehrend die diagonalen Zacken [mager] Anteilen bekommen (0,50).
+  /// Beides zusammen ist wichtig: mit einer zu kurzen Spitze UND zu
+  /// kleinen Zacken sah der Funke wie ein Hut auf dem Zug aus - mit
+  /// langen Zacken und kurzer Spitze ist er wieder eindeutig ein
+  /// vierstrahliger Funke, der nach oben funkelt.
+  ///
+  /// [c] ist die Mitte, [r] die Strahlelaenge der drei langen Spitzen
+  /// (oben, links, rechts), [kurz] der Anteil der unteren Spitze.
+  void _funkeOhneUnterspitze(
+    Canvas canvas,
+    Offset c,
+    double r,
+    Color farbe, {
+    double mager = 0.50,
+    double kurz = 0.55,
+  }) {
+    final zacke = r * mager;
+    final unten = r * kurz;
+    final p = Path()
+      ..moveTo(c.dx, c.dy - r)
+      ..lineTo(c.dx + zacke * 0.707, c.dy - zacke * 0.707)
+      ..lineTo(c.dx + r, c.dy)
+      ..lineTo(c.dx + zacke * 0.707, c.dy + zacke * 0.707)
+      ..lineTo(c.dx, c.dy + unten)
+      ..lineTo(c.dx - zacke * 0.707, c.dy + zacke * 0.707)
+      ..lineTo(c.dx - r, c.dy)
+      ..lineTo(c.dx - zacke * 0.707, c.dy - zacke * 0.707)
+      ..close();
+    canvas.drawPath(p, flaeche(farbe));
   }
 
   /// Zeichnet eine Material-Glyphe in das 17er-Feld, mittig auf [mitte].

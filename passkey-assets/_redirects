@@ -63,3 +63,13 @@
 # Anschrift einer dritten Person sind alles zulaessige Wege.
 /impressum    /impressum.html  200
 /impressum/   /impressum.html  200
+
+# Bestaetigungsseite nach E-Mail-Verifikation (Edge Function /confirm).
+#
+# Die Funktion leitet nach erfolgreicher Verifikation auf diese Adresse
+# um. Sie zeigt in der Design-Sprache der anderen Seiten "E-Mail
+# bestaetigt" und schliesst das Fenster. Ohne diese Regel gibt es
+# unter /bestaetigt einen 404 - und die Erfolgsseite ist eine reine
+# Text-Zeile.
+/bestaetigt    /bestaetigt.html  200
+/bestaetigt/   /bestaetigt.html  200
