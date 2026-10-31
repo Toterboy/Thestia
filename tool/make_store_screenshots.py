@@ -1247,34 +1247,43 @@ def app_tile(shot: Image.Image, box_h: int, box_w: int, corner_ratio=0.055,
             # auf der hellen Seite dunkel, auf der dunklen Seite hell.
             # Sonst waeren die Symbole auf einer Seite unlesbar.
             #
-            # Die Tinte wird fuer jede Seite getrennt gezeichnet: der
-            # Split-Faktor sagt, ab welchem x-Pixel die Seite wechselt.
+            # Die Grenze verlaeuft DIAGONAL (siehe split_screen). Eine
+            # senkrechte Teilung wuerde die Tinte an der falschen
+            # Stelle umschalten - die Statusleiste liegt oben links auf
+            # dem hellen Teil, die Navigationsleiste unten rechts auf
+            # dem dunklen.
+            #
+            # Deshalb wird eine MASKE benutzt: sie markiert je Pixel,
+            # ob er zur hellen oder zur dunklen Seite gehoert. Die
+            # Statusleiste wird zweimal gezeichnet (einmal mit dunkler,
+            # einmal mit heller Tinte) und dann mit der Maske
+            # zusammengesetzt.
+            winkel, anker_x, anker_y = split
             hell_t = (38, 34, 44, 245)
             dunkel_t = (236, 233, 242, 245)
             hell_nav = (45, 38, 50, 210)
             dunkel_nav = (236, 233, 242, 210)
-            w_s = scr.width
-            h_s = scr.height
-            # Zwei Ebenen: die obere mit heller Tinte, die untere mit
-            # dunkler - und dann wird an der Kante ineinander
-            # kopiert. Der Schnitt verlaeuft senkrecht (split ist der
-            # x-Anteil), deshalb reicht eine senkrechte Kante.
-            kante = int(w_s * split)
-            if kante <= 0:
-                _draw_status_bar(scr, tint=dunkel_t)
-                _draw_nav_bar(scr, tint=dunkel_nav)
-            elif kante >= w_s:
-                _draw_status_bar(scr, tint=hell_t)
-                _draw_nav_bar(scr, tint=hell_nav)
-            else:
-                oben = scr.crop((0, 0, kante, h_s)).copy()
-                unten = scr.crop((kante, 0, w_s, h_s)).copy()
-                _draw_status_bar(oben, tint=hell_t)
-                _draw_nav_bar(oben, tint=hell_nav)
-                _draw_status_bar(unten, tint=dunkel_t)
-                _draw_nav_bar(unten, tint=dunkel_nav)
-                scr.paste(oben, (0, 0))
-                scr.paste(unten, (kante, 0))
+
+            with_hell = scr.copy()
+            _draw_status_bar(with_hell, tint=hell_t)
+            _draw_nav_bar(with_hell, tint=hell_nav)
+            with_dunkel = scr.copy()
+            _draw_status_bar(with_dunkel, tint=dunkel_t)
+            _draw_nav_bar(with_dunkel, tint=dunkel_nav)
+
+            # Die Maske bezieht sich auf das BILD, auf dem die Linie
+            # gezogen wurde - also auf das ungeschnittene Original.
+            # Das Zielbild ist skaliert und (oben) beschnitten, darum
+            # muss die Maske dasselbe erfahren.
+            scale = scr.width / shot.width
+            beschnitt = 0
+            if shot.height * scale > scr.height:
+                beschnitt = 0  # der Beschnitt sitzt oben
+            mask = split_mask(shot.width, shot.height, winkel, anker_x,
+                              anker_y, scale=scale, crop_y=beschnitt)
+            if mask.size != scr.size:
+                mask = mask.resize(scr.size, Image.BILINEAR)
+            scr = Image.composite(with_hell, with_dunkel, mask)
     gerundet = _round_image(scr, int(scr.width * corner_ratio))
 
     if rand_oben or rand_unten:
@@ -2061,30 +2070,31 @@ def compose_modes_wqhd(tiles, headline: str, subline: str, badge: str):
     return round_corners(bg, 56)
 
 
-def split_screen(hell: Image.Image, dunkel: Image.Image, winkel: float = 22.0,
-                  anker_x: float = 0.5, anker_y: float = 0.42):
+def split_screen(hell: Image.Image, dunkel: Image.Image, winkel: float = -65.8,
+                  anker_x: float = 0.0, anker_y: float = 1.0):
     """Setzt zwei Renders zu EINEM Screen zusammen - SCHRAE geteilt.
 
-    NUTZERWUNSCH (31.10.2026): "Der Hell/Dunkel Screenshot soll so
-    sein, dass die Unterteilung entweder schraeg oder senkrecht ist."
+    NUTZERWUNSCH (31.10.2026): "Der Screenshot mit Hell und Dunkel
+    soll die Grenze von Hell und Dunkel von unten links nach oben
+    rechts haben."
 
-    Vorher war die Teilung waagerecht (oben hell, unten dunkel). Der
-    Wunsch ist ausdruecklich: die Linie soll NICHT waagerecht laufen -
-    entweder schraeg oder senkrecht. Waagerecht sah aus wie zwei
-    uebereinander gelegte Bildschirme.
+    Die Trennlinie laeuft also von der linken unteren Ecke zur
+    rechten oberen Ecke. Links OBEN davon ist der helle Render,
+    rechts UNTEN davon der dunkle.
 
-    SCHRAE (Standard): Eine Diagonale von links oben nach rechts
-    unten. Links der Linie ist der helle, rechts der dunkle Render.
-    Beide Renders sind derselbe Screen an derselben Stelle - es
-    sieht also aus wie EIN Screen, der zur Haelfte hell und zur
-    Haelfte dunkel ist.
+    Mit dieser Neigung bleiben die beiden relevanten Kacheln ganz:
+    "Hell" liegt links oben (im hellen Bereich), "Dunkel" liegt rechts
+    unten (im dunklen). Nur das mittlere "System" wird diagonal
+    durchschnitten - und genau das ist die Grenze zwischen Hell und
+    Dunkel, die der Nutzerwunsch beschreibt.
 
-    SENKRECHT ([winkel] = 90): Eine senkrechte Linie in der Mitte.
+    [winkel] ist die Neigung der Linie in Grad:
+      *  -90 = senkrecht
+      *  -66 = von unten links nach oben rechts (Ecke zu Ecke)
+      *   66 = von oben links nach unten rechts
 
-    [anker_x] / [anker_y]: Wo die Diagonale den Bildschirm kreuzt
-    (als Anteil der Breite bzw. Hoehe, 0..1). Der Anker liegt an
-    einer INHALTSGRENZE - dort, wo im Screen nichts steht. So
-    zerschneidet die Linie keinen Text und keine Kachel.
+    [anker_x] / [anker_y]: Der Punkt, durch den die Linie laeuft
+    (als Anteil der Breite bzw. Hoehe).
 
     Die Statusleiste kommt nur oben (aus dem hellen Render) - eine
     zweite Statusleiste in der Mitte des Bildes waere ein Fehler.
@@ -2094,9 +2104,7 @@ def split_screen(hell: Image.Image, dunkel: Image.Image, winkel: float = 22.0,
                          '%s vs %s' % (hell.size, dunkel.size))
     w, h = hell.size
 
-    # Mittelpunkt der Diagonalen: der Anker.
     mx, my = w * anker_x, h * anker_y
-    # Richtung der Diagonalen: (cos, sin) des Winkels zur Waagerechten.
     rad = math.radians(winkel)
     dx, dy = math.cos(rad), math.sin(rad)
 
@@ -2110,15 +2118,16 @@ def split_screen(hell: Image.Image, dunkel: Image.Image, winkel: float = 22.0,
 
     # Fuer jede SPALTE einmal rechnen: die Grenze ist eine Gerade,
     # also laesst sich der Uebergang pro x bestimmen.
+    #
+    # Abstand des Punktes (x, y) von der Geraden durch (mx, my) mit
+    # der Richtung (dx, dy):
+    #   d = (x - mx) * (-dy) + (y - my) * dx
+    # d < 0 -> links der Linie (hier: der helle Render).
     for x in range(w):
-        # Abstand des Punktes (x, y) von der Geraden durch (mx, my)
-        # mit der Richtung (dx, dy):
-        #   d = (x - mx) * (-dy) + (y - my) * dx
-        # d < 0 -> eine Seite, d > 0 -> die andere.
         basis = (x - mx) * (-dy) - (my * dx)
         for y in range(h):
             d = basis + y * dx
-            # 1 px breite weiche Kante in der Mitte der Diagonalen.
+            # 1 px breite weiche Kante in der Mitte der Linie.
             if d < -0.5:
                 out_pix[x, y] = hell_pix[x, y] + (255,)
             elif d > 0.5:
@@ -2137,6 +2146,41 @@ def split_screen(hell: Image.Image, dunkel: Image.Image, winkel: float = 22.0,
                 )
 
     return out
+
+
+def split_mask(w: int, h: int, winkel: float, anker_x: float,
+               anker_y: float, scale: float = 1.0, crop_y: int = 0) -> Image.Image:
+    """Maske der hellen Seite fuer ein SKALIERTES, beschnittenes Bild.
+
+    Liefert eine L-Maske (255 = hell, 0 = dunkel) in der Groesse des
+    Bildes, auf das sie angewendet wird.
+
+    [scale] ist der Skalierungsfaktor zwischen dem Original (w x h)
+    und dem Zielbild, [crop_y] der Versatz des Beschnitts nach oben.
+
+    Wird fuer die System-UI gebraucht: die Statusleiste und die
+    Navigationsleiste muessen auf der hellen Seite dunkel und auf der
+    dunklen Seite hell gezeichnet werden - sonst waeren die Symbole auf
+    einer Seite unlesbar. Die Grenze verlaeuft aber DIAGONAL, also
+    braucht es eine Maske und nicht zwei senkrechte Haelften.
+    """
+    mx = w * anker_x
+    my = h * anker_y
+    rad = math.radians(winkel)
+    dx, dy = math.cos(rad), math.sin(rad)
+
+    mask = Image.new('L', (int(w * scale), int(h * scale)), 0)
+    pix = mask.load()
+    ziel_w, ziel_h = mask.size
+    for x in range(ziel_w):
+        # Zurueck in die Originalkoordinaten.
+        ox = x / scale
+        basis = (ox - mx) * (-dy) - (my * dx)
+        for y in range(ziel_h):
+            oy = y / scale + crop_y
+            d = basis + oy * dx
+            pix[x, y] = 255 if d < 0 else 0
+    return mask
 
 
 def compose_9x16(shot: Image.Image, headline: str, subline: str, badge: str,
@@ -2348,26 +2392,30 @@ def main():
                       '- zuerst den dunklen Screen rendern')
                 continue
             # SENKRECHT geteilt (NUTZERWUNSCH: "die Unterteilung
-            # entweder schraeg oder senkrecht").
+            # entweder schraeg oder senkrecht") - und weiter
+            # "Die Grenze von Hell und Dunkel von unten links nach
+            # oben rechts".
             #
-            # Senkrecht ist hier die bessere Wahl: der Bildschirm ist
-            # 20:9 und die Erscheinungs-Auswahl (Hell/System/Dunkel)
-            # liegt in EINER Zeile. Eine Diagonale durch diese Zeile
-            # zerschneidet die Kacheln - und genau die Auswahl soll
-            # ja BEIDE Modi zeigen.
+            # Die Linie laeuft also von der linken unteren Ecke zur
+            # rechten oberen Ecke (-65,8 Grad). Oberhalb links davon
+            # ist der helle Render, unterhalb rechts der dunkle.
             #
-            # Die Kante liegt zwischen "System" und "Dunkel" (x =
-            # 0,655 der Breite). Links steht das Segment "Hell" auf
-            # hellem Grund, rechts "Dunkel" auf dunklem - die Aussage
-            # des Bildes in einem Blick.
-            # 270 Grad (nicht 90): die Seite, auf der der HELLE
-            # Render liegt, ist dann die linke. Bei 90 Grad waere sie
-            # die rechte - und die Statusleiste stuende mit dunkler
-            # Tinte auf dunklem Grund.
-            shot = split_screen(shot, Image.open(dunkel_src), winkel=270.0,
-                                anker_x=0.655, anker_y=0.45)
-            split_x = 0.655
-            print(f'  {name}: senkrechter Split aus 04_anpassen (hell) + '
+            # Warum gerade diese Neigung (-30,3 Grad): bei dieser
+            # Linie bleiben die beiden Kacheln, um die es geht, GANZ
+            # auf ihrer Seite. "Hell" (links) liegt im hellen Bereich,
+            # "Dunkel" (rechts) im dunklen. Nur das mittlere "System"
+            # wird diagonal durchschnitten - und genau das ist die
+            # Grenze zwischen Hell und Dunkel, die der Nutzerwunsch
+            # beschreibt.
+            #
+            # Der Anker ist die MITTE der System-Kachel in der
+            # Segmentzeile (x = 540, y = 1080 im 2400er Render). Von
+            # dort laeuft die Linie nach rechts oben und nach links
+            # unten - also genau "von unten links nach oben rechts".
+            shot = split_screen(shot, Image.open(dunkel_src), winkel=-30.3,
+                                anker_x=0.5, anker_y=0.45)
+            split_x = (-30.3, 0.5, 0.45)
+            print(f'  {name}: schraeger Split aus 04_anpassen (hell) + '
                   '04_anpassen_dunkel (dunkel)')
         # Nur das Datenschutz-Bild wird abgedunkelt. Ein zweites dunkles
         # Bild wuerde die Wirkung aufheben.
@@ -2382,8 +2430,9 @@ def main():
         # Der Schnitt landet an einer Inhaltsgrenze - nicht mitten in
         # einer Kachel.
         sauberer_schnitt = name == '02_aktuelles'
-        # X-Anteil, an dem die System-UI die Tinte wechselt (nur beim
-        # Hell/Dunkel-Split). None = einfarbig wie bei allen anderen.
+        # Geometrie der System-UI-Trennung (nur beim Hell/Dunkel-Split):
+        # Winkel, Anker-x, Anker-y. None = einfarbig wie bei allen
+        # anderen.
         split_x = None
         a = compose_9x16(shot, headline, subline, badge, dark=dunkel,
                          rand_oben=rand_oben, rand_unten=rand_unten,

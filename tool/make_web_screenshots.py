@@ -34,7 +34,24 @@ import sys
 from PIL import Image
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-QUELLE = ROOT / 'releases' / 'testapk' / 'screenshots' / 'marketing' / '9x16'
+
+# Die Quelle ist die KACHELN-Variante, nicht der App-Screenshot
+# (NUTZERWUNSCH 31.10.2026: "Es sollen nur die Screenshots benutzt
+# werden, die mit Kacheln sind, also keine, die eine Statusleiste oder
+# so haben.").
+#
+# Der Unterschied ist sichtbar: der App-Screenshot (9x16) zeigt einen
+# kompletten Geraete-Screen MIT nachgeahmter Statusleiste und
+# Navigationsleiste. Die Kacheln-Variante (9x16-kacheln) legt die
+# echten Inhalte als einzelne Kacheln auf den Markenverlauf - ohne
+# Statusleiste, ohne Navigationsleiste.
+#
+# Das ist auf der Website das richtige: es sind die Bausteine der App,
+# nicht das Bild eines Geraets. Und die Kacheln sind einzeln geladen
+# (und einzeln ueber ein Raster verteilt) - ein Geraete-Screen in
+# der Mitte des Rasters waere ein Fremdkoerper.
+QUELLE = ROOT / 'releases' / 'testapk' / 'screenshots' / 'marketing' / \
+    '9x16-kacheln'
 ZIEL = ROOT / 'passkey-assets' / 'screenshots'
 
 # Die Startseite (index.html). Dort steht die Galerie.

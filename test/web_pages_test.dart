@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:image/image.dart' as img;
+
 import 'package:flutter_test/flutter_test.dart';
 
 /// Publish-Verzeichnis des Netlify-Projekts fuer thestia.de.
@@ -265,5 +267,94 @@ void main() {
       expect(h, contains('justify-self: center'),
           reason: 'Die letzte Kachel muss mittig stehen.');
     });
+
+    test('Die Galerie ist ein Flex-Container - die unteren Bilder '
+        'stehen mittig', () {
+      // NUTZERWUNSCH (31.10.2026): "Zudem sollen die unteren beiden
+      // Bilder zentriert werden."
+      //
+      // Bei acht Bildern und drei Spalten bleiben zwei in der letzten
+      // Reihe. Im GRID stehen die linksbuendig - jede Zeile wird
+      // einzeln gefuellt. Mit Flex und `justify-content: center`
+      // richtet Flex jede Zeile einzeln aus, und die letzte Reihe mit
+      // zwei Bildern steht damit mittig.
+      final h = html();
+      final regel = RegExp(r'\.galerie-raster\s*\{([^}]*)\}')
+          .firstMatch(h);
+      expect(regel, isNotNull,
+          reason: 'Die Galerie braucht ihre eigene Regel.');
+      expect(regel!.group(1), contains('justify-content: center'),
+          reason: 'Ohne justify-content: center stehen die unteren '
+              'beiden Bilder linksbuendig.');
+    });
+
+    test('Die Galerie-Regeln stehen nur EINMAL im Dokument', () {
+      // Die Galerie-Regeln standen einmal in index.html UND einmal im
+      // Theme. Die Kopie in index.html stand VOR dem Theme und brachte
+      // `display: grid` - das Theme (mit Flex) kam danach und war
+      // wirkungslos. Die unteren Bilder standen deshalb linksbuendig.
+      //
+      // Regeln, die an mehreren Stellen stehen, driften auseinander.
+      final h = html();
+      expect(RegExp(r'\.galerie-raster\s*\{').allMatches(h).length, 1,
+          reason: 'Die .galerie-raster-Regel steht mehrfach im Dokument - '
+              'die spaeter gefundene gewinnt, die frueher gefundene '
+              'ist wirkungslos.');
+    });
   });
+
+  group('Die Galerie-Bilder', () {
+    test('Sie zeigen die Kacheln, nicht den Geraete-Screen', () {
+      // NUTZERWUNSCH (31.10.2026): "Es sollen nur die Screenshots
+      // benutzt werden, die mit Kacheln sind, also keine, die eine
+      // Statusleiste oder so haben."
+      //
+      // Geprueft an den Pixeln: In der Kacheln-Variante ist der
+      // oberste Streifen reiner Markenverlauf. Beim Geraete-Screen
+      // stuende dort die nachgeahmte Statusleiste (Uhrzeit, WLAN,
+      // Akku) auf weissem Grund.
+      final bilder = Directory('${assets.path}/screenshots')
+          .listSync()
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.jpg'))
+          .toList();
+      expect(bilder.length, 8,
+          reason: 'Es sind acht Galerie-Bilder.');
+
+      for (final f in bilder) {
+        final px = obersteZeilenSindWeiss(f);
+        expect(px, lessThan(0.15),
+            reason: '${f.path.split(Platform.pathSeparator).last}: Die '
+                'obersten Zeilen sind zu ${(px * 100).toStringAsFixed(0)}% '
+                'weiss - dort steht der Geraete-Screen mit Statusleiste, '
+                'nicht die Kachel.');
+      }
+    });
+  });
+}
+
+/// Anteil der weissen Pixel in den obersten 60 Zeilen eines Bildes.
+///
+/// Der App-Screen ist weiss (255,255,255). Der Markenverlauf der
+/// Kachel ist rosa bis violett. Steht oben eine nachgeahmte
+/// Statusleiste, ist der Streifen weiss.
+///
+/// 60 Zeilen entsprechen bei der Kachel (540 x 960) gut dem Bereich,
+/// in dem die Statusleiste stuende.
+double obersteZeilenSindWeiss(File datei) {
+  final bild = img.decodeJpg(datei.readAsBytesSync());
+  if (bild == null) {
+    throw StateError('${datei.path} konnte nicht gelesen werden.');
+  }
+  final zeilen = bild.height < 60 ? bild.height : 60;
+  var weiss = 0;
+  var gesamt = 0;
+  for (var y = 0; y < zeilen; y++) {
+    for (var x = 0; x < bild.width; x++) {
+      final p = bild.getPixel(x, y);
+      gesamt++;
+      if (p.r > 235 && p.g > 235 && p.b > 235) weiss++;
+    }
+  }
+  return gesamt == 0 ? 0 : weiss / gesamt;
 }
