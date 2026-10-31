@@ -7,7 +7,112 @@ und folgt der [Semantic Versioning Specification (SemVer)](https://semver.org/la
 Solange die Versionsnummer mit `0.` beginnt (Initial Development Phase nach SemVer §4),
 können sich Schnittstellen und Verhalten jederzeit ändern.
 
-## [0.10.0] – 2026-10-24 (Build 31)
+## [0.10.0] – Nachtrag (Build 31, 2026-10-30)
+
+### Hinzugefügt
+
+- **Sicherheits-Aufklärung vor dem Setup:** Nach der E-Mail-Bestätigung
+  fragt die App, ob bereits eine Dating-App benutzt wurde und ob die
+  Gefahren beim Online-Dating bewusst sind. Bei „Nein" folgt eine
+  Aufklärung aus fünf horizontal wischbaren Seiten (maximal fünf
+  Minuten). Der Fortschritt liegt lokal und wird nach einem Neustart
+  fortgesetzt; ist er nicht wiederherstellbar, beginnt die Aufklärung
+  von vorn. Der Abschluss wird als eigenes Setup-Flag gespeichert.
+- **„Connect to others" statt „QR Code scannen Modi":** Zusätzlich zum
+  QR-Code (eigenes Profil, Scannen, Code eingeben) lassen sich
+  Telefonnummer und Handles für Signal, Threema, Instagram, Snapchat,
+  Discord und eigene Apps hinterlegen. Signal und Threema sind als
+  empfohlen markiert, Instagram, Snapchat und Discord als „nicht
+  empfohlen". Telefonnummer und Handles werden ausschließlich
+  verschlüsselt im Keystore/Keychain (`SecureNamespaces.contacts`)
+  gespeichert und nur beim aktiven Teilen oder Kopieren weitergegeben.
+- **Öffentliche Seite „Sicher daten":** Ausführliche Fassung der
+  Aufklärung unter `/dating-sicherheit` im Design der übrigen
+  Thestia-Seiten (statisch, Dark/Light-Modus, kein JavaScript).
+- **QR-Schnellzugriff auf „Aktuelles":** QR-Symbol neben den
+  Einstellungen öffnet das Menü direkt.
+
+### Behoben
+
+- **Passkeys gingen im Release-Build gar nicht** (31.10.2026): `supabase_flutter`
+  hängt nur am `passkeys_platform_interface`, NICHT am app-seitigen
+  `passkeys`-Paket. Flutter baut ein Endorsed-Plugin (`passkeys_android`)
+  aber nur ein, wenn die App selbst vom App-Facing-Paket abhängt. Im
+  Release-APK fehlten deshalb **beides**: die Plugin-Klassen und die
+  Berechtigung `CREDENTIAL_MANAGER_SET_ORIGIN`. Jeder Passkey-Versuch
+  endete mit „MissingPluginException" — unabhängig von Gerät und Server.
+  Fix: `passkeys` ist jetzt eine direkte, exakt gepinnte Abhängigkeit;
+  ein Test verhindert die Regression.
+- **Der Sicherheitscheck wird nur noch verlangt, wenn der Server ihn
+  wirklich braucht**: Der Passkey-Zugriff versucht es zuerst ohne Token
+  und fragt den Sicherheitscheck erst ab, wenn der Server ein CAPTCHA
+  verlangt (vorher kam die Abfrage immer).
+- **Passkey-Fehler sagen jetzt, was los ist**: Auch unerwartete Fehler
+  laufen durch das Fehler-Mapping und werden konkret benannt, statt
+  „fehlgeschlagen" zu melden.
+- **Doppelter Scroll-View im eigenen Profil** (31.10.2026, beim Rendern
+  gefunden): Beim Umbau auf die flächige Geburtstags-Tönung war
+  `SingleChildScrollView` zweimal ineinander geschachtelt. Der innere
+  Scroll-View schluckt die Wischgeste - die Seite ließ sich dadurch
+  schlechter scrollen.
+- **Geburtstags-Chip lief seitlich aus dem Rand**: Der Text war nicht
+  umbruchfähig - bei großer Schrift (bis 3,2×) wurde der Chip breiter
+  als der Bildschirm (RenderFlex-Overflow). Der Text bricht jetzt um.
+- **Transit Spark: der Text verschiebt sich beim Moduswechsel nicht
+  mehr**: Flutter zählt den Rahmen der Kachel zum Innenabstand - mit
+  dem dickeren Rand der ausgewählten Kachel wanderte der Text um einen
+  Pixel. Der Rahmen hat jetzt überall dieselbe Breite.
+
+### Geändert
+
+- **Profil-Menü mit Rand nach oben** (31.10.2026): Der Griff und die drei
+  Optionen kleben nicht mehr an der Oberkante des Blattes.
+- **Ladekreise sind abgerundet**: Alle Ladeindikatoren der App bekommen
+  runde Enden (zentral in der Theme, ohne Änderung an den Stellen selbst).
+- **Der Name im Profil bleibt mittig**: Das Verifiziert- und das
+  Neu-Konto-Abzeichen stehen daneben, verschieben den Namen aber nicht
+  mehr - auch nicht beim fremden Profil.
+- **Verifizierung und Mood sind auch bei anderen sichtbar**: Das
+  Verifiziert-Abzeichen steht jetzt neben dem Namen in den Listen (erhaltene
+  Likes, Funken) und natürlich im Profil - und es verschiebt den Namen
+  dabei nicht mehr. Das Mood des Tages war im fremden Profil schon sichtbar
+  (jetzt durch einen Test abgesichert).
+- **Accessibility der neuen Bildschirme** (31.10.2026, beim Rendern
+  gefunden): Der Haupt-Knopf der Sicherheits-Aufklärung lag auf einem
+  390×844-Telefon 108 Pixel unterhalb des Bildschirmrands - man musste
+  scrollen, um weiterzukommen. Die Aktionen stehen jetzt fest am unteren
+  Rand, nur der Text scrollt. Bei 3,2-facher Schrift sprengten außerdem
+  der Zeit-Hinweis, das „nicht empfohlen"-Abzeichen und der
+  „Kopieren"-Knopf den Bildschirm (RenderFlex-Overflow). Die
+  Dock-Beschriftung war auf 16 Pixel Höhe begrenzt und wäre bei großer
+  Schrift abgeschnitten worden - sie wächst jetzt mit.
+- **Dock:** Alle vier Tabs (Aktuelles, Entdecken, Interessen, Profil)
+  zeigen dauerhaft ihre Beschriftung; der aktive Tab ist farblich und
+  fett hervorgehoben.
+- **Tab-Wischen:** Gebremstes Finger-Following, Widerstand am Rand und
+  Feder-Rücklauf machen den Wechsel zwischen den Haupttabs ruhiger.
+- **Transit Spark:** Der Funke über dem Zug verwendet dasselbe
+  `funkeMitSchleier`-Motiv wie „Find your Spark" und sitzt oben rechts;
+  die Zug-Geometrie bleibt unverändert.
+- **Interessen:** „Gesendet" und „Erhalten" starten eingeklappt, der
+  Funken-Bereich bleibt sichtbar und wird beim Öffnen nach unten
+  geschoben. Öffnen/Schließen und der Wechsel zwischen den beiden
+  Panels sind animiert; die Funken-Überschrift ist zentriert.
+- **Profil-Vorschau und echtes Profil:** Bild und alle übrigen Angaben
+  sind zentriert; der Geburtstags-Stil tönt die gesamte Fläche, nicht
+  nur den Avatar-Rahmen.
+- **Datenschutzerklärung Version 17:** Neuer Abschnitt 3c zu lokalen
+  Kontaktdaten und zur Sicherheits-Aufklärung; README und Roadmap
+  ergänzt.
+- **Neue Tests:** Render-Tests für „Connect to others" und die
+  Sicherheits-Aufklärung (kein Absturz, kein Overflow, Schritte
+  durchklickbar) sowie für die drei umgebauten Screens (Interessen,
+  eigenes Profil, fremdes Profil) inklusive Textgrößen-Prüfung bis 3,2×.
+  Dazu Accessibility-Tests für beide neuen Screens und das Dock sowie
+  ein Regressionstest, der verhindert, dass der Passkey-Plugin wieder aus
+  dem Build verschwindet.
+
+## [0.10.0] - 2026-10-24 (Build 31)
 
 ### Sicherheit
 

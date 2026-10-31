@@ -128,6 +128,19 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       Entdecken-Gruppierung („Unterwegs" = QR + Transit Spark), Onboarding
       als Interview (Thestia-Frage-Bubbles, zweisprachig); Soft-Ping folgt
       in 0.9.1, Gerätetest ausstehend
+- [x] **UX-/Sicherheits-Update (2026-10-30)** – Dock-Beschriftung für alle
+      vier Tabs, ruhigeres Tab-Wischen mit gebremstem Finger-Follow und
+      Feder-Rücklauf, Transit-Spark-Funke im gleichen Motiv wie „Find your
+      Spark" (Zug bleibt stehen), Interessen-Screen mit eingeklappten
+      Gesendet-/Erhalten-Panels und animierter Funken-Blase,
+      Profil-Vorschau und echtes Profil vollflächig im Geburtstags-Stil,
+      QR-Schnellzugriff auf „Aktuelles"; Sicherheits-Aufklärung vor dem
+      Setup (Ja/Nein-Fragen, fünf Lernseiten, max. 5 Minuten, lokaler
+      Fortschritt, Wiederherstellungs-Fallback) inklusive öffentlicher
+      Seite `/dating-sicherheit`; „QR Code scannen Modi" zu „Connect to
+      others" erweitert (Telefon und Social Media, verschlüsselt nur
+      lokal, Signal/Threema empfohlen, Instagram/Snapchat/Discord
+      gekennzeichnet); Datenschutzerklärung Version 17 und README ergänzt
 
 ## In Arbeit
 

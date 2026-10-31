@@ -120,6 +120,7 @@ Details: [SUPPORT.md](SUPPORT.md).
 - **Passkey einrichten** (überspringbarer Schritt; WebAuthn, Anmeldung ohne E-Mail/Passwort möglich)
 - **Persönlichkeitstest** (MBTI-Style, z. B. ENTP, INFJ)
 - **Gewohnheiten** (Rauchen, Alkohol, Drogen) als eigener Einrichtungsschritt
+- **Sicherheits-Aufklärung vor dem Setup** – nach der E-Mail-Bestätigung: kurze Fragen zu Dating-Erfahrung und Gefahrenbewusstsein, bei Bedarf fünf wischbare Lernseiten (max. 5 Minuten, lokal fortsetzbar). Die ausführliche Fassung steht unter [Sicher daten](passkey-assets/dating-sicherheit.html)
 - **Settings-/Privacy-Auswahl** nach der Registrierung – inklusive **Erscheinungsbild**: 6 Farbwelten (Classic Thestia, Ozean, Wald, Sonnenuntergang, Lavendel, Schiefer), jederzeit änderbar
 - **Willkommens-Screen** beim allerersten App-Start
 
@@ -127,7 +128,7 @@ Details: [SUPPORT.md](SUPPORT.md).
 
 - **Find your Match** – Blind-Matching „Persönlichkeit zuerst": Fotos sind erst nach einem Funke sichtbar (Blind Mode ist standardmäßig aktiv). Beim ersten Öffnen verlangt die App eine eigene Vorstellung (Text UND Audio sind Pflicht). Der gewichtete Matching-Score berücksichtigt Entfernung (40 %), gemeinsame Interessen (30 %) und Musik-Geschmack (30 %) und wird transparent als „Match: X %" angezeigt; strikte Geschlechts- und Altersfilter, optionaler Habit-Dealbreaker (Konsum maximal auf eigenem Niveau).
 - **Zufallschat** – automatische Zuordnung zu einem Peer-to-Peer-Textchat basierend auf Alter-/Distanz-Einstellungen
-- **QR Code** – eigenes Profil als QR-Code teilen, fremde Codes scannen oder manuell eingeben; der angezeigte 8-stellige Code ist serverseitig auflösbar (manuelle Eingabe findet den echten Nutzer)
+- **Connect to others** – eigenes Profil als QR-Code teilen, fremde Codes scannen oder manuell eingeben. Zusätzlich lassen sich Telefonnummer und Handles (Signal, Threema; Instagram, Snapchat und Discord als „nicht empfohlen" gekennzeichnet, eigene Apps ergänzbar) freiwillig hinterlegen und per Share-Sheet oder Zwischenablage weitergeben. Diese Kontaktdaten bleiben verschlüsselt auf dem Gerät und werden nie an den Server gesendet
 - **Dating Hour (Event-Modus)** – jeden Samstag 20:00–21:00 Uhr deutscher Zeit (Sommer-/Winterzeit automatisch berücksichtigt):
   - Beitritt jederzeit möglich (serverzeitsynchron, Manipulation der Geräteuhr wird erkannt); Aktualisieren ist rein lesend, Beitritt NUR über „Ich bin dabei" mit Bestätigungsdialog
   - Erst ab 20 angemeldeten Personen – darunter fällt das Event aus (Schutz vor Fake-Account-Runden); der Fortschritt („X von 20") wird live im Event-Screen angezeigt; nur Konten ab 24 Stunden Alter zählen

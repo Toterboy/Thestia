@@ -48,6 +48,14 @@
 /kinderschutz    /kinderschutz.html  200
 /kinderschutz/   /kinderschutz.html  200
 
+# Sicherheits-Aufklaerung "Sicher daten" (Dating-Sicherheit).
+#
+# Die App verweist fuer die ausfuehrliche Fassung auf diese Adresse.
+# Wie die anderen Seiten: Rewrite (200), damit die .html nicht im Link
+# steht und die Adresse dauerhaft existiert.
+/dating-sicherheit    /dating-sicherheit.html  200
+/dating-sicherheit/   /dating-sicherheit.html  200
+
 # Impressum (Par. 5 DDG).
 #
 # Die Datenschutzerklaerung verweist auf /impressum - die Adresse muss

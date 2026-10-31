@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Datenschutzerklärung für Thestia</title>
 <style>
+    /* Web-Design (tool/web_theme.py) */
     /* ---------------------------------------------------------------
-       Web-Design (tool/web_theme.py) - eine Quelle fuer alle Seiten.
+       Eine Quelle fuer alle Seiten.
 
        Die Farben kommen aus der App: Primaer #E9457B, heller
        Grund #F7F7FB, Karten weiss, dunkler Grund #121212, Karten
@@ -259,6 +260,95 @@
     }
     footer p { margin-bottom: .4rem; }
 
+    /* --- Landing- und Bestaetigungsseite ---------------------------- */
+    .held { max-width: 46rem; margin: 0 auto; padding: clamp(20px, 4vw, 32px); }
+    .held-karte {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: clamp(22px, 4vw, 40px); margin: clamp(16px, 3vw, 32px) auto 0;
+      max-width: 46rem; text-align: center;
+    }
+    .held-marke { display: flex; align-items: center; justify-content: center; }
+    .held-marke svg { width: 88px; height: 88px; }
+    .held-titel {
+      font-size: clamp(1.8rem, 1.2rem + 2.6vw, 2.5rem);
+      line-height: 1.15; letter-spacing: -0.03em; font-weight: 700;
+      margin: 10px 0 0;
+    }
+    .held-text {
+      color: var(--muted); font-size: 1.05rem; line-height: 1.6;
+      margin: 10px auto 0; max-width: 34rem;
+    }
+    .held-knopfe {
+      display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+      margin: 26px 0 0;
+    }
+    .held-knopf {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 20px; border-radius: 999px; font-weight: 600;
+      text-decoration: none; border: 1px solid var(--line);
+      color: var(--fg); background: var(--card);
+    }
+    .held-knopf.primary {
+      background: var(--accent); border-color: transparent;
+      color: var(--accent-fg);
+    }
+    .held-knopf:hover { transform: translateY(-1px); }
+    .held-liste {
+      display: grid; gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      margin: 0;
+    }
+    .held-link {
+      display: block; padding: 16px 18px; border-radius: var(--radius-s);
+      background: var(--card); border: 1px solid var(--line);
+      text-decoration: none; color: inherit;
+    }
+    .held-link strong { display: block; font-size: 1rem; margin-bottom: 3px; }
+    .held-link span {
+      color: var(--muted); font-size: .92rem; line-height: 1.45;
+      display: block;
+    }
+    .held-link:hover { border-color: var(--accent); }
+    .held-fuss {
+      max-width: 46rem; margin: 0 auto;
+      padding: 22px clamp(20px, 4vw, 32px) 56px;
+      color: var(--muted); font-size: .9rem;
+    }
+    .held-fuss a { color: var(--accent); }
+
+    /* --- Der Sicherheitscheck (Captcha-Seite) ------------------------ */
+    .sicherheit { max-width: 30rem; margin: 0 auto; padding: clamp(16px, 4vw, 28px); }
+    .sicherheit-karte {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: clamp(18px, 4vw, 28px); text-align: center;
+    }
+    .sicherheit-titel { font-weight: 700; font-size: 1.2rem; letter-spacing: -0.02em; margin: 0 0 4px; }
+    .sicherheit-status { display: inline-block; font-size: .92rem; color: var(--muted); margin-bottom: 14px; }
+    .sicherheit-status.ok { color: #1b7f4d; font-weight: 600; }
+    .sicherheit-status.fehler { color: #b3261e; }
+    .sicherheit-hinweis { color: var(--muted); font-size: .92rem; line-height: 1.55; margin: 16px 0 0; }
+    .sicherheit-neu {
+      margin-top: 16px; padding: 11px 18px; border-radius: 999px;
+      border: 1px solid var(--line); background: var(--card); color: var(--fg);
+      font: inherit; font-weight: 600; cursor: pointer;
+    }
+    .sicherheit-neu:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Der WebView der App ist klein (300 x 200 dp). Dort wird alles
+       weggepackt, was nicht das Widget selbst ist - der Nutzer sieht
+       in der App nur den Sicherheitscheck, nicht die Seite drumherum. */
+    @media (max-width: 420px), (max-height: 260px) {
+      .kopf { display: none; }
+      .sicherheit { padding: 8px; }
+      .sicherheit-karte { padding: 12px; border-radius: 16px; box-shadow: none; }
+      .sicherheit-titel { font-size: 1rem; }
+      .sicherheit-status { margin-bottom: 8px; }
+      .sicherheit-hinweis { display: none; }
+    }
+
+
     @media (max-width: 560px) {
       body { font-size: 16px; }
       table { font-size: .88rem; }
@@ -275,7 +365,7 @@
 </header>
 <div class="inhalt">
 <h1>Datenschutzerklärung für Thestia</h1>
-<p><strong>Stand: Oktober 2026</strong> · Version 16 (v0.10.0)</p>
+<p><strong>Stand: Oktober 2026</strong> · Version 17 (v0.10.0)</p>
 <p>Thestia ist ein datenschutzorientiertes Open-Source-Projekt (AGPLv3). Der Schutz deiner persönlichen Sphäre steht an erster Stelle: Es werden keine Werbetracker eingesetzt, keine Verhaltensprofile erstellt und keine Nutzerdaten an Dritte verkauft.</p>
 <h2>1. Grundsatz und Verantwortliche Stelle</h2>
 <p><strong>Kontakt:</strong> Fragen zur Verarbeitung deiner Daten, Auskunft, Berichtigung oder Löschung erreichst du über das In-App-Bug-Report-Formular (<em>Einstellungen → Datenschutz → Bug melden</em>) oder über die <strong>Kontaktadresse `datenschutz@thestia.de`</strong>. Für eine Löschung auf Anfrage nenne deine User-ID - dann werden auch die nach dem obigen aufgeführten Restdaten entfernt.</p>
@@ -322,6 +412,10 @@
 <p><strong>Keine Ortung:</strong> Transit Spark ermittelt keine Position per Funk. Der Standort wird nur für die Entfernungsanzeige der Profile verwendet und dient serverseitig nach 30 Tagen der Löschung (Migration 129, Cron `purge_stale_locations`).</p>
 <p><strong>Gespeichert wird nicht der Standort, sondern ein Rasterpunkt:</strong> Seit v0.10.0 werden Koordinaten vor dem Speichern auf ein Raster von 5 km gerundet – serverseitig erzwungen, nicht nur in der App. Wer in einem Land mit Millionen Einwohnern wohnt, kann aus diesen Daten keinen Wohnort ableiten. Der Ort selbst wird nicht erhoben, angezeigt oder gespeichert; sichtbar ist ausschließlich das Bundesland.</p>
 <p><strong>Entfernungsanzeige ist Zustimmungssache:</strong> Die Anzeige ist standardmäßig aus und muss pro Person eingeschaltet werden. Aus bedeutet serverseitig `null` – es wird keine Restentfernung aus dem Bundesland zurückgerechnet. Eingeschaltet bedeutet: andere sehen eine Stufe von 10 km, keine Zahl.</p>
+<h2>3c. Lokale Kontaktdaten („Connect to others") und Sicherheits-Aufklärung</h2>
+<p><strong>Kontaktdaten (freiwillig, ausschließlich lokal):</strong> In „Connect to others" kannst du freiwillig eine Telefonnummer sowie Handles für Signal, Threema, Instagram, Snapchat, Discord oder eigene Apps hinterlegen. Diese Angaben werden <strong>ausschließlich auf deinem Gerät</strong> im verschlüsselten Keystore (Android) bzw. in der Keychain (iOS) gespeichert – in einem eigenen Speicherbereich (`SecureNamespaces.contacts`). Sie werden <strong>nicht an Supabase, an Thestia-Server oder an Dritte übertragen</strong> und nicht serverseitig gesichert. Ein Gerätewechsel oder eine Neuinstallation überträgt sie nicht.</p>
+<p>Geteilt werden die Angaben nur, wenn du in der App aktiv auf „Teilen" oder „Kopieren" tippst: „Teilen" übergibt den von dir erzeugten Text an das Betriebssystem (Share-Sheet), „Kopieren" legt ihn in die Zwischenablage. Was danach mit dem Text geschieht, liegt außerhalb unseres Einflussbereichs. Du kannst die Angaben jederzeit im Formular entfernen und erneut speichern; mit dem Löschen der App-Daten werden sie ebenfalls entfernt. Telefonnummern werden vor dem Speichern auf ein gültiges Format geprüft, aber nicht an einen Server zur Validierung gesendet.</p>
+<p><strong>Sicherheits-Aufklärung vor dem Setup:</strong> Nach der E-Mail-Bestätigung fragt die App, ob du schon einmal eine Dating-App benutzt hast und ob dir die Gefahren beim Online-Dating bewusst sind. Die Antworten (Ja/Nein), der aktuelle Schritt und die Startzeit der Aufklärung werden <strong>nur lokal</strong> in den App-Einstellungen (SharedPreferences) gespeichert, damit der Ablauf nach einem Neustart fortgesetzt werden kann. Sie werden nicht an den Server übertragen und nicht für Profiling oder Werbung genutzt. Die Aufklärung dauert höchstens fünf Minuten; die ausführliche Fassung steht unter <a href="https://auth.thestia.de/dating-sicherheit">https://auth.thestia.de/dating-sicherheit</a>.</p>
 <h2>4. Lokaler Chat-Verlauf (optional) und lokaler KI-Reflexions-Chat (Sanctuary, geplant ab v0.11.0)</h2>
 <p><strong>Lokaler Chat-Verlauf (seit v0.8.x):</strong> Auf Wunsch speichert die App Chats verschlüsselt (AES-256, SecureHive; Schlüssel im Keystore) lokal auf dem Gerät – wählbar zwischen „Aus", „200 Nachrichten pro Chat" und „Kompletter Verlauf" (Standard). Die Daten verlassen das Gerät nicht und können jederzeit durch Deaktivieren gelöscht werden. Der JSON-Datenexport enthält den Verlauf (Einsicht/Übertragbarkeit), der Import stellt ihn wieder her.</p>
 <p>Der folgende Reflexions-Assistent ist <strong>geplant für v0.11.0</strong> und noch nicht Teil dieser Version; die Beschreibung gilt dem geplanten Stand. Sämtliche Zusagen dieses Abschnitts - lokal, ohne Übertragung - sind erst mit der Veröffentlichung einschlägig.</p>
@@ -373,6 +467,7 @@
 <table>
 <thead><tr><th>Version</th><th>Datum</th><th>Änderung</th></tr></thead>
 <tbody>
+<tr><td>17</td><td>2026&#8209;10</td><td><strong>Lokale Kontaktdaten und Sicherheits-Aufklärung:</strong> „Connect to others" speichert Telefonnummer und Handles freiwillig und ausschließlich verschlüsselt auf dem Gerät; keine Übertragung an Server, kein Geräte-Sync. Die neue Aufklärung vor dem Setup speichert Antworten und Fortschritt nur lokal. Ergänzt Abschnitt 3c und die öffentliche Seite `/dating-sicherheit`</td></tr>
 <tr><td>15</td><td>2026&#8209;10</td><td><strong>Speicherfristen eingeloest und Kontaktweg ergänzt:</strong> Die Erklärung kündigte seit Version 8 die Löschung des Verifikations-Videos nach 30 Tagen an - eingelöst war sie nicht (es gab keinen Löschjob). Der Cronjob `cleanup-verification-videos` (Migration 160) entfernt jetzt Chiffrat und Schlüssel nach 30 Tagen. Außerdem: der Kontaktweg nennt eine eigene E-Mail-Adresse, die verantwortliche Stelle wird namentlich benannt, und Spaceship ist als Auftragsverarbeiter für das Mail-Hosting eingetragen. Der Satz zu den Transit-Spark-Signalen in Abschnitt 7 war zudem zerbrochen</td></tr>
 <tr><td>16</td><td>2026&#8209;10</td><td><strong>Sicherheitscheck (CAPTCHA) genauer beschrieben:</strong> Die WebView des Sicherheitschecks wird nur für diesen Zweck geöffnet und lässt ausschließlich `auth.thestia.de` und die Turnstile-Dienste von Cloudflare zu. Drittanbieter-Cookies sind dort <strong>nicht</strong> zugelassen - es wird deshalb kein Sitzungs-Cookie von Cloudflare gespeichert, weder im Gerät noch in der App. Im Fehlerfall zeigt die App den technischen Turnstile-Code, damit ein Fehler einer Meldung zugeordnet werden kann, statt ihn in einer allgemeinen Fehlermeldung zu verstecken</td></tr>
 <tr><td>14</td><td>2026&#8209;10</td><td><strong>Kinderschutz-Standards:</strong> Verbot von Kindesmissbrauch (CSAE/CSAM) in den Community-Standards, eigene Meldeart in der App, oeffentliche Kinderschutz-Seite mit benannter Kontaktperson und Meldeweg an die zustaendigen Stellen. Von Google Play fuer Dating-Apps unabhaengig von einer Altersbeschraenkung verlangt</td></tr>
