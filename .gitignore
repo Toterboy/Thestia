@@ -101,7 +101,7 @@ desktop.ini
 
 # Admin-APKs (mit einkompilierter ADMIN_UUID) bleiben privat - niemals
 # ins oeffentliche Repository / Release hochladen.
-releases/*/admin/
+# (Der ganze releases/-Ordner ist weiter unten ausgeschlossen.)
 
 # Editor-/Backup-Dateien
 *.bak
@@ -181,4 +181,20 @@ android-log*.txt
 # Ausnahme: das Gefaehrdungsmodell liegt in passkey-assets/ und wird
 # bewusst veroeffentlicht - die oeffentliche Datenschutzerklaerung
 # verweist darauf.
-docs/
+#
+# Die Datenschutzerklaerung selbst ist die EINZIGE Datei aus docs/,
+# die im Repo liegt: Sie ist die Quelle der veroeffentlichten Fassung
+# (lib/generated/privacy_policy_de.dart und passkey-assets/
+# datenschutz.html) und muss mit ihr im Schritt bleiben - sonst laufen
+# die beiden Dateien auseinander. Alle anderen Dokumente (Notizen mit
+# Betreiber-Internas, ADMIN-UUID.md, Server-Anleitungen) bleiben
+# lokal.
+docs/*
+!docs/DATENSCHUTZ.md
+
+# Der komplette releases-Ordner gehoert NIE ins Repository: er
+# enthaelt die gebauten APKs und AABs (mehrere hundert MB pro Datei)
+# sowie die Admin-Builds mit der eingekompilierten ADMIN_UUID. Die
+# Artefakte gehoeren in ein Release bzw. in die Ablage des
+# Betreibers - nicht in die Historie des Quelltexts.
+releases/
