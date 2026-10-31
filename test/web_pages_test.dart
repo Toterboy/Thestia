@@ -225,4 +225,45 @@ void main() {
       }
     });
   });
+
+  group('Die Startseite (Landing)', () {
+    String html() =>
+        File('${assets.path}/index.html').readAsStringSync();
+
+    test('Die Galerie-Ueberschrift hat keinen Trennstrich', () {
+      // NUTZERWUNSCH (31.10.2026): "Bei thestia.de soll der Strich
+      // zwischen dem oberen Bereich mit den Buttons (Im Play Store
+      // etc.) und der Ueberschrift Ein Blick in die App weg."
+      //
+      // Der Strich kommt aus der h2-Regel des gemeinsamen Designs
+      // (border-top). Auf den Textseiten trennt er die Abschnitte -
+      // hier aber die Karte mit den Buttons von der Galerie, die
+      // zusammengehoeren.
+      final h = html();
+      expect(h, contains('.galerie-titel'));
+      // Die Regel muss border-top ausdruecklich abschalten.
+      final regel = RegExp(r'\.galerie-titel\s*\{([^}]*)\}').firstMatch(h);
+      expect(regel, isNotNull,
+          reason: 'Die Galerie-Ueberschrift braucht ihre eigene Regel.');
+      expect(regel!.group(1), contains('border-top: none'),
+          reason: 'Die Galerie-Ueberschrift erbt sonst den Trennstrich '
+              'der h2-Regel.');
+    });
+
+    test('Die unterste der fuenf Kacheln steht mittig', () {
+      // NUTZERWUNSCH (31.10.2026): "Unten bei den 5 Kacheln soll die
+      // untere mittig sein und nicht linksbuendig."
+      //
+      // Bei fuenf Kacheln und zwei Spalten bleibt eine Kachel allein
+      // in der letzten Zeile. Sie soll dort mittig stehen.
+      final h = html();
+      expect(RegExp(r'class="held-link"').allMatches(h).length, 5,
+          reason: 'Es sind fuenf Kacheln - die letzte steht allein.');
+      expect(h, contains('grid-column: 1 / -1'),
+          reason: 'Die letzte Kachel muss die ganze Zeile einnehmen, '
+              'damit sie mittig stehen kann.');
+      expect(h, contains('justify-self: center'),
+          reason: 'Die letzte Kachel muss mittig stehen.');
+    });
+  });
 }

@@ -177,6 +177,7 @@
     
     
     
+    
     /* Web-Design (tool/web_theme.py) */
     /* ---------------------------------------------------------------
        Eine Quelle fuer alle Seiten.
@@ -550,6 +551,33 @@
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       margin: 0;
     }
+    /*
+     * Die unterste der fuenf Kacheln steht allein in ihrer Zeile
+     * (NUTZERWUNSCH 31.10.2026: "Unten bei den 5 Kacheln soll die
+     * untere mittig sein und nicht linksbuendig").
+     *
+     * Bei fuenf Kacheln und zwei Spalten bleibt eine Kachel uebrig, die
+     * allein in der letzten Zeile steht - und die hing linksbuendig.
+     * Das sah nach einem Fehler aus: als waere die Zeile unvollstaendig.
+     *
+     * `grid-column: 1 / -1` laesst sie die ganze Zeile einnehmen,
+     * `justify-self: center` stellt sie mittig darin. Ihre Breite
+     * bleibt dabei die einer normalen Kachel (die Spaltenbreite) -
+     * sonst waere sie plötzlich doppelt so breit wie ihre Schwestern.
+     */
+    .held-liste > .held-link:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+      justify-self: center;
+      width: calc(50% - 6px);
+    }
+    /* Bei einer Spalte (schmale Fenster) ist die Kachel allein und
+       darf die volle Breite nehmen - dort ist "mittig" nicht sinnvoll,
+       die Kachel fuellt die Zeile ohnehin aus. */
+    @media (max-width: 479px) {
+      .held-liste > .held-link:last-child:nth-child(odd) {
+        width: 100%;
+      }
+    }
     .held-link {
       display: block; padding: 16px 18px; border-radius: var(--radius-s);
       background: var(--card); border: 1px solid var(--line);
@@ -584,6 +612,18 @@
     .galerie-titel {
       font-size: 1.22rem; line-height: 1.3; letter-spacing: -0.012em;
       font-weight: 650; margin: 0 0 .35rem;
+      /* KEIN Trennstrich (NUTZERWUNSCH 31.10.2026: "Bei thestia.de
+       * soll der Strich zwischen dem oberen Bereich mit den Buttons
+       * (Im Play Store etc.) und der Ueberschrift Ein Blick in die App
+       * weg").
+       *
+       * Die h2-Regel setzt einen Strich ueber jede Zwischenueberschrift
+       * - auf den Textseiten trennt er die Abschnitte voneinander, das
+       * ist richtig. Hier aber trennt er zwei Dinge, die zusammen
+       * gehoeren: die Karte mit den Buttons und die Galerie direkt
+       * darunter. Der Strich sah aus wie ein Rest der Karte. */
+      border-top: none;
+      padding-top: 0;
     }
     .galerie-text {
       color: var(--muted); font-size: .95rem; margin: 0 0 1rem;
