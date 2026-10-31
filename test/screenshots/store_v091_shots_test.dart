@@ -358,6 +358,45 @@ Future<void> _pump(
   );
 }
 
+/// Tippt den Verbindungs-Hinweis im Chat weg ("Kein P2P moeglich").
+///
+/// NUTZERWUNSCH (01.11.2026): "Bei Screenshot 3 soll die Nachricht mit
+/// Kein P2P moeglich nicht angezeigt werden (nur da)".
+///
+/// Der Hinweis sieht im Store-Bild wie eine Fehlermeldung aus - und
+/// passt nicht zur Ueberschrift der Kachel ("Euer Chat bleibt bei
+/// euch"). Er steht obendrauf und schiebt die Nachrichten nach unten.
+///
+/// Weggetippt wird er ueber den Knopf, den die App dafuer anbietet -
+/// der Wegtipp-Knopf (X) neben dem Text. Das aendert NICHTS an der
+/// App: sie zeigt den Hinweis weiterhin, wenn keine direkte
+/// Verbindung zustande kommt. Nur das Store-Bild zeigt den Zustand
+/// "Nutzer hat den Hinweis weggetippt" - und genau so sieht ein
+/// Geraet aus, auf dem der Hinweis schon verschwunden ist.
+///
+/// Das prueft nebenbei den Knopf selbst: wenn er nicht mehr da waere
+/// oder nichts mehr tuete, wuerde der Hinweis im Bild stehen bleiben
+/// und `check_store_screenshots.py` faelle nicht auf.
+Future<void> _wegtippeVerbindungshinweis(WidgetTester tester) async {
+  const hinweis = 'Kein P2P m\u{f6}glich';
+  final text = find.text(hinweis);
+  if (text.evaluate().isEmpty) return; // nichts zu tun
+
+  // Der Knopf sitzt in derselben Karte wie der Text.
+  final karte = find.ancestor(of: text, matching: find.byType(Card));
+  final knopf = find.descendant(
+    of: karte,
+    matching: find.byIcon(Icons.close),
+  );
+  if (knopf.evaluate().isEmpty) return;
+
+  await tester.tap(knopf.first);
+  await tester.pumpAndSettle(const Duration(milliseconds: 400));
+
+  expect(find.text(hinweis), findsNothing,
+      reason: 'Der Verbindungs-Hinweis muss im Store-Bild weg sein.');
+}
+
 /// Liest `version: x.y.z+build` aus pubspec.yaml.
 ///
 /// Bewusst aus der Datei statt aus PackageInfo: im Test laeuft kein
@@ -959,6 +998,7 @@ void main() {
         name: '02_chat',
         size: _phone,
         dpr: _dpr,
+        after: _wegtippeVerbindungshinweis,
         extra: [
           chatServiceProvider.overrideWithValue(
               _FakeChatService(_chatPartner(), _chatHistory())),
@@ -971,6 +1011,7 @@ void main() {
         name: '02_chat',
         size: _phone,
         dpr: _dpr,
+        after: _wegtippeVerbindungshinweis,
         extra: [
           chatServiceProvider.overrideWithValue(
               _FakeChatService(_chatPartner(), _chatHistory())),
