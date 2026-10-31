@@ -178,6 +178,8 @@
     
     
     
+    
+    
     /* Web-Design (tool/web_theme.py) */
     /* ---------------------------------------------------------------
        Eine Quelle fuer alle Seiten.
@@ -628,15 +630,49 @@
     .galerie-text {
       color: var(--muted); font-size: .95rem; margin: 0 0 1rem;
     }
+    /*
+     * Das Raster ist ein FLEX-Container, kein Grid (NUTZERWUNSCH
+     * 31.10.2026: "Zudem sollen die unteren beiden Bilder zentriert
+     * werden").
+     *
+     * Bei acht Bildern und drei Spalten bleiben in der letzten Reihe
+     * zwei uebrig - im Grid standen die linksbuendig, als waeren sie
+     * nicht dazugehoerig. Mit Flex und `justify-content: center`
+     * richtet Flex jede Zeile einzeln aus: die letzte Reihe mit zwei
+     * Bildern steht damit automatisch mittig.
+     *
+     * Flex ist hier robuster als Grid: bei einer anderen Bildzahl
+     * (sieben, neun, zehn) stimmt die Zentrierung immer - im Grid
+     * muesste man die Positionen hart codieren, und das passte dann
+     * nur bei genau acht Bildern.
+     *
+     * Die Breite ist fest (kein wachsen): `flex: 0 0 <breite>`
+     * verhindert, dass ein Bild in einer Reihe mit nur einem Bild
+     * allein auf die volle Breite aufgeht.
+     */
     .galerie-raster {
-      display: grid; gap: 14px;
-      grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 14px;
     }
-    /* Ab Tablet-Breite: drei Spalten statt vier. Die Bilder sind dann
+    .galerie-bild {
+      /* Zwei Spalten auf schmalen Fenstern. */
+      flex: 0 0 calc(50% - 7px);
+      max-width: calc(50% - 7px);
+    }
+    /* Ab Tablet-Breite: drei Spalten statt zwei. Die Bilder sind dann
        gross genug, dass man sie ohne Zooming lesen kann, und die
        Bildunterschrift passt in zwei Zeilen. */
     @media (min-width: 640px) {
-      .galerie-raster { grid-template-columns: repeat(3, 1fr); }
+      .galerie-bild {
+        flex: 0 0 calc(33.3333% - 9.3333px);
+        max-width: calc(33.3333% - 9.3333px);
+      }
+    }
+    /* Auf sehr schmalen Fenstern ein Bild pro Zeile. */
+    @media (max-width: 419px) {
+      .galerie-bild {
+        flex: 0 0 100%;
+        max-width: 100%;
+      }
     }
     .galerie-bild {
       margin: 0; overflow: hidden;
