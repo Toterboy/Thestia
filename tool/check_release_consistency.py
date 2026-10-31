@@ -65,8 +65,14 @@ FRESHNESS_WINDOW_S = 2 * 3600
 # der Check das sechste Bild stillschweigend ignoriert - er meldet nur
 # FEHLENDE Bilder, keine ueberzaehligen, und die Erfolgsmeldung stand
 # fest auf "5".
-EXPECTED_SHOTS = ['01_willkommen', '02_chat', '03_entdecken',
-                  '04_anpassen', '05_eisbrecher', '06_datenschutz']
+#
+# 31.10.2026: Die Kacheln sind neu nummeriert (die Aktuelles-Kachel
+# kam als zweite dazu, der Hell/Dunkel-Split als sechste). Die Namen
+# hier sind die KACHELNamen - sie muessen mit dem Store-Ordner
+# uebereinstimmen, sonst meldet der Check zu Recht ein fehlendes Bild.
+EXPECTED_SHOTS = ['01_willkommen', '02_aktuelles', '03_chat',
+                  '04_entdecken', '05_anpassen', '06_hell_dunkel',
+                  '07_eisbrecher', '08_datenschutz']
 
 FORBIDDEN_PERMISSIONS = ['android.permission.ACCESS_FINE_LOCATION']
 MAXSDK_PERMISSIONS = {

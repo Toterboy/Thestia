@@ -94,6 +94,146 @@ check("v_bad IS NOT NULL THEN" in all_sql or 'RAISE EXCEPTION' in all_sql,
       'DB: Fail-Fast-Guards vorhanden')
 
 # =====================================================================
+# 1b) Verifikationssperre muss serverseitig gelten
+# =====================================================================
+#
+# BEFUND (Security-Audit 31.10.2026): Die Verifikationspflicht fuer
+# Find your Spark, Dating Hour und Transit Spark wurde an GENAU EINER
+# Stelle geprueft - im Client, im Modus-Auswahlbildschirm. Find your
+# Spark ist serverseitig geschuetzt (Migration 156), Dating Hour und
+# Transit Spark nicht: in deren RPCs kommt is_verified nirgends vor.
+#
+# Ein Client-Gate ist keine Zugriffskontrolle: die RPCs sind fuer jeden
+# mit eigenem JWT aufrufbar. Die Regel hier verhindert, dass das
+# erneut so gebaut wird.
+#
+# Geprueft wird deshalb: JEDE Migration, die eine der betroffenen
+# Funktionen neu definiert, muss die Verifikation im Funktionskoerper
+# pruefen. Das ist robust gegen eine spaetere, aeltere Fassung einer
+# Funktion - die spaeteste Definition gewinnt in PostgreSQL.
+
+VERIFIKATIONS_PFLICHT = [
+    ('join_dating_hour', 'Dating Hour (Opt-in)'),
+    ('match_dating_hour_round', 'Dating Hour (Pairing)'),
+    ('transit_spark_adult', 'Transit Spark (Alter UND Verifikation)'),
+]
+
+
+def _neueste_definition(sql: str, fn_name: str) -> str:
+    """Der Funktionskoerper der LETZTEN Definition von fn_name.
+
+    PostgreSQL nimmt bei CREATE OR REPLACE die letzte Definition. Ein
+    aelterer, sicherer Koerper wuerde sonst den Check bestehen, obwohl
+    die aktive Funktion ungeschuetzt ist.
+    """
+    # Alle Definitionen finden und die letzte nehmen.
+    treffer = list(re.finditer(
+        r'CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+'
+        r'(?:public\.)?' + re.escape(fn_name) + r'\s*\(',
+        sql, re.I))
+    if not treffer:
+        return ''
+    start = treffer[-1].start()
+    # Bis zum Ende des Funktionskoerpers ($$ ... $$ oder $BODY$ ... $BODY$).
+    rest = sql[start:]
+    dollar = re.search(r'\$\$', rest)
+    if not dollar:
+        return rest[:2000]
+    body = rest[dollar.end():]
+    ende = body.find('$$')
+    return body[:ende] if ende >= 0 else body[:4000]
+
+
+for fn_name, beschreibung in VERIFIKATIONS_PFLICHT:
+    koerper = _neueste_definition(all_sql, fn_name)
+    if not koerper:
+        check(False,
+              f'DB: {beschreibung} - Definition von {fn_name} gefunden',
+              'keine CREATE OR REPLACE-Funktion in den Migrationen')
+        continue
+    # Die Verifikation kann direkt geprueft werden (is_verified) oder
+    # ueber eine Hilfsfunktion. Beides zaehlt - aber nur, wenn die
+    # genannte Funktion die Verifikation auch WIRKLICH prueft.
+    #
+    # transit_spark_is_adult prueft NUR das Alter (Alter ohne
+    # Verifikation - die Reihenfolge ist hier wichtig). Deshalb zaehlt
+    # sie NICHT als Verifikationspruefung; sonst wuerde die Regel den
+    # Ist-Zustand als erfuellt melden.
+    #
+    # verification_granted ist dagegen die Verifikationspruefung
+    # selbst (Migration 161): sie liest is_verified aus dem Profil.
+    prueft = ('is_verified' in koerper
+               or 'verification_granted' in koerper)
+    check(prueft,
+          f'DB: {beschreibung} prueft die Verifikation serverseitig',
+          f'letzte Definition von {fn_name} ohne is_verified')
+
+# Die Geburtsdatum-Angabe darf nicht still auf 26-Jahre fallen:
+# ohne birth_date muss das Alter UNBEKANNT sein, nicht erfunden.
+#
+# Erlaubt sind zwei Schreibweisen fuer "unbekannt":
+#   * birth_date ist NULL (NULLIF / NULL direkt)
+#   * birth_date wird gar nicht gesetzt (die Spalte fehlt im INSERT)
+#
+# Verboten ist der erfundene Stichtag 2000-01-01 (Alter 26).
+handle_new_user = _neueste_definition(all_sql, 'handle_new_user')
+if handle_new_user:
+    # Nur der AUSFUEHRENDE Teil zaehlt. Die Kommentare beschreiben
+    # den alten Wert (und die Bereinigung per UPDATE) - die muessen
+    # erlaubt sein, sonst koennte man den Fix nicht erklaeren.
+    ausfuehrend = re.sub(r'--[^\n]*', '', handle_new_user)
+    erfindet = '2000-01-01' in ausfuehrend
+    # 'birth_date' muss im INSERT vorhanden sein, sonst ist die Spalte
+    # NULL per Default - das ist auch in Ordnung.
+    check(not erfindet,
+          'DB: handle_new_user erfindet kein Geburtsdatum (kein '
+          '26-Jaehriger ohne Angabe)',
+          'sonst passiert die 18+-Pruefung ohne Altersangabe')
+else:
+    check(False,
+          'DB: handle_new_user gefunden',
+          'keine CREATE OR REPLACE-Funktion in den Migrationen')
+
+# =====================================================================
+# 1c) Das Verifikationsvideo wird IMMER verschluesselt abgelegt
+# =====================================================================
+#
+# BEFUND (Security-Audit 31.10.2026): Nur der Submit-Pfad
+# verschluesselte das Video. Der Auto-Pfad lagerte das ROHVIDEO ab -
+# unter dem Dateinamen 'video.mp4.enc', der Verschluesselung
+# suggeriert, aber ohne Chiffrat. Zwei Folgen: die Zusage der
+# Datenschutzerklaerung ("der Bucket enthaelt ausschliesslich
+# Chiffrat") stimmte nicht, und die Admin-Sichtung brach ab, weil
+# der Schluessel fehlte.
+#
+# Geprueft wird deshalb: JEDER Video-Upload im Client laeuft durch
+# VerificationCrypto.encrypt().
+
+verifikation = read(LIB / 'services' / 'verification_service.dart')
+
+# Die Uploads, die das Video in den Bucket schieben.
+uploads = list(re.finditer(
+    r'uploadVerificationVideo\(([^)]*)\)', verifikation))
+check(len(uploads) >= 2,
+      'APP: das Verifikationsvideo wird an mindestens zwei Stellen '
+      'hochgeladen (submit und auto)',
+      '%d Upload-Aufruf(e) gefunden' % len(uploads))
+
+for m in uploads:
+    argument = m.group(1).strip()
+    verschluesselt = ('encrypted.cipher' in argument
+                      or 'cipher' in argument)
+    check(verschluesselt,
+          'APP: Jeder Video-Upload nutzt das Chiffrat (encrypted.cipher)',
+          'Upload mit %r - das waere das Rohvideo' % argument[:40])
+
+# Und: der Schluessel muss mitgeschickt werden, sonst kann die
+# Edge Function ihn nicht ablegen.
+check(verifikation.count("'videoKey': encrypted.keyB64") >= 2,
+      'APP: der Video-Schluessel wird in BEIDEN Pfaden mitgeschickt',
+      'sonst kann die Admin-Sichtung das Video nicht entschluesseln')
+
+# =====================================================================
 # 2) Edge Functions
 # =====================================================================
 for name in ('verify-account', 'cancel-registration'):

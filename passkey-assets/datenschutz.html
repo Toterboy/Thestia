@@ -33,7 +33,7 @@
      * entscheiden sich ueber die Reihenfolge (die letzte gewinnt).
      */
     :root {
-      color-scheme: light dark;
+      color-scheme: light;
       --bg: #f2f2f8;
       --fg: #1b1b21;
       --muted: #575764;
@@ -53,6 +53,7 @@
     /* System dunkel: die Seite startet dunkel (ohne Zutun des Nutzers). */
     @media (prefers-color-scheme: dark) {
       :root {
+        color-scheme: dark;
         --bg: #0e0e13;
         --fg: #ece9f2;
         --muted: #a29fb0;
@@ -70,6 +71,7 @@
     }
     /* Schalter an: umdrehen. Im hellen System wird es dunkel ... */
     :root:has(#modus-umschalter:checked) {
+      color-scheme: dark;
       --bg: #0e0e13;
       --fg: #ece9f2;
       --muted: #a29fb0;
@@ -87,6 +89,7 @@
     /* ... und im dunklen System wieder hell. */
     @media (prefers-color-scheme: dark) {
       :root:has(#modus-umschalter:checked) {
+        color-scheme: light;
         --bg: #f2f2f8;
         --fg: #1b1b21;
         --muted: #575764;
@@ -375,6 +378,33 @@
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       margin: 0;
     }
+    /*
+     * Die unterste der fuenf Kacheln steht allein in ihrer Zeile
+     * (NUTZERWUNSCH 31.10.2026: "Unten bei den 5 Kacheln soll die
+     * untere mittig sein und nicht linksbuendig").
+     *
+     * Bei fuenf Kacheln und zwei Spalten bleibt eine Kachel uebrig, die
+     * allein in der letzten Zeile steht - und die hing linksbuendig.
+     * Das sah nach einem Fehler aus: als waere die Zeile unvollstaendig.
+     *
+     * `grid-column: 1 / -1` laesst sie die ganze Zeile einnehmen,
+     * `justify-self: center` stellt sie mittig darin. Ihre Breite
+     * bleibt dabei die einer normalen Kachel (die Spaltenbreite) -
+     * sonst waere sie plötzlich doppelt so breit wie ihre Schwestern.
+     */
+    .held-liste > .held-link:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+      justify-self: center;
+      width: calc(50% - 6px);
+    }
+    /* Bei einer Spalte (schmale Fenster) ist die Kachel allein und
+       darf die volle Breite nehmen - dort ist "mittig" nicht sinnvoll,
+       die Kachel fuellt die Zeile ohnehin aus. */
+    @media (max-width: 479px) {
+      .held-liste > .held-link:last-child:nth-child(odd) {
+        width: 100%;
+      }
+    }
     .held-link {
       display: block; padding: 16px 18px; border-radius: var(--radius-s);
       background: var(--card); border: 1px solid var(--line);
@@ -392,6 +422,104 @@
       color: var(--muted); font-size: .9rem;
     }
     .held-fuss a { color: var(--accent); }
+
+    /* --- Die Screenshot-Galerie (NUTZERWUNSCH 31.10.2026) ------------ */
+    /*
+     * "Auf thestia.de sollen auch die Screenshots angezeigt werden."
+     *
+     * Die Bilder liegen in passkey-assets/screenshots/ und werden von
+     * tool/make_web_screenshots.py verkleinert und hierher kopiert.
+     * Das Markup erzeugt dasselbe Skript - es kann also nicht
+     * auseinanderlaufen (Bild da, Bild fehlt).
+     */
+    .galerie {
+      max-width: 46rem; margin: 0 auto;
+      padding: clamp(6px, 1vw, 12px) clamp(20px, 4vw, 32px) 0;
+    }
+    .galerie-titel {
+      font-size: 1.22rem; line-height: 1.3; letter-spacing: -0.012em;
+      font-weight: 650; margin: 0 0 .35rem;
+      /* KEIN Trennstrich (NUTZERWUNSCH 31.10.2026: "Bei thestia.de
+       * soll der Strich zwischen dem oberen Bereich mit den Buttons
+       * (Im Play Store etc.) und der Ueberschrift Ein Blick in die App
+       * weg").
+       *
+       * Die h2-Regel setzt einen Strich ueber jede Zwischenueberschrift
+       * - auf den Textseiten trennt er die Abschnitte voneinander, das
+       * ist richtig. Hier aber trennt er zwei Dinge, die zusammen
+       * gehoeren: die Karte mit den Buttons und die Galerie direkt
+       * darunter. Der Strich sah aus wie ein Rest der Karte. */
+      border-top: none;
+      padding-top: 0;
+    }
+    .galerie-text {
+      color: var(--muted); font-size: .95rem; margin: 0 0 1rem;
+    }
+    /*
+     * Das Raster ist ein FLEX-Container, kein Grid (NUTZERWUNSCH
+     * 31.10.2026: "Zudem sollen die unteren beiden Bilder zentriert
+     * werden").
+     *
+     * Bei acht Bildern und drei Spalten bleiben in der letzten Reihe
+     * zwei uebrig - im Grid standen die linksbuendig, als waeren sie
+     * nicht dazugehoerig. Mit Flex und `justify-content: center`
+     * richtet Flex jede Zeile einzeln aus: die letzte Reihe mit zwei
+     * Bildern steht damit automatisch mittig.
+     *
+     * Flex ist hier robuster als Grid: bei einer anderen Bildzahl
+     * (sieben, neun, zehn) stimmt die Zentrierung immer - im Grid
+     * muesste man die Positionen hart codieren, und das passte dann
+     * nur bei genau acht Bildern.
+     *
+     * Die Breite ist fest (kein wachsen): `flex: 0 0 <breite>`
+     * verhindert, dass ein Bild in einer Reihe mit nur einem Bild
+     * allein auf die volle Breite aufgeht.
+     */
+    .galerie-raster {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 14px;
+    }
+    .galerie-bild {
+      /* Zwei Spalten auf schmalen Fenstern. */
+      flex: 0 0 calc(50% - 7px);
+      max-width: calc(50% - 7px);
+    }
+    /* Ab Tablet-Breite: drei Spalten statt zwei. Die Bilder sind dann
+       gross genug, dass man sie ohne Zooming lesen kann, und die
+       Bildunterschrift passt in zwei Zeilen. */
+    @media (min-width: 640px) {
+      .galerie-bild {
+        flex: 0 0 calc(33.3333% - 9.3333px);
+        max-width: calc(33.3333% - 9.3333px);
+      }
+    }
+    /* Auf sehr schmalen Fenstern ein Bild pro Zeile. */
+    @media (max-width: 419px) {
+      .galerie-bild {
+        flex: 0 0 100%;
+        max-width: 100%;
+      }
+    }
+    .galerie-bild {
+      margin: 0; overflow: hidden;
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius-s); box-shadow: var(--shadow-sm);
+      transition: transform .18s ease, border-color .18s ease;
+    }
+    .galerie-bild:hover {
+      transform: translateY(-2px); border-color: var(--accent-line);
+    }
+    .galerie-bild img {
+      display: block; width: 100%; height: auto;
+      background: var(--accent-soft);
+    }
+    .galerie-bild figcaption {
+      padding: 10px 12px 12px;
+      font-size: .82rem; line-height: 1.4; color: var(--muted);
+    }
+    .galerie-bild figcaption strong {
+      display: block; color: var(--card-fg);
+      font-size: .9rem; font-weight: 650; margin-bottom: 2px;
+    }
 
     /* --- Der Sicherheitscheck (Captcha-Seite) ------------------------ */
     .sicherheit { max-width: 30rem; margin: 0 auto; padding: clamp(16px, 4vw, 28px); }
@@ -543,6 +671,7 @@
 <table>
 <thead><tr><th>Version</th><th>Datum</th><th>Änderung</th></tr></thead>
 <tbody>
+<tr><td>18</td><td>2026&#8209;10</td><td><strong>Verifikation auch serverseitig erzwungen:</strong> Die Verifikationspflicht für Find your Spark, Dating Hour und Transit Spark wurde bisher nur im Gerät geprüft - die Server-Funktionen ließen sich mit eigenem Aufruf umgehen. Jetzt erzwingen sie die Verifikation selbst (Migration 161). Zusätzlich gilt ohne Altersangabe nicht mehr ein erfundenes Alter von 26 Jahren, sondern das Alter bleibt unbekannt und die 18+-Sperre greift. Das Verifikationsvideo wird im automatischen Freigabeweg nun ebenfalls verschlüsselt abgelegt - vorher lag es im Klartext im Speicher</td></tr>
 <tr><td>17</td><td>2026&#8209;10</td><td><strong>Lokale Kontaktdaten und Sicherheits-Aufklärung:</strong> „Connect to others" speichert Telefonnummer und Handles freiwillig und ausschließlich verschlüsselt auf dem Gerät; keine Übertragung an Server, kein Geräte-Sync. Die neue Aufklärung vor dem Setup speichert Antworten und Fortschritt nur lokal. Ergänzt Abschnitt 3c und die öffentliche Seite `/dating-sicherheit`</td></tr>
 <tr><td>15</td><td>2026&#8209;10</td><td><strong>Speicherfristen eingeloest und Kontaktweg ergänzt:</strong> Die Erklärung kündigte seit Version 8 die Löschung des Verifikations-Videos nach 30 Tagen an - eingelöst war sie nicht (es gab keinen Löschjob). Der Cronjob `cleanup-verification-videos` (Migration 160) entfernt jetzt Chiffrat und Schlüssel nach 30 Tagen. Außerdem: der Kontaktweg nennt eine eigene E-Mail-Adresse, die verantwortliche Stelle wird namentlich benannt, und Spaceship ist als Auftragsverarbeiter für das Mail-Hosting eingetragen. Der Satz zu den Transit-Spark-Signalen in Abschnitt 7 war zudem zerbrochen</td></tr>
 <tr><td>16</td><td>2026&#8209;10</td><td><strong>Sicherheitscheck (CAPTCHA) genauer beschrieben:</strong> Die WebView des Sicherheitschecks wird nur für diesen Zweck geöffnet und lässt ausschließlich `auth.thestia.de` und die Turnstile-Dienste von Cloudflare zu. Drittanbieter-Cookies sind dort <strong>nicht</strong> zugelassen - es wird deshalb kein Sitzungs-Cookie von Cloudflare gespeichert, weder im Gerät noch in der App. Im Fehlerfall zeigt die App den technischen Turnstile-Code, damit ein Fehler einer Meldung zugeordnet werden kann, statt ihn in einer allgemeinen Fehlermeldung zu verstecken</td></tr>
