@@ -111,6 +111,17 @@ class AppTheme {
     return ThemeData(
         useMaterial3: true,
         brightness: brightness,
+        // Emoji-Rueckfall (31.10.2026): Die Begruessung der Startseite
+        // nutzt ein Emoji. Ohne Rueckfall-Liste fehlt das Zeichen auf
+        // Geraeten, die die Emoji-Schrift nicht als erste Schrift fuehren -
+        // und im Store-Screenshot (Render ohne Systemschriften) blieb
+        // ein leeres Kaestchen stehen. Die Liste deckt Android (Noto),
+        // iOS/macOS (Apple) und Windows (Segoe) ab.
+        fontFamilyFallback: const [
+          'Noto Color Emoji',
+          'Apple Color Emoji',
+          'Segoe UI Emoji',
+        ],
         colorScheme: ColorScheme.fromSeed(
           seedColor: theme.primaryColor,
           brightness: brightness,

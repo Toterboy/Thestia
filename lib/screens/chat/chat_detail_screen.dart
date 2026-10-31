@@ -232,7 +232,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   /// raus - der Hinweis kommt beim naechsten Chat wieder, aber erst,
   /// wenn jemand ihn wegklickt.
   Future<void> _maybeShowBackgroundHint() async {
-    final settings = ref.read(settingsProvider);
+    // Warten, bis die Einstellungen wirklich geladen sind. Sie kommen
+    // asynchron aus dem Speicher - ohne dieses Warten sieht der Screen
+    // nur die Vorgabewerte und zeigt den Dialog auch dann, wenn die
+    // Person den Hintergrund schon gewaehlt und weggedrueckt hat.
+    final settings = await ref.read(settingsProvider.notifier).whenLoaded();
+    if (!mounted) return;
     if (settings.chatBackgroundSeen) return;
 
     // Der Dialog darf nicht im Dialog landen, wenn zwischen den Frames

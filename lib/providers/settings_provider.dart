@@ -23,6 +23,24 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   final LocalStorage _storage;
   final Ref _ref;
 
+  /// Signalisiert, wann die Einstellungen aus dem Speicher da sind.
+  ///
+  /// WICHTIG: Die Einstellungen kommen ASYNCHRON aus dem Speicher. Wer
+  /// sie vorher liest, sieht nur die Vorgabewerte - und kann damit eine
+  /// Entscheidung treffen, die falsch ist (der Chat zeigte den
+  /// Chat-Hintergrund-Dialog auch bei Personen, die ihn schon
+  /// weggedrueckt hatten). [whenLoaded] wartet auf den echten Stand.
+  final Completer<void> _geladen = Completer<void>();
+
+  /// Wartet, bis die Einstellungen geladen sind, und liefert sie.
+  ///
+  /// Nach dem ersten Aufruf kommt der Wert sofort (der Ladevorgang ist
+  /// dann erledigt).
+  Future<AppSettings> whenLoaded() async {
+    await _geladen.future;
+    return state;
+  }
+
   /// Lädt die gespeicherten Einstellungen beim Start.
   Future<void> _load() async {
     try {
@@ -42,6 +60,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       // Race Condition zwischen Onboarding-Flag- und Auth-Check und der
       // "Konto erstellen"-Screen blitzt vor den Willkommensscreens auf.
       _ref.read(settingsLoadedProvider.notifier).state = true;
+      if (!_geladen.isCompleted) _geladen.complete();
     }
   }
 
