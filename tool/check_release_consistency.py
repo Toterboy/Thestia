@@ -55,6 +55,16 @@ RELEASE_DIR = os.path.join(ROOT, 'releases', 'v0.9.2')
 SHOT_DIR = os.path.join(ROOT, 'fastlane', 'metadata', 'android', 'de-DE',
                         'images', 'phoneScreenshots')
 
+# Interne Screenshot-APKs (31.10.2026).
+#
+# BEFUND: Die Screenshot-APK war eine KOPIE des Play-APKs. Damit galt
+# FLAG_SECURE - und Android blockiert mit FLAG_SECURE jeden Screenshot.
+# In der installierten APK war es deshalb unmoeglich, die Store-Bilder
+# aufzunehmen. Die Screenshot-APK wird jetzt mit
+# THESTIA_ALLOW_SCREENSHOTS=true gebaut (build_release.ps1
+# -ScreenshotApk), und der Check stellt das hier sicher.
+TESTAPK_DIR = os.path.join(ROOT, 'releases', 'testapk')
+
 # Fenstergroesse in Sekunden. Ein Release baut alle Artefakte in
 # wenigen Minuten; zwei Stunden ist weit genug, um einen abgebrochenen
 # und neu gestarteten Lauf zu ueberbruecken, und eng genug, um
@@ -133,6 +143,61 @@ def dump_permissions(aapt2, apk):
                          r"(?: maxSdkVersion='(\d+)')?", out.stdout):
         perms[m.group(1)] = int(m.group(2)) if m.group(2) else None
     return perms, None
+
+
+def manifest_meta(aapt2, apk, name):
+    """Liest den Wert eines <meta-data>-Eintrags aus dem Manifest.
+
+    Gibt den Wert als String zurueck, oder None wenn es den Eintrag
+    nicht gibt.
+
+    ACHTUNG - der Typ ist nicht stabil (31.10.2026): aapt2 kompiliert
+    den Wert "true"/"false" als BOOLEAN, nicht als String. Im
+    Manifest-Text sieht das so aus:
+
+        A: ...android:value(0x01010024)=false
+
+    Ein String-Wert dagegen kommt als
+
+        A: ...android:value(0x01010024)=(type 0x12)0xffffffff (Raw: "true")
+
+    Deshalb werden beide Formen gelesen. Wer nur nach `Raw: "..."`
+    sucht, findet bei einem Boolean-Wert nichts und faelschlich
+    "kein Eintrag".
+    """
+    try:
+        out = subprocess.run(
+            [aapt2, 'dump', 'xmltree', apk, '--file', 'AndroidManifest.xml'],
+            capture_output=True, text=True, timeout=120)
+    except Exception as e:                                  # noqa: BLE001
+        return None, str(e)
+    if out.returncode != 0:
+        return None, out.stderr.strip() or 'aapt2-Ausgabe nicht lesbar'
+
+    # Der Manifest-Baum ist eine Klammerhierarchie: jeder Block beginnt
+    # mit "E: " (eingerueckt) und endet vor dem naechsten "E: ".
+    bloecke = re.split(r'\n(?=\s*E: )', out.stdout)
+    for block in bloecke:
+        if 'android:name(0x01010003)="%s"' % name not in block:
+            continue
+        # Nur das WERT-Attribut lesen - der Block enthaelt auch das
+        # name-Attribut, und dessen "Raw: ..." waere der Name, nicht
+        # der Wert.
+        treffer = re.search(
+            r'android:value\(0x01010024\)=([^\n]*)', block)
+        if not treffer:
+            return '', None
+        rest = treffer.group(1).strip()
+        # Form 1: String - der lesbare Inhalt steht hinter "Raw: ".
+        roh = re.search(r'Raw: "([^"]*)"', rest)
+        if roh:
+            return roh.group(1), None
+        # Form 2: Boolean/Zahl - direkt hinter dem Gleichheitszeichen.
+        kurz = re.match(r'([A-Za-z][A-Za-z0-9_-]*|0x[0-9a-fA-F]+)', rest)
+        if kurz:
+            return kurz.group(1), None
+        return rest, None
+    return None, None
 
 
 def dump_badging(aapt2, apk):
@@ -292,6 +357,62 @@ def main():
 
         if not rep.failures:
             rep.ok('Berechtigungen, .env-Freiheit und Stammdaten aller APKs ok')
+
+    # --- 4b) Screenshot-Freigabe ---------------------------------------
+    #
+    # Zwei gegenlaeufige Anforderungen, beide geprueft:
+    #
+    # 1) Die oeffentlichen APKs duerfen KEINE Screenshots erlauben.
+    #    FLAG_SECURE (MainActivity) ist ein Privatsphaerenschutz: ohne
+    #    ihn kann jeder ein Foto eines Chats oder eines Profils einer
+    #    fremden Person machen. Ein oeffentlicher Build mit
+    #    "allowScreenshots=true" waere eine stille Abschaltung genau
+    #    dieses Schutzes - und die waere im Store nicht sichtbar.
+    #
+    # 2) Die Screenshot-APK MUSS Screenshots erlauben. Sie ist genau
+    #    dafuer da - sonst laesst sich damit kein Store-Bild
+    #    aufnehmen. Bis 31.10.2026 war sie eine Kopie des Play-APKs
+    #    (also "false"), und genau deshalb war es in der installierten
+    #    APK unmoeglich, Screenshots zu machen.
+    #
+    # Beide Werte werden aus dem BINAREN Manifest gelesen, nicht aus
+    # dem Quelltext - nur so zaehlt, was tatsaechlich im Artefakt ist.
+    if aapt2:
+        for apk in apks:
+            name = os.path.basename(apk)
+            wert, err = manifest_meta(aapt2, apk, 'allowScreenshots')
+            if err:
+                rep.fail('%s: Manifest nicht lesbar (%s)' % (name, err))
+                continue
+            if wert == 'true':
+                rep.fail('%s erlaubt Screenshots (allowScreenshots=true) - '
+                         'das ist fuer eine oeffentliche APK nicht erlaubt: '
+                         'FLAG_SECURE schuetzt Chats und fremde Profile.'
+                         % name)
+
+        shot_apks = []
+        if os.path.isdir(TESTAPK_DIR):
+            shot_apks = sorted(
+                os.path.join(TESTAPK_DIR, f)
+                for f in os.listdir(TESTAPK_DIR)
+                if f.endswith('.apk') and 'screenshot' in f)
+        if not shot_apks:
+            rep.note('keine Screenshot-APK unter %s - nicht geprueft'
+                     % os.path.relpath(TESTAPK_DIR, ROOT))
+        for apk in shot_apks:
+            name = os.path.basename(apk)
+            wert, err = manifest_meta(aapt2, apk, 'allowScreenshots')
+            if err:
+                rep.fail('%s: Manifest nicht lesbar (%s)' % (name, err))
+                continue
+            if wert != 'true':
+                rep.fail('%s erlaubt KEINE Screenshots - damit laesst sich '
+                         'kein Store-Bild aufnehmen (FLAG_SECURE blockt '
+                         'jeden Screenshot). Neu bauen mit: '
+                         'tool\\build_release.ps1 -Flavor play '
+                         '-UniversalApk -ScreenshotApk' % name)
+            else:
+                rep.ok('%s: Screenshots erlaubt (richtig so)' % name)
 
     # --- 5) Screenshots -------------------------------------------------
     if not os.path.isdir(SHOT_DIR):

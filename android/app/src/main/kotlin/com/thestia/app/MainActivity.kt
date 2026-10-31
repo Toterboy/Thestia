@@ -48,15 +48,43 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    /**
+     * Dürfen in diesem Build Screenshots gemacht werden?
+     *
+     * NUR die interne Screenshot-APK (Build mit
+     * THESTIA_ALLOW_SCREENSHOTS=true) darf das. Alle Store-Releases
+     * behalten FLAG_SECURE - sonst könnte jeder ein Foto eines Chats
+     * oder eines fremden Profils machen.
+     *
+     * WICHTIG (31.10.2026): der TYP des Manifest-Werts ist nicht
+     * stabil. aapt2 kompiliert "true"/"false" als BOOLEAN, nicht als
+     * String - im Manifest steht dann
+     *
+     *     android:value(0x01010024)=false
+     *
+     * und nicht mehr `= (Raw: "false")`. Bundle.getString liefert bei
+     * einem Boolean NULL, Bundle.getBoolean bei einem String FALSE.
+     * Wer nur eine der beiden Varianten prüft, bekommt deshalb immer
+     * "nein" - und die Screenshot-APK wäre eine APK, in der sich kein
+     * Screenshot aufnehmen lässt.
+     */
     private fun screenshotsAllowed(): Boolean {
         return try {
             val info = packageManager.getApplicationInfo(
                 packageName,
                 android.content.pm.PackageManager.GET_META_DATA
             )
-            info.metaData?.getString("allowScreenshots") == "true" ||
-                info.metaData?.getBoolean("allowScreenshots") == true
+            val meta = info.metaData ?: return false
+            // Zuerst der String-Fall (falls aapt2 den Wert als String
+            // kompiliert hat).
+            val alsString = meta.getString("allowScreenshots")
+            if (alsString != null) {
+                return alsString.equals("true", ignoreCase = true)
+            }
+            // Sonst der Boolean-Fall - der ist der Normalfall.
+            meta.getBoolean("allowScreenshots")
         } catch (_: Exception) {
+            // Fail-closed: im Zweifel bleibt FLAG_SECURE stehen.
             false
         }
     }

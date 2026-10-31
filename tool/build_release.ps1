@@ -19,6 +19,8 @@
 #   .\tool\build_release.ps1 -Aab             # zusätzlich Play-App-Bundle (.aab)
 #   .\tool\build_release.ps1 -AdminUUID <uuid> # Team-Admin-Builds nach releases/<version>/admin/
 #                                             # (NICHT zur Verteilung; UUID = ADMIN_UUID-Secret)
+#   .\tool\build_release.ps1 -ScreenshotApk     # Screenshot-APK nach releases/testapk/
+#                                             # (intern; in ihr sind Screenshots ERLAUBT)
 #
 # APK-GRÖSSE (Hintergrund): Ein universelles APK enthält die nativen
 # Bibliotheken (Flutter-Engine, WebRTC, ONNX Runtime) DREIMAL - für
@@ -54,6 +56,21 @@ param(
     # Baut play+fdroid als universelle APKs mit --dart-define=ADMIN_UUID=...
     # nach "<OutDir>/admin/" (Team-intern, NICHT verteilen).
     [string]$AdminUUID = "",
+
+    # Screenshot-APK bauen (intern, NICHT verteilen).
+    #
+    # BEFUND (31.10.2026): Die Screenshot-APK war bisher eine KOPIE des
+    # Play-APKs. Damit galt FLAG_SECURE (MainActivity) - und Android
+    # blockiert mit FLAG_SECURE jeden Screenshot und jede
+    # Bildschirmaufnahme. In der installierten Screenshot-APK war es
+    # deshalb unmöglich, die Store-Bilder aufzunehmen.
+    #
+    # Der Fix ist kein Code, sondern ein Build-Flag:
+    # THESTIA_ALLOW_SCREENSHOTS=true setzt im Manifest das Meta-Flag
+    # "allowScreenshots", und MainActivity setzt FLAG_SECURE nur, wenn
+    # dieses Flag NICHT gesetzt ist. Der Build laeuft deshalb mit der
+    # Umgebungsvariable - und NUR fuer diesen einen Build.
+    [switch]$ScreenshotApk,
 
     [string]$OutRoot = "releases"
 )
@@ -447,6 +464,50 @@ if ($SkipBuild) {
         flutter build appbundle --release --flavor play @ConfigDefines --obfuscate --split-debug-info=build/symbols/play
         if ($LASTEXITCODE -ne 0) { throw "App-Bundle-Build fehlgeschlagen." }
         Copy-Aab -FlavorName "play"
+    }
+
+    # --- 4) Screenshot-APK (intern, Screenshots ERLAUBT) ---
+    if ($ScreenshotApk) {
+        Write-Host "==> Baue SCREENSHOT-APK (Screenshots erlaubt, nur intern)..." -ForegroundColor Cyan
+        # Die Umgebungsvariable muss WAEHREND des Builds gesetzt sein:
+        # Gradle liest sie beim Konfigurieren des Projekts und setzt
+        # daraus den Manifest-Platzhalter "allowScreenshots".
+        #
+        # Sie wird im finally-Zweig garantiert zurueckgesetzt. Sonst
+        # wuerde der unmittelbar folgende Admin-Build (und jeder
+        # spaetere Lauf im selben Prozess) ebenfalls mit
+        # Screenshot-Freigabe gebaut - und die Admin-APK waere damit
+        # eine APK, in der jeder Screenshot moeglich ist.
+        $env:THESTIA_ALLOW_SCREENSHOTS = "true"
+        try {
+            flutter build apk --release --flavor play @ConfigDefines --obfuscate --split-debug-info=build/symbols/screenshot
+            if ($LASTEXITCODE -ne 0) { throw "Screenshot-Build fehlgeschlagen." }
+            $src = Join-Path "build\app\outputs\flutter-apk" "app-play-release.apk"
+            if (-not (Test-Path -LiteralPath $src)) {
+                throw "Screenshot-APK nicht gefunden: $src"
+            }
+            $shotDir = Join-Path $OutRoot "testapk"
+            New-Item -ItemType Directory -Force -Path $shotDir | Out-Null
+            $dst = Join-Path $shotDir "Thestia-v$VersionName-screenshots.apk"
+
+            # Kein Admin-Build: die Screenshot-APK wird verteilt
+            # (an den, der die Store-Bilder aufnimmt). Ein
+            # Admin-Build darf dort nicht landen.
+            $secret = $env:ADMIN_UUID
+            if (-not [string]::IsNullOrWhiteSpace($secret)) {
+                if (Test-ContainsText -Path $src -Needle $secret) {
+                    throw ("ABGEBROCHEN: Die Screenshot-APK enthaelt die " +
+                           "Admin-UUID. Sie wird verteilt und darf den " +
+                           "Admin-Zugang nicht tragen.")
+                }
+            }
+
+            Copy-Item -LiteralPath $src -Destination $dst -Force
+            Write-Host "    OK: $dst" -ForegroundColor Green
+            Write-Host "    (Screenshots in dieser APK sind ERLAUBT - sie ist nicht fuer die Verteilung an Nutzer gedacht.)" -ForegroundColor DarkGray
+        } finally {
+            Remove-Item Env:\THESTIA_ALLOW_SCREENSHOTS -ErrorAction SilentlyContinue
+        }
     }
 
     # WICHTIG - Reihenfolge: die oeffentlichen Kopien oben passieren VOR
