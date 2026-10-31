@@ -129,6 +129,14 @@ class AppTheme {
         elevatedButtonTheme: _elevatedButtonTheme,
         filledButtonTheme: _filledButtonTheme,
         outlinedButtonTheme: _outlinedButtonTheme,
+        // NUTZERWUNSCH (31.10.2026): "Ladekreise sollen auch abgerundet
+        // sein." Die Enden des Kreises sind jetzt rund statt flach -
+        // das passt zur uebrigen runden Sprache der App (Karten mit 24 px,
+        // Knöpfe, Snackbars) und gilt fuer JEDEN Ladeindikator, ohne
+        // dass eine einzige Stelle im Code angefasst werden muss.
+        progressIndicatorTheme: const ProgressIndicatorThemeData(
+          strokeCap: StrokeCap.round,
+        ),
         inputDecorationTheme: _inputDecorationTheme(
             surface, theme.primaryColor),
         appBarTheme: AppBarTheme(

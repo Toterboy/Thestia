@@ -11,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:thestia/models/gender.dart';
 import 'package:thestia/providers/auth_provider.dart';
 import 'package:thestia/services/auth_exception.dart';
+import 'package:thestia/services/passkey_auth.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/utils/constants.dart';
@@ -431,12 +432,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // Tap, der kleine Button-Spinner allein reichte nicht).
     unawaited(_showBlockingLoader());
     try {
-      // Bei aktivierter Dashboard-CAPTCHA verlangt der Server auch für
-      // den Passkey-Login ein Token (wie beim normalen Login), sonst
-      // lehnt er die Anfrage direkt ab, bevor der native Dialog
-      // erscheint. Der Passkey-Button zeigt solange den Ladekreis.
+      // ERST OHNE Token versuchen (NUTZERWUNSCH 31.10.2026: "hat jetzt
+      // aber eine extra Captcha Abfrage"). Der Server verlangt den
+      // Sicherheitscheck nur in bestimmten Konfigurationen - fragt man
+      // IMMER danach, ist die Abfrage für die meisten Nutzer überflüssig.
+      //
+      // Lehnt der Server ohne Token ab (Antwort kommt, BEVOR der native
+      // Dialog erscheint), wird der Sicherheitscheck gezeigt und der
+      // Versuch einmal wiederholt.
       String? captchaToken;
+      try {
+        await ref.read(authProvider.notifier).loginWithPasskey();
+        if (mounted) {
+          debugPrint('[LoginScreen] Passkey-Login erfolgreich, navigiere zu Home');
+          context.go(AppRoutes.home);
+        }
+        return;
+      } catch (e) {
+        if (!PasskeyAuth.requiresCaptcha(e)) rethrow;
+        debugPrint('[LoginScreen] Server verlangt den Sicherheitscheck - '
+            'ich frage ihn jetzt ab.');
+      }
+
       if (AppConstants.captchaEnabled) {
+        if (!mounted) return;
         captchaToken = await showCaptchaChallenge(context);
         if (captchaToken == null) {
           if (mounted) {
@@ -461,11 +480,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        final message = e is AppException
-            ? L10n.exc(context, e)
-            : (e.toString().toLowerCase().contains('cancel')
-                ? L10n.t(context, 'auth.passkeyCancelled')
-                : L10n.t(context, 'auth.passkeyFailed'));
+        // JEDER Fehler bekommt eine konkrete Meldung - auch ein
+        // unerwarteter (NUTZERWUNSCH 31.10.2026: "Es gibt beim Fehler
+        // auch keine genauerere beschreibung des Problems").
+        final message = L10n.exc(
+          context,
+          PasskeyAuth.explainForUi(e, login: true),
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
         );

@@ -130,6 +130,15 @@ class AppSettings {
   /// Einmalig nach E-Mail-Bestaetigung, danach direkt Einrichtung.
   final bool signupWelcomeSeen;
 
+  /// Sicherheits-Aufklärung vor der Einrichtung abgeschlossen?
+  ///
+  /// NUTZERWUNSCH (30.10.2026): Nach der E-Mail-Bestätigung und VOR dem
+  /// Setup wird gefragt, ob die Person schon Dating-Apps benutzt hat und
+  /// ob ihr die Gefahren bewusst sind. Wer beides verneint (oder noch
+  /// keine App benutzt hat), bekommt die Aufklärungsseiten. Der Flag
+  /// gehört zum Setup: einmal abgeschlossen, nie wieder erzwungen.
+  final bool datingSafetyEducationCompleted;
+
   /// Chat-Hintergrund-Auswahl beim ersten Chat gezeigt (v0.10.0)?
   ///
   /// Bewusst KEIN Teil der Einrichtung: der Hintergrund ist eine
@@ -191,6 +200,7 @@ class AppSettings {
     this.chatBackground = 'none',
     this.chatBackgroundPath,
     this.signupWelcomeSeen = false,
+    this.datingSafetyEducationCompleted = false,
     this.chatBackgroundSeen = false,
     // v0.10.0: Datenschutz-Vorgabe. Nichts veroeffentlichen, was der
     // Nutzer nicht ausdruecklich erlaubt hat.
@@ -246,6 +256,8 @@ class AppSettings {
       chatBackground: json['chatBackground'] as String? ?? 'none',
       chatBackgroundPath: json['chatBackgroundPath'] as String?,
       signupWelcomeSeen: json['signupWelcomeSeen'] as bool? ?? false,
+      datingSafetyEducationCompleted:
+          json['datingSafetyEducationCompleted'] as bool? ?? false,
       chatBackgroundSeen: json['chatBackgroundSeen'] as bool? ?? false,
       // Fehlende Schluessel (alte Installation) gelten als "aus" -
       // das ist die datenschutzfreundliche Richtung.
@@ -286,6 +298,7 @@ class AppSettings {
     'chatBackground': chatBackground,
     'chatBackgroundPath': chatBackgroundPath,
     'signupWelcomeSeen': signupWelcomeSeen,
+    'datingSafetyEducationCompleted': datingSafetyEducationCompleted,
     'chatBackgroundSeen': chatBackgroundSeen,
     'showDistance': showDistance,
   };
@@ -336,6 +349,7 @@ class AppSettings {
     String? chatBackground,
     Object? chatBackgroundPath = _chatBackgroundPathUnset,
     bool? signupWelcomeSeen,
+    bool? datingSafetyEducationCompleted,
     bool? chatBackgroundSeen,
     bool? showDistance,
   }) {
@@ -382,6 +396,8 @@ class AppSettings {
               ? this.chatBackgroundPath
               : chatBackgroundPath as String?,
       signupWelcomeSeen: signupWelcomeSeen ?? this.signupWelcomeSeen,
+      datingSafetyEducationCompleted:
+          datingSafetyEducationCompleted ?? this.datingSafetyEducationCompleted,
       chatBackgroundSeen: chatBackgroundSeen ?? this.chatBackgroundSeen,
       showDistance: showDistance ?? this.showDistance,
     );

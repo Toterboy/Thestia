@@ -305,6 +305,7 @@ class MainNavigation extends ConsumerWidget {
               )
             : _TabSwipe(
                 enabled: swipeAktiv,
+                index: index,
                 onSwipe: (richtung) {
                   final ziel = index + richtung;
                   if (ziel < 0 || ziel >= _tabs.length) return;
@@ -367,60 +368,134 @@ class MainNavigation extends ConsumerWidget {
     );
   }
 }
-
 /// Wischen zwischen den Haupt-Reitern der App.
 ///
 /// NUTZERWUNSCH (28.10.2026): das Wischen soll NICHT mehr zwischen den
 /// Unterreitern der Interessen-Seite gehen, sondern zwischen den vier
 /// grossen Reitern der App (Aktuelles, Entdecken, Interessen, Profil).
+/// NUTZERWUNSCH (30.10.2026): "die Wisch-Animation soll fluessiger
+/// werden" - die Seite folgt dem Finger jetzt mit einer gedaempften
+/// Bewegung, federt beim Loslassen weich zurueck und der neue Reiter
+/// gleitet von der passenden Seite herein.
 ///
-/// Umsetzung: ein waeregender Geste-Erkner ueber dem Seiteninhalt. Er
-/// wird nur aktiv, wenn die Reiterleiste sichtbar ist - im Chat oder
+/// Umsetzung: ein waagerechter Geste-Erkner ueber dem Seiteninhalt.
+/// Er wird nur aktiv, wenn die Reiterleiste sichtbar ist - im Chat oder
 /// im Quiz wuerde ein Wischen sonst unerwartet den Reiter wechseln.
-///
-/// Das Kind wandert beim Ziehen leicht mit (gedaempft auf 18 %), damit
-/// die Geste als "die Seite schiebt sich" lesbar wird, und die
-/// Reitergrenze wird mit einem kurzen Ticken angekuendigt.
 class _TabSwipe extends StatefulWidget {
   const _TabSwipe({
     required this.child,
     required this.onSwipe,
     required this.enabled,
+    required this.index,
   });
 
   final Widget child;
 
-  /// Richtung: -1 = zurueck (nach links wischen), +1 = vor.
+  /// Richtung: -1 = zurueck (nach rechts wischen), +1 = vor.
   final ValueChanged<int> onSwipe;
 
   final bool enabled;
+
+  /// Aktueller Reiter. Aendert er sich, gleitet der neue Inhalt herein.
+  final int index;
 
   @override
   State<_TabSwipe> createState() => _TabSwipeState();
 }
 
-class _TabSwipeState extends State<_TabSwipe> {
-  /// Weg der aktuellen Geste in Pixeln.
+class _TabSwipeState extends State<_TabSwipe>
+    with TickerProviderStateMixin {
+  /// Weg der aktuellen Geste in Pixeln (mit Widerstand gedaempft).
   double _weg = 0;
+
+  /// Startwert der Rueckfeder-Animation.
+  double _federStart = 0;
 
   /// Ob die Reitergrenze in dieser Geste schon ueberschritten wurde.
   bool _geTickt = false;
 
+  /// Richtung des hereingleitenden Reiters: +1 von rechts, -1 von links.
+  int _enterRichtung = 1;
+
   /// Ab dieser Wegerstrecke wird gewechselt.
   static const double _schwelle = 64;
+
+  /// Anteil des Fingerwegs, den die Seite sichtbar mitgeht.
+  static const double _folge = 0.42;
+
+  /// Breite des Hereingleitens (Anteil der Bildschirmbreite).
+  static const double _einflug = 0.10;
+
+  late final AnimationController _enter = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 280),
+    value: 1,
+  );
+
+  late final AnimationController _feder = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 260),
+    value: 1,
+  )..addListener(_onFederTick);
+
+  void _onFederTick() {
+    if (!mounted) return;
+    if (_feder.isCompleted) {
+      setState(() => _weg = 0);
+    } else {
+      setState(() {});
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _TabSwipe oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.index != oldWidget.index) {
+      // Der Inhalt wurde vom Router ausgetauscht: von der Seite
+      // hereinholen, in deren Richtung gewischt wurde.
+      _enterRichtung = widget.index > oldWidget.index ? 1 : -1;
+      _weg = 0;
+      _feder.stop();
+      _enter.forward(from: 0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _enter.dispose();
+    _feder.dispose();
+    super.dispose();
+  }
+
+  /// Sichtbarer Versatz durch die laufende Rueckfeder.
+  double get _federWeg {
+    if (!_feder.isAnimating) return _weg;
+    final t = Curves.easeOutCubic.transform(_feder.value);
+    return _federStart * (1 - t);
+  }
 
   @override
   Widget build(BuildContext context) {
     if (!widget.enabled) return widget.child;
 
+    final breite = MediaQuery.sizeOf(context).width;
+
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onHorizontalDragStart: (_) {
+        _feder.stop();
         _weg = 0;
         _geTickt = false;
       },
       onHorizontalDragUpdate: (details) {
-        setState(() => _weg += details.delta.dx);
+        // Widerstand ab der halben Strecke: die Seite laesst sich
+        // ziehen, laeuft aber nicht unbegrenzt mit.
+        final daempfung = _weg.abs() > _schwelle * 0.75 ? 0.35 : 1.0;
+        final next = (_weg + details.delta.dx * daempfung).clamp(
+          -breite * 0.28,
+          breite * 0.28,
+        );
+        setState(() => _weg = next);
         if (!_geTickt && _weg.abs() >= _schwelle) {
           _geTickt = true;
           HapticFeedback.selectionClick();
@@ -428,24 +503,34 @@ class _TabSwipeState extends State<_TabSwipe> {
       },
       onHorizontalDragEnd: (_) {
         final gewickt = _weg.abs() >= _schwelle;
-        // RICHTUNG (NUTZERWUNSCH 28.10.2026: "das Swipen ... ist noch
-        // verbuggt und glaube ich auch falsch herum").
-        //
-        // Nach links wischen schiebt die Seite nach links - man
-        // kommt zum naechsten Reiter. Nach rechts waere es der
-        // vorherige. Vorher war es genau anders herum (nach links =
-        // zurueck), das war der Fehler.
+        // RICHTUNG (NUTZERWUNSCH 28.10.2026): Nach links wischen
+        // schiebt die Seite nach links - man kommt zum naechsten
+        // Reiter. Nach rechts waere es der vorherige.
         final richtung = _weg < 0 ? 1 : -1;
-        setState(() => _weg = 0);
-        if (gewickt) widget.onSwipe(richtung);
+        if (gewickt) {
+          setState(() => _weg = 0);
+          widget.onSwipe(richtung);
+        } else {
+          // Nicht weit genug: weich in die Ausgangslage zurueck.
+          _federStart = _weg;
+          _feder.forward(from: 0);
+        }
       },
       onHorizontalDragCancel: () {
-        setState(() => _weg = 0);
+        _federStart = _weg;
+        _feder.forward(from: 0);
       },
-      child: Transform.translate(
-        // Gedaempft: die Seite schiebt sich nur an - sonst wirkt die
-        // Geste wie ein Ruck.
-        offset: Offset(_weg * 0.18, 0),
+      child: AnimatedBuilder(
+        animation: Listenable.merge([_enter, _feder]),
+        builder: (context, child) {
+          final einflug =
+              (1 - Curves.easeOutCubic.transform(_enter.value)) *
+                  breite *
+                  _einflug *
+                  _enterRichtung;
+          final x = _federWeg * _folge + einflug;
+          return Transform.translate(offset: Offset(x, 0), child: child);
+        },
         child: widget.child,
       ),
     );

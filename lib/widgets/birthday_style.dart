@@ -541,16 +541,98 @@ class BirthdayChip extends StatelessWidget {
           Icon(Icons.cake_outlined,
               size: 14, color: scheme.onTertiaryContainer),
           const SizedBox(width: 6),
-          Text(
-            L10n.t(context, 'birthday.todayTitle'),
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: scheme.onTertiaryContainer,
-                  fontWeight: FontWeight.bold,
-                ),
+          // Flexible: der Text darf umbrechen. Ohne das waere der Chip
+          // bei grosser Schrift (bis 3,2x) breiter als der Bildschirm -
+          // er lief dann seitlich aus dem Rand (RenderFlex-Overflow).
+          Flexible(
+            child: Text(
+              L10n.t(context, 'birthday.todayTitle'),
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: scheme.onTertiaryContainer,
+                    fontWeight: FontWeight.bold,
+                  ),
+              textAlign: TextAlign.center,
+            ),
           ),
         ],
       ),
     );
+  }
+}
+
+/// Flächige Geburtstags-Tönung für einen ganzen Profilbereich.
+///
+/// NUTZERWUNSCH (30.10.2026): "Die Geburtstags-Vorschau soll die ganze
+/// Fläche einfärben, nicht nur den Rand vom Bild." Der vorhandene
+/// [BirthdayStyleFrame] bleibt als Akzent um das Bild; diese Fläche legt
+/// den Stil zusätzlich hinter den gesamten Inhalt.
+///
+/// Die Farbe wird mit der Oberfläche gemischt, nicht als transparenter
+/// Schleier darübergelegt: Text und Karten bleiben so in jedem Theme
+/// lesbar. [active] = false gibt das Kind unverändert zurück.
+class BirthdayStyleSurface extends StatelessWidget {
+  const BirthdayStyleSurface({
+    required this.style,
+    required this.active,
+    required this.child,
+    super.key,
+    this.borderRadius = BorderRadius.zero,
+    this.duration = const Duration(milliseconds: 250),
+  });
+
+  final String style;
+  final bool active;
+  final Widget child;
+  final BorderRadius borderRadius;
+  final Duration duration;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!active) return child;
+    return AnimatedContainer(
+      duration: duration,
+      curve: Curves.easeOutCubic,
+      decoration: BoxDecoration(
+        gradient: surfaceGradientFor(style, context),
+        borderRadius: borderRadius,
+      ),
+      child: child,
+    );
+  }
+
+  /// Opaque Mischung aus Stil-Akzent und Oberfläche.
+  ///
+  /// Bewusst deckend statt halbtransparent: ein Gradient mit Alpha
+  /// würde je nach Untergrund (Scaffold, Bottom-Sheet, Karte) anders
+  /// aussehen und den Kontrast von Text unvorhersehbar machen.
+  static LinearGradient surfaceGradientFor(String style, BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final accent = _accentFor(style);
+    final base = scheme.surface;
+    return LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Color.alphaBlend(accent.withValues(alpha: 0.22), base),
+        Color.alphaBlend(accent.withValues(alpha: 0.07), base),
+      ],
+    );
+  }
+
+  static Color _accentFor(String style) {
+    switch (style) {
+      case 'midnight':
+        return const Color(0xFF2E3E6E);
+      case 'sage':
+        return const Color(0xFF9CAF88);
+      case 'rose':
+        return const Color(0xFFE8B4B8);
+      case 'mono':
+        return const Color(0xFF5A5A5A);
+      case 'classic':
+      default:
+        return const Color(0xFFC9A227);
+    }
   }
 }
 

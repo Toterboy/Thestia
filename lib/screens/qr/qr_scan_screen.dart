@@ -325,6 +325,16 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
                 const SizedBox(height: 8),
                 Card(
                   child: ListTile(
+                    leading: const Icon(Icons.contact_phone_outlined),
+                    title: Text(L10n.t(context, 'contactShare.qrCardTitle')),
+                    subtitle: Text(L10n.t(context, 'contactShare.qrCardSub')),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push(AppRoutes.qrContacts),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Card(
+                  child: ListTile(
                     leading: const Icon(Icons.qr_code_scanner),
                     title: Text(L10n.t(context, 'qr.scanTitle')),
                     subtitle: Text(L10n.t(context, 'qr.scanSub')),

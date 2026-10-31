@@ -421,8 +421,9 @@ const Map<String, Map<String, String>> _strings = {
     'dm.findMatchDesc': 'Vorstellung anhören oder lesen, dann entscheiden',
     'dm.randomChat': 'Zufallschat',
     'dm.randomChatDesc': 'Direkter Text-Chat mit zufällig passender Person',
-    'dm.qrScan': 'QR-Code scannen',
-    'dm.qrScanDesc': 'Code einer Person scannen und direkt verbinden',
+    'dm.qrScan': 'Mit anderen verbinden',
+    'dm.qrScanDesc':
+        'QR-Code scannen oder Kontaktdaten teilen',
     'dm.datingHour': 'Dating Hour (Event)',
     'dm.datingHourDesc':
         'Samstags 20 bis 21 Uhr: 5-Minuten-Chats mit Entscheidungsphase',
@@ -696,7 +697,7 @@ const Map<String, Map<String, String>> _strings = {
         '{name} wird lokal gelöscht. Der zugehörige Chat-Verlauf geht damit '
         'verloren.',
     // QR-Flow
-    'qr.menuTitle': 'QR Code',
+    'qr.menuTitle': 'Mit anderen verbinden',
     'qr.choiceTitle': 'Was möchtest du tun?',
     'qr.showMine': 'Meinen QR Code zeigen',
     'qr.showMineBtn': 'Meinen eigenen Code anzeigen',
@@ -2930,6 +2931,144 @@ const Map<String, Map<String, String>> _strings = {
         'einer Eisbrecher-Frage an dein Gegenüber?',
     'chat.icebreakerSuggestSend': 'Frage senden',
     'chat.icebreakerSuggestLater': 'Später',
+    // Sicherheits-Aufklärung vor dem Setup (30.10.2026)
+    'safetyOnboarding.title': 'Sicher unterwegs',
+    'safetyOnboarding.ackTitle': 'Bevor du loslegst',
+    'safetyOnboarding.ackBody':
+        'Thestia verbindet Menschen, die sich noch nicht kennen. Genau '
+        'darin liegt die Chance und das Risiko. Nimm dir zwei Minuten '
+        'für die wichtigsten Regeln.',
+    'safetyOnboarding.ack1':
+        'Deine Daten gehören dir: Teile Telefonnummer, Adresse oder '
+        'Arbeitsplatz erst, wenn du sicher bist.',
+    'safetyOnboarding.ack2':
+        'Niemand muss dich zu etwas drängen, weder zu einem Treffen '
+        'noch zu Bildern noch zu Geld.',
+    'safetyOnboarding.ack3':
+        'Melden und Blockieren sind jederzeit möglich. Du musst dich '
+        'nicht erklären.',
+    'safetyOnboarding.ackButton': 'Ich habe verstanden',
+    'safetyOnboarding.timeHint':
+        'Die Aufklärung dauert höchstens 5 Minuten. Dein Fortschritt '
+        'bleibt gespeichert.',
+    'safetyOnboarding.q1Title':
+        'Hast du schon einmal eine Dating-App benutzt?',
+    'safetyOnboarding.q1Body':
+        'Es gibt keine richtige Antwort. Die Frage hilft uns nur, dich '
+        'dort abzuholen, wo du gerade stehst.',
+    'safetyOnboarding.q2Title':
+        'Sind dir die Gefahren beim Online-Dating bewusst?',
+    'safetyOnboarding.q2Body':
+        'Zum Beispiel Fake-Profile, ungewollte Bilder, Druck oder '
+        'Betrug. Wenn du unsicher bist, zeigen wir dir die wichtigsten '
+        'Punkte.',
+    'safetyOnboarding.yes': 'Ja',
+    'safetyOnboarding.no': 'Nein',
+    'safetyOnboarding.back': 'Zurück',
+    'safetyOnboarding.educationTitle': 'Sicher daten',
+    'safetyOnboarding.progress': 'Seite {current} von {total}',
+    'safetyOnboarding.timer': 'noch {min} Min.',
+    'safetyOnboarding.next': 'Weiter',
+    'safetyOnboarding.finish': 'Fertig',
+    'safetyOnboarding.moreInfo': 'Ausführliche Fassung lesen',
+    'safetyOnboarding.edu1Title': 'Nicht alles ist echt',
+    'safetyOnboarding.edu1Body':
+        'Fotos, Namen und Berufe lassen sich fälschen. Ein Profil ist '
+        'kein Beweis. Frag nach einem kurzen Video-Call oder einem '
+        'öffentlichen Treffen, bevor du persönliche Dinge teilst.',
+    'safetyOnboarding.edu1Hint':
+        'Vertrauen wächst. Es kommt nicht mit dem ersten Foto.',
+    'safetyOnboarding.edu2Title': 'Deine Daten gehören dir',
+    'safetyOnboarding.edu2Body':
+        'Telefonnummer, Adresse, Arbeitgeber und Ausweisfotos sind '
+        'sensibel. Teile sie erst, wenn du die Person gut kennst. '
+        'Screenshots können alles weitergeben, auch verschwindende '
+        'Nachrichten.',
+    'safetyOnboarding.edu2Hint':
+        'Ein Screenshot ist schneller gemacht, als du denkst.',
+    'safetyOnboarding.edu3Title': 'Das erste Treffen',
+    'safetyOnboarding.edu3Body':
+        'Triff dich tagsüber an einem öffentlichen Ort. Sag einer '
+        'Person, die du kennst, wo du bist und wann du zurück sein '
+        'willst. Sorge selbst für deinen Heimweg.',
+    'safetyOnboarding.edu3Hint':
+        'Du musst niemandem deine Adresse nennen, auch nicht beim '
+        'Abholen.',
+    'safetyOnboarding.edu4Title': 'Grenzen und Konsens',
+    'safetyOnboarding.edu4Body':
+        'Ein Ja gilt nur für genau das, was gerade passiert. Ein Nein, '
+        'ein Zögern oder ein Rückzug ist ein Nein. Niemand schuldet dir '
+        'Bilder, Zeit oder Nähe, du schuldest sie auch niemandem.',
+    'safetyOnboarding.edu4Hint':
+        'Druck ist kein Kennenlernen. Du darfst jederzeit gehen.',
+    'safetyOnboarding.edu5Title': 'Hilfe holen',
+    'safetyOnboarding.edu5Body':
+        'Du kannst Profile melden und blockieren, ohne dich zu '
+        'rechtfertigen. Bei Bedrohung, Stalking oder Gewalt hilft die '
+        'Polizei (110) oder der Notruf (112). Im Safety Center findest '
+        'du weitere Wege.',
+    'safetyOnboarding.edu5Hint':
+        'Hilfe zu holen ist Stärke, nicht Schwäche.',
+    // "Connect to others": Kontaktdaten teilen
+    'contactShare.title': 'Mit anderen verbinden',
+    'contactShare.subtitle':
+        'Teile deine Kontaktdaten, aber nur wenn du willst.',
+    'contactShare.qrCardTitle': 'Telefon & Social Media',
+    'contactShare.qrCardSub':
+        'Kontaktdaten lokal speichern und teilen',
+    'contactShare.intro':
+        'Speichere hier, wie dich andere außerhalb von Thestia erreichen '
+        'können. Du entscheidest bei jedem Teilen neu.',
+    'contactShare.phone': 'Telefonnummer',
+    'contactShare.phoneHint': 'z. B. +49 170 1234567',
+    'contactShare.phonePrivacy':
+        'Deine Nummer bleibt verschlüsselt auf diesem Gerät und wird nie '
+        'an unsere Server gesendet.',
+    'contactShare.apps': 'Apps',
+    'contactShare.signal': 'Signal',
+    'contactShare.threema': 'Threema',
+    'contactShare.instagram': 'Instagram',
+    'contactShare.snapchat': 'Snapchat',
+    'contactShare.discord': 'Discord',
+    'contactShare.recommended': 'empfohlen',
+    'contactShare.notRecommended': 'nicht empfohlen',
+    'contactShare.notRecommendedHint':
+        'Instagram, Snapchat und Discord sind keine sicheren Messenger. '
+        'Nutze sie nur, wenn du das möchtest.',
+    'contactShare.handle': 'Name / Handle',
+    'contactShare.handleHint': '@name oder ID',
+    'contactShare.addCustom': 'Weitere App hinzufügen',
+    'contactShare.customEntry': 'Eigene App',
+    'contactShare.customApp': 'App-Name',
+    'contactShare.customAppHint': 'z. B. Telegram',
+    'contactShare.customNeedsName':
+        'Bitte App-Namen und Handle ausfüllen.',
+    'contactShare.handleMissing':
+        'Bitte gib einen Handle ein oder schalte die App aus.',
+    'contactShare.invalidPhone':
+        'Bitte gib eine gültige Telefonnummer ein.',
+    'contactShare.save': 'Speichern',
+    'contactShare.saved': 'Kontaktdaten gespeichert.',
+    'contactShare.share': 'Kontaktdaten teilen',
+    'contactShare.copy': 'Kopieren',
+    'contactShare.copied': 'In die Zwischenablage kopiert.',
+    'contactShare.shareTitle': 'Meine Kontaktdaten',
+    'contactShare.shareIntro': 'So kannst du mich erreichen:',
+    'contactShare.shareFooter':
+        'Geteilt mit Thestia. Meine Nummer bleibt auf meinem Gerät.',
+    'contactShare.empty':
+        'Noch keine Kontaktdaten gespeichert. Trage Telefonnummer oder '
+        'einen Handle ein und tippe auf Speichern.',
+    'contactShare.remove': 'Entfernen',
+    'contactShare.none': 'Nicht angegeben',
+    'contactShare.add': 'Hinzufügen',
+    'contactShare.saveFailed':
+        'Speichern fehlgeschlagen. Bitte versuche es erneut.',
+    'contactShare.loadFailed':
+        'Kontaktdaten konnten nicht geladen werden. Deine Angaben sind '
+        'weiterhin sicher auf diesem Gerät.',
+    'contactShare.shareFailed': 'Teilen ist gerade nicht möglich.',
+    'home.qrTooltip': 'Mit anderen verbinden',
     'admin.statusOpen': 'Offen',
     'admin.statusApproved': 'Freigegeben',
     'admin.statusRejected': 'Abgelehnt',
@@ -3245,8 +3384,8 @@ const Map<String, Map<String, String>> _strings = {
     'dm.findMatchDesc': 'Listen to or read the intro, then decide',
     'dm.randomChat': 'Random chat',
     'dm.randomChatDesc': 'Direct text chat with a randomly matched person',
-    'dm.qrScan': 'Scan QR code',
-    'dm.qrScanDesc': "Scan someone's code and connect instantly",
+    'dm.qrScan': 'Connect to others',
+    'dm.qrScanDesc': 'Scan a QR code or share contact details',
     'dm.datingHour': 'Dating Hour (event)',
     'dm.datingHourDesc':
         'Saturdays 8 to 9 pm: 5-minute chats with a decision phase',
@@ -4620,7 +4759,7 @@ const Map<String, Map<String, String>> _strings = {
         '{name} will be deleted locally. The related chat history is lost '
         'with it.',
     // QR flow
-    'qr.menuTitle': 'QR code',
+    'qr.menuTitle': 'Connect to others',
     'qr.choiceTitle': 'What would you like to do?',
     'qr.showMine': 'Show my QR code',
     'qr.showMineBtn': 'Show my own code',
@@ -5632,6 +5771,137 @@ const Map<String, Map<String, String>> _strings = {
         'icebreaker question for your counterpart?',
     'chat.icebreakerSuggestSend': 'Send question',
     'chat.icebreakerSuggestLater': 'Later',
+    // Safety education before setup (30 Oct 2026)
+    'safetyOnboarding.title': 'Staying safe',
+    'safetyOnboarding.ackTitle': 'Before you start',
+    'safetyOnboarding.ackBody':
+        'Thestia connects people who do not know each other yet. That is '
+        'where the opportunity lies - and the risk. Take two minutes for '
+        'the most important rules.',
+    'safetyOnboarding.ack1':
+        'Your data belongs to you: share your phone number, address or '
+        'workplace only when you are sure.',
+    'safetyOnboarding.ack2':
+        'Nobody has to pressure you into anything - not into a meeting, '
+        'not into photos, not into money.',
+    'safetyOnboarding.ack3':
+        'You can report and block at any time. You do not have to '
+        'explain yourself.',
+    'safetyOnboarding.ackButton': 'I understand',
+    'safetyOnboarding.timeHint':
+        'This takes at most 5 minutes. Your progress is saved.',
+    'safetyOnboarding.q1Title': 'Have you used a dating app before?',
+    'safetyOnboarding.q1Body':
+        'There is no right answer. The question only helps us meet you '
+        'where you are right now.',
+    'safetyOnboarding.q2Title':
+        'Are you aware of the dangers of online dating?',
+    'safetyOnboarding.q2Body':
+        'For example fake profiles, unsolicited images, pressure or '
+        'fraud. If you are unsure, we will show you the most important '
+        'points.',
+    'safetyOnboarding.yes': 'Yes',
+    'safetyOnboarding.no': 'No',
+    'safetyOnboarding.back': 'Back',
+    'safetyOnboarding.educationTitle': 'Dating safely',
+    'safetyOnboarding.progress': 'Page {current} of {total}',
+    'safetyOnboarding.timer': '{min} min left',
+    'safetyOnboarding.next': 'Next',
+    'safetyOnboarding.finish': 'Done',
+    'safetyOnboarding.moreInfo': 'Read the long version',
+    'safetyOnboarding.edu1Title': 'Not everything is real',
+    'safetyOnboarding.edu1Body':
+        'Photos, names and jobs can be faked. A profile is not proof. '
+        'Ask for a short video call or a public meeting before you share '
+        'personal things.',
+    'safetyOnboarding.edu1Hint':
+        'Trust grows - it does not arrive with the first photo.',
+    'safetyOnboarding.edu2Title': 'Your data belongs to you',
+    'safetyOnboarding.edu2Body':
+        'Phone numbers, addresses, employers and ID photos are sensitive. '
+        'Share them only when you know the person well. Screenshots can '
+        'pass on everything - even disappearing messages.',
+    'safetyOnboarding.edu2Hint':
+        'A screenshot is taken faster than you think.',
+    'safetyOnboarding.edu3Title': 'The first meeting',
+    'safetyOnboarding.edu3Body':
+        'Meet during the day in a public place. Tell someone you know '
+        'where you are and when you want to be back. Arrange your own '
+        'way home.',
+    'safetyOnboarding.edu3Hint':
+        'You do not have to give anyone your address - not even for a '
+        'pickup.',
+    'safetyOnboarding.edu4Title': 'Boundaries and consent',
+    'safetyOnboarding.edu4Body':
+        'A yes only applies to exactly what is happening. A no, a pause '
+        'or pulling back is a no. Nobody owes you photos, time or '
+        'closeness - and you do not owe them to anyone either.',
+    'safetyOnboarding.edu4Hint':
+        'Pressure is not getting to know someone. You may leave at any '
+        'time.',
+    'safetyOnboarding.edu5Title': 'Getting help',
+    'safetyOnboarding.edu5Body':
+        'You can report and block profiles without justifying yourself. '
+        'For threats, stalking or violence, contact the police (110) or '
+        'the emergency line (112). The Safety Center lists more ways to '
+        'get help.',
+    'safetyOnboarding.edu5Hint': 'Getting help is strength, not weakness.',
+    // "Connect to others": sharing contact details
+    'contactShare.title': 'Connect to others',
+    'contactShare.subtitle':
+        'Share your contact details - only if you want to.',
+    'contactShare.qrCardTitle': 'Phone & social media',
+    'contactShare.qrCardSub': 'Store and share contact details locally',
+    'contactShare.intro':
+        'Save how others can reach you outside Thestia. You decide anew '
+        'every time you share.',
+    'contactShare.phone': 'Phone number',
+    'contactShare.phoneHint': 'e.g. +49 170 1234567',
+    'contactShare.phonePrivacy':
+        'Your number stays encrypted on this device and is never sent to '
+        'our servers.',
+    'contactShare.apps': 'Apps',
+    'contactShare.signal': 'Signal',
+    'contactShare.threema': 'Threema',
+    'contactShare.instagram': 'Instagram',
+    'contactShare.snapchat': 'Snapchat',
+    'contactShare.discord': 'Discord',
+    'contactShare.recommended': 'recommended',
+    'contactShare.notRecommended': 'not recommended',
+    'contactShare.notRecommendedHint':
+        'Instagram, Snapchat and Discord are not secure messengers. Use '
+        'them only if you want to.',
+    'contactShare.handle': 'Name / handle',
+    'contactShare.handleHint': '@name or ID',
+    'contactShare.addCustom': 'Add another app',
+    'contactShare.customEntry': 'Custom app',
+    'contactShare.customApp': 'App name',
+    'contactShare.customAppHint': 'e.g. Telegram',
+    'contactShare.customNeedsName': 'Please fill in app name and handle.',
+    'contactShare.handleMissing':
+        'Please enter a handle or turn the app off.',
+    'contactShare.invalidPhone': 'Please enter a valid phone number.',
+    'contactShare.save': 'Save',
+    'contactShare.saved': 'Contact details saved.',
+    'contactShare.share': 'Share contact details',
+    'contactShare.copy': 'Copy',
+    'contactShare.copied': 'Copied to clipboard.',
+    'contactShare.shareTitle': 'My contact details',
+    'contactShare.shareIntro': 'Here is how you can reach me:',
+    'contactShare.shareFooter':
+        'Shared with Thestia. My number stays on my device.',
+    'contactShare.empty':
+        'No contact details saved yet. Enter a phone number or a handle '
+        'and tap Save.',
+    'contactShare.remove': 'Remove',
+    'contactShare.none': 'Not provided',
+    'contactShare.add': 'Add',
+    'contactShare.saveFailed': 'Saving failed. Please try again.',
+    'contactShare.loadFailed':
+        'Contact details could not be loaded. Your data is still safe on '
+        'this device.',
+    'contactShare.shareFailed': 'Sharing is currently not possible.',
+    'home.qrTooltip': 'Connect to others',
     'admin.statusOpen': 'Open',
     'admin.statusApproved': 'Approved',
     'admin.statusRejected': 'Rejected',

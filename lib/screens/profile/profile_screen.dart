@@ -24,6 +24,7 @@ import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/services/supabase_storage_service.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/widgets/birthday_style.dart';
+import 'package:thestia/widgets/centered_name_with_badges.dart';
 import 'package:thestia/widgets/donate_button.dart';
 import 'package:thestia/widgets/new_account_badge.dart';
 import 'package:thestia/utils/age_safety_rules.dart';
@@ -211,6 +212,10 @@ class ProfileScreen extends ConsumerWidget {
             : '')
         : '';
 
+    // NUTZERWUNSCH (30.10.2026): derselbe flächige Geburtstags-Hintergrund
+    // wie in der Vorschau - nicht nur der Rahmen ums Bild.
+    final isBirthday = UserProfile.isBirthdayToday(profile.birthDate);
+
     return Scaffold(
       appBar: AppBar(
         title: Text(L10n.t(context, 'profile.title')),
@@ -227,156 +232,153 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: ScrollMoreHint(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Center(child: _OwnAvatar()),
-              const SizedBox(height: 16),
-              Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+      body: BirthdayStyleSurface(
+        style: profile.birthdayStyle,
+        active: isBirthday,
+        child: ScrollMoreHint(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Center(child: _OwnAvatar()),
+                const SizedBox(height: 16),
+                Center(
+                  child: GestureDetector(
                     // Versteckter Admin-Zugang: Long-Press auf den Namen
                     // oeffnet nur fuer die konfigurierte Admin-ID den
                     // Admin-Bereich. Normale Nutzer erreichen ihn nicht.
-                    GestureDetector(
-                      onLongPress: isCurrentUserAdmin()
-                          ? () => context.go(AppRoutes.admin)
-                          : null,
-                      child: Text(
-                        profile.name.isEmpty
-                            ? L10n.t(context, 'profile.unknown')
-                            : profile.name,
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
+                    onLongPress: isCurrentUserAdmin()
+                        ? () => context.go(AppRoutes.admin)
+                        : null,
+                    child: CenteredNameWithBadges(
+                      name: profile.name.isEmpty
+                          ? L10n.t(context, 'profile.unknown')
+                          : profile.name,
+                      style: Theme.of(context).textTheme.headlineSmall,
+                      badges: [
+                        // Verifiziert-Badge direkt neben dem Namen
+                        // (Nutzerwunsch; serverseitig durch Admin-Freigabe).
+                        if (profile.isVerified)
+                          Tooltip(
+                            message: L10n.t(context, 'verify.badge'),
+                            child: Icon(
+                              Icons.verified,
+                              size: 20,
+                              color: Colors.lightBlue.shade400,
+                            ),
+                          ),
+                        // Konto juenger als 7 Tage. Auf dem eigenen Profil
+                        // sichtbar, damit man sieht, wie man bei anderen
+                        // wirkt - die eigentliche Wirkung ist die Anzeige
+                        // auf fremden Profilen.
+                        if (profile.isRecentlyCreated)
+                          NewAccountBadge(profile: profile),
+                      ],
                     ),
-                    // Verifiziert-Badge direkt neben dem Namen
-                    // (Nutzerwunsch; serverseitig durch Admin-Freigabe).
-                    if (profile.isVerified) ...[
-                      const SizedBox(width: 6),
-                      Tooltip(
-                        message: L10n.t(context, 'verify.badge'),
-                        child: Icon(
-                          Icons.verified,
-                          size: 20,
-                          color: Colors.lightBlue.shade400,
-                        ),
-                      ),
-                    ],
-                    // Konto juenger als 7 Tage. Auf dem eigenen Profil
-                    // sichtbar, damit man sieht, wie man bei anderen
-                    // wirkt - die eigentliche Wirkung ist die Anzeige
-                    // auf fremden Profilen.
-                    if (profile.isRecentlyCreated) ...[
-                      const SizedBox(width: 6),
-                      NewAccountBadge(profile: profile),
-                    ],
-                  ],
+                  ),
                 ),
-              ),
-              Center(
-                child: Text(
-                  '${profile.age != null ? '${profile.age} ${L10n.t(context, 'profile.years')}' : L10n.t(context, 'profile.ageUnknown')}'
-                  '${genderLabel.isNotEmpty ? ' · $genderLabel' : ''}'
-                  // v0.10.0: Bundesland statt Ort. Der Ort war
-                  // der eigentlich sensible Teil und wird nicht
-                  // mehr gespeichert (Migration 135/136).
-                  '${stateSuffix(profile)}',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-              // Persönlichkeitstyp als Chip (Badge steht jetzt beim Namen).
-              if (profile.personalityType != null) ...[
-                const SizedBox(height: 4),
                 Center(
-                  child: Chip(
-                    label: Text(
-                        '${L10n.t(context, 'profile.typePrefix')} ${profile.personalityType}'),
+                  child: Text(
+                    '${profile.age != null ? '${profile.age} ${L10n.t(context, 'profile.years')}' : L10n.t(context, 'profile.ageUnknown')}'
+                    '${genderLabel.isNotEmpty ? ' · $genderLabel' : ''}'
+                    // v0.10.0: Bundesland statt Ort. Der Ort war
+                    // der eigentlich sensible Teil und wird nicht
+                    // mehr gespeichert (Migration 135/136).
+                    '${stateSuffix(profile)}',
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
-              ],
-              // Verifizierungs-Status (v0.9.1): Prüfung läuft oder
-              // Einstieg in den Video-Flow (Konto bleibt immer nutzbar).
-              if (!profile.isVerified) ...[
-                const SizedBox(height: 8),
-                const _VerificationStatusCard(),
-              ],
-              const SizedBox(height: 16),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(L10n.t(context, 'profile.aboutMe'),
-                          style: Theme.of(context).textTheme.titleMedium),
-                      const SizedBox(height: 8),
-                      Text(
-                        profile.bio.isEmpty
-                            ? L10n.t(context, 'profile.noBio')
-                            : profile.bio,
-                      ),
-                    ],
+                // Persönlichkeitstyp als Chip (Badge steht jetzt beim Namen).
+                if (profile.personalityType != null) ...[
+                  const SizedBox(height: 4),
+                  Center(
+                    child: Chip(
+                      label: Text(
+                          '${L10n.t(context, 'profile.typePrefix')} ${profile.personalityType}'),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              if (profile.interests.isNotEmpty) ...[
+                ],
+                // Verifizierungs-Status (v0.9.1): Prüfung läuft oder
+                // Einstieg in den Video-Flow (Konto bleibt immer nutzbar).
+                if (!profile.isVerified) ...[
+                  const SizedBox(height: 8),
+                  const _VerificationStatusCard(),
+                ],
+                const SizedBox(height: 16),
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(L10n.t(context, 'profile.interests'),
+                        Text(L10n.t(context, 'profile.aboutMe'),
                             style: Theme.of(context).textTheme.titleMedium),
-                        const SizedBox(height: 12),
-                        InterestChips(interests: profile.interests),
+                        const SizedBox(height: 8),
+                        Text(
+                          profile.bio.isEmpty
+                              ? L10n.t(context, 'profile.noBio')
+                              : profile.bio,
+                        ),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
-              ],
-              const _MoodCard(),
-              const SizedBox(height: 12),
-              Card(
-                child: SwitchListTile(
-                  title: Text(L10n.t(context, 'profile.blindModeTitle')),
-                  subtitle: Text(L10n.t(context, 'profile.blindModeSub')),
-                  value: settings.blindModeEnabled,
-                  onChanged: (v) {
-                    ref.read(settingsProvider.notifier).toggleBlindMode(v);
-                    // Blind Mode gehört zu den gespiegelten UI-Einstellungen
-                    // (v0.8.0) - entprellt serverseitig sichern.
-                    scheduleUiPrefsServerSync(
-                        ref.read(settingsProvider));
-                  },
+                if (profile.interests.isNotEmpty) ...[
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(L10n.t(context, 'profile.interests'),
+                              style: Theme.of(context).textTheme.titleMedium),
+                          const SizedBox(height: 12),
+                          InterestChips(interests: profile.interests),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                const _MoodCard(),
+                const SizedBox(height: 12),
+                Card(
+                  child: SwitchListTile(
+                    title: Text(L10n.t(context, 'profile.blindModeTitle')),
+                    subtitle: Text(L10n.t(context, 'profile.blindModeSub')),
+                    value: settings.blindModeEnabled,
+                    onChanged: (v) {
+                      ref.read(settingsProvider.notifier).toggleBlindMode(v);
+                      // Blind Mode gehört zu den gespiegelten UI-Einstellungen
+                      // (v0.8.0) - entprellt serverseitig sichern.
+                      scheduleUiPrefsServerSync(
+                          ref.read(settingsProvider));
+                    },
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: () => _showProfileMenu(context, ref, profile, settings),
-                icon: const Icon(Icons.person),
-                label: Text(L10n.t(context, 'profile.profileBtn')),
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: () => context.push(AppRoutes.bugReport),
-                icon: const Icon(Icons.bug_report),
-                label: Text(L10n.t(context, 'profile.bugReportBtn')),
-              ),
-              const SizedBox(height: 12),
-              // Spenden-Button, wieder da (bis v0.4.0 entfernt, weil die
-              // Zahlung eine Attrappe war). Ohne hinterlegte Adresse sagt
-              // der Button das auch - es tut so, als waere gespendet
-              // worden, waere schlimmer als gar nichts.
-              const Center(child: DonateButton()),
-              const SizedBox(height: 12),
-            ],
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: () => _showProfileMenu(context, ref, profile, settings),
+                  icon: const Icon(Icons.person),
+                  label: Text(L10n.t(context, 'profile.profileBtn')),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () => context.push(AppRoutes.bugReport),
+                  icon: const Icon(Icons.bug_report),
+                  label: Text(L10n.t(context, 'profile.bugReportBtn')),
+                ),
+                const SizedBox(height: 12),
+                // Spenden-Button, wieder da (bis v0.4.0 entfernt, weil die
+                // Zahlung eine Attrappe war). Ohne hinterlegte Adresse sagt
+                // der Button das auch - es tut so, als waere gespendet
+                // worden, waere schlimmer als gar nichts.
+                const Center(child: DonateButton()),
+                const SizedBox(height: 12),
+              ],
+            ),
           ),
         ),
       ),
@@ -394,41 +396,48 @@ class ProfileScreen extends ConsumerWidget {
       context: context,
       shape: profilDialogForm(),
       builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Der kleine Streifen oben: er sagt "das kannst du nach
-            // unten wegschieben" (NUTZERWUNSCH, 28.10.2026).
-            profilGriffleiste(context),
-            ListTile(
-              leading: const Icon(Icons.edit),
-              title: Text(L10n.t(context, 'profile.menu.edit')),
-              subtitle: Text(L10n.t(context, 'profile.menu.editSub')),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                context.push(AppRoutes.profileEdit);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.visibility),
-              title: Text(L10n.t(context, 'profile.menu.preview')),
-              subtitle: Text(L10n.t(context, 'profile.menu.previewSub')),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                _showProfilePreview(context, ref, profile, settings);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.record_voice_over),
-              title: Text(L10n.t(context, 'profile.menu.introPreview')),
-              subtitle:
-                  Text(L10n.t(context, 'profile.menu.introPreviewSub')),
-              onTap: () {
-                Navigator.of(ctx).pop();
-                _showIntroPreview(context, ref, profile);
-              },
-            ),
-          ],
+        child: Padding(
+          // NUTZERWUNSCH (31.10.2026): "Der Strich im Profil und dann
+          // ... soll nicht ganz oben sein, sondern noch ein bisschen
+          // Platz/Rand nach oben haben." Der Griff klebt nicht mehr an
+          // der Oberkante des Blattes.
+          padding: const EdgeInsets.only(top: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Der kleine Streifen oben: er sagt "das kannst du nach
+              // unten wegschieben" (NUTZERWUNSCH, 28.10.2026).
+              profilGriffleiste(context),
+              ListTile(
+                leading: const Icon(Icons.edit),
+                title: Text(L10n.t(context, 'profile.menu.edit')),
+                subtitle: Text(L10n.t(context, 'profile.menu.editSub')),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  context.push(AppRoutes.profileEdit);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.visibility),
+                title: Text(L10n.t(context, 'profile.menu.preview')),
+                subtitle: Text(L10n.t(context, 'profile.menu.previewSub')),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _showProfilePreview(context, ref, profile, settings);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.record_voice_over),
+                title: Text(L10n.t(context, 'profile.menu.introPreview')),
+                subtitle:
+                    Text(L10n.t(context, 'profile.menu.introPreviewSub')),
+                onTap: () {
+                  Navigator.of(ctx).pop();
+                  _showIntroPreview(context, ref, profile);
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -535,186 +544,211 @@ class ProfileScreen extends ConsumerWidget {
         maxChildSize: 0.95,
         minChildSize: 0.5,
         expand: false,
-        builder: (_, controller) => SingleChildScrollView(
-          controller: controller,
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              profilGriffleiste(context),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-              Text(
-                L10n.t(context, 'profile.preview.title'),
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => Navigator.of(ctx).pop(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            L10n.t(context, 'profile.preview.hint'),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-          ),
-          const SizedBox(height: 16),
-          // Umschalter: normale Vorschau oder Geburtstag.
-          ProfilVorschauUmschalter(
-            geburtstag: geburtstag,
-            onChanged: (v) => geburtstag.value = v,
-          ),
-          const SizedBox(height: 24),
-          // Der Avatar reagiert auf den Umschalter: im Geburtstags-Modus
-          // bekommt er den Stil-Rahmen (Verlauf) wie im echten Profil.
-          ValueListenableBuilder<bool>(
-            valueListenable: geburtstag,
-            builder: (context, istGeburtstag, _) {
-              final avatar = CircleAvatar(
-                radius: 56,
-                backgroundColor: isPhotosVisible
-                    ? Theme.of(context).colorScheme.primaryContainer
-                    : Colors.grey.shade300,
-                child: !isPhotosVisible
-                    ? const Icon(Icons.visibility_off,
-                        size: 48, color: Colors.white)
-                    : FutureBuilder<Uint8List?>(
-                        future: avatarFuture,
-                        builder: (context, snap) {
-                          final bytes = snap.data;
-                          if (bytes != null) {
-                            return ClipOval(
-                              child: Image.memory(bytes,
-                                  width: 112, height: 112, fit: BoxFit.cover),
-                            );
-                          }
-                          return const Icon(Icons.person,
-                              size: 56, color: Colors.white);
-                        },
-                      ),
-              );
-              if (!istGeburtstag) return avatar;
-              return BirthdayStyleFrame(
-                style: profile.birthdayStyle,
-                active: true,
-                borderRadius: 56,
-                child: avatar,
-              );
-            },
-          ),
-          // Der Chip weist den aktiven Stil aus (wie im echten Profil).
-          ValueListenableBuilder<bool>(
-            valueListenable: geburtstag,
-            builder: (context, istGeburtstag, _) => istGeburtstag
-                ? const Padding(
-                    padding: EdgeInsets.only(top: 10),
-                    child: Center(child: BirthdayChip()),
-                  )
-                : const SizedBox.shrink(),
-          ),
-              const SizedBox(height: 16),
-              Center(
-                child: Builder(builder: (context) {
-                  final genderName = profile.gender != null &&
-                          profile.gender!.isNotEmpty
-                      ? (Gender.fromValue(profile.gender) != null
-                          ? L10n.t(
-                              context, Gender.fromValue(profile.gender)!.labelKey)
-                          : profile.gender!)
-                      : '';
-                  return Text(
-                    '${profile.name}${profile.age != null ? ', ${profile.age}' : ''}'
-                    '${genderName.isNotEmpty ? ' · $genderName' : ''}'
-                    '${stateSuffix(profile)}',
-                    style: Theme.of(context).textTheme.titleMedium,
-                    textAlign: TextAlign.center,
-                  );
-                }),
-              ),
-              if (profile.personalityType != null) ...[
-                const SizedBox(height: 8),
-                Center(
-                  child: Chip(
-                      label: Text(
-                          '${L10n.t(context, 'profile.preview.type')} ${profile.personalityType}')),
-                ),
-              ],
-              if (!isPhotosVisible) ...[
+        builder: (_, controller) => ValueListenableBuilder<bool>(
+          valueListenable: geburtstag,
+          builder: (context, istGeburtstag, _) => BirthdayStyleSurface(
+            style: profile.birthdayStyle,
+            active: istGeburtstag,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            child: SingleChildScrollView(
+                controller: controller,
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    profilGriffleiste(context),
+                    // NUTZERWUNSCH (30.10.2026): Die Vorschau ist
+                    // zentriert - Bild UND alle Angaben. Der Titel
+                    // steht mittig, das Schliessen-Icon bleibt oben
+                    // rechts (Stack statt Row).
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 40),
+                          child: Text(
+                            L10n.t(context, 'profile.preview.title'),
+                            style: Theme.of(context).textTheme.headlineSmall,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.of(ctx).pop(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      L10n.t(context, 'profile.preview.hint'),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
                 const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline,
-                          color: Theme.of(context).colorScheme.onPrimaryContainer),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          L10n.t(context, 'profile.preview.photoHidden'),
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: Theme.of(context).colorScheme.onPrimaryContainer,
+                // Umschalter: normale Vorschau oder Geburtstag.
+                ProfilVorschauUmschalter(
+                  geburtstag: geburtstag,
+                  onChanged: (v) => geburtstag.value = v,
+                ),
+                const SizedBox(height: 24),
+                // Der Avatar reagiert auf den Umschalter: im Geburtstags-Modus
+                // bekommt er den Stil-Rahmen (Verlauf) wie im echten Profil.
+                // Die ganze Fläche darüber tönt [BirthdayStyleSurface].
+                Center(
+                  child: ValueListenableBuilder<bool>(
+                    valueListenable: geburtstag,
+                    builder: (context, istGeburtstag, _) {
+                      final avatar = CircleAvatar(
+                        radius: 56,
+                        backgroundColor: isPhotosVisible
+                            ? Theme.of(context).colorScheme.primaryContainer
+                            : Colors.grey.shade300,
+                        child: !isPhotosVisible
+                            ? const Icon(Icons.visibility_off,
+                                size: 48, color: Colors.white)
+                            : FutureBuilder<Uint8List?>(
+                                future: avatarFuture,
+                                builder: (context, snap) {
+                                  final bytes = snap.data;
+                                  if (bytes != null) {
+                                    return ClipOval(
+                                      child: Image.memory(bytes,
+                                          width: 112,
+                                          height: 112,
+                                          fit: BoxFit.cover),
+                                    );
+                                  }
+                                  return const Icon(Icons.person,
+                                      size: 56, color: Colors.white);
+                                },
                               ),
+                      );
+                      if (!istGeburtstag) return avatar;
+                      return BirthdayStyleFrame(
+                        style: profile.birthdayStyle,
+                        active: true,
+                        borderRadius: 56,
+                        child: avatar,
+                      );
+                    },
+                  ),
+                ),
+                // Der Chip weist den aktiven Stil aus (wie im echten Profil).
+                ValueListenableBuilder<bool>(
+                  valueListenable: geburtstag,
+                  builder: (context, istGeburtstag, _) => istGeburtstag
+                      ? const Padding(
+                          padding: EdgeInsets.only(top: 10),
+                          child: Center(child: BirthdayChip()),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+                    const SizedBox(height: 16),
+                    Center(
+                      child: Builder(builder: (context) {
+                        final genderName = profile.gender != null &&
+                                profile.gender!.isNotEmpty
+                            ? (Gender.fromValue(profile.gender) != null
+                                ? L10n.t(
+                                    context, Gender.fromValue(profile.gender)!.labelKey)
+                                : profile.gender!)
+                            : '';
+                        return Text(
+                          '${profile.name}${profile.age != null ? ', ${profile.age}' : ''}'
+                          '${genderName.isNotEmpty ? ' · $genderName' : ''}'
+                          '${stateSuffix(profile)}',
+                          style: Theme.of(context).textTheme.titleMedium,
+                          textAlign: TextAlign.center,
+                        );
+                      }),
+                    ),
+                    if (profile.personalityType != null) ...[
+                      const SizedBox(height: 8),
+                      Center(
+                        child: Chip(
+                            label: Text(
+                                '${L10n.t(context, 'profile.preview.type')} ${profile.personalityType}')),
+                      ),
+                    ],
+                    if (!isPhotosVisible) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline,
+                                color: Theme.of(context).colorScheme.onPrimaryContainer),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                L10n.t(context, 'profile.preview.photoHidden'),
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                    ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
-                  ),
-                ),
-              ],
-              const SizedBox(height: 24),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                    Text(L10n.t(context, 'profile.preview.aboutMe'),
-                          style: Theme.of(context).textTheme.titleMedium),
-                      const SizedBox(height: 8),
-                      Text(
-                        profile.bio.isEmpty
-                            ? L10n.t(context, 'profile.preview.noBio')
-                            : profile.bio,
+                    const SizedBox(height: 24),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                          Text(L10n.t(context, 'profile.preview.aboutMe'),
+                                style: Theme.of(context).textTheme.titleMedium),
+                            const SizedBox(height: 8),
+                            Text(
+                              profile.bio.isEmpty
+                                  ? L10n.t(context, 'profile.preview.noBio')
+                                  : profile.bio,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (profile.interests.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(L10n.t(context, 'profile.preview.interests'),
+                                  style: Theme.of(context).textTheme.titleMedium),
+                              const SizedBox(height: 12),
+                              InterestChips(interests: profile.interests),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
-                  ),
-                ),
-              ),
-              if (profile.interests.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(L10n.t(context, 'profile.preview.interests'),
-                            style: Theme.of(context).textTheme.titleMedium),
-                        const SizedBox(height: 12),
-                        InterestChips(interests: profile.interests),
-                      ],
+                    const SizedBox(height: 16),
+                    Text(
+                      L10n.t(context, 'profile.preview.note'),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
+                    const SizedBox(height: 24),
+                  ],
                 ),
-              ],
-              const SizedBox(height: 16),
-              Text(
-                L10n.t(context, 'profile.preview.note'),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-            ],
           ),
+        ),
         ),
       ),
     );

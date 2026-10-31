@@ -26,6 +26,7 @@ import 'package:thestia/screens/core/main_navigation.dart';
 import 'package:thestia/screens/interests/interessen_screen.dart';
 import 'package:thestia/screens/onboarding/personality_test_screen.dart';
 import 'package:thestia/screens/onboarding/settings_privacy_once_screen.dart';
+import 'package:thestia/screens/onboarding/dating_safety_education_screen.dart';
 import 'package:thestia/screens/mood/mood_picker_screen.dart';
 import 'package:thestia/screens/core/whats_new_screen.dart';
 import 'package:thestia/services/whats_new_service.dart';
@@ -53,6 +54,7 @@ import 'package:thestia/screens/profile/profile_detail_screen.dart';
 import 'package:thestia/screens/swipe/random_chat_screen.dart';
 import 'package:thestia/screens/swipe/transit_radar_screen.dart';
 import 'package:thestia/screens/bug_report/bug_report_screen.dart';
+import 'package:thestia/screens/qr/contact_share_screen.dart';
 import 'package:thestia/screens/qr/qr_profile_screen.dart';
 import 'package:thestia/screens/qr/qr_scan_screen.dart';
 import 'package:thestia/screens/legal/community_guidelines_screen.dart';
@@ -86,6 +88,8 @@ class AppRoutes {
   static const String settings = '/settings';
   static const String personalityTest = '/personality-test';
   static const String settingsPrivacyOnce = '/settings-privacy-once';
+  // Sicherheits-Aufklärung nach der E-Mail-Bestätigung, vor dem Setup.
+  static const String datingSafetyEducation = '/dating-safety-education';
   static const String swipeModeSelection = '/swipe-mode-selection';
   static const String randomChat = '/random-chat';
   // Transit Spark (v0.9.0)
@@ -94,6 +98,8 @@ class AppRoutes {
   // QR-Code (Profil teilen + Scannen)
   static const String qrProfile = '/qr/profile';
   static const String qrScan = '/qr/scan';
+  // "Connect to others": Kontaktdaten teilen (Telefon, Social Media)
+  static const String qrContacts = '/qr/contacts';
   // Mood of the Day
   static const String moodPicker = '/mood/picker';
   // "Neu in dieser Version" (App-Update-Popup für Registrierte).
@@ -268,6 +274,8 @@ GoRouter createRouter(Ref ref) {
           state.matchedLocation == AppRoutes.unbanRequest;
       final goingToSettingsPrivacyOnce =
           state.matchedLocation == AppRoutes.settingsPrivacyOnce;
+      final goingToDatingSafetyEducation =
+          state.matchedLocation == AppRoutes.datingSafetyEducation;
       final goingToOnboarding = state.matchedLocation == AppRoutes.onboarding;
       final goingToPersonalityTest =
           state.matchedLocation == AppRoutes.personalityTest;
@@ -430,6 +438,7 @@ GoRouter createRouter(Ref ref) {
       final setupExempt =
           goingToSettingsPrivacyOnce ||
           goingToSignupWelcome ||
+          goingToDatingSafetyEducation ||
           state.matchedLocation == AppRoutes.mfaSetup ||
           state.matchedLocation == AppRoutes.mfaChallenge ||
           state.matchedLocation == AppRoutes.bugReport;
@@ -461,6 +470,17 @@ GoRouter createRouter(Ref ref) {
           ref.read(pendingVerificationCredentialsProvider) != null;
       final enforceSetup =
           !settings.onboardingDone && (flagsKnown || freshRegistration);
+
+      // Schritt 1 vor dem eigentlichen Setup (NUTZERWUNSCH 30.10.2026):
+      // Sicherheits-Aufklärung. Sie gilt nur für Konten, deren Setup noch
+      // offen ist - Bestandsnutzer werden nicht nachträglich behelligt.
+      // Ist sie einmal abgeschlossen, erzwingt der Router sie nie wieder.
+      if (enforceSetup && !settings.datingSafetyEducationCompleted) {
+        if (!goingToDatingSafetyEducation) {
+          return AppRoutes.datingSafetyEducation;
+        }
+        return null;
+      }
 
       if (enforceSetup && !settings.oneTimeSettingsCompleted) {
         if (!setupExempt) return AppRoutes.settingsPrivacyOnce;
@@ -536,6 +556,7 @@ GoRouter createRouter(Ref ref) {
           goingToForgotPassword ||
           goingToResetPassword ||
           goingToSettingsPrivacyOnce ||
+          goingToDatingSafetyEducation ||
           goingToOnboarding) {
         return AppRoutes.home;
       }
@@ -596,6 +617,11 @@ GoRouter createRouter(Ref ref) {
         path: AppRoutes.settingsPrivacyOnce,
         builder: (context, state) => const SettingsPrivacyOnceScreen(),
       ),
+      // Sicherheits-Aufklärung (nach E-Mail-Bestätigung, vor dem Setup)
+      GoRoute(
+        path: AppRoutes.datingSafetyEducation,
+        builder: (context, state) => const DatingSafetyEducationScreen(),
+      ),
       GoRoute(
         path: AppRoutes.settings,
         builder: (context, state) => const SettingsScreen(),
@@ -649,6 +675,11 @@ GoRouter createRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.qrScan,
         builder: (context, state) => const QrScanScreen(),
+      ),
+      // "Connect to others": Telefon & Social Media (nur lokal gespeichert)
+      GoRoute(
+        path: AppRoutes.qrContacts,
+        builder: (context, state) => const ContactShareScreen(),
       ),
       // Mood of the Day
       GoRoute(

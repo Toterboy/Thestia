@@ -19,6 +19,7 @@ import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/services/supabase_storage_service.dart';
 import 'package:thestia/services/report_service.dart';
 import 'package:thestia/widgets/birthday_style.dart';
+import 'package:thestia/widgets/centered_name_with_badges.dart';
 import 'package:thestia/utils/age_safety_rules.dart';
 import 'package:thestia/widgets/intro_audio_player.dart';
 import 'package:thestia/widgets/new_account_badge.dart';
@@ -270,404 +271,397 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
             ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: _PublicProfileAvatar(
-                profile: profile,
-                isPhotosVisible: isPhotosVisible,
+      body: BirthdayStyleSurface(
+        style: profile.birthdayStyle,
+        active: profile.birthdayToday,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: _PublicProfileAvatar(
+                  profile: profile,
+                  isPhotosVisible: isPhotosVisible,
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Center(
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    child: Text(
+              const SizedBox(height: 16),
+              Center(
+                child: CenteredNameWithBadges(
+                  name:
                       '${profile.name}${profile.age != null && profile.age! > 0 ? ', ${profile.age}' : ''}'
                       '${genderLabel.isNotEmpty ? ' · $genderLabel' : ''}'
                       '${(profile.state ?? '').isNotEmpty ? ' · ${profile.state}' : ''}',
-                      // v0.10.0: Der Ortsname ist entfallen. Vorher stand
-                      // hier ein Fallback "Stadt, wenn kein Bundesland
-                      // gesetzt war" - damit stand der genauere Ort genau
-                      // dann im Profil, wenn die grobe Angabe fehlte. Das
-                      // war die unguenstigste Reihenfolge.
-                      style: Theme.of(context).textTheme.titleMedium,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  // Verifiziert-Badge direkt neben dem Namen
-                  // (Nutzerwunsch; serverseitig durch Admin-Freigabe).
-                  if (profile.isVerified) ...[
-                    const SizedBox(width: 6),
-                    Tooltip(
-                      message: L10n.t(context, 'verify.badge'),
-                      child: Icon(
-                        Icons.verified,
-                        size: 20,
-                        color: Colors.lightBlue.shade400,
+                  // v0.10.0: Der Ortsname ist entfallen. Vorher stand
+                  // hier ein Fallback "Stadt, wenn kein Bundesland
+                  // gesetzt war" - damit stand der genauere Ort genau
+                  // dann im Profil, wenn die grobe Angabe fehlte. Das
+                  // war die unguenstigste Reihenfolge.
+                  style: Theme.of(context).textTheme.titleMedium,
+                  badges: [
+                    // Verifiziert-Badge direkt neben dem Namen
+                    // (Nutzerwunsch; serverseitig durch Admin-Freigabe).
+                    if (profile.isVerified)
+                      Tooltip(
+                        message: L10n.t(context, 'verify.badge'),
+                        child: Icon(
+                          Icons.verified,
+                          size: 20,
+                          color: Colors.lightBlue.shade400,
+                        ),
                       ),
-                    ),
-                  ],
-                  // Konto juenger als 7 Tage. Hier ist der Hinweis
-                  // wertvoll: bei einem neuen Account ist eine
-                  // ungefragte Nachricht mit hoher Wahrscheinlichkeit
-                  // Missbrauch. Die RPC liefert created_at bereits mit.
-                  // Verifikations-Hinweis bei ANDEREN Personen
-                  // (v0.10.0). Nur wenn die Person NICHT verifiziert
-                  // ist - ein "wird geprueft" ist eine Information, ein
-                  // "verifiziert" hat bereits das Abzeichen.
-                  //
-                  // Drei Zustaende, bewusst getrennt: wer sich geprueft
-                  // hat, aber die Freigabe noch nicht hat, ist nicht
-                  // "nicht verifiziert", sondern "wird geprueft".
-                  if (!profile.isVerified &&
-                      profile.verificationState ==
-                          VerificationState.underReview) ...[
-                    const SizedBox(width: 6),
-                    Tooltip(
-                      message: L10n.t(context, 'verify.otherUnderReview'),
-                      child: Icon(
-                        Icons.hourglass_top,
-                        size: 18,
-                        color: Theme.of(context).colorScheme.outline,
+                    // Konto juenger als 7 Tage. Hier ist der Hinweis
+                    // wertvoll: bei einem neuen Account ist eine
+                    // ungefragte Nachricht mit hoher Wahrscheinlichkeit
+                    // Missbrauch. Die RPC liefert created_at bereits mit.
+                    // Verifikations-Hinweis bei ANDEREN Personen
+                    // (v0.10.0). Nur wenn die Person NICHT verifiziert
+                    // ist - ein "wird geprueft" ist eine Information, ein
+                    // "verifiziert" hat bereits das Abzeichen.
+                    //
+                    // Drei Zustaende, bewusst getrennt: wer sich geprueft
+                    // hat, aber die Freigabe noch nicht hat, ist nicht
+                    // "nicht verifiziert", sondern "wird geprueft".
+                    if (!profile.isVerified &&
+                        profile.verificationState ==
+                            VerificationState.underReview)
+                      Tooltip(
+                        message: L10n.t(context, 'verify.otherUnderReview'),
+                        child: Icon(
+                          Icons.hourglass_top,
+                          size: 18,
+                          color: Theme.of(context).colorScheme.outline,
+                        ),
                       ),
-                    ),
-                  ],
-                  if (profile.isRecentlyCreated) ...[
-                    const SizedBox(width: 6),
-                    NewAccountBadge(profile: profile),
-                  ],
-                ],
-              ),
-            ),
-            // v0.10.0: Nur anzeigen, wenn der Wert ueberhaupt eine
-            // sichtbare Stufe ergibt. Unterhalb von 5 km liefert
-            // labelForKm null - das ist Absicht: der Unterschied zwischen
-            // 2 und 4 km verrate sonst den Nachbarn. Bei fehlendem
-            // Label bleibt die Zeile weg, statt "0 km" zu zeigen.
-            if (_distanceLabel != null) ...[
-              const SizedBox(height: 8),
-              Center(
-                child: Text(
-                  _distanceLabel!,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-              ),
-            ],
-            // Persönlichkeitstyp als Chip (Badge steht jetzt beim Namen).
-            if (profile.personalityType != null) ...[
-              const SizedBox(height: 8),
-              Center(
-                child: Chip(
-                  label: Text(
-                    L10n.tf(context, 'profile.detail.type', {
-                      't': profile.personalityType ?? '',
-                    }),
-                  ),
-                ),
-              ),
-            ],
-            if (profile.mood != null) ...[
-              const SizedBox(height: 8),
-              Center(
-                child: Chip(
-                  avatar: Icon(
-                    Mood.fromValue(profile.mood)?.icon ?? Icons.mood,
-                    size: 18,
-                    color: Mood.fromValue(profile.mood)?.color,
-                  ),
-                  label: Text(
-                    'Mood: ${Mood.fromValue(profile.mood) != null ? L10n.t(context, Mood.fromValue(profile.mood)!.labelKey) : (profile.mood ?? '')}',
-                  ),
-                ),
-              ),
-            ],
-            const SizedBox(height: 16),
-            if (isPhotosVisible)
-              Container(
-                height: 160,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  gradient: const LinearGradient(
-                    colors: [Colors.deepPurple, Colors.blue],
-                  ),
-                ),
-                child: const Center(
-                  child: Icon(Icons.person, color: Colors.white, size: 48),
-                ),
-              ),
-            const SizedBox(height: 16),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      L10n.t(context, 'profile.detail.aboutMe'),
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      profile.bio.isEmpty
-                          ? L10n.t(context, 'profile.detail.noBio')
-                          : profile.bio,
-                    ),
+                    if (profile.isRecentlyCreated)
+                      NewAccountBadge(profile: profile),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            // Vorstellung der anderen Person (Text + Audio, v0.9.1-Fix):
-            // War bisher nur im Chat als 2-Zeilen-Vorschau sichtbar und im
-            // Profil-Screen gar nicht - deshalb wirkte die Vorstellung als
-            // "nicht aufrufbar". Jetzt eigene Karte mit vollem Text und
-            // abspielbarer Audio-Vorstellung.
-            if (profile.introText.isNotEmpty ||
-                profile.introAudioPath != null) ...[
+              // v0.10.0: Nur anzeigen, wenn der Wert ueberhaupt eine
+              // sichtbare Stufe ergibt. Unterhalb von 5 km liefert
+              // labelForKm null - das ist Absicht: der Unterschied zwischen
+              // 2 und 4 km verrate sonst den Nachbarn. Bei fehlendem
+              // Label bleibt die Zeile weg, statt "0 km" zu zeigen.
+              if (_distanceLabel != null) ...[
+                const SizedBox(height: 8),
+                Center(
+                  child: Text(
+                    _distanceLabel!,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ],
+              // Persönlichkeitstyp als Chip (Badge steht jetzt beim Namen).
+              if (profile.personalityType != null) ...[
+                const SizedBox(height: 8),
+                Center(
+                  child: Chip(
+                    label: Text(
+                      L10n.tf(context, 'profile.detail.type', {
+                        't': profile.personalityType ?? '',
+                      }),
+                    ),
+                  ),
+                ),
+              ],
+              if (profile.mood != null) ...[
+                const SizedBox(height: 8),
+                Center(
+                  child: Chip(
+                    avatar: Icon(
+                      Mood.fromValue(profile.mood)?.icon ?? Icons.mood,
+                      size: 18,
+                      color: Mood.fromValue(profile.mood)?.color,
+                    ),
+                    label: Text(
+                      'Mood: ${Mood.fromValue(profile.mood) != null ? L10n.t(context, Mood.fromValue(profile.mood)!.labelKey) : (profile.mood ?? '')}',
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              if (isPhotosVisible)
+                Container(
+                  height: 160,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: const LinearGradient(
+                      colors: [Colors.deepPurple, Colors.blue],
+                    ),
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.person, color: Colors.white, size: 48),
+                  ),
+                ),
+              const SizedBox(height: 16),
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.record_voice_over_outlined,
-                            size: 18,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            L10n.t(context, 'chat.introTitle'),
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                        ],
+                      Text(
+                        L10n.t(context, 'profile.detail.aboutMe'),
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
-                      if (profile.introText.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        Text(profile.introText),
-                      ],
-                      if (profile.introAudioPath != null) ...[
-                        const SizedBox(height: 12),
-                        IntroAudioPlayer(targetUserId: profile.id),
-                      ],
+                      const SizedBox(height: 8),
+                      Text(
+                        profile.bio.isEmpty
+                            ? L10n.t(context, 'profile.detail.noBio')
+                            : profile.bio,
+                      ),
                     ],
                   ),
                 ),
               ),
               const SizedBox(height: 12),
-            ],
-            if (profile.interests.isNotEmpty) ...[
-              Builder(
-                builder: (context) {
-                  // Gemeinsame Interessen mit dem eigenen Profil hervorheben.
-                  final me = ref.watch(profileProvider);
-                  final common = profile.interests
-                      .where(me.interests.contains)
-                      .toList();
-                  final others = profile.interests
-                      .where((i) => !me.interests.contains(i))
-                      .toList();
-                  return Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            L10n.t(context, 'profile.detail.interests'),
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
+              // Vorstellung der anderen Person (Text + Audio, v0.9.1-Fix):
+              // War bisher nur im Chat als 2-Zeilen-Vorschau sichtbar und im
+              // Profil-Screen gar nicht - deshalb wirkte die Vorstellung als
+              // "nicht aufrufbar". Jetzt eigene Karte mit vollem Text und
+              // abspielbarer Audio-Vorstellung.
+              if (profile.introText.isNotEmpty ||
+                  profile.introAudioPath != null) ...[
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.record_voice_over_outlined,
+                              size: 18,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              L10n.t(context, 'chat.introTitle'),
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ],
+                        ),
+                        if (profile.introText.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Text(profile.introText),
+                        ],
+                        if (profile.introAudioPath != null) ...[
                           const SizedBox(height: 12),
-                          if (common.isNotEmpty) ...[
+                          IntroAudioPlayer(targetUserId: profile.id),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              if (profile.interests.isNotEmpty) ...[
+                Builder(
+                  builder: (context) {
+                    // Gemeinsame Interessen mit dem eigenen Profil hervorheben.
+                    final me = ref.watch(profileProvider);
+                    final common = profile.interests
+                        .where(me.interests.contains)
+                        .toList();
+                    final others = profile.interests
+                        .where((i) => !me.interests.contains(i))
+                        .toList();
+                    return Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              L10n.t(context, 'profile.detail.interests'),
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                            const SizedBox(height: 12),
+                            if (common.isNotEmpty) ...[
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.favorite,
+                                    size: 16,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    L10n.t(
+                                      context,
+                                      'profile.detail.commonWithYou',
+                                    ),
+                                    style: Theme.of(context).textTheme.labelLarge
+                                        ?.copyWith(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              InterestChips(interests: common, highlighted: true),
+                              const SizedBox(height: 12),
+                            ],
+                            if (others.isNotEmpty) ...[
+                              if (common.isNotEmpty)
+                                Text(
+                                  L10n.t(context, 'profile.detail.more'),
+                                  style: Theme.of(context).textTheme.labelLarge,
+                                ),
+                              const SizedBox(height: 8),
+                              InterestChips(interests: others),
+                            ],
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+              // Musik-Geschmack (v0.8.0): gemeinsame Genres hervorgehoben.
+              // Plus Lieblingssong/Band (v0.9.1, aus der Einrichtung).
+              if (profile.musicLiked.isNotEmpty ||
+                  profile.musicDisliked.isNotEmpty ||
+                  (profile.favoriteSong?.isNotEmpty == true)) ...[
+                const SizedBox(height: 12),
+                Builder(
+                  builder: (context) {
+                    final me = ref.watch(profileProvider);
+                    final common = profile.musicLiked
+                        .where(me.musicLiked.contains)
+                        .toList();
+                    final others = profile.musicLiked
+                        .where((g) => !me.musicLiked.contains(g))
+                        .toList();
+                    return Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                             Row(
                               children: [
                                 Icon(
-                                  Icons.favorite,
-                                  size: 16,
+                                  Icons.music_note,
+                                  size: 18,
                                   color: Theme.of(context).colorScheme.primary,
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  L10n.t(
-                                    context,
-                                    'profile.detail.commonWithYou',
-                                  ),
-                                  style: Theme.of(context).textTheme.labelLarge
-                                      ?.copyWith(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.primary,
-                                      ),
+                                  L10n.t(context, 'profile.detail.music'),
+                                  style: Theme.of(context).textTheme.titleMedium,
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
-                            InterestChips(interests: common, highlighted: true),
                             const SizedBox(height: 12),
-                          ],
-                          if (others.isNotEmpty) ...[
-                            if (common.isNotEmpty)
-                              Text(
-                                L10n.t(context, 'profile.detail.more'),
-                                style: Theme.of(context).textTheme.labelLarge,
+                            if (profile.favoriteSong?.isNotEmpty == true) ...[
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(
+                                    Icons.star_outline,
+                                    size: 16,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      L10n.tf(
+                                        context,
+                                        'profile.detail.favoriteSong',
+                                        {'song': profile.favoriteSong!},
+                                      ),
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            const SizedBox(height: 8),
-                            InterestChips(interests: others),
-                          ],
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
-            // Musik-Geschmack (v0.8.0): gemeinsame Genres hervorgehoben.
-            // Plus Lieblingssong/Band (v0.9.1, aus der Einrichtung).
-            if (profile.musicLiked.isNotEmpty ||
-                profile.musicDisliked.isNotEmpty ||
-                (profile.favoriteSong?.isNotEmpty == true)) ...[
-              const SizedBox(height: 12),
-              Builder(
-                builder: (context) {
-                  final me = ref.watch(profileProvider);
-                  final common = profile.musicLiked
-                      .where(me.musicLiked.contains)
-                      .toList();
-                  final others = profile.musicLiked
-                      .where((g) => !me.musicLiked.contains(g))
-                      .toList();
-                  return Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.music_note,
-                                size: 18,
-                                color: Theme.of(context).colorScheme.primary,
+                              const SizedBox(height: 12),
+                            ],
+                            // Lieblingsband (getrennt, Migration 119).
+                            if (profile.favoriteBand?.isNotEmpty == true) ...[
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(
+                                    Icons.music_note_outlined,
+                                    size: 16,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      L10n.tf(
+                                        context,
+                                        'profile.detail.favoriteBand',
+                                        {'band': profile.favoriteBand!},
+                                      ),
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(width: 6),
-                              Text(
-                                L10n.t(context, 'profile.detail.music'),
-                                style: Theme.of(context).textTheme.titleMedium,
+                              const SizedBox(height: 12),
+                            ],
+                            if (common.isNotEmpty) ...[
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.favorite,
+                                    size: 16,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    L10n.t(context, 'profile.detail.sameTaste'),
+                                    style: Theme.of(context).textTheme.labelLarge
+                                        ?.copyWith(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              MusicTasteView(liked: common, commonWith: common),
+                              const SizedBox(height: 12),
+                            ],
+                            if (others.isNotEmpty) ...[
+                              if (common.isNotEmpty)
+                                Text(
+                                  L10n.t(context, 'profile.detail.more'),
+                                  style: Theme.of(context).textTheme.labelLarge,
+                                ),
+                              const SizedBox(height: 8),
+                              MusicTasteView(liked: others),
+                            ],
+                            if (profile.musicDisliked.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              MusicTasteView(
+                                liked: const [],
+                                disliked: profile.musicDisliked,
                               ),
                             ],
-                          ),
-                          const SizedBox(height: 12),
-                          if (profile.favoriteSong?.isNotEmpty == true) ...[
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(
-                                  Icons.star_outline,
-                                  size: 16,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    L10n.tf(
-                                      context,
-                                      'profile.detail.favoriteSong',
-                                      {'song': profile.favoriteSong!},
-                                    ),
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
                           ],
-                          // Lieblingsband (getrennt, Migration 119).
-                          if (profile.favoriteBand?.isNotEmpty == true) ...[
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(
-                                  Icons.music_note_outlined,
-                                  size: 16,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    L10n.tf(
-                                      context,
-                                      'profile.detail.favoriteBand',
-                                      {'band': profile.favoriteBand!},
-                                    ),
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodyMedium,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                          ],
-                          if (common.isNotEmpty) ...[
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.favorite,
-                                  size: 16,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  L10n.t(context, 'profile.detail.sameTaste'),
-                                  style: Theme.of(context).textTheme.labelLarge
-                                      ?.copyWith(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.primary,
-                                      ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            MusicTasteView(liked: common, commonWith: common),
-                            const SizedBox(height: 12),
-                          ],
-                          if (others.isNotEmpty) ...[
-                            if (common.isNotEmpty)
-                              Text(
-                                L10n.t(context, 'profile.detail.more'),
-                                style: Theme.of(context).textTheme.labelLarge,
-                              ),
-                            const SizedBox(height: 8),
-                            MusicTasteView(liked: others),
-                          ],
-                          if (profile.musicDisliked.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            MusicTasteView(
-                              liked: const [],
-                              disliked: profile.musicDisliked,
-                            ),
-                          ],
-                        ],
+                        ),
                       ),
-                    ),
-                  );
-                },
-              ),
+                    );
+                  },
+                ),
+              ],
             ],
-          ],
+      ),
         ),
       ),
     );

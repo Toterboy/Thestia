@@ -295,65 +295,19 @@ class TransitSparkPainter extends _ModeSymbolPainter {
     _glyphe(canvas, zug.codePoint, zug.fontFamily!, zug.fontPackage,
         const Offset(zugMitteX, zugMitteY), zugGroesse);
 
-    // --- Funke (ueber dem Zug) ---------------------------------------------
+    // --- Funke (oben rechts neben dem Zug) ---------------------------------
     //
-    // GEAENDERT (Nutzerwunsch, 29.10.2026): "Der Spark dadrueber soll
-    // nicht nach unten komisch zeigen."
+    // GEAENDERT (Nutzerwunsch, 30.10.2026): "Der Funke soll derselbe sein
+    // wie bei Find your Spark" - also der Stern MIT SCHLEIER, nicht der
+    // Sonderstern mit gekuerzter Unterspitze. Der Zug bleibt unveraendert
+    // mittig; der Funke sitzt jetzt oben rechts im freien Feld ueber dem
+    // Dach. Die Spur laeuft nach links oben aus und beruehrt den Zug
+    // nicht.
     //
-    // Mit dem vollen vierstrahligen Stern zeigte der Funke einen langen
-    // Strahl NACH UNTEN - der stach wie ein Stachel in das Zugdach.
-    // [_funkeOhneUnterspitze] zeichnet denselben Stern, aber mit kurzer
-    // unterer Spitze: der Funke funkelt nach oben, nicht in den Zug.
-    //
-    // Der Abstand zum Zug betraegt rund 0,9 Einheiten - sichtbar
-    // getrennt, aber nicht weit auseinander.
-    _funkeOhneUnterspitze(
-      canvas,
-      const Offset(zugMitteX, 1.45),
-      1.15,
-      color,
-      mager: 0.50,
-      kurz: 0.55,
-    );
-  }
-
-  /// Vierstrahliger Funke, dessen untere Spitze kuerzer bleibt.
-  ///
-  /// Der normale Stern ([stern]) hat vier gleich lange Strahlen. Ueber
-  /// dem Zug zeigte der untere Strahl wie ein Stachel, der in das Dach
-  /// sticht (NUTZERWUNSCH, 29.10.2026: "Der Spark dadrueber soll nicht
-  /// nach unten komisch zeigen").
-  ///
-  /// Hier bleibt die untere Spitze bei [kurz] Anteilen von [r] (0,55),
-  /// waehrend die diagonalen Zacken [mager] Anteilen bekommen (0,50).
-  /// Beides zusammen ist wichtig: mit einer zu kurzen Spitze UND zu
-  /// kleinen Zacken sah der Funke wie ein Hut auf dem Zug aus - mit
-  /// langen Zacken und kurzer Spitze ist er wieder eindeutig ein
-  /// vierstrahliger Funke, der nach oben funkelt.
-  ///
-  /// [c] ist die Mitte, [r] die Strahlelaenge der drei langen Spitzen
-  /// (oben, links, rechts), [kurz] der Anteil der unteren Spitze.
-  void _funkeOhneUnterspitze(
-    Canvas canvas,
-    Offset c,
-    double r,
-    Color farbe, {
-    double mager = 0.50,
-    double kurz = 0.55,
-  }) {
-    final zacke = r * mager;
-    final unten = r * kurz;
-    final p = Path()
-      ..moveTo(c.dx, c.dy - r)
-      ..lineTo(c.dx + zacke * 0.707, c.dy - zacke * 0.707)
-      ..lineTo(c.dx + r, c.dy)
-      ..lineTo(c.dx + zacke * 0.707, c.dy + zacke * 0.707)
-      ..lineTo(c.dx, c.dy + unten)
-      ..lineTo(c.dx - zacke * 0.707, c.dy + zacke * 0.707)
-      ..lineTo(c.dx - r, c.dy)
-      ..lineTo(c.dx - zacke * 0.707, c.dy - zacke * 0.707)
-      ..close();
-    canvas.drawPath(p, flaeche(farbe));
+    // Der Mittelpunkt ist so gewaehlt, dass die untere Spitze des
+    // Hauptsterns knapp ueber dem Zugdach (y = 3,83) endet:
+    // 2,35 + 1,45 = 3,80.
+    funkeMitSchleier(canvas, const Offset(14.15, 2.35), 1.45, color);
   }
 
   /// Zeichnet eine Material-Glyphe in das 17er-Feld, mittig auf [mitte].

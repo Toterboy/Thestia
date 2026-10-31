@@ -510,6 +510,17 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     await _persist();
   }
 
+  /// Sicherheits-Aufklärung vor der Einrichtung abgeschlossen.
+  ///
+  /// Nur-Upgrade: der Router erzwingt die Aufklärung danach nie wieder,
+  /// auch wenn der lokale Fortschritt (der beim Schließen/Crash
+  /// weiterläuft) fehlt.
+  Future<void> completeDatingSafetyEducation() async {
+    if (state.datingSafetyEducationCompleted) return;
+    state = state.copyWith(datingSafetyEducationCompleted: true);
+    await _persist();
+  }
+
   /// Chat-Hintergrund-Auswahl beim ersten Chat wurde gezeigt (v0.10.0).
   Future<void> markChatBackgroundSeen() async {
     state = state.copyWith(chatBackgroundSeen: true);

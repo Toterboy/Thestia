@@ -19,7 +19,6 @@ import 'package:thestia/providers/settings_provider.dart';
 import 'package:thestia/providers/user_preferences_provider.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/services/auth_exception.dart';
 import 'package:thestia/services/location_check_service.dart';
 import 'package:thestia/services/location_verification_service.dart';
 import 'package:thestia/services/mfa_service.dart';
@@ -477,25 +476,33 @@ class _SettingsPrivacyOnceScreenState
         return;
       }
 
-      // CAPTCHA-Token holen: GoTrue verlangt es fuer die
-      // Passkey-Registrierung (28.10.2026, live geprueft). Ohne Token
-      // lehnt der Server die Challenge-Anfrage ab, BEVOR der native
-      // Dialog erscheint - die Einrichtung schlug deshalb immer fehl.
+      // ERST OHNE Captcha-Token versuchen (NUTZERWUNSCH 31.10.2026:
+      // "hat jetzt aber eine extra Captcha Abfrage"). GoTrue verlangt das
+      // Token nur, wenn der Bot-Schutz wirklich greift.
+      //
+      // Lehnt der Server ohne Token ab (die Challenge-Antwort kommt, BEVOR
+      // der native Dialog erscheint), wird der Sicherheitscheck gezeigt
+      // und der Versuch mit Token wiederholt.
       if (!mounted) return;
-      final captchaToken = await showCaptchaChallenge(context);
-      if (captchaToken == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(L10n.t(context, 'auth.captchaRegister')),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+      try {
+        await PasskeyAuth.register();
+      } catch (e) {
+        if (!PasskeyAuth.requiresCaptcha(e)) rethrow;
+        if (!mounted) return;
+        final captchaToken = await showCaptchaChallenge(context);
+        if (captchaToken == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(L10n.t(context, 'auth.captchaRegister')),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+          return;
         }
-        return;
+        await PasskeyAuth.register(captchaToken: captchaToken);
       }
-
-      await PasskeyAuth.register(captchaToken: captchaToken);
       if (!mounted) return;
       setState(() => _passkeyCreated = true);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -506,10 +513,12 @@ class _SettingsPrivacyOnceScreenState
       );
     } catch (e) {
       debugPrint('[SettingsPrivacyOnce] Passkey-Setup fehlgeschlagen: $e');
-      // Nur die bereinigte Meldung zeigen - keine Plugin-/WebAuthn-Interna.
-      final msg = e is AppException
-          ? L10n.exc(context, e)
-          : L10n.t(context, 'setup.passkeySetupFailed');
+      // Konkrete Meldung statt der generischen - auch bei unerwarteten
+      // Fehlern (NUTZERWUNSCH 31.10.2026).
+      final msg = L10n.exc(
+        context,
+        PasskeyAuth.explainForUi(e, login: false),
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),

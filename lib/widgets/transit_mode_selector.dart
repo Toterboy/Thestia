@@ -125,8 +125,7 @@ class _RangeCard extends StatelessWidget {
     // Auswahl: Rand + Fuellung. Beide aus dem Theme, keine
     // Markenfarben im Widget.
     final borderColor =
-        selected ? scheme.primary : scheme.outlineVariant.withValues(alpha: 0.6);
-    final background = selected
+        selected ? scheme.primary : scheme.outlineVariant.withValues(alpha: 0.6);    final background = selected
         ? scheme.primaryContainer.withValues(alpha: 0.55)
         : scheme.surface;
 
@@ -148,7 +147,14 @@ class _RangeCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(radius),
               border: Border.all(
                 color: borderColor,
-                width: selected ? 2 : 1,
+                // Konstante Breite: Flutter zaehlt den Rahmen zum
+                // Innenabstand der BoxDecoration (border.dimensions).
+                // Ein wachsender Rahmen verschiebt den Text deshalb um
+                // einen Pixel (NUTZERWUNSCH 31.10.2026: "der Text
+                // verschiebt sich"). Die Auswahl traegt jetzt Farbe und
+                // Fuellung - wie es die Vorgabe des Widgets ohnehin
+                // sagt ("Auswahl: Rand + Fuellung").
+                width: 2,
               ),
             ),
             child: Material(

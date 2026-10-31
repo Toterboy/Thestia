@@ -43,6 +43,25 @@ class SecureNamespaces {
 
   /// Geräte-/sonstige Metadaten.
   static const String device = 'thestia.device';
+
+  /// Lokale Kontaktdaten für "Connect to others" (Telefonnummer,
+  /// Handles). Eigener Namespace, damit ein Keychain-/Keystore-Fehler
+  /// höchstens diese freiwilligen Angaben betrifft.
+  static const String contacts = 'thestia.contacts';
+
+  /// Namespaces, für die es keine Migration geben kann - weil es sie
+  /// vorher nicht gab.
+  ///
+  /// Ein Migrations-Eintrag ist nur dann nötig, wenn im Legacy-Namespace
+  /// (dem früheren Default) ALTDATEN für diesen Store lagen. Ein
+  /// brandneuer Namespace hat keine Vorgeschichte: es gibt nichts zu
+  /// verschieben, und ein erzwungener Leer-Eintrag wäre ein stiller
+  /// No-op (genau das prüft tool/check_namespace_migration.py als
+  /// Fehler).
+  ///
+  /// Sobald ein Namespace hier steht, sind die Altdaten beim Update nicht
+  /// betroffen - und das ist hier auch so gemeint.
+  static const Set<String> withoutMigration = <String>{contacts};
 }
 
 /// Schlüssel je Legacy-Namespace (für die Migration).

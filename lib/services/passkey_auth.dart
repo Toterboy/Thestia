@@ -302,6 +302,34 @@ class PasskeyAuth {
   static AppException explainError(Object e, {required bool login}) =>
       _explain(e, login: login);
 
+  /// Verlangt der Server fuer diese Anfrage ein CAPTCHA-Token?
+  ///
+  /// NUTZERWUNSCH (31.10.2026): "Passkey ... hat jetzt aber eine extra
+  /// Captcha Abfrage." Die Abfrage ist nur noetig, wenn der Server sie
+  /// wirklich verlangt - sonst fragt die App nach einem Sicherheitscheck,
+  /// den niemand gebraucht hat.
+  ///
+  /// Deshalb wird der Passkey-Zugriff ZUERST ohne Token versucht. Der
+  /// Server antwortet dann mit einem kurzen Fehler (der native Dialog
+  /// erscheint noch gar nicht), und nur DANN wird der Sicherheitscheck
+  /// gezeigt und der Versuch wiederholt.
+  ///
+  /// Erkannt wird das an der Meldung, die [_explain] dem
+  /// CAPTCHA-Fehler gibt ([AppException.messageKey]).
+  static bool requiresCaptcha(Object e) =>
+      e is AppException && e.messageKey == 'passkey.err.captcha';
+
+  /// Der Text, den die Oberflaeche zu einem Passkey-Fehler zeigen soll.
+  ///
+  /// Der Aufrufer bekommt hier IMMER eine [AppException] mit
+  /// Uebersetzungsschluessel - auch bei Fehlern, die nicht aus dem
+  /// Passkey-Pfad kommen. Vorher landete jeder solche Fehler in der
+  /// generischen Meldung "Passkey-Einrichtung fehlgeschlagen", ohne
+  /// jeden Hinweis auf die Ursache (NUTZERWUNSCH 31.10.2026: "Es gibt
+  /// beim Fehler auch keine genauerere beschreibung des Problems").
+  static AppException explainForUi(Object e, {required bool login}) =>
+      e is AppException ? e : _explain(e, login: login);
+
   /// Übersetzt kryptische Plugin-/WebAuthn-Fehler in verständliche Meldungen.
   ///
   /// Das Plugin meldet DOM-Fehlertypen als Code wie

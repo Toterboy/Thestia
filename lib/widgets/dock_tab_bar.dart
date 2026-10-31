@@ -33,21 +33,23 @@ class DockTab {
 /// soll jedoch etwas besonderes sein, was immer noch sehr
 /// benutzerfreundend ist."
 ///
+/// NUTZERWUNSCH (30.10.2026): "Die Beschriftung soll immer unter dem
+/// Icon stehen, bei allen vier Reitern." Vorher trugen nur der aktive
+/// Reiter einen Text, die inaktiven zeigten ausschliesslich ihr Symbol.
+///
 /// WAS DIESES DOCK ANDERS MACHT:
-///   * Die inaktiven Reiter zeigen NUR ihr Symbol.
-///   * Der aktive Reiter waechst zu einer gefuellten Pille aus Symbol
-///     UND Text. Man sieht also jederzeit, wo man ist, ohne dass vier
-///     Textzeilen die halbe Bildschirmbreite belegen - das ist der
-///     Unterschied zur Material-Leiste, bei der IMMER alle vier
-///     Labels dastehen.
-///   * Die Pille waechst weich mit (AnimatedSize), der Text laeuft
-///     seitlich ein statt zu springen.
+///   * Jeder Reiter traegt sein Symbol UND seine Beschriftung - immer.
+///   * Der aktive Reiter bekommt zusaetzlich die gefuellte Pille um das
+///     Symbol. Die Position der Symbole bleibt dabei unveraendert, weil
+///     die Pille in einem festen 40x32-Feld sitzt.
+///   * Die Pille blendet weich um, die Beschriftung wechselt nur Farbe
+///     und Gewicht - nichts springt.
 ///   * Das Ganze sitzt als schmales Dock ueber dem Rand, nicht als
 ///     randabfallender Balken.
 ///
 /// BEDIENBARKEIT (der Nutzerwunsch sagt ausdruecklich: "immer noch
 /// sehr benutzerfreundend"):
-///   * Der aktive Reiter traegt IMMER seinen Text - man ist nie ratlos.
+///   * Jeder Reiter traegt seine Beschriftung - man ist nie ratlos.
 ///   * Jeder Reiter hat eine Trefferflaeche von mindestens 44 dp Hoehe.
 ///   * Die Semantik meldet den aktiven Zustand an Screenreader.
 ///   * Ein Haptik-Klick bestaetigt den Wechsel.
@@ -165,25 +167,36 @@ class _DockTabItem extends StatelessWidget {
                   child: Icon(tab.icon, size: 21, color: symbolFarbe),
                 ),
                 const SizedBox(height: 3),
-                // Das Label: nur beim aktiven Reiter sichtbar. Der
-                // Platz bleibt aber IMMER reserviert, damit die Leiste
-                // beim Wechsel nicht springt.
-                SizedBox(
-                  height: 16,
-                  child: AnimatedOpacity(
+                // Das Label: IMMER sichtbar (NUTZERWUNSCH 30.10.2026).
+                // Der aktive Reiter traegt es in der Primaerfarbe und
+                // fett, die uebrigen gedaempft. AnimatedDefaultTextStyle
+                // laesst den Wechsel weich aussehen, ohne dass die
+                // Leiste ihre Hoehe aendert.
+                //
+                // Die Hoehe ist eine MINDESThoehe: Bei grosser Schrift
+                // (bis 3,2x) waere der Text in einer festen 16-Pixel-
+                // Box abgeschnitten - der Label waere dann unlesbar.
+                ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 16),
+                  child: AnimatedDefaultTextStyle(
                     duration: const Duration(milliseconds: 200),
-                    opacity: selected ? 1 : 0,
+                    curve: Curves.easeOutCubic,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                          color: selected
+                              ? scheme.primary
+                              : scheme.onSurfaceVariant,
+                          fontWeight: selected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          height: 1.1,
+                        ) ??
+                        const TextStyle(fontSize: 11, height: 1.1),
                     child: Text(
                       beschriftung,
                       maxLines: 1,
                       softWrap: false,
                       overflow: TextOverflow.clip,
                       textAlign: TextAlign.center,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: scheme.primary,
-                        fontWeight: FontWeight.w700,
-                        height: 1.1,
-                      ),
                     ),
                   ),
                 ),

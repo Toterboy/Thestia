@@ -265,6 +265,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       appBar: AppBar(
         title: Text(L10n.t(context, 'home.title')),
         actions: [
+          // NUTZERWUNSCH (30.10.2026): QR-Symbol direkt neben den
+          // Einstellungen - der Weg zu "Connect to others" soll nicht
+          // erst durch das Entdecken-Menue fuehren.
+          IconButton(
+            icon: const Icon(Icons.qr_code_2),
+            tooltip: L10n.t(context, 'home.qrTooltip'),
+            onPressed: () => context.push(AppRoutes.qrScan),
+          ),
           IconButton(
             icon: const Icon(Icons.settings),
             tooltip: L10n.t(context, 'home.settingsTooltip'),

@@ -21,7 +21,6 @@ import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/widgets/end_spark_dialog.dart';
 import 'package:thestia/widgets/funke_overlay.dart';
 import 'package:thestia/widgets/intro_audio_player.dart';
-import 'package:thestia/widgets/pill_tab_bar.dart';
 import 'package:thestia/widgets/states.dart';
 import 'package:thestia/l10n/app_strings.dart';
 
@@ -91,16 +90,14 @@ class InteressenScreen extends ConsumerStatefulWidget {
   ConsumerState<InteressenScreen> createState() => _InteressenScreenState();
 }
 
-class _InteressenScreenState extends ConsumerState<InteressenScreen>
-    with SingleTickerProviderStateMixin {
-  /// Reiter fuer "Gesendet" und "Erhalten".
+class _InteressenScreenState extends ConsumerState<InteressenScreen> {
+  /// Welches Panel ist offen? 0 = Gesendet, 1 = Erhalten, null = zu.
   ///
-  /// NUTZERWUNSCH (28.10.2026): die drei Kategorien werden zwei. Die
-  /// "Funken" sind kein Reiter mehr, sondern stehen IMMER unter dem
-  /// Inhalt - deshalb hat der Controller nur noch zwei Plaetze und
-  /// es gibt keine TabBarView mehr, also auch kein Wischen zwischen
-  /// den Reitern.
-  late final TabController _tabController;
+  /// NUTZERWUNSCH (30.10.2026): Beide Listen starten ZUGEKLAPPT. Erst ein
+  /// Tipp auf den Reiter öffnet die Blase darunter; ein zweiter Tipp
+  /// schließt sie wieder. Die Funken stehen immer darunter und werden
+  /// durch das Öffnen nach unten geschoben.
+  int? _openPanel;
 
   /// Schluessel fuer die Abschnitte - sie muessen ueberleben, wenn
   /// der Reiter wechselt (sonst waere die Liste bei jedem Wechsel
@@ -119,15 +116,16 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen>
     super.initState();
     // Der Initial-Reiter aus dem Aufrufer:
     //   1 = "Erhalten" (z. B. aus "Neue Likes" auf der Startseite),
-    //   2 = "Funken" (z. B. nach einem Match) - der ist jetzt kein
-    //       Reiter mehr, sondern ein Sprung zum Funken-Abschnitt,
-    //   0 = "Gesendet".
+    //   2 = "Funken" (z. B. nach einem Match) - der ist kein Reiter mehr,
+    //       sondern ein Sprung zum Funken-Abschnitt,
+    //   0 = "Gesendet" (Standard: zugeklappt).
     final gewaehlt = ref.read(interessenInitialTabProvider);
-    _tabController = TabController(
-      length: 2,
-      vsync: this,
-      initialIndex: gewaehlt == 1 ? 1 : 0,
-    );
+    if (gewaehlt == 1) _openPanel = 1;
+    if (gewaehlt == 1) {
+      // Einmal-Auftrag: beim naechsten ├ûffnen startet die Seite wieder
+      // zugeklappt, nicht dauerhaft auf "Erhalten".
+      ref.read(interessenInitialTabProvider.notifier).state = 0;
+    }
     // Der alte Initial-Reiter "2" war der Funken-Tab. Funken sind
     // jetzt immer sichtbar - deshalb springt die Seite dorthin,
     // statt einen Reiter zu waehlen.
@@ -167,9 +165,13 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen>
 
   @override
   void dispose() {
-    _tabController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  /// ├ûffnet ein Panel oder schlie├ƒt es, wenn es bereits offen ist.
+  void _togglePanel(int index) {
+    setState(() => _openPanel = _openPanel == index ? null : index);
   }
 
   @override
@@ -178,10 +180,8 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen>
     // Funken gibt. Auf "Gesendet" und "Erhalten" tut er nichts, und
     // genau das war der Befund: "Der Stift funktioniert nicht, wenn
     // keine Daten dort vorhanden sind."
-    final funkenVorhanden = (ref.watch(serverMatchesProvider).valueOrNull
-            ?.length ??
-        0) >
-        0;
+    final funkenVorhanden =
+        (ref.watch(serverMatchesProvider).valueOrNull?.length ?? 0) > 0;
     final stiftSichtbar = funkenVorhanden;
 
     return Scaffold(
@@ -204,32 +204,36 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen>
             ),
         ],
       ),
-      // NUTZERWUNSCH (28.10.2026): "Gesendet und Erhalten als Icon oder
-      // mit Schrift ... oben behalten und Funken generell immer dadrunter
-      // anzeigen." Und: das Wischen zwischen den Reitern soll NICHT
-      // mehr gehen - sondern zwischen den grossen Reitern der App.
-      //
-      // Deshalb: zwei Pillen oben (ohne Wischgeste), darunter ein
-      // einziger Scrollbereich, in dem erst die gewaehlte Liste und
-      // dann IMMER der Funken-Abschnitt steht.
+      // NUTZERWUNSCH (30.10.2026): "Gesendet" und "Erhalten" sind
+      // zugeklappte Blasen. Ein Tipp öffnet die Liste direkt unter dem
+      // Reiter (die Blase wächst nach unten), ein zweiter Tipp schließt
+      // sie. Die Funken stehen IMMER darunter und werden beim Öffnen
+      // nach unten geschoben.
       body: Column(
         children: [
-          PillTabBar(
-            controller: _tabController,
-            // Die beiden Reiter mittig (NUTZERWUNSCH, 28.10.2026):
-            // "Gesendet und Erhalten die beiden buttons zentriert oben
-            // in der reihe sein".
-            centered: true,
-            tabs: [
-              PillTab(
-                label: L10n.t(context, 'interests.tabSent'),
-                icon: Icons.outgoing_mail,
-              ),
-              PillTab(
-                label: L10n.t(context, 'interests.tabReceived'),
-                icon: Icons.call_received,
-              ),
-            ],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _InterestPanelButton(
+                    label: L10n.t(context, 'interests.tabSent'),
+                    icon: Icons.outgoing_mail,
+                    open: _openPanel == 0,
+                    onTap: () => _togglePanel(0),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _InterestPanelButton(
+                    label: L10n.t(context, 'interests.tabReceived'),
+                    icon: Icons.call_received,
+                    open: _openPanel == 1,
+                    onTap: () => _togglePanel(1),
+                  ),
+                ),
+              ],
+            ),
           ),
           Expanded(
             child: RefreshIndicator(
@@ -237,42 +241,53 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen>
               child: ListView(
                 controller: _scrollController,
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
                 children: [
-                  // Die gewaehlte Liste. AnimatedBuilder haelt sie mit
-                  // der Pillen-Leiste synchron - ohne ihn zeigte die
-                  // Leiste nach einem Klick erst beim naechsten
-                  // Fremd-Rebuild die neue Auswahl.
-                  //
-                  // Offstage statt Conditional: die unsichtbare Liste
-                  // bleibt am Leben (kein Neuladen beim Wechsel), nimmt
-                  // aber keinen Platz in Anspruch.
-                  AnimatedBuilder(
-                    animation: _tabController,
-                    builder: (context, _) => Column(
-                      children: [
-                        Offstage(
-                          offstage: _tabController.index != 0,
-                          child: _OwnLikesTab(key: _sentKey, embedded: true),
-                        ),
-                        Offstage(
-                          offstage: _tabController.index != 1,
-                          child:
-                              _ReceivedLikesTab(key: _receivedKey, embedded: true),
-                        ),
-                      ],
-                    ),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 320),
+                    curve: Curves.easeOutCubic,
+                    alignment: Alignment.topCenter,
+                    child: _openPanel == null
+                        ? const SizedBox.shrink()
+                        : AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 240),
+                            switchInCurve: Curves.easeOutCubic,
+                            switchOutCurve: Curves.easeInCubic,
+                            layoutBuilder: (current, previous) => Stack(
+                              alignment: Alignment.topCenter,
+                              children: [...previous, ?current],
+                            ),
+                            transitionBuilder: (child, animation) {
+                              final offset = Tween<Offset>(
+                                begin: const Offset(0, -0.02),
+                                end: Offset.zero,
+                              ).animate(animation);
+                              return FadeTransition(
+                                opacity: animation,
+                                child: SlideTransition(
+                                  position: offset,
+                                  child: child,
+                                ),
+                              );
+                            },
+                            child: _PanelBubble(
+                              key: ValueKey<int>(_openPanel!),
+                              child: _openPanel == 0
+                                  ? _OwnLikesTab(key: _sentKey, embedded: true)
+                                  : _ReceivedLikesTab(
+                                      key: _receivedKey,
+                                      embedded: true,
+                                    ),
+                            ),
+                          ),
                   ),
-                  // Trennlinie zum Funken-Abschnitt.
-                  const SizedBox(height: 24),
+                  // Die Funken stehen immer offen - ohne Text daneben,
+                  // mittig unter den beiden Reitern.
+                  const SizedBox(height: 20),
                   Padding(
                     key: _funkenAnker,
                     padding: const EdgeInsets.only(bottom: 4),
-                    child: _SectionHeader(
-                      icon: Icons.auto_awesome,
-                      title: L10n.t(context, 'interests.tabSparks'),
-                      subtitle: L10n.t(context, 'interests.sparksSub'),
-                    ),
+                    child: const _FunkenHeader(),
                   ),
                   _MatchesTab(key: _matchesKey, embedded: true),
                 ],
@@ -458,7 +473,25 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
                           Theme.of(context).colorScheme.primaryContainer,
                       child: const Icon(Icons.person, color: Colors.white),
                     ),
-                    title: Text(profile.name),
+                    // NUTZERWUNSCH (31.10.2026): "Verifizierung soll
+                    // fuer alle Personen sichtbar sein" - auch in der
+                    // Liste, nicht nur im Profil.
+                    title: Row(
+                      children: [
+                        Flexible(child: Text(profile.name)),
+                        if (profile.isVerified) ...[
+                          const SizedBox(width: 6),
+                          Tooltip(
+                            message: L10n.t(context, 'verify.badge'),
+                            child: Icon(
+                              Icons.verified,
+                              size: 18,
+                              color: Colors.lightBlue.shade400,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                     subtitle: Text([
                       '${profile.age ?? '?'} Jahre',
                       // Serverseitig berechnet, angezeigt als
@@ -549,9 +582,11 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
       final service = ref.read(findYourMatchServiceProvider);
       _likes = await service.listReceivedLikes();
       // Angesehen = Badge auf Aktuelles weg (v0.9.1, Seen-Tracking).
-      unawaited(ref
-          .read(seenProvider.notifier)
-          .markLikesSeen(_likes.map((l) => l.likeId)));
+      unawaited(
+        ref
+            .read(seenProvider.notifier)
+            .markLikesSeen(_likes.map((l) => l.likeId)),
+      );
       ref.invalidate(receivedLikesProvider);
     } catch (e) {
       debugPrint('[Interessen] Erhaltene Likes fehlgeschlagen: $e');
@@ -576,10 +611,12 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
         SnackBar(
           content: Text(
             accept
-                ? L10n.tf(context, 'interests.sparkAccepted',
-                    {'name': like.profile.name})
-                : L10n.tf(context, 'interests.likeDeclined',
-                    {'name': like.profile.name}),
+                ? L10n.tf(context, 'interests.sparkAccepted', {
+                    'name': like.profile.name,
+                  })
+                : L10n.tf(context, 'interests.likeDeclined', {
+                    'name': like.profile.name,
+                  }),
           ),
           behavior: SnackBarBehavior.floating,
         ),
@@ -588,7 +625,11 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
       debugPrint('[Interessen] Antwort fehlgeschlagen: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(L10n.tf(context, 'common.errorWith', {'error': '$e'}))),
+          SnackBar(
+            content: Text(
+              L10n.tf(context, 'common.errorWith', {'error': '$e'}),
+            ),
+          ),
         );
       }
     } finally {
@@ -614,8 +655,11 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(L10n.tf(context, 'interests.likeBackDone',
-              {'name': like.profile.name})),
+          content: Text(
+            L10n.tf(context, 'interests.likeBackDone', {
+              'name': like.profile.name,
+            }),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -625,8 +669,7 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content:
-              Text(L10n.tf(context, 'common.errorWith', {'error': '$e'})),
+          content: Text(L10n.tf(context, 'common.errorWith', {'error': '$e'})),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -837,12 +880,12 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
       await _autoCoolStaleSparks();
       // Angesehen = Badge auf Aktuelles weg (v0.9.1, Seen-Tracking).
       final seenBox = ref.read(seenProvider.notifier);
-      unawaited(seenBox
-          .markMatchesSeen(_serverMatches.map((m) => m.matchId)));
-      unawaited(seenBox.markQrSeen(ref
-          .read(chatProvider)
-          .where((m) => m.isQrContact)
-          .map((m) => m.id)));
+      unawaited(seenBox.markMatchesSeen(_serverMatches.map((m) => m.matchId)));
+      unawaited(
+        seenBox.markQrSeen(
+          ref.read(chatProvider).where((m) => m.isQrContact).map((m) => m.id),
+        ),
+      );
       ref.invalidate(serverMatchesProvider);
     } catch (e) {
       debugPrint('[Interessen] Matches laden fehlgeschlagen: $e');
@@ -882,7 +925,9 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
       // Lokal sofort umziehen (ohne erneuten Server-Roundtrip).
       _serverMatches = _serverMatches
           .where((m) => !staleIds.contains(m.matchId))
-          .followedBy(stale.map((m) => MatchWithState(
+          .followedBy(
+            stale.map(
+              (m) => MatchWithState(
                 matchId: m.matchId,
                 partner: m.partner,
                 unlockLevel: m.unlockLevel,
@@ -893,7 +938,9 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
                 resparkedAt: m.resparkedAt,
                 passedAt: m.passedAt,
                 lastAttemptAt: m.lastAttemptAt,
-              )))
+              ),
+            ),
+          )
           .toList();
     }
   }
@@ -938,13 +985,16 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(failed == 0
-              ? L10n.tf(context, 'interests.hiddenCount',
-                  {'n': '${_selected.length}'})
-              : L10n.tf(context, 'interests.hideFailed', {
-                  'failed': '$failed',
-                  'total': '${_selected.length}',
-                })),
+          content: Text(
+            failed == 0
+                ? L10n.tf(context, 'interests.hiddenCount', {
+                    'n': '${_selected.length}',
+                  })
+                : L10n.tf(context, 'interests.hideFailed', {
+                    'failed': '$failed',
+                    'total': '${_selected.length}',
+                  }),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -993,20 +1043,22 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     }
     setState(() {
       _serverMatches = _serverMatches
-          .map((m) => m.matchId == match.matchId
-              ? MatchWithState(
-                  matchId: m.matchId,
-                  partner: m.partner,
-                  unlockLevel: m.unlockLevel,
-                  failedAttempts: m.failedAttempts,
-                  createdVia: m.createdVia,
-                  status: 'cooled',
-                  createdAt: m.createdAt,
-                  resparkedAt: m.resparkedAt,
-                  passedAt: m.passedAt,
-                  lastAttemptAt: m.lastAttemptAt,
-                )
-              : m)
+          .map(
+            (m) => m.matchId == match.matchId
+                ? MatchWithState(
+                    matchId: m.matchId,
+                    partner: m.partner,
+                    unlockLevel: m.unlockLevel,
+                    failedAttempts: m.failedAttempts,
+                    createdVia: m.createdVia,
+                    status: 'cooled',
+                    createdAt: m.createdAt,
+                    resparkedAt: m.resparkedAt,
+                    passedAt: m.passedAt,
+                    lastAttemptAt: m.lastAttemptAt,
+                  )
+                : m,
+          )
           .toList();
     });
     try {
@@ -1014,8 +1066,11 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(L10n.tf(context, 'interests.cooledDone',
-                {'name': match.partner.name})),
+            content: Text(
+              L10n.tf(context, 'interests.cooledDone', {
+                'name': match.partner.name,
+              }),
+            ),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1026,8 +1081,11 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(L10n.tf(context, 'interests.cooledDone',
-                  {'name': match.partner.name})),
+              content: Text(
+                L10n.tf(context, 'interests.cooledDone', {
+                  'name': match.partner.name,
+                }),
+              ),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -1035,8 +1093,9 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(L10n.tf(context, 'common.errorWith',
-                {'error': '$e'})),
+            content: Text(
+              L10n.tf(context, 'common.errorWith', {'error': '$e'}),
+            ),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1069,8 +1128,12 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(L10n.t(
-            context, an ? 'interests.pinSparkOn' : 'interests.pinSparkOff')),
+        content: Text(
+          L10n.t(
+            context,
+            an ? 'interests.pinSparkOn' : 'interests.pinSparkOff',
+          ),
+        ),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -1128,8 +1191,11 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(L10n.tf(context, 'interests.hiddenOne',
-                {'name': match.partner.name})),
+            content: Text(
+              L10n.tf(context, 'interests.hiddenOne', {
+                'name': match.partner.name,
+              }),
+            ),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1139,8 +1205,9 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(L10n.tf(context, 'common.errorWith',
-                {'error': '$e'})),
+            content: Text(
+              L10n.tf(context, 'common.errorWith', {'error': '$e'}),
+            ),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1155,8 +1222,11 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                Text(L10n.tf(context, 'interests.resparkDone', {'name': match.partner.name})),
+            content: Text(
+              L10n.tf(context, 'interests.resparkDone', {
+                'name': match.partner.name,
+              }),
+            ),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -1185,11 +1255,11 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(L10n.t(ctx, 'interests.deleteSavedTitle')),
-        content: Text(L10n.tf(
-          ctx,
-          'interests.deleteSavedBody',
-          {'name': contact.partner.name},
-        )),
+        content: Text(
+          L10n.tf(ctx, 'interests.deleteSavedBody', {
+            'name': contact.partner.name,
+          }),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -1210,9 +1280,11 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     if (ref.context.mounted) {
       ScaffoldMessenger.of(ref.context).showSnackBar(
         SnackBar(
-          content: Text(L10n.tf(
-              ref.context, 'profile.detail.savedRemoved',
-              {'name': contact.partner.name})),
+          content: Text(
+            L10n.tf(ref.context, 'profile.detail.savedRemoved', {
+              'name': contact.partner.name,
+            }),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -1501,15 +1573,33 @@ class _CooledMatchTile extends StatelessWidget {
     final p = match.partner;
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      color: Theme.of(context).colorScheme.surfaceContainerHighest
-          .withValues(alpha: 0.5),
+      color: Theme.of(
+        context,
+      ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
       child: ListTile(
         onTap: onOpen,
         leading: GestureDetector(
           onTap: onProfile,
           child: const CircleAvatar(child: Icon(Icons.person_outline)),
         ),
-        title: Text('${p.name}, ${p.age ?? '?'}'),
+        // NUTZERWUNSCH (31.10.2026): "Verifizierung soll fuer alle
+        // Personen sichtbar sein" - auch in der Funken-Liste.
+        title: Row(
+          children: [
+            Flexible(child: Text('${p.name}, ${p.age ?? '?'}')),
+            if (p.isVerified) ...[
+              const SizedBox(width: 6),
+              Tooltip(
+                message: L10n.t(context, 'verify.badge'),
+                child: Icon(
+                  Icons.verified,
+                  size: 18,
+                  color: Colors.lightBlue.shade400,
+                ),
+              ),
+            ],
+          ],
+        ),
         subtitle: Text(
           p.bio.isNotEmpty ? p.bio : L10n.t(context, 'interests.noBio'),
           maxLines: 1,
@@ -1520,8 +1610,7 @@ class _CooledMatchTile extends StatelessWidget {
           children: [
             IconButton(
               icon: const Icon(Icons.person_outline),
-              tooltip:
-                  L10n.t(context, 'profile.detail.aboutMe'),
+              tooltip: L10n.t(context, 'profile.detail.aboutMe'),
               onPressed: onProfile,
             ),
             FilledButton.tonalIcon(
@@ -1538,6 +1627,145 @@ class _CooledMatchTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Runder Reiter ├╝ber einer aufklappbaren Blase.
+///
+/// Der Reiter ist die flache Spitze der Blase: Er bleibt beim ├ûffnen an
+/// seinem Platz, der Inhalt w├ñchst darunter nach unten. Deshalb gibt es
+/// hier keinen TabController und keine TabBarView - nur einen Zustand.
+class _InterestPanelButton extends StatelessWidget {
+  const _InterestPanelButton({
+    required this.label,
+    required this.icon,
+    required this.open,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool open;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final fg = open ? scheme.onPrimaryContainer : scheme.onSurfaceVariant;
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          decoration: BoxDecoration(
+            color: open
+                ? scheme.primaryContainer
+                : scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(999),
+              bottom: Radius.circular(14),
+            ),
+            border: Border.all(
+              color: open
+                  ? scheme.primary.withValues(alpha: 0.35)
+                  : scheme.outlineVariant.withValues(alpha: 0.45),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 18, color: fg),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: fg,
+                    fontWeight: open ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              AnimatedRotation(
+                turns: open ? 0.5 : 0,
+                duration: const Duration(milliseconds: 220),
+                child: Icon(Icons.keyboard_arrow_down, size: 18, color: fg),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Die Blase unter den Reitern: oben flach angeschlossen, unten rund.
+///
+/// Kein spitzer Schwanz - die Reiter selbst sind die Spitze. Der
+/// Inhalt startet direkt unter dem Reiter und schiebt die Funken beim
+/// Aufklappen nach unten.
+class _PanelBubble extends StatelessWidget {
+  const _PanelBubble({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.42),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(4),
+          bottom: Radius.circular(24),
+        ),
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.45),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(8, 14, 8, 6),
+      child: child,
+    );
+  }
+}
+
+/// Zentrierter Funken-Kopf: Symbol und Titel, kein Text daneben.
+class _FunkenHeader extends StatelessWidget {
+  const _FunkenHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      children: [
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: scheme.primaryContainer.withValues(alpha: 0.7),
+          ),
+          child: Icon(Icons.auto_awesome, size: 30, color: scheme.primary),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          L10n.t(context, 'interests.tabSparks'),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+          textAlign: TextAlign.center,
+        ),
+      ],
     );
   }
 }
@@ -1561,16 +1789,20 @@ class _SectionHeader extends StatelessWidget {
         children: [
           Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
           const SizedBox(width: 8),
-          Text(title,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                  )),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(subtitle,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    )),
+            child: Text(
+              subtitle,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
         ],
       ),
@@ -1623,8 +1855,7 @@ class _MatchTile extends ConsumerWidget {
             Expanded(child: Text(L10n.t(ctx, 'chat.blockTitle'))),
           ],
         ),
-        content: Text(L10n.tf(
-            ctx, 'chat.blockBody', {'name': m.partner.name})),
+        content: Text(L10n.tf(ctx, 'chat.blockBody', {'name': m.partner.name})),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -1640,13 +1871,15 @@ class _MatchTile extends ConsumerWidget {
     );
     if (confirmed != true || !context.mounted) return;
     try {
-      await SupabaseDatabaseService(SupabaseService.client)
-          .blockUser(m.partner.id);
+      await SupabaseDatabaseService(
+        SupabaseService.client,
+      ).blockUser(m.partner.id);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(L10n.tf(
-              context, 'chat.blockedDone', {'name': m.partner.name})),
+          content: Text(
+            L10n.tf(context, 'chat.blockedDone', {'name': m.partner.name}),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -1660,18 +1893,19 @@ class _MatchTile extends ConsumerWidget {
       );
     }
   }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final p = match.partner;
     // Quiz-Hinweis erst nach 50-70 Nachrichten (pro Chat deterministisch,
     // gleiche Schwelle wie im Chat-Screen).
-    final threshold =
-        50 + (match.matchId.toString().hashCode.abs() % 21);
+    final threshold = 50 + (match.matchId.toString().hashCode.abs() % 21);
     final msgCount = ref
         .watch(chatProvider.notifier)
         .messagesFor(match.matchId.toString())
         .length;
-    final showQuizHint = !match.quizPassed &&
+    final showQuizHint =
+        !match.quizPassed &&
         match.createdVia == 'find_match' &&
         msgCount >= threshold;
     return Card(
@@ -1710,10 +1944,10 @@ class _MatchTile extends ConsumerWidget {
           match.quizPassed
               ? L10n.t(context, 'interests.photoUnlocked')
               : showQuizHint
-                  ? L10n.t(context, 'interests.quizPending')
-                  : p.bio.isNotEmpty
-                      ? p.bio
-                      : L10n.t(context, 'interests.noBio'),
+              ? L10n.t(context, 'interests.quizPending')
+              : p.bio.isNotEmpty
+              ? p.bio
+              : L10n.t(context, 'interests.noBio'),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -1756,9 +1990,9 @@ class _MatchTile extends ConsumerWidget {
                 PopupMenuItem(
                   value: 'pin',
                   child: ListTile(
-                    leading: Icon(pinned
-                        ? Icons.push_pin_outlined
-                        : Icons.push_pin),
+                    leading: Icon(
+                      pinned ? Icons.push_pin_outlined : Icons.push_pin,
+                    ),
                     title: Text(L10n.t(context, 'interests.pinSpark')),
                     contentPadding: EdgeInsets.zero,
                   ),
@@ -1777,7 +2011,10 @@ class _MatchTile extends ConsumerWidget {
                 PopupMenuItem(
                   value: 'delete',
                   child: ListTile(
-                    leading: const Icon(Icons.delete_outline, color: Colors.red),
+                    leading: const Icon(
+                      Icons.delete_outline,
+                      color: Colors.red,
+                    ),
                     title: Text(L10n.t(context, 'interests.deleteSpark')),
                     contentPadding: EdgeInsets.zero,
                   ),
@@ -1786,8 +2023,7 @@ class _MatchTile extends ConsumerWidget {
                   value: 'hide',
                   child: ListTile(
                     leading: const Icon(Icons.visibility_off_outlined),
-                    title: Text(
-                        L10n.t(context, 'interests.hideOneBtn')),
+                    title: Text(L10n.t(context, 'interests.hideOneBtn')),
                     contentPadding: EdgeInsets.zero,
                   ),
                 ),

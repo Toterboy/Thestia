@@ -780,25 +780,35 @@ class _PasskeyTileState extends ConsumerState<_PasskeyTile> {
         if (proceed != true || !mounted) return;
       }
 
-      // CAPTCHA-Token holen: GoTrue verlangt es fuer die
-      // Passkey-Registrierung (28.10.2026, live geprueft). Ohne Token
-      // lehnt der Server die Challenge-Anfrage ab, BEVOR der native
-      // Dialog erscheint - die Einrichtung schlug deshalb immer fehl.
+      // ERST OHNE Captcha-Token versuchen (NUTZERWUNSCH 31.10.2026:
+      // "hat jetzt aber eine extra Captcha Abfrage"). GoTrue verlangt das
+      // Token nur, wenn der Bot-Schutz wirklich greift.
+      //
+      // Lehnt der Server ohne Token ab (die Challenge-Antwort kommt, BEVOR
+      // der native Dialog erscheint), wird der Sicherheitscheck gezeigt
+      // und der Versuch mit Token wiederholt. Ohne diesen Umweg schlug die
+      // Einrichtung immer fehl, weil das Paket `registerPasskey()` gar
+      // kein Token mitschicken kann.
       if (!mounted) return;
-      final captchaToken = await showCaptchaChallenge(context);
-      if (captchaToken == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(L10n.t(context, 'auth.captchaRegister')),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+      try {
+        await PasskeyAuth.register();
+      } catch (e) {
+        if (!PasskeyAuth.requiresCaptcha(e)) rethrow;
+        if (!mounted) return;
+        final captchaToken = await showCaptchaChallenge(context);
+        if (captchaToken == null) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(L10n.t(context, 'auth.captchaRegister')),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+          return;
         }
-        return;
+        await PasskeyAuth.register(captchaToken: captchaToken);
       }
-
-      await PasskeyAuth.register(captchaToken: captchaToken);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -809,9 +819,12 @@ class _PasskeyTileState extends ConsumerState<_PasskeyTile> {
       }
     } catch (e) {
       if (mounted) {
-        final msg = e is AppException
-            ? L10n.exc(context, e)
-            : L10n.t(context, 'settings.passkeyFailed');
+        // Konkrete Meldung statt der generischen - auch bei unerwarteten
+        // Fehlern (NUTZERWUNSCH 31.10.2026).
+        final msg = L10n.exc(
+          context,
+          PasskeyAuth.explainForUi(e, login: false),
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(msg),
