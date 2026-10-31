@@ -28,7 +28,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'tool'))
 
-from web_theme import apply_theme  # noqa: E402
+from web_theme import apply_theme, strip_theme  # noqa: E402
 
 ASSETS = ROOT / 'passkey-assets'
 
@@ -51,6 +51,20 @@ NUR_CSS = ['index.html', 'bestaetigt.html']
 
 
 def main() -> int:
+    # --force: Das Theme wird VORHER entfernt und neu eingespielt.
+    #
+    # Warum das noetig ist (31.10.2026): Das Design bekam eine neue
+    # Regel - die Seite folgt jetzt der Systemeinstellung (Dark Mode)
+    # und der Schalter dreht nur um. Wer das Design nachaendert,
+    # schreibt die Aenderung in web_theme.py und spielt sie mit
+    # --force auf alle Seiten ein.
+    #
+    # apply_theme() entfernt ein vorhandenes Theme zwar ohnehin zuerst -
+    # der Schritt ist aber unsichtbar, wenn jemand die Seite
+    # zwischendurch von Hand angefasst hat (zusaetzliches
+    # Inline-CSS, eine eigene Kopfzeile). --force raeumt restlos auf:
+    # jede Ausfuehrung ergibt dieselbe Seite.
+    force = '--force' in sys.argv[1:]
     geaendert = 0
     for name in SEITEN:
         pfad = ASSETS / name
@@ -58,7 +72,8 @@ def main() -> int:
             print(f'  {name}: fehlt - uebersprungen')
             continue
         vorher = pfad.read_text(encoding='utf-8')
-        nachher = apply_theme(vorher)
+        quelle = strip_theme(vorher) if force else vorher
+        nachher = apply_theme(quelle)
         if nachher == vorher:
             print(f'  {name}: bereits bearbeitet - unveraendert')
             continue
@@ -71,7 +86,8 @@ def main() -> int:
             print(f'  {name}: fehlt - uebersprungen')
             continue
         vorher = pfad.read_text(encoding='utf-8')
-        nachher = apply_theme(vorher, insert_chrome=False)
+        quelle = strip_theme(vorher, remove_chrome=False) if force else vorher
+        nachher = apply_theme(quelle, insert_chrome=False)
         if nachher == vorher:
             print(f'  {name}: bereits bearbeitet - unveraendert')
             continue

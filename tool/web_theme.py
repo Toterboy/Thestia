@@ -74,8 +74,25 @@ THEME_CSS = """
        (#d62d6c), damit sie auf weiss den Kontrast-Anspruch von 4,5:1
        erreicht.
        --------------------------------------------------------------- */
+    /* --- Farben: zwei Paletten, vier Zustaende --------------------- */
+    /*
+     * (1) Die Seite folgt der Systemeinstellung - ohne Zutun.
+     * (2) Der Schalter dreht um: hell -> dunkel, dunkel -> hell.
+     *
+     * Dazu braucht es vier Regeln, weil CSS den Systemzustand nicht
+     * "unsetten" kann - der Schalter ist ein 2-Zustands-Schalter:
+     *
+     *   System hell + Schalter aus  -> hell
+     *   System hell + Schalter an   -> dunkel
+     *   System dunkel + Schalter aus -> dunkel
+     *   System dunkel + Schalter an  -> hell
+     *
+     * Specificitaet: alle vier Selektoren haben (0,2,0) - `:root:has(...)`
+     * gewinnt gegen `:root` (0,1,0), und die beiden Media-Query-Varianten
+     * entscheiden sich ueber die Reihenfolge (die letzte gewinnt).
+     */
     :root {
-      color-scheme: light dark;
+      color-scheme: light;
       --bg: #f2f2f8;
       --fg: #1b1b21;
       --muted: #575764;
@@ -92,7 +109,28 @@ THEME_CSS = """
       --radius: 24px;
       --radius-s: 14px;
     }
-    html:has(#modus-umschalter:checked) {
+    /* System dunkel: die Seite startet dunkel (ohne Zutun des Nutzers). */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --bg: #0e0e13;
+        --fg: #ece9f2;
+        --muted: #a29fb0;
+        --card: #191920;
+        --card-fg: #ece9f2;
+        --line: #2b2a35;
+        --accent: #ff86b3;
+        --accent-soft: rgba(255,134,179,.12);
+        --accent-line: rgba(255,134,179,.34);
+        --accent-fg: #17161c;
+        --shadow-sm: 0 1px 2px rgba(0,0,0,.55);
+        --shadow: 0 1px 2px rgba(0,0,0,.40),
+                   0 24px 48px -24px rgba(0,0,0,.85);
+      }
+    }
+    /* Schalter an: umdrehen. Im hellen System wird es dunkel ... */
+    :root:has(#modus-umschalter:checked) {
+      color-scheme: dark;
       --bg: #0e0e13;
       --fg: #ece9f2;
       --muted: #a29fb0;
@@ -106,6 +144,25 @@ THEME_CSS = """
       --shadow-sm: 0 1px 2px rgba(0,0,0,.55);
       --shadow: 0 1px 2px rgba(0,0,0,.40),
                  0 24px 48px -24px rgba(0,0,0,.85);
+    }
+    /* ... und im dunklen System wieder hell. */
+    @media (prefers-color-scheme: dark) {
+      :root:has(#modus-umschalter:checked) {
+        color-scheme: light;
+        --bg: #f2f2f8;
+        --fg: #1b1b21;
+        --muted: #575764;
+        --card: #ffffff;
+        --card-fg: #1b1b21;
+        --line: #e4e2ee;
+        --accent: #d62d6c;
+        --accent-soft: rgba(214,45,108,.08);
+        --accent-line: rgba(214,45,108,.30);
+        --accent-fg: #ffffff;
+        --shadow-sm: 0 1px 2px rgba(25,18,45,.06);
+        --shadow: 0 1px 2px rgba(25,18,45,.04),
+                   0 20px 44px -24px rgba(25,18,45,.40);
+      }
     }
 
     *, *::before, *::after { box-sizing: border-box; }
@@ -193,13 +250,35 @@ THEME_CSS = """
     .modus-knopf svg { width: 20px; height: 20px; }
 
     /* Das Symbol zeigt den ZIEL-Modus: Mond im hellen Modus (Klick
-       = dunkel), Sonne im dunklen Modus (Klick = hell). */
+       = dunkel), Sonne im dunklen Modus (Klick = hell).
+
+       Dieselbe Logik wie die Farben: das System entscheidet, was der
+       Knopf anzeigt - der Schalter dreht nur um. */
     .modus-knopf .icon-sonne { display: none; }
-    html:has(#modus-umschalter:checked) .modus-knopf .icon-sonne {
+    /* System dunkel: Ziel ist hell -> Sonne zeigen. */
+    @media (prefers-color-scheme: dark) {
+      :root:not(:has(#modus-umschalter:checked)) .modus-knopf .icon-sonne {
+        display: block;
+      }
+      :root:not(:has(#modus-umschalter:checked)) .modus-knopf .icon-mond {
+        display: none;
+      }
+    }
+    /* Schalter an: im hellen System war der Ziel-Modus dunkel (Mond),
+       im dunklen System hell (Sonne). */
+    :root:has(#modus-umschalter:checked) .modus-knopf .icon-sonne {
       display: block;
     }
-    html:has(#modus-umschalter:checked) .modus-knopf .icon-mond {
+    :root:has(#modus-umschalter:checked) .modus-knopf .icon-mond {
       display: none;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:has(#modus-umschalter:checked) .modus-knopf .icon-sonne {
+        display: none;
+      }
+      :root:has(#modus-umschalter:checked) .modus-knopf .icon-mond {
+        display: block;
+      }
     }
 
     /* --- Inhalt: eine Karte auf getoentem Grund -------------------- */
@@ -376,6 +455,58 @@ THEME_CSS = """
     }
     .held-fuss a { color: var(--accent); }
 
+    /* --- Die Screenshot-Galerie (NUTZERWUNSCH 31.10.2026) ------------ */
+    /*
+     * "Auf thestia.de sollen auch die Screenshots angezeigt werden."
+     *
+     * Die Bilder liegen in passkey-assets/screenshots/ und werden von
+     * tool/make_web_screenshots.py verkleinert und hierher kopiert.
+     * Das Markup erzeugt dasselbe Skript - es kann also nicht
+     * auseinanderlaufen (Bild da, Bild fehlt).
+     */
+    .galerie {
+      max-width: 46rem; margin: 0 auto;
+      padding: clamp(6px, 1vw, 12px) clamp(20px, 4vw, 32px) 0;
+    }
+    .galerie-titel {
+      font-size: 1.22rem; line-height: 1.3; letter-spacing: -0.012em;
+      font-weight: 650; margin: 0 0 .35rem;
+    }
+    .galerie-text {
+      color: var(--muted); font-size: .95rem; margin: 0 0 1rem;
+    }
+    .galerie-raster {
+      display: grid; gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+    }
+    /* Ab Tablet-Breite: drei Spalten statt vier. Die Bilder sind dann
+       gross genug, dass man sie ohne Zooming lesen kann, und die
+       Bildunterschrift passt in zwei Zeilen. */
+    @media (min-width: 640px) {
+      .galerie-raster { grid-template-columns: repeat(3, 1fr); }
+    }
+    .galerie-bild {
+      margin: 0; overflow: hidden;
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius-s); box-shadow: var(--shadow-sm);
+      transition: transform .18s ease, border-color .18s ease;
+    }
+    .galerie-bild:hover {
+      transform: translateY(-2px); border-color: var(--accent-line);
+    }
+    .galerie-bild img {
+      display: block; width: 100%; height: auto;
+      background: var(--accent-soft);
+    }
+    .galerie-bild figcaption {
+      padding: 10px 12px 12px;
+      font-size: .82rem; line-height: 1.4; color: var(--muted);
+    }
+    .galerie-bild figcaption strong {
+      display: block; color: var(--card-fg);
+      font-size: .9rem; font-weight: 650; margin-bottom: 2px;
+    }
+
     /* --- Der Sicherheitscheck (Captcha-Seite) ------------------------ */
     .sicherheit { max-width: 30rem; margin: 0 auto; padding: clamp(16px, 4vw, 28px); }
     .sicherheit-karte {
@@ -517,6 +648,22 @@ def strip_theme(html: str, remove_chrome: bool = True) -> str:
         if j >= 0:
             html = html[:i] + html[j:]
 
+    # 1b) Die eigenstaendigen ":root { color-scheme: light dark; }"-Bloecke
+    #     entfernen - in JEDER Schreibweise.
+    #
+    #     Der Block war ueber Jahre als Extra ueber dem Theme. Er ist
+    #     ueberfluessig (das Theme setzt color-scheme selbst) und er
+    #     hat sich bei jedem Lauf verdoppelt, weil der Abgleich nur die
+    #     Einzeilen-Form kannte, eingefuegt wurde aber die
+    #     mehrzeilige. Deshalb: Regex statt Textvergleich.
+    html = re.sub(
+        r'[ \t]*:root\s*\{\s*color-scheme:\s*light\s+dark;\s*\}\s*',
+        '', html)
+    # Auch die Variante ohne Leerzeichen nach der Doppelpunktregel.
+    html = re.sub(
+        r'[ \t]*:root\s*\{\s*color-scheme:\s*light\s+dark\s*\}\s*',
+        '', html)
+
     if remove_chrome:
         # 2) Alten Schalter und altes Label entfernen.
         html = re.sub(r'<input[^>]*id="modus-umschalter"[^>]*>\s*', '', html)
@@ -556,13 +703,18 @@ def apply_theme(html: str, css_extra: str = '',
     # automatisch eingefuegt wurde.
     html = strip_theme(html, remove_chrome=insert_chrome)
 
-    # 1) Die alte :root-Zeile ersetzen (sie setzt nur color-scheme).
-    alt_root = ':root { color-scheme: light dark; }'
-    if alt_root in html:
-        html = html.replace(alt_root, '', 1)
-    elif '<style>' in html:
-        html = html.replace('<style>', '<style>\n    :root {\n'
-                             '      color-scheme: light dark;\n    }', 1)
+    # 1) Die alte eigenstaendige :root-Zeile braucht es nicht mehr.
+    #
+    #    Frueher stand hier ein Block, der nur color-scheme setzte. Das
+    #    THEME_CSS traegt die Eigenschaft selbst (im eigenen :root) -
+    #    der Extra-Block war also doppelt.
+    #
+    #    WICHTIG: Er wurde per exaktem Textvergleich gesucht, obwohl er
+    #    mehrzeilig eingefuegt wurde. Der Vergleich traf nie zu, also
+    #    wurde bei jedem Lauf ein weiterer eingefuegt: nach 18 Laeufen
+    #    standen 18 identische Bloecke in impressum.html. Deshalb
+    #    entfernt strip_theme() jetzt ALLE Varianten per Regex - gleich
+    #    ob einzeilig oder mehrzeilig.
 
     # 2) Die gemeinsamen Regeln an den Style-Block haengen.
     if '</style>' in html:
