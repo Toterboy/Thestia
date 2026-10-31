@@ -293,6 +293,52 @@ async function verifyPlayIntegrity(
   }
 }
 
+// Legt den Video-Schluessel ab - oder meldet, warum es nicht ging.
+//
+// v0.10.0, Security-Audit 31.10.2026: Der Chiffrat liegt im Bucket,
+// der Schluessel hier (Tabelle verification_video_keys, auf die der
+// Client bewusst KEINE Policy hat - er darf den Schluessel weder sehen
+// noch selbst setzen).
+//
+// AUSGELAGERT, weil der Auto-Pfad denselben Schluessel braucht: Bis
+// hierher wurde er nur im Submit-Zweig angenommen. Der Auto-Pfad
+// hinterlaess aber genau so ein Video fuer die Stichprobe (das Video
+// bleibt fuer Stichproben erhalten) - ohne Schluessel kann die
+// Admin-Sichtung es nicht entschluesseln.
+//
+// Rueckgabe: null bei Erfolg, sonst Fehlertext plus HTTP-Status.
+// (null statt eines leeren Objekts - so muss der Aufrufer den
+// Erfolgsfall ausdruecklich pruefen und bekommt keine ungenutzten
+// Felder.)
+async function storeVideoKey(
+  userId: string,
+  body: Record<string, unknown>,
+): Promise<{ error: string; status: number } | null> {
+  const videoKey = typeof body.videoKey === "string" ? body.videoKey : "";
+  const videoIv = typeof body.videoIv === "string" ? body.videoIv : "";
+  if (!videoKey || !videoIv) {
+    return { error: "Video-Schluessel fehlt", status: 400 };
+  }
+  // Format pruefen: Base64 mit 32 Byte Schluessel und 12 Byte IV.
+  const keyBytes = atobSafe(videoKey);
+  const ivBytes = atobSafe(videoIv);
+  if (!keyBytes || keyBytes.length !== 32 || !ivBytes || ivBytes.length !== 12) {
+    return { error: "Video-Schluessel ungueltig", status: 400 };
+  }
+  const { error: keyError } = await supabaseAdmin
+    .from("verification_video_keys")
+    .upsert({
+      user_id: userId,
+      key_b64: videoKey,
+      iv_b64: videoIv,
+    });
+  if (keyError) {
+    console.error("Video-Schluessel nicht speicherbar:", keyError);
+    return { error: "Video-Schluessel nicht speicherbar", status: 500 };
+  }
+  return null;
+}
+
 serve(async (req) => {
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
@@ -346,48 +392,21 @@ serve(async (req) => {
         );
       }
 
-      // Optionale KI-Schaetzung (nur Orientierung fuer die manuelle
-      // Pruefung, Plausibilitaets-Grenzen werden serverseitig geprüft).
       // Schluessel des Videos entgegennehmen und ablegen
       // (v0.10.0, Migration 151).
-      //
-      // Der Chiffrat liegt im Bucket, der Schluessel hier. Die Tabelle hat
-      // bewusst KEINE Policy fuer den Client - er darf den Schluessel
-      // weder sehen noch selbst setzen.
-      const videoKey = typeof body.videoKey === "string" ? body.videoKey : "";
-      const videoIv = typeof body.videoIv === "string" ? body.videoIv : "";
-      if (!videoKey || !videoIv) {
+      const keyResult = await storeVideoKey(user.id, body);
+      if (keyResult) {
         return new Response(
-          JSON.stringify({ error: "Video-Schluessel fehlt" }),
-          { status: 400, headers: { "Content-Type": "application/json" } },
+          JSON.stringify({ error: keyResult.error }),
+          {
+            status: keyResult.status,
+            headers: { "Content-Type": "application/json" },
+          },
         );
-      }
-      // Format pruefen: Base64 mit 32 Byte Schluessel und 12 Byte IV.
-      const keyBytes = atobSafe(videoKey);
-      const ivBytes = atobSafe(videoIv);
-      if (!keyBytes || keyBytes.length !== 32 || !ivBytes || ivBytes.length !== 12) {
-        return new Response(
-          JSON.stringify({ error: "Video-Schluessel ungueltig" }),
-          { status: 400, headers: { "Content-Type": "application/json" } },
-        );
-      }
-      {
-        const { error: keyError } = await supabaseAdmin
-          .from("verification_video_keys")
-          .upsert({
-            user_id: user.id,
-            key_b64: videoKey,
-            iv_b64: videoIv,
-          });
-        if (keyError) {
-          console.error("Video-Schluessel nicht speicherbar:", keyError);
-          return new Response(
-            JSON.stringify({ error: "Video-Schluessel nicht speicherbar" }),
-            { status: 500, headers: { "Content-Type": "application/json" } },
-          );
-        }
       }
 
+      // Optionale KI-Schaetzung (nur Orientierung fuer die manuelle
+      // Pruefung, Plausibilitaets-Grenzen werden serverseitig geprueft).
       const rawEstimate = Number(body.estimatedAge);
       const rawFaces = Number(body.faceCount);
       const estimatedAge = Number.isFinite(rawEstimate)
@@ -593,6 +612,26 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ error: "Video nicht gefunden (Upload fehlt)" }),
           { status: 400, headers: { "Content-Type": "application/json" } },
+        );
+      }
+
+      // Schluessel ablegen (v0.10.0, Security-Audit 31.10.2026).
+      //
+      // Der Auto-Pfad laesst das Video fuer die Stichprobe liegen (das
+      // Video bleibt fuer Stichproben erhalten). Ohne Schluessel kann
+      // die Admin-Sichtung es nicht entschluesseln - die Stichprobe der
+      // automatisch freigegebenen Faelle waere damit unmoeglich.
+      //
+      // Der Client schickt den Schluessel jetzt auch hier mit (vorher
+      // nur beim Submit).
+      const autoKeyResult = await storeVideoKey(user.id, body);
+      if (autoKeyResult) {
+        return new Response(
+          JSON.stringify({ error: autoKeyResult.error }),
+          {
+            status: autoKeyResult.status,
+            headers: { "Content-Type": "application/json" },
+          },
         );
       }
 

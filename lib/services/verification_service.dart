@@ -647,11 +647,34 @@ class VerificationService {
       final file = File(video.filePath);
       if (!await file.exists()) return false;
       final storage = SupabaseStorageService(SupabaseService.client);
+
+      // Das Video wird auch hier VERSCHLUESSELT hochgeladen.
+      //
+      // BUG (Security-Audit 31.10.2026): nur der Submit-Pfad
+      // verschluesselte (Zeile 563), der Auto-Pfad lagerte das
+      // ROHVIDEO ab - unter dem Dateinamen 'video.mp4.enc', der
+      // Verschluesselung suggeriert, aber ohne Chiffrat. Zwei Folgen:
+      // die Zusage der Datenschutzerklaerung ("der Bucket enthaelt
+      // ausschliesslich Chiffrat") stimmte nicht, und die Admin-
+      // Sichtung brach ab, weil der Schluessel fehlte.
+      //
+      // Verschluesselt wird jetzt in beiden Pfaden gleich - der
+      // Schluessel reist getrennt vom Chiffrat (Tabelle
+      // verification_video_keys, auf die der Client keinen Zugriff
+      // hat).
+      final encrypted = VerificationCrypto.encrypt(await file.readAsBytes());
+
       await storage
-          .uploadVerificationVideo(await file.readAsBytes())
+          .uploadVerificationVideo(encrypted.cipher)
           .timeout(const Duration(seconds: 60));
 
-      // 2) Serverseitige Prüfung (Regel "auto").
+      // 2) Serverseitige Pruefung (Regel "auto").
+      //
+      // Der Schluessel wird mitgeschickt (wie im Submit-Pfad), damit
+      // die Edge Function ihn ablegen kann. Ohne ihn kann die
+      // Admin-Sichtung das Video nicht entschluesseln - die
+      // Stichprobe der automatisch freigegebenen Faelle waere
+      // unmoeglich.
       final response = await SupabaseService.client.functions
           .invoke(
             'verify-account',
@@ -661,6 +684,8 @@ class VerificationService {
               'faceCount': faceCount,
               'deviation': deviation,
               'liveness': true,
+              'videoKey': encrypted.keyB64,
+              'videoIv': encrypted.ivB64,
               if (integrityToken != null && integrityNonce != null) ...{
                 'integrityToken': integrityToken,
                 'integrityNonce': integrityNonce,
