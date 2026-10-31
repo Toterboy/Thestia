@@ -132,6 +132,37 @@ Future<void> migrateLegacyNamespaces({
 }) async {
   final store = storage ?? const FlutterSecureStorage();
 
+  // PERFORMANCE (31.10.2026): Der Legacy-Namespace ist EINER - alle
+  // fuenf Ziel-Namespaces teilen ihn sich. Er wird deshalb genau
+  // EINMAL gelesen, und mit readAll statt mit einzelnen reads:
+  //
+  //   readAll ist EIN Plattform-Aufruf und liefert ALLE Schluessel
+  //   des Namespaces. Ein einzelner read ist dagegen ein eigener
+  //   Aufruf je Schluessel - und jeder Zugriff auf den Keystore
+  //   kostet eine Dateioperation mit Entschluesselung im Android
+  //   Keystore.
+  //
+  // Vorher lasse der Start bis zu 21 einzelne Zugriffe: je Schluessel
+  // ein read auf dem Ziel, und bei leerem Ziel noch einmal denselben
+  // Schluessel im Legacy. Das passierte VOR dem ersten Frame - der
+  // Nutzer wartete auf den Keystore, nicht auf die App.
+  //
+  // Nach der Migration ist der Legacy-Namespace leer. Dann genuegt
+  // EIN readAll, und die Ziel-Namespaces werden gar nicht angefasst.
+  Map<String, String> legacyAll;
+  try {
+    legacyAll = await store.readAll(
+      aOptions: legacyAndroid,
+      iOptions: legacyIOS,
+    );
+  } catch (e) {
+    // Fail-closed: ohne den Legacy-Inhalt kann nichts verschoben
+    // werden. Der Versuch wird beim naechsten Start wiederholt -
+    // und die Werte bleiben unangetastet.
+    debugPrint('[SecureNamespaces] Legacy-Namespace nicht lesbar: $e');
+    return;
+  }
+
   for (final entry in _legacyKeys.entries) {
     final namespace = entry.key;
     final keys = [
@@ -145,44 +176,54 @@ Future<void> migrateLegacyNamespaces({
     );
 
     try {
+      // Welche unserer Schluessel liegen noch im Legacy-Namespace?
+      // Der Default-Namespace wird von mehreren Stellen benutzt -
+      // nur die hier aufgefuehrten Keys sind unsere.
+      //
+      // Liegt keiner davon im Legacy, ist fuer diesen Namespace nichts
+      // zu tun. Das ist der Normalfall nach der Migration - und dann
+      // wird der Ziel-Namespace gar nicht gelesen.
+      final zuMigrieren = <String, String>{};
+      for (final key in keys) {
+        final wert = legacyAll[key];
+        if (wert != null) zuMigrieren[key] = wert;
+      }
+      if (zuMigrieren.isEmpty) continue;
+
       // Ist der Ziel-Namespace bereits gefuellt? Dann ist nichts zu tun -
       // die App hat die Werte schon in der neuen Struktur.
+      //
+      // Geprueft werden ALLE Keys des Namespaces, nicht nur die im
+      // Legacy gefundenen: ein halb umgestellter Namespace wird
+      // bewusst nicht angefasst.
+      final targetAll = await store.readAll(
+        aOptions: target,
+        iOptions: targetIOS,
+      );
       var targetHasData = false;
       for (final key in keys) {
-        if (await store.read(
-              key: key,
-              aOptions: target,
-              iOptions: targetIOS,
-            ) !=
-            null) {
+        if (targetAll.containsKey(key)) {
           targetHasData = true;
           break;
         }
       }
       if (targetHasData) continue;
 
-      for (final key in keys) {
-        final legacy = await store.read(
-          key: key,
-          aOptions: legacyAndroid,
-          iOptions: legacyIOS,
-        );
-        if (legacy == null) continue;
-
+      for (final eintrag in zuMigrieren.entries) {
         await store.write(
-          key: key,
-          value: legacy,
+          key: eintrag.key,
+          value: eintrag.value,
           aOptions: target,
           iOptions: targetIOS,
         );
         // Erst NACH erfolgreichem Schreiben loeschen.
         await store.delete(
-          key: key,
+          key: eintrag.key,
           aOptions: legacyAndroid,
           iOptions: legacyIOS,
         );
         if (kDebugMode) {
-          debugPrint('[SecureNamespaces] $namespace/$key migriert');
+          debugPrint('[SecureNamespaces] $namespace/${eintrag.key} migriert');
         }
       }
     } catch (e) {

@@ -10,7 +10,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:http/io_client.dart' show IOClient;
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -19,6 +18,7 @@ import 'package:thestia/app.dart';
 import 'package:thestia/routing/route_restore.dart' show setPendingRouteRestore;
 import 'package:thestia/providers/user_preferences_provider.dart' show sharedPrefsProvider;
 import 'package:thestia/screens/core/loading_screen.dart';
+import 'package:thestia/screens/core/update_required_screen.dart';
 import 'package:thestia/services/app_config_service.dart';
 import 'package:thestia/services/crash_journal.dart';
 import 'package:thestia/services/server_time_service.dart';
@@ -306,11 +306,50 @@ Future<_BootstrapInit?> _initializeApp() async {
       }
     } catch (_) {}
 
+    // Das Mindest-Build-Gate (app_config.min_app_version_build)
+    // braucht Netz - und es stand auf dem kritischen Pfad: der
+    // erste Frame der App wartete auf einen Server-Roundtrip (bis zu
+    // 6 s Timeout, im schlechtesten Fall bis zum App-Check im Store).
+    //
+    // Jetzt laeuft es so:
+    //
+    //   1) Der Cache wird ausgewertet - das ist ein lokaler Zugriff
+    //      und kostet nichts. Der Gate gilt also ab dem zweiten
+    //      Start.
+    //   2) Ohne Cache (erster Start nach dem Update) wird der Server
+    //      mit KURZEM Timeout gefragt. Das ist der einzige Fall, in
+    //      dem der Start noch wartet - und danach ist der Cache da.
+    //   3) Der frische Serverwert laeuft im Hintergrund nach
+    //      (app.dart) und aktualisiert den Cache.
+    //
+    // Fail-open bleibt: ein Fehler oder ein Timeout heisst "kein
+    // Update noetig" - genau wie es das Verhalten der Abfrage vorher
+    // war.
+    final build = await AppConfigService.currentBuildNumber();
+    var minBuild = AppConfigService.cachedMinAppVersionBuild(prefs);
+    if (minBuild == null) {
+      minBuild = await AppConfigService.fetchMinAppVersionBuild(
+        timeout: const Duration(seconds: 2),
+      );
+      if (minBuild != null) {
+        // Das Schreiben des Caches darf den Start NIE verhindern -
+        // ein Fehler hier ist kein Grund fuer den Fehlerbildschirm.
+        try {
+          await AppConfigService.cacheMinAppVersionBuild(prefs, minBuild);
+        } catch (e) {
+          debugPrint('[MAIN] Mindest-Build-Cache nicht schreibbar: $e');
+        }
+      }
+    }
+
     return _BootstrapInit(
       SharedPreferencesStorage(prefs),
       prefs,
       prefs.getString('app_locale') ?? 'de',
-      updateRequired: await isAppUpdateRequired(),
+      updateRequired: AppConfigService.isBuildBelowMinBuild(
+        build,
+        minBuild ?? 0,
+      ),
     );
   } catch (e) {
     debugPrint('[MAIN] Initialisierung fehlgeschlagen: $e');
@@ -626,7 +665,7 @@ class _BootstrapAppState extends State<_BootstrapApp> {
             debugShowCheckedModeBanner: false,
             theme: AppTheme.of(ThestiaTheme.classic, Brightness.light),
             darkTheme: AppTheme.of(ThestiaTheme.classic, Brightness.dark),
-            home: const _UpdateRequiredScreen(),
+            home: const UpdateRequiredScreen(),
           );
         }
 
@@ -685,73 +724,6 @@ class _StartupErrorScreen extends StatelessWidget {
                   onPressed: onRetry,
                   child: Text(L10n.t(context, 'admin.retry'))),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Update-Screen des Mindestversions-Gates (v0.8.0): Der Server verlangt
-/// eine neuere Build-Nummer (app_config.min_app_version_build). Mit
-/// Rueckfallebene: Ein bewusster Klick auf 'Trotzdem fortfahren' erlaubt
-/// das Oeffnen auf eigene Verantwortung (z. B. fuer Tester).
-class _UpdateRequiredScreen extends StatelessWidget {
-  const _UpdateRequiredScreen();
-
-  Future<void> _openStore() async {
-    final uris = [
-      Uri.parse('market://details?id=com.thestia.app'),
-      Uri.parse('https://play.google.com/store/apps/details?id=com.thestia.app'),
-    ];
-    for (final uri in uris) {
-      try {
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-          return;
-        }
-      } catch (_) {
-        // naechste Option versuchen
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.system_update_alt,
-                    size: 56, color: Theme.of(context).colorScheme.primary),
-                const SizedBox(height: 24),
-                Text(
-                  L10n.t(context, 'update.required'),
-                  style: Theme.of(context).textTheme.headlineSmall,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  L10n.t(context, 'update.body'),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                FilledButton.icon(
-                  onPressed: _openStore,
-                  icon: const Icon(Icons.shop_outlined),
-                  label: Text(L10n.t(context, 'update.now')),
-                ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () {},
-                  child: Text(L10n.t(context, 'update.later')),
-                ),
-              ],
-            ),
           ),
         ),
       ),

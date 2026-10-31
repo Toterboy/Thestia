@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -6,8 +9,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/providers/user_preferences_provider.dart'
+    show sharedPrefsProvider;
 import 'package:thestia/providers/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/screens/core/update_required_screen.dart';
+import 'package:thestia/services/app_config_service.dart';
 import 'package:thestia/services/global_relay_inbox.dart';
 import 'package:thestia/services/notification_service.dart';
 import 'package:thestia/services/unified_push_service.dart';
@@ -40,6 +47,18 @@ class _AppState extends ConsumerState<App> {
   bool _fcmListenerRegistered = false;
   GlobalRelayInbox? _inbox;
 
+  /// Der Server verlangt inzwischen einen neueren Build, als der
+  /// installierte ist.
+  ///
+  /// PERFORMANCE (31.10.2026): Der Mindest-Build stand beim Start auf
+  /// dem kritischen Pfad - der erste Frame wartete auf einen
+  /// Server-Roundtrip. Jetzt wird der beim Start aus dem lokalen
+  /// Cache gelesen (siehe main.dart), und der Serverwert laeuft hier
+  /// im Hintergrund nach. Ist er strenger geworden, erscheint der
+  /// Update-Hinweis als Deckschicht - ohne dass der Start gewartet
+  /// hat.
+  bool _lateUpdateRequired = false;
+
   @override
   void initState() {
     super.initState();
@@ -56,6 +75,37 @@ class _AppState extends ConsumerState<App> {
     _inbox = inbox;
     ref.read(globalRelayInboxProvider.notifier).state = inbox;
     inbox.start();
+    _checkMinBuildInBackground();
+  }
+
+  /// Prueft den serverseitigen Mindest-Build im Hintergrund.
+  ///
+  /// Der Wert beim Start kam aus dem lokalen Cache. Ist der Server
+  /// inzwischen strenger geworden, faellt das hier auf - der
+  /// Update-Hinweis erscheint dann als Deckschicht ueber der laufenden
+  /// App.
+  ///
+  /// Fail-open: ein Fehler beim Lesen bleibt ohne Folgen - der
+  /// Cache gilt weiter, und der naechste Start fragt wieder.
+  void _checkMinBuildInBackground() {
+    unawaited(() async {
+      try {
+        final prefs = ref.read(sharedPrefsProvider);
+        final frisch = await AppConfigService.fetchMinAppVersionBuild();
+        if (frisch == null) return;
+        if (prefs != null) {
+          await AppConfigService.cacheMinAppVersionBuild(prefs, frisch);
+        }
+        final build = await AppConfigService.currentBuildNumber();
+        if (!mounted) return;
+        if (!AppConfigService.isBuildBelowMinBuild(build, frisch)) return;
+        setState(() => _lateUpdateRequired = true);
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('[App] Mindest-Build-Pruefung fehlgeschlagen: $e');
+        }
+      }
+    }());
   }
 
   /// Lokale Benachrichtigung für Relay-Nachrichten, die außerhalb des
@@ -191,6 +241,26 @@ class _AppState extends ConsumerState<App> {
               ? ThemeMode.dark
               : ThemeMode.light),
       routerConfig: router,
+      // Der Update-Hinweis als Deckschicht ueber der laufenden App.
+      // Er erscheint, wenn der Server strenger geworden ist, seitdem
+      // der Cache gefuellt wurde (siehe _checkMinBuildInBackground).
+      //
+      // "Trotzdem fortfahren" ist hier aktiv - die App laeuft ja
+      // bereits. Beim Start (main.dart) ist derselbe Bildschirm eine
+      // Sperre; dort bleibt der Knopf ohne Wirkung.
+      builder: (context, child) {
+        if (!_lateUpdateRequired) return child ?? const SizedBox.shrink();
+        return Stack(
+          children: [
+            child ?? const SizedBox.shrink(),
+            Positioned.fill(
+              child: UpdateRequiredScreen(
+                onDismiss: () => setState(() => _lateUpdateRequired = false),
+              ),
+            ),
+          ],
+        );
+      },
       ),
     );
   }

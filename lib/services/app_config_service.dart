@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:thestia/services/supabase_service.dart';
 
@@ -14,6 +15,27 @@ class AppConfigService {
 
   static const String _minVersionKey = 'min_app_version_build';
   static const String _transitEnabledKey = 'transit_spark_enabled';
+
+  /// Schluessel des lokalen Caches fuer den Mindest-Build.
+  ///
+  /// PERFORMANCE (31.10.2026): Die Abfrage lief beim Start auf dem
+  /// kritischen Pfad - der erste Frame der App wartete auf einen
+  /// Server-Roundtrip (bis zu 6 s Timeout). Der Wert wird deshalb
+  /// lokal gecacht: der Cache wird sofort ausgewertet, der frische
+  /// Wert laeuft im Hintergrund nach.
+  static const String minVersionCacheKey = 'app_min_app_version_build';
+
+  /// Der gecachte Mindest-Build, oder `null` wenn noch keiner da ist.
+  static int? cachedMinAppVersionBuild(SharedPreferences prefs) =>
+      prefs.getInt(minVersionCacheKey);
+
+  /// Legt den Mindest-Build im Cache ab.
+  static Future<void> cacheMinAppVersionBuild(
+    SharedPreferences prefs,
+    int minBuild,
+  ) async {
+    await prefs.setInt(minVersionCacheKey, minBuild);
+  }
 
   /// Ob Transit Spark serverseitig freigeschaltet ist.
   ///
@@ -47,7 +69,13 @@ class AppConfigService {
   }
 
   /// Mindest-Build-Nummer oder `null` (nicht gesetzt / Fehler).
-  static Future<int?> fetchMinAppVersionBuild() async {
+  ///
+  /// [timeout] ist der Grund, warum diese Methode einen Parameter
+  /// braucht: der Aufruf auf dem kritischen Startpfad darf nicht
+  /// sechs Sekunden dauern.
+  static Future<int?> fetchMinAppVersionBuild({
+    Duration timeout = const Duration(seconds: 6),
+  }) async {
     if (!SupabaseService.isInitialized) return null;
     try {
       final response = await SupabaseService.client
@@ -55,7 +83,7 @@ class AppConfigService {
           .select('value')
           .eq('key', _minVersionKey)
           .maybeSingle()
-          .timeout(const Duration(seconds: 6));
+          .timeout(timeout);
       if (response == null) return null;
       return int.tryParse((response['value'] as String?) ?? '');
     } catch (e) {
@@ -65,17 +93,46 @@ class AppConfigService {
       return null;
     }
   }
+
+  /// Die Build-Nummer der installierten App (pubspec `+N`).
+  ///
+  /// Gecacht: der Wert aendert sich mit der Installation nicht, und
+  /// [PackageInfo.fromPlatform] ist ein Plattform-Aufruf.
+  static int? _buildNumberCache;
+
+  static Future<int> currentBuildNumber() async {
+    final cached = _buildNumberCache;
+    if (cached != null) return cached;
+    var build = 0;
+    try {
+      final info = await PackageInfo.fromPlatform();
+      build = int.tryParse(info.buildNumber) ?? 0;
+    } catch (_) {
+      build = 0;
+    }
+    _buildNumberCache = build;
+    return build;
+  }
+
+  /// Liegt der installierte Build unter dem serverseitigen Mindest-Build?
+  ///
+  /// Fail-open: ein unbekannter Build (0) oder ein unbekannter
+  /// Mindest-Build (0) sperrt niemanden.
+  static bool isBuildBelowMinBuild(int build, int minBuild) =>
+      build > 0 && minBuild > 0 && build < minBuild;
 }
 
-/// Prüft, ob das installierte Build (pubspec `+N`) unterhalb der
-/// serverseitigen Mindestversion liegt. Fail-open bei allen Fehlern.
+/// Prüft, ob das installierte Build (pubspec `+N`) unterhalb des
+/// serverseitigen Mindest-Builds liegt. Fail-open bei allen Fehlern.
+///
+/// Fragt den SERVER - fuer den Startpfad ist [cachedMinAppVersionBuild]
+/// die schnellere Variante (siehe main.dart).
 Future<bool> isAppUpdateRequired() async {
   try {
     final minBuild = await AppConfigService.fetchMinAppVersionBuild();
     if (minBuild == null || minBuild <= 0) return false;
-    final info = await PackageInfo.fromPlatform();
-    final build = int.tryParse(info.buildNumber) ?? 0;
-    return build > 0 && build < minBuild;
+    final build = await AppConfigService.currentBuildNumber();
+    return AppConfigService.isBuildBelowMinBuild(build, minBuild);
   } catch (_) {
     return false;
   }
