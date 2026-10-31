@@ -23,6 +23,7 @@ import 'package:thestia/widgets/funke_overlay.dart';
 import 'package:thestia/widgets/intro_audio_player.dart';
 import 'package:thestia/widgets/states.dart';
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/widgets/calm_loading.dart';
 
 /// Automatisches Nachladen eines Tabs (v0.9.1): bei Rückkehr von einem
 /// gepushten Screen (RouteObserver.didPopNext, z. B. aus dem Chat) und
@@ -349,6 +350,18 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
   List<ReceivedLike> _likes = [];
   bool _loading = true;
 
+  /// Wurde die Liste mindestens einmal geladen?
+  ///
+  /// NUTZERWUNSCH (31.10.2026): "der kurze Ladekreis ist stoerend fuer
+  /// die Animation dort". Der Kreis ersetzte beim Nachladen den GANZEN
+  /// Inhalt - die Liste verschwand fuer einen Moment und kam als
+  /// Kreis zurueck. Das ist kein Warten, das ist ein Schnitt.
+  ///
+  /// Deshalb gilt: der Platzhalter steht nur beim ERSTEN Laden, wenn
+  /// es noch nichts zu zeigen gibt. Ab dann bleibt der Inhalt
+  /// stehen und aktualisiert sich still im Hintergrund.
+  bool _everLoaded = false;
+
   @override
   void initState() {
     super.initState();
@@ -382,7 +395,12 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
     } catch (e) {
       debugPrint('[Interessen] Eigene Likes fehlgeschlagen: $e');
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _everLoaded = true;
+        });
+      }
     }
   }
 
@@ -408,8 +426,12 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+    // Nur beim ersten Laden: ein ruhiger Platzhalter statt eines
+    // kreisenden Rings. Beim Nachladen bleibt der Inhalt stehen -
+    // das Aufblitzen des Rings unterbrach die Animation, in der das
+    // Panel gerade aufgeht (NUTZERWUNSCH 31.10.2026).
+    if (_loading && !_everLoaded) {
+      return const CalmLoading();
     }
     if (_likes.isEmpty) {
       // v0.9.1-Fix (Android 16): Auch im Leerzustand pull-to-refresh
@@ -549,6 +571,18 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
     with RouteAware, WidgetsBindingObserver, _AutoReloadTab {
   List<ReceivedLike> _likes = [];
   bool _loading = true;
+
+  /// Wurde die Liste mindestens einmal geladen?
+  ///
+  /// NUTZERWUNSCH (31.10.2026): "der kurze Ladekreis ist stoerend fuer
+  /// die Animation dort". Der Kreis ersetzte beim Nachladen den GANZEN
+  /// Inhalt - die Liste verschwand fuer einen Moment und kam als
+  /// Kreis zurueck. Das ist kein Warten, das ist ein Schnitt.
+  ///
+  /// Deshalb gilt: der Platzhalter steht nur beim ERSTEN Laden, wenn
+  /// es noch nichts zu zeigen gibt. Ab dann bleibt der Inhalt
+  /// stehen und aktualisiert sich still im Hintergrund.
+  bool _everLoaded = false;
   int? _busyLikeId;
 
   @override
@@ -591,7 +625,12 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
     } catch (e) {
       debugPrint('[Interessen] Erhaltene Likes fehlgeschlagen: $e');
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _everLoaded = true;
+        });
+      }
     }
   }
 
@@ -680,8 +719,12 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+    // Nur beim ersten Laden: ein ruhiger Platzhalter statt eines
+    // kreisenden Rings. Beim Nachladen bleibt der Inhalt stehen -
+    // das Aufblitzen des Rings unterbrach die Animation, in der das
+    // Panel gerade aufgeht (NUTZERWUNSCH 31.10.2026).
+    if (_loading && !_everLoaded) {
+      return const CalmLoading();
     }
     if (_likes.isEmpty) {
       // Eingebettet scrollt die SEITE - kein eigener Leerraum von
@@ -790,14 +833,19 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
                         child: FilledButton.icon(
                           onPressed:
                               busy ? null : () => _respond(like, accept: true),
-                          icon: busy
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2),
-                                )
-                              : const Icon(Icons.favorite),
+                          // Kein Ladekreis im Knopf (NUTZERWUNSCH,
+                          // 31.10.2026): der Ring war 16 px breit
+                          // statt 24 px - die Knopfbreite sprang
+                          // damit hin und her, und bei einem kurzen
+                          // Vorgang war der Ring nur ein Blitzer.
+                          //
+                          // Das Symbol bleibt an seiner Stelle und
+                          // atmet nur leiser. Die Breite bleibt
+                          // konstant.
+                          icon: _BusyIcon(
+                            busy: busy,
+                            child: const Icon(Icons.favorite),
+                          ),
                           label: Text(L10n.t(context, 'interests.sparkConfirmBtn')),
                         ),
                       ),
@@ -836,6 +884,18 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     with RouteAware, WidgetsBindingObserver, _AutoReloadTab {
   List<MatchWithState> _serverMatches = [];
   bool _loading = true;
+
+  /// Wurde die Liste mindestens einmal geladen?
+  ///
+  /// NUTZERWUNSCH (31.10.2026): "der kurze Ladekreis ist stoerend fuer
+  /// die Animation dort". Der Kreis ersetzte beim Nachladen den GANZEN
+  /// Inhalt - die Liste verschwand fuer einen Moment und kam als
+  /// Kreis zurueck. Das ist kein Warten, das ist ein Schnitt.
+  ///
+  /// Deshalb gilt: der Platzhalter steht nur beim ERSTEN Laden, wenn
+  /// es noch nichts zu zeigen gibt. Ab dann bleibt der Inhalt
+  /// stehen und aktualisiert sich still im Hintergrund.
+  bool _everLoaded = false;
   /// Chats verwalten (v0.8.0): Mehrfachauswahl + "Aus Liste entfernen".
   /// Ein-/Ausgang über das AppBar-Icon (NUTZERWUNSCH: weniger Platz);
   /// der Zustand lebt im [matchSelectModeProvider] (AppBar <-> Tab).
@@ -890,7 +950,12 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     } catch (e) {
       debugPrint('[Interessen] Matches laden fehlgeschlagen: $e');
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _everLoaded = true;
+        });
+      }
     }
   }
 
@@ -1322,8 +1387,12 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     final uebrigeFunken =
         activeMatches.where((m) => !gepinnt.contains(m.matchId)).toList();
 
-    if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+    // Nur beim ersten Laden: ein ruhiger Platzhalter statt eines
+    // kreisenden Rings. Beim Nachladen bleibt der Inhalt stehen -
+    // das Aufblitzen des Rings unterbrach die Animation, in der das
+    // Panel gerade aufgeht (NUTZERWUNSCH 31.10.2026).
+    if (_loading && !_everLoaded) {
+      return const CalmLoading();
     }
     if (_serverMatches.isEmpty && qrContacts.isEmpty) {
       if (widget.embedded) {
@@ -1631,11 +1700,90 @@ class _CooledMatchTile extends StatelessWidget {
   }
 }
 
-/// Runder Reiter ├╝ber einer aufklappbaren Blase.
+/// Reiter ├╝ber einer aufklappbaren Blase.
 ///
-/// Der Reiter ist die flache Spitze der Blase: Er bleibt beim ├ûffnen an
-/// seinem Platz, der Inhalt w├ñchst darunter nach unten. Deshalb gibt es
-/// hier keinen TabController und keine TabBarView - nur einen Zustand.
+/// Der Reiter bleibt beim ├ûffnen an seinem Platz, der Inhalt w├ñchst
+/// darunter nach unten. Deshalb gibt es hier keinen TabController und
+/// keine TabBarView - nur einen Zustand.
+///
+/// FORM (NUTZERWUNSCH 31.10.2026): "die beiden Buttons oben sollen
+/// auch unten abgerundet bleiben und nicht unten eckig oben rund
+/// sein". Vorher war der Reiter oben eine runde Kapuze und unten fast
+/// eckig (Radius 14) - er sollte sich an die Blase anschliessen. Mit
+/// der runden Blase darunter sah das aber nach zwei getrennten
+/// Teilen aus, und der Reiter wirkte wie eine Haube.
+///
+/// Jetzt ist der Reiter eine Pille: oben UND unten gleich gerundet.
+/// Die Blase darunter ist ebenfalls oben gerundet - die beiden Teile
+/// lesen sich als ein Paar, nicht als Kappe plus Kasten.
+/// Symbol, das bei einem laufenden Vorgang leise atmet.
+///
+/// Kein Ladekreis im Knopf (NUTZERWUNSCH 31.10.2026): der Ring war
+/// 16 px breit statt 24 px - die Breite des Knopfes sprang damit
+/// hin und her, und bei einem kurzen Vorgang (das Antworten auf einen
+/// Like ist genau das) war der Ring nur ein Blitzer.
+///
+/// Das Symbol bleibt an seiner Stelle und wird nur etwas leiser. Die
+/// Knopfbreite bleibt dadurch stabil, und die Bewegung ist ruhig.
+class _BusyIcon extends StatefulWidget {
+  const _BusyIcon({required this.busy, required this.child});
+
+  final bool busy;
+  final Widget child;
+
+  @override
+  State<_BusyIcon> createState() => _BusyIconState();
+}
+
+class _BusyIconState extends State<_BusyIcon>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.busy) _controller.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(covariant _BusyIcon oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.busy && !_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    } else if (!widget.busy && _controller.isAnimating) {
+      _controller.stop();
+      _controller.value = 1;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final anim = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    );
+    return AnimatedBuilder(
+      animation: anim,
+      child: widget.child,
+      builder: (context, child) => Opacity(
+        // Der Wert bleibt immer ueber 0 - ein ganz verschwindendes
+        // Symbol wuerde wie ein Fehler aussehen.
+        opacity: widget.busy ? 0.45 + 0.4 * anim.value : 1.0,
+        child: child,
+      ),
+    );
+  }
+}
+
 class _InterestPanelButton extends StatelessWidget {
   const _InterestPanelButton({
     required this.label,
@@ -1668,10 +1816,9 @@ class _InterestPanelButton extends StatelessWidget {
             color: open
                 ? scheme.primaryContainer
                 : scheme.surfaceContainerHighest.withValues(alpha: 0.5),
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(999),
-              bottom: Radius.circular(14),
-            ),
+            // Pille: oben und unten gleich gerundet
+            // (NUTZERWUNSCH 31.10.2026).
+            borderRadius: BorderRadius.circular(999),
             border: Border.all(
               color: open
                   ? scheme.primary.withValues(alpha: 0.35)
@@ -1708,11 +1855,15 @@ class _InterestPanelButton extends StatelessWidget {
   }
 }
 
-/// Die Blase unter den Reitern: oben flach angeschlossen, unten rund.
+/// Die Blase unter den Reitern.
 ///
-/// Kein spitzer Schwanz - die Reiter selbst sind die Spitze. Der
-/// Inhalt startet direkt unter dem Reiter und schiebt die Funken beim
-/// Aufklappen nach unten.
+/// Der Inhalt startet direkt unter dem Reiter und schiebt die Funken
+/// beim Aufklappen nach unten.
+///
+/// Die Ecken sind oben wie unten gerundet (NUTZERWUNSCH 31.10.2026):
+/// Der Reiter ist jetzt eine Pille, und eine flach angeschlossene
+/// Blase darunter passte nicht mehr dazu - die gerundete Unterseite
+/// des Reiters stiesse auf die eckige Oberseite der Blase.
 class _PanelBubble extends StatelessWidget {
   const _PanelBubble({required this.child, super.key});
 
@@ -1726,7 +1877,7 @@ class _PanelBubble extends StatelessWidget {
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest.withValues(alpha: 0.42),
         borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(4),
+          top: Radius.circular(20),
           bottom: Radius.circular(24),
         ),
         border: Border.all(

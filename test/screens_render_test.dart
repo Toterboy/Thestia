@@ -203,6 +203,57 @@ void main() {
       expect(zurueck, closeTo(vorher, 1.0));
     });
 
+    testWidgets('die beiden Reiter oben sind unten genauso gerundet '
+        'wie oben', (tester) async {
+      // NUTZERWUNSCH (31.10.2026): "die beiden Buttons oben sollen auch
+      // unten abgerundet bleiben und nicht unten eckig oben rund sein".
+      //
+      // Vorher war der Reiter oben eine runde Kapuze (Radius 999) und
+      // unten fast eckig (Radius 14) - er sollte sich an die Blase
+      // anschliessen. Jetzt ist er eine Pille: oben UND unten gleich.
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await _pump(tester, const InteressenScreen(), _profilMitGeburtstag());
+
+      for (final label in ['Gesendet', 'Erhalten']) {
+        final container = tester.widget<AnimatedContainer>(
+          find
+              .ancestor(
+                of: find.text(label),
+                matching: find.byType(AnimatedContainer),
+              )
+              .first,
+        );
+        final deco = container.decoration as BoxDecoration;
+        final radius = deco.borderRadius as BorderRadius;
+        expect(radius.bottomLeft.x, greaterThan(100),
+            reason: '"$label" muss unten abgerundet sein - nicht eckig. '
+                'Gefunden: ${radius.bottomLeft.x}');
+        expect(radius.bottomLeft.x, radius.topLeft.x,
+            reason: '"$label" muss oben und unten gleich gerundet sein');
+      }
+    });
+
+    testWidgets('kein Ladekreis auf dem Interessen-Screen',
+        (tester) async {
+      // NUTZERWUNSCH (31.10.2026): "der kurze Ladekreis ist stoerend
+      // fuer die Animation dort". Der Ring ersetzte den Inhalt und
+      // unterbrach das Aufblenden des Panels.
+      //
+      // Jetzt steht beim ersten Laden ein ruhiger Platzhalter, und
+      // beim Nachladen bleibt der Inhalt stehen. Ein kreisender Ring
+      // darf sich nirgends mehr finden.
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await _pump(tester, const InteressenScreen(), _profilMitGeburtstag());
+
+      expect(find.byType(CircularProgressIndicator), findsNothing,
+          reason: 'Der Ladekreis unterbricht die Animation - er darf nicht '
+              'mehr vorkommen.');
+    });
+
     testWidgets('der Wechsel zwischen den Blasen funktioniert',
         (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
