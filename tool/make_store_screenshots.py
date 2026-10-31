@@ -23,6 +23,7 @@ Voraussetzung: die App-Screens vorher rendern -
 
 import json
 import math
+import math
 import pathlib
 import re
 import sys
@@ -850,7 +851,8 @@ def _icon_mask(tile, bg):
     return mask.filter(ImageFilter.GaussianBlur(0.6))
 
 
-def _draw_status_bar(img: Image.Image, clock=CLOCK_TEXT, percent=BATTERY_PERCENT):
+def _draw_status_bar(img: Image.Image, clock=CLOCK_TEXT, percent=BATTERY_PERCENT,
+                     tint=None):
     """Zeichnet die System-Statusleiste nach dem Geraet des Nutzers.
 
     ZWEI WEGE, und der erste ist der richtige:
@@ -880,7 +882,10 @@ def _draw_status_bar(img: Image.Image, clock=CLOCK_TEXT, percent=BATTERY_PERCENT
         return
     cy = band / 2.0
 
-    ICON = (38, 34, 44, 245)
+    # Die Tinte der Symbole. Standard: dunkel (auf hellem Grund).
+    # Fuer den Hell/Dunkel-Split wird sie auf der dunklen Seite hell
+    # gesetzt - sonst waeren die Symbole dort unsichtbar.
+    ICON = tint if tint is not None else (38, 34, 44, 245)
     u = float(w)
 
     def font(path, px):
@@ -982,7 +987,7 @@ def _draw_status_bar(img: Image.Image, clock=CLOCK_TEXT, percent=BATTERY_PERCENT
            fill=ICON, width=max(1, int(icon_h * 0.11)))
 
 
-def _draw_nav_bar(img: Image.Image):
+def _draw_nav_bar(img: Image.Image, tint=None):
     """Zeichnet die Gesture-Navigation als hellen Strich mittig unten.
 
     Der Strich bekommt eine dezente scrim-artige Hinterlegung: auf einem
@@ -1008,9 +1013,12 @@ def _draw_nav_bar(img: Image.Image):
     # auf dem Verlauf. Der weiche Saum bleibt (er hebt den Strich auf
     # bunten Kacheln ab), der Strich selbst ist aber deckend dunkel.
     bw, bh = w * 0.28, max(2.0, band * 0.11)
+    # Die Farbe des Strichs: dunkel auf hellem Grund, hell auf
+    # dunklem (siehe _draw_status_bar).
+    strich = tint if tint is not None else (45, 38, 50, 210)
     d.rounded_rectangle(
         [w / 2 - bw / 2, cy - bh / 2, w / 2 + bw / 2, cy + bh / 2],
-        radius=int(bh / 2), fill=(45, 38, 50, 210))
+        radius=int(bh / 2), fill=strich)
 
 
 def phone_mockup(screen: Image.Image, scale=1.0):
@@ -1083,7 +1091,80 @@ def phone_mockup(screen: Image.Image, scale=1.0):
     return canvas
 
 
-def app_tile(shot: Image.Image, box_h: int, box_w: int, corner_ratio=0.055):
+def _schnitt_an_inhaltsgrenze(shot: Image.Image, box_w: int, nutzbar_h: int):
+    """Findet die Zeile, an der der Screen beschnitten werden soll.
+
+    Gesucht ist die LEERSTE Zeile nahe beim Ziel: dort, wo der Screen
+    nichts zeigt, faellt der Beschnitt nicht auf - der Screenshot sieht
+    aus wie ein vollstaendiger Screen statt wie ein abgeschnittenes
+    Stueck.
+
+    Das Ziel ist die Zeile, bei der der Screen auf die Kastenbreite
+    skaliert gerade noch in die Kastenhoehe passt. Liegt das Ziel
+    IN einer Inhaltszeile (Text, Kachel), wird die naechste
+    Leerzeile darunter gesucht - ein Schnitt NACH dem Inhalt sieht
+    besser aus als einer mitten darin.
+
+    Gibt es in der Naehe keine Leerzeile, wird auf das Ziel
+    zurueckgefallen (der Screen ist dann lueckenlos gefuellt).
+    """
+    import numpy as np
+
+    grau = shot.convert('L')
+    a = np.asarray(grau)
+    h = a.shape[0]
+    # Hintergrund: der haeufigste Ton des oberen Bildteils (die App
+    # ist in der Regel einfarbig).
+    bg = int(np.median(a[:400]))
+    # Eine Zeile ist "leer", wenn kaum ein Pixel vom Hintergrund
+    # abweicht.
+    leer = []
+    for y in range(h):
+        anteil = float(np.mean(np.abs(a[y].astype(int) - bg) > 12))
+        if anteil < 0.012:
+            leer.append(y)
+
+    if not leer:
+        return max(1, int(h * nutzbar_h / box_w))
+
+    # Die Leerzeilen zu durchlaufenden Abschnitten zusammenfassen.
+    abschnitte = []
+    for y in leer:
+        if abschnitte and y == abschnitte[-1][1] + 1:
+            abschnitte[-1][1] = y
+        else:
+            abschnitte.append([y, y])
+
+    # Zielzeile: so weit darf der Screen geschnitten werden, dass er
+    # nach der Skalierung auf die Kastenbreite noch in die
+    # Kastenhoehe passt.
+    #
+    #   schnitt * (box_w / shot.width) <= nutzbar_h
+    #   => schnitt <= nutzbar_h * shot.width / box_w
+    ziel = nutzbar_h * shot.width / max(1, box_w)
+
+    # Der Leerabschnitt, der das Ziel enthaelt: der Schnitt faellt
+    # dann in eine Luecke - also genau dorthin, wo im Screen ohnehin
+    # nichts steht. Der Schnitt endet am ENDE dieses Abschnitts:
+    # die Kachel darueber ist damit vollstaendig sichtbar.
+    for beginn, ende in abschnitte:
+        if beginn <= ziel <= ende:
+            return max(1, int(ende + 1))
+    # Das Ziel liegt in einem Inhaltsbereich: dann der letzte
+    # Leerabschnitt DARUNTER (der Schnitt faellt nach dem Inhalt).
+    for beginn, ende in abschnitte:
+        if beginn > ziel:
+            return max(1, int(ende + 1))
+    # Nichts darunter: dann der letzte Leerabschnitt oberhalb.
+    for beginn, ende in reversed(abschnitte):
+        if ende < ziel:
+            return max(1, int(ende + 1))
+    return max(1, int(ziel))
+
+
+def app_tile(shot: Image.Image, box_h: int, box_w: int, corner_ratio=0.055,
+             rand_oben=0, rand_unten=0, sauberer_schnitt=False,
+             split=None):
     """Skaliert den App-Screen auf den Kasten und zeichnet die System-UI.
 
     v0.9.2: Ersetzt phone_mockup(). Das Geraet ist entfallen, der
@@ -1102,23 +1183,108 @@ def app_tile(shot: Image.Image, box_h: int, box_w: int, corner_ratio=0.055):
 
     SKALIERUNG (31.10.2026): Der Screen fuellt jetzt die BREITE des
     Kastens und wird oben verankert beschnitten. Vorher wurde er auf
-    die HOEHE skaliert - der Screen ist 20:9, der Kasten aber 9:19,5.
+    die Hoehe skaliert - der Screen ist 20:9, der Kasten aber 9:19,5.
     Dadurch passte nur 57 % der Kachelbreite zum Bild und der Text
     war auf dem Store-Listing unlesbar klein. Der Beschnitt am unteren
     Rand ist gewollt und normal: er zeigt genau, wie ein Screenshot
     aussieht. Wegfallen darf nur, was nicht klickbar ist (der
     "Weiter"-Knopf, das Eingabefeld) - der sichtbare Kopf mit Titel und
     Statusleiste bleibt.
+
+    [rand_oben] / [rand_unten] (31.10.2026): Zusaetzlicher Leerraum
+    oben und unten um den Screen herum - im Verlauf, nicht im Bild.
+    Der Screen wird dann auf [box_h] MINUS diese Raende skaliert.
+
+    Grund: beim zweiten Screenshot (Startseite) schnitt der Bildschirm
+    mitten in einer Kachel ab - der untere Rand wirkte wie abgeschnitten
+    und nicht wie ein Screenshot. Mit einem kleinen Rand oben und unten
+    bekommt das Bild Luft: es sieht aus wie ein Bild von einem Geraet
+    statt wie ein abgeschnittenes Stueck.
+
+    Die System-UI (Statusleiste, Navigationsleiste) wird IN das Bild
+    gezeichnet - sie sitzt also am Bildrand, nicht am Kastenrand.
     """
-    scale = box_w / shot.width
-    tw, th = int(shot.width * scale), int(shot.height * scale)
-    scr = shot.resize((tw, th), Image.LANCZOS)
-    if th > box_h:
-        scr = scr.crop((0, 0, tw, box_h))
+    # Platz fuer die Raende abziehen.
+    nutzbar_h = max(1, box_h - rand_oben - rand_unten)
+
+    if sauberer_schnitt:
+        # Der Schnitt landet an einer INHALTSGRENZE (31.10.2026).
+        #
+        # Bisher wurde der Screen oben verankert geschnitten - die
+        # Schnittkante fiel mitten in eine Kachel ("Keine neuen
+        # Funken" halb sichtbar). Das sah abgeschnitten aus, nicht wie
+        # ein Screenshot.
+        #
+        # Jetzt wird die Schnittkante an die naechste LEERZEILE
+        # gelegt: dort, wo der Screen nichts zeigt, faellt der
+        # Beschnitt nicht auf. Der Screen wird dabei auf die Breite
+        # des Kastens skaliert (der Text bleibt gross).
+        schnitt = _schnitt_an_inhaltsgrenze(shot, box_w, nutzbar_h)
+        scr = shot.crop((0, 0, shot.width, schnitt)).resize(
+            (box_w, max(1, int(schnitt * box_w / shot.width))),
+            Image.LANCZOS)
+    else:
+        # Beide Richtungen: der Screen darf die BREITE fuellen (das
+        # macht den Text gross) und wird nur beschnitten, wenn die
+        # Hoehe nicht reicht. Die Breite ist das Soll, die Hoehe die
+        # Grenze.
+        scale = box_w / shot.width
+        tw, th = int(shot.width * scale), int(shot.height * scale)
+        if th > nutzbar_h:
+            # Zu hoch: dann auf die Hoehe skalieren (der Screen ist ja
+            # breiter als hoch - er passt nur, wenn er kleiner wird).
+            scale = nutzbar_h / shot.height
+            tw, th = int(shot.width * scale), int(shot.height * scale)
+            scr = shot.resize((tw, th), Image.LANCZOS)
+        else:
+            scr = shot.resize((tw, th), Image.LANCZOS)
     if not OMIT_SYSTEM_UI:
-        _draw_status_bar(scr)
-        _draw_nav_bar(scr)
-    return _round_image(scr, int(scr.width * corner_ratio))
+        if split is None:
+            _draw_status_bar(scr)
+            _draw_nav_bar(scr)
+        else:
+            # Bei einem Hell/Dunkel-Split ist die System-UI zweifarbig:
+            # auf der hellen Seite dunkel, auf der dunklen Seite hell.
+            # Sonst waeren die Symbole auf einer Seite unlesbar.
+            #
+            # Die Tinte wird fuer jede Seite getrennt gezeichnet: der
+            # Split-Faktor sagt, ab welchem x-Pixel die Seite wechselt.
+            hell_t = (38, 34, 44, 245)
+            dunkel_t = (236, 233, 242, 245)
+            hell_nav = (45, 38, 50, 210)
+            dunkel_nav = (236, 233, 242, 210)
+            w_s = scr.width
+            h_s = scr.height
+            # Zwei Ebenen: die obere mit heller Tinte, die untere mit
+            # dunkler - und dann wird an der Kante ineinander
+            # kopiert. Der Schnitt verlaeuft senkrecht (split ist der
+            # x-Anteil), deshalb reicht eine senkrechte Kante.
+            kante = int(w_s * split)
+            if kante <= 0:
+                _draw_status_bar(scr, tint=dunkel_t)
+                _draw_nav_bar(scr, tint=dunkel_nav)
+            elif kante >= w_s:
+                _draw_status_bar(scr, tint=hell_t)
+                _draw_nav_bar(scr, tint=hell_nav)
+            else:
+                oben = scr.crop((0, 0, kante, h_s)).copy()
+                unten = scr.crop((kante, 0, w_s, h_s)).copy()
+                _draw_status_bar(oben, tint=hell_t)
+                _draw_nav_bar(oben, tint=hell_nav)
+                _draw_status_bar(unten, tint=dunkel_t)
+                _draw_nav_bar(unten, tint=dunkel_nav)
+                scr.paste(oben, (0, 0))
+                scr.paste(unten, (kante, 0))
+    gerundet = _round_image(scr, int(scr.width * corner_ratio))
+
+    if rand_oben or rand_unten:
+        # Der Screen in einen Kasten mit Rand setzen. Der Rand zeigt
+        # den Verlauf der Kachel - der Bildschirm "schwebt" darauf.
+        kasten = Image.new('RGBA', (box_w, box_h), (0, 0, 0, 0))
+        kasten.alpha_composite(
+            gerundet, ((box_w - gerundet.width) // 2, rand_oben))
+        return kasten
+    return gerundet
 
 
 def _round_image(img: Image.Image, radius: int) -> Image.Image:
@@ -1895,39 +2061,30 @@ def compose_modes_wqhd(tiles, headline: str, subline: str, badge: str):
     return round_corners(bg, 56)
 
 
-def split_screen(hell: Image.Image, dunkel: Image.Image, trenner: int = 963):
-    """Setzt zwei Renders zu EINEM Screen zusammen: oben hell, unten dunkel.
+def split_screen(hell: Image.Image, dunkel: Image.Image, winkel: float = 22.0,
+                  anker_x: float = 0.5, anker_y: float = 0.42):
+    """Setzt zwei Renders zu EINEM Screen zusammen - SCHRAE geteilt.
 
-    Der Wunsch (31.10.2026): "wo man Dark und Whitemode sieht, also auf
-    einem Screen so halbiert irgendwie".
+    NUTZERWUNSCH (31.10.2026): "Der Hell/Dunkel Screenshot soll so
+    sein, dass die Unterteilung entweder schraeg oder senkrecht ist."
 
-    Warum ueberhaupt ein Split statt zweier Kacheln: zwei Kacheln
-    zeigen zwei Bildschirme - der Store wuerde zwei App-Screens
-    nebeneinander zeigen. Ein Split zeigt DASSELBE Bild in zwei
-    Modi. Das ist die Aussage, die das Bild transportieren soll.
+    Vorher war die Teilung waagerecht (oben hell, unten dunkel). Der
+    Wunsch ist ausdruecklich: die Linie soll NICHT waagerecht laufen -
+    entweder schraeg oder senkrecht. Waagerecht sah aus wie zwei
+    uebereinander gelegte Bildschirme.
 
-    [trenner] ist die Zeile, an der geteilt wird. Sie ist an den
-    beiden Renders GEMESSEN und liegt in einer Leerzeile zwischen
-    der Ueberschrift "Erscheinung" und der Auswahl
-    Hell/System/Dunkel. Damit gilt:
+    SCHRAE (Standard): Eine Diagonale von links oben nach rechts
+    unten. Links der Linie ist der helle, rechts der dunkle Render.
+    Beide Renders sind derselbe Screen an derselben Stelle - es
+    sieht also aus wie EIN Screen, der zur Haelfte hell und zur
+    Haelfte dunkel ist.
 
-      * oben steht der vollstaendige Farbschema-Block (Kreise UND
-        ihre Beschriftung) auf hellem Grund,
-      * unten steht die Auswahl Hell/System/Dunkel auf dunklem Grund -
-        und dort ist "Dunkel" markiert.
+    SENKRECHT ([winkel] = 90): Eine senkrechte Linie in der Mitte.
 
-    Das Bild sagt damit genau das, was die Headline sagt: der
-    obere Teil IST hell, der untere IST dunkel. Die Grenze faellt
-    zusaetzlich genau zwischen zwei Abschnitten - kein Text wird
-    halb abgeschnitten.
-
-    Beide Renders haben identisches Layout, also passt dieselbe
-    Zeile fuer beide.
-
-    WICHTIG: Der dunkle Render wird an der Trennstelle GEKORZT
-    uebernommen, nicht von oben. Sonst stuende der Screen-Header
-    ("Erscheinungsbild", "Farbschema") ein zweites Mal in der Mitte
-    des Bildes - und es waeren zwei Screens, nicht einer.
+    [anker_x] / [anker_y]: Wo die Diagonale den Bildschirm kreuzt
+    (als Anteil der Breite bzw. Hoehe, 0..1). Der Anker liegt an
+    einer INHALTSGRENZE - dort, wo im Screen nichts steht. So
+    zerschneidet die Linie keinen Text und keine Kachel.
 
     Die Statusleiste kommt nur oben (aus dem hellen Render) - eine
     zweite Statusleiste in der Mitte des Bildes waere ein Fehler.
@@ -1936,18 +2093,55 @@ def split_screen(hell: Image.Image, dunkel: Image.Image, trenner: int = 963):
         raise ValueError('Die beiden Renders haben verschiedene Groessen: '
                          '%s vs %s' % (hell.size, dunkel.size))
     w, h = hell.size
-    if not 0 < trenner < h:
-        raise ValueError('Die Trennzeile %d liegt nicht im Bild (0..%d).'
-                         % (trenner, h))
-    out = Image.new('RGBA', (w, h), (0, 0, 0, 0))
-    out.paste(hell.convert('RGBA'), (0, 0))
-    # Der dunkle Teil STARTET an der Trennstelle: es ist der
-    # untere Abschnitt desselben Bildes, nicht ein zweiter Screen.
-    out.paste(dunkel.convert('RGBA').crop((0, trenner, w, h)), (0, trenner))
+
+    # Mittelpunkt der Diagonalen: der Anker.
+    mx, my = w * anker_x, h * anker_y
+    # Richtung der Diagonalen: (cos, sin) des Winkels zur Waagerechten.
+    rad = math.radians(winkel)
+    dx, dy = math.cos(rad), math.sin(rad)
+
+    hell_rgb = hell.convert('RGB')
+    dunkel_rgb = dunkel.convert('RGB')
+    hell_pix = hell_rgb.load()
+    dunkel_pix = dunkel_rgb.load()
+
+    out = Image.new('RGBA', (w, h))
+    out_pix = out.load()
+
+    # Fuer jede SPALTE einmal rechnen: die Grenze ist eine Gerade,
+    # also laesst sich der Uebergang pro x bestimmen.
+    for x in range(w):
+        # Abstand des Punktes (x, y) von der Geraden durch (mx, my)
+        # mit der Richtung (dx, dy):
+        #   d = (x - mx) * (-dy) + (y - my) * dx
+        # d < 0 -> eine Seite, d > 0 -> die andere.
+        basis = (x - mx) * (-dy) - (my * dx)
+        for y in range(h):
+            d = basis + y * dx
+            # 1 px breite weiche Kante in der Mitte der Diagonalen.
+            if d < -0.5:
+                out_pix[x, y] = hell_pix[x, y] + (255,)
+            elif d > 0.5:
+                out_pix[x, y] = dunkel_pix[x, y] + (255,)
+            else:
+                # Der Pixel liegt AUF der Linie: er wird aus beiden
+                # gemittelt. Das glaettet den Uebergang.
+                t = d + 0.5
+                hell_p = hell_pix[x, y]
+                dunkel_p = dunkel_pix[x, y]
+                out_pix[x, y] = (
+                    int(hell_p[0] + (dunkel_p[0] - hell_p[0]) * t),
+                    int(hell_p[1] + (dunkel_p[1] - hell_p[1]) * t),
+                    int(hell_p[2] + (dunkel_p[2] - hell_p[2]) * t),
+                    255,
+                )
+
     return out
 
 
-def compose_9x16(shot: Image.Image, headline: str, subline: str, badge: str, dark: bool = False):
+def compose_9x16(shot: Image.Image, headline: str, subline: str, badge: str,
+                 dark: bool = False, rand_oben: int = 0, rand_unten: int = 0,
+                 sauberer_schnitt: bool = False, split: float = None):
     W, H = 1080, 1920
     verlauf = gradient((W, H), 40)
     if dark:
@@ -1973,7 +2167,9 @@ def compose_9x16(shot: Image.Image, headline: str, subline: str, badge: str, dar
     # gross und abgerundet da - die Flaeche gehoert dem Produkt.
     box_h = H - y - 150
     box_w = W - 150
-    scr = app_tile(shot, box_h, box_w, corner_ratio=0.055)
+    scr = app_tile(shot, box_h, box_w, corner_ratio=0.055,
+                   rand_oben=rand_oben, rand_unten=rand_unten,
+                   sauberer_schnitt=sauberer_schnitt, split=split)
     tw, th = scr.size
     px = (W - tw) // 2
     py = y + 34
@@ -2138,24 +2334,61 @@ def main():
             print('  04_entdecken: keine Kacheln gefunden, Fallback auf '
                   'den Screen')
         shot = Image.open(src)
-        # 06_hell_dunkel: EIN Screen, oben hell und unten dunkel.
+        # 06_hell_dunkel: EIN Screen, SCHRAE geteilt (NUTZERWUNSCH
+        # 31.10.2026: "die Unterteilung entweder schraeg oder senkrecht").
         #
         # Beide Renders stammen aus demselben Screen (Erscheinungsbild)
-        # - der eine im hellen, der andere im dunklen Farbsatz. Sie
-        # werden an einer Abschnittsgrenze zusammengesetzt.
+        # - der eine im hellen, der andere im dunklen Farbsatz. Die
+        # Diagonale laeuft durch die Auswahl Hell/System/Dunkel und
+        # trennt genau zwischen "System" und "Dunkel".
         if name == '06_hell_dunkel':
             dunkel_src = SRC / '04_anpassen_dunkel.png'
             if not dunkel_src.exists():
                 print('  fehlt:', dunkel_src.name,
                       '- zuerst den dunklen Screen rendern')
                 continue
-            shot = split_screen(shot, Image.open(dunkel_src))
-            print(f'  {name}: Split aus 04_anpassen (hell) + '
+            # SENKRECHT geteilt (NUTZERWUNSCH: "die Unterteilung
+            # entweder schraeg oder senkrecht").
+            #
+            # Senkrecht ist hier die bessere Wahl: der Bildschirm ist
+            # 20:9 und die Erscheinungs-Auswahl (Hell/System/Dunkel)
+            # liegt in EINER Zeile. Eine Diagonale durch diese Zeile
+            # zerschneidet die Kacheln - und genau die Auswahl soll
+            # ja BEIDE Modi zeigen.
+            #
+            # Die Kante liegt zwischen "System" und "Dunkel" (x =
+            # 0,655 der Breite). Links steht das Segment "Hell" auf
+            # hellem Grund, rechts "Dunkel" auf dunklem - die Aussage
+            # des Bildes in einem Blick.
+            # 270 Grad (nicht 90): die Seite, auf der der HELLE
+            # Render liegt, ist dann die linke. Bei 90 Grad waere sie
+            # die rechte - und die Statusleiste stuende mit dunkler
+            # Tinte auf dunklem Grund.
+            shot = split_screen(shot, Image.open(dunkel_src), winkel=270.0,
+                                anker_x=0.655, anker_y=0.45)
+            split_x = 0.655
+            print(f'  {name}: senkrechter Split aus 04_anpassen (hell) + '
                   '04_anpassen_dunkel (dunkel)')
         # Nur das Datenschutz-Bild wird abgedunkelt. Ein zweites dunkles
         # Bild wuerde die Wirkung aufheben.
         dunkel = name == '08_datenschutz'
-        a = compose_9x16(shot, headline, subline, badge, dark=dunkel)
+        # 02_aktuelles: mehr Rand oben und unten (NUTZERWUNSCH
+        # 31.10.2026: "soll oben und unten der Rand etwas mehr da sein,
+        # da der wie abgeschnitten ist"). Die Startseite ist eine lange
+        # Liste - ohne Rand schnitt der Bildschirm mitten in einer
+        # Kachel ab und wirkte wie ein zerstueckeltes Bild.
+        rand_oben = 40 if name == '02_aktuelles' else 0
+        rand_unten = 40 if name == '02_aktuelles' else 0
+        # Der Schnitt landet an einer Inhaltsgrenze - nicht mitten in
+        # einer Kachel.
+        sauberer_schnitt = name == '02_aktuelles'
+        # X-Anteil, an dem die System-UI die Tinte wechselt (nur beim
+        # Hell/Dunkel-Split). None = einfarbig wie bei allen anderen.
+        split_x = None
+        a = compose_9x16(shot, headline, subline, badge, dark=dunkel,
+                         rand_oben=rand_oben, rand_unten=rand_unten,
+                         sauberer_schnitt=sauberer_schnitt,
+                         split=split_x)
         b = compose_wqhd(shot, headline, subline, badge, dark=dunkel)
 
         # Variante MIT nachgeahmter Systemleiste.
@@ -2167,7 +2400,10 @@ def main():
         # Screens werden nicht zweimal geladen.
         globals()['OMIT_SYSTEM_UI'] = True
         try:
-            a2 = compose_9x16(shot, headline, subline, badge, dark=dunkel)
+            a2 = compose_9x16(shot, headline, subline, badge, dark=dunkel,
+                              rand_oben=rand_oben, rand_unten=rand_unten,
+                              sauberer_schnitt=sauberer_schnitt,
+                              split=split_x)
             b2 = compose_wqhd(shot, headline, subline, badge, dark=dunkel)
             save_png(a2, OUT_9x16_OHNE / f'{name}.png')
             save_png(b2, OUT_WQHD_OHNE / f'{name}.png')

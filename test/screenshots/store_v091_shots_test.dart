@@ -21,6 +21,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'support/store_screenshot_insets.dart';
 import 'package:thestia/providers/user_preferences_provider.dart';
+import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/models/match.dart';
 import 'package:thestia/models/message.dart';
 import 'package:thestia/models/user_profile.dart';
@@ -228,6 +229,42 @@ Widget _harness(Widget child, SharedPreferences prefs, {
       securePrefsProvider.overrideWithValue(_FakeSecurePrefs()),
       secureProfileStoreProvider.overrideWithValue(_FakeSecureProfileStore()),
       sharedPrefsProvider.overrideWithValue(prefs),
+      // Das Profil als VERIFIZIERT (NUTZERWUNSCH 31.10.2026: "Die Modi
+      // sollen auf den Screenshots alle entsperrt sein (Nur im
+      // Screenshot)").
+      //
+      // Derselbe Override erledigt zwei Aufgaben:
+      //
+      // 1. Die Modus-Kacheln (Find your Spark, Dating Hour, Transit
+      //    Spark) sind gesperrt, solange das eigene Profil nicht
+      //    verifiziert ist. Im Store-Bild sahen sie ausgegraut aus und
+      //    trugen ein Schloss - das Bild zeigte damit einen Zustand,
+      //    den ein Nutzer NICHT kennenlernen kann (der muss erst
+      //    ein Video einreichen). Alle fuenf Modi sichtbar und
+      //    bedienbar zu zeigen ist die ehrlichere Darstellung.
+      //
+      // 2. Die Startseite zeigte die Karte "Nicht verifiziert" mit dem
+      //    Text "Fuer diesen Modus musst du dein Alter mit einem kurzen
+      //    Video bestaetigen" - auf dem UEBERSCHRIFT des Bildes. Das
+      //    war doppelt stoerend: die Karte nimmt die halbe Hoehe ein
+      //    und erklaert etwas, das im Bild nicht gebraucht wird.
+      //
+      // Der Name bleibt leer - der Screenshot zeigt dadurch weiterhin
+      // "Hallo, du!" statt eines erfundenen Namens.
+      profileProvider.overrideWith((ref) {
+        final notifier = ProfileNotifier(
+          _FakeLocalStorage(),
+          _FakeSecureProfileStore(),
+        );
+        notifier.setProfile(UserProfile(
+          id: AppConstants.currentUserId,
+          name: '',
+          bio: '',
+          isVerified: true,
+          verificationState: VerificationState.verified,
+        ));
+        return notifier;
+      }),
       ...extra,
     ],
     child: MaterialApp(
