@@ -4,8 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import 'package:thestia/models/app_settings.dart';
 import 'package:thestia/routing/route_restore.dart';
+import 'package:thestia/routing/verification_required_routes.dart';
 
+import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/providers/auth_provider.dart';
+import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/providers/settings_provider.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/services/mfa_service.dart';
@@ -288,6 +291,38 @@ GoRouter createRouter(Ref ref) {
       // erreichen. Direkter URL-Aufruf wird zur Startseite umgeleitet.
       if (state.matchedLocation == AppRoutes.admin && !isCurrentUserAdmin()) {
         return AppRoutes.home;
+      }
+
+      // -- Modi, die eine Verifikation voraussetzen --
+      //
+      // Defense in Depth (v0.10.0, Security-Audit 31.10.2026).
+      //
+      // Die Verifikationspflicht fuer Find your Spark, Dating Hour und
+      // Transit Spark wird im Modus-Auswahlbildschirm geprueft
+      // (swipe_mode_selection_screen.dart). Das ist eine UI-Sperre -
+      // die Routen selbst waren frei navigierbar.
+      //
+      // Zwei Gruende fuer die Pruefung HIER:
+      //
+      // 1) Ein Deep-Link (App-Links, Passwort-Zuruecksetzen-Mail,
+      //    ein gespeicherter Verlauf) umgeht den Auswahlbildschirm
+      //    vollstaendig. Wer den Bildschirm ueberspringt, kommt an
+      //    den Bildschirm.
+      // 2) Der Server erzwingt die Sperfe erst seit Migration 161
+      //    (vorher nur im Client). Diese Pruefung faengt den
+      //    Rest ab - unabhaengig vom Serverstand.
+      //
+      // Wichtig: Das ist die ZWEITE Sperre, nicht die einzige. Der
+      // Server bleibt die maechtige (Migration 161) - ein gepatchter
+      // Client kommt an der Servergrenze nicht vorbei.
+      if (loggedIn && routeNeedsVerification(state.matchedLocation)) {
+        final state2 = ref.read(profileProvider).verificationState;
+        if (state2 != VerificationState.verified) {
+          // Zurueck zur Modus-Auswahl: dort steht die Begruendung
+          // ("so kannst du das anbieten") und der Weg zur
+          // Verifikation.
+          return AppRoutes.swipeModeSelection;
+        }
       }
       if (!loggedIn) {
         // Vom Lade-Screen direkt auf die korrekte Start-Screen leiten:
@@ -848,3 +883,4 @@ GoRouter createRouter(Ref ref) {
 final routerProvider = Provider<GoRouter>((ref) {
   return createRouter(ref);
 });
+
