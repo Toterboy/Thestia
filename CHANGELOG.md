@@ -7,7 +7,7 @@ und folgt der [Semantic Versioning Specification (SemVer)](https://semver.org/la
 Solange die Versionsnummer mit `0.` beginnt (Initial Development Phase nach SemVer §4),
 können sich Schnittstellen und Verhalten jederzeit ändern.
 
-## [0.10.0] – Nachtrag (Build 31, 2026-10-30)
+## [0.10.0] – Nachtrag (Build 31, 2026-10-30/31)
 
 ### Hinzugefügt
 

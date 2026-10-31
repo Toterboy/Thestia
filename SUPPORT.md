@@ -46,7 +46,7 @@ der Folgezustand des abgebrochenen Updates.
 
 Nach dem Deinstallieren muss ein **Passkey neu registriert** werden –
 Android löscht Passkeys beim Deinstallieren. Das Konto selbst bleibt
-erhalten. Details: [docs/SIGNATUR-KEY.md](docs/SIGNATUR-KEY.md).
+erhalten.
 
 ### Update-Hinweis für alte Builds
 

@@ -1,8 +1,8 @@
 # Roadmap
 
 Öffentliche Planung – ohne Fixierung auf Termine (Beta = Prioritäten können
-sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
-[docs/adr/](docs/adr/).
+sich durch Feedback verschieben). Die konkrete Entscheidungshistorie liegt in
+den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
 
 ## Versionierungslogik
 
@@ -141,6 +141,22 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       others" erweitert (Telefon und Social Media, verschlüsselt nur
       lokal, Signal/Threema empfohlen, Instagram/Snapchat/Discord
       gekennzeichnet); Datenschutzerklärung Version 17 und README ergänzt
+- [x] **Passkey-Reparatur (2026-10-31)** – der Passkey-Plugin war im
+      Release-Build **gar nicht vorhanden** (`supabase_flutter` hängt nur am
+      Platform-Interface, nicht am app-seitigen `passkeys`-Paket; Flutter
+      baut ein Endorsed-Plugin nur ein, wenn die App selbst davon abhängt).
+      Im APK fehlten die Plugin-Klassen und die Berechtigung
+      `CREDENTIAL_MANAGER_SET_ORIGIN` – jeder Versuch endete mit
+      „MissingPluginException". `passkeys` ist jetzt eine direkte, exakt
+      gepinnte Abhängigkeit; ein Regressionstest verhindert die
+      Wiederholung. Dazu: der Sicherheitscheck wird erst abgefragt, wenn
+      der Server ihn wirklich verlangt, und Passkey-Fehler werden
+      konkret benannt statt „fehlgeschlagen" zu melden
+- [x] **UI-Nachschliff (2026-10-31)** – Transit-Spark-Kachel verschiebt den
+      Text beim Moduswechsel nicht mehr (der Rand zählte zum Innenabstand),
+      Profil-Menü mit Rand nach oben, Ladekreise mit runden Enden
+      (zentral in der Theme), Name im Profil bleibt trotz Abzeichen
+      mittig, Verifiziert-Abzeichen auch in den Interessen-Listen sichtbar
 
 ## In Arbeit
 
@@ -356,7 +372,7 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
 
 ## Geplant für 0.10.0 – Standort-Privatisierung, Transit Spark auf echten Geräten & Qualitätssicherung
 
-> Status: 0.9.1 ist veröffentlicht.
+> Status: v0.9.2 ist veröffentlicht, v0.10.0 ist in Vorbereitung.
 >
 > **Dieses Release ist ein MINOR-Bump, und zwar nach der eigenen Regel
 > dieser Roadmap.** Die Regel sagt: „Neue Nutzerfunktionen sind immer
@@ -452,7 +468,7 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       F-Droid-Einreichung, zentral gepinnte Tool-Versionen in
       `tool/requirements.txt`. CI-Jobs: `dependency-audit` und
       `static-checks`
-- [x] **Öffentliches Threat-Model** – fertig: [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md).
+- [x] **Öffentliches Threat-Model** – fertig: [passkey-assets/threat-model.md](passkey-assets/threat-model.md).
       Benennt Vertrauensgrenzen, Angriffsflächen (RLS/`SECURITY DEFINER`,
       Jugendschutz, BLE-Metadaten, Standort, E2E-Irrtum, Lieferkette,
       Moderation/Drittland, Authentifizierung), die Maßnahmen und – ohne
@@ -460,13 +476,14 @@ sich durch Feedback verschieben). Konkrete Entscheidungshistorie:
       Datenschutzerklärung verweisen darauf. `SECURITY.md` selbst war
       bereits öffentlich und nennt `security@thestia.de`
 - [x] **Incident-Response mit 72-Stunden-Uhr (Art. 33 DSGVO)** –
-      fertig: [docs/INCIDENT-RESPONSE.md](docs/INCIDENT-RESPONSE.md).
+      fertig: das betriebliche Ablauf-Dokument liegt lokal beim Betreiber
+      (bewusst nicht im öffentlichen Repository).
       Rollen, Triage in 4 h, Schweregrade mit Fristen, konkreter
       Reaktionsablauf (Eindämmen vor Ursachenanalyse, Sitzungswiderruf),
       Umgang mit kompromittiertem Signing-Key und Firebase-Key, Nachbereitung
       mit Pflicht zur Konsequenz
 - [~] **Datenschutzfolgeabschätzung (Art. 35 DSGVO)** – fachlich
-      erstellt: [docs/DSFA.md](docs/DSFA.md), **als Entwurf markiert**.
+      erstellt (liegt lokal beim Betreiber, **als Entwurf markiert**).
       Nicht rechtsgeprüft. Enthält Rechtsgrundlagen je Verarbeitung,
       Risikobewertung und – für Minderjährige – fünf zusätzliche
       Vorkehrungen. **Offen und nicht wegformuliert:** neun Punkte in

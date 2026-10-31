@@ -41,23 +41,22 @@ ein Projekt dieser Größe wäre das eine leere Zusage.
 
 ## Angriffsbild
 
-Das dokumentierte Bedrohungsmodell liegt öffentlich in
-[docs/THREAT-MODEL.md](docs/THREAT-MODEL.md). Es benennt die
+Das dokumentierte Bedrohungsmodell liegt öffentlich im
+[Threat Model](passkey-assets/threat-model.md). Es benennt die
 Angriffsflächen, die Maßnahmen und – ausdrücklich – die Restrisiken.
 Fehlt dort eine Angriffsfläche, ist das ein wirksamer Hinweis und wird
 mit Priorität bearbeitet.
 
-Der Ablauf für gemeldete Vorgänge steht in
-[docs/INCIDENT-RESPONSE.md](docs/INCIDENT-RESPONSE.md), die
-Abschätzung der Risiken nach Art. 35 DSGVO in
-[docs/DSFA.md](docs/DSFA.md).
+Der Ablauf für gemeldete Vorgänge und die Abschätzung der Risiken nach
+Art. 35 DSGVO sind betriebliche Dokumente und bleiben deshalb lokal
+beim Betreiber (nicht Teil des öffentlichen Repositories).
 
 **Zu den Fristen:** Die 72 Stunden aus Art. 33 DSGVO betreffen die
 Meldung einer **Datenpanne an die Aufsichtsbehörde**, nicht die Antwort
 an einen Hinweisgeber. Diese Antwort ist freiwillig und in
 `SECURITY.md` bewusst ohne Frist zugesagt. Wenn es zu einer bestätigten
 Datenpanne kommt, gilt die gesetzliche Frist unverändert – dafür steht
-der Ablauf in `docs/INCIDENT-RESPONSE.md`.
+der Ablauf im betrieblichen Incident-Response-Dokument.
 
 ## Scope
 
