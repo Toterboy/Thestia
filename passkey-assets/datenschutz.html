@@ -15,6 +15,23 @@
        (#d62d6c), damit sie auf weiss den Kontrast-Anspruch von 4,5:1
        erreicht.
        --------------------------------------------------------------- */
+    /* --- Farben: zwei Paletten, vier Zustaende --------------------- */
+    /*
+     * (1) Die Seite folgt der Systemeinstellung - ohne Zutun.
+     * (2) Der Schalter dreht um: hell -> dunkel, dunkel -> hell.
+     *
+     * Dazu braucht es vier Regeln, weil CSS den Systemzustand nicht
+     * "unsetten" kann - der Schalter ist ein 2-Zustands-Schalter:
+     *
+     *   System hell + Schalter aus  -> hell
+     *   System hell + Schalter an   -> dunkel
+     *   System dunkel + Schalter aus -> dunkel
+     *   System dunkel + Schalter an  -> hell
+     *
+     * Specificitaet: alle vier Selektoren haben (0,2,0) - `:root:has(...)`
+     * gewinnt gegen `:root` (0,1,0), und die beiden Media-Query-Varianten
+     * entscheiden sich ueber die Reihenfolge (die letzte gewinnt).
+     */
     :root {
       color-scheme: light dark;
       --bg: #f2f2f8;
@@ -33,7 +50,26 @@
       --radius: 24px;
       --radius-s: 14px;
     }
-    html:has(#modus-umschalter:checked) {
+    /* System dunkel: die Seite startet dunkel (ohne Zutun des Nutzers). */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0e0e13;
+        --fg: #ece9f2;
+        --muted: #a29fb0;
+        --card: #191920;
+        --card-fg: #ece9f2;
+        --line: #2b2a35;
+        --accent: #ff86b3;
+        --accent-soft: rgba(255,134,179,.12);
+        --accent-line: rgba(255,134,179,.34);
+        --accent-fg: #17161c;
+        --shadow-sm: 0 1px 2px rgba(0,0,0,.55);
+        --shadow: 0 1px 2px rgba(0,0,0,.40),
+                   0 24px 48px -24px rgba(0,0,0,.85);
+      }
+    }
+    /* Schalter an: umdrehen. Im hellen System wird es dunkel ... */
+    :root:has(#modus-umschalter:checked) {
       --bg: #0e0e13;
       --fg: #ece9f2;
       --muted: #a29fb0;
@@ -47,6 +83,24 @@
       --shadow-sm: 0 1px 2px rgba(0,0,0,.55);
       --shadow: 0 1px 2px rgba(0,0,0,.40),
                  0 24px 48px -24px rgba(0,0,0,.85);
+    }
+    /* ... und im dunklen System wieder hell. */
+    @media (prefers-color-scheme: dark) {
+      :root:has(#modus-umschalter:checked) {
+        --bg: #f2f2f8;
+        --fg: #1b1b21;
+        --muted: #575764;
+        --card: #ffffff;
+        --card-fg: #1b1b21;
+        --line: #e4e2ee;
+        --accent: #d62d6c;
+        --accent-soft: rgba(214,45,108,.08);
+        --accent-line: rgba(214,45,108,.30);
+        --accent-fg: #ffffff;
+        --shadow-sm: 0 1px 2px rgba(25,18,45,.06);
+        --shadow: 0 1px 2px rgba(25,18,45,.04),
+                   0 20px 44px -24px rgba(25,18,45,.40);
+      }
     }
 
     *, *::before, *::after { box-sizing: border-box; }
@@ -134,13 +188,35 @@
     .modus-knopf svg { width: 20px; height: 20px; }
 
     /* Das Symbol zeigt den ZIEL-Modus: Mond im hellen Modus (Klick
-       = dunkel), Sonne im dunklen Modus (Klick = hell). */
+       = dunkel), Sonne im dunklen Modus (Klick = hell).
+
+       Dieselbe Logik wie die Farben: das System entscheidet, was der
+       Knopf anzeigt - der Schalter dreht nur um. */
     .modus-knopf .icon-sonne { display: none; }
-    html:has(#modus-umschalter:checked) .modus-knopf .icon-sonne {
+    /* System dunkel: Ziel ist hell -> Sonne zeigen. */
+    @media (prefers-color-scheme: dark) {
+      :root:not(:has(#modus-umschalter:checked)) .modus-knopf .icon-sonne {
+        display: block;
+      }
+      :root:not(:has(#modus-umschalter:checked)) .modus-knopf .icon-mond {
+        display: none;
+      }
+    }
+    /* Schalter an: im hellen System war der Ziel-Modus dunkel (Mond),
+       im dunklen System hell (Sonne). */
+    :root:has(#modus-umschalter:checked) .modus-knopf .icon-sonne {
       display: block;
     }
-    html:has(#modus-umschalter:checked) .modus-knopf .icon-mond {
+    :root:has(#modus-umschalter:checked) .modus-knopf .icon-mond {
       display: none;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:has(#modus-umschalter:checked) .modus-knopf .icon-sonne {
+        display: none;
+      }
+      :root:has(#modus-umschalter:checked) .modus-knopf .icon-mond {
+        display: block;
+      }
     }
 
     /* --- Inhalt: eine Karte auf getoentem Grund -------------------- */

@@ -71,3 +71,12 @@
 # selten.
 /threat-model.md
   Cache-Control: public, max-age=86400
+
+# --- Die Screenshot-Galerie der Startseite ---------------------------
+#
+# Ein Tag ist hier richtig: die Bilder aendern sich nur, wenn die App
+# sichtbar umgebaut wird - und dann soll der Browser sie nicht monatelang
+# aus dem Cache zeigen. Sie sind klein (45-65 KB je Bild), ein langer
+# Cache bringt also wenig und riskiert veraltete Bilder.
+/screenshots/*
+  Cache-Control: public, max-age=86400

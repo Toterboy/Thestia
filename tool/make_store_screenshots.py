@@ -60,6 +60,24 @@ FONT_REG = r'C:\Windows\Fonts\segoeui.ttf'
 #   1. Nachpruefbar aus dem Code.
 #   2. Kein Zeitversprechen, keine Mengenangabe ohne Beleg.
 #   3. Erklaert ein echtes Alleinstellungsmerkmal.
+#
+# Die Kacheln sind nach ihrer POSITION im Store benannt (01, 02, ...).
+# Der Render im Repo (test/screenshots/store_v091/) ist nach dem SCREEN
+# benannt. Deshalb die Zuordnung unten: Kachel -> Quelldatei.
+QUELLE = {
+    '01_willkommen': '01_willkommen',
+    '02_aktuelles': '02_aktuelles',
+    '03_chat': '02_chat',
+    '04_entdecken': '03_entdecken',
+    '05_anpassen': '04_anpassen',
+    # 06_hell_dunkel braucht ZWEI Quellen (hell und dunkel). Die
+    # helle ist der Anpassen-Screen, die dunkle sein Gegenpart -
+    # der Sonderfall steht im Hauptlauf.
+    '06_hell_dunkel': '04_anpassen',
+    '07_eisbrecher': '05_eisbrecher',
+    '08_datenschutz': '06_datenschutz',
+}
+
 SHOTS = {
     '01_willkommen': (
         'Blind Date mit\nSubstanz',
@@ -67,7 +85,27 @@ SHOTS = {
         'und siehst ein Foto erst nach dem Funke.',
         'Kein Foto vor dem Kennenlernen',
     ),
-    '02_chat': (
+    # 2) Aktuelles: die Startseite (NEU, 31.10.2026).
+    #
+    #    Der Wunsch: "einen neuen Screenshot, wo man die Aktuelles
+    #    Seite sieht ... der zweite sein, also nach Blind Date mit
+    #    Substanz". Das Bild zeigt, was man beim Oeffnen der App
+    #    wirklich sieht: neue Nachrichten, neue Likes, neue Funken und
+    #    das Dock.
+    #
+    #    Der Text ist am Code nachpruefbar: der Bildschirm begruesst
+    #    ("Hallo, du!"), zeigt die Abschnitte "Neue Nachrichten",
+    #    "Neue Likes" und "Neue Funken" und verlinkt auf "Leute
+    #    entdecken". "Ohne Abo" ist die Abgrenzung gegen den
+    #    Marktstandard (es gibt keine Premium-Stufen).
+    '02_aktuelles': (
+        'Dein Überblick,\n'
+        'jeden Tag',
+        'Neue Nachrichten, neue Likes, neue Funken:\n'
+        'alles an einem Ort.',
+        'Ohne Abo, ohne Werbung',
+    ),
+    '03_chat': (
         # Ersetzt das Anmelde-Bild ("Erst pruefen, dann freischalten").
         # Das zeigte ein Formular - etwas, das man genau einmal macht. Der
         # Chat ist das staerkste Versprechen der App UND der Alltag
@@ -83,19 +121,44 @@ SHOTS = {
         'Außer ihr beiden kann niemand mitlesen.',
         'Schreib, was wirklich wichtig ist',
     ),
-    '03_entdecken': (
+    '04_entdecken': (
         'Fünf Wege,\n'
         'einen Funken zu zünden',
         'Von Find your Match bis Transit Spark:\n'
         'im Zug nebenan Blickkontakt genügt.',
         'Ende-zu-Ende-verschlüsselt',
     ),
-    '04_anpassen': (
+    '05_anpassen': (
         'Dein Stil,\n'
         'deine Farben',
         'Sechs Farbschemata, Hell/System/Dunkel und ein eigener\n'
         'Chat-Hintergrund – alles bleibt erhalten.',
         'Auch 6 Muster im Chat',
+    ),
+    # 6) Hell und Dunkel auf einem Bild.
+    #
+    #    Der Wunsch (31.10.2026): "Wenn passend vielleicht noch einen
+    #    Screenshot an passender Stelle, wo man Dark und Whitemode sieht,
+    #    also auf einem Screen so halbiert irgendwie".
+    #
+    #    Das Bild ist EIN Screen, oben hell und unten dunkel. Es ist
+    #    kein Mockup, sondern zwei echte Renders desselben Bildschirms
+    #    (store_v091/phone/04_anpassen.png und 04_anpassen_dunkel.png),
+    #    an einer Abschnittsgrenze zusammengesetzt.
+    #
+    #    Warum der Bildschirm "Erscheinungsbild": Er IST der Screen,
+    #    auf dem man zwischen Hell und Dunkel waehlt. Wer das Bild
+    #    sieht, sieht damit auch die Auswahl, die den Wechsel bewirkt
+    #    - oben "Hell", unten "Dunkel" markiert.
+    #
+    #    Die Texte sind am Code nachpruefbar: die App hat drei
+    #    Erscheinungsmodi (Hell/System/Dunkel) und sechs Farbschemata.
+    '06_hell_dunkel': (
+        'Hell oder dunkel,\n'
+        'ganz wie du willst',
+        'Drei Erscheinungsmodi: Hell, System oder Dunkel –\n'
+        'die App folgt deinem Gerät.',
+        'Auch sechs Farbschemata',
     ),
     # 6) Datenschutz. Eigenes Bild, weil die Entfernungs-Anzeige die
     #    inhaltlich wichtigste Aenderung dieses Releases ist und in einer
@@ -108,7 +171,7 @@ SHOTS = {
     #    Beleg, und der Punkt beschreibt ein echtes Alleinstellungs-
     #    merkmal: die Entscheidung liegt beim Nutzer, nicht beim
     #    Plattform-Standard.
-    '06_datenschutz': (
+    '08_datenschutz': (
         # Text in reinem Deutsch, mit echten Umlauten. Die uebrigen
         # fuenf Screens benutzen sie auch - eine Transliteration fiel
         # im Store sofort auf.
@@ -124,7 +187,7 @@ SHOTS = {
         'erst, wenn du sie erlaubst: nur Stufen von 10 km.',
         'Kein Ort gespeichert',
     ),
-    '05_eisbrecher': (
+    '07_eisbrecher': (
         '60 Fragen gegen\n'
         'das Schweigen',
         'Eisbrecher für den ersten Chat: antippen,\n'
@@ -1036,14 +1099,26 @@ def app_tile(shot: Image.Image, box_h: int, box_w: int, corner_ratio=0.055):
     corner_ratio: Eckenradius als Anteil der Breite. Ohne Mockup ist die
     Kachel das einzige abgerundete Element und traegt damit die
     Komposition - der Radius ist bewusst grosszuegig gewaehlt.
+
+    SKALIERUNG (31.10.2026): Der Screen fuellt jetzt die BREITE des
+    Kastens und wird oben verankert beschnitten. Vorher wurde er auf
+    die HOEHE skaliert - der Screen ist 20:9, der Kasten aber 9:19,5.
+    Dadurch passte nur 57 % der Kachelbreite zum Bild und der Text
+    war auf dem Store-Listing unlesbar klein. Der Beschnitt am unteren
+    Rand ist gewollt und normal: er zeigt genau, wie ein Screenshot
+    aussieht. Wegfallen darf nur, was nicht klickbar ist (der
+    "Weiter"-Knopf, das Eingabefeld) - der sichtbare Kopf mit Titel und
+    Statusleiste bleibt.
     """
-    scale = min(box_h / shot.height, box_w / shot.width)
+    scale = box_w / shot.width
     tw, th = int(shot.width * scale), int(shot.height * scale)
     scr = shot.resize((tw, th), Image.LANCZOS)
+    if th > box_h:
+        scr = scr.crop((0, 0, tw, box_h))
     if not OMIT_SYSTEM_UI:
         _draw_status_bar(scr)
         _draw_nav_bar(scr)
-    return _round_image(scr, int(tw * corner_ratio))
+    return _round_image(scr, int(scr.width * corner_ratio))
 
 
 def _round_image(img: Image.Image, radius: int) -> Image.Image:
@@ -1820,6 +1895,58 @@ def compose_modes_wqhd(tiles, headline: str, subline: str, badge: str):
     return round_corners(bg, 56)
 
 
+def split_screen(hell: Image.Image, dunkel: Image.Image, trenner: int = 963):
+    """Setzt zwei Renders zu EINEM Screen zusammen: oben hell, unten dunkel.
+
+    Der Wunsch (31.10.2026): "wo man Dark und Whitemode sieht, also auf
+    einem Screen so halbiert irgendwie".
+
+    Warum ueberhaupt ein Split statt zweier Kacheln: zwei Kacheln
+    zeigen zwei Bildschirme - der Store wuerde zwei App-Screens
+    nebeneinander zeigen. Ein Split zeigt DASSELBE Bild in zwei
+    Modi. Das ist die Aussage, die das Bild transportieren soll.
+
+    [trenner] ist die Zeile, an der geteilt wird. Sie ist an den
+    beiden Renders GEMESSEN und liegt in einer Leerzeile zwischen
+    der Ueberschrift "Erscheinung" und der Auswahl
+    Hell/System/Dunkel. Damit gilt:
+
+      * oben steht der vollstaendige Farbschema-Block (Kreise UND
+        ihre Beschriftung) auf hellem Grund,
+      * unten steht die Auswahl Hell/System/Dunkel auf dunklem Grund -
+        und dort ist "Dunkel" markiert.
+
+    Das Bild sagt damit genau das, was die Headline sagt: der
+    obere Teil IST hell, der untere IST dunkel. Die Grenze faellt
+    zusaetzlich genau zwischen zwei Abschnitten - kein Text wird
+    halb abgeschnitten.
+
+    Beide Renders haben identisches Layout, also passt dieselbe
+    Zeile fuer beide.
+
+    WICHTIG: Der dunkle Render wird an der Trennstelle GEKORZT
+    uebernommen, nicht von oben. Sonst stuende der Screen-Header
+    ("Erscheinungsbild", "Farbschema") ein zweites Mal in der Mitte
+    des Bildes - und es waeren zwei Screens, nicht einer.
+
+    Die Statusleiste kommt nur oben (aus dem hellen Render) - eine
+    zweite Statusleiste in der Mitte des Bildes waere ein Fehler.
+    """
+    if hell.size != dunkel.size:
+        raise ValueError('Die beiden Renders haben verschiedene Groessen: '
+                         '%s vs %s' % (hell.size, dunkel.size))
+    w, h = hell.size
+    if not 0 < trenner < h:
+        raise ValueError('Die Trennzeile %d liegt nicht im Bild (0..%d).'
+                         % (trenner, h))
+    out = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+    out.paste(hell.convert('RGBA'), (0, 0))
+    # Der dunkle Teil STARTET an der Trennstelle: es ist der
+    # untere Abschnitt desselben Bildes, nicht ein zweiter Screen.
+    out.paste(dunkel.convert('RGBA').crop((0, trenner, w, h)), (0, trenner))
+    return out
+
+
 def compose_9x16(shot: Image.Image, headline: str, subline: str, badge: str, dark: bool = False):
     W, H = 1080, 1920
     verlauf = gradient((W, H), 40)
@@ -1984,11 +2111,14 @@ def main():
         d.mkdir(parents=True, exist_ok=True)
 
     for name, (headline, subline, badge) in SHOTS.items():
-        src = SRC / f'{name}.png'
+        # Die Kachel ist nach ihrer Position benannt, der Render im Repo
+        # nach dem Screen (siehe QUELLE).
+        quelle = QUELLE.get(name, name)
+        src = SRC / f'{quelle}.png'
         if not src.exists():
             print('  fehlt:', src.name)
             continue
-        if name == '03_entdecken' and TILES.exists():
+        if name == '04_entdecken' and TILES.exists():
             # Sonderfall: nicht der Screen, sondern die einzelnen
             # Modus-Kacheln (siehe compose_modes).
             tiles = sorted(TILES.glob('tile_*.png'),
@@ -2005,12 +2135,26 @@ def main():
                 print(f'  {name}: 9x16 {a.size} + wqhd {b.size} '
                       f'({len(tiles)} Kacheln, drei Varianten)')
                 continue
-            print('  03_entdecken: keine Kacheln gefunden, Fallback auf '
+            print('  04_entdecken: keine Kacheln gefunden, Fallback auf '
                   'den Screen')
         shot = Image.open(src)
+        # 06_hell_dunkel: EIN Screen, oben hell und unten dunkel.
+        #
+        # Beide Renders stammen aus demselben Screen (Erscheinungsbild)
+        # - der eine im hellen, der andere im dunklen Farbsatz. Sie
+        # werden an einer Abschnittsgrenze zusammengesetzt.
+        if name == '06_hell_dunkel':
+            dunkel_src = SRC / '04_anpassen_dunkel.png'
+            if not dunkel_src.exists():
+                print('  fehlt:', dunkel_src.name,
+                      '- zuerst den dunklen Screen rendern')
+                continue
+            shot = split_screen(shot, Image.open(dunkel_src))
+            print(f'  {name}: Split aus 04_anpassen (hell) + '
+                  '04_anpassen_dunkel (dunkel)')
         # Nur das Datenschutz-Bild wird abgedunkelt. Ein zweites dunkles
         # Bild wuerde die Wirkung aufheben.
-        dunkel = name == '06_datenschutz'
+        dunkel = name == '08_datenschutz'
         a = compose_9x16(shot, headline, subline, badge, dark=dunkel)
         b = compose_wqhd(shot, headline, subline, badge, dark=dunkel)
 
@@ -2031,19 +2175,18 @@ def main():
             globals()['OMIT_SYSTEM_UI'] = False
 
         # Variante KACHELN: die echten Widgets des Screens als einzelne
-        # Kacheln auf dem Verlauf. 03 hat seine fuenf Moduskacheln, die
+        # Kacheln auf dem Verlauf. 04 hat seine fuenf Moduskacheln, die
         # uebrigen Screens ihre eigenen - je nachdem, was der Dart-Export
         # als Rechtecke notiert hat. Ohne Export bleibt der Screen in
         # einem Kachelbild: dann ist es kein Fehler, nur weniger schoen.
-        prefix = name[:2]
-        cards = load_cards(name, default_src=f'{name}.png',
-                       margin=CARD_MARGIN_LOGICAL if name in
-                       ('01_willkommen', '04_anpassen') else 0.0)
-        if cards:
+        cards = load_cards(quelle, default_src=f'{quelle}.png',
+                           margin=CARD_MARGIN_LOGICAL if name in
+                           ('01_willkommen', '05_anpassen') else 0.0)
+        if cards and name != '06_hell_dunkel':
             k = compose_cards(cards, headline, subline, badge,
                               heading='Eisbrecher-Fragen'
-                              if name == '05_eisbrecher' else None,
-                              cols=2 if name == '05_eisbrecher' else 1,
+                              if name == '07_eisbrecher' else None,
+                              cols=2 if name == '07_eisbrecher' else 1,
                               dark=dunkel)
             save_png(k, OUT_9x16_KACHELN / f'{name}.png')
             kw = compose_card_wqhd(shot, headline, subline, badge,

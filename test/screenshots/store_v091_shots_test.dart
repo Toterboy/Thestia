@@ -26,6 +26,7 @@ import 'package:thestia/models/message.dart';
 import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/providers/chat_provider.dart';
 import 'package:thestia/screens/chat/chat_detail_screen.dart';
+import 'package:thestia/screens/home/home_screen.dart';
 import 'package:thestia/services/chat_service.dart';
 import 'package:thestia/screens/spice/spice_questions_screen.dart';
 import 'package:thestia/screens/swipe/swipe_mode_selection_screen.dart';
@@ -33,6 +34,7 @@ import 'package:thestia/screens/welcome/welcome_screen.dart';
 import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/services/secure_storage.dart';
 import 'package:thestia/theme/app_theme.dart';
+import 'package:thestia/utils/constants.dart';
 import 'package:thestia/widgets/appearance_selector.dart';
 import 'package:thestia/widgets/app_logo.dart';
 import 'package:thestia/widgets/chat_background_picker.dart';
@@ -120,6 +122,28 @@ Future<void> _loadFontsOnce() async {
       await loader.load();
     }
   } catch (_) {}
+
+  // Emoji (31.10.2026): Die Startseite begruesst mit "Hallo, du! <Emoji>".
+  // Ohne Emoji-Schrift zeichnet der Test ein leeres Kaestchen - im
+  // Store-Listing sieht das nach einem Fehler aus. Die Schrift ist
+  // optional: Fehlt sie (Linux ohne Noto-Color-Emoji), wird einfach
+  // nichts nachgeladen - der Render laeuft dann eben mit dem
+  // Kaestchen.
+  for (final pfad in const [
+    r'C:\Windows\Fonts\seguiemj.ttf',   // Windows: Segoe UI Emoji
+    '/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf',   // Linux
+    '/System/Library/Fonts/Apple Color Emoji.ttc',          // macOS
+  ]) {
+    final f = File(pfad);
+    if (!f.existsSync()) continue;
+    try {
+      final loader = FontLoader('Noto Color Emoji')
+        ..addFont(Future.value(ByteData.sublistView(f.readAsBytesSync())));
+      await loader.load();
+      break;    } catch (_) {
+      // Manche Systemschriften kann Flutter nicht laden - dann eben ohne.
+    }
+  }
   _fontsLoaded = true;
 }
 
@@ -129,15 +153,30 @@ Future<void> _loadFontsOnce() async {
 
 class _FakeLocalStorage implements LocalStorage {
   final map = <String, String>{};
+
+  /// Der Chat-Hintergrund-Dialog darf im Store-Screenshot NICHT
+  /// aufpoppen: er verdeckt den Chat, um den es geht ("Screenshot ist
+  /// das Chat-Hintergrund Pop up vor dem Chat, was so nicht sein soll").
+  ///
+  /// Der Dialog erscheint, solange `chatBackgroundSeen` nicht gesetzt
+  /// ist - der Store-Screenshot zeigt einen Geraet, auf dem der Nutzer
+  /// die Auswahl schon getroffen hat.
+  static const _settingsMitDialogGesehen =
+      '{"chatBackgroundSeen":true,"blindModeEnabled":true}';
+
   @override
   Future<void> saveString(String key, String value) async => map[key] = value;
   @override
-  Future<String?> getString(String key) async => map[key];
+  Future<String?> getString(String key) async {
+    if (key == AppConstants.prefsSettingsKey) return _settingsMitDialogGesehen;
+    return map[key];
+  }
   @override
   Future<void> saveBool(String key, bool value) async =>
       map[key] = value ? 'true' : 'false';
   @override
-  Future<bool?> getBool(String key) async => map[key] == 'true';
+  Future<bool?> getBool(String key) async =>
+      map[key] == null ? null : map[key] == 'true';
   @override
   Future<void> saveInt(String key, int value) async => map[key] = '$value';
   @override
@@ -168,13 +207,21 @@ class _FakeSecureProfileStore extends SecureProfileStore {
 // Harness
 // ---------------------------------------------------------------------------
 
-Widget _harness(Widget child, SharedPreferences prefs,
-    [List<Override> extra = const []]) {
+Widget _harness(Widget child, SharedPreferences prefs, {
+  List<Override> extra = const [],
+  bool dark = false,
+}) {
   // Card-SchattEN nur fuer den Store-Render abschalten: der Test-Rasterizer
   // zeichnet den Drop-Shadow als harte graue Kontur statt weich - im Play Store
   // sieht das nach einem Renderfehler aus ("grauer Rahmen"). Auf dem Geraet ist
   // der Schatten weich, die App selbst bleibt unveraendert.
-  final theme = AppTheme.light(theme: ThestiaTheme.classic);
+  //
+  // [dark] = true rendert den DUNKLEN Farbsatz. Das ist fuer die
+  // Split-Kachel noetig (Hell und Dunkel auf einem Bild) - der
+  // Store soll zeigen, dass die App in beiden Modi lesbar ist.
+  final theme = dark
+      ? AppTheme.dark(theme: ThestiaTheme.classic)
+      : AppTheme.light(theme: ThestiaTheme.classic);
   return ProviderScope(
     overrides: [
       localStorageProvider.overrideWithValue(_FakeLocalStorage()),
@@ -208,6 +255,7 @@ Future<void> _pump(
   required Size size,
   required double dpr,
   double textScale = 1.0,
+  bool dark = false,
   Future<void> Function(WidgetTester)? after,
   List<Override> extra = const [],
 }) async {
@@ -255,7 +303,7 @@ Future<void> _pump(
       // Nur fuer Screens, die sonst ueber den unteren Rand hinauslaufen
       // (Entdecken-Liste): echtes UI, kompakter gesetzt.
       data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
-      child: _harness(child, prefs, extra),
+      child: _harness(child, prefs, extra: extra, dark: dark),
     ),
   );
   for (var i = 0; i < 3; i++) {
@@ -301,6 +349,47 @@ Future<void> _pump(
 /// No-op-Callback fuer gerenderte Auswahl-Widgets.
 void _noop(String _) {}
 
+/// Der Screen "Erscheinungsbild" - die Einstellungen fuer Farbschema,
+/// Hell/Dunkel und Chat-Hintergrund.
+///
+/// [erscheinung] ist der im Screen gewaehlte Modus ("light" oder
+/// "dark"). Er wird durchgereicht, damit das helle und das dunkle
+/// Bild denselben Screen zeigen - nur mit der passenden Auswahl.
+///
+/// Bewusst NICHT nachgebaut, sondern die echten Widgets der App:
+/// ThemePicker, AppearanceSelector, ChatBackgroundPicker. Wer das
+/// Layout hier nachbaut, erzeugt wieder ein Mockup - und genau das
+/// war der Fehler, den dieser Screen vorher hatte.
+Widget _anpassenScreen(String erscheinung) {
+  return Builder(
+    builder: (context) => Scaffold(
+      appBar: AppBar(title: const Text('Erscheinungsbild')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Farbschema',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            ThemePicker(selectedName: 'classic', onChanged: (_) {}),
+            const SizedBox(height: 16),
+            Text('Erscheinung',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            AppearanceSelector(value: erscheinung, onChanged: _noop),
+            const SizedBox(height: 16),
+            Text('Chat-Hintergrund',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            const ChatBackgroundPicker(),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 /// No-op-Callback fuer [ThemePicker], der ein [ThestiaTheme] liefert.
 void _noopTheme(ThestiaTheme _) {}
 
@@ -325,6 +414,27 @@ void _shot(
       );
     }, skip: !_enabled);
   }
+}
+
+/// Registriert einen Screen im DUNKLEN Farbsatz - nur fuer die
+/// Phone-Aufloesung.
+///
+/// Der Grund: die Split-Kachel zeigt denselben Screen halb hell, halb
+/// dunkel. Dafuer braucht es zwei Renders desselben Screens - und der
+/// dunkle ist nur fuer das Phone-Format noetig (das Tablet-Bild wird
+/// nicht geteilt).
+void _shotDark(String name, Widget Function() build) {
+  testWidgets('$name [dunkel]', (tester) async {
+    await _pump(
+      tester,
+      build(),
+      outDir: 'store_v091/phone',
+      name: name,
+      size: _phone,
+      dpr: _dpr,
+      dark: true,
+    );
+  }, skip: !_enabled);
 }
 
 /// Die Reihenfolge der Modi im Screen, wie in
@@ -524,6 +634,48 @@ List<Finder> _findModeCards(WidgetTester tester) {
 /// und ein leerer Chat ist als Store-Bild wertlos.
 ///
 /// Ueberschrieben werden nur [getMatches] und [getMessages].
+/// Richtet die Speicher fuer die Chat-/Startseiten-Screens her.
+///
+/// Der Chat startet ueber EncryptionService die Signal-Boxen, und
+/// SecureHive holt seinen Schluessel direkt aus dem
+/// flutter_secure_storage-Plugin - nicht ueber die Provider-Attrappe des
+/// Harness. Im Test gibt es dafuer keine Implementierung, also bricht
+/// initialize() mit MissingPluginException ab.
+///
+/// Der Kanal wird deshalb hier als leerer Speicher beantwortet:
+/// read -> null (kein Schluessel hinterlegt), write/delete -> true.
+/// Das entspricht einem frisch installierten Geraet.
+/// Hive braucht einen Pfad fuer die verschluesselten Boxen
+/// (Identity-Key, PreKeys, Session-Ratchet). Im Test geht das in
+/// ein temporaeres Verzeichnis.
+Future<void> _vorbereiteChatSpeicher(WidgetTester tester) async {
+  final hiveDir =
+      Directory.systemTemp.createTempSync('thestia_store_chat');
+  Hive.init(hiveDir.path);
+  addTearDown(() {
+    try {
+      hiveDir.deleteSync(recursive: true);
+    } catch (_) {
+      // Dateikoepfe bleiben unter Windows gern kurz offen - fuer
+      // einen Temp-Ordner ist das kein Fehler.
+    }
+  });
+
+  const secure = MethodChannel('plugins.it_nomads.com/'
+      'flutter_secure_storage');
+  tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+    secure,
+    (call) async => switch (call.method) {
+      'read' => null,
+      'write' || 'delete' => true,
+      'containsKey' => false,
+      _ => null,
+    },
+  );
+  addTearDown(() => tester.binding.defaultBinaryMessenger
+      .setMockMethodCallHandler(secure, null));
+}
+
 class _FakeChatService extends ChatService {
   _FakeChatService(this._partner, this._messages);
 
@@ -757,46 +909,9 @@ void main() {
   //      05 Eisbrecher.
   if (_enabled) {
     testWidgets('export Kacheln 02 (Chat)', (tester) async {
-      // Der Chat startet ueber EncryptionService die Signal-Boxen, und
-      // SecureHive holt seinen Schluessel direkt aus dem
-      // flutter_secure_storage-Plugin - nicht ueber die Provider-
-      // Attrappe des Harness. Im Test gibt es dafuer keine
-      // Implementierung, also bricht initialize() mit
-      // MissingPluginException ab.
-      //
-      // Der Kanal wird deshalb hier als leerer Speicher beantwortet:
-      // read -> null (kein Schluessel hinterlegt), write/delete -> true.
-      // Das entspricht einem frisch installierten Geraet.
-      // Hive braucht einen Pfad fuer die verschluesselten Boxen
-      // (Identity-Key, PreKeys, Session-Ratchet). Im Test geht das in
-      // ein temporaeres Verzeichnis.
-      final hiveDir =
-          Directory.systemTemp.createTempSync('thestia_store_chat');
-      Hive.init(hiveDir.path);
-      addTearDown(() {
-        try {
-          hiveDir.deleteSync(recursive: true);
-        } catch (_) {
-          // Dateienkoepfe bleiben unter Windows gern kurz offen - fuer
-          // einen Temp-Ordner ist das kein Fehler.
-        }
-      });
+      await _vorbereiteChatSpeicher(tester);
 
-      const secure = MethodChannel('plugins.it_nomads.com/'
-          'flutter_secure_storage');
-      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-        secure,
-        (call) async => switch (call.method) {
-          'read' => null,
-          'write' || 'delete' => true,
-          'containsKey' => false,
-          _ => null,
-        },
-      );
-      addTearDown(() => tester.binding.defaultBinaryMessenger
-          .setMockMethodCallHandler(secure, null));
-
-      // Auch in den Phone-Ordner: make_store_screenshots.py liest den
+      // Auch im Phone-Ordner: make_store_screenshots.py liest den
       // Store-Screen 02 von dort, nicht aus cards/. Beide Aufrufe
       // nutzen denselben Provider-Override - ohne ihn waere der Screen
       // in einem der beiden Ordner leer.
@@ -827,6 +942,31 @@ void main() {
       expect(find.byType(ChatDetailScreen), findsOneWidget);
       expect(find.text('Mara'), findsWidgets,
           reason: 'der Partner-Name fehlt - die Attrappe greift nicht');
+    });
+
+    // 2) Aktuelles: die Startseite.
+    //
+    //    Der Wunsch: "einen neuen Screenshot, wo man die Aktuelles
+    //    Seite sieht" - als ZWEITES Bild, direkt nach "Blind Date mit
+    //    Substanz". Das Bild zeigt, was man beim Oeffnen der App
+    //    wirklich sieht: neue Nachrichten, neue Likes, neue Funken und
+    //    das Dock.
+    testWidgets('export 02_aktuelles (Startseite)', (tester) async {
+      await _vorbereiteChatSpeicher(tester);
+
+      await _pump(
+        tester,
+        const HomeScreen(),
+        outDir: 'store_v091/phone',
+        name: '02_aktuelles',
+        size: _phone,
+        dpr: _dpr,
+        extra: [
+          chatServiceProvider.overrideWithValue(
+              _FakeChatService(_chatPartner(), _chatHistory())),
+        ],
+      );
+      expect(find.byType(HomeScreen), findsOneWidget);
     });
   }
 
@@ -937,33 +1077,22 @@ void main() {
   //    gesetzt, dass die beiden wichtigsten Abschnitte sichtbar sind -
   //    Farbschema oben, Erscheinungsmodus darunter, Chat-Hintergrund
   //    angetippt am unteren Rand (so sieht es beim Scrollen aus).
-  _shot('04_anpassen', () => Builder(
-        builder: (context) => Scaffold(
-          appBar: AppBar(title: const Text('Erscheinungsbild')),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text('Farbschema',
-                    style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                ThemePicker(selectedName: 'classic', onChanged: (_) {}),
-                const SizedBox(height: 16),
-                Text('Erscheinung',
-                    style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                const AppearanceSelector(value: 'light', onChanged: _noop),
-                const SizedBox(height: 16),
-                Text('Chat-Hintergrund',
-                    style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                const ChatBackgroundPicker(),
-              ],
-            ),
-          ),
-        ),
-      ));
+  _shot('04_anpassen', () => _anpassenScreen('light'));
+
+  // Der DUNKLE Gegenpart desselben Screens (31.10.2026).
+  //
+  // Der Wunsch: "Wenn passend vielleicht noch einen Screenshot an
+  // passender Stelle, wo man Dark und Whitemode sieht, also auf einem
+  // Screen so halbiert irgendwie." Der Generator schneidet aus diesem
+  // Render die untere Haelfte heraus und legt sie unter die obere
+  // Haelfte des hellen Screens - so sieht man EINEN Screen, der
+  // zur Haelfte hell und zur Haelfte dunkel ist.
+  //
+  // Der Screen ist derselbe wie im hellen Bild - nur der gewaehlte
+  // Erscheinungsmodus ist "dark", damit die Auswahl im Bild auch
+  // stimmt. Sonst zeigte der Schalter "Hell", obwohl der Screen
+  // dunkel waere.
+  _shotDark('04_anpassen_dunkel', () => _anpassenScreen('dark'));
 
   // 6) Datenschutz. Eigenes Bild, weil die Entfernungs-Anzeige die
   // inhaltlich wichtigste Aenderung dieses Releases ist und als vierte
