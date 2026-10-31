@@ -23,6 +23,26 @@ import 'package:thestia/l10n/app_strings.dart';
 /// (Barrierefreiheitstest) waere jede feste Segmentbreite ein
 /// RenderFlex-Overflow. `Wrap` laesst die Segmente untereinander
 /// wandern, statt sie zu beschneiden.
+///
+/// GLEICHE ABSTAENDE (31.10.2026): "Die Abstaende bei Einstellungen
+/// Erscheinung sollen gleich links und rechts sein."
+///
+/// Vorher waren die drei Segmente unterschiedlich breit - "Hell" war
+/// schmaler als "System" und "Dunkel", weil der Kasten nur eine
+/// Mindestbreite (92 px) hatte und der Text den Rest bestimmte. Die
+/// Folge: die Zeile war linksbuendig und lief rechts ins Leere, der
+/// Abstand zwischen den Kacheln war nicht der zwischen der letzten
+/// Kachel und dem Rand.
+///
+/// Jetzt bekommen alle drei Segmente dieselbe Breite: die breiteste
+/// der drei (gemessen an ihrem Text) ist der Massstab, alle werden
+/// darauf gestreckt. So sind die Kacheln gleich breit, der Abstand
+/// zwischen ihnen ist ueberall derselbe, und die Zeile endet genau
+/// dort, wo der Inhalt endet.
+///
+/// Bei 3,2-facher Schriftgroesse passt die Zeile nicht mehr in eine
+/// Zeile - dann teilt [Wrap] sie auf mehrere Zeilen auf. Deshalb
+/// bleibt es bei `Wrap` und nicht bei `Row` mit `Expanded`.
 class AppearanceSelector extends StatelessWidget {
   const AppearanceSelector({
     super.key,
@@ -62,21 +82,85 @@ class AppearanceSelector extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Wrap(
-          spacing: 10,
-          runSpacing: 10,
-          children: [
-            for (final mode in _order)
-              _Segment(
-                mode: mode,
-                selected: mode == value,
-                radius: _radius,
-                icon: _icons[mode] ?? Icons.brightness_auto_outlined,
-                title: L10n.t(context, 'appearance.$mode'),
-                description: describe(mode),
-                onTap: () => onChanged(mode),
-              ),
-          ],
+        LayoutBuilder(
+          builder: (context, constraints) {
+            const spacing = 10.0;
+
+            // Wie breit ist der BREITESTE Text? Nur so viel Platz
+            // braucht ein Segment, damit nichts umbricht.
+            final textStyle = theme.textTheme.labelLarge;
+            double textBreite(String titel) {
+              final tp = TextPainter(
+                text: TextSpan(text: titel, style: textStyle),
+                textDirection: TextDirection.ltr,
+                textScaler: MediaQuery.textScalerOf(context),
+              )..layout();
+              // 2 x 14 px Innenabstand + 2 px Rahmen (dickster Fall)
+              return tp.width + 2 * 14 + 4;
+            }
+
+            final maxText = [
+              for (final mode in _order)
+                textBreite(L10n.t(context, 'appearance.$mode')),
+            ].reduce((a, b) => a > b ? a : b);
+
+            // Breite, die jedes Segment bekaeme, wenn die Zeile die
+            // gesamte Breite ausfuellt.
+            //
+            // `isFinite` ist wichtig: in einer horizontal scrollbaren
+            // Liste waere die Breite unendlich, und `Expanded` mit
+            // unendlicher Breite wirft.
+            final endlich = constraints.maxWidth.isFinite;
+            final sollBreite = endlich
+                ? (constraints.maxWidth - 2 * spacing) / 3
+                : double.infinity;
+
+            // Die Schleifenvariable heisst `mode` - so entsteht der
+            // Key 'appearance.$mode'. Der L10n-Test erlaubt genau
+            // diese Schreibweise; 'appearance.${_order[i]}' waere eine
+            // zweite, unzulaessige Key-Familie.
+            Widget segment(String mode, {double mindestBreite = 92}) =>
+                _Segment(
+                  mode: mode,
+                  selected: mode == value,
+                  radius: _radius,
+                  icon: _icons[mode] ?? Icons.brightness_auto_outlined,
+                  title: L10n.t(context, 'appearance.$mode'),
+                  description: describe(mode),
+                  onTap: () => onChanged(mode),
+                  mindestBreite: mindestBreite,
+                );
+
+            // Passt die Zeile in eine Zeile? Dann strecken: alle drei
+            // Segmente bekommen DENSELBEN Anteil, der Abstand
+            // zwischen ihnen ist ueberall derselbe, und links wie
+            // rechts bleibt gleich viel Rand.
+            //
+            // Sonst (grosse Schrift) waere jede feste Breite ein
+            // RenderFlex-Overflow - dann bricht [Wrap] die Zeile auf.
+            if (endlich && maxText <= sollBreite) {
+              return Row(
+                children: [
+                  for (final mode in _order) ...[
+                    if (mode != _order.first) const SizedBox(width: spacing),
+                    // Expanded legt die Breite fest - deshalb braucht
+                    // das Segment hier KEINE Mindestbreite (die waere
+                    // sonst groesser als der Platz und wuerde
+                    // ueberlaufen).
+                    Expanded(child: segment(mode, mindestBreite: 0)),
+                  ],
+                ],
+              );
+            }
+
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: [
+                for (final mode in _order) segment(mode),
+              ],
+            );
+          },
         ),
         const SizedBox(height: 10),
         // Erklaerung der AKTIVEN Option. Nur eine sichtbare Zeile, sonst
@@ -100,6 +184,7 @@ class _Segment extends StatelessWidget {
     required this.title,
     required this.description,
     required this.onTap,
+    this.mindestBreite = 92,
   });
 
   final String mode;
@@ -109,6 +194,17 @@ class _Segment extends StatelessWidget {
   final String title;
   final String description;
   final VoidCallback onTap;
+
+  /// Mindestbreite in logischen Pixeln.
+  ///
+  /// Normalfall: 92 px - damit die drei Segmente bei ueblicher Schrift
+  /// eine Zeile ergeben.
+  ///
+  /// 0, wenn der Platz von aussen fest vorgegeben ist (im `Row` mit
+  /// `Expanded`): dort legt `Expanded` die Breite fest, und eine
+  /// Mindestbreite waere groesser als der Platz - das wuerde
+  /// ueberlaufen.
+  final double mindestBreite;
 
   @override
   Widget build(BuildContext context) {
@@ -159,7 +255,12 @@ class _Segment extends StatelessWidget {
                   // Mindestbreite, damit die drei Segmente bei normaler
                   // Schrift eine Zeile ergeben. Kein Maximum: bei grosser
                   // Schrift darf ein Segment breiter werden.
-                  constraints: const BoxConstraints(minWidth: 92),
+                  //
+                  // [breite] schlaegt die Mindestbreite: dann sind alle
+                  // drei Segmente gleich breit (siehe [AppearanceSelector]).
+                  constraints: BoxConstraints(
+                    minWidth: mindestBreite,
+                  ),
                   child: Padding(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
