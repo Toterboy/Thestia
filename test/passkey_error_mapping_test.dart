@@ -97,4 +97,58 @@ void main() {
       expect(e, isA<AppException>());
     });
   });
+
+  group('PasskeyAuth.requiresCaptcha', () {
+    test('ein Captcha-Fehler wird erkannt', () {
+      final e = PasskeyAuth.explainError(
+        'AuthApiException(captcha_verification_failed): 400',
+        login: true,
+      );
+      expect(PasskeyAuth.requiresCaptcha(e), isTrue,
+          reason: 'Dann fragt die App den Sicherheitscheck ab.');
+    });
+
+    test('andere Fehler loesen KEINEN Sicherheitscheck aus', () {
+      // Sonst fragt die App nach einem Captcha, das niemand braucht -
+      // genau die "extra Captcha Abfrage", die stoert.
+      for (final text in [
+        'android-unhandled: NotAllowedError',
+        'AuthApiException: status: 400, message: credential verification failed',
+        'no_credential_available',
+      ]) {
+        final e = PasskeyAuth.explainError(text, login: true);
+        expect(PasskeyAuth.requiresCaptcha(e), isFalse, reason: text);
+      }
+    });
+
+    test('ein fremder Fehler (kein AppException) loest nichts aus', () {
+      expect(PasskeyAuth.requiresCaptcha(Exception('captcha?')), isFalse);
+    });
+  });
+
+  group('PasskeyAuth.explainForUi', () {
+    test('ein AppException bleibt unveraendert', () {
+      final original = PasskeyAuth.explainError(
+        'android-unhandled: NotAllowedError',
+        login: false,
+      );
+      expect(
+        identical(PasskeyAuth.explainForUi(original, login: false), original),
+        isTrue,
+      );
+    });
+
+    test('ein unbekannter Fehler wird zur konkreten Meldung', () {
+      // Vorher landete so ein Fehler in der generischen Meldung
+      // "Passkey-Einrichtung fehlgeschlagen" - ohne Ursache.
+      final e = PasskeyAuth.explainForUi(
+        'MissingPluginException: No implementation found',
+        login: false,
+      );
+      expect(e, isA<AppException>());
+      expect(e.message, contains('nicht verfügbar'),
+          reason: 'Die Meldung muss die Ursache nennen.');
+      expect(e.messageKey, isNotNull);
+    });
+  });
 }

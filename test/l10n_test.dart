@@ -154,6 +154,9 @@ void main() {
         'verify.challenge.gesture.\$data',
         'verify.challenge.direction.\$data',
         'verify.challenge.base.\${type.name}',
+        'safetyOnboarding.edu\${n}Title',
+        'safetyOnboarding.edu\${n}Body',
+        'safetyOnboarding.edu\${n}Hint',
       };
       final unknown = dynamic
           .where((k) =>
