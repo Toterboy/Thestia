@@ -1274,6 +1274,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.0"
+  passkeys:
+    dependency: "direct main"
+    description:
+      name: passkeys
+      sha256: "1596fa3940c458fcd0062ce222d7fec69d9b70187a4b9e67d585e0386f73e18c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.22.3"
   passkeys_android:
     dependency: "direct overridden"
     description:
@@ -1281,6 +1289,22 @@ packages:
       relative: true
     source: path
     version: "2.13.1"
+  passkeys_darwin:
+    dependency: transitive
+    description:
+      name: passkeys_darwin
+      sha256: ceb245f1c98fa25119fd2795ebe8dc39dd7a6b443de77bf58fde9f5ff76237b9
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.5"
+  passkeys_doctor:
+    dependency: transitive
+    description:
+      name: passkeys_doctor
+      sha256: "44eefcc28603cdeb052e7a6b5fd8642f47e54bb5450ffbd7da3dc0e2a728bb7b"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.6.2"
   passkeys_platform_interface:
     dependency: "direct main"
     description:
@@ -1289,6 +1313,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.10.0"
+  passkeys_web:
+    dependency: transitive
+    description:
+      name: passkeys_web
+      sha256: "5a02f256914eeb5d06d1b5a8e552c6a2837a7364d7591c14b06a992fcc4da051"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.10.1"
+  passkeys_windows:
+    dependency: transitive
+    description:
+      name: passkeys_windows
+      sha256: "43d116e42324788e1cddc1ba6e98a32a28ccc47f68508c4cd4a19e6309daa127"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.5"
   path:
     dependency: transitive
     description:

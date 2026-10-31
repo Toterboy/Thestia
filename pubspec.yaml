@@ -136,9 +136,19 @@ dependencies:
   # Passkey-Unterstützung (signInWithPasskey/registerPasskey).
   # Direkte Abhängigkeit: ThestiaPasskeyAuthenticator implementiert die
   # Interface-Klasse des Platform-Interfaces (ohne Pre-Cancel-Verhalten).
-  # NUR das Platform-Interface wird direkt gebraucht - das konkrete
-  # passkeys-Paket kommt transitiv über supabase_flutter (Security 2026-09-26:
-  # ungenutzte Direkt-Abhängigkeiten = unnötige Angriffsfläche).
+  #
+  # WICHTIG (31.10.2026): Das app-seitige Paket `passkeys` ist eine
+  # ECHTE Abhaengigkeit - nicht nur ein Transitivum von supabase_flutter.
+  # supabase_flutter 2.18.3 haengt nur am `passkeys_platform_interface`;
+  # das Paket `passkeys` (mit der Plugin-Deklaration) fehlt. Ohne es baut
+  # Flutter das Endorsed-Paket `passkeys_android` NICHT in die App - im
+  # Release-APK fehlten dann sowohl die Plugin-Klassen als auch die
+  # Berechtigung CREDENTIAL_MANAGER_SET_ORIGIN, und jeder Passkey-Versuch
+  # endete mit "MissingPluginException". Genau das war der Grund, warum
+  # Passkeys "nicht mehr gingen", obwohl der Server alles korrekt hatte.
+  #
+  # Exakt gepinnt (Sicherheitsrelevant: Authentifizierung).
+  passkeys: 2.22.3
   passkeys_platform_interface: ^2.10.0
 
   # QR-Code (Profil teilen + Scannen)

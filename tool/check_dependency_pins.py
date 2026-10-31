@@ -44,6 +44,7 @@ SECURITY_CRITICAL = {
     'shared_preferences': 'Unverschlüsselte Einstellungen',
     'flutter_local_notifications': 'Lokale Benachrichtigungen',
     'url_launcher': 'Öffnet beliebige URLs aus Nutzerdaten',
+    'passkeys': 'WebAuthn/Passkey - Anmeldung und Geräte-Bindung',
 }
 
 # Bewusst NICHT gepinnt - mit Begründung, damit die Ausnahme nicht

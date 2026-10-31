@@ -10,6 +10,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_timezone
   flutter_webrtc
   geolocator_windows
+  passkeys_windows
   permission_handler_windows
   record_windows
   share_plus
