@@ -16,7 +16,8 @@ eine Seite schon bearbeitet wurde, und tut sie sonst nur einmal an.
 
     python tool/apply_web_theme.py
 
-Geaenderte Seiten: kinderschutz.html, konto-loeschen.html, impressum.html.
+Geaenderte Seiten: kinderschutz.html, konto-loeschen.html, impressum.html,
+dating-sicherheit.html.
 Die Datenschutzerklaerung wird NICHT hier bearbeitet - sie entsteht aus
 docs/DATENSCHUTZ.md ueber tool/make_privacy_policy.py, das dieselben
 Regeln aus tool/web_theme.py zieht.
@@ -34,7 +35,12 @@ ASSETS = ROOT / 'passkey-assets'
 # index.html ist die Captcha-Seite der App. Sie wird NICHT umgestaltet:
 # sie muss zum App-Hintergrund passen, sonst blitzt beim Aufruf ein
 # heller Fleck auf.
-SEITEN = ['kinderschutz.html', 'konto-loeschen.html', 'impressum.html']
+SEITEN = [
+    'kinderschutz.html',
+    'konto-loeschen.html',
+    'impressum.html',
+    'dating-sicherheit.html',
+]
 
 # index.html: die Captcha-Seite. Sie hat ZWEI Ansichten (Sicherheitscheck
 # fuer auth.thestia.de, Landing-Seite fuer die Wurzel-Domain) und bringt

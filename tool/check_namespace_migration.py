@@ -32,6 +32,24 @@ print('Deklarierte Namespaces:')
 for k, v in sorted(declared.items()):
     print(f'   {k:10s} = {v}')
 
+# ---------------------------------------------------------------- Neu ohne Migration
+#
+# Ein Namespace braucht einen Migrations-Eintrag nur, wenn im Legacy-
+# Namespace ALTDATEN lagen. Ein brandneuer Namespace hat keine
+# Vorgeschichte - dort gibt es nichts zu verschieben. Solche Namespaces
+# muessen aber AUSDRUECKLICH als neu deklariert werden, damit der Weg
+# nicht stillschweigend zunehmend weiter wird.
+neu_ohne_migration = set()
+m_neu = re.search(
+    r'withoutMigration\s*=\s*<String>\{(.*?)\}\s*;', ns_src, re.S)
+if m_neu:
+    neu_ohne_migration = set(re.findall(r'\b(\w+)\b', m_neu.group(1)))
+    neu_ohne_migration = {
+        n for n in neu_ohne_migration if n in declared}
+if neu_ohne_migration:
+    print(f'\nAls NEU deklariert (keine Altdaten, keine Migration noetig): '
+          f'{sorted(neu_ohne_migration)}')
+
 # ---------------------------------------------------------------- Migrationsliste
 m = re.search(r'_legacyKeys\s*=\s*\{(.*?)\n\};', ns_src, re.S)
 if not m:
@@ -77,7 +95,12 @@ for f in sorted(LIB.rglob('*.dart')):
 
 print('\nUmgestellte Namespaces im Code:')
 for rel, ns in results:
-    mark = 'OK  ' if ns in migrated else 'FEHLT'
+    if ns in migrated:
+        mark = 'OK  '
+    elif ns in neu_ohne_migration:
+        mark = 'NEU '
+    else:
+        mark = 'FEHLT'
     print(f'   {mark} {rel:46s} {ns}')
 
 # ---------------------------------------------------------------- Bewertung
@@ -85,18 +108,25 @@ print('\n' + '=' * 74)
 problems = []
 
 for rel, ns in results:
+    if ns in migrated and ns in neu_ohne_migration:
+        problems.append(f'{rel}: {ns} ist als BEIDES migriert und als neu '
+                        f'deklariert -> widerspruechlich')
+        continue
     if ns not in migrated:
+        if ns in neu_ohne_migration:
+            # Neu: es gibt keine Altdaten, die migriert werden muessten.
+            continue
         problems.append(f'{rel}: {ns} wird benutzt, aber NICHT migriert '
                         f'-> Datenverlust beim Update')
+        continue
+    ks = keys_per_ns.get(ns, [])
+    if ks:
+        print(f'  migriert: {ns:10s} Keys={ks}')
     else:
-        ks = keys_per_ns.get(ns, [])
-        if ks:
-            print(f'  migriert: {ns:10s} Keys={ks}')
-        else:
-            # Leer ist nur erlaubt, wenn der Key dynamisch nachgereicht wird
-            if 'extraSessionKeys' not in ns_src:
-                problems.append(f'{ns}: Eintrag ist leer und es gibt keine '
-                                f'Nachreichung -> nichts migriert')
+        # Leer ist nur erlaubt, wenn der Key dynamisch nachgereicht wird
+        if 'extraSessionKeys' not in ns_src:
+            problems.append(f'{ns}: Eintrag ist leer und es gibt keine '
+                            f'Nachreichung -> nichts migriert')
 
 if problems:
     print('RELEASE-BLOCKER:\n')
@@ -131,6 +161,9 @@ for rel, ns in results:
     elif ns == 'session' and runtime_ok:
         print(f'  OK   {ns:10s} leer, aber Keys werden zur Laufzeit '
               f'ueber extraSessionKeys nachgereicht')
+    elif ns in neu_ohne_migration:
+        print(f'  OK   {ns:10s} neu - es gibt keine Altdaten, die '
+              f'migriert werden muessten')
     else:
         empty_problems.append(ns)
         print(f'  X    {ns:10s} LEER - die Migration kopiert nichts '

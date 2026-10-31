@@ -1,13 +1,24 @@
 """Selbsttest fuer check_namespace_migration.py.
 
-Zwei Mutationen, die beide einen echten Release-Blocker erzeugen:
+Sechs Mutationen, die alle einen echten Release-Blocker erzeugen:
   A) signals komplett aus der Migrationsliste entfernen
   B) signals-Key-Liste leeren (stiller No-op)
+  C) session aus der Migrationsliste entfernen
+  D) extraSessionKeys-Parameter entfernen
+  E) contacts nicht mehr als "neu ohne Migration" deklariert
+  F) einen MIGRierten Namespace zusaetzlich als "neu" deklariert
 
-Beide MUESSEN den Checker zum Scheitern bringen. Ein Checker, der einen
+Alle MUESSEN den Checker zum Scheitern bringen. Ein Checker, der einen
 Datenverlust beim Update nicht sieht, ist schlimmer als keiner.
+
+WICHTIG: Die Mutationen suchen per REGEX, nicht per exaktem Text. Sonst
+bricht der Selbsttest bei der naechsten Formatierungs-Aenderung des
+Quelltextes (Zeilenumbrueche, Einrueckung) - ein Selftest, der an
+Formatierung klebt, prueft die Sache nicht mehr, sondern nur noch den
+Formatierer.
 """
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
@@ -47,21 +58,44 @@ def run_mutation(label, mutate, expect_fail):
         return ok
 
 
+def _sub(t, pattern, repl, count=1):
+    return re.sub(pattern, repl, t, count=count, flags=re.S)
+
+
 def drop_signals(t):
-    return t.replace('SecureNamespaces.signals: [\n  \'hive_encryption_key\',\n],\n', '')
+    # signals komplett aus der Migrationsliste entfernen
+    return _sub(t, r'SecureNamespaces\.signals:\s*\[[^\]]*\],?\s*', '')
 
 
 def empty_signals(t):
-    return t.replace("  'hive_encryption_key',\n", '')
+    # signals-Key-Liste leeren (stiller No-op)
+    return _sub(t, r'SecureNamespaces\.signals:\s*\[[^\]]*\]',
+                'SecureNamespaces.signals: []')
 
 
 def drop_session(t):
-    return t.replace('SecureNamespaces.session: [],\n', '')
+    return _sub(t, r'SecureNamespaces\.session:\s*\[\],?\s*', '')
 
 
 def drop_hive_key_param(t):
     # extraSessionKeys-Parameter entfernen -> session laeuft leer
-    return t.replace('  List<String> extraSessionKeys = const [],\n', '')
+    return _sub(t, r'List<String>\s+extraSessionKeys\s*=\s*const\s*\[\],\s*', '')
+
+
+def drop_new_declaration(t):
+    # contacts aus der "neu ohne Migration"-Deklaration entfernen:
+    # der Checker muss den Namespace dann wieder als Blocker melden.
+    return _sub(t, r'withoutMigration\s*=\s*<String>\{[^}]*\}',
+                'withoutMigration = <String>{}')
+
+
+def declare_migrated_as_new(t):
+    # signals als "neu" deklarieren, obwohl es migriert wird:
+    # das ist widerspruechlich und muss auffallen.
+    def repl(m):
+        inhalt = m.group(1)
+        return 'withoutMigration = <String>{' + inhalt + ', signals}'
+    return _sub(t, r'withoutMigration\s*=\s*<String>\{([^}]*)\}', repl)
 
 
 print('SELBSTTEST check_namespace_migration.py\n' + '=' * 74)
@@ -70,6 +104,10 @@ results = [
     run_mutation('signals-Liste leer (stiller No-op)', empty_signals, True),
     run_mutation('session ganz aus der Migrationsliste', drop_session, True),
     run_mutation('extraSessionKeys-Parameter entfernt', drop_hive_key_param, True),
+    run_mutation('contacts nicht mehr als neu deklariert',
+                 drop_new_declaration, True),
+    run_mutation('migrierter Namespace zugleich als neu deklariert',
+                 declare_migrated_as_new, True),
 ]
 print('=' * 74)
 if all(results):

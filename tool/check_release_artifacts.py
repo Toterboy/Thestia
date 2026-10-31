@@ -84,6 +84,13 @@ def newest_app_source_mtime():
             for p in wurzel.rglob('*'):
                 if any(teil in ausgeschlossen for teil in p.parts):
                     continue
+                # local.properties ist von Gradle erzeugt (SDK-Pfad,
+                # org.gradle...). Es ist kein Quelltext - und da die
+                # Datei bei jedem Build neu geschrieben wird, wuerde
+                # sie sonst eine Frische-Pruefung, die sich selbst
+                # erfuellt, erzeugen (29.10.2026).
+                if p.name == 'local.properties':
+                    continue
                 if p.is_file() and p.suffix.lower() in endungen:
                     kandidaten.append(p)
     pubspec = ROOT / 'pubspec.yaml'
