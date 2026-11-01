@@ -1,21 +1,31 @@
 # tool/check_privacy_deployment.py
 """
-Prueft, ob die LIVE ausgelieferte Datenschutzerklaerung mit der im Repo
-uebereinstimmt.
+Prueft, ob der PUBLISH-ORDNER (passkey-assets/) mit dem live
+ausgelieferten Stand uebereinstimmt - und vor allem: WELCHE Dateien
+hochgeladen werden muessen.
 
 WARUM ES DAS GIBT
 -----------------
-`passkey-assets/datenschutz.html` wird auf Netlify per Drag-and-Drop
-hochgeladen, nicht aus dem Repo deployed. Zwei Kopien, keine Kopplung -
-und das ist bereits schiefgegangen: live stand Version 5 (v0.9.2) mit
-"AusOrt wird nicht erhoben" und "Entfernung in 5-km-Schritten", waehrend
-die App seit v0.10.0 das Bundesland speichert, Koordinaten auf ein
-5-km-Raster rundet und die Entfernung in 10-km-Stufen zeigt. Die
-veroeffentlichte Erklaerung beschrieb also eine App, die es nicht mehr
-gibt.
+`passkey-assets/` wird auf Netlify per Drag-and-Drop hochgeladen, nicht
+aus dem Repo deployed. Zwei Kopien, keine Kopplung - und das ist bereits
+zweimal schiefgegangen:
 
-Ein Versions- oder Hash-Vergleich allein haette das nicht gezeigt: das
-Repo war korrekt, nur die VEROEFFENTLICHTE Fassung war es nicht.
+  1) Die live ausgelieferte Datenschutzerklaerung war aelter als das
+     Repo (Version 5 gegen Version 6). Die veroeffentlichte Fassung
+     beschrieb eine App, die es nicht mehr gibt.
+  2) Das Impressum stand wochenlang mit offenen Platzhaltern
+     ("[ANBIETER]") online.
+
+Zusaetzlich zur Pruefung: WELCHE Dateien abweichen. Vorher stand am
+Ende nur "Netlify: passkey-assets/ neu hochladen" - das hiess: den
+GANZEN Ordner. Das war bei jeder kleinen Aenderung Arbeit ohne Anlass.
+
+Die Werkzeuge, die den Ordner erzeugen (tool/make_web_screenshots.py,
+tool/apply_web_theme.py), sind inzwischen WIEDERHOLBAR: ein zweiter
+Durchlauf aendert nichts (geprueft von
+tool/check_web_theme_idempotenz.py). Deshalb weicht der Ordner jetzt nur
+dort von live ab, wo sich wirklich etwas geaendert hat - und genau diese
+Dateien werden hier benannt.
 
     python tool/check_privacy_deployment.py
 
@@ -23,10 +33,10 @@ Exit-Code 1 bei Abweichung. Ohne Netz (offline) wird die Pruefung
 uebersprungen, nicht als Fehler gewertet - ein Offline-Lauf soll den
 Build nicht blockieren.
 
-Die Live-Adresse ist ueber THESTIA_PRIVACY_URL ueberschreibbar.
+Die Live-Adresse ist ueber THESTIA_PRIVACY_URL (Datenschutz) und
+THESTIA_SITE_URL (Basis) ueberschreibbar.
 """
 
-import hashlib
 import os
 import re
 import sys
@@ -34,8 +44,15 @@ import urllib.error
 import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-LOCAL = os.path.join(ROOT, 'passkey-assets', 'datenschutz.html')
+ASSETS = os.path.join(ROOT, 'passkey-assets')
+LOCAL = os.path.join(ASSETS, 'datenschutz.html')
 DEFAULT_URL = 'https://auth.thestia.de/datenschutz.html'
+BASIS_DEFAULT = 'https://auth.thestia.de'
+
+# Dateien, die Netlify NICHT ausliefert, sondern beim Deploy liest.
+# Sie koennen nicht gegen live geprueft werden (404) - sie gehoeren
+# aber trotzdem in jeden Upload, wenn sie sich geaendert haben.
+KONFIGURATION = {'_headers', '_redirects', 'netlify.toml'}
 
 # Woerter, die nur in einer Version vorkommen. Sie machen den Unterschied
 # lesbar, statt nur "Hash weicht ab" zu sagen.
@@ -44,6 +61,13 @@ MARKERS = [
     ('Version 5 (v0.9.2)', 'alter Stand: beschreibt die v0.9.2-Standortlogik'),
     ('5-km-Raster', 'neuer Stand: Koordinaten werden auf ein 5-km-Raster gerundet'),
     ('5-km-Schritten', 'alter Stand: Entfernung in 5-km-Schritten'),
+]
+
+# Die Pflichtseiten mit eigenem Platzhalter-Risiko.
+PFLICHTSEITEN = [
+    ('impressum.html', 'Impressum (Par. 5 DDG)'),
+    ('kinderschutz.html', 'Kinderschutz und Meldestelle'),
+    ('konto-loeschen.html', 'Konto-Loesch-URL (Play-Pflichtfeld)'),
 ]
 
 
@@ -56,93 +80,169 @@ def norm(text: str) -> str:
     return re.sub(r'\s+', ' ', text).strip()
 
 
+def hole(url: str):
+    """Holt eine URL. Liefert (status, bytes)."""
+    try:
+        req = urllib.request.Request(
+            url, headers={'User-Agent': 'thesia-privacy-check/1.0'})
+        with urllib.request.urlopen(req, timeout=25) as res:
+            return res.status, res.read()
+    except urllib.error.HTTPError as e:
+        return e.code, b''
+    except Exception:
+        return -1, b''
+
+
+def veroeffentlichte_dateien():
+    """Alle Dateien im Publish-Ordner, die tatsaechlich ausgeliefert werden."""
+    ergebnis = []
+    for wurzel, _dirs, dateien in os.walk(ASSETS):
+        for name in sorted(dateien):
+            pfad = os.path.join(wurzel, name)
+            rel = os.path.relpath(pfad, ASSETS).replace('\\', '/')
+            if name in KONFIGURATION:
+                continue
+            ergebnis.append((rel, pfad))
+    return sorted(ergebnis)
+
+
+# Verweise in den Seiten. Ein Link auf ../SECURITY.md sieht im
+# Repository richtig aus - auf der Website fuehrt er ins Leere,
+# weil die Datei nicht im Publish-Ordner liegt.
+LINK_HTML = re.compile(r'(?:href|src)\s*=\s*["\']([^"\']+)["\']', re.I)
+LINK_MD = re.compile(r'\]\(([^)]+)\)')
+
+
+def tote_verweise(basis: str) -> list:
+    """Relative Verweise, die weder im Ordner liegen noch live sind."""
+    tote = []
+    for pfad in sorted(os.listdir(ASSETS)):
+        if not (pfad.endswith('.html') or pfad.endswith('.md')):
+            continue
+        voll = os.path.join(ASSETS, pfad)
+        with open(voll, 'rb') as f:
+            text = f.read().decode('utf-8', 'replace')
+        ziele = (set(LINK_HTML.findall(text)) if pfad.endswith('.html')
+                 else set(LINK_MD.findall(text)))
+        for ziel in sorted(ziele):
+            if ziel.startswith(('http://', 'https://', 'mailto:', '#',
+                                'data:', 'javascript:', '/')):
+                continue
+            datei = ziel[3:] if ziel.startswith('../') else ziel
+            if os.path.exists(os.path.join(ASSETS, datei)):
+                continue
+            code, _ = hole(f'{basis}/{datei}')
+            if code != 200:
+                tote.append(f'{pfad}: {ziel}')
+    return tote
+
+
 def main() -> int:
     url = os.environ.get('THESTIA_PRIVACY_URL', DEFAULT_URL)
+    basis = os.environ.get('THESTIA_SITE_URL', BASIS_DEFAULT)
 
     if not os.path.exists(LOCAL):
         print(f'FEHLER: {LOCAL} existiert nicht.')
         return 1
 
+    print('=' * 74)
+    print('PUBLISH-ORDNER: Repo vs. live ausgeliefert')
+    print('=' * 74)
+    print(f'  lokal : {ASSETS}')
+    print(f'  live  : {basis}')
+    print()
+
+    dateien = veroeffentlichte_dateien()
+    if not dateien:
+        print('FEHLER: der Publish-Ordner ist leer.')
+        return 1
+
+    hochzuladen = []
+    gleich = []
+    nur_formatierung = []
+    nicht_live = []
+    nicht_erreichbar = []
+
+    print(f'{"Datei":<34} {"Repo":>9} {"live":>9}  Status')
+    print('-' * 74)
+
+    for rel, pfad in dateien:
+        with open(pfad, 'rb') as f:
+            lokal = f.read()
+        code, live = hole(f'{basis}/{rel}')
+
+        if code == -1:
+            nicht_erreichbar.append(rel)
+            print(f'{rel:<34} {len(lokal):>9} {"-":>9}  live nicht erreichbar')
+            continue
+        if code == 404:
+            nicht_live.append(rel)
+            print(f'{rel:<34} {len(lokal):>9} {"-":>9}  nicht live (404)')
+            continue
+        if code != 200:
+            nicht_erreichbar.append(rel)
+            print(f'{rel:<34} {len(lokal):>9} {"-":>9}  HTTP {code}')
+            continue
+
+        if lokal == live:
+            gleich.append(rel)
+            print(f'{rel:<34} {len(lokal):>9} {len(live):>9}  identisch')
+            continue
+
+        # Textseiten: nur Formatierung (Zeilenumbrueche) oder Inhalt?
+        if rel.endswith(('.html', '.txt', '.md', '.json')):
+            n_lokal = norm(lokal.decode('utf-8', 'replace'))
+            n_live = norm(live.decode('utf-8', 'replace'))
+            if n_lokal == n_live:
+                nur_formatierung.append(rel)
+                print(f'{rel:<34} {len(lokal):>9} {len(live):>9}  '
+                      f'nur Formatierung (Inhalt gleich)')
+                continue
+
+        hochzuladen.append(rel)
+        print(f'{rel:<34} {len(lokal):>9} {len(live):>9}  ABWEICHUNG')
+
+    # ------------------------------------------------------------------
+    # Die Datenschutzerklaerung im Detail: welche Woerter fehlen live?
+    # ------------------------------------------------------------------
+    print()
+    print('=' * 74)
+    print('DATENSCHUTZERKLAERUNG: was unterscheidet sich im Text?')
+    print('=' * 74)
     with open(LOCAL, 'rb') as f:
-        lokal = f.read().decode('utf-8', errors='replace')
-
-    print('=' * 70)
-    print('DATENSCHUTZERKLAERUNG: Repo vs. live ausgeliefert')
-    print('=' * 70)
-    print(f'  lokal : {LOCAL}')
-    print(f'  live  : {url}')
-
-    try:
-        req = urllib.request.Request(
-            url, headers={'User-Agent': 'thesia-privacy-check/1.0'})
-        with urllib.request.urlopen(req, timeout=25) as res:
-            live = res.read().decode('utf-8', errors='replace')
-    except (urllib.error.URLError, OSError) as e:
-        print()
-        print(f'  Live nicht erreichbar ({e}).')
-        print('  Pruefung uebersprungen - offline ist das kein Fehler.')
-        return 0
-
-    nl, nv = norm(lokal), norm(live)
-    if nl == nv:
-        print()
-        print('OK  live und Repo sind identisch.')
+        lokal_text = f.read().decode('utf-8', 'replace')
+    code, live_bytes = hole(url)
+    live_text = live_bytes.decode('utf-8', 'replace') if code == 200 else ''
+    nl, nv = norm(lokal_text), norm(live_text)
+    if not live_text:
+        print('  live nicht erreichbar - Detail nicht vergleichbar.')
+    elif nl == nv:
+        print('  OK  live und Repo sind inhaltlich identisch.')
     else:
-        print()
-        print('FEHLER  live und Repo weichen ab.')
-        print(f'        lokal {len(nl)} Zeichen, live {len(nv)} Zeichen')
-        print()
         for marker, bedeutung in MARKERS:
             in_lokal = marker in nl
             in_live = marker in nv
             if in_lokal != in_live:
                 ort = 'live' if in_live else 'Repo'
                 print(f'  - {marker!r}: nur im {ort} ({bedeutung})')
-        print()
-        print('  Die live ausgelieferte Fassung ist vermutlich aelter.')
-        print('  Netlify: passkey-assets/ neu hochladen (Drag & Drop),')
-        print('  danach diese Pruefung erneut laufen lassen.')
 
     # ------------------------------------------------------------------
-    # Die UEBRIGEN Pflichtseiten mitpruefen
-    # ------------------------------------------------------------------
-    #
-    # BISHER (24.10.2026): Der Check verglich NUR die Datenschutzerklaerung.
-    # Damit blieb der Rest des Publish-Verzeichnisses unbeaufsichtigt -
-    # und genau da ist es schiefgegangen: Das Impressum wurde mit
-    # offenen Platzhaltern ("[ANBIETER]", "[ANSCHRIFT]") hochgeladen
-    # und stand damit wochenlang oeffentlich.
-    #
-    # Zwei Fehlerklassen werden jetzt geprueft:
-    #   1) Platzhalter in einer LIVE-Seite. Sie sind im HTML-Kommentar
-    #      erkennbar ("[WORT]") und duerfen nie veroeffentlicht werden.
-    #   2) Abweichung zwischen Repo und Live bei den uebrigen Seiten.
+    # Platzhalter: im Repo (darf nicht hochgeladen werden) und live
     # ------------------------------------------------------------------
     print()
-    print('=' * 70)
-    print('UEBRIGE PUBLISH-SEITEN')
-    print('=' * 70)
-
-    basis = os.environ.get('THESTIA_SITE_URL', 'https://auth.thestia.de')
-    seiten = [
-        ('impressum.html', 'Impressum (Par. 5 DDG)'),
-        ('kinderschutz.html', 'Kinderschutz und Meldestelle'),
-        ('konto-loeschen.html', 'Konto-Loesch-URL (Play-Pflichtfeld)'),
-    ]
-
+    print('=' * 74)
+    print('PLATZHALTER')
+    print('=' * 74)
     fehler = 0
 
-    # Platzhalter zuerst - im REPO. Eine Seite mit Platzhaltern im Repo
-    # darf nicht hochgeladen werden; steht sie trotzdem live, ist das
-    # der schlimmere Fall.
     print()
-    print('1) Platzhalter im Repo (darf nicht hochgeladen werden):')
-    for datei, _ in seiten:
-        pfad = os.path.join(ROOT, 'passkey-assets', datei)
+    print('1) Im Repo (darf nicht hochgeladen werden):')
+    for datei, _ in PFLICHTSEITEN:
+        pfad = os.path.join(ASSETS, datei)
         if not os.path.exists(pfad):
             continue
         with open(pfad, 'rb') as f:
-            inhalt = f.read().decode('utf-8', errors='replace')
+            inhalt = f.read().decode('utf-8', 'replace')
         treffer = sorted(set(re.findall(r'\[[A-Z]{3,}\]', inhalt)))
         if treffer:
             print(f'   FEHLT {datei}: {", ".join(treffer)}')
@@ -150,46 +250,104 @@ def main() -> int:
         else:
             print(f'   OK    {datei}')
 
-    # Dann live: Platzhalter und Abweichung.
     print()
-    print('2) Live-Stand:')
-    for datei, was in seiten:
-        live_url = f'{basis}/{datei}'
-        pfad = os.path.join(ROOT, 'passkey-assets', datei)
-        try:
-            req = urllib.request.Request(
-                live_url, headers={'User-Agent': 'thesia-privacy-check/1.0'})
-            with urllib.request.urlopen(req, timeout=25) as res:
-                inhalt = res.read().decode('utf-8', errors='replace')
-        except (urllib.error.URLError, OSError) as e:
-            print(f'   FEHLT {was}: nicht erreichbar ({e})')
+    print('2) Live:')
+    for datei, was in PFLICHTSEITEN:
+        code, inhalt_bytes = hole(f'{basis}/{datei}')
+        if code != 200:
+            print(f'   FEHLT {was}: nicht erreichbar (HTTP {code})')
             fehler += 1
             continue
-
+        inhalt = inhalt_bytes.decode('utf-8', 'replace')
         treffer = sorted(set(re.findall(r'\[[A-Z]{3,}\]', inhalt)))
         if treffer:
             print(f'   FEHLT {was}: PLATZHALTER LIVE: {", ".join(treffer)}')
             fehler += 1
             continue
-
+        pfad = os.path.join(ASSETS, datei)
         if os.path.exists(pfad):
             with open(pfad, 'rb') as f:
-                lokal_inhalt = f.read().decode('utf-8', errors='replace')
+                lokal_inhalt = f.read().decode('utf-8', 'replace')
             if norm(lokal_inhalt) != norm(inhalt):
                 print(f'   FEHLT {was}: live weicht vom Repo ab')
                 fehler += 1
                 continue
-
         print(f'   OK    {was}')
 
-    if fehler:
+    # ------------------------------------------------------------------
+    # Tote Verweise: sie sehen im Repository richtig aus und fuehren
+    # auf der Website ins Leere.
+    # ------------------------------------------------------------------
+    print()
+    print('=' * 74)
+    print('VERWEISE')
+    print('=' * 74)
+    tote = tote_verweise(basis)
+    if tote:
+        print(f'   FEHLT {len(tote)} Verweis(e) zeigt ins Leere:')
+        for x in tote:
+            print(f'     X {x}')
+        fehler += len(tote)
+    else:
+        print('   OK    alle relativen Verweise zeigen auf existierende Seiten.')
+
+    # ------------------------------------------------------------------
+    # Die Antwort auf die eigentliche Frage: was muss hochgeladen werden?
+    # ------------------------------------------------------------------
+    print()
+    print('=' * 74)
+    print('ZU UPLOADEN')
+    print('=' * 74)
+
+    if nicht_erreichbar:
         print()
-        print(f'{fehler} Problem(e). Netlify: passkey-assets/ neu hochladen.')
+        print('Nicht geprueft (live nicht erreichbar):')
+        for d in nicht_erreichbar:
+            print('   ', d)
+
+    if hochzuladen:
+        print()
+        print(f'{len(hochzuladen)} Datei(en) weichen vom live-Stand ab -')
+        print('DIE MUESSEN hochgeladen werden:')
+        for d in hochzuladen:
+            print('   ', d)
+    else:
+        print()
+        print('Keine Datei weicht inhaltlich vom live-Stand ab.')
+
+    if nur_formatierung:
+        print()
+        print(f'{len(nur_formatierung)} Datei(en) sind inhaltlich gleich,')
+        print('aber nicht byte-identisch (nur Zeilenumbrueche). Die Seite')
+        print('sieht live genauso aus - ein Upload ist also NICHT noetig.')
+        print('Wer sie einmal hochlaedt, hat danach einen sauberen Zustand:')
+        for d in nur_formatierung:
+            print('   ', d)
+
+    if nicht_live:
+        print()
+        print('Im Repo, aber nicht live (404) - beim Upload mitnehmen,')
+        print('damit sie online sind:')
+        for d in nicht_live:
+            print('   ', d)
+
+    print()
+    print('Konfigurationsdateien (Netlify liest sie beim Deploy, sie')
+    print('werden nicht ausgeliefert):')
+    for name in sorted(KONFIGURATION):
+        if os.path.exists(os.path.join(ASSETS, name)):
+            print('   ', name)
+
+    if hochzuladen or nur_formatierung or nicht_live or fehler:
+        print()
+        print('Netlify: nur die als "MUESSEN" markierten Dateien hochladen.')
+        print('Der Rest ist bereits live und unveraendert.')
         return 1
 
     print()
-    print('OK  alle Pflichtseiten sind live und ohne Platzhalter.')
-    return 0 if nl == nv else 1
+    print('OK  der Publish-Ordner ist live identisch. Es muss nichts')
+    print('hochgeladen werden.')
+    return 0
 
 
 if __name__ == '__main__':

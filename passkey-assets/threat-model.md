@@ -1,11 +1,11 @@
 # Threat Model – Thestia
 
-Öffentlich. Stand 2026-09-28, zu `com.thestia.app` (Build 30 / v0.9.2).
+Öffentlich. Stand 2026-11-01, zu `com.thestia.app` (Build 31 / v0.10.0).
 
 Dieses Dokument beschreibt, **wor** Thestia angreifbar ist und welche
 Maßnahmen greifen. Zweck ist nicht Vollständigkeit um ihrer selbst
 willen, sondern die Belastbarkeit der Zusage in
-[SECURITY.md](../SECURITY.md): Ein Meldeweg ohne dokumentiertes
+[SECURITY.md](https://github.com/Toterboy/Thestia/blob/main/SECURITY.md): Ein Meldeweg ohne dokumentiertes
 Angriffsbild ist eine Zusage ohne Verfahren.
 
 **Kein Versuch der Vollständigkeit.** Es werden die Angriffsflächen
@@ -57,7 +57,7 @@ Sicherheitsfunktionen `SET search_path = public, pg_temp`.
 - Interne Hilfsfunktionen ohne Grant – das ist der Grund für die
   `security_invoker`-Umstellung
 - Harte Invarianten prüft `tool/check_security_invariants.py`
-  (58 Regeln), läuft in CI
+  (66 Regeln), läuft in CI
 - **Restrisiko:** Eine neue Funktion ohne `REVOKE` ist sofort
   weltweit aufrufbar. Kein automatisches Werkzeug verhindert das –
   nur der Review.
@@ -75,7 +75,7 @@ UI; Altersband-Unschärfe wird nicht automatisch aufgelöst, sondern
 queue-t.
 **Offen:** kein verbindliches Mindestalter, kein Widerspruchsverfahren,
 keine Aufbewahrungsregel für Verifizierungsmedien. Siehe
-[ROADMAP](../ROADMAP.md).
+[ROADMAP](https://github.com/Toterboy/Thestia/blob/main/ROADMAP.md).
 
 ### 3.3 BLE-Nahbereich
 
@@ -174,6 +174,49 @@ statt SHA-256 im Origin führt zu `credential verification failed`.
 Dashboard-Konfiguration. Ohne sie sendet der Client ein Token, das der
 Server ignoriert – der Bot-Schutz ist dann still aus.
 
+### 3.9 Verifikation: serverseitig erzwungen
+
+Die Modi, bei denen Thestia Menschen vermittelt, die einander nicht kennen
+(Find your Spark, Dating Hour, Transit Spark), setzen ein **verifiziertes
+Profil** voraus. Diese Voraussetzung wird **serverseitig** geprüft, nicht
+nur in der App: die Serverfunktionen verweigern den Beitritt, wenn das
+Profil des Aufrufers nicht verifiziert ist.
+
+**Maßnahmen**
+- Eine einzige Hilfsfunktion entscheidet über die Freigabe; alle betroffenen
+  Serverfunktionen nutzen sie. Bei Transit Spark wirkt sie auf Radar,
+  Matching und Kontaktaufnahme, ohne dass jede einzelne Funktion
+  angepasst werden musste.
+- Fehlt das Profil oder ist der Verifikationsstand unbekannt, wird
+  **nicht** freigegeben. Die Prüfung ist fail-closed - sie kann nicht
+  versehentlich offen ausfallen.
+- Die App prüft zusätzlich im Router, ob der angesteuerte Bildschirm zu
+  einem verifizierungspflichtigen Modus gehört. Das ist eine zweite
+  Verteidigungslinie; die maechtige Sperre ist die im Server.
+- Harte Invarianten prüft `tool/check_security_invariants.py` (66 Regeln),
+  läuft in CI. Der Check liest die **letzte** Definition einer Funktion -
+  eine ältere, sichere Fassung ließe ihn sonst bestehen, obwohl die
+  aktive Funktion ungeschützt wäre.
+
+**Restrisiko:** Eine Serverfunktion, die ohne diese Prüfung neu entsteht,
+ist ungeschützt. Kein Werkzeug verhindert das - nur der Review. Der
+Invarianten-Check deckt die heute betroffenen Funktionen ab.
+
+### 3.10 Altersangabe: unbekannt heisst nicht "erwachsen"
+
+Für die Modi, die nur ab 18 Jahren nutzbar sind, muss das Alter belegt
+sein. Fehlt die Angabe, gilt die Person **nicht** als volljährig - die
+Sperre greift dann, statt die Person durchzulassen. Die Prüfung sitzt in
+der Datenbank, damit sie auch ein veränderter Client nicht umgeht.
+
+**Maßnahmen**
+- Die Datenbank prüft Alter und Verifikation gemeinsam; die App zeigt für
+  ein fehlendes Geburtsdatum einen eigenen Hinweis und verlangt die
+  Angabe beim Speichern des Profils.
+- Konten, die ohne Altersangabe registriert wurden, gelten als
+  "Alter unbekannt" und werden für die ab 18 Jahren gesperrten Modi
+  nach dem Nachtragen des Alters freigeschaltet.
+
 ## 4. Was wir bewusst nicht tun
 
 - Kein Profilfoto-Katalog im Nahbereich
@@ -184,7 +227,7 @@ Server ignoriert – der Bot-Schutz ist dann still aus.
 
 ## 5. Sicherheitslücken melden
 
-`security@thestia.de` – siehe [SECURITY.md](../SECURITY.md) für Fristen
+`security@thestia.de` – siehe [SECURITY.md](https://github.com/Toterboy/Thestia/blob/main/SECURITY.md) für Fristen
 und den gewünschten Umfang. Eingangsbestätigung binnen 72 Stunden.
 
 Für dieses Dokument gilt: Fehlt eine Angriffsfläche, ist das ein
