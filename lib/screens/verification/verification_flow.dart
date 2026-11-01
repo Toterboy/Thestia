@@ -292,7 +292,8 @@ class VerificationVideoScreen extends ConsumerStatefulWidget {
 }
 
 class _VerificationVideoScreenState
-    extends ConsumerState<VerificationVideoScreen> {
+    extends ConsumerState<VerificationVideoScreen>
+    with WidgetsBindingObserver {
   CameraController? _cameraController;
   List<CameraDescription> _cameras = [];
   bool _isRecording = false;
@@ -307,6 +308,16 @@ class _VerificationVideoScreenState
   @override
   void initState() {
     super.initState();
+    // NUTZERWUNSCH (01.11.2026): "Die App laggt extrem, wenn ich die
+    // Videoerifizierung mache" und "soll die Kamera weg, um Ressourcen
+    // zu sparen".
+    //
+    // Ohne Lifecycle-Behandlung bleibt die Kamera offen, wenn der
+    // Nutzer die App waehrend der Aufnahme in den Hintergrund
+    // schaltet: der Preview-Texture lebt weiter, der Sensor bleibt
+    // belegt. Die camera-Doku verlangt dispose() bei inactive und
+    // einen Neuaufbau bei resumed.
+    WidgetsBinding.instance.addObserver(this);
     _generateChallenge();
     // Kamera erst NACH der Offenlegung oeffnen - siehe _initializeCamera.
     //
@@ -412,9 +423,55 @@ class _VerificationVideoScreenState
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _recordTimer?.cancel();
-    _cameraController?.dispose();
+    final controller = _cameraController;
+    _cameraController = null;
+    controller?.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Die Kamera bei inactive/paused freigeben und bei resumed neu
+    // aufbauen. Das camera-Plugin verlangt das ausdruecklich: ein
+    // weiterlaufender Preview-Texture im Hintergrund kostet Akku und
+    // haelt den Sensor belegt.
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      if (!_isRecording) {
+        unawaited(_kameraFreigeben());
+      }
+      return;
+    }
+    if (state == AppLifecycleState.resumed &&
+        _cameraController == null &&
+        !_processing &&
+        _error == null) {
+      unawaited(_initializeCamera());
+    }
+  }
+
+  /// Gibt die Kamera frei: Preview-Texture, Sensor und Akku.
+  ///
+  /// NUTZERWUNSCH (01.11.2026): "Wenn es verifiziert wird, nach der
+  /// Aufnahme, soll die Kamera weg, um Ressourcen zu sparen."
+  ///
+  /// Vorher lief die Kamera waehrend der kompletten Nachbearbeitung
+  /// weiter - Frames entnehmen, KI-Schaetzung, Upload. Das sind
+  /// mehrere Sekunden, in denen die Kamera ohne Zweck offen war.
+  Future<void> _kameraFreigeben() async {
+    final controller = _cameraController;
+    _cameraController = null;
+    if (controller == null) return;
+    try {
+      await controller.dispose();
+    } catch (_) {
+      // Beim Freigeben darf nichts werfen - der Aufrufer ist im
+      // catch-Block einer Fehlerbehandlung.
+    }
+    if (mounted) setState(() {});
   }
 
   Future<void> _toggleRecording() async {
@@ -511,8 +568,22 @@ class _VerificationVideoScreenState
     // Einzelbild-Ausreißer gehen im Median unter. Best-Effort: Was
     // schiefgeht, fehlt einfach als Sample.
     Future<List<Uint8List>> extractFrames(String videoPath) async {
-      final frames = <Uint8List>[];
-      for (final ms in AgeEstimationService.verificationFrameTimeMs) {
+      // PARALLEL (NUTZERWUNSCH 01.11.2026): "Die App laggt extrem,
+      // wenn ich die Videoerifizierung mache."
+      //
+      // Vorher wurden die fuenf Thumbnails NACHEINANDER entnommen. Das
+      // Plugin dekodiert auf Android ein voll aufgeloestes Frame und
+      // komprimiert es neu - pro Frame einige hundert Millisekunden.
+      // Fuenf mal hintereinander war einer der laengsten Einzelposten
+      // der gesamten Verifizierung.
+      //
+      // Das Plugin arbeitet mit einem Thread-Pool
+      // (Executors.newCachedThreadPool) - parallele Aufrufe sind also
+      // sicher. Die Reihenfolge der Ergebnisse bleibt erhalten
+      // (Future.wait liefert sie in der Reihenfolge der Futures), der
+      // Median rechnet also mit denselben Werten wie vorher.
+      final zeitpunkte = AgeEstimationService.verificationFrameTimeMs;
+      final ergebnisse = await Future.wait(zeitpunkte.map((ms) async {
         try {
           final Uint8List? bytes = await thumb.VideoThumbnail.thumbnailData(
             video: videoPath,
@@ -521,12 +592,16 @@ class _VerificationVideoScreenState
             quality: 80,
             timeMs: ms,
           ).timeout(const Duration(seconds: 10), onTimeout: () => null);
-          if (bytes != null && bytes.isNotEmpty) frames.add(bytes);
+          return bytes;
         } catch (e) {
           debugPrint('[Verification] Frame @$ms ms übersprungen: $e');
+          return null;
         }
-      }
-      return frames;
+      }));
+      return ergebnisse
+          .whereType<Uint8List>()
+          .where((bytes) => bytes.isNotEmpty)
+          .toList();
     }
 
     final frames = await extractFrames(path);
@@ -616,6 +691,14 @@ class _VerificationVideoScreenState
 
     try {
       final selfie = await captureSelfie();
+
+      // Die Kamera wird ab hier nicht mehr gebraucht: die Aufnahme ist
+      // zu Ende und das Selfie ist geholt. Sie hier freizugeben spart
+      // Akku, schont die Sensoren und beendet den Preview-Texture -
+      // vorher lief die Kamera waehrend der kompletten Auswertung
+      // (Frames, KI-Schaetzung, Upload) weiter.
+      await _kameraFreigeben();
+
       final samples = <Uint8List>[...frames];
       if (selfie != null) samples.add(selfie);
       if (samples.isNotEmpty) {
@@ -846,16 +929,23 @@ class _VerificationVideoScreenState
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    FittedBox(
-                      fit: BoxFit.cover,
-                      child: SizedBox(
-                        width:
-                            _cameraController!.value.previewSize?.height ?? 360,
-                        height:
-                            _cameraController!.value.previewSize?.width ?? 640,
-                        child: CameraPreview(_cameraController!),
-                      ),
-                    ),
+                    // Nach der Aufnahme wird die Kamera freigegeben -
+                    // dann gibt es keinen Preview mehr. Der schwarze
+                    // Hintergrund ist der Hintergrund des
+                    // Verarbeitungs-Hinweises darueber.
+                    if (_cameraController != null)
+                      FittedBox(
+                        fit: BoxFit.cover,
+                        child: SizedBox(
+                          width: _cameraController!.value.previewSize?.height ??
+                              360,
+                          height:
+                              _cameraController!.value.previewSize?.width ?? 640,
+                          child: CameraPreview(_cameraController!),
+                        ),
+                      )
+                    else
+                      const ColoredBox(color: Colors.black),
                     // Aufnahme-Indikator: dezenter Pill/Chip oben mittig
                     if (_isRecording)
                       Positioned(

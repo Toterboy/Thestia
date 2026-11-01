@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:pointycastle/export.dart';
 
 /// Verschluesselung des Verifikations-Videos (v0.10.0).
@@ -50,6 +50,33 @@ class VerificationCrypto {
       );
     final cipher = gcm.process(plaintext);
 
+    return (
+      cipher: cipher,
+      keyB64: base64Encode(key),
+      ivB64: base64Encode(iv),
+    );
+  }
+
+  /// Verschluesselt Videobytes OHNE den UI-Thread zu blockieren.
+  ///
+  /// NUTZERWUNSCH (01.11.2026): "Die App laggt extrem, wenn ich die
+  /// Videoerifizierung mache."
+  ///
+  /// AES-GCM in pure Dart braucht bei 5-25 MB mehrere Sekunden. Auf
+  /// dem UI-Isolate friert die App dabei sichtbar ein - die Kamera,
+  /// der Spinner und jede Beruehrung stehen still.
+  ///
+  /// compute() legt die Arbeit in ein Hintergrund-Isolate. Das Muster
+  /// stand schon hier (encryptArgs) - es wurde nur nie benutzt.
+  static Future<({Uint8List cipher, String keyB64, String ivB64})>
+      encryptAsync(Uint8List plaintext) async {
+    final key = Uint8List.fromList(
+      List<int>.generate(_keyLength, (_) => _random.nextInt(256)),
+    );
+    final iv = Uint8List.fromList(
+      List<int>.generate(_ivLength, (_) => _random.nextInt(256)),
+    );
+    final cipher = await compute(encryptArgs, (plaintext, key, iv));
     return (
       cipher: cipher,
       keyB64: base64Encode(key),

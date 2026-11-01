@@ -208,6 +208,23 @@ class AgeEstimationService {
     _ageInputNames = const [];
   }
 
+  /// SHA-256 ueber einen grossen Block - im Hintergrund-Isolate.
+  ///
+  /// NUTZERWUNSCH (01.11.2026): "Die App laggt extrem, wenn ich die
+  /// Videoerifizierung mache."
+  ///
+  /// Das Altersmodell ist 81 MB. Der Hash in pure Dart dauert dort
+  /// mehrere Sekunden - auf dem UI-Isolate steht waehrenddessen die
+  /// ganze App still (Kamera, Spinner, jede Beruehrung).
+  ///
+  /// compute() legt die Arbeit in ein Hintergrund-Isolate. Der
+  /// sha256-Import bleibt fuer die Vergleichsfunktion noetig.
+  static Future<String> _hash(Uint8List bytes) =>
+      compute(_hashArgs, bytes);
+
+  /// Die Arbeit fuer [compute] - muss statisch und top-level sein.
+  static String _hashArgs(Uint8List bytes) => sha256.convert(bytes).toString();
+
   Future<bool> _initInternal() async {
     try {
       OrtEnv.instance.init();
@@ -223,7 +240,7 @@ class AgeEstimationService {
         data.lengthInBytes,
       );
       if (!isExpectedSha256(
-        sha256.convert(bytes).toString(),
+        await _hash(bytes),
         expectedDetectorSha256,
       )) {
         debugPrint(
@@ -251,7 +268,7 @@ class AgeEstimationService {
         data.lengthInBytes,
       );
       if (!isExpectedSha256(
-        sha256.convert(bytes).toString(),
+        await _hash(bytes),
         expectedAgeModelSha256,
       )) {
         debugPrint(

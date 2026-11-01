@@ -560,7 +560,10 @@ class VerificationService {
       // wer den Bucket lesen kann, hat die biometrischen Daten. Der
       // Chiffrat kommt hochgeladen, der Schluessel getrennt in die
       // Schluesseltabelle, auf die der Client keinen Zugriff hat.
-      final encrypted = VerificationCrypto.encrypt(bytes);
+      // Im Hintergrund-Isolate: sonst friert die App fuer mehrere
+      // Sekunden ein (NUTZERWUNSCH 01.11.2026: "Die App laggt extrem,
+      // wenn ich die Videoerifizierung mache").
+      final encrypted = await VerificationCrypto.encryptAsync(bytes);
 
       final storage = SupabaseStorageService(SupabaseService.client);
       await storage
@@ -589,13 +592,19 @@ class VerificationService {
 
       if (response.data is Map<String, dynamic>) {
         final data = response.data as Map<String, dynamic>;
-        final accepted = data['status'] == 'pending';
+        // 'pending_minor' ist eine ANGENOMMENE Einreichung: Der Server
+        // legt sie in die manuelle Pruefung (Altersgrenze 21). Vorher
+        // pruefte der Client nur auf 'pending' - und meldete fuer
+        // JEDE Person unter 21 "Server lehnte die Einreichung ab",
+        // obwohl Video und Schluessel korrekt gespeichert waren.
+        final status = data['status'];
+        final accepted = status == 'pending' || status == 'pending_minor';
         if (accepted) {
           await deleteVideo(video.filePath);
         } else {
           _lastSubmitError =
               'Server lehnte die Einreichung ab: '
-              '${data['error'] ?? data['status'] ?? data.keys.toList()}';
+              '${data['error'] ?? status ?? data.keys.toList()}';
         }
         return accepted;
       }
@@ -603,17 +612,58 @@ class VerificationService {
           'Unerwartete Server-Antwort (${response.data.runtimeType})';
       return false;
     } catch (e) {
+      // BUG (01.11.2026): der Catch hat JEDEN Fehler verschluckt und
+      // "erfolgreich" gemeldet. Ein vom Storage-Server ABGELEHNTER
+      // Upload (falscher Content-Type, fehlende Berechtigung) ist aber
+      // kein Netzausfall: das Video liegt dann nirgends, in
+      // verification_video_keys steht kein Schluessel, und der Fall
+      // erscheint NIE im Adminbereich - bei der App aber "Video
+      // eingereicht!". Das war die Ursache von "Die Videoverifizierung
+      // kommt im Adminbereich irgendwie nicht an".
+      //
+      // Nur ein echter Netzausfall darf als "lokal pending"
+      // durchgehen - dann ist der Retry beim naechsten Start sinnvoll.
+      final netzausfall = _istNetzausfall(e);
       if (kDebugMode) {
         debugPrint('[VerificationService] Server-Submit fehlgeschlagen '
-            '(lokal pending): $e');
+            '${netzausfall ? '(lokal pending)' : '(Fehler gemeldet)'}: $e');
       }
-      // Server nicht erreichbar: Video ist LOKAL gespeichert, die
-      // Aufgabe ist erfüllt -> als pending akzeptieren (Fix "Einreichen
-      // schlägt immer fehl trotz korrekter Ausführung"). Der Upload
-      // wird über retryPendingUpload beim nächsten Start nachgeholt.
-      _lastSubmitError = null;
-      return true;
+      if (netzausfall) {
+        // Server nicht erreichbar: Video ist LOKAL gespeichert, die
+        // Aufgabe ist erfüllt -> als pending akzeptieren (Fix "Einreichen
+        // schlägt immer fehl trotz korrekter Ausführung"). Der Upload
+        // wird über retryPendingUpload beim nächsten Start nachgeholt.
+        _lastSubmitError = null;
+        return true;
+      }
+      _lastSubmitError = 'Einreichung fehlgeschlagen: $e';
+      return false;
     }
+  }
+
+  /// Ist das ein Netzausfall (offline) - oder ein abgelehnter Upload?
+  ///
+  /// Nur ein Netzausfall darf als "lokal pending" durchgehen. Ein vom
+  /// Server abgelehnter Upload (400 falscher Content-Type, 403 fehlende
+  /// Berechtigung) ist ein echter Fehler: das Video liegt nirgends,
+  /// und der Fall erscheint nie im Adminbereich.
+  static bool _istNetzausfall(Object e) {
+    if (e is SocketException) return true;
+    if (e is HttpException) return true;
+    if (e is TimeoutException) return true;
+    final text = e.toString().toLowerCase();
+    for (final kuerzel in const [
+      'socket',
+      'connection',
+      'network',
+      'failed host lookup',
+      'no address associated',
+      'connection refused',
+      'timeout',
+    ]) {
+      if (text.contains(kuerzel)) return true;
+    }
+    return false;
   }
 
   /// KI-Triage unauffällig (v0.9.1, Migration 095 + Edge Action "auto").
@@ -662,7 +712,9 @@ class VerificationService {
       // Schluessel reist getrennt vom Chiffrat (Tabelle
       // verification_video_keys, auf die der Client keinen Zugriff
       // hat).
-      final encrypted = VerificationCrypto.encrypt(await file.readAsBytes());
+      final encrypted = await VerificationCrypto.encryptAsync(
+        await file.readAsBytes(),
+      );
 
       await storage
           .uploadVerificationVideo(encrypted.cipher)
