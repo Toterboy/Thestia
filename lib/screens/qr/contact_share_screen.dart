@@ -78,34 +78,61 @@ class _PresetApp {
     required this.key,
     required this.labelKey,
     required this.recommended,
+    required this.icon,
+    required this.farbe,
   });
 
   final String key;
   final String labelKey;
   final bool recommended;
+
+  /// Das Symbol der App (NUTZERWUNSCH 01.11.2026: "Den Auswahlscreen
+  /// bei Mit anderen verbinden etwas schoener gestalten").
+  ///
+  /// Eine Liste von Schaltern ohne Symbol ist eine Liste von Schaltern.
+  /// Mit Symbol erkennt man die App auf einen Blick - das ist der
+  /// ganze Sinn dieser Zeile.
+  final IconData icon;
+
+  /// Die Farbe des Symbols (je App eine eigene).
+  final Color farbe;
 }
 
 const _presets = <_PresetApp>[
-  _PresetApp(key: 'signal', labelKey: 'contactShare.signal', recommended: true),
+  _PresetApp(
+    key: 'signal',
+    labelKey: 'contactShare.signal',
+    recommended: true,
+    icon: Icons.lock_outline,
+    farbe: Color(0xFF3A76F0),
+  ),
   _PresetApp(
     key: 'threema',
     labelKey: 'contactShare.threema',
     recommended: true,
+    icon: Icons.chat_bubble_outline,
+    farbe: Color(0xFF2A8C4E),
   ),
   _PresetApp(
     key: 'instagram',
     labelKey: 'contactShare.instagram',
     recommended: false,
+    icon: Icons.camera_alt_outlined,
+    farbe: Color(0xFFC13584),
   ),
   _PresetApp(
     key: 'snapchat',
     labelKey: 'contactShare.snapchat',
     recommended: false,
+    icon: Icons.auto_awesome_outlined,
+    farbe: Color(0xFFE0A800),
   ),
   _PresetApp(
     key: 'discord',
     labelKey: 'contactShare.discord',
     recommended: false,
+    icon: Icons.forum_outlined,
+    farbe: Color(0xFF5865F2),
   ),
 ];
 
@@ -424,13 +451,41 @@ class _ContactShareFormState extends ConsumerState<_ContactShareForm> {
             style: theme.textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          Text(
-            L10n.t(context, 'contactShare.recommended'),
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: theme.colorScheme.primary,
+          // Die empfohlenen Apps bekommen einen eigenen Abschnitt mit
+          // einer Markierung - sie sind es, um die es hier geht.
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.star_rounded,
+                  size: 15,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 6),
+                // Flexible: bei grosser Schrift waechst der Text ueber
+                // die Zeile hinaus (RenderFlex-Overflow, gefunden beim
+                // Accessibility-Test mit 3,2-facher Schrift).
+                Flexible(
+                  child: Text(
+                    L10n.t(context, 'contactShare.recommended'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           for (final preset in recommended)
             _PresetTile(
               preset: preset,
@@ -555,7 +610,28 @@ class _PresetTile extends StatelessWidget {
               // Schrift passt "nicht empfohlen" nicht mehr neben den
               // Namen in eine Zeile (RenderFlex-Overflow, gefunden beim
               // Accessibility-Test).
-              title: Text(label),
+              //
+              // Das Symbol der App steht VOR dem Namen: eine Liste von
+              // Schaltern ist ohne Symbol eine Liste von Schaltern.
+              title: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: preset.farbe.withValues(alpha: 0.14),
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: Icon(
+                      preset.icon,
+                      size: 20,
+                      color: preset.farbe,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(label)),
+                ],
+              ),
               subtitle: Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(

@@ -210,17 +210,18 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen> {
       // Reiter (die Blase wächst nach unten), ein zweiter Tipp schließt
       // sie. Die Funken stehen IMMER darunter und werden beim Öffnen
       // nach unten geschoben.
-      // Die Reiter liegen UEBER dem aufgeklappten Bereich und ragen
-      // _reiterUeberlappung Pixel in ihn hinein. Damit haengen sie an
-      // der Kante des Bereichs, statt in ihm zu stehen (NUTZERWUNSCH
-      // 01.11.2026: "die buttons von Gesendet und Erhalten, wenn man
-      // die aufklappt, ganz bisschen im aufgeklappten fenster drin und
-      // nicht nur dran").
+      // Die Reiter stehen VOR dem aufgeklappten Bereich, nicht in ihm.
       //
-      // Vorher stand die Zeile in einer Column ueber der Liste: die
-      // Liste wurde danach gemalt und ueberdeckte die Reiter. Deshalb
-      // war eine Ueberlappung gar nicht moeglich - die Reiter lagen
-      // stumpf auf der Kante.
+      // NUTZERWUNSCH (01.11.2026), zweimal: "die buttons ... ganz
+      // bisschen im aufgeklappten fenster drin und nicht nur dran" und
+      // danach "sind Gesendet und Erhalten in dem Aufgeklappten noch
+      // immer drinnen".
+      //
+      // Ein Reiter, der in den Bereich hineinragt, IST in ihm - egal,
+      // ob er ueberlappt oder sich nur beruehrt. Der Bereich ist ein
+      // eigenes Fenster, die Reiter gehoeren davor. Deshalb liegt
+      // der Bereich jetzt unter ihnen (mit einem kleinen Abstand), und
+      // die Reiter werden nach der Liste gemalt.
       body: Stack(
         children: [
           Positioned.fill(
@@ -231,8 +232,8 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: EdgeInsets.fromLTRB(
                   16,
-                  _reiterRandOben + _pillenHoehe(context) -
-                      _reiterUeberlappung,
+                  _reiterRandOben + _pillenHoehe(context) +
+                      _abstandReiterBereich,
                   16,
                   28,
                 ),
@@ -366,18 +367,19 @@ double _pillenHoehe(BuildContext context) {
 /// Der Rand ueber der Reiter-Zeile.
 const double _reiterRandOben = 4;
 
-/// Wie weit die Reiter in den aufgeklappten Bereich hineinragen.
+/// Der Abstand zwischen den Reitern und dem aufgeklappten Bereich.
 ///
-/// NUTZERWUNSCH (01.11.2026): "die buttons von Gesendet und Erhalten,
-/// wenn man die aufklappt, ganz bisschen im aufgeklappten fenster drin
-/// und nicht nur dran" - die Reiter sollen AN dem aufgeklappten Bereich
-/// haengen, nicht in ihm stehen.
+/// NUTZERWUNSCH (01.11.2026), zweimal: "die buttons ... ganz bisschen
+/// im aufgeklappten fenster drin und nicht nur dran" und danach
+/// "sind Gesendet und Erhalten in dem Aufgeklappten noch immer drinnen".
 ///
-/// Mit dieser Ueberlappung rueckt die Oberkante des Bereichs unter die
-/// Unterkante der Reiter. Die Reiter sind nach der Liste gemalt, also
-/// liegen sie VOR ihr - ihre Unterkante verschwindet damit im Bereich
-/// und sie lesen sich als Reiter, die an der Kante haengen.
-const double _reiterUeberlappung = 10;
+/// Ein Reiter, der in den Bereich hineinragt, IST in ihm - egal, ob
+/// er ueberlappt oder sich beruehrt. Der Bereich ist ein eigenes
+/// Fenster ("Pop-up"), und die Reiter gehoeren VOR das Fenster.
+///
+/// Deshalb: der Bereich beginnt unter den Reitern, mit einem kleinen
+/// Abstand. Die Reiter stehen dadurch eindeutig ausserhalb.
+const double _abstandReiterBereich = 10;
 
 /// Ein Eintrag im Personen-Menü (siehe [_PersonenMenue]).
 class _MenueEintrag {
@@ -2180,7 +2182,18 @@ class _PanelBubble extends StatelessWidget {
         ),
       ),
       padding: const EdgeInsets.fromLTRB(8, 14, 8, 6),
-      child: child,
+      // GLEICHE HOEHE (NUTZERWUNSCH 01.11.2026: "Gesendet und
+      // Erhalten sind die Pop up maessigen Fenster nicht gleich gross
+      // nach unten").
+      //
+      // Die beiden Leertexte haben verschiedene Laenge, dadurch waren
+      // die Fenster unterschiedlich hoch - und beim Wechsel ruckte
+      // alles darunter nach. Die Mindesthoehe macht beide gleich
+      // hoch, solange der Inhalt nicht ueber sie hinaus waechst.
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 236),
+        child: child,
+      ),
     );
   }
 }

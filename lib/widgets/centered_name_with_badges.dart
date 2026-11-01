@@ -40,7 +40,14 @@ class CenteredNameWithBadges extends StatelessWidget {
 
     final echte = Row(
       mainAxisSize: MainAxisSize.min,
-      children: badges,
+      children: [
+        // Abstand zum Namen (NUTZERWUNSCH 01.11.2026: "Die 'neu' Badge
+        // bei Profil ist zu nah bis in dem Namen"). Der Abstand steht
+        // IN der Badge-Reihe, damit die unsichtbare Gegenseite
+        // (links) genauso breit ist - der Name bleibt mittig.
+        const SizedBox(width: 6),
+        ...badges,
+      ],
     );
 
     return Row(
