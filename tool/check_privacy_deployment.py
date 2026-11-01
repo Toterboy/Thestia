@@ -72,12 +72,29 @@ PFLICHTSEITEN = [
 
 
 def norm(text: str) -> str:
-    """Vereinheitlicht fuer den Vergleich."""
-    text = re.sub(r'<script.*?</script>', ' ', text, flags=re.S | re.I)
-    text = re.sub(r'<style.*?</style>', ' ', text, flags=re.S | re.I)
+    """Vereinheitlicht fuer den Vergleich.
+
+    WICHTIG (01.11.2026): Die Script- und Style-Bloecke werden
+    NICHT mehr weggeworfen. Vorher geschah das - und damit blieb jede
+    Verhaltensaenderung im JavaScript unsichtbar: die Aenderung an
+    index.html (der Turnstile-Token wird nicht mehr angezeigt) wurde
+    als "nur Formatierung" eingestuft, obwohl sich die Seite sichtbar
+    anders verhaelt.
+
+    Weggeworfen werden nur die TAGS; der Inhalt bleibt, der
+    Leerraum wird vereinheitlicht. Damit bleibt der Vergleich
+    unempfindlich gegenueber Zeilenumbruechen - erkennt aber
+    Aenderungen im Text, im CSS und im JavaScript.
+    """
+    # Die VERWEISE der Tags mitnehmen. Ein href ist eine echte
+    # Aenderung, auch wenn der Linktext gleich bleibt - so ist der
+    # Wechsel von auth.thestia.de auf thestia.de sichtbar geworden.
+    verweise = re.findall(
+        r'(?:href|src)\s*=\s*["\']([^"\']*)["\']', text, re.I)
     text = re.sub(r'<[^>]+>', ' ', text)
     text = re.sub(r'&[a-z]+;', ' ', text)
-    return re.sub(r'\s+', ' ', text).strip()
+    return (re.sub(r'\s+', ' ', text).strip() + ' || ' +
+            ' '.join(sorted(verweise)))
 
 
 def hole(url: str):
