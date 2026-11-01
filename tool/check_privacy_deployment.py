@@ -20,6 +20,13 @@ Zusaetzlich zur Pruefung: WELCHE Dateien abweichen. Vorher stand am
 Ende nur "Netlify: passkey-assets/ neu hochladen" - das hiess: den
 GANZEN Ordner. Das war bei jeder kleinen Aenderung Arbeit ohne Anlass.
 
+HINWEIS (01.11.2026): Das Netlify-Projekt arbeitet mit "Deploy from
+repository" und Publish-Verzeichnis passkey-assets. Die Dateien
+werden also durch den PUSH veroeffentlicht - ein manueller Upload
+gibt es nicht. Das hier ist deshalb eine Kontrollanzeige, kein
+Arbeitsauftrag: wenn hier etwas abweicht, ist der Push noch nicht
+durch (oder es fehlt ein Commit).
+
 Die Werkzeuge, die den Ordner erzeugen (tool/make_web_screenshots.py,
 tool/apply_web_theme.py), sind inzwischen WIEDERHOLBAR: ein zweiter
 Durchlauf aendert nichts (geprueft von
@@ -357,8 +364,10 @@ def main() -> int:
 
     if hochzuladen or nur_formatierung or nicht_live or fehler:
         print()
-        print('Netlify: nur die als "MUESSEN" markierten Dateien hochladen.')
-        print('Der Rest ist bereits live und unveraendert.')
+        print('Netlify: das Projekt haengt am Repository (Deploy from')
+        print('repository, Publish-Verzeichnis passkey-assets) - ein Push')
+        print('veroeffentlicht die Dateien. Ein manueller Upload ist nicht')
+        print('noetig; die Zeitenstempel im Protokoll zeigen den Stand.')
         return 1
 
     print()
