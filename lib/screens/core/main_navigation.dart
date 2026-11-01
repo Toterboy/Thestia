@@ -424,11 +424,16 @@ class _TabSwipeState extends State<_TabSwipe>
   static const double _folge = 0.42;
 
   /// Breite des Hereingleitens (Anteil der Bildschirmbreite).
-  static const double _einflug = 0.10;
+  ///
+  /// NUTZERWUNSCH (01.11.2026): "die Animation ... ist sehr abrupt".
+  /// Bei 10 % war der Hereinflug so kurz, dass der Wechsel wie ein
+  /// Schnitt wirkte. Mit 18 % laeuft die Bewegung sichtbar durch -
+  /// und die Dauer ist etwas laenger, damit sie ruhig wirkt.
+  static const double _einflug = 0.18;
 
   late final AnimationController _enter = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 280),
+    duration: const Duration(milliseconds: 320),
     value: 1,
   );
 
@@ -454,6 +459,8 @@ class _TabSwipeState extends State<_TabSwipe>
       // Der Inhalt wurde vom Router ausgetauscht: von der Seite
       // hereinholen, in deren Richtung gewischt wurde.
       _enterRichtung = widget.index > oldWidget.index ? 1 : -1;
+      // Der Weg wird HIER zurueckgesetzt - beim Loslassen blieb er
+      // stehen, damit die Seite nicht fuer ein Bild zuruecksprang.
       _weg = 0;
       _feder.stop();
       _enter.forward(from: 0);
@@ -508,8 +515,28 @@ class _TabSwipeState extends State<_TabSwipe>
         // Reiter. Nach rechts waere es der vorherige.
         final richtung = _weg < 0 ? 1 : -1;
         if (gewickt) {
-          setState(() => _weg = 0);
+          // NUTZERWUNSCH (01.11.2026): "die Animation, wenn ich
+          // zwischen den Reitern swipe, ist sehr abrupt und unschoen".
+          //
+          // Das Ruecksetzen auf 0 war der abrupte Teil: die Seite
+          // sprang fuer ein Bild zurueck, waehrend der neue Reiter
+          // von der Seite herein kam. Der Weg bleibt deshalb stehen -
+          // der neue Inhalt zieht an der Stelle ein, an der der
+          // alte gerade lag, und das Wischen laeuft durch.
+          //
+          // Zurueckgesetzt wird der Weg in didUpdateWidget, wenn der
+          // Reiter tatsaechlich wechselt. Passiert das nicht (am
+          // Rand gibt es keinen weiteren Reiter), muss die Seite
+          // trotzdem zurueckfedern - das passiert im
+          // Post-Frame-Callback unten.
           widget.onSwipe(richtung);
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            // Der Wechsel hat den Weg bereits zurueckgesetzt.
+            if (_weg == 0) return;
+            _federStart = _weg;
+            _feder.forward(from: 0);
+          });
         } else {
           // Nicht weit genug: weich in die Ausgangslage zurueck.
           _federStart = _weg;

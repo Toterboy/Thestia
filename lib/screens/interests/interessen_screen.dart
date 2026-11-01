@@ -210,59 +210,79 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen> {
       // Reiter (die Blase wächst nach unten), ein zweiter Tipp schließt
       // sie. Die Funken stehen IMMER darunter und werden beim Öffnen
       // nach unten geschoben.
-      body: Column(
+      // Die Reiter liegen UEBER dem aufgeklappten Bereich und ragen
+      // _reiterUeberlappung Pixel in ihn hinein. Damit haengen sie an
+      // der Kante des Bereichs, statt in ihm zu stehen (NUTZERWUNSCH
+      // 01.11.2026: "die buttons von Gesendet und Erhalten, wenn man
+      // die aufklappt, ganz bisschen im aufgeklappten fenster drin und
+      // nicht nur dran").
+      //
+      // Vorher stand die Zeile in einer Column ueber der Liste: die
+      // Liste wurde danach gemalt und ueberdeckte die Reiter. Deshalb
+      // war eine Ueberlappung gar nicht moeglich - die Reiter lagen
+      // stumpf auf der Kante.
+      body: Stack(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _InterestPanelButton(
-                    label: L10n.t(context, 'interests.tabSent'),
-                    icon: Icons.outgoing_mail,
-                    open: _openPanel == 0,
-                    onTap: () => _togglePanel(0),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _InterestPanelButton(
-                    label: L10n.t(context, 'interests.tabReceived'),
-                    icon: Icons.call_received,
-                    open: _openPanel == 1,
-                    onTap: () => _togglePanel(1),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
+          Positioned.fill(
             child: RefreshIndicator(
               onRefresh: _refreshAlle,
               child: ListView(
                 controller: _scrollController,
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 28),
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  _reiterRandOben + _pillenHoehe(context) -
+                      _reiterUeberlappung,
+                  16,
+                  28,
+                ),
                 children: [
+                  // clipBehavior: Clip.hardEdge - OHNE das war die
+                  // Blase waehrend des Aufklappens nicht beschnitten:
+                  // sie stand in voller Hoehe da, waehrend der Kasten
+                  // darunter wuchs. Das sah ruckelig aus (NUTZERWUNSCH
+                  // 01.11.2026: "Die Aufklapptanimation ist auch noch
+                  // etwas ruckelig").
                   AnimatedSize(
                     duration: const Duration(milliseconds: 320),
                     curve: Curves.easeOutCubic,
                     alignment: Alignment.topCenter,
+                    clipBehavior: Clip.hardEdge,
                     child: _openPanel == null
                         ? const SizedBox.shrink()
                         : AnimatedSwitcher(
                             duration: const Duration(milliseconds: 240),
                             switchInCurve: Curves.easeOutCubic,
                             switchOutCurve: Curves.easeInCubic,
+                            // Die ausgehenden Panels duerfen die Hoehe
+                            // NICHT bestimmen: sonst springt der
+                            // Kasten, wenn das neue Panel kuerzer ist.
+                            // Sie werden deshalb positioniert - und
+                            // zaehlen nicht mit.
                             layoutBuilder: (current, previous) => Stack(
                               alignment: Alignment.topCenter,
-                              children: [...previous, ?current],
+                              children: [
+                                ...previous.map(
+                                  (p) => Positioned(
+                                    top: 0,
+                                    left: 0,
+                                    right: 0,
+                                    child: p,
+                                  ),
+                                ),
+                                ?current,
+                              ],
                             ),
                             transitionBuilder: (child, animation) {
                               final offset = Tween<Offset>(
-                                begin: const Offset(0, -0.02),
+                                begin: const Offset(0, -0.03),
                                 end: Offset.zero,
-                              ).animate(animation);
+                              ).animate(
+                                CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeOutCubic,
+                                ),
+                              );
                               return FadeTransition(
                                 opacity: animation,
                                 child: SlideTransition(
@@ -295,7 +315,246 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen> {
               ),
             ),
           ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _InterestPanelButton(
+                      label: L10n.t(context, 'interests.tabSent'),
+                      icon: Icons.outgoing_mail,
+                      open: _openPanel == 0,
+                      onTap: () => _togglePanel(0),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _InterestPanelButton(
+                      label: L10n.t(context, 'interests.tabReceived'),
+                      icon: Icons.call_received,
+                      open: _openPanel == 1,
+                      onTap: () => _togglePanel(1),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+/// Die Hoehe der Reiter-Pille: 40 px im Normalfall.
+///
+/// Die Pille hat eine FESTE Hoehe - nur so sitzt der aufgeklappte
+/// Bereich genau darunter (siehe [_reiterUeberlappung]). Bei grosser
+/// Schriftgroesse waere eine feste Hoehe aber zu klein: der Text
+/// laege dann ueber (der Render-Test prueft 3,2-fache Schriftgroesse).
+///
+/// Deshalb waechst die Hoehe mit dem Textfaktor mit.
+double _pillenHoehe(BuildContext context) {
+  final skala = MediaQuery.textScalerOf(context).scale(1.0);
+  return 40 * (skala < 1.0 ? 1.0 : skala);
+}
+
+/// Der Rand ueber der Reiter-Zeile.
+const double _reiterRandOben = 4;
+
+/// Wie weit die Reiter in den aufgeklappten Bereich hineinragen.
+///
+/// NUTZERWUNSCH (01.11.2026): "die buttons von Gesendet und Erhalten,
+/// wenn man die aufklappt, ganz bisschen im aufgeklappten fenster drin
+/// und nicht nur dran" - die Reiter sollen AN dem aufgeklappten Bereich
+/// haengen, nicht in ihm stehen.
+///
+/// Mit dieser Ueberlappung rueckt die Oberkante des Bereichs unter die
+/// Unterkante der Reiter. Die Reiter sind nach der Liste gemalt, also
+/// liegen sie VOR ihr - ihre Unterkante verschwindet damit im Bereich
+/// und sie lesen sich als Reiter, die an der Kante haengen.
+const double _reiterUeberlappung = 10;
+
+/// Ein Eintrag im Personen-Menü (siehe [_PersonenMenue]).
+class _MenueEintrag {
+  const _MenueEintrag({
+    required this.wert,
+    required this.icon,
+    required this.label,
+    this.rot = false,
+  });
+
+  final String wert;
+  final IconData icon;
+  final String label;
+
+  /// Rote Beschriftung (loeschen, blockieren).
+  final bool rot;
+}
+
+/// Die Werkzeuge fuer eine Person in einer Liste.
+///
+/// NUTZERWUNSCH (01.11.2026): "Die Bearbeitungstools auf der Interessen
+/// Seite sehe ich auch nicht. Wenn sie mit Funken erst sichtbar werden
+/// ist okay, aber sonst noch ergaenzen, also entfernen, blockieren,
+/// melden, anpinnen, archivieren usw."
+///
+/// Bei den FUNKEN gab es diese Werkzeuge schon (das Drei-Punkte-Menue
+/// der Funken-Kachel). Bei den LIKES fehlten sie - und die waren nur
+/// erreichbar, wenn ueberhaupt ein Funke existierte. Wer nur geliked
+/// hat, konnte nichts machen.
+///
+/// Das Menue haengt deshalb die allgemeinen Aktionen (Profil,
+/// Blockieren, Melden) an die aktionsspezifischen (entfernen,
+/// ignorieren, zurueck liken) an - und wird von beiden Kachelarten
+/// benutzt, damit es an beiden gleich aussieht.
+class _PersonenMenue extends ConsumerWidget {
+  const _PersonenMenue({
+    required this.personId,
+    required this.personName,
+    this.aktionen = const [],
+    this.onAktion,
+    this.aktiv = true,
+  });
+
+  final String personId;
+  final String personName;
+
+  /// Die aktionsspezifischen Eintraege.
+  final List<_MenueEintrag> aktionen;
+
+  /// Aufruf fuer einen aktionsspezifischen Eintrag.
+  final void Function(String wert)? onAktion;
+
+  /// Bei einem laufenden Vorgang ist das Menue gesperrt.
+  final bool aktiv;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert),
+      tooltip: L10n.t(context, 'chat.more'),
+      enabled: aktiv,
+      onSelected: (wert) => _ausfuehren(context, ref, wert),
+      itemBuilder: (ctx) => [
+        for (final a in aktionen)
+          PopupMenuItem(
+            value: a.wert,
+            child: ListTile(
+              leading: Icon(a.icon, color: a.rot ? Colors.red : null),
+              title: Text(a.label),
+              contentPadding: EdgeInsets.zero,
+            ),
+          ),
+        if (aktionen.isNotEmpty) const PopupMenuDivider(),
+        PopupMenuItem(
+          value: 'profil',
+          child: ListTile(
+            leading: const Icon(Icons.person_outline),
+            title: Text(L10n.t(context, 'profile.detail.aboutMe')),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+        PopupMenuItem(
+          value: 'melden',
+          child: ListTile(
+            leading: const Icon(Icons.flag_outlined),
+            title: Text(L10n.t(context, 'profile.detail.reportUser')),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+        PopupMenuItem(
+          value: 'blockieren',
+          child: ListTile(
+            leading: const Icon(Icons.block, color: Colors.red),
+            title: Text(L10n.t(context, 'profile.detail.blockUser')),
+            contentPadding: EdgeInsets.zero,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _ausfuehren(BuildContext context, WidgetRef ref, String wert) {
+    switch (wert) {
+      case 'profil':
+        context.push(AppRoutes.profileDetailPath(personId));
+      case 'melden':
+        showReportUserDialog(
+          context: context,
+          ref: ref,
+          reportedUserId: personId,
+          reportedUserName: personName,
+        );
+      case 'blockieren':
+        unawaited(bestaetigeBlockieren(context, ref, personId, personName));
+      default:
+        onAktion?.call(wert);
+    }
+  }
+}
+
+/// Blockieren mit Bestaetigung - fuer jede Person, nicht nur fuer
+/// Funken.
+///
+/// Der Dialog und der Ablauf sind derselbe wie im Chat: erst fragen,
+/// dann blockieren, dann melden. Zwei getrennte Funktionen gab es bis
+/// hierher - die eine konnte nur einen Funke blockieren, und genau
+/// deshalb war das Blockieren bei einem blossen Like nicht erreichbar.
+Future<void> bestaetigeBlockieren(
+  BuildContext context,
+  WidgetRef ref,
+  String personId,
+  String personName,
+) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Row(
+        children: [
+          const Icon(Icons.block, color: Colors.red),
+          const SizedBox(width: 8),
+          Expanded(child: Text(L10n.t(ctx, 'chat.blockTitle'))),
+        ],
+      ),
+      content: Text(L10n.tf(ctx, 'chat.blockBody', {'name': personName})),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(ctx).pop(false),
+          child: Text(L10n.t(ctx, 'common.cancel')),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(ctx).pop(true),
+          style: FilledButton.styleFrom(backgroundColor: Colors.red),
+          child: Text(L10n.t(ctx, 'chat.blockAction')),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true || !context.mounted) return;
+  try {
+    await SupabaseDatabaseService(
+      SupabaseService.client,
+    ).blockUser(personId);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          L10n.tf(context, 'chat.blockedDone', {'name': personName}),
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  } catch (_) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(L10n.t(context, 'chat.blockFailed')),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }
@@ -528,10 +787,30 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
                       if (like.createdAt != null)
                         _likeDatum(context, like.createdAt!),
                     ].join(' · ')),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.close, color: Colors.red),
-                      tooltip: L10n.t(context, 'interests.likeWithdrawTooltip'),
-                      onPressed: () => _removeLike(like),
+                    // Die Werkzeuge fuer die Person (NUTZERWUNSCH
+                    // 01.11.2026): "Die Bearbeitungstools auf der
+                    // Interessen Seite sehe ich auch nicht ... entfernen,
+                    // blockieren, melden ... usw."
+                    //
+                    // Vorher stand hier nur ein X (Like zuruecknehmen).
+                    // Blockieren und Melden waren ausschliesslich bei
+                    // den FUNKEN erreichbar - wer nur geliked hatte,
+                    // konnte nichts machen.
+                    trailing: _PersonenMenue(
+                      personId: profile.id,
+                      personName: profile.name,
+                      aktionen: [
+                        _MenueEintrag(
+                          wert: 'entfernen',
+                          icon: Icons.close,
+                          label: L10n.t(
+                              context, 'interests.likeWithdrawTooltip'),
+                          rot: true,
+                        ),
+                      ],
+                      onAktion: (wert) {
+                        if (wert == 'entfernen') _removeLike(like);
+                      },
                     ),
                   ),
                   if (profile.introAudioPath != null) ...[
@@ -797,6 +1076,16 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
                     ),
                     onTap: () =>
                         context.go(AppRoutes.profileDetailPath(profile.id)),
+                    // Die Werkzeuge fuer die Person (NUTZERWUNSCH
+                    // 01.11.2026). Die aktionsspezifischen Knöpfe
+                    // stehen gleich darunter - hier kommen die
+                    // allgemeinen (Profil, Melden, Blockieren), die es
+                    // vorher nur bei den Funken gab.
+                    trailing: _PersonenMenue(
+                      personId: profile.id,
+                      personName: profile.name,
+                      aktiv: !busy,
+                    ),
                   ),
                   if (profile.introAudioPath != null) ...[
                     const SizedBox(height: 8),
@@ -1802,16 +2091,21 @@ class _InterestPanelButton extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final fg = open ? scheme.onPrimaryContainer : scheme.onSurfaceVariant;
 
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(999),
-      child: InkWell(
-        onTap: onTap,
+    // Feste Hoehe (siehe [_pillenHoehe]): der aufgeklappte Bereich
+    // rueckt genau um _reiterUeberlappung darunter. Ohne feste Hoehe
+    // waere die Ueberlappung von der Schriftgroesse abhaengig.
+    return SizedBox(
+      height: _pillenHoehe(context),
+      child: Material(
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(999),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(999),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             color: open
                 ? scheme.primaryContainer
@@ -1825,29 +2119,30 @@ class _InterestPanelButton extends StatelessWidget {
                   : scheme.outlineVariant.withValues(alpha: 0.45),
             ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 18, color: fg),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: fg,
-                    fontWeight: open ? FontWeight.w700 : FontWeight.w500,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 18, color: fg),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: fg,
+                      fontWeight: open ? FontWeight.w700 : FontWeight.w500,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              AnimatedRotation(
-                turns: open ? 0.5 : 0,
-                duration: const Duration(milliseconds: 220),
-                child: Icon(Icons.keyboard_arrow_down, size: 18, color: fg),
-              ),
-            ],
+                const SizedBox(width: 4),
+                AnimatedRotation(
+                  turns: open ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 220),
+                  child: Icon(Icons.keyboard_arrow_down, size: 18, color: fg),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1897,24 +2192,38 @@ class _FunkenHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Column(
+    // NEBENEINANDER statt untereinander (NUTZERWUNSCH 01.11.2026: "das
+    // Funken Symbol und Funken zusammen untereinander etwas gross. Also
+    // entweder irgendwie nebeneinander oder etwas kleiner machen").
+    //
+    // Beides: nebeneinander UND kleiner. Untereinander brauchte der
+    // Kopf fast 100 px Hoehe - die Ueberschrift des Abschnitts war
+    // groesser als die Ueberschriften der Listen darunter.
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
-          width: 56,
-          height: 56,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: scheme.primaryContainer.withValues(alpha: 0.7),
           ),
-          child: Icon(Icons.auto_awesome, size: 30, color: scheme.primary),
+          child: Icon(Icons.auto_awesome, size: 22, color: scheme.primary),
         ),
-        const SizedBox(height: 10),
-        Text(
-          L10n.t(context, 'interests.tabSparks'),
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-          textAlign: TextAlign.center,
+        const SizedBox(width: 10),
+        // Flexible: bei grosser Schriftgroesse waechst die Ueberschrift
+        // ueber die Zeile hinaus (der Render-Test prueft 3,2-fache
+        // Schriftgroesse) - ohne Flexible laeuft das Row ueber.
+        Flexible(
+          child: Text(
+            L10n.t(context, 'interests.tabSparks'),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
         ),
       ],
     );
@@ -1991,58 +2300,17 @@ class _MatchTile extends ConsumerWidget {
 
   /// Blockieren aus dem Funken-Menü (NUTZERWUNSCH): Gleicher Dialog und
   /// Ablauf wie im Chat (Bestätigung -> blockUser -> Funken-Tab).
+  ///
+  /// Die Arbeit macht [bestaetigeBlockieren] - die kann jede Person,
+  /// nicht nur einen Funke. Vorher gab es diese Trennung, und genau
+  /// deshalb war das Blockieren bei einem blossen Like nicht
+  /// erreichbar (NUTZERWUNSCH 01.11.2026).
   Future<void> _confirmBlockTile(
     BuildContext context,
     WidgetRef ref,
     MatchWithState m,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Row(
-          children: [
-            const Icon(Icons.block, color: Colors.red),
-            const SizedBox(width: 8),
-            Expanded(child: Text(L10n.t(ctx, 'chat.blockTitle'))),
-          ],
-        ),
-        content: Text(L10n.tf(ctx, 'chat.blockBody', {'name': m.partner.name})),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(L10n.t(ctx, 'common.cancel')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: Text(L10n.t(ctx, 'chat.blockAction')),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !context.mounted) return;
-    try {
-      await SupabaseDatabaseService(
-        SupabaseService.client,
-      ).blockUser(m.partner.id);
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            L10n.tf(context, 'chat.blockedDone', {'name': m.partner.name}),
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    } catch (_) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(L10n.t(context, 'chat.blockFailed')),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
+    await bestaetigeBlockieren(context, ref, m.partner.id, m.partner.name);
   }
 
   @override
