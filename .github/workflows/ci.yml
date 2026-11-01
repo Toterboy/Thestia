@@ -317,6 +317,7 @@ jobs:
           python3 tool/check_namespace_migration_selftest.py
           python3 tool/check_push_readiness_selftest.py
           python3 tool/check_gitignore_selftest.py
+          python3 tool/check_web_theme_idempotenz.py
 
       - name: Uebrige statische Pruefer
         run: |

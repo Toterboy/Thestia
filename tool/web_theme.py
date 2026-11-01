@@ -719,7 +719,34 @@ def strip_theme(html: str, remove_chrome: bool = True) -> str:
         i = min(positionen)
         j = html.find('</style>', i)
         if j >= 0:
-            html = html[:i] + html[j:]
+            # Der Anteil VOR dem Marker gehoert ebenfalls zum Theme und
+            # muss mit entfernt werden.
+            #
+            # BEFUND (01.11.2026): THEME_CSS beginnt mit einem Umbruch
+            # und einer Einrueckung, und der Marker sitzt erst an
+            # Position 5 des CSS-Blocks. Beim Entfernen blieb genau
+            # dieser Rest stehen - bei jedem Lauf kam eine Zeile dazu.
+            # Die Seite war dadurch NIE wieder identisch, auch wenn sich
+            # an ihr nichts geaendert hatte: der Betreiber musste also
+            # nach jedem Durchlauf alles neu hochladen.
+            #
+            # Deshalb geht das Zurueckgehen jetzt ueber den ganzen
+            # Leerraum vor dem Marker. Der Rest der Seite (das eigene
+            # CSS der Seite) bleibt unberuehrt - es endet mit dem
+            # letzten Zeichen vor dem Leerraum.
+            k = i
+            while k > 0 and html[k - 1] in ' \t\r\n':
+                k -= 1
+            # Genau EIN Zeilenumbruch bleibt erhalten: er beendet die
+            # letzte CSS-Zeile der Seite. Ohne das rueckte die
+            # Einrueckung der Theme-Regeln in die vorige Zeile, und
+            # die Seite waere nach dem ersten Durchlauf anders als
+            # nach dem zweiten - der erste Durchlauf muesste also
+            # immer wiederholt werden.
+            if '\n' in html[k:i]:
+                html = html[:k] + '\n' + html[j:]
+            else:
+                html = html[:k] + html[j:]
 
     # 1b) Die eigenstaendigen ":root { color-scheme: light dark; }"-Bloecke
     #     entfernen - in JEDER Schreibweise.
@@ -744,6 +771,19 @@ def strip_theme(html: str, remove_chrome: bool = True) -> str:
             r'<label[^>]*for="modus-umschalter"[^>]*>.*?</label>\s*', '', html,
             flags=re.S)
         # 3) Die alte Kopfzeile entfernen, falls sie schon existiert.
+        #
+        #    WICHTIG: Der Umbruch zwischen <body> und der Kopfzeile
+        #    gehoert zum eingefuegten Chrome - apply_theme() setzt ihn
+        #    ("<body>\n" + kopf). Bliebe er beim Entfernen stehen,
+        #    haette die Seite nach jedem Lauf eine Zeile mehr, ohne
+        #    dass sich an ihr etwas geaendert haette. Deshalb wird er
+        #    hier MIT entfernt: das Muster beginnt bei <body>.
+        html = re.sub(
+            r'(<body[^>]*>)\s*<header class="kopf">.*?</header>\s*',
+            r'\1', html, flags=re.S)
+        # Notfall fuer Quellen, in denen die Kopfzeile ohne <body>
+        # davor steht: sie muss trotzdem weg, sonst stuende sie
+        # doppelt.
         html = re.sub(r'<header class="kopf">.*?</header>\s*', '', html,
                       flags=re.S)
         # 4) Die alte Inhalts-Huelle entfernen. Ohne diesen Schritt
