@@ -421,8 +421,14 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
       // E-Mail + Passwort NUR IM SPEICHER für den stillen Auto-Login nach
       // der Bestätigung sichern (nie persistiert). Damit erkennt die App
       // die Bestätigung ohne Session und meldet den Nutzer automatisch an.
-      _ref.read(pendingVerificationCredentialsProvider.notifier).state =
-          (email: email, password: password, createdAt: DateTime.now());
+      _ref.read(pendingVerificationCredentialsProvider.notifier).state = (
+            email: email,
+            password: password,
+            createdAt: DateTime.now(),
+            name: name,
+            gender: gender,
+            birthDate: birthDate,
+          );
       _profileNotifier.setProfile(profile);
       state = const AsyncValue.data(true);
       // Server-Sync auch NACH der Registrierung anstoßen: Er setzt
@@ -799,7 +805,23 @@ final pendingVerificationEmailProvider = StateProvider<String?>((ref) => null);
 /// die Lebensdauer auf 15 Minuten – danach verweigert der Auto-Login das
 /// Passwort weiterzureichen (das Passwort bleibt nie unbegrenzt im Speicher).
 final pendingVerificationCredentialsProvider = StateProvider<
-        ({String email, String password, DateTime createdAt})?>((ref) => null);
+        ({
+          String email,
+          String password,
+          DateTime createdAt,
+          // NUTZERWUNSCH (01.11.2026): "Falls man einen Fehler bemerkt,
+          // soll man an dieser Stelle die E-Mail-Adresse nochmal ändern."
+          //
+          // Das Ändern der Adresse heißt: das unbestätigte Konto löschen
+          // und mit der neuen Adresse neu registrieren. Dafür braucht es
+          // die Angaben aus dem Registrierungsformular - ohne sie
+          // entstünde ein Profil ohne Name und ohne Geburtsdatum.
+          //
+          // Alles NUR IM SPEICHER, nie persistiert.
+          String name,
+          String? gender,
+          DateTime birthDate,
+        })?>((ref) => null);
 
 /// Zeigt an, ob ein Passwort-Reset (Recovery-Deep-Link) aussteht. Solange
 /// true ist, erzwingt der Router den Reset-Screen; nach erfolgreichem
@@ -836,6 +858,32 @@ class EmailConfirmedNotifier extends StateNotifier<bool?>
     with WidgetsBindingObserver {
   EmailConfirmedNotifier(this._ref) : super(null) {
     WidgetsBinding.instance.addObserver(this);
+
+    // BEFUND (01.11.2026): Der Poller wurde beim ersten "nicht
+    // angemeldet" endgueltig gestoppt - und die Registrierung laeuft
+    // OHNE Session (bei aktivierter E-Mail-Bestaetigung liefert
+    // signUp keine). Damit blieb der Wert dauerhaft null, der
+    // Bildschirm bekam die Bestaetigung nie gemeldet, und der
+    // einzige Weg weiter war der stille Auto-Login.
+    //
+    // Ausserdem blieb ein "true" aus einem VORHERIGEN Konto stehen:
+    // der Wert wurde beim Abmelden nie zurueckgesetzt. Danach
+    // umging das Router-Gate die E-Mail-Bestaetigung vollstaendig -
+    // der Nutzer kam direkt zum Willkommens-Screen.
+    //
+    // Der Anmeldestatus ist deshalb jetzt die Quelle: bei der
+    // Anmeldung laeuft der Poller wieder an, beim Abmelden wird der
+    // Wert zurueckgesetzt.
+    _ref.listen(authProvider, (prev, next) {
+      final angemeldet = next.valueOrNull ?? false;
+      if (angemeldet) {
+        if (_timer == null) _startPolling();
+      } else {
+        if (state != null) state = null;
+        _stopPolling();
+      }
+    });
+
     _startPolling();
   }
 

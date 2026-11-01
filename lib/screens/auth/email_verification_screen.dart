@@ -39,6 +39,9 @@ class _EmailVerificationScreenState
   int _autoLoginDelaySeconds = 5;
   String? _capturedEmail;
 
+  /// Läuft gerade das Ändern der E-Mail-Adresse.
+  bool _changingEmail = false;
+
   /// Dauer der "E-Mail gesendet"-Bestätigung im Button.
   static const _sentAnimationDuration = Duration(seconds: 2);
 
@@ -281,19 +284,14 @@ class _EmailVerificationScreenState
           context.go(AppRoutes.login);
           return;
         }
-        final response = await SupabaseService.client.functions
-            .invoke(
-              'cancel-registration',
-              body: {'email': creds.email, 'password': creds.password},
-            )
-            .timeout(const Duration(seconds: 30));
-        final ok = (response.data as Map?)?['deleted'] == true;
-        if (!ok) {
-          final err =
-              (response.data as Map?)?['error']?.toString() ??
-              'Unbekannter Fehler';
-          throw StateError(err);
-        }
+        // Der Nachweis der Inhaberschaft laeuft ueber einen
+        // Anmeldeversuch - und der verlangt bei aktivierter
+        // Dashboard-CAPTCHA ein Token. Ohne Token kam "captcha_failed"
+        // statt "email_not_confirmed", der Nachweis schlug fehl und die
+        // Funktion antwortete mit 401 (NUTZERWUNSCH 01.11.2026: "Loeschen
+        // des Profils (Registrierung abbrechen) bei Email bestaetigen
+        // schlaegt mit 401 fehl. unauthorized.").
+        await _loescheUnbestaetigtesKonto(creds.email, creds.password);
         await ref.read(authProvider.notifier).logout();
       }
       if (!mounted) return;
@@ -316,6 +314,159 @@ class _EmailVerificationScreenState
         ),
       );
     }
+  }
+
+  /// Holt das CAPTCHA-Token.
+  ///
+  /// '' = es wird keines gebraucht (CAPTCHA ist aus), null = der
+  /// Nutzer hat das CAPTCHA abgebrochen.
+  Future<String?> _holeCaptcha() async {
+    if (!AppConstants.captchaEnabled) return '';
+    return showCaptchaChallenge(context);
+  }
+
+  /// Loescht ein unbestätigtes Konto.
+  ///
+  /// Der Nachweis der Inhaberschaft laeuft ueber einen Anmeldeversuch
+  /// mit E-Mail und Passwort (beides nur im Speicher). GoTrue prueft
+  /// dabei die CAPTCHA VOR dem Konto - ohne Token kommt
+  /// "captcha_failed" und der Nachweis waere nie erbracht.
+  Future<void> _loescheUnbestaetigtesKonto(
+    String email,
+    String passwort,
+  ) async {
+    final captchaHinweis = L10n.t(context, 'email.captchaNeeded');
+    final captcha = await _holeCaptcha();
+    if (captcha == null) {
+      throw Exception(captchaHinweis);
+    }
+    final response = await SupabaseService.client.functions
+        .invoke(
+          'cancel-registration',
+          body: {
+            'email': email,
+            'password': passwort,
+            'captchaToken': captcha,
+          },
+        )
+        .timeout(const Duration(seconds: 30));
+    final ok = (response.data as Map?)?['deleted'] == true;
+    if (!ok) {
+      final err =
+          (response.data as Map?)?['error']?.toString() ??
+          'Unbekannter Fehler';
+      throw StateError(err);
+    }
+  }
+
+  /// Aendert die E-Mail-Adresse der laufenden Registrierung.
+  ///
+  /// NUTZERWUNSCH (01.11.2026): "Bei Email bestaetigen soll die
+  /// Emailadresse nochmal angezeigt werden. Falls man einen Fehler
+  /// bemerkt, soll man an dieser Stelle die Emailadresse nochmal
+  /// aendern."
+  ///
+  /// Ablauf: das unbestätigte Konto wird geloescht (Nachweis ueber
+  /// Passwort + CAPTCHA) und mit der neuen Adresse neu registriert.
+  /// Ein direktes "Aendern" ist nicht moeglich: ohne Session kann der
+  /// Client die Adresse nicht setzen (updateUser verlangt ein JWT).
+  ///
+  /// Die Angaben aus dem Registrierungsformular liegen im
+  /// pendingVerificationCredentialsProvider - ohne sie entstuende ein
+  /// Profil ohne Name und ohne Geburtsdatum.
+  Future<void> _changeEmail() async {
+    // Die Texte VOR der ersten Warteschleife holen: nach einem await
+    // darf der Context nicht mehr benutzt werden (der Bildschirm
+    // koennte weg sein).
+    final abgelaufenText = L10n.t(context, 'email.cancelExpired');
+    final captchaHinweis = L10n.t(context, 'email.captchaNeeded');
+    final creds = ref.read(pendingVerificationCredentialsProvider);
+    if (creds == null) {
+      _melde(abgelaufenText);
+      return;
+    }
+
+    final controller = TextEditingController(text: creds.email);
+    final neue = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(L10n.t(ctx, 'email.changeAddressTitle')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(L10n.t(ctx, 'email.changeAddressBody')),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.emailAddress,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: L10n.t(ctx, 'email.newAddress'),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(L10n.t(ctx, 'common.cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+            child: Text(L10n.t(ctx, 'email.changeAddress')),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (neue == null || neue.isEmpty) return;
+    if (neue.toLowerCase() == creds.email.toLowerCase()) return;
+
+    setState(() => _changingEmail = true);
+    try {
+      // 1) Das alte, unbestätigte Konto löschen.
+      await _loescheUnbestaetigtesKonto(creds.email, creds.password);
+      // 2) Mit der neuen Adresse neu registrieren.
+      final captcha = await _holeCaptcha();
+      if (captcha == null) {
+        throw Exception(captchaHinweis);
+      }
+      await ref.read(authProvider.notifier).register(
+            name: creds.name,
+            email: neue,
+            password: creds.password,
+            gender: creds.gender,
+            birthDate: creds.birthDate,
+            captchaToken: captcha,
+          );
+      if (!mounted) return;
+      setState(() {
+        _capturedEmail = neue;
+        _showSent = true;
+        _changingEmail = false;
+      });
+      ref.read(pendingVerificationEmailProvider.notifier).state = neue;
+      _melde(L10n.t(context, 'email.addressChanged'));
+    } catch (e) {
+      debugPrint('[EmailVerification] Adresse aendern fehlgeschlagen: $e');
+      if (!mounted) return;
+      setState(() => _changingEmail = false);
+      _melde(
+        L10n.tf(context, 'email.addressChangeFailed', {'error': '$e'}),
+      );
+    }
+  }
+
+  /// Zeigt eine Meldung am unteren Rand.
+  void _melde(String text) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(text),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Future<void> _resend() async {
@@ -430,6 +581,21 @@ class _EmailVerificationScreenState
               style: Theme.of(context).textTheme.bodyLarge,
               textAlign: TextAlign.center,
             ),
+            const SizedBox(height: 12),
+            // DIE ADRESSE (NUTZERWUNSCH 01.11.2026): "Bei Email
+            // bestaetigen soll die Emailadresse nochmal angezeigt
+            // werden. Falls man einen Fehler bemerkt, soll man an
+            // dieser Stelle die Emailadresse nochmal aendern."
+            //
+            // Vorher stand hier nur ein Text ohne Adresse - der
+            // Nutzer musste in sein Postfach, um zu sehen, an welche
+            // Adresse die Mail ging.
+            if (_capturedEmail != null && _capturedEmail!.isNotEmpty)
+              _Adresskarte(
+                email: _capturedEmail!,
+                onChange: _changingEmail ? null : _changeEmail,
+                aendert: _changingEmail,
+              ),
             const SizedBox(height: 12),
             Text(
               statusText,
@@ -569,6 +735,94 @@ class _EmailVerificationScreenState
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+
+/// Die E-Mail-Adresse der laufenden Registrierung.
+///
+/// NUTZERWUNSCH (01.11.2026): "Bei Email bestaetigen soll die
+/// Emailadresse nochmal angezeigt werden. Falls man einen Fehler
+/// bemerkt, soll man an dieser Stelle die Emailadresse nochmal
+/// aendern."
+///
+/// Die Adresse ist auswaehlbar (der Nutzer soll sie kopieren koennen,
+/// ohne den Bildschirm zu verlassen) und darunter steht der Knopf
+/// fuer die Aenderung.
+class _Adresskarte extends StatelessWidget {
+  const _Adresskarte({
+    required this.email,
+    required this.onChange,
+    required this.aendert,
+  });
+
+  final String email;
+
+  /// null = der Knopf ist gesperrt (während die Adresse geändert wird).
+  final VoidCallback? onChange;
+
+  /// Läuft gerade die Änderung.
+  final bool aendert;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: scheme.outlineVariant.withValues(alpha: 0.5),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.alternate_email, size: 18, color: scheme.primary),
+              const SizedBox(width: 8),
+              Text(
+                L10n.t(context, 'email.addressLabel'),
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          SelectableText(
+            email,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            L10n.t(context, 'email.addressHint'),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: onChange,
+              icon: aendert
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.edit_outlined, size: 16),
+              label: Text(L10n.t(context, 'email.changeAddress')),
+            ),
+          ),
+        ],
       ),
     );
   }

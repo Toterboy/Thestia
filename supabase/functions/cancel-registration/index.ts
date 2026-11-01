@@ -15,9 +15,28 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.0";
 //   1. signInWithPassword mit E-Mail + Passwort versuchen.
 //   2. Erfolg  -> Account ist aktiv/bestätigt -> ABLEHNEN (dafür gibt
 //      es Login + delete-account).
-//   3. Fehler "Email not confirmed" -> Inhaberschaft bewiesen (nur wer
+//   3. Fehler "email_not_confirmed" -> Inhaberschaft bewiesen (nur wer
 //      das Passwort kennt, bekommt genau diesen Fehler).
 //   4. Jeder andere Fehler (falsches Passwort, unbekannt) -> ABLEHNEN.
+//
+// BEFUND (01.11.2026): Der Nachweis SCHLAEG IMMER FEHL, seit die
+// Dashboard-CAPTCHA aktiv ist. GoTrue prüft die CAPTCHA VOR dem
+// Abgleich des Kontos und antwortet dann mit "captcha protection:
+// request disallowed (no captcha_token found)" - statt mit
+// "email_not_confirmed". Der alte Code prüfte aber genau diesen
+// Text: der Nachweis scheiterte also bei JEDEM Aufruf, und die
+// Funktion antwortete mit 401 "Ungueltige Angaben". Der Abbruch der
+// Registrierung war damit komplett kaputt.
+//
+// Zwei Änderungen folgen daraus:
+//   * Der Client schickt das CAPTCHA-Token mit (wie beim Resend der
+//     Bestätigungsmail).
+//   * Geprüft wird der FEHLERCODE (email_not_confirmed), nicht der
+//     Fehlertext - der Text ist übersetzbar, der Code nicht.
+//
+// Und: der Fehler "captcha_failed" wird ausdrücklich als solcher
+// gemeldet (400 statt 401). Sonst hält der Nutzer sein Passwort für
+// falsch, obwohl die CAPTCHA fehlt.
 // Erst danach wird GELÖSCHT – und nur, wenn der Account wirklich noch
 // unbestätigt ist (Doppel-Check gegen Wettlauf mit der Bestätigung).
 //
@@ -129,6 +148,12 @@ serve(async (req) => {
     const body = await req.json();
     const email = String(body.email ?? "").trim().toLowerCase();
     const password = String(body.password ?? "");
+    // CAPTCHA-Token des Clients (Turnstile/hCaptcha). Ohne es lehnt
+    // GoTrue den Passwort-Grant ab, BEVOR es das Konto prüft - der
+    // Nachweis der Inhaberschaft käme so nie zustande.
+    const captchaToken = typeof body.captchaToken === "string"
+      ? body.captchaToken
+      : "";
     if (!email.includes("@") || password.length === 0) {
       return new Response(JSON.stringify({ error: "Ungueltige Angaben" }), {
         status: 400, headers: { "Content-Type": "application/json" },
@@ -146,8 +171,15 @@ serve(async (req) => {
     const supabaseAnon = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
+    const anmeldedaten: {
+      email: string;
+      password: string;
+      captchaToken?: string;
+    } = { email, password };
+    if (captchaToken.length > 0) anmeldedaten.captchaToken = captchaToken;
+
     const { error: signInError } =
-      await supabaseAnon.auth.signInWithPassword({ email, password });
+      await supabaseAnon.auth.signInWithPassword(anmeldedaten);
 
     if (!signInError) {
       // Anmeldung erfolgreich -> Account aktiv/bestätigt. Dafür ist
@@ -157,7 +189,26 @@ serve(async (req) => {
         { status: 409, headers: { "Content-Type": "application/json" } },
       );
     }
-    if (!/email not confirmed/i.test(signInError.message)) {
+
+    const fehlerCode = String(signInError.code ?? "");
+    if (fehlerCode === "captcha_failed" ||
+      /captcha/i.test(signInError.message)) {
+      // Die CAPTCHA fehlt. Das ist KEIN falsches Passwort - der
+      // Nutzer soll das nicht als "401" lesen.
+      console.warn("cancel-registration: CAPTCHA fehlt:", fehlerCode,
+        signInError.message);
+      return new Response(
+        JSON.stringify({ error: "CAPTCHA noetig - bitte erneut versuchen" }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    // Der FEHLERCODE ist der verlaessliche Teil - der Fehlertext ist
+    // uebersetzbar und wurde schon einmal von "email_not_confirmed"
+    // auf etwas anderes umgestellt.
+    const istUnbestaetigt = fehlerCode === "email_not_confirmed" ||
+      /email not confirmed/i.test(signInError.message);
+    if (!istUnbestaetigt) {
       // Falsches Passwort oder unbekannte Adresse - kein Nachweis.
       // Absichtlich dieselbe neutrale Antwort (keine Enumeration).
       return new Response(JSON.stringify({ error: "Ungueltige Angaben" }), {

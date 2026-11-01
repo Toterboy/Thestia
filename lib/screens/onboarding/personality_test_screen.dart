@@ -211,10 +211,15 @@ Future<bool> _persistSetupFlagsToServer({String? personalityType}) async {
                 ],
               ),
             ),
+            // NUTZERWUNSCH (01.11.2026): "Der scrollstrich in der
+            // Einrichtung kann etwas weiter an den Rand." - der
+            // Scrollstrich stand 24 px vom Rand weg, weil das Padding
+            // um ihn herum lag. Jetzt sitzt er am Rand, nur der Inhalt
+            // hat seinen Abstand.
             Expanded(
               child: Scrollbar(
                 child: ListView.separated(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
                   itemCount: questions.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 20),
                   itemBuilder: (context, i) {

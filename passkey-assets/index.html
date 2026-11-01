@@ -731,7 +731,9 @@
     <div id="captcha-box" class="cf-turnstile"
          data-sitekey="0x4AAAAAAFDhMgIL_nrpUokM"></div>
 
-    <!-- Nur sichtbar bei Browser-/Debug-Tests ohne WebView-Channel. -->
+    <!-- Nur sichtbar bei Browser-/Debug-Tests ohne WebView-Channel.
+         Zeigt NIEMALS das Token - nur einen neutralen Text oder den
+         Fehlercode (siehe sendToApp). -->
     <div id="debug-output" style="display:none; margin-top:16px; color:#4ade80; font-family:monospace;"></div>
 
     <!--
@@ -895,7 +897,17 @@
       var out = document.getElementById('debug-output');
       if (out) {
         out.style.display = 'block';
-        out.textContent = message;
+        // NIE das Token anzeigen (NUTZERWUNSCH 01.11.2026: "der gruene
+        // lange Code, der eigentlich versteckt werden sollte").
+        //
+        // Das Token ist ein Einmal-Nachweis fuer den Server - ihn
+        // offenzulegen bringt niemandem etwas und sieht wie ein Fehler
+        // aus. Im Browser gibt es keinen App-Kanal, also steht hier ein
+        // neutraler Text. Die FEHLERCODE bleiben sichtbar: die sind
+        // das eigentliche Diagnose-Material ("invalid-domain",
+        // "network-error", ...).
+        var istFehler = message && message.indexOf('ERROR:') === 0;
+        out.textContent = istFehler ? message : 'Sicherheitscheck abgeschlossen.';
       }
       // Sichtbarer Hinweis im Fehlerfall (SCRIPT_NOT_LOADED /
       // CAPTCHA_ERROR). Ohne ihn bleibt nur eine schwarze Flaeche.

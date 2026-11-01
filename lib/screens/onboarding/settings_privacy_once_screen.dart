@@ -1710,37 +1710,52 @@ class _Page extends StatelessWidget {
       color: Theme.of(context).colorScheme.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       clipBehavior: Clip.hardEdge,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Interview-Stil: Thestia stellt die Frage (Chat-Optik).
-            InterviewBubble(text: L10n.t(context, questionKey)),
-            if (subtitle.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Text(
-                subtitle,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-            const SizedBox(height: 16),
-            Expanded(
-              child: Scrollbar(
-                child: SingleChildScrollView(
+      // NUTZERWUNSCH (01.11.2026): "Der scrollstrich in der Einrichtung
+      // kann etwas weiter an den Rand."
+      //
+      // Vorher lag das GANZE Padding (all: 24) AUSSERHALB des
+      // Scrollbars - der Strich stand damit 24 px vom Kartenrand weg
+      // (plus den System-Rand der Navigationsleiste). Jetzt sitzt der
+      // Scrollbar am Kartenrand, und nur der INHALT hat seinen
+      // Abstand.
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Interview-Stil: Thestia stellt die Frage (Chat-Optik).
+                InterviewBubble(text: L10n.t(context, questionKey)),
+                if (subtitle.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    subtitle,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: Scrollbar(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  left: 24,
+                  right: 24,
                   // Platz für die Tastatur: Der Inhalt bleibt so über dem
                   // Keyboard scrollbar, statt dahinter zu verschwinden.
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.viewInsetsOf(context).bottom,
-                  ),
-                  child: child,
+                  bottom: 24 + MediaQuery.viewInsetsOf(context).bottom,
                 ),
+                child: child,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
