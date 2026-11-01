@@ -221,6 +221,22 @@ const Map<String, Map<String, String>> _strings = {
         'Anmeldedaten abgelaufen - melde dich einfach erneut an, die '
         'Bestätigung wird dann erneut gesendet.',
     'email.deleteFailed': 'Löschen fehlgeschlagen: {error}',
+    'email.addressLabel': 'E-Mail-Adresse',
+    'email.addressHint':
+        'An diese Adresse ging die Bestätigungsmail.',
+    'email.changeAddress': 'Adresse ändern',
+    'email.changeAddressTitle': 'E-Mail-Adresse ändern',
+    'email.changeAddressBody':
+        'Ist die Adresse falsch? Ändere sie hier. Das Konto wird '
+        'gelöscht und mit der neuen Adresse neu angelegt - du '
+        'bekommst eine neue Bestätigungsmail.',
+    'email.newAddress': 'Neue E-Mail-Adresse',
+    'email.addressChanged':
+        'Adresse geändert. Eine neue Bestätigungsmail ist unterwegs.',
+    'email.addressChangeFailed':
+        'Die Adresse konnte nicht geändert werden: {error}',
+    'email.captchaNeeded':
+        'Bitte bestätige das CAPTCHA - ohne geht es nicht weiter.',
     'forgot.title': 'Passwort vergessen',
     'forgot.heading': 'Passwort zurücksetzen',
     'forgot.body':
@@ -1690,8 +1706,6 @@ const Map<String, Map<String, String>> _strings = {
     'profile.aboutMe': 'Über mich',
     'profile.noBio': 'Noch keine Bio.',
     'profile.interests': 'Interessen',
-    'profile.blindModeTitle': 'Persönlichkeit vor Aussehen',
-    'profile.blindModeSub': 'Fotos erst nach Funke anzeigen',
     'profile.profileBtn': 'Profil',
     'profile.bugReportBtn': 'Bug melden',
     'profile.donateBtn': 'Unterstützen',
@@ -3204,6 +3218,22 @@ const Map<String, Map<String, String>> _strings = {
         'Credentials expired - just sign up again, the confirmation '
         'will be re-sent.',
     'email.deleteFailed': 'Delete failed: {error}',
+    'email.addressLabel': 'Email address',
+    'email.addressHint':
+        'The confirmation email went to this address.',
+    'email.changeAddress': 'Change address',
+    'email.changeAddressTitle': 'Change email address',
+    'email.changeAddressBody':
+        'Wrong address? Change it here. The account is deleted and '
+        'recreated with the new address - you will get a new '
+        'confirmation email.',
+    'email.newAddress': 'New email address',
+    'email.addressChanged':
+        'Address changed. A new confirmation email is on its way.',
+    'email.addressChangeFailed':
+        'The address could not be changed: {error}',
+    'email.captchaNeeded':
+        'Please confirm the CAPTCHA - without it we cannot continue.',
     'forgot.title': 'Forgot password',
     'forgot.heading': 'Reset password',
     'forgot.body':
@@ -4408,8 +4438,6 @@ const Map<String, Map<String, String>> _strings = {
     'profile.aboutMe': 'About me',
     'profile.noBio': 'No bio yet.',
     'profile.interests': 'Interests',
-    'profile.blindModeTitle': 'Personality over looks',
-    'profile.blindModeSub': 'Show photos only after a spark',
     'profile.profileBtn': 'Profile',
     'profile.bugReportBtn': 'Report a bug',
     'profile.donateBtn': 'Support',

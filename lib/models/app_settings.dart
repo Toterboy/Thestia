@@ -213,7 +213,10 @@ class AppSettings {
   /// Erzeugt Einstellungen aus einem JSON-Map.
   factory AppSettings.fromJson(Map<String, dynamic> json) {
     return AppSettings(
-      blindModeEnabled: json['blindModeEnabled'] as bool? ?? true,
+      // Blind Mode ist fest AN (NUTZERWUNSCH 01.11.2026) - der
+      // gespeicherte Wert wird bewusst ignoriert. Sonst koennte ein
+      // alter Stand (Blind Mode aus) die App weiter ausblenden.
+      blindModeEnabled: true,
       revealPhotosAfterMatch: json['revealPhotosAfterMatch'] as bool? ?? true,
       profileVisibility: ProfileVisibility.fromValue(
         json['profileVisibility'] as String?,
@@ -354,7 +357,9 @@ class AppSettings {
     bool? showDistance,
   }) {
     return AppSettings(
-      blindModeEnabled: blindModeEnabled ?? this.blindModeEnabled,
+      // Blind Mode ist fest AN - der uebergebene Wert wird
+      // bewusst ignoriert (NUTZERWUNSCH 01.11.2026).
+      blindModeEnabled: true,
       revealPhotosAfterMatch:
           revealPhotosAfterMatch ?? this.revealPhotosAfterMatch,
       profileVisibility: profileVisibility ?? this.profileVisibility,

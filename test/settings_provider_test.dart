@@ -47,19 +47,20 @@ ProviderContainer _createContainer() {
 
 void main() {
   group('Blind-Mode-Logik', () {
-    test('toggleBlindMode schaltet den Status korrekt um', () async {
+    test('der Blind Mode laesst sich nicht abschalten', () async {
+      // NUTZERWUNSCH (01.11.2026): "Persönlichkeit vor Aussehen"
+      // IST das Prinzip der App - die Option ist aus dem Profil
+      // entfernt und der Wert ist fest AN.
       final container = _createContainer();
-      final notifier = container.read(settingsProvider.notifier);
 
-      // Standard: Blind Mode AN ("Persönlichkeit zuerst").
-      final initial = container.read(settingsProvider).blindModeEnabled;
-      expect(initial, isTrue);
-
-      await notifier.toggleBlindMode(true);
       expect(container.read(settingsProvider).blindModeEnabled, isTrue);
 
-      await notifier.toggleBlindMode(false);
-      expect(container.read(settingsProvider).blindModeEnabled, isFalse);
+      // Auch ein gespeicherter alter Stand (Blind Mode aus) darf die
+      // App nicht wieder ausblenden.
+      final alt = container.read(settingsProvider)
+          .copyWith(blindModeEnabled: false);
+      expect(alt.blindModeEnabled, isTrue,
+          reason: 'copyWith darf den Blind Mode nicht abschalten');
     });
 
     test('Standard-Einstellungen haben Blind Mode an', () {
@@ -149,7 +150,7 @@ void main() {
       );
 
       await container.read(settingsProvider.notifier).setMaxDistanceKm(42);
-      await container.read(settingsProvider.notifier).toggleBlindMode(true);
+      await container.read(settingsProvider.notifier).setMfaSetupDismissed(true);
       await container.read(settingsProvider.notifier)
           .setProfileVisibility(ProfileVisibility.hidden);
       await container.read(settingsProvider.notifier).setDarkMode(true);

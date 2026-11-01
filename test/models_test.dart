@@ -359,10 +359,13 @@ void main() {
 
     test('fromJson ignoriert unbekannte Felder (z. B. alter swipeMode)', () {
       final s = AppSettings.fromJson(<String, dynamic>{
+        // Der Blind Mode ist fest AN (NUTZERWUNSCH 01.11.2026) - ein
+        // gespeicherter "false"-Wert darf ihn nicht abschalten.
         'blindModeEnabled': false,
         'swipeMode': 'invalid_mode',
       });
-      expect(s.blindModeEnabled, isFalse);
+      expect(s.blindModeEnabled, isTrue,
+          reason: 'Der Blind Mode laesst sich nicht abschalten.');
       expect(s.profileVisibility, ProfileVisibility.everyone);
     });
 

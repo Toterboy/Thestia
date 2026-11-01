@@ -95,22 +95,28 @@ void main() {
   group('Persist-Deduplizierung', () {
     test('unveraenderter State schreibt nicht erneut', () async {
       final notifier = container.read(settingsProvider.notifier);
-      await notifier.toggleBlindMode(false);
+      // Der Blind Mode laesst sich nicht mehr abschalten
+      // (NUTZERWUNSCH 01.11.2026) - fuer den Schreib-Test wird
+      // deshalb eine andere boolesche Einstellung genommen.
+      await notifier.setMfaSetupDismissed(true);
       final afterFirst = storage.writes;
 
       // Gleicher Wert nochmal: der State ist identisch, also kein I/O.
-      await notifier.toggleBlindMode(false);
+      await notifier.setMfaSetupDismissed(true);
       expect(storage.writes, afterFirst);
     });
 
     test('echte Aenderung schreibt genau einmal', () async {
       final notifier = container.read(settingsProvider.notifier);
       storage.writes = 0;
-      await notifier.toggleBlindMode(false);
-      await notifier.toggleBlindMode(false);
+      // Der Blind Mode laesst sich nicht mehr abschalten
+      // (NUTZERWUNSCH 01.11.2026) - fuer den Schreib-Test wird
+      // deshalb eine andere boolesche Einstellung genommen.
+      await notifier.setMfaSetupDismissed(true);
+      await notifier.setMfaSetupDismissed(true);
       expect(storage.writes, 1);
 
-      await notifier.toggleBlindMode(true);
+      await notifier.setMfaSetupDismissed(false);
       expect(storage.writes, 2);
     });
   });
@@ -124,8 +130,8 @@ void main() {
       );
       // Der State wird optimistisch gesetzt; der Schreibfehler darf die UI
       // nicht mit einer unbehandelten Async-Exception zerstoeren.
-      await c.read(settingsProvider.notifier).toggleBlindMode(false);
-      expect(c.read(settingsProvider).blindModeEnabled, isFalse);
+      await c.read(settingsProvider.notifier).setMfaSetupDismissed(true);
+      expect(c.read(settingsProvider).mfaSetupDismissed, isTrue);
       expect(broken.attempts, greaterThan(0));
       c.dispose();
     });

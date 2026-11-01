@@ -344,20 +344,17 @@ class ProfileScreen extends ConsumerWidget {
                 ],
                 const _MoodCard(),
                 const SizedBox(height: 12),
-                Card(
-                  child: SwitchListTile(
-                    title: Text(L10n.t(context, 'profile.blindModeTitle')),
-                    subtitle: Text(L10n.t(context, 'profile.blindModeSub')),
-                    value: settings.blindModeEnabled,
-                    onChanged: (v) {
-                      ref.read(settingsProvider.notifier).toggleBlindMode(v);
-                      // Blind Mode gehört zu den gespiegelten UI-Einstellungen
-                      // (v0.8.0) - entprellt serverseitig sichern.
-                      scheduleUiPrefsServerSync(
-                          ref.read(settingsProvider));
-                    },
-                  ),
-                ),
+                // Der Schalter "Persönlichkeit vor Aussehen" ist
+                // entfernt (NUTZERWUNSCH 01.11.2026: "soll nicht mehr
+                // deaktivierbar sein, da meine App genau das ja
+                // ausmacht. Also einfach entfernen.").
+                //
+                // Das Verhalten ist trotzdem unveraendert: der Blind
+                // Mode ist jetzt fest AN (app_settings.dart erzwingt
+                // das), die Fotos bleiben also bis zum ersten Funke
+                // verborgen. Der Unterschied ist nur, dass es keine
+                // Schaltflaeche mehr gibt, mit der man es abschalten
+                // koennte.
                 const SizedBox(height: 16),
                 FilledButton.icon(
                   onPressed: () => _showProfileMenu(context, ref, profile, settings),

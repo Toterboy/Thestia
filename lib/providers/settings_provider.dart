@@ -85,11 +85,9 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   /// Zuletzt erfolgreich geschriebener JSON-Stand (Deduplizierung).
   String? _lastPersisted;
 
-  /// Schaltet den Blind Mode um.
-  Future<void> toggleBlindMode(bool value) async {
-    state = state.copyWith(blindModeEnabled: value);
-    await _persist();
-  }
+  // Der Blind Mode wird nicht mehr umgeschaltet (NUTZERWUNSCH
+  // 01.11.2026): "Persönlichkeit vor Aussehen" ist das Prinzip der
+  // App, keinstellbar. Der Wert steht fest in AppSettings.
 
   /// Blendet den MFA-Einrichtungshinweis dauerhaft aus.
   Future<void> setMfaSetupDismissed(bool value) async {
@@ -243,11 +241,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
     T? read<T>(String key) => ui[key] is T ? ui[key] as T : null;
 
-    final blind = read<bool>('blindModeEnabled');
-    if (blind != null && blind != next.blindModeEnabled) {
-      next = next.copyWith(blindModeEnabled: blind);
-      changed = true;
-    }
+    // 'blindModeEnabled' wird vom Server bewusst NICHT mehr
+    // uebernommen: der Blind Mode ist fest AN. Ohne das wuerde ein
+    // alter Serverstand (Blind Mode aus) die App wieder ausblenden -
+    // der Wert wird beim naechsten Sync auf true gesetzt und
+    // heilt damit auch die Bestandskonten.
     final reveal = read<bool>('revealPhotosAfterMatch');
     if (reveal != null && reveal != next.revealPhotosAfterMatch) {
       next = next.copyWith(revealPhotosAfterMatch: reveal);
