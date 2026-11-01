@@ -316,6 +316,7 @@ jobs:
           python3 tool/check_migrations_sql_paths_selftest.py
           python3 tool/check_namespace_migration_selftest.py
           python3 tool/check_push_readiness_selftest.py
+          python3 tool/check_gitignore_selftest.py
 
       - name: Uebrige statische Pruefer
         run: |

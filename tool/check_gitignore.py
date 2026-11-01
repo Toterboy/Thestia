@@ -20,6 +20,7 @@ Aufruf:
 from __future__ import annotations
 
 import json
+import os
 import pathlib
 import re
 import subprocess
@@ -103,6 +104,121 @@ def ignored(path: str) -> bool:
     return r.returncode == 0
 
 
+# ---------------------------------------------------------------------
+# PERFORMANCE (01.11.2026)
+#
+# BEFUND: Diese Pruefung hat den CI-Lauf minutenlang blockiert. Der
+# Grund war nicht die Logik, sondern der Weg, wie sie gearbeitet hat:
+#
+#   Fuer JEDE Datei, die auf ein Muster passte, wurde ein eigener
+#   `git check-ignore`-Prozess gestartet. Nach einem Release-Build
+#   liegen unter build/ ueber 44 000 Dateien - und fast jede davon
+#   passt auf `(^|/)build/` oder auf `\.so$`. Das waren also rund
+#   44 000 git-Prozesse, jeder mit seinem eigenen Start, seiner
+#   eigenen Index-Ladung und seiner eigenen Ausgabe.
+#
+#   Ein Hintergrundlauf war nach 15 Minuten noch nicht durch - und
+#   zwei parallele Laeufe machten es nicht schneller.
+#
+# ZWEI GEGENMASSNAHMEN:
+#
+#   1) Die Ignore-Pruefung laeuft GESAMMELT. `git check-ignore
+#      --stdin` nimmt viele Pfade auf einmal entgegen und liefert
+#      die ignorierten zurueck. Aus 44 000 Prozessen wird EINE.
+#
+#   2) Die Traversierung beschneidet die Ordner, in denen ohnehin
+#      nichts gefunden werden kann: build/ und releases/ sind
+#      ignoriert - eine Datei dort kann also nie "NICHT IGNORIERT"
+#      sein. os.walk mit dirs[:]-Beschneidung laeuft gar nicht erst
+#      in sie hinein.
+#
+# BEIDES aendert das Ergebnis nicht: die Befunde sind dieselben. Was
+# sich aendert, ist die Zahl in der Kopfzeile ("N Dateien
+# durchsucht") - sie bezieht sich jetzt auf die durchsuchten Ordner
+# und nicht mehr auf den Build-Ordner.
+# ---------------------------------------------------------------------
+
+
+def ignored_batch(paths: list[str]) -> set[str]:
+    """Welche der uebergebenen Pfade sind ignoriert? EIN git-Aufruf.
+
+    Verwendet `git check-ignore -z --stdin`: die Pfade kommen
+    NUL-getrennt ueber stdin, die Antwort ebenfalls. Ohne -z waere
+    die Zeilentrennung (und damit ein Pfad mit Zeilenumbruch) der
+    stille Fehler.
+    """
+    if not paths:
+        return set()
+    r = subprocess.run(
+        ['git', 'check-ignore', '-z', '--stdin'],
+        cwd=ROOT,
+        input='\0'.join(paths) + '\0',
+        capture_output=True, text=True, encoding='utf-8', errors='replace')
+    return {p for p in r.stdout.split('\0') if p}
+
+
+def check_ignore_verbose(paths: list[str]) -> dict[str, tuple[str, str, str]]:
+    """Regel, Zeilennummer und Muster je Pfad. EIN git-Aufruf.
+
+    Rueckgabe: Pfad -> (quelle, zeilennummer, muster).
+
+    ACHTUNG - das Ausgabeformat mit -z ist VIERFELDERIG:
+
+        <quelle>\\0<zeilennummer>\\0<muster>\\0<pfad>\\0
+
+    Ohne -z waere es "<quelle>:<nummer>:<muster><TAB><pfad>". Wer die
+    beiden Formen verwechselt, findet NICHTS - der Check meldet dann
+    nie eine Inkonsistenz und ist genau damit blind. Das ist an dieser
+    Stelle schon einmal passiert (der Test oben).
+    """
+    if not paths:
+        return {}
+    r = subprocess.run(
+        ['git', 'check-ignore', '-v', '-z', '--no-index', '--stdin'],
+        cwd=ROOT,
+        input='\0'.join(paths) + '\0',
+        capture_output=True, text=True, encoding='utf-8', errors='replace')
+    felder = r.stdout.split('\0')
+    ergebnis: dict[str, tuple[str, str, str]] = {}
+    i = 0
+    while i + 3 < len(felder):
+        quelle = felder[i]
+        nummer = felder[i + 1]
+        muster = felder[i + 2]
+        pfad = felder[i + 3]
+        i += 4
+        if not pfad:
+            continue
+        ergebnis[pfad] = (quelle, nummer, muster)
+    return ergebnis
+
+
+# Ordner, in denen nicht gesucht wird - ZUSAETZLICH zu SKIP_DIRS.
+#
+# build/ und releases/ sind komplett ignoriert. Eine Datei dort kann
+# also nie "NICHT IGNORIERT" sein, und der Weg in sie hinein kostet
+# allein Zeit (44 000 Dateien nach einem Release-Build).
+EXTRA_SKIP_DIRS = {'build', 'releases'}
+
+
+def dateien_unter_root() -> list[pathlib.Path]:
+    """Alle Dateien unter ROOT, ohne die uebersprungenen Ordner.
+
+    os.walk mit dirs[:]-Beschneidung: die uebersprungenen Ordner
+    werden nicht betreten. pathlib.rglob laeuft in sie hinein und
+    liefert sie trotzdem - das war der Unterschied zwischen "wird
+    nicht ausgewertet" und "wird ausgewertet und kostet 44 000
+    git-Prozesse".
+    """
+    ergebnis: list[pathlib.Path] = []
+    for wurzel, dirs, dateien in os.walk(ROOT):
+        dirs[:] = [d for d in dirs
+                   if d not in SKIP_DIRS and d not in EXTRA_SKIP_DIRS]
+        for name in dateien:
+            ergebnis.append(pathlib.Path(wurzel) / name)
+    return ergebnis
+
+
 def main() -> int:
     out: list[str] = []
     tracked = set(filter(None, git('ls-files').splitlines()))
@@ -117,26 +233,40 @@ def main() -> int:
     findings_a: list[str] = []
     ok_count = 0
     scanned = 0
-    for p in sorted(ROOT.rglob('*')):
+    # Die Ignore-Pruefung wird GESAMMELT nachgeholt (siehe ignored_batch).
+    # Deshalb sammelt dieser Durchlauf erst einmal die Kandidaten.
+    # Die Reihenfolge der Befunde bleibt dabei erhalten.
+    eintraege: list[tuple[str, str, str, str]] = []
+    for p in sorted(dateien_unter_root()):
         rel = p.relative_to(ROOT).as_posix()
-        if any(part in SKIP_DIRS for part in p.parts) or '/build/' in rel:
-            continue
-        if not p.is_file():
+        if any(part in SKIP_DIRS for part in p.parts):
             continue
         scanned += 1
         for pat, label, why in ALL_PATTERNS:
             if re.search(pat, rel):
                 if rel in ALLOWED_TRACKED:
-                    ok_count += 1
+                    eintraege.append((rel, 'ok', label, why))
                 elif rel in tracked:
-                    findings_a.append(
-                        f'  X  VERSIONIERT trotz Muster: {rel}  ({label})')
-                elif ignored(rel):
-                    ok_count += 1
+                    eintraege.append((rel, 'versioniert', label, why))
                 else:
-                    findings_a.append(
-                        f'  X  NICHT IGNORIERT: {rel}  ({label}) - {why}')
+                    eintraege.append((rel, 'offen', label, why))
                 break
+
+    # EIN git-Aufruf fuer alle Kandidaten statt eines je Datei.
+    kandidaten = [rel for rel, art, _, _ in eintraege if art == 'offen']
+    ignoriert = ignored_batch(kandidaten)
+
+    for rel, art, label, why in eintraege:
+        if art == 'ok':
+            ok_count += 1
+        elif art == 'versioniert':
+            findings_a.append(
+                f'  X  VERSIONIERT trotz Muster: {rel}  ({label})')
+        elif rel in ignoriert:
+            ok_count += 1
+        else:
+            findings_a.append(
+                f'  X  NICHT IGNORIERT: {rel}  ({label}) - {why}')
     out.append(f'  {scanned} Dateien durchsucht, {ok_count} korrekt behandelt, '
                f'{len(findings_a)} Beanstandung(en)')
     out.append('  (Treffer im Detail nur bei Beanstandungen - korrekt behandelte')
@@ -156,17 +286,14 @@ def main() -> int:
     out.append('    (Pruefung mit --no-index; ohne ihn sieht git versionierte')
     out.append('     Dateien grundsaetzlich nie als ignoriert an.)')
     findings_b: list[str] = []
+    # EIN git-Aufruf fuer alle versionierten Dateien (vorher einer
+    # je Datei - bei ueber 500 Dateien sind das 500 Prozesse).
+    regeln = check_ignore_verbose(sorted(tracked))
     for rel in sorted(tracked):
-        r = subprocess.run(['git', 'check-ignore', '-v', '--no-index', '--', rel],
-                           cwd=ROOT, capture_output=True, text=True,
-                           encoding='utf-8', errors='replace')
-        if r.returncode != 0:
+        eintrag = regeln.get(rel)
+        if eintrag is None:
             continue
-        # Ausgabeformat von check-ignore -v ist
-        #   <quelle>:<zeilennummer>:<muster><TAB><pfad>
-        # Das Muster steht im DRITTEN Feld. Mit maxsplit=2 statt 1 wird
-        # der Doppelpunkt in Mustern wie "a:b" nicht mitzerschossen.
-        quelle, nummer, muster = r.stdout.strip().split('\t')[0].split(':', 2)
+        quelle, nummer, muster = eintrag
         if muster.lstrip().startswith('!'):
             continue
         findings_b.append(
@@ -215,9 +342,13 @@ def main() -> int:
     out.append('')
     out.append('--- E) Reine Ignore-Pruefung (stille Wiki-Dateien) ---')
     findings_e: list[str] = []
-    for p in sorted(ROOT.rglob('.env*')):
-        rel = p.relative_to(ROOT).as_posix()
-        if rel not in ALLOWED_TRACKED and not ignored(rel):
+    env_dateien = [p for p in dateien_unter_root()
+                   if p.name.startswith('.env')]
+    # EIN git-Aufruf fuer alle .env-Kandidaten.
+    offen = [p.relative_to(ROOT).as_posix() for p in env_dateien]
+    nicht_ignoriert = ignored_batch(offen)
+    for rel in offen:
+        if rel not in ALLOWED_TRACKED and rel not in nicht_ignoriert:
             findings_e.append(f'  X       {rel} waere per "git add -A" aufnehmbar')
     out.append('  OK      keine aufnehmbaren Ignore-Dateien' if not findings_e
                else '\n'.join(findings_e))
