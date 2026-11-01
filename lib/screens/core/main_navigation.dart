@@ -417,6 +417,29 @@ class _TabSwipeState extends State<_TabSwipe>
   /// Richtung des hereingleitenden Reiters: +1 von rechts, -1 von links.
   int _enterRichtung = 1;
 
+  /// Der Inhalt, der gerade ANGEZEIGT wird.
+  ///
+  /// NUTZERWUNSCH (01.11.2026): "Das swipen in der App zwischen den
+  /// Reitern ist noch immer nicht fluessig."
+  ///
+  /// Der Grund war nicht die Animation, sondern dass die alte Seite
+  /// SOFORT verschwand: der Router tauschte sie aus, und die neue
+  /// Seite fuhr von der Seite herein. Zwischen "alt" und "neu" gab es
+  /// keinen Uebergang - das ist ein Schnitt, und ein Schnitt wirkt
+  /// immer abrupt, egal wie schoen die Bewegung danach aussieht.
+  ///
+  /// Deshalb haelt dieser State den Inhalt selbst. Der Wechsel wird
+  /// hier zu Ende gefuehrt: die alte Seite bleibt eingebaut und
+  /// blendet aus, die neue blendet ein und gleitet herein.
+  ///
+  /// Wichtig: Die alte Seite wird hier NICHT neu eingebaut. Sie war
+  /// vorher ein Kind dieses Staates und bleibt es - ein erneutes
+  /// Einbauen wuerde ihren State neu aufsetzen und zurueckflackern.
+  late Widget _angezeigt;
+
+  /// Der vorherige Inhalt, der beim Wechsel ausblendet.
+  Widget? _ausblendend;
+
   /// Ab dieser Wegerstrecke wird gewechselt.
   static const double _schwelle = 64;
 
@@ -435,7 +458,18 @@ class _TabSwipeState extends State<_TabSwipe>
     vsync: this,
     duration: const Duration(milliseconds: 320),
     value: 1,
-  );
+  )..addStatusListener(_onEnterStatus);
+
+  /// Nach der Ueberblendung wird der alte Inhalt freigegeben.
+  ///
+  /// Bis dahin bleibt er eingebaut (sonst wuerde er neu eingebaut
+  /// und zurueckflackern). Danach hat er nichts mehr zu tun - er
+  /// wuerde sonst ewig weiterlaufen (Timer, Streams, Abos).
+  void _onEnterStatus(AnimationStatus status) {
+    if (status != AnimationStatus.completed) return;
+    if (!mounted) return;
+    setState(() => _ausblendend = null);
+  }
 
   late final AnimationController _feder = AnimationController(
     vsync: this,
@@ -453,17 +487,39 @@ class _TabSwipeState extends State<_TabSwipe>
   }
 
   @override
+  void initState() {
+    super.initState();
+    _angezeigt = widget.child;
+  }
+
+  @override
   void didUpdateWidget(covariant _TabSwipe oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.index != oldWidget.index) {
       // Der Inhalt wurde vom Router ausgetauscht: von der Seite
       // hereinholen, in deren Richtung gewischt wurde.
       _enterRichtung = widget.index > oldWidget.index ? 1 : -1;
+      // Die alte Seite bleibt eingebaut und blendet aus. Sie war
+      // vorher ein Kind dieses Staates - sie wird hier also NICHT neu
+      // eingebaut (kein Zurueckflackern).
+      _ausblendend = _angezeigt;
+      _angezeigt = widget.child;
       // Der Weg wird HIER zurueckgesetzt - beim Loslassen blieb er
       // stehen, damit die Seite nicht fuer ein Bild zuruecksprang.
       _weg = 0;
       _feder.stop();
       _enter.forward(from: 0);
+    } else if (widget.child != oldWidget.child) {
+      // Innerhalb des GLEICHEN Reiters (Detailseite, Chat, Profil):
+      // der Inhalt wird direkt getauscht.
+      //
+      // Wichtig: Das Kind des ShellRoute wechselt bei JEDER Navigation
+      // - nicht nur beim Reiterwechsel. Ohne diese Unterscheidung
+      // wuerde die Ueberblendung bei jedem Aufruf einer Detailseite
+      // ausgeloest, und die vorige Seite stuende noch 320 ms ueber
+      // der neuen.
+      _angezeigt = widget.child;
+      _ausblendend = null;
     }
   }
 
@@ -550,15 +606,35 @@ class _TabSwipeState extends State<_TabSwipe>
       child: AnimatedBuilder(
         animation: Listenable.merge([_enter, _feder]),
         builder: (context, child) {
-          final einflug =
-              (1 - Curves.easeOutCubic.transform(_enter.value)) *
-                  breite *
-                  _einflug *
-                  _enterRichtung;
+          final t = Curves.easeOutCubic.transform(_enter.value);
+          // Der neue Inhalt gleitet herein, der alte blendet aus.
+          //
+          // Beide sind gleichzeitig sichtbar: das ist der Unterschied
+          // zwischen einem Wechsel und einem Schnitt. Ohne die
+          // Ueberblendung wirkt jeder Reiterwechsel abruppt - egal wie
+          // weich die Bewegung des neuen Inhalts auch ist.
+          final einflug = (1 - t) * breite * _einflug * _enterRichtung;
           final x = _federWeg * _folge + einflug;
-          return Transform.translate(offset: Offset(x, 0), child: child);
+          return Stack(
+            children: [
+              if (_ausblendend != null)
+                Opacity(
+                  // Der alte Inhalt weicht zurueck, waehrend er
+                  // ausblendet - so bleibt die Bewegung eine
+                  // durchgehende.
+                  opacity: (1 - t).clamp(0.0, 1.0),
+                  child: Transform.translate(
+                    offset: Offset(
+                      -breite * _einflug * _enterRichtung * t * 0.6,
+                      0,
+                    ),
+                    child: _ausblendend,
+                  ),
+                ),
+              Transform.translate(offset: Offset(x, 0), child: _angezeigt),
+            ],
+          );
         },
-        child: widget.child,
       ),
     );
   }
