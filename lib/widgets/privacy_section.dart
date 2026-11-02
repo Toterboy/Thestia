@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/profile_visibility.dart';
+import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/utils/age_safety_rules.dart';
 import 'package:thestia/widgets/selectable_tile.dart';
 
 /// Schwarzflaeche fuer den Entfernungs-Schalter.
@@ -100,6 +102,21 @@ class PrivacySectionCard extends ConsumerWidget {
     final notifier = ref.read(settingsProvider.notifier);
     final scheme = Theme.of(context).colorScheme;
 
+    // MINDERJAEHRIGE (16-17): die grobe Entfernung duerfen sie nicht
+    // anzeigen (Betreiber-Entscheidung 02.11.2026).
+    //
+    // Die App kennt nur das deklarierte Alter - das verifizierte steht
+    // nicht im eigenen Profil. Fuer die Anzeige reicht das: die
+    // Datenbank entscheidet ohnehin nach dem verifizierten Alter
+    // (`profile_distance_km`, Migration 163).
+    //
+    // Fehlt das Alter ganz (kein Geburtsdatum im Profil), gilt der
+    // strengste Fall: gesperrt.
+    final profil = ref.watch(profileProvider);
+    final alter = profil.age ?? 0;
+    final entfernungGesperrt =
+        AgeSafetyRules.isRoughDistanceForced(alter);
+
     final karte = Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -174,14 +191,23 @@ class PrivacySectionCard extends ConsumerWidget {
                 ),
               ),
               subtitle: Text(
-                L10n.t(context, 'settings.showDistanceSub'),
+                entfernungGesperrt
+                    ? L10n.t(context, 'settings.showDistanceSubMinor')
+                    : L10n.t(context, 'settings.showDistanceSub'),
                 style: const TextStyle(
                   color: Color(0xFFC9C4D2),
                   height: 1.35,
                 ),
               ),
-              value: settings.showDistance,
-              onChanged: (v) => notifier.setShowDistance(v),
+              // Bei Minderjaehrigen ist der Schalter gesperrt und der
+              // Wert bleibt aus - auch wenn er im Server (etwa aus
+              // einer aelteren Version) noch auf true steht. Sonst
+              // waere die Anzeige aktiv, es kaeme aber keine
+              // Entfernung an: das sieht wie ein Fehler aus.
+              value: entfernungGesperrt ? false : settings.showDistance,
+              onChanged: entfernungGesperrt
+                  ? null
+                  : (v) => notifier.setShowDistance(v),
             ),
             const SizedBox(height: 8),
             Text(

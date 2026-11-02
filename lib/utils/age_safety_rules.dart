@@ -125,6 +125,27 @@ class AgeSafetyRules {
     return ageGroup(viewerAge) == AgeGroup.minor;
   }
 
+  /// Dürfen Minderjährige (16-17) die **grobe Entfernung** anzeigen?
+  ///
+  /// BETREIBER-ENTSCHEIDUNG (02.11.2026): "Die grobe Entfernung
+  /// dürfen 16 und 17 jährige auch nicht aktivieren können."
+  ///
+  /// Hintergrund: Der Schalter "Entfernung anzeigen" stand für alle
+  /// offen. Damit konnte ein 16-Jähriger mitteilen, wie weit weg
+  /// jemand wohnt - in einem Umfeld, in dem das mehr verrät als bei
+  /// Erwachsenen.
+  ///
+  /// - 16-17: gesperrt
+  /// - 18+: frei wählbar
+  ///
+  /// Die maechtige Sperre sitzt in der Datenbank
+  /// (`profile_distance_km`, Migration 163): sie benutzt das
+  /// VERIFIZIERTE Alter. Diese Regel hier ist die freundliche Seite -
+  /// damit der Schalter gar nicht erst angeboten wird.
+  static bool isRoughDistanceForced(int viewerAge) {
+    return ageGroup(viewerAge) == AgeGroup.minor;
+  }
+
   /// Bestimmt den effektiven Foto-Sichtbarkeits-Modus für ein Profil.
   ///
   /// Berücksichtigt:

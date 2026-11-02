@@ -134,13 +134,25 @@ def _neueste_definition(sql: str, fn_name: str) -> str:
     if not treffer:
         return ''
     start = treffer[-1].start()
-    # Bis zum Ende des Funktionskoerpers ($$ ... $$ oder $BODY$ ... $BODY$).
+    # Bis zum Ende des Funktionskoerpers.
+    #
+    # ACHTUNG (02.11.2026): Es gibt zwei Schreibweisen fuer das
+    # Dollar-Delimiter - $$ ... $$ und $name$ ... $name$ (z.B.
+    # $function$ oder $BODY$). Der Helfer erkannte nur $$ und griff
+    # deshalb bei einer Funktion mit $function$ das FALSCHE Stueck:
+    # es landete im nachfolgenden DO-Block statt im Funktionskoerper.
+    #
+    # Das war kein theoretischer Fehler: die Pruefung "gibt
+    # Minderjaehrigen keine Entfernung" schlug dadurch fehl, obwohl
+    # die Migration die Bedingung enthaelt - und ein Check, der an
+    # der falschen Stelle sucht, prueft gar nichts.
     rest = sql[start:]
-    dollar = re.search(r'\$\$', rest)
+    dollar = re.search(r'\$[A-Za-z_][A-Za-z0-9_]*\$|\$\$', rest)
     if not dollar:
         return rest[:2000]
+    delim = dollar.group(0)
     body = rest[dollar.end():]
-    ende = body.find('$$')
+    ende = body.find(delim)
     return body[:ende] if ende >= 0 else body[:4000]
 
 
@@ -193,6 +205,39 @@ else:
     check(False,
           'DB: handle_new_user gefunden',
           'keine CREATE OR REPLACE-Funktion in den Migrationen')
+
+# =====================================================================
+# 1d) Minderjaehrige geben KEINE Entfernung preis
+# =====================================================================
+#
+# BETREIBER-ENTSCHEIDUNG (02.11.2026): "Die grobe Entfernung duerfen 16
+# und 17 jaehrige auch nicht aktivieren koennen."
+#
+# BISHER: profile_distance_km lieferte die Entfernung, sobald
+# profiles.show_distance des anderen gesetzt war - das durfte JEDER
+# aktivieren, auch ein 16-Jaehriger.
+#
+# Die Sperre muss in der FUNKTION sitzen, die die Entfernung ausgibt -
+# eine Einstellung, die ein gepatchter Client setzen kann, ist keine
+# Sperre. Geprueft wird deshalb, dass die letzte Definition von
+# profile_distance_km das Alter beruecksichtigt (verified_age) UND
+# mindestens 18 verlangt.
+#
+# Das ist die Server-Haelfte. Die App-Haelte (der gesperrte Schalter)
+# steht in AgeSafetyRules.isRoughDistanceForced und wird von
+# test/age_safety_rules_test.dart geprueft.
+
+_distanz_funktion = _neueste_definition(all_sql, 'profile_distance_km')
+check('verified_age' in _distanz_funktion,
+      'DB: profile_distance_km rechnet mit dem verifizierten Alter '
+      '(verified_age)',
+      'sonst wuerde die Entfernung nach der Altersangabe im Profil '
+      'entschieden')
+check('>= 18' in _distanz_funktion,
+      'DB: profile_distance_km gibt Minderjaehrigen (16-17) keine '
+      'Entfernung',
+      'die grobe Entfernung darf fuer unter 18-Jaehrige nicht '
+      'ausgegeben werden')
 
 # =====================================================================
 # 1c) Das Verifikationsvideo wird IMMER verschluesselt abgelegt

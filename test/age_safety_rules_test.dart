@@ -117,6 +117,33 @@ void main() {
     });
   });
 
+  group('AgeSafetyRules - isRoughDistanceForced', () {
+    // BETREIBER-ENTSCHEIDUNG (02.11.2026): "Die grobe Entfernung
+    // duerfen 16 und 17 jaehrige auch nicht aktivieren koennen."
+    //
+    // Die maechtige Sperre sitzt in der Datenbank
+    // (profile_distance_km, Migration 163). Diese Regel ist die
+    // freundliche Seite: der Schalter wird gar nicht erst angeboten.
+    test('Minor (16-17): die grobe Entfernung ist gesperrt', () {
+      expect(AgeSafetyRules.isRoughDistanceForced(16), isTrue);
+      expect(AgeSafetyRules.isRoughDistanceForced(17), isTrue);
+    });
+
+    test('Adult (18+): die grobe Entfernung ist frei waehlbar', () {
+      expect(AgeSafetyRules.isRoughDistanceForced(18), isFalse);
+      expect(AgeSafetyRules.isRoughDistanceForced(19), isFalse);
+      expect(AgeSafetyRules.isRoughDistanceForced(20), isFalse);
+      expect(AgeSafetyRules.isRoughDistanceForced(25), isFalse);
+      expect(AgeSafetyRules.isRoughDistanceForced(99), isFalse);
+    });
+
+    test('Unbekanntes Alter (0) gilt als gesperrt', () {
+      // Fehlt das Geburtsdatum im Profil, ist die strengste Variante
+      // richtig: gesperrt.
+      expect(AgeSafetyRules.isRoughDistanceForced(0), isTrue);
+    });
+  });
+
   group('AgeSafetyRules - canChangePhotoVisibilitySettings', () {
     test('Minor (16-17) cannot change photo visibility settings', () {
       expect(AgeSafetyRules.canChangePhotoVisibilitySettings(16), isFalse);

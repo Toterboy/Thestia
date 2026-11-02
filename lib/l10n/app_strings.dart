@@ -1522,6 +1522,10 @@ const Map<String, Map<String, String>> _strings = {
         'Zeigt anderen nur ungefähr, wie weit weg du bist - in Stufen '
         'von 10 km. Aus ist der Standard; dein genauer Standort bleibt '
         'immer privat.',
+    'settings.showDistanceSubMinor':
+        'In deinem Alter bleibt die Entfernung aus. Der genaue Standort '
+        'bleibt ohnehin immer privat - und in deinem Umfeld wäre die '
+        'ungefähre Angabe mehr, als sie sein sollte.',
     'distance.bucketUnder': 'unter {km} km',
     'distance.bucketRange': '{from} bis {to} km',
     'distance.bucketOver': 'über {km} km',
@@ -4270,6 +4274,10 @@ const Map<String, Map<String, String>> _strings = {
     'settings.showDistanceSub':
         'Shows others roughly how far away you are, in 10 km steps. '
         'Off by default; your exact location stays private.',
+    'settings.showDistanceSubMinor':
+        'At your age, the distance stays off. Your exact location is '
+        'private either way - and in your surroundings, an approximate '
+        'figure would tell more than it should.',
     'distance.bucketUnder': 'under {km} km',
     'distance.bucketRange': '{from} to {to} km',
     'distance.bucketOver': 'over {km} km',

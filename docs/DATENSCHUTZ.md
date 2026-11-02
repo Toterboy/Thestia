@@ -42,7 +42,7 @@ Tracking-Pixel und **keine** nutzerübergreifende Verhaltensanalyse.
 |---|---|---|---|
 | Kontodaten | Name, E-Mail, Geburtsdatum, Geschlecht | Kontoverwaltung, Jugendschutzfilter (serverseitig erzwungen) | Mit Account-Löschung |
 | Standortdaten | Bundesland sowie Koordinaten, vor dem Speichern auf ein 5-km-Raster gerundet | Entfernungsberechnung; die Koordinaten liegen ausschließlich in einer nur für den Eigentümer lesbaren Tabelle und verlassen den Server nicht | 30 Tage nach dem letzten Standortschreiben; mit Account-Löschung |
-| Standortanzeige | Entfernung in Stufen von 10 km, nur wenn die betroffene Person das **eingeschaltet** hat; unter 5 km wird nichts angezeigt | Andere Nutzer sehen nur die Stufe, nie einen Wert in Metern oder Kilometern. Ohne Einschaltung sehen sie gar keine Entfernung | – |
+| Standortanzeige | Entfernung in Stufen von 10 km, nur wenn die betroffene Person das **eingeschaltet** hat; unter 5 km wird nichts angezeigt. **Für 16- und 17-Jährige ist die Anzeige ausgeschlossen - auch wenn sie den Schalter einschalten** | Andere Nutzer sehen nur die Stufe, nie einen Wert in Metern oder Kilometern. Ohne Einschaltung sehen sie gar keine Entfernung. Die Sperre für Minderjährige sitzt in der Datenbank (`profile_distance_km`, Migration 163) und richtet sich nach dem verifizierten Alter | – |
 | Ortsangabe | Wird nicht erhoben | Seit v0.10.0 wird kein Ort, keine Stadt und kein Postleitzahl-Bereich gespeichert oder angezeigt – nur das Bundesland | – |
 | Profilangaben | Bio, Interessen, Audio-Vorstellung, Gewohnheiten (Rauchen/Alkohol/Drogen), Mood, Musik-Geschmack, **Profilbild** (siehe Abschnitt 3a) | Vermittlung passender Kontakte („Funken") | Mit Account-Löschung |
 | Geräte-Liste | Gerätemodell (Hersteller + Modellkennung, z. B. „Samsung SM-S921B"), Plattform, App-Version, Zeitstempel der letzten Anmeldung | Anzeige „Wo bin ich eingeloggt?" + „Überall abmelden" (Migration 071/078); kein Standort, keine Seriennummer, keine Werbe-ID | Automatisch beim Abmelden; mit Account-Löschung |
@@ -319,6 +319,15 @@ erzwungen), und die Altersfilter sind serverseitig begrenzt (Migration
 verarbeitet (Art. 6 Abs. 1 lit. c/f) und gegenüber anderen Nutzern nie
 angezeigt (nur gerundetes Alter).
 
+**Grobe Entfernung (v0.10.0):** 16- und 17-Jährige geben **keine
+Entfernung** preis - auch nicht die ungefähre in 10-km-Stufen. Die
+Sperre sitzt in der Datenbank (`profile_distance_km`, Migration 163) und
+richtet sich nach dem **verifizierten** Alter; in der App ist der
+Schalter für diese Altersgruppe gesperrt. In einem Umfeld, in dem man
+sich über die Nähe zu anderen ausmacht, sagt eine ungefähre Angabe mehr
+aus als bei Erwachsenen - deshalb bleibt sie hier aus. Für Erwachsene
+ändert sich nichts.
+
 **Transit Spark ist davon ausgenommen und nur ab 18 Jahren nutzbar.**
 Die Sperre sitzt an zwei Stellen, weil eine allein nichts taugt:
 
@@ -398,6 +407,7 @@ Git-Historie nachvollziehbar.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 19 | 2026-11 | **Grobe Entfernung für Minderjährige abgeschaltet:** 16- und 17-Jährige zeigen keine Entfernung an - auch nicht die ungefähre in 10-km-Stufen. Die Sperre sitzt in der Datenbank und richtet sich nach dem verifizierten Alter; der Schalter ist in der App für diese Altersgruppe gesperrt. Für Erwachsene ändert sich nichts |
 | 18 | 2026-10 | **Verifikation auch serverseitig erzwungen:** Die Verifikationspflicht für Find your Spark, Dating Hour und Transit Spark wurde bisher nur im Gerät geprüft - die Server-Funktionen ließen sich mit eigenem Aufruf umgehen. Jetzt erzwingen sie die Verifikation selbst (Migration 161). Zusätzlich gilt ohne Altersangabe nicht mehr ein erfundenes Alter von 26 Jahren, sondern das Alter bleibt unbekannt und die 18+-Sperre greift. Das Verifikationsvideo wird im automatischen Freigabeweg nun ebenfalls verschlüsselt abgelegt - vorher lag es im Klartext im Speicher |
 | 17 | 2026-10 | **Lokale Kontaktdaten und Sicherheits-Aufklärung:** „Connect to others" speichert Telefonnummer und Handles freiwillig und ausschließlich verschlüsselt auf dem Gerät; keine Übertragung an Server, kein Geräte-Sync. Die neue Aufklärung vor dem Setup speichert Antworten und Fortschritt nur lokal. Ergänzt Abschnitt 3c und die öffentliche Seite `/dating-sicherheit` |
 | 15 | 2026-10 | **Speicherfristen eingeloest und Kontaktweg ergänzt:** Die Erklärung kündigte seit Version 8 die Löschung des Verifikations-Videos nach 30 Tagen an - eingelöst war sie nicht (es gab keinen Löschjob). Der Cronjob `cleanup-verification-videos` (Migration 160) entfernt jetzt Chiffrat und Schlüssel nach 30 Tagen. Außerdem: der Kontaktweg nennt eine eigene E-Mail-Adresse, die verantwortliche Stelle wird namentlich benannt, und Spaceship ist als Auftragsverarbeiter für das Mail-Hosting eingetragen. Der Satz zu den Transit-Spark-Signalen in Abschnitt 7 war zudem zerbrochen |
