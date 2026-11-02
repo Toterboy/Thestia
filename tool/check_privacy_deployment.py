@@ -20,12 +20,13 @@ Zusaetzlich zur Pruefung: WELCHE Dateien abweichen. Vorher stand am
 Ende nur "Netlify: passkey-assets/ neu hochladen" - das hiess: den
 GANZEN Ordner. Das war bei jeder kleinen Aenderung Arbeit ohne Anlass.
 
-HINWEIS (01.11.2026): Das Netlify-Projekt arbeitet mit "Deploy from
-repository" und Publish-Verzeichnis passkey-assets. Die Dateien
-werden also durch den PUSH veroeffentlicht - ein manueller Upload
-gibt es nicht. Das hier ist deshalb eine Kontrollanzeige, kein
-Arbeitsauftrag: wenn hier etwas abweicht, ist der Push noch nicht
-durch (oder es fehlt ein Commit).
+HINWEIS (02.11.2026): Fuer diesen Ordner gibt es ZWEI Wege, und
+die Dokumentation widerspricht sich (docs/PLAY-REGELN-CHECK.md sagt
+"haengt am Repository", der Kommentar in .github/workflows/ci.yml
+sagt "per Drag & Drop"). Die Praxis: ein Push aus dem Repository wird
+uebernommen, der Deploy kann aber etliche Minuten dauern (Netlify
+reiht Builds ein). Deshalb nennt dieser Check die Dateien einzeln -
+damit klar ist, was zurueckbleibt, egal welcher Weg genutzt wird.
 
 Die Werkzeuge, die den Ordner erzeugen (tool/make_web_screenshots.py,
 tool/apply_web_theme.py), sind inzwischen WIEDERHOLBAR: ein zweiter
@@ -364,10 +365,13 @@ def main() -> int:
 
     if hochzuladen or nur_formatierung or nicht_live or fehler:
         print()
-        print('Netlify: das Projekt haengt am Repository (Deploy from')
-        print('repository, Publish-Verzeichnis passkey-assets) - ein Push')
-        print('veroeffentlicht die Dateien. Ein manueller Upload ist nicht')
-        print('noetig; die Zeitenstempel im Protokoll zeigen den Stand.')
+        print('Netlify - die Datei(en) unten sind noch nicht live.')
+        print('  Weg 1: der Deploy aus dem Repository zieht nach. Er kann')
+        print('         etliche Minuten dauern (Netlify reiht Builds ein).')
+        print('  Weg 2: Site -> Deploys -> Add new deploy -> Deploy')
+        print('         manually und den Inhalt von passkey-assets/')
+        print('         hochziehen (den ORDNER, nicht die Einzeldateien).')
+        print('  Pruefen danach mit: python tool/check_privacy_deployment.py')
         return 1
 
     print()
