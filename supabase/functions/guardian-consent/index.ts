@@ -30,7 +30,9 @@ const INTERNAL_SECRET = Deno.env.get("THESTIA_INTERNAL_SECRET") ?? "";
 
 // Das Eltern-Portal. Dort kann der Elternteil bestaetigen, einstellen
 // und widerrufen.
-const PORTAL_URL = "https://auth.thestia.de/eltern";
+// Der persoenliche Bereich des Elternteils. Die oeffentliche Seite
+// fuer Eltern und Jugendliche liegt daneben unter /eltern.
+const PORTAL_URL = "https://auth.thestia.de/eltern/einstellungen";
 
 // Absender. Eine Elternmail kommt vom Support-Postfach, nicht vom
 // Kinderschutz-Postfach: der Kinderschutz-Eingang ist fuer Meldungen

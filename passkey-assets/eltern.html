@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Elternbereich - Thestia</title>
+  <title>Eltern und Jugendliche - Thestia</title>
   <meta name="robots" content="noindex">
   <style>
     body {
@@ -17,6 +17,8 @@
     h1 { font-size: 1.5rem; margin-bottom: .25rem; }
     h2 { font-size: 1.05rem; margin-top: 2rem; }
     p.lead { opacity: .8; margin-top: 0; }
+    ol, ul { padding-left: 1.25rem; }
+    li { margin-bottom: .5rem; }
     .box {
       border: 1px solid rgba(128,128,128,.35);
       border-radius: 12px;
@@ -24,58 +26,48 @@
       margin: 1.25rem 0;
     }
     .klein { font-size: .875rem; opacity: .85; }
-    .warn {
-      border-color: rgba(200,60,60,.6);
-      background: rgba(200,60,60,.08);
+    .schritt {
+      border-left: 3px solid rgba(91,63,168,.55);
+      padding: .25rem 0 .25rem .9rem;
+      margin: 0 0 1rem;
     }
-    a { color: inherit; }
-
-    label { display: block; font-weight: 600; margin: 1rem 0 .35rem; }
-    select, input[type="time"], input[type="password"] {
+    .schritt ol { list-style: none; padding-left: 0; counter-reset: s; }
+    .schritt > li {
+      counter-increment: s;
+      margin-bottom: .75rem;
+      padding-left: 2rem;
+      position: relative;
+    }
+    .schritt > li::before {
+      content: counter(s);
+      position: absolute;
+      left: 0;
+      top: .1rem;
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 50%;
+      background: rgba(91,63,168,.14);
+      text-align: center;
+      font-weight: 700;
+      font-size: .85rem;
+      line-height: 1.5rem;
+    }
+    table {
+      border-collapse: collapse;
       width: 100%;
-      padding: .7rem .8rem;
-      border-radius: 10px;
-      border: 1px solid rgba(128,128,128,.45);
-      background: transparent;
-      color: inherit;
-      font-size: 1rem;
-      box-sizing: border-box;
-    }
-    input[type="time"] { max-width: 12rem; }
-    input[type="password"] { max-width: 12rem; letter-spacing: .5rem; }
-    .reihe { display: flex; gap: .75rem; flex-wrap: wrap; }
-    .reihe > div { flex: 1 1 10rem; }
-    button {
-      font: inherit;
-      font-weight: 600;
-      border-radius: 999px;
-      padding: .8rem 1.5rem;
-      border: 1px solid rgba(128,128,128,.45);
-      background: transparent;
-      color: inherit;
-      cursor: pointer;
-    }
-    button.haupt {
-      background: #5b3fa8;
-      border-color: #5b3fa8;
-      color: #fff;
-    }
-    button.warn-btn {
-      border-color: rgba(200,60,60,.6);
-      color: rgba(200,60,60,.95);
-    }
-    button:disabled { opacity: .55; cursor: default; }
-    .status {
-      border-radius: 10px;
-      padding: .8rem 1rem;
       margin: 1rem 0;
       font-size: .95rem;
     }
-    .status.ok { background: rgba(80,170,90,.12); border: 1px solid rgba(80,170,90,.45); }
-    .status.fehler { background: rgba(200,60,60,.1); border: 1px solid rgba(200,60,60,.5); }
-    .status.info { background: rgba(128,128,128,.12); border: 1px solid rgba(128,128,128,.4); }
-    [hidden] { display: none !important; }
-  
+    th, td {
+      border: 1px solid rgba(128,128,128,.35);
+      padding: .55rem .7rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: rgba(128,128,128,.12); }
+    a { color: inherit; }
+    hr { border: 0; border-top: 1px solid rgba(128,128,128,.3); margin: 2rem 0; }
+
     /* Web-Design (tool/web_theme.py) */
     /* ---------------------------------------------------------------
        Eine Quelle fuer alle Seiten.
@@ -641,294 +633,122 @@
 <div class="inhalt">
 
 
-<h1>Elternbereich</h1>
-<p class="lead">Hier kannst du die Freigabe verwalten, die Benachrichtigungen
-einstellen und die Nutzungszeit begrenzen.</p>
+<h1>Eltern und Jugendliche</h1>
+<p class="lead">Thestia ist eine Dating-App von Thoralf Illg. Sie ist ab 16 Jahren
+nutzbar &ndash; und für 16- und 17-Jährige sieht sie die Zustimmung der
+Sorgeberechtigten vor. Hier steht, wie das abläuft und was dabei verarbeitet wird.</p>
 
-<div id="laden" class="status info">Einstellungen werden geladen …</div>
-
-<div id="fehler" class="status fehler" hidden></div>
-
-<!-- 1) Bestaetigen -->
-<div id="bereich-bestaetigen" class="box" hidden>
-  <h2>Freigabe bestätigen</h2>
-  <p>Dein Kind hat angefragt, Thestia zu nutzen. Für 16- und 17-Jährige
-  verlangt die App die Zustimmung der Sorgeberechtigten.</p>
-  <p class="klein">Mit der Bestätigung gibst du zu, dass du Sorgeberechtigte
-  oder Sorgeberechtigter bist und dass dein Kind die App nutzen darf. Du
-  kannst die Freigabe jederzeit wieder widerrufen.</p>
-  <button class="haupt" id="knopf-bestaetigen">Freigabe bestätigen</button>
+<div class="box">
+  <p><strong>Warum überhaupt eine Zustimmung?</strong> In Deutschland kann eine
+  Person ab dem vollendeten 16. Lebensjahr selbst entscheiden ( 3a JUG). Bis dahin
+  braucht es die Zustimmung der Sorgeberechtigten. Thestia setzt das so um: für
+  16- und 17-Jährige wird die Zustimmung angefragt, und der Jugendliche kann sie
+  auch ablehnen &ndash; die App bleibt nutzbar, nur eben ohne Freigabe. Niemand wird an
+  der Nutzung gehindert, und niemand wird überwacht.</p>
 </div>
 
-<!-- 2) Einstellungen -->
-<div id="bereich-einstellen" hidden>
-  <div class="box">
-    <h2>Benachrichtigungen</h2>
-    <p class="klein">Wenn zwischen deinem Kind und einer anderen Person ein
-    Funke entsteht, bekommst du eine kurze Nachricht. Wir nennen dir keine
-    Namen und schicken keine Profile - nur, dass etwas passiert ist.</p>
-    <label for="notify-enabled">Nachrichten senden</label>
-    <select id="notify-enabled">
-      <option value="true">Ja</option>
-      <option value="false">Nein</option>
-    </select>
-    <label for="notify-frequency">Wie oft</label>
-    <select id="notify-frequency">
-      <option value="daily">Täglich</option>
-      <option value="weekly">Wöchentlich</option>
-      <option value="monthly">Monatlich</option>
-      <option value="none">Gar nicht</option>
-    </select>
-  </div>
+<h2>Die Schritte für Eltern</h2>
+<div class="schritt">
+  <ol>
+    <li>Ihr Kind (16 oder 17 Jahre) lädt Thestia herunter, registriert sich und
+    gibt im Einrichtungsdialog Ihre E-Mail-Adresse an. Es muss eine andere sein als
+    die Kontoadresse des Kindes &ndash; sonst würde sich das Kind selbst als
+    Elternteil eintragen.</li>
+    <li>Sie erhalten eine E-Mail mit einem Link. Der Link ist 14 Tage gültig und
+    gehört nur zu diesem einen Konto.</li>
+    <li>Sie bestätigen den Link. Damit ist die Freigabe erteilt und Ihr Kind kann
+    Thestia vollständig nutzen.</li>
+    <li>Im selben Bereich stellen Sie ein, wie oft Sie benachrichtigt werden möchten
+    (täglich, w&ouchentlich, monatlich oder gar nicht), ob die Nutzungszeit
+    begrenzt wird und mit welcher vierstelligen PIN diese Einstellung gesichert wird.</li>
+    <li>Sie können die Freigabe jederzeit mit einem Klick widerrufen. Das wirkt
+    sofort, nicht erst beim nächsten Login.</li>
+  </ol>
+</div>
+<p class="klein">Sie haben eine E-Mail mit einem Link erhalten? Der Link führt
+direkt in Ihren persönlichen Bereich: <a href="/eltern/einstellungen">/eltern/einstellungen</a>.
+Ohne diesen Link gibt es keinen Zugang &ndash; das ist Absicht, damit niemand
+anderes an Ihre Einstellungen kommt.</p>
 
-  <div class="box">
-    <h2>Nutzungszeit</h2>
-    <p class="klein">Du kannst ein Zeitfenster festlegen, in dem die App
-    genutzt werden darf. Außerhalb steht in der App ein Hinweis. Die
-    Einstellung ist mit einer vierstelligen PIN geschützt, damit dein Kind
-    sie nicht eigenmächtig ändert. Die PIN wird nur auf dem Server geprüft -
-    das Gerät kennt sie nicht.</p>
-    <label for="usage-enabled">Nutzungszeit begrenzen</label>
-    <select id="usage-enabled">
-      <option value="false">Nein</option>
-      <option value="true">Ja</option>
-    </select>
-    <div class="reihe">
-      <div>
-        <label for="usage-start">Erlaubt von</label>
-        <input type="time" id="usage-start">
-      </div>
-      <div>
-        <label for="usage-end">bis</label>
-        <input type="time" id="usage-end">
-      </div>
-    </div>
-    <label for="pin">PIN (vier Stellen)</label>
-    <input type="password" id="pin" inputmode="numeric" maxlength="4"
-           pattern="[0-9]*" placeholder="1234" autocomplete="new-password">
-    <p class="klein">Die PIN ist nur nötig, wenn die Nutzungszeit begrenzt
-    wird. Wenn du sie änderst, gilt ab sofort die neue.</p>
-  </div>
-
-  <button class="haupt" id="knopf-speichern">Einstellungen speichern</button>
-
-  <div class="box warn" style="margin-top:2rem">
-    <h2>Freigabe widerrufen</h2>
-    <p class="klein">Damit endet die Aufsicht sofort. Dein Kind kann die
-    App weiter benutzen - es verliert lediglich die elterliche Freigabe.</p>
-    <button class="warn-btn" id="knopf-widerrufen">Freigabe widerrufen</button>
-  </div>
+<h2>Was Sie sehen &ndash; und was nicht</h2>
+<div class="box">
+  <p><strong>Sie sehen:</strong> ob eine Freigabe besteht, welchen Rhythmus die
+  Benachrichtigungen haben, ob eine Nutzungszeit begrenzt ist und wie lange die
+  Freigabe bestehen soll.</p>
+  <p><strong>Sie sehen nicht:</strong> das Profil Ihres Kindes, seine Nachrichten,
+  seine Fotos, seinen Standort, die Namen der Personen, mit denen er sich unterhält,
+  und den Inhalt von Nachrichten. Sie bekommen höchstens den Hinweis, dass
+  überhaupt ein Funke entstanden ist &ndash; <em>ohne</em> Namen, <em>ohne</em>
+  Profil, <em>ohne</em> Inhalte.</p>
+  <p>Das ist Absicht: Der Jugendschutz soll Gefahren erkennen können, ohne zur
+  Überwachung zu werden. Wenn Sie mehr brauchen, wäre das eine andere
+  Entscheidung &ndash; und keine, die man nebenbei einführt.</p>
 </div>
 
-<div id="bereich-erledigt" class="box" hidden>
-  <h2>Erledigt</h2>
-  <p id="text-erledigt"></p>
-  <p class="klein">Du kannst diese Seite jederzeit über den Link in deiner
-  E-Mail erneut öffnen.</p>
-</div>
+<h2>Das Recht Ihres Kindes</h2>
+<ul>
+  <li>Die Freigabe ist <strong>freiwillig</strong> &ndash; Ihr Kind kann sie ablehnen
+  und die App ohne Freigabe nutzen.</li>
+  <li>Die Freigabe kann <strong>jederzeit</strong> widerrufen werden &ndash; in der
+  App unter <em>Datenschutz &amp; Elternzugriff</em>, ohne dass jemand gefragt
+  werden muss.</li>
+  <li>Mit dem <strong>18. Geburtstag</strong> entscheidet Ihr Kind selbst: die
+  Freigabe beenden, für ein bis sechs Monate behalten oder erstmal weiter
+  behalten. Sie erfahren das nicht automatisch &ndash; das Kind entscheidet allein.</li>
+  <li>Der Abschnitt über die Elternaufsicht bleibt auch ab 18 sichtbar, damit die
+  Freigabe aus der Zeit mit 16/17 geordnet werden kann.</li>
+</ul>
 
-<script>
-(function () {
-  "use strict";
+<h2>Welche Daten mit der Aufsicht verarbeitet werden</h2>
+<table>
+  <thead>
+    <tr><th>Daten</th><th>Zweck</th><th>Aufbewahrung</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>E-Mail-Adresse des Elternteils</td>
+      <td>Zustellung der Bestätigungs-Mail und Benachrichtigungen</td>
+      <td>bis zum Ende der Freigabe</td>
+    </tr>
+    <tr>
+      <td>Stand der Freigabe (beantragt, bestätigt, widerrufen) mit Zeitstempeln</td>
+      <td>Nachweis, was vereinbart war (Art. 5 Abs. 2 DSGVO)</td>
+      <td>so lange wie der Nachweis benötigt wird</td>
+    </tr>
+    <tr>
+      <td>Vierstellige PIN (nur als Hash, nie im Klartext)</td>
+      <td>Schutz der Einstellungen vor dem Jugendlichen</td>
+      <td>bis zum Ende der Freigabe</td>
+    </tr>
+    <tr>
+      <td>Eingestellter Rhythmus, Zeitfenster der Nutzungszeit</td>
+      <td>Benachrichtigungen, Nutzungsbeschränkung</td>
+      <td>bis zum Ende der Freigabe</td>
+    </tr>
+    <tr>
+      <td>Ereignis &bdquo;ein Funke ist entstanden&ldquo; (ohne Namen, ohne Inhalte)</td>
+      <td>Benachrichtigung in dem von Ihnen gewählten Rhythmus</td>
+      <td>wird nach dem Versand gelöscht</td>
+    </tr>
+  </tbody>
+</table>
 
-  var FN_URL = "https://jftuigjbmmuvrckbchqo.supabase.co/functions/v1/guardian-consent";
+<h2>Was die Freigabe nicht bewirkt</h2>
+<p>Die eingestellte Nutzungszeit ist eine <strong>Hausregel auf dem Gerät deines
+Kindes</strong>. Sie verhindert die versehentliche Überschreitung, sie ist aber kein
+technisches Verbot: mit einem gerooteten Gerät oder einer selbst gebauten App kommt
+man daran vorbei. Wir schreiben das offen hin, statt es schöner zu machen.</p>
 
-  var params = new URLSearchParams(window.location.search);
-  var token = params.get("token") || "";
+<p>Und noch eines: Thestia ist eine Dating-App mit strengem Jugendschutz. Zwei Dinge
+sind für unter 18 gar nicht möglich &ndash; der Nahbereichsfunk &bdquo;Transit
+Spark&ldquo; (BLE) und das Begegnungs-Matching unterwegs. Das steht auch im
+<a href="/kinderschutz">Kinderschutz-Bereich</a>.</p>
 
-  var elLaden = document.getElementById("laden");
-  var elFehler = document.getElementById("fehler");
-  var elBestaetigen = document.getElementById("bereich-bestaetigen");
-  var elEinstellen = document.getElementById("bereich-einstellen");
-  var elErledigt = document.getElementById("bereich-erledigt");
-  var elTextErledigt = document.getElementById("text-erledigt");
-
-  function zeigen(el, sichtbar) {
-    el.hidden = !sichtbar;
-  }
-
-  function fehler(text) {
-    elLaden.hidden = true;
-    elFehler.textContent = text;
-    elFehler.hidden = false;
-  }
-
-  function ruf(action, extra) {
-    var body = { action: action, token: token };
-    if (extra) {
-      for (var k in extra) {
-        if (Object.prototype.hasOwnProperty.call(extra, k)) body[k] = extra[k];
-      }
-    }
-    return fetch(FN_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    }).then(function (r) { return r.json(); });
-  }
-
-  function minuten(zeit) {
-    if (!zeit) return null;
-    var teile = zeit.split(":");
-    var h = parseInt(teile[0], 10);
-    var m = parseInt(teile[1], 10);
-    if (isNaN(h) || isNaN(m)) return null;
-    return h * 60 + m;
-  }
-
-  function zeitText(min) {
-    if (min === null || min === undefined) return "";
-    var h = Math.floor(min / 60);
-    var m = min % 60;
-    return (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
-  }
-
-  if (!token || token.length < 16) {
-    fehler("Dieser Link ist unvollständig. Bitte nutze den Link aus der E-Mail, " +
-           "die wir dir geschickt haben.");
-    return;
-  }
-
-  // Stand laden
-  ruf("status").then(function (data) {
-    elLaden.hidden = true;
-    if (!data || data.ok !== true) {
-      fehler("Dieser Link ist nicht mehr gültig. Der Link ist 14 Tage lang " +
-             "gültig - bitte fordere in der App eine neue E-Mail an.");
-      return;
-    }
-    if (data.status === "pending") {
-      zeigen(elBestaetigen, true);
-      return;
-    }
-    if (data.status !== "active") {
-      elTextErledigt.textContent =
-        "Die Freigabe ist nicht mehr aktiv. In der App kann dein Kind eine " +
-        "neue Anfrage stellen.";
-      zeigen(elErledigt, true);
-      return;
-    }
-
-    // Bestehende Einstellungen uebernehmen
-    document.getElementById("notify-enabled").value =
-      data.notifyEnabled ? "true" : "false";
-    document.getElementById("notify-frequency").value =
-      data.notifyFrequency || "weekly";
-    document.getElementById("usage-enabled").value =
-      data.usageLimitEnabled ? "true" : "false";
-    document.getElementById("usage-start").value =
-      zeitText(data.usageStartMin);
-    document.getElementById("usage-end").value =
-      zeitText(data.usageEndMin);
-    zeigen(elEinstellen, true);
-  }).catch(function () {
-    fehler("Die Seite konnte den Server nicht erreichen. Bitte später noch " +
-           "mal versuchen.");
-  });
-
-  document.getElementById("knopf-bestaetigen").addEventListener("click", function () {
-    var knopf = this;
-    knopf.disabled = true;
-    ruf("confirm").then(function (data) {
-      if (data && data.ok === true) {
-        elBestaetigen.hidden = true;
-        elTextErledigt.textContent =
-          "Danke. Die Freigabe ist aktiv - die Einstellungen kannst du " +
-          "unten jederzeit anpassen.";
-        zeigen(elErledigt, true);
-        ruf("status").then(function (st) {
-          if (st && st.ok === true) {
-            document.getElementById("notify-enabled").value =
-              st.notifyEnabled ? "true" : "false";
-            document.getElementById("notify-frequency").value =
-              st.notifyFrequency || "weekly";
-            zeigen(elEinstellen, true);
-          }
-        });
-      } else {
-        elFehler.textContent =
-          "Die Bestätigung hat nicht geklappt. Der Link ist vielleicht " +
-          "abgelaufen - bitte fordere in der App eine neue E-Mail an.";
-        elFehler.hidden = false;
-        knopf.disabled = false;
-      }
-    }).catch(function () {
-      fehler("Der Server ist gerade nicht erreichbar.");
-      knopf.disabled = false;
-    });
-  });
-
-  document.getElementById("knopf-speichern").addEventListener("click", function () {
-    var knopf = this;
-    knopf.disabled = true;
-    var pinFeld = document.getElementById("pin");
-    var pin = pinFeld.value.trim();
-    var nutzungAn = document.getElementById("usage-enabled").value === "true";
-    var args = {
-      notifyEnabled: document.getElementById("notify-enabled").value === "true",
-      notifyFrequency: document.getElementById("notify-frequency").value,
-      usageLimitEnabled: nutzungAn,
-      usageStartMin: minuten(document.getElementById("usage-start").value),
-      usageEndMin: minuten(document.getElementById("usage-end").value)
-    };
-    if (nutzungAn) {
-      if (!/^[0-9]{4}$/.test(pin)) {
-        elFehler.textContent =
-          "Für die begrenzte Nutzungszeit wird eine PIN aus genau vier " +
-          "Ziffern gebraucht.";
-        elFehler.hidden = false;
-        knopf.disabled = false;
-        return;
-      }
-      args.pin = pin;
-    }
-    ruf("settings", args).then(function (data) {
-      knopf.disabled = false;
-      if (data && data.ok === true) {
-        elFehler.textContent = "Gespeichert.";
-        elFehler.className = "status ok";
-        elFehler.hidden = false;
-        pinFeld.value = "";
-      } else {
-        elFehler.className = "status fehler";
-        elFehler.textContent =
-          "Das Speichern hat nicht geklappt" +
-          (data && data.error ? " (" + data.error + ")" : "") + ".";
-        elFehler.hidden = false;
-      }
-    }).catch(function () {
-      knopf.disabled = false;
-      fehler("Der Server ist gerade nicht erreichbar.");
-    });
-  });
-
-  document.getElementById("knopf-widerrufen").addEventListener("click", function () {
-    if (!window.confirm(
-      "Freigabe wirklich widerrufen? Die Aufsicht endet dann sofort.")) {
-      return;
-    }
-    var knopf = this;
-    knopf.disabled = true;
-    ruf("revoke").then(function (data) {
-      if (data && data.ok === true) {
-        elEinstellen.hidden = true;
-        elTextErledigt.textContent =
-          "Die Freigabe wurde widerrufen. Ab jetzt gibt es keine " +
-          "Benachrichtigungen mehr.";
-        zeigen(elErledigt, true);
-      } else {
-        elFehler.className = "status fehler";
-        elFehler.textContent = "Das Widerrufen hat nicht geklappt.";
-        elFehler.hidden = false;
-        knopf.disabled = false;
-      }
-    }).catch(function () {
-      knopf.disabled = false;
-      fehler("Der Server ist gerade nicht erreichbar.");
-    });
-  });
-})();
-</script>
+<hr>
+<p class="klein">Diese Seite ist Teil des Impressums und der Datenschutzerklärung von
+Thestia. Stand: November 2026. Fragen: <a href="mailto:support@thestia.de">support@thestia.de</a>.
+Hinweise auf Kindesmissbrauch bitte an
+<a href="mailto:kinderschutz@thestia.de">kinderschutz@thestia.de</a>.</p>
 
 </div>
 </body>

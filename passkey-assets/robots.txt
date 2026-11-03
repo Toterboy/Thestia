@@ -21,4 +21,7 @@ Allow: /datenschutz
 Allow: /impressum
 Allow: /kinderschutz
 Allow: /konto-loeschen
+Allow: /daten-loeschen
+Allow: /eltern
+Allow: /eltern/einstellungen
 Allow: /threat-model.md

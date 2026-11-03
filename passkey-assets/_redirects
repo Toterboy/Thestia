@@ -36,16 +36,36 @@
 /konto-loeschen    /konto-loeschen.html  200
 /konto-loeschen/   /konto-loeschen.html  200
 
-# Eltern-Portal (v0.11.0).
+# Eltern-Bereich (v0.10.0).
 #
-# Das Eltern-Portal liegt als eltern.html neben der Datenschutz-
-# Erklaerung. Der Link, den der Elternteil per Mail bekommt, zeigt auf
-# /eltern - nicht auf /eltern.html. Ohne Regel gabe es dort einen 404.
+# ZWEI Seiten, weil sie zwei ganz verschiedene Zwecke haben:
+#
+#   /eltern                 - die oeffentliche Seite fuer Eltern und
+#                             Jugendliche: was die Zustimmung ist, wie sie
+#                             ablaeuft, welche Daten dabei verarbeitet
+#                             werden und was das Recht des Kindes ist.
+#                             Hierher gehoert auch jeder, der im Store
+#                             oder im Web nachschauen will.
+#   /eltern/einstellungen   - der persoenliche Bereich des Elternteils.
+#                             Nur mit dem Link aus der E-Mail erreichbar
+#                             (der Token ist die Berechtigung).
 #
 # Rewrite (200), wie bei den anderen Seiten: die Adresse existiert danach
 # wirklich, ohne dass der Browser folgt.
-/eltern    /eltern.html  200
-/eltern/   /eltern.html  200
+/eltern                 /eltern.html  200
+/eltern/                /eltern.html  200
+/eltern/einstellungen   /eltern-einstellungen.html  200
+/eltern/einstellungen/  /eltern-einstellungen.html  200
+
+# Daten-Loeschung (Play-Anforderung: web-basierte Loeschung von
+# Daten und des Kontos).
+#
+# Die Seite nennt die Schritte fuer die Loeschung in der App UND im
+# Browser, dazu die Art der geloeschten und der aufbewahrten Daten mit
+# ihren Aufbewahrungsdauern. Sie wird in der Data-Safety-Antwort des
+# Play Console als URL eingetragen.
+/daten-loeschen    /daten-loeschen.html  200
+/daten-loeschen/   /daten-loeschen.html  200
 
 # Kinderschutz-Seite (Play Child Safety Standards).
 #

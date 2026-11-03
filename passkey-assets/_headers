@@ -67,6 +67,22 @@
 /konto-loeschen.html
   Cache-Control: public, max-age=300
 
+# Daten-Loeschung (Play-Anforderung)
+/daten-loeschen
+  Cache-Control: public, max-age=300
+/daten-loeschen.html
+  Cache-Control: public, max-age=300
+
+# Eltern-Bereich: die oeffentliche Seite und der persoenliche Bereich
+/eltern
+  Cache-Control: public, max-age=300
+/eltern.html
+  Cache-Control: public, max-age=300
+/eltern/einstellungen
+  Cache-Control: public, max-age=300
+/eltern-einstellungen.html
+  Cache-Control: public, max-age=300
+
 # Das Threat Model ist oeffentlich (Transparenz) und aendert sich
 # selten.
 /threat-model.md

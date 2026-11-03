@@ -38,6 +38,8 @@ ASSETS = ROOT / 'passkey-assets'
 SEITEN = [
     'kinderschutz.html',
     'eltern.html',
+    'eltern-einstellungen.html',
+    'daten-loeschen.html',
     'konto-loeschen.html',
     'impressum.html',
     'dating-sicherheit.html',

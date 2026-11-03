@@ -208,6 +208,114 @@ void main() {
     });
   });
 
+  group('Die Seiten fuer die Play-Anforderungen', () {
+    // Google Play verlangt fuer "Daten loeschen" eine oeffentlich
+    // erreichbare Seite, die drei Dinge erfuellt:
+    //
+    //   1. Sie bezieht sich auf die App oder den Entwicklernamen aus
+    //      dem Store-Eintrag.
+    //   2. Sie zeigt gut sichtbar die Schritte, mit denen Nutzer die
+    //      Loeschung ihrer Daten (oder ihres Kontos) anfordern.
+    //   3. Sie nennt die Art der zu loeschenden oder aufzubewahrenden
+    //      Daten und eine etwaige zusaetzliche Aufbewahrungsdauer.
+    //
+    // Diese Tests halten fest, dass die Seite das weiterhin tut - sie
+    // waere sonst nach der naechsten Textaenderung stillschweigend
+    // unvollstaendig.
+    String datenLoeschen() =>
+        File('${assets.path}/daten-loeschen.html').readAsStringSync();
+    String eltern() =>
+        File('${assets.path}/eltern.html').readAsStringSync();
+
+    test('Die Loesch-Seite nennt die App und den Entwickler', () {
+      final h = datenLoeschen();
+      expect(h, contains('Thestia'),
+          reason: 'Die Seite muss sich auf die App beziehen.');
+      expect(h, contains('Thoralf Illg'),
+          reason: 'Die Seite muss den Entwicklernamen aus dem '
+              'Store-Eintrag nennen.');
+    });
+
+    test('Die Loesch-Seite zeigt die Schritte fuer die App UND den Browser',
+        () {
+      final h = datenLoeschen();
+      expect(h, contains('Daten löschen'),
+          reason: 'Der Eintrag in der App muss benannt sein.');
+      expect(h, contains('Datenschutz &amp; Account'),
+          reason: 'Der Weg in der App muss konkret beschrieben sein.');
+      expect(h, contains('/konto-loeschen'),
+          reason: 'Der Weg im Browser muss verlinkt sein.');
+      expect(h, contains('support@thestia.de'),
+          reason: 'Der Weg per E-Mail muss benannt sein.');
+    });
+
+    test('Die Loesch-Seite nennt die geloeschten Datenarten', () {
+      final h = datenLoeschen();
+      for (final art in [
+        'Profilfotos',
+        'Standortdaten',
+        'Profilangaben',
+        'Likes',
+        'Funken',
+        'Nachrichten',
+        'Geräte',
+        'Stimmung',
+        'Meldungen',
+      ]) {
+        expect(h, contains(art),
+            reason: 'Die Datenart "$art" muss auf der Seite stehen.');
+      }
+    });
+
+    test('Die Loesch-Seite nennt die Aufbewahrungsdauern', () {
+      final h = datenLoeschen();
+      expect(h, contains('Aufbewahrung'),
+          reason: 'Die Seite muss die Aufbewahrung thematisieren.');
+      for (final dauer in const [
+        '24 Stunden',
+        '30 Tage',
+        '90 Tage',
+        '180 Tage',
+      ]) {
+        expect(h, contains(dauer),
+            reason: 'Die Aufbewahrungsdauer "$dauer" muss genannt werden.');
+      }
+      expect(h, contains('unwiderruflich'),
+          reason: 'Die Unwiderruflichkeit muss benannt werden.');
+    });
+
+    test('Die Eltern-Seite nennt die Schritte, die Daten und die Rechte',
+        () {
+      final h = eltern();
+      expect(h, contains('Thestia'));
+      expect(h, contains('Thoralf Illg'));
+      // Die Schritte fuer die Eltern.
+      expect(h, contains('E-Mail'));
+      expect(h, contains('bestätigen'));
+      // Die Daten, die verarbeitet werden.
+      expect(h, contains('PIN'));
+      expect(h, contains('Aufbewahrung'));
+      // Die Rechte des Kindes.
+      expect(h, contains('18. Geburtstag'));
+      expect(h, contains('widerrufen'));
+    });
+
+    test('Beide Seiten sind von der Startseite aus erreichbar', () {
+      // "Bei thestia.de auffindbar" - die Landing-Seite verlinkt beide.
+      final h =
+          File('${assets.path}/index.html').readAsStringSync();
+      expect(h, contains('href="/daten-loeschen"'));
+      expect(h, contains('href="/eltern"'));
+    });
+
+    test('Die Unterseiten sind erreichbar (Rewrite-Regeln)', () {
+      final redirects =
+          File('${assets.path}/_redirects').readAsStringSync();
+      expect(redirects, contains('/daten-loeschen'));
+      expect(redirects, contains('/eltern/einstellungen'));
+    });
+  });
+
   group('Die veroeffentlichten Artefakte', () {
     test('Die Sitemap enthaelt kein Geheimnis', () {
       // docs/ADMIN-UUID.md enthaelt die Admin-UUID und darf nicht
@@ -252,15 +360,17 @@ void main() {
               'der h2-Regel.');
     });
 
-    test('Die unterste der fuenf Kacheln steht mittig', () {
+    test('Die unterste der sieben Kacheln steht mittig', () {
       // NUTZERWUNSCH (31.10.2026): "Unten bei den 5 Kacheln soll die
       // untere mittig sein und nicht linksbuendig."
       //
-      // Bei fuenf Kacheln und zwei Spalten bleibt eine Kachel allein
-      // in der letzten Zeile. Sie soll dort mittig stehen.
+      // Seit dem 03.11.2026 sind es sieben Kacheln (neu: Daten loeschen
+      // und Eltern & Jugendliche). Bei ungerader Kachelzahl und zwei
+      // Spalten bleibt eine Kachel allein in der letzten Zeile. Sie
+      // soll dort mittig stehen.
       final h = html();
-      expect(RegExp(r'class="held-link"').allMatches(h).length, 5,
-          reason: 'Es sind fuenf Kacheln - die letzte steht allein.');
+      expect(RegExp(r'class="held-link"').allMatches(h).length, 7,
+          reason: 'Es sind sieben Kacheln - die letzte steht allein.');
       expect(h, contains('grid-column: 1 / -1'),
           reason: 'Die letzte Kachel muss die ganze Zeile einnehmen, '
               'damit sie mittig stehen kann.');

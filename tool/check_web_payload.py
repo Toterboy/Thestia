@@ -54,7 +54,7 @@ MAX_DATEI = 200 * 1024
 
 # Die Pflichtseiten - genau die, die Play verlangt.
 PFLICHT_PFADE = ['/datenschutz', '/impressum', '/kinderschutz',
-                  '/konto-loeschen']
+                  '/konto-loeschen', '/daten-loeschen', '/eltern']
 
 problems = []
 

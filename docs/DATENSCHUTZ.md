@@ -316,6 +316,19 @@ Die Löschung erfolgt unmittelbar auf dem Server.
   30 Tagen nach Einreichung gelöscht - zusammen mit seinem Schlüssel
   (Cron `cleanup-verification-videos`).
 
+## 7a. Daten löschen: die öffentlichen Seiten
+
+Zwei Seiten im Web sind für dich erreichbar und nennen die Wege, auf
+denen du die Löschung deiner Daten anfordern kannst:
+
+- **Daten löschen** (`https://thestia.de/daten-loeschen`): die Schritte
+  für die Löschung einzelner Kategorien und für die vollständige
+  Löschung, die Art der gelöschten und der aufbewahrten Daten mit ihren
+  Aufbewahrungsdauern.
+- **Eltern und Jugendliche** (`https://thestia.de/eltern`): wie die
+  elterliche Zustimmung für 16- und 17-Jährige abläuft, welche Daten
+  dabei verarbeitet werden und welche Rechte der Jugendliche behält.
+
 ## 8. Deine Rechte (Art. 15–21 DSGVO)
 
 - **Auskunft (Art. 15):** Der In-App-Datenexport („Meine Daten

@@ -24,7 +24,9 @@ const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY") ?? "";
 const INTERNAL_SECRET = Deno.env.get("THESTIA_INTERNAL_SECRET") ?? "";
 const SENDER_EMAIL = "support@thestia.de";
 const SENDER_NAME = "Thestia";
-const PORTAL_URL = "https://auth.thestia.de/eltern";
+// Der persoenliche Bereich des Elternteils. Die oeffentliche Seite
+// fuer Eltern und Jugendliche liegt daneben unter /eltern.
+const PORTAL_URL = "https://auth.thestia.de/eltern/einstellungen";
 
 function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
