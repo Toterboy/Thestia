@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/admin/admin_counts.dart';
+import 'package:thestia/screens/admin/admin_mail_inbox.dart';
 import 'package:thestia/services/photo_moderation_service.dart';
 import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/supabase_service.dart';
@@ -127,7 +128,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
     }
 
     return DefaultTabController(
-      length: 6,
+      length: 7,
       child: Builder(
         builder: (context) {
           final counts = ref.watch(adminCountsProvider).valueOrNull;
@@ -185,6 +186,13 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                       icon: Icons.block,
                       count: (counts?.bans ?? 0) > 0 ? counts!.bans : null,
                     ),
+                    // Der Posteingang: eingehende Mails an die Adresse
+                    // des Betreibers, nach Rubrik gefiltert. Nur lesen -
+                    // antworten geht weiterhin ueber das Mail-Programm.
+                    PillTab(
+                      label: L10n.t(context, 'admin.tabMail'),
+                      icon: Icons.inbox_outlined,
+                    ),
                   ],
                 ),
               ),
@@ -216,6 +224,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                       _PhotoModerationList(),
                       _PhotoAppealsTab(),
                       _BansTab(),
+                      AdminMailInboxTab(),
                     ],
                   ),
                 ),

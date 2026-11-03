@@ -858,6 +858,28 @@ class SupabaseDatabaseService {
   Future<List<Map<String, dynamic>>> fetchUserReports() =>
       _adminList('admin_list_user_reports');
 
+  /// Die Mails fuer den Posteingang im Admin-Bereich.
+  ///
+  /// NUR LESEN: es gibt bewusst keine Antwortfunktion (Migration 168).
+  /// Die RPC prueft serverseitig `is_current_user_admin` - ohne Admin
+  /// liefert sie nichts.
+  Future<List<Map<String, dynamic>>> fetchAdminMailMessages({
+    String? category,
+    int limit = 100,
+  }) async {
+    final params = <String, dynamic>{'p_limit': limit};
+    // Ein null-Wert als Parameter waere in PostgREST ein String
+    // "null" - deshalb weglassen statt mitsenden.
+    if (category != null && category.isNotEmpty) {
+      params['p_category'] = category;
+    }
+    final response = await _client.rpc(
+      'admin_list_mail_messages',
+      params: params,
+    );
+    return List<Map<String, dynamic>>.from(response as List<dynamic>);
+  }
+
   /// Meldung als bearbeitet markieren.
   Future<void> resolveUserReport(String reportId) async {
     await _client.rpc(
