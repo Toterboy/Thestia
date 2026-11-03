@@ -117,11 +117,29 @@ class TransitNotifier extends StateNotifier<TransitState>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       if (this.state.active) {
-        unawaited(TransitBleService.instance.resume());
+        // FRISCHES Token beim Neustart (ROADMAP, "BLE-Tracking-Haertung":
+        // "frische Token pro Advertising-Neustart"). Mit demselben Token
+        // weiterzumachen wuerde verraten, dass das Geraet zwischendurch
+        // nur still war.
+        final neuerToken = TransitEncounterService.generateToken();
+        unawaited(_resumeMitNeuemToken(neuerToken));
       }
       return;
     }
     unawaited(TransitBleService.instance.suspend());
+  }
+
+  /// Startet das Advertising mit einem neuen Token und meldet ihn dem
+  /// Server als Anwesenheit.
+  Future<void> _resumeMitNeuemToken(String neuerToken) async {
+    final ok = await TransitBleService.instance.resume(token: neuerToken);
+    if (!ok) return;
+    if (SupabaseService.isInitialized) {
+      try {
+        await SupabaseDatabaseService(SupabaseService.client)
+            .transitPresenceHeartbeat(neuerToken);
+      } catch (_) {}
+    }
   }
 
   /// Fragt den Schalterstand ab (Migration 159).

@@ -1672,32 +1672,46 @@ def compose_card(shot: Image.Image, headline: str, subline: str, badge: str,
 
 
 def compose_card_wqhd(shot: Image.Image, headline: str, subline: str,
-                      badge: str, dark: bool = False):
+                      badge: str, dark: bool = False,
+                      W: int = 2560, H: int = 1440):
     """16:9: Kachel links, Text rechts - wie compose_modes_wqhd, aber mit
-    einem Inhaltsblock statt der fuenf Moduskacheln."""
-    W, H = 2560, 1440
+    einem Inhaltsblock statt der fuenf Moduskacheln.
+
+    W und H sind variabel, damit dieselbe Komposition auch fuer das
+    10-Zoll-Tablet (1920x1200) benutzt werden kann. Vorher gab es nur
+    die 16:9-Variante - und ein nachtraeglicher Beschnitt auf
+    1920x1200 hat den Text auf der rechten Seite abgeschnitten (der
+    Kachel-Block stand links, der Rest fehlte). Das ist der Grund fuer
+    die Parameter: eine Komposition wird in der Groesse erzeugt, in der
+    sie auch gebraucht wird.
+    """
     verlauf = gradient((W, H), 25)
     if dark:
         verlauf = darken(verlauf)
     bg = verlauf.convert('RGBA')
     draw = ImageDraw.Draw(bg)
 
-    margin = 90
-    col_w = _place_card(bg, _crop_store_insets(shot.convert('RGB')), margin,
-                        H - 2 * margin, 980, x=margin)
+    # Alles proportional zur kleineren Kante: so sieht die Komposition
+    # bei jedem Format gleich aus (nicht nur nicht abgeschnitten).
+    skala = min(W / 2560.0, H / 1440.0)
+    margin = int(90 * skala)
+    kachel_max = int(980 * skala)
 
-    f_head = ImageFont.truetype(FONT_BOLD, 78)
-    f_sub = ImageFont.truetype(FONT_REG, 38)
-    tx = margin + col_w + 90
-    y = max(200, (H - 400) // 2)
-    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255), 20,
-                   tx, y, align='left')
-    y += 24
-    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226), 14,
-                   tx, y, align='left')
-    y += 40
-    badge_pill(bg, badge, tx, y, size=36, align='left')
-    return round_corners(bg, 56)
+    col_w = _place_card(bg, _crop_store_insets(shot.convert('RGB')), margin,
+                        H - 2 * margin, kachel_max, x=margin)
+
+    f_head = ImageFont.truetype(FONT_BOLD, max(28, int(78 * skala)))
+    f_sub = ImageFont.truetype(FONT_REG, max(16, int(38 * skala)))
+    tx = margin + col_w + int(90 * skala)
+    y = max(int(200 * skala), (H - int(400 * skala)) // 2)
+    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255),
+                   max(10, int(20 * skala)), tx, y, align='left')
+    y += max(12, int(24 * skala))
+    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226),
+                   max(8, int(14 * skala)), tx, y, align='left')
+    y += max(20, int(40 * skala))
+    badge_pill(bg, badge, tx, y, size=max(18, int(36 * skala)), align='left')
+    return round_corners(bg, max(24, int(56 * skala)))
 
 
 CARDS = ROOT / 'test' / 'screenshots' / 'store_v091' / 'cards'

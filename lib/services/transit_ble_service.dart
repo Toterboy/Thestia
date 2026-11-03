@@ -331,10 +331,17 @@ class TransitBleService {
 
   /// Startet das Funk-Radio nach einem [suspend] wieder.
   ///
+  /// [token] setzt einen neuen Token. Das ist der Normalfall: Nach dem
+  /// Hintergrund muss ein FRISCHES Token gesendet werden. Wer das Geraet
+  /// eine Stunde lang ausgeschaltet hatte, sendet nach dem Zurueckkommen
+  /// sonst wieder denselben Pseudonym-Token - genau die Kontinuitaet, die
+  /// ein Beobachter sucht (ROADMAP, "BLE-Tracking-Haertung": "frische
+  /// Token pro Advertising-Neustart").
+  ///
   /// Gibt false zurueck, wenn nicht gestartet werden konnte (z. B. weil
   /// die Bluetooth-Berechtigung inzwischen fehlt).
-  Future<bool> resume() async {
-    final token = _currentToken;
+  Future<bool> resume({String? token}) async {
+    token = token ?? _currentToken;
     if (token == null) return false;
     if (_advertising) return true;
     try {

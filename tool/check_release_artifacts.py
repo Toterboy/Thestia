@@ -31,6 +31,18 @@ RELEASES = ROOT / 'releases'
 EXPECTED_CN = 'CN=Thestia'
 FORBIDDEN_CN = 'WispDating'
 
+# Der SHA-256-Fingerabdruck des Release-Zertifikats.
+#
+# WARUM (03.11.2026, Sicherheitspruefung): Der CN ist FREI WAEHLBAR.
+# Ein fremder Keystore mit "CN=Thestia" waere durch die CN-Pruefung
+# gegangen - erkannt wurde nur der alte CN. Der Fingerabdruck ist der
+# bindende Nachweis: er sagt, WELCHES Zertifikat signiert hat. Er ist
+# in passkey-assets/assetlinks.json hinterlegt (dort gegen den
+# Release-Keystore geprueft) - das ist dieselbe Quelle, die auch
+# Android fuer die App-Links benutzt.
+EXPECTED_SHA256 = ('8C:BE:F7:D0:8F:86:66:54:2E:1D:53:B9:B4:26:C5:46:AF:'
+                    '82:47:93:1A:DF:E8:20:61:9E:17:F7:91:3F:3E:1A')
+
 # Die UUID kommt aus der Umgebung, damit sie nicht im Repo landet.
 ADMIN_UUID = os.environ.get('ADMIN_UUID', '').strip()
 
@@ -497,6 +509,11 @@ def main():
                 continue
             m = re.search(r'(CN=[^,\s]+)', out)
             cn = m.group(1) if m else '(kein CN)'
+            # Der Fingerabdruck steht in der Ausgabe von apksigner als
+            # "Signer #1 certificate SHA-256 digest: <hex>".
+            fp = re.search(r'SHA-256 digest:\s*([0-9a-fA-F]+)', out)
+            fingerabdruck = fp.group(1).upper() if fp else ''
+            erwartet = EXPECTED_SHA256.replace(':', '')
             if FORBIDDEN_CN in out:
                 problems.append(
                     f'{path.name}: CN={cn} - das ist die alte Signatur aus '
@@ -505,7 +522,18 @@ def main():
             elif EXPECTED_CN not in out:
                 problems.append(f'{path.name}: CN ist {cn}, erwartet '
                                 f'{EXPECTED_CN}')
-            print(f'  {path.name:<48} {cn}')
+            elif not fingerabdruck:
+                problems.append(
+                    f'{path.name}: Fingerabdruck nicht auslesbar - die '
+                    f'Signatur kann nicht eindeutig geprueft werden')
+            elif fingerabdruck != erwartet:
+                problems.append(
+                    f'{path.name}: Signatur-Fingerabdruck {fingerabdruck} '
+                    f'weicht ab vom erwarteten {erwartet}. Der CN ist frei '
+                    f'waehlbar - der Fingerabdruck ist der bindende '
+                    f'N achweis.')
+            print(f'  {path.name:<48} {cn}  '
+                  f'SHA-256:{fingerabdruck[:16] or "(unbekannt)"}…')
     else:
         # In der CI fehlt apksigner immer. Das als Fehler zu melden
         # wuerde den Check dort unbrauchbar machen; es als Erfolg zu

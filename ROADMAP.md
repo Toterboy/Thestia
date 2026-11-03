@@ -453,8 +453,12 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
       vor den kosmetischen Punkten, weil die Exposition bereits
       gegenwärtig für jeden Nutzer mit aktivem Transit Spark besteht.*
       Umgesetzt in 0.10.0: rotierende Encounter-Tokens mit Jitter,
-      Herstellerfilter, gepulstes Scanning. **Offen und zuerst zu
-      klären:** die Plattform-Frage. Resolvable Private Addresses
+      Herstellerfilter, gepulstes Scanning, **frisches Token bei jedem
+      Neustart des Advertising** (03.11.2026: nach dem Hintergrund wurde
+      bisher mit demselben Token weitergemacht - wer das Gerät eine Stunde
+      lang ausgeschaltet hatte, sendete danach denselben Pseudonym-Token
+      wieder; das ist genau die Kontinuität, die ein Beobachter sucht).
+      **Offen und zuerst zu klären:** die Plattform-Frage. Resolvable Private Addresses
       rotieren auf Android als **Plattformverhalten**; eine App kann sie
       für eigenes Advertising nicht erzwingen, und `flutter_blue_plus`
       bietet dafür keine API. Zu prüfen ist deshalb, was sich tatsächlich
@@ -491,11 +495,30 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
       je Anbieter, Art. 22 für den Matching-Score, Widerspruchsverfahren
       bei Altersablehnung, Bewertung der Krisen-Erkennung als
       Nicht-Medizinprodukt. Vor dem Launch rechtlich zu prüfen
-- [ ] **Bleibt Betreiberentscheidung:** Mindestalter verbindlich
-      festlegen, Live-Board und Same-Train-Matching für Minderjährige
-      sperren, BLE-Nahbereich für unter 18-Jährige abschaltbar machen.
-      Vorschläge stehen in Abschnitt 5 der DSFA, sie sind fachlich
-      begründet und rechtlich nicht geprüft
+- [x] **Mindestalter: 16 Jahre – verbindlich festgelegt**
+      (Betreiberentscheidung 03.11.2026: "Die App ist keinesfalls für
+      unter 16 jährige gedacht!").
+      * **Unter 16 ist die App nicht gedacht und nicht zugänglich.**
+        Durchgesetzt wird das an drei Stellen, nicht nur in der Anzeige:
+        die Altersprüfung im Registrierungsformular
+        (`lib/utils/validators.dart`, Mindestalter 16), der
+        Datenbank-Constraint `chk_profiles_birth_date_age`
+        (Migration 154 – auch ein manipulierter Client kommt nicht
+        daran vorbei) und die serverseitige Verifikation, deren
+        Altersannahme nie unter 16 liegt.
+      * **BLE-Nahbereich (Transit Spark) für unter 18-Jährige
+        abgeschaltet:** serverseitig erzwungen, nicht nur im Gerät
+        (`transit_spark_adult()`, Migration 131; zusätzlich der
+        Kill-Switch aus Migration 159).
+      * **Live-Board und Same-Train-Matching für Minderjährige:** die
+        Funktionen sind nicht gebaut (Web-Bridge, geplant ab v0.12.0).
+        Für 16- und 17-Jährige gibt es sie damit ohnehin nicht.
+      * Für 16- und 17-Jährige gilt die Elternaufsicht (Abschnitt
+        unten): Zustimmung der Sorgeberechtigten, freie Wahl des
+        Kindes, jederzeitiger Widerruf, Entscheidung mit 18.
+      * **Offen bleibt die rechtliche Prüfung** (siehe DSFA Abschnitt 7):
+        Form und Nachweis der Einwilligung, die Einwilligungsfähigkeit
+        ab 16 nach § 3a JUG und die Abgrenzung zu Art. 8 DSGVO.
 - [ ] **Vorstellungs-Vorlagen (Text + Audio)** – hier verbindlich für
       0.10.0 eingeplant; Ausformulierung siehe „In Arbeit". Kleines
       Feature, aber es hebt die Profilqualität der frühen Nutzerschaft
