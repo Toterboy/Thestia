@@ -42,6 +42,16 @@ except ImportError:  # pragma: no cover
     sys.exit(0)
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+# Die beiden Sprachlaeufe (03.11.2026).
+#
+# BISHER wurde nur DE geprueft. Die englische Liste hatte keine Phone-
+# Screenshots (die Tablet-Skripte kopierten die deutschen Bilder in
+# beide Sprachen) - ein Zustand, den diese Pruefung nicht sehen
+# konnte, weil sie nur einen Ordner kannte.
+#
+# Beide Laeufe werden jetzt geprueft: gleiche Regeln, gleiche
+# Quellen, gleiche fertigen Bilder.
 SRC = ROOT / 'test' / 'screenshots' / 'store_v091' / 'phone'
 
 # Kompositionen OHNE Geraet und OHNE System-UI.
@@ -53,6 +63,14 @@ SRC = ROOT / 'test' / 'screenshots' / 'store_v091' / 'phone'
 NO_STATUSBAR = {'03_entdecken.png'}
 FINAL = (ROOT / 'fastlane' / 'metadata' / 'android' / 'de-DE' /
          'images' / 'phoneScreenshots')
+
+# Je Sprache: Quell-Screens und fertige Store-Bilder.
+LAEUFE = [
+    ('de', ROOT / 'test' / 'screenshots' / 'store_v091' / 'phone', FINAL),
+    ('en', ROOT / 'test' / 'screenshots' / 'store_v091_en' / 'phone',
+     ROOT / 'fastlane' / 'metadata' / 'android' / 'en-US' /
+     'images' / 'phoneScreenshots'),
+]
 
 # Insets aus dem committeten Modul lesen, nicht hart verdrahten.
 INSET_DART = (ROOT / 'test' / 'screenshots' / 'support' /
@@ -207,7 +225,9 @@ def main():
     #
     # Das ist kein Wegsehen: sind die Dateien da (lokaler Release-Lauf),
     # wird vollstaendig geprueft und ein Befund bricht hart ab.
-    if not SRC.exists() or not any(SRC.glob('*.png')):
+    vorhanden = [(lang, src, fin) for lang, src, fin in LAEUFE
+                 if src.exists() and any(src.glob('*.png'))]
+    if not vorhanden:
         print('=' * 68)
         print('STORE-SCREENSHOT-REALISMUS')
         print('=' * 68)
@@ -217,7 +237,8 @@ def main():
             for p in problems:
                 print(' X', p)
             return 1
-        print(f'Keine Quell-Screens vorhanden ({SRC.relative_to(ROOT)}).')
+        print('Keine Quell-Screens vorhanden '
+              f'({SRC.relative_to(ROOT)}).')
         print('Die Ausgaben sind gitignoriert und in CI nicht da - der')
         print('Realismus wird beim Release-Lauf lokal geprueft:')
         print('  $env:STORE_SHOTS="1"; flutter test --update-goldens '
@@ -242,71 +263,75 @@ def main():
     print()
 
     problems = []
-    for f in sorted(SRC.glob('*.png')):
-        im = Image.open(f).convert('RGB')
-        w, h = im.size
-        px = im.load()
-        notes = []
+    for sprache, src_dir, final_dir in vorhanden:
+      print('-' * 68)
+      print('Sprache: %s' % sprache)
+      print('-' * 68)
+      for f in sorted(src_dir.glob('*.png')):
+          im = Image.open(f).convert('RGB')
+          w, h = im.size
+          px = im.load()
+          notes = []
 
-        # 1) Seitenverhaeltnis
-        ratio = h / w
-        if not (2.0 <= ratio <= 2.25):
-            problems.append(
-                f'{f.name}: Seitenverhaeltnis {ratio:.2f}:1 ist nicht 20:9')
+          # 1) Seitenverhaeltnis
+          ratio = h / w
+          if not (2.0 <= ratio <= 2.25):
+              problems.append(
+                  f'{f.name}: Seitenverhaeltnis {ratio:.2f}:1 ist nicht 20:9')
 
-        # 2) Statusleisten-Reserve - nur fuer die Kompositionen, die
-        #    ueberhaupt eine Statusleiste zeigen. 03_entdecken besteht
-        #    seit v0.9.2 aus losen Modus-Kacheln auf dem Verlauf, ohne
-        #    Geraet und ohne System-UI: dort waere die Pruefung sinnlos.
-        has_statusbar = f.name not in NO_STATUSBAR
-        if has_statusbar:
-            bg = px[6, 6]
-            content = total = 0
-            for y in range(0, max(0, band_px - tol), 2):
-                for x in range(0, w, 6):
-                    c = px[x, y]
-                    total += 1
-                    if sum(abs(c[i] - bg[i]) for i in range(3)) > 90:
-                        content += 1
-            share = content / total if total else 0
-            if share >= 0.02:
-                problems.append(
-                    f'{f.name}: {share*100:.1f}% sichtbarer App-Inhalt im '
-                    f'Statusleisten-Band (0..{band_px - tol}px) - der Render '
-                    f'hat die System-Insets nicht angewendet')
-            notes.append(f'Reserve {share*100:.2f}%')
+          # 2) Statusleisten-Reserve - nur fuer die Kompositionen, die
+          #    ueberhaupt eine Statusleiste zeigen. 03_entdecken besteht
+          #    seit v0.9.2 aus losen Modus-Kacheln auf dem Verlauf, ohne
+          #    Geraet und ohne System-UI: dort waere die Pruefung sinnlos.
+          has_statusbar = f.name not in NO_STATUSBAR
+          if has_statusbar:
+              bg = px[6, 6]
+              content = total = 0
+              for y in range(0, max(0, band_px - tol), 2):
+                  for x in range(0, w, 6):
+                      c = px[x, y]
+                      total += 1
+                      if sum(abs(c[i] - bg[i]) for i in range(3)) > 90:
+                          content += 1
+              share = content / total if total else 0
+              if share >= 0.02:
+                  problems.append(
+                      f'{f.name}: {share*100:.1f}% sichtbarer App-Inhalt im '
+                      f'Statusleisten-Band (0..{band_px - tol}px) - der Render '
+                      f'hat die System-Insets nicht angewendet')
+              notes.append(f'Reserve {share*100:.2f}%')
 
-        # 3) System-Indikatoren im fertigen Bild. Nur wo ueberhaupt eine
-        #    Statusleiste gezeichnet wird - 03_entdecken besteht aus losen
-        #    Kacheln auf dem Verlauf, ohne Geraet und ohne System-UI.
-        final = FINAL / f.name
-        if has_statusbar and final.exists():
-            fim = Image.open(final).convert('RGB')
-            top = find_screen(fim)
-            if top is None:
-                problems.append(
-                    f'{f.name}: abgerundete App-Kachel nicht gefunden - '
-                    f'das fertige Bild scheint kein Verlauf plus '
-                    f'App-Screen zu sein')
-            else:
-                xs = find_screen_x(fim, top)
-                if xs is None:
-                    problems.append(
-                        f'{f.name}: Kacheloberkante bei y={top} gefunden, '
-                        f'Ausdehnung aber nicht messbar')
-                else:
-                    left, right = xs
-                    dark, min_dark = count_indicators(
-                        fim, top, left, right, status_dp)
-                    if dark < min_dark:
-                        problems.append(
-                            f'{f.name}: keine System-Symbole in der '
-                            f'Statusleiste ({dark} dunkle Pixel, '
-                            f'>= {min_dark} erwartet) - der Screen wirkt '
-                            f'wie ein Bild statt wie ein Geraet')
-                    notes.append(f'Symbole {dark}/{min_dark}')
+          # 3) System-Indikatoren im fertigen Bild. Nur wo ueberhaupt eine
+          #    Statusleiste gezeichnet wird - 03_entdecken besteht aus losen
+          #    Kacheln auf dem Verlauf, ohne Geraet und ohne System-UI.
+          final = final_dir / f.name
+          if has_statusbar and final.exists():
+              fim = Image.open(final).convert('RGB')
+              top = find_screen(fim)
+              if top is None:
+                  problems.append(
+                      f'{f.name}: abgerundete App-Kachel nicht gefunden - '
+                      f'das fertige Bild scheint kein Verlauf plus '
+                      f'App-Screen zu sein')
+              else:
+                  xs = find_screen_x(fim, top)
+                  if xs is None:
+                      problems.append(
+                          f'{f.name}: Kacheloberkante bei y={top} gefunden, '
+                          f'Ausdehnung aber nicht messbar')
+                  else:
+                      left, right = xs
+                      dark, min_dark = count_indicators(
+                          fim, top, left, right, status_dp)
+                      if dark < min_dark:
+                          problems.append(
+                              f'{f.name}: keine System-Symbole in der '
+                              f'Statusleiste ({dark} dunkle Pixel, '
+                              f'>= {min_dark} erwartet) - der Screen wirkt '
+                              f'wie ein Bild statt wie ein Geraet')
+                      notes.append(f'Symbole {dark}/{min_dark}')
 
-        print(f'  {f.name:<26} {"  ".join(notes)}')
+          print(f'  {f.name:<26} {"  ".join(notes)}')
 
     print()
     if problems:

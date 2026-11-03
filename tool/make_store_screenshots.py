@@ -203,6 +203,79 @@ SHOTS = {
     ),
 }
 
+# Die ENGLISCHEN Texte (03.11.2026).
+#
+# BISHER gab es nur einen Textsatz: die englische Store-Liste zeigte
+# deutsche Headlines UEBER deutschen Screenshots. Das war die
+# schlimmste Variante - ein Bild, das in zwei Sprachen spricht.
+#
+# Die Zusagen sind dieselben wie auf Deutsch und genauso am Code
+# nachpruefbar: sechs Farbschemata, drei Erscheinungsmodi, E2E auch
+# ueber das Relay, Entfernungsanzeige in 10-km-Stufen und nur auf
+# Wunsch, keine Ortesspeicherung, 60 Eisbrecher in 10 Kategorien.
+#
+# Die Ueberschriften sind bewusst kurz: sie stehen im 9:16-Bild neben
+# dem Verlauf und duerfen nicht ueber die Kachel hinauslaufen.
+SHOTS_EN = {
+    '01_willkommen': (
+        'Blind date\n'
+        'with substance',
+        'Personality before looks: listen first,\n'
+        'and see a photo only after the spark.',
+        'No photo before you meet',
+    ),
+    '02_aktuelles': (
+        'Your overview,\n'
+        'every day',
+        'New messages, new likes, new sparks:\n'
+        'all in one place.',
+        'No subscription, no ads',
+    ),
+    '03_chat': (
+        'Your chat stays\n'
+        'between you',
+        'End-to-end encrypted, even over the relay.\n'
+        'Nobody but the two of you can read it.',
+        'Write what really matters',
+    ),
+    '04_entdecken': (
+        'Five ways\n'
+        'to spark a match',
+        'From Find your Match to Transit Spark:\n'
+        'a glance on the train is enough.',
+        'End-to-end encrypted',
+    ),
+    '05_anpassen': (
+        'Your style,\n'
+        'your colors',
+        'Six colour schemes, light/system/dark and your own\n'
+        'chat background - all of it is kept.',
+        'Also 6 chat patterns',
+    ),
+    '06_hell_dunkel': (
+        'Light or dark,\n'
+        'exactly as you like',
+        'Three appearance modes: light, system or dark -\n'
+        'the app follows your device.',
+        'Also six colour schemes',
+    ),
+    '08_datenschutz': (
+        'You decide\n'
+        'who sees what.',
+        'Your profile for everyone - or only for the people\n'
+        'you have a spark with. Distance only shows\n'
+        'when you allow it: in 10 km steps.',
+        'No location stored',
+    ),
+    '07_eisbrecher': (
+        '60 questions against\n'
+        'the silence',
+        'Icebreakers for the first chat: tap,\n'
+        'send, talk. In 10 categories.',
+        'Tap, send, talk',
+    ),
+}
+
 
 def darken(img, amount=0.26):
     """Zieht den Markenverlauf Richtung Schwarz.
@@ -330,6 +403,55 @@ OUT_WQHD_OHNE = OUT_WQHD.with_name('wqhd-ohne-systemleiste')
 # hier nichts nach fastlane kopiert.
 OUT_9x16_KACHELN = OUT_9x16.with_name('9x16-kacheln')
 OUT_WQHD_KACHELN = OUT_WQHD.with_name('wqhd-kacheln')
+
+# ---------------------------------------------------------------------------
+# Die Sprachlaeufe (03.11.2026)
+# ---------------------------------------------------------------------------
+#
+# BISHER lief der Compositor genau einmal - fuer Deutsch. Die englische
+# Store-Liste bekam deshalb die DEUTSCHEN Bilder: die Tablet-Skripte
+# kopierten dieselben Dateien in beide Sprachen. Wer die englische
+# Liste oeffnete, sah ein englisches Feature-Graphic und darunter
+# deutsche Screenshots mit deutschen Headlines.
+#
+# Jetzt laeuft der Compositor je Sprache ueber eine eigene QUELLE, eigene
+# TEXTE und eigene AUSGABE. Die englischen Render kommen aus
+# test/screenshots/store_v091_en/ - erzeugt von
+# store_v091_shots_test.dart mit STORE_SHOTS_LANG=en.
+#
+# Die DE-Ausgabeordner behalten ihre Namen (9x16, wqhd, 9x16-kacheln):
+# sie liegen seit v0.9.2 in den Release-Skripten und im Tablet-Skript.
+# Die englischen kommen nach marketing/en/ - so bleiben sie getrennt
+# und ueberschreiben sich nicht gegenseitig.
+MARKETING = ROOT / 'releases' / 'testapk' / 'screenshots' / 'marketing'
+
+
+def _profil(lang, quellordner, shots, fastlane_sprache, heading_eisbrecher):
+    """Baut die Pfade eines Sprachlaufs."""
+    basis = ROOT / 'test' / 'screenshots' / quellordner
+    out = MARKETING if lang == 'de' else MARKETING / 'en'
+    return {
+        'lang': lang,
+        'src': basis / 'phone',
+        'tiles': basis / 'tiles',
+        'cards': basis / 'cards',
+        'shots': shots,
+        'heading_eisbrecher': heading_eisbrecher,
+        'out_9x16': out / '9x16',
+        'out_wqhd': out / 'wqhd',
+        'out_9x16_ohne': out / '9x16-ohne-systemleiste',
+        'out_wqhd_ohne': out / 'wqhd-ohne-systemleiste',
+        'out_9x16_kacheln': out / '9x16-kacheln',
+        'out_wqhd_kacheln': out / 'wqhd-kacheln',
+        'out_fastlane': (ROOT / 'fastlane' / 'metadata' / 'android'
+                         / fastlane_sprache / 'images' / 'phoneScreenshots'),
+    }
+
+
+PROFILE = [
+    _profil('de', 'store_v091', SHOTS, 'de-DE', 'Eisbrecher-Fragen'),
+    _profil('en', 'store_v091_en', SHOTS_EN, 'en-US', 'Icebreaker questions'),
+]
 
 
 def _draw_clock(img, d, cy, color):
@@ -1726,7 +1848,7 @@ CARDS_DPR = 3.0
 CARD_MARGIN_LOGICAL = 30.0
 
 
-def _load_card_rects(screen):
+def _load_card_rects(screen, cards_dir=CARDS):
     """Liest die Kachelrechtecke EINES Screens.
 
     Der Dateiname traegt den VOLLEN Screen-Namen, nicht nur die ersten
@@ -1736,7 +1858,7 @@ def _load_card_rects(screen):
     umbenannter Screen ist damit kein Datenleck mehr, sondern ein
     sichtbar falsches Bild.
     """
-    path = CARDS / f'rects_{screen}.json'
+    path = cards_dir / f'rects_{screen}.json'
     if not path.is_file():
         return []
     try:
@@ -1755,7 +1877,7 @@ def _load_card_rects(screen):
     return out
 
 
-def load_cards(screen, default_src=None, margin=0.0):
+def load_cards(screen, default_src=None, margin=0.0, cards_dir=CARDS):
     """Schneidet die Kacheln eines Screens aus den exportierten Bildern.
 
     `default_src` gilt fuer Rechtecke OHNE eigenen Dateiverweis: bei 01
@@ -1787,11 +1909,11 @@ def load_cards(screen, default_src=None, margin=0.0):
     """
     out = []
     cache = {}
-    for name, src, rect in _load_card_rects(screen):
+    for name, src, rect in _load_card_rects(screen, cards_dir):
         src = src or default_src
         if not src:
             continue
-        img_path = CARDS / src
+        img_path = cards_dir / src
         if img_path not in cache:
             if not img_path.is_file():
                 continue
@@ -2303,7 +2425,7 @@ def save_png(img: Image.Image, path: pathlib.Path, tries: int = 6):
     raise last
 
 
-def _check_claims():
+def _check_claims(shots):
     """Sperrt Textversprechen, die der Code nicht einloest.
 
     Bis v0.9.2 stand in den Shots "In einer Minute startklar" und
@@ -2331,7 +2453,7 @@ def _check_claims():
          'Prozentangabe zur Verschluesselung ist nicht belegbar'),
     ]
     problems = []
-    for name, (headline, subline, badge) in SHOTS.items():
+    for name, (headline, subline, badge) in shots.items():
         blob = ' '.join((headline, subline, badge))
         for pattern, why in forbidden:
             m = re.search(pattern, blob, re.I)
@@ -2341,50 +2463,110 @@ def _check_claims():
     return problems
 
 
-def main():
-    if not SRC.exists():
-        sys.exit('Keine App-Screens gefunden. Erst rendern:\n'
-                 '  $env:STORE_SHOTS="1"; flutter test --update-goldens '
-                 'test/screenshots/store_v091_shots_test.dart')
+# Die englischen Gegenstuecke (03.11.2026).
+#
+# Die Liste oben ist auf deutsche Worte geschrieben. Ohne ein
+# englisches Gegenstueck waere der englische Textlauf ungeprueft -
+# und das ist genau der Satz, der am Anfang dieser Sache falsch war
+# ("In einer Minute startklar" stand im deutschen Shots, im englischen
+# waere "ready in a minute" durchgerutscht).
+VERBOT_EN = [
+    (r'\b(in|a|one)?\s*minut', 'Zeitversprechen ohne Beleg'),
+    (r'\binstantly\b', '"instantly" ist ein Zeitversprechen'),
+    (r'\b(right away|immediately)\b', 'Zeitversprechen ohne Beleg'),
+    (r'\bseconds?\b', 'Zeitversprechen ohne Beleg'),
+    (r'\bfree\b', '"free" ist eine Preiszusage, keine Funktion'),
+    (r'\bunlimited\b', '"unlimited" ist eine Ressourcen-Zusage'),
+    (r'\bnever\s+deleted', 'Datenloesch-Zusage'),
+    (r'\bsecure\b', '"secure" ohne Bezug ist eine Behauptung'),
+    (r'\b\d+\s*%\s*(secure|encrypted)',
+     'Prozentangabe zur Verschluesselung ist nicht belegbar'),
+]
 
-    problems = _check_claims()
+
+def _check_claims_en(shots):
+    """Dieselbe Pruefung fuer die englischen Texte."""
+    problems = []
+    for name, (headline, subline, badge) in shots.items():
+        blob = ' '.join((headline, subline, badge))
+        for pattern, why in VERBOT_EN:
+            m = re.search(pattern, blob, re.I)
+            if m:
+                problems.append(
+                    f'{name}: "{m.group(0)}" - {why}')
+    return problems
+
+
+def main():
+    """Baut die Store-Bilder fuer BEIDE Sprachen.
+
+    Die Reihenfolge ist fest: Deutsch zuerst (es ist die Quelle, aus
+    der die uebrigen Texte stammen), Englisch danach. Jeder Lauf
+    schreibt in seine eigenen Ordner - die beiden Sprachen duerfen
+    sich nicht gegenseitig ueberschreiben.
+    """
+    for profil in PROFILE:
+        print('=' * 68)
+        print('Sprache: %s' % profil['lang'])
+        print('=' * 68)
+        _baue_sprache(profil)
+
+
+def _baue_sprache(profil):
+    """Baut die Store-Bilder EINER Sprache.
+
+    Alles, was vorher fest verdrahtet war (Quelle, Ordner, Texte),
+    kommt jetzt aus dem Profil - dadurch koennen DE und EN mit
+    demselben Code und verschiedenen Daten laufen.
+    """
+    if not profil['src'].exists():
+        sys.exit('Keine App-Screens gefunden (%s). Erst rendern:\n'
+                 '  $env:STORE_SHOTS="1"; flutter test --update-goldens '
+                 'test/screenshots/store_v091_shots_test.dart'
+                 % profil['src'].relative_to(ROOT))
+
+    if profil['lang'] == 'en':
+        problems = _check_claims_en(profil['shots'])
+    else:
+        problems = _check_claims(profil['shots'])
     if problems:
         print('STORE-SCREENSHOT-TEXT abgelehnt:', file=sys.stderr)
         for p in problems:
             print('  X', p, file=sys.stderr)
         print('\nDer Text ist ein Produktversprechen. Wenn die Aussage '
               'zutrifft,\ndarf sie NICHT einfach hier erlaubt werden - '
-              'sie muss im Kommentar\nzu SHOTS begruendet werden, damit '
+              'sie muss im Kommentar\nzu den Textressourcen begruendet werden, '
+              'damit '
               'sie beim naechsten Review wiedergeprueft wird.',
               file=sys.stderr)
         sys.exit(1)
 
-    for d in (OUT_9x16, OUT_WQHD, OUT_FASTLANE,
-              OUT_9x16_OHNE, OUT_WQHD_OHNE,
-              OUT_9x16_KACHELN, OUT_WQHD_KACHELN):
+    for d in (profil['out_9x16'], profil['out_wqhd'], profil['out_fastlane'],
+              profil['out_9x16_ohne'], profil['out_wqhd_ohne'],
+              profil['out_9x16_kacheln'], profil['out_wqhd_kacheln']):
         d.mkdir(parents=True, exist_ok=True)
 
-    for name, (headline, subline, badge) in SHOTS.items():
+    for name, (headline, subline, badge) in profil['shots'].items():
         # Die Kachel ist nach ihrer Position benannt, der Render im Repo
         # nach dem Screen (siehe QUELLE).
         quelle = QUELLE.get(name, name)
-        src = SRC / f'{quelle}.png'
+        src = profil['src'] / f'{quelle}.png'
         if not src.exists():
             print('  fehlt:', src.name)
             continue
-        if name == '04_entdecken' and TILES.exists():
+        if name == '04_entdecken' and profil['tiles'].exists():
             # Sonderfall: nicht der Screen, sondern die einzelnen
             # Modus-Kacheln (siehe compose_modes).
-            tiles = sorted(TILES.glob('tile_*.png'),
+            tiles = sorted(profil['tiles'].glob('tile_*.png'),
                            key=lambda p: int(p.stem.split('_')[1]))
             if tiles:
                 crops = [_crop_tile(Image.open(t)) for t in tiles]
                 a = compose_modes(crops, headline, subline, badge)
                 b = compose_modes_wqhd(crops, headline, subline, badge)
-                for d, im in ((OUT_9x16, a), (OUT_WQHD, b),
-                              (OUT_FASTLANE, a),
-                              (OUT_9x16_OHNE, a), (OUT_WQHD_OHNE, b),
-                              (OUT_9x16_KACHELN, a), (OUT_WQHD_KACHELN, b)):
+                for d, im in ((profil['out_9x16'], a), (profil['out_wqhd'], b),
+                              (profil['out_fastlane'], a),
+                              (profil['out_9x16_ohne'], a), (profil['out_wqhd_ohne'], b),
+                              (profil['out_9x16_kacheln'], a), (profil['out_wqhd_kacheln'], b)):
                     save_png(im, d / f'{name}.png')
                 print(f'  {name}: 9x16 {a.size} + wqhd {b.size} '
                       f'({len(tiles)} Kacheln, drei Varianten)')
@@ -2400,7 +2582,7 @@ def main():
         # Diagonale laeuft durch die Auswahl Hell/System/Dunkel und
         # trennt genau zwischen "System" und "Dunkel".
         if name == '06_hell_dunkel':
-            dunkel_src = SRC / '04_anpassen_dunkel.png'
+            dunkel_src = profil['src'] / '04_anpassen_dunkel.png'
             if not dunkel_src.exists():
                 print('  fehlt:', dunkel_src.name,
                       '- zuerst den dunklen Screen rendern')
@@ -2455,7 +2637,7 @@ def main():
         b = compose_wqhd(shot, headline, subline, badge, dark=dunkel)
 
         # Variante MIT nachgeahmter Systemleiste.
-        for d, im in ((OUT_9x16, a), (OUT_WQHD, b), (OUT_FASTLANE, a)):
+        for d, im in ((profil['out_9x16'], a), (profil['out_wqhd'], b), (profil['out_fastlane'], a)):
             save_png(im, d / f'{name}.png')
 
         # Variante OHNE. Der Aufruf geht ueber das Modul-Flag, damit
@@ -2468,8 +2650,8 @@ def main():
                               sauberer_schnitt=sauberer_schnitt,
                               split=split_x)
             b2 = compose_wqhd(shot, headline, subline, badge, dark=dunkel)
-            save_png(a2, OUT_9x16_OHNE / f'{name}.png')
-            save_png(b2, OUT_WQHD_OHNE / f'{name}.png')
+            save_png(a2, profil['out_9x16_ohne'] / f'{name}.png')
+            save_png(b2, profil['out_wqhd_ohne'] / f'{name}.png')
         finally:
             globals()['OMIT_SYSTEM_UI'] = False
 
@@ -2480,17 +2662,18 @@ def main():
         # einem Kachelbild: dann ist es kein Fehler, nur weniger schoen.
         cards = load_cards(quelle, default_src=f'{quelle}.png',
                            margin=CARD_MARGIN_LOGICAL if name in
-                           ('01_willkommen', '05_anpassen') else 0.0)
+                           ('01_willkommen', '05_anpassen') else 0.0,
+                           cards_dir=profil['cards'])
         if cards and name != '06_hell_dunkel':
             k = compose_cards(cards, headline, subline, badge,
-                              heading='Eisbrecher-Fragen'
+                              heading=profil['heading_eisbrecher']
                               if name == '07_eisbrecher' else None,
                               cols=2 if name == '07_eisbrecher' else 1,
                               dark=dunkel)
-            save_png(k, OUT_9x16_KACHELN / f'{name}.png')
+            save_png(k, profil['out_9x16_kacheln'] / f'{name}.png')
             kw = compose_card_wqhd(shot, headline, subline, badge,
                                    dark=dunkel)
-            save_png(kw, OUT_WQHD_KACHELN / f'{name}.png')
+            save_png(kw, profil['out_wqhd_kacheln'] / f'{name}.png')
             print(f'  {name}: 9x16 {a.size} + wqhd {b.size} '
                   f'(drei Varianten, {len(cards)} Kacheln aus echten '
                   'Widgets)')
@@ -2498,18 +2681,18 @@ def main():
 
         k = compose_card(shot, headline, subline, badge, dark=dunkel)
         kw = compose_card_wqhd(shot, headline, subline, badge, dark=dunkel)
-        save_png(k, OUT_9x16_KACHELN / f'{name}.png')
-        save_png(kw, OUT_WQHD_KACHELN / f'{name}.png')
+        save_png(k, profil['out_9x16_kacheln'] / f'{name}.png')
+        save_png(kw, profil['out_wqhd_kacheln'] / f'{name}.png')
 
         print(f'  {name}: 9x16 {a.size} + wqhd {b.size} '
               f'(drei Varianten, Kachel {k.size}'
               f'{", abgedunkelt" if dunkel else ""})')
 
-    print('Fertig.')
-    _remove_stale(SHOTS.keys())
+    print('Fertig (%s).' % profil['lang'])
+    _remove_stale(profil['shots'].keys(), profil)
 
 
-def _remove_stale(names):
+def _remove_stale(names, profil):
     """Entfernt PNGs in den Ausgabeordnern, die zu keinem Screen mehr gehoeren.
 
     Wichtig fuer den Store: in `fastlane/metadata/.../phoneScreenshots`

@@ -1639,6 +1639,12 @@ const Map<String, Map<String, String>> _strings = {
     'intro.prompt.humor.silent': 'Was bringt dich zum Lachen, das niemand mitbekommt?',
     'intro.prompt.dream.learn': 'Was möchtest du unbedingt einmal lernen?',
     'intro.prompt.dream.trip': 'Wohin würdest du fahren, wenn Geld keine Rolle spielt?',
+    // Leitfaden fuer die Audio-Vorstellung (3 Schritte, ROADMAP 0.10.0)
+    'intro.guide.title': 'Leitfaden für deine Vorstellung',
+    'intro.guide.step1': 'Wer bist du?',
+    'intro.guide.step2': 'Was macht dich aus?',
+    'intro.guide.step3': 'Warum bist du hier?',
+    'intro.guide.hint': 'Tippe einen Schritt an, um ihn selbst zu wählen.',
     'intro.audioTitleRequired': 'Audio-Vorstellung *',
     'intro.audioTitle': 'Audio-Vorstellung',
     'intro.savedState':
@@ -4593,6 +4599,12 @@ const Map<String, Map<String, String>> _strings = {
     'intro.prompt.humor.silent': 'What makes you laugh when nobody is watching?',
     'intro.prompt.dream.learn': 'What would you really like to learn?',
     'intro.prompt.dream.trip': 'Where would you travel if money were no object?',
+    // Guide for the audio intro (3 steps, roadmap 0.10.0)
+    'intro.guide.title': 'Guide for your intro',
+    'intro.guide.step1': 'Who are you?',
+    'intro.guide.step2': 'What makes you tick?',
+    'intro.guide.step3': 'Why are you here?',
+    'intro.guide.hint': 'Tap a step to choose it yourself.',
     'intro.audioTitleRequired': 'Audio intro *',
     'intro.audioTitle': 'Audio intro',
     'intro.savedState': 'Recorded. You can re-record or remove it.',

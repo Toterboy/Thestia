@@ -20,6 +20,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'support/store_screenshot_insets.dart';
+import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/providers/user_preferences_provider.dart';
 import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/models/match.dart';
@@ -46,6 +47,37 @@ import 'package:thestia/widgets/theme_picker.dart';
 /// in der normalen Testsuite).
 final bool _enabled = Platform.environment.containsKey('STORE_SHOTS');
 
+/// Sprache des Renders: 'de' (Standard) oder 'en'.
+///
+/// WARUM (03.11.2026): Bis hierher gab es nur einen Render, und die
+/// englische Store-Liste trug deshalb DEUTSCHE Bilder - die
+/// Tablet-Skripte kopierten dieselben Dateien in beide Sprachen. Wer
+/// die englische Liste oeffnete, sah ein englisches Feature-Graphic
+/// und darunter deutsche Screenshots. Das ist keine Kosmetik: die
+/// Screenshots sind das, was im Store zum Installieren verleitet.
+///
+/// Der Render laeuft deshalb zweimal - einmal je Sprache:
+///
+///   $env:STORE_SHOTS="1"; flutter test --update-goldens \
+///       test/screenshots/store_v091_shots_test.dart
+///   $env:STORE_SHOTS="1"; $env:STORE_SHOTS_LANG="en"; flutter test \
+///       --update-goldens test/screenshots/store_v091_shots_test.dart
+final String _lang =
+    (Platform.environment['STORE_SHOTS_LANG'] ?? 'de').toLowerCase();
+
+/// Waehlt den Text passend zur Render-Sprache.
+String _t(String de, String en) => _lang == 'en' ? en : de;
+
+/// Wurzelordner der Render-Ausgaben.
+///
+/// Die englischen Renders kommen in einen EIGENEN Ordner: sie
+/// duerfen sich nicht mit den deutschen ueberschreiben - sonst waere
+/// nach dem zweiten Lauf der deutsche Stand weg.
+const String _rootDe = 'store_v091';
+const String _rootEn = 'store_v091_en';
+
+String get _root => _lang == 'en' ? _rootEn : _rootDe;
+
 // Zielaufloesung der App-Screens: echtes Smartphone-Seitenverhaeltnis
 // (1080x2400 = 20:9). Die Komposition in
 // tool/make_store_screenshots.py verwendet genau diese Quelle.
@@ -64,7 +96,7 @@ const double _dpr = 3.0;
 
 /// Zielordner der einzelnen Kacheln. make_store_screenshots.py liest
 /// daraus und setzt sie auf dem Verlauf zusammen.
-const String outTiles = 'store_v091/tiles';
+String get outTiles => '$_root/tiles';
 
 /// Zielordner fuer die Kacheln der Screens 01, 02, 04 und 05.
 ///
@@ -74,7 +106,7 @@ const String outTiles = 'store_v091/tiles';
 /// Widgets des Screens an Ort und Stelle". Deshalb wird nichts
 /// umgebaut und nichts nachgeschnitten: rects.json sagt, welcher
 /// Bildbereich zu welcher Karte gehoert.
-const String outCards = 'store_v091/cards';
+String get outCards => '$_root/cards';
 
 /// SharedPreferences-Instanz fuer die Einzel-Exporte.
 ///
@@ -229,6 +261,11 @@ Widget _harness(Widget child, SharedPreferences prefs, {
       securePrefsProvider.overrideWithValue(_FakeSecurePrefs()),
       secureProfileStoreProvider.overrideWithValue(_FakeSecureProfileStore()),
       sharedPrefsProvider.overrideWithValue(prefs),
+      // Die Sprache. `L10n.t` liest localeProvider ueber den
+      // L10nScope - dieser Override ist das, was den Screen wirklich
+      // umschaltet. MaterialApp.locale allein aendert nur die
+      // Material-Widgets (Datum, Zahlen), nicht die App-Texte.
+      localeProvider.overrideWith((ref) => Locale(_lang)),
       // Das Profil als VERIFIZIERT (NUTZERWUNSCH 31.10.2026: "Die Modi
       // sollen auf den Screenshots alle entsperrt sein (Nur im
       // Screenshot)").
@@ -260,6 +297,20 @@ Widget _harness(Widget child, SharedPreferences prefs, {
           id: AppConstants.currentUserId,
           name: '',
           bio: '',
+          // ERWACHSENEN-ALTER (03.11.2026).
+          //
+          // Ohne birthDate ist `profil.age` null, der Code rechnet dann
+          // mit 0 - und 0 ist ein Minderjaehriger. Der Datenschutz-
+          // Bildschirm zeigte deshalb die Jugendschutz-Variante
+          // ("In deinem Alter bleibt die Entfernung aus"), waehrend
+          // die Kachel-Ueberschrift das Verhalten von Erwachsenen
+          // beschreibt ("erst, wenn du sie erlaubst: Stufen von
+          // 10 km"). Zwei widersprechende Aussagen in EINEM Bild.
+          //
+          // Das Play-Listing richtet sich an Erwachsene (Zielgruppe
+          // 18+, "Restrict Minor Access"). Das Bild zeigt darum einen
+          // erwachsenen Nutzer - mit dem Text, den ER sieht.
+          birthDate: DateTime(1994, 4, 12),
           isVerified: true,
           verificationState: VerificationState.verified,
         ));
@@ -267,12 +318,15 @@ Widget _harness(Widget child, SharedPreferences prefs, {
       }),
       ...extra,
     ],
-    child: MaterialApp(
+    // Der L10nScope steht UEBER dem MaterialApp: `L10n.t` sucht ihn
+    // ueber den Kontext. Wer ihn weglässt, bekommt deutsche Texte in
+    // einem englischen Listing.
+    child: L10nScope(child: MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: theme.copyWith(
         cardTheme: theme.cardTheme.copyWith(elevation: 0, shadowColor: const Color(0x00000000)),
       ),
-      locale: const Locale('de'),
+      locale: Locale(_lang),
       supportedLocales: const [Locale('de'), Locale('en')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -280,7 +334,7 @@ Widget _harness(Widget child, SharedPreferences prefs, {
         GlobalCupertinoLocalizations.delegate,
       ],
       home: child,
-    ),
+    )),
   );
 }
 
@@ -378,7 +432,8 @@ Future<void> _pump(
 /// oder nichts mehr tuete, wuerde der Hinweis im Bild stehen bleiben
 /// und `check_store_screenshots.py` faelle nicht auf.
 Future<void> _wegtippeVerbindungshinweis(WidgetTester tester) async {
-  const hinweis = 'Kein P2P m\u{f6}glich';
+  // Der Text kommt aus der App: 'chat.relayBannerShort'.
+  final hinweis = _t('Kein P2P m\u{f6}glich', 'No P2P available');
   final text = find.text(hinweis);
   if (text.evaluate().isEmpty) return; // nichts zu tun
 
@@ -437,25 +492,29 @@ void _noop(String _) {}
 /// Layout hier nachbaut, erzeugt wieder ein Mockup - und genau das
 /// war der Fehler, den dieser Screen vorher hatte.
 Widget _anpassenScreen(String erscheinung) {
+  // Die Ueberschriften sind im echten Screen L10n-Keys
+  // ('settings.colors' = Farbwelt/Color scheme,
+  // 'settings.chatBg' = Chat-Hintergrund/Chat background). Hier steht
+  // die kurzere Fassung, damit sie im Bild Platz haben.
   return Builder(
     builder: (context) => Scaffold(
-      appBar: AppBar(title: const Text('Erscheinungsbild')),
+      appBar: AppBar(title: Text(_t('Erscheinungsbild', 'Appearance'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Farbschema',
+            Text(_t('Farbschema', 'Color scheme'),
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             ThemePicker(selectedName: 'classic', onChanged: (_) {}),
             const SizedBox(height: 16),
-            Text('Erscheinung',
+            Text(_t('Erscheinung', 'Light or dark'),
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             AppearanceSelector(value: erscheinung, onChanged: _noop),
             const SizedBox(height: 16),
-            Text('Chat-Hintergrund',
+            Text(_t('Chat-Hintergrund', 'Chat background'),
                 style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 8),
             const ChatBackgroundPicker(),
@@ -481,7 +540,7 @@ void _shot(
       await _pump(
         tester,
         build(),
-        outDir: 'store_v091/${entry.key}',
+        outDir: '$_root/${entry.key}',
         name: name,
         size: entry.value.size,
         dpr: entry.value.dpr,
@@ -504,7 +563,7 @@ void _shotDark(String name, Widget Function() build) {
     await _pump(
       tester,
       build(),
-      outDir: 'store_v091/phone',
+      outDir: '$_root/phone',
       name: name,
       size: _phone,
       dpr: _dpr,
@@ -549,11 +608,12 @@ Widget _soleTileHost(Card card) {
       securePrefsProvider.overrideWithValue(_FakeSecurePrefs()),
       secureProfileStoreProvider.overrideWithValue(_FakeSecureProfileStore()),
       sharedPrefsProvider.overrideWithValue(_sharedPrefs),
+      localeProvider.overrideWith((ref) => Locale(_lang)),
     ],
-    child: MaterialApp(
+    child: L10nScope(child: MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: theme,
-      locale: const Locale('de'),
+      locale: Locale(_lang),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -576,7 +636,7 @@ Widget _soleTileHost(Card card) {
           ),
         ),
       ),
-    ),
+    )),
   );
 }
 
@@ -776,14 +836,19 @@ class _FakeChatService extends ChatService {
       matchId == 'store-shot-match' ? _messages : const [];
 }
 
-UserProfile _chatPartner() => const UserProfile(
+UserProfile _chatPartner() => UserProfile(
       id: 'store-shot-peer',
       name: 'Mara',
-      bio: 'Bücher, Rad, Kaffee.',
+      bio: _t('Bücher, Rad, Kaffee.', 'Books, bikes, coffee.'),
       state: 'Nordrhein-Westfalen',
-      interests: ['Fotografieren', 'Wandern', 'Kochen'],
+      interests: _lang == 'en'
+          ? const ['Photography', 'Hiking', 'Cooking']
+          : const ['Fotografieren', 'Wandern', 'Kochen'],
       isVerified: true,
-      introText: 'Erzähl mir etwas, das nicht auf deinem Profil steht.',
+      introText: _t(
+        'Erzähl mir etwas, das nicht auf deinem Profil steht.',
+        'Tell me something that is not on your profile.',
+      ),
     );
 
 List<Message> _chatHistory() {
@@ -814,11 +879,17 @@ List<Message> _chatHistory() {
 // an der letzten Zeile wirkt, als haette man den Faden verloren - und
 // genau so gelesen wird das Bild zuerst.
   return [
-    m('1', 'store-shot-peer', 'Ich muss dir was Beunruhigendes sagen.', 0),
-    m('2', 'me', 'Jetzt bin ich neugierig.', 2),
-    m('3', 'store-shot-peer', 'Ich verhandle nachts mit meinem Toaster.', 4),
-    m('4', 'me', 'Gewinnst du meistens?', 6),
-    m('5', 'store-shot-peer', 'Selten. Er akzeptiert nur exakt zwei Scheiben.', 8),
+    m('1', 'store-shot-peer',
+        _t('Ich muss dir was Beunruhigendes sagen.',
+           'I have to tell you something unsettling.'), 0),
+    m('2', 'me', _t('Jetzt bin ich neugierig.', 'Now I am curious.'), 2),
+    m('3', 'store-shot-peer',
+        _t('Ich verhandle nachts mit meinem Toaster.',
+           'I negotiate with my toaster at night.'), 4),
+    m('4', 'me', _t('Gewinnst du meistens?', 'Do you usually win?'), 6),
+    m('5', 'store-shot-peer',
+        _t('Selten. Er akzeptiert nur exakt zwei Scheiben.',
+           'Rarely. It accepts exactly two slices.'), 8),
   ];
 }
 
@@ -994,7 +1065,7 @@ void main() {
       await _pump(
         tester,
         const ChatDetailScreen(matchId: 'store-shot-match'),
-        outDir: 'store_v091/phone',
+        outDir: '$_root/phone',
         name: '02_chat',
         size: _phone,
         dpr: _dpr,
@@ -1035,7 +1106,7 @@ void main() {
       await _pump(
         tester,
         const HomeScreen(),
-        outDir: 'store_v091/phone',
+        outDir: '$_root/phone',
         name: '02_aktuelles',
         size: _phone,
         dpr: _dpr,
@@ -1190,7 +1261,7 @@ void main() {
 // zusammen verlangt der Analyzer nicht - er verlangt const fuer
 // `SingleChildScrollView`, weil dessen Parameter alle konstant sind.
 _shot('06_datenschutz', () => Scaffold(
-      appBar: AppBar(title: const Text('Einstellungen')),
+      appBar: AppBar(title: Text(_t('Einstellungen', 'Settings'))),
       body: const SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
         child: PrivacySection(readOnly: true),

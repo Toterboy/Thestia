@@ -169,10 +169,33 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
       Store-Icon (512×512) und Feature Graphic (1024×500) sind bereits
       erzeugt, siehe `tool/make_play_icon.py` und
       `tool/make_feature_graphic.py`
+- [x] **Store-Listing auch auf Englisch** (03.11.2026) – die englische
+      Liste war unvollständig: Sie hatte **keine** Phone-Screenshots, und
+      die Tablet-Bilder waren Kopien der deutschen. Wer die englische
+      Liste öffnete, sah ein englisches Feature-Graphic über deutschen
+      Screenshots mit deutschen Headlines – ein Bild, das in zwei
+      Sprachen spricht. Jetzt ist beides getrennt:
+      * Der Renderer läuft je Sprache: `store_v091_shots_test.dart` mit
+        `STORE_SHOTS_LANG=en` schreibt nach `test/screenshots/store_v091_en/`.
+        Entscheidend war der `L10nScope`: `MaterialApp.locale` allein
+        ändert nur Datum und Zahlen, die App-Texte kommen aus
+        `L10n.t` – ohne den Scope bleibt der Screen deutsch.
+      * Der Compositor hat je Sprache eigene Quelle, eigene Texte und
+        eigene Ausgabe (`tool/make_store_screenshots.py`, `PROFILE`).
+      * Die Textprüfung gilt für beide Sprachen (`_check_claims_en`):
+        „ready in a minute" wäre sonst durchgerutscht.
+      * Das Tablet-Skript baut je Sprache aus der eigenen Quelle –
+        die englischen Bilder sind englisch, nicht übersetzt.
+      * Nebenbefund: das Render-Profil bekam ein Erwachsenen-Alter. Ohne
+        `birthDate` rechnet die App mit 0 Jahren, und 0 ist ein
+        Minderjähriger – der Datenschutz-Screen zeigte im Store die
+        Jugendschutz-Variante („In deinem Alter bleibt die Entfernung
+        aus"), während die Kachel-Überschrift das Erwachsenen-Verhalten
+        beschrieb. Zwei widersprüchliche Aussagen in einem Bild.
 - [ ] F-Droid-Einreichung (google-freier Flavor, UnifiedPush, Fastlane-
       Metadaten liegen vor; Einreichung steht aus). **Ziel: 0.10.0**,
       unabhängig vom Play-Upload
-- [ ] **Vorstellungs-Vorlagen (Text + Audio)**: Prompt-Karten (rotierend,
+- [x] **Vorstellungs-Vorlagen (Text + Audio)**: Prompt-Karten (rotierend,
       z. B. „Erzähl von einem Moment, der dich zuletzt zum Lachen gebracht
       hat") als opt-in Gerüst für die Text-Vorstellung – ein Tipp fügt
       einen Einstiegssatz ein, Freitext bleibt erlaubt. Für die Audio-
@@ -182,6 +205,18 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
       Aufzählung – zahlt direkt auf das Audio-first-Matching von
       Find your Match ein. **Ziel: 0.10.0**, ausformuliert unter
       „Geplant für 0.10.0".
+      **Umgesetzt:** Der Text-Teil war schon in 0.9.2 fertig (rotierende
+      Prompt-Karten aus vier Themen, `lib/data/intro_prompt_catalog.dart`;
+      ein Tipp hängt den Einstiegssatz an, Freitext bleibt erlaubt).
+      Der Audio-Teil kam in 0.10.0: `lib/widgets/intro_recording_guide.dart`
+      zeigt während der Aufnahme die drei Winkel in fester Reihenfolge.
+      Zwei Entscheidungen, die absicht sind: die Schritte laufen von
+      selbst (alle 15 Sekunden ein neuer Winkel), ein Tipp auf einen
+      Schritt übernimmt aber dauerhaft die Steuerung – der Nutzer hat
+      das letzte Wort; und nach dem dritten Schritt bleibt der dritte
+      stehen, weil die Aufnahme bis 5 Minuten laufen darf und der
+      Leitfaden nur drei Winkel hat. Der Leitfaden ist eine Stütze, kein
+      Fragebogen: Pflicht ist weiterhin nur Text UND Audio.
 
 ## 0.8.0 – Geschmack & Matching (umgesetzt, inkl. Nachträge 1–2)
 
@@ -519,10 +554,20 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
       * **Offen bleibt die rechtliche Prüfung** (siehe DSFA Abschnitt 7):
         Form und Nachweis der Einwilligung, die Einwilligungsfähigkeit
         ab 16 nach § 3a JUG und die Abgrenzung zu Art. 8 DSGVO.
-- [ ] **Vorstellungs-Vorlagen (Text + Audio)** – hier verbindlich für
-      0.10.0 eingeplant; Ausformulierung siehe „In Arbeit". Kleines
-      Feature, aber es hebt die Profilqualität der frühen Nutzerschaft
-      direkt, solange das Match-Erlebnis noch ohne Stimmen auskommt
+- [x] **Vorstellungs-Vorlagen (Text + Audio)** – erledigt in 0.10.0.
+      Der Text-Teil war schon in 0.9.2 fertig (rotierende Prompt-Karten
+      aus vier Themen, `lib/data/intro_prompt_catalog.dart`; ein Tipp
+      hängt den Einstiegssatz an, Freitext bleibt erlaubt). Der
+      Audio-Teil ist neu: `lib/widgets/intro_recording_guide.dart`
+      begleitet die Aufnahme mit drei Winkeln in fester Reihenfolge
+      (Wer bist du? / Was macht dich aus? / Warum bist du hier?). Die
+      Schritte laufen von selbst (alle 15 Sekunden ein neuer Winkel),
+      ein Tipp auf einen Schritt übernimmt dauerhaft die Steuerung, und
+      nach dem dritten Schritt bleibt der dritte stehen. Der Leitfaden
+      ist eine Stütze, kein Fragebogen – Pflicht bleibt Text UND Audio.
+      Kleines Feature, aber es hebt die Profilqualität der frühen
+      Nutzerschaft direkt, solange das Match-Erlebnis noch ohne Stimmen
+      auskommt
 
 - [x] **Suchfilter mit drei echten Modi** – „Entfernung (km)",
       „Bundesland" und „Ganz Deutschland" filtern jetzt auch

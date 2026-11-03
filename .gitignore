@@ -131,6 +131,9 @@ test/screenshots/goldens/
 # SafeArea-Reservierung beim naechsten Checkout spurlos verschwunden,
 # waehrend das Python-Werkzeug weiter auf sie wartet.
 test/screenshots/store_v091/
+# Der englische Render (03.11.2026) - dieselbe Regel, eigener Ordner.
+# store_v091_shots_test.dart mit STORE_SHOTS_LANG=en schreibt hierhin.
+test/screenshots/store_v091_en/
 fastlane/metadata/android/*/images/phoneScreenshots/
 releases/testapk/screenshots/
 

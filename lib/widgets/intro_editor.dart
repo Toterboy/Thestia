@@ -10,6 +10,7 @@ import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/services/speech_level_detector.dart';
 import 'package:thestia/services/supabase_storage_service.dart';
 import 'package:thestia/widgets/audio_review_sheet.dart';
+import 'package:thestia/widgets/intro_recording_guide.dart';
 
 /// Editor für die eigene Vorstellung ("Find your Match"): Text + Audio.
 ///
@@ -519,6 +520,16 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
           ],
+        ),
+        const SizedBox(height: 12),
+        // Drei-Schritte-Leitfaden (ROADMAP 0.10.0, "Vorstellungs-Vorlagen
+        // (Text + Audio)"): Wer 60 Sekunden redet, braucht eine Struktur,
+        // sonst sagt am Ende jeder nur "Ja, also... ich bin halt so".
+        // Die Text-Vorstellung hat die Prompt-Karten - fuer die Audio-
+        // Vorstellung war das die letzte fehlende Haelfte.
+        IntroRecordingGuide(
+          elapsedSeconds: _recordSeconds,
+          paused: _paused,
         ),
         const SizedBox(height: 12),
         // Lautstärke-Balken als EIGENES Widget: Die 10-Hz-Amplitude baut

@@ -56,6 +56,19 @@ HOOK = 'Person statt Bild.'
 # Sprachen) und in docs/DATENSCHUTZ.md Abschnitt 3, dort eingeraenkt.
 PROOF = 'Datenschutzfreundliches Dating  ·  Ende-zu-Ende verschlüsselt'
 
+# Die englischen Gegenstuecke (03.11.2026).
+#
+# BISHER wurde fuer BEIDE Sprachen dasselbe deutsche Motiv ausgeliefert
+# ("Person statt Bild. / Datenschutzfreundliches Dating"). Im
+# englischen Listing stand damit ein deutscher Claim - der erste
+# deutsche Text, den ein englischsprachiger Besucher gesehen haette.
+#
+# Die Aussage ist dieselbe und genauso belegbar: die App zeigt vor dem
+# ersten Funken kein Foto, und die Chats sind Ende-zu-Ende
+# verschluesselt (auch ueber das Relay).
+HOOK_EN = 'Person, not picture.'
+PROOF_EN = 'Privacy-friendly dating  ·  End-to-end encrypted'
+
 FONT_BOLD = pathlib.Path('C:/Windows/Fonts/segoeuib.ttf')
 FONT_REG = pathlib.Path('C:/Windows/Fonts/segoeui.ttf')
 FONT_SEMI = pathlib.Path('C:/Windows/Fonts/segoeuisb.ttf')
@@ -133,17 +146,12 @@ def emblem(size: int) -> Image.Image:
         return im.convert('RGBA').resize((size, size), Image.LANCZOS)
 
 
-def main() -> int:
-    print('=' * 70)
-    print('PLAY FEATURE GRAPHIC')
-    print('=' * 70)
-    if not ICON.exists():
-        print(f'  FEHLER: {ICON} nicht gefunden.')
-        return 1
-    if not FONT_BOLD.exists():
-        print(f'  FEHLER: {FONT_BOLD} nicht gefunden - Text nicht moeglich.')
-        return 1
+def _draw(hook: str, proof: str, sprache: str):
+    """Zeichnet die Feature Graphic fuer EINE Sprache.
 
+    Getrennt je Sprache, weil der Claim ein Text ist: ein deutscher
+    Claim im englischen Listing ist ein Fehler, keine Sparmassnahme.
+    """
     canvas = gradient((W, H))
     d = ImageDraw.Draw(canvas)
 
@@ -171,18 +179,18 @@ def main() -> int:
     print(f'  Textfeld: x={tx}..{W - MARGIN}  ({max_w} px breit)')
 
     f_brand = fit_font(d, BRAND, FONT_BOLD, 104, max_w)
-    f_hook = fit_font(d, HOOK, FONT_SEMI, 46, max_w)
-    f_proof = fit_font(d, PROOF, FONT_REG, 25, max_w)
+    f_hook = fit_font(d, hook, FONT_SEMI, 46, max_w)
+    f_proof = fit_font(d, proof, FONT_REG, 25, max_w)
     print(f'  Schriftgrade (an Textfeld angepasst): Marke {f_brand.size}, '
           f'Claim {f_hook.size}, Nachweis {f_proof.size}')
-    for label, txt, f in (('Marke', BRAND, f_brand), ('Claim', HOOK, f_hook),
-                          ('Nachweis', PROOF, f_proof)):
+    for label, txt, f in (('Marke', BRAND, f_brand), ('Claim', hook, f_hook),
+                          ('Nachweis', proof, f_proof)):
         w = d.textbbox((0, 0), txt, font=f)[2]
         print(f'    {label:9s} {w:4d} px  {"passt" if w <= max_w else "PASST NICHT"}')
 
     # Textblock auf die Mitte des Emblems ausrichten
     heights = []
-    for txt, font in ((BRAND, f_brand), (HOOK, f_hook)):
+    for txt, font in ((BRAND, f_brand), (hook, f_hook)):
         b = d.textbbox((0, 0), txt, font=font)
         heights.append((b, font, txt))
     gap1, gap2 = 12, 16
@@ -193,12 +201,12 @@ def main() -> int:
         d.text((tx, y - b[1]), txt, font=font, fill=color)
         y += (b[3] - b[1]) + gap1
     y += gap2 - gap1
-    b = d.textbbox((0, 0), PROOF, font=f_proof)
-    d.text((tx, y - b[1]), PROOF, font=f_proof, fill=INK_SOFT)
+    b = d.textbbox((0, 0), proof, font=f_proof)
+    d.text((tx, y - b[1]), proof, font=f_proof, fill=INK_SOFT)
 
     # Harte Zusicherung: nichts darf ueber den Rand hinausragen
-    for label, txt, f in (('Marke', BRAND, f_brand), ('Claim', HOOK, f_hook),
-                          ('Nachweis', PROOF, f_proof)):
+    for label, txt, f in (('Marke', BRAND, f_brand), ('Claim', hook, f_hook),
+                          ('Nachweis', proof, f_proof)):
         b = d.textbbox((0, 0), txt, font=f)
         assert tx + b[2] <= W - MARGIN, f'{label} ragt ueber den rechten Rand'
     assert iy >= 0 and y + f_proof.size <= H, 'Text ragt vertikal heraus'
@@ -206,15 +214,39 @@ def main() -> int:
     # Alpha ausschliessen: Play akzeptiert nur JPEG oder 24-Bit-PNG.
     assert canvas.mode == 'RGB', f'unerwarteter Modus {canvas.mode}'
     out_paths = []
-    for lang in ('de-DE', 'en-US'):
-        d_dir = OUT_DIR / lang / 'images'
-        d_dir.mkdir(parents=True, exist_ok=True)
-        p = d_dir / OUT_NAME
-        canvas.save(p, format='PNG', optimize=True)
-        out_paths.append(p)
+    d_dir = OUT_DIR / sprache / 'images'
+    d_dir.mkdir(parents=True, exist_ok=True)
+    p = d_dir / OUT_NAME
+    canvas.save(p, format='PNG', optimize=True)
+    out_paths.append(p)
+    return out_paths, canvas
+
+
+
+def main() -> int:
+    print('=' * 70)
+    print('PLAY FEATURE GRAPHIC')
+    print('=' * 70)
+    if not ICON.exists():
+        print(f'  FEHLER: {ICON} nicht gefunden.')
+        return 1
+    if not FONT_BOLD.exists():
+        print(f'  FEHLER: {FONT_BOLD} nicht gefunden - Text nicht moeglich.')
+        return 1
+
+    out_paths = []
+    canvases = []
+    for sprache, hook, proof in (
+        ('de-DE', HOOK, PROOF),
+        ('en-US', HOOK_EN, PROOF_EN),
+    ):
+        paths, canvas = _draw(hook, proof, sprache)
+        out_paths.extend(paths)
+        canvases.append((sprache, canvas))
 
     # Gegenprobe
-    print(f'  Kanalmodus: {canvas.mode} (24-Bit-PNG ohne Alpha, wie gefordert)')
+    print('  Kanalmodus: %s (24-Bit-PNG ohne Alpha, wie gefordert)'
+          % canvases[0][1].mode)
     print()
     print('  Gegenprobe:')
     ok = True
@@ -227,11 +259,11 @@ def main() -> int:
                   f'Modus {chk.mode}  {p.stat().st_size:,} B  '
                   f'-> {"OK" if good else "FEHLER"}')
     print()
-    print(f'  Hinweis: Inhalt ist der DEUTSCHIE Claim. Fuer {OUT_NAME} in')
-    print('  en-US wird dasselbe deutsche Motiv ausgeliefert - Play nimmt pro')
-    print('  Listing die Datei des jeweiligen Sprachordners. Vor einem')
-    print('  englischen Listing also HOOK/PROOF auf Englisch umstellen und')
-    print('  en-US-Screenshots nachziehen (aktuell 0).')
+    print('  Je Sprache ein eigener Claim: Deutsch "Person statt Bild.",')
+    print('  Englisch "Person, not picture.". Play nimmt pro Listing die')
+    print('  Datei des jeweiligen Sprachordners - ein deutscher Claim im')
+    print('  englischen Listing waere ein deutscher Text im englischen')
+    print('  Listing.')
     print()
     print('OK: 1024x500, 24-Bit-PNG.' if ok else 'FEHLER: Format Grenze gerissen.')
     return 0 if ok else 1
