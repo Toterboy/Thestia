@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/models/guardian_status.dart';
 import 'package:thestia/providers/guardian_provider.dart';
 
 /// Sperrt die App ausserhalb der von den Elternteilen erlaubten Zeit.
@@ -51,12 +52,56 @@ class UsageTimeGate extends ConsumerStatefulWidget {
   ConsumerState<UsageTimeGate> createState() => _UsageTimeGateState();
 }
 
-class _UsageTimeGateState extends ConsumerState<UsageTimeGate> {
+class _UsageTimeGateState extends ConsumerState<UsageTimeGate>
+    with WidgetsBindingObserver {
   Timer? _ticker;
+
+  /// Laeuft die App im Vordergrund? Im Hintergrund wird der Ticker
+  /// angehalten - ein Dart-Isolate arbeitet im Hintergrund weiter, und
+  /// jeder Weckruf kostet Akku.
+  bool _imVordergrund = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Der Ticker haengt an der Sperre: er laeuft nur, wenn ueberhaupt
+    // eine Nutzungszeit begrenzt ist. Sonst weckt er 2880 Mal am Tag
+    // einen Nutzer, der gar keine Beschraenkung hat.
+    ref.listenManual<GuardianStatus>(guardianProvider, (prev, next) {
+      _tickerAnpassen(next);
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final vordergrund = state == AppLifecycleState.resumed;
+    if (vordergrund != _imVordergrund) {
+      _imVordergrund = vordergrund;
+      _tickerAnpassen(ref.read(guardianProvider));
+    }
+    if (mounted) setState(() {});
+  }
+
+  /// Startet oder stoppt den Ticker passend zur Lage.
+  void _tickerAnpassen(GuardianStatus status) {
+    final sperreAktiv = status.usageLimitEnabled &&
+        status.usageStartMin != null &&
+        status.usageEndMin != null;
+
+    if (!sperreAktiv || !_imVordergrund) {
+      _ticker?.cancel();
+      _ticker = null;
+      return;
+    }
+    if (_ticker != null) return;
     // Alle 30 Sekunden nachsehen: sonst bleibt die App offen, wenn die
     // erlaubte Zeit ablaeuft, und der Jugendliche merkt es erst beim
     // naechsten Bildschirmwechsel.
@@ -66,12 +111,6 @@ class _UsageTimeGateState extends ConsumerState<UsageTimeGate> {
         if (mounted) setState(() {});
       },
     );
-  }
-
-  @override
-  void dispose() {
-    _ticker?.cancel();
-    super.dispose();
   }
 
   @override

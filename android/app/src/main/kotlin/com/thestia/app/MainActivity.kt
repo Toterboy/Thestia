@@ -1,5 +1,7 @@
 package com.thestia.app
 
+import android.app.Activity
+import android.app.Application
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.AdvertiseCallback
 import android.bluetooth.le.AdvertiseData
@@ -32,6 +34,9 @@ class MainActivity : FlutterActivity() {
     private var advertiser: android.bluetooth.le.BluetoothLeAdvertiser? = null
     private var advertiseCallback: AdvertiseCallback? = null
 
+    /** Wurde der Lifecycle-Callback fuer FLAG_SECURE schon registriert? */
+    private var secureCallbackRegistered = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // FLAG_SECURE verhindert Screenshots und Screen-Recording.
@@ -45,7 +50,49 @@ class MainActivity : FlutterActivity() {
                 WindowManager.LayoutParams.FLAG_SECURE,
                 WindowManager.LayoutParams.FLAG_SECURE
             )
+            // ... und fuer jede Activity, die NICHT von uns kommt - vor
+            // allem der Bild-Crop aus image_cropper
+            // (com.yalantis.ucrop.UCropActivity). Dort war der
+            // Screenshot-Schutz vorher nicht gesetzt: auf dem
+            // Profilbild-Screen konnte also ein Foto gemacht werden.
+            secureOtherActivities()
         }
+    }
+
+    /**
+     * Setzt FLAG_SECURE auf jede Activity, die nicht von uns stammt.
+     *
+     * WARUM (03.11.2026): FLAG_SECURE wurde bisher nur in der
+     * MainActivity gesetzt. Der Bild-Crop (image_cropper) oeffnet eine
+     * eigene Activity - auf ihr war der Screenshot-Schutz nicht
+     * gesetzt. Die Activity laesst sich nicht von uns ableiten (sie
+     * stammt aus dem Plugin), also registriert die App einen
+     * Lifecycle-Callback, der das Flag bei jeder Activity setzt.
+     *
+     * Der Callback wird nur registriert, wenn Screenshots verboten
+     * sind - der Store-Screenshot-Build bleibt unberuehrt.
+     */
+    private fun secureOtherActivities() {
+        if (secureCallbackRegistered) return
+        secureCallbackRegistered = true
+        application.registerActivityLifecycleCallbacks(
+            object : Application.ActivityLifecycleCallbacks {
+                override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+                    if (activity is MainActivity) return
+                    activity.window.setFlags(
+                        WindowManager.LayoutParams.FLAG_SECURE,
+                        WindowManager.LayoutParams.FLAG_SECURE
+                    )
+                }
+
+                override fun onActivityStarted(activity: Activity) {}
+                override fun onActivityResumed(activity: Activity) {}
+                override fun onActivityPaused(activity: Activity) {}
+                override fun onActivityStopped(activity: Activity) {}
+                override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+                override fun onActivityDestroyed(activity: Activity) {}
+            }
+        )
     }
 
     /**

@@ -1229,7 +1229,16 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
   /// Zurückkommen in die App sofort nachladen.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state != AppLifecycleState.resumed) return;
+    if (state != AppLifecycleState.resumed) {
+      // AKKU (03.11.2026): Im Hintergrund wird nicht gepollt. Vorher lief
+      // der Timer weiter und feuerte alle 15 Sekunden einen echten
+      // Server-Request - auch wenn der Screen gar nicht sichtbar war.
+      // Der Screen bleibt im Backstack gemountet, also lief der Timer
+      // unbegrenzt weiter.
+      _refreshTimer?.cancel();
+      _refreshTimer = null;
+      return;
+    }
     _idleTicks = 0;
     _load().then((_) {
       if (mounted) _scheduleRefresh();

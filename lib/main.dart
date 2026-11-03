@@ -471,14 +471,39 @@ Future<void> _initializeSupabase() async {
       publishableKey: supabaseAnonKey,
       // Deep-Link-Handling für Passwort-Reset / E-Mail-Bestätigung
       // (thestia://reset-password): supabase_flutter hört über app_links auf
-      // eingehende URIs. Der eingebaute Filter erkennt aber nur
-      // access_token/code/error – PKCE-Links mit token_hash (Standard bei
-      // E-Mail-OTP und Recovery) würden ignoriert. Das Predicate erweitert
-      // die Erkennung um token_hash, damit getSessionFromUrl den Link
-      // verarbeitet und das passwordRecovery-Event feuert (das der
-      // AuthNotifier in den passwordRecoveryPendingProvider schreibt).
-      // QR-Deep-Links (thestia://user/...) tragen kein Auth-Token und fallen
-      // weiterhin NICHT darunter.
+      // eingehende URIs.
+      //
+      // SICHERHEIT (03.11.2026): Es wird AUSSCHLIESSLICH der PKCE-Code
+      // akzeptiert.
+      //
+      // Warum: "thestia://" ist ein exportiertes Custom Scheme - JEDE
+      // App auf dem Gerät kann die Thestia-App mit einer URI starten.
+      // Übernimmt die App eine URI mit access_token oder token_hash, legt
+      // sie eine Session für genau dieses Konto an - und zwar OHNE jeden
+      // Nachweis, dass der Nutzer den Link in seiner E-Mail auch
+      // geöffnet hat.
+      //
+      // Das ist eine Session-Fixierung: eine bösartige App startet
+      // Thestia mit dem eigenen Recovery-Link, der Nutzer landet im
+      // Passwort-Reset-Screen und setzt ahnungslos ein Passwort - und
+      // lädt danach Fotos, Chats und Standort in das Konto des
+      // Angreifers. In einer Dating-App mit Bild- und Standortdaten ist
+      // das ein Datenabfluss.
+      //
+      // Beide vom Betreiber genutzten Flows sind PKCE-basiert:
+      //   * resetPasswordForEmail sendet einen code_challenge
+      //   * signUp sendet einen code_challenge
+      // Der Link in der E-Mail enthält deshalb einen ?code=..., und der
+      // Austausch läuft über den code_verifier, den NUR diese App kennt.
+      // Ein fremder Code lässt sich hier nicht einlösen - die
+      // Fixierung ist damit ausgeschlossen.
+      //
+      // access_token und token_hash werden deshalb abgelehnt. Sie sind
+      // der Implicit-Flow bzw. der E-Mail-OTP-Flow; beide wären hier
+      // unbenutzte Freiheitsgrade und genau die Angriffsfläche.
+      //
+      // QR-Deep-Links (thestia://user/...) tragen kein Auth-Token und
+      // fallen ohnehin nicht darunter.
       authOptions: FlutterAuthClientOptions(
         // Audit H-6: Session (inkl. Refresh-Token) im Keystore/Keychain
         // statt im Klartext-SharedPreferences persistieren.
@@ -488,10 +513,9 @@ Future<void> _initializeSupabase() async {
           final fragment = Uri.splitQueryString(uri.fragment);
           bool has(String key) =>
               query.containsKey(key) || fragment.containsKey(key);
-          return has('access_token') ||
-              has('token_hash') ||
-              has('code') ||
-              has('error');
+          // NUR der PKCE-Code. Siehe die Erklaerung oben.
+          if (has('access_token') || has('token_hash')) return false;
+          return has('code') || has('error');
         },
       ),
       // SECURITY (Audit 2026-09-26): STRIKTES Zertifikat-Pinning fuer den

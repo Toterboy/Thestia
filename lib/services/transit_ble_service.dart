@@ -223,8 +223,11 @@ class TransitBleService {
     required String newToken,
     required void Function(String token, int rssi) onEncounter,
   }) async {
-    if (!_advertising) return;
+    // Der neue Token wird IMMER gemerkt - auch wenn gerade kein Funk
+    // laeuft (App im Hintergrund). Sonst waere nach dem Zurueckkommen
+    // ein aelteres Token aktiv, obwohl die Rotation eigentlich lief.
     _currentToken = newToken;
+    if (!_advertising) return;
     try {
       final ok = await _channel
           .invokeMethod<bool>('startAdvertise', {
@@ -297,6 +300,61 @@ class TransitBleService {
       if (token != null && token != _currentToken) {
         _onEncounter?.call(token, r.rssi);
       }
+    }
+  }
+
+  /// Haelt das Funk-Radio an, ohne die Sitzung zu beenden.
+  ///
+  /// AKKU + PRIVATSPHARE (03.11.2026): Das Advertising lief im
+  /// Hintergrund weiter - der native Zyklus sendet bis zu 45 Minuten im
+  /// ~100-ms-Takt (LOW_LATENCY). Der Kommentar am Dateianfang sagt
+  /// "Vordergrund-Betrieb"; die Umsetzung war es nicht. Mit diesem
+  /// Aufruf wird es wieder so.
+  ///
+  /// Der Token bleibt erhalten: beim Zurueckkommen wird mit demselben
+  /// Token weitergearbeitet (siehe [resume]).
+  Future<void> suspend() async {
+    if (!_advertising && !_scanning) return;
+    _scanning = false;
+    _pulseTimer?.cancel();
+    _pulseTimer = null;
+    try {
+      await _stopScanWindow();
+      await _channel.invokeMethod('stopAdvertise');
+    } catch (e) {
+      debugPrint('[TransitBle] Suspend fehlgeschlagen: $e');
+    }
+    _advertising = false;
+    // _currentToken und _onEncounter bleiben erhalten - das ist der
+    // Unterschied zu [stop].
+  }
+
+  /// Startet das Funk-Radio nach einem [suspend] wieder.
+  ///
+  /// Gibt false zurueck, wenn nicht gestartet werden konnte (z. B. weil
+  /// die Bluetooth-Berechtigung inzwischen fehlt).
+  Future<bool> resume() async {
+    final token = _currentToken;
+    if (token == null) return false;
+    if (_advertising) return true;
+    try {
+      final ok = await _channel
+          .invokeMethod<bool>('startAdvertise', {
+        'token': token,
+        'cycleMs': TransitBlePrivacy.advertiseCycleDelay().inMilliseconds,
+      }).timeout(const Duration(seconds: 10));
+      _advertising = ok ?? false;
+      if (!_advertising) {
+        debugPrint('[TransitBle] Resume abgelehnt.');
+        return false;
+      }
+      _startScanWindow();
+      _schedulePulseNext();
+      _scanning = true;
+      return true;
+    } catch (e) {
+      debugPrint('[TransitBle] Resume fehlgeschlagen: $e');
+      return false;
     }
   }
 

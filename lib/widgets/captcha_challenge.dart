@@ -96,6 +96,21 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
       return;
     }
     // Turnstile-Token (beginnt mit "0.") – Challenge erfolgreich.
+    //
+    // SICHERHEIT (03.11.2026): Der Bridge-Aufruf kommt aus JEDER im
+    // WebView geladenen Seite - auch aus einem Iframe. Ohne
+    // Formatpruefung koennte eine manipulierte Seite einen beliebigen
+    // String als "Token" einspielen. Der Server wuerde ihn ablehnen,
+    // aber die App meldete dennoch "Sicherheitscheck bestanden".
+    //
+    // Geprueft wird deshalb das Format, das Cloudflare selbst
+    // liefert: "0." gefolgt von einer Zeichenkette aus Buchstaben,
+    // Ziffern, "_" und "-". Alles andere wird als Fehler behandelt.
+    if (!_istTurnstileToken(text)) {
+      debugPrint('[CAPTCHA] Unplausibles Token-Format - verworfen.');
+      setState(() => _error = 'CAPTCHA_ERROR:invalid-token');
+      return;
+    }
     Navigator.of(context).pop(text);
   }
 
@@ -131,6 +146,17 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
         ),
       )
       ..loadRequest(Uri.parse(_captchaPageUrl));
+  }
+
+  /// Ist der String ein plausibles Turnstile-Token?
+  ///
+  /// Turnstile-Token beginnen mit "0." und enthalten nur Buchstaben,
+  /// Ziffern, "_" und "-". Alles andere kann nicht aus Cloudflare
+  /// stammen.
+  static bool _istTurnstileToken(String text) {
+    if (text.length < 8 || text.length > 4096) return false;
+    if (!text.startsWith('0.')) return false;
+    return RegExp(r'^[A-Za-z0-9_.-]+$').hasMatch(text);
   }
 
   /// Übersetzt den Turnstile-Fehlercode in eine verständliche Meldung.

@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:thestia/services/auth_exception.dart';
 import 'package:thestia/services/avatar_crypto.dart';
 import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// Service für private Avatar-Speicherung in Supabase Storage.
 ///
@@ -31,6 +32,26 @@ class SupabaseStorageService {
   static const String _bucket = 'avatars';
   static const String _fileName = 'avatar.jpg';
   static const int _signedUrlExpirySeconds = 3600;
+
+  /// Darf der Client dieser URL folgen?
+  ///
+  /// Erlaubt sind nur HTTPS und die eigenen Supabase-Hosts. Die
+  /// signierten Storage-URLen kommen vom Supabase-Projekt selbst; ein
+  /// kompromittiertes Backend (oder ein manipulierter
+  /// UnifiedPush-Endpunkt) dürfte die App nicht auf einen beliebigen
+  /// Host schicken können.
+  static bool _istErlaubterHost(String host) {
+    final h = host.toLowerCase();
+    if (h.isEmpty) return false;
+    // Das eigene Projekt und seine Storage-CDNs.
+    if (h.endsWith('.supabase.co')) return true;
+    // Der Host aus der Konfiguration (falls er nicht auf .supabase.co
+    // endet - z. B. bei einer selbst gehosteten Instanz).
+    final eigener = Uri.tryParse(AppConstants.supabaseUrlBase)?.host;
+    return eigener != null &&
+        eigener.isNotEmpty &&
+        h == eigener.toLowerCase();
+  }
 
   /// Lädt eine Chat-Media-Datei (Bild, Sprache) in den Storage hoch.
   ///
@@ -261,6 +282,19 @@ class SupabaseStorageService {
       final data = response.data as Map<String, dynamic>?;
       final url = data?['url'] as String?;
       if (url == null || url.isEmpty) return null;
+
+      // SICHERHEIT (03.11.2026): Die URL kommt aus der Edge Function.
+      // Sie wird ungeprueft geladen - ein kompromittiertes Backend (oder
+      // ein manipulierter UnifiedPush-Endpunkt) koennte die App sonst auf
+      // einen beliebigen Host schicken. Erlaubt sind deshalb nur
+      // HTTPS und die eigenen Supabase-Hosts.
+      final uri = Uri.tryParse(url);
+      if (uri == null ||
+          uri.scheme != 'https' ||
+          !_istErlaubterHost(uri.host)) {
+        debugPrint('[Storage] Download-URL nicht erlaubt: $url');
+        return null;
+      }
       final res = await http.get(Uri.parse(url));
       if (res.statusCode != 200) {
         if (kDebugMode) {

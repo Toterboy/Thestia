@@ -510,10 +510,22 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
 - [x] **Suchradius für 16- und 17-Jährige begrenzt** – höchstens 25 km
       oder nur das gleiche Bundesland; „Ganz Deutschland" ist gesperrt
       und wird serverseitig wie 25 km behandelt (Migration 164).
-- [x] **Posteingang im Admin-Bereich** – eingehende Mails nach Adresse
+- [x] **Posteingang im Admin-Bereich** - eingehende Mails nach Adresse
       sortiert (Kinderschutz, Support, Datenschutz, Presse), nur
       anzeigen, nicht antworten: es gibt bewusst keinen SMTP-Zugang aus
       der App heraus (Migration 168).
+- [x] **Keine Session-Fixierung über einen Deep-Link** - der
+      Deep-Link-Filter akzeptiert nur noch den PKCE-Code. Ein
+      exportiertes Custom Scheme lässt jede fremde App die Thestia-App
+      mit einer fremden Session starten.
+- [x] **Akku: das Funk-Radio schweigt im Hintergrund** - das
+      BLE-Advertising lief bis zu 45 Minuten im 100-ms-Takt weiter, auch
+      wenn die App nicht im Vordergrund war. Ebenso: kein Polling im
+      Hintergrund (Transit-Radar, Dating Hour, Quiz), kein Ticker ohne
+      Nutzungszeit-Beschränkung, Bildverarbeitung im Isolate.
+- [x] **FLAG_SECURE auf allen Bildschirmen** - auch auf dem Bild-Crop.
+- [x] **Downloads und Push-Endpunkte werden geprüft** - nur HTTPS und
+      nur eigene Hosts.
 
 ### Elternfreigabe und Aufsicht für 16- und 17-Jährige (Teil von 0.10.0)
 

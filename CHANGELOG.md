@@ -65,7 +65,57 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 ### Sicherheit
 
-- **Suchradius für 16- und 17-Jährige begrenzt:** höchstens 25 km oder
+- **Keine Session-Fixierung über einen Deep-Link:** „thestia://" ist
+  ein exportiertes Custom Scheme – jede App auf dem Gerät konnte die
+  Thestia-App mit einer URI starten. Übernahm die App eine URI mit
+  `access_token` oder `token_hash`, legte sie eine Session für genau
+  dieses Konto an, ohne dass der Nutzer den Link in seiner E-Mail
+  geöffnet haben musste. Eine bösartige App konnte so den
+  Passwort-Reset-Screen mit dem Konto des Angreifers öffnen; alles,
+  was der Nutzer danach hochlädt, wäre im Konto des Angreifers
+  gelandet. Beide genutzten Flows sind ohnehin PKCE-basiert (der Link
+  enthält einen Code, der nur mit dem geräteeigenen Verifier
+  einlösbar ist) – die abgelehnten Formen waren ungenutzte
+  Freiheitsgrade und genau die Angriffsfläche.
+- **FLAG_SECURE auf allen Bildschirmen:** Das Flag saß bisher nur in
+  der Haupt-Activity. Auf dem Bild-Crop (Profilbild) war der
+  Screenshot-Schutz nicht gesetzt – dort konnte also ein Foto gemacht
+  werden. Jetzt setzt ein Lifecycle-Callback das Flag auf jeder
+  Activity, die nicht von uns stammt.
+- **Der Captcha-Bridge prüft das Token-Format:** Der JavaScript-Kanal
+  des Sicherheitschecks nimmt Nachrichten von jeder im WebView
+  geladenen Seite an. Jetzt wird nur ein String im Turnstile-Format
+  („0." + erlaubte Zeichen) als Token akzeptiert.
+- **Downloads nur von eigenen Hosts:** Die signierte URL aus der
+  Edge-Funktion wurde ungeprüft geladen. Jetzt werden Schema und Host
+  geprüft – eine manipulierte Backend-Antwort kann die App nicht mehr
+  auf einen fremden Host schicken.
+- **Der UnifiedPush-Endpunkt muss HTTPS sein:** Sonst würden die
+  Push-Metadaten im Klartext übertragen.
+- **Das BLE-Funk-Radio schweigt im Hintergrund:** Siehe Akku.
+
+### Akku
+
+- **Das Bluetooth-Radio wird abgeschaltet, wenn die App in den
+  Hintergrund geht.** Das Advertising lief bis zu 45 Minuten im
+  ~100-ms-Takt weiter, auch wenn der Nutzer die App nicht ansah –
+  der eigene Kommentar am Dateianfang sagte „Vordergrund-Betrieb",
+  die Umsetzung folgte ihm nicht. Das war der größte Einzelposten
+  (und zugleich ein Datenschutzproblem: Funkaktivität ohne sichtbare
+  Anzeige).
+- **Kein Polling im Hintergrund:** Der Transit-Radar (alle 15 s ein
+  Server-Request), der Dating-Hour-Screen (30 s) und der Quiz-Warte-
+  poller (3 s) laufen jetzt nur im Vordergrund. Der Screen bleibt im
+  Backstack gemountet – vorher liefen die Timer unbegrenzt weiter.
+- **Der Ticker der Nutzungszeit-Sperre läuft nur, wenn überhaupt eine
+  Nutzungszeit begrenzt ist** – vorher 2880 Weckrufe am Tag bei jedem
+  Nutzer, unabhängig davon.
+- **Die Bildverarbeitung läuft im Hintergrund-Isolate** (Chat-
+  Hintergrund, Fehlerbericht). Das `image`-Paket ist reines Dart und
+  blockierte den UI-Thread; bei einem großen Foto hing der Bildschirm
+  sichtbar.
+
+### Suchradius für 16- und 17-Jährige begrenzt: höchstens 25 km oder
   nur das gleiche Bundesland. „Ganz Deutschland" ist gesperrt und wird
   serverseitig wie 25 km behandelt. Ab 18 bleibt alles frei wählbar.
   Beim Umsetzen kam heraus: der Modus „Bundesland" hatte nie einen

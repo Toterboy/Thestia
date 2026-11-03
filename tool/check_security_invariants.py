@@ -432,6 +432,54 @@ check('delete-user-data' not in all_sql
       'das Konto zu loeschen ist ein eigener Vorgang mit MFA-Bestaetigung')
 
 # =====================================================================
+# 1i) Keine Session-Fixierung ueber einen Deep-Link
+# =====================================================================
+#
+# SICHERHEIT (03.11.2026): "thestia://" ist ein EXPORTIERTES Custom
+# Scheme. Jede App auf dem Geraet kann die Thestia-App mit einer URI
+# starten. Uebernimmt die App eine URI mit access_token oder
+# token_hash, legt sie eine Session fuer genau dieses Konto an - ohne
+# jeden Nachweis, dass der Nutzer den Link in seiner E-Mail geoeffnet
+# hat. Eine boesartige App koennte so den Passwort-Reset-Screen mit
+# dem Konto des Angreifers oeffnen; alles, was der Nutzer danach
+# hochlaedt, landet im Konto des Angreifers.
+#
+# Beide von uns genutzten Flows sind PKCE-basiert (resetPasswordForEmail
+# und signUp senden einen code_challenge) - der Link enthaelt deshalb
+# einen ?code=..., der nur mit dem geräteeigenen code_verifier
+# eingeloest werden kann. Die Formen access_token und token_hash sind
+# ungenutzte Freiheitsgrade und genau die Angriffsflaeche.
+check("has('access_token') || has('token_hash')" in
+      read(ROOT / 'lib' / 'main.dart') and
+      "return false;" in read(ROOT / 'lib' / 'main.dart'),
+      'APP: Der Deep-Link-Filter lehnt access_token und token_hash ab',
+      'sonst kann eine fremde App die Thestia-App in eine fremde Session '
+      'zwingen (Session-Fixierung)')
+
+# =====================================================================
+# 1j) Heruntergeladen wird nur von eigenen Hosts
+# =====================================================================
+check('_istErlaubterHost' in
+      read(ROOT / 'lib' / 'services' / 'supabase_storage_service.dart'),
+      'APP: Download-URLs werden gegen eine Host-Liste geprueft',
+      'eine URL aus dem Backend darf die App nicht auf einen beliebigen '
+      'Host schicken')
+
+check("uri.scheme != 'https'" in
+      read(ROOT / 'lib' / 'services' / 'unified_push_service.dart'),
+      'APP: Der UnifiedPush-Endpunkt muss HTTPS sein',
+      'sonst wuerden die Push-Metadaten im Klartext uebertragen')
+
+# =====================================================================
+# 1k) Das BLE-Funk-Radio schweigt im Hintergrund
+# =====================================================================
+check('TransitBleService.instance.suspend()' in
+      read(ROOT / 'lib' / 'providers' / 'transit_provider.dart'),
+      'APP: Das BLE-Advertising wird im Hintergrund abgeschaltet',
+      'das Advertising lief sonst bis zu 45 Minuten im 100-ms-Takt weiter - '
+      'das ist Akku- und Datenschutzproblem in einem')
+
+# =====================================================================
 # 1c) Das Verifikationsvideo wird IMMER verschluesselt abgelegt
 # =====================================================================
 #

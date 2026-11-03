@@ -29,7 +29,8 @@ class DatingHourEventScreen extends ConsumerStatefulWidget {
   ConsumerState<DatingHourEventScreen> createState() => _DatingHourEventScreenState();
 }
 
-class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen> {
+class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen>
+    with WidgetsBindingObserver {
   Timer? _refreshTimer;
   Timer? _countdownTimer;
   String? _reminderScheduledFor;
@@ -44,12 +45,34 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _startAutoRefresh();
     _startCountdown();
   }
 
+  /// AKKU (03.11.2026): Die beiden Timer laufen nur im Vordergrund.
+  ///
+  /// Vorher pollt der Screen alle 30 Sekunden den Server - auch dann,
+  /// wenn die App im Hintergrund ist und der Screen gar nicht sichtbar
+  /// ist. Der Screen bleibt im Backstack gemountet, der Timer lief also
+  /// unbegrenzt weiter.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _startAutoRefresh();
+      _startCountdown();
+      ref.invalidate(currentDatingHourEventProvider);
+      return;
+    }
+    _refreshTimer?.cancel();
+    _refreshTimer = null;
+    _countdownTimer?.cancel();
+    _countdownTimer = null;
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _refreshTimer?.cancel();
     _countdownTimer?.cancel();
     super.dispose();

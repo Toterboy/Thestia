@@ -103,6 +103,19 @@ class UnifiedPushService {
       PushEndpoint endpoint, String instance) async {
     final url = endpoint.url;
     if (url.isEmpty || !SupabaseService.isInitialized) return;
+
+    // SICHERHEIT (03.11.2026): Der Endpunkt muss HTTPS sein.
+    //
+    // Der UnifiedPush-Connector bringt exportierte Komponenten mit, die
+    // jede App ansprechen kann. Der Export bleibt (ohne ihn kaeme kein
+    // Push an), deshalb wird die Annahme hier geprueft: ein Endpunkt
+    // auf http:// wuerde die Push-Metadaten im Klartext uebertragen -
+    // und koennte von einer fremden App gesetzt werden.
+    final uri = Uri.tryParse(url);
+    if (uri == null || uri.scheme != 'https' || uri.host.isEmpty) {
+      debugPrint('[UnifiedPush] Endpunkt nicht HTTPS - verworfen.');
+      return;
+    }
     try {
       await SupabaseDatabaseService(SupabaseService.client)
           .updateOwnProfile({'up_endpoint': url});

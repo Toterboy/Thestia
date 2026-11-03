@@ -28,7 +28,8 @@ class QuizScreen extends ConsumerStatefulWidget {
   ConsumerState<QuizScreen> createState() => _QuizScreenState();
 }
 
-class _QuizScreenState extends ConsumerState<QuizScreen> {
+class _QuizScreenState extends ConsumerState<QuizScreen>
+    with WidgetsBindingObserver {
   QuizState? _state;
   QuizQuestion? _question;
   QuizAnswerResult? _result;
@@ -45,11 +46,32 @@ class _QuizScreenState extends ConsumerState<QuizScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _load();
+  }
+
+  /// AKKU (03.11.2026): Im Hintergrund wird nicht gepollt.
+  ///
+  /// Der Wartepoller fragt alle 3 Sekunden den Quiz-Zustand ab. Laeuft
+  /// die App im Hintergrund, ist das eine sinnlose Last - und der
+  /// Screen bleibt im Backstack gemountet, der Timer lief also weiter.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Der Wartepoller laeuft nur, wenn tatsaechlich auf den Partner
+      // gewartet wird.
+      if (_waitingTimer != null) _startWaitingPoll();
+      return;
+    }
+    _cooldownTimer?.cancel();
+    _cooldownTimer = null;
+    _waitingTimer?.cancel();
+    _waitingTimer = null;
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _cooldownTimer?.cancel();
     _waitingTimer?.cancel();
     super.dispose();

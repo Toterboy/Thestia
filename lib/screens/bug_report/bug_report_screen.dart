@@ -1,7 +1,7 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -130,21 +130,34 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
   /// (EXIF/GPS). Rückgabe `null` bei Fehlschlag - die Originalbytes mit
   /// potenziellen GPS-/Gerätedaten werden NIE durchgereicht.
   Future<Uint8List?> _compressImage(Uint8List bytes) async {
+    // AKKU (03.11.2026): Die Bildverarbeitung laeuft im Hintergrund-
+    // Isolate (compute). Das `image`-Paket ist reines Dart - ohne
+    // compute() blockiert das Dekodieren und Neu-Encodieren den
+    // UI-Thread; bei einem grossen Foto ist der Bildschirm dann weder
+    // bedienbar noch flüssig.
     try {
-      final image = img.decodeImage(bytes);
-      if (image == null) return null;
-
-      final resized = img.copyResize(
-        image,
-        width: 1024,
-        height: (image.height * 1024 / image.width).round(),
-      );
-
-      final compressed = img.encodeJpg(resized, quality: 75);
+      final compressed = await compute(_compressImageTask, bytes);
       return Uint8List.fromList(compressed);
     } catch (_) {
       return null;
     }
+  }
+
+  /// Die eigentliche Bildarbeit - laeuft im Isolate.
+  ///
+  /// Top-Level-Funktion: compute() braucht eine Funktion, die nicht auf
+  /// den Zustand der Klasse zugreift.
+  static Uint8List _compressImageTask(Uint8List bytes) {
+    final image = img.decodeImage(bytes);
+    if (image == null) return Uint8List(0);
+
+    final resized = img.copyResize(
+      image,
+      width: 1024,
+      height: (image.height * 1024 / image.width).round(),
+    );
+
+    return Uint8List.fromList(img.encodeJpg(resized, quality: 75));
   }
 
   List<String> _base64Images() {

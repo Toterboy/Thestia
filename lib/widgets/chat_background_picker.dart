@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
@@ -34,6 +36,34 @@ class ChatBackgroundPicker extends ConsumerWidget {
   /// (auch 4K) und begrenzen den Bitmap-Speicher auf ~10 MB.
   static const int _targetPx = 1600;
 
+  /// Bild auf Zielgroesse bringen und als JPEG speichern.
+  ///
+  /// Laeuft im Isolate (compute). Top-Level-Funktion, weil compute()
+  /// keine Methode mit Zustand der Klasse aufrufen kann.
+  ///
+  /// Gibt null zurueck, wenn das Bild nicht lesbar war.
+  static Uint8List? _bildAufbereiten(Uint8List bytes) {
+    final decoded = img.decodePng(bytes) ?? img.decodeJpg(bytes);
+    if (decoded == null) return null;
+
+    // Auf Zielgröße bringen (Aspect-Ratio bleibt erhalten) und als
+    // JPEG speichern: verkleinert die Datei und vereinheitlicht das
+    // Format – ein laterales Dekodieren ist so günstig wie möglich.
+    final scaled = decoded.width > _targetPx || decoded.height > _targetPx
+        ? img.copyResize(
+            decoded,
+            width: decoded.width >= decoded.height
+                ? _targetPx
+                : (decoded.width * _targetPx / decoded.height).round(),
+            height: decoded.height >= decoded.width
+                ? _targetPx
+                : (decoded.height * _targetPx / decoded.width).round(),
+            interpolation: img.Interpolation.average,
+          )
+        : decoded;
+    return img.encodeJpg(scaled, quality: 88);
+  }
+
   Future<void> _pickCustom(BuildContext context, WidgetRef ref) async {
     try {
       final picked = await _picker.pickImage(source: ImageSource.gallery);
@@ -44,29 +74,19 @@ class ChatBackgroundPicker extends ConsumerWidget {
         _toast(context, 'chatbg.tooLarge');
         return;
       }
-      final decoded = img.decodePng(bytes) ?? img.decodeJpg(bytes);
-      if (decoded == null) {
+      // AKKU (03.11.2026): Die Bildverarbeitung laeuft im Hintergrund-
+      // Isolate (compute). Ohne das blockiert das Dekodieren eines
+      // grossen Fotos den UI-Thread - der Bildschirm haengt sichtbar
+      // (und die App kann in der Zeit keine Eingaben verarbeiten).
+      final jpeg = await compute(_bildAufbereiten, bytes);
+      if (!context.mounted) return;
+      if (jpeg == null || jpeg.isEmpty) {
         _toast(context, 'chatbg.badImage');
         return;
       }
-      // Auf Zielgröße bringen (Aspect-Ratio bleibt erhalten) und als
-      // JPEG speichern: verkleinert die Datei und vereinheitlicht das
-      // Format – ein laterales Dekodieren ist so günstig wie möglich.
-      final scaled = decoded.width > _targetPx || decoded.height > _targetPx
-          ? img.copyResize(
-              decoded,
-              width: decoded.width >= decoded.height
-                  ? _targetPx
-                  : (decoded.width * _targetPx / decoded.height).round(),
-              height: decoded.height >= decoded.width
-                  ? _targetPx
-                  : (decoded.height * _targetPx / decoded.width).round(),
-              interpolation: img.Interpolation.average,
-            )
-          : decoded;
       final dir = await getApplicationDocumentsDirectory();
       final target = File('${dir.path}/$_customFileName');
-      await target.writeAsBytes(img.encodeJpg(scaled, quality: 88));
+      await target.writeAsBytes(jpeg);
       // Pfad + Auswahl in einem Schritt: spart einen kompletten
       // JSON-Encode und einen Keystore-Write.
       await ref

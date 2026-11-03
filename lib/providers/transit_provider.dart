@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/models/transit_models.dart';
@@ -94,10 +94,34 @@ class TransitState {
 /// Provider für Transit Spark: aktiviert BLE (Advertising + Scanning),
 /// rotiert Tokens, hält den Encounter-Cache warm und sendet Signale
 /// mit 1-3 Merkmal-Tags.
-class TransitNotifier extends StateNotifier<TransitState> {
+class TransitNotifier extends StateNotifier<TransitState>
+    with WidgetsBindingObserver {
   TransitNotifier() : super(const TransitState()) {
+    WidgetsBinding.instance.addObserver(this);
     _encounters.load();
     unawaited(_refreshFeatureFlag());
+  }
+
+  /// AKKU + PRIVATSPHARE (03.11.2026): Das BLE-Funk-Radio wird
+  /// abgeschaltet, wenn die App in den Hintergrund geht.
+  ///
+  /// Vorher lief das Advertising bis zu 45 Minuten im ~100-ms-Takt
+  /// weiter, auch wenn der Nutzer die App nicht ansah. Der Kommentar
+  /// am Dateianfang von transit_ble_service.dart sagt "Vordergrund-
+  /// Betrieb" - das war die Absicht, die Umsetzung folgte ihr nicht.
+  ///
+  /// Der Radar bleibt dabei AKTIV (die Sitzung laeuft weiter, der
+  /// Nutzer sieht sie im Interface als "aktiv"); nur das Funk-Radio
+  /// schweigt. Beim Zurueckkommen startet es wieder.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      if (this.state.active) {
+        unawaited(TransitBleService.instance.resume());
+      }
+      return;
+    }
+    unawaited(TransitBleService.instance.suspend());
   }
 
   /// Fragt den Schalterstand ab (Migration 159).
@@ -360,6 +384,7 @@ class TransitNotifier extends StateNotifier<TransitState> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _rotateTimer?.cancel();
     _countdownTimer?.cancel();
     _persistTimer?.cancel();
