@@ -1,0 +1,26 @@
+Mehr Klarheit fuer 16 und 17
+
+Elternfreigabe, die freiwillig ist
+Wenn du 16 oder 17 bist, kannst du einen Elternteil eintragen. Er
+bekommt eine Mail mit einem Link, bestaetigt dort selbst und kann es
+jederzeit wieder rueckgaengig machen. Du musst nichts erzwingen - und
+wenn die Freigabe ausbleibt, ist die App trotzdem voll nutzbar.
+
+Deine Entscheidung mit 18
+Mit 18 entscheidest du selbst: Elternzugriff beenden, ein paar Monate
+weiter behalten oder erstmal weiter behalten. Der Bereich bleibt auch
+dann in den Einstellungen sichtbar.
+
+Benachrichtigungen ohne Einmischung
+Entsteht ein Funke, kann dein Elternteil eine kurze Nachricht bekommen -
+in dem Rhythmus, den er selbst waehlt. Ohne Namen, ohne Profile, ohne
+Nachrichteninhalte. Und eine begrenzte Nutzungszeit, gesichert mit einer
+PIN, die nur auf dem Server geprueft wird.
+
+Ein engerer Suchradius
+Bei 16 und 17 gilt jetzt hoechstens 25 km Radius - oder nur Personen
+aus deinem eigenen Bundesland. Ab 18 bleibt alles frei waehlbar.
+
+Fehlerbehebungen
+- Der Abstand zwischen zwei Profilen wird nicht mehr falsch berechnet
+- Profile mit altem Geburtsdatum zeigen die richtigen Ergebnisse

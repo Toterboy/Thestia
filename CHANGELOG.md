@@ -7,6 +7,70 @@ und folgt der [Semantic Versioning Specification (SemVer)](https://semver.org/la
 Solange die Versionsnummer mit `0.` beginnt (Initial Development Phase nach SemVer §4),
 können sich Schnittstellen und Verhalten jederzeit ändern.
 
+## [0.11.0] – Elternfreigabe und Aufsicht (Build 32, 2026-11-03)
+
+### Hinzugefügt
+
+- **Elternfreigabe für 16- und 17-Jährige:** Direkt nach dem
+  Willkommens-Screen kann die E-Mail-Adresse eines Elternteils
+  eingetragen werden. Sie muss von der eigenen Kontoadresse abweichen –
+  sonst würde sich der Jugendliche selbst als Elternteil eintragen.
+  Der Elternteil bekommt eine E-Mail mit einem Link, bestätigt dort die
+  Freigabe und kann sie jederzeit widerrufen. **Die Zustimmung ist
+  freiwillig**: nach § 3a JUG kann eine Person ab dem vollendeten
+  16. Lebensjahr selbst einwilligen, und niemand wird an der Nutzung
+  gehindert, weil die Zustimmung ausbleibt.
+- **Der Elternteil ist Genehmiger, nicht Nutzer:** Es gibt kein
+  Elternkonto. Er sieht weder Nachrichten noch Profile noch den
+  Standort des Jugendlichen.
+- **Eltern-Benachrichtigung bei neuen Funken:** Entsteht ein Funke (ein
+  gegenseitiges „Du magst mich" – nicht schon ein einzelnes Like),
+  bekommt der Elternteil eine kurze Nachricht. Die Häufigkeit legt er
+  selbst fest: täglich, wöchentlich, monatlich oder gar nicht. **Dabei
+  werden keine Namen, Profile oder Inhalte weitergegeben** – er erfährt
+  nur, *dass* ein Funke entstanden ist.
+- **Nutzungszeit per PIN gesichert:** Der Elternteil kann ein
+  Zeitfenster festlegen, in dem die App genutzt werden darf. Die
+  Einstellung ist mit einer vierstelligen PIN geschützt; die PIN wird
+  nur auf dem Server geprüft (bcrypt) und ist auf dem Gerät des
+  Jugendlichen nicht gespeichert. Nach fünf Fehlversuchen ist die
+  Prüfung für eine Stunde gesperrt.
+- **Entscheidung mit 18:** Wer bei der Registrierung 16 oder 17 war,
+  bekommt mit 18 einen eigenen Screen: Elternzugriff beenden, für 1 bis
+  6 Monate behalten oder erstmal weiter behalten. Der Bereich bleibt
+  auch ab 18 in den Einstellungen sichtbar, damit die Freigabe geordnet
+  werden kann.
+- **Neuer Einstellungsabschnitt „Kinderschutz & Elternzugriff"** mit
+  dem Stand der Freigabe, dem Benachrichtigungs-Rhythmus, der
+  Nutzungszeit und der Frage, wie lange der Zugriff bestehen soll.
+- **Eltern-Portal** unter `auth.thestia.de/eltern`: bestätigen,
+  einstellen, widerrufen.
+
+### Sicherheit
+
+- **Suchradius für 16- und 17-Jährige begrenzt:** höchstens 25 km oder
+  nur das gleiche Bundesland. „Ganz Deutschland" ist gesperrt und wird
+  serverseitig wie 25 km behandelt. Ab 18 bleibt alles frei wählbar.
+  Beim Umsetzen kam heraus: der Modus „Bundesland" hatte nie einen
+  serverseitigen Filter – server-seitig hießen „Bundesland" und „Ganz
+  Deutschland" beide „kein Radius". Die Bundesland-Bedingung ist neu.
+- **Der Token der Freigabe wird nur als Hash gespeichert** und ist nach
+  14 Tagen ungültig.
+- **Jede Anfrage, Bestätigung und jeder Widerruf wird protokolliert**
+  (Art. 5 Abs. 2 DSGVO).
+- **Datenschutzerklärung** um einen eigenen Abschnitt zur Elternaufsicht
+  erweitert (Version 20); die DSFA führt die neue Maßnahme und ihre
+  Grenzen.
+
+### Bekannte Grenzen
+
+- Die Nutzungszeit ist eine Hausregel auf dem Gerät des Jugendlichen.
+  Sie verhindert die versehentliche Überschreitung, ist aber kein
+  technisches Verbot – ein gerootetes Gerät kommt an ihr vorbei.
+- Die rechtliche Prüfung (§ 3a JUG, Art. 8 DSGVO, Verantwortlichkeit
+  für die Einrichtung eines kindlichen Kontos) steht aus. Sie ist in
+  der DSFA und in der Roadmap festgehalten.
+
 ## [0.10.0] – Nachtrag (Build 31, 2026-10-30/31)
 
 ### Hinzugefügt
