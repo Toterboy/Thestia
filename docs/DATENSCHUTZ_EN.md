@@ -45,6 +45,7 @@ analysis.
 | Parental supervision | E-mail address of one parent, status of the approval, time window of permitted use, four-digit PIN (stored as a hash only), timestamps of the request, confirmation and revocation | Consent of those with parental responsibility for accounts aged 16/17; limitation of the usage time; notification of the parents about new sparks. The parent is an **approver, not a user** - they have no account and see neither messages nor profiles | With the end of the approval; the events used for notifications are deleted after they have been sent |
 | Distance display | Distance in steps of 10 km, only if the person concerned has **switched it on**; below 5 km nothing is displayed. **For 16- and 17-year-olds the display is excluded - even if they switch it on** | Other users see only the step, never a value in metres or kilometres. Without switching it on they see no distance at all. The block for minors lives in the database (`profile_distance_km`, migration 163) and is based on the verified age | – |
 | Place of residence | Not collected | Since v0.10.0 no place, no city and no postcode area is stored or displayed - only the federal state | – |
+| **Information from which your sexual orientation can be inferred** (derived, not collected): who you are looking for, what you are looking for, your interests, your gender | Prerequisite for the matching; Art. 9 (2) (a) GDPR - processing only with your explicit consent (see section 2b) | with the account deletion; can be deleted individually at any time |
 | Profile details | Bio, interests, audio introduction, habits (smoking/alcohol/drugs), mood, music taste, **profile picture** (see section 3a) | Matching suitable contacts ("sparks") | With account deletion |
 | Device list | Device model (manufacturer + model identifier, e.g. "Samsung SM-S921B"), platform, app version, timestamp of the last login; on a sign-in from a **new** device additionally a notification email with the device name, the app version and the time | Display "Where am I logged in?" + "Sign out everywhere" (migration 071/078); no location, no serial number, no advertising ID | Automatically on sign-out; with account deletion |
 | Preferences | Search radius, age range, gender filter, "I'm looking for", colour world, UI switches (Blind Mode, visibility, notifications) | Restoration after a reinstall (migration 066/071/074/076) | With account deletion |
@@ -74,6 +75,47 @@ registration there is none: the first sign-in is the registration itself.
 When you sign in from a new device, you can see under
 *Settings → Privacy & account → Devices* which devices belong to your
 account, and log out foreign sessions.
+
+## 2b. Information from which your sexual orientation can be inferred
+
+**This has to be stated explicitly, because these are special category
+data.**
+
+Thestia does **not** ask you for your sexual orientation. But it can be
+inferred from what you enter - in a dating app that is unavoidable, because
+the whole point of the app is to bring together people whose wishes
+match. Together, these details allow conclusions about your sexual
+orientation:
+
+| Detail | What it reveals |
+|---|---|
+| **Who you are looking for** (`gender_preferences`: "men", "women", "all") | whether you are looking for men, women or everyone |
+| **What you are looking for** (`relationship_type`: "a relationship", "casual", "open") | the orientation of your wish |
+| **Your interests** (e.g. "romance", "erotic") | the kind of contact you are looking for |
+| **Your own gender** (`gender`) | combined with the above, the orientation |
+
+**Legal basis:** These are data of a **special category** under
+**Art. 9 GDPR** - the processing is therefore only permissible because
+you have **explicitly consented** (Art. 9 (2) (a)). You give that
+consent **by registering**; the notice about it is shown in the
+registration form. You can withdraw it at any time - see section 8.
+
+**What this means in practice:**
+
+* We do not ask for the orientation, and we do not store it as a field of
+  its own.
+* We do not derive it from your behaviour and we sell nothing on. The
+  matching calculation uses your details to show you suitable people -
+  nothing more.
+* We do not show other people your details in the form "is looking for
+  men". They see your profile, your interests and (once you have
+  consented) your photos - but not your search preferences.
+* If you delete the details (section 7), the conclusions are gone too:
+  the filters are reset to the default.
+
+**Important:** We do not go without these details. A dating app without
+the possibility to say who you are looking for would not be a dating
+app. We simply say it openly.
 
 ## 3. End-to-end encryption (Signal protocol)
 
@@ -324,8 +366,13 @@ The erasure takes place on the server immediately.
 - The verification video is stored encrypted (only the ciphertext is kept
   permanently in storage). During the review by the administration a
   decrypted copy is created temporarily, which is deleted automatically
-  after 20 minutes. The video itself is deleted at the latest 30 days
-  after submission - together with its key (cron
+  after 20 minutes. **The video itself is kept for 30 days after the
+  approval of the verification** (migration 171; the period previously
+  started at the submission - a video that waited weeks for the review
+  was already deleted on the day of the approval). If a verification
+  lies undecided for more than 90 days, the video is deleted as well -
+  the review needs it, but it may not lie there without limit. It is
+  deleted together with its key (cron
   `cleanup-verification-videos`).
 
 ## 7a. Delete data: the public pages
@@ -353,6 +400,12 @@ you can request the erasure of your data:
   deleted in the app under *Privacy & account* without giving up the
   account. For everything else (including data that exists only on the
   server) a message to us is sufficient.
+- **Withdrawal of consent (Art. 7 (3), Art. 9 (2) (a)):** You can
+  withdraw your consent to the processing of the special categories at
+  any time (see section 2b). We then stop the processing; the data
+  concerned is deleted unless there is another legal basis. The
+  withdrawal does not affect the lawfulness of the processing carried
+  out until then.
 - **Restriction/objection (Art. 18/21):** Via the contact options in
   section 1.
 - **Data portability (Art. 20):** JSON export via the in-app function.
@@ -492,6 +545,8 @@ the git history.
 
 | Version | Date | Change |
 |---|---|---|
+| 22 | 2026-11 | **Retention of the verification video moved to the approval:** The period previously started at the upload - a video that waited weeks for the review was already deleted on the day of the approval. The videos are now kept for **30 days after the approval of the verification**; on a rejection for 30 days from the submission, and as a safety net for 90 days without a decision (migration 171). |
+| 21 | 2026-11 | **Information from which the sexual orientation can be inferred explicitly disclosed:** The consent to the processing of these special categories (Art. 9 (2) (a) GDPR) is given by registering; the notice about it is shown in the registration form, the withdrawal in section 8. |
 | 20 | 2026-11 | **Parental approval for 16- and 17-year-olds:** The consent of those with parental responsibility is requested (e-mail address of one parent, which must differ from the young person's own account address) and confirmed by the parent via a link. The parent is an approver, not a user - they have no account and see no profiles. They can set the notification about new sparks to a rhythm of daily/weekly/monthly/not at all (without names, profiles or contents), set a usage time via a PIN-protected time window, and revoke the approval at any time. At 18 the young person decides themselves. Every request, confirmation and every revocation is logged. |
 | 19 | 2026-11 | **Coarse distance switched off for minors:** 16- and 17-year-olds do not display any distance - not even the approximate one in 10 km steps. The block lives in the database and is based on the verified age; the switch is locked in the app for this age group. For adults nothing changes |
 | 18 | 2026-10 | **Verification now also enforced server-side:** The verification requirement for Find your Spark, Dating Hour and Transit Spark was previously only checked on the device - the server functions could be bypassed with a direct call. Now they enforce the verification themselves (migration 161). In addition, without an age entry an invented age of 26 years no longer applies; instead the age remains unknown and the 18+ block applies. The verification video is now also stored encrypted in the automatic release path - previously it was stored in plaintext in storage |

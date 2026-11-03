@@ -690,6 +690,11 @@ serve(async (req) => {
           verification_status: "auto",
           is_verified: true,
           verified_age: verifiedAge,
+          // Zeitpunkt der Freigabe (v0.10.0, Migration 171): Startpunkt
+          // der 30-Tage-Frist fuer das Verifikations-Video. Vorher lief
+          // die Frist ab dem Upload - ein Video, das 25 Tage auf die
+          // Sichtung wartete, wurde am Tag der Freigabe geloescht.
+          verification_approved_at: new Date().toISOString(),
         })
         .eq("user_id", user.id);
 
@@ -764,6 +769,13 @@ serve(async (req) => {
         // Bei Ablehnung das verifizierte Alter wieder loeschen - ein
         // abgelehntes Konto darf kein verifiziertes Alter behalten.
         ...(isVerified ? { verified_age: verifiedAge } : { verified_age: null }),
+        // Zeitpunkt der Freigabe (v0.10.0, Migration 171): Startpunkt
+        // der 30-Tage-Frist fuer das Verifikations-Video. Bei einer
+        // Ablehnung wird er geloescht - dort laeuft die Frist ab dem
+        // Upload.
+        ...(isVerified
+          ? { verification_approved_at: new Date().toISOString() }
+          : { verification_approved_at: null }),
       })
       .eq("user_id", targetUserId);
 

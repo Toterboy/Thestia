@@ -45,6 +45,7 @@ Tracking-Pixel und **keine** nutzerübergreifende Verhaltensanalyse.
 | Elternaufsicht | E-Mail-Adresse eines Elternteils, Stand der Freigabe, Zeitfenster der erlaubten Nutzung, vierstellige PIN (nur als Hash), Zeitpunkte der Anfrage, Bestätigung und des Widerrufs | Zustimmung der Sorgeberechtigten für Konten im Alter 16/17; Begrenzung der Nutzungszeit; Benachrichtigung der Eltern bei neuen Funken. Der Elternteil ist **Genehmiger, nicht Nutzer** - er hat kein Konto und sieht weder Nachrichten noch Profile | Mit dem Ende der Freigabe; die Ereignisse für Benachrichtigungen werden nach dem Versand gelöscht |
 | Standortanzeige | Entfernung in Stufen von 10 km, nur wenn die betroffene Person das **eingeschaltet** hat; unter 5 km wird nichts angezeigt. **Für 16- und 17-Jährige ist die Anzeige ausgeschlossen - auch wenn sie den Schalter einschalten** | Andere Nutzer sehen nur die Stufe, nie einen Wert in Metern oder Kilometern. Ohne Einschaltung sehen sie gar keine Entfernung. Die Sperre für Minderjährige sitzt in der Datenbank (`profile_distance_km`, Migration 163) und richtet sich nach dem verifizierten Alter | – |
 | Ortsangabe | Wird nicht erhoben | Seit v0.10.0 wird kein Ort, keine Stadt und kein Postleitzahl-Bereich gespeichert oder angezeigt – nur das Bundesland | – |
+| **Angaben zur sexuellen Orientierung** (abgeleitet, nicht erhoben): zu wem du suchst, was du suchst, deine Interessen, dein Geschlecht | Voraussetzung für das Matching; Art. 9 Abs. 2 lit. a DSGVO – Verarbeitung nur mit deiner ausdrücklichen Einwilligung (siehe Abschnitt 2b) | mit der Kontolöschung; jederzeit einzeln löschbar |
 | Profilangaben | Bio, Interessen, Audio-Vorstellung, Gewohnheiten (Rauchen/Alkohol/Drogen), Mood, Musik-Geschmack, **Profilbild** (siehe Abschnitt 3a) | Vermittlung passender Kontakte („Funken") | Mit Account-Löschung |
 | Geräte-Liste | Gerätemodell (Hersteller + Modellkennung, z. B. „Samsung SM-S921B"), Plattform, App-Version, Zeitstempel der letzten Anmeldung; bei einer Anmeldung von einem **neuen** Gerät zusätzlich eine Benachrichtigungs-Mail mit Gerätename, App-Version und Zeitpunkt | Anzeige „Wo bin ich eingeloggt?" + „Überall abmelden" (Migration 071/078); kein Standort, keine Seriennummer, keine Werbe-ID | Automatisch beim Abmelden; mit Account-Löschung |
 | Präferenzen | Suchradius, Altersspanne, Geschlechts-Filter, „Ich suche", Farbwelt, UI-Schalter (Blind Mode, Sichtbarkeit, Benachrichtigungen) | Wiederherstellung nach Neuinstallation (Migration 066/071/074/076) | Mit Account-Löschung |
@@ -55,7 +56,7 @@ Tracking-Pixel und **keine** nutzerübergreifende Verhaltensanalyse.
 | Bild-Prüfhash | SHA-256-Hash eines von dir gesendeten Chatbildes, zusammen mit der Kennung des Empfängers | Nachweis, dass ein gemeldetes Bild tatsächlich in einem Chat geflossen ist (Missbrauchsschutz gegen willkürliche Meldungen) | Mit Account-Löschung |
 | Standort-Zeitstempel | Zeitpunkt der letzten Standortprüfung | Plausibilitätsprüfung (unplausible Ortswechsel) | Mit Account-Löschung |
 | Merkzeichen des Kontos | MD5-Hash der Kontokennung | Verhinderung, dass ein gelöschtes Konto erneut registriert wird | Bleibt dauerhaft bestehen, ohne Klarnamen |
-| Verifizierung | Selbstaufnahme mit Bild **und Ton** zur Schätzung des Alters. Das Video wird **auf dem Gerät verschlüsselt** (AES-256-GCM) und nur der Chiffrat übertragen; der Schlüssel liegt in einer Tabelle, auf die die App keinen Zugriff hat. Zweck: Altersprüfung für den Jugendschutz und die 18+-Freigabe von Transit Spark. Bei Ablehnung werden Video und Schlüssel gelöscht, sonst nach spätestens 30 Tagen nach Einreichung (Abschnitt 7). Nur bei einer manuellen Sichtung durch die Administration entsteht kurzzeitig eine entschlüsselte Kopie, die nach 20 Minuten automatisch gelöscht wird |
+| Verifizierung | Selbstaufnahme mit Bild **und Ton** zur Schätzung des Alters. Das Video wird **auf dem Gerät verschlüsselt** (AES-256-GCM) und nur der Chiffrat übertragen; der Schlüssel liegt in einer Tabelle, auf die die App keinen Zugriff hat. Zweck: Altersprüfung für den Jugendschutz und die 18+-Freigabe von Transit Spark. Bei Ablehnung werden Video und Schlüssel gelöscht, sonst **30 Tage nach der Freigabe der Verifizierung** (Migration 171; die Frist lief früher ab der Einreichung - ein Video, das Wochen auf die Sichtung wartete, wurde am Tag der Freigabe schon gelöscht). Liegt eine Verifizierung länger als 90 Tage ohne Entscheidung, wird das Video ebenfalls gelöscht - die Sichtung braucht es, aber es darf nicht unbegrenzt liegen (Abschnitt 7). Nur bei einer manuellen Sichtung durch die Administration entsteht kurzzeitig eine entschlüsselte Kopie, die nach 20 Minuten automatisch gelöscht wird |
 
 ## 2a. Anmeldung von einem neuen Gerät
 
@@ -75,6 +76,47 @@ Registrierung selbst.
 Wenn du dich an einem neuen Gerät anmeldest, kannst du unter
 *Einstellungen → Datenschutz & Account → Geräte* sehen, welche Geräte
 zu deinem Konto gehören, und fremde Sitzungen abmelden.
+
+## 2b. Angaben, aus denen sich die sexuelle Orientierung ergibt
+
+**Das muss ausdrücklich gesagt werden, weil es besondere Daten sind.**
+
+Thestia fragt dich **nicht** nach deiner sexuellen Orientierung. Aber
+aus deinen Angaben lässt sie sich sehr wohl ableiten – das ist bei einer
+Dating-App unvermeidlich, denn der ganze Zweck der App ist, Menschen
+mit passenden Wünschen zusammenzubringen. Zusammen ergeben diese
+Angaben Rückschlüsse auf deine sexuelle Orientierung:
+
+| Angabe | Rückschluss |
+|---|---|
+| **Zu wen du suchst** (`gender_preferences`: „Männer", „Frauen", „Alle") | ob du Männer, Frauen oder alle suchst |
+| **Was du suchst** (`relationship_type`: „eine Beziehung", „kurz", „offen") | welche Ausrichtung deiner Wunsch hat |
+| **Deine Interessen** (z. B. „Romantik", „Erotik") | welche Art von Kontakt du suchst |
+| **Dein eigenes Geschlecht** (`gender`) | in Kombination mit dem Obigen die Orientierung |
+
+**Rechtsgrundlage:** Das sind Daten der **besonderen Kategorie** nach
+**Art. 9 DSGVO** – die Verarbeitung ist deshalb nur zulässig, weil du
+**ausdrücklich eingewilligt hast** (Art. 9 Abs. 2 lit. a). Deine
+Einwilligung erteilst du **mit der Registrierung**; der Hinweis dazu
+steht im Registrierungsformular. Du kannst sie jederzeit widerrufen –
+siehe Abschnitt 8.
+
+**Was das praktisch bedeutet:**
+
+* Wir fragen nicht nach der Orientierung, und wir speichern sie auch
+  nicht als eigenes Feld.
+* Wir leiten sie nicht aus deinem Verhalten ab und verkaufen nichts
+  weiter. Die Match-Berechnung nutzt deine Angaben, um dir passende
+  Menschen zu zeigen – mehr nicht.
+* Wir zeigen deine Angaben auch nicht anderen in der Form „sucht
+  Männer". Andere sehen dein Profil, deine Interessen und (nach
+  Freigabe) deine Fotos – aber nicht deine Suchpräferenzen.
+* Wenn du die Angaben löschst (Abschnitt 7), sind auch die Rückschlüsse
+  weg: die Filter werden auf den Standard zurückgesetzt.
+
+**Wichtig:** Auf diese Angaben verzichten wir nicht. Eine Dating-App
+ohne die Möglichkeit zu sagen, wen man sucht, wäre keine Dating-App.
+Wir sagen es nur offen.
 
 ## 3. Ende-zu-Ende-Verschlüsselung (Signal-Protokoll)
 
@@ -371,6 +413,12 @@ denen du die Löschung deiner Daten anfordern kannst:
   lassen sich in der App unter *Datenschutz & Account* löschen, ohne das
   Konto aufzugeben. Für alles andere (auch Daten, die nur auf dem Server
   liegen) genügt eine Nachricht an uns.
+- **Widerruf der Einwilligung (Art. 7 Abs. 3, Art. 9 Abs. 2 lit. a):** Du
+  kannst die Einwilligung in die Verarbeitung der besonderen Kategorien
+  jederzeit widerrufen (siehe Abschnitt 2b). Danach stellen wir die
+  Verarbeitung ein; die betroffenen Daten werden gelöscht, sofern es
+  keine andere Rechtsgrundlage gibt. Der Widerruf berührt die
+  Rechtmäßigkeit der bis dahin erfolgten Verarbeitung nicht.
 - **Einschränkung/Widerspruch (Art. 18/21):** Über die Kontaktwege in
   Abschnitt 1.
 - **Datenübertragbarkeit (Art. 20):** JSON-Export über die In-App-
@@ -524,6 +572,8 @@ Git-Historie nachvollziehbar.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 22 | 2026-11 | **Aufbewahrung des Verifikationsvideos auf die Freigabe umgestellt:** Die Frist lief bisher ab dem Upload - ein Video, das Wochen auf die Sichtung wartete, wurde am Tag der Freigabe schon gelöscht. Jetzt bleiben die Videos **30 Tage nach der Freigabe der Verifizierung**; bei einer Ablehnung 30 Tage ab der Einreichung, und als Sicherheitsnetz 90 Tage ohne Entscheidung (Migration 171). |
+| 21 | 2026-11 | **Angaben zur sexuellen Orientierung ausdrücklich offengelegt:** Die Einwilligung in die Verarbeitung dieser besonderen Kategorie (Art. 9 Abs. 2 lit. a DSGVO) wird mit der Registrierung erteilt; der Hinweis dazu steht im Registrierungsformular, der Widerruf in Abschnitt 8. |
 | 20 | 2026-11 | **Elternfreigabe für 16- und 17-Jährige:** Die Zustimmung der Sorgeberechtigten wird angefragt (E-Mail-Adresse eines Elternteils, muss von der eigenen Kontoadresse abweichen) und vom Elternteil per Link bestätigt. Der Elternteil ist Genehmiger, nicht Nutzer - er hat kein Konto und sieht keine Profile. Er kann die Benachrichtigung über neue Funken im Rhythmus täglich/wöchentlich/monatlich/gar nicht einstellen (ohne Namen, Profile oder Inhalte), eine Nutzungszeit per PIN-geschütztem Zeitfenster setzen und die Freigabe jederzeit widerrufen. Mit 18 entscheidet der Jugendliche selbst. Jede Anfrage, Bestätigung und jeder Widerruf wird protokolliert. |
 | 19 | 2026-11 | **Grobe Entfernung für Minderjährige abgeschaltet:** 16- und 17-Jährige zeigen keine Entfernung an - auch nicht die ungefähre in 10-km-Stufen. Die Sperre sitzt in der Datenbank und richtet sich nach dem verifizierten Alter; der Schalter ist in der App für diese Altersgruppe gesperrt. Für Erwachsene ändert sich nichts |
 | 18 | 2026-10 | **Verifikation auch serverseitig erzwungen:** Die Verifikationspflicht für Find your Spark, Dating Hour und Transit Spark wurde bisher nur im Gerät geprüft - die Server-Funktionen ließen sich mit eigenem Aufruf umgehen. Jetzt erzwingen sie die Verifikation selbst (Migration 161). Zusätzlich gilt ohne Altersangabe nicht mehr ein erfundenes Alter von 26 Jahren, sondern das Alter bleibt unbekannt und die 18+-Sperre greift. Das Verifikationsvideo wird im automatischen Freigabeweg nun ebenfalls verschlüsselt abgelegt - vorher lag es im Klartext im Speicher |

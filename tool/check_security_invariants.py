@@ -529,6 +529,40 @@ check('notify-new-login' in
       'sonst wird die Mail gar nicht erst angestossen')
 
 # =====================================================================
+# 1m) Das Verifikationsvideo haengt an der FREIGABE, nicht am Upload
+# =====================================================================
+#
+# BETREIBER-AUFTRAG (03.11.2026): "Sie sollen 30 Tage nach Verifizierung
+# (nicht Upload sondern Genehmigung der Verifizierung) bleiben und nach
+# 30 Tagen geloescht werden."
+#
+# Vorher lief die Frist ab dem Upload (Migration 160): ein Video, das
+# Wochen auf die Sichtung wartete, wurde am Tag der Freigabe geloescht.
+
+_video = _neueste_definition(all_sql, 'cleanup_verification_videos')
+check('verification_approved_at' in _video,
+      'DB: Die Video-Frist laeuft ab dem Zeitpunkt der Freigabe',
+      'vorher lief sie ab dem Upload - ein Video, das Wochen auf die '
+      'Sichtung wartete, wurde am Tag der Freigabe schon geloescht')
+
+check('30 days' in _video,
+      'DB: Die Video-Frist betraegt 30 Tage',
+      'die Zusage der Datenschutzerklaerung muss im Code stehen')
+
+check('90 days' in _video,
+      'DB: Es gibt ein Sicherheitsnetz fuer Videos ohne Entscheidung',
+      'ein Video, das ewig in der Pruefung liegt, braucht eine Grenze')
+
+# Der Freigabe-Zeitpunkt muss beim Freigeben auch wirklich gesetzt
+# werden - sonst laeuft die Frist nie an.
+_verifizierung = (ROOT / 'supabase' / 'functions' / 'verify-account' /
+                  'index.ts')
+if _verifizierung.exists():
+    check('verification_approved_at' in read(_verifizierung),
+          'SERVER: verify-account setzt den Freigabe-Zeitpunkt',
+          'ohne ihn startet die 30-Tage-Frist nie')
+
+# =====================================================================
 # 1c) Das Verifikationsvideo wird IMMER verschluesselt abgelegt
 # =====================================================================
 #

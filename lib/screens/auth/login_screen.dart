@@ -729,6 +729,67 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                           .onSurfaceVariant,
                                     ),
                               ),
+                              const SizedBox(height: 10),
+                              // EINWILLIGUNG (03.11.2026): "In der
+                              // Datenschutzerklaerung muss ausdruecklich
+                              // ueber die Erhebung von Daten wie der
+                              // sexuellen Orientierung aufgeklaert werden
+                              // und das der User auch zustimmt."
+                              //
+                              // Die Angaben, aus denen sich die
+                              // Orientierung ergibt, sind Daten der
+                              // besonderen Kategorie (Art. 9 DSGVO). Die
+                              // Verarbeitung ist nur mit ausdruecklicher
+                              // Einwilligung zulaessig - die Registrierung
+                              // ist sie. Der Hinweis steht hier, im
+                              // Registrierungsformular, und verweist auf
+                              // die Erklaerung, in der es ausfuehrlich
+                              // steht (Abschnitt 2b).
+                              Container(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      L10n.t(
+                                          context, 'auth.privacyConsent'),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    GestureDetector(
+                                      onTap: () => context.push(
+                                        AppRoutes.privacyPolicy,
+                                      ),
+                                      child: Text(
+                                        L10n.t(context,
+                                            'auth.privacyConsentLink'),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary,
+                                              decoration:
+                                                  TextDecoration.underline,
+                                              decorationColor:
+                                                  Theme.of(context)
+                                                      .colorScheme
+                                                      .primary,
+                                            ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                         ),

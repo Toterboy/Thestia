@@ -225,7 +225,18 @@ class _SettingsPrivacyOnceScreenState
       // der Schrittentext "du kannst diesen Schritt auch ueberspringen"
       // versprach. Jetzt: leer ist erlaubt, und was eingegeben wurde,
       // wird gespeichert.
-      if (IntroEditor.isValid(text: _introText, audioPath: _introAudioPath)) {
+      //
+      // NUTZERWUNSCH (03.11.2026): "Kann man die Einrichtung abschliessen
+      // ohne eine Sprachaufnahme bei der Vorstellung machen zu muessen?"
+      //
+      // Die Antwort war: der Schritt ist ueberspringbar - ABER wer Text
+      // OHNE Audio eintippt, hat seinen Text verloren: isValid() verlangt
+      // beides, dadurch wurde _clearIntro() gerufen und der getippte
+      // Text verworfen. Das war die eigentliche Stolperfalle.
+      //
+      // Jetzt: Text allein wird gespeichert, Audio allein auch, beides
+      // natuerlich auch. Nur ein vollstaendig leerer Schritt loescht.
+      if (_introText.trim().isNotEmpty || _introAudioPath != null) {
         _saveIntro();
       } else {
         _clearIntro();

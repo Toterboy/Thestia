@@ -180,6 +180,12 @@ const Map<String, Map<String, String>> _strings = {
         'und führen zum dauerhaften Ausschluss.',
     'auth.ageConfirmRequired':
         'Bitte bestätige die Richtigkeit deines Geburtsdatums.',
+    'auth.privacyConsent':
+        'Mit der Registrierung akzeptierst du die Datenschutzerklärung: '
+        'auch die Verarbeitung der Angaben, aus denen sich deine sexuelle '
+        'Orientierung ergibt (Art. 9 DSGVO). Du kannst das jederzeit '
+        'widerrufen.',
+    'auth.privacyConsentLink': 'Datenschutzerklärung lesen',
     'auth.liabilityNote':
         'Hinweis: Thestia prüft Angaben nicht lückenlos. Verlass dich nie '
         'allein auf Profilangaben, triff dich nur an öffentlichen Orten '
@@ -3380,6 +3386,12 @@ const Map<String, Map<String, String>> _strings = {
         'and leads to a permanent ban.',
     'auth.ageConfirmRequired':
         'Please confirm that your date of birth is correct.',
+    'auth.privacyConsent':
+        'By registering you accept the privacy policy - including the '
+        'processing of the information from which your sexual orientation '
+        'can be inferred (Art. 9 GDPR). You can withdraw your consent at '
+        'any time.',
+    'auth.privacyConsentLink': 'Read the privacy policy',
     'auth.liabilityNote':
         'Note: Thestia cannot verify every detail. Never rely on profile '
         'information alone, only meet in public places and report '
