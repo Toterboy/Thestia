@@ -249,6 +249,40 @@ THEME_CSS = """
     }
     .modus-knopf svg { width: 20px; height: 20px; }
 
+    /* Der Sprachknopf sitzt rechts neben dem Modus-Knopf. Er ist ein
+       LINK, kein Schalter: die zweite Sprache ist eine eigene Datei, und
+       ein Link laesst sich mit der Tastatur bedienen und im neuen Tab
+       oeffnen. */
+    .sprach-knopf {
+      width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--card);
+      color: var(--fg);
+      box-shadow: var(--shadow-sm);
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform .15s ease, color .2s ease,
+                  border-color .2s ease, background .2s ease;
+    }
+    .sprach-knopf:hover {
+      transform: scale(1.06);
+      color: var(--accent);
+      border-color: var(--accent-line);
+    }
+    .sprach-knopf:active { transform: scale(.97); }
+    .sprach-knopf:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
     /* Das Symbol zeigt den ZIEL-Modus: Mond im hellen Modus (Klick
        = dunkel), Sonne im dunklen Modus (Klick = hell).
 
@@ -670,8 +704,34 @@ KOPF_HTML = (
     'title="Dark- und Light-Mode umschalten">'
     + _SVG_MOND + _SVG_SONNE +
     '</label>\n'
+    '__SPRACHKNOPF__'
     '</header>'
 )
+
+
+def sprachknopf(ziel: str, sprache: str) -> str:
+    """Der Sprachknopf (leer, wenn es keine zweite Fassung gibt).
+
+    NUTZERWUNSCH (03.11.2026): "Oben rechts neben dem Button fuer Dark
+    und Light Mode soll ein Button fuer die Sprache zwischen Deutsch und
+    Englisch sein."
+
+    Der Knopf zeigt die ZIEL-Sprache, nicht die aktuelle: auf der
+    deutschen Seite steht "EN", auf der englischen "DE". Das ist
+    dieselbe Logik wie beim Modus-Knopf (das Symbol zeigt den Modus, in
+    den man wechselt) und die einzige, die man nicht nachschlagen muss.
+
+    [sprache] ist das Kuerzel des ZIELS ("EN" oder "DE").
+    """
+    if not ziel:
+        return ''
+    label = ('Switch to English' if sprache == 'EN'
+             else 'Auf Deutsch wechseln')
+    return (
+        '  <a class="sprach-knopf" href="%s" hreflang="%s" title="%s" '
+        'aria-label="%s">%s</a>\n'
+        % (ziel, sprache.lower(), label, label, sprache)
+    )
 
 # Kurzname fuer den Generator, der bisher ein eigenes CSS hatte.
 CSS = THEME_CSS
@@ -797,7 +857,9 @@ def strip_theme(html: str, remove_chrome: bool = True) -> str:
 
 
 def apply_theme(html: str, css_extra: str = '',
-                insert_chrome: bool = True) -> str:
+                insert_chrome: bool = True,
+                sprach_ziel: str = '',
+                sprache: str = 'EN') -> str:
     """Haengt Design, Kopfzeile und Umschalt-Knopf in eine HTML-Seite ein.
 
     [css_extra] sind seiten-eigene Regeln, die VOR den gemeinsamen
@@ -810,6 +872,13 @@ def apply_theme(html: str, css_extra: str = '',
     Landing-Seite) und bringt ihre eigene Kopfzeile mit - die
     gemeinsame Huelle wuerde den Sicherheitscheck in eine Karte
     packen.
+
+    [sprach_ziel] = Adresse der anderen Sprachfassung (z. B.
+    "/en/impressum"). Leer lassen, wenn es keine gibt - dann fehlt
+    der Sprachknopf.
+
+    [sprache] = Kuerzel des ZIELS: "EN" auf der deutschen Seite,
+    "DE" auf der englischen.
     """
     # Ein altes Design wird entfernt, damit die Seite nie zweimal
     # gestyled wird. Die Kopfzeile wird nur entfernt, wenn sie auch
@@ -843,7 +912,8 @@ def apply_theme(html: str, css_extra: str = '',
         return html
 
     # 3) Kopfzeile direkt nach <body>, Inhalt in die Karte.
-    kopf = KOPF_HTML + '\n<div class="inhalt">\n'
+    kopf = (KOPF_HTML.replace('__SPRACHKNOPF__', sprachknopf(sprach_ziel, sprache))
+            + '\n<div class="inhalt">\n')
     if '<body>' in html:
         html = html.replace('<body>', '<body>\n' + kopf, 1)
     elif '<body ' in html:

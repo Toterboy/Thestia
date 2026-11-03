@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!--
+    ZWEI ANSICHTEN, EIN HOST (28.10.2026).
+
+    Diese Datei wird an zwei Adressen ausgeliefert (beide zeigen auf
+    dieselbe Netlify-Site):
+
+      * https://auth.thestia.de/  - der SICHERHEITSCHECK der App. Die
+        App oeffnet diese Adresse in einem WebView und erwartet hier
+        das Turnstile-Widget.
+
+      * https://thestia.de/       - die oeffentliche Seite der App
+        (Wurzel-Domain, z. B. fuer die App-Links/Passwort-Zuruecksetzen).
+
+    Vorher bekam BEIDE Adressen den Sicherheitscheck. Auf thestia.de
+    ergab das Turnstile den Fehler 110200 ("Domain not authorized") -
+    der Sitekey kennt nur auth.thestia.de. Die Seite sah damit kaputt
+    aus und stellte eine sinnlose Frage ("Muss hier ein Captcha sein?").
+
+    Die Aufteilung nach Hostname loest beides:
+      * auth.thestia.de bekommt den Sicherheitscheck (mit dunklem
+        Hintergrund, damit beim Oeffnen des WebViews kein heller
+        Fleck aufblitzt),
+      * jede andere Adresse bekommt eine ordentliche Landing-Seite im
+        Design der App.
+
+    Die Entscheidung faellt im HEAD, bevor irgendetwas gezeichnet wird
+    (documentElement.className) - sonst gabe es bei jedem Oeffnen des
+    WebViews einen kurzen Blitz in der falschen Farbe.
+  -->
+  <script>
+    (function () {
+      var host = (location.hostname || '').toLowerCase();
+      var istCaptchaHost = host === 'auth.thestia.de';
+      // Testschalter: ?ansicht=captcha erzwingt den Sicherheitscheck,
+      // ?ansicht=landing die Landing-Seite. Nuetzt beim Pruefen auf
+      // localhost (dort ist der Hostname 127.0.0.1). Die App ruft die
+      // Seite ohne Parameter auf - dort entscheidet allein der Host.
+      var ansicht = '';
+      try {
+        ansicht = (new URLSearchParams(location.search).get('ansicht') || '').toLowerCase();
+      } catch (e) { /* alter Browser */ }
+      if (ansicht === 'captcha') istCaptchaHost = true;
+      if (ansicht === 'landing') istCaptchaHost = false;
+      document.documentElement.className = istCaptchaHost
+        ? 'captcha-host'
+        : 'landing-host';
+    })();
+  </script>
+  <!--
+    CSP fuer Turnstile (v0.10.0, korrigiert).
+
+    Die alte Fassung erlaubte NUR script-src, style-src, frame-src und
+    connect-src fuer challenges.cloudflare.com. Damit fehlten drei
+    Dinge, die Turnstile zum Arbeiten braucht:
+
+      * worker-src: faellt auf default-src 'self' zurueck, und damit
+        ist der Blob-Worker der Turnstile-Engine blockiert. api.js
+        scheitert bei der Initialisierung, WINDOW.TURNSTILE wird nie
+        gesetzt - die Seite meldet dann genau das:
+        "typeof turnstile === 'undefined'" (ERROR:SCRIPT_NOT_LOADED).
+      * img-src ohne Cloudflare: die Icons und Hintergrundbilder des
+        Widgets werden nicht geladen.
+      * connect-src ohne 'self': eigene Requests der Seite an ihre
+        eigene Herkunft sind blockiert.
+  -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; child-src https://challenges.cloudflare.com; connect-src 'self' https://challenges.cloudflare.com; img-src 'self' data: https://challenges.cloudflare.com; font-src 'self' https://challenges.cloudflare.com; worker-src 'self' blob:;">
+  <title>Thestia – Encounters that see more than just a photo (English)</title>
+  <style>
+/* --- Grundlagen (beide Ansichten) -------------------------------- */
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI Variable Text",
+                   "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans",
+                   Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* --- ANSICHT 1: Sicherheitscheck (nur auth.thestia.de) ------------ */
+    html.captcha-host body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #121212;
+      color: #ffffff;
+      font-size: 15px;
+    }
+    #captcha-view { display: flex; flex-direction: column; align-items: center; }
+    html.landing-host #captcha-view { display: none; }
+
+    /* --- ANSICHT 2: Landing-Seite (alle anderen Hostnamen) ----------- */
+    html.landing-host body { background: var(--bg, #f2f2f8); color: var(--fg, #1b1b21); }
+    #landing-view { display: none; }
+    html.landing-host #landing-view { display: block; }
+
+    .held { max-width: 46rem; margin: 0 auto; padding: clamp(20px, 4vw, 32px); }
+
+    .held-karte {
+      background: var(--card, #ffffff);
+      border: 1px solid var(--line, #e4e2ee);
+      border-radius: var(--radius, 24px);
+      box-shadow: var(--shadow, 0 1px 2px rgba(25,18,45,.04));
+      padding: clamp(22px, 4vw, 40px);
+      margin: clamp(16px, 3vw, 32px) auto 0;
+      max-width: 46rem;
+    }
+
+    .held-marke { display: flex; align-items: center; justify-content: center; }
+    .held-marke svg { width: 96px; height: 96px; }
+
+    .held-titel {
+      font-size: clamp(2rem, 1.2rem + 3vw, 2.8rem);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      font-weight: 700;
+      text-align: center;
+      margin: 8px 0 0;
+    }
+    .held-text {
+      text-align: center;
+      color: var(--muted, #575764);
+      font-size: 1.08rem;
+      line-height: 1.6;
+      margin: 10px 0 0;
+    }
+
+    .held-knopfe { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 26px 0 0; }
+    .held-knopf {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 20px;
+      border-radius: 999px;
+      font-weight: 600;
+      text-decoration: none;
+      border: 1px solid var(--line, #e4e2ee);
+      color: var(--fg, #1b1b21);
+      background: var(--card, #ffffff);
+    }
+    .held-knopf.primary {
+      background: var(--accent, #d62d6c);
+      border-color: transparent;
+      color: var(--accent-fg, #ffffff);
+    }
+    .held-knopf:hover { transform: translateY(-1px); }
+
+    .held-liste { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin: 0; }
+    .held-link {
+      display: block;
+      padding: 16px 18px;
+      border-radius: var(--radius-s, 14px);
+      background: var(--card, #ffffff);
+      border: 1px solid var(--line, #e4e2ee);
+      text-decoration: none;
+      color: inherit;
+    }
+    .held-link strong { display: block; font-size: 1rem; margin-bottom: 3px; }
+    .held-link span { color: var(--muted, #575764); font-size: .92rem; line-height: 1.45; display: block; }
+    .held-link:hover { border-color: var(--accent, #d62d6c); }
+
+    .held-fuss { max-width: 46rem; margin: 0 auto; padding: 22px clamp(20px, 4vw, 32px) 56px; color: var(--muted, #575764); font-size: .9rem; }
+    .held-fuss a { color: var(--accent, #d62d6c); }
+  
+    /* ---------------------------------------------------------------
+
+    /* Web-Design (tool/web_theme.py) */
+    /* ---------------------------------------------------------------
+       Eine Quelle fuer alle Seiten.
+
+       Die Farben kommen aus der App: Primaer #E9457B, heller
+       Grund #F7F7FB, Karten weiss, dunkler Grund #121212, Karten
+       #1E1E1E. Die Linkfarbe ist eine dunklere Variante des Rosa
+       (#d62d6c), damit sie auf weiss den Kontrast-Anspruch von 4,5:1
+       erreicht.
+       --------------------------------------------------------------- */
+    /* --- Farben: zwei Paletten, vier Zustaende --------------------- */
+    /*
+     * (1) Die Seite folgt der Systemeinstellung - ohne Zutun.
+     * (2) Der Schalter dreht um: hell -> dunkel, dunkel -> hell.
+     *
+     * Dazu braucht es vier Regeln, weil CSS den Systemzustand nicht
+     * "unsetten" kann - der Schalter ist ein 2-Zustands-Schalter:
+     *
+     *   System hell + Schalter aus  -> hell
+     *   System hell + Schalter an   -> dunkel
+     *   System dunkel + Schalter aus -> dunkel
+     *   System dunkel + Schalter an  -> hell
+     *
+     * Specificitaet: alle vier Selektoren haben (0,2,0) - `:root:has(...)`
+     * gewinnt gegen `:root` (0,1,0), und die beiden Media-Query-Varianten
+     * entscheiden sich ueber die Reihenfolge (die letzte gewinnt).
+     */
+    :root {
+      color-scheme: light;
+      --bg: #f2f2f8;
+      --fg: #1b1b21;
+      --muted: #575764;
+      --card: #ffffff;
+      --card-fg: #1b1b21;
+      --line: #e4e2ee;
+      --accent: #d62d6c;
+      --accent-soft: rgba(214,45,108,.08);
+      --accent-line: rgba(214,45,108,.30);
+      --accent-fg: #ffffff;
+      --shadow-sm: 0 1px 2px rgba(25,18,45,.06);
+      --shadow: 0 1px 2px rgba(25,18,45,.04),
+                 0 20px 44px -24px rgba(25,18,45,.40);
+      --radius: 24px;
+      --radius-s: 14px;
+    }
+    /* System dunkel: die Seite startet dunkel (ohne Zutun des Nutzers). */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --bg: #0e0e13;
+        --fg: #ece9f2;
+        --muted: #a29fb0;
+        --card: #191920;
+        --card-fg: #ece9f2;
+        --line: #2b2a35;
+        --accent: #ff86b3;
+        --accent-soft: rgba(255,134,179,.12);
+        --accent-line: rgba(255,134,179,.34);
+        --accent-fg: #17161c;
+        --shadow-sm: 0 1px 2px rgba(0,0,0,.55);
+        --shadow: 0 1px 2px rgba(0,0,0,.40),
+                   0 24px 48px -24px rgba(0,0,0,.85);
+      }
+    }
+    /* Schalter an: umdrehen. Im hellen System wird es dunkel ... */
+    :root:has(#modus-umschalter:checked) {
+      color-scheme: dark;
+      --bg: #0e0e13;
+      --fg: #ece9f2;
+      --muted: #a29fb0;
+      --card: #191920;
+      --card-fg: #ece9f2;
+      --line: #2b2a35;
+      --accent: #ff86b3;
+      --accent-soft: rgba(255,134,179,.12);
+      --accent-line: rgba(255,134,179,.34);
+      --accent-fg: #17161c;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.55);
+      --shadow: 0 1px 2px rgba(0,0,0,.40),
+                 0 24px 48px -24px rgba(0,0,0,.85);
+    }
+    /* ... und im dunklen System wieder hell. */
+    @media (prefers-color-scheme: dark) {
+      :root:has(#modus-umschalter:checked) {
+        color-scheme: light;
+        --bg: #f2f2f8;
+        --fg: #1b1b21;
+        --muted: #575764;
+        --card: #ffffff;
+        --card-fg: #1b1b21;
+        --line: #e4e2ee;
+        --accent: #d62d6c;
+        --accent-soft: rgba(214,45,108,.08);
+        --accent-line: rgba(214,45,108,.30);
+        --accent-fg: #ffffff;
+        --shadow-sm: 0 1px 2px rgba(25,18,45,.06);
+        --shadow: 0 1px 2px rgba(25,18,45,.04),
+                   0 20px 44px -24px rgba(25,18,45,.40);
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      max-width: none;
+      background: var(--bg);
+      color: var(--fg);
+      /* Die Reihenfolge ist wichtig: `system-ui` zuerst nimmt die
+         System-Schrift (San Francisco, Segoe UI Variable, Roboto) -
+         das ist auf jedem Geraet die Schrift, fuer die die App gebaut
+         ist. Die konkreten Namen danach sind der Fallback fuer
+         aeltere Systeme, `sans-serif` der letzte Notnagel. */
+      font-family: system-ui, -apple-system, "Segoe UI Variable Text",
+                   "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans",
+                   Arial, sans-serif;
+      font-size: 17px;
+      line-height: 1.7;
+      letter-spacing: -0.003em;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    /* --- Kopfzeile: Marke, Name, Umschalter ------------------------ */
+    .kopf {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px clamp(16px, 5vw, 40px);
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+    }
+    .marke { display: inline-flex; line-height: 0; }
+    .marke svg { display: block; width: 26px; height: 26px; }
+    .marken-text {
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: -0.015em;
+    }
+
+    /* Die Checkbox bleibt im Quelltext (Tastatur!), ist aber nicht
+       sichtbar. Der Klick geht ueber das Label. */
+    .modus-schalter {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .modus-knopf {
+      margin-left: auto;
+      width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--card);
+      color: var(--fg);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      transition: transform .15s ease, color .2s ease,
+                  border-color .2s ease, background .2s ease;
+    }
+    .modus-knopf:hover {
+      transform: scale(1.06);
+      color: var(--accent);
+      border-color: var(--accent-line);
+    }
+    .modus-knopf:active { transform: scale(.97); }
+    .modus-schalter:focus-visible + .modus-knopf {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+    .modus-knopf svg { width: 20px; height: 20px; }
+
+    /* Der Sprachknopf sitzt rechts neben dem Modus-Knopf. Er ist ein
+       LINK, kein Schalter: die zweite Sprache ist eine eigene Datei, und
+       ein Link laesst sich mit der Tastatur bedienen und im neuen Tab
+       oeffnen. */
+    .sprach-knopf {
+      width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--card);
+      color: var(--fg);
+      box-shadow: var(--shadow-sm);
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform .15s ease, color .2s ease,
+                  border-color .2s ease, background .2s ease;
+    }
+    .sprach-knopf:hover {
+      transform: scale(1.06);
+      color: var(--accent);
+      border-color: var(--accent-line);
+    }
+    .sprach-knopf:active { transform: scale(.97); }
+    .sprach-knopf:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    /* Das Symbol zeigt den ZIEL-Modus: Mond im hellen Modus (Klick
+       = dunkel), Sonne im dunklen Modus (Klick = hell).
+
+       Dieselbe Logik wie die Farben: das System entscheidet, was der
+       Knopf anzeigt - der Schalter dreht nur um. */
+    .modus-knopf .icon-sonne { display: none; }
+    /* System dunkel: Ziel ist hell -> Sonne zeigen. */
+    @media (prefers-color-scheme: dark) {
+      :root:not(:has(#modus-umschalter:checked)) .modus-knopf .icon-sonne {
+        display: block;
+      }
+      :root:not(:has(#modus-umschalter:checked)) .modus-knopf .icon-mond {
+        display: none;
+      }
+    }
+    /* Schalter an: im hellen System war der Ziel-Modus dunkel (Mond),
+       im dunklen System hell (Sonne). */
+    :root:has(#modus-umschalter:checked) .modus-knopf .icon-sonne {
+      display: block;
+    }
+    :root:has(#modus-umschalter:checked) .modus-knopf .icon-mond {
+      display: none;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:has(#modus-umschalter:checked) .modus-knopf .icon-sonne {
+        display: none;
+      }
+      :root:has(#modus-umschalter:checked) .modus-knopf .icon-mond {
+        display: block;
+      }
+    }
+
+    /* --- Inhalt: eine Karte auf getoentem Grund -------------------- */
+    .inhalt {
+      max-width: 46rem;
+      margin: clamp(16px, 3vw, 32px) auto 0;
+      padding: clamp(22px, 4vw, 32px);
+      background: var(--card);
+      color: var(--card-fg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .inhalt > :first-child { margin-top: 0; }
+    .inhalt > :last-child { margin-bottom: 0; }
+
+    /* --- Typografie ----------------------------------------------- */
+    h1 {
+      font-size: clamp(1.7rem, 1.2rem + 1.8vw, 2.15rem);
+      line-height: 1.15;
+      letter-spacing: -0.025em;
+      font-weight: 700;
+      margin: 0 0 .35rem;
+    }
+    h1 + p.lead { margin-top: 0; }
+    h2 {
+      font-size: 1.22rem;
+      line-height: 1.3;
+      letter-spacing: -0.012em;
+      font-weight: 650;
+      margin: 2.4rem 0 .7rem;
+      padding-top: 1.4rem;
+      border-top: 1px solid var(--line);
+    }
+    h3 {
+      font-size: 1.03rem;
+      line-height: 1.35;
+      font-weight: 650;
+      margin: 1.6rem 0 .5rem;
+    }
+    p { margin: 0 0 1.05rem; }
+    p.lead {
+      color: var(--muted);
+      font-size: 1.06rem;
+      margin-bottom: 1.6rem;
+    }
+    .klein { color: var(--muted); font-size: .9rem; }
+    strong { font-weight: 650; }
+    em { font-style: italic; }
+    a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+      text-decoration-color: var(--accent-line);
+    }
+    a:hover { text-decoration-color: var(--accent); }
+
+    ul, ol { margin: .4rem 0 1.25rem; padding-left: 1.35rem; }
+    li { margin-bottom: .4rem; }
+    li::marker { color: var(--accent); }
+
+    /* Hinweis-Boxen: wie die tonalen Karten der App. */
+    .box, .hinweis {
+      background: var(--accent-soft);
+      color: var(--card-fg);
+      border: 1px solid var(--accent-line);
+      border-left: 1px solid var(--accent-line);
+      border-radius: var(--radius-s);
+      padding: 1rem 1.15rem;
+      margin: 1.6rem 0;
+    }
+    .box > :last-child, .hinweis > :last-child { margin-bottom: 0; }
+
+    /* --- Tabellen: abgerundete Karten ----------------------------- */
+    .tabellen-huelle {
+      overflow-x: auto;
+      margin: 1.4rem 0 1.6rem;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+    table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      margin: 0;
+      /* 0,88 rem statt 0,95: die grosse Tabelle der
+         Datenschutzerklaerung brauchte 693 px, die Karte bietet 672 px.
+         Mit der kleineren Schrift passt sie in die Karte - sonst
+         schneidet der Kartenrand die letzte Spalte ab. */
+      font-size: .88rem;
+      background: var(--card);
+      color: var(--card-fg);
+    }
+    th, td {
+      border: 0;
+      padding: .65rem .75rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { font-weight: 650; }
+    thead th {
+      background: var(--accent-soft);
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+    tbody tr + tr td { border-top: 1px solid var(--line); }
+
+    footer {
+      max-width: 46rem;
+      margin: 0 auto;
+      padding: 20px clamp(16px, 4vw, 28px) 56px;
+      color: var(--muted);
+      font-size: .88rem;
+    }
+    footer p { margin-bottom: .4rem; }
+
+    /* --- Landing- und Bestaetigungsseite ---------------------------- */
+    .held { max-width: 46rem; margin: 0 auto; padding: clamp(20px, 4vw, 32px); }
+    .held-karte {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: clamp(22px, 4vw, 40px); margin: clamp(16px, 3vw, 32px) auto 0;
+      max-width: 46rem; text-align: center;
+    }
+    .held-marke { display: flex; align-items: center; justify-content: center; }
+    .held-marke svg { width: 88px; height: 88px; }
+    .held-titel {
+      font-size: clamp(1.8rem, 1.2rem + 2.6vw, 2.5rem);
+      line-height: 1.15; letter-spacing: -0.03em; font-weight: 700;
+      margin: 10px 0 0;
+    }
+    .held-text {
+      color: var(--muted); font-size: 1.05rem; line-height: 1.6;
+      margin: 10px auto 0; max-width: 34rem;
+    }
+    .held-knopfe {
+      display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+      margin: 26px 0 0;
+    }
+    .held-knopf {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 20px; border-radius: 999px; font-weight: 600;
+      text-decoration: none; border: 1px solid var(--line);
+      color: var(--fg); background: var(--card);
+    }
+    .held-knopf.primary {
+      background: var(--accent); border-color: transparent;
+      color: var(--accent-fg);
+    }
+    .held-knopf:hover { transform: translateY(-1px); }
+    .held-liste {
+      display: grid; gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      margin: 0;
+    }
+    /*
+     * Die unterste der fuenf Kacheln steht allein in ihrer Zeile
+     * (NUTZERWUNSCH 31.10.2026: "Unten bei den 5 Kacheln soll die
+     * untere mittig sein und nicht linksbuendig").
+     *
+     * Bei fuenf Kacheln und zwei Spalten bleibt eine Kachel uebrig, die
+     * allein in der letzten Zeile steht - und die hing linksbuendig.
+     * Das sah nach einem Fehler aus: als waere die Zeile unvollstaendig.
+     *
+     * `grid-column: 1 / -1` laesst sie die ganze Zeile einnehmen,
+     * `justify-self: center` stellt sie mittig darin. Ihre Breite
+     * bleibt dabei die einer normalen Kachel (die Spaltenbreite) -
+     * sonst waere sie plötzlich doppelt so breit wie ihre Schwestern.
+     */
+    .held-liste > .held-link:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+      justify-self: center;
+      width: calc(50% - 6px);
+    }
+    /* Bei einer Spalte (schmale Fenster) ist die Kachel allein und
+       darf die volle Breite nehmen - dort ist "mittig" nicht sinnvoll,
+       die Kachel fuellt die Zeile ohnehin aus. */
+    @media (max-width: 479px) {
+      .held-liste > .held-link:last-child:nth-child(odd) {
+        width: 100%;
+      }
+    }
+    .held-link {
+      display: block; padding: 16px 18px; border-radius: var(--radius-s);
+      background: var(--card); border: 1px solid var(--line);
+      text-decoration: none; color: inherit;
+    }
+    .held-link strong { display: block; font-size: 1rem; margin-bottom: 3px; }
+    .held-link span {
+      color: var(--muted); font-size: .92rem; line-height: 1.45;
+      display: block;
+    }
+    .held-link:hover { border-color: var(--accent); }
+    .held-fuss {
+      max-width: 46rem; margin: 0 auto;
+      padding: 22px clamp(20px, 4vw, 32px) 56px;
+      color: var(--muted); font-size: .9rem;
+    }
+    .held-fuss a { color: var(--accent); }
+
+    /* --- Die Screenshot-Galerie (NUTZERWUNSCH 31.10.2026) ------------ */
+    /*
+     * "Auf thestia.de sollen auch die Screenshots angezeigt werden."
+     *
+     * Die Bilder liegen in passkey-assets/screenshots/ und werden von
+     * tool/make_web_screenshots.py verkleinert und hierher kopiert.
+     * Das Markup erzeugt dasselbe Skript - es kann also nicht
+     * auseinanderlaufen (Bild da, Bild fehlt).
+     */
+    .galerie {
+      max-width: 46rem; margin: 0 auto;
+      padding: clamp(6px, 1vw, 12px) clamp(20px, 4vw, 32px) 0;
+    }
+    .galerie-titel {
+      font-size: 1.22rem; line-height: 1.3; letter-spacing: -0.012em;
+      font-weight: 650; margin: 0 0 .35rem;
+      /* KEIN Trennstrich (NUTZERWUNSCH 31.10.2026: "Bei thestia.de
+       * soll der Strich zwischen dem oberen Bereich mit den Buttons
+       * (Im Play Store etc.) und der Ueberschrift Ein Blick in die App
+       * weg").
+       *
+       * Die h2-Regel setzt einen Strich ueber jede Zwischenueberschrift
+       * - auf den Textseiten trennt er die Abschnitte voneinander, das
+       * ist richtig. Hier aber trennt er zwei Dinge, die zusammen
+       * gehoeren: die Karte mit den Buttons und die Galerie direkt
+       * darunter. Der Strich sah aus wie ein Rest der Karte. */
+      border-top: none;
+      padding-top: 0;
+    }
+    .galerie-text {
+      color: var(--muted); font-size: .95rem; margin: 0 0 1rem;
+    }
+    /*
+     * Das Raster ist ein FLEX-Container, kein Grid (NUTZERWUNSCH
+     * 31.10.2026: "Zudem sollen die unteren beiden Bilder zentriert
+     * werden").
+     *
+     * Bei acht Bildern und drei Spalten bleiben in der letzten Reihe
+     * zwei uebrig - im Grid standen die linksbuendig, als waeren sie
+     * nicht dazugehoerig. Mit Flex und `justify-content: center`
+     * richtet Flex jede Zeile einzeln aus: die letzte Reihe mit zwei
+     * Bildern steht damit automatisch mittig.
+     *
+     * Flex ist hier robuster als Grid: bei einer anderen Bildzahl
+     * (sieben, neun, zehn) stimmt die Zentrierung immer - im Grid
+     * muesste man die Positionen hart codieren, und das passte dann
+     * nur bei genau acht Bildern.
+     *
+     * Die Breite ist fest (kein wachsen): `flex: 0 0 <breite>`
+     * verhindert, dass ein Bild in einer Reihe mit nur einem Bild
+     * allein auf die volle Breite aufgeht.
+     */
+    .galerie-raster {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 14px;
+    }
+    .galerie-bild {
+      /* Zwei Spalten auf schmalen Fenstern. */
+      flex: 0 0 calc(50% - 7px);
+      max-width: calc(50% - 7px);
+    }
+    /* Ab Tablet-Breite: drei Spalten statt zwei. Die Bilder sind dann
+       gross genug, dass man sie ohne Zooming lesen kann, und die
+       Bildunterschrift passt in zwei Zeilen. */
+    @media (min-width: 640px) {
+      .galerie-bild {
+        flex: 0 0 calc(33.3333% - 9.3333px);
+        max-width: calc(33.3333% - 9.3333px);
+      }
+    }
+    /* Auf sehr schmalen Fenstern ein Bild pro Zeile. */
+    @media (max-width: 419px) {
+      .galerie-bild {
+        flex: 0 0 100%;
+        max-width: 100%;
+      }
+    }
+    .galerie-bild {
+      margin: 0; overflow: hidden;
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius-s); box-shadow: var(--shadow-sm);
+      transition: transform .18s ease, border-color .18s ease;
+    }
+    .galerie-bild:hover {
+      transform: translateY(-2px); border-color: var(--accent-line);
+    }
+    .galerie-bild img {
+      display: block; width: 100%; height: auto;
+      background: var(--accent-soft);
+    }
+    .galerie-bild figcaption {
+      padding: 10px 12px 12px;
+      font-size: .82rem; line-height: 1.4; color: var(--muted);
+    }
+    .galerie-bild figcaption strong {
+      display: block; color: var(--card-fg);
+      font-size: .9rem; font-weight: 650; margin-bottom: 2px;
+    }
+
+    /* --- Der Sicherheitscheck (Captcha-Seite) ------------------------ */
+    .sicherheit { max-width: 30rem; margin: 0 auto; padding: clamp(16px, 4vw, 28px); }
+    .sicherheit-karte {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: clamp(18px, 4vw, 28px); text-align: center;
+    }
+    .sicherheit-titel { font-weight: 700; font-size: 1.2rem; letter-spacing: -0.02em; margin: 0 0 4px; }
+    .sicherheit-status { display: inline-block; font-size: .92rem; color: var(--muted); margin-bottom: 14px; }
+    .sicherheit-status.ok { color: #1b7f4d; font-weight: 600; }
+    .sicherheit-status.fehler { color: #b3261e; }
+    .sicherheit-hinweis { color: var(--muted); font-size: .92rem; line-height: 1.55; margin: 16px 0 0; }
+    .sicherheit-neu {
+      margin-top: 16px; padding: 11px 18px; border-radius: 999px;
+      border: 1px solid var(--line); background: var(--card); color: var(--fg);
+      font: inherit; font-weight: 600; cursor: pointer;
+    }
+    .sicherheit-neu:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Der WebView der App ist klein (300 x 200 dp). Dort wird alles
+       weggepackt, was nicht das Widget selbst ist - der Nutzer sieht
+       in der App nur den Sicherheitscheck, nicht die Seite drumherum. */
+    @media (max-width: 420px), (max-height: 260px) {
+      .kopf { display: none; }
+      .sicherheit { padding: 8px; }
+      .sicherheit-karte { padding: 12px; border-radius: 16px; box-shadow: none; }
+      .sicherheit-titel { font-size: 1rem; }
+      .sicherheit-status { margin-bottom: 8px; }
+      .sicherheit-hinweis { display: none; }
+    }
+
+
+    @media (max-width: 560px) {
+      body { font-size: 16px; }
+      table { font-size: .88rem; }
+      th, td { padding: .6rem .7rem; }
+    }
+</style>
+</head>
+<body>
+<header class="kopf">
+      <span class="marke">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <defs><linearGradient id="held-marke-klein" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#ff6b95"/>
+            <stop offset="1" stop-color="#7b4dd6"/>
+          </linearGradient></defs>
+          <path fill="url(#held-marke-klein)"
+                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+      </span>
+      <span class="marken-text">Thestia</span>
+      <input type="checkbox" id="modus-umschalter" class="modus-schalter" aria-label="Dark- und Light-Mode umschalten">
+      <label for="modus-umschalter" class="modus-knopf" title="Dark- und Light-Mode umschalten">
+        <svg class="icon-mond" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"/>
+        </svg>
+        <svg class="icon-sonne" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="4"/>
+          <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+        </svg>
+      </label>
+      
+  <a class="sprach-knopf" href="/" hreflang="de"
+     title="Auf Deutsch wechseln" aria-label="Auf Deutsch wechseln">DE</a>
+  </header>
+<div class="inhalt">
+
+  <!--
+    ANSICHT 1: Der Sicherheitscheck der App.
+    Nur auf auth.thestia.de sichtbar - die App oeffnet diese Adresse im
+    WebView und wartet auf das Token.
+  -->
+  <div id="captcha-view">
+    <!-- Öffentlicher Sitekey (kein Secret!). -->
+    <div id="captcha-box" class="cf-turnstile"
+         data-sitekey="0x4AAAAAAFDhMgIL_nrpUokM"></div>
+
+    <!-- Nur sichtbar bei Browser-/Debug-Tests ohne WebView-Channel.
+         Zeigt NIEMALS das Token - nur einen neutralen Text oder den
+         Fehlercode (siehe sendToApp). -->
+    <div id="debug-output" style="display:none; margin-top:16px; color:#4ade80; font-family:monospace;"></div>
+
+    <!--
+      Sichtbarer Hinweis, wenn der Captcha-Block nicht startet. Ohne das
+      sieht der Nutzer nur eine schwarze Flaeche und weiss nicht, was
+      los ist. Der Text erscheint nur im Fehlerfall.
+    -->
+    <div id="captcha-error"
+         style="display:none; margin-top:16px; max-width:320px; color:#f87171;
+                font-family:system-ui,sans-serif; font-size:14px; text-align:center;">
+      The security check could not be loaded. Please check your internet
+      connection and reload the page. If an ad blocker is active,
+      it must allow <code>challenges.cloudflare.com</code>.
+    </div>
+  </div>
+
+  <!--
+    ANSICHT 2: Die oeffentliche Seite (Wurzel-Domain).
+
+    Sie ersetzt den Sicherheitscheck auf thestia.de. Inhalt: was die
+    App ist, wo man sie bekommt, und die Pflichtseiten.
+  -->
+  <div id="landing-view">
+    <div class="held-karte">
+      <div class="held-marke">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <defs><linearGradient id="held-marke-gross" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#ff6b95"/>
+            <stop offset="1" stop-color="#7b4dd6"/>
+          </linearGradient></defs>
+          <path fill="url(#held-marke-gross)"
+                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+      </div>
+      <h1 class="held-titel">Thestia</h1>
+      <p class="held-text">
+        Encounters that see more than just a photo. Messages are
+        end-to-end encrypted, your location stays with you.
+      </p>
+      <div class="held-knopfe">
+        <a class="held-knopf primary" href="https://play.google.com/store/apps/details?id=com.thestia.app">In the Play Store</a>
+        <a class="held-knopf" href="https://f-droid.org/packages/com.thestia.app/">On F-Droid</a>
+        <a class="held-knopf" href="https://github.com/Toterboy/Thestia">Source code on GitHub</a>
+      </div>
+    </div>
+
+    <!-- GALERIE (tool/make_web_screenshots.py) -->
+    <section class="galerie" aria-labelledby="galerie-titel">
+      <h2 class="galerie-titel" id="galerie-titel">A look inside the app</h2>
+      <p class="galerie-text">The images show the app in the order you get to know it - from the first screen to the privacy policy.</p>
+      <div class="galerie-raster">
+      <figure class="galerie-bild">
+        <img src="/screenshots/01_willkommen.jpg" alt="A blind date with substance" loading="lazy" decoding="async" width="540" height="960">
+        <figcaption><strong>A blind date with substance</strong>Personality before looks</figcaption>
+      </figure>
+      <figure class="galerie-bild">
+        <img src="/screenshots/02_aktuelles.jpg" alt="Your overview, every day" loading="lazy" decoding="async" width="540" height="960">
+        <figcaption><strong>Your overview, every day</strong>New messages, new likes, new sparks</figcaption>
+      </figure>
+      <figure class="galerie-bild">
+        <img src="/screenshots/03_chat.jpg" alt="Your chat stays between you" loading="lazy" decoding="async" width="540" height="960">
+        <figcaption><strong>Your chat stays between you</strong>End-to-end encrypted</figcaption>
+      </figure>
+      <figure class="galerie-bild">
+        <img src="/screenshots/04_entdecken.jpg" alt="Five ways to spark a connection" loading="lazy" decoding="async" width="540" height="960">
+        <figcaption><strong>Five ways to spark a connection</strong>From Find your Match to Transit Spark</figcaption>
+      </figure>
+      <figure class="galerie-bild">
+        <img src="/screenshots/05_anpassen.jpg" alt="Your style, your colors" loading="lazy" decoding="async" width="540" height="960">
+        <figcaption><strong>Your style, your colors</strong>Six color schemes, light/system/dark</figcaption>
+      </figure>
+      <figure class="galerie-bild">
+        <img src="/screenshots/06_hell_dunkel.jpg" alt="Light or dark, just as you like" loading="lazy" decoding="async" width="540" height="960">
+        <figcaption><strong>Light or dark, just as you like</strong>Three appearance modes: light, system or dark</figcaption>
+      </figure>
+      <figure class="galerie-bild">
+        <img src="/screenshots/07_eisbrecher.jpg" alt="Icebreakers instead of small talk" loading="lazy" decoding="async" width="540" height="960">
+        <figcaption><strong>Icebreakers instead of small talk</strong>Questions you enjoy answering</figcaption>
+      </figure>
+      <figure class="galerie-bild">
+        <img src="/screenshots/08_datenschutz.jpg" alt="Your data stays with you" loading="lazy" decoding="async" width="540" height="960">
+        <figcaption><strong>Your data stays with you</strong>What is collected - and what is not</figcaption>
+      </figure>
+      </div>
+    </section>
+    <!-- /GALERIE -->
+
+    <div class="held">
+      <div class="held-liste">
+        <a class="held-link" href="/impressum">
+          <strong>Legal notice</strong>
+          <span>Provider identification and contact (Sec. 5 DDG)</span>
+        </a>
+        <a class="held-link" href="/datenschutz">
+          <strong>Privacy</strong>
+          <span>What is collected, why and for how long</span>
+        </a>
+        <a class="held-link" href="/kinderschutz">
+          <strong>Child protection</strong>
+          <span>Reporting office and age approval</span>
+        </a>
+        <a class="held-link" href="/dating-sicherheit">
+          <strong>Date safely</strong>
+          <span>Fake profiles, first dates and help</span>
+        </a>
+        <a class="held-link" href="/konto-loeschen">
+          <strong>Delete account</strong>
+          <span>How to remove your account and your data</span>
+        </a>
+        <a class="held-link" href="/daten-loeschen">
+          <strong>Delete data</strong>
+          <span>The steps, the types of data and the retention period</span>
+        </a>
+        <a class="held-link" href="/eltern">
+          <strong>Parents &amp; teens</strong>
+          <span>Consent, supervision and your child's rights</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="held-fuss">
+      <p>Thestia is an open source project under the GNU Affero General Public License 3.0. The source code is on <a href="https://github.com/Toterboy/Thestia">GitHub</a> - contributions are welcome.</p>
+      <p>The app's security check runs at <a href="https://auth.thestia.de/">auth.thestia.de</a>.</p>
+    </div>
+  </div>
+
+  <script>
+    // Zustellung an die App: webview_flutter (Captcha.postMessage) ODER
+    // flutter_inappwebview (callHandler). Ohne Channel (Browser-Test) wird
+    // das Ergebnis im DOM angezeigt statt einer ReferenceError zu werfen.
+    function sendToApp(message) {
+      try {
+        if (window.Captcha && typeof window.Captcha.postMessage === 'function') {
+          window.Captcha.postMessage(message);
+          return;
+        }
+      } catch (e) { /* weiter mit nächster Variante */ }
+      try {
+        if (window.flutter_inappwebview &&
+            typeof window.flutter_inappwebview.callHandler === 'function') {
+          window.flutter_inappwebview.callHandler('Captcha', message);
+          return;
+        }
+      } catch (e) { /* weiter mit Fallback */ }
+      var out = document.getElementById('debug-output');
+      if (out) {
+        out.style.display = 'block';
+        // NIE das Token anzeigen (NUTZERWUNSCH 01.11.2026: "der gruene
+        // lange Code, der eigentlich versteckt werden sollte").
+        //
+        // Das Token ist ein Einmal-Nachweis fuer den Server - ihn
+        // offenzulegen bringt niemandem etwas und sieht wie ein Fehler
+        // aus. Im Browser gibt es keinen App-Kanal, also steht hier ein
+        // neutraler Text. Die FEHLERCODE bleiben sichtbar: die sind
+        // das eigentliche Diagnose-Material ("invalid-domain",
+        // "network-error", ...).
+        var istFehler = message && message.indexOf('ERROR:') === 0;
+        out.textContent = istFehler ? message : 'Security check completed.';
+      }
+      // Sichtbarer Hinweis im Fehlerfall (SCRIPT_NOT_LOADED /
+      // CAPTCHA_ERROR). Ohne ihn bleibt nur eine schwarze Flaeche.
+      if (message && message.indexOf('ERROR:') === 0) {
+        var err = document.getElementById('captcha-error');
+        if (err) err.style.display = 'block';
+      }
+    }
+
+    function onSuccess(token) {
+      sendToApp(token);
+    }
+    // FEHLERCODE MITGEBEN (24.10.2026).
+    //
+    // Bisher wurde der Code verworfen und immer nur "CAPTCHA_ERROR"
+    // gemeldet. Turnstile liefert aber einen sprechenden Code:
+    // "invalid-domain", "invalid-sitekey", "network-error",
+    // "timeout-or-duplicate", "unsupported-browser", "unknown-error".
+    // Ohne den Code laesst sich nicht unterscheiden, ob der Fehler an
+    // der Domain-Bindung, am Netz oder am Browser liegt - und genau
+    // diese Information fehlte beim Debuggen im WebView.
+    //
+    // 110200 ist "Domain not authorized": Der Sitekey kennt nur
+    // auth.thestia.de. Deshalb bekommen andere Hostnamen (z. B. die
+    // Wurzel-Domain) gar kein Widget - dort steht die Landing-Seite.
+    function onError(code) {
+      sendToApp('ERROR:CAPTCHA_ERROR:' + (code || 'unknown'));
+    }
+    function onUnsupported(code) {
+      sendToApp('ERROR:CAPTCHA_UNSUPPORTED:' + (code || 'unknown'));
+    }
+    function onTimeout() {
+      sendToApp('ERROR:CAPTCHA_TIMEOUT');
+    }
+    function onExpired() {
+      sendToApp('ERROR:CAPTCHA_EXPIRED');
+    }
+
+    // NUR auf auth.thestia.de wird Turnstile geladen. Auf der
+    // Landing-Seite gibt es damit keinen einzigen externen Request -
+    // die Seite ist komplett statisch.
+    function ladeTurnstile() {
+      return new Promise(function (resolve, reject) {
+        var s = document.createElement('script');
+        s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+        s.defer = true;
+        s.onload = function () { resolve(); };
+        s.onerror = function () { reject(new Error('api.js not loaded')); };
+        document.head.appendChild(s);
+      });
+    }
+
+    function starteCaptcha() {
+      var el = document.getElementById('captcha-box');
+      if (!el) {
+        sendToApp('ERROR:SCRIPT_NOT_LOADED');
+        return;
+      }
+      ladeTurnstile().then(function () {
+        // Sicherheitsnetz: api.js kann bei langsamer Verbindung trotz
+        // defer noch nicht ausgefuehrt sein - bis zu 12 s warten, erst
+        // dann den Fehler melden.
+        var attempts = 0;
+        function tryRender() {
+          if (typeof turnstile !== 'undefined') {
+            turnstile.render(el, {
+              sitekey: el.getAttribute('data-sitekey'),
+              callback: onSuccess,
+              'error-callback': onError,
+              'expired-callback': onExpired,
+              // Die beiden weiteren Callbacks liefern eigene Codes - ohne
+              // sie waere ein "timeout" nicht von einem "unsupported" zu
+              // unterscheiden.
+              'timeout-callback': onTimeout,
+              'unsupported-callback': onUnsupported
+            });
+          } else if (attempts < 48) {
+            attempts++;
+            setTimeout(tryRender, 250);
+          } else {
+            sendToApp('ERROR:SCRIPT_NOT_LOADED');
+          }
+        }
+        tryRender();
+      }).catch(function (e) {
+        sendToApp('ERROR:SCRIPT_NOT_LOADED');
+      });
+    }
+
+    if (document.documentElement.className === 'captcha-host') {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', starteCaptcha);
+      } else {
+        starteCaptcha();
+      }
+    }
+  </script>
+</div>
+</body>
+</html>

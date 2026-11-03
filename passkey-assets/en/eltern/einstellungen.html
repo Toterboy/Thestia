@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Parents area - Thestia (English)</title>
+  <meta name="robots" content="noindex">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+    }
+    h1 { font-size: 1.5rem; margin-bottom: .25rem; }
+    h2 { font-size: 1.05rem; margin-top: 2rem; }
+    p.lead { opacity: .8; margin-top: 0; }
+    .box {
+      border: 1px solid rgba(128,128,128,.35);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin: 1.25rem 0;
+    }
+    .klein { font-size: .875rem; opacity: .85; }
+    .warn {
+      border-color: rgba(200,60,60,.6);
+      background: rgba(200,60,60,.08);
+    }
+    a { color: inherit; }
+
+    label { display: block; font-weight: 600; margin: 1rem 0 .35rem; }
+    select, input[type="time"], input[type="password"] {
+      width: 100%;
+      padding: .7rem .8rem;
+      border-radius: 10px;
+      border: 1px solid rgba(128,128,128,.45);
+      background: transparent;
+      color: inherit;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+    input[type="time"] { max-width: 12rem; }
+    input[type="password"] { max-width: 12rem; letter-spacing: .5rem; }
+    .reihe { display: flex; gap: .75rem; flex-wrap: wrap; }
+    .reihe > div { flex: 1 1 10rem; }
+    button {
+      font: inherit;
+      font-weight: 600;
+      border-radius: 999px;
+      padding: .8rem 1.5rem;
+      border: 1px solid rgba(128,128,128,.45);
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+    }
+    button.haupt {
+      background: #5b3fa8;
+      border-color: #5b3fa8;
+      color: #fff;
+    }
+    button.warn-btn {
+      border-color: rgba(200,60,60,.6);
+      color: rgba(200,60,60,.95);
+    }
+    button:disabled { opacity: .55; cursor: default; }
+    .status {
+      border-radius: 10px;
+      padding: .8rem 1rem;
+      margin: 1rem 0;
+      font-size: .95rem;
+    }
+    .status.ok { background: rgba(80,170,90,.12); border: 1px solid rgba(80,170,90,.45); }
+    .status.fehler { background: rgba(200,60,60,.1); border: 1px solid rgba(200,60,60,.5); }
+    .status.info { background: rgba(128,128,128,.12); border: 1px solid rgba(128,128,128,.4); }
+    [hidden] { display: none !important; }
+
+    /* Web-Design (tool/web_theme.py) */
+    /* ---------------------------------------------------------------
+       Eine Quelle fuer alle Seiten.
+
+       Die Farben kommen aus der App: Primaer #E9457B, heller
+       Grund #F7F7FB, Karten weiss, dunkler Grund #121212, Karten
+       #1E1E1E. Die Linkfarbe ist eine dunklere Variante des Rosa
+       (#d62d6c), damit sie auf weiss den Kontrast-Anspruch von 4,5:1
+       erreicht.
+       --------------------------------------------------------------- */
+    /* --- Farben: zwei Paletten, vier Zustaende --------------------- */
+    /*
+     * (1) Die Seite folgt der Systemeinstellung - ohne Zutun.
+     * (2) Der Schalter dreht um: hell -> dunkel, dunkel -> hell.
+     *
+     * Dazu braucht es vier Regeln, weil CSS den Systemzustand nicht
+     * "unsetten" kann - der Schalter ist ein 2-Zustands-Schalter:
+     *
+     *   System hell + Schalter aus  -> hell
+     *   System hell + Schalter an   -> dunkel
+     *   System dunkel + Schalter aus -> dunkel
+     *   System dunkel + Schalter an  -> hell
+     *
+     * Specificitaet: alle vier Selektoren haben (0,2,0) - `:root:has(...)`
+     * gewinnt gegen `:root` (0,1,0), und die beiden Media-Query-Varianten
+     * entscheiden sich ueber die Reihenfolge (die letzte gewinnt).
+     */
+    :root {
+      color-scheme: light;
+      --bg: #f2f2f8;
+      --fg: #1b1b21;
+      --muted: #575764;
+      --card: #ffffff;
+      --card-fg: #1b1b21;
+      --line: #e4e2ee;
+      --accent: #d62d6c;
+      --accent-soft: rgba(214,45,108,.08);
+      --accent-line: rgba(214,45,108,.30);
+      --accent-fg: #ffffff;
+      --shadow-sm: 0 1px 2px rgba(25,18,45,.06);
+      --shadow: 0 1px 2px rgba(25,18,45,.04),
+                 0 20px 44px -24px rgba(25,18,45,.40);
+      --radius: 24px;
+      --radius-s: 14px;
+    }
+    /* System dunkel: die Seite startet dunkel (ohne Zutun des Nutzers). */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --bg: #0e0e13;
+        --fg: #ece9f2;
+        --muted: #a29fb0;
+        --card: #191920;
+        --card-fg: #ece9f2;
+        --line: #2b2a35;
+        --accent: #ff86b3;
+        --accent-soft: rgba(255,134,179,.12);
+        --accent-line: rgba(255,134,179,.34);
+        --accent-fg: #17161c;
+        --shadow-sm: 0 1px 2px rgba(0,0,0,.55);
+        --shadow: 0 1px 2px rgba(0,0,0,.40),
+                   0 24px 48px -24px rgba(0,0,0,.85);
+      }
+    }
+    /* Schalter an: umdrehen. Im hellen System wird es dunkel ... */
+    :root:has(#modus-umschalter:checked) {
+      color-scheme: dark;
+      --bg: #0e0e13;
+      --fg: #ece9f2;
+      --muted: #a29fb0;
+      --card: #191920;
+      --card-fg: #ece9f2;
+      --line: #2b2a35;
+      --accent: #ff86b3;
+      --accent-soft: rgba(255,134,179,.12);
+      --accent-line: rgba(255,134,179,.34);
+      --accent-fg: #17161c;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.55);
+      --shadow: 0 1px 2px rgba(0,0,0,.40),
+                 0 24px 48px -24px rgba(0,0,0,.85);
+    }
+    /* ... und im dunklen System wieder hell. */
+    @media (prefers-color-scheme: dark) {
+      :root:has(#modus-umschalter:checked) {
+        color-scheme: light;
+        --bg: #f2f2f8;
+        --fg: #1b1b21;
+        --muted: #575764;
+        --card: #ffffff;
+        --card-fg: #1b1b21;
+        --line: #e4e2ee;
+        --accent: #d62d6c;
+        --accent-soft: rgba(214,45,108,.08);
+        --accent-line: rgba(214,45,108,.30);
+        --accent-fg: #ffffff;
+        --shadow-sm: 0 1px 2px rgba(25,18,45,.06);
+        --shadow: 0 1px 2px rgba(25,18,45,.04),
+                   0 20px 44px -24px rgba(25,18,45,.40);
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      max-width: none;
+      background: var(--bg);
+      color: var(--fg);
+      /* Die Reihenfolge ist wichtig: `system-ui` zuerst nimmt die
+         System-Schrift (San Francisco, Segoe UI Variable, Roboto) -
+         das ist auf jedem Geraet die Schrift, fuer die die App gebaut
+         ist. Die konkreten Namen danach sind der Fallback fuer
+         aeltere Systeme, `sans-serif` der letzte Notnagel. */
+      font-family: system-ui, -apple-system, "Segoe UI Variable Text",
+                   "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans",
+                   Arial, sans-serif;
+      font-size: 17px;
+      line-height: 1.7;
+      letter-spacing: -0.003em;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    /* --- Kopfzeile: Marke, Name, Umschalter ------------------------ */
+    .kopf {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px clamp(16px, 5vw, 40px);
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+    }
+    .marke { display: inline-flex; line-height: 0; }
+    .marke svg { display: block; width: 26px; height: 26px; }
+    .marken-text {
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: -0.015em;
+    }
+
+    /* Die Checkbox bleibt im Quelltext (Tastatur!), ist aber nicht
+       sichtbar. Der Klick geht ueber das Label. */
+    .modus-schalter {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .modus-knopf {
+      margin-left: auto;
+      width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--card);
+      color: var(--fg);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      transition: transform .15s ease, color .2s ease,
+                  border-color .2s ease, background .2s ease;
+    }
+    .modus-knopf:hover {
+      transform: scale(1.06);
+      color: var(--accent);
+      border-color: var(--accent-line);
+    }
+    .modus-knopf:active { transform: scale(.97); }
+    .modus-schalter:focus-visible + .modus-knopf {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+    .modus-knopf svg { width: 20px; height: 20px; }
+
+    /* Der Sprachknopf sitzt rechts neben dem Modus-Knopf. Er ist ein
+       LINK, kein Schalter: die zweite Sprache ist eine eigene Datei, und
+       ein Link laesst sich mit der Tastatur bedienen und im neuen Tab
+       oeffnen. */
+    .sprach-knopf {
+      width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--card);
+      color: var(--fg);
+      box-shadow: var(--shadow-sm);
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform .15s ease, color .2s ease,
+                  border-color .2s ease, background .2s ease;
+    }
+    .sprach-knopf:hover {
+      transform: scale(1.06);
+      color: var(--accent);
+      border-color: var(--accent-line);
+    }
+    .sprach-knopf:active { transform: scale(.97); }
+    .sprach-knopf:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    /* Das Symbol zeigt den ZIEL-Modus: Mond im hellen Modus (Klick
+       = dunkel), Sonne im dunklen Modus (Klick = hell).
+
+       Dieselbe Logik wie die Farben: das System entscheidet, was der
+       Knopf anzeigt - der Schalter dreht nur um. */
+    .modus-knopf .icon-sonne { display: none; }
+    /* System dunkel: Ziel ist hell -> Sonne zeigen. */
+    @media (prefers-color-scheme: dark) {
+      :root:not(:has(#modus-umschalter:checked)) .modus-knopf .icon-sonne {
+        display: block;
+      }
+      :root:not(:has(#modus-umschalter:checked)) .modus-knopf .icon-mond {
+        display: none;
+      }
+    }
+    /* Schalter an: im hellen System war der Ziel-Modus dunkel (Mond),
+       im dunklen System hell (Sonne). */
+    :root:has(#modus-umschalter:checked) .modus-knopf .icon-sonne {
+      display: block;
+    }
+    :root:has(#modus-umschalter:checked) .modus-knopf .icon-mond {
+      display: none;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:has(#modus-umschalter:checked) .modus-knopf .icon-sonne {
+        display: none;
+      }
+      :root:has(#modus-umschalter:checked) .modus-knopf .icon-mond {
+        display: block;
+      }
+    }
+
+    /* --- Inhalt: eine Karte auf getoentem Grund -------------------- */
+    .inhalt {
+      max-width: 46rem;
+      margin: clamp(16px, 3vw, 32px) auto 0;
+      padding: clamp(22px, 4vw, 32px);
+      background: var(--card);
+      color: var(--card-fg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .inhalt > :first-child { margin-top: 0; }
+    .inhalt > :last-child { margin-bottom: 0; }
+
+    /* --- Typografie ----------------------------------------------- */
+    h1 {
+      font-size: clamp(1.7rem, 1.2rem + 1.8vw, 2.15rem);
+      line-height: 1.15;
+      letter-spacing: -0.025em;
+      font-weight: 700;
+      margin: 0 0 .35rem;
+    }
+    h1 + p.lead { margin-top: 0; }
+    h2 {
+      font-size: 1.22rem;
+      line-height: 1.3;
+      letter-spacing: -0.012em;
+      font-weight: 650;
+      margin: 2.4rem 0 .7rem;
+      padding-top: 1.4rem;
+      border-top: 1px solid var(--line);
+    }
+    h3 {
+      font-size: 1.03rem;
+      line-height: 1.35;
+      font-weight: 650;
+      margin: 1.6rem 0 .5rem;
+    }
+    p { margin: 0 0 1.05rem; }
+    p.lead {
+      color: var(--muted);
+      font-size: 1.06rem;
+      margin-bottom: 1.6rem;
+    }
+    .klein { color: var(--muted); font-size: .9rem; }
+    strong { font-weight: 650; }
+    em { font-style: italic; }
+    a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+      text-decoration-color: var(--accent-line);
+    }
+    a:hover { text-decoration-color: var(--accent); }
+
+    ul, ol { margin: .4rem 0 1.25rem; padding-left: 1.35rem; }
+    li { margin-bottom: .4rem; }
+    li::marker { color: var(--accent); }
+
+    /* Hinweis-Boxen: wie die tonalen Karten der App. */
+    .box, .hinweis {
+      background: var(--accent-soft);
+      color: var(--card-fg);
+      border: 1px solid var(--accent-line);
+      border-left: 1px solid var(--accent-line);
+      border-radius: var(--radius-s);
+      padding: 1rem 1.15rem;
+      margin: 1.6rem 0;
+    }
+    .box > :last-child, .hinweis > :last-child { margin-bottom: 0; }
+
+    /* --- Tabellen: abgerundete Karten ----------------------------- */
+    .tabellen-huelle {
+      overflow-x: auto;
+      margin: 1.4rem 0 1.6rem;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+    table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      margin: 0;
+      /* 0,88 rem statt 0,95: die grosse Tabelle der
+         Datenschutzerklaerung brauchte 693 px, die Karte bietet 672 px.
+         Mit der kleineren Schrift passt sie in die Karte - sonst
+         schneidet der Kartenrand die letzte Spalte ab. */
+      font-size: .88rem;
+      background: var(--card);
+      color: var(--card-fg);
+    }
+    th, td {
+      border: 0;
+      padding: .65rem .75rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { font-weight: 650; }
+    thead th {
+      background: var(--accent-soft);
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+    tbody tr + tr td { border-top: 1px solid var(--line); }
+
+    footer {
+      max-width: 46rem;
+      margin: 0 auto;
+      padding: 20px clamp(16px, 4vw, 28px) 56px;
+      color: var(--muted);
+      font-size: .88rem;
+    }
+    footer p { margin-bottom: .4rem; }
+
+    /* --- Landing- und Bestaetigungsseite ---------------------------- */
+    .held { max-width: 46rem; margin: 0 auto; padding: clamp(20px, 4vw, 32px); }
+    .held-karte {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: clamp(22px, 4vw, 40px); margin: clamp(16px, 3vw, 32px) auto 0;
+      max-width: 46rem; text-align: center;
+    }
+    .held-marke { display: flex; align-items: center; justify-content: center; }
+    .held-marke svg { width: 88px; height: 88px; }
+    .held-titel {
+      font-size: clamp(1.8rem, 1.2rem + 2.6vw, 2.5rem);
+      line-height: 1.15; letter-spacing: -0.03em; font-weight: 700;
+      margin: 10px 0 0;
+    }
+    .held-text {
+      color: var(--muted); font-size: 1.05rem; line-height: 1.6;
+      margin: 10px auto 0; max-width: 34rem;
+    }
+    .held-knopfe {
+      display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+      margin: 26px 0 0;
+    }
+    .held-knopf {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 20px; border-radius: 999px; font-weight: 600;
+      text-decoration: none; border: 1px solid var(--line);
+      color: var(--fg); background: var(--card);
+    }
+    .held-knopf.primary {
+      background: var(--accent); border-color: transparent;
+      color: var(--accent-fg);
+    }
+    .held-knopf:hover { transform: translateY(-1px); }
+    .held-liste {
+      display: grid; gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      margin: 0;
+    }
+    /*
+     * Die unterste der fuenf Kacheln steht allein in ihrer Zeile
+     * (NUTZERWUNSCH 31.10.2026: "Unten bei den 5 Kacheln soll die
+     * untere mittig sein und nicht linksbuendig").
+     *
+     * Bei fuenf Kacheln und zwei Spalten bleibt eine Kachel uebrig, die
+     * allein in der letzten Zeile steht - und die hing linksbuendig.
+     * Das sah nach einem Fehler aus: als waere die Zeile unvollstaendig.
+     *
+     * `grid-column: 1 / -1` laesst sie die ganze Zeile einnehmen,
+     * `justify-self: center` stellt sie mittig darin. Ihre Breite
+     * bleibt dabei die einer normalen Kachel (die Spaltenbreite) -
+     * sonst waere sie plötzlich doppelt so breit wie ihre Schwestern.
+     */
+    .held-liste > .held-link:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+      justify-self: center;
+      width: calc(50% - 6px);
+    }
+    /* Bei einer Spalte (schmale Fenster) ist die Kachel allein und
+       darf die volle Breite nehmen - dort ist "mittig" nicht sinnvoll,
+       die Kachel fuellt die Zeile ohnehin aus. */
+    @media (max-width: 479px) {
+      .held-liste > .held-link:last-child:nth-child(odd) {
+        width: 100%;
+      }
+    }
+    .held-link {
+      display: block; padding: 16px 18px; border-radius: var(--radius-s);
+      background: var(--card); border: 1px solid var(--line);
+      text-decoration: none; color: inherit;
+    }
+    .held-link strong { display: block; font-size: 1rem; margin-bottom: 3px; }
+    .held-link span {
+      color: var(--muted); font-size: .92rem; line-height: 1.45;
+      display: block;
+    }
+    .held-link:hover { border-color: var(--accent); }
+    .held-fuss {
+      max-width: 46rem; margin: 0 auto;
+      padding: 22px clamp(20px, 4vw, 32px) 56px;
+      color: var(--muted); font-size: .9rem;
+    }
+    .held-fuss a { color: var(--accent); }
+
+    /* --- Die Screenshot-Galerie (NUTZERWUNSCH 31.10.2026) ------------ */
+    /*
+     * "Auf thestia.de sollen auch die Screenshots angezeigt werden."
+     *
+     * Die Bilder liegen in passkey-assets/screenshots/ und werden von
+     * tool/make_web_screenshots.py verkleinert und hierher kopiert.
+     * Das Markup erzeugt dasselbe Skript - es kann also nicht
+     * auseinanderlaufen (Bild da, Bild fehlt).
+     */
+    .galerie {
+      max-width: 46rem; margin: 0 auto;
+      padding: clamp(6px, 1vw, 12px) clamp(20px, 4vw, 32px) 0;
+    }
+    .galerie-titel {
+      font-size: 1.22rem; line-height: 1.3; letter-spacing: -0.012em;
+      font-weight: 650; margin: 0 0 .35rem;
+      /* KEIN Trennstrich (NUTZERWUNSCH 31.10.2026: "Bei thestia.de
+       * soll der Strich zwischen dem oberen Bereich mit den Buttons
+       * (Im Play Store etc.) und der Ueberschrift Ein Blick in die App
+       * weg").
+       *
+       * Die h2-Regel setzt einen Strich ueber jede Zwischenueberschrift
+       * - auf den Textseiten trennt er die Abschnitte voneinander, das
+       * ist richtig. Hier aber trennt er zwei Dinge, die zusammen
+       * gehoeren: die Karte mit den Buttons und die Galerie direkt
+       * darunter. Der Strich sah aus wie ein Rest der Karte. */
+      border-top: none;
+      padding-top: 0;
+    }
+    .galerie-text {
+      color: var(--muted); font-size: .95rem; margin: 0 0 1rem;
+    }
+    /*
+     * Das Raster ist ein FLEX-Container, kein Grid (NUTZERWUNSCH
+     * 31.10.2026: "Zudem sollen die unteren beiden Bilder zentriert
+     * werden").
+     *
+     * Bei acht Bildern und drei Spalten bleiben in der letzten Reihe
+     * zwei uebrig - im Grid standen die linksbuendig, als waeren sie
+     * nicht dazugehoerig. Mit Flex und `justify-content: center`
+     * richtet Flex jede Zeile einzeln aus: die letzte Reihe mit zwei
+     * Bildern steht damit automatisch mittig.
+     *
+     * Flex ist hier robuster als Grid: bei einer anderen Bildzahl
+     * (sieben, neun, zehn) stimmt die Zentrierung immer - im Grid
+     * muesste man die Positionen hart codieren, und das passte dann
+     * nur bei genau acht Bildern.
+     *
+     * Die Breite ist fest (kein wachsen): `flex: 0 0 <breite>`
+     * verhindert, dass ein Bild in einer Reihe mit nur einem Bild
+     * allein auf die volle Breite aufgeht.
+     */
+    .galerie-raster {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 14px;
+    }
+    .galerie-bild {
+      /* Zwei Spalten auf schmalen Fenstern. */
+      flex: 0 0 calc(50% - 7px);
+      max-width: calc(50% - 7px);
+    }
+    /* Ab Tablet-Breite: drei Spalten statt zwei. Die Bilder sind dann
+       gross genug, dass man sie ohne Zooming lesen kann, und die
+       Bildunterschrift passt in zwei Zeilen. */
+    @media (min-width: 640px) {
+      .galerie-bild {
+        flex: 0 0 calc(33.3333% - 9.3333px);
+        max-width: calc(33.3333% - 9.3333px);
+      }
+    }
+    /* Auf sehr schmalen Fenstern ein Bild pro Zeile. */
+    @media (max-width: 419px) {
+      .galerie-bild {
+        flex: 0 0 100%;
+        max-width: 100%;
+      }
+    }
+    .galerie-bild {
+      margin: 0; overflow: hidden;
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius-s); box-shadow: var(--shadow-sm);
+      transition: transform .18s ease, border-color .18s ease;
+    }
+    .galerie-bild:hover {
+      transform: translateY(-2px); border-color: var(--accent-line);
+    }
+    .galerie-bild img {
+      display: block; width: 100%; height: auto;
+      background: var(--accent-soft);
+    }
+    .galerie-bild figcaption {
+      padding: 10px 12px 12px;
+      font-size: .82rem; line-height: 1.4; color: var(--muted);
+    }
+    .galerie-bild figcaption strong {
+      display: block; color: var(--card-fg);
+      font-size: .9rem; font-weight: 650; margin-bottom: 2px;
+    }
+
+    /* --- Der Sicherheitscheck (Captcha-Seite) ------------------------ */
+    .sicherheit { max-width: 30rem; margin: 0 auto; padding: clamp(16px, 4vw, 28px); }
+    .sicherheit-karte {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: clamp(18px, 4vw, 28px); text-align: center;
+    }
+    .sicherheit-titel { font-weight: 700; font-size: 1.2rem; letter-spacing: -0.02em; margin: 0 0 4px; }
+    .sicherheit-status { display: inline-block; font-size: .92rem; color: var(--muted); margin-bottom: 14px; }
+    .sicherheit-status.ok { color: #1b7f4d; font-weight: 600; }
+    .sicherheit-status.fehler { color: #b3261e; }
+    .sicherheit-hinweis { color: var(--muted); font-size: .92rem; line-height: 1.55; margin: 16px 0 0; }
+    .sicherheit-neu {
+      margin-top: 16px; padding: 11px 18px; border-radius: 999px;
+      border: 1px solid var(--line); background: var(--card); color: var(--fg);
+      font: inherit; font-weight: 600; cursor: pointer;
+    }
+    .sicherheit-neu:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Der WebView der App ist klein (300 x 200 dp). Dort wird alles
+       weggepackt, was nicht das Widget selbst ist - der Nutzer sieht
+       in der App nur den Sicherheitscheck, nicht die Seite drumherum. */
+    @media (max-width: 420px), (max-height: 260px) {
+      .kopf { display: none; }
+      .sicherheit { padding: 8px; }
+      .sicherheit-karte { padding: 12px; border-radius: 16px; box-shadow: none; }
+      .sicherheit-titel { font-size: 1rem; }
+      .sicherheit-status { margin-bottom: 8px; }
+      .sicherheit-hinweis { display: none; }
+    }
+
+
+    @media (max-width: 560px) {
+      body { font-size: 16px; }
+      table { font-size: .88rem; }
+      th, td { padding: .6rem .7rem; }
+    }
+</style>
+</head>
+<body>
+<header class="kopf">
+  <span class="marke"><svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="thestia-marke" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff6b95"/><stop offset="1" stop-color="#7b4dd6"/></linearGradient></defs><path fill="url(#thestia-marke)" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span>
+  <span class="marken-text">Thestia</span>
+  <input type="checkbox" id="modus-umschalter" class="modus-schalter" aria-label="Dark- und Light-Mode umschalten">
+  <label for="modus-umschalter" class="modus-knopf" title="Dark- und Light-Mode umschalten"><svg class="icon-mond" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"/></svg><svg class="icon-sonne" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></label>
+  <a class="sprach-knopf" href="/eltern/einstellungen" hreflang="de" title="Auf Deutsch wechseln" aria-label="Auf Deutsch wechseln">DE</a>
+</header>
+<div class="inhalt">
+
+
+<h1>Parents area</h1>
+<p class="lead">Here you can manage the consent, set up notifications
+and limit the usage time.</p>
+
+<div id="laden" class="status info">Loading settings …</div>
+
+<div id="fehler" class="status fehler" hidden></div>
+
+<!-- 1) Bestaetigen -->
+<div id="bereich-bestaetigen" class="box" hidden>
+  <h2>Confirm consent</h2>
+  <p>Your child has asked to use Thestia. For 16- and 17-year-olds
+  the app requires the consent of a legal guardian.</p>
+  <p class="klein">By confirming, you state that you are a legal guardian
+  and that your child is allowed to use the app. You can revoke the consent
+  at any time.</p>
+  <button class="haupt" id="knopf-bestaetigen">Confirm consent</button>
+</div>
+
+<!-- 2) Einstellungen -->
+<div id="bereich-einstellen" hidden>
+  <div class="box">
+    <h2>Notifications</h2>
+    <p class="klein">When a spark appears between your child and another
+    person, you get a short message. We do not give you any names and we do
+    not send any profiles - only that something happened.</p>
+    <label for="notify-enabled">Send messages</label>
+    <select id="notify-enabled">
+      <option value="true">Yes</option>
+      <option value="false">No</option>
+    </select>
+    <label for="notify-frequency">How often</label>
+    <select id="notify-frequency">
+      <option value="daily">Daily</option>
+      <option value="weekly">Weekly</option>
+      <option value="monthly">Monthly</option>
+      <option value="none">Not at all</option>
+    </select>
+  </div>
+
+  <div class="box">
+    <h2>Usage time</h2>
+    <p class="klein">You can define a time window in which the app may be
+    used. Outside of it, the app shows a notice. The setting is protected by
+    a four-digit PIN so that your child cannot change it on their own.
+    The PIN is only checked on the server - the device does not know
+    it.</p>
+    <label for="usage-enabled">Limit usage time</label>
+    <select id="usage-enabled">
+      <option value="false">No</option>
+      <option value="true">Yes</option>
+    </select>
+    <div class="reihe">
+      <div>
+        <label for="usage-start">Allowed from</label>
+        <input type="time" id="usage-start">
+      </div>
+      <div>
+        <label for="usage-end">to</label>
+        <input type="time" id="usage-end">
+      </div>
+    </div>
+    <label for="pin">PIN (four digits)</label>
+    <input type="password" id="pin" inputmode="numeric" maxlength="4"
+           pattern="[0-9]*" placeholder="1234" autocomplete="new-password">
+    <p class="klein">The PIN is only needed when the usage time is limited.
+    If you change it, the new one applies from now on.</p>
+  </div>
+
+  <button class="haupt" id="knopf-speichern">Save settings</button>
+
+  <div class="box warn" style="margin-top:2rem">
+    <h2>Revoke consent</h2>
+    <p class="klein">This ends the supervision immediately. Your child can
+    keep using the app - they only lose the parental consent.</p>
+    <button class="warn-btn" id="knopf-widerrufen">Revoke consent</button>
+  </div>
+</div>
+
+<div id="bereich-erledigt" class="box" hidden>
+  <h2>Done</h2>
+  <p id="text-erledigt"></p>
+  <p class="klein">You can reopen this page at any time via the link in your
+  email.</p>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var FN_URL = "https://jftuigjbmmuvrckbchqo.supabase.co/functions/v1/guardian-consent";
+
+  var params = new URLSearchParams(window.location.search);
+  var token = params.get("token") || "";
+
+  var elLaden = document.getElementById("laden");
+  var elFehler = document.getElementById("fehler");
+  var elBestaetigen = document.getElementById("bereich-bestaetigen");
+  var elEinstellen = document.getElementById("bereich-einstellen");
+  var elErledigt = document.getElementById("bereich-erledigt");
+  var elTextErledigt = document.getElementById("text-erledigt");
+
+  function zeigen(el, sichtbar) {
+    el.hidden = !sichtbar;
+  }
+
+  function fehler(text) {
+    elLaden.hidden = true;
+    elFehler.textContent = text;
+    elFehler.hidden = false;
+  }
+
+  function ruf(action, extra) {
+    var body = { action: action, token: token };
+    if (extra) {
+      for (var k in extra) {
+        if (Object.prototype.hasOwnProperty.call(extra, k)) body[k] = extra[k];
+      }
+    }
+    return fetch(FN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    }).then(function (r) { return r.json(); });
+  }
+
+  function minuten(zeit) {
+    if (!zeit) return null;
+    var teile = zeit.split(":");
+    var h = parseInt(teile[0], 10);
+    var m = parseInt(teile[1], 10);
+    if (isNaN(h) || isNaN(m)) return null;
+    return h * 60 + m;
+  }
+
+  function zeitText(min) {
+    if (min === null || min === undefined) return "";
+    var h = Math.floor(min / 60);
+    var m = min % 60;
+    return (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m;
+  }
+
+  if (!token || token.length < 16) {
+    fehler("This link is incomplete. Please use the link from the email " +
+           "we sent you.");
+    return;
+  }
+
+  // Stand laden
+  ruf("status").then(function (data) {
+    elLaden.hidden = true;
+    if (!data || data.ok !== true) {
+      fehler("This link is no longer valid. The link is valid for 14 days " +
+             "- please request a new email in the app.");
+      return;
+    }
+    if (data.status === "pending") {
+      zeigen(elBestaetigen, true);
+      return;
+    }
+    if (data.status !== "active") {
+      elTextErledigt.textContent =
+        "The consent is no longer active. In the app your child can " +
+        "submit a new request.";
+      zeigen(elErledigt, true);
+      return;
+    }
+
+    // Bestehende Einstellungen uebernehmen
+    document.getElementById("notify-enabled").value =
+      data.notifyEnabled ? "true" : "false";
+    document.getElementById("notify-frequency").value =
+      data.notifyFrequency || "weekly";
+    document.getElementById("usage-enabled").value =
+      data.usageLimitEnabled ? "true" : "false";
+    document.getElementById("usage-start").value =
+      zeitText(data.usageStartMin);
+    document.getElementById("usage-end").value =
+      zeitText(data.usageEndMin);
+    zeigen(elEinstellen, true);
+  }).catch(function () {
+    fehler("The page could not reach the server. Please try " +
+           "again later.");
+  });
+
+  document.getElementById("knopf-bestaetigen").addEventListener("click", function () {
+    var knopf = this;
+    knopf.disabled = true;
+    ruf("confirm").then(function (data) {
+      if (data && data.ok === true) {
+        elBestaetigen.hidden = true;
+        elTextErledigt.textContent =
+          "Thank you. The consent is active - you can adjust the " +
+          "settings below at any time.";
+        zeigen(elErledigt, true);
+        ruf("status").then(function (st) {
+          if (st && st.ok === true) {
+            document.getElementById("notify-enabled").value =
+              st.notifyEnabled ? "true" : "false";
+            document.getElementById("notify-frequency").value =
+              st.notifyFrequency || "weekly";
+            zeigen(elEinstellen, true);
+          }
+        });
+      } else {
+        elFehler.textContent =
+          "The confirmation did not work. The link may have expired " +
+          "- please request a new email in the app.";
+        elFehler.hidden = false;
+        knopf.disabled = false;
+      }
+    }).catch(function () {
+      fehler("The server is currently not reachable.");
+      knopf.disabled = false;
+    });
+  });
+
+  document.getElementById("knopf-speichern").addEventListener("click", function () {
+    var knopf = this;
+    knopf.disabled = true;
+    var pinFeld = document.getElementById("pin");
+    var pin = pinFeld.value.trim();
+    var nutzungAn = document.getElementById("usage-enabled").value === "true";
+    var args = {
+      notifyEnabled: document.getElementById("notify-enabled").value === "true",
+      notifyFrequency: document.getElementById("notify-frequency").value,
+      usageLimitEnabled: nutzungAn,
+      usageStartMin: minuten(document.getElementById("usage-start").value),
+      usageEndMin: minuten(document.getElementById("usage-end").value)
+    };
+    if (nutzungAn) {
+      if (!/^[0-9]{4}$/.test(pin)) {
+        elFehler.textContent =
+          "Limited usage time requires a PIN of exactly four " +
+          "digits.";
+        elFehler.hidden = false;
+        knopf.disabled = false;
+        return;
+      }
+      args.pin = pin;
+    }
+    ruf("settings", args).then(function (data) {
+      knopf.disabled = false;
+      if (data && data.ok === true) {
+        elFehler.textContent = "Saved.";
+        elFehler.className = "status ok";
+        elFehler.hidden = false;
+        pinFeld.value = "";
+      } else {
+        elFehler.className = "status fehler";
+        elFehler.textContent =
+          "Saving did not work" +
+          (data && data.error ? " (" + data.error + ")" : "") + ".";
+        elFehler.hidden = false;
+      }
+    }).catch(function () {
+      knopf.disabled = false;
+      fehler("The server is currently not reachable.");
+    });
+  });
+
+  document.getElementById("knopf-widerrufen").addEventListener("click", function () {
+    if (!window.confirm(
+      "Really revoke the consent? The supervision ends immediately.")) {
+      return;
+    }
+    var knopf = this;
+    knopf.disabled = true;
+    ruf("revoke").then(function (data) {
+      if (data && data.ok === true) {
+        elEinstellen.hidden = true;
+        elTextErledigt.textContent =
+          "The consent has been revoked. There will be no more " +
+          "notifications from now on.";
+        zeigen(elErledigt, true);
+      } else {
+        elFehler.className = "status fehler";
+        elFehler.textContent = "Revoking did not work.";
+        elFehler.hidden = false;
+        knopf.disabled = false;
+      }
+    }).catch(function () {
+      knopf.disabled = false;
+      fehler("The server is currently not reachable.");
+    });
+  });
+})();
+</script>
+
+</div>
+</body>
+</html>

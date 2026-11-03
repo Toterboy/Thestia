@@ -199,6 +199,40 @@
     }
     .modus-knopf svg { width: 20px; height: 20px; }
 
+    /* Der Sprachknopf sitzt rechts neben dem Modus-Knopf. Er ist ein
+       LINK, kein Schalter: die zweite Sprache ist eine eigene Datei, und
+       ein Link laesst sich mit der Tastatur bedienen und im neuen Tab
+       oeffnen. */
+    .sprach-knopf {
+      width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--card);
+      color: var(--fg);
+      box-shadow: var(--shadow-sm);
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform .15s ease, color .2s ease,
+                  border-color .2s ease, background .2s ease;
+    }
+    .sprach-knopf:hover {
+      transform: scale(1.06);
+      color: var(--accent);
+      border-color: var(--accent-line);
+    }
+    .sprach-knopf:active { transform: scale(.97); }
+    .sprach-knopf:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
     /* Das Symbol zeigt den ZIEL-Modus: Mond im hellen Modus (Klick
        = dunkel), Sonne im dunklen Modus (Klick = hell).
 

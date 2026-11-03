@@ -56,6 +56,18 @@ MAX_DATEI = 200 * 1024
 PFLICHT_PFADE = ['/datenschutz', '/impressum', '/kinderschutz',
                   '/konto-loeschen', '/daten-loeschen', '/eltern']
 
+# Die englischen Fassungen (NUTZERWUNSCH 03.11.2026: jede Seite auf
+# Deutsch und Englisch).
+#
+# Sie liegen unter /en/ und brauchen dieselben Cache-Angaben - sonst
+# fragt der Browser bei jedem Besuch nach. In robots.txt genuegt die
+# Praefix-Regel "Allow: /en/", deshalb stehen die einzelnen Pfade hier
+# nicht in der robots-Pruefung.
+EN_PFLICHT_PFADE = ['/en/', '/en/datenschutz', '/en/impressum',
+                     '/en/kinderschutz', '/en/konto-loeschen',
+                     '/en/daten-loeschen', '/en/eltern',
+                     '/en/eltern/einstellungen']
+
 problems = []
 
 
@@ -169,8 +181,13 @@ def main() -> int:
                 regeln[aktueller].append((name.strip().lower(),
                                           wert.strip()))
 
-        for pfad in PFLICHT_PFADE:
-            for variante in (pfad, pfad + '.html'):
+        for pfad in PFLICHT_PFADE + EN_PFLICHT_PFADE:
+            varianten = [pfad, pfad + '.html']
+            # Die Startseite der englischen Fassung ist /en/index.html -
+            # die Datei /en/.html gibt es nicht.
+            if pfad.endswith('/'):
+                varianten = [pfad, pfad + 'index.html']
+            for variante in varianten:
                 eintraege = regeln.get(variante)
                 if not eintraege:
                     flag('_headers: kein Block fuer %s' % variante)

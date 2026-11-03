@@ -45,12 +45,83 @@ SEITEN = [
     'dating-sicherheit.html',
 ]
 
+# datenschutz.html und en/datenschutz.html werden GENERIERT
+# (tool/make_privacy_policy.py) und bringen das Design schon mit -
+# inklusive des Sprachknopfes, den der Generator selbst setzt. Sie
+# duerfen hier NICHT laufen: strip_theme() wuerde die Kopfzeile
+# entfernen und apply_theme() eine ohne Sprachknopf einsetzen.
+
+# Die englischen Fassungen liegen unter en/ und tragen dieselben
+# Dateinamen. "en/eltern/einstellungen.html" gehoert zu
+# "eltern-einstellungen.html" - die Ordnerstruktur bildet die Adresse
+# ab, damit "/en/eltern/einstellungen" und "/eltern/einstellungen"
+# zueinander passen.
+EN_SEITEN = [
+    'en/impressum.html',
+    'en/kinderschutz.html',
+    'en/dating-sicherheit.html',
+    'en/konto-loeschen.html',
+    'en/daten-loeschen.html',
+    'en/eltern.html',
+    'en/eltern/einstellungen.html',
+]
+
+# Seite -> (deutsche Adresse, englische Adresse).
+#
+# Die Adressen ohne ".html" entstehen ueber die Rewrite-Regeln in
+# _redirects. Sie stehen hier, damit der Sprachknopf nicht raten muss
+# und weil beide Werkzeuge (Theme und _redirects) dieselbe Liste
+# brauchen.
+SEITEN_URL = {
+    'index.html': ('/', '/en/'),
+    'impressum.html': ('/impressum', '/en/impressum'),
+    'kinderschutz.html': ('/kinderschutz', '/en/kinderschutz'),
+    'dating-sicherheit.html': ('/dating-sicherheit', '/en/dating-sicherheit'),
+    'konto-loeschen.html': ('/konto-loeschen', '/en/konto-loeschen'),
+    'daten-loeschen.html': ('/daten-loeschen', '/en/daten-loeschen'),
+    'datenschutz.html': ('/datenschutz', '/en/datenschutz'),
+    'eltern.html': ('/eltern', '/en/eltern'),
+    'eltern-einstellungen.html': (
+        '/eltern/einstellungen', '/en/eltern/einstellungen'),
+}
+
+
+def sprachziel(rel: str) -> tuple[str, str]:
+    """(Adresse der anderen Fassung, Kuerzel des Ziels) fuer eine Seite.
+
+    [rel] ist der Pfad relativ zu passkey-assets/ - z. B.
+    'impressum.html' oder 'en/impressum.html'.
+
+    Fuer die englischen Seiten ist der Name die Datei OHNE den Ordner
+    'en/' (z. B. 'en/eltern/einstellungen.html' -> 'eltern-einstellungen
+    .html'), weil die Ordnerstruktur die Adresse abbildet.
+    """
+    if rel.startswith('en/'):
+        rest = rel[3:]
+        # 'en/eltern/einstellungen.html' gehoert zu 'eltern-einstellungen
+        # .html' - der Pfad zwischen 'en/' und dem Dateinamen ist
+        # genau die Adresse ohne '/en/'.
+        basis = rest.replace('/', '-', 1) if '/' in rest else rest
+        # 'eltern/einstellungen.html' -> 'eltern-einstellungen.html'
+        if '/' in rest:
+            teil = rest.split('/')
+            basis = teil[0] + '-' + teil[-1]
+        eintrag = SEITEN_URL.get(basis)
+        if not eintrag:
+            return '', ''
+        return eintrag[0], 'DE'
+
+    eintrag = SEITEN_URL.get(rel)
+    if not eintrag:
+        return '', ''
+    return eintrag[1], 'EN'
+
 # index.html: die Captcha-Seite. Sie hat ZWEI Ansichten (Sicherheitscheck
 # fuer auth.thestia.de, Landing-Seite fuer die Wurzel-Domain) und bringt
 # ihre eigene Kopfzeile mit. Deshalb bekommt sie nur das gemeinsame CSS,
 # keine Kopfzeile und keine Inhalts-Huelle - die wuerde den
 # Sicherheitscheck in eine Karte packen.
-NUR_CSS = ['index.html', 'bestaetigt.html']
+NUR_CSS = ['index.html', 'bestaetigt.html', 'en/index.html']
 
 
 def main() -> int:
@@ -69,14 +140,15 @@ def main() -> int:
     # jede Ausfuehrung ergibt dieselbe Seite.
     force = '--force' in sys.argv[1:]
     geaendert = 0
-    for name in SEITEN:
+    for name in SEITEN + EN_SEITEN:
         pfad = ASSETS / name
         if not pfad.exists():
             print(f'  {name}: fehlt - uebersprungen')
             continue
         vorher = pfad.read_text(encoding='utf-8')
         quelle = strip_theme(vorher) if force else vorher
-        nachher = apply_theme(quelle)
+        ziel, sprache = sprachziel(name)
+        nachher = apply_theme(quelle, sprach_ziel=ziel, sprache=sprache)
         if nachher == vorher:
             print(f'  {name}: bereits bearbeitet - unveraendert')
             continue

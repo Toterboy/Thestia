@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:thestia/generated/privacy_policy_blocks.dart';
 import 'package:thestia/generated/privacy_policy_de.dart';
+import 'package:thestia/generated/privacy_policy_en.dart';
 import 'package:thestia/l10n/app_strings.dart';
 
 /// Volltext der Datenschutzerklärung, aus [kPrivacyPolicyDe] gerendert.
@@ -11,33 +14,55 @@ import 'package:thestia/l10n/app_strings.dart';
 /// nachgeladen. Eine URL kann falsch, verschoben oder nicht erreichbar
 /// sein; der Text nicht.
 ///
-/// Quelle ist `docs/DATENSCHUTZ.md`. Wird sie geändert, erzeugt
-/// `python tool/make_privacy_policy.py` beide Ausgaben neu: diesen Text
-/// und `site/datenschutz.html` für den Store-Eintrag. So können App und
-/// Store nicht auseinanderlaufen.
-class PrivacyPolicyTextScreen extends StatefulWidget {
+/// Quelle ist `docs/DATENSCHUTZ.md` (deutsch) und
+/// `docs/DATENSCHUTZ_EN.md` (englisch). Wird eine davon geändert,
+/// erzeugt `python tool/make_privacy_policy.py` beide Ausgaben neu:
+/// diese Texte, `passkey-assets/datenschutz.html` und
+/// `passkey-assets/en/datenschutz.html` für den Store-Eintrag. So können
+/// App und Store nicht auseinanderlaufen.
+///
+/// Die Sprache richtet sich nach der App-Sprache (NUTZERWUNSCH
+/// 03.11.2026: alles auf Deutsch und Englisch). Wer die App auf
+/// Englisch stellt, bekommt also auch die englische Erklärung - und
+/// umgekehrt.
+class PrivacyPolicyTextScreen extends ConsumerStatefulWidget {
   const PrivacyPolicyTextScreen({super.key});
 
   @override
-  State<PrivacyPolicyTextScreen> createState() =>
+  ConsumerState<PrivacyPolicyTextScreen> createState() =>
       _PrivacyPolicyTextScreenState();
 }
 
-class _PrivacyPolicyTextScreenState extends State<PrivacyPolicyTextScreen> {
+class _PrivacyPolicyTextScreenState
+    extends ConsumerState<PrivacyPolicyTextScreen> {
+  /// Die zur App-Sprache passende Fassung.
+  List<PrivacyBlock> get _bloecke =>
+      ref.watch(localeProvider).languageCode == 'en'
+          ? kPrivacyPolicyEn
+          : kPrivacyPolicyDe;
+
   /// Spaltenüberschriften je Tabellenzeile.
   ///
   /// ListView.builder baut nur die sichtbaren Elemente, deshalb kann der
   /// Bildschirm die Überschrift beim Bauen der Zeile nicht einfach
   /// "merken". Die Zuordnung wird deshalb einmal vorab berechnet: Index
   /// der Zeile -> Kopfzeilen dieser Tabelle.
-  late final Map<int, List<String>> _headers = _computeHeaders();
+  ///
+  /// Die Mappe wird je Fassung zwischengespeichert: sie wird bei jedem
+  /// Bau neu gebraucht, aber die beiden Fassungen wechseln nicht
+  /// ständig.
+  final Map<String, Map<int, List<String>>> _headerCache = {};
 
-  static Map<int, List<String>> _computeHeaders() {
+  Map<int, List<String>> _headers(List<PrivacyBlock> blocks, String sprache) {
+    return _headerCache.putIfAbsent(sprache, () => _computeHeaders(blocks));
+  }
+
+  static Map<int, List<String>> _computeHeaders(List<PrivacyBlock> blocks) {
     final map = <int, List<String>>{};
     List<String>? current;
 
-    for (var i = 0; i < kPrivacyPolicyDe.length; i++) {
-      final block = kPrivacyPolicyDe[i];
+    for (var i = 0; i < blocks.length; i++) {
+      final block = blocks[i];
       if (block.kind == 'table_head') {
         current = block.cells;
       } else if (block.kind == 'table') {
@@ -52,6 +77,9 @@ class _PrivacyPolicyTextScreenState extends State<PrivacyPolicyTextScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final bloecke = _bloecke;
+    final sprache = ref.watch(localeProvider).languageCode;
+    final headers = _headers(bloecke, sprache);
 
     return Scaffold(
       appBar: AppBar(title: Text(L10n.t(context, 'privacy.policyTitle'))),
@@ -60,14 +88,14 @@ class _PrivacyPolicyTextScreenState extends State<PrivacyPolicyTextScreen> {
       body: SelectionArea(
         child: ListView.builder(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-          itemCount: kPrivacyPolicyDe.length,
+          itemCount: bloecke.length,
           itemBuilder: (context, index) => _block(
             context,
-            kPrivacyPolicyDe[index],
+            bloecke[index],
             // Map-Zugriff gibt zurueck, ob der Schluessel existiert.
             // Bei einer Tabelle ohne Kopfzeile ist die Liste leer, nicht
             // null - deshalb das explizite Ersetzen.
-            _headers[index] ?? const <String>[],
+            headers[index] ?? const <String>[],
             theme,
           ),
         ),

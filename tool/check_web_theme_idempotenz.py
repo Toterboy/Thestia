@@ -44,13 +44,13 @@ sys.path.insert(0, str(ROOT / 'tool'))
 
 from web_theme import apply_theme, strip_theme  # noqa: E402
 
-ASSETS = ROOT / 'passkey-assets'
+# Die SeitENlisten und die Sprachlogik kommen aus apply_web_theme.py -
+# sonst prueft dieser Selbsttest etwas anderes als das echte Werkzeug.
+# Das war die Ursache fuer einen Fehlalarm: apply_theme() ohne den
+# Sprachknopf entfernt ihn, und die Seite war damit "veraendert".
+from apply_web_theme import EN_SEITEN, NUR_CSS, SEITEN, sprachziel  # noqa: E402
 
-# Die Seiten mit Kopfzeile und Inhalts-Huelle.
-SEITEN = ['kinderschutz.html', 'konto-loeschen.html', 'impressum.html',
-          'dating-sicherheit.html']
-# Die Captcha-Seite: nur das gemeinsame CSS, keine Kopfzeile.
-NUR_CSS = ['index.html', 'bestaetigt.html']
+ASSETS = ROOT / 'passkey-assets'
 
 FEHLER = []
 
@@ -62,10 +62,14 @@ def pruefe_seite(name: str, nur_css: bool) -> None:
         return
 
     vorher = pfad.read_text(encoding='utf-8')
+    ziel, sprache = sprachziel(name)
 
     # 1) Ohne --force: der Normalfall. apply_theme() entfernt ein
     #    vorhandenes Theme und spielt es neu ein.
-    nachher = apply_theme(vorher, insert_chrome=not nur_css)
+    nachher = apply_theme(vorher,
+                          insert_chrome=not nur_css,
+                          sprach_ziel=ziel,
+                          sprache=sprache)
     if nachher != vorher:
         FEHLER.append(
             f'{name}: ein Durchlauf aendert die Datei '
@@ -75,7 +79,10 @@ def pruefe_seite(name: str, nur_css: bool) -> None:
     #    strip_theme(), dann apply_theme() - das Ergebnis muss
     #    dasselbe sein.
     quelle = strip_theme(vorher, remove_chrome=not nur_css)
-    erzwungen = apply_theme(quelle, insert_chrome=not nur_css)
+    erzwungen = apply_theme(quelle,
+                            insert_chrome=not nur_css,
+                            sprach_ziel=ziel,
+                            sprache=sprache)
     if erzwungen != nachher:
         FEHLER.append(f'{name}: --force ergibt ein anderes Ergebnis '
                       f'als der Normalfall')
@@ -86,7 +93,7 @@ def main() -> int:
     print('SELBSTTEST: Web-Werkzeuge muessen wiederholbar sein')
     print('=' * 70)
 
-    for name in SEITEN:
+    for name in SEITEN + EN_SEITEN:
         pruefe_seite(name, nur_css=False)
     for name in NUR_CSS:
         pruefe_seite(name, nur_css=True)

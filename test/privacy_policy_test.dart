@@ -1,8 +1,11 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/generated/privacy_policy_de.dart';
+import 'package:thestia/generated/privacy_policy_en.dart';
+import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/screens/privacy/privacy_policy_text_screen.dart';
 
 /// Publish-Verzeichnis des Netlify-Projekts fuer thestia.de. Dieselbe
@@ -135,7 +138,9 @@ void main() {
 
   testWidgets('Der Bildschirm zeigt den Anfang der Erklaerung',
       (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: PrivacyPolicyTextScreen()));
+    await tester.pumpWidget(const ProviderScope(
+      child: MaterialApp(home: PrivacyPolicyTextScreen()),
+    ));
     await tester.pump();
 
     final ersterH1 = kPrivacyPolicyDe.firstWhere((b) => b.kind == 'h1');
@@ -147,9 +152,28 @@ void main() {
     );
   });
 
+  testWidgets('Die englische Fassung erscheint bei englischer App-Sprache',
+      (tester) async {
+    await tester.pumpWidget(ProviderScope(
+      overrides: [localeProvider.overrideWith((ref) => const Locale('en'))],
+      child: const MaterialApp(home: PrivacyPolicyTextScreen()),
+    ));
+    await tester.pump();
+
+    final ersterH1 = kPrivacyPolicyEn.firstWhere((b) => b.kind == 'h1');
+    expect(
+      find.text(ersterH1.text.replaceAll('**', '').trim()),
+      findsOneWidget,
+      reason: 'Wer die App auf Englisch stellt, bekommt die englische '
+          'Erklaerung - nicht die deutsche.',
+    );
+  });
+
   testWidgets('Kein Textblock wird als Markdown angezeigt',
       (tester) async {
-    await tester.pumpWidget(const MaterialApp(home: PrivacyPolicyTextScreen()));
+    await tester.pumpWidget(const ProviderScope(
+      child: MaterialApp(home: PrivacyPolicyTextScreen()),
+    ));
     await tester.pump();
 
     // Die Sterne duerfen nirgends im sichtbaren Text landen. Sie sind

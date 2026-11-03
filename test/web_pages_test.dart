@@ -316,6 +316,108 @@ void main() {
     });
   });
 
+  group('Die Zweisprachigkeit (NUTZERWUNSCH 03.11.2026)', () {
+    // "Jede der Websites soll auf Englisch und Deutsch verfuegbar sein.
+    //  Standardmaessig auf Deutsch."
+    //
+    // Diese Tests halten fest, dass jede Seite einen Sprachknopf hat,
+    // dass er auf die andere Fassung zeigt und dass die andere Fassung
+    // auch wirklich existiert. Sonst koennte der Knopf ins Leere
+    // zeigen - und niemand faellt es, bis ein Besucher darauf klickt.
+    const seiten = [
+      'impressum',
+      'kinderschutz',
+      'dating-sicherheit',
+      'konto-loeschen',
+      'daten-loeschen',
+      'datenschutz',
+      'eltern',
+    ];
+
+    String lese(String pfad) =>
+        File('${assets.path}/$pfad').readAsStringSync();
+
+    test('Jede deutsche Seite hat einen Sprachknopf auf die englische',
+        () {
+      for (final s in seiten) {
+        final h = lese('$s.html');
+        expect(h, contains('class="sprach-knopf"'),
+            reason: 'Die Seite $s braucht einen Sprachknopf.');
+        expect(h, contains('href="/en/$s"'),
+            reason: 'Der Sprachknopf auf $s muss auf /en/$s zeigen.');
+        expect(h, contains('>EN</a>'),
+            reason: 'Der Knopf zeigt das ZIEL: auf der deutschen Seite '
+                'steht "EN".');
+      }
+    });
+
+    test('Jede englische Seite hat einen Sprachknopf zurueck ins Deutsche',
+        () {
+      for (final s in seiten) {
+        final h = lese('en/$s.html');
+        expect(h, contains('class="sprach-knopf"'),
+            reason: 'Die englische Seite $s braucht einen Sprachknopf.');
+        expect(h, contains('href="/$s"'),
+            reason: 'Der Sprachknopf auf en/$s muss zurueck auf /$s '
+                'zeigen.');
+        expect(h, contains('>DE</a>'),
+            reason: 'Der Knopf zeigt das ZIEL: auf der englischen Seite '
+                'steht "DE".');
+      }
+    });
+
+    test('Die englischen Fassungen existieren alle', () {
+      for (final s in seiten) {
+        expect(File('${assets.path}/en/$s.html').existsSync(), isTrue,
+            reason: 'Die englische Fassung von $s fehlt.');
+      }
+    });
+
+    test('Die englischen Seiten sind auf Englisch (lang="en")', () {
+      for (final s in seiten) {
+        expect(lese('en/$s.html'), contains('<html lang="en">'),
+            reason: 'Die englische Seite $s muss lang="en" setzen.');
+      }
+      for (final s in seiten) {
+        expect(lese('$s.html'), contains('<html lang="de">'),
+            reason: 'Die deutsche Seite $s muss lang="de" setzen.');
+      }
+    });
+
+    test('Der Elternbereich liegt in beiden Sprachen unter /eltern', () {
+      // /eltern ist die oeffentliche Seite, /eltern/einstellungen der
+      // persoenliche Bereich des Elternteils (nur mit dem Token).
+      expect(lese('eltern.html'), contains('/eltern/einstellungen'));
+      expect(lese('en/eltern.html'), contains('/en/eltern/einstellungen'));
+      expect(File('${assets.path}/en/eltern/einstellungen.html').existsSync(),
+          isTrue);
+    });
+
+    test('Die Startseite hat in beiden Sprachen einen Sprachknopf', () {
+      expect(lese('index.html'), contains('href="/en/"'));
+      expect(lese('en/index.html'), contains('href="/"'));
+    });
+
+    test('Die Rewrite-Regeln kennen die englischen Adressen', () {
+      final r = lese('_redirects');
+      for (final s in seiten) {
+        expect(r, contains('/en/$s'),
+            reason: 'Die Adresse /en/$s braucht eine Rewrite-Regel.');
+      }
+      expect(r, contains('/en/eltern/einstellungen'));
+    });
+
+    test('Die Seiten folgen der Systemeinstellung fuer Hell/Dunkel', () {
+      // Das Theme richtet sich nach prefers-color-scheme; der Schalter
+      // dreht nur um. Ohne diese Regel waere die Seite IMMER hell - oder
+      // immer dunkel, je nachdem, was der Rechner gerade eingestellt hat.
+      for (final s in ['impressum', 'kinderschutz']) {
+        expect(lese('$s.html'), contains('prefers-color-scheme'),
+            reason: 'Die Seite $s muss der Systemeinstellung folgen.');
+      }
+    });
+  });
+
   group('Die veroeffentlichten Artefakte', () {
     test('Die Sitemap enthaelt kein Geheimnis', () {
       // docs/ADMIN-UUID.md enthaelt die Admin-UUID und darf nicht

@@ -50,11 +50,58 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SOURCE = os.path.join(ROOT, 'docs', 'DATENSCHUTZ.md')
-DART_OUT = os.path.join(
-    ROOT, 'lib', 'generated', 'privacy_policy_de.dart')
 # Publish-Verzeichnis des bestehenden Netlify-Projekts fuer thestia.de.
-HTML_OUT = os.path.join(ROOT, 'passkey-assets', 'datenschutz.html')
+
+# Die Erklaerung gibt es in zwei Sprachen (NUTZERWUNSCH 03.11.2026:
+# "Jede der Websites soll auf Englisch und Deutsch verfuegbar sein").
+#
+# Beide Fassungen entstehen aus einer eigenen Markdown-Quelle mit
+# IDENTISCHER Struktur - sonst waeren die beiden Texte nicht
+# vergleichbar und die Versionshistorie lief auseinander.
+#
+# Die englische Fassung liegt unter /en/ (die URLs ohne ".html" entstehen
+# ueber die Rewrite-Regeln in _redirects).
+SPRACHEN = [
+    {
+        'sprache': 'de',
+        'quelle': os.path.join(ROOT, 'docs', 'DATENSCHUTZ.md'),
+        'dart': os.path.join(
+            ROOT, 'lib', 'generated', 'privacy_policy_de.dart'),
+        'html': os.path.join(
+            ROOT, 'passkey-assets', 'datenschutz.html'),
+        'klasse': 'kPrivacyPolicyDe',
+        'blocks': os.path.join(
+            ROOT, 'lib', 'generated', 'privacy_policy_blocks.dart'),
+        'titel': 'Datenschutzerklärung für Thestia',
+        'lang': 'de',
+        'fuss': (
+            'Verantwortliche Stelle im Sinne der DSGVO ist Thestia. '
+            'Kontakt über das In-App-Bug-Report-Formular oder das '
+            'Issue-Tracker des öffentlichen Projekt-Repositorys.'),
+        # Der Sprachknopf zeigt auf die andere Fassung.
+        'sprach_ziel': '/en/datenschutz',
+        'sprach_label': 'EN',
+    },
+    {
+        'sprache': 'en',
+        'quelle': os.path.join(ROOT, 'docs', 'DATENSCHUTZ_EN.md'),
+        'dart': os.path.join(
+            ROOT, 'lib', 'generated', 'privacy_policy_en.dart'),
+        'html': os.path.join(
+            ROOT, 'passkey-assets', 'en', 'datenschutz.html'),
+        'klasse': 'kPrivacyPolicyEn',
+        'blocks': os.path.join(
+            ROOT, 'lib', 'generated', 'privacy_policy_blocks.dart'),
+        'titel': 'Privacy policy for Thestia',
+        'lang': 'en',
+        'fuss': (
+            'The data controller within the meaning of the GDPR is Thestia. '
+            'Get in touch via the in-app bug report form or the issue '
+            'tracker of the public project repository.'),
+        'sprach_ziel': '/datenschutz',
+        'sprach_label': 'DE',
+    },
+]
 
 # Design und Umschalt-Knopf kommen aus tool/web_theme.py - damit sind
 # alle Seiten im Publish-Verzeichnis wirklich gleich aufgebaut.
@@ -65,12 +112,9 @@ HTML_OUT = os.path.join(ROOT, 'passkey-assets', 'datenschutz.html')
 import pathlib as _pathlib
 import sys as _sys
 _sys.path.insert(0, str(_pathlib.Path(__file__).resolve().parent))
-from web_theme import CSS, KOPF_HTML  # noqa: E402
+from web_theme import CSS, KOPF_HTML, sprachknopf  # noqa: E402
 
-FOOTER_DE = (
-    'Verantwortliche Stelle im Sinne der DSGVO ist Thestia. Kontakt '
-    'über das In-App-Bug-Report-Formular oder das Issue-Tracker des '
-    'öffentlichen Projekt-Repositorys.')
+# Der Fuss-Text steht in der Sprachbeschreibung (SPRACHEN).
 
 
 # --------------------------------------------------------------------------
@@ -234,36 +278,52 @@ def dart_quote(s):
     return "'" + out + "'"
 
 
-def render_dart(blocks):
+def render_blocks() -> str:
+    """Die Klasse PrivacyBlock - einmal, fuer beide Sprachfassungen.
+
+    Beide Fassungen werden im selben Bildschirm benutzt. Wenn beide
+    Dateien die Klasse selbst definieren, gibt es beim Import einen
+    Namenskonflikt ("PrivacyBlock is imported from both"). Deshalb
+    liegt sie in einer dritten Datei.
+    """
+    return '''// GENERIERTE DATEI - NICHT VON HAND AENDERN.
+// Neu erzeugen mit: python tool/make_privacy_policy.py
+
+/// Ein Abschnitt der Datenschutzerklaerung fuer die Anzeige in der
+/// App.
+///
+/// Google Play verlangt die Erklaerung nicht nur als Link im Store,
+/// sondern ausdruecklich auch als Text innerhalb der App selbst.
+/// Deshalb steht sie hier und wird im Privacy-Screen gelesen, statt
+/// nur verlinkt zu werden - eine URL kann falsch oder nicht erreichbar
+/// sein, dieser Text nicht.
+class PrivacyBlock {
+  const PrivacyBlock(this.kind, this.text, {this.cells});
+
+  /// h1, h2, h3, p, li oder table.
+  final String kind;
+
+  /// Fliesstext bzw. Ueberschrift. Fuer [kind] == 'table' leer.
+  final String text;
+
+  /// Zellen einer Tabellenzeile. Nur bei [kind] == 'table' gesetzt.
+  final List<String>? cells;
+}
+'''
+
+
+def render_dart(blocks, sprache: dict):
     lines = [
         '// GENERIERTE DATEI - NICHT VON HAND AENDERN.',
-        '// Quelle: docs/DATENSCHUTZ.md',
+        '// Quelle: docs/DATENSCHUTZ%s.md' % (
+            '_EN' if sprache['sprache'] == 'en' else ''),
         '// Neu erzeugen mit: python tool/make_privacy_policy.py',
         '',
-        '/// Ein Abschnitt der Datenschutzerklaerung fuer die Anzeige in der',
-        '/// App.',
-        '///',
-        '/// Google Play verlangt die Erklaerung nicht nur als Link im Store,',
-        '/// sondern ausdruecklich auch als Text innerhalb der App selbst.',
-        '/// Deshalb steht sie hier und wird im Privacy-Screen gelesen, statt',
-        '/// nur verlinkt zu werden - eine URL kann falsch oder nicht erreichbar',
-        '/// sein, dieser Text nicht.',
-        'class PrivacyBlock {',
-        '  const PrivacyBlock(this.kind, this.text, {this.cells});',
-        '',
-        "  /// h1, h2, h3, p, li oder table.",
-        '  final String kind;',
-        '',
-        '  /// Fliesstext bzw. Ueberschrift. Fuer [kind] == \'table\' leer.',
-        '  final String text;',
-        '',
-        '  /// Zellen einer Tabellenzeile. Nur bei [kind] == \'table\' gesetzt.',
-        '  final List<String>? cells;',
-        '}',
+        "import 'package:thestia/generated/privacy_policy_blocks.dart';",
         '',
         '/// Die vollstaendige Datenschutzerklaerung als Bloecke, in der',
-        '/// Reihenfolge von docs/DATENSCHUTZ.md.',
-        'const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[',
+        '/// Reihenfolge der Quelle.',
+        'const List<PrivacyBlock> %s = <PrivacyBlock>[' % sprache['klasse'],
     ]
 
     for b in blocks:
@@ -287,20 +347,23 @@ def render_dart(blocks):
 # HTML
 # --------------------------------------------------------------------------
 
-def render_html(blocks):
+def render_html(blocks, sprache: dict):
     """Eine einzige statische Datei. Kein JavaScript, keine Requests."""
     grouped = group_tables(blocks)
 
-    out = ['<!DOCTYPE html>', '<html lang="de">', '<head>',
+    out = ['<!DOCTYPE html>', '<html lang="%s">' % sprache['lang'], '<head>',
            '<meta charset="utf-8">',
            '<meta name="viewport" content="width=device-width, '
            'initial-scale=1">',
-           '<title>Datenschutzerklärung für Thestia</title>',
+           '<title>%s</title>' % sprache['titel'],
            '<style>%s</style>' % CSS,
            '</head>', '<body>',
-           # Kopfzeile mit Marke und Umschalt-Knopf: reine CSS-Variante,
-           # kein Skript.
-           *KOPF_HTML.split('\n'),
+           # Kopfzeile mit Marke, Umschalt-Knopf und Sprachknopf: reine
+           # CSS-Variante, kein Skript.
+           *KOPF_HTML.replace(
+               '__SPRACHKNOPF__',
+               sprachknopf(sprache['sprach_ziel'],
+                           sprache['sprach_label'])).split('\n'),
            # Der Inhalt liegt in einer Karte - wie die Karten der App.
            '<div class="inhalt">']
 
@@ -377,7 +440,8 @@ def render_html(blocks):
     # Seitenhintergrund, nicht in der Karte - so wie die Fusszeile der
     # App unter der Karte steht.
     out.append('</div>')
-    out.append('<footer>%s</footer>' % html.escape(FOOTER_DE, quote=False))
+    out.append('<footer>%s</footer>'
+               % html.escape(sprache['fuss'], quote=False))
     out.append('</body>')
     out.append('</html>')
 
@@ -407,43 +471,50 @@ def _schreibe_wenn_geaendert(pfad: str, inhalt: str) -> None:
 
 
 def main():
-    if not os.path.exists(SOURCE):
-        print('FEHLER: Quelle fehlt: %s' % SOURCE)
-        return 1
+    for sprache in SPRACHEN:
+        quelle = sprache['quelle']
+        if not os.path.exists(quelle):
+            print('FEHLER: Quelle fehlt: %s' % quelle)
+            return 1
 
-    with io.open(SOURCE, encoding='utf-8') as fh:
-        blocks = parse(fh.read().split('\n'))
+        with io.open(quelle, encoding='utf-8') as fh:
+            blocks = parse(fh.read().split('\n'))
 
-    if not blocks:
-        print('FEHLER: keine Bloecke aus %s' % SOURCE)
-        return 1
+        if not blocks:
+            print('FEHLER: keine Bloecke aus %s' % quelle)
+            return 1
 
-    # Kein Block darf einen Zeilenumbruch im Dart-Literal erzeugen. Genau
-    # daran ist app_strings.dart gescheitert, deshalb wird es hier
-    # abgesichert und nicht erst beim Analysieren des Dart-Codes.
-    for b in blocks:
-        texts = [b.get('text', '')] + list(b.get('cells') or [])
-        for t in texts:
-            if '\n' in t:
-                print('FEHLER: Block enthaelt einen Zeilenumbruch: %r' % t[:60])
-                return 1
+        # Kein Block darf einen Zeilenumbruch im Dart-Literal erzeugen.
+        # Genau daran ist app_strings.dart gescheitert, deshalb wird es
+        # hier abgesichert und nicht erst beim Analysieren des
+        # Dart-Codes.
+        for b in blocks:
+            texts = [b.get('text', '')] + list(b.get('cells') or [])
+            for t in texts:
+                if '\n' in t:
+                    print('FEHLER: Block enthaelt einen Zeilenumbruch: %r'
+                          % t[:60])
+                    return 1
 
-    os.makedirs(os.path.dirname(DART_OUT), exist_ok=True)
-    _schreibe_wenn_geaendert(DART_OUT, render_dart(blocks))
+        os.makedirs(os.path.dirname(sprache['dart']), exist_ok=True)
+        _schreibe_wenn_geaendert(sprache['blocks'], render_blocks())
+        _schreibe_wenn_geaendert(sprache['dart'],
+                                 render_dart(blocks, sprache))
 
-    os.makedirs(os.path.dirname(HTML_OUT), exist_ok=True)
-    _schreibe_wenn_geaendert(HTML_OUT, render_html(blocks))
+        os.makedirs(os.path.dirname(sprache['html']), exist_ok=True)
+        _schreibe_wenn_geaendert(sprache['html'],
+                                 render_html(blocks, sprache))
 
+        kinds = {}
+        for b in blocks:
+            kinds[b['kind']] = kinds.get(b['kind'], 0) + 1
 
-    kinds = {}
-    for b in blocks:
-        kinds[b['kind']] = kinds.get(b['kind'], 0) + 1
-
-    print('Datenschutzerklaerung erzeugt: %d Bloecke' % len(blocks))
-    for k in sorted(kinds):
-        print('  %-6s %d' % (k, kinds[k]))
-    print('  -> %s' % os.path.relpath(DART_OUT, ROOT))
-    print('  -> %s' % os.path.relpath(HTML_OUT, ROOT))
+        print('Datenschutzerklaerung (%s) erzeugt: %d Bloecke'
+              % (sprache['sprache'], len(blocks)))
+        for k in sorted(kinds):
+            print('  %-6s %d' % (k, kinds[k]))
+        print('  -> %s' % os.path.relpath(sprache['dart'], ROOT))
+        print('  -> %s' % os.path.relpath(sprache['html'], ROOT))
     return 0
 
 

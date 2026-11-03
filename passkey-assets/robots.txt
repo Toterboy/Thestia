@@ -24,4 +24,5 @@ Allow: /konto-loeschen
 Allow: /daten-loeschen
 Allow: /eltern
 Allow: /eltern/einstellungen
+Allow: /en/
 Allow: /threat-model.md

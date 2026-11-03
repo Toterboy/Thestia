@@ -189,8 +189,13 @@ android-log*.txt
 # die beiden Dateien auseinander. Alle anderen Dokumente (Notizen mit
 # Betreiber-Internas, ADMIN-UUID.md, Server-Anleitungen) bleiben
 # lokal.
+#
+# Die englische Fassung (03.11.2026) ist die zweite Quelle: sie
+# erzeugt privacy_policy_en.dart und passkey-assets/en/datenschutz.html
+# und muss aus demselben Grund mit im Schritt bleiben.
 docs/*
 !docs/DATENSCHUTZ.md
+!docs/DATENSCHUTZ_EN.md
 
 # Der komplette releases-Ordner gehoert NIE ins Repository: er
 # enthaelt die gebauten APKs und AABs (mehrere hundert MB pro Datei)

@@ -57,6 +57,22 @@
 /eltern/einstellungen   /eltern-einstellungen.html  200
 /eltern/einstellungen/  /eltern-einstellungen.html  200
 
+# Die englischen Fassungen (NUTZERWUNSCH 03.11.2026: jede Seite auf
+# Deutsch und Englisch).
+#
+# Sie liegen unter /en/ und tragen dieselben Dateinamen wie die
+# deutschen Seiten. Rewrite (200), damit die Adresse ohne ".html"
+# funktioniert - so, wie es bei den deutschen Seiten auch ist.
+/en/    /en/index.html  200
+/en/impressum    /en/impressum.html  200
+/en/kinderschutz    /en/kinderschutz.html  200
+/en/dating-sicherheit    /en/dating-sicherheit.html  200
+/en/konto-loeschen    /en/konto-loeschen.html  200
+/en/daten-loeschen    /en/daten-loeschen.html  200
+/en/datenschutz    /en/datenschutz.html  200
+/en/eltern    /en/eltern.html  200
+/en/eltern/einstellungen    /en/eltern/einstellungen.html  200
+
 # Daten-Loeschung (Play-Anforderung: web-basierte Loeschung von
 # Daten und des Kontos).
 #

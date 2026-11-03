@@ -67,6 +67,44 @@
 /konto-loeschen.html
   Cache-Control: public, max-age=300
 
+# Die englischen Fassungen
+/en/
+  Cache-Control: public, max-age=300
+/en/index.html
+  Cache-Control: public, max-age=300
+/en/impressum
+  Cache-Control: public, max-age=300
+/en/impressum.html
+  Cache-Control: public, max-age=300
+/en/kinderschutz
+  Cache-Control: public, max-age=300
+/en/kinderschutz.html
+  Cache-Control: public, max-age=300
+/en/dating-sicherheit
+  Cache-Control: public, max-age=300
+/en/dating-sicherheit.html
+  Cache-Control: public, max-age=300
+/en/konto-loeschen
+  Cache-Control: public, max-age=300
+/en/konto-loeschen.html
+  Cache-Control: public, max-age=300
+/en/daten-loeschen
+  Cache-Control: public, max-age=300
+/en/daten-loeschen.html
+  Cache-Control: public, max-age=300
+/en/datenschutz
+  Cache-Control: public, max-age=300
+/en/datenschutz.html
+  Cache-Control: public, max-age=300
+/en/eltern
+  Cache-Control: public, max-age=300
+/en/eltern.html
+  Cache-Control: public, max-age=300
+/en/eltern/einstellungen
+  Cache-Control: public, max-age=300
+/en/eltern/einstellungen.html
+  Cache-Control: public, max-age=300
+
 # Daten-Loeschung (Play-Anforderung)
 /daten-loeschen
   Cache-Control: public, max-age=300
