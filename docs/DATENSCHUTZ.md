@@ -259,6 +259,16 @@ Gerät und werden zu keinem Zeitpunkt an externe Server übertragen.
 | Hugging Face | Beim Melden eines Bildes: der **Bildinhalt** (zur automatischen Einordnung als anständig oder unauffällig); beim Download einer KI-Modelldatei: keine personenbezogenen Daten | Automatische Vorauswertung gemeldeter Bilder; ansonsten ausschließlich der optionale, nutzerinitiiierte Download frei verfügbarer KI-Modelldateien (GGUF) | Global |
 | STUN-Server (nextcloud/Hetzner, miwifi/OVH, voipgate, voipstunt) | Deine IP-Adresse | Ermittlung der öffentlichen Adresse für den Direktverbindungsversuch bei Video- und Sprachanrufen; über diese Server wird kein Inhalt übertragen | Deutschland, Frankreich, Niederlande (EU) |
 | Codeberg e.V. (geplant ab v0.12.0) | Keine personenbezogenen Daten | Trackerfreies Hosting der Flutter-Web-Artefakte (statische Dateien) | Berlin, Deutschland |
+| Liberapay (nur, wenn du den Spenden-Button benutzt) | **Aus der App: keine.** Die App öffnet lediglich einen Link in deinem Browser. Die Zahlung selbst läuft vollständig auf der Website des Anbieters; die App erhält weder eine Bestätigung noch eine Spender-Kennung und weiß nicht, ob gespendet wurde | Freiwillige Spende zur Unterstützung des Projekts | EU (Niederlande) |
+
+**Finanzdaten:** Die App erhebt **keine** Zahlungs- oder Finanzdaten.
+Es gibt keinen In-App-Kauf, kein Abo und kein Bezahlsystem in der App.
+Der einzige finanzielle Vorgang ist der freiwillige Spenden-Button im
+Profil: er öffnet die Website des Anbieters im Browser. Die App
+überträgt dabei nichts – keine Kartendaten, keine Käufer-ID, keine
+Transaktionsbestätigung, keinen Zahlungsstatus. Sie weiß nicht einmal,
+ob gespendet wurde (deshalb gibt es bewusst auch keine
+Spender-Bestätigung und kein Spender-Abzeichen in der App).
 
 **Keine** Weitergabe an Werbenetzwerke, Datenbroker oder
 Analyse-Dienste. **Keine** Nutzung von Google Analytics, Crashlytics oder

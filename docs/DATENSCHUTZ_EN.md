@@ -246,6 +246,16 @@ exclusively on your device and are never transferred to external servers.
 | Hugging Face | When reporting an image: the **image content** (for automatic classification as decent or unobtrusive); when downloading an AI model file: no personal data | Automatic pre-assessment of reported images; otherwise exclusively the optional, user-initiated download of freely available AI model files (GGUF) | Global |
 | STUN servers (nextcloud/Hetzner, miwifi/OVH, voipgate, voipstunt) | Your IP address | Determination of the public address for the direct connection attempt during video and voice calls; no content is transmitted via these servers | Germany, France, Netherlands (EU) |
 | Codeberg e.V. (planned from v0.12.0) | No personal data | Tracker-free hosting of the Flutter web artefacts (static files) | Berlin, Germany |
+| Liberapay (only if you use the donate button) | **None from the app.** The app merely opens a link in your browser. The payment itself runs entirely on the provider's website; the app receives neither a confirmation nor a donor ID and does not even know whether a donation was made | Voluntary donation to support the project | EU (Netherlands) |
+
+**Financial data:** The app collects **no** payment or financial data.
+There is no in-app purchase, no subscription and no payment system in the
+app. The only financial procedure is the voluntary donate button in the
+profile: it opens the provider's website in your browser. The app
+transmits nothing in the process - no card details, no buyer ID, no
+transaction confirmation, no payment status. It does not even know
+whether a donation was made (which is why there is deliberately neither
+a donor confirmation nor a donor badge in the app).
 
 **No** disclosure to advertising networks, data brokers or analytics
 services. **No** use of Google Analytics, Crashlytics or similar products
