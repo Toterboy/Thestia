@@ -577,6 +577,9 @@ const Map<String, Map<String, String>> _strings = {
     'setupp.distance': 'Entfernung',
     'setupp.filterLabel': 'Filter',
     'setupp.maxDistance': 'Maximale Entfernung: {km} km',
+    'setupp.radiusMinorHint':
+        'In deinem Alter gilt höchstens 25 km Radius - oder nur Personen '
+        'aus deinem eigenen Bundesland.',
     'setupp.stateLabel': 'Bundesland',
     'setupp.germanyNote': 'Es werden Profile aus ganz Deutschland angezeigt.',
     // v0.10.0: Es wird kein Ort mehr abgefragt, nur das Bundesland.
@@ -2343,6 +2346,9 @@ const Map<String, Map<String, String>> _strings = {
     'profile.edit.filters': 'Filter & Präferenzen',
     'profile.edit.radiusMode': 'Suchradius definieren über',
     'profile.edit.maxDistance': 'Maximale Entfernung: {km} km',
+    'profile.edit.radiusMinorHint':
+        'In deinem Alter gilt höchstens 25 km Radius - oder nur Personen '
+        'aus deinem eigenen Bundesland.',
     'profile.edit.bio': 'Bio',
     'profile.edit.music': 'Musik',
     'profile.edit.musicSub':
@@ -4668,6 +4674,9 @@ const Map<String, Map<String, String>> _strings = {
     'setupp.distance': 'Distance',
     'setupp.filterLabel': 'Filter',
     'setupp.maxDistance': 'Maximum distance: {km} km',
+    'setupp.radiusMinorHint':
+        'At your age, the radius is at most 25 km - or only people from '
+        'your own federal state.',
     'setupp.stateLabel': 'Federal state',
     'setupp.germanyNote': 'Profiles from all over Germany are shown.',
     // v0.10.0: No city is asked for any more, only the state.
@@ -5223,6 +5232,9 @@ const Map<String, Map<String, String>> _strings = {
     'profile.edit.filters': 'Filters & preferences',
     'profile.edit.radiusMode': 'Define search radius by',
     'profile.edit.maxDistance': 'Maximum distance: {km} km',
+    'profile.edit.radiusMinorHint':
+        'At your age, the radius is at most 25 km - or only people from '
+        'your own federal state.',
     'profile.edit.bio': 'Bio',
     'profile.edit.music': 'Music',
     'profile.edit.musicSub':

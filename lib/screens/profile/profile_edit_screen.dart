@@ -1220,6 +1220,46 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   @override
   Widget build(BuildContext context) {
     final profile = ref.watch(profileProvider);
+
+    // Suchradius fuer Minderjaehrige (BETREIBER-ENTSCHEIDUNG 03.11.2026):
+    // hoechstens 25 km ODER nur das gleiche Bundesland; "Ganz Deutschland"
+    // ist gesperrt. Der SERVER entscheidet (Migration 164) - hier wird
+    // nur das Angebot angepasst.
+    //
+    // Fallback 18 (wie bei der Altersspanne weiter unten): solange das
+    // Geburtsdatum nicht geladen ist, wird nichts geklemmt.
+    final radiusViewerAge = profile.age ?? 18;
+    final radiusGesperrt =
+        AgeSafetyRules.isDiscoveryRadiusCapped(radiusViewerAge);
+    final radiusMaxKm = AgeSafetyRules.maxDiscoveryRadiusKm(radiusViewerAge);
+
+    // Gespeicherte Werte korrigieren, die der Regel widersprechen.
+    //
+    // WICHTIG: Die Snapshot-Felder werden MITVERAENDERT. Sie sind der
+    // Vergleichspunkt der Dirty-Erkennung - ohne dieses Mitschreiben
+    // waere der Screen nach der Korrektur "veraendert" und der Nutzer
+    // bekäme beim Zurueck eine "Aenderungen verwerfen?"-Nachfrage, die
+    // gar nicht von ihm stammt.
+    if (radiusGesperrt) {
+      final prefs = ref.read(userPreferencesProvider);
+      if (prefs.maxDistanceKm > radiusMaxKm) {
+        _initialMaxDistanceKm = radiusMaxKm;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref
+              .read(userPreferencesProvider.notifier)
+              .setMaxDistanceKm(radiusMaxKm);
+        });
+      }
+      if (prefs.distanceFilterMode == DistanceFilterMode.germany) {
+        _initialDistanceMode = DistanceFilterMode.distanceKm;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref
+              .read(userPreferencesProvider.notifier)
+              .setDistanceFilterMode(DistanceFilterMode.distanceKm);
+        });
+      }
+    }
+
     // Dirty-Flag BEOBACHTEN (nicht nur post-frame melden): Reine
     // Textfeld-/Regler-Änderungen triggern sonst KEINEN Rebuild des
     // PopScope - canPop blieb true und die "Speichern?"-Nachfrage beim
@@ -1568,8 +1608,17 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                     ),
                     DropdownMenuItem(
                       value: DistanceFilterMode.germany,
+                      // Fuer Minderjaehrige gesperrt (Migration 164) -
+                      // ausgegraut statt versteckt, damit klar ist,
+                      // dass es die Option gibt und warum sie nicht
+                      // geht.
+                      enabled: !radiusGesperrt,
                       child: Text(
-                          L10n.t(context, 'profile.edit.modeGermany')),
+                        L10n.t(context, 'profile.edit.modeGermany'),
+                        style: radiusGesperrt
+                            ? const TextStyle(color: Colors.grey)
+                            : null,
+                      ),
                     ),
                   ],
                   onChanged: (v) {
@@ -1582,6 +1631,13 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                   },
                 ),
               ),
+              if (radiusGesperrt) ...[
+                const SizedBox(height: 8),
+                Text(
+                  L10n.t(context, 'profile.edit.radiusMinorHint'),
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+              ],
               const SizedBox(height: 12),
               Consumer(
                 builder: (context, ref, _) {
@@ -1676,23 +1732,29 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                       style: const TextStyle(color: Colors.grey),
                     );
                   }
+                  // Der Wert wird geklemmt angezeigt: ein gespeicherter
+                  // Radius ueber der Grenze wuerde sonst die Slider-
+                  // Assertion ausloesen (value muss zwischen min und max
+                  // liegen).
+                  final radiusWert =
+                      prefs.maxDistanceKm.clamp(1, radiusMaxKm);
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         L10n.tf(context, 'profile.edit.maxDistance',
-                            {'km': '${prefs.maxDistanceKm}'}),
+                            {'km': '$radiusWert'}),
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       Slider(
-                        value: prefs.maxDistanceKm.toDouble(),
+                        value: radiusWert.toDouble(),
                         min: 1,
-                        max: AppConstants.maxDistanceKm.toDouble(),
-                        divisions: AppConstants.maxDistanceKm - 1,
+                        max: radiusMaxKm.toDouble(),
+                        divisions: radiusMaxKm - 1,
                         label: L10n.tf(
                             context,
                             'profile.edit.maxDistance',
-                            {'km': '${prefs.maxDistanceKm}'}),
+                            {'km': '$radiusWert'}),
                         onChanged: (v) {
                           final rounded = v.round();
                           ref

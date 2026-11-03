@@ -834,6 +834,42 @@ setState(() {
       });
     }
 
+    // Suchradius für Minderjährige (BETREIBER-ENTSCHEIDUNG 03.11.2026):
+    // höchstens 25 km ODER nur das gleiche Bundesland. "Ganz Deutschland"
+    // ist gesperrt.
+    //
+    // Der SERVER entscheidet (Migration 164) - hier geht es nur darum,
+    // das Angebot passend zu zeigen. Ein gepatchter Client kommt an der
+    // Grenze nicht vorbei: der Server behandelt "Ganz Deutschland" für
+    // Minderjährige wie 25 km.
+    //
+    // Der Fallback ist hier 18 (wie bei der Altersspanne oben): solange
+    // das Geburtsdatum nicht geladen ist, wird nichts geklemmt. Das
+    // verhindert, dass ein Erwachsender während des Einrichtens
+    // plötzlich auf 25 km springt.
+    final radiusGesperrt =
+        AgeSafetyRules.isDiscoveryRadiusCapped(effectiveAge);
+    final radiusMaxKm = AgeSafetyRules.maxDiscoveryRadiusKm(effectiveAge);
+    // Der Slider darf keinen Wert ausserhalb [min, max] bekommen - sonst
+    // wirft die Flutter-Assertion. Deshalb wird geklemmt angezeigt.
+    final radiusWert = userPrefs.maxDistanceKm.clamp(1, radiusMaxKm);
+
+    // Gespeicherte Werte korrigieren (nur wenn das Alter bekannt ist):
+    // ein gespeicherter Modus "Ganz Deutschland" oder ein Radius über
+    // 25 km wird für Minderjährige zurückgesetzt.
+    if (userAge != null && radiusGesperrt) {
+      if (userPrefs.distanceFilterMode == DistanceFilterMode.germany) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          userPrefsNotifier.setDistanceFilterMode(DistanceFilterMode.distanceKm);
+        });
+      }
+      if (userPrefs.maxDistanceKm != radiusWert) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          userPrefsNotifier.setMaxDistanceKm(radiusWert);
+        });
+      }
+    }
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) async {
@@ -975,9 +1011,22 @@ setState(() {
                               labelText: L10n.t(context, 'setupp.filterLabel'),
                             ),
                             items: DistanceFilterMode.values.map((mode) {
+                              // "Ganz Deutschland" ist für Minderjährige
+                              // gesperrt - ausgegraut, aber sichtbar
+                              // (nicht versteckt: sonst wüsste niemand,
+                              // warum die Auswahl fehlt).
+                              final gesperrt = mode == DistanceFilterMode.germany &&
+                                  !AgeSafetyRules.isWholeGermanyAllowed(
+                                      effectiveAge);
                               return DropdownMenuItem(
                                 value: mode,
-                                child: Text(mode.label),
+                                enabled: !gesperrt,
+                                child: Text(
+                                  mode.label,
+                                  style: gesperrt
+                                      ? const TextStyle(color: Colors.grey)
+                                      : null,
+                                ),
                               );
                             }).toList(),
                             onChanged: (v) {
@@ -986,6 +1035,16 @@ setState(() {
                               }
                             },
                           ),
+                          if (radiusGesperrt) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              L10n.t(context, 'setupp.radiusMinorHint'),
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 20),
                           if (userPrefs.distanceFilterMode ==
                               DistanceFilterMode.distanceKm) ...[
@@ -994,17 +1053,17 @@ setState(() {
                               // (userPreferences), damit beide Screens
                               // immer denselben Wert zeigen.
                               L10n.tf(context, 'setupp.maxDistance', {
-                                'km': '${userPrefs.maxDistanceKm}',
+                                'km': '$radiusWert',
                               }),
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const SizedBox(height: 8),
                             Slider(
-                              value: userPrefs.maxDistanceKm.toDouble(),
+                              value: radiusWert.toDouble(),
                               min: 1,
-                              max: AppConstants.maxDistanceKm.toDouble(),
-                              divisions: AppConstants.maxDistanceKm - 1,
-                              label: '${userPrefs.maxDistanceKm} km',
+                              max: radiusMaxKm.toDouble(),
+                              divisions: radiusMaxKm - 1,
+                              label: '$radiusWert km',
                               onChanged: (v) =>
                                   userPrefsNotifier.setMaxDistanceKm(v.round()),
                             ),

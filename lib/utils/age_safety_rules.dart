@@ -9,6 +9,8 @@
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 
+import 'package:thestia/utils/constants.dart';
+
 /// Repräsentiert die Altersgruppe eines Nutzers für Schutz-Regeln.
 enum AgeGroup {
   /// 16-17 Jahre: Minderjährig, strengster Schutz
@@ -144,6 +146,46 @@ class AgeSafetyRules {
   /// damit der Schalter gar nicht erst angeboten wird.
   static bool isRoughDistanceForced(int viewerAge) {
     return ageGroup(viewerAge) == AgeGroup.minor;
+  }
+
+  /// Höchster Suchradius (in km) für Minderjährige (16-17).
+  ///
+  /// BETREIBER-ENTSCHEIDUNG (03.11.2026): "für 16 und 17 jährige
+  /// entweder gleiches Bundesland oder max. 25 Km".
+  ///
+  /// Der Wert steht hier und in der Datenbank (Migration 164, Body von
+  /// `profile_discovery_visible`). Beide Stellen müssen zusammenpassen -
+  /// ein zweiter, abweichender Wert in der Datenbank wäre die klassische
+  /// Stelle, an der eine Grenze auseinanderläuft.
+  static const int minorMaxDiscoveryRadiusKm = 25;
+
+  /// Dürfen Minderjährige (16-17) den Suchradius unbegrenzt wählen?
+  ///
+  /// - 16-17: begrenzt (25 km ODER nur das gleiche Bundesland)
+  /// - 18+: frei wählbar
+  ///
+  /// Die maechtige Sperre sitzt in der Datenbank
+  /// (`profile_discovery_visible`, Migration 164): sie benutzt das
+  /// VERIFIZIERTE Alter und greift auch bei einem gepatchten Client.
+  /// Diese Regel hier ist die freundliche Seite - damit gar nicht erst
+  /// ein Radius angeboten wird, den der Server ohnehin verweigert.
+  static bool isDiscoveryRadiusCapped(int viewerAge) {
+    return ageGroup(viewerAge) == AgeGroup.minor;
+  }
+
+  /// Der größte wählbare Suchradius (in km) für diesen Nutzer.
+  static int maxDiscoveryRadiusKm(int viewerAge) {
+    return isDiscoveryRadiusCapped(viewerAge)
+        ? minorMaxDiscoveryRadiusKm
+        : AppConstants.maxDistanceKm;
+  }
+
+  /// Darf der Modus "Ganz Deutschland" gewählt werden?
+  ///
+  /// Server-seitig wird er für Minderjährige wie "maximal 25 km"
+  /// behandelt (fail-closed, Migration 164). Hier wird er ausgegraut.
+  static bool isWholeGermanyAllowed(int viewerAge) {
+    return !isDiscoveryRadiusCapped(viewerAge);
   }
 
   /// Bestimmt den effektiven Foto-Sichtbarkeits-Modus für ein Profil.

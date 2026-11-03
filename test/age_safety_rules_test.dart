@@ -144,6 +144,56 @@ void main() {
     });
   });
 
+  group('AgeSafetyRules - Suchradius (v0.11.0)', () {
+    // BETREIBER-ENTSCHEIDUNG (03.11.2026): "fuer 16 und 17 jaehrige
+    // entweder gleiches Bundesland oder max. 25 Km. Und ab 18 alles
+    // frei auswaehlbar."
+    //
+    // Die maechtige Sperre sitzt in der Datenbank
+    // (profile_discovery_visible, Migration 164). Diese Regel ist die
+    // freundliche Seite: der Radius wird gar nicht erst groesser
+    // angeboten.
+    test('Minor (16-17): der Suchradius ist begrenzt', () {
+      expect(AgeSafetyRules.isDiscoveryRadiusCapped(16), isTrue);
+      expect(AgeSafetyRules.isDiscoveryRadiusCapped(17), isTrue);
+    });
+
+    test('Adult (18+): der Suchradius ist frei waehlbar', () {
+      expect(AgeSafetyRules.isDiscoveryRadiusCapped(18), isFalse);
+      expect(AgeSafetyRules.isDiscoveryRadiusCapped(19), isFalse);
+      expect(AgeSafetyRules.isDiscoveryRadiusCapped(25), isFalse);
+      expect(AgeSafetyRules.isDiscoveryRadiusCapped(99), isFalse);
+    });
+
+    test('Unbekanntes Alter (0) gilt als begrenzt', () {
+      // Fehlt das Geburtsdatum im Profil, ist die strengste Variante
+      // richtig: begrenzt.
+      expect(AgeSafetyRules.isDiscoveryRadiusCapped(0), isTrue);
+    });
+
+    test('Minor: hoechstens 25 km', () {
+      expect(AgeSafetyRules.maxDiscoveryRadiusKm(16), 25);
+      expect(AgeSafetyRules.maxDiscoveryRadiusKm(17), 25);
+      expect(AgeSafetyRules.maxDiscoveryRadiusKm(0), 25);
+    });
+
+    test('Adult: der normale Slider-Endwert (100 km)', () {
+      expect(AgeSafetyRules.maxDiscoveryRadiusKm(18), 100);
+      expect(AgeSafetyRules.maxDiscoveryRadiusKm(30), 100);
+    });
+
+    test('Minor: "Ganz Deutschland" ist gesperrt', () {
+      expect(AgeSafetyRules.isWholeGermanyAllowed(16), isFalse);
+      expect(AgeSafetyRules.isWholeGermanyAllowed(17), isFalse);
+      expect(AgeSafetyRules.isWholeGermanyAllowed(0), isFalse);
+    });
+
+    test('Adult: "Ganz Deutschland" ist erlaubt', () {
+      expect(AgeSafetyRules.isWholeGermanyAllowed(18), isTrue);
+      expect(AgeSafetyRules.isWholeGermanyAllowed(40), isTrue);
+    });
+  });
+
   group('AgeSafetyRules - canChangePhotoVisibilitySettings', () {
     test('Minor (16-17) cannot change photo visibility settings', () {
       expect(AgeSafetyRules.canChangePhotoVisibilitySettings(16), isFalse);

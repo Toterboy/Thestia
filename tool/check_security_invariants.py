@@ -240,6 +240,48 @@ check('>= 18' in _distanz_funktion,
       'ausgegeben werden')
 
 # =====================================================================
+# 1e) Minderjaehrige bekommen einen begrenzten Suchradius
+# =====================================================================
+#
+# BETREIBER-ENTSCHEIDUNG (03.11.2026): "fuer 16 und 17 jaehrige
+# entweder gleiches Bundesland oder max. 25 Km. Und ab 18 alles frei
+# auswaehlbar."
+#
+# BISHER: Der Radius wurde nur im Modus 'distance_km' ausgewertet. Fuer
+# 'state' und 'germany' fiel die Entfernungsbedingung weg - "Ganz
+# Deutschland" war also dasselbe wie "Bundesland" (nur ohne jeden
+# Vergleich!). Ein Client, der den Modus auf 'germany' stellt, kam an
+# jeder Radiusgrenze vorbei.
+#
+# Die Grenze muss deshalb in der FUNKTION sitzen, die die Sichtbarkeit
+# entscheidet - und zwar erzwungen fuer Minderjaehrige, unabhaengig vom
+# gespeicherten Modus.
+
+_sichtbarkeit = _neueste_definition(all_sql, 'profile_discovery_visible')
+
+check('profile_known_age' in _sichtbarkeit,
+      'DB: profile_discovery_visible rechnet mit dem bekannten Alter '
+      '(profile_known_age)',
+      'sonst wuerde die Grenze nach der Altersangabe im Profil '
+      'entschieden - und ein unbekanntes Alter faelle auf 26 Jahre')
+
+check('<= 25' in _sichtbarkeit,
+      'DB: profile_discovery_visible begrenzt den Radius fuer '
+      'Minderjaehrige auf 25 km',
+      'die grobe Entfernung darf fuer unter 18-Jaehrige nicht '
+      'ueberschritten werden')
+
+check('distance_filter_mode' in _sichtbarkeit,
+      'DB: profile_discovery_visible wertet den Suchradius-Modus aus',
+      'sonst kaeme ein Client mit dem Modus "Ganz Deutschland" an der '
+      'Grenze vorbei')
+
+check('v.state' in _sichtbarkeit and 't.state' in _sichtbarkeit,
+      'DB: profile_discovery_visible vergleicht das Bundesland',
+      'die Alternative "gleiches Bundesland" fuer 16- und 17-Jaehrige '
+      'waere sonst wirkungslos')
+
+# =====================================================================
 # 1c) Das Verifikationsvideo wird IMMER verschluesselt abgelegt
 # =====================================================================
 #
