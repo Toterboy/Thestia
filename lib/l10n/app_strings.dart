@@ -405,6 +405,112 @@ const Map<String, Map<String, String>> _strings = {
         'Solange dein Profil pausiert ist, kannst du keine Entdecken-Modi '
         'nutzen. Beende die Pause in den Einstellungen, um weiterzumachen.',
     'paused.toSettings': 'Zu den Einstellungen',
+
+    // ===================================================================
+    // Elternfreigabe und Aufsicht (v0.11.0)
+    // ===================================================================
+    'guardian.sectionTitle': 'Kinderschutz & Elternzugriff',
+    'guardian.sectionIntro':
+        'Hier steht, ob dein Konto unter Aufsicht steht. Für 16- und '
+        '17-Jährige sieht Thestia vor, dass die Sorgeberechtigten zustimmen.',
+    'guardian.noConsentTitle': 'Keine Elternfreigabe',
+    'guardian.noConsentText':
+        'Für Konten ab 18 ist keine Freigabe nötig. Wenn du 16 oder 17 bist, '
+        'kannst du hier einen Elternteil eintragen - dann bekommt er eine '
+        'E-Mail und entscheidet selbst.',
+    'guardian.requestBtn': 'Elternfreigabe anfordern',
+    'guardian.pendingTitle': 'Warte auf die Bestätigung',
+    'guardian.pendingText':
+        'Wir haben {email} eine E-Mail geschickt. Erst wenn dein Elternteil '
+        'den Link in der Mail bestätigt, ist die Freigabe aktiv.',
+    'guardian.activeTitle': 'Freigabe aktiv',
+    'guardian.activeText':
+        'Dein Konto steht unter Aufsicht von {email}.',
+    'guardian.notifyTitle': 'Benachrichtigungen',
+    'guardian.notifyText':
+        'Dein Elternteil wird benachrichtigt, wenn ein Funke entsteht - in '
+        'dem Rhythmus, den er selbst gewählt hat. Namen und Profile werden '
+        'nicht weitergegeben.',
+    'guardian.notifyFrequencyLabel': 'Rhythmus',
+    'guardian.notifyFrequency.daily': 'Täglich',
+    'guardian.notifyFrequency.weekly': 'Wöchentlich',
+    'guardian.notifyFrequency.monthly': 'Monatlich',
+    'guardian.notifyFrequency.none': 'Gar nicht',
+    'guardian.usageTitle': 'Nutzungszeit',
+    'guardian.usageText':
+        'Dein Elternteil kann ein Zeitfenster festlegen, in dem die App '
+        'genutzt werden darf. Außerhalb steht in der App ein Hinweis.',
+    'guardian.usageWindow': 'Erlaubt von {from} bis {to}',
+    'guardian.usageNone': 'Keine Begrenzung',
+    'guardian.usagePinNote':
+        'Die Einstellung ist mit einer PIN geschützt. Sie kann nur mit '
+        'dieser PIN geändert werden.',
+    'guardian.accessTitle': 'Wie lange bleibt der Zugriff?',
+    'guardian.accessText':
+        'Du bestimmst, bis wann dein Elternteil Zugriff behält. Die Nutzung '
+        'der App bleibt davon unberührt.',
+    'guardian.accessUntil18': 'Bis zum 18. Geburtstag',
+    'guardian.accessGrace': '{months} Monat(e) länger',
+    'guardian.accessIndefinite': 'Bis ich es beende',
+    'guardian.accessUntil': 'Zugriff bis {date}',
+    'guardian.endAccessBtn': 'Elternzugriff beenden',
+    'guardian.confirmEndTitle': 'Elternzugriff beenden?',
+    'guardian.confirmEndText':
+        'Damit endet die Freigabe sofort. Dein Elternteil bekommt keine '
+        'Benachrichtigungen mehr.',
+    'guardian.transitionBtn': 'Jetzt entscheiden',
+    'guardian.transitionTitle': 'Du bist jetzt 18',
+    'guardian.transitionText':
+        'Seit deinem 18. Geburtstag entscheidest du selbst, ob dein '
+        'Elternteil weiter Zugriff hat. Bis du etwas änderst, bleibt der '
+        'Zugriff bestehen.',
+    'guardian.transitionEnd': 'Zugriff jetzt beenden',
+    'guardian.transitionGrace': 'Noch {months} Monat(e) behalten',
+    'guardian.transitionKeep': 'Erstmal weiter behalten',
+    'guardian.graceLabel': 'Nachfrist: {months} Monat(e)',
+    'guardian.gracePicker': 'Monate',
+    'guardian.requestScreenTitle': 'Elternfreigabe',
+    'guardian.requestIntro':
+        'Für 16- und 17-Jährige sieht Thestia vor, dass die '
+        'Sorgeberechtigten zustimmen. Dein Elternteil bekommt eine E-Mail '
+        'mit einem Link und entscheidet dort selbst. Die Zustimmung ist '
+        'freiwillig - und du kannst sie jederzeit widerrufen.',
+    'guardian.emailLabel': 'E-Mail-Adresse eines Elternteils',
+    'guardian.emailHint': 'name@beispiel.de',
+    'guardian.sendBtn': 'Anfrage senden',
+    'guardian.sentTitle': 'Anfrage ist raus',
+    'guardian.sentText':
+        'Wir haben {email} geschickt. Bitte deinen Elternteil, den Link in '
+        'der E-Mail zu öffnen - erst danach ist die Freigabe aktiv.',
+    'guardian.skipBtn': 'Später - ohne Freigabe fortfahren',
+    'guardian.errorSameEmail':
+        'Das ist deine eigene E-Mail-Adresse. Bitte die eines Elternteils '
+        'eintragen.',
+    'guardian.errorNotEligible':
+        'Die Elternfreigabe ist nur für 16- und 17-Jährige vorgesehen.',
+    'guardian.errorInvalidEmail': 'Bitte eine gültige E-Mail-Adresse eintragen.',
+    'guardian.errorRateLimited':
+        'Zu viele Anfragen. Bitte später noch einmal versuchen.',
+    'guardian.errorGeneric':
+        'Das hat nicht geklappt. Bitte später noch einmal versuchen.',
+    'guardian.usageLockTitle': 'Deine Nutzungszeit ist heute vorbei',
+    'guardian.usageLockText':
+        'Die Nutzungszeit endet heute um {time}. Morgen geht es weiter.',
+    'guardian.pinTitle': 'Elternbereich',
+    'guardian.pinText':
+        'Bitte die vierstellige PIN eingeben, die dein Elternteil festgelegt '
+        'hat.',
+    'guardian.pinWrong': 'Die PIN stimmt nicht.',
+    'guardian.pinLocked': 'Mit PIN entsperren',
+    'guardian.pinUnlocked': 'Entsperrt',
+    'guardian.unlockTitle': 'Elternbereich entsperren',
+    'guardian.usageFrom': 'von',
+    'guardian.usageTo': 'bis',
+    'guardian.usageToggleLabel': 'Nutzungszeit begrenzen',
+    'guardian.saveBtn': 'Speichern',
+    'guardian.usageLockHint':
+        'Sprich mit deinen Elternteilen - die Einstellung lässt sich im '
+        'Elternbereich ändern.',
     'signup.title': 'Willkommen bei Thestia!',
     'signup.body':
         'Schön, dass du da bist. Gleich geht es mit deiner Einrichtung '
@@ -2660,6 +2766,21 @@ const Map<String, Map<String, String>> _strings = {
     'admin.tabVerification': 'Verifizierung',
     'admin.tabModeration': 'Moderation',
     'admin.tabAppeals': 'Bild-Prüfung',
+    'admin.tabMail': 'Post',
+    'admin.mailAll': 'Alle',
+    'admin.mailKinderschutz': 'Kinderschutz',
+    'admin.mailSupport': 'Support',
+    'admin.mailDatenschutz': 'Datenschutz',
+    'admin.mailPresse': 'Presse',
+    'admin.mailSonstiges': 'Sonstiges',
+    'admin.mailEmptyTitle': 'Keine Mails',
+    'admin.mailEmptyText':
+        'Hier landen die Mails, die an die Adresse des Betreibers gehen. '
+        'Je nach Postfach kommen sie erst nach dem nächsten Abruf hier an.',
+    'admin.mailWithoutSubject': '(ohne Betreff)',
+    'admin.mailEmptyBody': '(kein Text)',
+    'admin.mailReadOnly':
+        'Nur zum Lesen - antworten geht über das Mail-Programm.',
     'admin.tabBans': 'Sperren',
     'admin.close': 'Schließen',
     'admin.error': 'Fehler: {error}',
@@ -3393,6 +3514,109 @@ const Map<String, Map<String, String>> _strings = {
         'While your profile is paused, you cannot use Discovery modes. '
         'End the pause in settings to continue.',
     'paused.toSettings': 'To settings',
+
+    // ===================================================================
+    // Guardian consent and supervision (v0.11.0)
+    // ===================================================================
+    'guardian.sectionTitle': 'Child safety & parental access',
+    'guardian.sectionIntro':
+        'This is where you can see whether your account is supervised. For '
+        '16- and 17-year-olds, Thestia provides for the consent of those '
+        'with parental responsibility.',
+    'guardian.noConsentTitle': 'No parental consent',
+    'guardian.noConsentText':
+        'For accounts aged 18 and over, no consent is needed. If you are 16 '
+        'or 17, you can add a parent here - they receive an email and '
+        'decide for themselves.',
+    'guardian.requestBtn': 'Request parental consent',
+    'guardian.pendingTitle': 'Waiting for confirmation',
+    'guardian.pendingText':
+        'We sent an email to {email}. The consent only becomes active once '
+        'your parent opens the link in that email.',
+    'guardian.activeTitle': 'Consent active',
+    'guardian.activeText': 'Your account is supervised by {email}.',
+    'guardian.notifyTitle': 'Notifications',
+    'guardian.notifyText':
+        'Your parent is notified when a spark appears - at the interval '
+        'they chose themselves. No names and no profiles are passed on.',
+    'guardian.notifyFrequencyLabel': 'Interval',
+    'guardian.notifyFrequency.daily': 'Daily',
+    'guardian.notifyFrequency.weekly': 'Weekly',
+    'guardian.notifyFrequency.monthly': 'Monthly',
+    'guardian.notifyFrequency.none': 'Never',
+    'guardian.usageTitle': 'Usage time',
+    'guardian.usageText':
+        'Your parent can set a time window in which the app may be used. '
+        'Outside that window, the app shows a notice.',
+    'guardian.usageWindow': 'Allowed from {from} until {to}',
+    'guardian.usageNone': 'No limit',
+    'guardian.usagePinNote':
+        'This setting is protected by a PIN. It can only be changed with '
+        'that PIN.',
+    'guardian.accessTitle': 'How long does access remain?',
+    'guardian.accessText':
+        'You decide until when your parent keeps access. Your own use of '
+        'the app is not affected.',
+    'guardian.accessUntil18': 'Until your 18th birthday',
+    'guardian.accessGrace': '{months} month(s) longer',
+    'guardian.accessIndefinite': 'Until I end it',
+    'guardian.accessUntil': 'Access until {date}',
+    'guardian.endAccessBtn': 'End parental access',
+    'guardian.confirmEndTitle': 'End parental access?',
+    'guardian.confirmEndText':
+        'The consent ends immediately. Your parent will no longer receive '
+        'notifications.',
+    'guardian.transitionBtn': 'Decide now',
+    'guardian.transitionTitle': 'You are 18 now',
+    'guardian.transitionText':
+        'Since your 18th birthday, you decide yourself whether your parent '
+        'keeps access. Until you change something, access remains.',
+    'guardian.transitionEnd': 'End access now',
+    'guardian.transitionGrace': 'Keep it for {months} more month(s)',
+    'guardian.transitionKeep': 'Keep it for now',
+    'guardian.graceLabel': 'Grace period: {months} month(s)',
+    'guardian.gracePicker': 'Months',
+    'guardian.requestScreenTitle': 'Parental consent',
+    'guardian.requestIntro':
+        'For 16- and 17-year-olds, Thestia provides for the consent of '
+        'those with parental responsibility. Your parent receives an email '
+        'with a link and decides there. The consent is voluntary - and you '
+        'can revoke it at any time.',
+    'guardian.emailLabel': 'Email address of a parent',
+    'guardian.emailHint': 'name@example.com',
+    'guardian.sendBtn': 'Send request',
+    'guardian.sentTitle': 'Request sent',
+    'guardian.sentText':
+        'We sent an email to {email}. Please ask your parent to open the '
+        'link in it - only then does the consent become active.',
+    'guardian.skipBtn': 'Later - continue without consent',
+    'guardian.errorSameEmail':
+        'That is your own email address. Please enter the address of a '
+        'parent.',
+    'guardian.errorNotEligible':
+        'Parental consent is only provided for 16- and 17-year-olds.',
+    'guardian.errorInvalidEmail': 'Please enter a valid email address.',
+    'guardian.errorRateLimited':
+        'Too many requests. Please try again later.',
+    'guardian.errorGeneric':
+        'That did not work. Please try again later.',
+    'guardian.usageLockTitle': 'Your usage time is over for today',
+    'guardian.usageLockText':
+        'Usage time ends today at {time}. Tomorrow it starts again.',
+    'guardian.pinTitle': 'Parent area',
+    'guardian.pinText':
+        'Please enter the four-digit PIN your parent set.',
+    'guardian.pinWrong': 'The PIN is not correct.',
+    'guardian.pinLocked': 'Unlock with PIN',
+    'guardian.pinUnlocked': 'Unlocked',
+    'guardian.unlockTitle': 'Unlock the parent area',
+    'guardian.usageFrom': 'from',
+    'guardian.usageTo': 'until',
+    'guardian.usageToggleLabel': 'Limit usage time',
+    'guardian.saveBtn': 'Save',
+    'guardian.usageLockHint':
+        'Talk to your parents - the setting can be changed in the parent '
+        'area.',
     'signup.title': 'Welcome to Thestia!',
     'signup.body':
         'Glad you are here. Your setup starts right away - step by step, '
@@ -5536,6 +5760,21 @@ const Map<String, Map<String, String>> _strings = {
     'admin.tabVerification': 'Verification',
     'admin.tabModeration': 'Moderation',
     'admin.tabAppeals': 'Image review',
+    'admin.tabMail': 'Inbox',
+    'admin.mailAll': 'All',
+    'admin.mailKinderschutz': 'Child safety',
+    'admin.mailSupport': 'Support',
+    'admin.mailDatenschutz': 'Privacy',
+    'admin.mailPresse': 'Press',
+    'admin.mailSonstiges': 'Other',
+    'admin.mailEmptyTitle': 'No emails',
+    'admin.mailEmptyText':
+        'Emails sent to the operator address end up here. Depending on the '
+        'mailbox, they arrive after the next fetch.',
+    'admin.mailWithoutSubject': '(no subject)',
+    'admin.mailEmptyBody': '(no text)',
+    'admin.mailReadOnly':
+        'Read only - replies go through your email program.',
     'admin.tabBans': 'Bans',
     'admin.close': 'Close',
     'admin.error': 'Error: {error}',

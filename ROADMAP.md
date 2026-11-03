@@ -639,12 +639,19 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
 
 ## Entwurf: 16- und 17-Jährige mit nachweisbarer Einwilligung der Sorgeberechtigten
 
-> **Status: Entwurf, nicht eingeplant, nicht im Play-Release.**
-> Aufgeschrieben am 24.10.2026 auf Wunsch des Betreibers. Der Wunsch ist
-> klar: 16- und 17-Jährige sollen die App nutzen können – mit Zustimmung
-> der Eltern, die die App herunterladen und dem Kind zur Verfügung
-> stellen. Eine Weitergabe an Personen, die nicht geeignet sind (etwa
-> unter 16-Jährige), ist in keinem Fall erlaubt.
+> **Status: umgesetzt in v0.11.0 (03.11.2026).** Aufgeschrieben am
+> 24.10.2026 auf Wunsch des Betreibers, umgesetzt am 03.11.2026.
+> Der Wunsch ist klar: 16- und 17-Jährige sollen die App nutzen können –
+> mit Zustimmung der Eltern, die die App herunterladen und dem Kind zur
+> Verfügung stellen. Eine Weitergabe an Personen, die nicht geeignet sind
+> (etwa unter 16-Jährige), ist in keinem Fall erlaubt.
+>
+> **UMGESETZT:** Migrationen 165 (Freigabe, Audit-Trail, Digest-Trigger,
+> Cron), 166 (Portal-Status), 167 (Änderungen nur mit PIN); Edge
+> Functions `guardian-consent` und `guardian-digest`; Eltern-Portal unter
+> `auth.thestia.de/eltern`; App: Freigabe-Screen nach dem Willkommens-
+> Screen, Einstellungsabschnitt „Kinderschutz & Elternzugriff",
+> Übergangs-Screen mit 18, PIN-geschützte Nutzungszeit.
 >
 > Dieser Block hält fest, was das rechtlich und technisch bedeutet, was
 > Google Play zulässt und was es nicht zulässt. Er ist eine
@@ -733,17 +740,20 @@ diesen einen, verifizierten Menschen.
 
 Vorgesehene Bausteine (noch nicht umgesetzt):
 
-| Baustein | Zweck | Aufwand |
-|---|---|---|
-| `profiles.supervised` (bool) | Konto steht unter Aufsicht | klein |
-| `profiles.consent_state` (`none`/`pending`/`granted`/`revoked`) | Stand der Einwilligung, serverseitig | klein |
-| `profiles.consent_parent_ref` | Verweis auf den Einwilligungsdatensatz, **kein** Konto des Elternteils | klein |
-| `profiles.consent_verified_at` / `consent_revoked_at` | Nachweiszeitpunkt und Widerruf | klein |
-| Einwilligungs-Flow (Elternseite) | Eltern bestätigen per Einmal-Link an ihre eigene Adresse; der Link ist an die **konkrete, verifizierte** Minderperson gebunden | mittel |
-| Widerrufs-Flow | Eltern widerrufen per Link; der Server setzt `consent_state='revoked'` und sperrt die Funktionen | mittel |
-| Kopplung an die Altersprüfung | Das bestehende Video-Alter entscheidet; die Einwilligung gilt **nur** für das Alter 16/17 und **nur** für dieses Konto | mittel |
-| Aufsichtsmodus | Eltern können einzelne Funktionen abschalten (BLE/Transit Spark, Zufallschat, Standort) | groß |
-| Audit-Trail | Jede Einwilligung und jeder Widerruf wird protokolliert (wer, wann, für wen) | mittel |
+| Baustein | Zweck | Aufwand | Stand |
+|---|---|---|---|
+| `profiles.supervised` (bool) | Konto steht unter Aufsicht | klein | ✅ Migration 165 |
+| `profiles.consent_state` (`none`/`pending`/`granted`/`revoked`) | Stand der Einwilligung, serverseitig | klein | ✅ Migration 165 |
+| `profiles.consent_parent_ref` | Verweis auf den Einwilligungsdatensatz, **kein** Konto des Elternteils | klein | ✅ Migration 165 |
+| `profiles.consent_verified_at` / `consent_revoked_at` | Nachweiszeitpunkt und Widerruf | klein | ✅ Migration 165 |
+| Einwilligungs-Flow (Elternseite) | Eltern bestätigen per Einmal-Link an ihre eigene Adresse; der Link ist an die **konkrete, verifizierte** Minderperson gebunden | mittel | ✅ Eltern-Portal `auth.thestia.de/eltern`, Token nur als Hash gespeichert |
+| Widerrufs-Flow | Eltern widerrufen per Link; der Server setzt `consent_state='revoked'` und sperrt die Funktionen | mittel | ✅ Migration 165 |
+| Kopplung an die Altersprüfung | Das bestehende Video-Alter entscheidet; die Einwilligung gilt **nur** für das Alter 16/17 und **nur** für dieses Konto | mittel | ✅ `guardian_eligible_age()` - das **verifizierte** Alter |
+| Aufsichtsmodus | Eltern können einzelne Funktionen abschalten (BLE/Transit Spark, Zufallschat, Standort) | groß | 🟡 teilweise: Nutzungszeit per PIN gesetzt; das Abschalten einzelner Funktionen ist nicht gebaut |
+| Audit-Trail | Jede Einwilligung und jeder Widerruf wird protokolliert (wer, wann, für wen) | mittel | ✅ `guardian_consent_audit` |
+| Eltern-Benachrichtigung | Elternteil erfährt, dass ein Funke entstanden ist - ohne Namen, Profile oder Inhalte | mittel | ✅ Digest per `pg_cron`, Frequenz daily/weekly/monthly/none |
+| Entscheidung mit 18 | Jugendlicher entscheidet: Zugriff beenden, 1-6 Monate behalten oder erstmal behalten | mittel | ✅ `set_guardian_access_policy()`, Übergangs-Screen in der App |
+| Nutzungszeit | Zeitfenster, in dem die App genutzt werden darf | mittel | ✅ PIN-geschützt (`set_guardian_settings_with_pin`), Sperre in der App |
 
 **Regeln, die daraus zwingend folgen:**
 
@@ -766,8 +776,8 @@ Vorgesehene Bausteine (noch nicht umgesetzt):
 
 ### 4. Offene Entscheidungen (bewusst nicht getroffen)
 
-- [ ] Wird das Modell **überhaupt** umgesetzt – oder bleibt es bei 18+
-      und wird nur dokumentiert?
+- [x] Wird das Modell **überhaupt** umgesetzt – oder bleibt es bei 18+
+      und wird nur dokumentiert? → **Umgesetzt (03.11.2026).**
 - [ ] Gilt es nur für 16/17 (Selbsteinwilligung ab 16) oder auch für
       13–15 (elterliche Einwilligung)? Play erlaubt in keinem Fall
       unter 18; die Entscheidung betrifft also nur Nicht-Play-Kanäle.
@@ -780,7 +790,12 @@ Vorgesehene Bausteine (noch nicht umgesetzt):
       Altersspanne? Ein beaufsichtigtes Konto braucht eigene Regeln im
       Jugendschutz-Filter.
 - [ ] Prüfung durch eine Rechtsberatung (Medienrecht/Datenschutz), bevor
-      irgendetwas davon live geht.
+      irgendetwas davon live geht. → **OFFEN.** Die Technik ist live
+      (Migrationen 165-167), die rechtliche Prüfung steht aus. Der
+      Kernpunkt ist in der DSFA (Abschnitt 5, Punkt 6) festgehalten:
+      Form und Nachweis der Einwilligung nach § 3a JUG und Art. 8 DSGVO,
+      die Verantwortlichkeit für die Einrichtung eines kindlichen
+      Kontos und die Einordnung der Nutzungszeit.
 ### Vorschläge zu 0.11.0 (nicht terminiert, nicht eingeplant)
 
 > Die folgenden drei Punkte sind **Ideen, keine Zusagen**. Sie standen

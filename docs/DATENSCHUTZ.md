@@ -42,6 +42,7 @@ Tracking-Pixel und **keine** nutzerübergreifende Verhaltensanalyse.
 |---|---|---|---|
 | Kontodaten | Name, E-Mail, Geburtsdatum, Geschlecht | Kontoverwaltung, Jugendschutzfilter (serverseitig erzwungen) | Mit Account-Löschung |
 | Standortdaten | Bundesland sowie Koordinaten, vor dem Speichern auf ein 5-km-Raster gerundet | Entfernungsberechnung; die Koordinaten liegen ausschließlich in einer nur für den Eigentümer lesbaren Tabelle und verlassen den Server nicht | 30 Tage nach dem letzten Standortschreiben; mit Account-Löschung |
+| Elternaufsicht | E-Mail-Adresse eines Elternteils, Stand der Freigabe, Zeitfenster der erlaubten Nutzung, vierstellige PIN (nur als Hash), Zeitpunkte der Anfrage, Bestätigung und des Widerrufs | Zustimmung der Sorgeberechtigten für Konten im Alter 16/17; Begrenzung der Nutzungszeit; Benachrichtigung der Eltern bei neuen Funken. Der Elternteil ist **Genehmiger, nicht Nutzer** - er hat kein Konto und sieht weder Nachrichten noch Profile | Mit dem Ende der Freigabe; die Ereignisse für Benachrichtigungen werden nach dem Versand gelöscht |
 | Standortanzeige | Entfernung in Stufen von 10 km, nur wenn die betroffene Person das **eingeschaltet** hat; unter 5 km wird nichts angezeigt. **Für 16- und 17-Jährige ist die Anzeige ausgeschlossen - auch wenn sie den Schalter einschalten** | Andere Nutzer sehen nur die Stufe, nie einen Wert in Metern oder Kilometern. Ohne Einschaltung sehen sie gar keine Entfernung. Die Sperre für Minderjährige sitzt in der Datenbank (`profile_distance_km`, Migration 163) und richtet sich nach dem verifizierten Alter | – |
 | Ortsangabe | Wird nicht erhoben | Seit v0.10.0 wird kein Ort, keine Stadt und kein Postleitzahl-Bereich gespeichert oder angezeigt – nur das Bundesland | – |
 | Profilangaben | Bio, Interessen, Audio-Vorstellung, Gewohnheiten (Rauchen/Alkohol/Drogen), Mood, Musik-Geschmack, **Profilbild** (siehe Abschnitt 3a) | Vermittlung passender Kontakte („Funken") | Mit Account-Löschung |
@@ -328,6 +329,54 @@ sich über die Nähe zu anderen ausmacht, sagt eine ungefähre Angabe mehr
 aus als bei Erwachsenen - deshalb bleibt sie hier aus. Für Erwachsene
 ändert sich nichts.
 
+**Elternfreigabe für 16- und 17-Jährige (v0.11.0):** Für Konten in
+diesem Alter sieht Thestia die Zustimmung der Sorgeberechtigten vor. Die
+Zustimmung ist **freiwillig**: nach § 3a JUG kann eine Person ab dem
+vollendeten 16. Lebensjahr selbst einwilligen, und niemand wird an der
+Nutzung gehindert, weil die Zustimmung ausbleibt.
+
+So läuft es:
+
+- Der Jugendliche trägt die E-Mail-Adresse eines Elternteils ein. Sie
+  muss **eine andere** sein als die eigene Kontoadresse - sonst würde
+  sich der Jugendliche selbst als Elternteil eintragen.
+- Der Elternteil erhält eine E-Mail mit einem Link, bestätigt dort die
+  Freigabe und kann sie jederzeit mit einem Klick widerrufen. Der Link
+  enthält einen Zugangsschlüssel, der nur als Hash gespeichert wird und
+  nach 14 Tagen ungültig ist.
+- **Der Elternteil hat kein Konto.** Er sieht ausschließlich, was für
+  die Aufsicht nötig ist: ob eine Freigabe besteht, welchen Rhythmus
+  die Benachrichtigungen haben und ob die Nutzungszeit begrenzt ist.
+- **Benachrichtigungen:** entsteht zwischen dem Jugendlichen und einer
+  anderen Person ein Funke (ein gegenseitiges „Du magst mich" - nicht
+  schon ein einzelnes Like), bekommt der Elternteil eine kurze
+  Nachricht. Die Häufigkeit legt er selbst fest: täglich, wöchentlich,
+  monatlich oder gar nicht. **Wir nennen dabei keine Namen, keine
+  Profile und keine Inhalte** - der Elternteil erfährt nur, *dass* ein
+  Funke entstanden ist. Wer das nicht möchte, erfährt es nicht.
+- **Nutzungszeit:** der Elternteil kann ein Zeitfenster festlegen, in
+  dem die App genutzt werden darf. Diese Einstellung ist mit einer
+  vierstelligen PIN geschützt; die PIN wird nur auf dem Server geprüft
+  und ist auf dem Gerät des Jugendlichen nicht gespeichert. Der
+  Jugendliche kann sie deshalb nicht selbst ändern - aber er kann sie
+  auch nicht erraten (die Prüfung ist nach fünf Fehlversuchen für eine
+  Stunde gesperrt).
+- **Mit 18 endet die Pflicht zur Zustimmung.** Dann entscheidet der
+  Jugendliche selbst: Zugriff beenden, für 1 bis 6 Monate behalten oder
+  erstmal weiter behalten. Auch ab 18 bleibt der Abschnitt in den
+  Einstellungen sichtbar, damit die Freigabe aus der Zeit mit 16/17
+  geordnet werden kann.
+
+Wir protokollieren jede Anfrage, Bestätigung und jeden Widerruf mit
+Zeitpunkt (Art. 5 Abs. 2 DSGVO, Rechenschaftsnachweis). Die Daten des
+Jugendlichen selbst geben wir an den Elternteil **nicht** weiter.
+
+**Was die Nutzungszeit nicht ist:** Sie ist eine Hausregel auf dem
+Gerät des Jugendlichen. Sie verhindert die versehentliche
+Überschreitung - sie ist aber kein technisches Verbot. Wer ein gerootetes
+Gerät hat oder die App selbst baut, kommt an ihr vorbei. Das ist eine
+Tatsache, die wir nicht beschönigen.
+
 **Transit Spark ist davon ausgenommen und nur ab 18 Jahren nutzbar.**
 Die Sperre sitzt an zwei Stellen, weil eine allein nichts taugt:
 
@@ -407,6 +456,7 @@ Git-Historie nachvollziehbar.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 20 | 2026-11 | **Elternfreigabe für 16- und 17-Jährige:** Die Zustimmung der Sorgeberechtigten wird angefragt (E-Mail-Adresse eines Elternteils, muss von der eigenen Kontoadresse abweichen) und vom Elternteil per Link bestätigt. Der Elternteil ist Genehmiger, nicht Nutzer - er hat kein Konto und sieht keine Profile. Er kann die Benachrichtigung über neue Funken im Rhythmus täglich/wöchentlich/monatlich/gar nicht einstellen (ohne Namen, Profile oder Inhalte), eine Nutzungszeit per PIN-geschütztem Zeitfenster setzen und die Freigabe jederzeit widerrufen. Mit 18 entscheidet der Jugendliche selbst. Jede Anfrage, Bestätigung und jeder Widerruf wird protokolliert. |
 | 19 | 2026-11 | **Grobe Entfernung für Minderjährige abgeschaltet:** 16- und 17-Jährige zeigen keine Entfernung an - auch nicht die ungefähre in 10-km-Stufen. Die Sperre sitzt in der Datenbank und richtet sich nach dem verifizierten Alter; der Schalter ist in der App für diese Altersgruppe gesperrt. Für Erwachsene ändert sich nichts |
 | 18 | 2026-10 | **Verifikation auch serverseitig erzwungen:** Die Verifikationspflicht für Find your Spark, Dating Hour und Transit Spark wurde bisher nur im Gerät geprüft - die Server-Funktionen ließen sich mit eigenem Aufruf umgehen. Jetzt erzwingen sie die Verifikation selbst (Migration 161). Zusätzlich gilt ohne Altersangabe nicht mehr ein erfundenes Alter von 26 Jahren, sondern das Alter bleibt unbekannt und die 18+-Sperre greift. Das Verifikationsvideo wird im automatischen Freigabeweg nun ebenfalls verschlüsselt abgelegt - vorher lag es im Klartext im Speicher |
 | 17 | 2026-10 | **Lokale Kontaktdaten und Sicherheits-Aufklärung:** „Connect to others" speichert Telefonnummer und Handles freiwillig und ausschließlich verschlüsselt auf dem Gerät; keine Übertragung an Server, kein Geräte-Sync. Die neue Aufklärung vor dem Setup speichert Antworten und Fortschritt nur lokal. Ergänzt Abschnitt 3c und die öffentliche Seite `/dating-sicherheit` |

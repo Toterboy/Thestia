@@ -36,6 +36,17 @@
 /konto-loeschen    /konto-loeschen.html  200
 /konto-loeschen/   /konto-loeschen.html  200
 
+# Eltern-Portal (v0.11.0).
+#
+# Das Eltern-Portal liegt als eltern.html neben der Datenschutz-
+# Erklaerung. Der Link, den der Elternteil per Mail bekommt, zeigt auf
+# /eltern - nicht auf /eltern.html. Ohne Regel gabe es dort einen 404.
+#
+# Rewrite (200), wie bei den anderen Seiten: die Adresse existiert danach
+# wirklich, ohne dass der Browser folgt.
+/eltern    /eltern.html  200
+/eltern/   /eltern.html  200
+
 # Kinderschutz-Seite (Play Child Safety Standards).
 #
 # Play verlangt fuer Dating-, Social- und Random-Chat-Apps einen

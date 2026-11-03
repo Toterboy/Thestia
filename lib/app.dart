@@ -19,6 +19,7 @@ import 'package:thestia/services/global_relay_inbox.dart';
 import 'package:thestia/services/notification_service.dart';
 import 'package:thestia/services/unified_push_service.dart';
 import 'package:thestia/theme/app_theme.dart';
+import 'package:thestia/widgets/usage_time_gate.dart';
 
 /// Laufende Instanz des globalen Relay-Eingangs (für [App.dispose]).
 final globalRelayInboxProvider = StateProvider<GlobalRelayInbox?>((ref) => null);
@@ -249,10 +250,15 @@ class _AppState extends ConsumerState<App> {
       // bereits. Beim Start (main.dart) ist derselbe Bildschirm eine
       // Sperre; dort bleibt der Knopf ohne Wirkung.
       builder: (context, child) {
-        if (!_lateUpdateRequired) return child ?? const SizedBox.shrink();
+        // Die Nutzungszeit-Sperre (v0.11.0) umschliesst JEDE Route - auch
+        // die rechtlichen Seiten. Sie wird VOR dem Update-Hinweis
+        // eingebaut: das Update-Gate ist technisch wichtiger, die
+        // Nutzungszeit ist eine Hausregel.
+        final mitSperre = UsageTimeGate(child: child ?? const SizedBox.shrink());
+        if (!_lateUpdateRequired) return mitSperre;
         return Stack(
           children: [
-            child ?? const SizedBox.shrink(),
+            mitSperre,
             Positioned.fill(
               child: UpdateRequiredScreen(
                 onDismiss: () => setState(() => _lateUpdateRequired = false),

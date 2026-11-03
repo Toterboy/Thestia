@@ -282,6 +282,110 @@ check('v.state' in _sichtbarkeit and 't.state' in _sichtbarkeit,
       'waere sonst wirkungslos')
 
 # =====================================================================
+# 1f) Die elterliche Aufsicht haengt an der Datenbank, nicht an der App
+# =====================================================================
+#
+# BETREIBER-ENTSCHEIDUNG (03.11.2026): Elternfreigabe fuer 16- und
+# 17-Jaehrige, mit PIN-geschuetzter Nutzungszeit und gebuendelten
+# Benachrichtigungen.
+#
+# Die Regeln muessen serverseitig gelten: eine Einstellung im Client
+# kann mit einem gepatchten Client gesetzt werden.
+
+_anfrage = _neueste_definition(all_sql, 'request_guardian_consent')
+
+check('guardian_eligible_age' in _anfrage,
+      'DB: request_guardian_consent prueft das Alter (ueber das '
+      'VERIFIZIERTE Alter)',
+      'sonst koennte ein 14-Jaehriger eine Elternfreigabe anlegen')
+
+check('same_email' in _anfrage,
+      'DB: request_guardian_consent schliesst die eigene Kontoadresse aus',
+      'sonst wuerde sich der Jugendliche selbst als Elternteil eintragen')
+
+check('sha256' in _anfrage,
+      'DB: request_guardian_consent hasht den Token',
+      'der Token darf nicht im Klartext gespeichert werden - er ist die '
+      'Berechtigung des Elternteils')
+
+check('consume_rate_limit' in _anfrage,
+      'DB: request_guardian_consent hat eine Sperre',
+      'ohne Sperre koennte der Token erneuert und die Mail mit einem '
+      'neuen Token geflutet werden')
+
+_pin = _neueste_definition(all_sql, 'verify_guardian_pin')
+check('crypt' in _pin,
+      'DB: verify_guardian_pin vergleicht serverseitig (bcrypt)',
+      'ein lokaler Vergleich waere mit einem gepatchten Client zu '
+      'umgehen')
+check('consume_rate_limit' in _pin,
+      'DB: verify_guardian_pin hat eine Sperre',
+      'eine vierstellige PIN hat nur 10 000 Moeglichkeiten - ohne '
+      'Sperre waere sie in Sekunden durch')
+
+_mit_pin = _neueste_definition(all_sql, 'set_guardian_settings_with_pin')
+check('crypt' in _mit_pin,
+      'DB: set_guardian_settings_with_pin prueft die PIN serverseitig',
+      'sonst koennte der Jugendliche die Nutzungszeit selbst verschieben')
+check('consume_rate_limit' in _mit_pin,
+      'DB: set_guardian_settings_with_pin teilt die Sperre der PIN',
+      'zwei getrennte Zaehler wuerden die Sperre aushebeln')
+
+# Der Funken-Trigger: ein Funke erzeugt das Eltern-Ereignis, ein Like
+# nicht ("nicht nur like auf einer Seite").
+check('trg_matches_guardian_notify' in all_sql,
+      'DB: Der Trigger fuer Eltern-Ereignisse haengt an matches',
+      'ohne ihn erfahren die Eltern nie von einem Funken')
+check('guardian_notification_events' in all_sql,
+      'DB: Die Eltern-Ereignisse werden gespeichert',
+      'ohne Zwischenspeicherung gibt es nichts zu buendeln')
+
+# Die Freigabe- und Ereignis-Tabellen duerfen fuer Clients nicht
+# direkt lesbar sein.
+for _tabelle in ('guardian_consents', 'guardian_consent_audit',
+                  'guardian_notification_events'):
+    check(
+        f'ALTER TABLE public.{_tabelle} ENABLE ROW LEVEL SECURITY' in all_sql,
+        f'DB: {_tabelle} hat Row-Level-Security aktiv',
+        'sonst koennte ein Client die Tabelle direkt lesen')
+
+# =====================================================================
+# 1g) Der Posteingang ist NUR LESBAR
+# =====================================================================
+#
+# BETREIBER-ENTSCHEIDUNG (03.11.2026): "Koennen im Adminbereich fuer mich
+# die Emails auch angezeigt werden? Kein Antworten nur anzeigen."
+#
+# "Kein Antworten" ist eine technische Vorgabe, keine Formulierung: eine
+# Antwortfunktion braeuchte SMTP-Zugang und eine zweite Absender-
+# identitaet. Im Kinderschutz waere die Gefahr real, aus dem falschen
+# Konto zu schreiben.
+
+check('ALTER TABLE public.mail_messages ENABLE ROW LEVEL SECURITY' in all_sql,
+      'DB: mail_messages hat Row-Level-Security aktiv',
+      'ohne RLS koennte ein Client die Tabelle direkt lesen')
+
+_mails = _neueste_definition(all_sql, 'admin_list_mail_messages')
+check('is_current_user_admin' in _mails,
+      'DB: admin_list_mail_messages prueft den Admin-Status',
+      'die Mails enthalten personenbezogene Daten Dritter - sie gehoeren '
+      'nur in die Hand des Betreibers')
+
+for _verb in ('INSERT INTO public.mail_messages',
+              'UPDATE public.mail_messages',
+              'DELETE FROM public.mail_messages'):
+    check(_verb not in _mails,
+          f'DB: admin_list_mail_messages schreibt nicht ({_verb})',
+          'der Posteingang darf nur gelesen werden')
+
+# Und es darf gar keine Schreibfunktion fuer die Mails geben.
+for _name in ('send_mail', 'reply_mail', 'insert_mail_message',
+              'delete_mail_message', 'update_mail_message'):
+    check(f'FUNCTION public.{_name}' not in all_sql,
+          f'DB: Es gibt keine Funktion {_name}()',
+          'aus der App heraus wird nicht geantwortet')
+
+# =====================================================================
 # 1c) Das Verifikationsvideo wird IMMER verschluesselt abgelegt
 # =====================================================================
 #

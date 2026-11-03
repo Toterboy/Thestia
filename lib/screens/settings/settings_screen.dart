@@ -34,6 +34,7 @@ import 'package:thestia/utils/age_safety_rules.dart';
 import 'package:thestia/widgets/appearance_selector.dart';
 import 'package:thestia/widgets/buttons.dart';
 import 'package:thestia/widgets/chat_background_picker.dart';
+import 'package:thestia/widgets/guardian_section.dart';
 import 'package:thestia/widgets/privacy_section.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/widgets/language_switch.dart';
@@ -110,6 +111,11 @@ class SettingsScreen extends ConsumerWidget {
           // wie die App. Ein im Screenshot-Test nachgebautes Layout
           // zeigt sonst etwas, das es in der App nicht gibt.
           const PrivacySection(),
+          const SizedBox(height: 16),
+          // Kinderschutz & Elternzugriff (v0.11.0). Sichtbar fuer alle:
+          // wer mit 18 geworden ist, hat die Freigabe aus der Zeit mit
+          // 16/17 noch und entscheidet hier ueber ihr Ende.
+          const GuardianSection(),
           _SectionTitle(L10n.t(context, 'settings.communitySafety')),
           Card(
             child: Padding(

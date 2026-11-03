@@ -18,6 +18,8 @@ import 'package:thestia/screens/auth/forgot_password_screen.dart';
 import 'package:thestia/screens/auth/reset_password_screen.dart';
 import 'package:thestia/screens/auth/unban_request_screen.dart';
 import 'package:thestia/screens/auth/email_verification_screen.dart';
+import 'package:thestia/screens/guardian/guardian_consent_screen.dart';
+import 'package:thestia/screens/guardian/guardian_transition_screen.dart';
 import 'package:thestia/screens/auth/mfa_setup_screen.dart';
 import 'package:thestia/screens/auth/mfa_challenge_screen.dart';
 import 'package:thestia/screens/core/loading_screen.dart';
@@ -71,6 +73,12 @@ class AppRoutes {
   static const String loading = '/loading';
   // Kurzer Willkommensscreen nach E-Mail-Bestätigung (v0.9.1, einmalig).
   static const String signupWelcome = '/welcome-new';
+
+  /// Elternfreigabe anfordern (16 und 17 Jahre).
+  static const String guardianConsent = '/guardian-consent';
+
+  /// Entscheidung ueber den Elternzugriff mit 18.
+  static const String guardianTransition = '/guardian-transition';
   static const String onboarding = '/onboarding';
   static const String login = '/login';
   static const String forgotPassword = '/forgot-password';
@@ -629,6 +637,18 @@ GoRouter createRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.signupWelcome,
         builder: (context, state) => const SignupWelcomeScreen(),
+      ),
+      // Elternfreigabe (16/17). Freiwillig - wer sie nicht will,
+      // ueberspringt sie und kommt direkt ins Setup.
+      GoRoute(
+        path: AppRoutes.guardianConsent,
+        builder: (context, state) => const GuardianConsentScreen(),
+      ),
+      // Die Entscheidung mit 18: Zugriff beenden, Nachfrist oder
+      // weiter behalten.
+      GoRoute(
+        path: AppRoutes.guardianTransition,
+        builder: (context, state) => const GuardianTransitionScreen(),
       ),
       GoRoute(
         path: AppRoutes.login,

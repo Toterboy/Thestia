@@ -1,0 +1,153 @@
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'package:thestia/models/guardian_status.dart';
+
+/// Alle Aufrufe rund um die elterliche Freigabe.
+///
+/// Die Regeln sitzen in der Datenbank (Migration 165/166). Diese Klasse
+/// ist nur der Transport - sie entscheidet nichts selbst.
+class GuardianService {
+  GuardianService(this._client);
+
+  final SupabaseClient _client;
+
+  /// Liest den aktuellen Stand.
+  ///
+  /// Fehler werden zu einem "unbekannten" Stand: ein Fehler darf nicht
+  /// so aussehen, als gaebe es keine Aufsicht. [GuardianStatus.isUnknown]
+  /// sagt dem Bildschirm, dass er den Zustand nicht kennt.
+  Future<GuardianStatus> fetchStatus() async {
+    try {
+      final res = await _client.rpc('get_my_guardian_status');
+      if (res is Map) {
+        return GuardianStatus.fromJson(Map<String, dynamic>.from(res));
+      }
+    } catch (e) {
+      debugPrint('[Guardian] Status nicht lesbar: $e');
+    }
+    return GuardianStatus.unknown;
+  }
+
+  /// Fordert die Freigabe eines Elternteils an.
+  ///
+  /// Die Adresse muss eine andere sein als die eigene Kontoadresse - das
+  /// prueft der Server (`same_email`). Die Altersgrenze (16/17) prueft
+  /// der Server ebenfalls (`not_eligible`).
+  Future<GuardianResult> requestConsent(String guardianEmail) async {
+    try {
+      await _client.rpc(
+        'request_guardian_consent',
+        params: {'p_guardian_email': guardianEmail.trim().toLowerCase()},
+      );
+      return const GuardianResult.ok();
+    } catch (e) {
+      return GuardianResult.failed(_codeOf(e), e.toString());
+    }
+  }
+
+  /// Beendet die Freigabe (der Jugendliche selbst).
+  Future<GuardianResult> revoke() async {
+    try {
+      await _client.rpc('revoke_guardian_consent', params: {'p_actor': 'youth'});
+      return const GuardianResult.ok();
+    } catch (e) {
+      return GuardianResult.failed(_codeOf(e), e.toString());
+    }
+  }
+
+  /// Die Entscheidung mit 18: `ended`, `grace` oder `indefinite`.
+  Future<GuardianResult> setAccessPolicy(
+    String policy, {
+    int? graceMonths,
+  }) async {
+    try {
+      await _client.rpc(
+        'set_guardian_access_policy',
+        params: {'p_policy': policy, 'p_grace_months': graceMonths},
+      );
+      return const GuardianResult.ok();
+    } catch (e) {
+      return GuardianResult.failed(_codeOf(e), e.toString());
+    }
+  }
+
+  /// Prueft die vierstellige PIN der Aufsicht.
+  ///
+  /// Der Vergleich laeuft auf dem SERVER - das Geraet kennt die PIN nie.
+  /// Bei falschen Versuchen sperrt der Server die PIN (5 pro Stunde).
+  Future<bool> verifyPin(String pin) async {
+    try {
+      final res = await _client.rpc(
+        'verify_guardian_pin',
+        params: {'p_pin': pin},
+      );
+      return res == true;
+    } catch (e) {
+      debugPrint('[Guardian] PIN-Pruefung fehlgeschlagen: $e');
+      return false;
+    }
+  }
+
+  /// Markiert den Screen zum 18. Geburtstag als gesehen.
+  Future<void> markTransitionDone() async {
+    try {
+      await _client.rpc('mark_guardian_transition_done');
+    } catch (e) {
+      debugPrint('[Guardian] Übergang nicht markiert: $e');
+    }
+  }
+
+  /// Aendert die Einstellungen der Aufsicht - nur mit der PIN.
+  ///
+  /// Der PIN-Vergleich laeuft auf dem Server (Migration 167). Ohne die
+  /// richtige PIN aendert sich nichts; die PIN gehoert dem Elternteil,
+  /// damit kann der Jugendliche die Nutzungszeit nicht selbst verschieben.
+  Future<GuardianResult> updateSettingsWithPin({
+    required String pin,
+    String? notifyFrequency,
+    bool? usageLimitEnabled,
+    int? usageStartMin,
+    int? usageEndMin,
+  }) async {
+    try {
+      final res = await _client.rpc(
+        'set_guardian_settings_with_pin',
+        params: {
+          'p_pin': pin,
+          'p_notify_frequency': notifyFrequency,
+          'p_usage_limit_enabled': usageLimitEnabled,
+          'p_usage_start_min': usageStartMin,
+          'p_usage_end_min': usageEndMin,
+        },
+      );
+      final code = res is Map ? res['error'] as String? : null;
+      if (code != null) {
+        return GuardianResult.failed(code);
+      }
+      return const GuardianResult.ok();
+    } catch (e) {
+      return GuardianResult.failed(_codeOf(e), e.toString());
+    }
+  }
+
+  /// Übersetzt die Fehlermeldung der RPC in einen Code.
+  ///
+  /// PostgREST liefert die Meldung der Ausnahme im Text. Die Codes
+  /// stammen aus den Ausnahmetexten der Migration 165.
+  static String? _codeOf(Object e) {
+    final text = e.toString().toLowerCase();
+    if (text.contains('not_authenticated')) return 'not_authenticated';
+    if (text.contains('not_eligible')) return 'not_eligible';
+    if (text.contains('same_email')) return 'same_email';
+    if (text.contains('invalid_email')) return 'invalid_email';
+    if (text.contains('rate_limited')) return 'rate_limited';
+    if (text.contains('invalid_policy')) return 'invalid_policy';
+    if (text.contains('invalid_grace')) return 'invalid_grace';
+    if (text.contains('no_consent')) return 'no_consent';
+    if (text.contains('wrong_pin')) return 'wrong_pin';
+    if (text.contains('no_pin')) return 'no_pin';
+    if (text.contains('invalid_pin')) return 'invalid_pin';
+    return null;
+  }
+}

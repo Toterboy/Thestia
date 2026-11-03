@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/utils/age_safety_rules.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/widgets/app_logo.dart';
 
@@ -19,6 +21,27 @@ class SignupWelcomeScreen extends ConsumerWidget {
 
   Future<void> _continue(BuildContext context, WidgetRef ref) async {
     await ref.read(settingsProvider.notifier).markSignupWelcomeSeen();
+    if (!context.mounted) return;
+
+    // Minderjaehrige (16 und 17) bekommen direkt nach diesem Screen die
+    // Elternfreigabe angeboten (Betreiber-Entscheidung 03.11.2026).
+    //
+    // FREIWILLIG: der Screen laesst sich ueberspringen, und nach § 3a JUG
+    // kann eine Person ab dem vollendeten 16. Lebensjahr selbst
+    // einwilligen. Deshalb ist das ein Angebot, keine Sperre.
+    //
+    // Das Alter kommt aus dem Profil (das Geburtsdatum wird bei der
+    // Registrierung gesetzt). Ist es noch nicht da, gibt es keinen
+    // Umweg - die Freigabe laesst sich jederzeit auch aus den
+    // Einstellungen anfordern.
+    final alter = ref.read(profileProvider).age;
+    if (alter != null &&
+        AgeSafetyRules.ageGroup(alter) == AgeGroup.minor &&
+        context.mounted) {
+      context.go(AppRoutes.guardianConsent);
+      return;
+    }
+
     if (context.mounted) context.go(AppRoutes.home);
   }
 

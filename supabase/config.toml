@@ -87,6 +87,32 @@ verify_jwt = false
 [functions.cancel-registration]
 verify_jwt = false
 
+# mail-ingest: nimmt eingehende Mails entgegen (v0.11.0).
+# Wird von zwei Diensten aufgerufen, beide mit dem internen Secret:
+#   - tool/mail_imap_poll.py (IMAP-Abfrage)
+#   - deploy/cloudflare/email-worker.js (Cloudflare Email Worker)
+# verify_jwt auf Gateway-Ebene wuerde beide Wege blockieren.
+[functions.mail-ingest]
+verify_jwt = false
+enabled = true
+
+# guardian-consent: Eltern-Erlaubnis (v0.11.0).
+# Zwei Wege, beide mit eigener Berechtigung im Code:
+#   - intern aus der Datenbank (Trigger/RPC) mit x-thestia-internal
+#   - oeffentlich aus dem Eltern-Portal, wo der Token in der URL die
+#     Berechtigung IST (32 Byte Zufall, nur als Hash gespeichert)
+# verify_jwt auf Gateway-Ebene wuerde beide Wege blockieren.
+[functions.guardian-consent]
+verify_jwt = false
+enabled = true
+
+# guardian-digest: die gebuendelten Eltern-Benachrichtigungen.
+# Wird ausschliesslich aus der Datenbank aufgerufen (pg_cron ->
+# net.http_post mit dem internen Secret).
+[functions.guardian-digest]
+verify_jwt = false
+enabled = true
+
 # request-unban: Entsperrungsantrag fuer gesperrte E-Mail-Adressen.
 # Der Nutzer ist bewusst NICHT eingeloggt (Konto gesperrt) -> verify_jwt
 # deaktiviert. Eigene Absicherung in der Funktion: nur Eintraege aus

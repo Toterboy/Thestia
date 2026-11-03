@@ -37,6 +37,7 @@ ASSETS = ROOT / 'passkey-assets'
 # heller Fleck auf.
 SEITEN = [
     'kinderschutz.html',
+    'eltern.html',
     'konto-loeschen.html',
     'impressum.html',
     'dating-sicherheit.html',
