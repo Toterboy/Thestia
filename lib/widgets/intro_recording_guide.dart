@@ -117,7 +117,7 @@ class _IntroRecordingGuideState extends State<IntroRecordingGuide> {
             ),
             const SizedBox(height: 6),
             for (var i = 0; i < IntroRecordingGuide.stepKeys.length; i++)
-              _stepRow(context, i, aktiv, automatisch),
+              _stepRow(context, i, aktiv),
             const SizedBox(height: 2),
             Text(
               L10n.t(context, 'intro.guide.hint'),
@@ -132,21 +132,19 @@ class _IntroRecordingGuideState extends State<IntroRecordingGuide> {
   }
 
   /// Eine Zeile des Leitfadens: Nummer, Text, Zustand.
+  ///
+  /// Drei Zustaende, klar unterscheidbar:
+  ///   * aktiv   - gefuellter Kreis, Text in der Akzentfarbe, fett
+  ///   * erledigt- Haken im Kreis, Text zurueckgenommen
+  ///   * offen   - offener Kreis, Text zurueckgenommen
   Widget _stepRow(
     BuildContext context,
     int index,
     int aktiv,
-    int automatisch,
   ) {
     final scheme = Theme.of(context).colorScheme;
     final istAktiv = index == aktiv;
     final istVorbei = index < aktiv;
-
-    final farbe = istAktiv
-        ? scheme.onPrimaryContainer
-        : istVorbei
-            ? scheme.primary
-            : scheme.onSurfaceVariant;
 
     return InkWell(
       onTap: () => setState(() => _manualStep = index),
@@ -176,7 +174,9 @@ class _IntroRecordingGuideState extends State<IntroRecordingGuide> {
                   : Text(
                       '${index + 1}',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: istAktiv ? scheme.onPrimary : farbe,
+                            color: istAktiv
+                                ? scheme.onPrimary
+                                : scheme.onSurfaceVariant,
                             fontWeight: FontWeight.w700,
                           ),
                     ),
@@ -186,7 +186,9 @@ class _IntroRecordingGuideState extends State<IntroRecordingGuide> {
               child: Text(
                 L10n.t(context, IntroRecordingGuide.stepKeys[index]),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: farbe,
+                      color: istAktiv
+                          ? scheme.primary
+                          : scheme.onSurfaceVariant,
                       fontWeight:
                           istAktiv ? FontWeight.w700 : FontWeight.w400,
                     ),
