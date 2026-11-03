@@ -11,6 +11,23 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 ### Hinzugefügt
 
+- **Drei-Schritte-Leitfaden für die Audio-Vorstellung** (03.11.2026):
+  Während der Aufnahme begleitet die App die Vorstellung mit drei
+  Winkeln in fester Reihenfolge: „Wer bist du?", „Was macht dich
+  aus?", „Warum bist du hier?". Die Schritte laufen von selbst (alle
+  15 Sekunden ein neuer Winkel); ein Tipp auf einen Schritt übernimmt
+  dauerhaft die Steuerung, und nach dem dritten bleibt der dritte
+  stehen. Pflicht bleibt Text UND Audio - der Leitfaden ist eine Stütze,
+  kein Fragebogen. Für die Text-Vorstellung gab es die rotierenden
+  Prompt-Karten schon seit 0.9.2.
+- **Das englische Store-Listing ist vollständig** (03.11.2026): Die
+  englische Liste hatte keine Phone-Screenshots, und die Tablet-Bilder
+  waren Kopien der deutschen - ein englisches Feature-Graphic über
+  deutschen Screenshots mit deutschen Headlines. Jetzt sind Render,
+  Headlines, Tablet-Bilder und Feature-Graphic je Sprache eigenständig
+  (englischer Claim: „Person, not picture."). Der Renderer läuft je
+  Sprache (`STORE_SHOTS_LANG=en`), der Compositor hat eigene Quellen,
+  Texte und Ausgaben, und die Textprüfung gilt für beide Sprachen.
 - **Elternfreigabe für 16- und 17-Jährige:** Direkt nach dem
   Willkommens-Screen kann die E-Mail-Adresse eines Elternteils
   eingetragen werden. Sie muss von der eigenen Kontoadresse abweichen –
@@ -196,6 +213,12 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 ### Geändert
 
+- **Das Mindestalter ist festgelegt: 16 Jahre** (Betreiberentscheidung
+  03.11.2026). Die App ist nicht für unter 16-Jährige gedacht, und das
+  wird nicht nur angezeigt, sondern erzwungen: im Registrierungsformular,
+  im Datenbank-Constraint (`chk_profiles_birth_date_age`, greift auch bei
+  manipuliertem Client) und bei der serverseitigen Altersannahme. Der
+  BLE-Nahbereich ist für unter 18-Jährige serverseitig gesperrt.
 - **Profil-Menü mit Rand nach oben** (31.10.2026): Der Griff und die drei
   Optionen kleben nicht mehr an der Oberkante des Blattes.
 - **Ladekreise sind abgerundet**: Alle Ladeindikatoren der App bekommen

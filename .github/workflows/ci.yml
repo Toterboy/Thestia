@@ -394,6 +394,19 @@ jobs:
       - name: Screenshot-Schriftgroesse einheitlich
         run: python3 tool/check_screenshot_consistency.py
 
+      # Beide Store-Listen muessen vollstaendig sein - und eigenstaendig.
+      #
+      # Befund (03.11.2026): Die englische Liste hatte KEINE
+      # Phone-Screenshots, und die Tablet-Bilder waren Kopien der
+      # deutschen. Wer die englische Liste oeffnete, sah ein englisches
+      # Feature-Graphic ueber DEUTSCHEN Screenshots mit deutschen
+      # Headlines. Beide Bildordner sind gitignoriert (regenerierbare
+      # Build-Artefakte) - in der CI ist nur die Metadatenstruktur da,
+      # und genau die wird hier geprueft: vollstaendig und nicht
+      # identisch zwischen den Sprachen.
+      - name: Store-Listen vollstaendig und je Sprache eigenstaendig
+        run: python3 tool/check_store_listing_languages.py
+
       # Release-Artefakte: Signatur und Admin-Trennung.
       #
       # Hintergrund: Bei v0.9.1 sind die beiden universellen APKs unter

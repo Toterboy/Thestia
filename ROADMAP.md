@@ -484,22 +484,42 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
       > fragt den Stand ab und zeigt eine klare Meldung, statt eine
       > Alters-Begründung zu geben, die nicht zutrifft. Der Wert steht
       > im Auslieferungszustand auf `true`.
-- [ ] **BLE-Tracking-Härtung (Privacy im Funk)** – *vorgezogen, steht
-      vor den kosmetischen Punkten, weil die Exposition bereits
-      gegenwärtig für jeden Nutzer mit aktivem Transit Spark besteht.*
-      Umgesetzt in 0.10.0: rotierende Encounter-Tokens mit Jitter,
-      Herstellerfilter, gepulstes Scanning, **frisches Token bei jedem
-      Neustart des Advertising** (03.11.2026: nach dem Hintergrund wurde
-      bisher mit demselben Token weitergemacht - wer das Gerät eine Stunde
-      lang ausgeschaltet hatte, sendete danach denselben Pseudonym-Token
-      wieder; das ist genau die Kontinuität, die ein Beobachter sucht).
-      **Offen und zuerst zu klären:** die Plattform-Frage. Resolvable Private Addresses
-      rotieren auf Android als **Plattformverhalten**; eine App kann sie
-      für eigenes Advertising nicht erzwingen, und `flutter_blue_plus`
-      bietet dafür keine API. Zu prüfen ist deshalb, was sich tatsächlich
-      steuern lässt: frische Token pro Advertising-Neustart, Jitter der
-      Intervalle, Verkürzung der Fenster. Der Eintrag wird nicht als
-      „RPA umgesetzt" verbucht, solange das nicht belegt ist.
+- [x] **BLE-Tracking-Härtung (Privacy im Funk)** – *vorgezogen, stand vor den
+      kosmetischen Punkten, weil die Exposition bereits gegenwärtig für jeden
+      Nutzer mit aktivem Transit Spark besteht.*
+      **Was die App tatsächlich steuern kann - und das ist umgesetzt**
+      (`lib/services/transit_ble_privacy.dart`):
+      * **Token-Rotation mit Jitter:** Basis 10 min, Streuung ± 40 %
+        (6-14 min). Ohne Jitter wäre der Rotationszeitpunkt selbst ein
+        Fingerprint: wer morgens immer zur selben Sekunde startet, ist
+        wiederzuerkennen.
+      * **Sendepausen mit Jitter:** Advertising-Zyklus 20-45 s. Ein
+        durchgehender Sender verrät Anwesenheit, ein unregelmäßiger
+        Sender verrät nur, dass dort jemand ist, der Transit Spark
+        benutzt.
+      * **Gepulstes Scanning:** 12 s an, 8-20 s aus. Ein Dauer-Scanner
+        erzeugt ein eigenes, wiedererkennbares Muster.
+      * **Frisches Token bei jedem Neustart des Advertising** (03.11.2026):
+        nach dem Hintergrund wurde mit demselben Token weitergemacht - wer
+        das Gerät eine Stunde lang ausgeschaltet hatte, sendete danach
+        denselben Pseudonym-Token wieder; das ist genau die Kontinuität,
+        die ein Beobachter sucht.
+      * **Zufall aus `Random.secure`**, nicht aus `Random()`: ein
+        vorhersagbarer Jitter ist schlimmer als gar keiner, weil er ein
+        Muster verspricht, das keines ist.
+      **Was die App NICHT steuern kann - und das ist keine offene
+      Aufgabe, sondern eine Eigenschaft der Plattform:** Resolvable
+      Private Addresses rotieren auf Android als Plattformverhalten.
+      Eine App kann die Adresse ihres eigenen Advertising nicht erzwingen,
+      und `flutter_blue_plus` bietet dafür keine API. Der Eintrag wird
+      deshalb ausdrücklich **nicht** als „RPA umgesetzt" verbucht: die
+      Rotation der Adresse selbst liegt bei Android, nicht bei uns. Was
+      wir tun, ist die darüberliegende Schicht (Pseudonym-Token statt
+      Gerätekennung) so zu gestalten, dass ein Beobachter keine
+      Kontinuität herstellen kann, auch wenn die Adresse rotiert.
+      Der verbleibende Teil ist **nicht** bei uns, sondern beim Gerät:
+      der BLE-Gerätetest (siehe oben) muss zeigen, dass die Kombination
+      auf echten Geräten funktioniert.
 - [x] **Dependency-Hygiene in CI** – erledigt: `flutter pub outdated`- und
       CVE-Prüfung je Pipeline-Lauf, exakte Pins für alle 16
       sicherheitsrelevanten direkten Abhängigkeiten (kein `^` für
@@ -1191,13 +1211,27 @@ Vorgesehene Bausteine (noch nicht umgesetzt):
       passiert mit Supabase-Backups, dem Pre-Key-Speicher und
       Push-Payloads. Die Information nach Art. 13 DSGVO besteht
       unabhängig davon, ob die Umsetzung steht
-- [ ] **Belastbare Durchsetzung des Mindestalters**: Die Roadmap nennt
+- [~] **Belastbare Durchsetzung des Mindestalters**: Die Roadmap nannte
       „serverseitig erzwungenen Jugendschutz" und eine KI-Alters-Triage
       mit manueller Queue, aber kein konkretes Mindestalter, keine
       Rechtsgrundlage, kein Widerspruchsverfahren, keine Regel für
       Altersband-Unschärfe und keine Aufbewahrung der
       Verifizierungsmedien. Für eine App mit Jugendschutz ist das die
-      zentrale rechtliche Voraussetzung, kein Feature
+      zentrale rechtliche Voraussetzung, kein Feature.
+      **Erledigt in 0.10.0:** das Mindestalter ist entschieden (16 Jahre,
+      Betreiberentscheidung 03.11.2026) und an drei Stellen erzwungen -
+      im Registrierungsformular (`lib/utils/validators.dart`), in der
+      Datenbank (`chk_profiles_birth_date_age`, Migration 154, greift
+      auch bei manipuliertem Client) und bei der serverseitigen
+      Altersannahme. Der BLE-Nahbereich ist für unter 18-Jährige
+      serverseitig gesperrt (Migration 131, fail-closed).
+      **Offen bleibt ausdrücklich die Rechtsseite** (nicht bei uns, sondern
+      bei der Rechtsberatung): Rechtsgrundlage der Einwilligung ab 16
+      (§ 3a JUG, Abgrenzung zu Art. 8 DSGVO), Widerspruchsverfahren bei
+      Altersablehnung, Regel für die Altersband-Unschärfe und die
+      Aufbewahrung der Verifizierungsmedien. Das sind die Punkte aus
+      Abschnitt 7 der DSFA (siehe dort, und die Datenschutzfolge-
+      abschätzung oben).
 - Öffentliches Threat-Model: **nach 0.10.0 vorgezogen**, dort geführt
 
 ## Versionierungsprinzip
