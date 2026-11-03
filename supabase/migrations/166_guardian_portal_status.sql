@@ -62,7 +62,7 @@ $$;
 
 COMMENT ON FUNCTION public.guardian_portal_status(text) IS
   'Der Stand der elterlichen Einstellungen fuer das Portal. Enthaelt '
-  'KEINE Daten des Kindes ausser dem Freigabestatus (v0.11.0, '
+  'KEINE Daten des Kindes ausser dem Freigabestatus (v0.10.0, '
   'Migration 166). Nur service_role.';
 
 REVOKE ALL ON FUNCTION public.guardian_portal_status(text)

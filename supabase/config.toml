@@ -87,7 +87,14 @@ verify_jwt = false
 [functions.cancel-registration]
 verify_jwt = false
 
-# mail-ingest: nimmt eingehende Mails entgegen (v0.11.0).
+# delete-user-data: loescht einzelne Datenkategorien, OHNE das Konto
+# zu loeschen. Wird von der App mit dem User-JWT aufgerufen - die
+# Funktion loescht ausschliesslich fuer die UID dieses Tokens.
+[functions.delete-user-data]
+verify_jwt = true
+enabled = true
+
+# mail-ingest: nimmt eingehende Mails entgegen (v0.10.0).
 # Wird von zwei Diensten aufgerufen, beide mit dem internen Secret:
 #   - tool/mail_imap_poll.py (IMAP-Abfrage)
 #   - deploy/cloudflare/email-worker.js (Cloudflare Email Worker)
@@ -96,7 +103,7 @@ verify_jwt = false
 verify_jwt = false
 enabled = true
 
-# guardian-consent: Eltern-Erlaubnis (v0.11.0).
+# guardian-consent: Eltern-Erlaubnis (v0.10.0).
 # Zwei Wege, beide mit eigener Berechtigung im Code:
 #   - intern aus der Datenbank (Trigger/RPC) mit x-thestia-internal
 #   - oeffentlich aus dem Eltern-Portal, wo der Token in der URL die

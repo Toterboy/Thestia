@@ -1087,12 +1087,22 @@ setState(() {
                             // Katalog - vorher standen hier Vollnamen
                             // ("Bayern") und im Profil-Edit Kuerzel ("BY"),
                             // was die Filterung ebenfalls aushebte.
+                            // v0.10.0: Der Wert ist das Bundesland des
+                            // Profils (_selectedState) - es wird beim
+                            // Speichern in profiles.state geschrieben, und
+                            // genau diesen Wert vergleicht der Server
+                            // (Migration 169).
+                            //
+                            // Vorher stand hier preferredState - eine Spalte
+                            // mit CHECK-Constraint, der das Bundesland gar
+                            // nicht zulaesst. Die Auswahl wurde also
+                            // stillschweigend verworfen, und der Modus
+                            // "Bundesland" filterte ueberhaupt nichts.
                             DropdownButtonFormField<String>(
                               initialValue:
-                                  userPrefs.preferredState?.trim().isEmpty ??
-                                      true
+                                  _selectedState?.trim().isEmpty ?? true
                                   ? null
-                                  : userPrefs.preferredState!.trim(),
+                                  : _selectedState!.trim(),
                               borderRadius: BorderRadius.circular(16),
                               decoration: InputDecoration(
                                 labelText: L10n.t(
@@ -1112,8 +1122,14 @@ setState(() {
                               onChanged: (v) async {
                                 // Kein Fehlerhinweis mehr noetig: eine
                                 // Liste kann nicht falsch getippt werden.
-                                await userPrefsNotifier
-                                    .setPreferredState(v);
+                                //
+                                // v0.10.0: Der Wert geht in das Bundesland
+                                // des Profils - dort vergleicht der Server
+                                // ihn (profiles.state). Die tote Spalte
+                                // preferred_state wird nicht mehr benutzt.
+                                if (v != null) {
+                                  setState(() => _selectedState = v);
+                                }
                               },
                             ),
                             const SizedBox(height: 20),

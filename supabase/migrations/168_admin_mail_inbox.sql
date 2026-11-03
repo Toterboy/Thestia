@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS public.mail_messages (
 
 COMMENT ON TABLE public.mail_messages IS
   'Eingehende Mails des Betreibers, im Admin-Bereich einsehbar - nur zum '
-  'Lesen (v0.11.0, Migration 168). Keine Antwortfunktion: es gibt '
+  'Lesen (v0.10.0, Migration 168). Keine Antwortfunktion: es gibt '
   'bewusst keinen SMTP-Zugang aus der App heraus.';
 
 COMMENT ON COLUMN public.mail_messages.category IS
@@ -116,7 +116,7 @@ AS $$
 $$;
 
 COMMENT ON FUNCTION public.mail_category_for(text) IS
-  'Leitet die Rubrik aus der Empfangsadresse ab (v0.11.0, Migration 168).';
+  'Leitet die Rubrik aus der Empfangsadresse ab (v0.10.0, Migration 168).';
 REVOKE ALL ON FUNCTION public.mail_category_for(text) FROM PUBLIC;
 
 -- ===========================================================================
@@ -172,7 +172,7 @@ $$;
 
 COMMENT ON FUNCTION public.admin_list_mail_messages(text, int) IS
   'Die Mails fuer den Admin-Bereich, nach Rubrik gefiltert. Nur lesen - '
-  'die Funktion kann nichts aendern und nichts senden (v0.11.0, '
+  'die Funktion kann nichts aendern und nichts senden (v0.10.0, '
   'Migration 168).';
 REVOKE ALL ON FUNCTION public.admin_list_mail_messages(text, int)
   FROM PUBLIC, anon, authenticated;
@@ -237,7 +237,7 @@ END;
 $$;
 
 COMMENT ON FUNCTION public.cleanup_old_mail_messages() IS
-  'Loescht Mails, die aelter als 180 Tage sind (v0.11.0, Migration 168).';
+  'Loescht Mails, die aelter als 180 Tage sind (v0.10.0, Migration 168).';
 REVOKE ALL ON FUNCTION public.cleanup_old_mail_messages() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.cleanup_old_mail_messages() TO service_role;
 

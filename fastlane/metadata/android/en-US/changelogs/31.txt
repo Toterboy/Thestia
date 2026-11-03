@@ -1,33 +1,25 @@
-More security, more clarity
+More clarity for 16 and 17
 
-Verification that actually means something
-Your video is now stored encrypted - nobody else can see it. And an
-approval only counts if it was really granted: approval, rejection and
-a running review are now told apart properly. Your verified age is what
-counts, not what you entered.
+Parental consent that is voluntary
+If you are 16 or 17, you can add a parent. They receive an email with a
+link, confirm it themselves and can undo it at any time. Nothing is
+forced - and if no consent is given, the app is fully usable anyway.
 
-Child safety that works when it matters
-Concerns about child sexual abuse now have their own reporting path, and
-it actually works. There is also a dedicated page with the contact
-person and the reporting address: kinderschutz.thestia.de
+Your decision at 18
+From 18 onwards you decide yourself: end parental access, keep it for a
+few more months, or keep it for now. The section stays visible in the
+settings either way.
 
-Describable traits
-In nearby mode you can now describe exactly what someone looks like -
-from the shirt down to the shoes and hair colour. The traits are sorted
-by category, and you get a badge once your description is complete.
+Notifications without interference
+When a spark appears, a parent can get a short message - at the
+interval they choose themselves. No names, no profiles, no message
+contents. And a limited usage time, secured with a PIN that is only
+ever checked on the server.
 
-A bigger privacy promise
-No TURN server any more, no location data that is kept longer than
-needed, and a visible notice when someone sees your distance. You can
-delete your data yourself at any time - without asking support.
-
-Access only for verified accounts
-Without verification you no longer see any suggestions. That protects
-against age entries that are not true.
+A tighter search radius
+For 16 and 17, the radius is now at most 25 km - or only people from
+your own federal state. From 18, everything stays freely selectable.
 
 Fixes
-- Reporting works again - including for inappropriate images
-- Password reset and resending the confirmation mail work
-- Profiles are no longer shown with the wrong age
-- Favourite song, favourite band and birthday style are kept
-- Several places where text was cut off
+- The distance between two profiles is no longer calculated wrongly
+- Profiles with an old date of birth show the right results

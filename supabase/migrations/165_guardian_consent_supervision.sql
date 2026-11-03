@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS public.guardian_consents (
 
 COMMENT ON TABLE public.guardian_consents IS
   'Freigabe der Sorgeberechtigten fuer ein Konto im Alter 16/17 '
-  '(v0.11.0, Migration 165). Es gibt bewusst KEIN Konto des '
+  '(v0.10.0, Migration 165). Es gibt bewusst KEIN Konto des '
   'Elternteils: das Konto gehoert dem Kind, der Elternteil ist '
   'Genehmiger. Der Token liegt nur als Hash vor.';
 
@@ -196,18 +196,18 @@ ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS guardian_transition_done boolean NOT NULL DEFAULT false;
 
 COMMENT ON COLUMN public.profiles.supervised IS
-  'Das Konto steht unter Aufsicht der Sorgeberechtigten (v0.11.0, '
+  'Das Konto steht unter Aufsicht der Sorgeberechtigten (v0.10.0, '
   'Migration 165).';
 COMMENT ON COLUMN public.profiles.consent_state IS
   'Stand der elterlichen Einwilligung: none | pending | granted | revoked '
-  '(v0.11.0, Migration 165).';
+  '(v0.10.0, Migration 165).';
 COMMENT ON COLUMN public.profiles.consent_parent_ref IS
   'Verweis auf den Einwilligungsdatensatz in guardian_consents - KEIN '
-  'Konto des Elternteils (v0.11.0, Migration 165).';
+  'Konto des Elternteils (v0.10.0, Migration 165).';
 COMMENT ON COLUMN public.profiles.guardian_transition_done IS
   'Der Screen zum 18. Geburtstag wurde gesehen. Bis dahin bleibt der '
   'Elternzugriff bestehen; danach entscheidet der Jugendliche '
-  '(v0.11.0, Migration 165).';
+  '(v0.10.0, Migration 165).';
 
 -- Kein CHECK auf consent_state: der Wert wird nur serverseitig gesetzt
 -- (RPCs). Ein CHECK wuerde hier nur die Datenhaltung betreffen, nicht
@@ -771,7 +771,7 @@ $$;
 COMMENT ON FUNCTION public.verify_guardian_pin(text) IS
   'Prueft die vierstellige PIN der Aufsicht. Der Vergleich laeuft '
   'serverseitig gegen den bcrypt-Hash - das Geraet kennt die PIN nie. '
-  '5 Versuche pro Stunde (v0.11.0, Migration 165).';
+  '5 Versuche pro Stunde (v0.10.0, Migration 165).';
 REVOKE ALL ON FUNCTION public.verify_guardian_pin(text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.verify_guardian_pin(text) TO authenticated;
 
@@ -861,7 +861,7 @@ $$;
 COMMENT ON FUNCTION public.get_my_guardian_status() IS
   'Der Stand der elterlichen Aufsicht fuer die App: Freigabe, '
   'Benachrichtigungs-Frequenz, Nutzungszeit, PIN vorhanden, und ob der '
-  'Screen zum 18. Geburtstag ansteht (v0.11.0, Migration 165).';
+  'Screen zum 18. Geburtstag ansteht (v0.10.0, Migration 165).';
 REVOKE ALL ON FUNCTION public.get_my_guardian_status() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.get_my_guardian_status() TO authenticated;
 
@@ -1146,7 +1146,7 @@ $$;
 COMMENT ON FUNCTION public.run_guardian_digest(text) IS
   'Buendelt die Funken-Ereignisse je Freigabe und stoesst den Versand an. '
   'Die Haeufigkeit (daily/weekly/monthly) wird vom Elternteil gestellt; '
-  'wer "none" waehlt, bekommt nichts (v0.11.0, Migration 165).';
+  'wer "none" waehlt, bekommt nichts (v0.10.0, Migration 165).';
 REVOKE ALL ON FUNCTION public.run_guardian_digest(text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.run_guardian_digest(text) TO service_role;
 

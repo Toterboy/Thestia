@@ -1,7 +1,7 @@
 // Supabase Edge Function: /mail-ingest
 //
 // Nimmt eingehende Mails entgegen und legt sie in public.mail_messages
-// ab - der Admin-Bereich zeigt sie danach an (v0.11.0, Migration 168).
+// ab - der Admin-Bereich zeigt sie danach an (v0.10.0, Migration 168).
 //
 // ZWEI EINGANGSWEGE, beide mit demselben Aufruf:
 //

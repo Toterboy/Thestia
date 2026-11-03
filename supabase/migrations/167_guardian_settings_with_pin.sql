@@ -107,7 +107,7 @@ $$;
 COMMENT ON FUNCTION public.set_guardian_settings_with_pin(text, text, boolean, int, int) IS
   'Aendert die Einstellungen der Aufsicht - NUR mit der korrekten PIN des '
   'Elternteils. Die Pruefung laeuft serverseitig gegen den bcrypt-Hash '
-  '(v0.11.0, Migration 167). Ohne PIN wird nichts geaendert.';
+  '(v0.10.0, Migration 167). Ohne PIN wird nichts geaendert.';
 REVOKE ALL ON FUNCTION public.set_guardian_settings_with_pin(text, text, boolean, int, int)
   FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.set_guardian_settings_with_pin(text, text, boolean, int, int)

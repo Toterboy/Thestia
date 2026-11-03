@@ -1,7 +1,7 @@
 // Supabase Edge Function: /guardian-digest
 //
 // Buendelt die Funken-Ereignisse fuer die Sorgeberechtigten und
-// verschickt sie als E-Mail (v0.11.0, Migration 165).
+// verschickt sie als E-Mail (v0.10.0, Migration 165).
 //
 // AUFRUF: nur aus der Datenbank (pg_cron -> run_guardian_digest ->
 // net.http_post) mit dem internen Secret. verify_jwt = false in

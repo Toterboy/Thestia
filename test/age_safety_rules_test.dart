@@ -144,7 +144,7 @@ void main() {
     });
   });
 
-  group('AgeSafetyRules - Suchradius (v0.11.0)', () {
+  group('AgeSafetyRules - Suchradius (v0.10.0)', () {
     // BETREIBER-ENTSCHEIDUNG (03.11.2026): "fuer 16 und 17 jaehrige
     // entweder gleiches Bundesland oder max. 25 Km. Und ab 18 alles
     // frei auswaehlbar."

@@ -281,6 +281,15 @@ check('v.state' in _sichtbarkeit and 't.state' in _sichtbarkeit,
       'die Alternative "gleiches Bundesland" fuer 16- und 17-Jaehrige '
       'waere sonst wirkungslos')
 
+# Der Modus "Bundesland" hat bis Migration 169 gar nichts gefiltert:
+# "Bundesland" und "Ganz Deutschland" waren dieselbe Bedingung (kein
+# Radius). Die drei Modi muessen jetzt alle drei ausgewertet werden.
+for _modus in ('distance_km', 'state', 'germany'):
+    check(f"= '{_modus}'" in _sichtbarkeit,
+          f'DB: profile_discovery_visible wertet den Suchmodus "{_modus}" aus',
+          'der Modus muss das tun, was er verspricht - sonst ist die '
+          'Einstellung eine Anzeige ohne Wirkung')
+
 # =====================================================================
 # 1f) Die elterliche Aufsicht haengt an der Datenbank, nicht an der App
 # =====================================================================
@@ -384,6 +393,43 @@ for _name in ('send_mail', 'reply_mail', 'insert_mail_message',
     check(f'FUNCTION public.{_name}' not in all_sql,
           f'DB: Es gibt keine Funktion {_name}()',
           'aus der App heraus wird nicht geantwortet')
+
+# =====================================================================
+# 1h) Die selektive Datenloeschung loescht NUR die eigenen Daten
+# =====================================================================
+#
+# BETREIBER-ENTSCHEIDUNG (03.11.2026): "Biete ich Nutzern die
+# Moeglichkeit das Entfernen einiger oder aller ihrer Daten anzufordern,
+# ohne dass dabei das Konto geloescht werden muss?"
+#
+# Die Edge Function loescht mit der Service-Rolle - das ist der einzige
+# Weg, die Daten wirklich zu entfernen (RLS und der normale Client
+# duerfen das nicht). Damit ist die Function die kritische Stelle: sie
+# muss die Identitaet des Aufrufers BEWEISEN, bevor sie loescht.
+
+_loesch_funktion = 'supabase/functions/delete-user-data/index.ts'
+
+check(has(_loesch_funktion, 'auth.getUser(token)'),
+      'APP/SERVER: delete-user-data prueft das JWT des Aufrufers',
+      'ohne Identitaetsnachweis wuerde die Funktion mit der '
+      'Service-Rolle fuer jeden loeschen koennen')
+
+check(has(_loesch_funktion, 'if (!token) return json({ error: "Unauthorized" })')
+      or has(_loesch_funktion, 'if (!token)'),
+      'SERVER: delete-user-data lehnt Anrufe ohne Token ab',
+      'die Funktion schreibt mit der Service-Rolle - ohne Token waere das '
+      'eine offene Loeschschnittstelle')
+
+check(has(_loesch_funktion, '.eq("user_id", uid)'),
+      'SERVER: delete-user-data filtert auf die eigene user_id',
+      'die Loeschung muss sich auf das Konto des Aufrufers beschraenken')
+
+# Und die Loeschung darf nicht ins Konto selbst eingreifen - das
+# loescht die separate delete-account-Funktion (mit MFA-Step-up).
+check('delete-user-data' not in all_sql
+      or 'auth.users' not in _neueste_definition(all_sql, 'delete_user_data'),
+      'SERVER: Die selektive Loeschung loescht kein Konto',
+      'das Konto zu loeschen ist ein eigener Vorgang mit MFA-Bestaetigung')
 
 # =====================================================================
 # 1c) Das Verifikationsvideo wird IMMER verschluesselt abgelegt

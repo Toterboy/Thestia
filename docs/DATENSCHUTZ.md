@@ -193,7 +193,7 @@ den Server übertragen und nicht für Profiling oder Werbung genutzt. Die
 Aufklärung dauert höchstens fünf Minuten; die ausführliche Fassung steht
 unter <https://auth.thestia.de/dating-sicherheit>.
 
-## 4. Lokaler Chat-Verlauf (optional) und lokaler KI-Reflexions-Chat (Sanctuary, geplant ab v0.11.0)
+## 4. Lokaler Chat-Verlauf (optional) und lokaler KI-Reflexions-Chat (Sanctuary, geplant ab v0.10.0)
 
 **Lokaler Chat-Verlauf (seit v0.8.x):** Auf Wunsch speichert die App
 Chats verschlüsselt (AES-256, SecureHive; Schlüssel im Keystore) lokal
@@ -203,7 +203,7 @@ können jederzeit durch Deaktivieren gelöscht werden. Der JSON-Datenexport
 enthält den Verlauf (Einsicht/Übertragbarkeit), der Import stellt ihn
 wieder her.
 
-Der folgende Reflexions-Assistent ist **geplant für v0.11.0** und
+Der folgende Reflexions-Assistent ist **geplant für v0.10.0** und
 noch nicht Teil dieser Version; die Beschreibung gilt dem
 geplanten Stand. Sämtliche Zusagen dieses Abschnitts - lokal,
 ohne Übertragung - sind erst mit der Veröffentlichung
@@ -268,7 +268,30 @@ enthalten nur die vom Nutzer geprüften Angaben).
 ## 7. Speicherfristen und Kontolöschung
 
 Du hast jederzeit das Recht auf vollständige Löschung deines Kontos
-(**Art. 17 DSGVO – Recht auf Löschung**).
+(**Art. 17 DSGVO – Recht auf Löschung**) – und du kannst auch einzelne
+Daten löschen, ohne dein Konto aufzugeben.
+
+**Daten löschen ohne das Konto zu löschen (v0.10.0):** Unter
+*Datenschutz & Account* findest du den Eintrag **Daten löschen**. Du
+kreuzt an, was verschwinden soll, und bestätigst. Das Konto, deine
+E-Mail-Adresse und dein Passwort bleiben – du kannst dich weiter
+anmelden.
+
+Zur Auswahl stehen: Profilfotos, Standortdaten (Koordinaten und
+Bundesland), Profilangaben (Bio, Interessen, Musik, Vorstellung, Audio,
+Gewohnheiten), Likes, Funken, die von dir gesendeten Nachrichten, deine
+Geräteliste mit Passkeys und Push-Schlüsseln, Stimmung und Verlauf, deine
+Meldungen und Fehlerberichte, Transit-Spark-Daten sowie die elterliche
+Freigabe. „Alle Daten löschen" entfernt sämtliche Daten zum Konto und
+lässt das Konto selbst bestehen.
+
+Die Löschung ist **unwiderruflich** – es gibt kein Wiederherstellen.
+Was auch die Gegenseite betrifft, steht bei der jeweiligen Kategorie:
+Funken zu löschen beendet den Chat auch für die andere Person;
+empfangene Nachrichten sind Daten der anderen Person und verschwinden
+dort.
+
+Die Löschung erfolgt unmittelbar auf dem Server.
 
 - Bei Ausführung der In-App-Funktion **„Account löschen"** (unter
   Datenschutz & Account, mit 2FA-Bestätigung) werden alle
@@ -302,7 +325,10 @@ Du hast jederzeit das Recht auf vollständige Löschung deines Kontos
   auf Anfrage bei uns nach – schreibe uns dazu.
 - **Berichtigung (Art. 16):** Alle Profilfelder sind in der App frei
   editier- und löschbar.
-- **Löschung (Art. 17):** Siehe Abschnitt 7.
+- **Löschung (Art. 17):** Siehe Abschnitt 7. Einzelne Datenkategorien
+  lassen sich in der App unter *Datenschutz & Account* löschen, ohne das
+  Konto aufzugeben. Für alles andere (auch Daten, die nur auf dem Server
+  liegen) genügt eine Nachricht an uns.
 - **Einschränkung/Widerspruch (Art. 18/21):** Über die Kontaktwege in
   Abschnitt 1.
 - **Datenübertragbarkeit (Art. 20):** JSON-Export über die In-App-
@@ -329,7 +355,7 @@ sich über die Nähe zu anderen ausmacht, sagt eine ungefähre Angabe mehr
 aus als bei Erwachsenen - deshalb bleibt sie hier aus. Für Erwachsene
 ändert sich nichts.
 
-**Elternfreigabe für 16- und 17-Jährige (v0.11.0):** Für Konten in
+**Elternfreigabe für 16- und 17-Jährige (v0.10.0):** Für Konten in
 diesem Alter sieht Thestia die Zustimmung der Sorgeberechtigten vor. Die
 Zustimmung ist **freiwillig**: nach § 3a JUG kann eine Person ab dem
 vollendeten 16. Lebensjahr selbst einwilligen, und niemand wird an der
@@ -471,7 +497,7 @@ Git-Historie nachvollziehbar.
 | 8 | 2026-10 | **Video verschlüsselt:** Das Verifikations-Video wird auf dem Gerät mit AES-256-GCM verschlüsselt; im Speicher liegt nur der Chiffrat. Der Schlüssel liegt in einer Tabelle ohne Client-Zugriff. Die früheren Angaben „verschlüsselt nur auf dem Gerät“ und „7 Tage“ waren falsch |
 | 7 | 2026-10 | **v0.10.0 – Aussehen-Merkmale:** Die Merkmale in Transit Spark sind jetzt in Kategorien gegliedert (Oberteil, Unterteil, Kopf, Schuhe, Accessoires, Haar, Augen) mit je einem Wert pro Kategorie, einer Suche und eigenen Farbpaletten für Haar- und Augenfarbe. Die Merkmale liegen im Klartext in `transit_signals` – anders als Chat-Inhalte, die als Chiffrat transportiert werden – und werden nach 24 Stunden gelöscht. Merkmale, die du an einer anderen Person bemerkt hast, werden nur für das Matching verwendet, nicht angezeigt und nicht an Dritte weitergegeben |
 | 6 | 2026-10 | **v0.10.0 – Standort neu:** Der Ort (Stadt) wird nicht mehr erhoben, gespeichert oder angezeigt; sichtbar ist nur das Bundesland. Koordinaten liegen vor dem Speichern auf einem 5-km-Raster in einer nur für den Eigentümer lesbaren Tabelle. Die Entfernungsanzeige ist aus und muss eingeschaltet werden; eingeschaltet zeigt sie Stufen von 10 km, unter 5 km gar nichts. Die Spalten `city`, `location_lat` und `location_lng` wurden aus `profiles` entfernt. Löschung nach 30 Tagen bleibt bestehen |
-| 5 | 2026-10 | v0.9.2: Altersprüfung mit Kamera **und** Ton korrekt als aktiv beschrieben (war als "deaktiviert" geführt), 18+-Sperre für Transit Spark, Entfernungsangabe korrigiert, Sanctuary als geplant für v0.11.0 gekennzeichnet |
+| 5 | 2026-10 | v0.9.2: Altersprüfung mit Kamera **und** Ton korrekt als aktiv beschrieben (war als "deaktiviert" geführt), 18+-Sperre für Transit Spark, Entfernungsangabe korrigiert, Sanctuary als geplant für v0.10.0 gekennzeichnet |
 | 4 | 2026-09 | Verschlüsselte Profilbilder + on-device NSFW-Vorprüfung (3a), lokaler Chat-Verlauf (3 Modi), Gerätemodell in der Geräte-Liste (078), Präferenzen-/UI-Sync (074/076) ergänzt |
 | 3 | 2026-09 | Sanctuary (on-device KI), Geräte-Liste (071), Web-Bridge/Codeberg (0.12.0-Ausblick), Rechte-Kapitel ergänzt |
 | 2 | 2026-08 | UnifiedPush, NSFW-Melde-Workflow, Ban-Einträge |

@@ -90,7 +90,7 @@ COMMENT ON FUNCTION public.profile_known_age(date, int) IS
   'sonst das deklarierte. NULL, wenn das Alter unbekannt ist - im '
   'Gegensatz zu profile_effective_age(), das dann auf den 01.01.2000 '
   'faellt (26 Jahre). Aufrufer werten NULL als "behandle wie '
-  'Minderjaehrig" (v0.11.0, Migration 164).';
+  'Minderjaehrig" (v0.10.0, Migration 164).';
 
 REVOKE ALL ON FUNCTION public.profile_known_age(date, int) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.profile_known_age(date, int) TO authenticated;
@@ -181,7 +181,7 @@ AS $$
 $$;
 
 COMMENT ON FUNCTION public.profile_discovery_visible(uuid, uuid) IS
-  'Sichtbarkeit eines Profils in der Begegnungsliste. v0.11.0 (Migration '
+  'Sichtbarkeit eines Profils in der Begegnungsliste. v0.10.0 (Migration '
   '164): fuer 16- und 17-Jaehrige gilt ein begrenzter Suchradius - '
   'maximal 25 km ODER nur das gleiche Bundesland. "Ganz Deutschland" ist '
   'gesperrt und wird serverseitig wie 25 km behandelt (fail-closed). '

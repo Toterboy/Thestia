@@ -112,7 +112,7 @@ class SettingsScreen extends ConsumerWidget {
           // zeigt sonst etwas, das es in der App nicht gibt.
           const PrivacySection(),
           const SizedBox(height: 16),
-          // Kinderschutz & Elternzugriff (v0.11.0). Sichtbar fuer alle:
+          // Kinderschutz & Elternzugriff (v0.10.0). Sichtbar fuer alle:
           // wer mit 18 geworden ist, hat die Freigabe aus der Zeit mit
           // 16/17 noch und entscheidet hier ueber ihr Ende.
           const GuardianSection(),
@@ -425,6 +425,15 @@ class SettingsScreen extends ConsumerWidget {
                     trailing: const Icon(Icons.chevron_right),
                     contentPadding: EdgeInsets.zero,
                     onTap: () => context.push(AppRoutes.devices),
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.cleaning_services_outlined),
+                    title: Text(L10n.t(context, 'settings.deleteData')),
+                    subtitle:
+                        Text(L10n.t(context, 'settings.deleteDataSub')),
+                    trailing: const Icon(Icons.chevron_right),
+                    contentPadding: EdgeInsets.zero,
+                    onTap: () => context.push(AppRoutes.deleteData),
                   ),
                   ListTile(
                     leading: const Icon(Icons.privacy_tip),

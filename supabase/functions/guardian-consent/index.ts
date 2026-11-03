@@ -1,6 +1,6 @@
 // Supabase Edge Function: /guardian-consent
 //
-// Eltern-Erlaubnis fuer 16- und 17-Jaehrige (v0.11.0, Migration 165).
+// Eltern-Erlaubnis fuer 16- und 17-Jaehrige (v0.10.0, Migration 165).
 //
 // ZWEI WEGE, DIE FUNKTION AUFGERUFEN WIRD:
 //

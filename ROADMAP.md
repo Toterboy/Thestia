@@ -370,7 +370,7 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
       KI-Kennzeichnung an Bildprüfungen, Video-Verifizierung mit lokaler
   KI-Alters-Triage (095, 2-Jahre-Regel, manuelle Queue für Abweichler)
 
-## Geplant für 0.10.0 – Standort-Privatisierung, Transit Spark auf echten Geräten & Qualitätssicherung
+## Umgesetzt: 0.10.0 – Standort-Privatisierung, Transit Spark auf echten Geräten & Qualitätssicherung
 
 > Status: v0.9.2 ist veröffentlicht, v0.10.0 ist in Vorbereitung.
 >
@@ -501,157 +501,35 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
       Feature, aber es hebt die Profilqualität der frühen Nutzerschaft
       direkt, solange das Match-Erlebnis noch ohne Stimmen auskommt
 
-## Geplant für 0.11.0 – Emotionaler Rückzugsort (Sanctuary) & Lokaler KI-Reflexions-Chat
+- [x] **Suchfilter mit drei echten Modi** – „Entfernung (km)",
+      „Bundesland" und „Ganz Deutschland" filtern jetzt auch
+      unterschiedlich. Vorher filterten die beiden letzten Modi
+      dasselbe: gar nichts – der Bundesland-Vergleich fehlte
+      vollständig, und niemand hat es gemerkt, weil die Liste
+      plausibel aussah (Migration 169).
+- [x] **Suchradius für 16- und 17-Jährige begrenzt** – höchstens 25 km
+      oder nur das gleiche Bundesland; „Ganz Deutschland" ist gesperrt
+      und wird serverseitig wie 25 km behandelt (Migration 164).
+- [x] **Posteingang im Admin-Bereich** – eingehende Mails nach Adresse
+      sortiert (Kinderschutz, Support, Datenschutz, Presse), nur
+      anzeigen, nicht antworten: es gibt bewusst keinen SMTP-Zugang aus
+      der App heraus (Migration 168).
 
-> Vision: Ein vollständig offlinefähiger, geschützter Raum zur
-> Selbstreflexion bei Frust, Zurückweisung oder emotionalen Tiefs –
-> betrieben durch rein lokale On-Device-Sprachmodelle. Kein Server, kein
-> Konto, keine Weitergabe: Was im Sanctuary geschrieben wird, bleibt im
-> RAM (optional lokal AES-verschlüsselt).
+### Elternfreigabe und Aufsicht für 16- und 17-Jährige (Teil von 0.10.0)
 
-### 1. Modell-Management & Download-Pipeline
-
-- [ ] **Stufenbasierte Modellauswahl**:
-      * Stufe 1 (Kompakt / Akkusparend): Gemma 4 E2B, Spark-X2.5-1.7B
-        (Text-only)
-      * Stufe 2 (Erweitert / Tiefgründig): Qwen 3.5-4B, Gemma 4 E4B,
-        Spark-X2.5-4B
-- [ ] **Quantisierungs-Varianten**: Jedes Modell ist wählbar in
-      Q4_K_M (Standard, Balance), Q5_K_M / Q6_K (höhere Qualität) und
-      Q3_K_S / IQ3 (wenig Speicher) – der Downloader zeigt Größe/RAM-
-      Bedarf je Variante und warnt bei zu knappem Speicher
-- [ ] **Multimodal-Kennzeichnung (Vision-Badge)**: Modelle mit
-      Bilderkennung werden optisch gekennzeichnet, um Screenshots von
-      Chats zwecks Interpretation und Formulierungshilfe analysieren zu
-      können
-- [ ] **Hugging-Face-Downloader**: Direkter Download der GGUF-Dateien mit
-      Fortschrittsanzeige, Hash-Prüfung, Abbruch-/Fortsetzungslogik und
-      Speicherwarnung
-- [ ] **Eigener Modell-Import**: Manuelle Eingabe beliebiger
-      Hugging-Face-Repo-URLs oder lokaler Import von GGUF-Dateien aus dem
-      Smartphone-Speicher
-- [ ] **Eigene-Modell-Erkennung**: Wird ein importiertes Modell erkannt,
-      das einem der kuratierten Vorschlagsmodelle entspricht (Datei-Hash
-      bzw. Repo-/Dateiname-Muster), übernimmt die App automatisch dessen
-      geprüfte System-Prompt-Vorlage – der Nutzer muss nichts konfigurieren
-
-### 2. Inferenz-Engine & Prompt-Steuerung
-
-- [ ] **Inferenz-Engine**: **llama.cpp über FFI ist der tragfähige
-      Pfad** – Gemma 4 und Spark-X2.5 liefern GGUF-Checkpoints, und
-      Spark-X2.5 wird von llama.cpp nativ unterstützt. **NICHT** MediaPipe
-      oder LiteRT: das sind Frameworks für Vision- bzw. klassische
-      On-Device-ML, nicht für autoregressive Textgenerierung. Für
-      Gemma 4 existiert mit **ML Kit GenAI Prompt API / Google AI Edge**
-      zusätzlich ein erstklassiger Android-Pfad, der ohne eigenen
-      llama.cpp-Build auskommt – der gehört als Alternative geprüft,
-      weil er RAM und Akku deutlich schont. Beides ohne jede externe
-      Serververbindung
-- [ ] **Hugging-Face-Downloader: Drittlandproblem lösen.** Modelle über
-      Hugging Face zu beziehen ist die einfachste Variante und die
-      bequemste, aber der Anbieter ist US-gestützt, während 0.12.0
-      US-Cloud-Abhängigkeit ausdrücklich als Ausschlusskriterium führt
-      (CLOUD Act). Zusätzlich übermittelt jeder Metadatenabruf die
-      IP-Adresse des Nutzers an einen US-Dienst. Zu entscheiden:
-      eigener EU-Spiegel, oder die Aussage in 0.12.0 relativieren.
-      Spark-X2.5 stammt von iFlytek (CN) – die Governance-Frage ist
-      damit nicht auf US-Anbieter begrenzt
-- [ ] **Modellgrößen gegen den Speicher dokumentieren** (Gemma 4 E2B
-      mobil ca. 1,1 GB, E4B mobil ca. 2,5 GB; Q4_0 2,9 bzw. 4,5 GB):
-      der Downloader warnt bisher nur vor RAM-Mangel, nicht vor
-      fehlendem Speicher. Die App selbst ist bereits 1,6 GB groß, ein
-      2,5-GB-Modell verdoppelt das
-- [ ] **Fest integrierte, modellspezifisch optimierte System-Prompts** für
-      alle kuratierten Standardmodelle (Fokus auf Empathie, kognitive
-      Umstrukturierung, offene Fragen, keine falschen Diagnosen)
-- [ ] **Editierbarer Standard-System-Prompt** für benutzerdefinierte
-      Fremdmodelle
-
-### 3. Sicherheits- und Qualitätssystem
-
-- [ ] **Prominente Hinweise**: Pflichtbanner („KIs machen Fehler, dienen
-      rein als Reflexionshilfe und ersetzen keine Therapie")
-- [ ] **Modell-Meldung**: Meldefunktion („Modellqualität beanstanden"),
-      um unbrauchbare, halluzinierende oder toxische Antworten strukturiert
-      zur Prüfung an das Team zu senden
-- [ ] **Krisen-Erkennung**: Regex-basierte On-Device-Erkennung suizidaler
-      Begriffe mit sofortiger, unaufdringlicher Einblendung von
-      Notfallkontakten (Telefonseelsorge, Nummer gegen Kummer)
-- [ ] **Datenintegrität**: Chatverläufe verbleiben flüchtig im RAM oder
-      werden optional rein lokal AES-verschlüsselt in Hive abgelegt
-- [ ] **Import-Sicherheitsnetz für benutzerdefinierte Modelle**: jeder
-      manuell importierte GGUF-Download bekommt einen sichtbaren
-      Warnhinweis (ungeprüfte Qualität und Sicherheit, keine
-      Haftungsübernahme) und wird intern als „Fremdmodell" markiert
-- [ ] **Schutzschicht unterhalb des System-Prompts (nicht abschaltbar)**:
-      Für Fremdmodelle bleiben Krisen-Erkennung und Therapie-Hinweis-
-      Banner technisch erzwungen. Sie liegen UNTERHALB der Prompt-Ebene,
-      damit weder ein selbst geladener GGUF noch ein manipuliertes Modell
-      sie aushebeln kann. Der editierbare System-Prompt gilt
-      ausschließlich oberhalb dieser Schicht – die fest verdrahtete
-      Reihenfolge lautet Schutzschicht → editierbarer Prompt → Modell.
-      Wer den Schutz entfernen will, kann das nicht per Konfiguration,
-      nur durch Entfernen der App
-- [ ] **Notruf 112 neben den Beratungsstellen** (Telefonseelsorge, Nummer
-      gegen Kummer). Fehlt bisher und ist die naheliegendste Reaktion
-- [ ] **Verhalten bei Wegtippen des Krisen-Banners**: Was passiert, wenn
-      jemand die Einblendung schließt? Ohne definierte Antwort bleibt die
-      Maßnahme eine Anzeige ohne Handlungskette
-- [ ] **Rechtsberatung zur Haftungsformulierung** (Krisen-Erkennung,
-      Pflichtbanner, „ersetzt keine Therapie"). Das Banner ist ein
-      Haftungshinweis, kein Sicherheitsnachweis
-- [ ] **Einordnung als Nicht-Medizinprodukt** in der App und in den
-      Store-Metadaten. Medizinprodukteregulierung (MDR/IVDR) und
-      Jugendschutz bei Minderjährigen sind bisher nicht bewertet –
-      Sanctuary wird voraussichtlich auch von Nutzenden unter 18 genutzt
-- [ ] **Evaluation der Krisen-Erkennung, nicht nur Regex**: Eine
-      Regex auf suizidale Begriffe trifft keine Umschreibungen, keine
-      metaphorischen Formulierungen und keine mehrsprachigen Eingaben.
-      Ohne Testmenge ist nicht belegbar, wie hoch die Erkennungsrate
-      ist – das ist gegenüber Nutzenden eine Zusage, die derzeit nicht
-      gedeckt ist. Mindestanforderung: dokumentierte Testmenge mit
-      Positiv- und Negativfällen, Recall-Wert, und die Erkennung läuft
-      **zusätzlich** zum Modell, nicht nur bei einer Modellantwort
-- [ ] **Restrisiko benennen**: Der Schutz entfällt, wenn die App
-      deinstalliert wird. Das ist als Eigenschaft der Architektur korrekt
-      und nicht zu beheben – es gehört aber offen kommuniziert, statt als
-      Stärke dargestellt zu werden
-
-
-### Begleitend in 0.11.0 – Begegnung statt Bildschirm
-
-- [ ] **Sync-Dates** (Distanz-taugliche Mini-Dates im Ideen-Rad): Katalog
-      von gemeinsamen Aktivitäten für denselben Zeitpunkt trotz Distanz –
-      „Spaziergang + Anruf", „Den selben Film schauen", „Koch-Duell",
-      „Sterne gucken und dabei telefonieren". Beim Annehmen: gemeinsamer
-      Timer + Anruf-Button - während des Dates läuft NUR der Anruf, kein
-      Bildschirm. Nutzt bestehendes Ideen-Rad + Audio-Calls.
-- [ ] **Offline-Knopf nach dem echten Treffen**: Nach einem Treffen, das
-      BEIDE Personen bestätigt haben, erscheint der sanfte Vorschlag
-      „Genießt die Zeit - Thestia schweigt bis morgen": Benachrichtigungen
-      stumm für den Abend, ruhiger Bildschirm. Die App feiert Abwesenheit
-      statt Bindung zu erzeugen (konkrete Form der „Digitalen Entgiftung").
-- [ ] **Antizipation statt Streak**: Bei Distanz-Funken den Chat sanft
-      Richtung Anruf/Sprachnachricht nudge („Stimmen verbinden mehr als
-      Texte"); sobald der Meet-Intent terminiert ist, zeigt der
-      Chat-Header die Vorfreude („Treffen am Samstag!") statt
-      Chat-Metriken.
-
-## Entwurf: 16- und 17-Jährige mit nachweisbarer Einwilligung der Sorgeberechtigten
-
-> **Status: umgesetzt in v0.11.0 (03.11.2026).** Aufgeschrieben am
+> **Status: umgesetzt in v0.10.0 (03.11.2026).** Aufgeschrieben am
 > 24.10.2026 auf Wunsch des Betreibers, umgesetzt am 03.11.2026.
 > Der Wunsch ist klar: 16- und 17-Jährige sollen die App nutzen können –
 > mit Zustimmung der Eltern, die die App herunterladen und dem Kind zur
 > Verfügung stellen. Eine Weitergabe an Personen, die nicht geeignet sind
 > (etwa unter 16-Jährige), ist in keinem Fall erlaubt.
 >
-> **UMGESETZT:** Migrationen 165 (Freigabe, Audit-Trail, Digest-Trigger,
-> Cron), 166 (Portal-Status), 167 (Änderungen nur mit PIN); Edge
-> Functions `guardian-consent` und `guardian-digest`; Eltern-Portal unter
-> `auth.thestia.de/eltern`; App: Freigabe-Screen nach dem Willkommens-
-> Screen, Einstellungsabschnitt „Kinderschutz & Elternzugriff",
-> Übergangs-Screen mit 18, PIN-geschützte Nutzungszeit.
+> **UMGESETZT (in v0.10.0):** Migrationen 165 (Freigabe, Audit-Trail,
+> Digest-Trigger, Cron), 166 (Portal-Status), 167 (Änderungen nur mit
+> PIN); Edge Functions `guardian-consent` und `guardian-digest`;
+> Eltern-Portal unter `auth.thestia.de/eltern`; App: Freigabe-Screen nach
+> dem Willkommens-Screen, Einstellungsabschnitt „Kinderschutz &
+> Elternzugriff", Übergangs-Screen mit 18, PIN-geschützte Nutzungszeit.
 >
 > Dieser Block hält fest, was das rechtlich und technisch bedeutet, was
 > Google Play zulässt und was es nicht zulässt. Er ist eine
@@ -848,6 +726,141 @@ Vorgesehene Bausteine (noch nicht umgesetzt):
       weil die Roadmap an zwei Stellen sonst verschiedene Zeiten für
       dasselbe Vorhaben nennt
 
+## Geplant für 0.11.0 – Emotionaler Rückzugsort (Sanctuary) & Lokaler KI-Reflexions-Chat
+
+> Vision: Ein vollständig offlinefähiger, geschützter Raum zur
+> Selbstreflexion bei Frust, Zurückweisung oder emotionalen Tiefs –
+> betrieben durch rein lokale On-Device-Sprachmodelle. Kein Server, kein
+> Konto, keine Weitergabe: Was im Sanctuary geschrieben wird, bleibt im
+> RAM (optional lokal AES-verschlüsselt).
+
+### 1. Modell-Management & Download-Pipeline
+
+- [ ] **Stufenbasierte Modellauswahl**:
+      * Stufe 1 (Kompakt / Akkusparend): Gemma 4 E2B, Spark-X2.5-1.7B
+        (Text-only)
+      * Stufe 2 (Erweitert / Tiefgründig): Qwen 3.5-4B, Gemma 4 E4B,
+        Spark-X2.5-4B
+- [ ] **Quantisierungs-Varianten**: Jedes Modell ist wählbar in
+      Q4_K_M (Standard, Balance), Q5_K_M / Q6_K (höhere Qualität) und
+      Q3_K_S / IQ3 (wenig Speicher) – der Downloader zeigt Größe/RAM-
+      Bedarf je Variante und warnt bei zu knappem Speicher
+- [ ] **Multimodal-Kennzeichnung (Vision-Badge)**: Modelle mit
+      Bilderkennung werden optisch gekennzeichnet, um Screenshots von
+      Chats zwecks Interpretation und Formulierungshilfe analysieren zu
+      können
+- [ ] **Hugging-Face-Downloader**: Direkter Download der GGUF-Dateien mit
+      Fortschrittsanzeige, Hash-Prüfung, Abbruch-/Fortsetzungslogik und
+      Speicherwarnung
+- [ ] **Eigener Modell-Import**: Manuelle Eingabe beliebiger
+      Hugging-Face-Repo-URLs oder lokaler Import von GGUF-Dateien aus dem
+      Smartphone-Speicher
+- [ ] **Eigene-Modell-Erkennung**: Wird ein importiertes Modell erkannt,
+      das einem der kuratierten Vorschlagsmodelle entspricht (Datei-Hash
+      bzw. Repo-/Dateiname-Muster), übernimmt die App automatisch dessen
+      geprüfte System-Prompt-Vorlage – der Nutzer muss nichts konfigurieren
+
+### 2. Inferenz-Engine & Prompt-Steuerung
+
+- [ ] **Inferenz-Engine**: **llama.cpp über FFI ist der tragfähige
+      Pfad** – Gemma 4 und Spark-X2.5 liefern GGUF-Checkpoints, und
+      Spark-X2.5 wird von llama.cpp nativ unterstützt. **NICHT** MediaPipe
+      oder LiteRT: das sind Frameworks für Vision- bzw. klassische
+      On-Device-ML, nicht für autoregressive Textgenerierung. Für
+      Gemma 4 existiert mit **ML Kit GenAI Prompt API / Google AI Edge**
+      zusätzlich ein erstklassiger Android-Pfad, der ohne eigenen
+      llama.cpp-Build auskommt – der gehört als Alternative geprüft,
+      weil er RAM und Akku deutlich schont. Beides ohne jede externe
+      Serververbindung
+- [ ] **Hugging-Face-Downloader: Drittlandproblem lösen.** Modelle über
+      Hugging Face zu beziehen ist die einfachste Variante und die
+      bequemste, aber der Anbieter ist US-gestützt, während 0.12.0
+      US-Cloud-Abhängigkeit ausdrücklich als Ausschlusskriterium führt
+      (CLOUD Act). Zusätzlich übermittelt jeder Metadatenabruf die
+      IP-Adresse des Nutzers an einen US-Dienst. Zu entscheiden:
+      eigener EU-Spiegel, oder die Aussage in 0.12.0 relativieren.
+      Spark-X2.5 stammt von iFlytek (CN) – die Governance-Frage ist
+      damit nicht auf US-Anbieter begrenzt
+- [ ] **Modellgrößen gegen den Speicher dokumentieren** (Gemma 4 E2B
+      mobil ca. 1,1 GB, E4B mobil ca. 2,5 GB; Q4_0 2,9 bzw. 4,5 GB):
+      der Downloader warnt bisher nur vor RAM-Mangel, nicht vor
+      fehlendem Speicher. Die App selbst ist bereits 1,6 GB groß, ein
+      2,5-GB-Modell verdoppelt das
+- [ ] **Fest integrierte, modellspezifisch optimierte System-Prompts** für
+      alle kuratierten Standardmodelle (Fokus auf Empathie, kognitive
+      Umstrukturierung, offene Fragen, keine falschen Diagnosen)
+- [ ] **Editierbarer Standard-System-Prompt** für benutzerdefinierte
+      Fremdmodelle
+
+### 3. Sicherheits- und Qualitätssystem
+
+- [ ] **Prominente Hinweise**: Pflichtbanner („KIs machen Fehler, dienen
+      rein als Reflexionshilfe und ersetzen keine Therapie")
+- [ ] **Modell-Meldung**: Meldefunktion („Modellqualität beanstanden"),
+      um unbrauchbare, halluzinierende oder toxische Antworten strukturiert
+      zur Prüfung an das Team zu senden
+- [ ] **Krisen-Erkennung**: Regex-basierte On-Device-Erkennung suizidaler
+      Begriffe mit sofortiger, unaufdringlicher Einblendung von
+      Notfallkontakten (Telefonseelsorge, Nummer gegen Kummer)
+- [ ] **Datenintegrität**: Chatverläufe verbleiben flüchtig im RAM oder
+      werden optional rein lokal AES-verschlüsselt in Hive abgelegt
+- [ ] **Import-Sicherheitsnetz für benutzerdefinierte Modelle**: jeder
+      manuell importierte GGUF-Download bekommt einen sichtbaren
+      Warnhinweis (ungeprüfte Qualität und Sicherheit, keine
+      Haftungsübernahme) und wird intern als „Fremdmodell" markiert
+- [ ] **Schutzschicht unterhalb des System-Prompts (nicht abschaltbar)**:
+      Für Fremdmodelle bleiben Krisen-Erkennung und Therapie-Hinweis-
+      Banner technisch erzwungen. Sie liegen UNTERHALB der Prompt-Ebene,
+      damit weder ein selbst geladener GGUF noch ein manipuliertes Modell
+      sie aushebeln kann. Der editierbare System-Prompt gilt
+      ausschließlich oberhalb dieser Schicht – die fest verdrahtete
+      Reihenfolge lautet Schutzschicht → editierbarer Prompt → Modell.
+      Wer den Schutz entfernen will, kann das nicht per Konfiguration,
+      nur durch Entfernen der App
+- [ ] **Notruf 112 neben den Beratungsstellen** (Telefonseelsorge, Nummer
+      gegen Kummer). Fehlt bisher und ist die naheliegendste Reaktion
+- [ ] **Verhalten bei Wegtippen des Krisen-Banners**: Was passiert, wenn
+      jemand die Einblendung schließt? Ohne definierte Antwort bleibt die
+      Maßnahme eine Anzeige ohne Handlungskette
+- [ ] **Rechtsberatung zur Haftungsformulierung** (Krisen-Erkennung,
+      Pflichtbanner, „ersetzt keine Therapie"). Das Banner ist ein
+      Haftungshinweis, kein Sicherheitsnachweis
+- [ ] **Einordnung als Nicht-Medizinprodukt** in der App und in den
+      Store-Metadaten. Medizinprodukteregulierung (MDR/IVDR) und
+      Jugendschutz bei Minderjährigen sind bisher nicht bewertet –
+      Sanctuary wird voraussichtlich auch von Nutzenden unter 18 genutzt
+- [ ] **Evaluation der Krisen-Erkennung, nicht nur Regex**: Eine
+      Regex auf suizidale Begriffe trifft keine Umschreibungen, keine
+      metaphorischen Formulierungen und keine mehrsprachigen Eingaben.
+      Ohne Testmenge ist nicht belegbar, wie hoch die Erkennungsrate
+      ist – das ist gegenüber Nutzenden eine Zusage, die derzeit nicht
+      gedeckt ist. Mindestanforderung: dokumentierte Testmenge mit
+      Positiv- und Negativfällen, Recall-Wert, und die Erkennung läuft
+      **zusätzlich** zum Modell, nicht nur bei einer Modellantwort
+- [ ] **Restrisiko benennen**: Der Schutz entfällt, wenn die App
+      deinstalliert wird. Das ist als Eigenschaft der Architektur korrekt
+      und nicht zu beheben – es gehört aber offen kommuniziert, statt als
+      Stärke dargestellt zu werden
+
+
+### Begleitend in 0.11.0 – Begegnung statt Bildschirm
+
+- [ ] **Sync-Dates** (Distanz-taugliche Mini-Dates im Ideen-Rad): Katalog
+      von gemeinsamen Aktivitäten für denselben Zeitpunkt trotz Distanz –
+      „Spaziergang + Anruf", „Den selben Film schauen", „Koch-Duell",
+      „Sterne gucken und dabei telefonieren". Beim Annehmen: gemeinsamer
+      Timer + Anruf-Button - während des Dates läuft NUR der Anruf, kein
+      Bildschirm. Nutzt bestehendes Ideen-Rad + Audio-Calls.
+- [ ] **Offline-Knopf nach dem echten Treffen**: Nach einem Treffen, das
+      BEIDE Personen bestätigt haben, erscheint der sanfte Vorschlag
+      „Genießt die Zeit - Thestia schweigt bis morgen": Benachrichtigungen
+      stumm für den Abend, ruhiger Bildschirm. Die App feiert Abwesenheit
+      statt Bindung zu erzeugen (konkrete Form der „Digitalen Entgiftung").
+- [ ] **Antizipation statt Streak**: Bei Distanz-Funken den Chat sanft
+      Richtung Anruf/Sprachnachricht nudge („Stimmen verbinden mehr als
+      Texte"); sobald der Meet-Intent terminiert ist, zeigt der
+      Chat-Header die Vorfreude („Treffen am Samstag!") statt
+      Chat-Metriken.
 
 ## Geplant für 0.12.0 – Web-Bridge, Transit-Reachability & Zero-Install Gast-Verbindungen
 

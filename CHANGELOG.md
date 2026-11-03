@@ -7,7 +7,7 @@ und folgt der [Semantic Versioning Specification (SemVer)](https://semver.org/la
 Solange die Versionsnummer mit `0.` beginnt (Initial Development Phase nach SemVer §4),
 können sich Schnittstellen und Verhalten jederzeit ändern.
 
-## [0.11.0] – Elternfreigabe und Aufsicht (Build 32, 2026-11-03)
+## [0.10.0] – Elternfreigabe, Aufsicht und Admin-Posteingang (Build 31, 2026-10-30 bis 2026-11-03)
 
 ### Hinzugefügt
 
@@ -46,6 +46,23 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 - **Eltern-Portal** unter `auth.thestia.de/eltern`: bestätigen,
   einstellen, widerrufen.
 
+- **Daten löschen ohne das Konto zu löschen:** Unter *Datenschutz &
+  Account* gibt es jetzt einen eigenen Eintrag. Du kreuzt an, was
+  verschwinden soll - Profilfotos, Standortdaten, Profilangaben, Likes,
+  Funken, deine gesendeten Nachrichten, Geräte und Schlüssel, Stimmung
+  und Verlauf, Meldungen, Transit-Spark-Daten oder die elterliche
+  Freigabe - und bestätigst. Das Konto, deine E-Mail und dein Passwort
+  bleiben. „Alle Daten löschen" entfernt sämtliche Daten zum Konto und
+  lässt das Konto selbst bestehen. Die Löschung ist unwiderruflich; was
+  auch die Gegenseite betrifft (Funken beenden den Chat für beide),
+  steht bei der jeweiligen Kategorie.
+- **Der Suchfilter hat jetzt drei echte Modi:** „Entfernung (km)",
+  „Bundesland" und „Ganz Deutschland" filtern auch unterschiedlich.
+  Vorher filterten die beiden letzten Modi dasselbe - gar nichts: der
+  Bundesland-Vergleich fehlte vollständig, und niemand hat es gemerkt,
+  weil die Liste plausibel aussah. Bei 16 und 17 gilt weiterhin:
+  höchstens 25 km oder nur das gleiche Bundesland.
+
 ### Sicherheit
 
 - **Suchradius für 16- und 17-Jährige begrenzt:** höchstens 25 km oder
@@ -71,7 +88,7 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   für die Einrichtung eines kindlichen Kontos) steht aus. Sie ist in
   der DSFA und in der Roadmap festgehalten.
 
-## [0.10.0] – Nachtrag (Build 31, 2026-10-30/31)
+### Nachtrag vom 30./31.10.2026
 
 ### Hinzugefügt
 

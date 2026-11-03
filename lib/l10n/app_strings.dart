@@ -407,7 +407,7 @@ const Map<String, Map<String, String>> _strings = {
     'paused.toSettings': 'Zu den Einstellungen',
 
     // ===================================================================
-    // Elternfreigabe und Aufsicht (v0.11.0)
+    // Elternfreigabe und Aufsicht (v0.10.0)
     // ===================================================================
     'guardian.sectionTitle': 'Kinderschutz & Elternzugriff',
     'guardian.sectionIntro':
@@ -511,6 +511,78 @@ const Map<String, Map<String, String>> _strings = {
     'guardian.usageLockHint':
         'Sprich mit deinen Elternteilen - die Einstellung lässt sich im '
         'Elternbereich ändern.',
+
+    // ===================================================================
+    // Selektive Datenloeschung (v0.10.0)
+    // ===================================================================
+    'del.title': 'Daten löschen',
+    'del.intro':
+        'Du kannst einzelne Daten löschen, ohne dein Konto aufzugeben.',
+    'del.intro2':
+        'Die Löschung ist unwiderruflich - es gibt kein Wiederherstellen. '
+        'Dein Konto, deine E-Mail-Adresse und dein Passwort bleiben.',
+    'del.fotos': 'Profilfotos',
+    'del.fotosSub': 'Alle Bilder im Profil, auch die in der Cloud gespeicherten.',
+    'del.standort': 'Standortdaten',
+    'del.standortSub':
+        'Deine Koordinaten und dein Bundesland. Danach sieht niemand mehr, '
+        'wie weit weg du bist.',
+    'del.profil': 'Profilangaben',
+    'del.profilSub':
+        'Bio, Interessen, Musik, Vorstellung, Audio und deine Gewohnheiten.',
+    'del.likes': 'Likes',
+    'del.likesSub': 'Die von dir gesetzten und die von dir erhaltenen Likes.',
+    'del.funken': 'Funken',
+    'del.funkenSub':
+        'Alle Funken (Matches). Achtung: damit endet der Chat - auch für '
+        'die andere Person.',
+    'del.nachrichten': 'Nachrichten',
+    'del.nachrichtenSub':
+        'Die von dir gesendeten Nachrichten. Empfangene Nachrichten sind '
+        'Daten der anderen Person - die verschwinden dort.',
+    'del.geraete': 'Geräte und Schlüssel',
+    'del.geraeteSub':
+        'Deine Geräteliste, Passkeys, Push-Schlüssel und Prekeys. Nach '
+        'dem Löschen musst du neue Geräte wieder anmelden.',
+    'del.stimmung': 'Stimmung und Verlauf',
+    'del.stimmungSub': 'Deine täglichen Stimmungsangaben und der Verlauf.',
+    'del.meldungen': 'Meldungen und Berichte',
+    'del.meldungenSub':
+        'Deine Meldungen über andere und die Fehlerberichte, die du '
+        'geschickt hast.',
+    'del.transit': 'Transit Spark',
+    'del.transitSub':
+        'Deine Nahbereichs-Signale, deine Anwesenheit und die Grüße, die '
+        'dir gesendet wurden.',
+    'del.elternaufsicht': 'Elternaufsicht',
+    'del.elternaufsichtSub':
+        'Die Freigabe deiner Eltern: sie wird beendet und deine Eltern '
+        'erhalten keine Nachrichten mehr.',
+    'del.confirmTitle': 'Daten löschen?',
+    'del.confirmText': 'Folgende Daten werden gelöscht:',
+    'del.irreversible': 'Das lässt sich nicht rückgängig machen.',
+    'del.deleteBtn': 'Löschen',
+    'del.doneTitle': 'Gelöscht',
+    'del.doneText':
+        'Die gewählten Daten sind gelöscht. Dein Konto bleibt bestehen.',
+    'del.partialTitle': 'Teilweise gelöscht',
+    'del.partialText':
+        'Ein Teil konnte nicht gelöscht werden. Melde dich gern beim '
+        'Support - dann schauen wir gemeinsam darauf.',
+    'del.allTitle': 'Alles löschen',
+    'del.allText':
+        'Löscht sämtliche Daten zu deinem Konto: Profil, Fotos, '
+        'Standort, Likes, Funken, Nachrichten, Geräte, Verlauf und '
+        'Meldungen. Dein Konto bleibt - du kannst dich weiter anmelden, '
+        'findest dort aber nichts mehr.',
+    'del.allBtn': 'Alle Daten löschen (Konto bleibt)',
+    'del.accountHint':
+        'Du willst das ganze Konto loswerden? Das geht auch - damit '
+        'verschwindet alles, auch die Anmeldung.',
+    'del.accountLink': 'Konto vollständig löschen',
+    'settings.deleteData': 'Daten löschen',
+    'settings.deleteDataSub':
+        'Einzelne Daten löschen, ohne das Konto aufzugeben.',
     'signup.title': 'Willkommen bei Thestia!',
     'signup.body':
         'Schön, dass du da bist. Gleich geht es mit deiner Einrichtung '
@@ -3516,7 +3588,7 @@ const Map<String, Map<String, String>> _strings = {
     'paused.toSettings': 'To settings',
 
     // ===================================================================
-    // Guardian consent and supervision (v0.11.0)
+    // Guardian consent and supervision (v0.10.0)
     // ===================================================================
     'guardian.sectionTitle': 'Child safety & parental access',
     'guardian.sectionIntro':
@@ -3617,6 +3689,79 @@ const Map<String, Map<String, String>> _strings = {
     'guardian.usageLockHint':
         'Talk to your parents - the setting can be changed in the parent '
         'area.',
+
+    // ===================================================================
+    // Selective data deletion (v0.10.0)
+    // ===================================================================
+    'del.title': 'Delete data',
+    'del.intro':
+        'You can delete individual pieces of data without giving up your '
+        'account.',
+    'del.intro2':
+        'Deletion is irreversible - there is no undo. Your account, your '
+        'email address and your password stay.',
+    'del.fotos': 'Profile photos',
+    'del.fotosSub':
+        'All images in the profile, including the ones stored in the cloud.',
+    'del.standort': 'Location data',
+    'del.standortSub':
+        'Your coordinates and your federal state. Afterwards nobody sees '
+        'how far away you are.',
+    'del.profil': 'Profile details',
+    'del.profilSub':
+        'Bio, interests, music, introduction, audio and your habits.',
+    'del.likes': 'Likes',
+    'del.likesSub': 'The likes you gave and the likes you received.',
+    'del.funken': 'Sparks',
+    'del.funkenSub':
+        'All sparks (matches). Note: this ends the chat - for the other '
+        'person as well.',
+    'del.nachrichten': 'Messages',
+    'del.nachrichtenSub':
+        'The messages you sent. Received messages belong to the other '
+        'person - they disappear on their side.',
+    'del.geraete': 'Devices and keys',
+    'del.geraeteSub':
+        'Your device list, passkeys, push keys and prekeys. After deleting '
+        'them you have to register new devices again.',
+    'del.stimmung': 'Mood and history',
+    'del.stimmungSub': 'Your daily mood entries and the history.',
+    'del.meldungen': 'Reports and bug reports',
+    'del.meldungenSub':
+        'Your reports about others and the error reports you sent.',
+    'del.transit': 'Transit Spark',
+    'del.transitSub':
+        'Your nearby signals, your presence and the greetings you '
+        'received.',
+    'del.elternaufsicht': 'Parental access',
+    'del.elternaufsichtSub':
+        'Your parents\' consent ends and they no longer receive any '
+        'notifications.',
+    'del.confirmTitle': 'Delete data?',
+    'del.confirmText': 'The following data will be deleted:',
+    'del.irreversible': 'This cannot be undone.',
+    'del.deleteBtn': 'Delete',
+    'del.doneTitle': 'Deleted',
+    'del.doneText':
+        'The selected data has been deleted. Your account still exists.',
+    'del.partialTitle': 'Partially deleted',
+    'del.partialText':
+        'Some of it could not be deleted. Feel free to contact support - '
+        'we will look at it together.',
+    'del.allTitle': 'Delete everything',
+    'del.allText':
+        'Deletes all data associated with your account: profile, photos, '
+        'location, likes, sparks, messages, devices, history and reports. '
+        'Your account stays - you can still sign in, but you will find '
+        'nothing there.',
+    'del.allBtn': 'Delete all data (keep account)',
+    'del.accountHint':
+        'Want to get rid of the whole account? That works too - everything '
+        'disappears, including the sign-in.',
+    'del.accountLink': 'Delete account completely',
+    'settings.deleteData': 'Delete data',
+    'settings.deleteDataSub':
+        'Delete individual pieces of data without giving up your account.',
     'signup.title': 'Welcome to Thestia!',
     'signup.body':
         'Glad you are here. Your setup starts right away - step by step, '

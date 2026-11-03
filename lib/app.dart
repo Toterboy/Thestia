@@ -250,7 +250,7 @@ class _AppState extends ConsumerState<App> {
       // bereits. Beim Start (main.dart) ist derselbe Bildschirm eine
       // Sperre; dort bleibt der Knopf ohne Wirkung.
       builder: (context, child) {
-        // Die Nutzungszeit-Sperre (v0.11.0) umschliesst JEDE Route - auch
+        // Die Nutzungszeit-Sperre (v0.10.0) umschliesst JEDE Route - auch
         // die rechtlichen Seiten. Sie wird VOR dem Update-Hinweis
         // eingebaut: das Update-Gate ist technisch wichtiger, die
         // Nutzungszeit ist eine Hausregel.

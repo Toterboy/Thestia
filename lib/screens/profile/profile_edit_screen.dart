@@ -1644,83 +1644,39 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                   final prefs = ref.watch(userPreferencesProvider);
                   if (prefs.distanceFilterMode == DistanceFilterMode.state) {
                     return DropdownButtonFormField<String>(
-                      initialValue: prefs.preferredState,
+                      initialValue: _stateCtrl.text.isEmpty
+                          ? null
+                          : _stateCtrl.text,
                       // isExpanded: siehe Kommentar beim Geschlecht-Feld.
                       isExpanded: true,
                       decoration: InputDecoration(
                           labelText:
                               L10n.t(context, 'profile.edit.state')),
-                      items: [
-                        DropdownMenuItem(
-                            value: 'BW',
-                            child: Text(_stateLabel(context,
-                                'Baden-Württemberg'))),
-                        DropdownMenuItem(
-                            value: 'BY',
-                            child:
-                                Text(_stateLabel(context, 'Bayern'))),
-                        DropdownMenuItem(
-                            value: 'BE',
-                            child:
-                                Text(_stateLabel(context, 'Berlin'))),
-                        DropdownMenuItem(
-                            value: 'BB',
-                            child: Text(
-                                _stateLabel(context, 'Brandenburg'))),
-                        DropdownMenuItem(
-                            value: 'HB',
-                            child:
-                                Text(_stateLabel(context, 'Bremen'))),
-                        DropdownMenuItem(
-                            value: 'HH',
-                            child:
-                                Text(_stateLabel(context, 'Hamburg'))),
-                        DropdownMenuItem(
-                            value: 'HE',
-                            child:
-                                Text(_stateLabel(context, 'Hessen'))),
-                        DropdownMenuItem(
-                            value: 'MV',
-                            child: Text(_stateLabel(
-                                context, 'Mecklenburg-Vorpommern'))),
-                        DropdownMenuItem(
-                            value: 'NI',
-                            child: Text(_stateLabel(
-                                context, 'Niedersachsen'))),
-                        DropdownMenuItem(
-                            value: 'NW',
-                            child: Text(_stateLabel(
-                                context, 'Nordrhein-Westfalen'))),
-                        DropdownMenuItem(
-                            value: 'RP',
-                            child: Text(_stateLabel(
-                                context, 'Rheinland-Pfalz'))),
-                        DropdownMenuItem(
-                            value: 'SL',
-                            child: Text(
-                                _stateLabel(context, 'Saarland'))),
-                        DropdownMenuItem(
-                            value: 'SN',
-                            child:
-                                Text(_stateLabel(context, 'Sachsen'))),
-                        DropdownMenuItem(
-                            value: 'ST',
-                            child: Text(_stateLabel(
-                                context, 'Sachsen-Anhalt'))),
-                        DropdownMenuItem(
-                            value: 'SH',
-                            child: Text(_stateLabel(
-                                context, 'Schleswig-Holstein'))),
-                        DropdownMenuItem(
-                            value: 'TH',
-                            child: Text(
-                                _stateLabel(context, 'Thüringen'))),
-                      ],
+                      // v0.10.0: Der Wert ist jetzt das Bundesland aus
+                      // dem Profil - und damit genau der Wert, den der
+                      // Server vergleicht (profiles.state, Migration 169).
+                      //
+                      // Vorher standen hier Kuerzel ("BY"), die in der
+                      // Spalte preferred_state landeten. Die Spalte hat
+                      // einen CHECK-Constraint, der Beziehungswerte
+                      // erlaubt und keine Bundeslaender - die Auswahl
+                      // wurde also stillschweigend verworfen. Der Modus
+                      // "Bundesland" filterte dadurch ueberhaupt nichts.
+                      items: kGermanStates
+                          .map(
+                            (st) => DropdownMenuItem(
+                              value: st,
+                              child: Text(_stateLabel(context, st)),
+                            ),
+                          )
+                          .toList(),
                       onChanged: (v) {
                         if (v != null) {
-                          ref
-                              .read(userPreferencesProvider.notifier)
-                              .setPreferredState(v);
+                          // Das Feld _stateCtrl ist das Bundesland des
+                          // Profils - es wird mit dem Speichern-Botton
+                          // mitgeschickt. Der Filter laeuft also ueber
+                          // denselben Wert, den das Profil anzeigt.
+                          _stateCtrl.text = v;
                           _syncDirtyFlag();
                         }
                       },

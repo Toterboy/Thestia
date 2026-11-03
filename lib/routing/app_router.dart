@@ -19,6 +19,7 @@ import 'package:thestia/screens/auth/reset_password_screen.dart';
 import 'package:thestia/screens/auth/unban_request_screen.dart';
 import 'package:thestia/screens/auth/email_verification_screen.dart';
 import 'package:thestia/screens/guardian/guardian_consent_screen.dart';
+import 'package:thestia/screens/privacy/delete_data_screen.dart';
 import 'package:thestia/screens/guardian/guardian_transition_screen.dart';
 import 'package:thestia/screens/auth/mfa_setup_screen.dart';
 import 'package:thestia/screens/auth/mfa_challenge_screen.dart';
@@ -73,6 +74,9 @@ class AppRoutes {
   static const String loading = '/loading';
   // Kurzer Willkommensscreen nach E-Mail-Bestätigung (v0.9.1, einmalig).
   static const String signupWelcome = '/welcome-new';
+
+  /// Selektive Datenloeschung (das Konto bleibt).
+  static const String deleteData = '/delete-data';
 
   /// Elternfreigabe anfordern (16 und 17 Jahre).
   static const String guardianConsent = '/guardian-consent';
@@ -637,6 +641,12 @@ GoRouter createRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.signupWelcome,
         builder: (context, state) => const SignupWelcomeScreen(),
+      ),
+      // Selektive Datenloeschung: einzelne Kategorien loeschen, ohne
+      // das Konto aufzugeben.
+      GoRoute(
+        path: AppRoutes.deleteData,
+        builder: (context, state) => const DeleteDataScreen(),
       ),
       // Elternfreigabe (16/17). Freiwillig - wer sie nicht will,
       // ueberspringt sie und kommt direkt ins Setup.
