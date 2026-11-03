@@ -40,6 +40,38 @@ FILES = sorted(
 )
 
 
+def _pruefe_doppelte_nummern() -> bool:
+    """Keine zwei Migrationsdateien mit derselben Nummer.
+
+    Der Runner bucht jede angewandte Migration in schema_migrations. Eine
+    zweite Datei mit derselben Nummer laeuft durch (der Body ist
+    idempotent), scheitert aber bei der Verbuchung ("duplicate key value
+    violates unique constraint") - und remote und lokal laufen
+    auseinander. Im "migration list" stand danach zweimal dieselbe
+    Nummer, einmal als erledigt und einmal als offen.
+
+    Passiert am 03.11.2026: 169_distance_filter_modes.sql und
+    169_new_login_alert.sql.
+    """
+    from collections import defaultdict
+
+    nach_nummer = defaultdict(list)
+    for rel in FILES:
+        nummer = rel.split("/")[-1].split("_")[0]
+        if nummer.isdigit():
+            nach_nummer[nummer].append(rel.split("/")[-1])
+
+    doppelt = {n: v for n, v in nach_nummer.items() if len(v) > 1}
+    if doppelt:
+        print("FEHLER: Doppelte Migrationsnummern:")
+        for nummer, dateien in sorted(doppelt.items()):
+            print(f"  {nummer}: {', '.join(dateien)}")
+        print("  -> Die zweite Datei wird angewendet, aber nicht verbucht. "
+              "Die Nummer umbenennen.")
+        return False
+    return True
+
+
 def check(rel: str) -> bool:
     path = ROOT / rel
     if not path.exists():
@@ -175,4 +207,5 @@ def check(rel: str) -> bool:
 
 
 ok = all(check(f) for f in FILES)
+ok = _pruefe_doppelte_nummern() and ok
 sys.exit(0 if ok else 1)

@@ -1,51 +1,38 @@
 // Supabase Edge Function: /notify-new-login
 //
-// Meldet dem Kontoinhaber, wenn sich ein NEUES Geraet anmeldet.
+// Sendet die Warn-Mail an den Kontoinhaber, wenn sich ein NEUES Geraet
+// anmeldet.
 //
-// WARUM (03.11.2026): Auf die Frage "Gibt es E-Mail-Mitteilungen, wenn
-// es fehlgeschlagene Anmeldeversuche gibt?" lautete die Antwort: nein.
-// Es gab weder eine Mail bei Fehlversuchen noch bei einer Anmeldung von
-// einem fremden Geraet.
+// AUFBAU (v0.10.0, Migration 169):
 //
-// Der Fehlversuch ist der schlechtere Fall: Er wird von Supabase Auth
-// (GoTrue) gezaehlt und gesperrt - er erreicht unseren Server gar nicht.
-// Und eine Mail bei JEDEM Fehlversuch waere ein Spam-Relais (jede
-// beliebige Adresse koennte Mails ausloesen) und eine Enumerationshilfe
-// (eine Mail nur bei existierender Adresse verraet, ob es das Konto
-// gibt).
+// Der Aufruf kommt aus der DATENBANK - aus dem Trigger auf
+// auth_devices, der bei jedem INSERT einer Geraete-Zeile feuert. Der
+// Trigger entscheidet also, was "neu" ist, und diese Funktion schickt
+// nur noch die Mail.
 //
-// Der echte Fall ist die ERFOLGREICHE Anmeldung von einem unbekannten
-// Geraet. Dafuer haben wir die Daten bereits: Jede App-Instanz hat eine
-// stabile Geraete-ID und schreibt sie nach dem Login in auth_devices
-// (Migration 071). Ist die ID dort unbekannt, ist es ein neues Geraet.
+// WARUM nicht aus der App (die erste Fassung):
 //
-// DIE PRUEFUNG PASSIERT HIER, IM SERVER. Der Client darf es nicht
-// entscheiden: ein Angreifer mit gestohlenem Passwort ruft die Funktion
-// mit einer fremden Geraete-ID auf - die Mail geht an den Kontoinhaber
-// (genau das ist gewuenscht), aber der Client darf nicht bestimmen
-// "neues Geraet = keine Mail".
+//   * FAELLT DER AUFRUF AUS, geht die Mail trotzdem raus. Der Trigger
+//     haengt an der Tabelle, nicht an einem Aufruf der App - inklusive
+//     des Fallback-Pfads der App, in dem sie die Zeile selbst schreibt.
+//   * Die Entscheidung liegt damit in der Datenbank und nicht beim
+//     Client.
 //
-// AUTH: Der Aufrufer muss mit seinem JWT angemeldet sein. Die Funktion
-// arbeitet mit der Service-Rolle, um die Geraete-Tabelle zu lesen und
-// die Mail zu senden.
+// AUTH: Nur mit dem internen Secret (x-thestia-internal). Das ist der
+// Aufruf des Triggers (Muster aus Migration 146). Ohne Secret: 401.
+//
+// DIE BREMSE: Der Trigger zaehlt die versendeten Mails (consume_rate_limit,
+// 5 pro Konto und Stunde). Die Funktion muss nichts zaehlen - sonst
+// wuerde eine haeufig neu registrierende App jeden Alarm unterdruecken.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.0";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY") ?? "";
+const INTERNAL_SECRET = Deno.env.get("THESTIA_INTERNAL_SECRET") ?? "";
 const SENDER_EMAIL = "support@thestia.de";
 const SENDER_NAME = "Thestia";
-
-// Ein Konto, das gerade erst angelegt wurde, loggt sich zum ersten Mal
-// ein - da waere eine "neue Anmeldung"-Mail irritierend. Deshalb gilt
-// das Fenster direkt nach der Registrierung als Ausnahme.
-const NEU_REGISTRIERT_MINUTEN = 30;
-
-// Hoechstzahl an Mails pro Konto und Stunde. Schützt davor, dass
-// jemand durch das Löschen der App-Daten (neue Geraete-ID) den
-// Postfach flutet.
-const MAILS_PRO_STUNDE = 5;
 
 function _pickApiKey(autoDict: string, custom: string): string {
   const single = Deno.env.get(custom) ?? "";
@@ -77,6 +64,15 @@ function json(data: unknown, status = 200): Response {
   });
 }
 
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -84,17 +80,6 @@ function escapeHtml(s: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
-}
-
-/** Wie viele "neue Geraete" bekam dieses Konto in der letzten Stunde? */
-async function mailsLetzteStunde(userId: string): Promise<number> {
-  const seit = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-  const { count } = await supabaseAdmin
-    .from("auth_devices")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .gte("created_at", seit);
-  return count ?? 0;
 }
 
 async function sendMail(
@@ -138,16 +123,14 @@ async function sendMail(
 serve(async (req: Request) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const token = authHeader.replace(/^Bearer\s+/i, "");
-  if (!token) return json({ error: "Unauthorized" }, 401);
-
-  const { data: { user }, error: authError } = await supabaseAdmin.auth
-    .getUser(token);
-  if (authError || !user) {
-    return json({ error: "Sitzung ungueltig - bitte neu anmelden" }, 401);
+  // AUTH: nur das interne Secret. Der Aufrufer ist der Trigger.
+  const header = req.headers.get("x-thestia-internal") ?? "";
+  if (
+    INTERNAL_SECRET === "" || header === "" ||
+    !timingSafeEqual(header, INTERNAL_SECRET)
+  ) {
+    return json({ error: "Unauthorized" }, 401);
   }
-  const userId = user.id;
 
   let body: Record<string, unknown>;
   try {
@@ -156,77 +139,30 @@ serve(async (req: Request) => {
     return json({ error: "Invalid JSON" }, 400);
   }
 
-  const deviceId = String(body.deviceId ?? "").trim();
-  if (!deviceId || deviceId.length > 100) {
-    return json({ error: "deviceId fehlt" }, 400);
-  }
-  const deviceName = String(body.deviceName ?? "").slice(0, 120);
+  const userId = String(body.userId ?? "").trim();
+  if (!userId) return json({ error: "userId fehlt" }, 400);
+
   const deviceModel = String(body.deviceModel ?? "").slice(0, 120);
-  const platform = String(body.platform ?? "").slice(0, 40);
+  const deviceName = String(body.deviceName ?? "").slice(0, 120);
   const appVersion = String(body.appVersion ?? "").slice(0, 60);
 
-  // Bekanntes Geraet? Dann nur last_seen auffrischen.
-  const { data: bekannt } = await supabaseAdmin
-    .from("auth_devices")
-    .select("id")
-    .eq("user_id", userId)
-    .eq("device_id", deviceId)
+  // Die Adresse des Kontos. Der Trigger hat die Berechtigung, aber
+  // nicht die Adresse - die holen wir hier mit der Service-Rolle.
+  const { data: userData, error: userError } = await supabaseAdmin
+    .from("auth.users")
+    .select("email, raw_user_meta_data")
+    .eq("id", userId)
     .maybeSingle();
 
-  if (bekannt) {
-    await supabaseAdmin
-      .from("auth_devices")
-      .update({ last_seen_at: new Date().toISOString() })
-      .eq("user_id", userId)
-      .eq("device_id", deviceId);
-    return json({ ok: true, isNew: false, emailed: false });
-  }
-
-  // Neues Geraet: Zeile anlegen (die Liste soll vollstaendig sein).
-  const { error: insertError } = await supabaseAdmin
-    .from("auth_devices")
-    .insert({
-      user_id: userId,
-      device_id: deviceId,
-      device_name: deviceName,
-      platform,
-      app_version: appVersion,
-      device_model: deviceModel || null,
-      last_seen_at: new Date().toISOString(),
-    });
-
-  if (insertError) {
-    // 23505: Ein gleichzeitiger zweiter Aufruf hat die Zeile schon
-    // angelegt - das ist kein Fehler, sondern der Normalfall bei zwei
-    // Anmeldungen im selben Moment.
-    if (String(insertError.code) !== "23505") {
-      console.error("notify-new-login: insert fehlgeschlagen:", insertError);
-      return json({ error: "insert_failed" }, 500);
-    }
-    return json({ ok: true, isNew: false, emailed: false });
-  }
-
-  // Direkt nach der Registrierung keine Mail (siehe Konstante oben).
-  const altersMinuten = (Date.now() - new Date(user.created_at).getTime()) /
-    60000;
-  if (altersMinuten < NEU_REGISTRIERT_MINUTEN) {
-    return json({ ok: true, isNew: true, emailed: false });
-  }
-
-  // Bremse: nicht mehr als MAILS_PRO_STUNDE neue Geraete-Mails.
-  const bereits = await mailsLetzteStunde(userId);
-  if (bereits >= MAILS_PRO_STUNDE) {
-    console.log(
-      `notify-new-login: Mail-Bremse greift (${bereits} neue Geraete in der Stunde).`,
-    );
-    return json({ ok: true, isNew: true, emailed: false });
-  }
-
-  const email = user.email;
-  if (!email) {
+  if (userError || !userData?.email) {
     console.log("notify-new-login: Konto ohne E-Mail-Adresse - keine Mail.");
-    return json({ ok: true, isNew: true, emailed: false });
+    return json({ ok: true, emailed: false });
   }
+
+  const email = String(userData.email);
+  const vorname = String(
+    (userData.raw_user_meta_data as Record<string, unknown> | null)?.name ?? "",
+  ).split(" ")[0].slice(0, 40);
 
   const gerät = deviceModel || deviceName || "unbekanntes Gerät";
   const zeitpunkt = new Date().toLocaleString("de-DE", {
@@ -246,7 +182,7 @@ serve(async (req: Request) => {
   <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700">Neue Anmeldung in Thestia</h1>
 </td></tr>
 <tr><td style="padding:30px;color:#2d2d2d;font-size:15px;line-height:1.65">
-  <p>Hallo,</p>
+  <p>Hallo${vorname ? ` ${escapeHtml(vorname)}` : ""},</p>
   <p>dein Thestia-Konto wurde gerade auf einem Ger&auml;t angemeldet, das wir
   noch nicht kennen:</p>
   <div style="background:#f7f5fa;border-radius:10px;padding:14px 16px;margin:22px 0">
@@ -285,5 +221,9 @@ serve(async (req: Request) => {
     html,
   );
 
-  return json({ ok: true, isNew: true, emailed: gesendet });
+  console.log(
+    `notify-new-login: ${gesendet ? "Mail gesendet" : "Mail NICHT gesendet"} an ${email} (Geraet: ${gerät}).`,
+  );
+
+  return json({ ok: true, emailed: gesendet });
 });

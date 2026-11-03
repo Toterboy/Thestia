@@ -488,24 +488,45 @@ check('TransitBleService.instance.suspend()' in
 # Client. Andernfalls koennte ein Angreifer mit gestohlenem Passwort den
 # Alarm unterdruecken, indem er selbst festlegt "bekanntes Geraet".
 _check = 'supabase/functions/notify-new-login/index.ts'
-check('getUser(token)' in read(ROOT / _check),
-      'SERVER: notify-new-login prueft das JWT des Aufrufers',
-      'die Funktion schreibt mit der Service-Rolle - ohne '
-      'Identitaetsnachweis waere das eine offene Schnittstelle')
+# NACH DEM BEFUND VOM 03.11.2026 ("Ich habe keine Mail bekommen, als ich
+# die App Daten geloescht und mich neu angemeldet habe") wurde der Weg
+# umgebaut:
+#
+# VORHER: Die App rief die Edge Function auf, die Funktion legte die
+# Geraete-Zeile an und schickte die Mail. Faellt der Aufruf aus, geht
+# die Mail NIE raus - das war der gemeldete Fall. Und die Bremse
+# zaehlte die Geraete-Zeilen statt der Mails, also war sie nach
+# fuenf Neuinstallationen dicht.
+#
+# JETZT: Der Trigger auf auth_devices (Migration 170) loest die Mail
+# aus. Er feuert bei JEDEM INSERT - unabhaengig davon, wer geschrieben
+# hat. Die Entscheidung faellt damit die Datenbank, nicht der Client.
 
-check("supabaseAdmin.auth" in read(ROOT / _check),
-      'SERVER: notify-new-login holt die Geraete ueber die Service-Rolle',
-      'die Liste der bekannten Geraete darf nicht vom Client kommen')
+check('trg_auth_devices_new_login' in all_sql,
+      'DB: Der Trigger fuer die Neugeraete-Meldung sitzt auf auth_devices',
+      'ohne Trigger haengt die Warnung am Aufruf der App - und faellt der '
+      'aus, geht keine Mail raus')
 
-check('MAILS_PRO_STUNDE' in read(ROOT / _check),
-      'SERVER: notify-new-login begrenzt die Zahl der Warn-Mails',
-      'ohne Bremse koennte ein Angreifer durch das Leeren der App-Daten '
-      'den Posteingang fluten')
+check('consume_rate_limit' in
+      _neueste_definition(all_sql, 'notify_new_login_device'),
+      'DB: Die Bremse der Neugeraete-Meldung zaehlt die MAILS',
+      'zaehlt sie die Geraete-Zeilen, unterdrueckt eine haeufig neu '
+      'registrierende App jeden Alarm')
 
-check('notify-new-login' in read(ROOT / 'lib' / 'services' /
-                                 'device_session_service.dart'),
-      'APP: Die Geraete-Registrierung laeuft ueber notify-new-login',
-      'sonst entschaidet der Client und die Warnung waere optional')
+check("'new_login_mail:'" in
+      _neueste_definition(all_sql, 'notify_new_login_device'),
+      'DB: Die Bremse nutzt einen eigenen Schluessel',
+      'sonst teilt sie sich die Sperre mit anderen Funktionen')
+
+check('x-thestia-internal' in read(ROOT / _check),
+      'SERVER: notify-new-login akzeptiert nur das interne Secret',
+      'die Funktion wird aus dem Trigger gerufen - ein offener '
+      'Mail-Aufruf waere eine Spam-Schleuse')
+
+check('notify-new-login' in
+      _neueste_definition(all_sql, 'notify_new_login_device'),
+      'DB: Der Trigger ruft notify-new-login auf',
+      'sonst wird die Mail gar nicht erst angestossen')
 
 # =====================================================================
 # 1c) Das Verifikationsvideo wird IMMER verschluesselt abgelegt

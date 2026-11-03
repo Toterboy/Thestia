@@ -26,7 +26,6 @@ import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/services/mfa_service.dart';
 import 'package:thestia/services/passkey_auth.dart';
 import 'package:thestia/services/prekey_service.dart';
-import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/widgets/captcha_challenge.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/services/unified_push_service.dart';
@@ -298,24 +297,11 @@ class SettingsScreen extends ConsumerWidget {
                   const SizedBox(height: 8),
                   ThemePicker(
                     selectedName: settings.themeName,
+                    // Der Server-Sync sitzt im Provider (setThemeName) -
+                    // sonst wurde die Farbe nur im Einstellungs-Screen
+                    // gespiegelt und nicht im Onboarding.
                     onChanged: (t) {
                       ref.read(settingsProvider.notifier).setThemeName(t.name);
-                      // Themefarbe serverseitig spiegeln (Migration 071),
-                      // damit sie nach Neuinstallation/Login direkt wieder
-                      // angewendet wird. Best effort.
-                      if (SupabaseService.isInitialized) {
-                        unawaited(() async {
-                          try {
-                            await SupabaseDatabaseService(
-                              SupabaseService.client,
-                            ).updateOwnProfile({'theme_name': t.name});
-                          } catch (e) {
-                            debugPrint(
-                                '[Settings] Theme-Server-Sync fehlgeschlagen: '
-                                '$e');
-                          }
-                        }());
-                      }
                     },
                   ),
                   const SizedBox(height: 16),

@@ -440,19 +440,39 @@ class _TabSwipeState extends State<_TabSwipe>
   /// Der vorherige Inhalt, der beim Wechsel ausblendet.
   Widget? _ausblendend;
 
+  /// Der Weg, den der Finger beim Wechsel zurueckgelegt hatte.
+  ///
+  /// Die alte Seite startet dort - sie springt nicht auf 0 zurueck und
+  /// faehrt dann weiter. Ohne das wirkt der Wechsel wie ein Schnitt mit
+  /// einem verschobenen Bild.
+  double _wegBeimWechsel = 0;
+
   /// Ab dieser Wegerstrecke wird gewechselt.
   static const double _schwelle = 64;
 
   /// Anteil des Fingerwegs, den die Seite sichtbar mitgeht.
-  static const double _folge = 0.42;
-
-  /// Breite des Hereingleitens (Anteil der Bildschirmbreite).
   ///
-  /// NUTZERWUNSCH (01.11.2026): "die Animation ... ist sehr abrupt".
-  /// Bei 10 % war der Hereinflug so kurz, dass der Wechsel wie ein
-  /// Schnitt wirkte. Mit 18 % laeuft die Bewegung sichtbar durch -
-  /// und die Dauer ist etwas laenger, damit sie ruhig wirkt.
-  static const double _einflug = 0.18;
+  /// NUTZERWUNSCH (03.11.2026): "Das Swipen zwischen den Reitern
+  /// (links und rechts) sieht nicht nach einem fluessigen Swipe aus."
+  ///
+  /// DER BEFUND: Die Seite folgte dem Finger nur mit 42 %. Das fuehlt
+  /// sich an, als haette die Seite einen Widerstand - der Finger
+  /// zieht, die Seite zoeodert hinterher. Ein Wischen, das sich
+  /// waech wie ein Wischen anfuehlt, geht 1:1 mit dem Finger.
+  static const double _folge = 1.0;
+
+  /// Wie weit die Seite beim Ziehen maximal mitwandert (Anteil der
+  /// Bildschirmbreite).
+  static const double _maxWeg = 0.34;
+
+  /// Dauer des Hereinflugs bei einem Reiterwechsel per Tippen.
+  ///
+  /// Der Weg, den die neue Seite zuruecklegt, ist die Bildschirmbreite
+  /// minus dem, was der Finger schon geschafft hat - die Dauer waechst
+  /// also mit der Reststrecke. Das ist der Unterschied zwischen
+  /// "abrupt" und "fluessig": eine kurze Bewegung wird zuegiger
+  /// beendet, eine lange braucht ihre Zeit.
+  static const int _wechselMs = 300;
 
   late final AnimationController _enter = AnimationController(
     vsync: this,
@@ -504,10 +524,23 @@ class _TabSwipeState extends State<_TabSwipe>
       // eingebaut (kein Zurueckflackern).
       _ausblendend = _angezeigt;
       _angezeigt = widget.child;
+      // Der Weg, den der Finger zurueckgelegt hat, wandert in die alte
+      // Seite - sie startet dort, wo der Finger sie verlassen hat.
+      _wegBeimWechsel = _weg;
       // Der Weg wird HIER zurueckgesetzt - beim Loslassen blieb er
       // stehen, damit die Seite nicht fuer ein Bild zuruecksprang.
       _weg = 0;
       _feder.stop();
+      // Die Dauer haengt an der Reststrecke: die neue Seite kommt von
+      // neben dem Bildschirm und legt (Bildschirmbreite minus dem
+      // Fingerweg) zurueck. Ein kurzer Wisch wird also zuegiger
+      // beendet als ein langer.
+      final breite = MediaQuery.sizeOf(context).width;
+      final restweg = (breite + _wegBeimWechsel).abs();
+      _enter.duration = Duration(
+        milliseconds: (140 + (restweg / breite).clamp(0.0, 1.0) * _wechselMs)
+            .round(),
+      );
       _enter.forward(from: 0);
     } else if (widget.child != oldWidget.child) {
       // Innerhalb des GLEICHEN Reiters (Detailseite, Chat, Profil):
@@ -555,8 +588,8 @@ class _TabSwipeState extends State<_TabSwipe>
         // ziehen, laeuft aber nicht unbegrenzt mit.
         final daempfung = _weg.abs() > _schwelle * 0.75 ? 0.35 : 1.0;
         final next = (_weg + details.delta.dx * daempfung).clamp(
-          -breite * 0.28,
-          breite * 0.28,
+          -breite * _maxWeg,
+          breite * _maxWeg,
         );
         setState(() => _weg = next);
         if (!_geTickt && _weg.abs() >= _schwelle) {
@@ -607,14 +640,32 @@ class _TabSwipeState extends State<_TabSwipe>
         animation: Listenable.merge([_enter, _feder]),
         builder: (context, child) {
           final t = Curves.easeOutCubic.transform(_enter.value);
-          // Der neue Inhalt gleitet herein, der alte blendet aus.
+
+          // NUTZERWUNSCH (03.11.2026): "Das Swipen ... sieht nicht nach
+          // einem fluessigen Swipe aus."
           //
-          // Beide sind gleichzeitig sichtbar: das ist der Unterschied
-          // zwischen einem Wechsel und einem Schnitt. Ohne die
-          // Ueberblendung wirkt jeder Reiterwechsel abruppt - egal wie
-          // weich die Bewegung des neuen Inhalts auch ist.
-          final einflug = (1 - t) * breite * _einflug * _enterRichtung;
-          final x = _federWeg * _folge + einflug;
+          // DER BEFUND: Die neue Seite kam mit 18 % Hereinflug und der
+          // alte Inhalt blendete nur aus. Das ist eine Ueberblendung mit
+          // einem kleinen Rutsch - kein Wischen.
+          //
+          // JETZT: Die beiden Seiten fahren GLEICHZEITIG und mit
+          // derselben Strecke: Die alte faehrt vom Fingerweg aus weiter
+          // hinaus, die neue kommt von neben dem Bildschirm hinterher.
+          // Weil beide dieselbe Strecke zuruecklegen, wirkt es wie eine
+          // einzige durchgehende Bewegung.
+          //
+          // Der Weg der neuen Seite ist die Bildschirmbreite minus dem,
+          // was der Finger schon geschafft hat - sie setzt also genau
+          // dort an, wo die alte Seite gerade ist. Kein Sprung, keine
+          // Luecke.
+          final alterWeg =
+              _wegBeimWechsel * (1 - t) + (-_enterRichtung * breite) * t;
+          final neuerWeg =
+              (_enterRichtung * (breite + _wegBeimWechsel)) * (1 - t);
+
+          // Beim Ziehen (kein Wechsel) ist t = 1: die neue Seite folgt
+          // dem Finger 1:1 (_federWeg ist dann der Fingerweg).
+          final x = _federWeg * _folge + neuerWeg;
           return Stack(
             children: [
               if (_ausblendend != null)
@@ -624,10 +675,7 @@ class _TabSwipeState extends State<_TabSwipe>
                   // durchgehende.
                   opacity: (1 - t).clamp(0.0, 1.0),
                   child: Transform.translate(
-                    offset: Offset(
-                      -breite * _einflug * _enterRichtung * t * 0.6,
-                      0,
-                    ),
+                    offset: Offset(alterWeg, 0),
                     child: _ausblendend,
                   ),
                 ),

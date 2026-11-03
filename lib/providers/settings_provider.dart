@@ -464,9 +464,34 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   }
 
   /// Farbschema wechseln (ThestiaTheme-Name).
+  ///
+  /// Wird auch serverseitig gespiegelt (profiles.theme_name, Migration
+  /// 071). Das ist kein Luxus: der lokale Speicher liegt im Keystore und
+  /// wird mit der App geloescht - ohne den Server-Spiegel waere die
+  /// Farbe nach einer Neuinstallation weg.
+  ///
+  /// Der Sync stand vorher NUR im Einstellungs-Screen. Wer die Farbe im
+  /// Onboarding waehlte (der normale Weg beim ersten Start), kam dort
+  /// nie vor - die Farbe wurde nie gespiegelt. Deshalb liegt er jetzt
+  /// hier, im Provider: so gilt er fuer jeden Weg.
   Future<void> setThemeName(String name) async {
+    if (state.themeName == name) return;
     state = state.copyWith(themeName: name);
     await _persist();
+    unawaited(_syncThemeNameServer(name));
+  }
+
+  /// Spiegelt die Themefarbe auf den Server (Best effort).
+  Future<void> _syncThemeNameServer(String name) async {
+    try {
+      if (!SupabaseService.isInitialized) return;
+      await SupabaseDatabaseService(SupabaseService.client)
+          .updateOwnProfile({'theme_name': name});
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Settings] Theme-Sync fehlgeschlagen: $e');
+      }
+    }
   }
 
   /// Mikrofon-Offenlegung bestaetigt (Google-Play-Richtlinie).

@@ -224,16 +224,35 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen> {
       // die Reiter werden nach der Liste gemalt.
       body: Stack(
         children: [
-          Positioned.fill(
+          // NUTZERWUNSCH (03.11.2026), erneut: "Bei Interessen sind die
+          // Buttons Gesendet und Erhalten noch immer in dem Fenster, was
+          // aufploppt".
+          //
+          // DER BEFUND: Die Reiter sind fixiert (Positioned), die Liste
+          // war es auch (Positioned.fill) - aber sie hatte den Platz der
+          // Reiter nur als INNEREN Abstand (padding). Sobald man in der
+          // Liste scrollte, wanderte der Inhalt UNTER den fixierten
+          // Reitern hindurch und die Knöpfe lagen optisch IM Panel. Das
+          // war der Grund fuer die wiederholte Meldung: die Geometrie
+          // war richtig, die Ueberlappung beim Scrollen nicht.
+          //
+          // Die Loesung: Die Liste beginnt raeumlich UNTER den Reitern
+          // (Positioned.top). Ihr Inhalt kann gar nicht mehr unter ihnen
+          // durchlaufen - die Reiter stehen immer vor dem Fenster.
+          Positioned(
+            top: _reiterRandOben + _pillenHoehe(context) +
+                _abstandReiterBereich,
+            left: 0,
+            right: 0,
+            bottom: 0,
             child: RefreshIndicator(
               onRefresh: _refreshAlle,
               child: ListView(
                 controller: _scrollController,
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(
+                padding: const EdgeInsets.fromLTRB(
                   16,
-                  _reiterRandOben + _pillenHoehe(context) +
-                      _abstandReiterBereich,
+                  4,
                   16,
                   28,
                 ),
@@ -379,7 +398,7 @@ const double _reiterRandOben = 4;
 ///
 /// Deshalb: der Bereich beginnt unter den Reitern, mit einem kleinen
 /// Abstand. Die Reiter stehen dadurch eindeutig ausserhalb.
-const double _abstandReiterBereich = 10;
+const double _abstandReiterBereich = 16;
 
 /// Ein Eintrag im Personen-Menü (siehe [_PersonenMenue]).
 class _MenueEintrag {
