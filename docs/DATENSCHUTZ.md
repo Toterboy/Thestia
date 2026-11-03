@@ -46,7 +46,7 @@ Tracking-Pixel und **keine** nutzerübergreifende Verhaltensanalyse.
 | Standortanzeige | Entfernung in Stufen von 10 km, nur wenn die betroffene Person das **eingeschaltet** hat; unter 5 km wird nichts angezeigt. **Für 16- und 17-Jährige ist die Anzeige ausgeschlossen - auch wenn sie den Schalter einschalten** | Andere Nutzer sehen nur die Stufe, nie einen Wert in Metern oder Kilometern. Ohne Einschaltung sehen sie gar keine Entfernung. Die Sperre für Minderjährige sitzt in der Datenbank (`profile_distance_km`, Migration 163) und richtet sich nach dem verifizierten Alter | – |
 | Ortsangabe | Wird nicht erhoben | Seit v0.10.0 wird kein Ort, keine Stadt und kein Postleitzahl-Bereich gespeichert oder angezeigt – nur das Bundesland | – |
 | Profilangaben | Bio, Interessen, Audio-Vorstellung, Gewohnheiten (Rauchen/Alkohol/Drogen), Mood, Musik-Geschmack, **Profilbild** (siehe Abschnitt 3a) | Vermittlung passender Kontakte („Funken") | Mit Account-Löschung |
-| Geräte-Liste | Gerätemodell (Hersteller + Modellkennung, z. B. „Samsung SM-S921B"), Plattform, App-Version, Zeitstempel der letzten Anmeldung | Anzeige „Wo bin ich eingeloggt?" + „Überall abmelden" (Migration 071/078); kein Standort, keine Seriennummer, keine Werbe-ID | Automatisch beim Abmelden; mit Account-Löschung |
+| Geräte-Liste | Gerätemodell (Hersteller + Modellkennung, z. B. „Samsung SM-S921B"), Plattform, App-Version, Zeitstempel der letzten Anmeldung; bei einer Anmeldung von einem **neuen** Gerät zusätzlich eine Benachrichtigungs-Mail mit Gerätename, App-Version und Zeitpunkt | Anzeige „Wo bin ich eingeloggt?" + „Überall abmelden" (Migration 071/078); kein Standort, keine Seriennummer, keine Werbe-ID | Automatisch beim Abmelden; mit Account-Löschung |
 | Präferenzen | Suchradius, Altersspanne, Geschlechts-Filter, „Ich suche", Farbwelt, UI-Schalter (Blind Mode, Sichtbarkeit, Benachrichtigungen) | Wiederherstellung nach Neuinstallation (Migration 066/071/074/076) | Mit Account-Löschung |
 | Push-Tokens | FCM-Token (nur Play) bzw. UnifiedPush-Endpunkt (F-Droid) | Zustellung von Push-Signalen **ohne Nachrichteninhalt** | Mit Account-Löschung / Abmelden |
 | Aussehen-Merkmale (Transit Spark) | Kategorie und Wert eines Merkmals (Kleidung je Kategorie, Kopfbedeckung, Schuhe, Accessoires, Haarfarbe/-länge/-frisur, Augenfarbe) sowie die zugehörige Farbangabe, jeweils als Liste von bis zu acht Werten | Merkmals-Abgleich in Transit Spark: "was ich an dir bemerkt habe" gegen "was du über dich sagst". Nur die Auswahl wird übertragen, nicht der Zweck | Nach 24 Stunden (Cron `cleanup-transit-signals`) |
@@ -56,6 +56,25 @@ Tracking-Pixel und **keine** nutzerübergreifende Verhaltensanalyse.
 | Standort-Zeitstempel | Zeitpunkt der letzten Standortprüfung | Plausibilitätsprüfung (unplausible Ortswechsel) | Mit Account-Löschung |
 | Merkzeichen des Kontos | MD5-Hash der Kontokennung | Verhinderung, dass ein gelöschtes Konto erneut registriert wird | Bleibt dauerhaft bestehen, ohne Klarnamen |
 | Verifizierung | Selbstaufnahme mit Bild **und Ton** zur Schätzung des Alters. Das Video wird **auf dem Gerät verschlüsselt** (AES-256-GCM) und nur der Chiffrat übertragen; der Schlüssel liegt in einer Tabelle, auf die die App keinen Zugriff hat. Zweck: Altersprüfung für den Jugendschutz und die 18+-Freigabe von Transit Spark. Bei Ablehnung werden Video und Schlüssel gelöscht, sonst nach spätestens 30 Tagen nach Einreichung (Abschnitt 7). Nur bei einer manuellen Sichtung durch die Administration entsteht kurzzeitig eine entschlüsselte Kopie, die nach 20 Minuten automatisch gelöscht wird |
+
+## 2a. Anmeldung von einem neuen Gerät
+
+Wenn du dich von einem Gerät anmeldest, das wir bisher nicht kennen,
+schicken wir dir eine E-Mail. In der steht, **welches** Gerät es war (Modell,
+App-Version) und **wann** (Uhrzeit). Damit du eine fremde Anmeldung
+bemerken kannst, ohne dass dafür jemand dein Passwort kennen muss.
+
+Die Prüfung, ob es ein neues Gerät ist, passiert auf unserem Server – nicht
+in der App. Ein Angreifer mit deinem Passwort kann die Mail also weder
+unterdrücken noch verhindern.
+
+Wir versenden höchstens fünf solche Mails pro Konto und Stunde. Direkt nach
+der Registrierung gibt es keine: die erste Anmeldung ist die
+Registrierung selbst.
+
+Wenn du dich an einem neuen Gerät anmeldest, kannst du unter
+*Einstellungen → Datenschutz & Account → Geräte* sehen, welche Geräte
+zu deinem Konto gehören, und fremde Sitzungen abmelden.
 
 ## 3. Ende-zu-Ende-Verschlüsselung (Signal-Protokoll)
 

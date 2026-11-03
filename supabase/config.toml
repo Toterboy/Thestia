@@ -94,6 +94,16 @@ verify_jwt = false
 verify_jwt = true
 enabled = true
 
+# notify-new-login: meldet dem Kontoinhaber eine Anmeldung von einem
+# NEUEN Geraet (v0.10.0). Die App ruft die Funktion nach jedem Login mit
+# dem User-JWT und den Geraetedaten auf; der SERVER entscheidet, ob es
+# neu ist, und schickt die Warn-Mail. Deshalb verify_jwt = true: der
+# Aufrufer muss angemeldet sein, und die Liste der bekannten Geraete
+# darf nicht vom Client entschieden werden.
+[functions.notify-new-login]
+verify_jwt = true
+enabled = true
+
 # mail-ingest: nimmt eingehende Mails entgegen (v0.10.0).
 # Wird von zwei Diensten aufgerufen, beide mit dem internen Secret:
 #   - tool/mail_imap_poll.py (IMAP-Abfrage)

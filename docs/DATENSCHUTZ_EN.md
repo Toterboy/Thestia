@@ -46,7 +46,7 @@ analysis.
 | Distance display | Distance in steps of 10 km, only if the person concerned has **switched it on**; below 5 km nothing is displayed. **For 16- and 17-year-olds the display is excluded - even if they switch it on** | Other users see only the step, never a value in metres or kilometres. Without switching it on they see no distance at all. The block for minors lives in the database (`profile_distance_km`, migration 163) and is based on the verified age | – |
 | Place of residence | Not collected | Since v0.10.0 no place, no city and no postcode area is stored or displayed - only the federal state | – |
 | Profile details | Bio, interests, audio introduction, habits (smoking/alcohol/drugs), mood, music taste, **profile picture** (see section 3a) | Matching suitable contacts ("sparks") | With account deletion |
-| Device list | Device model (manufacturer + model identifier, e.g. "Samsung SM-S921B"), platform, app version, timestamp of the last login | Display "Where am I logged in?" + "Sign out everywhere" (migration 071/078); no location, no serial number, no advertising ID | Automatically on sign-out; with account deletion |
+| Device list | Device model (manufacturer + model identifier, e.g. "Samsung SM-S921B"), platform, app version, timestamp of the last login; on a sign-in from a **new** device additionally a notification email with the device name, the app version and the time | Display "Where am I logged in?" + "Sign out everywhere" (migration 071/078); no location, no serial number, no advertising ID | Automatically on sign-out; with account deletion |
 | Preferences | Search radius, age range, gender filter, "I'm looking for", colour world, UI switches (Blind Mode, visibility, notifications) | Restoration after a reinstall (migration 066/071/074/076) | With account deletion |
 | Push tokens | FCM token (Play only) resp. UnifiedPush endpoint (F-Droid) | Delivery of push signals **without any message content** | With account deletion / sign-out |
 | Appearance features (Transit Spark) | Category and value of a feature (clothing per category, headwear, shoes, accessories, hair colour/length/style, eye colour) as well as the associated colour specification, each as a list of up to eight values | Feature matching in Transit Spark: "what I noticed about you" against "what you say about yourself". Only the selection is transmitted, not the purpose | After 24 hours (cron `cleanup-transit-signals`) |
@@ -56,6 +56,24 @@ analysis.
 | Location timestamp | Time of the last location check | Plausibility check (implausible changes of location) | With account deletion |
 | Marker of the account | MD5 hash of the account identifier | Prevents a deleted account from being registered again | Persists permanently, without any clear name |
 | Verification | Self-recording with image **and** sound to estimate the age. The video is **encrypted on the device** (AES-256-GCM) and only the ciphertext is transmitted; the key is stored in a table to which the app has no access. Purpose: age check for child safety and the 18+ release of Transit Spark. In case of rejection the video and key are deleted, otherwise at the latest 30 days after submission (section 7). Only a manual review by the administration creates a temporarily decrypted copy, which is deleted automatically after 20 minutes |
+
+## 2a. Sign-in from a new device
+
+When you sign in from a device we do not know yet, we send you an email.
+It names **which** device it was (model, app version) and **when** (time).
+That way you notice a foreign sign-in without anyone having to know your
+password.
+
+The check whether it is a new device happens on our server - not in the
+app. An attacker with your password can therefore neither suppress nor
+prevent the mail.
+
+We send at most five such emails per account and hour. Directly after
+registration there is none: the first sign-in is the registration itself.
+
+When you sign in from a new device, you can see under
+*Settings → Privacy & account → Devices* which devices belong to your
+account, and log out foreign sessions.
 
 ## 3. End-to-end encryption (Signal protocol)
 

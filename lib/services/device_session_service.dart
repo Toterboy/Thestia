@@ -129,15 +129,45 @@ class DeviceSessionService {
   ///
   /// Wirft bei Fehlern - der Aufrufer entscheidet (beim Sync: still,
   /// auf dem Geräte-Screen: Hinweis).
+  ///
+  /// Der Weg geht ueber die Edge Function `notify-new-login` und NICHT
+  /// direkt in die Tabelle: Der SERVER entscheidet, ob es sich um ein
+  /// neues Geraet handelt, und schickt in dem Fall die Warn-Mail an den
+  /// Kontoinhaber. Der Client darf das nicht entscheiden - sonst
+  /// koennte ein Angreifer mit gestohlenem Passwort den Alarm unterdruecken.
   Future<void> enrollCurrentDevice() async {
     if (!SupabaseService.isInitialized) return;
     final info = await PackageInfo.fromPlatform();
+    final deviceId = await getDeviceId();
+    final deviceName = describeDevice();
+    final platform = Platform.operatingSystem;
+    final appVersion = '${info.version} (${info.buildNumber})';
+    final deviceModel = await readDeviceModel();
+
+    try {
+      await SupabaseService.client.functions.invoke(
+        'notify-new-login',
+        body: {
+          'deviceId': deviceId,
+          'deviceName': deviceName,
+          'platform': platform,
+          'appVersion': appVersion,
+          'deviceModel': deviceModel ?? '',
+        },
+      );
+      return;
+    } catch (e) {
+      // Rueckfall: die Geraete-Liste selbst schreiben. Dann fehlt die
+      // Warnung, aber die Liste stimmt - und die ist wichtiger.
+      debugPrint('[DeviceSession] Neugeraete-Meldung nicht moeglich: $e');
+    }
+
     await _db.upsertOwnDevice(
-      deviceId: await getDeviceId(),
-      deviceName: describeDevice(),
-      platform: Platform.operatingSystem,
-      appVersion: '${info.version} (${info.buildNumber})',
-      deviceModel: await readDeviceModel(),
+      deviceId: deviceId,
+      deviceName: deviceName,
+      platform: platform,
+      appVersion: appVersion,
+      deviceModel: deviceModel,
     );
   }
 

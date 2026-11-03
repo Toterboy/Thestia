@@ -480,6 +480,34 @@ check('TransitBleService.instance.suspend()' in
       'das ist Akku- und Datenschutzproblem in einem')
 
 # =====================================================================
+# 1l) Die Neugeraete-Warnung entscheidet der SERVER, nicht die App
+# =====================================================================
+#
+# SICHERHEIT (03.11.2026): Die App meldet ihr Geraet nach dem Login.
+# Ob es ein NEUES Geraet ist, entscheidet die Edge Function - nicht der
+# Client. Andernfalls koennte ein Angreifer mit gestohlenem Passwort den
+# Alarm unterdruecken, indem er selbst festlegt "bekanntes Geraet".
+_check = 'supabase/functions/notify-new-login/index.ts'
+check('getUser(token)' in read(ROOT / _check),
+      'SERVER: notify-new-login prueft das JWT des Aufrufers',
+      'die Funktion schreibt mit der Service-Rolle - ohne '
+      'Identitaetsnachweis waere das eine offene Schnittstelle')
+
+check("supabaseAdmin.auth" in read(ROOT / _check),
+      'SERVER: notify-new-login holt die Geraete ueber die Service-Rolle',
+      'die Liste der bekannten Geraete darf nicht vom Client kommen')
+
+check('MAILS_PRO_STUNDE' in read(ROOT / _check),
+      'SERVER: notify-new-login begrenzt die Zahl der Warn-Mails',
+      'ohne Bremse koennte ein Angreifer durch das Leeren der App-Daten '
+      'den Posteingang fluten')
+
+check('notify-new-login' in read(ROOT / 'lib' / 'services' /
+                                 'device_session_service.dart'),
+      'APP: Die Geraete-Registrierung laeuft ueber notify-new-login',
+      'sonst entschaidet der Client und die Warnung waere optional')
+
+# =====================================================================
 # 1c) Das Verifikationsvideo wird IMMER verschluesselt abgelegt
 # =====================================================================
 #
