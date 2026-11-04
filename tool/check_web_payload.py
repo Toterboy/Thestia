@@ -137,6 +137,12 @@ def main() -> int:
             flag('%s: laedt automatisch von draussen: %s' % (name, m.group(1)))
         for m in re.finditer(
                 r'<link[^>]+href\s*=\s*"(https?://[^"]+)"', html, re.I):
+            # EIN canonical-Tag ist kein Stylesheet: Er bindet nichts
+            # ein, er benennt nur die Originalseite. Ohne diese
+            # Ausnahme wuerde der Check jede Seite mit canonical als
+            # "bindet ein fremdes Stylesheet ein" melden.
+            if 'rel="canonical"' in m.group(0):
+                continue
             flag('%s: bindet ein fremdes Stylesheet ein: %s'
                  % (name, m.group(1)))
         for m in re.finditer(r'url\(\s*["\']?(https?://[^)"\']+)', html):
@@ -338,6 +344,43 @@ def main() -> int:
         if 'frame-ancestors' not in alle_header:
             flag('_headers: Content-Security-Policy ohne frame-ancestors '
                  '- die Seiten sind sonst in fremde iframes einbettbar')
+
+    # --- 3b) canonical und noindex -------------------------------------
+    #
+    # BEFUND 04.11.2026: 10 der 18 Seiten trugen ein hartes
+    # <meta name="robots" content="noindex"> - darunter die im Play
+    # Console eingetragenen Loesch-URLs, die gesetzlich geforderte
+    # Kinderschutz-Meldestelle und das Eltern-Portal. Sie waren
+    # erreichbar, aber nicht indexierbar - die Anforderung war
+    # "auffindbar auf thestia.de".
+    #
+    # Und: 16 Seiten hatten gar kein canonical. thestia.de und
+    # auth.thestia.de sind EIN Netlify-Projekt - ohne canonical weiss
+    # eine Suchmaschine nicht, welche Fassung die Originalseite ist.
+    #
+    # noindex ist NUR richtig, wo die URL pro Nutzer verschieden ist
+    # (das Eltern-Portal mit dem Token) oder transient ist (die
+    # Bestaetigungsseite).
+    print('\n3b) canonical und noindex:')
+    TRANSIENT = ('bestaetigt.html', 'einstellungen.html')
+    for seite in sorted(ASSETS.rglob('*.html')):
+        rel = seite.relative_to(ASSETS).as_posix()
+        inhalt = seite.read_text(encoding='utf-8')
+        hat_canonical = 'rel="canonical"' in inhalt
+        hat_noindex = 'name="robots"' in inhalt
+        transient = any(m in rel for m in TRANSIENT)
+        if transient:
+            if not hat_noindex:
+                flag('%s: noindex fehlt - die URL ist transient bzw. '
+                     'enthaelt den Token des Elternteils' % rel)
+        else:
+            if not hat_canonical:
+                flag('%s: canonical fehlt - die Seite ist unter zwei '
+                     'Hosts erreichbar (thestia.de und auth.thestia.de)' % rel)
+            if hat_noindex:
+                flag('%s: noindex steht drin - die Seite soll '
+                     'auffindbar sein' % rel)
+    print('   %d Seiten geprueft' % len(list(ASSETS.rglob('*.html'))))
 
     # --- 4) robots.txt -----------------------------------------------
     print('\n4) robots.txt:')

@@ -364,6 +364,66 @@ serve(async (req) => {
       }
     }
 
+    // BEFUND 04.11.2026: Die Typpruefung allein war zu schwach. Sie
+    // akzeptierte JEDE Zeichenkette als "string" und JEDE Zahl als
+    // "number" - ein Bundle mit 10 MB Text im Schluesselfeld landete
+    // ungeprueft in der Datenbank (Spalte prekeys.bundle, JSONB), und
+    // zusaetzliche Felder wurden MITgespeichert.
+    //
+    // Jetzt wird der Inhalt geprueft:
+    //   * nur die sieben bekannten Felder (keine Extras)
+    //   * die Schluessel-Felder sind Base64 in plausible Laengen
+    //   * die Zahlen sind ganze Zahlen im uint32-Bereich
+    //
+    // Die Laengen sind absichtlich grosszuegig (Signal-Schluessel
+    // sind 33 bzw. 64 Byte roh, also 44 bzw. 88 Zeichen Base64), aber
+    // klein genug, dass die Datenbank nicht zugeballt wird.
+    const MAX_BASE64 = 200;
+    const MAX_ID = 2147483647;
+
+    const erlaubteFelder = new Set(Object.keys(requiredFields));
+    for (const feld of Object.keys(bundle as Record<string, unknown>)) {
+      if (!erlaubteFelder.has(feld)) {
+        return new Response(
+          JSON.stringify({ error: `Unbekanntes Feld ${feld}.` }),
+          { status: 400, headers: { "Content-Type": "application/json" } },
+        );
+      }
+    }
+
+    const base64Felder = [
+      "identityKeyPublic",
+      "preKeyPublic",
+      "signedPreKeyPublic",
+      "signedPreKeySignature",
+    ];
+    for (const feld of base64Felder) {
+      const wert = (bundle as Record<string, unknown>)[feld] as string;
+      if (wert.length === 0 || wert.length > MAX_BASE64) {
+        return new Response(
+          JSON.stringify({ error: `Feld ${feld}: Laenge 1-${MAX_BASE64}.` }),
+          { status: 400, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      if (!/^[A-Za-z0-9+/]+={0,2}$/.test(wert)) {
+        return new Response(
+          JSON.stringify({ error: `Feld ${feld}: kein Base64.` }),
+          { status: 400, headers: { "Content-Type": "application/json" } },
+        );
+      }
+    }
+
+    const idFelder = ["registrationId", "preKeyId", "signedPreKeyId"];
+    for (const feld of idFelder) {
+      const wert = (bundle as Record<string, unknown>)[feld] as number;
+      if (!Number.isInteger(wert) || wert < 0 || wert > MAX_ID) {
+        return new Response(
+          JSON.stringify({ error: `Feld ${feld}: keine gueltige ID.` }),
+          { status: 400, headers: { "Content-Type": "application/json" } },
+        );
+      }
+    }
+
     const { error: upsertError } = await supabaseAdmin
       .from("prekeys")
       .upsert({

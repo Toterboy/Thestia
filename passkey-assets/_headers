@@ -67,10 +67,6 @@
   Content-Type: application/json
   Cache-Control: public, max-age=86400
 
-/apple-app-site-association
-  Content-Type: application/json
-  Cache-Control: public, max-age=86400
-
 # --- Die CAPTCHA-Seite (Arbeitsblatt des Sicherheitschecks) --------
 #
 # Bewusst OHNE Cache-Angabe: die Seite wird von der App bei jeder

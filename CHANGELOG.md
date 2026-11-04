@@ -338,6 +338,73 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 ### Behoben
 
+- **Die Website war an zehn Seiten für Suchmaschinen gesperrt**
+  (04.11.2026): Auf `daten-loeschen`, `konto-loeschen`, `kinderschutz`
+  und `eltern` (je Deutsch und Englisch) stand ein hartes
+  `<meta name="robots" content="noindex">`. Die Seiten waren erreichbar,
+  aber nicht indexierbar - und die ersten drei sind die URLs, die im
+  Play Console bzw. vom Gesetz gefordert sind. Der Anforderung
+  „auffindbar auf thestia.de" war damit nicht entsprochen. Jetzt sind
+  die Seiten auffindbar, und `noindex` steht nur noch dort, wo es
+  richtig ist: im Eltern-Portal (die URL trägt den Token des
+  Elternteils) und auf der transienten Bestätigungsseite.
+- **16 Seiten hatten kein canonical-Tag:** `thestia.de` und
+  `auth.thestia.de` sind ein Netlify-Projekt - dieselben Dateien sind
+  unter beiden Hosts erreichbar. Ohne canonical weiß eine Suchmaschine
+  nicht, welche Fassung die Originalseite ist. Jetzt zeigt jede
+  öffentliche Seite auf ihre kanonische Adresse.
+- **Die englischen Seiten verlinkten die deutschen Pflichtseiten**
+  (04.11.2026): Sieben englische Seiten zeigten in ihren Fußzeilen
+  und Textlinks auf deutsche Texte. Der Sprachumschalter ist dabei
+  unverändert - er zeigt absichtlich auf die deutsche Fassung.
+- **Der Impressums-Link zeigte auf einen Host, den es nicht gibt**
+  (04.11.2026): Der Linktext lautete `kinderschutz.thestia.de`, das
+  Ziel war `auth.thestia.de/kinderschutz` - und der Auth-Host ist für
+  den Sicherheitscheck da, nicht für die öffentliche Meldestelle.
+- **Im Bug-Report waren beliebige Dateien als „Screenshot" möglich**
+  (04.11.2026): Geprüft wurde nur die Größe. Jetzt wird jeder Anhang
+  an den Magic Bytes geprüft (JPEG/PNG/WebP), und der Dateiname ergibt
+  sich aus dem erkannten Typ - der Client kann also auch keine
+  Endung mehr bestimmen.
+- **Ein gemeldetes Bild musste gar kein Bild sein** (04.11.2026): Die
+  Längenprüfung allein ließ jeden Byte-Haufen als Bild durch - er ging
+  als `reported_image.jpg` an die Moderation und lief durch den
+  NSFW-Scanner, der mit Daten arbeiten musste, die kein Bild sind.
+- **Ein PreKey-Bundle durfte beliebig groß und unsinnig sein**
+  (04.11.2026): Die Prüfung sah nur nach dem Typ. Jetzt gilt eine
+  Whitelist der sieben Felder, die Base64-Felder werden auf Länge und
+  Alphabet geprüft, die IDs müssen ganze Zahlen im uint32-Bereich
+  sein.
+- **Die Verwaltung war über zwei Admin-Konzepte erreichbar**
+  (04.11.2026): `admin-ban` prüfte das Secret `ADMIN_UUID`,
+  `verification-media` und `verify-account` das Spaltenflag
+  `profiles.is_admin`. Zwei Konzepte für dieselbe Frage sind zwei
+  Wahrheiten. Jetzt gilt überall das Flag (Migration 175 setzt es für
+  das bisherige Adminkonto); das Secret bleibt nur noch eine
+  Bauvariable für die Admin-Variante der App.
+- **`admin-ban` hatte keine Bremse** (04.11.2026): Ohne Limit konnte
+  ein kompromittiertes Admin-Konto die GoTrue-Nutzerliste (25 Seiten à
+  200 Nutzer je Anfrage) missbrauchen. Jetzt: 60 Aktionen pro Stunde.
+- **Der SSRF-Wächter gab bei DNS-Fehlern nach** (04.11.2026): Der
+  Fehlerpfad war fail-open, obwohl der Kommentar das Gegenteil
+  behauptete. Eine fehlgeschlagene Auflösung bedeutet, dass der Host
+  nicht existiert - jetzt fail-closed.
+- **Das Verdachtsflag am Standort ließ sich zurücksetzen**
+  (04.11.2026): Ohne Vorposition wurde `is_location_suspicious` auf
+  `false` gesetzt - wer seine eigene Zeile löscht, konnte die
+  Geschwindigkeitsprüfung zurücksetzen. Das Flag wird jetzt nur noch
+  gesetzt, nie gelöscht.
+- **Zwei Secret-Namen für dasselbe Geheimnis** (04.11.2026):
+  `THESTIA_INTERNAL_SECRET` und `INTERNAL_SECRET`. Bei einer Rotation
+  wäre eine Seite stehen geblieben. Jetzt ist `THESTIA_INTERNAL_SECRET`
+  der kanonische Name.
+- **Eine Edge Function war zerlegt und kam trotzdem ins Repository**
+  (04.11.2026): Die bis dahin genutzte Syntaxprüfung
+  (`node --experimental-strip-types --check`) meldet sich *nicht* -
+  sie meldete auch die kaputte Datei als gültig. Jetzt prüft
+  `tool/check_edge_syntax.py` mit esbuild (einem echten
+  TypeScript-Parser) alle 24 Dateien, und der Prüfer ist Teil der CI.
+
 
 - **Passkeys gingen im Release-Build gar nicht** (31.10.2026): `supabase_flutter`
   hängt nur am `passkeys_platform_interface`, NICHT am app-seitigen

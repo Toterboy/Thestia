@@ -330,6 +330,12 @@ jobs:
           python3 tool/check_texts.py
           python3 tool/check_keys.py
           python3 tool/check_local_ci_sync.py
+          # BEFUND 04.11.2026: Eine Edge Function war zerlegt und kam
+          # trotzdem ins Repository - die bis dahin genutzte
+          # Syntaxpruefung ("node --experimental-strip-types --check")
+          # MELDET SICH NICHT. Der Deploy hat den Fehler gefangen,
+          # aber zu spaet. Dieser Check parst TypeScript wirklich.
+          python3 tool/check_edge_syntax.py
 
       # Doppelkodierte Umlaute sind gueltiges UTF-8, deshalb findet sie
       # weder der Analyzer noch ein Test. Sie fielen nur auf, als eine

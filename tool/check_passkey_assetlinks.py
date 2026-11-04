@@ -195,7 +195,18 @@ def check_aasa() -> None:
     """
     print('--- apple-app-site-association ---')
     if not AASA.exists():
-        fail.append('apple-app-site-association fehlt')
+        # OPTIONAL (04.11.2026): Es gibt kein iOS-Release - der
+        # Betrieb ist zu teuer. Ohne Apple-Team-ID kann die Datei
+        # ohnehin nichts bewirken: Apple prueft die Team-ID streng,
+        # eine Vorlage laesst sich nur mit dem Developer-Konto des
+        # Kontoinhabers fuellen.
+        #
+        # Deshalb wird die Datei nicht mehr verlangt. Eine veraltete
+        # Vorlage im Publish-Ordner waere schlimmer als gar keine:
+        # Sie antwortet mit HTTP 200 und laesst jeden Healthcheck
+        # gruen aussehen, obwohl die Funktion nicht existiert.
+        print('  nicht vorhanden - iOS-Passkeys sind fuer dieses Projekt '
+              'nicht relevant (kein iOS-Release).')
         return
     raw = AASA.read_text(encoding='utf-8')
     try:
@@ -251,6 +262,10 @@ def check_live(local_android: set[str]) -> None:
             if only_local:
                 fail.append(f'{host} fehlen lokal vorhandene Zertifikate: '
                             f'{len(only_local)} - Live-Datei ist veraltet')
+    if not AASA.exists():
+        # Kein iOS-Release -> die Datei wird nicht mehr erwartet und
+        # nicht mehr geprueft (siehe check_aasa oben).
+        return
     try:
         with urllib.request.urlopen(AASA_URL, timeout=30, context=ctx) as r:
             live_aasa = r.read().decode('utf-8')

@@ -21,6 +21,7 @@
 // Mail-Adresse des Betreibers: MODERATION_EMAIL (Default s.u.).
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { endungFuer, pruefeAufBild } from "../_shared/image_guard.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.0";
 
 const MODERATION_EMAIL = Deno.env.get("MODERATION_EMAIL") ?? "moderation@thestia.de";
@@ -204,6 +205,24 @@ serve(async (req) => {
         status: 400, headers: { "Content-Type": "application/json" },
       });
     }
+
+    // BEFUND 04.11.2026: Geprueft wurde nur die LAENGE des Base64-
+    // Strings. Damit konnte jeder beliebige Byte-Haufen als "Bild"
+    // eingereicht werden - ein PDF, ein Skript, eine ZIP-Datei. Der
+    // Anhang ging als "reported_image.jpg" an die Moderation, und der
+    // NSFW-Scanner lief auf Daten, die kein Bild sind.
+    //
+    // Jetzt wird der Dateityp an den Magic Bytes geprueft. Das ist
+    // die serverseitige Haelfte von "wenn nur Bilder hochgeladen
+    // werden duerfen, dann nur Bilder" - der Client-Picker allein
+    // waere eine Empfehlung, keine Grenze.
+    const bildTyp = pruefeAufBild(imageBase64);
+    if (!bildTyp) {
+      return new Response(
+        JSON.stringify({ error: "Nur Bilder (JPEG, PNG, WebP) sind erlaubt." }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
     if (!/^[0-9a-f-]{36}$/i.test(reportedUserId)) {
       return new Response(JSON.stringify({ error: "Ungültige reportedUserId." }), {
         status: 400, headers: { "Content-Type": "application/json" },
@@ -354,7 +373,10 @@ serve(async (req) => {
           to: [{ email: MODERATION_EMAIL, name: "Thestia Moderation" }],
           subject: `Bild-Meldung${ai.available && ai.nsfw ? " (KI bestätigt)" : ""}${escalate ? " - eskaliert" : ""} – ${now.slice(0, 10)}`,
           htmlContent,
-          attachment: [{ name: "reported_image.jpg", content: imageBase64 }],
+          attachment: [{
+          name: `reported_image${endungFuer(bildTyp)}`,
+          content: imageBase64,
+        }],
         }),
       });
       if (!brevoResp.ok) {

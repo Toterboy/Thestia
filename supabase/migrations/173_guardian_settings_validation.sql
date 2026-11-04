@@ -66,7 +66,7 @@ DECLARE
 BEGIN
   IF p_token IS NULL OR length(p_token) < 16 THEN
     RETURN jsonb_build_object('ok', false, 'error', 'invalid_token');
-  END;
+  END IF;
 
   SELECT * INTO v_row
     FROM public.guardian_consents
@@ -77,23 +77,23 @@ BEGIN
 
   IF NOT FOUND THEN
     RETURN jsonb_build_object('ok', false, 'error', 'invalid_token');
-  END;
+  END IF;
 
   IF p_notify_frequency IS NOT NULL
      AND p_notify_frequency NOT IN ('daily','weekly','monthly','none') THEN
     RETURN jsonb_build_object('ok', false, 'error', 'invalid_frequency');
-  END;
+  END IF;
 
   -- Die Nutzungszeit ist nur mit PIN erlaubt: sie ist die einzige
   -- Einstellung, die den Jugendlichen in seiner Freiheit beschraenkt.
   IF coalesce(p_usage_limit_enabled, false) AND p_pin IS NULL THEN
     RETURN jsonb_build_object('ok', false, 'error', 'pin_required');
-  END;
+  END IF;
 
   -- PIN: genau vier Ziffern.
   IF p_pin IS NOT NULL AND p_pin !~ '^[0-9]{4}$' THEN
     RETURN jsonb_build_object('ok', false, 'error', 'invalid_pin');
-  END;
+  END IF;
 
   -- NEU (04.11.2026): Bereich der Nutzungszeit.
   --
@@ -188,12 +188,12 @@ BEGIN
 
   IF p_pin IS NULL OR p_pin !~ '^[0-9]{4}$' THEN
     RETURN jsonb_build_object('ok', false, 'error', 'invalid_pin');
-  END;
+  END IF;
 
   IF p_notify_frequency IS NOT NULL
      AND p_notify_frequency NOT IN ('daily','weekly','monthly','none') THEN
     RETURN jsonb_build_object('ok', false, 'error', 'invalid_frequency');
-  END;
+  END IF;
 
   -- NEU (04.11.2026): Bereich der Nutzungszeit - identisch zum
   -- Elternportal (Migration 173), damit beide Wege dieselben Grenzen
@@ -217,7 +217,7 @@ BEGIN
   IF NOT public.consume_rate_limit(
        'guardian_pin:' || v_uid::text, 5, 3600) THEN
     RETURN jsonb_build_object('ok', false, 'error', 'rate_limited');
-  END;
+  END IF;
 
   SELECT c.id, c.pin_hash INTO v_row
     FROM public.guardian_consents c
@@ -228,14 +228,14 @@ BEGIN
 
   IF NOT FOUND OR v_row.pin_hash IS NULL THEN
     RETURN jsonb_build_object('ok', false, 'error', 'no_pin');
-  END;
+  END IF;
 
   v_hash := v_row.pin_hash;
   v_ok := (extensions.crypt(p_pin, v_hash) = v_hash);
 
   IF NOT v_ok THEN
     RETURN jsonb_build_object('ok', false, 'error', 'wrong_pin');
-  END;
+  END IF;
 
   UPDATE public.guardian_consents
      SET notify_frequency    = coalesce(p_notify_frequency, notify_frequency),

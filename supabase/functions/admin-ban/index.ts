@@ -14,14 +14,16 @@
 //  3. Optional: Der Nutzer erhält per E-Mail (Brevo) die Begründung und den
 //     Hinweis auf den Entsperrungsantrag.
 //
-// Auth: JWT-Pflicht + die JWT-User-ID muss dem Secret ADMIN_UUID entsprechen
-// (denselben Wert wie das Build-Flag --dart-define=ADMIN_UUID setzen).
-// Fail-closed: Ohne gesetztes Secret lehnt die Funktion ALLE Anfragen ab.
+// Auth: JWT-Pflicht + das Spaltenflag profiles.is_admin (Migration 175).
+// Fail-closed: Ohne Admin-Flag lehnt die Funktion ALLE Anfragen ab.
+//
+// Das Secret ADMIN_UUID wird fuer den BAUEN gebraucht (--dart-define),
+// damit die Admin-Variante der App entsteht - die Berechtigung selbst
+// kommt aus der Datenbank.
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.0";
 
-const ADMIN_UUID = Deno.env.get("ADMIN_UUID") ?? "";
 const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY") ?? "";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 // API-Keys: sb_-Keys (secret_jwt_template -> service_role). Nach
@@ -77,11 +79,59 @@ serve(async (req) => {
       status: 401, headers: { "Content-Type": "application/json" },
     });
   }
-  if (!ADMIN_UUID || authData.user.id !== ADMIN_UUID) {
+  // EIN Admin-Konzept (BEFUND 04.11.2026, Migration 175).
+  //
+  // Vorher stand hier der Vergleich mit dem Secret ADMIN_UUID, waehrend
+  // verification-media und verify-account das Spaltenflag
+  // profiles.is_admin geprueft haben. Zwei Konzepte fuer dieselbe
+  // Frage sind zwei Wahrheiten: Ein Konto konnte in der einen
+  // Funktion Admin sein und in der anderen nicht - und eine Rotation
+  // des Secrets haette nur die eine Funktion getroffen.
+  //
+  // Jetzt gilt das Flag ueberall. Das Flag kann nur serverseitig
+  // gesetzt werden (Trigger Migration 061) - ein gepatchter Client
+  // kommt nicht daran.
+  //
+  // Das Secret ADMIN_UUID bleibt es fuer den BAUEN: die App braucht
+  // es als --dart-define, um die Admin-Variante zu erzeugen. Es ist
+  // damit eine Bauvariable, keine Berechtigung mehr.
+  const { data: adminProfile } = await supabaseAdmin
+    .from("profiles")
+    .select("is_admin")
+    .eq("user_id", authData.user.id)
+    .maybeSingle();
+  if (!adminProfile || adminProfile.is_admin !== true) {
     return new Response(JSON.stringify({ error: "Forbidden" }), {
       status: 403, headers: { "Content-Type": "application/json" },
     });
   }
+
+  // Rate-Limit (BEFUND 04.11.2026): Ohne Bremse konnte ein
+  // kompromittiertes Admin-Konto die GoTrue-Nutzerliste (bis 25
+  // Seiten a 200 Nutzer je Anfrage) missbrauchen und so die API
+  // fluten. 60 Aktionen pro Stunde sind fuer die Handarbeit
+  // reichlich.
+  const { data: rateOk, error: rateError } = await supabaseAdmin.rpc(
+    "consume_rate_limit",
+    {
+      p_key: `admin_ban:${authData.user.id}`,
+      p_max_hits: 60,
+      p_window_seconds: 3600,
+    },
+  );
+  if (rateError) {
+    console.error("admin-ban: Rate-Limit-RPC fehlgeschlagen:", rateError);
+    return new Response(JSON.stringify({ error: "Serverfehler." }), {
+      status: 503, headers: { "Content-Type": "application/json" },
+    });
+  }
+  if (rateOk !== true) {
+    return new Response(
+      JSON.stringify({ error: "Zu viele Aktionen. Bitte spaeter erneut versuchen." }),
+      { status: 429, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
 
   try {
     const body = await req.json();
@@ -129,6 +179,10 @@ serve(async (req) => {
     // Weg läuft über die GoTrue-Admin-Liste, jetzt PAGINIERT (bis 5000
     // Accounts), damit die Sperrung auch bei größeren Instanzen greift.
     if (!targetUserId && action === "ban") {
+      // Der Scan ist durch das Rate-Limit (60/h) begrenzt: im
+      // schlimmsten Fall sind es 60 x 25 Seiten GoTrue-Aufrufe je
+      // Stunde. Der Client uebergibt die User-ID in der Regel
+      // direkt - dann entfaellt der Scan ganz.
       for (let page = 1; page <= 25 && !targetUserId; page++) {
         const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({
           page, perPage: 200,

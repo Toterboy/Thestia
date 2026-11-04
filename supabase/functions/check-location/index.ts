@@ -61,13 +61,13 @@ interface CheckLocationRequest {
   lon2: number;
 }
 
-  /**
+/**
  * Vergleicht zwei Strings constant-time.
  *
- * BEFUND 04.11.2026: Der Vergleich war [...secret].every(...) - der
- * bricht beim ersten unterschiedlichen Zeichen ab und war damit
- * timing-observable. Die neun anderen internen Funktionen nutzen
- * diese Form schon.
+ * BEFUND 04.11.2026: Der Vergleich war [...secret].every(...) mit
+ * vorabendem Längenvergleich - der bricht beim ersten Unterschied ab
+ * und war damit timing-observable. Die neun anderen internen
+ * Funktionen nutzen timingSafeEqual - diese eine war die Ausnahme.
  */
 function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
@@ -75,6 +75,8 @@ function timingSafeEqual(a: string, b: string): boolean {
   for (let i = 0; i < a.length; i++) {
     diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   }
+  return diff === 0;
+}
 
 serve(async (req) => {
   if (req.method !== "POST") {
@@ -88,10 +90,18 @@ serve(async (req) => {
   // INTERNER SCHUTZ: Nur Aufrufe mit gültigem internen Secret zulassen
   // (constant-time Vergleich, Audit N5).
   // -------------------------------------------------------------------------
-  return diff === 0;
-}
-
-  const internalSecret = Deno.env.get("INTERNAL_SECRET");
+  // EIN Secret-Name fuer alle internen Funktionen (BEFUND 04.11.2026).
+  //
+  // Es gab zwei: THESTIA_INTERNAL_SECRET (die acht anderen internen
+  // Funktionen) und INTERNAL_SECRET (nur diese beiden). Bei einer
+  // Rotation wäre eine der beiden Seiten stehen geblieben - und die
+  // Verwechslung waere beim Lesen nicht zu sehen.
+  //
+  // THESTIA_INTERNAL_SECRET ist der kanonische Name. Der Rueckfall auf
+  // den alten Namen haelt den Bestand lauffaehig, bis das alte Secret
+  // entfernt ist.
+  const internalSecret = Deno.env.get("THESTIA_INTERNAL_SECRET") ??
+    Deno.env.get("INTERNAL_SECRET") ?? "";
   const receivedSecret = req.headers.get("x-internal-secret") ?? "";
   const secretsMatch =
     !!internalSecret && timingSafeEqual(internalSecret, receivedSecret);

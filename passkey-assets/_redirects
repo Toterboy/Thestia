@@ -39,7 +39,6 @@
 # /.well-known/-Pfade auf die Dateien im Root (Netlify Drop ignoriert
 # Ordner mit fuehrendem Punkt).
 /.well-known/assetlinks.json               /assetlinks.json               200!
-/.well-known/apple-app-site-association    /apple-app-site-association    200!
 
 # Die eigene robots.txt fuer den Auth-Host. Der Host-Rewrite wirkt NUR
 # auf diesen Host und kann keinen anderen Host freigeben.

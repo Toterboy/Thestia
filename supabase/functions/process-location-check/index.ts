@@ -21,7 +21,11 @@ function _pickApiKey(autoDict: string, custom: string): string {
 }
 
 const SUPABASE_SERVICE_ROLE_KEY = _pickApiKey("SUPABASE_SECRET_KEYS", "SUPABASE_SECRET_KEY");
-const INTERNAL_SECRET = Deno.env.get("INTERNAL_SECRET") ?? "";
+// EIN Secret-Name fuer alle internen Funktionen (BEFUND 04.11.2026).
+// THESTIA_INTERNAL_SECRET ist der kanonische Name; der Rueckfall auf
+// den alten Namen haelt den Bestand lauffaehig.
+const INTERNAL_SECRET = Deno.env.get("THESTIA_INTERNAL_SECRET") ??
+  Deno.env.get("INTERNAL_SECRET") ?? "";
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !INTERNAL_SECRET) {
   console.error("SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY und INTERNAL_SECRET müssen als Secrets gesetzt sein.");

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { endungFuer, pruefeAufBild } from "../_shared/image_guard.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.44.0";
 
 const BUGREPORT_EMAIL = "bugreport@thestia.de";
@@ -182,6 +183,26 @@ serve(async (req) => {
         return { name, content };
       })
       .filter((a) => a.content.length > 0);
+
+    // BEFUND 04.11.2026: Die Anhaenge wurden nur nach Groesse
+    // geprueft. Jeder Byte-Haufen konnte als "Screenshot" an die
+    // Support-Mail des Betreibers gehen - auch ein Skript oder eine
+    // ZIP-Datei. Der Dateiname stand dabei unter Client-Kontrolle
+    // (nur auf sichere Zeichen reduziert).
+    //
+    // Jetzt wird jeder Anhang an den Magic Bytes geprueft, und der
+    // Name wird vom erkannten Typ abgeleitet - der Client kann also
+    // auch keine Dateiendung mehr bestimmen.
+    for (const a of attachments) {
+      const typ = pruefeAufBild(a.content);
+      if (!typ) {
+        return new Response(
+          JSON.stringify({ error: "Anhänge: nur Bilder (JPEG, PNG, WebP)." }),
+          { status: 400, headers: { "Content-Type": "application/json" } },
+        );
+      }
+      a.name = `screenshot${endungFuer(typ)}`;
+    }
 
     if (attachments.some((a) => a.content.length > MAX_ATTACHMENT_BASE64)) {
       return new Response(JSON.stringify({ error: "Ein Bild überschreitet 2 MB." }), {
