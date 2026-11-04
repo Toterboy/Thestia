@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/utils/captcha_token.dart';
 import 'package:thestia/utils/constants.dart';
 
 /// CAPTCHA-Challenge für Registrierung & Login (Bot-Schutz).
@@ -95,7 +96,7 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
       setState(() => _error = text.substring('ERROR:'.length));
       return;
     }
-    // Turnstile-Token (beginnt mit "0.") – Challenge erfolgreich.
+    // Turnstile-Token - Challenge erfolgreich.
     //
     // SICHERHEIT (03.11.2026): Der Bridge-Aufruf kommt aus JEDER im
     // WebView geladenen Seite - auch aus einem Iframe. Ohne
@@ -103,10 +104,11 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
     // String als "Token" einspielen. Der Server wuerde ihn ablehnen,
     // aber die App meldete dennoch "Sicherheitscheck bestanden".
     //
-    // Geprueft wird deshalb das Format, das Cloudflare selbst
-    // liefert: "0." gefolgt von einer Zeichenkette aus Buchstaben,
-    // Ziffern, "_" und "-". Alles andere wird als Fehler behandelt.
-    if (!_istTurnstileToken(text)) {
+    // Die Formatpruefung steht in lib/utils/captcha_token.dart, damit
+    // sie testbar ist - sie hat hier als private Methode gestanden und
+    // ist deshalb 04.11.2026 zu streng geworden: sie verlangte das
+    // Praefix "0.", Cloudflare liefert inzwischen "1." (live gemessen).
+    if (!isTurnstileToken(text)) {
       debugPrint('[CAPTCHA] Unplausibles Token-Format - verworfen.');
       setState(() => _error = 'CAPTCHA_ERROR:invalid-token');
       return;
@@ -146,17 +148,6 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
         ),
       )
       ..loadRequest(Uri.parse(_captchaPageUrl));
-  }
-
-  /// Ist der String ein plausibles Turnstile-Token?
-  ///
-  /// Turnstile-Token beginnen mit "0." und enthalten nur Buchstaben,
-  /// Ziffern, "_" und "-". Alles andere kann nicht aus Cloudflare
-  /// stammen.
-  static bool _istTurnstileToken(String text) {
-    if (text.length < 8 || text.length > 4096) return false;
-    if (!text.startsWith('0.')) return false;
-    return RegExp(r'^[A-Za-z0-9_.-]+$').hasMatch(text);
   }
 
   /// Übersetzt den Turnstile-Fehlercode in eine verständliche Meldung.
