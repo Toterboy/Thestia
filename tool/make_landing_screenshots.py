@@ -6,10 +6,17 @@ leere Kaesten - die Pfade /screenshots/*.jpg existierten auf dem
 Server nicht. Im Quelltext des Verzeichnisses lagen sie auch nicht:
 die Bilder waren nie erzeugt worden.
 
-QUELLE: die Store-Screenshots (9x16, 1080x1920) aus
-fastlane/metadata/android/<sprache>/images/phoneScreenshots/. Sie
-zeigen dieselben Screens und dieselben Texte wie im Store - das
-Bild und sein Alt-Text sagen dasselbe.
+QUELLE: die Store-Screenshots in der KACHELN-Variante (9x16,
+1080x1920) aus releases/testapk/screenshots/marketing/9x16-kacheln/
+(bzw. .../en/9x16-kacheln/ fuer Englisch). Das ist die Variante OHNE
+nachgeahmte Statusleiste - der Test in test/web_pages_test.dart
+verlangt genau das ("Die Galerie zeigt die Kacheln, nicht den
+Geraete-Screen").
+
+Die Geraete-Screens (fastlane/.../phoneScreenshots) haben oben die
+gemalte Statusleiste (Uhrzeit, WLAN, Akku) auf weissem Grund - das
+sieht in der Galerie nach einem Screenshot aus und ist fuer die
+Webseite die falsche Wahl.
 
 ZIEL: passkey-assets/screenshots/*.jpg (deutsch) und
 passkey-assets/en/screenshots/*.jpg (englisch). Die Bildpfade in den
@@ -41,15 +48,19 @@ SPRACHEN = [
     ('en-US', PUBLISH / 'en' / 'screenshots'),
 ]
 
+# Die Quelle: die Kacheln-Variante der Store-Screenshots.
+QUELLE = ROOT / 'releases' / 'testapk' / 'screenshots' / 'marketing'
+
 
 def main() -> int:
     anzahl = 0
     fehlend = []
 
     for sprache, ziel in SPRACHEN:
-        quelle = FASTLANE / sprache / 'images' / 'phoneScreenshots'
+        basis = QUELLE if sprache == 'de-DE' else QUELLE / 'en'
+        quelle = basis / '9x16-kacheln'
         if not quelle.is_dir():
-            print('  %s: keine Store-Screenshots (%s) - erst '
+            print('  %s: keine Kacheln-Screenshots (%s) - erst '
                   'python tool/make_store_screenshots.py'
                   % (sprache, quelle.relative_to(ROOT)))
             return 1

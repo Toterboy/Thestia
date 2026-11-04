@@ -106,7 +106,12 @@ void main() {
           reason: '$name: laedt ein Bild automatisch von draussen.',
         );
         expect(
-          RegExp(r'''<link[^>]+href\s*=\s*["']https?://''',
+          // WICHTIG (04.11.2026): Ein <link rel="canonical"> bindet KEIN
+          // Stylesheet ein - der Browser laedt daraus nichts. Ohne diese
+          // Ausnahme wird die eigene kanonische Adresse als "fremde
+          // Ressource" gewertet.
+          RegExp(r'''<link(?![^>]*rel\s*=\s*["']canonical["'])'''
+              r'''[^>]+href\s*=\s*["']https?://''',
                   caseSensitive: false)
               .hasMatch(html),
           isFalse,
@@ -161,16 +166,24 @@ void main() {
 
     test('Jede Kachel hat ein Bild im Publish-Verzeichnis', () {
       final html = File('${assets.path}/index.html').readAsStringSync();
+      // Die Pfade sind RELATIV (04.11.2026): so zeigt /en/ die
+      // englischen Bilder und / die deutschen. Absolute Pfade
+      // (/screenshots/...) wuerden auf der englischen Seite die
+      // deutschen Bilder zeigen.
       final bilder = RegExp(r'''<img[^>]+src\s*=\s*["']([^"']+)["']''')
           .allMatches(html)
           .map((m) => m.group(1)!)
-          .where((u) => u.startsWith('/screenshots/'))
+          .where((u) => u.startsWith('screenshots/')
+              || u.startsWith('/screenshots/'))
           .toList();
       expect(bilder.length, greaterThanOrEqualTo(8),
           reason: 'Die Galerie soll alle acht Screenshots zeigen.');
 
       for (final url in bilder) {
-        final pfad = '${assets.path}$url';
+        // Relativ zum Ordner der HTML-Datei aufloesen.
+        final pfad = url.startsWith('/')
+            ? '${assets.path}$url'
+            : '${assets.path}/${url}';
         expect(File(pfad).existsSync(), isTrue,
             reason: 'Bild fehlt: $url');
         // Die Obergrenze aus tool/check_web_payload.py (200 KB). Wer
@@ -196,10 +209,14 @@ void main() {
       // 01 Willkommen, 02 Aktuelles, 03 Chat, 04 Entdecken,
       // 05 Anpassen, 06 Hell/Dunkel, 07 Eisbrecher, 08 Datenschutz.
       final html = File('${assets.path}/index.html').readAsStringSync();
-      final reihenfolge = RegExp(r'/screenshots/(\d\d)_')
-          .allMatches(html)
-          .map((m) => m.group(1)!)
-          .toList();
+      // Nur die <img>-Elemente: das og:image in den Meta-Angaben
+      // nennt ebenfalls "screenshots/01_..." und wuerde die Liste
+      // sonst um einen Eintrag verlaengern.
+      final reihenfolge =
+          RegExp(r'''<img[^>]+src\s*=\s*["'][^"']*screenshots/(\d\d)_''')
+              .allMatches(html)
+              .map((m) => m.group(1)!)
+              .toList();
       expect(reihenfolge,
           ['01', '02', '03', '04', '05', '06', '07', '08'],
           reason: 'Die Kacheln muessen in der Reihenfolge der Screens '

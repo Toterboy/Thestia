@@ -107,7 +107,15 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   key: const Key('welcome-page-content'),
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const AppLogo(size: 120),
+                    // GROESSER (04.11.2026): Das Logo war 120 dp - auf
+                    // einem 360 dp breiten Screen ein kleines Bild. Im
+                    // Store-Screenshot landete es dadurch bei nur 193 px,
+                    // und die Wortmarke "Thestia" war im Listing nicht
+                    // mehr zu lesen. 170 dp ist der Weg, der in der App
+                    // besser aussieht UND im Store schaerfer ist (die
+                    // Quelle ist 941x941 px, es wird also nicht
+                    // hochskaliert).
+                    const AppLogo(size: 170),
                     const SizedBox(height: 32),
                     Text(
                       page.title,

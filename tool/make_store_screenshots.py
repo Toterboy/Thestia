@@ -1785,7 +1785,15 @@ def compose_card(shot: Image.Image, headline: str, subline: str, badge: str,
     margin = 60
     gap = 28
     badge_top = H - 136
-    card = _crop_store_insets(shot.convert('RGB'))
+    # KEIN Insets-Crop (04.11.2026).
+    #
+    # Der Crop schnitt an der ERSTEN Inhaltszeile ab - mitten durch
+    # den Text. Bei 06 (Hell/Dunkel) fehlte dadurch ueber der
+    # Ueberschrift "Erscheinungsbild" ein Stueck des Screens, unten
+    # fehlten die letzten Chat-Hintergruende. Der Screen ist jetzt
+    # vollstaendig; die leeren Insets-Streifen oben und unten sind
+    # Teil des Screens (dort steht die Statusleiste).
+    card = shot.convert('RGB')
     _place_card(bg, card, y + 34, badge_top - y - 70, W - 2 * margin,
                 center_w=W)
 
@@ -2178,18 +2186,19 @@ def compose_modes_wqhd(tiles, headline: str, subline: str, badge: str,
     Kante - sonst sieht das 10-Zoll-Bild aus wie ein 16:9-Bild, das
     zusammengestaucht wurde.
     """
-    skala = min(W / 2560.0, H / 1440.0)
+    # DASSELBE Raster wie in den uebrigen Querformat-Bildern: die
+    # Kacheln stehen an derselben Stelle und der Text beginnt an
+    # derselben Stelle (04.11.2026).
+    skala, margin, spalte_x, spalte_w, tx = _quer_raster(W, H)
     bg = gradient((W, H), 25).convert('RGBA')
     draw = ImageDraw.Draw(bg)
 
-    margin = max(24, int(90 * skala))
     gap = max(10, int(26 * skala))
     col_w = _place_tiles(bg, tiles, margin, H - 2 * margin,
-                         max(200, int(980 * skala)), gap, x=margin)
+                         spalte_w, gap, x=spalte_x)
 
     f_head = ImageFont.truetype(FONT_BOLD, max(24, int(78 * skala)))
     f_sub = ImageFont.truetype(FONT_REG, max(12, int(38 * skala)))
-    tx = margin + col_w + max(30, int(90 * skala))
     y = max(int(120 * skala), (H - int(400 * skala)) // 2)
     y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255),
                    max(8, int(20 * skala)), tx, y, align='left')
@@ -2218,36 +2227,26 @@ def compose_cards_wqhd(cards, headline: str, subline: str, badge: str,
                         W: int = 1920, H: int = 1200):
     """Querformat: die echten Kacheln links, der Text rechts.
 
-    WARUM ES DIESE FUNKTION GIBT (04.11.2026): Das 10-Zoll-Tablet war
-    vorher ein Bild, in dem der GANZE Telefon-Screen links stand und der
-    Text rechts. Drei Fehler kamen dadurch:
-
-      * Der Screen wurde auf die volle Bildhoehe skaliert - der
-        Abschnittsrand schnitt dabei oben mitten durch den
-        "Ueberspringen"-Knopf.
-      * Alles wurde kleiner: das App-Logo schrumpfte auf 150 px und
-        wirkte unscharf, wenn der Store es gross zeigt.
-      * Die Startseite und die Entdecken-Kacheln hatten gar keinen
-        eigenen Kachel-Export - fuer die Entdecken stand dort der
-        Dart-Placeholder (eine schwarze Box mit X).
-
-    Mit den Kacheln aus dem App-Export ist der Inhalt 1:1 (also
-    scharf), der Screenshot ist eine Karte wie in den uebrigen Bildern
-    und der Text steht rechts - so wie beim 16:9-Bild.
+    FUER DAS 10-ZOLL-TABLET (04.11.2026), mit demselben Raster wie
+    das Bild mit dem App-Screen (compose_landscape): die Kacheln
+    stehen an derselben Stelle und der Text beginnt an derselben
+    Stelle. So sehen alle acht Bilder gleich aus.
 
     Die Kacheln kommen aus dem Dart-Export (echte Widgets, kein
     nachgebautes Layout), genau wie im 9:16-Bild.
     """
-    skala = min(W / 2560.0, H / 1440.0)
+    # Das GLEICHE Raster wie im Bild mit dem App-Screen: die Kacheln
+    # stehen an derselben Stelle und der Text beginnt an derselben
+    # Stelle. So sehen alle acht Bilder gleich aus.
+    skala, margin, spalte_x, spalte_w, tx = _quer_raster(W, H)
     verlauf = gradient((W, H), 25)
     if dark:
         verlauf = darken(verlauf)
     bg = verlauf.convert('RGBA')
     draw = ImageDraw.Draw(bg)
 
-    margin = max(24, int(90 * skala))
     gap = max(10, int(26 * skala))
-    text_gap = max(30, int(90 * skala))
+    max_w = spalte_w
 
     imgs = [c for _n, c in cards]
 
@@ -2258,8 +2257,6 @@ def compose_cards_wqhd(cards, headline: str, subline: str, badge: str,
     # die Hoehe (die letzte Reihe war abgeschnitten) und fuer den Text
     # rechts war kein Platz mehr. Jetzt nimmt die linke Spalte 42 % der
     # Breite, der Text steht rechts.
-    max_w = max(200, int(W * 0.42))
-
     head = None
     head_h = 0
     if heading:
@@ -2273,11 +2270,11 @@ def compose_cards_wqhd(cards, headline: str, subline: str, badge: str,
         block = head_h + (gap if heading else 0) + probe['block_h']
         start = margin + max(0, (H - 2 * margin - block) / 2.0)
         if head is not None:
-            _paste_card(bg, head, margin, start)
+            _paste_card(bg, head, spalte_x, start)
         _place_grid(bg, imgs,
                     int(start + head_h + (gap if heading else 0)),
                     int(H - 2 * margin), max_w, cols=cols, gap=gap,
-                    min_gap=18, center_w=2 * margin + max_w)
+                    min_gap=18, center_w=2 * spalte_x + max_w)
         col_w = max_w
     else:
         # Der Block sitzt MITTIG (sonst klebt die Karte oben und der
@@ -2290,15 +2287,115 @@ def compose_cards_wqhd(cards, headline: str, subline: str, badge: str,
         block = head_h + (gap if heading else 0) + probe['block_h']
         start = margin + max(0, (H - 2 * margin - block) / 2.0)
         if head is not None:
-            _paste_card(bg, head, margin, start)
-        col_w = _place_tiles(bg, imgs,
-                             int(start + head_h + (gap if heading else 0)),
-                             int(H - start - margin), max_w, gap, x=margin)
+            _paste_card(bg, head, spalte_x, start)
+        # Die Kacheln beginnen an derselben Stelle wie der App-Screen
+        # im Nachbarbild: linksbuendig in der Spalte.
+        col_w = _place_tiles(
+            bg, imgs,
+            int(start + head_h + (gap if heading else 0)),
+            int(H - start - margin), max_w, gap, x=spalte_x)
 
     # Der Text rechts, mittig zur Kachel.
     f_head = ImageFont.truetype(FONT_BOLD, max(24, int(78 * skala)))
     f_sub = ImageFont.truetype(FONT_REG, max(12, int(38 * skala)))
-    tx = margin + col_w + text_gap
+    y = max(int(120 * skala), (H - int(400 * skala)) // 2)
+    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255),
+                   max(8, int(20 * skala)), tx, y, align='left')
+    y += max(10, int(24 * skala))
+    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226),
+                   max(6, int(14 * skala)), tx, y, align='left')
+    y += max(16, int(40 * skala))
+    f_badge = ImageFont.truetype(FONT_BOLD, max(14, int(36 * skala)))
+    bb = draw.textbbox((0, 0), badge, font=f_badge)
+    bw = bb[2] - bb[0] + 2 * max(24, int(68 * skala))
+    layer = Image.new('RGBA', bg.size, (0, 0, 0, 0))
+    ImageDraw.Draw(layer).rounded_rectangle(
+        [tx, y, tx + bw, y + bb[3] - bb[1] + max(14, int(40 * skala))],
+        radius=(bb[3] - bb[1] + max(14, int(40 * skala))) // 2,
+        fill=(255, 255, 255, 52), outline=(255, 255, 255, 130), width=2)
+    ImageDraw.Draw(layer).text(
+        (tx + max(24, int(68 * skala)) - bb[0],
+         y + max(8, int(20 * skala)) - bb[1]), badge, font=f_badge,
+        fill=(255, 255, 255, 250))
+    bg.alpha_composite(layer)
+    return round_corners(bg, max(24, int(56 * skala)))
+
+
+def _quer_raster(W: int, H: int):
+    """Die feste Aufteilung des Querformat-Bildes.
+
+    FUER ALLE BILDER GLEICH (04.11.2026): "die Screenshots beim
+    10-Zoll-Tablet alle gleich positioniert sein und das dabei nicht
+    ausserhalb des Bildes sondern mehr mittig".
+
+    Also: eine Spalte fuer den Inhalt an FESTER Stelle (16 % der
+    Breite, 30 % breit) und der Text immer an derselben Stelle
+    (52 %). Ob in der Spalte ein App-Screen oder eine Kachel steht,
+    aendert nichts an der Position - der Betrachter sieht acht Bilder
+    mit derselben Anordnung.
+    """
+    skala = min(W / 2560.0, H / 1440.0)
+    margin = max(24, int(90 * skala))
+    # Die linke Kante der Inhaltsspalte: 12 % der Breite. Nicht am
+    # Rand (3 % sah angeklebt aus) und nicht zu weit innen (der Block
+    # waere dann nicht mehr mittig).
+    spalte_x = int(W * 0.12)
+    spalte_w = int(W * 0.30)
+    # Der Text beginnt direkt nach der Spalte - in JEDEM Bild an
+    # derselben Stelle.
+    text_x = spalte_x + spalte_w + int(W * 0.03)
+    return skala, margin, spalte_x, spalte_w, text_x
+
+
+def compose_landscape(shot: Image.Image, headline: str, subline: str,
+                      badge: str, dark: bool = False, W: int = 1920,
+                      H: int = 1200, split=None):
+    """QUERFORMAT: der volle App-Screen links, der Text rechts.
+
+    FUER DAS 10-ZOLL-TABLET (04.11.2026).
+
+    DREI SACHEN, DIE VORHER SCHIEFGINGEN (NUTZER-MELDUNG):
+
+    1. "Ueber der Ueberschrift muss noch ein kleiner Teil vom Screen
+       sein, der abgeschnitten wurde." - Der Insets-Crop schnitt an
+       der ersten Inhaltszeile ab, mitten durch den Text. Bei 06
+       (Hell/Dunkel) fehlte dadurch der Streifen ueber der
+       Ueberschrift "Erscheinungsbild" und unten die letzten
+       Chat-Hintergruende. Hier wird NICHTS geschnitten: der
+       Screen ist vollstaendig, die Systemleiste wird in den leeren
+       Rand gezeichnet.
+
+    2. "Die Screenshots sollen alle gleich positioniert sein." - Der
+       Screen steht darum an einer FESTEN Stelle, unabhaengig vom
+       Inhalt. Vorher hing die Position am Text daneben.
+
+    3. "mehr mittig, nicht ausserhalb des Bildes." - Die linke
+       Kante liegt bei 16 % der Bildbreite (vorher am Rand bei 3 %).
+       Der Screen ist damit nicht mehr an den Rand geklebt, und der
+       Block aus Screen und Text sitzt als Ganzes mittig.
+    """
+    skala, margin, spalte_x, spalte_w, tx = _quer_raster(W, H)
+    verlauf = gradient((W, H), 25)
+    if dark:
+        verlauf = darken(verlauf)
+    bg = verlauf.convert('RGBA')
+    draw = ImageDraw.Draw(bg)
+
+    # app_tile zeichnet die Systemleiste mit alpha_composite - das geht
+    # nur mit einem RGBA-Bild. Die Render sind RGBA, der Split-Screen
+    # (zusammengesetzt aus zwei RGB-Bildern) dagegen RGB.
+    if shot.mode != 'RGBA':
+        shot = shot.convert('RGBA')
+
+    # Der Screen in der festen Spalte, mittig zur Hoehe.
+    box_h = H - 2 * margin
+    scr = app_tile(shot, box_h, spalte_w, corner_ratio=0.055, split=split)
+    tw, th = scr.size
+    bg.alpha_composite(scr, (spalte_x, (H - th) // 2))
+
+    # Der Text rechts daneben, mittig zur Hoehe.
+    f_head = ImageFont.truetype(FONT_BOLD, max(24, int(78 * skala)))
+    f_sub = ImageFont.truetype(FONT_REG, max(12, int(38 * skala)))
     y = max(int(120 * skala), (H - int(400 * skala)) // 2)
     y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255),
                    max(8, int(20 * skala)), tx, y, align='left')
@@ -2737,11 +2834,15 @@ def _baue_sprache(profil):
         # da der wie abgeschnitten ist"). Die Startseite ist eine lange
         # Liste - ohne Rand schnitt der Bildschirm mitten in einer
         # Kachel ab und wirkte wie ein zerstueckeltes Bild.
-        rand_oben = 40 if name == '02_aktuelles' else 0
-        rand_unten = 40 if name == '02_aktuelles' else 0
-        # Der Schnitt landet an einer Inhaltsgrenze - nicht mitten in
-        # einer Kachel.
-        sauberer_schnitt = name == '02_aktuelles'
+        rand_oben = 0
+        rand_unten = 0
+        # KEIN Schnitt und KEIN Rand mehr (04.11.2026): der Nutzer
+        # wollte "die ganze Aktuelles Seite" - der Schnitt an einer
+        # Inhaltsgrenze hoerte mitten in einer Zeile auf ("Keine neuen
+        # Funken" halb sichtbar) und der Rand liess den Bildschirm
+        # schweben. Der Screen wird jetzt auf die Hoehe skaliert und
+        # zeigt die Seite vollstaendig.
+        sauberer_schnitt = False
         # Geometrie der System-UI-Trennung (nur beim Hell/Dunkel-Split):
         # Winkel, Anker-x, Anker-y. None = einfarbig wie bei allen
         # anderen.
