@@ -1,27 +1,31 @@
-Thestia flips the classic dating formula: person first, picture later.
+Blind dates by personality, not photos.
 
-You only see photos once two people have genuinely gotten to know each other – through written and spoken intros plus a little quiz about each other. No perfectly staged profile pics in the spotlight; the human behind them takes center stage.
+With Thestia you get to hear what someone says before you see what they look like. Intros can be read and listened to, plus a small quiz about each other. Photos only appear once you have genuinely got to know each other. So the perfectly staged profile picture is not the centrepiece – the person behind it is.
 
-HIGHLIGHTS
+FIVE WAYS TO SPARK A MATCH
 
-• Find your Match: candidates without photos, with written & spoken intros instead
-• Quiz unlock: pictures appear only after both pass the quiz (enforced server-side)
-• Random Chat: talk anonymously with a random person
-• QR code: connect in person – scan, show, or type a code
-• Dating Hour: weekly event with 5-minute chats; match only if both say yes
+• Find your Match: candidates without a photo, with an intro to read and listen to instead
+• Quiz unlock: photos only after the quiz has been passed on both sides – enforced on the server
+• Dating Hour: a weekly event with five-minute chats; a match only happens when both sides say yes
+• Random chat: write anonymously to a random person
+• Transit Spark: meet on the train – an encounter that can turn into a spark
 
-PRIVACY ISN'T AN ADD-ON, IT'S THE ARCHITECTURE
+PRIVACY IS NOT AN ADD-ON, IT IS THE ARCHITECTURE
 
-• End-to-end encryption for all messages, pictures and calls (Signal Protocol)
-• Direct device-to-device connections via WebRTC – servers never see content
-• Your location is never shared: others only see "approx. X km away"
-• No ad or tracking SDKs, EU infrastructure, fully open source
+• End-to-end encryption for every message, image and call (Signal protocol)
+• Direct device-to-device connection via WebRTC – the server never sees the content
+• Your location is never shared: others see at most „about X km away"
+• No advertising or tracking SDKs, EU infrastructure, open source
+• You decide whether your distance is shown at all – for minors it stays hidden
 
 SAFETY FOR EVERYONE
 
-• Age protection: minors are invisible to adults
-• Incoming chat pictures are blurred by default, revealed only after confirmation
-• Report and block features with personal review by the support team
-• Optional: two-factor authentication and passkeys
+• From the age of 16, with parental consent for 16- and 17-year-olds – they stay invisible to adults
+• Incoming chat images are blurred by default and only unlocked after confirmation
+• Report and block, with every case reviewed by a real person
+• Two-factor authentication and passkeys supported
+• You can delete your account and your data yourself – right in the app
 
-Thestia is free software (AGPLv3). The complete source code is public.
+OPEN AND VERIFIABLE
+
+Thestia is free software (AGPLv3). The complete source code is publicly readable, every decision in the project is documented, and the privacy policy, the threat model and the safety rules are all open. Built by a person with some help from artificial intelligence.

@@ -1,27 +1,31 @@
-Thestia dreht das Prinzip klassischer Dating-Apps um: Persönlichkeit zuerst.
+Blind Date nach Vorstellung statt Foto.
 
-Fotos sieht man erst, wenn zwei Menschen sich wirklich kennengelernt haben – über Text- und Audio-Vorstellungen und ein kleines Quiz übereinander. So steht nicht das perfekt ausgeleuchtete Profilbild im Mittelpunkt, sondern der Mensch dahinter.
+Bei Thestia siehst du zuerst zu, was jemand sagt – nicht, wie er aussieht. Vorstellungen kannst du lesen und anhören, dazu ein kleines Quiz übereinander. Fotos gibt es erst, wenn ihr euch wirklich kennt. So steht nicht das perfekt ausgeleuchtete Profilbild im Mittelpunkt, sondern der Mensch dahinter.
 
-HIGHLIGHTS
+FÜNF WEGE, EINEN FUNKEN ZU ZÜNDEN
 
 • Find your Match: Kandidaten ohne Foto, dafür mit Vorstellung zum Lesen und Anhören
-• Quiz-Freischaltung: Bilder gibt es erst nach bestandenem Quiz auf beiden Seiten (serverseitig erzwungen)
+• Quiz-Freischaltung: Bilder gibt es erst nach dem bestandenen Quiz auf beiden Seiten – serverseitig erzwungen
+• Dating Hour: wöchentliches Event mit 5-Minuten-Gesprächen; ein Match entsteht nur, wenn beide Seiten „Ja" sagen
 • Zufallschat: anonym mit einem zufälligen Menschen schreiben
-• QR-Code: euch persönlich verbinden – scannen, zeigen oder Code eintippen
-• Dating Hour: wöchentliches Event mit 5-Minuten-Gesprächen; Match nur bei beidseitigem „Ja"
+• Transit Spark: Sehnt euch im Zug – die Begegnung, aus der ein Funke werden kann
 
-PRIVATSPHÄRE KEIN ZUSATZ, SONDERN ARCHITEKTUR
+PRIVATSPHÄRE IST KEIN ZUSATZ, SONDERN ARCHITEKTUR
 
-• Ende-zu-Ende-Verschlüsselung aller Nachrichten, Bilder und Anrufe (Signal Protocol)
+• Ende-zu-Ende-Verschlüsselung aller Nachrichten, Bilder und Anrufe (Signal-Protokoll)
 • Direkte Geräte-zu-Gerät-Verbindung per WebRTC – der Server sieht keine Inhalte
-• Standort wird nie weitergegeben: andere sehen nur „ca. X km entfernt"
+• Dein Standort wird nie weitergegeben: andere sehen höchstens „ca. X km entfernt"
 • Keine Werbe- oder Tracking-SDKs, EU-Infrastruktur, offener Quellcode
+• Du entscheidest selbst, ob deine Entfernung angezeigt wird – bei Minderjährigen bleibt sie aus
 
 SICHERHEIT FÜR ALLE
 
-• Altersschutz: Minderjährige sind für Erwachsene unsichtbar
-• Eingehende Chat-Bilder standardmäßig verpixelt, Freischaltung nur nach Bestätigung
-• Melden und Blockieren mit persönlicher Prüfung durch den Support
-• Optional: Zwei-Faktor-Authentisierung und Passkeys
+• Ab 16 Jahren, mit Elternfreigabe für 16- und 17-Jährige – für Erwachsene bleiben sie unsichtbar
+• Eingehende Chat-Bilder sind standardmäßig verpixelt, freigeschaltet wird erst nach Bestätigung
+• Melden und Blockieren, mit persönlicher Prüfung durch den Support
+• Zwei-Faktor-Authentisierung und Passkeys möglich
+• Konto und Daten lassen sich jederzeit selbst löschen – direkt in der App
 
-Thestia ist freie Software (AGPLv3). Der komplette Code ist öffentlich einsehbar.
+OFFEN UND NACHPRÜFBAR
+
+Thestia ist freie Software (AGPLv3). Der komplette Code ist öffentlich einsehbar, jede Entscheidung im Projekt ist begründet, und Datenschutzerklärung, Angriffsbild und Sicherheitsregeln liegen offen. Entwickelt von einem Menschen mit Hilfe künstlicher Intelligenz.
