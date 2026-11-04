@@ -21,9 +21,47 @@
 # genannten Pfaden die Bloecke zusammen an, aber darauf ist kein
 # Verlass zu bauen - lieber eindeutig.
 
+# --- Sicherheits-Header fuer ALLE Seiten ---------------------------
+#
+# BEFUND 04.11.2026 (Audit der Website): Auf keiner Seite waren
+# Sicherheits-Header gesetzt. Live gemessen fehlten X-Frame-Options,
+# X-Content-Type-Options, Referrer-Policy, Permissions-Policy und ein
+# CSP-HEADER. Die Startseite hatte nur eine meta-CSP - und eine
+# meta-CSP kann "frame-ancestors" gar nicht abbilden (per Spezifikation
+# in <meta> nicht erlaubt).
+#
+# ZWEI ANGREIFSSZENARIEN, DIE DAUER OHNE DIESE HEADER MÖGLICH WAREN:
+#
+#  1) CLICKJACKING DER CAPTCHA-SEITE: https://auth.thestia.de/ liess
+#     sich in jedem <iframe> einbetten. Eine Angreifer-Seite legt ein
+#     transparentes Overlay ueber das Turnstile-Widget - das Opfer
+#     loest den Sicherheitscheck, der Angreifer nutzt das Ergebnis.
+#
+#  2) CLICKJACKING DES ELTERN-PORTALS:
+#     /eltern/einstellungen?token=... enthaelt die Schaltflaechen
+#     "Freigabe bestaetigen" und "Freigabe widerrufen". Ohne
+#     frame-ancestors kann die Seite geframt und ueberlagert werden.
+#
+# Netlify wendet ALLE passenden Bloecke an - der "/*"-Block gilt fuer
+# jede Datei, die pfad-spezifische Bloecke zusaetzlich ergaenzen.
+#
+# Die CSP entspricht der meta-CSP der Startseite (plus die Supabase-
+# Domain, die das Eltern-Portal fuer seine Abfragen braucht).
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+  Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), usb=(), interest-cohort=()
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; frame-src https://challenges.cloudflare.com; child-src https://challenges.cloudflare.com; worker-src 'self' blob:; connect-src 'self' https://challenges.cloudflare.com https://jftuigjbmmuvrckbchqo.supabase.co; img-src 'self' data: https://challenges.cloudflare.com; font-src 'self' https://challenges.cloudflare.com
+
 # --- Pflichtdateien fuer die App-Link-Verifikation -----------------
 /.well-known/*
   Content-Type: application/json
+  # BEFUND 04.11.2026: Ohne Cache-Angabe lieferte Netlify hier
+  # "max-age=0, must-revalidate" - die App-Link-Verifikation wurde
+  # also bei jeder Pruefung neu validiert.
+  Cache-Control: public, max-age=86400
 
 /assetlinks.json
   Content-Type: application/json
@@ -39,6 +77,17 @@
 # Registrierung geladen und muss immer die aktuelle Sitekey-Datei
 # ausliefern. Das ist der Default des Systems.
 /index.html
+  Content-Type: text/html; charset=utf-8
+
+# BEFUND 04.11.2026: Die Regel fuer "/index.html" galt nicht fuer die
+# Startseite "/" - Netlify wendet die Regeln auf den aufgerufenen
+# Pfad an. Live gemessen lieferte "/" deshalb "Cache-Control:
+# public,max-age=0,must-revalidate" statt der 5-Minuten-Regel. Die
+# Startseite ist die wichtigste Seite des Projekts (kanonische URL,
+# Sitemap-Priority 1.0) - jeder Hit darauf erzeugte einen neuen
+# Netlify-Request.
+/ 
+  Cache-Control: public, max-age=300
   Content-Type: text/html; charset=utf-8
 
 # --- Die Rechts- und Pflichtseiten ----------------------------------
@@ -101,9 +150,11 @@
 /en/eltern.html
   Cache-Control: public, max-age=300
 /en/eltern/einstellungen
-  Cache-Control: public, max-age=300
+  Cache-Control: no-store
+  Referrer-Policy: no-referrer
 /en/eltern/einstellungen.html
-  Cache-Control: public, max-age=300
+  Cache-Control: no-store
+  Referrer-Policy: no-referrer
 
 # Daten-Loeschung (Play-Anforderung)
 /daten-loeschen
@@ -116,10 +167,23 @@
   Cache-Control: public, max-age=300
 /eltern.html
   Cache-Control: public, max-age=300
+# BEFUND 04.11.2026: Das Eltern-Portal bekommt den Berechtigungs-
+# Token aus der URL (?token=...). Ein "public"-Cache wuerde die Seite
+# (mit dem Token in der Cache-Key-Adresse) zwischenspeichern, und
+# ohne Referrer-Policy landet der Token bei jedem internen Klick im
+# Referer-Header - also in den Server-Logs. Deshalb: nicht cachen und
+# den Referer abschalten.
+#
+# Der Inhalt der Seite ist fuer alle Nutzer identisch (der Token wird
+# nur clientseitig gelesen, es werden keine Nutzerdaten ausgeliefert).
+# Es geht also nicht um das Cache des Inhalts, sondern um das
+# Cache-LOG und um den Referer.
 /eltern/einstellungen
-  Cache-Control: public, max-age=300
+  Cache-Control: no-store
+  Referrer-Policy: no-referrer
 /eltern-einstellungen.html
-  Cache-Control: public, max-age=300
+  Cache-Control: no-store
+  Referrer-Policy: no-referrer
 
 # Das Threat Model ist oeffentlich (Transparenz) und aendert sich
 # selten.

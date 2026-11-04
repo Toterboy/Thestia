@@ -6,8 +6,24 @@
 # Quellen duerfen sich also nicht dieselbe Adresse nennen - sonst
 # schattiert die _redirects-Regel die TOML-Regel lautlos.
 #
-# Hier wird deshalb nur /datenschutz bedient; die .well-known-Pfade fuer
-# die App-Link-Verifikation stehen weiter in netlify.toml.
+# BEFUND 04.11.2026: Die .well-known-Pfade und der robots-Host-Rewrite
+# stehen jetzt AUCH hier - nicht nur in netlify.toml.
+#
+# Grund: ob netlify.toml bei einem Drag-&-Drop-Upload ausgewertet wird,
+# laesst sich aus dem Repo nicht belegen. Im Live-Stand vom 04.11.2026
+# war robots.txt auf BEIDEN Hosts die gesperrte Fassung und sitemap.xml
+# gab es gar nicht - die Spiegelung ist also nicht Schaden, sondern
+# Schadensbegrenzung.
+#
+# Das Schattungsrisiko aus dem Absatz darüber gilt nur, wenn ZWEI
+# Regeln dieselbe Adresse auf UNTERSCHIEDLICHE Ziele zeigen. Beide
+# zeigen hier auf dasselbe Ziel - der erste Treffer gewinnt, und das
+# Ergebnis ist in beiden Faellen identisch.
+#
+# Zusaetzlich: die interne Betriebsnotiz ASSETLINKS_ROOTDOMAIN.md ist
+# aus dem Publish-Ordner verschwunden (sie nennt die Stellen, an denen
+# ein Angreifer nachsehen wuerde). Der Redirect unten faengt die
+# bereits veroeffentlichte Datei ab.
 #
 # Warum ueberhaupt eine Regel: Netlify liefert datenschutz.html unter
 # /datenschutz.html aus. Ohne Regel gibt es unter /datenschutz einen
@@ -19,6 +35,18 @@
 # die .html im Link steht. Die Regel ist absichtlich explizit, obwohl
 # Netlify "Pretty URLs" schon per Default beherrscht - dann haengt die
 # Adresse an einer Dashboard-Einstellung, die jemand aus schalten kann.
+
+# /.well-known/-Pfade auf die Dateien im Root (Netlify Drop ignoriert
+# Ordner mit fuehrendem Punkt).
+/.well-known/assetlinks.json               /assetlinks.json               200!
+/.well-known/apple-app-site-association    /apple-app-site-association    200!
+
+# Die eigene robots.txt fuer den Auth-Host. Der Host-Rewrite wirkt NUR
+# auf diesen Host und kann keinen anderen Host freigeben.
+https://auth.thestia.de/robots.txt          /robots-auth.txt               200!
+
+# Die interne Betriebsnotiz gehoert nicht oeffentlich.
+/ASSETLINKS_ROOTDOMAIN.md                  /threat-model.md               301!
 
 /datenschutz    /datenschutz.html  200
 /datenschutz/   /datenschutz.html  200

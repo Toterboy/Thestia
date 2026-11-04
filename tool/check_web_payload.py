@@ -68,6 +68,15 @@ EN_PFLICHT_PFADE = ['/en/', '/en/datenschutz', '/en/impressum',
                      '/en/daten-loeschen', '/en/eltern',
                      '/en/eltern/einstellungen']
 
+# Pfade, die NICHT gecacht werden duerfen (BEFUND 04.11.2026).
+#
+# Das Eltern-Portal bekommt den Berechtigungs-Token aus der URL. Eine
+# Cache-Zeit wuerde die Seite zwischenspeichern und der Token
+# landete im Netlify-Zugriffslog - und im Referer jedes internen
+# Klicks. "no-store" ist hier die richtige Angabe.
+KEIN_CACHE = {'/eltern/einstellungen', '/eltern/einstellungen.html',
+              '/en/eltern/einstellungen', '/en/eltern/einstellungen.html'}
+
 problems = []
 
 
@@ -265,6 +274,22 @@ def main() -> int:
                 if not cache:
                     flag('_headers: %s ohne Cache-Control' % variante)
                     continue
+                # BEFUND 04.11.2026: Das Eltern-Portal ist die EINZIGE
+                # Ausnahme. Dort steht der Berechtigungs-Token in der
+                # URL (?token=...). Eine Cache-Zeit wuerde die Seite
+                # mit dem Token in der Cache-Adresse zwischenspeichern -
+                # und der Token landet im Netlify-Zugriffslog. Deshalb
+                # "no-store" statt max-age.
+                #
+                # Der Inhalt der Seite ist fuer alle Nutzer identisch
+                # (der Token wird nur clientseitig gelesen) - es geht
+                # nicht um die Inhalte, sondern um das Cache-LOG.
+                if variante in KEIN_CACHE:
+                    if 'no-store' not in cache[0]:
+                        flag('_headers: %s muss "no-store" haben - dort '
+                             'steht der Berechtigungs-Token in der URL'
+                             % variante)
+                    continue
                 max_age = re.search(r'max-age=(\d+)', cache[0])
                 if not max_age or int(max_age.group(1)) == 0:
                     flag('_headers: %s hat max-age=0 - der Browser '
@@ -276,6 +301,43 @@ def main() -> int:
         for p in doppelt:
             flag('_headers: %s steht mehrfach da' % p)
         print('   %d Pfade mit Regeln' % len(regeln))
+
+        # BEFUND 04.11.2026: Auf KEINER Seite waren Sicherheits-Header
+        # gesetzt. Live gemessen fehlten X-Frame-Options,
+        # X-Content-Type-Options, Referrer-Policy, Permissions-Policy
+        # und ein CSP-HEADER.
+        #
+        # Zwei Angriffsszenarien, die dadurch moeglich waren:
+        #   * Clickjacking der CAPTCHA-Seite (auth.thestia.de liess
+        #     sich in jedem iframe einbetten).
+        #   * Clickjacking des Eltern-Portals: /eltern/einstellungen
+        #     enthaelt "Freigabe bestaetigen" und "Freigabe
+        #     widerrufen" - geframt und ueberlagert kann ein
+        #     Angreifer einen Elternteil dazu bringen, die elterliche
+        #     Freigabe zu bestaetigen oder zu widerrufen.
+        #
+        # Der "/*"-Block in _headers gilt fuer jede Datei; Netlify
+        # wendet alle passenden Bloecke an.
+        sicherheits_header = [
+            'X-Content-Type-Options',
+            'Referrer-Policy',
+            'X-Frame-Options',
+            'Permissions-Policy',
+            'Strict-Transport-Security',
+            'Content-Security-Policy',
+        ]
+        alle_header = ' '.join(
+            '%s %s' % (n, w) for zeilen_ in regeln.values()
+            for (n, w) in zeilen_).lower()
+        for h in sicherheits_header:
+            if h.lower() not in alle_header:
+                flag('_headers: %s fehlt (global auf "/*" setzen) - ohne '
+                     'den Header ist die Seite u.a. frambar' % h)
+        # frame-ancestors kann nur im HEADER stehen, nicht in einer
+        # meta-CSP (per Spezifikation dort nicht erlaubt).
+        if 'frame-ancestors' not in alle_header:
+            flag('_headers: Content-Security-Policy ohne frame-ancestors '
+                 '- die Seiten sind sonst in fremde iframes einbettbar')
 
     # --- 4) robots.txt -----------------------------------------------
     print('\n4) robots.txt:')

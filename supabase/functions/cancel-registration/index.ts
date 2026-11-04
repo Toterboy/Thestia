@@ -51,6 +51,22 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 // SUPABASE_SECRET_KEY ('default') zuerst, Reserve SUPABASE_SECRET_KEYS.
 // Publishable analog (sb_publishable_/anon).
 function _pickApiKey(autoDict: string, custom: string): string {
+/**
+ * Maskiert die LIKE-Wildcards in einem Wert.
+ *
+ * BEFUND 04.11.2026: Der Wert wurde ungefiltert in ein LIKE-Muster
+ * gebaut (`%${email}%`). In SQL ist "%" ein Platzhalter und "_" matcht
+ * ein beliebiges Zeichen - eine Adresse wie "%@beispiel.de" hat dadurch
+ * die Buckets ALLER Adressen auf dieser Domain getroffen, fremde
+ * Rate-Limit-Zaehler inklusive.
+ *
+ * Der Escape-Character im LIKE-Muster von Postgres ist der Backslash.
+ */
+function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, (m) => `\\${m}`);
+}
+
+
   const single = Deno.env.get(custom) ?? "";
   if (single.length > 0) return single;
   try {
@@ -242,7 +258,7 @@ serve(async (req) => {
       await supabaseAdmin
         .from("rate_limit_hits")
         .delete()
-        .like("bucket_key", `%${email}%`);
+        .like("bucket_key", `%${escapeLike(email)}%`);
     } catch (e) {
       console.error("rate_limit purge failed:", e);
     }

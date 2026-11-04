@@ -20,6 +20,22 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 type _KeyCand = { key: string; source: string };
 
 function _keyCandidates(): _KeyCand[] {
+/**
+ * Maskiert die LIKE-Wildcards in einem Wert.
+ *
+ * BEFUND 04.11.2026: Der Wert wurde ungefiltert in ein LIKE-Muster
+ * gebaut (`%${email}%`). In SQL ist "%" ein Platzhalter und "_" matcht
+ * ein beliebiges Zeichen - eine Adresse wie "%@beispiel.de" hat dadurch
+ * die Buckets ALLER Adressen auf dieser Domain getroffen, fremde
+ * Rate-Limit-Zaehler inklusive.
+ *
+ * Der Escape-Character im LIKE-Muster von Postgres ist der Backslash.
+ */
+function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, (m) => `\\${m}`);
+}
+
+
   const out: _KeyCand[] = [];
   try {
     const dict = JSON.parse(
@@ -180,8 +196,11 @@ async function purgeUserRows(
     };
   }
   // Operative Rate-Limit-Zähler mit User-ID/E-Mail im Schlüssel.
-  const patterns = [`%${userId}%`];
-  if (email) patterns.push(`%${email}%`);
+  // BEFUND 04.11.2026: Das Muster wird maskiert - ein "%" oder
+  // "_" in der E-Mail-Adresse waere sonst ein LIKE-Platzhalter und
+  // wuerde fremde Rate-Limit-Buckets mitloeschen.
+  const patterns = [`%${escapeLike(userId)}%`];
+  if (email) patterns.push(`%${escapeLike(email)}%`);
   for (const p of patterns) {
     const { error: rlError } = await client
       .from("rate_limit_hits")
@@ -208,9 +227,37 @@ function aalFromToken(token: string): string | null {
 
 /**
  * M-14: Hat der Nutzer verifizierte MFA-Faktoren, erfordert die
- * Account-Löschung AAL2 (Client-seitige MFA-Umleitung ist umgehbar).
- * Ist die Admin-MFA-API in dieser supabase-js-Version nicht verfügbar,
- * wird der Check übersprungen (geloggt) statt die Löschung zu blockieren.
+ * Account-Loeschung AAL2 (Client-seitige MFA-Umleitung ist umgehbar).
+ *
+ * BEFUND 04.11.2026 - DIESER CHECK WAR TOT:
+ *
+ * Der Aufruf war `client.auth.mfa.listFactors(userId)`. Das ist aber
+ * die NUTZER-API:
+ *
+ *   client.auth.mfa.listFactors()
+ *     -> GET /user  (braucht eine Session des Clients)
+ *     -> beim Service-Key-Client gibt es keine Session
+ *     -> { data: null, error: AuthSessionMissingError }
+ *     -> data?.factors ?? []  =>  []
+ *     -> hasVerified === false  =>  "MFA erfuellt"
+ *
+ * Die userId wurde als Argument uebergeben und einfach IGNORIERT - die
+ * Funktion nimmt kein Argument. Und die Antwortform
+ * ({ data: { factors: [...] } }) ist die der ADMIN-API.
+ *
+ * Die Folge: Ein Nutzer mit aktiviertem TOTP konnte sein Konto mit
+ * einem einfachen aal1-Token unwiderruflich loeschen. Der dokumentierte
+ * M-14-Schutz existierte faktisch nicht.
+ *
+ * Richtig ist die ADMIN-API:
+ *
+ *   client.auth.admin.mfa.listFactors({ userId })
+ *     -> GET /admin/users/{userId}/factors
+ *     -> { data: { factors: [...] }, error }
+ *
+ * Und fail-closed: Wenn die API fehlt oder fehlschlaegt, wird die
+ * Loeschung blockiert. Ein Schutz, der bei einem Fehler nachgibt, ist
+ * kein Schutz.
  */
 async function mfaSatisfied(
   client: ReturnType<typeof createClient>,
@@ -221,16 +268,35 @@ async function mfaSatisfied(
   if (aal === "aal2") return true;
 
   try {
-    const adminAny = client.auth as unknown as {
-      mfa?: { listFactors?: (uid: string) => Promise<{ data?: { factors?: { status?: string }[] } }> };
+    const adminApi = client.auth.admin as unknown as {
+      mfa?: {
+        listFactors?: (params: { userId: string }) => Promise<{
+          data?: { factors?: { status?: string }[] } | null;
+          error?: { message?: string } | null;
+        }>;
+      };
     };
-    if (typeof adminAny.mfa?.listFactors !== "function") return false;
-    const { data } = await adminAny.mfa.listFactors(userId);
-    const hasVerified = (data?.factors ?? []).some((f) => f.status === "verified");
+    const listFactors = adminApi.mfa?.listFactors;
+    if (typeof listFactors !== "function") {
+      // Ohne die API laesst sich nicht feststellen, ob der Nutzer
+      // MFA-Faktoren hat. Also blockieren (fail-closed) - sonst waere
+      // der MFA-Schutz wieder nur eine Behauptung.
+      console.error(
+        "MFA-Faktor-API nicht verfuegbar - Account-Loeschung wird blockiert.",
+      );
+      return false;
+    }
+    const { data, error } = await listFactors({ userId });
+    if (error) {
+      console.error("MFA-Faktor-Pruefung fehlgeschlagen (fail-closed):", error);
+      return false;
+    }
+    const factors = data?.factors ?? [];
+    const hasVerified = factors.some((f) => f.status === "verified");
     if (hasVerified && aal !== "aal2") return false;
     return true;
   } catch (e) {
-    console.error("MFA-Faktor-Prüfung fehlgeschlagen (fail-closed):", e);
+    console.error("MFA-Faktor-Pruefung fehlgeschlagen (fail-closed):", e);
     return false;
   }
 }

@@ -98,226 +98,31 @@ async function isSafeUpEndpoint(
   if (host.includes(":")) return { ok: false, reason: "ipv6_literal_not_allowed" };
 
   // DNS-Auflösung gegen private Bereiche (falls im Edge-Runtime verfügbar).
-  try {
-    const records = await Deno.resolveDns(host, "A");
-    for (const ip of records) {
-      if (isPrivateIPv4(ip)) return { ok: false, reason: "resolves_private" };
-    }
-  } catch {
-    // resolveDns nicht verfügbar oder NXDOMAIN -> Hostname-Heuristik genügt;
-    // echte Auflösung übernimmt der fetch mit ausgehender Netzkontrolle des
-    // Betreibers.
-  }
-  return { ok: true };
-}
-
-function isPrivateIPv4(ip: string): boolean {
-  const parts = ip.split(".").map((p) => parseInt(p, 10));
-  if (parts.length !== 4 || parts.some((p) => Number.isNaN(p))) return true; // fail-closed
-  const [a, b] = parts;
-  if (a === 10 || a === 127 || a === 0) return true;
-  if (a === 169 && b === 254) return true;         // link-local
-  if (a === 172 && b >= 16 && b <= 31) return true;
-  if (a === 192 && b === 168) return true;
-  if (a === 100 && b >= 64 && b <= 127) return true; // CGNAT
-  if (a >= 224) return true;                        // multicast/reserved
-  return false;
-}
-
-/**
- * DB-basiertes Rate-Limit pro Absender (Audit B4).
- * Nutzt die persistente RPC consume_rate_limit (Migration 042) –
- * überlebt Cold Starts und ist über alle Instanzen hinweg gültig.
- */
-const RATE_LIMIT_MAX = 20;
-const RATE_LIMIT_WINDOW_S = 60;
-
-async function isRateLimited(callerId: string): Promise<boolean> {
-  try {
-    const { data, error } = await admin.rpc("consume_rate_limit", {
-      p_key: `notify-user:${callerId}`,
-      p_max_hits: RATE_LIMIT_MAX,
-      p_window_seconds: RATE_LIMIT_WINDOW_S,
-    });
-    if (error) {
-      // Fail-closed: Wenn das Limit nicht geprüft werden kann, wird der
-      // Versand blockiert (Push ist Best-Effort, kein kritischer Pfad).
-      console.error("consume_rate_limit error:", error);
-      return true;
-    }
-    return data !== true;
-  } catch (e) {
-    console.error("consume_rate_limit exception:", e);
-    return true;
-  }
-}
-
-/** Serverseitig generierte Texte pro kind (kein client-kontrollierter Text). */
-const clientTextsByKind: Record<string, { title: string; body: string }> = {
-  messages: { title: "Thestia", body: "Du hast eine neue Nachricht erhalten." },
-  // v0.9.0-Feedback ("auf dem anderen Gerät passiert gar nichts"): Nach
-  // einem QR-Scan/Like soll die gescannte Person einen Push erhalten.
-  // Der Text ist serverseitig fix (kein Phishing), die E1-Beziehungs-
-  // prüfung unten verlangt einen EIGENEN Like des Aufrufers an das Ziel.
-  likes: { title: "Thestia", body: "Jemand hat deine Vorstellung entdeckt." },
-};
-
-/**
- * Audit E1: Clients dürfen nur Nutzer benachrichtigen, mit denen eine
- * reale Beziehung besteht (Match zwischen beiden ODER eigener Like an
- * das Ziel ODER aktive Zufallschat-Session ODER offene Dating-Hour-
- * Session). Interne Trigger-Aufrufe sind davon ausgenommen.
- *
- * NUTZERWUNSCH "Ich muss im Chat sein, um Nachrichten zu erhalten":
- * Zufallschat-/Dating-Hour-Partner sind KEINE Matches - ohne diese
- * Erweiterung wurde ihr Nachrichten-Push mit no_relationship
- * abgelehnt, obwohl eine aktive Session existiert.
- */
-async function hasRelationshipBetween(
-  callerId: string,
-  targetUserId: string,
-): Promise<boolean> {
-  try {
-    const { data } = await admin
-      .from("matches")
-      .select("id")
-      .or(
-        `and(user_one_id.eq.${callerId},user_two_id.eq.${targetUserId}),` +
-          `and(user_one_id.eq.${targetUserId},user_two_id.eq.${callerId})`,
-      )
-      .limit(1)
-      .maybeSingle();
-    if (data) return true;
-
-    // Aktive Zufallschat-Session zwischen beiden (Paarung in BEIDEN
-    // Richtungen möglich).
-    const { data: randomSession } = await admin
-      .from("random_chat_sessions")
-      .select("id")
-      .eq("status", "active")
-      .or(
-        `and(user_a.eq.${callerId},user_b.eq.${targetUserId}),` +
-          `and(user_a.eq.${targetUserId},user_b.eq.${callerId})`,
-      )
-      .limit(1)
-      .maybeSingle();
-    if (randomSession) return true;
-
-    // Offene Dating-Hour-Session zwischen beiden.
-    const { data: dhSession } = await admin
-      .from("dating_hour_session")
-      .select("id")
-      .is("ended_at", null)
-      .or(
-        `and(user_a.eq.${callerId},user_b.eq.${targetUserId}),` +
-          `and(user_a.eq.${targetUserId},user_b.eq.${callerId})`,
-      )
-      .limit(1)
-      .maybeSingle();
-    if (dhSession) return true;
-
-    // Noch kein Match: ein eigener (auch unbeantworteter) Like genügt,
-    // damit Like-Benachrichtigungen zustellen können.
-    const { data: like } = await admin
-      .from("likes")
-      .select("id")
-      .eq("user_id", callerId)
-      .eq("liked_user_id", targetUserId)
-      .limit(1)
-      .maybeSingle();
-    return !!like;
-  } catch (e) {
-    console.error("relationship check failed:", e);
-    // Fail-closed: ohne Beziehungsnachweis wird nicht gepusht.
-    return false;
-  }
-}
-
-/** Erzeugt ein kurzlebiges FCM-Access-Token aus dem Service-Account (JWT-Flow). */
-async function getFcmAccessToken(serviceAccountJson: string): Promise<string> {
-  const sa = JSON.parse(serviceAccountJson);
-  const now = Math.floor(Date.now() / 1000);
-
-  // JWT-Header/Payload (RS256) für Google OAuth.
-  const header = { alg: "RS256", typ: "JWT" };
-  const claims = {
-    iss: sa.client_email,
-    scope: "https://www.googleapis.com/auth/firebase.messaging",
-    aud: sa.token_uri ?? "https://oauth2.googleapis.com/token",
-    iat: now,
-    exp: now + 3600,
-  };
-  const b64 = (obj: unknown) =>
-    btoa(JSON.stringify(obj)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-  const unsigned = `${b64(header)}.${b64(claims)}`;
-
-  // PKCS#8-PEM in CryptoKey umwandeln und signieren.
-  const pem = sa.private_key as string;
-  const pemBody = pem
-    .replace(/-----BEGIN PRIVATE KEY-----/, "")
-    .replace(/-----END PRIVATE KEY-----/, "")
-    .replace(/\s+/g, "");
-  const binary = atob(pemBody);
-  const keyBytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
-  const key = await crypto.subtle.importKey(
-    "pkcs8",
-    keyBytes,
-    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const signature = await crypto.subtle.sign(
-    "RSASSA-PKCS1-v1_5",
-    key,
-    new TextEncoder().encode(unsigned),
-  );
-  const sigB64 = btoa(String.fromCharCode(...new Uint8Array(signature)))
-    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-  const assertion = `${unsigned}.${sigB64}`;
-
-  const tokenResp = await fetch(sa.token_uri ?? "https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-      assertion,
-    }),
-  });
-  if (!tokenResp.ok) {
-    throw new Error(`Google-OAuth fehlgeschlagen: ${tokenResp.status} ${await tokenResp.text()}`);
-  }
-  const tokenData = await tokenResp.json();
-  return tokenData.access_token as string;
-}
-
-serve(async (req) => {
-  if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405, headers: { "Content-Type": "application/json" },
-    });
-  }
-
-  // Auth: interner Trigger-Aufruf ODER authentifizierter Client (JWT).
-  const internal = req.headers.get("x-thestia-internal") ?? "";
-  const isInternal =
-    THESTIA_INTERNAL_SECRET !== "" &&
-    internal !== "" &&
-    timingSafeEqual(internal, THESTIA_INTERNAL_SECRET);
-
-  let callerId = "";
-  if (!isInternal) {
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const token = authHeader.replace(/^Bearer\s+/i, "");
+  // DNS-Aufloesung gegen private Bereiche.
+  //
+  // BEFUND 04.11.2026: Der Fehlerpfad war fail-OPEN. Jeder Fehler -
+  // auch "die Aufloesung schlug fehl" - wurde als "kann nicht pruefen"
+  // gelesen und die Anfrage durchgelassen. Der Kommentar behauptete
+  // das Gegenteil ("DNS-Fehler werden fail-closed behandelt").
+  //
+  // Jetzt werden die beiden Faelle getrennt:
+  //
+  //   * Die Laufzeit kann nicht aufloesen (Deno.resolveDns fehlt):
+  //     Eine Grenze der Laufzeit, kein Angriff. Es bleibt bei der
+  //     Host-Heuristik - sonst waere die Push-Zustellung kaputt.
+  //   * Die Aufloesung schlug fehl (NXDOMAIN, DNS-Fehler): Der Host
+  //     existiert nicht. fail-closed - ein Host, der nicht aufloest,
+  //     kann auch nichts liefern.
+  if (typeof Deno.resolveDns === "function") {
     try {
-      const { data } = await admin.auth.getUser(token);
-      if (!data.user) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401, headers: { "Content-Type": "application/json" },
-        });
+      const records = await Deno.resolveDns(host, "A");
+      for (const ip of records) {
+        if (isPrivateIPv4(ip)) return { ok: false, reason: "resolves_private" };
       }
-      callerId = data.user.id;
     } catch {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      return { ok: false, reason: "dns_resolution_failed" };
+    }
+  }
         status: 401, headers: { "Content-Type": "application/json" },
       });
     }

@@ -9,6 +9,7 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 ## [0.10.0] – Elternfreigabe, Aufsicht und Admin-Posteingang (Build 31, 2026-10-30 bis 2026-11-03)
 
+
 ### Hinzugefügt
 
 - **Eigener Screen für die Elterneinstellungen:** Der Bereich „Kinderschutz &
@@ -91,6 +92,29 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 ### Sicherheit
 
+- **Die Website trägt jetzt Sicherheits-Header** (04.11.2026): Auf
+  keiner Seite waren `X-Frame-Options`, `X-Content-Type-Options`,
+  `Referrer-Policy`, `Permissions-Policy`, HSTS oder ein CSP-**Header**
+  gesetzt. Die Startseite hatte nur eine `meta`-CSP - und eine
+  `meta`-CSP kann `frame-ancestors` gar nicht abbilden. Damit waren
+  zwei Clickjacking-Angriffe möglich: die CAPTCHA-Seite
+  (`auth.thestia.de`) ließ sich in jedem `<iframe>` einbetten, und das
+  Eltern-Portal (`/eltern/einstellungen?token=…`) ließ sich framen -
+  samt der Schaltflächen „Freigabe bestätigen" und „Freigabe
+  widerrufen".
+- **Der Berechtigungs-Token des Eltern-Portals wird nicht mehr
+  zwischengespeichert** (04.11.2026): Das Portal bekommt den Token aus
+  der URL. „public"-Cache hätte die Seite mit dem Token in der
+  Cache-Adresse gespeichert, und ohne `Referrer-Policy` landet der
+  Token bei jedem internen Klick im Referer-Header - also in den
+  Server-Logs. Jetzt `no-store` und `no-referrer`; der
+  Sprachumschalter nimmt den Token mit.
+- **Die interne Betriebsnotiz zum App-Link-Aufbau wird nicht mehr
+  veröffentlicht** (04.11.2026): `ASSETLINKS_ROOTDOMAIN.md` nennt die
+  Stellen, an denen ein Angreifer nachsehen würde (Debug-Keystore,
+  `key.properties`, Supabase-Redirect-Allowlist). Sie liegt jetzt in
+  `deploy/`; ein Redirect fängt die bereits veröffentlichte Datei ab.
+
 - **Keine Session-Fixierung über einen Deep-Link:** „thestia://" ist
   ein exportiertes Custom Scheme – jede App auf dem Gerät konnte die
   Thestia-App mit einer URI starten. Übernahm die App eine URI mit
@@ -170,6 +194,92 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Läufen war ausschließlich der Job `analyze-and-test` rot, und zwar
   nur im Schritt „Analyze". Die übrigen fünf Jobs waren grün.)
 
+- **Der MFA-Step-up bei der Konto-Löschung war wirkungslos**
+  (04.11.2026, Audit der Edge Functions): Die Funktion `delete-account`
+  rief `client.auth.mfa.listFactors(userId)` auf - das ist aber die
+  *Nutzer*-API: sie nimmt kein Argument, braucht eine Session des
+  Clients (der Service-Key-Client hat keine) und liefert deshalb
+  `{ data: null }`. Die Faktorenliste war immer leer, die Prüfung
+  immer „erfüllt". Ein Konto mit aktiviertem TOTP ließ sich mit einem
+  einfachen aal1-Token unwiderruflich löschen. Jetzt wird die
+  *Admin*-API benutzt (`client.auth.admin.mfa.listFactors({ userId })`)
+  und fail-closed blockiert, wenn die API fehlt oder fehlschlägt.
+- **Die selektive Datenlöschung löschte die Rate-Limit-Zähler
+  nicht** (04.11.2026): `delete-user-data` filterte auf
+  `rate_limit_hits.identifier` - diese Spalte gibt es nicht (die
+  Tabelle hat nur `bucket_key`, `window_start` und `hit_count`).
+  PostgREST antwortete mit einem Spaltenfehler, die Kategorie „alles"
+  meldete dauerhaft `ok:false`, und die Zähler blieben stehen. Jetzt
+  wird über `bucket_key` gelöscht.
+- **Das IP-Limit war umgehbar** (04.11.2026): Die Client-IP wurde zuerst
+  aus `x-client-ip` gelesen. Das ist *kein* Header von Supabase oder
+  Cloudflare (sondern eine Vercel/Netlify-Konvention) - Edge Functions
+  reichen unbekannte Client-Header unverändert durch. Mit
+  `x-client-ip: 1.2.3.4` pro Anfrage bekam jede Anfrage ein neues
+  Limit-Key. Jetzt zuerst `cf-connecting-ip` (den Cloudflare bei jeder
+  Anfrage neu setzt) und aus `x-forwarded-for` der **letzte** Eintrag
+  (Cloudflare hängt die echte IP an - der erste ist der vom Client
+  frei wählbare).
+- **Das Rate-Limit im Entsperrungsantrag war fail-open**
+  (04.11.2026): `request-unban` wertete den Fehler der RPC nicht aus -
+  bei einem Stoerfall fiel die 3/h-Bremse ersatzlos weg, und die
+  Entsperrungsanträge wurden eine Mail-Bombardierung von
+  `support@thestia.de`. Jetzt fail-closed wie in allen anderen
+  Funktionen.
+- **E-Mail-Adressen wurden ungefiltert in ein LIKE-Muster gebaut**
+  (04.11.2026): In SQL ist `%` ein Platzhalter und `_` matcht ein
+  beliebiges Zeichen. Eine Adresse wie `%@beispiel.de` löschte dadurch
+  die Rate-Limit-Buckets *aller* Adressen auf dieser Domain. Die
+  Muster werden jetzt maskiert (`escapeLike`).
+- **Die elterliche Nutzungszeit konnte ungewollt gelöscht werden**
+  (04.11.2026, Migration 173): `set_guardian_portal_settings` schrieb
+  `usage_start_min = p_usage_start_min` *ohne* `coalesce` - fehlte der
+  Wert im Request, war die Beschränkung weg, während
+  `usage_limit_enabled` weiter „aktiv" anzeigte. Jetzt mit `coalesce`
+  und Bereichsprüfung (0–1439 Minuten, Ende > Beginn). Eine aktive
+  Nutzungszeit braucht jetzt auch eine Zeit.
+- **Die Versionsangabe der Datenschutzerklärung widersprach ihrer
+  eigenen Historie** (04.11.2026): Sie nannte Version 17 (Oktober),
+  die Historie reichte bis Version 22 (November).
+- **Die englische Datenschutzerklärung nannte die alte Aufbewahrungs-
+  frist** (04.11.2026): Sie versprach das Verifikationsvideo „30 Tage
+  nach der Einreichung" zu löschen, die deutsche Fassung und die
+  Versionshistorie sagten korrekt „30 Tage nach der Freigabe"
+  (Migration 171). Die englische Tabelle war beim Umsetzen nicht
+  mitgezogen worden.
+- **Das Crash-Journal speicherte Rohdaten** (04.11.2026): Der Kommentar
+  versprach „keine Nutzertexte, keine Geräte-Serials, keine PII",
+  gespeichert wurden aber der rohe Fehlertext und der rohe Stack.
+  Ein Supabase-Fehler kann die E-Mail-Adresse enthalten, und das
+  Journal wird dem Nutzer per Bug-Report angeboten - die Daten wären
+  also über das Gerät hinausgegangen. Jetzt werden E-Mail-Adressen,
+  Bearer-Token, JWTs und lange Hex-Schlüssel redigiert; UUID und
+  Dateipfade bleiben (ohne sie ist der Absturz nicht zuordenbar).
+- **Die Kapsel des Datenlösch-Wegs versprach ein Formular, das es nicht
+  gibt** (04.11.2026): Der Text auf `/daten-loeschen` sagte „die Seite
+  `/konto-loeschen` öffnen und das Formular ausfüllen" - im gesamten
+  Publish-Ordner gibt es kein einziges `<form>`. Der Weg 3 ist
+  tatsächlich die App oder die E-Mail; der Text sagt das jetzt.
+
+- **Die englische Startseite verlinkte die deutschen Pflichtseiten**
+  (04.11.2026): „Legal notice" und „Privacy" fuehrten zu den deutschen
+  Texten. Jetzt zeigen alle Links auf die englischen Seiten
+  (`/en/...`, die in `_redirects` auf die englischen Dateien zeigen).
+- **Die Startseite und die `.well-known`-Dateien fielen durch die
+  Cache-Regeln** (04.11.2026): Netlify wendet die `_headers`-Regeln auf
+  den *aufgerufenen* Pfad an - die Regel für `/index.html` galt also
+  nicht für `/`. Die wichtigste Seite des Projekts lieferte deshalb
+  `max-age=0` statt der 5-Minuten-Regel, und genau die Datei, die
+  Android bei jeder App-Link-Pruefung neu abruft, ebenfalls.
+- **Die `_redirects` spiegeln jetzt die Regeln aus `netlify.toml`**
+  (04.11.2026): Ob die Konfigurationsdatei bei einem Drag-&-Drop-Upload
+  ausgewertet wird, laesst sich aus dem Repo nicht belegen. Im
+  Live-Stand vom 04.11.2026 war `robots.txt` auf *beiden* Hosts die
+  gesperrte Fassung und `sitemap.xml` gab es gar nicht - die
+  oeffentliche Seite war also fuer Suchmaschinen gesperrt. Die Regeln
+  zeigen auf dieselben Ziele wie in der TOML, deshalb ist die
+  Spiegelung unschaedlich.
+
 ### Hinzugefügt
 
 - **`tool/check_local_ci.ps1` – die CI-Gates lokal laufen lassen**
@@ -189,6 +299,14 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 - Die Nutzungszeit ist eine Hausregel auf dem Gerät des Jugendlichen.
   Sie verhindert die versehentliche Überschreitung, ist aber kein
   technisches Verbot – ein gerootetes Gerät kommt an ihr vorbei.
+  **Die Durchsetzung passiert ausschließlich im Client** (die
+  Datenbank speichert nur die Minutenwerte, keine Filter- oder
+  Gate-Funktion prüft sie). Das ist bewusst so: die Minuten sind
+  „Minuten seit Mitternacht in der Zeitzone des Geräts", und der
+  Server kennt die Zeitzone des Geräts nicht zuverlässig. Eine
+  serverseitige Durchsetzung würde deshalb in der falschen
+  Zeitzone arbeiten. Wer das ändern will, muss die Zeitzone mit dem
+  Gerät zuverlässig übermitteln – das ist eine eigene Aufgabe.
 - Die rechtliche Prüfung (§ 3a JUG, Art. 8 DSGVO, Verantwortlichkeit
   für die Einrichtung eines kindlichen Kontos) steht aus. Sie ist in
   der DSFA und in der Roadmap festgehalten.
@@ -219,6 +337,7 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Einstellungen öffnet das Menü direkt.
 
 ### Behoben
+
 
 - **Passkeys gingen im Release-Build gar nicht** (31.10.2026): `supabase_flutter`
   hängt nur am `passkeys_platform_interface`, NICHT am app-seitigen

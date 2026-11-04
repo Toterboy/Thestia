@@ -23,20 +23,41 @@ void main() {
   });
 
   group('AgeSafetyRules - canViewProfile', () {
-    test('Gestufte Regeln: 18 sieht 16+, 19 sieht 17+, 20+ sieht 18+', () {
-      // 18 (adult18): darf 16+ sehen.
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 18, targetAge: 16), isTrue);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 18, targetAge: 17), isTrue);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 18, targetAge: 18), isTrue);
-      // 19 (adult19): darf 17+ sehen, aber NICHT 16.
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 19, targetAge: 17), isTrue);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 19, targetAge: 18), isTrue);
+    // Die Regel entspricht dem Server (Migration 154 + 155):
+    // Die Discovery filtert BEIDSEITIG ueber
+    // age_compatible_bidirectional, also age_compatible(a->b) UND
+    // age_compatible(b->a). age_compatible (Migration 056):
+    //
+    //   Viewer < 18  -> Ziel in [16, 18)
+    //   Viewer = 18  -> Ziel >= 16
+    //   Viewer = 19  -> Ziel >= 17
+    //   Viewer >= 20 -> Ziel >= 18
+    //
+    // Beidseitig heisst das: Minderjaehrige sehen nur Minderjaehrige,
+    // Erwachsene sehen nur Erwachsene. 18<->16/17 ist gesperrt und
+    // 19<->17 ebenfalls.
+    //
+    // BISHER stand hier die einseitige Regel ("18 sieht 16+"), und
+    // die Tests haben sie festgeschrieben - obwohl der Server sie
+    // nie erteilt. Ein 18-Jaehriger sieht niemals einen
+    // Minderjaehrigen.
+    test('Erwachsene sehen keine Minderjaehrigen', () {
+      expect(AgeSafetyRules.canViewProfile(viewerAge: 18, targetAge: 16), isFalse);
+      expect(AgeSafetyRules.canViewProfile(viewerAge: 18, targetAge: 17), isFalse);
+      expect(AgeSafetyRules.canViewProfile(viewerAge: 19, targetAge: 17), isFalse);
       expect(AgeSafetyRules.canViewProfile(viewerAge: 19, targetAge: 16), isFalse);
-      // 20+ (adult): darf 18+ sehen, aber NICHT 16-17.
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 20, targetAge: 18), isTrue);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 25, targetAge: 19), isTrue);
       expect(AgeSafetyRules.canViewProfile(viewerAge: 25, targetAge: 17), isFalse);
       expect(AgeSafetyRules.canViewProfile(viewerAge: 30, targetAge: 16), isFalse);
+      expect(AgeSafetyRules.canViewProfile(viewerAge: 40, targetAge: 17), isFalse);
+    });
+
+    test('Erwachsene sehen Erwachsene', () {
+      expect(AgeSafetyRules.canViewProfile(viewerAge: 18, targetAge: 18), isTrue);
+      expect(AgeSafetyRules.canViewProfile(viewerAge: 18, targetAge: 19), isTrue);
+      expect(AgeSafetyRules.canViewProfile(viewerAge: 19, targetAge: 18), isTrue);
+      expect(AgeSafetyRules.canViewProfile(viewerAge: 19, targetAge: 19), isTrue);
+      expect(AgeSafetyRules.canViewProfile(viewerAge: 20, targetAge: 18), isTrue);
+      expect(AgeSafetyRules.canViewProfile(viewerAge: 25, targetAge: 19), isTrue);
     });
 
     test('Minor (16-17) cannot see adult (18+)', () {
@@ -47,9 +68,14 @@ void main() {
       expect(AgeSafetyRules.canViewProfile(viewerAge: 16, targetAge: 30), isFalse);
     });
 
-    test('Same age group is always allowed', () {
+    test('Minderjaehrige sehen nur Minderjaehrige', () {
       expect(AgeSafetyRules.canViewProfile(viewerAge: 16, targetAge: 16), isTrue);
+      expect(AgeSafetyRules.canViewProfile(viewerAge: 16, targetAge: 17), isTrue);
+      expect(AgeSafetyRules.canViewProfile(viewerAge: 17, targetAge: 16), isTrue);
       expect(AgeSafetyRules.canViewProfile(viewerAge: 17, targetAge: 17), isTrue);
+    });
+
+    test('Erwachsene sehen Erwachsene (gleiche Gruppe)', () {
       expect(AgeSafetyRules.canViewProfile(viewerAge: 18, targetAge: 18), isTrue);
       expect(AgeSafetyRules.canViewProfile(viewerAge: 19, targetAge: 19), isTrue);
       expect(AgeSafetyRules.canViewProfile(viewerAge: 25, targetAge: 25), isTrue);
@@ -77,20 +103,29 @@ void main() {
   group('AgeSafetyRules - minFilterAge', () {
     // v0.10.0 (Migration 154): Die Untergrenze ist hoechstens 10
     // Jahre unter dem eigenen Alter und nie unter 18, sobald der
-    // Nutzer volljuehrig ist. Das entspricht dem Server
-    // (max_age_range_min) - die App bietet keine Werte an, die der
-    // Server nicht liefert.
+    // Nutzer volljuehrig ist.
+    //
+    // Das ist wortgleich die Server-Funktion max_age_range_min:
+    //
+    //   greatest(v_viewer_age - 10,
+    //            CASE WHEN v_viewer_age < 18 THEN 16 ELSE 18 END)
+    //
+    // Die App hat bis 04.11.2026 fuer 18-Jaehrige 16 und fuer
+    // 19-Jaehrige 17 angeboten - der Server liefert diese Altersstufen
+    // nie. Der Filter war damit TOT: leere Liste, keine
+    // Erklaerung. Die Paritaet ist jetzt ueber [die Tabelle unten]
+    // festgeschrieben.
     test('Minderjaehrige (16-17) min filter = 16', () {
       expect(AgeSafetyRules.minFilterAge(16), equals(16));
       expect(AgeSafetyRules.minFilterAge(17), equals(16));
     });
 
-    test('18-Jaehriger: 16 (Server erlaubt es)', () {
-      expect(AgeSafetyRules.minFilterAge(18), equals(16));
+    test('18-Jaehriger: 18 (der Server liefert nur Erwachsene)', () {
+      expect(AgeSafetyRules.minFilterAge(18), equals(18));
     });
 
-    test('19-Jaehriger: 17 (Server beginnt bei 17)', () {
-      expect(AgeSafetyRules.minFilterAge(19), equals(17));
+    test('19-Jaehriger: 18 (der Server liefert nur Erwachsene)', () {
+      expect(AgeSafetyRules.minFilterAge(19), equals(18));
     });
 
     test('Volljaehrige: eigenes Alter minus 10, mindestens 18', () {
@@ -99,6 +134,36 @@ void main() {
       expect(AgeSafetyRules.minFilterAge(30), equals(20));
       expect(AgeSafetyRules.minFilterAge(40), equals(30));
       expect(AgeSafetyRules.minFilterAge(65), equals(55));
+    });
+
+    // Die Paritaet zur Server-Funktion max_age_range_min. Jede Zeile
+    // ist 1:1 aus dem SQL abgeleitet - nicht aus der App abgeleitet.
+    // Weicht eine Zahl ab, laeuft die App auseinander.
+    test('Paritaet zur Server-Funktion max_age_range_min', () {
+      const serverWerte = <int, int>{
+        // Alter: max_age_range_min(Alter)
+        15: 16,
+        16: 16,
+        17: 16,
+        18: 18,
+        19: 18,
+        20: 18,
+        25: 18,
+        28: 18,
+        29: 19,
+        30: 20,
+        40: 30,
+        65: 55,
+        99: 89,
+      };
+      serverWerte.forEach((alter, erwartet) {
+        expect(
+          AgeSafetyRules.minFilterAge(alter),
+          equals(erwartet),
+          reason: 'minFilterAge($alter) muss max_age_range_min($alter) = '
+              '$erwartet entsprechen',
+        );
+      });
     });
   });
 
@@ -325,8 +390,12 @@ void main() {
     // v0.10.0 (Migration 154): nach unten max. 10 Jahre unter dem
     // eigenen Alter, mindestens 18.
     test('Adult filter clamped to eigenes Alter minus 10', () {
+      // Ein 18-Jaehriger bekommt auf 18 geklemmt: 16 waere ein toter
+      // Filter (der Server liefert fuer ihn nur Erwachsene).
       expect(AgeSafetyRules.clampFilterAge(viewerAge: 18, filterMin: 16, filterMax: 99),
-          equals((16, 99)));
+          equals((18, 99)));
+      expect(AgeSafetyRules.clampFilterAge(viewerAge: 19, filterMin: 16, filterMax: 99),
+          equals((18, 99)));
       expect(AgeSafetyRules.clampFilterAge(viewerAge: 20, filterMin: 16, filterMax: 99),
           equals((18, 99)));
       expect(AgeSafetyRules.clampFilterAge(viewerAge: 25, filterMin: 16, filterMax: 30),
@@ -345,7 +414,7 @@ void main() {
       // bis 17; Volljaehrige hoechstens 10 Jahre unter ihr eigenes
       // Alter.
       expect(AgeSafetyRules.isValidFilterAge(viewerAge: 16, filterMin: 16, filterMax: 17), isTrue);
-      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 18, filterMin: 16, filterMax: 30), isTrue);
+      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 18, filterMin: 18, filterMax: 30), isTrue);
       expect(AgeSafetyRules.isValidFilterAge(viewerAge: 20, filterMin: 18, filterMax: 35), isTrue);
       expect(AgeSafetyRules.isValidFilterAge(viewerAge: 20, filterMin: 18, filterMax: 25), isTrue);
       expect(AgeSafetyRules.isValidFilterAge(viewerAge: 40, filterMin: 30, filterMax: 60), isTrue);
@@ -360,6 +429,10 @@ void main() {
       expect(AgeSafetyRules.isValidFilterAge(viewerAge: 16, filterMin: 20, filterMax: 16), isFalse);
       expect(AgeSafetyRules.isValidFilterAge(viewerAge: 20, filterMin: 16, filterMax: 35), isFalse);
       expect(AgeSafetyRules.isValidFilterAge(viewerAge: 40, filterMin: 25, filterMax: 60), isFalse);
+      // Ein 18-Jaehriger mit Untergrenze 16: der Server liefert ihm
+      // niemals einen Minderjaehrigen - der Filter waere tot.
+      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 18, filterMin: 16, filterMax: 30), isFalse);
+      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 19, filterMin: 17, filterMax: 30), isFalse);
     });
   });
 }

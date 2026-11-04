@@ -40,45 +40,50 @@ class AgeSafetyRules {
 
   /// Prüft, ob ein Nutzer (viewer) einen anderen Nutzer (target) im Feed sehen darf.
   ///
-  /// Stufenweise Regeln:
-  /// - 16-17: nur untereinander sichtbar
-  /// - 18+: kann 16+ sehen
-  /// - 19+: kann 17+ sehen
-  /// - 20+: kann 18+ sehen
+  /// DIESE REGEL ENTSPRICHT DEM SERVER (Migration 154 + 155):
+  ///
+  /// Der Server filtert die Discovery über
+  /// `age_compatible_bidirectional(viewer.birth_date, target.birth_date)`,
+  /// und das ist `age_compatible(a→b) UND age_compatible(b→a)`.
+  /// `age_compatible` (Migration 056) lautet:
+  ///
+  ///   Viewer < 18  → Ziel ∈ [16, 18)
+  ///   Viewer = 18  → Ziel ≥ 16
+  ///   Viewer = 19  → Ziel ≥ 17
+  ///   Viewer ≥ 20  → Ziel ≥ 18
+  ///
+  /// Beidseitig angewandt heißt das:
+  ///
+  ///   * 16/17 sehen NUR 16/17.
+  ///   * Erwachsene sehen NUR Erwachsene.
+  ///   * 18↔16/17 ist gesperrt, 19↔17 ist gesperrt.
+  ///
+  /// Bis 04.11.2026 stand hier die EINSEITIGE Regel ("18+ kann 16+
+  /// sehen"). Die war zwar unbenutzt - aber sie war eine Falle: Wer sie
+  /// benutzt hätte, hätte eine Altersfreigabe gebaut, die der Server
+  /// nie erteilt. Ein 18-Jähriger sieht keinen 16-Jährigen, und ein
+  /// 19-Jähriger keinen 17-Jährigen.
   static bool canViewProfile({
     required int viewerAge,
     required int targetAge,
   }) {
     if (kDebugMode) debugPrint('[AGE_SAFETY] canViewProfile: viewerAge=$viewerAge, targetAge=$targetAge');
-    final viewerGroup = ageGroup(viewerAge);
-    final targetGroup = ageGroup(targetAge);
-    if (kDebugMode) debugPrint('[AGE_SAFETY] viewerGroup=$viewerGroup, targetGroup=$targetGroup');
-
-    // 16-17: nur untereinander sichtbar
-    if (viewerGroup == AgeGroup.minor) {
-      final allowed = targetGroup == AgeGroup.minor;
-      if (kDebugMode) debugPrint('[AGE_SAFETY] MINOR viewer -> allowed=$allowed');
-      return allowed;
-    }
-
-    // 18+: darf 16+ sehen
-    if (viewerGroup == AgeGroup.adult18) {
-      final allowed = targetAge >= 16;
-      if (kDebugMode) debugPrint('[AGE_SAFETY] ADULT18 viewer -> allowed=$allowed');
-      return allowed;
-    }
-
-    // 19+: darf 17+ sehen
-    if (viewerGroup == AgeGroup.adult19) {
-      final allowed = targetAge >= 17;
-      if (kDebugMode) debugPrint('[AGE_SAFETY] ADULT19 viewer -> allowed=$allowed');
-      return allowed;
-    }
-
-    // 20+: darf 18+ sehen
-    final allowed = targetAge >= 18;
-    if (kDebugMode) debugPrint('[AGE_SAFETY] ADULT20+ viewer -> allowed=$allowed');
-    return allowed;
+    // Die beidseitige Server-Regel in ihrer einfachsten Form:
+    // Minderjaehrige sehen nur Minderjaehrige, Erwachsene nur
+    // Erwachsene.
+    //
+    // WICHTIG: Der Vergleich laeuft ueber die Grenze 18, NICHT ueber
+    // [ageGroup]. Die Enum-Werte adult18/adult19/adult unterscheiden
+    // noch die alte gestufte Regel - im Enum sind 18 und 19
+    // verschiedene Gruppen, nach der beidseitigen Server-Regel sind
+    // beide schlicht "Erwachsen". Mit dem Enum-Vergleich waere ein
+    // 18-Jaehriger fuer einen 19-Jaehrigen unsichtbar - der Server
+    // liefert ihn aber.
+    final viewerMinderjaehrig = viewerAge < 18;
+    final targetMinderjaehrig = targetAge < 18;
+    final erlaubt = viewerMinderjaehrig == targetMinderjaehrig;
+    if (kDebugMode) debugPrint('[AGE_SAFETY] beidseitig -> erlaubt=$erlaubt');
+    return erlaubt;
   }
 
   /// Gibt die maximal erlaubte obere Altersgrenze für den Filter-Slider zurück.
@@ -97,24 +102,33 @@ class AgeSafetyRules {
   /// Gibt die minimal erlaubte untere Altersgrenze für den Filter-Slider zurück.
   ///
   /// - 16-17: 16 Jahre (untereinander ja)
-  /// - 18: 16 Jahre (der Server erlaubt einem 18-Jaehrigen, 16-Jaehrige
-  ///   zu sehen - allerdings nicht umgekehrt, siehe [canViewProfile])
-  /// - 19: 17 Jahre
+  /// - 18: 18 Jahre
+  /// - 19: 18 Jahre
   /// - 20+: hoechstens 10 Jahre unter dem eigenen Alter, aber nie
-  ///   unter 18. Der Server erzwingt dasselbe (max_age_range_min,
-  ///   Migration 154) - ohne diese Grenze war der Filter tot, ohne
-  ///   dass die UI das erklaert haette.
+  ///   unter 18.
   ///
-  /// WICHTIG: Der Server filtert BEIDSEITIG (Migration 154). Ein
-  /// 18-Jaehriger sieht also in der Praxis KEINE 16- und 17-Jaehrigen,
-  /// auch wenn der Regler es erlauben wuerde. Die Grenze hier ist so
-  /// gewaehlt, dass die App keine Werte anbietet, die der Server nicht
-  /// liefert - sonst stellt der Nutzer einen Filter ein und wundert
-  /// sich ueber leere Ergebnisse.
+  /// WICHTIG (04.11.2026): Bis hierher stand fuer 18-Jaehrige die
+  /// Grenze 16 und fuer 19-Jaehrige die Grenze 17. Das war ein TOTER
+  /// FILTER: Der Server filtert die Discovery beidseitig (Migration
+  /// 154), ein 18-Jaehriger bekommt also NIE einen 16- oder
+  /// 17-Jaehrigen zu sehen - und ein 19-Jaehriger nie einen
+  /// 17-Jaehrigen. Wer die Grenze auf 16/17 stellte, bekam eine leere
+  /// Liste und keine Erklaerung.
+  ///
+  /// Die Grenze steht hier bewusst UEBER dem, was der Server als
+  /// kleinstes Zielalter zulaesst: nach oben wegzulassen ist harmlos
+  /// (der Filter grenzt nur ein), nach unten zu gehen bedeutet "gar
+  /// keine Ergebnisse".
+  ///
+  /// Fuer 20+ bleibt das Fenster "hoechstens 10 Jahre unter mir" - das
+  /// ist eine Produktentscheidung, keine Jugendschutzgrenze. Der
+  /// Server liefert dort mehr, als der Filter zulaesst.
   static int minFilterAge(int viewerAge) {
     if (viewerAge < 18) return 16;
-    if (viewerAge == 18) return 16;
-    if (viewerAge == 19) return 17;
+    // Ab 18 liefert der Server ausschliesslich Erwachsene
+    // (age_compatible_bidirectional). Der Filter darf deshalb nicht
+    // unter 18 gehen - sonst ist er tot.
+    if (viewerAge <= 19) return 18;
     return math.max(18, viewerAge - 10);
   }
 

@@ -70,6 +70,22 @@ serve((req) => {
 
   return new Response(html, {
     status: 200,
-    headers: { "Content-Type": "text/html; charset=utf-8" },
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      // BEFUND 04.11.2026: Die Seite hatte keine Sicherheits-Header.
+      // Ohne frame-ancestors liess sie sich in ein fremdes iframe
+      // einbetten - Clickjacking auf das CAPTCHA. Ohne
+      // X-Content-Type-Options kann der Browser den Inhalt
+      // eigenmaechtig interpretieren.
+      "Content-Security-Policy":
+        "default-src 'self'; script-src 'self' 'unsafe-inline' " +
+        "https://challenges.cloudflare.com https://js.hcaptcha.com; " +
+        "frame-src https://challenges.cloudflare.com https://js.hcaptcha.com; " +
+        "style-src 'self' 'unsafe-inline'; img-src 'self' data:; " +
+        "frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
+      "Referrer-Policy": "no-referrer",
+    },
   });
 });

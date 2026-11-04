@@ -611,15 +611,36 @@ for name in ('verify-account', 'cancel-registration'):
     check(bool(fail_closed), f'EDGE: {name} Rate-Limit fail-closed')
 
 c = read(FN / 'delete-account' / 'index.ts')
-check('listFactors !== "function") return false;' in c,
-      'EDGE: delete-account MFA-Pruefung fail-closed')
-check('MFA-Faktor-Prüfung fehlgeschlagen (fail-closed)' in c,
+# BEFUND 04.11.2026: Der alte Aufruf war
+# "listFactors !== \"function\") return false;" in EINER Zeile. Der
+# neue Code prueft dieselbe Sache, aber mit einer eigenen Meldung
+# davor - deshalb wird jetzt geprueft, dass der Block vorhanden ist
+# UND danach "return false" folgt (fail-closed).
+_mfa_block = re.search(
+    r'typeof listFactors !== "function".{0,400}?return false;', c, re.S)
+check(bool(_mfa_block),
+      'EDGE: delete-account MFA-Pruefung fail-closed '
+      '(fehlt die Admin-API, wird die Loeschung blockiert)')
+check('MFA-Faktor-Pruefung fehlgeschlagen (fail-closed)' in c,
       'EDGE: delete-account MFA-catch fail-closed')
 
 for name in ('request-unban', 'send-bug-report', 'prekeys'):
     c = read(FN / name / 'index.ts')
-    check('function clientIp' in c and 'split(",")[0]' in c,
+    # BEFUND 04.11.2026: Geprueft wird jetzt der LETZTE Eintrag aus
+    # x-forwarded-for, nicht der erste.
+    #
+    # Cloudflare HAENGT die echte Client-IP an den Header an - der
+    # erste Eintrag ist damit der vom Client frei waehlbare, der
+    # letzte der von der Plattform gesetzte. Wer den ersten nimmt,
+    # laesst sich mit "x-forwarded-for: 1.2.3.4" pro Anfrage ein
+    # neues Limit-Key bauen.
+    check('function clientIp' in c
+          and 'split(",")' in c
+          and 'split(",")[0]' not in c,
           f'EDGE: {name} IP korrekt geparst (kein Header-Rotations-Bypass)')
+    check('cf-connecting-ip' in c,
+          f'EDGE: {name} nimmt zuerst cf-connecting-ip '
+          '(der Header, den Cloudflare bei jeder Anfrage neu setzt)')
     raw = re.search(r'const ip = req\.headers\.get\("x-forwarded-for"\)', c)
     check(not raw, f'EDGE: {name} nutzt den Helfer statt rohem XFF')
 
@@ -702,6 +723,207 @@ check(has('lib/utils/constants.dart',
 check(has('tool/build_release.ps1', 'CAPTCHA_SITEKEY fehlt',
           'ConfigDefines'),
       'BUILD: Release bricht ohne Konfiguration/CAPTCHA ab')
+
+# =====================================================================
+# 8) Client und Server duerfen nicht auseinanderlaufen
+# =====================================================================
+#
+# Am 04.11.2026 wurden zwei echte Abweichungen gefunden - beide waren
+# "die App dachte etwas anderes als der Server":
+#
+#   a) Die Re-Authentifizierung fuer "E-Mail aendern" und "Passwort
+#      aendern" rief signInWithPassword OHNE CAPTCHA-Token. GoTrue
+#      prueft das CAPTCHA bei jedem Passwort-Grant - der Server lehnte
+#      also jeden Versuch mit "Invalid login credentials" ab. Beide
+#      Funktionen waren im Release komplett kaputt, und die Meldung
+#      sah aus wie ein Tippfehler.
+#
+#   b) Die Untergrenze des Altersfilters stand in der App bei 16
+#      (18-Jaehrige) bzw. 17 (19-Jaehrige), der Server liefert fuer
+#      Erwachsene aber ausschliesslich Erwachsene (max_age_range_min
+#      = greatest(alter - 10, 18)). Der Filter war damit TOT.
+#
+# Beide Abweichungen sind nur durch den ABGLEICH mit dem Server
+# aufgefallen. Diese beiden Invarianten halten den Abgleich fest.
+
+# (a) Jeder signInWithPassword-Aufruf im Client braucht einen Token.
+#
+# Gesucht wird nicht nach einem Aufruf an sich, sondern nach einem
+# Aufruf OHNE "captchaToken" - das ist der Fehler.
+re_auth_ohne_token = []
+for dart in sorted(LIB.rglob('*.dart')):
+    if 'generated' in dart.parts:
+        continue
+    inhalt = read(dart)
+    pos = 0
+    while True:
+        treffer = inhalt.find('signInWithPassword(', pos)
+        if treffer < 0:
+            break
+        # Bis zum schliessenden Aufrufzeichen schauen.
+        ende = inhalt.find(');', treffer)
+        block = inhalt[treffer:ende if ende > 0 else treffer + 400]
+        if 'captchaToken' not in block:
+            re_auth_ohne_token.append(
+                '%s:%d' % (dart.relative_to(ROOT),
+                           inhalt[:treffer].count(chr(10)) + 1))
+        pos = treffer + 1
+
+check(not re_auth_ohne_token,
+      'APP: Jeder signInWithPassword-Aufruf gibt ein captchaToken mit '
+      '(GoTrue prueft das CAPTCHA bei jedem Passwort-Grant)',
+      ', '.join(re_auth_ohne_token))
+
+# (b) Die Alters-Untergrenze der App muss der des Servers entsprechen.
+#
+# Server (Migration 154, max_age_range_min):
+#   greatest(v_viewer_age - 10, CASE WHEN v_viewer_age < 18 THEN 16 ELSE 18 END)
+#
+# App (lib/utils/age_safety_rules.dart, minFilterAge):
+#   Minderjaehrige: 16, ab 18: nie unter 18, sonst eigenes Alter - 10.
+sql_alt = read(MIG / '154_youth_protection_hardening.sql')
+check('CASE WHEN v_viewer_age < 18 THEN 16 ELSE 18 END' in sql_alt,
+      'DB: max_age_range_min laesst fuer Erwachsene nie unter 18 zu')
+check(has('lib/utils/age_safety_rules.dart',
+          'if (viewerAge < 18) return 16;',
+          'if (viewerAge <= 19) return 18;'),
+      'APP: minFilterAge entspricht max_age_range_min (Minderjaehrige 16, '
+      'ab 18 nie unter 18)')
+check(has('lib/utils/age_safety_rules.dart',
+          'final viewerMinderjaehrig = viewerAge < 18;'),
+      'APP: canViewProfile nutzt die beidseitige Server-Regel '
+      '(Minderjaehrige sehen nur Minderjaehrige)')
+
+# =====================================================================
+# 9) Edge Functions: Befunde aus dem Audit vom 04.11.2026
+# =====================================================================
+#
+# Alle sechs folgenden Punkte sind am 04.11.2026 am Code verifiziert
+# worden - die Kommentare in den Funktionen nennen den Grund. Jeder
+# Punkt war eine echte Luecke, kein Fehlalarm.
+
+# (1) Der MFA-Step-up bei der Account-Loeschung war TOT.
+#
+#     Der Aufruf war `client.auth.mfa.listFactors(userId)` - das ist
+#     die NUTZER-API: sie nimmt kein Argument, braucht eine Session
+#     des Clients (der Service-Key-Client hat keine) und liefert
+#     { data: null }. Damit war die Faktorenliste immer leer und die
+#     Pruefung immer "erfuellt" - ein Konto mit TOTP war mit einem
+#     einfachen aal1-Token loeschbar.
+#
+#     Richtig ist die ADMIN-API: client.auth.admin.mfa.listFactors.
+delete_account = read(FN / 'delete-account' / 'index.ts')
+check('auth.admin' in delete_account
+      and 'listFactors({ userId })' in delete_account,
+      'EDGE: delete-account nutzt die Admin-MFA-API '
+      '(client.auth.admin.mfa.listFactors) - sonst ist der MFA-Step-up tot')
+# Der Kommentar im Code nennt den alten Aufruf auch - deshalb wird nur
+# der CODE geprueft. "ohne //" reichte nicht: der alte Aufruf stand in
+# einem Blockkommentar (Zeilen mit " * ").
+def _ohne_kommentar(text):
+    return '\n'.join(
+        z for z in text.split('\n')
+        if not z.strip().startswith(('//', '*', '/*')))
+
+
+delete_account_code = _ohne_kommentar(delete_account)
+check('listFactors(userId)' not in delete_account_code,
+      'EDGE: delete-account ruft NICHT die Nutzer-MFA-API auf '
+      '(liefert ohne Session immer eine leere Liste)')
+
+# (2) delete-user-data loeschte auf einer Spalte, die es nicht gibt.
+#
+#     rate_limit_hits hat bucket_key, window_start und hit_count
+#     (Migration 042) - aber KEINE Spalte "identifier". PostgREST
+#     antwortete mit einem Spaltenfehler, die selektive Datenloeschung
+#     meldete dauerhaft ok:false und die Zaehler blieben stehen.
+delete_user_data = read(FN / 'delete-user-data' / 'index.ts')
+# Die Kommentare nennen den alten Aufruf auch - deshalb wird nur der
+# CODE geprueft (siehe _ohne_kommentar).
+delete_user_data_code = _ohne_kommentar(delete_user_data)
+check('.eq("identifier"' not in delete_user_data_code,
+      'EDGE: delete-user-data loescht rate_limit_hits ueber bucket_key '
+      '(die Spalte "identifier" gibt es nicht)')
+check('"rate_limit_hits"' in delete_user_data
+      and 'bucket_key' in delete_user_data,
+      'EDGE: delete-user-data greift auf die Schluessel-Spalte zu')
+
+# (3) Das Rate-Limit in request-unban war fail-OPEN.
+#
+#     `const { data: limited } = await ...` - der Fehler der RPC
+#     wurde nicht ausgewertet. Bei einem RPC-Fehler war data === null,
+#     und "null === false" ist false: die 3/h-Bremse fiel ersatzlos weg.
+request_unban = read(FN / 'request-unban' / 'index.ts')
+check('limitError' in request_unban,
+      'EDGE: request-unban wertet den Fehler des Rate-Limits aus '
+      '(fail-closed - sonst faellt die Bremse bei jedem Stoerfall weg)')
+
+# (4) Die Client-IP kam aus einem Header, den der Client setzen kann.
+#
+#     "x-client-ip" ist KEIN Standard-Header von Supabase oder
+#     Cloudflare (das ist eine Vercel/Netlify-Konvention). Edge
+#     Functions reichen unbekannte Header unveraendert durch. Mit
+#     "x-client-ip: 1.2.3.4" pro Anfrage war das IP-Limit zu umgehen.
+ip_probleme = []
+for ts in sorted(FN.rglob('index.ts')):
+    inhalt = read(ts)
+    if 'headers.get("x-client-ip")' in inhalt:
+        ip_probleme.append('%s' % ts.relative_to(ROOT))
+check(not ip_probleme,
+      'EDGE: Keine Funktion liest die Client-IP aus "x-client-ip" '
+      '(der Header ist vom Client frei waehlbar - die IP-Limits waren '
+      'damit umgehbar)',
+      ', '.join(ip_probleme))
+
+# (5) E-Mail-Adressen wurden ungefiltert in ein LIKE-Muster gebaut.
+#
+#     In SQL ist "%" ein Platzhalter und "_" matcht ein beliebiges
+#     Zeichen. Eine Adresse wie "%@beispiel.de" loeschte dadurch die
+#     Rate-Limit-Buckets ALLER Adressen auf dieser Domain.
+like_probleme = []
+for ts in sorted(FN.rglob('index.ts')):
+    inhalt = read(ts)
+    # Die Kommentare nennen die alten Muster auch - nur der CODE zaehlt.
+    code = _ohne_kommentar(inhalt)
+    for treffer in re.finditer(r'\.like\("bucket_key",\s*([^)]*)\)', code):
+        muster = treffer.group(1)
+        # Wird direkt interpoliert, muss escapeLike da sein. Wird eine
+        # Variable benutzt, muss die Datei escapeLike benutzen - die
+        # Variable wird dann beim Bauen des Musters maskiert.
+        if '${' in muster:
+            if 'escapeLike' not in muster:
+                like_probleme.append('%s' % ts.relative_to(ROOT))
+        elif 'escapeLike' not in code:
+            like_probleme.append('%s' % ts.relative_to(ROOT))
+check(not like_probleme,
+      'EDGE: Jedes LIKE-Muster auf bucket_key maskiert die Wildcards '
+      '(escapeLike) - sonst loescht "%@domain.de" fremde Zaehler',
+      ', '.join(sorted(set(like_probleme))))
+
+# (6) check-location verglich sein internes Secret NICHT constant-time,
+#     obwohl der Kommentar genau das behauptete. Die neun anderen
+#     internen Funktionen nutzen timingSafeEqual.
+check_location = read(FN / 'check-location' / 'index.ts')
+check('timingSafeEqual' in check_location
+      and '[...internalSecret].every' not in check_location,
+      'EDGE: check-location vergleicht das interne Secret constant-time '
+      '(timingSafeEqual)')
+
+# (7) Die Nutzungszeit im Elternportal wurde ungeprueft gespeichert
+#     und bei einem unvollstaendigen Request geloescht.
+#
+#     Migration 165 schrieb "usage_start_min = p_usage_start_min"
+#     (ohne coalesce) - fehlte der Wert, war die elterliche
+#     Beschraenkung weg, waehrend "usage_limit_enabled" weiter true
+#     blieb. Migration 173 holt das nach.
+sql_173 = read(MIG / '173_guardian_settings_validation.sql')
+check('usage_start_min     = coalesce(p_usage_start_min, usage_start_min)'
+      in sql_173,
+      'DB: Das Elternportal loescht die Nutzungszeit nicht, wenn der '
+      'Request sie nicht mitschickt (coalesce)')
+check('invalid_usage_time' in sql_173,
+      'DB: Das Elternportal prueft den Bereich der Nutzungszeit '
+      '(0..1439) - sonst wird "-5 Minuten seit Mitternacht" gespeichert')
 
 # =====================================================================
 # Ausgabe

@@ -52,6 +52,22 @@ const USER_SCOPED_BUCKETS = ["avatars", "verification-videos"];
 type _KeyCand = { key: string; source: string };
 
 function _keyCandidates(): _KeyCand[] {
+/**
+ * Maskiert die LIKE-Wildcards in einem Wert.
+ *
+ * BEFUND 04.11.2026: Die E-Mail-Adresse wurde ungefiltert in ein
+ * LIKE-Muster gebaut. In SQL ist "%" ein Platzhalter und "_" matcht
+ * ein beliebiges Zeichen - eine Adresse wie "%@beispiel.de" hat
+ * dadurch die Buckets ALLER Adressen auf dieser Domain getroffen,
+ * fremde Rate-Limit-Zaehler inklusive.
+ *
+ * Der Escape-Character im LIKE-Muster von Postgres ist der Backslash.
+ */
+function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, (m) => `\\${m}`);
+}
+
+
   const out: _KeyCand[] = [];
   try {
     const dict = JSON.parse(
@@ -472,10 +488,22 @@ serve(async (req) => {
           }).eq("user_id", uid).select("user_id"),
       },
       {
+        // BEFUND 04.11.2026: Hier stand .eq("identifier", uid).
+        // Die Spalte "identifier" gibt es in rate_limit_hits NICHT -
+        // die Tabelle hat nur bucket_key, window_start und hit_count
+        // (Migration 042). PostgREST antwortete mit einem Spaltenfehler:
+        // die selektive Datenloeschung meldete bei "alles" dauerhaft
+        // ok:false, und die Rate-Limit-Zaehler des Kontos blieben
+        // stehen.
+        //
+        // Richtig ist die Schluessel-Spalte - und das Muster wird
+        // maskiert, damit ein "%" oder "_" nicht als LIKE-Platzhalter
+        // wirkt.
         tabelle: "rate_limit_hits",
         filter: (c) =>
-          c.from("rate_limit_hits").delete().eq("identifier", uid)
-            .select("identifier"),
+          c.from("rate_limit_hits").delete()
+            .like("bucket_key", `%${escapeLike(uid)}%`)
+            .select("bucket_key"),
       },
       {
         tabelle: "profile_photo_appeals",

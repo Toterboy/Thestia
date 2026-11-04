@@ -19,6 +19,7 @@ import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/providers/settings_provider.dart';
 import 'package:thestia/providers/user_preferences_provider.dart';
 import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/widgets/captcha_challenge.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show UserAttributes;
 import 'package:thestia/services/mfa_service.dart';
 import 'package:thestia/services/supabase_service.dart';
@@ -232,6 +233,59 @@ class PrivacyScreen extends ConsumerWidget {
     }
   }
 
+  /// Re-Authentifizierung für die sensiblen Konto-Änderungen
+  /// (E-Mail-Adresse, Passwort).
+  ///
+  /// WARUM HIER EIN CAPTCHA-TOKEN NOTWENDIG IST (04.11.2026):
+  ///
+  /// GoTrue prüft das CAPTCHA bei **jedem** Passwort-Grant - also auch
+  /// bei diesem. Der normale Login übergibt den Token (siehe
+  /// `SupabaseAuthService.login`), diese beiden Aufrufe taten es
+  /// nicht. Der Server antwortete darauf mit "Invalid login
+  /// credentials" - dieselbe Meldung wie bei einem falschen Passwort.
+  ///
+  /// Die Folge war: **"E-Mail-Adresse ändern" und "Passwort ändern"
+  /// waren im Release-Build komplett kaputt.** Der Nutzer gab sein
+  /// richtiges Passwort ein und bekam eine Fehlermeldung, die wie ein
+  /// Tippfehler aussah. Es ist kein Fehlerbericht aufgefallen, weil
+  /// die Meldung "falsche Zugangsdaten" lautet und nicht "CAPTCHA
+  /// fehlt".
+  ///
+  /// Der Token kommt aus derselben Challenge, die auch Registrierung
+  /// und Login nutzen ([showCaptchaChallenge]).
+  ///
+  /// Gibt `true` zurück, wenn die Re-Auth geklappt hat, `false`, wenn
+  /// der Nutzer die Challenge abgebrochen hat (dann wird gar nichts
+  /// versucht).
+  Future<bool> _reauthenticate(
+    BuildContext context, {
+    required String email,
+    required String password,
+  }) async {
+    String? captchaToken;
+    if (AppConstants.captchaEnabled && !kIsWeb) {
+      captchaToken = await showCaptchaChallenge(context);
+      if (captchaToken == null) {
+        // Der Nutzer hat die Challenge abgebrochen - keine Re-Auth.
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(L10n.t(context, 'privacy.changeFailed')),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return false;
+      }
+    }
+    await SupabaseService.client.auth.signInWithPassword(
+      email: email,
+      password: password,
+      captchaToken: captchaToken,
+    );
+    return true;
+  }
+
   /// E-Mail-Adresse ändern (v0.8.0): Re-Auth per aktuellem Passwort,
   /// danach updateUser - Supabase sendet Bestätigungs-Links an beide
   /// Adressen; die Änderung wird erst nach Bestätigung aktiv.
@@ -296,11 +350,14 @@ class PrivacyScreen extends ConsumerWidget {
     if (ok != true || !context.mounted) return;
 
     try {
-      // Re-Auth: aktuelles Passwort verifizieren.
-      await SupabaseService.client.auth.signInWithPassword(
+      // Re-Auth: aktuelles Passwort verifizieren (mit CAPTCHA-Token -
+      // siehe [_reauthenticate]).
+      final okAuth = await _reauthenticate(
+        context,
         email: currentEmail,
         password: passwordCtrl.text,
       );
+      if (!okAuth) return;
       await SupabaseService.client.auth.updateUser(
         UserAttributes(email: emailCtrl.text.trim()),
       );
@@ -395,11 +452,14 @@ class PrivacyScreen extends ConsumerWidget {
     if (ok != true || !context.mounted) return;
 
     try {
-      // Re-Auth: aktuelles Passwort verifizieren.
-      await SupabaseService.client.auth.signInWithPassword(
+      // Re-Auth: aktuelles Passwort verifizieren (mit CAPTCHA-Token -
+      // siehe [_reauthenticate]).
+      final okAuth = await _reauthenticate(
+        context,
         email: currentEmail,
         password: currentCtrl.text,
       );
+      if (!okAuth) return;
       await SupabaseService.client.auth
           .updateUser(UserAttributes(password: newCtrl.text));
       if (!context.mounted) return;

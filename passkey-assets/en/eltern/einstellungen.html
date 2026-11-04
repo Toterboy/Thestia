@@ -771,6 +771,18 @@ and limit the usage time.</p>
   var params = new URLSearchParams(window.location.search);
   var token = params.get("token") || "";
 
+  // BEFUND 04.11.2026: Der Sprachumschalter verlor den Token. Der
+  // Elternteil wechselte auf die andere Sprache und sah "Dieser Link
+  // ist nicht mehr gueltig" - der Token ist die einzige Berechtigung
+  // fuer das Eltern-Portal.
+  var sprachKnopf = document.querySelector(".sprach-knopf");
+  if (sprachKnopf && token) {
+    sprachKnopf.setAttribute(
+      "href",
+      sprachKnopf.getAttribute("href") + "?token=" + encodeURIComponent(token),
+    );
+  }
+
   var elLaden = document.getElementById("laden");
   var elFehler = document.getElementById("fehler");
   var elBestaetigen = document.getElementById("bereich-bestaetigen");

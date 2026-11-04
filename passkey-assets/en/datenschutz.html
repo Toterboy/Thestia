@@ -604,7 +604,7 @@
 </header>
 <div class="inhalt">
 <h1>Privacy Policy for Thestia</h1>
-<p><strong>As of: October 2026</strong> · Version 17 (v0.10.0)</p>
+<p><strong>As of: November 2026</strong> · Version 22 (v0.10.0)</p>
 <p>Thestia is a privacy-conscious open-source project (AGPLv3). Protecting your personal sphere comes first: no advertising trackers are used, no behavioural profiles are created, and no user data is sold to third parties.</p>
 <h2>1. Principles and data controller</h2>
 <p><strong>Contact:</strong> Questions about the processing of your data, access, rectification or erasure can be directed to the in-app bug report form (<em>Settings → Privacy → Report a bug</em>) or to the <strong>contact address `datenschutz@thestia.de`</strong>. To request erasure, state your user ID - then the residual data listed above is removed as well.</p>
@@ -632,7 +632,7 @@
 <tr><td>Image review hash</td><td>SHA-256 hash of a chat image you sent, together with the identifier of the recipient</td><td>Proof that a reported image really did travel through a chat (abuse protection against arbitrary reports)</td><td>With account deletion</td></tr>
 <tr><td>Location timestamp</td><td>Time of the last location check</td><td>Plausibility check (implausible changes of location)</td><td>With account deletion</td></tr>
 <tr><td>Marker of the account</td><td>MD5 hash of the account identifier</td><td>Prevents a deleted account from being registered again</td><td>Persists permanently, without any clear name</td></tr>
-<tr><td>Verification</td><td>Self-recording with image <strong>and</strong> sound to estimate the age. The video is <strong>encrypted on the device</strong> (AES-256-GCM) and only the ciphertext is transmitted; the key is stored in a table to which the app has no access. Purpose: age check for child safety and the 18+ release of Transit Spark. In case of rejection the video and key are deleted, otherwise at the latest 30 days after submission (section 7). Only a manual review by the administration creates a temporarily decrypted copy, which is deleted automatically after 20 minutes</td></tr>
+<tr><td>Verification</td><td>Self-recording with image <strong>and</strong> sound to estimate the age. The video is <strong>encrypted on the device</strong> (AES-256-GCM) and only the ciphertext is transmitted; the key is stored in a table to which the app has no access. Purpose: age check for child safety and the 18+ release of Transit Spark. In case of rejection the video and key are deleted, otherwise <strong>30 days after the approval of the verification</strong> (migration 171; the period previously started at the submission - a video that waited weeks for the review was already deleted on the day of the approval). If a verification stays undecided for more than 90 days, the video is deleted as well - the review needs it, but it must not lie around indefinitely (section 7). Only a manual review by the administration creates a temporarily decrypted copy, which is deleted automatically after 20 minutes</td></tr>
 </tbody>
 </table>
 </div>

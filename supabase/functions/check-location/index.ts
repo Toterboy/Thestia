@@ -61,6 +61,21 @@ interface CheckLocationRequest {
   lon2: number;
 }
 
+  /**
+ * Vergleicht zwei Strings constant-time.
+ *
+ * BEFUND 04.11.2026: Der Vergleich war [...secret].every(...) - der
+ * bricht beim ersten unterschiedlichen Zeichen ab und war damit
+ * timing-observable. Die neun anderen internen Funktionen nutzen
+ * diese Form schon.
+ */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+
 serve(async (req) => {
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
@@ -73,14 +88,13 @@ serve(async (req) => {
   // INTERNER SCHUTZ: Nur Aufrufe mit gültigem internen Secret zulassen
   // (constant-time Vergleich, Audit N5).
   // -------------------------------------------------------------------------
+  return diff === 0;
+}
+
   const internalSecret = Deno.env.get("INTERNAL_SECRET");
   const receivedSecret = req.headers.get("x-internal-secret") ?? "";
   const secretsMatch =
-    !!internalSecret &&
-    internalSecret.length === receivedSecret.length &&
-    [...internalSecret].every(
-      (c, i) => c.charCodeAt(0) === receivedSecret.charCodeAt(i),
-    );
+    !!internalSecret && timingSafeEqual(internalSecret, receivedSecret);
   if (!secretsMatch) {
     return new Response(JSON.stringify({ error: "Forbidden" }), {
       status: 403,

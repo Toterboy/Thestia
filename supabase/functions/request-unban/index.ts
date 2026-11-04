@@ -77,17 +77,29 @@ function escapeHtml(s: string): string {
  * x-forwarded-for. "unknown" nur, wenn gar nichts vorhanden ist.
  */
 function clientIp(req: Request): string {
-  const direct =
-    req.headers.get("x-client-ip") ??
-    req.headers.get("cf-connecting-ip") ??
-    req.headers.get("true-client-ip");
-  if (direct) return direct.trim().slice(0, 64);
+  // BEFUND 04.11.2026: Der Header "x-client-ip" stand an erster
+  // Stelle. Den setzt die Plattform NICHT - er ist eine
+  // Vercel/Netlify-Konvention und kommt unveraendert vom Client. Mit
+  // "x-client-ip: 1.2.3.4" pro Anfrage war das IP-Limit zu umgehen.
+  //
+  // cf-connecting-ip setzt Cloudflare bei JEDER Anfrage neu - den
+  // kann der Client nicht mitbringen.
+  const cf = req.headers.get("cf-connecting-ip");
+  if (cf) return cf.trim().slice(0, 64);
 
+  // x-forwarded-for: Cloudflare HAENGT die echte IP an. Der letzte
+  // Eintrag ist damit der verlaessliche, der erste der vom Client
+  // frei waehlbare. Es wird der letzte genommen.
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) {
-    const first = forwarded.split(",")[0]?.trim();
-    if (first) return first.slice(0, 64);
+    const teile = forwarded.split(",").map((t) => t.trim()).filter(Boolean);
+    const letzter = teile[teile.length - 1];
+    if (letzter) return letzter.slice(0, 64);
   }
+
+  // Kein verlaesslicher Wert vorhanden. "unknown" ist hier der
+  // SICHERE Fall: Alle Anfragen ohne IP teilen sich dann eine Bremse,
+  // statt dass jede ihre eigene bekommt.
   return "unknown";
 }
 
@@ -125,12 +137,24 @@ serve(async (req) => {
     }
 
     // Persistentes Rate-Limit pro E-Mail (überlebt Cold Starts).
-    const { data: limited } = await supabaseAdmin.rpc("consume_rate_limit", {
-      p_key: "unban_request:" + emailRaw,
-      p_max_hits: 3,
-      p_window_seconds: 3600,
-    });
-    if (limited === false) {
+    // BEFUND 04.11.2026: Der Fehler der RPC wurde nicht ausgewertet.
+    // Bei einem RPC-Fehler war data === null - und "null === false" ist
+    // false, also griff die Bremse nicht. Die 3/h-Grenze fiel bei
+    // jedem Stoerfall ersatzlos weg. Jetzt fail-closed, wie in allen
+    // anderen Funktionen.
+    const { data: limited, error: limitError } = await supabaseAdmin.rpc(
+      "consume_rate_limit",
+      {
+        p_key: "unban_request:" + emailRaw,
+        p_max_hits: 3,
+        p_window_seconds: 3600,
+      },
+    );
+    if (limitError) {
+      console.error("request-unban: Rate-Limit-RPC fehlgeschlagen:", limitError);
+      return jsonError("Serverfehler. Bitte spaeter erneut versuchen.", 503);
+    }
+    if (limited !== true) {
       return jsonError("Zu viele Anfragen für diese E-Mail-Adresse. Bitte warte eine Stunde.", 429);
     }
 

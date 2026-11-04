@@ -54,10 +54,27 @@ function decodeMime(raw) {
         return "";
       }
     })
-    .replace(/=\?utf-8\?Q\?([^?]+)\?=/gi, (_, q) =>
-      decodeURIComponent(q.replace(/_/g, " ").replace(/=([0-9A-F]{2})/gi,
-        (m, h) => String.fromCharCode(parseInt(h, 16))))
-    )
+    .replace(/=\?utf-8\?Q\?([^?]+)\?=/gi, (_, q) => {
+      // BEFUND 04.11.2026: decodeURIComponent wirft bei kaputtem
+      // Input einen URIError (z. B. ein "%" ohne zwei Hex-Ziffern).
+      // Der Fehler ist in einer replace()-Rueckruffunktion nicht
+      // abfangbar - er landete in der aufrufenden Funktion
+      // (decodeMime) und liess die gesamte Mail-Eingang
+      // abbrechen. Eine einzige kaputte Kopfzeile hat damit jede
+      // weitere Mail blockiert.
+      //
+      // Darum: der Fehler wird gefangen, und im Fehlerfall bleibt der
+      // Originaltext stehen. Eine Mail mit kaputtem Betreff ist immer
+      // noch besser als eine Mail, die gar nicht ankommt.
+      try {
+        return decodeURIComponent(
+          q.replace(/_/g, " ").replace(/=([0-9A-F]{2})/gi,
+            (m, h) => String.fromCharCode(parseInt(h, 16)))
+        );
+      } catch (_) {
+        return q;
+      }
+    })
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/&lt;/gi, "<")

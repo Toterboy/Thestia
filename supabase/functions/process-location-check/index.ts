@@ -93,7 +93,14 @@ serve(async (req) => {
     { p_key: `loccheck:${userId}`, p_max_hits: 10, p_window_seconds: 3600 },
   );
   if (rateError) {
-    console.warn("Rate-Limit-Prüfung fehlgeschlagen (fail-open):", rateError);
+    // BEFUND 04.11.2026: Der Fehlerpfad war fail-OPEN - bei einem
+    // Stoerfall der RPC entfiel die Bremse ersatzlos. Alle anderen
+    // Funktionen machen es fail-closed.
+    console.error("Rate-Limit-Prüfung fehlgeschlagen:", rateError);
+    return new Response(
+      JSON.stringify({ error: "rate_limit_unavailable" }),
+      { status: 503, headers: { "Content-Type": "application/json" } },
+    );
   } else if (rateOk !== true) {
     return new Response(
       JSON.stringify({ error: "rate_limited" }),
@@ -187,11 +194,20 @@ serve(async (req) => {
 
     if (previousLat == null || previousLon == null) {
       // Keine alte Position vorhanden, daher keine Prüfung möglich.
-      // In diesem Fall setzen wir is_location_suspicious auf false.
+      //
+      // BEFUND 04.11.2026: Hier stand "is_location_suspicious: false".
+      // Damit war das Umgehen möglich: Der Client loescht seine eigene
+      // Zeile in profile_locations (die Policy erlaubt das - "FOR ALL")
+      // und ruft die Funktion erneut auf. Ohne Vorposition wurde das
+      // Flag zurueckgesetzt und die Geschwindigkeits-Baseline neu
+      // gesetzt.
+      //
+      // Das Flag wird jetzt nur noch SETZT, nie geloescht. Das ist
+      // die sichere Richtung: ein faelschlich gesetztes Flag ist ein
+      // Fehlalarm, ein zurueckgesetztes Flag ist eine Umgehung.
       const { error: updateError } = await supabaseAdmin
         .from("profiles")
         .update({
-          is_location_suspicious: false,
           location_checked_at: new Date().toISOString(),
         })
         .eq("user_id", userId);

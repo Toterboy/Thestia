@@ -45,17 +45,29 @@ const RATE_WINDOW_MS = 60_000; // 1 Minute
  * -> ERSTER Eintrag aus x-forwarded-for. "unknown" nur, wenn nichts da ist.
  */
 function clientIp(req: Request): string {
-  const direct =
-    req.headers.get("x-client-ip") ??
-    req.headers.get("cf-connecting-ip") ??
-    req.headers.get("true-client-ip");
-  if (direct) return direct.trim().slice(0, 64);
+  // BEFUND 04.11.2026: Der Header "x-client-ip" stand an erster
+  // Stelle. Den setzt die Plattform NICHT - er ist eine
+  // Vercel/Netlify-Konvention und kommt unveraendert vom Client. Mit
+  // "x-client-ip: 1.2.3.4" pro Anfrage war das IP-Limit zu umgehen.
+  //
+  // cf-connecting-ip setzt Cloudflare bei JEDER Anfrage neu - den
+  // kann der Client nicht mitbringen.
+  const cf = req.headers.get("cf-connecting-ip");
+  if (cf) return cf.trim().slice(0, 64);
 
+  // x-forwarded-for: Cloudflare HAENGT die echte IP an. Der letzte
+  // Eintrag ist damit der verlaessliche, der erste der vom Client
+  // frei waehlbare. Es wird der letzte genommen.
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) {
-    const first = forwarded.split(",")[0]?.trim();
-    if (first) return first.slice(0, 64);
+    const teile = forwarded.split(",").map((t) => t.trim()).filter(Boolean);
+    const letzter = teile[teile.length - 1];
+    if (letzter) return letzter.slice(0, 64);
   }
+
+  // Kein verlaesslicher Wert vorhanden. "unknown" ist hier der
+  // SICHERE Fall: Alle Anfragen ohne IP teilen sich dann eine Bremse,
+  // statt dass jede ihre eigene bekommt.
   return "unknown";
 }
 
