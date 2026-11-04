@@ -100,7 +100,13 @@ function Gate {
     Write-Host ('-' * 72) -ForegroundColor DarkGray
     Write-Host "  $Name" -ForegroundColor Cyan
     Write-Host ('-' * 72) -ForegroundColor DarkGray
-    $out = & $Argumente[0] @($Argumente[1..($Argumente.Count - 1)]) 2>&1 | Out-String
+    # Der Aufruf kann auch aus genau einem Wort bestehen. Dann darf der
+    # Bereich 1..0 nicht gebildet werden - er liefe rueckwaerts und
+    # waere ein leerer Array, mit dem "& $cmd @()" zwar harmlos, aber
+    # in aelteren PowerShell-Versionen eine Fehlerquelle ist.
+    $rest = @()
+    if ($Argumente.Count -gt 1) { $rest = @($Argumente[1..($Argumente.Count - 1)]) }
+    $out = & $Argumente[0] @rest 2>&1 | Out-String
     $code = $LASTEXITCODE
     $text = $out.TrimEnd()
     if ($text) { Write-Host $text -ForegroundColor DarkGray }
