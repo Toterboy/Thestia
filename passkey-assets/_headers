@@ -134,3 +134,9 @@
 # Cache bringt also wenig und riskiert veraltete Bilder.
 /screenshots/*
   Cache-Control: public, max-age=86400
+# Die englische Galerie liegt unter /en/screenshots/ (die Bildpfade
+# in den Landing-Seiten sind RELATIV, damit die englische Seite
+# ihre eigenen Bilder zeigt) - sie braucht dieselbe Regel, sonst
+# fragt der Browser bei jedem Besuch nach.
+/en/screenshots/*
+  Cache-Control: public, max-age=86400

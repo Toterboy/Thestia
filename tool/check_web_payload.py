@@ -158,6 +158,75 @@ def main() -> int:
             print('        Verweise nach draussen (Klick, kein Ladevorgang): '
                   + ', '.join(sorted(set(fremde))))
 
+    # --- 2b) Landing-Seite und Suchmaschinen ---------------------------
+    #
+    # BEFUND (04.11.2026): In der Google-Suche stand als Beschreibung
+    # von "Thestia" die Fehlermeldung des Sicherheitschecks. Ursache:
+    # Die Landing-Seite hatte KEINE Meta-Beschreibung, also baute Google
+    # den Snippet aus dem Seiteninhalt - und auf auth.thestia.de ist der
+    # einzige Text im DOM genau diese Fehlermeldung.
+    #
+    # Zusaetzlich sperrte die robots.txt (Disallow: /, gedacht fuer die
+    # CAPTCHA-Seite) auch thestia.de - die oeffentliche Seite war damit
+    # gar nicht indexierbar. Beides wird hier geprueft.
+    print('\n2b) Landing-Seite und Suchmaschinen:')
+    LANDING = [('index.html', 'https://thestia.de/'),
+               ('en/index.html', 'https://thestia.de/en/')]
+    for name, canonical in LANDING:
+        p = ASSETS / name
+        if not p.exists():
+            flag('%s fehlt' % name)
+            continue
+        html = p.read_text(encoding='utf-8')
+
+        m = re.search(r'<meta\s+name="description"\s+content="([^"]*)"', html)
+        if not m:
+            flag('%s: keine meta description - Google baut die '
+                 'Beschreibung dann aus dem Seiteninhalt (das war die '
+                 'Fehlermeldung des Sicherheitschecks)' % name)
+        elif len(m.group(1)) < 60:
+            flag('%s: meta description ist zu kurz (%d Zeichen)'
+                 % (name, len(m.group(1))))
+
+        m = re.search(r'<link\s+rel="canonical"\s+href="([^"]*)"', html)
+        if not m:
+            flag('%s: kein canonical - die Kopie auf auth.thestia.de '
+                 'wuerde mitindexiert' % name)
+        elif m.group(1) != canonical:
+            flag('%s: canonical ist %s, erwartet %s'
+                 % (name, m.group(1), canonical))
+
+        # Die Bilder, auf die die Seite zeigt, muessen existieren.
+        fehlend = 0
+        for rel in re.findall(r'src="(screenshots/[^"]+)"', html):
+            if not (p.parent / rel).is_file():
+                flag('%s: Bild %s fehlt (die Seite zeigte leere '
+                     'Kaesten)' % (name, rel))
+                fehlend += 1
+        if fehlend == 0:
+            print('   OK  %-22s Beschreibung, canonical und Bilder' % name)
+
+    # Sitemap und die beiden robots-Dateien.
+    if not (ASSETS / 'sitemap.xml').is_file():
+        flag('sitemap.xml fehlt')
+    else:
+        print('   OK  sitemap.xml')
+    if not (ASSETS / 'robots-auth.txt').is_file():
+        flag('robots-auth.txt fehlt - der Auth-Host braucht eine eigene '
+             'robots.txt, sonst sperrt die normale Datei auch thestia.de')
+    else:
+        print('   OK  robots-auth.txt (eigene Sperre fuer den Auth-Host)')
+
+    # Die Netlify-Regel, die dem Auth-Host die eigene robots.txt gibt.
+    toml = (ASSETS / 'netlify.toml')
+    if not toml.is_file() or 'auth.thestia.de/robots.txt' not in \
+            toml.read_text(encoding='utf-8'):
+        flag('netlify.toml: der Host-Rewrite auf robots-auth.txt fehlt - '
+             'ohne ihn gilt die normale robots.txt auch fuer '
+             'auth.thestia.de')
+    else:
+        print('   OK  netlify.toml (Host-Rewrite fuer robots.txt)')
+
     # --- 3) Cache-Angaben --------------------------------------------
     print('\n3) Cache-Angaben (_headers):')
     headers_pfad = ASSETS / '_headers'
@@ -216,10 +285,29 @@ def main() -> int:
              'jeden Pfad, auch ueber die CAPTCHA-Seite')
     else:
         inhalt = robots_pfad.read_text(encoding='utf-8')
+        # "Allow: /" erlaubt alles - dann braucht es die einzelnen
+        # Allow-Zeilen nicht (das ist der Stand seit 04.11.2026: die
+        # oeffentliche Seite soll indexierbar sein, und die CAPTCHA-
+        # Sperre liegt jetzt in robots-auth.txt fuer den Auth-Host).
+        alles_erlaubt = re.search(r'(?m)^Allow:\s*/\s*$', inhalt) is not None
         for pfad in PFLICHT_PFADE:
+            if alles_erlaubt:
+                continue
             if ('Allow: %s' % pfad) not in inhalt:
                 flag('robots.txt: %s ist nicht erlaubt' % pfad)
-        print('   vorhanden, %d Zeichen' % len(inhalt))
+        print('   vorhanden, %d Zeichen%s'
+              % (len(inhalt), ' (alles erlaubt)' if alles_erlaubt else ''))
+
+    # Die Sperre fuer den Auth-Host: dort muss die CAPTCHA-Seite
+    # weiterhin ausgeschlossen bleiben.
+    auth_robots = ASSETS / 'robots-auth.txt'
+    if auth_robots.is_file():
+        inhalt = auth_robots.read_text(encoding='utf-8')
+        if not re.search(r'(?m)^Disallow:\s*/\s*$', inhalt):
+            flag('robots-auth.txt: sperrt nichts - der Sicherheitscheck '
+                 'waere wieder crawlbar (Netlify-Credits, Turnstile)')
+        else:
+            print('   robots-auth.txt sperrt den Sicherheitscheck')
 
     # --- Ergebnis ----------------------------------------------------
     print()

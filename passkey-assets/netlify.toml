@@ -13,3 +13,31 @@
   to = "/apple-app-site-association"
   status = 200
   force = true
+
+# EIGENE robots.txt fuer den Auth-Host (04.11.2026).
+#
+# auth.thestia.de und thestia.de sind EIN Netlify-Projekt (beide Domains
+# zeigen per CNAME darauf). Damit bekamen beide Hosts dieselbe
+# robots.txt - und das hatte zwei Fehler:
+#
+#  * Die Datei sperrte alles ("Disallow: /"), um Bot-Zugriffe auf die
+#    CAPTCHA-Seite fernzuhalten. Damit war auch thestia.de gesperrt:
+#    die oeffentliche Seite war nicht auffindbar, und in der
+#    Google-Suche stand als Beschreibung die Fehlermeldung des
+#    Sicherheitschecks.
+#  * Ohne Sperre waere die CAPTCHA-Seite wieder crawlbar - jeder
+#    Bot-Hit laesst den Turnstile-Script von Cloudflare nachladen und
+#    frisst Netlify-Credits.
+#
+# Der Host-Rewrite loest das: der Auth-Host bekommt /robots-auth.txt
+# (dort bleibt alles gesperrt), thestia.de die normale robots.txt aus
+# dem Publish-Ordner (dort ist die Seite indexierbar).
+#
+# REIHENFOLGE: Die .well-known-Regeln stehen weiter oben und greifen
+# zuerst - der Host-Rewrite darf die App-Link-Pruefung nicht stoeren.
+[[redirects]]
+  from = "https://auth.thestia.de/robots.txt"
+  to = "/robots-auth.txt"
+  status = 200
+  force = true
+

@@ -1,28 +1,27 @@
-# robots.txt fuer auth.thestia.de
-#
-# WARUM (28.10.2026): der Nutzer meldete, dass das Besuchen der Seiten
-# Netlify-Credits frisst. Gemessen kostet ein Besuch ~6 KB - das
-# koennen Visits nicht sein. Was die Credits frisst, sind zu einem
-# grossen Teil automatisierte Zugriffe: die Domain zeigt per CNAME
-# direkt auf Netlify, jeder Bot-Hit ist also ein Netlify-Request.
-#
-# Diese Datei weist die Maschinen von der CAPTCHA-Seite weg. Die Seite
-# unter "/" ist das Arbeitsblatt des Sicherheitschecks der App: fuer
-# Suchmaschinen und Scanner ohne Nutzen, und jeder Aufruf laesst
-# zusaetzlich den Turnstile-Script von Cloudflare nachladen.
-#
-# Die Rechts- und Pflichtseiten bleiben ausdruecklich erlaubt - sie
-# sollen auffindbar bleiben (Impressum, Datenschutz, Kinderschutz,
-# Konto-Loeschung, Threat Model).
+"""robots.txt fuer THESTIA.DE (die oeffentliche Seite).
+
+WARUM ZWEI DATEIEN (04.11.2026): Die Domain zeigt per CNAME direkt
+auf Netlify - auth.thestia.de und thestia.de sind EIN Netlify-Projekt,
+also bekommen beide Hosts DIESELBE robots.txt. Das war vorher ein
+Problem in beide Richtungen:
+
+  * `Disallow: /` (fuer die CAPTCHA-Seite) hat auch thestia.de
+    gesperrt - die oeffentliche Seite war damit ueberhaupt nicht
+    auffindbar. Die Suchmaschine sah nur den Sicherheitscheck.
+  * Ohne Sperre waere die CAPTCHA-Seite wieder crawlbar - jeder
+    Bot-Hit laesst den Turnstile-Script von Cloudflare nachladen und
+    frisst Netlify-Credits (das war der Grund fuer die Sperre).
+
+LOESUNG: Netlify liefert dem Auth-Host eine eigene robots.txt
+(Host-Rewrite in netlify.toml auf /robots-auth.txt). Diese Datei
+hier gilt fuer thestia.de: die oeffentliche Seite soll indexiert
+werden.
+
+Der Sicherheitscheck der App (auth.thestia.de) bleibt fuer
+Suchmaschinen gesperrt - dort steht /robots-auth.txt.
+"""
 
 User-agent: *
-Disallow: /
-Allow: /datenschutz
-Allow: /impressum
-Allow: /kinderschutz
-Allow: /konto-loeschen
-Allow: /daten-loeschen
-Allow: /eltern
-Allow: /eltern/einstellungen
-Allow: /en/
-Allow: /threat-model.md
+Allow: /
+
+Sitemap: https://thestia.de/sitemap.xml

@@ -1,4 +1,4 @@
-"""Prueft, dass alle PNG-Dateien im Repo wirklich gueltige PNGs sind.
+"""Prueft, dass alle Bild-Dateien im Repo wirklich gueltige Bilder sind.
 
 Begründung
 ----------
@@ -15,6 +15,21 @@ wird hier jede PNG-Datei im Arbeitsverzeichnis geprüft:
   3. IEND-Chunk vorhanden (nicht abgeschnitten)
   4. Bytegröße == Größe des Git-Blobs, falls die Datei versioniert ist
      (Abweichung = Zeilenenden- oder Text-Roundtrip-Schaden)
+
+DIE JPEGs DER LANDING-SEITE (04.11.2026)
+
+Genau der Schaden von oben, nur an einer anderen Stelle: Die acht
+Bilder unter `passkey-assets/screenshots/` waren keine JPEGs, sondern
+UTF-16-Text mit einem BOM - ein PowerShell-Text-Roundtrip hatte die
+Binaerdatei zerlegt. Sie lagen so im Repository und damit auch auf
+dem Server: die Landing-Seite zeigte acht leere Kaesten, und niemand
+hat es gemeldet.
+
+Der PNG-Check fasste diese Dateien nicht an (er prueft *.png), also
+blieb der Schaden unsichtbar. Seitdem werden die JPEGs mitgeprueft:
+  1. JPEG-Signatur (FFD8) vorhanden
+  2. die Datei laesst sich vollstaendig dekodieren
+  3. Bytegröße == Größe des Git-Blobs (wie bei den PNGs)
 
 Aufruf:  python tool/check_png_integrity.py
 Exit 0 = alles in Ordnung, Exit 1 = mindestens ein Befund.
@@ -111,8 +126,40 @@ def check(p: pathlib.Path):
                 f'CRLF- oder Text-Roundtrip-Schaden; .gitattributes prüfen')
 
 
+def check_jpeg(p: pathlib.Path):
+    """Prueft eine JPEG-Datei (siehe Modul-Docstring)."""
+    global checked
+    rel = p.relative_to(ROOT).as_posix()
+    data = p.read_bytes()
+    checked += 1
+
+    if not data.startswith(b'\xff\xd8'):
+        problems.append(
+            f'{rel}: keine JPEG-Signatur (erste Bytes '
+            f'{data[:4].hex()}) - die Datei wurde als TEXT gespeichert '
+            f'(UTF-16-BOM oder aehnlich) und ist im Browser nicht lesbar')
+        return
+
+    try:
+        from PIL import Image
+        with Image.open(p) as im:
+            im.load()
+    except Exception as e:  # noqa: BLE001
+        problems.append(f'{rel}: nicht dekodierbar ({e})')
+        return
+
+    if tracked(rel):
+        bsz = blob_size(rel)
+        if bsz is not None and bsz != len(data):
+            problems.append(
+                f'{rel}: Größe weicht vom Repository ab '
+                f'(Arbeitskopie {len(data)} B, Repo {bsz} B, '
+                f'Differenz {len(data) - bsz:+d} B) - typisch für '
+                f'CRLF- oder Text-Roundtrip-Schaden; .gitattributes prüfen')
+
+
 print('=' * 70)
-print('PNG-INTEGRITÄT')
+print('BILD-INTEGRITÄT')
 print('=' * 70)
 for p in sorted(ROOT.rglob('*.png')):
     parts = p.relative_to(ROOT).parts
@@ -120,6 +167,17 @@ for p in sorted(ROOT.rglob('*.png')):
         continue
     check(p)
 print(f'{checked} PNG-Dateien geprüft.')
+
+# Die Bilder der Landing-Seite (siehe Modul-Docstring).
+jpg_geprueft = 0
+for p in sorted(ROOT.rglob('*.jpg')):
+    parts = p.relative_to(ROOT).parts
+    if any(s in parts for s in SKIP_PARTS):
+        continue
+    vorher = checked
+    check_jpeg(p)
+    jpg_geprueft += checked - vorher
+print(f'{jpg_geprueft} JPEG-Dateien geprüft.')
 print()
 
 if problems:
@@ -129,5 +187,5 @@ if problems:
     print(f'{len(problems)} Befund(e).')
     sys.exit(1)
 
-print('OK  alle PNGs lesbar, vollständig und identisch zum Repository.')
+print('OK  alle Bilder lesbar, vollständig und identisch zum Repository.')
 sys.exit(0)
