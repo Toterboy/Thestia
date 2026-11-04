@@ -213,6 +213,11 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 ### Geändert
 
+- **Das Logo im Begrüßungsbild ist größer** (170 statt 120 dp): Es war
+  auf einem 360 dp breiten Screen ein kleines Bild, und im
+  Store-Screenshot landete es bei nur 193 px — die Wortmarke „Thestia"
+  war im Listing nicht mehr zu lesen. Die Quelle ist 941×941 px, es
+  wird also nicht hochskaliert.
 - **Das Mindestalter ist festgelegt: 16 Jahre** (Betreiberentscheidung
   03.11.2026). Die App ist nicht für unter 16-Jährige gedacht, und das
   wird nicht nur angezeigt, sondern erzwungen: im Registrierungsformular,
