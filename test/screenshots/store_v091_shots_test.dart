@@ -1091,6 +1091,31 @@ void main() {
       expect(find.byType(ChatDetailScreen), findsOneWidget);
       expect(find.text('Mara'), findsWidgets,
           reason: 'der Partner-Name fehlt - die Attrappe greift nicht');
+
+      // Die Nachrichten als KACHEL (04.11.2026).
+      //
+      // BISHER gab es fuer den Chat nur den ganzen Screen. Im
+      // Tablet-Bild stand er deshalb klein links (der Text war kaum
+      // lesbar), waehrend die uebrigen Bilder Kacheln zeigten. Die
+      // Kachel ist der Block aus den Nachrichten - von der ersten bis
+      // zur letzten sichtbaren. Die Union der beiden Randnachrichten
+      // umfasst genau diesen Block, weil die Nachrichten dazwischen
+      // dazwischenliegen.
+      final erste = find.text(_t('Ich muss dir was Beunruhigendes sagen.',
+                                  'I have to tell you something unsettling.'));
+      final letzte = find.text(_t('Selten. Er akzeptiert nur exakt zwei '
+                                  'Scheiben.',
+                                  'Rarely. It accepts exactly two slices.'));
+      expect(erste, findsOneWidget, reason: 'die erste Nachricht fehlt');
+      expect(letzte, findsOneWidget, reason: 'die letzte Nachricht fehlt');
+
+      final box = tester.getRect(erste).expandToInclude(tester.getRect(letzte));
+      await _writeCardList(tester, '02_chat', {
+        'chat_verlauf': {
+          'file': '02_chat.png',
+          'rect': [box.left, box.top, box.width, box.height],
+        },
+      });
     });
 
     // 2) Aktuelles: die Startseite.
@@ -1116,6 +1141,61 @@ void main() {
         ],
       );
       expect(find.byType(HomeScreen), findsOneWidget);
+    });
+
+    // 2b) Die Startseite braucht auch eine KACHEL (04.11.2026).
+    //
+    //    BISHER gab es fuer 02 nur den ganzen Screen. Im 9:16-Bild lag
+    //    er deshalb als Telefon-Bild in der Kachel, im Tablet-Bild als
+    //    kleiner Bildausschnitt - die Ueberschrift stand dort anders
+    //    als in den uebrigen Bildern, und die Startseite war der
+    //    einzige Screen, dessen Rand mitten in einer Zeile abgeschnitten
+    //    war ("Keine neuen Funken" halb sichtbar).
+    //
+    //    Die KACHEL ist der Block aus Begruessung und Unterzeile. Er
+    //    ist der eigentliche Inhalt der Startseite - der Rest ist eine
+    //    Liste, die im Bild nichts erzaehlt.
+    testWidgets('export Kachel 02_aktuelles (Startseite)', (tester) async {
+      await _vorbereiteChatSpeicher(tester);
+
+      await _pump(
+        tester,
+        const HomeScreen(),
+        outDir: outCards,
+        name: '02_aktuelles',
+        size: _phone,
+        dpr: _dpr,
+        extra: [
+          chatServiceProvider.overrideWithValue(
+              _FakeChatService(_chatPartner(), _chatHistory())),
+        ],
+      );
+
+      // Die Begruessung ist der Text mit dem Emoji am Ende; die
+      // Unterzeile steht direkt darunter. Beide zusammen ergeben den
+      // Kachel-Block.
+      final begruessung = find.textContaining('Hallo,');
+      expect(begruessung, findsOneWidget,
+          reason: 'die Begruessung der Startseite fehlt');
+      final unterzeile =
+          find.text('Finde Verbindungen, die mehr sehen als nur ein Foto.');
+      expect(unterzeile, findsOneWidget,
+          reason: 'die Unterzeile der Startseite fehlt');
+
+      final r1 = tester.getRect(begruessung);
+      final r2 = tester.getRect(unterzeile);
+      final box = r1.expandToInclude(r2);
+      // KEIN extra Rand nach unten: der Innenabstand der Kachel
+      // (CARD_MARGIN_LOGICAL) kommt spaeter beim Zuschneiden dazu. Hier
+      // noch einmal 6 px drauf, reach der Schnitt in die naechste
+      // Ueberschrift ("Neue Nachrichten") - und die Kachel sah
+      // abgeschnitten aus.
+      await _writeCardList(tester, '02_aktuelles', {
+        'aktuelles_gruss': {
+          'file': '02_aktuelles.png',
+          'rect': [box.left, box.top, box.width, box.height],
+        },
+      });
     });
   }
 

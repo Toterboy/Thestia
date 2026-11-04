@@ -2163,47 +2163,163 @@ def compose_modes(tiles, headline: str, subline: str, badge: str):
     return round_corners(bg, 56)
 
 
-def compose_modes_wqhd(tiles, headline: str, subline: str, badge: str):
-    """16:9: Kacheln links, Text rechts - wie compose_wqhd, aber mit
+def compose_modes_wqhd(tiles, headline: str, subline: str, badge: str,
+                        W: int = 2560, H: int = 1440):
+    """Querformat: Kacheln links, Text rechts - wie compose_wqhd, aber mit
     Kacheln statt eines Geraets.
 
     Die Kacheln werden mit derselben Hoehenbegrenzung gesetzt wie im
     9:16-Bild. Vorher lag die Spaltenbreite fest bei 900 px, wodurch die
     hohe Transit-Spark-Kachel aus ihrer Zeile in die darunterliegende
     ragte.
+
+    W und H sind Parameter (04.11.2026): das 10-Zoll-Tablet braucht
+    1920x1200, das 16:9-Bild 2560x1440. Alles proportional zur kleineren
+    Kante - sonst sieht das 10-Zoll-Bild aus wie ein 16:9-Bild, das
+    zusammengestaucht wurde.
     """
-    W, H = 2560, 1440
+    skala = min(W / 2560.0, H / 1440.0)
     bg = gradient((W, H), 25).convert('RGBA')
     draw = ImageDraw.Draw(bg)
 
-    margin = 90
-    gap = 26
-    col_w = _place_tiles(bg, tiles, margin, H - 2 * margin, 980, gap,
-                         x=margin)
+    margin = max(24, int(90 * skala))
+    gap = max(10, int(26 * skala))
+    col_w = _place_tiles(bg, tiles, margin, H - 2 * margin,
+                         max(200, int(980 * skala)), gap, x=margin)
 
-    f_head = ImageFont.truetype(FONT_BOLD, 78)
-    f_sub = ImageFont.truetype(FONT_REG, 38)
-    tx = margin + col_w + 90
-    y = max(200, (H - 400) // 2)
-    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255), 20,
-                   tx, y, align='left')
-    y += 24
-    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226), 14,
-                   tx, y, align='left')
-    y += 40
-    f_badge = ImageFont.truetype(FONT_BOLD, 36)
+    f_head = ImageFont.truetype(FONT_BOLD, max(24, int(78 * skala)))
+    f_sub = ImageFont.truetype(FONT_REG, max(12, int(38 * skala)))
+    tx = margin + col_w + max(30, int(90 * skala))
+    y = max(int(120 * skala), (H - int(400 * skala)) // 2)
+    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255),
+                   max(8, int(20 * skala)), tx, y, align='left')
+    y += max(10, int(24 * skala))
+    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226),
+                   max(6, int(14 * skala)), tx, y, align='left')
+    y += max(16, int(40 * skala))
+    f_badge = ImageFont.truetype(FONT_BOLD, max(14, int(36 * skala)))
     bb = draw.textbbox((0, 0), badge, font=f_badge)
-    bw = bb[2] - bb[0] + 2 * 68
+    bw = bb[2] - bb[0] + 2 * max(24, int(68 * skala))
     layer = Image.new('RGBA', bg.size, (0, 0, 0, 0))
     ImageDraw.Draw(layer).rounded_rectangle(
-        [tx, y, tx + bw, y + bb[3] - bb[1] + 40],
-        radius=(bb[3] - bb[1] + 40) // 2,
+        [tx, y, tx + bw, y + bb[3] - bb[1] + max(14, int(40 * skala))],
+        radius=(bb[3] - bb[1] + max(14, int(40 * skala))) // 2,
         fill=(255, 255, 255, 52), outline=(255, 255, 255, 130), width=2)
     ImageDraw.Draw(layer).text(
-        (tx + 68 - bb[0], y + 20 - bb[1]), badge, font=f_badge,
+        (tx + max(24, int(68 * skala)) - bb[0],
+         y + max(8, int(20 * skala)) - bb[1]), badge, font=f_badge,
         fill=(255, 255, 255, 250))
     bg.alpha_composite(layer)
-    return round_corners(bg, 56)
+    return round_corners(bg, max(24, int(56 * skala)))
+
+
+def compose_cards_wqhd(cards, headline: str, subline: str, badge: str,
+                        heading=None, cols: int = 1, dark: bool = False,
+                        W: int = 1920, H: int = 1200):
+    """Querformat: die echten Kacheln links, der Text rechts.
+
+    WARUM ES DIESE FUNKTION GIBT (04.11.2026): Das 10-Zoll-Tablet war
+    vorher ein Bild, in dem der GANZE Telefon-Screen links stand und der
+    Text rechts. Drei Fehler kamen dadurch:
+
+      * Der Screen wurde auf die volle Bildhoehe skaliert - der
+        Abschnittsrand schnitt dabei oben mitten durch den
+        "Ueberspringen"-Knopf.
+      * Alles wurde kleiner: das App-Logo schrumpfte auf 150 px und
+        wirkte unscharf, wenn der Store es gross zeigt.
+      * Die Startseite und die Entdecken-Kacheln hatten gar keinen
+        eigenen Kachel-Export - fuer die Entdecken stand dort der
+        Dart-Placeholder (eine schwarze Box mit X).
+
+    Mit den Kacheln aus dem App-Export ist der Inhalt 1:1 (also
+    scharf), der Screenshot ist eine Karte wie in den uebrigen Bildern
+    und der Text steht rechts - so wie beim 16:9-Bild.
+
+    Die Kacheln kommen aus dem Dart-Export (echte Widgets, kein
+    nachgebautes Layout), genau wie im 9:16-Bild.
+    """
+    skala = min(W / 2560.0, H / 1440.0)
+    verlauf = gradient((W, H), 25)
+    if dark:
+        verlauf = darken(verlauf)
+    bg = verlauf.convert('RGBA')
+    draw = ImageDraw.Draw(bg)
+
+    margin = max(24, int(90 * skala))
+    gap = max(10, int(26 * skala))
+    text_gap = max(30, int(90 * skala))
+
+    imgs = [c for _n, c in cards]
+
+    # Die Kacheln bekommen die LINKE Spalte - nicht die ganze Breite.
+    #
+    # (04.11.2026) Vorher lief das 2-Spalten-Raster ueber die volle
+    # Bildbreite: die Kacheln wurden riesig, der Block passte nicht in
+    # die Hoehe (die letzte Reihe war abgeschnitten) und fuer den Text
+    # rechts war kein Platz mehr. Jetzt nimmt die linke Spalte 42 % der
+    # Breite, der Text steht rechts.
+    max_w = max(200, int(W * 0.42))
+
+    head = None
+    head_h = 0
+    if heading:
+        width = max((c.width for c in imgs), default=max_w)
+        head = _heading_card(heading, width)
+        head_h = int(head.height * max_w / width)
+        head = head.resize((max_w, head_h), Image.LANCZOS)
+
+    if cols > 1:
+        probe = _grid_metrics(imgs, H - 2 * margin, max_w, cols, gap, 18)
+        block = head_h + (gap if heading else 0) + probe['block_h']
+        start = margin + max(0, (H - 2 * margin - block) / 2.0)
+        if head is not None:
+            _paste_card(bg, head, margin, start)
+        _place_grid(bg, imgs,
+                    int(start + head_h + (gap if heading else 0)),
+                    int(H - 2 * margin), max_w, cols=cols, gap=gap,
+                    min_gap=18, center_w=2 * margin + max_w)
+        col_w = max_w
+    else:
+        # Der Block sitzt MITTIG (sonst klebt die Karte oben und der
+        # Text steht auf halber Hoehe - das Bild sah unausgewogen aus).
+        #
+        # Die Hoehe des Blocks wird vorher berechnet, weil sie von der
+        # Skalierung abhaengt und die Skalierung vom verfuegbaren Raum
+        # (_grid_metrics rechnet ohne zu zeichnen).
+        probe = _grid_metrics(imgs, H - 2 * margin, max_w, 1, gap, 18)
+        block = head_h + (gap if heading else 0) + probe['block_h']
+        start = margin + max(0, (H - 2 * margin - block) / 2.0)
+        if head is not None:
+            _paste_card(bg, head, margin, start)
+        col_w = _place_tiles(bg, imgs,
+                             int(start + head_h + (gap if heading else 0)),
+                             int(H - start - margin), max_w, gap, x=margin)
+
+    # Der Text rechts, mittig zur Kachel.
+    f_head = ImageFont.truetype(FONT_BOLD, max(24, int(78 * skala)))
+    f_sub = ImageFont.truetype(FONT_REG, max(12, int(38 * skala)))
+    tx = margin + col_w + text_gap
+    y = max(int(120 * skala), (H - int(400 * skala)) // 2)
+    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255),
+                   max(8, int(20 * skala)), tx, y, align='left')
+    y += max(10, int(24 * skala))
+    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226),
+                   max(6, int(14 * skala)), tx, y, align='left')
+    y += max(16, int(40 * skala))
+    f_badge = ImageFont.truetype(FONT_BOLD, max(14, int(36 * skala)))
+    bb = draw.textbbox((0, 0), badge, font=f_badge)
+    bw = bb[2] - bb[0] + 2 * max(24, int(68 * skala))
+    layer = Image.new('RGBA', bg.size, (0, 0, 0, 0))
+    ImageDraw.Draw(layer).rounded_rectangle(
+        [tx, y, tx + bw, y + bb[3] - bb[1] + max(14, int(40 * skala))],
+        radius=(bb[3] - bb[1] + max(14, int(40 * skala))) // 2,
+        fill=(255, 255, 255, 52), outline=(255, 255, 255, 130), width=2)
+    ImageDraw.Draw(layer).text(
+        (tx + max(24, int(68 * skala)) - bb[0],
+         y + max(8, int(20 * skala)) - bb[1]), badge, font=f_badge,
+        fill=(255, 255, 255, 250))
+    bg.alpha_composite(layer)
+    return round_corners(bg, max(24, int(56 * skala)))
 
 
 def split_screen(hell: Image.Image, dunkel: Image.Image, winkel: float = -65.8,
@@ -2662,7 +2778,7 @@ def _baue_sprache(profil):
         # einem Kachelbild: dann ist es kein Fehler, nur weniger schoen.
         cards = load_cards(quelle, default_src=f'{quelle}.png',
                            margin=CARD_MARGIN_LOGICAL if name in
-                           ('01_willkommen', '05_anpassen') else 0.0,
+                           ('01_willkommen', '02_aktuelles', '03_chat', '05_anpassen') else 0.0,
                            cards_dir=profil['cards'])
         if cards and name != '06_hell_dunkel':
             k = compose_cards(cards, headline, subline, badge,

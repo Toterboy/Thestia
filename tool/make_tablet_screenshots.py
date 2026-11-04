@@ -82,6 +82,59 @@ def _ist_dunkel(quelle: pathlib.Path) -> bool:
     return 'dunkel' in quelle.stem.lower()
 
 
+def _komponiere_10zoll(comp, profil, name, headline, subline, badge, dunkel):
+    """Baut das 10-Zoll-Bild EINES Screens.
+
+    Siehe den Kommentar im Aufrufer: je Screen die passende Komposition
+    (Modus-Kacheln, App-Kacheln oder der geteilte Bildschirm).
+    """
+    if name == '04_entdecken':
+        # Die fuenf echten Modus-Kacheln, nicht der Placeholder-Screen.
+        tiles = sorted(profil['tiles'].glob('tile_*.png'),
+                       key=lambda p: int(p.stem.split('_')[1]))
+        if not tiles:
+            return None
+        crops = [comp._crop_tile(Image.open(t)) for t in tiles]
+        return comp.compose_modes_wqhd(crops, headline, subline, badge,
+                                        W=GROSSE_10[0], H=GROSSE_10[1])
+
+    if name == '06_hell_dunkel':
+        # HELL + DUNKEL als EINER Screen, schraeg geteilt. Ohne den
+        # Split stand nur die helle Variante im Bild, obwohl die
+        # Ueberschrift "Hell oder dunkel" versprach.
+        hell = profil['src'] / '04_anpassen.png'
+        dunkel_src = profil['src'] / '04_anpassen_dunkel.png'
+        if not dunkel_src.exists():
+            return None
+        shot = comp.split_screen(Image.open(hell).convert('RGB'),
+                                  Image.open(dunkel_src).convert('RGB'),
+                                  winkel=-30.3, anker_x=0.5, anker_y=0.45)
+        return comp.compose_card_wqhd(shot, headline, subline, badge,
+                                       dark=False,
+                                       W=GROSSE_10[0], H=GROSSE_10[1])
+
+    # Kacheln aus dem Dart-Export, wenn es sie gibt.
+    cards = comp.load_cards(comp.QUELLE.get(name, name),
+                            default_src='%s.png' % comp.QUELLE.get(name, name),
+                            margin=comp.CARD_MARGIN_LOGICAL
+                            if name in ('01_willkommen', '02_aktuelles', '03_chat', '05_anpassen')
+                            else 0.0,
+                            cards_dir=profil['cards'])
+    if cards:
+        return comp.compose_cards_wqhd(
+            cards, headline, subline, badge,
+            heading=profil['heading_eisbrecher']
+            if name == '07_eisbrecher' else None,
+            cols=2 if name == '07_eisbrecher' else 1,
+            dark=dunkel, W=GROSSE_10[0], H=GROSSE_10[1])
+
+    # Sonst der ganze Bildschirm (Startseite).
+    quelle = profil['src'] / ('%s.png' % comp.QUELLE.get(name, name))
+    shot = Image.open(quelle).convert('RGB')
+    return comp.compose_card_wqhd(shot, headline, subline, badge, dark=dunkel,
+                                   W=GROSSE_10[0], H=GROSSE_10[1])
+
+
 def main() -> int:
     anzahl = 0
 
@@ -114,7 +167,25 @@ def main() -> int:
             print('  %s 7 Zoll: %s' % (lang, quelle.name))
 
         # ------------------------------------------------------------------
-        # 10 Zoll: neu komponiert in 1920x1200 (Kachel links, Text rechts).
+        # 10 Zoll: neu komponiert in 1920x1200.
+        #
+        # JE SCREEN EIGENE KOMPOSITION (04.11.2026). Vorher stand in ALLEN
+        # Bildern der ganze Telefon-Screen links - das brachte drei
+        # Fehler:
+        #
+        #   * Der Screen fuellte die volle Bildhoehe; oben schnitt die
+        #     Kante mitten durch den "Ueberspringen"-Knopf.
+        #   * Alles wurde kleiner - das App-Logo schrumpfte auf 150 px
+        #     und wirkte unscharf.
+        #   * Fuer 04 (Entdecken) gibt es keinen Screen, sondern fuenf
+        #     Modus-Kacheln: der Dart-Placeholder (eine schwarze Box mit
+        #     X) stand im Bild. Fuer 06 (Hell/Dunkel) fehlte die
+        #     Schraegteilung - es stand nur die helle Variante.
+        #
+        # Die Reihenfolge:
+        #   1) Modus-Kacheln (04)      -> compose_modes_wqhd
+        #   2) Kacheln aus dem Export  -> compose_cards_wqhd (1:1, scharf)
+        #   3) Bildschirm (06)         -> compose_card_wqhd mit Split
         # ------------------------------------------------------------------
         for name, (headline, subline, badge) in profil['shots'].items():
             quelle = profil['src'] / ('%s.png' % comp.QUELLE.get(name, name))
@@ -123,13 +194,15 @@ def main() -> int:
                       % (lang, name))
                 continue
 
-            shot = Image.open(quelle).convert('RGB')
-            dunkel = _ist_dunkel(quelle)
+            dunkel = name == '08_datenschutz'
+            bild = _komponiere_10zoll(
+                comp, profil, name, headline, subline, badge, dunkel)
 
-            bild = comp.compose_card_wqhd(
-                shot, headline, subline, badge, dark=dunkel,
-                W=GROSSE_10[0], H=GROSSE_10[1],
-            )
+            if bild is None:
+                print('  %s 10 Zoll: %s - nichts zu zeigen, uebersprungen'
+                      % (lang, name))
+                continue
+
             ziele = [out_10 / ('%s.png' % name)]
             ziele.append(_zielordner(sprache, '10in') / ('%s.png' % name))
             _speichere(bild, ziele)
