@@ -155,6 +155,35 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   erweitert (Version 20); die DSFA führt die neue Maßnahme und ihre
   Grenzen.
 
+### Behoben
+
+- **Die CI war an einer Zeile rot, obwohl lokal alles grün war**
+  (04.11.2026, Läufe #265, #266 und #268): In `test/web_pages_test.dart`
+  stand `'${assets.path}/${url}'`. Die Klammern um `url` sind überflüssig,
+  und Dart meldet das als *Hinweis* (`unnecessary_brace_in_string_interps`).
+  Die CI ruft `flutter analyze --fatal-infos` auf – dort ist ein Hinweis
+  ein **Fehler**. Lokal läuft `flutter analyze` ohne diese Flag und meldet
+  „No issues found". Deshalb blieb die CI drei Läufe lang rot, während
+  die lokale Prüfung grün war. Der Schritt „Tests" wurde danach gar nicht
+  mehr ausgeführt, ein dahinterliegender Fehler wäre unsichtbar
+  geblieben. (Geprüft über die öffentliche GitHub-API: In allen drei
+  Läufen war ausschließlich der Job `analyze-and-test` rot, und zwar
+  nur im Schritt „Analyze". Die übrigen fünf Jobs waren grün.)
+
+### Hinzugefügt
+
+- **`tool/check_local_ci.ps1` – die CI-Gates lokal laufen lassen**
+  (04.11.2026): Das Skript spiegelt die vier Jobs aus
+  `.github/workflows/ci.yml` und benutzt dieselben Flags: der Analyzer
+  mit `--fatal-infos`, die Tests mit der `.env` aus `.env.example`,
+  `python3` mit Rückfall auf `python`. Ohne diesen Spiegel bleibt man
+  der Meinung, alles sei grün, während die CI rot ist – genau das ist
+  dreimal passiert. Aufruf:
+
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File .\tool\check_local_ci.ps1
+  ```
+
 ### Bekannte Grenzen
 
 - Die Nutzungszeit ist eine Hausregel auf dem Gerät des Jugendlichen.

@@ -437,6 +437,38 @@ Support erst ab v0.9.2 ist eine Folge der Alterssperre für Transit Spark
 | Standort             | `geolocator`, `geocoding`                          |
 | Benachrichtigungen   | `flutter_local_notifications`                      |
 
+### Lokale Prüfung (derselbe Maßstab wie die CI)
+
+Bevor etwas gepusht wird, laufen dieselben Gates, die GitHub Actions
+ausführt:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tool\check_local_ci.ps1
+```
+
+Das Skript spiegelt die Jobs aus [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
+– `analyze-and-test`, `dependency-audit`, `static-checks`, `passkey-assets` –
+und benutzt dabei **genau die Flags der CI**:
+
+| Gate | Aufruf | Unterschied zur CI |
+| --- | --- | --- |
+| Analyzer | `flutter analyze --fatal-infos` | ohne `--fatal-infos` ist ein *Hinweis* kein Fehler – lokal grün, in der CI rot |
+| Tests | `flutter test` mit `.env` aus `.env.example` | die CI baut die `.env` genauso auf |
+| Prüfer | 25 Skripte unter `tool/` | `python3` → `python`, weil Windows oft kein `python3` kennt |
+
+Der Unterschied beim Analyzer ist der Grund, warum das Skript existiert:
+Ein Hinweis wie `unnecessary_brace_in_string_interps` lässt den
+lokalen Exit-Code bei 0 („No issues found"), macht die CI aber rot.
+Ohne diesen Spiegel bleibt man drei CI-Läufe lang der Meinung, alles
+sei grün.
+
+```powershell
+# nur eine Gruppe (der Testlauf dauert lokal rund zwei Minuten)
+.\tool\check_local_ci.ps1 -Nur static-checks
+# ohne Tests, aber mit dem CI-Flag des Analyzers
+.\tool\check_local_ci.ps1 -Schnell
+```
+
 ---
 
 ## Ausblick
