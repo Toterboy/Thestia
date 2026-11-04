@@ -183,7 +183,7 @@ void main() {
         // Relativ zum Ordner der HTML-Datei aufloesen.
         final pfad = url.startsWith('/')
             ? '${assets.path}$url'
-            : '${assets.path}/${url}';
+            : '${assets.path}/$url';
         expect(File(pfad).existsSync(), isTrue,
             reason: 'Bild fehlt: $url');
         // Die Obergrenze aus tool/check_web_payload.py (200 KB). Wer
