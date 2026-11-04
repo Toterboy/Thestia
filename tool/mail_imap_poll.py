@@ -22,15 +22,19 @@ verhindert, dass dieselbe Mail zweimal gespeichert wird.
 Einrichtung
 ===========
 
-Umgebungsvariablen (weder Passwoerter noch Schluessel im Repo!):
+Die Zugangsdaten kommen aus `tool/mail_secrets.py` - in dieser
+Reihenfolge:
 
-  IMAP_HOST             z. B. imap.example.com
-  IMAP_PORT             993 (Standard)
-  IMAP_USER             der Postfach-Login
-  IMAP_PASSWORD         das Passwort bzw. ein App-Passwort
-  IMAP_FOLDER           INBOX (Standard)
-  THESTIA_FUNCTIONS_URL  https://<projekt>.supabase.co/functions/v1
-  THESTIA_INTERNAL_SECRET  das interne Secret der Edge Functions
+  1. Umgebungsvariablen (fuer CI und Task-Planer):
+       IMAP_HOST, IMAP_PORT, IMAP_USER, IMAP_PASSWORD, IMAP_FOLDER,
+       THESTIA_FUNCTIONS_URL, THESTIA_INTERNAL_SECRET
+  2. Secret-Datei ausserhalb des Projekts (Vorgabe):
+       %USERPROFILE%\\.secrets\\thestia-mail.properties
+
+Selbst einrichten (fragt nach den Werten ab, legt die Datei an und
+richtet den Task-Planer ein):
+
+  python tool/setup_mail_inbox.py
 
 Beispiel (Windows, Aufgabenplaner alle 5 Minuten):
 
@@ -62,11 +66,15 @@ import email.utils
 import imaplib
 import json
 import os
+import pathlib
 import ssl
 import sys
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import mail_secrets  # noqa: E402
 
 DEFAULT_PORT = 993
 DEFAULT_FOLDER = "INBOX"
@@ -184,13 +192,18 @@ def send(payload: dict, url: str, secret: str, dry_run: bool) -> bool:
 def main() -> int:
     dry_run = "--dry-run" in sys.argv
 
-    host = os.environ.get("IMAP_HOST", "").strip()
-    user = os.environ.get("IMAP_USER", "").strip()
-    password = os.environ.get("IMAP_PASSWORD", "")
-    port = int(os.environ.get("IMAP_PORT", str(DEFAULT_PORT)))
-    folder = os.environ.get("IMAP_FOLDER", DEFAULT_FOLDER)
-    base = os.environ.get("THESTIA_FUNCTIONS_URL", "").rstrip("/")
-    secret = os.environ.get("THESTIA_INTERNAL_SECRET", "")
+    # Die Zugangsdaten kommen aus tool/mail_secrets.py: Umgebung
+    # zuerst, dann die Secret-Datei ausserhalb des Projekts. Vorher
+    # standen hier nur Umgebungsvariablen - damit war der
+    # Posteingang nur per Task-Planer einrichtbar, nicht "von Hand".
+    settings = mail_secrets.read_settings()
+    host = settings.get("IMAP_HOST", "").strip()
+    user = settings.get("IMAP_USER", "").strip()
+    password = settings.get("IMAP_PASSWORD", "")
+    port = int(settings.get("IMAP_PORT", str(DEFAULT_PORT)))
+    folder = settings.get("IMAP_FOLDER", DEFAULT_FOLDER)
+    base = settings.get("THESTIA_FUNCTIONS_URL", "").rstrip("/")
+    secret = settings.get("THESTIA_INTERNAL_SECRET", "")
 
     fehlend = [
         name
@@ -204,7 +217,8 @@ def main() -> int:
         if not wert
     ]
     if fehlend:
-        log(f"FEHLT in der Umgebung: {', '.join(fehlend)}")
+        log(f"FEHLT: {', '.join(fehlend)}")
+        log("Einrichten:  python tool/setup_mail_inbox.py")
         return 2
 
     url = f"{base}/mail-ingest"
