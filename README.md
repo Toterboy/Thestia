@@ -13,6 +13,15 @@ Das Projekt ist vollständig kostenlos nutzbar und soll eine echte Alternative z
 Tinder & Co. darstellen. Es befindet sich in aktiver Entwicklung und ist noch
 nicht vollständig funktional. Beiträge und Feedback sind willkommen.
 
+> **Mit Liebe entwickelt – und mit Unterstützung künstlicher Intelligenz.**
+> Thestia wurde von einem Menschen mit Hilfe von KI-Modellen entwickelt:
+> vom ersten Architektur-Entwurf über Code, Tests und Bildschirmfotos bis zu
+> Datenschutzerklärung und Bedrohungsschutz. Was die App kann und wie sie
+> tickt, hat ein Mensch entschieden – die KI hat Code geschrieben, nicht
+> Verantwortung übernommen. Jede Zeile ist im [Quellcode](https://github.com/Toterboy/Thestia)
+> nachprüfbar, jede Entscheidung im [Roadmap](ROADMAP.md) begründet.
+> *Made with love – and with some help by AI.*
+
 > **Umbenannt:** Aus **WispDating** wurde **Thestia** (ab v0.9.1, Build 29).
 > Neuer Name, neues Logo, neue App-ID (`com.thestia.app`) – **bitte neu
 > installieren**, die alte App aktualisiert sich nicht von selbst. Konto und

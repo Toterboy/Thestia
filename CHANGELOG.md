@@ -11,6 +11,15 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 ### Hinzugefügt
 
+- **Eigener Screen für die Elterneinstellungen:** Der Bereich „Kinderschutz &
+  Elternzugriff" lag als große Karte mitten in den Einstellungen (mit
+  PIN-Dialog, Benachrichtigungs-Rhythmus und Nutzungszeit) und hat den
+  Einstellungs-Screen zugeballert. Jetzt steht dort ein Eintrag mit dem
+  aktuellen Status; die Einstellungen selbst liegen auf einem eigenen
+  Screen (`/guardian-settings`), weiterhin durch die PIN des
+  Elternteils geschützt. Das Freigabe-Ende mit 18 bleibt ohne PIN
+  möglich – das entscheidet der Jugendliche selbst.
+
 - **Drei-Schritte-Leitfaden für die Audio-Vorstellung** (03.11.2026):
   Während der Aufnahme begleitet die App die Vorstellung mit drei
   Winkeln in fester Reihenfolge: „Wer bist du?", „Was macht dich

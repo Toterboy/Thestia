@@ -20,6 +20,7 @@ import 'package:thestia/screens/auth/unban_request_screen.dart';
 import 'package:thestia/screens/auth/email_verification_screen.dart';
 import 'package:thestia/screens/guardian/guardian_consent_screen.dart';
 import 'package:thestia/screens/privacy/delete_data_screen.dart';
+import 'package:thestia/screens/guardian/guardian_settings_screen.dart';
 import 'package:thestia/screens/guardian/guardian_transition_screen.dart';
 import 'package:thestia/screens/auth/mfa_setup_screen.dart';
 import 'package:thestia/screens/auth/mfa_challenge_screen.dart';
@@ -83,6 +84,9 @@ class AppRoutes {
 
   /// Entscheidung ueber den Elternzugriff mit 18.
   static const String guardianTransition = '/guardian-transition';
+
+  /// Die Elterneinstellungen (PIN-geschuetzt) - eigener Screen.
+  static const String guardianSettings = '/guardian-settings';
   static const String onboarding = '/onboarding';
   static const String login = '/login';
   static const String forgotPassword = '/forgot-password';
@@ -659,6 +663,11 @@ GoRouter createRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.guardianTransition,
         builder: (context, state) => const GuardianTransitionScreen(),
+      ),
+      // Die Elterneinstellungen als eigener Screen (04.11.2026).
+      GoRoute(
+        path: AppRoutes.guardianSettings,
+        builder: (context, state) => const GuardianSettingsScreen(),
       ),
       GoRoute(
         path: AppRoutes.login,

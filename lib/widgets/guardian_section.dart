@@ -21,7 +21,11 @@ import 'package:thestia/widgets/privacy_section.dart';
 /// die PIN als Weg zur Aenderung, nicht als Schutz vor dem Jugendlichen:
 /// er kennt sie nicht, der Elternteil schon.
 class GuardianSection extends ConsumerStatefulWidget {
-  const GuardianSection({super.key});
+  const GuardianSection({super.key, this.showTitle = true});
+
+  /// Der Titel wird im eigenen Screen in der AppBar gezeigt - dort
+  /// waere er doppelt.
+  final bool showTitle;
 
   @override
   ConsumerState<GuardianSection> createState() => _GuardianSectionState();
@@ -179,7 +183,9 @@ class _GuardianSectionState extends ConsumerState<GuardianSection> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        PrivacySectionTitle(L10n.t(context, 'guardian.sectionTitle')),
+        if (widget.showTitle)
+          PrivacySectionTitle(L10n.t(context, 'guardian.sectionTitle')),
+        if (widget.showTitle) const SizedBox(height: 8),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),

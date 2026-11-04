@@ -112,7 +112,8 @@ def _komponiere_10zoll(comp, profil, name, headline, subline, badge, dunkel):
         return comp.compose_landscape(shot, headline, subline, badge,
                                        dark=False, W=GROSSE_10[0],
                                        H=GROSSE_10[1],
-                                       split=(-30.3, 0.5, 0.45))
+                                       split=(-30.3, 0.5, 0.45),
+                                       system_ui=False)
 
     # Kacheln aus dem Dart-Export, wenn es sie gibt.
     cards = comp.load_cards(comp.QUELLE.get(name, name),
@@ -133,7 +134,8 @@ def _komponiere_10zoll(comp, profil, name, headline, subline, badge, dunkel):
     quelle = profil['src'] / ('%s.png' % comp.QUELLE.get(name, name))
     shot = Image.open(quelle).convert('RGB')
     return comp.compose_landscape(shot, headline, subline, badge, dark=dunkel,
-                                   W=GROSSE_10[0], H=GROSSE_10[1])
+                                   W=GROSSE_10[0], H=GROSSE_10[1],
+                                   system_ui=False)
 
 
 def main() -> int:
@@ -160,7 +162,10 @@ def main() -> int:
         # das ist auch in Ordnung: die App hat kein Tablet-Layout, und
         # ein erfundenes waere eine falsche Darstellung.
         # ------------------------------------------------------------------
-        kacheln = profil['out_9x16']
+        # Die KACHELN (ohne nachgeahmte Statusleiste) - so sollen die
+        # Tablet-Bilder aussehen (NUTZERWUNSCH 04.11.2026: "Bei den
+        # Tablets auch im Kachel Design ohne die Statusleiste").
+        kacheln = profil['out_9x16_kacheln']
         if not kacheln.is_dir():
             print('  %s 7 Zoll: %s fehlt - erst '
                   'python tool/make_store_screenshots.py'

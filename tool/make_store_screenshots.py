@@ -2349,7 +2349,7 @@ def _quer_raster(W: int, H: int):
 
 def compose_landscape(shot: Image.Image, headline: str, subline: str,
                       badge: str, dark: bool = False, W: int = 1920,
-                      H: int = 1200, split=None):
+                      H: int = 1200, split=None, system_ui: bool = True):
     """QUERFORMAT: der volle App-Screen links, der Text rechts.
 
     FUER DAS 10-ZOLL-TABLET (04.11.2026).
@@ -2388,8 +2388,25 @@ def compose_landscape(shot: Image.Image, headline: str, subline: str,
         shot = shot.convert('RGBA')
 
     # Der Screen in der festen Spalte, mittig zur Hoehe.
+    #
+    # system_ui=False blendet die gezeichnete Statusleiste aus (Uhrzeit,
+    # WLAN, Akku, Gestenlinie). Das ist das KACHEL-Design: der
+    # App-Screen als Kachel auf dem Verlauf, ohne nachgeahmte
+    # Systemleiste - so wie es die Tablet-Bilder zeigen sollen. Der
+    # Screen selbst wird NICHT geschnitten (es fehlt nichts).
     box_h = H - 2 * margin
-    scr = app_tile(shot, box_h, spalte_w, corner_ratio=0.055, split=split)
+    if system_ui:
+        scr = app_tile(shot, box_h, spalte_w, corner_ratio=0.055,
+                       split=split)
+    else:
+        global OMIT_SYSTEM_UI
+        vorher = OMIT_SYSTEM_UI
+        OMIT_SYSTEM_UI = True
+        try:
+            scr = app_tile(shot, box_h, spalte_w, corner_ratio=0.055,
+                           split=split)
+        finally:
+            OMIT_SYSTEM_UI = vorher
     tw, th = scr.size
     bg.alpha_composite(scr, (spalte_x, (H - th) // 2))
 

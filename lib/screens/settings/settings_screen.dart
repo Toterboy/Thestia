@@ -30,14 +30,54 @@ import 'package:thestia/widgets/captcha_challenge.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/services/unified_push_service.dart';
 import 'package:thestia/utils/age_safety_rules.dart';
+import 'package:thestia/models/guardian_status.dart';
+import 'package:thestia/providers/guardian_provider.dart';
 import 'package:thestia/widgets/appearance_selector.dart';
 import 'package:thestia/widgets/buttons.dart';
 import 'package:thestia/widgets/chat_background_picker.dart';
-import 'package:thestia/widgets/guardian_section.dart';
 import 'package:thestia/widgets/privacy_section.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/widgets/language_switch.dart';
 import 'package:thestia/widgets/theme_picker.dart';
+
+/// Der Eintrag "Kinderschutz & Elternzugriff" in den Einstellungen.
+///
+/// Zeigt den aktuellen Stand in einem Satz und oeffnet den Eltern-
+/// bereich (eigener Screen). Der Inhalt dort ist das gemeinsame Widget
+/// `GuardianSection` - es gibt keine zweite, abweichende Darstellung.
+class _GuardianSettingsEntry extends ConsumerWidget {
+  const _GuardianSettingsEntry();
+
+  /// Der Stand in einem Satz - ohne Zahlen, ohne Geheimnis.
+  String _status(BuildContext context, GuardianStatus status) {
+    if (status.isUnknown) return L10n.t(context, 'common.loading');
+    if (!status.hasConsent) return L10n.t(context, 'guardian.noConsentTitle');
+    if (status.isPending) return L10n.t(context, 'guardian.pendingTitle');
+    return L10n.t(context, 'guardian.activeTitle');
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = ref.watch(guardianProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        PrivacySectionTitle(L10n.t(context, 'guardian.sectionTitle')),
+        const SizedBox(height: 8),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.family_restroom),
+            title: Text(L10n.t(context, 'guardian.pinTitle')),
+            subtitle: Text(_status(context, status)),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.guardianSettings),
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 /// Spiegelt den Rest der UI-Einstellungen nach profiles.ui_prefs (v0.8.0,
 /// Migration 074) - damit überstehen Blind Mode, Sichtbarkeit, Dark Mode
@@ -114,7 +154,15 @@ class SettingsScreen extends ConsumerWidget {
           // Kinderschutz & Elternzugriff (v0.10.0). Sichtbar fuer alle:
           // wer mit 18 geworden ist, hat die Freigabe aus der Zeit mit
           // 16/17 noch und entscheidet hier ueber ihr Ende.
-          const GuardianSection(),
+          //
+          // Die Einstellungen selbst liegen in einem EIGENEN Screen
+          // (04.11.2026): hier stand der komplette Bereich mit
+          // PIN-Dialog, Rhythmus und Nutzungszeit als grosse Karte
+          // zwischen Datenschutz und Community-Regeln - der
+          // Einstellungs-Screen war zugeballert und der Bereich schwer
+          // auffindbar. Hier steht der Eintrag mit dem aktuellen
+          // Status, der Weg fuehrt in den Elternbereich.
+          const _GuardianSettingsEntry(),
           _SectionTitle(L10n.t(context, 'settings.communitySafety')),
           Card(
             child: Padding(
