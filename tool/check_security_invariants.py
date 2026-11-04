@@ -119,18 +119,48 @@ VERIFIKATIONS_PFLICHT = [
 ]
 
 
-def _neueste_definition(sql: str, fn_name: str) -> str:
+def _neueste_definition(sql: str, fn_name: str,
+                       _gesehen: frozenset = frozenset()) -> str:
     """Der Funktionskoerper der LETZTEN Definition von fn_name.
 
     PostgreSQL nimmt bei CREATE OR REPLACE die letzte Definition. Ein
     aelterer, sicherer Koerper wuerde sonst den Check bestehen, obwohl
     die aktive Funktion ungeschuetzt ist.
+
+    ZWEI AUFLOESUNGEN (beide noetig, seit Migration 176):
+
+    1) RENAME: Eine Funktion kann per
+       "ALTER FUNCTION ... RENAME TO ..." umbenannt worden sein. Ihr
+       Koerper steht dann in der SQL weiterhin unter dem ALTEN Namen.
+
+    2) DELEGATION: Eine Funktion kann eine duenne Huelle sein, die an
+       eine andere weiterreicht. Die Sicherheitspruefungen stehen dann
+       in der anderen.
     """
+    # Endlosschleifen verhindern (Huelle -> Original -> Huelle).
+    if fn_name.lower() in _gesehen:
+        return ''
+    _gesehen = _gesehen | {fn_name.lower()}
+
+    # (1) Wurde die Funktion umbenannt? Dann steht ihr Koerper unter
+    #     dem urspruenglichen Namen - und zwar in dem Teil der SQL,
+    #     der VOR dem RENAME liegt (danach gibt es nur noch die
+    #     duenne Huelle unter dem neuen Namen).
+    ziel = fn_name
+    suchtext = sql
+    umbenannt = re.search(
+        r'ALTER\s+FUNCTION\s+(?:public\.)?"?([a-z0-9_]+)"?\s*\([^)]*\)\s*'
+        r'RENAME\s+TO\s+"?([a-z0-9_]+)"?',
+        sql, re.I)
+    if umbenannt and umbenannt.group(2).lower() == fn_name.lower():
+        ziel = umbenannt.group(1)
+        suchtext = sql[:umbenannt.start()]
+
     # Alle Definitionen finden und die letzte nehmen.
     treffer = list(re.finditer(
         r'CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+'
-        r'(?:public\.)?' + re.escape(fn_name) + r'\s*\(',
-        sql, re.I))
+        r'(?:public\.)?' + re.escape(ziel) + r'\s*\(',
+        suchtext, re.I))
     if not treffer:
         return ''
     start = treffer[-1].start()
@@ -146,14 +176,31 @@ def _neueste_definition(sql: str, fn_name: str) -> str:
     # Minderjaehrigen keine Entfernung" schlug dadurch fehl, obwohl
     # die Migration die Bedingung enthaelt - und ein Check, der an
     # der falschen Stelle sucht, prueft gar nichts.
-    rest = sql[start:]
+    rest = suchtext[start:]
     dollar = re.search(r'\$[A-Za-z_][A-Za-z0-9_]*\$|\$\$', rest)
     if not dollar:
         return rest[:2000]
     delim = dollar.group(0)
     body = rest[dollar.end():]
     ende = body.find(delim)
-    return body[:ende] if ende >= 0 else body[:4000]
+    koerper = body[:ende] if ende >= 0 else body[:4000]
+
+    # Migration 176 (04.11.2026): Mehrere Funktionen wurden umbenannt
+    # (ALTER FUNCTION ... RENAME TO ..._ohne_nutzungszeit) und davor
+    # eine duenne Huelle gesetzt, die das Gate erzwingt. Die
+    # Sicherheitspruefungen stehen im umbenannten Original.
+    #
+    # Ohne diese Aufloesung wuerde der Check nur die Huelle sehen und
+    # eine Luecke melden, die es nicht gibt. Dass die Huelle das Gate
+    # wirklich aufruft, ist getrennt abgesichert (Invariante
+    # "match_dating_hour_round prueft den Aufrufer NUR, wenn er selbst
+    # handelt").
+    delegiert = re.search(r'PERFORM\s+public\.([a-z0-9_]+)\s*\(', koerper, re.I)
+    if delegiert and delegiert.group(1).lower() != fn_name.lower():
+        innen = _neueste_definition(sql, delegiert.group(1), _gesehen)
+        if innen:
+            koerper = koerper + '\n' + innen
+    return koerper
 
 
 for fn_name, beschreibung in VERIFIKATIONS_PFLICHT:
@@ -179,6 +226,34 @@ for fn_name, beschreibung in VERIFIKATIONS_PFLICHT:
     check(prueft,
           f'DB: {beschreibung} prueft die Verifikation serverseitig',
           f'letzte Definition von {fn_name} ohne is_verified')
+
+    # ZUSAETZLICH: Bei den Dating-Hour-Funktionen muss die
+    # TEILNEHMERPRUEFUNG dastehen - nicht nur die des Aufrufers.
+    #
+    # WARUM (04.11.2026): Ein Aufrufer-Check allein genuegt nicht.
+    # Die Paarung laeuft ueber den Cron, wo es gar keinen Aufrufer
+    # gibt (auth.uid() ist NULL) - dort wurde die ganze Runde
+    # abgebrochen. Und die eigentliche Gefahr ist ein Match
+    # zwischen einer verifizierten und einer unverifizierten Person:
+    # da muss die Verifikation beider TEILNEHMER geprueft werden.
+    if fn_name == 'match_dating_hour_round':
+        # Die Paarung: beide TEILNEHMER muessen verifiziert sein. Ein
+        # Aufrufer-Check allein genuegt nicht - die Paarung laeuft
+        # ueber den Cron, wo es gar keinen Aufrufer gibt.
+        check('verification_granted(v_user.user_id)' in koerper
+              or 'verification_granted(q.user_id)' in koerper,
+              'DB: Die Paarung prueft die Verifikation der TEILNEHMER '
+              '(nicht nur die des Aufrufers - der Cron hat keinen '
+              'Aufrufer)',
+              f'letzte Definition von {fn_name} ohne Teilnehmerpruefung')
+    elif fn_name == 'join_dating_hour':
+        # Das Beitreten: hier ist der Aufrufer die betroffene Person.
+        # Wichtig ist, dass die Pruefung NICHT wegfaellt - deshalb wird
+        # sie hier ausdruecklich verlangt.
+        check('verification_granted' in koerper,
+              'DB: Das Beitreten prueft die Verifikation der Person, '
+              'die beitritt',
+              f'letzte Definition von {fn_name} ohne Verifikationspruefung')
 
 # Die Geburtsdatum-Angabe darf nicht still auf 26-Jahre fallen:
 # ohne birth_date muss das Alter UNBEKANNT sein, nicht erfunden.
@@ -916,6 +991,75 @@ check('timingSafeEqual' in check_location
 #     (ohne coalesce) - fehlte der Wert, war die elterliche
 #     Beschraenkung weg, waehrend "usage_limit_enabled" weiter true
 #     blieb. Migration 173 holt das nach.
+# =====================================================================
+# 10) Dating Hour: der Cron-Fund und die Nutzungszeit
+# =====================================================================
+#
+# BEFUND 04.11.2026: Die Dating Hour hat seit dem 03.11.2026 nicht mehr
+# gepaart, und niemand hat es gemerkt.
+#
+# Die Ursache: match_dating_hour_round pruefte den AUFRUFER
+#     IF NOT public.verification_granted(auth.uid()) THEN RAISE ...
+# Die Funktion wird aber ausschliesslich vom Cron aufgerufen (alle 30
+# Sekunden) - ohne JWT. auth.uid() ist dort NULL,
+# verification_granted(NULL) ist false, also hat der Cron bei der
+# ERSTEN aktiven Veranstaltung geworfen und die ganze Runde
+# abgebrochen. Es wurde also ueberhaupt nicht mehr gepaart.
+#
+# Die App ruft die Funktion NICHT selbst auf (nur join_dating_hour) -
+# der Cron war der einzige Weg.
+
+sql_176 = read(MIG / '176_email_timezone_usage_time.sql')
+sql_161 = read(MIG / '161_verification_gates_server_side.sql')
+
+# Der Aufrufer darf nur geprueft werden, wenn er selbst handelt.
+check('auth.uid() IS NOT NULL' in sql_176
+      and 'AND NOT public.verification_granted(auth.uid())' in sql_176,
+      'DB: match_dating_hour_round prueft den Aufrufer NUR, wenn er selbst '
+      'handelt - der Cron (ohne JWT) darf nicht die ganze Runde abbrechen')
+
+# Und die Teilnehmer werden weiterhin geprueft.
+check('public.verification_granted(v_user.user_id)' in sql_176,
+      'DB: match_dating_hour_round prueft JEDEN Teilnehmer auf Verifikation')
+
+# Die Nutzungszeit wird je Teilnehmer geprueft, nicht je Veranstaltung.
+check(sql_176.count('public.guardian_usage_time_allows(') >= 3,
+      'DB: Die elterliche Nutzungszeit wird je Teilnehmer der Dating Hour '
+      'geprueft (nicht je Veranstaltung - sonst wuerde eine '
+      'Beschraenkung die ganze Runde betreffen)')
+
+# Die Gate-Funktion selbst.
+check('CREATE OR REPLACE FUNCTION public.guardian_usage_time_allows' in sql_176,
+      'DB: Die Gate-Funktion fuer die elterliche Nutzungszeit existiert')
+check("AT TIME ZONE v_tz" in sql_176,
+      'DB: Die Nutzungszeit wird in der LOKALEN Zeit des Geraets '
+      'geprueft (jetzt at time zone, mit Sommerzeit)')
+check('pg_timezone_names' in sql_176,
+      'DB: Die Zeitzone wird gegen die PostgreSQL-Zeitzonendatenbank '
+      'geprueft - ein unbekannter Name wuerde in "at time zone" einen '
+      'Fehler ausloesen')
+
+# Die Zeitzone kommt vom Geraet, nicht vom Server.
+check('ADD COLUMN IF NOT EXISTS timezone text' in sql_176,
+      'DB: profiles fuehrt die Zeitzone des Geraets (fuer die '
+      'Nutzungszeit im lokalen Takt)')
+check(has('lib/services/guardian_service.dart',
+          'report_my_timezone', 'FlutterTimezone.getLocalTimezone()'),
+      'APP: Der Client meldet seine Zeitzone an den Server - ohne sie '
+      'kann der Server die Nutzungszeit nicht bewerten')
+
+# profiles.email: damit admin-ban nicht die GoTrue-Nutzerliste
+# abklopfen muss.
+check('ADD COLUMN IF NOT EXISTS email text' in sql_176,
+      'DB: profiles fuehrt die E-Mail-Adresse (fuer die Adminsuche)')
+check('idx_profiles_email' in sql_176,
+      'DB: Die E-Mail-Spalte ist indiziert (die Adminsuche ist eine '
+      'Gleichheitsabfrage)')
+check(has('supabase/functions/admin-ban/index.ts',
+          '.from("profiles")', '.eq("email", email)'),
+      'EDGE: admin-ban sucht die User-ID ueber profiles.email statt '
+      'ueber einen Scan durch die GoTrue-Nutzerliste')
+
 sql_173 = read(MIG / '173_guardian_settings_validation.sql')
 check('usage_start_min     = coalesce(p_usage_start_min, usage_start_min)'
       in sql_173,

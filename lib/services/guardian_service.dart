@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:thestia/models/guardian_status.dart';
@@ -18,6 +19,16 @@ class GuardianService {
   /// so aussehen, als gaebe es keine Aufsicht. [GuardianStatus.isUnknown]
   /// sagt dem Bildschirm, dass er den Zustand nicht kennt.
   Future<GuardianStatus> fetchStatus() async {
+    // Die Zeitzone melden, BEVOR der Status gelesen wird.
+    //
+    // Der Server braucht sie, um die elterliche Nutzungszeit in der
+    // LOKALEN Zeit des Geraets zu pruefen (Migration 176). Ohne sie
+    // kann er die Beschraenkung nicht bewerten - und der Server
+    // blockiert dann fail-closed.
+    //
+    // Das Melden ist ein eigener Schritt und darf den Status nicht
+    // verhindern: schlaegt er fehl, lesen wir trotzdem den Status.
+    await _meldeZeitzone();
     try {
       final res = await _client.rpc('get_my_guardian_status');
       if (res is Map) {
@@ -27,6 +38,39 @@ class GuardianService {
       debugPrint('[Guardian] Status nicht lesbar: $e');
     }
     return GuardianStatus.unknown;
+  }
+
+  /// Meldet die Zeitzone des Geraets an den Server.
+  ///
+  /// BEOGRUENDUNG (04.11.2026): Die elterliche Nutzungszeit ist
+  /// "Minuten seit Mitternacht in der Zeitzone des Geraets". Solange
+  /// der Server die Zeitzone nicht kannte, war eine serverseitige
+  /// Pruefung unmoglich - die Beschraenkung galt damit nur im
+  /// Client, und der Client ist patchbar.
+  ///
+  /// Wir melden einen IANA-Namen ("Europe/Berlin"). Der Server rechnet
+  /// damit selbst und bekommt die lokale Zeit inklusive Sommerzeit -
+  /// es gibt keine Umrechnung, die er selbst machen muss.
+  ///
+  /// Fehler werden verschluckt: Die Zeitzone ist eine Verbesserung,
+  /// kein Grund, den Status nicht zu lesen. Der Server blockiert in
+  /// dem Fall fail-closed - der Jugendliche sieht dann die Sperre und
+  /// kann sie ueber den Standort-Check (der die Zeitzone mitschickt)
+  /// aufloesen.
+  Future<void> _meldeZeitzone() async {
+    try {
+      final tz = await FlutterTimezone.getLocalTimezone();
+      final name = tz.identifier;
+      if (name.isEmpty) return;
+      await _client.rpc(
+        'report_my_timezone',
+        params: {'p_timezone': name},
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Guardian] Zeitzone nicht meldbar: $e');
+      }
+    }
   }
 
   /// Fordert die Freigabe eines Elternteils an.

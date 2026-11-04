@@ -336,6 +336,12 @@ jobs:
           # MELDET SICH NICHT. Der Deploy hat den Fehler gefangen,
           # aber zu spaet. Dieser Check parst TypeScript wirklich.
           python3 tool/check_edge_syntax.py
+          # Der Publish-Ordner wird per Drag-and-Drop hochgeladen - es
+          # gibt keinen Build-Schritt, der einen Fehler meldet. Was
+          # nicht geprueft wird, landet live: eine Regel auf eine
+          # fehlende Datei, eine durch noindex gesperrte Pflichtseite,
+          # ein toter Link.
+          python3 tool/check_publish_folder.py
 
       # Doppelkodierte Umlaute sind gueltiges UTF-8, deshalb findet sie
       # weder der Analyzer noch ein Test. Sie fielen nur auf, als eine

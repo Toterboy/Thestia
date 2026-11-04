@@ -338,6 +338,49 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 ### Behoben
 
+- **Die Dating Hour hat seit dem 03.11.2026 nicht mehr gepaart**
+  (04.11.2026, Migration 176): `match_dating_hour_round` prüfte den
+  *Aufrufer* auf Verifikation - und die Funktion wird ausschließlich vom
+  Cron aufgerufen (alle 30 Sekunden), also **ohne JWT**. `auth.uid()`
+  ist dort `NULL`, `verification_granted(NULL)` ist `false` - der Cron
+  warf bei der ersten aktiven Veranstaltung `verification_required`
+  und brach damit die **gesamte Runde** ab. Die App ruft die Funktion
+  nicht selbst auf (nur `join_dating_hour`), der Cron war der einzige
+  Weg - es wurde also überhaupt nicht mehr gepaart. Das wöchentliche
+  Event mit den Fünf-Minuten-Gesprächen hat damit nicht funktioniert.
+  Jetzt wird der Aufrufer nur geprüft, wenn er selbst handelt; die
+  Teilnehmer werden in der Schleife geprüft (das war ohnehin schon so).
+- **Die elterliche Nutzungszeit wird jetzt serverseitig geprüft**
+  (04.11.2026, Migration 176): Bisher galt sie ausschließlich im
+  Client - und der Client ist patchbar. Die Zusage gegenüber dem
+  Elternteil war damit nicht belastbar. Der Server kann sie jetzt
+  prüfen, weil er die Zeitzone des Geräts kennt: Die App meldet sie
+  bei jedem Start (IANA-Name, z. B. `Europe/Berlin`), und der Server
+  rechnet damit selbst - inklusive Sommerzeit. Geprüft wird je
+  Teilnehmer der Dating Hour, nicht je Veranstaltung (eine
+  Beschränkung darf nur die betroffene Person betreffen).
+  *Ehrliche Grenze:* Der Chat läuft Ende-zu-Ende verschlüsselt über
+  WebRTC - der Server ist dort nicht im Pfad und kann einen Chat nicht
+  unterbinden. Für den Chat bleibt die clientseitige Sperre die
+  einzige Schranke.
+- **`admin-ban` muss nicht mehr die GoTrue-Nutzerliste abklopfen**
+  (04.11.2026, Migration 176): Die Funktion suchte die User-ID zu
+  einer E-Mail-Adresse durch Blättern in der GoTrue-Admin-API (bis zu
+  25 Seiten à 200 Nutzer). `profiles` speicherte die Adresse gar
+  nicht. Jetzt steht sie dort (aus `auth.users`, indexiert) - die
+  Suche ist eine Abfrage.
+- **Der Testschalter `?ansicht=captcha` war auf jedem Host aktiv**
+  (04.11.2026): Er zwang die Sicherheitscheck-Ansicht auch auf
+  `thestia.de` - dort wurde der Turnstile-Script von Cloudflare
+  geladen, obwohl der Sitekey nur für `auth.thestia.de` freigeschaltet
+  ist (Fehler 110200, verbrauchte Netlify-Credits). Der Schalter ist
+  jetzt auf localhost beschränkt.
+- **Innere Betriebsnotizen standen in den veröffentlichten Seiten**
+  (04.11.2026): Der Impressums-Kommentar verwies auf Impressumsdienste
+  und darauf, dass die Seite noch unvollständig sei; im Kinderschutz
+  stand ein erledigter „ANPASSEN"-Eintrag. Beides ist über
+  `view-source` sichtbar gewesen - jetzt entfernt.
+
 - **Die Website war an zehn Seiten für Suchmaschinen gesperrt**
   (04.11.2026): Auf `daten-loeschen`, `konto-loeschen`, `kinderschutz`
   und `eltern` (je Deutsch und Englisch) stand ein hartes

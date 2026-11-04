@@ -53,12 +53,37 @@ for f in files:
             end = close2 if close2 != -1 else i + 6000
         defs[m.group(1).lower()] = sql[i:end if end != -1 else i + 6000]
 
+
+def effektiver_koerper(name: str) -> str:
+    """Der Koerper, in dem die Pruefungen TATSAECHLICH stehen.
+
+    WARUM DAS NOETIG IST (04.11.2026):
+
+    Migration 176 hat die Dating-Hour-Funktionen umbenannt
+    (ALTER FUNCTION ... RENAME TO ..._ohne_nutzungszeit) und davor
+    eine duenne Huelle gesetzt, die die elterliche Nutzungszeit
+    erzwingt. Die Sicherheitspruefungen (Verifikation, Blockier-
+    schutz, Alterskompatibilitaet) stehen aber im umbenannten Original.
+
+    Ohne diese Aufloesung wuerde der Pruefer nur die Huelle sehen
+    und eine Luecke melden, die es nicht gibt. Die Huelle ist selbst
+    geprueft - in tool/check_security_invariants.py steht die
+    Invariante, dass die Huelle das Gate auch wirklich aufruft.
+    """
+    body = defs.get(name.lower(), '')
+    treffer = re.search(r'PERFORM\s+public\.([a-z0-9_]+)\s*\(', body, re.I)
+    if treffer:
+        innen = defs.get(treffer.group(1).lower())
+        if innen:
+            return body + '\n' + innen
+    return body
+
 # --- Sicherheits-Invarianten -------------------------------------------------
 PAIRS = ['join_random_chat', 'match_dating_hour_round']
 print('\nInvarianten Paarungs-Sicherheit:')
 ok = True
 for name in PAIRS:
-    body = defs.get(name, '')
+    body = effektiver_koerper(name)
     checks = {
         'blocked_users': 'blocked_users' in body,
         'age_compatible_bidirectional': 'age_compatible_bidirectional' in body,
@@ -76,12 +101,12 @@ TRANSIT_GATED = ['transit_presence_heartbeat', 'match_proximity_spark',
                  'send_soft_ping']
 print('\nInvarianten Transit Spark 18+ (Migration 131):')
 for name in TRANSIT_GATED:
-    body = defs.get(name, '')
+    body = effektiver_koerper(name)
     self_gate = 'transit_spark_adult(' in body
     print(f'  {name:28} {"OK" if self_gate else "FEHLT":6} (eigenes 18+-Gate)')
     ok &= self_gate
 for name in ('match_proximity_spark', 'send_soft_ping'):
-    body = defs.get(name, '')
+    body = effektiver_koerper(name)
     # Gegenpartei separat filtern: ein Treffer muss auf eine Person
     # zielen, nicht auf den eigenen uid-Ausdruck.
     other_gate = re.search(r'transit_spark_adult\(\s*(?:s|pr)\.user_id\s*\)', body)

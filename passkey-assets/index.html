@@ -49,12 +49,22 @@
       // ?ansicht=landing die Landing-Seite. Nuetzt beim Pruefen auf
       // localhost (dort ist der Hostname 127.0.0.1). Die App ruft die
       // Seite ohne Parameter auf - dort entscheidet allein der Host.
-      var ansicht = '';
-      try {
-        ansicht = (new URLSearchParams(location.search).get('ansicht') || '').toLowerCase();
-      } catch (e) { /* alter Browser */ }
-      if (ansicht === 'captcha') istCaptchaHost = true;
-      if (ansicht === 'landing') istCaptchaHost = false;
+      // Der Testschalter "?ansicht=captcha|landing" ist NUR auf localhost
+      // erlaubt (BEFUND 04.11.2026). Auf thestia.de erzwingte er die
+      // Sicherheitscheck-Ansicht - damit wurde auf der oeffentlichen Seite
+      // der Turnstile-Script von Cloudflare geladen. Der Sitekey ist aber
+      // nur fuer auth.thestia.de freigeschaltet: Ergebnis war der
+      // Cloudflare-Fehler 110200 und verbrauchte Netlify-Credits.
+      var istLokal = host === 'localhost' || host === '127.0.0.1' ||
+        host === '::1' || host === '[::1]';
+      if (istLokal) {
+        var ansicht = '';
+        try {
+          ansicht = (new URLSearchParams(location.search).get('ansicht') || '').toLowerCase();
+        } catch (e) { /* alter Browser */ }
+        if (ansicht === 'captcha') istCaptchaHost = true;
+        if (ansicht === 'landing') istCaptchaHost = false;
+      }
       document.documentElement.className = istCaptchaHost
         ? 'captcha-host'
         : 'landing-host';

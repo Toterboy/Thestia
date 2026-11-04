@@ -175,21 +175,30 @@ serve(async (req) => {
     }
 
     // User-ID anhand der E-Mail nachziehen (für den GoTrue-Ban), wenn nur
-    // die E-Mail angegeben wurde. profiles speichert die E-Mail nicht - der
-    // Weg läuft über die GoTrue-Admin-Liste, jetzt PAGINIERT (bis 5000
-    // Accounts), damit die Sperrung auch bei größeren Instanzen greift.
-    if (!targetUserId && action === "ban") {
-      // Der Scan ist durch das Rate-Limit (60/h) begrenzt: im
-      // schlimmsten Fall sind es 60 x 25 Seiten GoTrue-Aufrufe je
-      // Stunde. Der Client uebergibt die User-ID in der Regel
-      // direkt - dann entfaellt der Scan ganz.
-      for (let page = 1; page <= 25 && !targetUserId; page++) {
-        const { data: list, error: listErr } = await supabaseAdmin.auth.admin.listUsers({
-          page, perPage: 200,
-        });
-        if (listErr || !list?.users || list.users.length === 0) break;
-        const match = list.users.find((u) => (u.email ?? "").toLowerCase() === email);
-        if (match) targetUserId = match.id;
+    // die E-Mail angegeben wurde.
+    //
+    // BEFUND 04.11.2026: Vorher wurde hier die GoTrue-Admin-Liste
+    // durchsucht - bis zu 25 Seiten a 200 Nutzer (5 000 listUsers-
+    // Aufrufe im schlimmsten Fall), um EINE Adresse zu finden. Und
+    // profiles speicherte die E-Mail gar nicht, es gab also gar keine
+    // Alternative.
+    //
+    // profiles.email (Migration 176) traegt dieselbe Adresse aus
+    // derselben Quelle (auth.users) und ist indiziert. Damit ist die
+    // Suche eine einzige Abfrage.
+    if (!targetUserId && email) {
+      const { data: profil, error: profilErr } = await supabaseAdmin
+        .from("profiles")
+        .select("user_id")
+        .ilike("email", email)
+        .maybeSingle();
+      if (profilErr) {
+        console.error(
+          "admin-ban: profiles.email-Abfrage fehlgeschlagen:",
+          profilErr,
+        );
+      } else if (profil?.user_id) {
+        targetUserId = profil.user_id as string;
       }
     }
 
