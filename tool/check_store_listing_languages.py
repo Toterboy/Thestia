@@ -18,6 +18,24 @@ Geprueft wird je Sprache:
      deutschen Gegenstueck. Sonst ist eine der beiden Listen eine
      Kopie - und die falsche.
 
+WAS IN DER CI NICHT VORHANDEN IST (und deshalb kein Fehler ist):
+
+Die Phone-Screenshots sind REGENERIERBARE BUILD-ARTEFAKTE und stehen
+deshalb nicht im Repository (`.gitignore`:
+`fastlane/metadata/android/*/images/phoneScreenshots/`). In einem
+frischen Checkout - also in der CI - fehlen sie. Das ist kein Mangel,
+sondern die Natur eines Artefakts.
+
+Deshalb gilt:
+
+  * Fehlen die Phone-Screenshots in BEIDEN Sprachen, ist das kein
+    Befund. Der Ordner wird als "nicht erzeugt" gemeldet.
+  * Fehlen sie in nur EINER Sprache, IST das ein Befund: dann ist eine
+    Liste unvollstaendig und die andere nicht - genau der Zustand, der
+    zur Korrektur fuehrt.
+  * Die Tablet-Bilder und die Metadaten-Dateien sind versioniert und
+    muessen immer da sein.
+
 Aufruf:  python tool/check_store_listing_languages.py
 """
 
@@ -36,10 +54,15 @@ SPRACHEN = ['de-DE', 'en-US']
 # tool/make_store_screenshots.py, SHOTS).
 ERWARTET = 8
 
-ORDNER = [
-    ('images/phoneScreenshots', ERWARTET),
+# Ordner, die versioniert sind -> ihr Fehlen ist immer ein Befund.
+VERSIONIERT = [
     ('images/tabletScreenshots/7in', ERWARTET),
     ('images/tabletScreenshots/10in', ERWARTET),
+]
+
+# Ordner, die regenerierbare Artefakte sind -> in der CI nicht da.
+ARTEFAKT = [
+    ('images/phoneScreenshots', ERWARTET),
 ]
 
 DATEIEN = [
@@ -63,6 +86,15 @@ def main() -> int:
     problems = []
     pro_sprache = {}
 
+    # Welche Artefakt-Ordner gibt es ueberhaupt? Fehlt einer in ALLEN
+    # Sprachen, ist das der normale CI-Zustand (nicht erzeugt).
+    artefakt_vorhanden = {}
+    for rel, _anzahl in ARTEFAKT:
+        artefakt_vorhanden[rel] = [
+            sprache for sprache in SPRACHEN
+            if (FASTLANE / sprache / rel).is_dir()
+        ]
+
     for sprache in SPRACHEN:
         basis = FASTLANE / sprache
         print('\n%s' % sprache)
@@ -70,11 +102,36 @@ def main() -> int:
             problems.append(f'{sprache}: der Ordner fehlt ganz')
             continue
 
-        for rel, anzahl in ORDNER:
+        for rel, anzahl in VERSIONIERT:
             ordner = basis / rel
             if not ordner.is_dir():
                 problems.append(f'{sprache}: {rel} fehlt')
                 print('  X %-34s fehlt' % rel)
+                continue
+            pngs = sorted(ordner.glob('*.png'))
+            if len(pngs) != anzahl:
+                problems.append(
+                    f'{sprache}: {rel} hat {len(pngs)} Bilder, '
+                    f'erwartet {anzahl}')
+            else:
+                print('  OK %-34s %d Bilder' % (rel, len(pngs)))
+            pro_sprache[(sprache, rel)] = {p.name: sha256(p) for p in pngs}
+
+        for rel, anzahl in ARTEFAKT:
+            ordner = basis / rel
+            if not ordner.is_dir():
+                # Fehlt der Ordner in EINER Sprache, aber in der anderen
+                # ist er da, ist das genau der zu korrigierende Fall.
+                if len(artefakt_vorhanden.get(rel, [])) == 1:
+                    problems.append(
+                        f'{sprache}: {rel} fehlt, in '
+                        f'{artefakt_vorhanden[rel][0]} ist es da - '
+                        f'genau eine unvollstaendige Liste')
+                    print('  X %-34s fehlt (in der anderen Sprache da)'
+                          % rel)
+                else:
+                    print('  - %-34s nicht erzeugt (Artefakt, in der CI '
+                          'nicht vorhanden)' % rel)
                 continue
             pngs = sorted(ordner.glob('*.png'))
             if len(pngs) != anzahl:
@@ -102,7 +159,7 @@ def main() -> int:
     if len(SPRACHEN) == 2:
         a, b = SPRACHEN
         gleich = []
-        for rel, _anzahl in ORDNER:
+        for rel, _anzahl in VERSIONIERT + ARTEFAKT:
             ha = pro_sprache.get((a, rel), {})
             hb = pro_sprache.get((b, rel), {})
             for name, h in ha.items():
