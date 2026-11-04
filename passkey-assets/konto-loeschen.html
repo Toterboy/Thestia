@@ -191,11 +191,21 @@ body {
     }
     .modus-knopf {
       margin-left: auto;
+      /* BEFUND 04.11.2026: Der Elternbereich hat eine seiten-eigene
+         Formular-Regel "label { margin: 1rem 0 .35rem; }". Sie trifft
+         auch diesen Knopf - er ist ja ein <label> fuer den
+         unsichtbaren Schalter. Dadurch sass er 5,6 px hoeher als der
+         Sprachknopf daneben. Die Kopfschaltflaechen werden deshalb
+         hier vollstaendig definiert: kein margin, damit keine Seite
+         sie versehentlich verschieben kann. */
+      margin-top: 0;
+      margin-bottom: 0;
       width: 42px;
       height: 42px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      flex: 0 0 auto;
       border: 1px solid var(--line);
       border-radius: 999px;
       background: var(--card);
@@ -227,6 +237,11 @@ body {
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      /* Wie der Modusknopf: kein margin. Eine seiten-eigene Formular-
+         Regel darf die Kopfzeile nicht verschieben. */
+      margin-top: 0;
+      margin-bottom: 0;
+      flex: 0 0 auto;
       border: 1px solid var(--line);
       border-radius: 999px;
       background: var(--card);

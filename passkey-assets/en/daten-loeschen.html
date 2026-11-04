@@ -235,11 +235,21 @@
     }
     .modus-knopf {
       margin-left: auto;
+      /* BEFUND 04.11.2026: Der Elternbereich hat eine seiten-eigene
+         Formular-Regel "label { margin: 1rem 0 .35rem; }". Sie trifft
+         auch diesen Knopf - er ist ja ein <label> fuer den
+         unsichtbaren Schalter. Dadurch sass er 5,6 px hoeher als der
+         Sprachknopf daneben. Die Kopfschaltflaechen werden deshalb
+         hier vollstaendig definiert: kein margin, damit keine Seite
+         sie versehentlich verschieben kann. */
+      margin-top: 0;
+      margin-bottom: 0;
       width: 42px;
       height: 42px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      flex: 0 0 auto;
       border: 1px solid var(--line);
       border-radius: 999px;
       background: var(--card);
@@ -271,6 +281,11 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      /* Wie der Modusknopf: kein margin. Eine seiten-eigene Formular-
+         Regel darf die Kopfzeile nicht verschieben. */
+      margin-top: 0;
+      margin-bottom: 0;
+      flex: 0 0 auto;
       border: 1px solid var(--line);
       border-radius: 999px;
       background: var(--card);
@@ -746,6 +761,7 @@ else's account.</p>
 <p>The deletion in way 1 and way 2 is <strong>immediate</strong>: the data is removed
 from the server, not merely hidden.</p>
 
+<div class="tabellen-huelle">
 <table>
   <thead>
     <tr><th>Data</th><th>When selected</th><th>Retention</th></tr>
@@ -830,10 +846,12 @@ from the server, not merely hidden.</p>
     </tr>
   </tbody>
 </table>
+</div>
 
 <h2>How long is other data retained?</h2>
 <p>If you delete only individual pieces of data, or nothing at all, the remaining data
 is kept only for as long as it is needed:</p>
+<div class="tabellen-huelle">
 <table>
   <thead>
     <tr><th>Data</th><th>Retention</th></tr>
@@ -848,6 +866,7 @@ is kept only for as long as it is needed:</p>
     <tr><td>Access and change logs</td><td>7 days</td></tr>
   </tbody>
 </table>
+</div>
 <p class="klein">After the account has been deleted, only the technically necessary
 remains: the ban entries against bypassing child safety bans, the record of the
 parental consent and the email address in the hash directory, to prevent a new

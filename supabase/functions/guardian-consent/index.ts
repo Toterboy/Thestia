@@ -14,7 +14,7 @@
 // 2) OEFFENTLICH aus dem Eltern-Portal (passkey-assets/eltern.html):
 //    Kein JWT - der Token in der URL IST die Berechtigung. Er ist
 //    32 Byte Zufall, wird nur als SHA-256-Hash gespeichert und ist nach
-//    14 Tagen ungueltig.
+//    24 Stunden gueltig.
 //    Aktionen: confirm, settings, revoke.
 //
 // verify_jwt = false (supabase/config.toml) - beide Wege pruefen ihre
@@ -265,7 +265,7 @@ Du kannst die Freigabe jederzeit widerrufen - mit einem Klick, ohne Rückfrage.<
 </div>
 
 <p style="color:#8b8b96;font-size:13px">Dieser Link enthält einen Zugangsschlüssel.
-Bitte leite diese E-Mail nicht weiter. Der Link ist 14 Tage gültig.</p>`,
+Bitte leite diese E-Mail nicht weiter. Der Link ist 24 Stunden gültig.</p>`,
   );
   return await sendMail(
     guardianEmail,

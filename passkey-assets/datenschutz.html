@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="canonical" href="https://thestia.de/datenschutz">
 <title>Datenschutzerklärung für Thestia</title>
+<link rel="canonical" href="https://thestia.de/datenschutz">
 <style>
     /* Web-Design (tool/web_theme.py) */
     /* ---------------------------------------------------------------
@@ -165,11 +165,21 @@
     }
     .modus-knopf {
       margin-left: auto;
+      /* BEFUND 04.11.2026: Der Elternbereich hat eine seiten-eigene
+         Formular-Regel "label { margin: 1rem 0 .35rem; }". Sie trifft
+         auch diesen Knopf - er ist ja ein <label> fuer den
+         unsichtbaren Schalter. Dadurch sass er 5,6 px hoeher als der
+         Sprachknopf daneben. Die Kopfschaltflaechen werden deshalb
+         hier vollstaendig definiert: kein margin, damit keine Seite
+         sie versehentlich verschieben kann. */
+      margin-top: 0;
+      margin-bottom: 0;
       width: 42px;
       height: 42px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      flex: 0 0 auto;
       border: 1px solid var(--line);
       border-radius: 999px;
       background: var(--card);
@@ -201,6 +211,11 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      /* Wie der Modusknopf: kein margin. Eine seiten-eigene Formular-
+         Regel darf die Kopfzeile nicht verschieben. */
+      margin-top: 0;
+      margin-bottom: 0;
+      flex: 0 0 auto;
       border: 1px solid var(--line);
       border-radius: 999px;
       background: var(--card);
@@ -605,7 +620,7 @@
 </header>
 <div class="inhalt">
 <h1>Datenschutzerklärung für Thestia</h1>
-<p><strong>Stand: November 2026</strong> · Version 22 (v0.10.0)</p>
+<p><strong>Stand: Oktober 2026</strong> · Version 17 (v0.10.0)</p>
 <p>Thestia ist ein datenschutzorientiertes Open-Source-Projekt (AGPLv3). Der Schutz deiner persönlichen Sphäre steht an erster Stelle: Es werden keine Werbetracker eingesetzt, keine Verhaltensprofile erstellt und keine Nutzerdaten an Dritte verkauft.</p>
 <h2>1. Grundsatz und Verantwortliche Stelle</h2>
 <p><strong>Kontakt:</strong> Fragen zur Verarbeitung deiner Daten, Auskunft, Berichtigung oder Löschung erreichst du über das In-App-Bug-Report-Formular (<em>Einstellungen → Datenschutz → Bug melden</em>) oder über die <strong>Kontaktadresse `datenschutz@thestia.de`</strong>. Für eine Löschung auf Anfrage nenne deine User-ID - dann werden auch die nach dem obigen aufgeführten Restdaten entfernt.</p>
@@ -727,7 +742,7 @@
 <p><strong>Grobe Entfernung (v0.10.0):</strong> 16- und 17-Jährige geben <strong>keine Entfernung</strong> preis - auch nicht die ungefähre in 10-km-Stufen. Die Sperre sitzt in der Datenbank (`profile_distance_km`, Migration 163) und richtet sich nach dem <strong>verifizierten</strong> Alter; in der App ist der Schalter für diese Altersgruppe gesperrt. In einem Umfeld, in dem man sich über die Nähe zu anderen ausmacht, sagt eine ungefähre Angabe mehr aus als bei Erwachsenen - deshalb bleibt sie hier aus. Für Erwachsene ändert sich nichts.</p>
 <p><strong>Elternfreigabe für 16- und 17-Jährige (v0.10.0):</strong> Für Konten in diesem Alter sieht Thestia die Zustimmung der Sorgeberechtigten vor. Die Zustimmung ist <strong>freiwillig</strong>: nach § 3a JUG kann eine Person ab dem vollendeten 16. Lebensjahr selbst einwilligen, und niemand wird an der Nutzung gehindert, weil die Zustimmung ausbleibt.</p>
 <p>So läuft es:</p>
-<ul><li>Der Jugendliche trägt die E-Mail-Adresse eines Elternteils ein. Sie muss <strong>eine andere</strong> sein als die eigene Kontoadresse - sonst würde sich der Jugendliche selbst als Elternteil eintragen.</li><li>Der Elternteil erhält eine E-Mail mit einem Link, bestätigt dort die Freigabe und kann sie jederzeit mit einem Klick widerrufen. Der Link enthält einen Zugangsschlüssel, der nur als Hash gespeichert wird und nach 14 Tagen ungültig ist.</li><li><strong>Der Elternteil hat kein Konto.</strong> Er sieht ausschließlich, was für die Aufsicht nötig ist: ob eine Freigabe besteht, welchen Rhythmus die Benachrichtigungen haben und ob die Nutzungszeit begrenzt ist.</li><li><strong>Benachrichtigungen:</strong> entsteht zwischen dem Jugendlichen und einer anderen Person ein Funke (ein gegenseitiges „Du magst mich" - nicht schon ein einzelnes Like), bekommt der Elternteil eine kurze Nachricht. Die Häufigkeit legt er selbst fest: täglich, wöchentlich, monatlich oder gar nicht. <strong>Wir nennen dabei keine Namen, keine Profile und keine Inhalte</strong> - der Elternteil erfährt nur, <em>dass</em> ein Funke entstanden ist. Wer das nicht möchte, erfährt es nicht.</li><li><strong>Nutzungszeit:</strong> der Elternteil kann ein Zeitfenster festlegen, in dem die App genutzt werden darf. Diese Einstellung ist mit einer vierstelligen PIN geschützt; die PIN wird nur auf dem Server geprüft und ist auf dem Gerät des Jugendlichen nicht gespeichert. Der Jugendliche kann sie deshalb nicht selbst ändern - aber er kann sie auch nicht erraten (die Prüfung ist nach fünf Fehlversuchen für eine Stunde gesperrt).</li><li><strong>Mit 18 endet die Pflicht zur Zustimmung.</strong> Dann entscheidet der Jugendliche selbst: Zugriff beenden, für 1 bis 6 Monate behalten oder erstmal weiter behalten. Auch ab 18 bleibt der Abschnitt in den Einstellungen sichtbar, damit die Freigabe aus der Zeit mit 16/17 geordnet werden kann.</li></ul>
+<ul><li>Der Jugendliche trägt die E-Mail-Adresse eines Elternteils ein. Sie muss <strong>eine andere</strong> sein als die eigene Kontoadresse - sonst würde sich der Jugendliche selbst als Elternteil eintragen.</li><li>Der Elternteil erhält eine E-Mail mit einem Link, bestätigt dort die Freigabe und kann sie jederzeit mit einem Klick widerrufen. Der Link enthält einen Zugangsschlüssel, der nur als Hash gespeichert wird und nach 24 Stunden ungültig ist.</li><li><strong>Der Elternteil hat kein Konto.</strong> Er sieht ausschließlich, was für die Aufsicht nötig ist: ob eine Freigabe besteht, welchen Rhythmus die Benachrichtigungen haben und ob die Nutzungszeit begrenzt ist.</li><li><strong>Die E-Mail-Adresse des Elternteils wird mit dem Ende der Freigabe gelöscht.</strong> Endet die Freigabe, wird die Adresse nicht mehr gebraucht: es gibt keine Benachrichtigungen mehr und keinen Zugang zum Elternportal. Sie wird dann aus unseren Daten entfernt. Hat der Jugendliche eine Nachfrist gewählt ("noch einen Monat behalten"), endet die Freigabe erst nach dieser Frist, und die Adresse wird erst dann gelöscht.</li><li><strong>Benachrichtigungen:</strong> entsteht zwischen dem Jugendlichen und einer anderen Person ein Funke (ein gegenseitiges „Du magst mich" - nicht schon ein einzelnes Like), bekommt der Elternteil eine kurze Nachricht. Die Häufigkeit legt er selbst fest: täglich, wöchentlich, monatlich oder gar nicht. <strong>Wir nennen dabei keine Namen, keine Profile und keine Inhalte</strong> - der Elternteil erfährt nur, <em>dass</em> ein Funke entstanden ist. Wer das nicht möchte, erfährt es nicht.</li><li><strong>Nutzungszeit:</strong> der Elternteil kann ein Zeitfenster festlegen, in dem die App genutzt werden darf. Diese Einstellung ist mit einer vierstelligen PIN geschützt; die PIN wird nur auf dem Server geprüft und ist auf dem Gerät des Jugendlichen nicht gespeichert. Der Jugendliche kann sie deshalb nicht selbst ändern - aber er kann sie auch nicht erraten (die Prüfung ist nach fünf Fehlversuchen für eine Stunde gesperrt).</li><li><strong>Mit 18 endet die Pflicht zur Zustimmung.</strong> Dann entscheidet der Jugendliche selbst: Zugriff beenden, für 1 bis 6 Monate behalten oder erstmal weiter behalten. Auch ab 18 bleibt der Abschnitt in den Einstellungen sichtbar, damit die Freigabe aus der Zeit mit 16/17 geordnet werden kann.</li></ul>
 <p>Wir protokollieren jede Anfrage, Bestätigung und jeden Widerruf mit Zeitpunkt (Art. 5 Abs. 2 DSGVO, Rechenschaftsnachweis). Die Daten des Jugendlichen selbst geben wir an den Elternteil <strong>nicht</strong> weiter.</p>
 <p><strong>Was die Nutzungszeit nicht ist:</strong> Sie ist eine Hausregel auf dem Gerät des Jugendlichen. Sie verhindert die versehentliche Überschreitung - sie ist aber kein technisches Verbot. Wer ein gerootetes Gerät hat oder die App selbst baut, kommt an ihr vorbei. Das ist eine Tatsache, die wir nicht beschönigen.</p>
 <p><strong>Transit Spark ist davon ausgenommen und nur ab 18 Jahren nutzbar.</strong> Die Sperre sitzt an zwei Stellen, weil eine allein nichts taugt:</p>

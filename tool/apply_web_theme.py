@@ -121,7 +121,8 @@ def sprachziel(rel: str) -> tuple[str, str]:
 # ihre eigene Kopfzeile mit. Deshalb bekommt sie nur das gemeinsame CSS,
 # keine Kopfzeile und keine Inhalts-Huelle - die wuerde den
 # Sicherheitscheck in eine Karte packen.
-NUR_CSS = ['index.html', 'bestaetigt.html', 'en/index.html']
+NUR_CSS = ['index.html', 'bestaetigt.html', 'en/index.html',
+           'en/bestaetigt.html']
 
 
 def main() -> int:

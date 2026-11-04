@@ -282,6 +282,37 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 ### Hinzugefügt
 
+- **Der Freigabe-Link für Elternteile gilt nur noch 24 Stunden**
+  (04.11.2026, Migration 179): Bisher war er 14 Tage gültig - und ein
+  Link, der zwei Wochen in einem Postkasten liegt, wird irgendwann von
+  einer fremden Person benutzt. Die Frist steht jetzt im Server
+  (`token_expires_at = now() + interval '24 hours'`), nicht nur im Text.
+  Auch die offenen Links aus dem Bestand wurden auf 24 Stunden gekürzt.
+- **Die E-Mail-Adresse des Elternteils verschwindet mit der Freigabe**
+  (04.11.2026, Migration 179): Endet die Freigabe, wird die Adresse
+  gelöscht - sie wird dann für nichts mehr gebraucht (keine
+  Benachrichtigungen, kein Zugang zum Elternportal). Das gilt für alle
+  drei Wege: der Jugendliche beendet, der Elternteil widerruft, der
+  Zugriff endet sofort. **Eine Ausnahme:** Wer „noch einen Monat
+  behalten" wählt, hat die Freigabe noch nicht beendet - dann bleibt
+  die Adresse bis nach dem Monat stehen und wird erst dann gelöscht
+  (der Cron räumt sie ab). Wann gelöscht wurde, steht in
+  `email_deleted_at`.
+- **Jede Website-Seite hat jetzt eine englische Fassung** (04.11.2026):
+  Die Bestätigungsseite war die letzte ohne. Alle 20 Seiten sind jetzt
+  zweisprachig, jede verlinkt auf die andere Fassung, und eine neue
+  Dauerprüfung (`tool/check_publish_folder.py`) sagt es, wenn eine
+  Seite fehlt.
+- **Die Kopfschaltflächen der Website sitzen wieder auf gleicher Höhe**
+  (04.11.2026): Der Modus-Knopf (Hell/Dunkel) und der Sprachknopf waren
+  im Elternbereich 5,6 px versetzt. Ursache war eine seiten-eigene
+  Formular-Regel, die auch den Modus-Knopf traf - er ist ja ein
+  `label`. Die Kopf-Knöpfe bekommen jetzt kein `margin` mehr, und ihr
+  Kürzel sitzt mittig im Knopf.
+- **Die Tabellen sind abgerundet** (04.11.2026): Das pinke Element
+  (der Tabellenkopf) bei „Daten löschen" hatte eckige Ecken, weil die
+  Tabellen nicht in der abgerundeten Hülle lagen. Jetzt tun sie das.
+
 - **Die Dating Hour bekommt einen ausblendbaren Timer und zwei
   Fristen** (04.11.2026, Migration 177): Die 5 Minuten sind jetzt eine
   *Entscheidungsphase*, nicht das Ende des Gesprächs. Nach 5 Minuten

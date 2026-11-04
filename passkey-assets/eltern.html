@@ -227,11 +227,21 @@
     }
     .modus-knopf {
       margin-left: auto;
+      /* BEFUND 04.11.2026: Der Elternbereich hat eine seiten-eigene
+         Formular-Regel "label { margin: 1rem 0 .35rem; }". Sie trifft
+         auch diesen Knopf - er ist ja ein <label> fuer den
+         unsichtbaren Schalter. Dadurch sass er 5,6 px hoeher als der
+         Sprachknopf daneben. Die Kopfschaltflaechen werden deshalb
+         hier vollstaendig definiert: kein margin, damit keine Seite
+         sie versehentlich verschieben kann. */
+      margin-top: 0;
+      margin-bottom: 0;
       width: 42px;
       height: 42px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      flex: 0 0 auto;
       border: 1px solid var(--line);
       border-radius: 999px;
       background: var(--card);
@@ -263,6 +273,11 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      /* Wie der Modusknopf: kein margin. Eine seiten-eigene Formular-
+         Regel darf die Kopfzeile nicht verschieben. */
+      margin-top: 0;
+      margin-bottom: 0;
+      flex: 0 0 auto;
       border: 1px solid var(--line);
       border-radius: 999px;
       background: var(--card);
@@ -689,15 +704,19 @@ Sorgeberechtigten vor. Hier steht, wie das abläuft und was dabei verarbeitet wi
     gibt im Einrichtungsdialog Ihre E-Mail-Adresse an. Es muss eine andere sein als
     die Kontoadresse des Kindes &ndash; sonst würde sich das Kind selbst als
     Elternteil eintragen.</li>
-    <li>Sie erhalten eine E-Mail mit einem Link. Der Link ist 14 Tage gültig und
+    <li>Sie erhalten eine E-Mail mit einem Link. Der Link ist 24 Stunden gültig und
     gehört nur zu diesem einen Konto.</li>
     <li>Sie bestätigen den Link. Damit ist die Freigabe erteilt und Ihr Kind kann
     Thestia vollständig nutzen.</li>
     <li>Im selben Bereich stellen Sie ein, wie oft Sie benachrichtigt werden möchten
-    (täglich, w&ouchentlich, monatlich oder gar nicht), ob die Nutzungszeit
+    (täglich, wöchentlich, monatlich oder gar nicht), ob die Nutzungszeit
     begrenzt wird und mit welcher vierstelligen PIN diese Einstellung gesichert wird.</li>
     <li>Sie können die Freigabe jederzeit mit einem Klick widerrufen. Das wirkt
     sofort, nicht erst beim nächsten Login.</li>
+    <li>Mit dem Ende der Freigabe wird auch Ihre E-Mail-Adresse gelöscht. Sie wird
+    dann nicht mehr gebraucht: es gibt keine Benachrichtigungen mehr und keinen Zugang
+    zu Ihrem Bereich. Hat Ihr Kind eine Nachfrist gewählt ("noch einen Monat behalten"),
+    endet die Freigabe erst nach dieser Frist, und die Adresse wird erst dann gelöscht.</li>
   </ol>
 </div>
 <p class="klein">Sie haben eine E-Mail mit einem Link erhalten? Der Link führt
@@ -735,6 +754,7 @@ anderes an Ihre Einstellungen kommt.</p>
 </ul>
 
 <h2>Welche Daten mit der Aufsicht verarbeitet werden</h2>
+<div class="tabellen-huelle">
 <table>
   <thead>
     <tr><th>Daten</th><th>Zweck</th><th>Aufbewahrung</th></tr>
@@ -767,6 +787,7 @@ anderes an Ihre Einstellungen kommt.</p>
     </tr>
   </tbody>
 </table>
+</div>
 
 <h2>Was die Freigabe nicht bewirkt</h2>
 <p>Die eingestellte Nutzungszeit ist eine <strong>Hausregel auf dem Gerät deines

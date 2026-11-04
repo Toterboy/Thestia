@@ -155,3 +155,8 @@ https://auth.thestia.de/robots.txt          /robots-auth.txt               200!
 # Text-Zeile.
 /bestaetigt    /bestaetigt.html  200
 /bestaetigt/   /bestaetigt.html  200
+
+# Die englische Fassung der Bestaetigungsseite (NUTZERWUNSCH
+# 04.11.2026: jede Seite auf Deutsch und Englisch).
+/en/bestaetigt    /en/bestaetigt.html  200
+/en/bestaetigt/   /en/bestaetigt.html  200

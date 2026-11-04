@@ -227,11 +227,21 @@
     }
     .modus-knopf {
       margin-left: auto;
+      /* BEFUND 04.11.2026: Der Elternbereich hat eine seiten-eigene
+         Formular-Regel "label { margin: 1rem 0 .35rem; }". Sie trifft
+         auch diesen Knopf - er ist ja ein <label> fuer den
+         unsichtbaren Schalter. Dadurch sass er 5,6 px hoeher als der
+         Sprachknopf daneben. Die Kopfschaltflaechen werden deshalb
+         hier vollstaendig definiert: kein margin, damit keine Seite
+         sie versehentlich verschieben kann. */
+      margin-top: 0;
+      margin-bottom: 0;
       width: 42px;
       height: 42px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      flex: 0 0 auto;
       border: 1px solid var(--line);
       border-radius: 999px;
       background: var(--card);
@@ -263,6 +273,11 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      /* Wie der Modusknopf: kein margin. Eine seiten-eigene Formular-
+         Regel darf die Kopfzeile nicht verschieben. */
+      margin-top: 0;
+      margin-bottom: 0;
+      flex: 0 0 auto;
       border: 1px solid var(--line);
       border-radius: 999px;
       background: var(--card);
@@ -689,7 +704,7 @@ nobody is surveilled.</p>
     <li>Your child (aged 16 or 17) downloads Thestia, registers, and enters your email
     address in the setup dialog. It has to be a different one from the account's own
     address &ndash; otherwise the child would enter themselves as the parent.</li>
-    <li>You receive an email with a link. The link is valid for 14 days and belongs to
+    <li>You receive an email with a link. The link is valid for 24 hours and belongs to
     this one account only.</li>
     <li>You confirm the link. The consent is then granted and your child can use
     Thestia fully.</li>
@@ -698,6 +713,10 @@ nobody is surveilled.</p>
     secures this setting.</li>
     <li>You can revoke the consent at any time with a single click. It takes effect
     immediately, not only at the next login.</li>
+    <li>When the consent ends, your email address is deleted as well. It is no longer
+    needed then: there are no more notifications and no more access to your area. If your
+    child chose a grace period ("keep it for one more month"), the consent only ends after
+    that period, and the address is only deleted then.</li>
   </ol>
 </div>
 <p class="klein">Have you received an email with a link? The link takes you straight to
@@ -734,6 +753,7 @@ to your settings.</p>
 </ul>
 
 <h2>Which data are processed for the supervision</h2>
+<div class="tabellen-huelle">
 <table>
   <thead>
     <tr><th>Data</th><th>Purpose</th><th>Retention</th></tr>
@@ -767,6 +787,7 @@ to your settings.</p>
     </tr>
   </tbody>
 </table>
+</div>
 
 <h2>What the consent does not achieve</h2>
 <p>The usage time you set is a <strong>household rule on your child's device</strong>.

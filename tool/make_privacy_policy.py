@@ -81,6 +81,15 @@ SPRACHEN = [
         # Der Sprachknopf zeigt auf die andere Fassung.
         'sprach_ziel': '/en/datenschutz',
         'sprach_label': 'EN',
+        # Die kanonische Adresse. Ohne sie ist die Seite bei mehreren
+        # Adressen erreichbar (/datenschutz und /datenschutz.html) -
+        # die Suchmaschine waehlt dann eine davon aus.
+        #
+        # BEFUND 04.11.2026: Der Generator hat die Seite ohne canonical
+        # geschrieben. Beim Neuerzeugen (etwa nach einer Textaenderung)
+        # verschwand die Angabe wieder - und die Seite war auf einmal
+        # "nicht auffindbar" fuer die Suchmaschine.
+        'canonical': 'https://thestia.de/datenschutz',
     },
     {
         'sprache': 'en',
@@ -100,6 +109,7 @@ SPRACHEN = [
             'tracker of the public project repository.'),
         'sprach_ziel': '/datenschutz',
         'sprach_label': 'DE',
+        'canonical': 'https://thestia.de/en/datenschutz',
     },
 ]
 
@@ -356,6 +366,10 @@ def render_html(blocks, sprache: dict):
            '<meta name="viewport" content="width=device-width, '
            'initial-scale=1">',
            '<title>%s</title>' % sprache['titel'],
+           # Die kanonische Adresse: die Seite ist unter zwei Adressen
+           # erreichbar (/datenschutz und /datenschutz.html). Ohne diese
+           # Angabe entscheidet die Suchmaschine, welche davon gilt.
+           '<link rel="canonical" href="%s">' % sprache['canonical'],
            '<style>%s</style>' % CSS,
            '</head>', '<body>',
            # Kopfzeile mit Marke, Umschalt-Knopf und Sprachknopf: reine

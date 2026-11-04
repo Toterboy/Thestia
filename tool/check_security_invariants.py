@@ -1143,6 +1143,180 @@ check('invalid_usage_time' in sql_173,
       '(0..1439) - sonst wird "-5 Minuten seit Mitternacht" gespeichert')
 
 # =====================================================================
+# 12) Der Eltern-Link: 24 Stunden, und die E-Mail des Elternteils
+#     verschwindet mit der Freigabe
+# =====================================================================
+#
+# NUTZERWUNSCH 04.11.2026):
+#
+#   * "der Link statt 14 Tagen nur 24 Stunden gueltig sein" - nicht nur
+#     im Text, sondern im Server. Ein Link, der zwei Wochen lebt, liegt
+#     irgendwann in irgendeinem Postkasten und wird dann von einer
+#     fremden Person benutzt.
+#
+#   * "die Emailadresse des Elternteils auch mit Beendigung der Freigabe
+#     geloescht" - mit EINER Ausnahme: Wer "noch 1 Monat behalten"
+#     waehlt, hat die Freigabe noch nicht beendet. Dann wird die Adresse
+#     erst nach dem Monat geloescht, nicht sofort.
+#
+# Beides wird hier geprueft, damit es nicht wieder verschwindet.
+
+sql_179 = read(MIG / '179_guardian_email_purge_and_24h_token.sql')
+
+# --- Der Token gilt 24 Stunden ---------------------------------------
+check(sql_179.count("now() + interval '24 hours'") >= 3,
+      'DB: Der Freigabe-Link gilt 24 Stunden - an ALLEN Stellen '
+      '(Anlegen, Erneuern, Bestand), nicht nur an einer')
+check("token_expires_at = now() + interval '24 hours'," in sql_179,
+      'DB: Auch der erneuerte Link gilt 24 Stunden')
+check("interval '14 days'" not in sql_179,
+      'DB: In der neuen Migration steht keine 14-Tage-Frist mehr')
+check('least(token_expires_at, now() + interval \'24 hours\')' in sql_179,
+      'DB: Der Bestand offener Links wird auf 24 Stunden gekuerzt '
+      '(sonst waeren die alten Links weiterhin gueltig)')
+
+# --- Die E-Mail des Elternteils wird geloescht ------------------------
+check('ALTER COLUMN guardian_email DROP NOT NULL' in sql_179,
+      'DB: Die Adresse des Elternteils ist optional - sonst koennte '
+      'sie gar nicht geloescht werden')
+check('ADD COLUMN IF NOT EXISTS email_deleted_at timestamptz' in sql_179,
+      'DB: Der Loeschzeitpunkt wird vermerkt (der Nachweis, dass die '
+      'Freigabe auch ihre Daten zurueckgibt)')
+check('CREATE OR REPLACE FUNCTION public.purge_guardian_emails()'
+      in sql_179,
+      'DB: Es gibt eine Funktion, die die Adresse nach dem Ende loescht')
+check("access_until <= now()" in sql_179,
+      'DB: Die Nachfrist ("noch 1 Monat") beendet die Freigabe erst, '
+      'wenn sie abgelaufen ist - die Adresse bleibt bis dahin')
+check(sql_179.count('guardian_email  = NULL') >= 5,
+      'DB: Alle drei Beendigungswege und die Aufraeumfunktion loeschen '
+      'die Adresse des Elternteils')
+check("'guardian-email-purge'" in sql_179,
+      'DB: Der Cron raeumt die Adresse nach einer Nachfrist ab')
+check('REVOKE ALL ON FUNCTION public.purge_guardian_emails()' in sql_179,
+      'DB: Die Aufraeumfunktion laeuft nur fuer den service_role')
+
+# --- Der Text sagt dasselbe -------------------------------------------
+check(has('supabase/functions/guardian-consent/index.ts',
+          'Der Link ist 24 Stunden g\u00fcltig.'),
+      'EDGE: Die E-Mail an den Elternteil nennt 24 Stunden')
+check('14 Tagen ungueltig' not in read(FN / 'guardian-consent' / 'index.ts'),
+      'EDGE: In der Funktion steht keine 14-Tage-Frist mehr')
+
+# Die Website: der Elternbereich und das Portal sagen dasselbe.
+check(has('passkey-assets/eltern.html',
+          'Der Link ist 24 Stunden g\u00fcltig',
+          'w\u00f6chentlich'),
+      'WEB: Der Elternbereich nennt 24 Stunden (und das kaputte '
+      '"W\u00f6chentlich" ist repariert)')
+check(has('passkey-assets/en/eltern.html',
+          'The link is valid for 24 hours'),
+      'WEB: Die englische Fassung nennt 24 hours')
+check(has('passkey-assets/eltern-einstellungen.html',
+          'Der Link ist 24 Stunden lang'),
+      'WEB: Das Elternportal meldet einen abgelaufenen Link nach 24 Stunden')
+check(has('passkey-assets/en/eltern/einstellungen.html',
+          'The link is valid for 24 hours'),
+      'WEB: Das englische Elternportal meldet 24 hours')
+
+# Die Datenschutzerklaerung (Quelle und erzeugte Seiten).
+check(has('docs/DATENSCHUTZ.md',
+          'nach 24 Stunden ung\u00fcltig ist',
+          'E-Mail-Adresse des Elternteils wird mit dem Ende der Freigabe'),
+      'WEB: Die Datenschutzerklaerung nennt 24 Stunden und die '
+      'Loeschung der Eltern-Adresse')
+check(has('docs/DATENSCHUTZ_EN.md',
+          'invalid after 24 hours',
+          "parent's e-mail address is deleted when the approval ends"),
+      'WEB: Die englische Datenschutzerklaerung nennt 24 hours und die '
+      'Loeschung der Eltern-Adresse')
+
+# --- Der Generator darf den Canonical nicht mehr verlieren ------------
+# BEFUND 04.11.2026: Beim Neuerzeugen der Datenschutz-Seiten (etwa nach
+# einer Textaenderung) verschwand die kanonische Adresse wieder. Die Seite
+# war danach "nicht auffindbar" fuer die Suchmaschine - und der Fehler
+# fiel nur auf, weil der Publish-Checker sie meldete.
+check(has('tool/make_privacy_policy.py',
+          "'canonical': 'https://thestia.de/datenschutz'",
+          "'canonical': 'https://thestia.de/en/datenschutz'",
+          '<link rel="canonical" href="%s">'),
+      'TOOL: Der Generator der Datenschutz-Seiten schreibt die '
+      'kanonische Adresse mit (sonst verschwindet sie beim Neuerzeugen)')
+
+# =====================================================================
+# 13) Die Website: gleiche Hoehe, mittiger Text, englische Fassungen
+# =====================================================================
+#
+# NUTZERWUNSCH 04.11.2026): "Bei den Websites sind die Buttons fuer
+# Sprache und Hell Dunkel Modus nicht auf der selben Hoehe! (Nur
+# Elternbereich)" und "Das EN im Sprach button ist nicht mittig im
+# Button."
+
+# BEFUND 04.11.2026: Der Elternbereich hat eine seiten-eigene Formular-
+# Regel "label { margin: 1rem 0 .35rem; }". Sie traf auch den
+# Modus-Knopf - er ist ja ein <label> fuer den unsichtbaren Schalter.
+# Dadurch sass er 5,6 px hoeher als der Sprachknopf daneben.
+def css_block(text: str, sel: str) -> str:
+    """Der Inhalt eines CSS-Blocks, z. B. '.modus-knopf { ... }'.
+
+    Die Kommentare werden vorher entfernt: sonst bricht der erste
+    '}' INNERHALB eines Kommentars den Block ab - und die Pruefung
+    schlaegt dann an, obwohl das CSS korrekt ist.
+    """
+    ohne_kommentare = re.sub(r'/\*.*?\*/', '', text, flags=re.S)
+    m = re.search(re.escape(sel) + r'\s*\{(.*?)\}', ohne_kommentare, re.S)
+    return m.group(1) if m else ''
+
+
+theme = read(ROOT / 'tool' / 'web_theme.py')
+for _sel in ('.modus-knopf', '.sprach-knopf'):
+    _block = css_block(theme, _sel)
+    check('margin-top: 0;' in _block and 'margin-bottom: 0;' in _block,
+          'WEB: %s beommt kein margin - eine seiten-eigene '
+          'Formular-Regel darf die Kopfzeile nicht verschieben' % _sel)
+    check('flex: 0 0 auto;' in _block,
+          'WEB: %s wird nicht zusammengedrueckt (flex: 0 0 auto)' % _sel)
+check('justify-content: center;' in css_block(theme, '.sprach-knopf'),
+      'WEB: Der Sprachknopf zentriert sein Kuerzel (inline-flex)')
+
+# Jede Seite hat eine englische Fassung und verlinkt auf sie. Das prueft
+# tool/check_publish_folder.py (Abschnitt 9) - hier steht nur die
+# Grundlage: die Bestaetigungsseite, die bis jetzt keine hatte.
+check(has('passkey-assets/en/bestaetigt.html',
+          '<html lang="en">',
+          'E-Mail confirmed',
+          'href="/bestaetigt"'),
+      'WEB: Die Bestaetigungsseite hat eine englische Fassung')
+check(has('passkey-assets/bestaetigt.html',
+          'href="/en/bestaetigt"'),
+      'WEB: Die Bestaetigungsseite verlinkt auf ihre englische Fassung')
+
+# Die Tabellen: das pinke Element ist der Tabellenkopf. Ohne die
+# abgerundete Huelle bleiben seine Ecken eckig.
+def tabellen_ohne_huelle(rel: str) -> int:
+    """Wie viele Tabellen haben KEINE abgerundete Huelle?
+
+    Das pinke Element ist der Tabellenkopf (background:
+    var(--accent-soft)). Ohne die Huelle mit ihrem Radius von 20 px
+    bleiben seine Ecken eckig - das war der gemeldete Fehler.
+    """
+    inhalt = read(ROOT / rel)
+    tabellen = len(re.findall(r'<table[ >]', inhalt))
+    hüllen = len(re.findall(r'<div class="tabellen-huelle">', inhalt))
+    return tabellen - hüllen
+
+
+check(tabellen_ohne_huelle('passkey-assets/daten-loeschen.html') == 0,
+      'WEB: JEDE Tabelle bei "Daten loeschen" sitzt in der abgerundeten '
+      'Huelle - das pinke Element bekommt runde Ecken')
+check(tabellen_ohne_huelle('passkey-assets/en/daten-loeschen.html') == 0,
+      'WEB: Die englische Fassung hat dieselbe abgerundete Huelle')
+check(tabellen_ohne_huelle('passkey-assets/eltern.html') == 0,
+      'WEB: Auch die Tabelle im Elternbereich sitzt in der Huelle')
+check(tabellen_ohne_huelle('passkey-assets/en/eltern.html') == 0,
+      'WEB: Auch die englische Elternseite hat die Huelle')
+
+# =====================================================================
 # Ausgabe
 # =====================================================================
 print('SICHERHEITS-INVARIANTEN\n' + '=' * 78)

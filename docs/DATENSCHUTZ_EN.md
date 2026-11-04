@@ -442,10 +442,16 @@ Here is how it works:
   person would register themselves as their own parent.
 - The parent receives an e-mail with a link, confirms the approval there
   and can revoke it at any time with a single click. The link contains an
-  access key that is only stored as a hash and is invalid after 14 days.
+  access key that is only stored as a hash and is invalid after 24 hours.
 - **The parent has no account.** They see exclusively what is necessary
   for the supervision: whether an approval exists, what rhythm the
   notifications have and whether the usage time is limited.
+- **The parent's e-mail address is deleted when the approval ends.** Once the
+  approval has ended, the address is no longer needed: there are no more
+  notifications and no more access to the parent portal. It is then removed from
+  our data. If the young person chose a grace period ("keep it for one more
+  month"), the approval only ends after that period, and the address is only
+  deleted then.
 - **Notifications:** when a spark arises between the young person and
   another person (a mutual "I like you" - not just a single like), the
   parent receives a short message. They set the frequency themselves:

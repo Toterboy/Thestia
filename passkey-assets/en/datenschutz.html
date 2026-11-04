@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="canonical" href="https://thestia.de/en/datenschutz">
 <title>Privacy policy for Thestia</title>
+<link rel="canonical" href="https://thestia.de/en/datenschutz">
 <style>
     /* Web-Design (tool/web_theme.py) */
     /* ---------------------------------------------------------------
@@ -165,11 +165,21 @@
     }
     .modus-knopf {
       margin-left: auto;
+      /* BEFUND 04.11.2026: Der Elternbereich hat eine seiten-eigene
+         Formular-Regel "label { margin: 1rem 0 .35rem; }". Sie trifft
+         auch diesen Knopf - er ist ja ein <label> fuer den
+         unsichtbaren Schalter. Dadurch sass er 5,6 px hoeher als der
+         Sprachknopf daneben. Die Kopfschaltflaechen werden deshalb
+         hier vollstaendig definiert: kein margin, damit keine Seite
+         sie versehentlich verschieben kann. */
+      margin-top: 0;
+      margin-bottom: 0;
       width: 42px;
       height: 42px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      flex: 0 0 auto;
       border: 1px solid var(--line);
       border-radius: 999px;
       background: var(--card);
@@ -201,6 +211,11 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      /* Wie der Modusknopf: kein margin. Eine seiten-eigene Formular-
+         Regel darf die Kopfzeile nicht verschieben. */
+      margin-top: 0;
+      margin-bottom: 0;
+      flex: 0 0 auto;
       border: 1px solid var(--line);
       border-radius: 999px;
       background: var(--card);
@@ -605,7 +620,7 @@
 </header>
 <div class="inhalt">
 <h1>Privacy Policy for Thestia</h1>
-<p><strong>As of: November 2026</strong> · Version 22 (v0.10.0)</p>
+<p><strong>As of: October 2026</strong> · Version 17 (v0.10.0)</p>
 <p>Thestia is a privacy-conscious open-source project (AGPLv3). Protecting your personal sphere comes first: no advertising trackers are used, no behavioural profiles are created, and no user data is sold to third parties.</p>
 <h2>1. Principles and data controller</h2>
 <p><strong>Contact:</strong> Questions about the processing of your data, access, rectification or erasure can be directed to the in-app bug report form (<em>Settings → Privacy → Report a bug</em>) or to the <strong>contact address `datenschutz@thestia.de`</strong>. To request erasure, state your user ID - then the residual data listed above is removed as well.</p>
@@ -633,7 +648,7 @@
 <tr><td>Image review hash</td><td>SHA-256 hash of a chat image you sent, together with the identifier of the recipient</td><td>Proof that a reported image really did travel through a chat (abuse protection against arbitrary reports)</td><td>With account deletion</td></tr>
 <tr><td>Location timestamp</td><td>Time of the last location check</td><td>Plausibility check (implausible changes of location)</td><td>With account deletion</td></tr>
 <tr><td>Marker of the account</td><td>MD5 hash of the account identifier</td><td>Prevents a deleted account from being registered again</td><td>Persists permanently, without any clear name</td></tr>
-<tr><td>Verification</td><td>Self-recording with image <strong>and</strong> sound to estimate the age. The video is <strong>encrypted on the device</strong> (AES-256-GCM) and only the ciphertext is transmitted; the key is stored in a table to which the app has no access. Purpose: age check for child safety and the 18+ release of Transit Spark. In case of rejection the video and key are deleted, otherwise <strong>30 days after the approval of the verification</strong> (migration 171; the period previously started at the submission - a video that waited weeks for the review was already deleted on the day of the approval). If a verification stays undecided for more than 90 days, the video is deleted as well - the review needs it, but it must not lie around indefinitely (section 7). Only a manual review by the administration creates a temporarily decrypted copy, which is deleted automatically after 20 minutes</td></tr>
+<tr><td>Verification</td><td>Self-recording with image <strong>and</strong> sound to estimate the age. The video is <strong>encrypted on the device</strong> (AES-256-GCM) and only the ciphertext is transmitted; the key is stored in a table to which the app has no access. Purpose: age check for child safety and the 18+ release of Transit Spark. In case of rejection the video and key are deleted, otherwise at the latest 30 days after submission (section 7). Only a manual review by the administration creates a temporarily decrypted copy, which is deleted automatically after 20 minutes</td></tr>
 </tbody>
 </table>
 </div>
@@ -727,7 +742,7 @@
 <p><strong>Coarse distance (v0.10.0):</strong> 16- and 17-year-olds do not disclose <strong>any distance</strong> - not even the approximate one in 10 km steps. The block lives in the database (`profile_distance_km`, migration 163) and is based on the <strong>verified</strong> age; in the app the switch is locked for this age group. In an environment where people arrange to meet others by proximity, an approximate value says more than it does among adults - that is why it stays off here. For adults nothing changes.</p>
 <p><strong>Parental approval for 16- and 17-year-olds (v0.10.0):</strong> For accounts in this age range, Thestia requires the consent of those with parental responsibility. The consent is <strong>voluntary</strong>: under Sec. 3a JUG a person can consent themselves from the age of 16, and nobody is prevented from using the app because the consent is missing.</p>
 <p>Here is how it works:</p>
-<ul><li>The young person enters the e-mail address of a parent. It must be <strong>a different one</strong> from their own account address - otherwise the young person would register themselves as their own parent.</li><li>The parent receives an e-mail with a link, confirms the approval there and can revoke it at any time with a single click. The link contains an access key that is only stored as a hash and is invalid after 14 days.</li><li><strong>The parent has no account.</strong> They see exclusively what is necessary for the supervision: whether an approval exists, what rhythm the notifications have and whether the usage time is limited.</li><li><strong>Notifications:</strong> when a spark arises between the young person and another person (a mutual "I like you" - not just a single like), the parent receives a short message. They set the frequency themselves: daily, weekly, monthly or not at all. <strong>We name no names, no profiles and no contents</strong> - the parent only learns <em>that</em> a spark has arisen. Anyone who does not want that does not learn it.</li><li><strong>Usage time:</strong> the parent can define a time window in which the app may be used. This setting is protected by a four-digit PIN; the PIN is only checked on the server and is not stored on the young person's device. The young person therefore cannot change it themselves - but they also cannot guess it (the check is blocked for one hour after five failed attempts).</li><li><strong>At 18 the obligation to consent ends.</strong> Then the young person decides themselves: end access, keep it for 1 to 6 months, or keep it for now. Even after 18 the section remains visible in the settings, so that the approval from the 16/17 period can be tidied up.</li></ul>
+<ul><li>The young person enters the e-mail address of a parent. It must be <strong>a different one</strong> from their own account address - otherwise the young person would register themselves as their own parent.</li><li>The parent receives an e-mail with a link, confirms the approval there and can revoke it at any time with a single click. The link contains an access key that is only stored as a hash and is invalid after 24 hours.</li><li><strong>The parent has no account.</strong> They see exclusively what is necessary for the supervision: whether an approval exists, what rhythm the notifications have and whether the usage time is limited.</li><li><strong>The parent's e-mail address is deleted when the approval ends.</strong> Once the approval has ended, the address is no longer needed: there are no more notifications and no more access to the parent portal. It is then removed from our data. If the young person chose a grace period ("keep it for one more month"), the approval only ends after that period, and the address is only deleted then.</li><li><strong>Notifications:</strong> when a spark arises between the young person and another person (a mutual "I like you" - not just a single like), the parent receives a short message. They set the frequency themselves: daily, weekly, monthly or not at all. <strong>We name no names, no profiles and no contents</strong> - the parent only learns <em>that</em> a spark has arisen. Anyone who does not want that does not learn it.</li><li><strong>Usage time:</strong> the parent can define a time window in which the app may be used. This setting is protected by a four-digit PIN; the PIN is only checked on the server and is not stored on the young person's device. The young person therefore cannot change it themselves - but they also cannot guess it (the check is blocked for one hour after five failed attempts).</li><li><strong>At 18 the obligation to consent ends.</strong> Then the young person decides themselves: end access, keep it for 1 to 6 months, or keep it for now. Even after 18 the section remains visible in the settings, so that the approval from the 16/17 period can be tidied up.</li></ul>
 <p>We log every request, confirmation and every revocation with the time (Art. 5 para. 2 GDPR, accountability). We do <strong>not</strong> pass the young person's own data on to the parent.</p>
 <p><strong>What the usage time is not:</strong> it is a house rule on the young person's device. It prevents the accidental overrun - but it is not a technical prohibition. Anyone with a rooted device or who builds the app themselves can get around it. That is a fact we do not gloss over.</p>
 <p><strong>Transit Spark is exempt from this and can only be used from 18 years of age.</strong> The block is in two places, because one alone is not enough:</p>

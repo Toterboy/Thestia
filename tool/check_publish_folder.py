@@ -226,6 +226,83 @@ def main() -> int:
     if not gefunden:
         print("  OK: keine")
 
+    # -----------------------------------------------------------------
+    # 9) Sprachfassungen
+    # -----------------------------------------------------------------
+    #
+    # NUTZERWUNSCH 04.11.2026: "Alle sollen Englische Versionen haben."
+    #
+    # Bis hierher galt das nur fuer die Seiten, die man beim Bauen
+    # bemerkt hat. Die Bestaetigungsseite war die Ausnahme - und genau
+    # die fiel auf, weil niemand sie im Alltag besucht. Deshalb wird
+    # es jetzt geprueft: Jede Seite braucht die andere Fassung, und
+    # jede Seite verlinkt auf sie.
+    print("\n9) Sprachfassungen:")
+
+    def zwilling(p: pathlib.Path) -> pathlib.Path:
+        """Die Seite in der anderen Sprache."""
+        r = rel(p)
+        if r.startswith("en/"):
+            rest = r[3:]
+            # Die Ordnerstruktur bildet die Adresse ab:
+            # /eltern/einstellungen liegt in en/eltern/einstellungen.html
+            if rest == "eltern/einstellungen.html":
+                return pathlib.Path("eltern-einstellungen.html")
+            return pathlib.Path(rest)
+        if r == "eltern-einstellungen.html":
+            return pathlib.Path("en/eltern/einstellungen.html")
+        return pathlib.Path("en") / r
+
+    def adresse(p: pathlib.Path) -> str:
+        """Die oeffentliche Adresse einer Seite (ohne .html).
+
+        [p] ist relativ zu passkey-assets/ - wie der Zwilling oben.
+        """
+        r = p.as_posix()
+        # Die Adresse folgt den Rewrite-Regeln in _redirects, nicht dem
+        # Dateinamen: /eltern/einstellungen ist die echte Adresse der
+        # Datei eltern-einstellungen.html.
+        if r == "eltern-einstellungen.html":
+            return "/eltern/einstellungen"
+        if r == "en/eltern/einstellungen.html":
+            return "/en/eltern/einstellungen"
+        if r.endswith("index.html"):
+            return "/" + r[:-len("index.html")]
+        return "/" + r[:-len(".html")]
+
+    fehlend = []
+    for p in html:
+        z = zwilling(p)
+        if not (A / z).exists():
+            fehlend.append("%s (erwartet %s)" % (rel(p), z.as_posix()))
+    if fehlend:
+        for f in fehlend:
+            fehler.append("Keine Sprachfassung: %s" % f)
+        print("  FEHLER: %d Seite(n) ohne Fassung in der anderen Sprache"
+              % len(fehlend))
+        for f in fehlend:
+            print("    %s" % f)
+    else:
+        print("  OK: %d Seiten, jede hat die andere Fassung" % len(html))
+
+    ohne_link = []
+    for p in html:
+        z = zwilling(p)
+        erwartet = adresse(z)
+        varianten = (erwartet, erwartet + ".html")
+        t = p.read_text(encoding="utf-8")
+        if not any('href="%s"' % v in t for v in varianten):
+            ohne_link.append("%s (erwartet %s)" % (rel(p), erwartet))
+    if ohne_link:
+        for f in ohne_link:
+            fehler.append("Kein Link auf die Sprachfassung: %s" % f)
+        print("  FEHLER: %d Seite(n) ohne Link auf die andere Fassung"
+              % len(ohne_link))
+        for f in ohne_link:
+            print("    %s" % f)
+    else:
+        print("  OK: jede Seite verlinkt auf ihre Sprachfassung")
+
     print("\n" + "=" * 72)
     if fehler:
         print("FEHLER (%d):" % len(fehler))

@@ -235,11 +235,21 @@
     }
     .modus-knopf {
       margin-left: auto;
+      /* BEFUND 04.11.2026: Der Elternbereich hat eine seiten-eigene
+         Formular-Regel "label { margin: 1rem 0 .35rem; }". Sie trifft
+         auch diesen Knopf - er ist ja ein <label> fuer den
+         unsichtbaren Schalter. Dadurch sass er 5,6 px hoeher als der
+         Sprachknopf daneben. Die Kopfschaltflaechen werden deshalb
+         hier vollstaendig definiert: kein margin, damit keine Seite
+         sie versehentlich verschieben kann. */
+      margin-top: 0;
+      margin-bottom: 0;
       width: 42px;
       height: 42px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      flex: 0 0 auto;
       border: 1px solid var(--line);
       border-radius: 999px;
       background: var(--card);
@@ -271,6 +281,11 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      /* Wie der Modusknopf: kein margin. Eine seiten-eigene Formular-
+         Regel darf die Kopfzeile nicht verschieben. */
+      margin-top: 0;
+      margin-bottom: 0;
+      flex: 0 0 auto;
       border: 1px solid var(--line);
       border-radius: 999px;
       background: var(--card);
@@ -745,6 +760,7 @@ Konten gelöscht werden.</p>
 <p>Die Löschung in Weg 1 und Weg 2 ist <strong>unmittelbar</strong>: die Daten werden
 vom Server entfernt, nicht nur ausgeblendet.</p>
 
+<div class="tabellen-huelle">
 <table>
   <thead>
     <tr><th>Daten</th><th>Bei Auswahl</th><th>Aufbewahrung</th></tr>
@@ -828,10 +844,12 @@ vom Server entfernt, nicht nur ausgeblendet.</p>
     </tr>
   </tbody>
 </table>
+</div>
 
 <h2>Wie lange wird sonst aufbewahrt?</h2>
 <p>Wenn du nur einzelne Daten löschst oder gar nichts löschst, bleiben die
 übrigen Daten selbstverständlich nur so lange, wie sie gebraucht werden:</p>
+<div class="tabellen-huelle">
 <table>
   <thead>
     <tr><th>Daten</th><th>Aufbewahrung</th></tr>
@@ -846,6 +864,7 @@ vom Server entfernt, nicht nur ausgeblendet.</p>
     <tr><td>Kontowechsel und Zugriffsprotokolle</td><td>7 Tage</td></tr>
   </tbody>
 </table>
+</div>
 <p class="klein">Nach dem Löschen des Kontos bleiben nur die technisch notwendigen
 Restdaten: die Sperr-Einträge gegen eine Umgehung der Jugendschutz-Sperren, das
 Protokoll der elterlichen Einwilligung und die E-Mail-Adresse im Hash-Verzeichnis, um

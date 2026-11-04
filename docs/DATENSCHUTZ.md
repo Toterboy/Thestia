@@ -459,10 +459,16 @@ So läuft es:
 - Der Elternteil erhält eine E-Mail mit einem Link, bestätigt dort die
   Freigabe und kann sie jederzeit mit einem Klick widerrufen. Der Link
   enthält einen Zugangsschlüssel, der nur als Hash gespeichert wird und
-  nach 14 Tagen ungültig ist.
+  nach 24 Stunden ungültig ist.
 - **Der Elternteil hat kein Konto.** Er sieht ausschließlich, was für
   die Aufsicht nötig ist: ob eine Freigabe besteht, welchen Rhythmus
   die Benachrichtigungen haben und ob die Nutzungszeit begrenzt ist.
+- **Die E-Mail-Adresse des Elternteils wird mit dem Ende der Freigabe gelöscht.**
+  Endet die Freigabe, wird die Adresse nicht mehr gebraucht: es gibt keine
+  Benachrichtigungen mehr und keinen Zugang zum Elternportal. Sie wird dann aus
+  unseren Daten entfernt. Hat der Jugendliche eine Nachfrist gewählt ("noch einen
+  Monat behalten"), endet die Freigabe erst nach dieser Frist, und die Adresse wird
+  erst dann gelöscht.
 - **Benachrichtigungen:** entsteht zwischen dem Jugendlichen und einer
   anderen Person ein Funke (ein gegenseitiges „Du magst mich" - nicht
   schon ein einzelnes Like), bekommt der Elternteil eine kurze
