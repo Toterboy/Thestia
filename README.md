@@ -1,4 +1,6 @@
-﻿# Thestia
+﻿![Thestia – Begegnungen, die mehr sehen als nur ein Foto](assets/images/feature_graphic_rund.png)
+
+# Thestia
 
 ![CI](https://github.com/Toterboy/Thestia/actions/workflows/ci.yml/badge.svg)
 [![Lizenz: AGPL v3](https://img.shields.io/badge/Lizenz-AGPL_v3-blue.svg)](LICENSE)

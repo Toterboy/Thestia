@@ -37,6 +37,27 @@ ICON = ROOT / 'assets/images/thestia_icon_base.png'
 OUT_DIR = ROOT / 'fastlane/metadata/android'
 OUT_NAME = 'featureGraphic.png'
 
+# DIE ABGERUNDETE FASSUNG (04.11.2026).
+#
+# Zwei Dateien, weil Play und das README verschiedene Anforderungen
+# haben:
+#
+#   * PLAY: 24-Bit-PNG OHNE Alphakanal ("JPEG oder 24-Bit-PNG (kein
+#     Alpha)"). Eine abgerundete Graphic braucht aber genau den
+#     Alphakanal - sonst sind die Ecken entweder eckig oder mit einer
+#     Farbe gefuellt, die auf fremdem Grund wie ein Fehler aussieht.
+#     Fuer Play bleibt die Graphic deshalb eckig.
+#   * README und Webseite: dort sind transparente Ecken richtig - der
+#     Hintergrund der Seite bzw. GitHubs zeigt durch.
+#
+# Also: die Play-Datei bleibt RGB, die abgerundete Fassung kommt nach
+# assets/images/ (nicht nach docs/ - das ist gitignoriert).
+ROUNDED_OUT = ROOT / 'assets' / 'images' / 'feature_graphic_rund.png'
+
+# Der Eckradius der abgerundeten Fassung. 48 px bei 1024 Breite sind
+# knapp 5 % - deutlich, aber nicht plakativ.
+ROUNDED_RADIUS = 48
+
 # Markenverlauf: Violett -> Magenta, diagonal von links oben nach rechts
 # unten. Die Zwischenfarben stammen aus dem Icon selbst, damit die
 # Graphic nicht danebenliegt.
@@ -223,6 +244,23 @@ def _draw(hook: str, proof: str, sprache: str):
 
 
 
+def _runde_ecken(bild: Image.Image, radius: int) -> Image.Image:
+    """Rundet die vier Ecken eines Bildes (mit transparenten Ecken).
+
+    Die Maske ist ein abgerundetes Rechteck ueber die volle Flaeche.
+    Der Radius wird auf die kleinere Kante begrenzt, damit er bei
+    quadratischen Bildern nicht ueber die Mitte hinausgeht.
+    """
+    w, h = bild.size
+    r = max(1, min(radius, w // 2, h // 2))
+    mask = Image.new('L', (w, h), 0)
+    ImageDraw.Draw(mask).rounded_rectangle([0, 0, w - 1, h - 1], radius=r,
+                                           fill=255)
+    out = bild.convert('RGBA')
+    out.putalpha(mask)
+    return out
+
+
 def main() -> int:
     print('=' * 70)
     print('PLAY FEATURE GRAPHIC')
@@ -243,6 +281,17 @@ def main() -> int:
         paths, canvas = _draw(hook, proof, sprache)
         out_paths.extend(paths)
         canvases.append((sprache, canvas))
+
+    # Die abgerundete Fassung fuer README und Webseite (mit Alpha).
+    #
+    # Der Radius wird als Maske gesetzt, nicht als Rechteck - sonst
+    # waeren die Ecken eckig. Die Spielexpectspruefung bleibt, damit
+    # die Play-Datei nach wie vor 24-Bit ohne Alpha ist.
+    rund = _runde_ecken(canvases[0][1], ROUNDED_RADIUS)
+    ROUNDED_OUT.parent.mkdir(parents=True, exist_ok=True)
+    rund.save(ROUNDED_OUT, format='PNG', optimize=True)
+    print('  Abgerundete Fassung (mit Alpha, fuer README/Webseite): %s (%d B)'
+          % (ROUNDED_OUT.relative_to(ROOT), ROUNDED_OUT.stat().st_size))
 
     # Gegenprobe
     print('  Kanalmodus: %s (24-Bit-PNG ohne Alpha, wie gefordert)'
