@@ -2431,6 +2431,27 @@ const Map<String, Map<String, String>> _strings = {
     'dh.chat.noSpark': 'Kein Funke',
     'dh.chat.keepSearching': 'Weiter suchen',
     'dh.chat.e2e': 'Ende zu Ende verschlüsselt',
+  'dh.chat.timerHide': 'Timer ausblenden',
+  'dh.chat.timerShow': 'Timer anzeigen',
+  'dh.chat.fiveMinutesDone':
+      'Die 5 Minuten sind um. Ihr habt Zeit, in Ruhe zu entscheiden, '
+      'was ihr von eurem Gespräch haltet.',
+  'dh.chat.endConversation': 'Gespräch beenden',
+  'dh.chat.endConversationTitle': 'Gespräch beenden?',
+  'dh.chat.endConversationBody':
+      'Wenn du das Gespräch beendest, entsteht daraus kein Funke. '
+      'Das ist völlig in Ordnung. Wenn sich euer Gespräch richtig '
+      'angefühlt hat, entscheidet ihr einfach beide dafür.',
+  'dh.chat.endConversationDone': 'Das Gespräch ist beendet.',
+  'dh.autoMatch.badge': 'Automatisch',
+  'dh.autoMatch.title': 'Automatischer Funke',
+  'dh.autoMatch.body':
+      'Aus eurem Gespräch ist automatisch ein Funke geworden. '
+      'Passt das zu euch?',
+  'dh.autoMatch.keep': 'Behalten',
+  'dh.autoMatch.remove': 'Person entfernen',
+  'dh.autoMatch.done': 'Alles klar, der Hinweis ist weg.',
+  'dh.autoMatch.failed': 'Der Hinweis konnte nicht entfernt werden.',
     'dh.chat.leaveTitle': 'Chat verlassen?',
     'dh.chat.leaveBody':
         'Wenn du den Chat verlässt, gilt das als "Ablehnen". Möchtest du '
@@ -5526,6 +5547,27 @@ const Map<String, Map<String, String>> _strings = {
     'dh.chat.noSpark': 'No spark',
     'dh.chat.keepSearching': 'Keep searching',
     'dh.chat.e2e': 'End-to-end encrypted',
+  'dh.chat.timerHide': 'Hide the timer',
+  'dh.chat.timerShow': 'Show the timer',
+  'dh.chat.fiveMinutesDone':
+      'The 5 minutes are up. Take your time and decide at ease what '
+      'you think of your conversation.',
+  'dh.chat.endConversation': 'End the conversation',
+  'dh.chat.endConversationTitle': 'End the conversation?',
+  'dh.chat.endConversationBody':
+      'If you end the conversation, it will not become a spark. '
+      'That is completely fine. If your conversation felt right, you '
+      'can both decide for it.',
+  'dh.chat.endConversationDone': 'The conversation has ended.',
+  'dh.autoMatch.badge': 'Automatic',
+  'dh.autoMatch.title': 'Automatic spark',
+  'dh.autoMatch.body':
+      'Your conversation has become a spark automatically. '
+      'Does that feel right to you?',
+  'dh.autoMatch.keep': 'Keep',
+  'dh.autoMatch.remove': 'Remove the person',
+  'dh.autoMatch.done': 'All good, the hint is gone.',
+  'dh.autoMatch.failed': 'The hint could not be removed.',
     'dh.chat.leaveTitle': 'Leave chat?',
     'dh.chat.leaveBody':
         'Leaving the chat counts as "declining". Do you really want to '

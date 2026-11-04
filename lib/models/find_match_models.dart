@@ -42,6 +42,7 @@ class MatchWithState {
     this.passedAt,
     this.lastAttemptAt,
     this.kind = 'spark',
+    this.autoMatch = false,
   });
 
   final int matchId;
@@ -65,6 +66,14 @@ class MatchWithState {
   /// 'friends' = Freundschaft.
   final String kind;
 
+  /// Automatisch entstandener Funke (Migration 177): true = der Funke
+  /// kam nach 10 Minuten Dating Hour zustande und wurde NICHT von
+  /// beiden Seiten bestaetigt. Der Interessen-Screen fragt deshalb
+  /// einmal nach (behalten oder Person entfernen).
+  ///
+  /// Die Spalte heisst in der Datenbank `matches.auto_match`.
+  final bool autoMatch;
+
   bool get isFriends => kind == 'friends';
 
   bool get quizPassed => unlockLevel >= 2;
@@ -81,6 +90,11 @@ class MatchWithState {
       Map<String, dynamic>.from(json['profile'] as Map? ?? {}),
     );
     final distanceKm = (json['distanceKm'] as num?)?.toDouble();
+    // Automatischer Funke (Migration 177). Die Listen-RPC liefert die
+    // Spalte `auto_match` als 'autoMatch' (Namenskonvention der RPC);
+    // 'auto_match' wird auch gelesen, falls der Wert unveraendert aus
+    // der Tabelle kommt.
+    final autoFlag = json['autoMatch'] ?? json['auto_match'];
     return MatchWithState(
       matchId: json['matchId'] as int,
       // Distanz kommt als Geschwister-Feld der RPC-Antwort (5-km-Schritte).
@@ -102,6 +116,7 @@ class MatchWithState {
           ? null
           : DateTime.tryParse(json['lastAttemptAt'] as String),
       kind: json['kind'] as String? ?? 'spark',
+      autoMatch: autoFlag is bool ? autoFlag : false,
     );
   }
 }

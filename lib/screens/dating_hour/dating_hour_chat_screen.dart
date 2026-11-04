@@ -56,6 +56,18 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
   bool _hasVoted = false;
   bool _showDecision = false;
 
+  /// Der Timer ist aus- und wieder einblendbar
+  /// (NUTZERWUNSCH 04.11.2026: "einen Timer gibt, den man sichtbar
+  /// und unsichtbar machen kann"). Manche wollen die Zeit nicht
+  /// sehen - das Gespräch soll nicht nach Zeit aussehen.
+  bool _showTimer = true;
+
+  /// Die Fuenf-Minuten-Marke wurde schon im Chat gezeigt.
+  ///
+  /// Sie ist ein HINWEIS der App, keine Nachricht einer Person. Sie
+  /// steht deshalb nur einmal im Verlauf und wird nicht gesendet.
+  bool _fiveMinuteNoticeShown = false;
+
   /// Alter des Chat-Partners (aus public_profiles) - für den
   /// Altersdifferenz-Hinweis (Migration: >= 10 Jahre Differenz).
   int? _partnerAge;
@@ -254,6 +266,18 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
         _showDecisionDialog();
       }
 
+      // Die Fuenf-Minuten-Marke als mittiger Hinweis im Chat
+      // (NUTZERWUNSCH 04.11.2026).
+      //
+      // Sie steht an der Position, an der die Fuenf Minuten
+      // vorbeigegangen sind - alles, was danach geschrieben wird,
+      // steht darunter. Der Ton ist bewusst sanft: es ist eine
+      // Einladung, in Ruhe zu entscheiden, kein Countdown-Druck.
+      if (session.isExpired && !_fiveMinuteNoticeShown) {
+        _fiveMinuteNoticeShown = true;
+        _zeigeFuenfMinutenHinweis(session);
+      }
+
       // Während der Timer läuft, frischen wir den Session-Status im
       // Hintergrund auf, um gegenseitige Entscheidungen zu erkennen.
       // Zusätzlich (Relay-Fallback): Relay-Nachrichten des Partners alle
@@ -285,6 +309,91 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
 
   void _showDecisionDialog() {
     setState(() => _showDecision = true);
+  }
+
+  /// Setzt den mittigen Hinweis in den Verlauf.
+  ///
+  /// Er ist ein Hinweis der App und keine Nachricht einer Person -
+  /// er wird deshalb nicht gesendet und steht nur in diesem
+  /// Verlauf. Beide Seiten sehen ihn zur selben Zeit (die Fuenf
+  /// Minuten gelten fuer dieselbe Session).
+  void _zeigeFuenfMinutenHinweis(DatingHourSession session) {
+    final myId = _currentUserId;
+    final peerId = _peerId;
+    if (myId == null || peerId == null) return;
+
+    // Nicht doppelt: steht der Hinweis schon im Verlauf (der Screen
+    // wurde neu geoeffnet), bleibt er dort - es wird kein zweiter
+    // eingefuegt.
+    final vorhanden = ref
+        .read(chatProvider.notifier)
+        .messagesFor(widget.sessionId)
+        .any((m) => m.type == MessageType.notice);
+    if (vorhanden) return;
+
+    final hinweis = Message(
+      id: Message.newId('notice'),
+      senderId: myId,
+      receiverId: peerId,
+      text: L10n.t(context, 'dh.chat.fiveMinutesDone'),
+      timestamp: DateTime.now(),
+      type: MessageType.notice,
+    );
+    ref.read(chatProvider.notifier).addMessage(widget.sessionId, hinweis, ref: ref);
+    if (mounted) setState(() {});
+  }
+
+  /// Beendet das Gespraech - von einer Seite aus, jederzeit.
+  ///
+  /// NUTZERWUNSCH 04.11.2026: "Wenn man das aber nicht will, kann
+  /// die eine Seite ja jederzeit das Gespraech beenden und es gibt
+  /// keinen automatischen Funke von beiden Seiten."
+  Future<void> _endConversation() async {
+    final service = ref.read(datingHourServiceProvider);
+    final session = _session;
+    if (session == null) return;
+
+    final bestaetigt = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(L10n.t(ctx, 'dh.chat.endConversationTitle')),
+        content: Text(L10n.t(ctx, 'dh.chat.endConversationBody')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(L10n.t(ctx, 'common.cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(L10n.t(ctx, 'dh.chat.endConversation')),
+          ),
+        ],
+      ),
+    );
+    if (bestaetigt != true || !mounted) return;
+
+    try {
+      await service.endConversation(widget.sessionId);
+      if (!mounted) return;
+      // Lokal nachziehen: der Server beendet die Session.
+      await _loadSession();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(L10n.t(context, 'dh.chat.endConversationDone')),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.t(context, 'common.errorOccurred')),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Future<void> _sendMessage() async {
@@ -630,11 +739,14 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(partnerName, style: const TextStyle(fontSize: 16)),
-            if (session != null)
+            if (session != null && _showTimer)
               // v0.9.1: E2E-Badge zentriert im verfügbaren Titel-Raum
               // (nutzt den Leerraum sauber aus statt rechtsbündig).
               // Die Sekunden-Anzeige tickt isoliert (_PerSecond), damit
               // nicht der ganze Screen pro Sekunde rebuildet (Akku).
+              //
+              // NUTZERWUNSCH 04.11.2026: Der Timer ist aus- und
+              // wieder einblendbar.
               _PerSecond(
                 builder: (_) => Center(
                   child: Row(
@@ -657,15 +769,25 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                         decoration: BoxDecoration(
-                          color: session.remainingSeconds > 60
-                              ? Colors.green
-                              : session.remainingSeconds > 30
-                                  ? Colors.orange
-                                  : Colors.red,
+                          // In der zweiten Phase (nach den 5 Minuten)
+                          // zaehlt der Timer bis zum automatischen
+                          // Funke - und wird blau, damit man sieht,
+                          // dass er eine andere Bedeutung hat.
+                          color: session.isDecisionPhase
+                              ? Colors.blue
+                              : session.remainingSeconds > 60
+                                  ? Colors.green
+                                  : session.remainingSeconds > 30
+                                      ? Colors.orange
+                                      : Colors.red,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          _formatTime(session.remainingSeconds),
+                          _formatTime(
+                            session.isDecisionPhase
+                                ? session.autoMatchSecondsLeft
+                                : session.remainingSeconds,
+                          ),
                           style: const TextStyle(
                             fontSize: 10,
                             color: Colors.white,
@@ -733,6 +855,31 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
           onPressed: () => _confirmLeave(),
         ),
         automaticallyImplyLeading: false,
+        actions: [
+          // Der Timer ist aus- und wieder einblendbar
+          // (NUTZERWUNSCH 04.11.2026).
+          IconButton(
+            tooltip: L10n.t(
+              context,
+              _showTimer ? 'dh.chat.timerHide' : 'dh.chat.timerShow',
+            ),
+            icon: Icon(
+              _showTimer ? Icons.timer : Icons.timer_off_outlined,
+              size: 20,
+            ),
+            onPressed: () {
+              setState(() => _showTimer = !_showTimer);
+            },
+          ),
+          // Das Gespraech beenden - von einer Seite aus, jederzeit.
+          // Ein beendetes Gespraech erhaelt KEINEN automatischen Funke.
+          if (session != null && !session.isCompleted)
+            IconButton(
+              tooltip: L10n.t(context, 'dh.chat.endConversation'),
+              icon: const Icon(Icons.call_end, size: 20),
+              onPressed: _endConversation,
+            ),
+        ],
       ),
       body: Builder(
         builder: (context) {
@@ -748,7 +895,7 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
               Column(
           children: [
           // Timer-Balken (tickt isoliert, v0.9.1, Akku).
-          if (session != null && !session.bothDecided)
+          if (session != null && !session.bothDecided && _showTimer)
             _PerSecond(
               builder: (_) => _TimerBar(
                 remainingSeconds: session.remainingSeconds,
@@ -824,8 +971,21 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
           ),
 
           // Eingabe oder Entscheidungs-Buttons
+          // Eingabe oder Entscheidungs-Buttons
+          //
+          // NUTZERWUNSCH 04.11.2026: "Wenn die 5 Minuten vorbei
+          // sind, soll ... eine Nachricht kommen, dass die 5 Minuten
+          // um sind und sich langsam entschieden werden soll."
+          //
+          // Die 5 Minuten sind deshalb eine ENTSCHEIDUNGSphase, nicht
+          // das Ende des Gespraechs: Der Chat bleibt bedienbar, und
+          // die Entscheidung kommt ZUSATZLICH dazu. Vorher hat der
+          // abgelaufene Timer den Eingabebereich ersetzt - es war
+          // danach nicht mehr moeglich, weiterzuschreiben, und das
+          // Gespraech war nach 5 Minuten beendet, bevor der
+          // automatische Funke bei Minute 10 ueberhaupt greifen konnte.
           if (session != null && !session.bothDecided) ...[
-            if (!_showDecision && !session.isExpired) ...[
+            if (!_hasVoted) ...[
               // Frage-Karten für Schüchterne (v0.8.0): ein Tap übernimmt
               // eine sanfte Frage aus einem thematischen Bereich.
               _ShyQuestionChips(
@@ -838,19 +998,20 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
                 controller: _messageController,
                 onSend: _sendMessage,
               ),
-            ]
-            else if (_showDecision && !_hasVoted)
-              _DecisionButtons(
-                onAccept: () => _handleDecision(true),
-                onReject: () => _handleDecision(false),
-              )
-            else if (_hasVoted)
+            ] else
               _WaitingForPartner(
                 onBack: () {
                   if (mounted) context.go(AppRoutes.datingHourEvent);
                 },
               ),
-              ],
+            // In der Entscheidungsphase (nach den 5 Minuten) wird die
+            // Entscheidung angeboten - der Chat bleibt aber offen.
+            if (session.isExpired && !_hasVoted)
+              _DecisionButtons(
+                onAccept: () => _handleDecision(true),
+                onReject: () => _handleDecision(false),
+              ),
+          ],
             ],
           ),
         ],
@@ -1125,6 +1286,33 @@ class _MessageBubble extends StatelessWidget {
       timeLabel = DateFormat.Hm().format(msg.timestamp.toLocal());
     } catch (_) {}
 
+    // Der System-Hinweis (z. B. die Fuenf-Minuten-Marke) steht
+    // mittig in der Mitte - so wie die Eisbrecher-Fragen im normalen
+    // Chat. Er gehoert niemandem, also steht er auch nicht links
+    // oder rechts bei einer Person.
+    if (msg.type == MessageType.notice) {
+      return Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
+          child: Text(
+            msg.text,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.4,
+            ),
+          ),
+        ),
+      );
+    }
     return Align(
       alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
       child: Column(

@@ -992,6 +992,79 @@ check('timingSafeEqual' in check_location
 #     Beschraenkung weg, waehrend "usage_limit_enabled" weiter true
 #     blieb. Migration 173 holt das nach.
 # =====================================================================
+# 11) Dating Hour: der automatische Funke nach 10 Minuten
+# =====================================================================
+#
+# NUTZERWUNSCH 04.11.2026): Die 5 Minuten sind eine
+# ENTSCHEIDUNGSphase, nicht das Ende des Gespraechs. Danach laeuft
+# der Chat weiter, und nach 10 Minuten entsteht automatisch ein
+# beidseitiger Funke - damit eine unterbrochene Verbindung nicht
+# dazu fuehrt, dass zwei sich gut verstandene Menschen kein Match
+# bekommen.
+#
+# Das wird vom CRON erzeugt, nicht vom Client: der Cron laeuft auch
+# dann, wenn beide Apps geschlossen sind. Ein clientseitiger Funke
+# waere genau die Sorte gruener Status, die nichts bedeutet.
+
+sql_177 = read(MIG / '177_dating_hour_auto_match.sql')
+sql_178 = read(MIG / '178_auto_match_in_match_list.sql')
+
+check('ADD COLUMN IF NOT EXISTS auto_match_at timestamptz' in sql_177,
+      'DB: dating_hour_session fuehrt die 10-Minuten-Marke (auto_match_at)')
+check('ADD COLUMN IF NOT EXISTS auto_matched boolean' in sql_177,
+      'DB: dating_hour_session merkt sich, dass der Funke automatisch war')
+check('ADD COLUMN IF NOT EXISTS ended_by uuid' in sql_177,
+      'DB: dating_hour_session merkt sich, wer das Gespraech beendet hat')
+check('ADD COLUMN IF NOT EXISTS auto_match boolean' in sql_177,
+      'DB: public.matches merkt sich den automatischen Funke')
+
+# Der Cron erzeugt den automatischen Funke.
+check('auto_match_at <= now()' in sql_177
+      and 'auto_matched = true' in sql_177,
+      'DB: Der Cron erzeugt den automatischen Funke nach 10 Minuten')
+check('INSERT INTO public.matches(user_one_id, user_two_id, auto_match)'
+      in sql_177,
+      'DB: Der automatische Funke landet auch in der Match-Liste')
+
+# Wer beendet, bekommt KEINEN automatischen Funke.
+check('ended_by = v_user' in sql_177,
+      'DB: Ein beendetes Gespraech merkt sich, wer es beendet hat')
+check('CREATE OR REPLACE FUNCTION public.end_dating_hour_conversation'
+      in sql_177,
+      'DB: Eine Seite kann das Gespraech jederzeit beenden')
+check("user_a_decision = CASE WHEN user_a = v_user THEN 'reject'"
+      in sql_177,
+      'DB: Das Beenden verwirft ein laufendes "Ja" - wer beendet, meint es')
+
+# Die Rueckfrage: einmalig, behalten oder entfernen.
+check('CREATE OR REPLACE FUNCTION public.resolve_dating_hour_auto_match'
+      in sql_177,
+      'DB: Die Rueckfrage zum automatischen Funke gibt es (einmalig)')
+check('SET auto_match = false' in sql_177,
+      'DB: "Behalten" entfernt nur den Hinweis, der Funke bleibt')
+check('DELETE FROM public.matches' in sql_177,
+      'DB: "Person entfernen" loescht den Funke')
+
+# Die Liste muss das Feld auch LIEFERN - sonst bleibt das Sternchen
+# stumm (BEFUND 04.11.2026).
+check("'autoMatch', coalesce(m.auto_match, false)" in sql_178,
+      'DB: Die Match-Liste liefert das Kennzeichen mit - sonst bleibt '
+      'der Hinweis auf dem Interessen-Screen unsichtbar')
+
+# Der Client: der Chat bleibt nach den 5 Minuten bedienbar.
+check(has('lib/screens/dating_hour/dating_hour_chat_screen.dart',
+          "'dh.chat.fiveMinutesDone'",
+          'MessageType.notice',
+          'endConversation'),
+      'APP: Die Fuenf-Minuten-Marke steht mittig im Chat und das '
+      'Gespraech laeuft weiter')
+check(has('lib/services/dating_hour_service.dart',
+          'end_dating_hour_conversation',
+          'resolve_dating_hour_auto_match'),
+      'APP: Der Client kann das Gespraech beenden und die Rueckfrage '
+      'zum automatischen Funke beantworten')
+
+# =====================================================================
 # 10) Dating Hour: der Cron-Fund und die Nutzungszeit
 # =====================================================================
 #

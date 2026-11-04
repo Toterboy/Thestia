@@ -15,6 +15,12 @@ enum MessageType {
   /// Geteilte Eisbrecher-Frage (v0.9.1): wird BEIDEN Chat-Seiten gleichzeitig
   /// als mittige Bubble angezeigt und wandert wie jede Nachricht mit.
   icebreaker,
+
+  /// System-Hinweis in der Mitte des Chats (v0.10.0): kein Text einer
+  /// Person, sondern ein Hinweis der App - z. B. die Fuenf-Minuten-Marke
+  /// in der Dating Hour. Wird mittig dargestellt, wie die
+  /// Eisbrecher-Fragen.
+  notice,
 }
 
 /// Repräsentiert eine 1:1-Nachricht im Chat.

@@ -282,6 +282,28 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 ### Hinzugefügt
 
+- **Die Dating Hour bekommt einen ausblendbaren Timer und zwei
+  Fristen** (04.11.2026, Migration 177): Die 5 Minuten sind jetzt eine
+  *Entscheidungsphase*, nicht das Ende des Gesprächs. Nach 5 Minuten
+  steht mittig im Chat ein sanfter Hinweis („Ihr habt Zeit, in Ruhe zu
+  entscheiden"), der Chat bleibt bedienbar, und erst nach 10 Minuten
+  entsteht automatisch ein beidseitiger Funke. Der Grund: Wenn auf einer
+  Seite die Verbindung abbricht und das Gespräch weiterläuft, sollen
+  zwei, die sich gut verstanden haben, trotzdem ihr Match bekommen -
+  nicht nur, weil niemand auf „Ablehnen" geklickt hat.
+- **Der automatische Funke ist als solcher gekennzeichnet** (04.11.2026):
+  Auf dem Interessen-Screen trägt er ein dezentes Kennzeichen, und beim
+  Antippen wird *einmal* gefragt: passt das zu euch, oder soll die
+  Person verschwinden? Wer sie behalten will, verliert nur den Hinweis.
+  Wer sie entfernen will, verliert sie - wie bei einem normalen
+  Funke.
+- **Das Gespräch lässt sich jederzeit beenden** (04.11.2026): Von einer
+  Seite aus, ohne Begründung. Ein beendetes Gespräch bekommt *keinen*
+  automatischen Funke - „beenden" ist ein aktives „ich will das nicht",
+  kein passives „es ist nichts passiert".
+- **Der Timer ist aus- und wieder einblendbar** (04.11.2026): Nicht
+  jeder möchte, dass ein Gespräch nach Zeit aussieht.
+
 - **`tool/check_local_ci.ps1` – die CI-Gates lokal laufen lassen**
   (04.11.2026): Das Skript spiegelt die vier Jobs aus
   `.github/workflows/ci.yml` und benutzt dieselben Flags: der Analyzer

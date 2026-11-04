@@ -149,6 +149,42 @@ class DatingHourService {
     });
   }
 
+  /// Beendet das Gespraech einer Session (v0.10.0, Migration 177).
+  ///
+  /// NUTZERWUNSCH 04.11.2026: "Wenn man das aber nicht will, kann
+  /// die eine Seite ja jederzeit das Gespraech beenden und es gibt
+  /// keinen automatischen Funke von beiden Seiten."
+  ///
+  /// Das Beenden ist ein aktives "ich will das nicht" - deshalb
+  /// bekommt eine so beendete Session auch keinen automatischen
+  /// Funke. Der Server prueft das (der Cron nimmt nur Sessions ohne
+  /// ended_at).
+  Future<bool> endConversation(String sessionId) async {
+    return _safeCall('endConversation', () async {
+      final result = await SupabaseService.client.rpc(
+        'end_dating_hour_conversation',
+        params: {'p_session_id': sessionId},
+      );
+      if (result is Map && result['ok'] == true) return true;
+      return false;
+    });
+  }
+
+  /// Die einmalige Rueckfrage zum automatischen Funke (Migration 177).
+  ///
+  /// [keep] = true: der Hinweis verschwindet, der Funke bleibt.
+  /// [keep] = false: der Funke (und damit die Person) wird entfernt.
+  Future<bool> resolveAutoMatch(String partnerId, {required bool keep}) async {
+    return _safeCall('resolveAutoMatch', () async {
+      final result = await SupabaseService.client.rpc(
+        'resolve_dating_hour_auto_match',
+        params: {'p_partner_id': partnerId, 'p_keep': keep},
+      );
+      if (result is Map && result['ok'] == true) return true;
+      return false;
+    });
+  }
+
   /// Liefert die aktive Session des aktuellen Users für ein Event.
   Future<DatingHourSession?> getMyActiveSession(String eventId) async {
     return _safeCall('getMyActiveSession', () async {

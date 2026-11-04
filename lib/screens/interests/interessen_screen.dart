@@ -1313,6 +1313,7 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
                 resparkedAt: m.resparkedAt,
                 passedAt: m.passedAt,
                 lastAttemptAt: m.lastAttemptAt,
+                autoMatch: m.autoMatch,
               ),
             ),
           )
@@ -1431,6 +1432,7 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
                     resparkedAt: m.resparkedAt,
                     passedAt: m.passedAt,
                     lastAttemptAt: m.lastAttemptAt,
+                    autoMatch: m.autoMatch,
                   )
                 : m,
           )
@@ -1490,6 +1492,160 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     ref.read(chatProvider.notifier).markRead(m.matchId.toString());
     unawaited(ref.read(seenProvider.notifier).markMatchesSeen([m.matchId]));
     context.push(AppRoutes.chatDetailPath(m.matchId.toString()));
+  }
+
+  /// Oeffnet einen Funken - bei einem automatisch entstandenen erst die
+  /// EINMALIGE Rueckfrage (Migration 177).
+  ///
+  /// Der automatische Funke (Dating Hour nach 10 Minuten) ist nicht von
+  /// beiden Seiten bestaetigt worden. Bevor der Chat aufgeht, fragt die
+  /// App deshalb einmal nach: behalten oder Person entfernen.
+  ///
+  /// Die "einmalig" merkt sich die DATENBANK (matches.auto_match): nach
+  /// "Behalten" setzt die RPC das Flag zurueck, nach "Person entfernen"
+  /// ist der Funke geloescht. Beides wird hier nur noch lokal
+  /// nachgezogen und beim naechsten Laden bestaetigt - eine zweite
+  /// (lokale) Wahrheit gibt es nicht.
+  Future<void> _openFunke(
+    BuildContext context,
+    WidgetRef ref,
+    MatchWithState m,
+  ) async {
+    if (!m.autoMatch) {
+      _openMatch(context, ref, m);
+      return;
+    }
+
+    final antwort = await _frageAutoMatch(context);
+    // Abgebrochen: weder der Chat geht auf noch aendert sich etwas.
+    if (antwort == null || !context.mounted) return;
+
+    if (antwort) {
+      // BEHALTEN: der Hinweis verschwindet, der Chat geht danach auf.
+      final ok = await _loeseAutoMatch(context, m, behalten: true);
+      if (!context.mounted) return;
+      if (ok) {
+        _setzeAutoMatch(m, false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(L10n.t(context, 'dh.autoMatch.done')),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      // Auch bei einem Fehler geht der Chat auf - die Frage soll den
+      // Nutzer nicht blockieren.
+      _openMatch(context, ref, m);
+      return;
+    }
+
+    // PERSON ENTFERNEN: der Funke wird geloescht, der Chat bleibt zu.
+    final ok = await _loeseAutoMatch(context, m, behalten: false);
+    if (!context.mounted) return;
+    if (ok) {
+      setState(() {
+        _serverMatches =
+            _serverMatches.where((x) => x.matchId != m.matchId).toList();
+      });
+      await _load();
+      return;
+    }
+    // Fehler: die Person ist noch da. Der Chat geht trotzdem auf.
+    _openMatch(context, ref, m);
+  }
+
+  /// Die einmalige Rueckfrage zum automatischen Funke (Migration 177).
+  ///
+  /// true = behalten, false = Person entfernen, null = abgebrochen.
+  Future<bool?> _frageAutoMatch(BuildContext context) {
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: Icon(
+          Icons.auto_awesome,
+          color: Theme.of(ctx).colorScheme.primary,
+        ),
+        title: Text(L10n.t(ctx, 'dh.autoMatch.title')),
+        content: Text(L10n.t(ctx, 'dh.autoMatch.body')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            child: Text(L10n.t(ctx, 'dh.autoMatch.remove')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(L10n.t(ctx, 'dh.autoMatch.keep')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Loest die Rueckfrage zum automatischen Funke auf (Migration 177).
+  ///
+  /// p_keep = true: der Hinweis verschwindet, der Funke bleibt.
+  /// p_keep = false: der Funke wird geloescht, die Person verschwindet.
+  ///
+  /// Rueckgabe: true = die Datenbank hat es angenommen.
+  Future<bool> _loeseAutoMatch(
+    BuildContext context,
+    MatchWithState m, {
+    required bool behalten,
+  }) async {
+    try {
+      await SupabaseService.client.rpc(
+        'resolve_dating_hour_auto_match',
+        params: {
+          // Die UUID der ANDEREN Person (nicht die eigene).
+          'p_partner_id': m.partner.id,
+          'p_keep': behalten,
+        },
+      );
+      return true;
+    } catch (e) {
+      debugPrint('[Interessen] Auto-Funke aufloesen fehlgeschlagen: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(L10n.t(context, 'dh.autoMatch.failed')),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return false;
+    }
+  }
+
+  /// Traegt die Entscheidung lokal nach (die Datenbank ist die Wahrheit).
+  ///
+  /// Ohne das bliebe das Sternchen bis zum naechsten Laden stehen.
+  void _setzeAutoMatch(MatchWithState m, bool wert) {
+    if (!mounted) return;
+    setState(() {
+      _serverMatches = _serverMatches
+          .map(
+            (x) => x.matchId == m.matchId
+                ? MatchWithState(
+                    matchId: x.matchId,
+                    partner: x.partner,
+                    unlockLevel: x.unlockLevel,
+                    failedAttempts: x.failedAttempts,
+                    createdVia: x.createdVia,
+                    status: x.status,
+                    createdAt: x.createdAt,
+                    resparkedAt: x.resparkedAt,
+                    passedAt: x.passedAt,
+                    lastAttemptAt: x.lastAttemptAt,
+                    kind: x.kind,
+                    autoMatch: wert,
+                  )
+                : x,
+          )
+          .toList();
+    });
   }
 
   /// Fixiert einen Funken (NUTZERWUNSCH, 28.10.2026: "fixieren").
@@ -1837,7 +1993,7 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
             ...fixierteFunken.map((m) => _MatchTile(
                   match: m,
                   pinned: true,
-                  onTap: () => _openMatch(context, ref, m),
+                  onTap: () => _openFunke(context, ref, m),
                   onProfile: () => context.push(
                     AppRoutes.profileDetailPath(m.partner.id),
                   ),
@@ -1874,7 +2030,10 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
                 // Vorstellung) ist über den Personen-Button erreichbar.
                 // Kühlen/Entfernen geht direkt über das Menü (v0.9.1).
                 // Push: Zurück landet wieder exakt hier (gleicher Tab).
-                onTap: () => _openMatch(context, ref, m),
+                //
+                // Bei einem automatisch entstandenen Funke kommt vorher
+                // die einmalige Rueckfrage (Migration 177).
+                onTap: () => _openFunke(context, ref, m),
                 onProfile: () => context.push(
                   AppRoutes.profileDetailPath(m.partner.id),
                 ),
@@ -1898,16 +2057,7 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
             ),
             ...cooledMatches.map((m) => _CooledMatchTile(
                   match: m,
-                  onOpen: () {
-                    ref
-                        .read(chatProvider.notifier)
-                        .markRead(m.matchId.toString());
-                    unawaited(ref
-                        .read(seenProvider.notifier)
-                        .markMatchesSeen([m.matchId]));
-                    context.push(
-                        AppRoutes.chatDetailPath(m.matchId.toString()));
-                  },
+                  onOpen: () => _openFunke(context, ref, m),
                   onProfile: () => context.push(
                     AppRoutes.profileDetailPath(m.partner.id),
                   ),
@@ -1976,6 +2126,12 @@ class _CooledMatchTile extends StatelessWidget {
                   color: Colors.lightBlue.shade400,
                 ),
               ),
+            ],
+            // Der automatische Funke (Migration 177) - auch hier sichtbar,
+            // die Rueckfrage kommt beim Antippen.
+            if (match.autoMatch) ...[
+              const SizedBox(width: 6),
+              const _AutoMatchBadge(),
             ],
           ],
         ),
@@ -2302,6 +2458,28 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
+/// Dezentes Kennzeichen fuer einen automatisch entstandenen Funke
+/// (Migration 177).
+///
+/// Der Funke kam nach 10 Minuten Dating Hour zustande, nicht durch ein
+/// beidseitiges "Ja". Das Sternchen macht das kenntlich - der Tooltip
+/// sagt, was es ist.
+class _AutoMatchBadge extends StatelessWidget {
+  const _AutoMatchBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: L10n.t(context, 'dh.autoMatch.badge'),
+      child: Icon(
+        Icons.auto_awesome,
+        size: 16,
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
+      ),
+    );
+  }
+}
+
 class _MatchTile extends ConsumerWidget {
   const _MatchTile({
     required this.match,
@@ -2381,6 +2559,13 @@ class _MatchTile extends ConsumerWidget {
                   p.distanceLabel((key) => L10n.t(context, key)),
               ].join(' · ')),
             ),
+            // Der automatische Funke (Migration 177): er kam nicht von
+            // beiden Seiten zustande. Das Sternchen weist darauf hin -
+            // die Rueckfrage kommt beim Antippen.
+            if (match.autoMatch) ...[
+              const SizedBox(width: 6),
+              const _AutoMatchBadge(),
+            ],
             // Die Nadel: der Funke ist fixiert und steht deshalb oben.
             if (pinned)
               Icon(

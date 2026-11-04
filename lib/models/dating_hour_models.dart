@@ -20,6 +20,25 @@ class DatingHourSession {
   final String? userBDecision; // 'accept' oder 'reject'
   final bool isMatch;
 
+  /// Wann der automatische Funke entsteht (Start + 10 Minuten).
+  ///
+  /// NUTZERWUNSCH 04.11.2026: Die 5 Minuten sind eine
+  /// ENTSCHEIDUNGSphase, nicht das Ende des Gespraechs. Danach
+  /// laeuft der Chat weiter, und nach 10 Minuten entsteht automatisch
+  /// ein Funke - damit eine unterbrochene Verbindung nicht dazu
+  /// fuehrt, dass zwei sich gut verstandene Menschen kein Match
+  /// bekommen.
+  final DateTime? autoMatchAt;
+
+  /// Der Funke wurde automatisch erzeugt (nicht von beiden bestaetigt).
+  final bool autoMatched;
+
+  /// Wer das Gespraech vorzeitig beendet hat.
+  ///
+  /// Wer beendet, meint es: Ein beendetes Gespraech erhaelt KEINEN
+  /// automatischen Funke.
+  final String? endedBy;
+
   const DatingHourSession({
     required this.id,
     required this.eventId,
@@ -31,6 +50,9 @@ class DatingHourSession {
     this.userADecision,
     this.userBDecision,
     this.isMatch = false,
+    this.autoMatchAt,
+    this.autoMatched = false,
+    this.endedBy,
   });
 
   /// Baut eine Session aus einer Supabase-Row.
@@ -48,6 +70,13 @@ class DatingHourSession {
       userADecision: json['user_a_decision'] as String?,
       userBDecision: json['user_b_decision'] as String?,
       isMatch: json['is_match'] as bool? ?? false,
+      // Migration 177: die zweite Frist und die Kennzeichnung des
+      // automatischen Funkes.
+      autoMatchAt: json['auto_match_at'] != null
+          ? DateTime.parse(json['auto_match_at'] as String)
+          : null,
+      autoMatched: json['auto_matched'] as bool? ?? false,
+      endedBy: json['ended_by'] as String?,
     );
   }
 
@@ -85,12 +114,44 @@ class DatingHourSession {
   /// Ob mindestens eine Person abgelehnt hat (oder Timer abgelaufen ohne beidseitige Annahme).
   bool get isRejected => isCompleted && !isMatch;
 
+  /// Verbleibende Sekunden bis zum automatischen Funke (0, wenn keiner
+  /// bevorsteht oder er schon da ist).
+  ///
+  /// Wird nur in der ZWEITEN Phase angezeigt - also nachdem die
+  /// 5-Minuten-Marke im Chat steht.
+  int get autoMatchSecondsLeft {
+    final at = autoMatchAt;
+    if (at == null) return 0;
+    final rest = at.difference(ServerTimeService.instance.getVerifiedNow())
+        .inSeconds;
+    return rest.clamp(0, 600);
+  }
+
+  /// Sind die 5 Minuten vorbei, aber der automatische Funke noch nicht?
+  ///
+  /// Das ist die Phase, in der die App im Chat sagt: die Zeit ist um,
+  /// entscheidet in Ruhe.
+  bool get isDecisionPhase =>
+      remainingSeconds <= 0 && autoMatchSecondsLeft > 0;
+
+  /// Der Funke wurde automatisch erzeugt.
+  bool get isAutoMatched => autoMatched;
+
+  /// Hat eine der beiden Seiten das Gespraech vorzeitig beendet?
+  bool get wasEndedEarly => endedBy != null;
+
+  /// Hat der aufrufende Nutzer das Gespraech beendet?
+  bool wasEndedBy(String userId) => endedBy != null && endedBy == userId;
+
   DatingHourSession copyWith({
     String? id,
     String? eventId,
     String? userA,
     String? userB,
     DateTime? startedAt,
+    DateTime? autoMatchAt,
+    bool? autoMatched,
+    String? endedBy,
     DateTime? expiresAt,
     DateTime? endedAt,
     String? userADecision,
@@ -108,6 +169,9 @@ class DatingHourSession {
       userADecision: userADecision ?? this.userADecision,
       userBDecision: userBDecision ?? this.userBDecision,
       isMatch: isMatch ?? this.isMatch,
+      autoMatchAt: autoMatchAt ?? this.autoMatchAt,
+      autoMatched: autoMatched ?? this.autoMatched,
+      endedBy: endedBy ?? this.endedBy,
     );
   }
 }
