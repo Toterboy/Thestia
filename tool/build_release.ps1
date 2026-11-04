@@ -164,6 +164,20 @@ if ($captchaProvider -eq "none") {
 }
 Write-Host "    Config: $($ConfigDefines.Count) Defines aus .env (nicht gebuendelt)"
 
+# WOHER KOMMEN DIE SIGNIER-ANGABEN? (04.11.2026)
+#
+# Die Passwoerter des Release-Keystores liegen nicht mehr in
+# android/key.properties, sondern in einer Secret-Datei ausserhalb des
+# Projekts (bzw. in Umgebungsvariablen fuer CI). Der Build sagt hier,
+# woher er sie genommen hat - ein Release, der ohne Signatur gebaut
+# wuerde, faellt damit sofort auf.
+try {
+    $secretStatus = & python "$PSScriptRoot\keystore_secrets.py" --status 2>$null
+    if ($secretStatus) { Write-Host "    Signierung: $secretStatus" }
+} catch {
+    Write-Host "    Signierung: Status nicht ermittelbar (kein Python?)" -ForegroundColor Yellow
+}
+
 function Test-ContainsText {
     <#
       Prueft, ob eine Datei eine Zeichenkette enthaelt - chunkweise, damit

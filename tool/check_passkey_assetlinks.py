@@ -25,10 +25,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import pathlib
 import re
 import subprocess
 import sys
+
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import keystore_secrets  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 ASSETLINKS = ROOT / 'passkey-assets' / 'assetlinks.json'
@@ -51,11 +55,42 @@ def norm(fp: str) -> str:
     return fp.replace(':', '').replace(' ', '').lower()
 
 
+def keytool_executable() -> str:
+    """Wo liegt keytool?
+
+    `keytool` gehoert zum JDK und ist nicht immer im PATH - auf einem
+    Windows-Arbeitsplatz mit Android Studio liegt es in der
+    mitgelieferten JBR. Ohne diese Suche fand der Fingerabdruck-Vergleich
+    lokal nicht statt ("Keystore nicht lesbar"), obwohl alles da war.
+    """
+    import shutil as _shutil
+    direkt = _shutil.which('keytool')
+    if direkt:
+        return direkt
+    kandidaten = []
+    java_home = os.environ.get('JAVA_HOME', '').strip()
+    if java_home:
+        kandidaten.append(pathlib.Path(java_home) / 'bin' / 'keytool.exe')
+        kandidaten.append(pathlib.Path(java_home) / 'bin' / 'keytool')
+    for basis in (
+        pathlib.Path(os.environ.get('PROGRAMFILES', r'C:\Program Files'))
+        / 'Android' / 'Android Studio' / 'jbr' / 'bin',
+        pathlib.Path(os.environ.get('PROGRAMFILES', r'C:\Program Files'))
+        / 'Eclipse Adoptium' / 'jdk-21' / 'bin',
+    ):
+        kandidaten.append(basis / 'keytool.exe')
+        kandidaten.append(basis / 'keytool')
+    for k in kandidaten:
+        if k.is_file():
+            return str(k)
+    return 'keytool'
+
+
 def keytool_sha256(alias: str, keystore: str, password: str) -> str | None:
     try:
         p = subprocess.run(
-            ['keytool', '-list', '-v', '-alias', alias, '-keystore', keystore,
-             '-storepass', password],
+            [keytool_executable(), '-list', '-v', '-alias', alias,
+             '-keystore', keystore, '-storepass', password],
             capture_output=True, text=True, encoding='utf-8', errors='replace',
         )
     except FileNotFoundError:
@@ -65,15 +100,15 @@ def keytool_sha256(alias: str, keystore: str, password: str) -> str | None:
 
 
 def read_props() -> dict[str, str]:
-    out: dict[str, str] = {}
-    if not PROPS.exists():
-        return out
-    for line in PROPS.read_text(encoding='utf-8', errors='replace').splitlines():
-        line = line.strip()
-        if line and not line.startswith('#') and '=' in line:
-            k, v = line.split('=', 1)
-            out[k.strip()] = v.strip()
-    return out
+    """Die Signier-Angaben - aufgeloest ueber tool/keystore_secrets.py.
+
+    FRUEHER standen hier die Passwoerter aus android/key.properties.
+    Seit dem 04.11.2026 liegen sie in einer Secret-Datei ausserhalb des
+    Projekts (siehe tool/keystore_secrets.py) - der Fingerabdruck des
+    Release-Keystores muss aber weiterhin berechnet werden, sonst
+    waere die Pruefung sinnlos.
+    """
+    return keystore_secrets.read_props()
 
 
 def check_assetlinks(expected: dict[str, str | None]) -> set[str]:

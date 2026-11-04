@@ -407,6 +407,16 @@ jobs:
       - name: Store-Listen vollstaendig und je Sprache eigenstaendig
         run: python3 tool/check_store_listing_languages.py
 
+      # Die Signier-Passwoerter duerfen NICHT im Projektverzeichnis liegen.
+      #
+      # Sie lagen bis 04.11.2026 im Klartext in android/key.properties -
+      # gitignored, aber eben im Ordner, also in Backups und Sync-Mappen.
+      # Jetzt liegen sie in einer Secret-Datei ausserhalb des Repos bzw. in
+      # Umgebungsvariablen. Der Check sucht in ALLEN *.properties unterhalb
+      # des Repos nach Passwoertern - nicht nur in key.properties.
+      - name: Keystore-Passwoerter nicht im Projektverzeichnis
+        run: python3 tool/check_keystore_secrets.py
+
       # Release-Artefakte: Signatur und Admin-Trennung.
       #
       # Hintergrund: Bei v0.9.1 sind die beiden universellen APKs unter

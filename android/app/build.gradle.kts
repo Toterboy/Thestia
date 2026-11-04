@@ -1,5 +1,6 @@
 import java.util.Properties
 import java.io.FileInputStream
+import java.io.File
 
 plugins {
     id("com.android.application")
@@ -9,18 +10,75 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// Release-Signierung über android/key.properties (NICHT committen – steht in
-// .gitignore). Enthält keyAlias, keyPassword, storeFile, storePassword.
-// Fehlt die Datei, schlägt der Release-Build FEHL (kein stiller Debug-
-// Keystore-Fallback mehr – ein versehentlich debug-signiertes Release wäre
-// nicht Play-Store-tauglich und sicherheitsrelevant). Für lokale Release-
-// Testsignierungen explizit: -Pthestia.allowDebugSigning=true ODER
-// Umgebungsvariable THESTIA_ALLOW_DEBUG_SIGNING=true.
+// Release-Signierung: woher die Passwörter kommen.
+//
+// DIE PASSWÖRTER LIEGEN NICHT MEHR IM PROJEKTORDNER (04.11.2026).
+// Vorher standen sie im Klartext in android/key.properties - zwar
+// gitignored, aber eben auf der Platte, in einem Ordner, der in
+// Backups, Sync-Mappen und Screenshots mitschwimmt.
+//
+// DIE AUFLÖSUNG (in dieser Reihenfolge):
+//
+//   1. Umgebungsvariablen - der Weg für CI und für Build-Server:
+//        THESTIA_KEYSTORE_PASSWORD, THESTIA_KEY_PASSWORD,
+//        THESTIA_KEY_ALIAS, THESTIA_KEYSTORE_FILE
+//   2. Eine Secret-Datei AUSSERHALB des Projekts:
+//        %THESTIA_KEYSTORE_PROPERTIES% oder (Vorgabe)
+//        %USERPROFILE%\.secrets\thestia-release.properties
+//      bzw. ~/.secrets/thestia-release.properties
+//   3. android/key.properties (Altlast, weiterhin unterstützt) -
+//      enthält dann NUR noch keyAlias und storeFile.
+//
+// Wichtig: Es gibt KEINEN stillen Debug-Fallback. Fehlt die
+// Konfiguration, schlägt der Release-Build FEHL - ein versehentlich
+// debug-signiertes Release wäre nicht Play-Store-tauglich und
+// sicherheitsrelevant. Für lokale Release-Testsignierungen explizit:
+// -Pthestia.allowDebugSigning=true ODER Umgebungsvariable
+// THESTIA_ALLOW_DEBUG_SIGNING=true.
 val keystoreProperties = Properties()
+
+// 1) Umgebungsvariablen (CI, Build-Server).
+val envStorePassword = System.getenv("THESTIA_KEYSTORE_PASSWORD")
+val envKeyPassword = System.getenv("THESTIA_KEY_PASSWORD")
+val envKeyAlias = System.getenv("THESTIA_KEY_ALIAS")
+val envStoreFile = System.getenv("THESTIA_KEYSTORE_FILE")
+
+// 2) Secret-Datei außerhalb des Projektordners.
+val secretFileFromEnv = System.getenv("THESTIA_KEYSTORE_PROPERTIES")
+val defaultSecretFile = listOfNotNull(
+    System.getProperty("user.home"),
+    System.getenv("USERPROFILE"),
+    System.getenv("HOME"),
+).firstOrNull()?.let { home ->
+    File(home, ".secrets/thestia-release.properties")
+}
+val secretPropertiesFile = secretFileFromEnv?.let { File(it) } ?: defaultSecretFile
+if (secretPropertiesFile != null && secretPropertiesFile.isFile) {
+    keystoreProperties.load(FileInputStream(secretPropertiesFile))
+}
+
+// 3) Altlast: android/key.properties.
 val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
+
+// Die Umgebungsvariablen haben Vorrang vor beiden Dateien.
+fun secret(name: String, env: String?): String? =
+    env ?: keystoreProperties.getProperty(name)?.takeIf { it.isNotBlank() }
+
+val secretKeyAlias = secret("keyAlias", envKeyAlias)
+val secretKeyPassword = secret("keyPassword", envKeyPassword)
+val secretStorePassword = secret("storePassword", envStorePassword)
+val secretStoreFile = secret("storeFile", envStoreFile)
+
+// "Vorhanden" heisst: alle vier Angaben da. Nur dann wird signiert -
+// sonst bricht der Release-Build (siehe unten) mit einer klaren
+// Meldung ab.
+val signingConfigured = secretKeyAlias != null &&
+    secretKeyPassword != null &&
+    secretStorePassword != null &&
+    secretStoreFile != null
 
 android {
     namespace = "com.thestia.app"
@@ -29,14 +87,14 @@ android {
     ndkVersion = flutter.ndkVersion
 
     signingConfigs {
-        // Release-Signierung nur anlegen, wenn key.properties existiert;
-        // sonst greift in buildTypes der Debug-Fallback.
-        if (keystorePropertiesFile.exists()) {
+        // Release-Signierung nur anlegen, wenn die Angaben VOLLSTAENDIG
+        // sind; sonst greift in buildTypes der Debug-Fallback.
+        if (signingConfigured) {
             create("release") {
-                keyAlias = keystoreProperties["keyAlias"] as String
-                keyPassword = keystoreProperties["keyPassword"] as String
-                storeFile = keystoreProperties["storeFile"]?.let { file(it) }
-                storePassword = keystoreProperties["storePassword"] as String
+                keyAlias = secretKeyAlias
+                keyPassword = secretKeyPassword
+                storeFile = secretStoreFile?.let { file(it) }
+                storePassword = secretStorePassword
             }
         }
     }
@@ -105,7 +163,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Release mit dem echten Keystore signieren. Ohne key.properties:
+            // Release mit dem echten Keystore signieren. Ohne vollständige
+            // Signier-Angaben:
             //  - Ein echter Release-Build bricht hart FEHL (kein stiller
             //    Debug-Fallback - debug-signierte Releases waeren ein
             //    Sicherheitsrisiko).
@@ -113,7 +172,7 @@ android {
             //    den release-buildType mit, duerfen dadurch aber nicht knallen:
             //    Der Fehler wird nur geworfen, wenn tatsaechlich ein
             //    Release-Task angefragt wurde (Task-Name enthaelt "Release").
-            if (keystorePropertiesFile.exists()) {
+            if (signingConfigured) {
                 signingConfig = signingConfigs.getByName("release")
             } else {
                 val allowDebugSigning =
@@ -127,10 +186,14 @@ android {
                         logger.warn("WARNUNG: Release wird mit dem DEBUG-Keystore signiert (nur für lokale Tests).")
                         signingConfig = signingConfigs.getByName("debug")
                     } else {
+                        val secretFile = secretPropertiesFile?.absolutePath
+                            ?: "(kein Secret-Dateipfad ermittelt)"
                         throw GradleException(
-                            "Release-Build ohne android/key.properties nicht erlaubt. " +
-                                "Lege android/key.properties an (siehe README/.env.example) oder " +
-                                "signiere lokal bewusst mit -Pthestia.allowDebugSigning=true."
+                            "Release-Build ohne Signier-Angaben nicht erlaubt. " +
+                                "Setze THESTIA_KEYSTORE_PASSWORD/THESTIA_KEY_PASSWORD/THESTIA_KEY_ALIAS/" +
+                                "THESTIA_KEYSTORE_FILE als Umgebungsvariablen, oder lege die Secret-Datei " +
+                                "$secretFile an, oder trage keyAlias/storeFile in android/key.properties ein. " +
+                                "Signiere lokal bewusst mit -Pthestia.allowDebugSigning=true."
                         )
                     }
                 }

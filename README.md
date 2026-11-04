@@ -386,6 +386,16 @@ Support erst ab v0.9.2 ist eine Folge der Alterssperre für Transit Spark
   Validierung im Hintergrund.
 - **Release-Signierung**: Build bricht fehl, wenn kein Keystore konfiguriert
   ist (kein stiller Debug-Fallback).
+- **Keystore-Passwörter liegen nicht im Projektverzeichnis** (04.11.2026): Sie
+  stehen in einer Secret-Datei außerhalb des Repos
+  (`%USERPROFILE%\.secrets\thestia-release.properties`) oder in
+  Umgebungsvariablen für CI (`THESTIA_KEYSTORE_PASSWORD`,
+  `THESTIA_KEY_PASSWORD`, `THESTIA_KEY_ALIAS`, `THESTIA_KEYSTORE_FILE`).
+  `android/key.properties` nennt nur noch Alias und Pfad. Die Auflösung
+  (Umgebung → Secret-Datei → `key.properties`) ist in
+  `android/app/build.gradle.kts` und `tool/keystore_secrets.py` hinterlegt;
+  `tool/check_keystore_secrets.py` verhindert, dass ein Passwort zurück ins
+  Projekt wandert.
 - **Passkey/WebAuthn**: Die GoTrue-Ursprungs-Liste muss den **SHA-256**-Hash der
   installierten APK enthalten (`android:apk-key-hash:…`, 43 Base64URL-Zeichen) –
   SHA-1-Fingerprints matchen nie. Das vollständige Angriffsbild steht im
