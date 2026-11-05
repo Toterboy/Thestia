@@ -1,25 +1,32 @@
-"""robots.txt fuer THESTIA.DE (die oeffentliche Seite).
-
-WARUM ZWEI DATEIEN (04.11.2026): Die Domain zeigt per CNAME direkt
-auf Netlify - auth.thestia.de und thestia.de sind EIN Netlify-Projekt,
-also bekommen beide Hosts DIESELBE robots.txt. Das war vorher ein
-Problem in beide Richtungen:
-
-  * `Disallow: /` (fuer die CAPTCHA-Seite) hat auch thestia.de
-    gesperrt - die oeffentliche Seite war damit ueberhaupt nicht
-    auffindbar. Die Suchmaschine sah nur den Sicherheitscheck.
-  * Ohne Sperre waere die CAPTCHA-Seite wieder crawlbar - jeder
-    Bot-Hit laesst den Turnstile-Script von Cloudflare nachladen und
-    frisst Netlify-Credits (das war der Grund fuer die Sperre).
-
-LOESUNG: Netlify liefert dem Auth-Host eine eigene robots.txt
-(Host-Rewrite in netlify.toml auf /robots-auth.txt). Diese Datei
-hier gilt fuer thestia.de: die oeffentliche Seite soll indexiert
-werden.
-
-Der Sicherheitscheck der App (auth.thestia.de) bleibt fuer
-Suchmaschinen gesperrt - dort steht /robots-auth.txt.
-"""
+# robots.txt fuer THESTIA.DE (die oeffentliche Seite).
+#
+# WARUM ZWEI DATEIEN (04.11.2026): Die Domain zeigt per CNAME direkt
+# auf Netlify - auth.thestia.de und thestia.de sind EIN Netlify-Projekt,
+# also bekommen beide Hosts DIESELBE robots.txt. Das war vorher ein
+# Problem in beide Richtungen:
+#
+#   * "Disallow: /" (fuer die CAPTCHA-Seite) hat auch thestia.de
+#     gesperrt - die oeffentliche Seite war damit ueberhaupt nicht
+#     auffindbar. Die Suchmaschine sah nur den Sicherheitscheck.
+#   * Ohne Sperre waere die CAPTCHA-Seite wieder crawlbar - jeder
+#     Bot-Hit laesst den Turnstile-Script von Cloudflare nachladen und
+#     frisst Netlify-Credits (das war der Grund fuer die Sperre).
+#
+# LOESUNG: Netlify liefert dem Auth-Host eine eigene robots.txt
+# (Host-Rewrite in netlify.toml auf /robots-auth.txt). Diese Datei
+# hier gilt fuer thestia.de: die oeffentliche Seite soll indexiert
+# werden.
+#
+# Der Sicherheitscheck der App (auth.thestia.de) bleibt fuer
+# Suchmaschinen gesperrt - dort steht /robots-auth.txt.
+#
+# BEFUND 05.11.2026: Diese Datei begann mit einem Python-Docstring
+# (DREIFACH-ANFUEHRUNGSZEICHEN) statt mit Kommentaren. Das war kein
+# gueltiges robots.txt - Lighthouse meldete "robots.txt is not valid"
+# und der SEO-Score der Startseite blieb bei 80. Zusaetzlich standen die
+# internen Betriebsnotizen (Netlify-Credits, Host-Struktur) oeffentlich
+# im Netz. Die Notizen stehen jetzt in tool/check_publish_folder.py,
+# nicht mehr in der ausgelieferten Datei.
 
 User-agent: *
 Allow: /

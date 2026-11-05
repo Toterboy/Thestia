@@ -990,10 +990,18 @@ def strip_theme(html: str, remove_chrome: bool = True) -> str:
         # 4) Die alte Inhalts-Huelle entfernen. Ohne diesen Schritt
         #    stapelt sich bei jedem Lauf eine weitere Huelle - der Inhalt
         #    saehe dann in einer Karte in einer Karte in einer Karte aus.
+        #
+        # WICHTIG (05.11.2026): Es werden BEIDE Formen entfernt - die
+        # alte (<div class="inhalt">) und die neue (<main
+        # class="inhalt">). Das <main> kam wegen der Lighthouse-Meldung
+        # "Document does not have a main landmark": ohne es springt ein
+        # Screenreader durch Kopfzeile und Fuss statt zum Inhalt.
+        html = html.replace('<main class="inhalt">\n', '')
+        html = html.replace('<main class="inhalt">', '')
         html = html.replace('<div class="inhalt">\n', '')
         html = html.replace('<div class="inhalt">', '')
-        html = re.sub(r'</div>\s*(<footer)', r'\1', html)
-        html = re.sub(r'</div>\s*</body>', '</body>', html)
+        html = re.sub(r'</(?:div|main)>\s*(<footer)', r'\1', html)
+        html = re.sub(r'</(?:div|main)>\s*</body>', '</body>', html)
     return html
 
 
@@ -1074,7 +1082,7 @@ def apply_theme(html: str, css_extra: str = '',
 
     # 3) Kopfzeile direkt nach <body>, Inhalt in die Karte.
     kopf = (KOPF_HTML.replace('__SPRACHKNOPF__', sprachknopf(sprach_ziel, sprache))
-            + '\n<div class="inhalt">\n')
+            + '\n<main class="inhalt">\n')
     if '<body>' in html:
         html = html.replace('<body>', '<body>\n' + kopf, 1)
     elif '<body ' in html:
@@ -1086,8 +1094,8 @@ def apply_theme(html: str, css_extra: str = '',
     #    in der Karte (wie die Fusszeile der App unter der Karte).
     if '<footer' in html:
         i = html.index('<footer')
-        html = html[:i] + '</div>\n' + html[i:]
+        html = html[:i] + '</main>\n' + html[i:]
     else:
-        html = html.replace('</body>', '</div>\n</body>', 1)
+        html = html.replace('</body>', '</main>\n</body>', 1)
 
     return html

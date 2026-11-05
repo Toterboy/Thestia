@@ -382,7 +382,7 @@ def render_html(blocks, sprache: dict):
                sprachknopf(sprache['sprach_ziel'],
                            sprache['sprach_label'])).split('\n'),
            # Der Inhalt liegt in einer Karte - wie die Karten der App.
-           '<div class="inhalt">']
+           '<main class="inhalt">']
 
     table_open = False
 

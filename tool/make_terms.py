@@ -285,7 +285,7 @@ def seite(sprache, daten, pfad):
              *KOPF_HTML.replace(
                  '__SPRACHKNOPF__',
                  sprachknopf(sprach_ziel, sprach_label)).split('\n'),
-             '<div class="inhalt">',
+             '<main class="inhalt">',
              '<h1>%s</h1>' % daten['titel'],
              '<p class="lead">%s</p>' % daten['lead']]
     for art, inhalt in daten['bloecke']:
@@ -298,7 +298,7 @@ def seite(sprache, daten, pfad):
             for li in inhalt:
                 teile.append('    <li>%s</li>' % li)
             teile.append('  </ul>')
-    teile.append('</div>')
+    teile.append('</main>')
     teile.append('</body>')
     teile.append('</html>')
     pfad.write_text('\n'.join(teile) + '\n', encoding='utf-8', newline='\n')

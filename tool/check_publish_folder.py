@@ -270,6 +270,43 @@ def main() -> int:
                               "nicht gibt: %s" % ziel)
 
     # -----------------------------------------------------------------
+    # 7b) robots.txt: Syntax
+    # -----------------------------------------------------------------
+    #
+    # BEFUND (05.11.2026): Die Datei begann mit einem Python-Docstring
+    # statt mit Kommentaren - kein gueltiges robots.txt (Lighthouse:
+    # "robots.txt is not valid", SEO-Score 80 statt 100). Die interne
+    # Betriebsnotiz stand dabei oeffentlich im Netz.
+    print("\n7b) robots.txt (Syntax):")
+    ERLAUBT = {"user-agent", "allow", "disallow", "crawl-delay",
+               "sitemap", "host", "noindex"}
+    for name in ("robots.txt", "robots-auth.txt"):
+        pfad = A / name
+        if not pfad.exists():
+            print("  %s: fehlt (uebersprungen)" % name)
+            continue
+        zeilen = pfad.read_text(encoding="utf-8").split("\n")
+        kaputt = []
+        for nummer, roh in enumerate(zeilen, 1):
+            s = roh.strip()
+            if not s or s.startswith("#"):
+                continue
+            if ":" not in s:
+                kaputt.append((nummer, s))
+                continue
+            schluessel = s.split(":", 1)[0].strip().lower()
+            if schluessel not in ERLAUBT:
+                kaputt.append((nummer, s))
+        if kaputt:
+            for nummer, s in kaputt:
+                fehler.append("%s Zeile %d: keine gueltige robots-Direktive: "
+                              "%s" % (name, nummer, s[:60]))
+                print("  FEHLER %s Zeile %d: %s" % (name, nummer, s[:60]))
+        else:
+            print("  OK    %s: alle Zeilen sind Kommentar oder eine "
+                  "bekannte Direktive" % name)
+
+    # -----------------------------------------------------------------
     # 8) Platzhalter
     # -----------------------------------------------------------------
     print("\n8) Platzhalter:")
