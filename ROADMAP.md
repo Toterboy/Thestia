@@ -674,6 +674,9 @@ ausreichend. Genau das ist der Maßstab, an dem unten entworfen wird.
   vertrieben werden darf, ist eine Rechtsfrage, die vor einer
   Entscheidung juristisch zu klären ist – hier steht sie offen.
 
+- **Nicht-Play-Kanäle:** Dort gilt nicht die Play-Policy, sondern das
+  deutsche Recht. Das ist der Ort, an dem das Modell unten seinen Sinn
+  hätte.
 **ENTSCHEIDUNG 05.11.2026: Der 16+-Pfad bleibt (bewusst).**
 
 Bei der Bestandsaufnahme vom 05.11.2026 (siehe
@@ -692,25 +695,23 @@ entfernt werden soll. Entscheidung: **er bleibt.** Begründung:
   einem Nutzen, solange der **Play-Kanal** die 16+-Pfade ohnehin nicht
   ausliefert.
 
-**Offen bleibt genau eine Stelle:** das Listing bewirbt „Ab 16 Jahren,
-mit Elternfreigabe für 16- und 17-Jährige", während der Play-Kanal
-laut Policy auf 18+ Zielgruppe steht. Wer im Play-Store ein 16+-Ziel
-verspricht, das Play nicht ausliefert, verspricht etwas, das es dort
-nicht gibt. Zwei saubere Wege:
 
-1. **Listing an den Kanal anpassen** (empfohlen): Der Play-Text
-   beschreibt nur die 18+-Nutzung, der 16+-Pfad wird als
-   Nicht-Play-Variante beschrieben (F-Droid). Damit stimmen Listing
-   und Wirklichkeit überein.
-2. **Minderjährigen-Pfad ganz entfernen** – wie oben beschrieben.
+**Die Store-Frage ist entschieden (05.11.2026):** Das Listing nennt
+beides, ohne zu verschweigen, dass es zwei Kanäle gibt:
 
-Die Entscheidung ist eine Markt- und Rechtsfrage, keine technische.
-Die technische Umsetzung von Weg 1 ist ein Textwechsel im
-fastlane-Metadaten; die technische Umsetzung von Weg 2 ist in
-`docs/MINDERJAEHRIGE-NUTZUNG.md` (Abschnitt 9) beschrieben.
-- **Nicht-Play-Kanäle:** Dort gilt nicht die Play-Policy, sondern das
-  deutsche Recht. Das ist der Ort, an dem das Modell unten seinen Sinn
-  hätte.
+> Im Play Store ab 18 Jahren: Google verlangt für Dating-Apps ohnehin
+> eine Altersgrenze von 18. In anderen Kanälen (F-Droid) ist die App ab
+> 16 Jahren mit Elternfreigabe nutzbar – für Erwachsene bleiben
+> Minderjährige unsichtbar
+
+Damit stimmen Listing und Wirklichkeit überein: der Kanal gibt 18+ her,
+die App kann 16+. Eine Invariante (`tool/check_security_invariants.py`)
+sichert das ab - schreibt jemand wieder „ab 16 Jahren, mit
+Elternfreigabe" ins Listing, schlägt sie an.
+
+**Bleiben würde Weg 2:** den Minderjährigen-Pfad ganz entfernen. Das ist
+eine Markt- und Rechtsfrage, keine technische; die technische Umsetzung
+steht in `docs/MINDERJAEHRIGE-NUTZUNG.md` (Abschnitt 9).
 
 ### 2. Der juristische Anker (Deutschland)
 

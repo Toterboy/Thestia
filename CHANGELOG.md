@@ -282,6 +282,20 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 ### Hinzugefügt
 
+- **Das Store-Listing nennt jetzt beide Kanäle** (05.11.2026): Bisher
+  stand dort „Ab 16 Jahren, mit Elternfreigabe für 16- und 17-Jährige".
+  Das ist im Play Store falsch - Google verlangt für Dating-Apps
+  zwingend eine Altersgrenze von 18, die 16+-Pfade sind im
+  Play-Store-Build also gar nicht erreichbar. Jetzt steht dort: im Play
+  Store ab 18 Jahren, in anderen Kanälen (F-Droid) ab 16 Jahren mit
+  Elternfreigabe. Eine Invariante sichert das ab.
+- **Die Nutzungsbedingungen sind jetzt auch in der App** (05.11.2026):
+  Die Seiten gab es seit dem 05.11. (passkey-assets/
+  nutzungsbedingungen.html), in der App gab es aber keinen Link darauf.
+  Jetzt steht die Kachel neben der Datenschutzerklärung und dem
+  Impressum - Play verlangt für jede App eine erreichbare Adresse der
+  Nutzungsbedingungen.
+
 - **Das Impressum ist jetzt vollständig, die Nutzungsbedingungen gibt es
   überhaupt** (05.11.2026): Die Rechtslage wurde recherchiert und das
   Ergebnis umgesetzt.

@@ -1539,6 +1539,44 @@ check(has('passkey-assets/kinderschutz.html',
       'Inhalte (DSA Art. 18 - Bundesnetzagentur)')
 
 # =====================================================================
+# 18) Das Store-Listing verspricht kein 16+ im Play Store
+# =====================================================================
+#
+# Google Play verlangt fuer Apps mit Dating-Kern zwingend
+# "Restrict Minor Access" (Zielgruppe 18+). Im Play-Store-Build sind
+# die 16+-Pfade also NICHT erreichbar. Ein Listing, das dort ein
+# 16+-Ziel verspricht, verspricht etwas, das der Kanal nicht
+# ausliefert.
+#
+# Erlaubt ist die ehrliche Fassung: was der Kanal hergibt (18+) und was
+# die App kann (16+ mit Elternfreigabe in den Nicht-Play-Kanaelen).
+
+_liste_de = read(ROOT / 'fastlane' / 'metadata' / 'android' / 'de-DE'
+                 / 'full_description.txt')
+_liste_en = read(ROOT / 'fastlane' / 'metadata' / 'android' / 'en-US'
+                 / 'full_description.txt')
+
+for _name, _liste in (('de-DE', _liste_de), ('en-US', _liste_en)):
+    check('ab 18' in _liste.lower() or 'from the age of 18' in _liste.lower(),
+          'STORE (%s): Das Listing nennt 18 Jahre fuer den Play Store' % _name)
+    check('ab 16 jahren, mit elternfreigabe' not in _liste.lower()
+          and 'from the age of 16, with parental consent' not in _liste.lower(),
+          'STORE (%s): Das Listing verspricht kein 16+ mehr im Play Store - '
+          'der Kanal liefert die 16+-Pfade nicht aus' % _name)
+    check('f-droid' in _liste.lower(),
+          'STORE (%s): Das Listing nennt den Nicht-Play-Kanal, in dem die '
+          'App ab 16 Jahren mit Elternfreigabe nutzbar ist' % _name)
+
+# Die Nutzungsbedingungen muessen in der App verlinkt sein: Play
+# verlangt fuer jede App eine erreichbare Adresse.
+check(has('lib/screens/privacy/privacy_screen.dart',
+          "'privacy.termsTitle'",
+          'https://thestia.de/nutzungsbedingungen'),
+      'APP: Die Nutzungsbedingungen sind in den '
+      'Datenschutz-Einstellungen verlinkt (Play verlangt eine erreichbare '
+      'Adresse)')
+
+# =====================================================================
 # Ausgabe
 # =====================================================================
 print('SICHERHEITS-INVARIANTEN\n' + '=' * 78)

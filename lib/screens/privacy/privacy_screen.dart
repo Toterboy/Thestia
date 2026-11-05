@@ -612,6 +612,18 @@ class PrivacyScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => _openImprint(context),
           ),
+          // Die Nutzungsbedingungen gehoeren ebenfalls in die App:
+          // Google Play verlangt fuer jede App eine erreichbare Adresse
+          // der Nutzungsbedingungen, und in der App selbst gehoeren die
+          // Bedingungen neben der Datenschutzerklaerung und dem
+          // Impressum zu finden.
+          ListTile(
+            leading: const Icon(Icons.description),
+            title: Text(L10n.t(context, 'privacy.termsTitle')),
+            subtitle: Text(L10n.t(context, 'privacy.termsSub')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _openTerms(context),
+          ),
           const Divider(height: 32),
           _SectionTitle(L10n.t(context, 'privacy.processors')),
           _InfoCard(text: L10n.t(context, 'privacy.processorsInfo')),
@@ -705,6 +717,34 @@ Future<void> _openImprint(BuildContext context) async {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(L10n.t(context, 'privacy.imprintFailed')),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+}
+
+/// Oeffnet die Nutzungsbedingungen auf thestia.de.
+///
+/// Wie das Impressum liegen die Bedingungen auf der Website: sie sind
+/// ein fester Text, und ihn an zwei Stellen zu pflegen (App und Web)
+/// waere eine Fehlerquelle. Die App verlinkt drauf - das genuegt
+/// Google Play und dem Nutzer.
+Future<void> _openTerms(BuildContext context) async {
+  const url = 'https://thestia.de/nutzungsbedingungen';
+  var ok = false;
+  try {
+    ok = await launchUrl(
+      Uri.parse(url),
+      mode: LaunchMode.externalApplication,
+    );
+  } catch (e) {
+    debugPrint('[Privacy] Nutzungsbedingungen konnten nicht geoeffnet '
+        'werden: $e');
+  }
+  if (!ok && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(L10n.t(context, 'privacy.termsFailed')),
         behavior: SnackBarBehavior.floating,
       ),
     );

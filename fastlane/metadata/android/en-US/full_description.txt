@@ -20,7 +20,7 @@ PRIVACY IS NOT AN ADD-ON, IT IS THE ARCHITECTURE
 
 SAFETY FOR EVERYONE
 
-• From the age of 16, with parental consent for 16- and 17-year-olds – they stay invisible to adults
+• From the age of 18 in the Play Store: Google requires an age limit of 18 for dating apps. In other channels (F-Droid) the app can be used from the age of 16 with parental consent – minors stay invisible to adults
 • Incoming chat images are blurred by default and only unlocked after confirmation
 • Report and block, with every case reviewed by a real person
 • Two-factor authentication and passkeys supported

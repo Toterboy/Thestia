@@ -2716,6 +2716,12 @@ const Map<String, Map<String, String>> _strings = {
   'privacy.imprintTitle': 'Impressum',
   'privacy.imprintSub':
       'Anbieterkennzeichnung nach § 5 DDG - Anschrift und Kontakt',
+  'privacy.termsTitle': 'Nutzungsbedingungen',
+  'privacy.termsSub':
+      'Was beim Benutzen der App erlaubt ist und was nicht',
+  'privacy.termsFailed':
+      'Die Nutzungsbedingungen konnten nicht geöffnet werden. Bitte öffne '
+      'https://thestia.de/nutzungsbedingungen im Browser.',
   'privacy.imprintFailed':
       'Das Impressum konnte nicht geöffnet werden. Bitte öffne '
       'https://thestia.de/impressum im Browser.',
@@ -5839,6 +5845,12 @@ const Map<String, Map<String, String>> _strings = {
   'privacy.imprintTitle': 'Imprint',
   'privacy.imprintSub':
       'Provider identification pursuant to Sec. 5 DDG - address and contact',
+  'privacy.termsTitle': 'Terms of use',
+  'privacy.termsSub':
+      'What is allowed when using the app, and what is not',
+  'privacy.termsFailed':
+      'The terms of use could not be opened. Please open '
+      'https://thestia.de/en/nutzungsbedingungen in your browser.',
   'privacy.imprintFailed':
       'The imprint could not be opened. Please open '
       'https://thestia.de/impressum in your browser.',

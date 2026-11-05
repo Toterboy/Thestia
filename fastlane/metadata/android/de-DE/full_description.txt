@@ -20,7 +20,7 @@ PRIVATSPHÄRE IST KEIN ZUSATZ, SONDERN ARCHITEKTUR
 
 SICHERHEIT FÜR ALLE
 
-• Ab 16 Jahren, mit Elternfreigabe für 16- und 17-Jährige – für Erwachsene bleiben sie unsichtbar
+• Im Play Store ab 18 Jahren: Google verlangt für Dating-Apps ohnehin eine Altersgrenze von 18. In anderen Kanälen (F-Droid) ist die App ab 16 Jahren mit Elternfreigabe nutzbar – für Erwachsene bleiben Minderjährige unsichtbar
 • Eingehende Chat-Bilder sind standardmäßig verpixelt, freigeschaltet wird erst nach Bestätigung
 • Melden und Blockieren, mit persönlicher Prüfung durch den Support
 • Zwei-Faktor-Authentisierung und Passkeys möglich
