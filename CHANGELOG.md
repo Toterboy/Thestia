@@ -282,6 +282,48 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 ### Hinzugefügt
 
+- **Das Impressum ist jetzt vollständig, die Nutzungsbedingungen gibt es
+  überhaupt** (05.11.2026): Die Rechtslage wurde recherchiert und das
+  Ergebnis umgesetzt.
+  * **Die Anschrift steht jetzt auf der Seite selbst** (§ 5 Abs. 1 Nr. 1
+    DDG). Vorher verwies das Impressum auf das Google-Play-Entwickler-
+    profil - damit hing die gesetzlich geforderte ladungsfähige Anschrift
+    an einer fremden Plattform. Fällt das Profil aus, hat das Impressum
+    gar keine Anschrift. Der Verweis bleibt als Zusatz, ersetzt aber
+    nichts. Als sichtbarer Platzhalter markiert, damit die Seite nicht
+    mit einer erfundenen Adresse online geht.
+  * **Der Abschnitt „EU-Streitschlichtung" ist raus** (DE + EN): Die
+    ODR-Plattform der EU ist seit dem 20.07.2025 abgeschaltet
+    (VO (EU) 2024/3228). Der Absatz behauptete das Gegenteil.
+  * **Die App hat jetzt einen Impressum-Einstieg** (in den
+    Datenschutz-Einstellungen): Die App ist selbst ein digitaler Dienst
+    im Sinne des § 5 DDG - die Informationspflichten gelten für sie,
+    nicht nur für die Website.
+  * **Die Nutzungsbedingungen gibt es jetzt** (neu, DE + EN): Mindestalter
+    16, Elternfreigabe für 16/17-Jährige, Verhaltensregeln,
+    Sonderregeln für Minderjährige, Moderation mit Begründungspflicht und
+    Widerspruchsweg, Daten und Löschung, Haftung, Open Source. Damit
+    liegen die nach DSA Art. 16 geforderten Bedingungen vor.
+  * **Die Meldestelle nennt jetzt auch den Meldeweg für rechtswidrige
+    Inhalte** (DSA Art. 18, Bundesnetzagentur). Vorher gab es dort nur
+    den Polizei-Weg für Kindesmissbrauch.
+- **Drei Behauptungen auf der Website stimmen jetzt mit dem Code überein**
+  (05.11.2026, gefunden bei der Bestandsaufnahme):
+  * „Die Nutzungszeit ist eine Hausregel auf dem Gerät" - sie wird seit
+    Migration 176 auch **serverseitig** erzwungen (Dating Hour). Nur der
+    WebRTC-Chat bleibt clientseitig, und das steht jetzt so da.
+  * „Das Funken-Ereignis wird nach dem Versand gelöscht" - im Code wird
+    nur der Versandzeitpunkt gesetzt.
+  * „Der Altersnachweis bleibt bestehen" - beim Löschen aller Daten geht
+    er mit.
+- **Die Nutzung durch 16- und 17-Jährige ist jetzt vollständig
+  dokumentiert** (`docs/MINDERJAEHRIGE-NUTZUNG.md`, 18 KB): Jede
+  Altersregel, der komplette Freigabe-Ablauf, was der Elternteil darf
+  und was nicht, die Nutzungszeit, der 18. Geburtstag, die Daten und ihre
+  Löschwege, die Moderation, die Rechtsgrundlagen und die
+  Store-Angaben - jeweils mit Datei und Zeile. Dazu vier Lücken, die
+  eine Entscheidung brauchen (siehe das Dokument).
+
 - **Der Standort-Check ist jetzt atomar** (04.11.2026, Migration 180):
   Bisher las die Funktion die alte Position, rief `check-location` auf
   (zwei Netzwerkaufrufe) und schrieb erst danach. In diesem Zeitfenster
