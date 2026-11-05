@@ -1490,6 +1490,55 @@ check(has('supabase/migrations/180_atomic_location_check_and_admin_audit.sql',
       'App behauptet es nicht ohne Beleg')
 
 # =====================================================================
+# 17) Die Rechtstexte: Impressum in der App, Nutzungsbedingungen
+# =====================================================================
+#
+# RECHERCHE 05.11.2026: Die App ist selbst ein digitaler Dienst im
+# Sinne des Par. 5 DDG - die Informationspflichten gelten also fuer
+# sie, nicht nur fuer die Website. Und fuer eine Webanwendung mit
+# Nutzerinhalten verlangt DSA Art. 16 die "Bedingungen fuer die
+# Vereinbarung von Leistungen".
+
+check(has('lib/screens/privacy/privacy_screen.dart',
+          "'privacy.imprintTitle'",
+          '_openImprint',
+          'https://thestia.de/impressum'),
+      'APP: Die Datenschutz-Einstellungen enthalten einen '
+      'Impressum-Einstieg (Par. 5 DDG gilt auch fuer die App)')
+
+for _terms, _alter, _freigabe in (
+        ('passkey-assets/nutzungsbedingungen.html',
+         'Mindestalter', 'Freigabe'),
+        ('passkey-assets/en/nutzungsbedingungen.html',
+         'Minimum age', 'consent')):
+    check(has(_terms, '<h1>', _alter, _freigabe),
+          'WEB: Die Nutzungsbedingungen (%s) nennen das Mindestalter und '
+          'die Elternfreigabe (DSA Art. 16)' % _terms)
+
+check(has('passkey-assets/nutzungsbedingungen.html',
+          'Mindestalter', 'Freigabe', 'Moderation, Sperren und Begründung',
+          'Deine Daten', 'widerrufbar'),
+      'WEB: Die Nutzungsbedingungen regeln Mindestalter, Freigabe, '
+      'Moderation (mit Begruendungspflicht) und die Daten')
+
+check(has('passkey-assets/en/nutzungsbedingungen.html',
+          'Minimum age', 'consent', 'Moderation', 'deleted'),
+      'WEB: Die englischen Nutzungsbedingungen decken dasselbe ab')
+
+check(has('passkey-assets/nutzungsbedingungen.html',
+          'Widerspruch', 'moderation@thestia.de'),
+      'WEB: Die Nutzungsbedingungen nennen den Widerspruchsweg gegen '
+      'Moderationsentscheidungen (DSA Art. 17)')
+
+# Die URL wird geprueft, nicht nur das Wort: sonst wuerde ein
+# gleichnamiges Wort genuegen (und die Negativprobe waere nicht
+# aussagekraeftig).
+check(has('passkey-assets/kinderschutz.html',
+          'bundesnetzagentur.de', 'Rechtswidrige Inhalte melden'),
+      'WEB: Die Meldestelle verlinkt den Meldeweg fuer rechtswidrige '
+      'Inhalte (DSA Art. 18 - Bundesnetzagentur)')
+
+# =====================================================================
 # Ausgabe
 # =====================================================================
 print('SICHERHEITS-INVARIANTEN\n' + '=' * 78)

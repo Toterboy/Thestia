@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/user_profile.dart';
@@ -600,6 +601,17 @@ class PrivacyScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.privacyPolicy),
           ),
+          // Das Impressum ist Pflicht, nicht Kuer: die App ist selbst
+          // ein digitaler Dienst im Sinne des Par. 5 DDG. Ohne diesen
+          // Eintrag kann die App die Anbieterkennzeichnung nicht
+          // liefern (Recherche 05.11.2026).
+          ListTile(
+            leading: const Icon(Icons.badge_outlined),
+            title: Text(L10n.t(context, 'privacy.imprintTitle')),
+            subtitle: Text(L10n.t(context, 'privacy.imprintSub')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _openImprint(context),
+          ),
           const Divider(height: 32),
           _SectionTitle(L10n.t(context, 'privacy.processors')),
           _InfoCard(text: L10n.t(context, 'privacy.processorsInfo')),
@@ -666,6 +678,34 @@ class PrivacyScreen extends ConsumerWidget {
             onTap: () => _deleteAccount(context, ref),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Oeffnet das Impressum auf thestia.de.
+///
+/// Das Impressum liegt auf der Website, nicht in der App: es ist ein
+/// fester Text, und ihn an zwei Stellen zu pflegen (App und Web) waere
+/// eine Fehlerquelle. Ausserdem ist die Website die vollstaendige
+/// Fassung - dort stehen Anschrift, Kontakt sowie die Hinweise zu
+/// Moderation und Streitfaellen.
+Future<void> _openImprint(BuildContext context) async {
+  const url = 'https://thestia.de/impressum';
+  var ok = false;
+  try {
+    ok = await launchUrl(
+      Uri.parse(url),
+      mode: LaunchMode.externalApplication,
+    );
+  } catch (e) {
+    debugPrint('[Privacy] Impressum konnte nicht geoeffnet werden: $e');
+  }
+  if (!ok && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(L10n.t(context, 'privacy.imprintFailed')),
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }

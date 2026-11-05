@@ -2713,6 +2713,12 @@ const Map<String, Map<String, String>> _strings = {
     'privacy.validator.tooShort': 'Zu kurz',
     'privacy.validator.mismatch': 'Nicht identisch',
     'privacy.policyTitle': 'Datenschutzerklärung',
+  'privacy.imprintTitle': 'Impressum',
+  'privacy.imprintSub':
+      'Anbieterkennzeichnung nach § 5 DDG - Anschrift und Kontakt',
+  'privacy.imprintFailed':
+      'Das Impressum konnte nicht geöffnet werden. Bitte öffne '
+      'https://thestia.de/impressum im Browser.',
     'privacy.policySub':
         'Was wir erheben, warum, und wie lange. Vollständiger Text.',
     'privacy.yourData': 'Deine Daten',
@@ -5830,6 +5836,12 @@ const Map<String, Map<String, String>> _strings = {
     'privacy.validator.tooShort': 'Too short',
     'privacy.validator.mismatch': 'Does not match',
     'privacy.policyTitle': 'Privacy policy',
+  'privacy.imprintTitle': 'Imprint',
+  'privacy.imprintSub':
+      'Provider identification pursuant to Sec. 5 DDG - address and contact',
+  'privacy.imprintFailed':
+      'The imprint could not be opened. Please open '
+      'https://thestia.de/impressum in your browser.',
     'privacy.policySub':
         'What we collect, why, and for how long. Full text.',
     'privacy.yourData': 'Your data',

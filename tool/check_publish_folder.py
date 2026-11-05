@@ -303,6 +303,67 @@ def main() -> int:
     else:
         print("  OK: jede Seite verlinkt auf ihre Sprachfassung")
 
+    # -----------------------------------------------------------------
+    # 10) Impressum und Meldestelle
+    # -----------------------------------------------------------------
+    #
+    # RECHERCHE 05.11.2026: Die EU-ODR-Plattform ist seit dem 20.07.2025
+    # abgeschaltet (VO (EU) 2024/3228). Ein Impressum, das sie noch
+    # erwaehnt, behauptet etwas Falsches - und der Absatz war auch vor
+    # der Abschaltung irrefuehrend, weil er eine Teilnahme ablehnte,
+    # ohne zu sagen, dass es keine Plattform mehr gibt.
+    print("\n10) Impressum und Meldestelle:")
+    impressum_de = (A / "impressum.html").read_text(encoding="utf-8")
+    impressum_en = (A / "en" / "impressum.html").read_text(encoding="utf-8")
+
+    odr_muster = ("ec.europa.eu/consumers/odr", "Online-Streitbeilegung",
+                   "online dispute resolution", "EU-Streitschlichtung",
+                   "EU dispute resolution")
+    for name, inhalt in (("impressum.html", impressum_de),
+                          ("en/impressum.html", impressum_en)):
+        treffer = [m for m in odr_muster if m.lower() in inhalt.lower()]
+        if treffer:
+            fehler.append(
+                "%s: nennt die ODR-Plattform (%s) - sie ist seit dem "
+                "20.07.2025 abgeschaltet" % (name, ", ".join(treffer)))
+            print("  FEHLER: %s nennt noch die ODR-Plattform" % name)
+        else:
+            print("  OK: %s nennt keine ODR-Plattform" % name)
+
+    # Die Anschrift: § 5 Abs. 1 Nr. 1 DDG verlangt eine ladungsfaehige
+    # Anschrift. Ein Postfach genuegt nicht. Solange nicht eingetragen
+    # ist, gibt es einen Hinweis (kein Fehler) - aber nur EINEN
+    # Platzhalter, sonst wird es ein Fehler.
+    for name, inhalt, marker in (
+            ("impressum.html", impressum_de, "[Straße, Hausnummer, PLZ, Ort]"),
+            ("en/impressum.html", impressum_en,
+             "[street, house number, postcode, city]")):
+        hat_adressfeld = marker in inhalt
+        if not hat_adressfeld:
+            fehler.append(
+                "%s: kein Feld fuer die ladungsfaehige Anschrift - § 5 "
+                "Abs. 1 Nr. 1 DDG verlangt sie auf der Seite selbst" % name)
+            print("  FEHLER: %s hat kein Anschriftfeld" % name)
+        else:
+            hinweise.append(
+                "%s: die Anschrift ist noch nicht eingetragen. Vor dem "
+                "Hochladen ersetzen: Straße, Hausnummer, PLZ, Ort - und "
+                "zustellmoeglich (kein Postfach, keine erfundene Adresse)."
+                % name)
+            print("  HINWEIS: %s - Anschrift noch offen" % name)
+
+    # Die Meldestelle muss den Meldeweg fuer rechtswidrige Inhalte
+    # nennen (DSA Art. 18 - die Bundesnetzagentur).
+    for name in ("kinderschutz.html", "en/kinderschutz.html"):
+        inhalt = (A / name).read_text(encoding="utf-8")
+        if "bundesnetzagentur.de" not in inhalt.lower():
+            fehler.append(
+                "%s: nennt keinen Meldeweg fuer rechtswidrige Inhalte "
+                "(DSA Art. 18 - Bundesnetzagentur)" % name)
+            print("  FEHLER: %s nennt die Bundesnetzagentur nicht" % name)
+        else:
+            print("  OK: %s nennt die Bundesnetzagentur" % name)
+
     print("\n" + "=" * 72)
     if fehler:
         print("FEHLER (%d):" % len(fehler))

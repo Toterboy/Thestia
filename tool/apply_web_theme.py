@@ -43,6 +43,7 @@ SEITEN = [
     'konto-loeschen.html',
     'impressum.html',
     'dating-sicherheit.html',
+    'nutzungsbedingungen.html',
 ]
 
 # datenschutz.html und en/datenschutz.html werden GENERIERT
@@ -64,6 +65,7 @@ EN_SEITEN = [
     'en/daten-loeschen.html',
     'en/eltern.html',
     'en/eltern/einstellungen.html',
+    'en/nutzungsbedingungen.html',
 ]
 
 # Seite -> (deutsche Adresse, englische Adresse).
@@ -83,6 +85,8 @@ SEITEN_URL = {
     'eltern.html': ('/eltern', '/en/eltern'),
     'eltern-einstellungen.html': (
         '/eltern/einstellungen', '/en/eltern/einstellungen'),
+    'nutzungsbedingungen.html': (
+        '/nutzungsbedingungen', '/en/nutzungsbedingungen'),
 }
 
 

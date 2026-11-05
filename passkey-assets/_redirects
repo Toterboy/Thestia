@@ -100,6 +100,14 @@ https://auth.thestia.de/robots.txt          /robots-auth.txt               200!
 /en/eltern    /en/eltern.html  200
 /en/eltern/einstellungen    /en/eltern/einstellungen.html  200
 
+# Nutzungsbedingungen (DSA Art. 16: Bedingungen fuer die Vereinbarung
+# von Leistungen). Die Seite ist die Grundlage fuer die Meldestelle und
+# fuer das Impressum.
+/nutzungsbedingungen    /nutzungsbedingungen.html  200
+/nutzungsbedingungen/   /nutzungsbedingungen.html  200
+/en/nutzungsbedingungen    /en/nutzungsbedingungen.html  200
+/en/nutzungsbedingungen/   /en/nutzungsbedingungen.html  200
+
 # Daten-Loeschung (Play-Anforderung: web-basierte Loeschung von
 # Daten und des Kontos).
 #
