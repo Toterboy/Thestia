@@ -105,8 +105,12 @@ def main() -> int:
             print("  FEHLT   %s" % behauptung)
             print("            (waere falsch: %s)" % auswirkung)
 
-    # Zusaetzlich: die verbotenen Formulierungen duerfen nicht
-    # wieder auftauchen.
+    # Zusaetzlich: die verbotenen Formulierungen duerfen im GANZEN
+    # Publish-Ordner nicht wieder auftauchen.
+    #
+    # BEFUND (05.11.2026): Die falsche Aussage stand nicht nur in den
+    # Nutzungsbedingungen, sondern auch im Elternportal. Ein Check, der
+    # nur eine Seite ansieht, haette das nicht gefunden.
     verboten = [
         ("Es ist verboten, Personen zu kontaktieren, die das "
          "eindeutig unter 18 Jahre alt sind",
@@ -120,11 +124,47 @@ def main() -> int:
          "using the app",
          "the parental approval is voluntary"),
     ]
+    alle_seiten = sorted(
+        p for p in (ROOT / "passkey-assets").rglob("*.html"))
     for satz, warum in verboten:
-        if satz in de_terms or satz in en_terms:
-            fehlend.append((satz[:40] + "...", warum))
-            print("  FEHLT   VERBOTENE FORMULIERUNG wieder drin: %s..." % satz[:52])
-            print("            (waere falsch: %s)" % warum)
+        for seite in alle_seiten:
+            inhalt = lies(seite)
+            if satz in inhalt:
+                rel = seite.relative_to(ROOT)
+                fehlend.append(("%s: %s..." % (rel, satz[:40]), warum))
+                print("  FEHLT   VERBOTENE FORMULIERUNG in %s: %s..."
+                      % (rel, satz[:52]))
+                print("            (waere falsch: %s)" % warum)
+
+    # Und: KEINE Seite darf eine PFLICHT behaupten.
+    #
+    # WICHTIG: Es geht um Behauptungen, nicht um Erwaehnungen. Die Seite
+    # kinderschutz.html verweist auf die Elternseite, erwaehnt aber
+    # "Zustimmung der Sorgeberechtigten" - ohne etwas zu behaupten.
+    # Das ist in Ordnung.
+    #
+    # Geprueft werden daher nur die Formulierungen, die eine Pflicht
+    # behaupten ("verlangt", "braucht", "muss", "requires", "needs").
+    pflicht_muster = [
+        r'verlangt die (?:App|Thestia)',
+        r'braucht die Zustimmung der Sorgeberechtigten',
+        r'ben[oö]tigt? die Zustimmung der Sorgeberechtigten',
+        r'(?:requires|needs) the consent of',
+        r'must (?:have|obtain) (?:a )?(?:legal )?guardian',
+    ]
+    freiwillig_woerter = ('freiwillig', 'voluntary', 'ablehnen', 'without it')
+    for seite in alle_seiten:
+        rel = str(seite.relative_to(ROOT))
+        inhalt = lies(seite)
+        behauptet_pflicht = any(
+            re.search(m, inhalt, re.I) for m in pflicht_muster)
+        if behauptet_pflicht:
+            if not any(w in inhalt for w in freiwillig_woerter):
+                fehlend.append((
+                    "%s: behauptet eine Pflicht der Zustimmung" % rel,
+                    "die Zustimmung ist freiwillig (Par. 3a JUG)"))
+                print("  FEHLT   %s behauptet eine Pflicht der Zustimmung, "
+                      "nennt sie aber nicht freiwillig" % rel)
 
     print("=" * 74)
     if fehlend:
