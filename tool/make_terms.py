@@ -34,15 +34,26 @@ DE = {
         ('h2', '1. Wer diese Bedingungen akzeptiert'),
         ('p', 'Mit der Registrierung in der App Thestia akzeptierst du diese '
               'Nutzungsbedingungen. Wer die App im Auftrag einer anderen '
-              'Person nutzt, muss deren Einwilligung vorliegen - für '
-              'Personen unter 18 die Zustimmung der Sorgeberechtigten.'),
+              'Person nutzt, muss deren Einwilligung vorliegen.'),
         ('h2', '2. Mindestalter'),
-        ('p', 'Thestia ist ab 16 Jahren nutzbar. Wer zwischen 16 und 17 '
-              'Jahre alt ist, braucht die Zustimmung der '
-              'Sorgeberechtigten, bevor er die App nutzen kann. Diese '
-              'Zustimmung ist widerrufbar, und zwar jederzeit und ohne '
-              'Angabe von Gründen. Ab dem 18. Geburtstag entscheidet die '
-              'Person selbst über den Zugang der Sorgeberechtigten.'),
+        ('p', 'Thestia ist ab 16 Jahren nutzbar. Wer 16 oder 17 Jahre alt '
+              'ist, kann die App auch ohne Zustimmung der '
+              'Sorgeberechtigten nutzen: Nach § 3a JUG kann eine Person ab '
+              'dem vollendeten 16. Lebensjahr selbst einwilligen, und '
+              'niemand wird an der Nutzung gehindert, weil eine Zustimmung '
+              'ausbleibt.'),
+        ('p', 'Die Elternfreigabe ist freiwillig. Wenn du 16 oder 17 bist '
+              'und dir die elterliche Aufsicht wichtig ist, kannst du sie '
+              'anfordern: Du bekommst dann ein Zeitfenster, in dem die App '
+              'genutzt werden darf, Hinweise auf neue Funken und einen '
+              'geschützten Bereich für deine Eltern. Die Freigabe ist '
+              'jederzeit und ohne Angabe von Gründen widerrufbar. Mit dem '
+              'Ende der Freigabe endet auch die Aufsicht, und die '
+              'E-Mail-Adresse der Eltern wird gelöscht.'),
+        ('p', 'Egal ob eine Elternfreigabe vorliegt: Für 16- und '
+              '17-Jährige gelten immer die Regeln aus Abschnitt 4. Ab dem '
+              '18. Geburtstag entscheidet die Person selbst über den '
+              'Zugang der Sorgeberechtigten.'),
         ('h2', '3. Was du auf Thestia tust'),
         ('ul', [
             'Du behandelst andere Menschen mit Respekt. Beleidigungen, '
@@ -68,13 +79,20 @@ DE = {
         ('h2', '4. Minderjährige und besondere Schutzbedürfnisse'),
         ('p', 'Für 16- und 17-Jährige gelten zusätzlich diese Regeln:'),
         ('ul', [
-            'Es ist verboten, Personen zu kontaktieren, die das '
-            'eindeutig unter 18 Jahre alt sind.',
+            'Du siehst nur andere 16- und 17-Jährige, und nur diese '
+            'sehen dich. Die Begegnungen sind beidseitig gefiltert: '
+            'Wer 18 oder älter ist, erreicht dich nicht.',
+            'Deine Entfernung wird nicht angezeigt, auch nicht grob.',
+            'Dein Suchradius ist begrenzt: höchstens 25 Kilometer oder '
+            'Personen im selben Bundesland.',
+            'Transit Spark, die Nahbereichs-Funktion für Begegnungen '
+            'unterwegs, steht dir nicht zur Verfügung. Sie ist ab 18 '
+            'Jahren.',
+            'Deine Fotos sind nur für andere 16- und 17-Jährige '
+            'sichtbar, und die Einstellung dafür kannst du nicht '
+            'ändern.',
             'Es ist verboten, Sex, Nacktheit oder sexuelle Handlungen '
             'anzubieten oder darzustellen.',
-            'Erwachsene, die mit Minderjährigen Kontakt aufnehmen, '
-            'müssen die Führung des Kontakts jederzeit unterbrechen '
-            'können.',
             'Wird ein Kind oder Jugendlicher Opfer sexueller '
             'Gewalt oder Ausbeutung, gilt die Meldestelle auf '
             'thestia.de/kinderschutz. Wir melden bestätigte Fälle an '
@@ -129,15 +147,25 @@ EN = {
         ('h2', '1. Who accepts these terms'),
         ('p', 'By registering in the Thestia app you accept these terms of '
               'use. If you use the app on behalf of someone else, their '
-              'consent must be in place - for persons under 18, the '
-              'consent of those with parental responsibility.'),
+              'consent must be in place.'),
         ('h2', '2. Minimum age'),
-        ('p', 'Thestia may be used from the age of 16. Anyone between 16 '
-              'and 17 years old needs the consent of those with parental '
-              'responsibility before using the app. That consent can be '
-              'revoked at any time and without giving reasons. From the '
-              '18th birthday onwards, the person decides themselves about '
-              'the access of their parents.'),
+        ('p', 'Thestia may be used from the age of 16. Someone aged 16 or '
+              '17 can also use the app without the consent of those with '
+              'parental responsibility: under Sec. 3a JUG a person may '
+              'consent themselves from their 16th birthday onwards, and '
+              'nobody is prevented from using the app because consent is '
+              'missing.'),
+        ('p', 'The parental approval is voluntary. If you are 16 or 17 and '
+              'you value the supervision by your parents, you can request '
+              'it: you then get a time window in which the app may be '
+              'used, notices about new sparks and a protected area for '
+              'your parents. The approval can be revoked at any time and '
+              'without giving reasons. When it ends, the supervision ends '
+              'as well, and the parents\' email address is deleted.'),
+        ('p', 'Whether or not a parental approval exists: for 16 and 17 year '
+              'olds the rules in section 4 always apply. From the 18th '
+              'birthday onwards, the person decides themselves about the '
+              'access of their parents.'),
         ('h2', '3. What you do on Thestia'),
         ('ul', [
             'You treat other people with respect. Insults, harassment, '
@@ -160,10 +188,18 @@ EN = {
         ('h2', '4. Minors and people who need particular protection'),
         ('p', 'These additional rules apply to 16 and 17 year olds:'),
         ('ul', [
-            'It is forbidden to contact people who are clearly under 18.',
+            'You only see other 16 and 17 year olds, and only they see '
+            'you. Encounters are filtered on both sides: anyone aged 18 or '
+            'older cannot reach you.',
+            'Your distance is not shown, not even roughly.',
+            'Your search radius is limited: at most 25 kilometres or '
+            'people in the same federal state.',
+            'Transit Spark, the proximity feature for encounters on the '
+            'move, is not available to you. It is for 18 year olds and '
+            'older.',
+            'Your photos are only visible to other 16 and 17 year olds, '
+            'and you cannot change that setting.',
             'It is forbidden to offer or depict sex, nudity or sexual acts.',
-            'Adults who contact minors must be able to end the contact at '
-            'any time.',
             'If a child or young person is a victim of sexual violence or '
             'exploitation, the reporting point at thestia.de/kinderschutz '
             'applies. We report confirmed cases to the competent bodies '
@@ -208,20 +244,47 @@ EN = {
 }
 
 
+# Design und Sprachknopf kommen aus tool/web_theme.py. Damit ist die
+# Seite genau so gebaut, wie apply_theme sie erzeugt - und der
+# Idempotenz-Gate der CI ("Web-Theme wiederholbar") ist erfuellt.
+import sys as _sys
+_sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from web_theme import CSS, KOPF_HTML, sprachknopf  # noqa: E402
+
+
 def seite(sprache, daten, pfad):
-    teile = ['<!DOCTYPE html>', '<html lang="%s">' % sprache, '<head>',
-             '<meta charset="UTF-8">',
-             '<meta name="viewport" content="width=device-width, initial-scale=1">']
     if sprache == 'de':
-        teile.append('<link rel="canonical" href="https://thestia.de/nutzungsbedingungen">')
+        canonical = 'https://thestia.de/nutzungsbedingungen'
+        sprach_ziel = '/en/nutzungsbedingungen'
+        sprach_label = 'EN'
     else:
-        teile.append('<link rel="canonical" href="https://thestia.de/en/nutzungsbedingungen">')
-    teile.append('<title>%s - Thestia</title>' % daten['titel'])
-    teile.append('</head>')
-    teile.append('<body>')
-    teile.append('<div class="inhalt">')
-    teile.append('<h1>%s</h1>' % daten['titel'])
-    teile.append('<p class="lead">%s</p>' % daten['lead'])
+        canonical = 'https://thestia.de/en/nutzungsbedingungen'
+        sprach_ziel = '/nutzungsbedingungen'
+        sprach_label = 'DE'
+
+    teile = ['<!DOCTYPE html>', '<html lang="%s">' % sprache, '<head>',
+             '  <meta charset="UTF-8">',
+             '  <meta name="viewport" content="width=device-width, '
+             'initial-scale=1">',
+             '  <link rel="canonical" href="%s">' % canonical,
+             '  <title>%s - Thestia</title>' % daten['titel'],
+             '  <style>',
+             # Eigenes CSS VOR dem gemeinsamen (siehe Kommentar oben:
+             # sonst ist strip_theme/apply_theme nicht wiederholbar).
+             '    body {',
+             '        font-family: -apple-system, BlinkMacSystemFont, '
+             '"Segoe UI", Roboto, sans-serif;',
+             '        max-width: 44rem; margin: 0 auto; padding: 3rem 1.5rem;',
+             '    }',
+             '%s</style>' % CSS,
+             '</head>',
+             '<body>',
+             *KOPF_HTML.replace(
+                 '__SPRACHKNOPF__',
+                 sprachknopf(sprach_ziel, sprach_label)).split('\n'),
+             '<div class="inhalt">',
+             '<h1>%s</h1>' % daten['titel'],
+             '<p class="lead">%s</p>' % daten['lead']]
     for art, inhalt in daten['bloecke']:
         if art == 'h2':
             teile.append('  <h2>%s</h2>' % inhalt)

@@ -233,6 +233,7 @@ if (Soll 'static-checks') {
         (G 'Uebrige statische Pruefer (CI-Spiegel)' @($py, 'tool/check_local_ci_sync.py'))
         (G 'Uebrige statische Pruefer (Edge-Syntax)' @($py, 'tool/check_edge_syntax.py'))
         (G 'Publish-Ordner vorbereit' @($py, 'tool/check_publish_folder.py'))
+        (G 'Nutzungsbedingungen belegt' @($py, 'tool/check_terms_claims.py'))
         (G 'Mojibake' @($py, 'tool/check_mojibake.py', '--skip-known'))
         (G '.gitignore auf Luecken' @($py, 'tool/check_gitignore.py'))
         (G 'PNG-Dateien auf Korruption' @($py, 'tool/check_png_integrity.py'))

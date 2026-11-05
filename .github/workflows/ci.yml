@@ -342,6 +342,7 @@ jobs:
           # fehlende Datei, eine durch noindex gesperrte Pflichtseite,
           # ein toter Link.
           python3 tool/check_publish_folder.py
+          python3 tool/check_terms_claims.py
 
       # Doppelkodierte Umlaute sind gueltiges UTF-8, deshalb findet sie
       # weder der Analyzer noch ein Test. Sie fielen nur auf, als eine

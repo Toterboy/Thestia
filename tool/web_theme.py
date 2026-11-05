@@ -914,6 +914,14 @@ def apply_theme(html: str, css_extra: str = '',
     #    ob einzeilig oder mehrzeilig.
 
     # 2) Die gemeinsamen Regeln an den Style-Block haengen.
+    #
+    # WICHTIG (05.11.2026): Der Style-Block muss das eigene CSS VOR dem
+    # gemeinsamen tragen. Grund: strip_theme() entfernt den gemeinsamen
+    # Block und laesst bei einer Seite, die NUR den gemeinsamen Block
+    # im Style-Block hat, eine Leerzeile stehen - der naechste Durchlauf
+    # haette sie wieder drin und die Datei waere ein Zeichen laenger.
+    # Der Idempotenz-Gate der CI ("Web-Theme wiederholbar") hat genau
+    # das gemeldet. Seiten mit eigenem CSS im Style-Block sind stabil.
     if '</style>' in html:
         html = html.replace('</style>', css_extra + THEME_CSS + '</style>', 1)
     else:
