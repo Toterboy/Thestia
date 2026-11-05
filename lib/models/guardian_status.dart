@@ -21,6 +21,7 @@ class GuardianStatus {
     this.hasPin = false,
     this.accessPolicy = 'ended',
     this.accessUntil,
+    this.emailDeletedAt,
     this.graceMonths,
     this.confirmedAt,
     this.revokedAt,
@@ -74,6 +75,13 @@ class GuardianStatus {
   /// Wie viele Monate Nachfrist bei `grace`?
   final int? graceMonths;
 
+  /// Wann wurde die E-Mail-Adresse des Elternteils geloescht?
+  ///
+  /// Migration 180: Mit dem Ende der Freigabe verschwindet die Adresse
+  /// des Elternteils. Die App sagt das dem Nutzer - aber nur, wenn der
+  /// Server es bestaetigt. Deshalb kommt der Zeitpunkt von dort.
+  final DateTime? emailDeletedAt;
+
   final DateTime? confirmedAt;
   final DateTime? revokedAt;
 
@@ -94,6 +102,17 @@ class GuardianStatus {
 
   /// Es gibt ueberhaupt eine Freigabe (aktiv oder wartend).
   bool get hasConsent => isActive || isPending;
+
+  /// Die Freigabe ist beendet - widerrufen oder abgelaufen.
+  ///
+  /// Das ist ein eigener Zustand und nicht dasselbe wie "es gab nie
+  /// eine Freigabe": Der Jugendliche soll sehen, dass die Freigabe
+  /// existiert hat und dass sie endgueltig vorbei ist.
+  bool get isEnded =>
+      status == 'revoked' || status == 'expired';
+
+  /// Die E-Mail-Adresse des Elternteils wurde geloescht.
+  bool get isGuardianEmailDeleted => emailDeletedAt != null;
 
   /// Der Nutzer ist minderjaehrig (16 oder 17).
   bool get isMinor => (age ?? 0) > 0 && (age ?? 0) < 18;
@@ -129,6 +148,7 @@ class GuardianStatus {
       hasPin: json['hasPin'] == true,
       accessPolicy: json['accessPolicy'] as String? ?? 'ended',
       accessUntil: timeOf(json['accessUntil']),
+      emailDeletedAt: timeOf(json['emailDeletedAt']),
       graceMonths: minOf(json['graceMonths']),
       confirmedAt: timeOf(json['confirmedAt']),
       revokedAt: timeOf(json['revokedAt']),

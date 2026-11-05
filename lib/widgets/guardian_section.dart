@@ -222,6 +222,46 @@ class _GuardianSectionState extends ConsumerState<GuardianSection> {
   Widget _inhalt(BuildContext context, GuardianStatus status) {
     final theme = Theme.of(context);
 
+    // Die Freigabe ist beendet (widerrufen oder abgelaufen).
+    //
+    // BEFUND 04.11.2026: Bis hierher sah dieser Fall aus wie "es gab
+    // nie eine Freigabe". Das war falsch und uninformativ: Der
+    // Jugendliche wusste nicht, ob seine Freigabe endete - und erst
+    // recht nicht, dass dabei die E-Mail-Adresse des Elternteils
+    // geloescht wurde (Migration 179).
+    if (status.isEnded) {
+      final endgueltigGeloescht = status.isGuardianEmailDeleted;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            L10n.t(context, 'guardian.endedTitle'),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            L10n.t(
+              context,
+              endgueltigGeloescht
+                  ? 'guardian.endedTextEmailDeleted'
+                  : 'guardian.endedTextEmailPending',
+            ),
+            style: theme.textTheme.bodyMedium?.copyWith(height: 1.4),
+          ),
+          if (status.isMinor) ...[
+            const SizedBox(height: 14),
+            PrimaryButton(
+              label: L10n.t(context, 'guardian.requestBtn'),
+              onPressed: () => context.push('/guardian-consent'),
+            ),
+          ],
+        ],
+      );
+    }
+
     // Keine Freigabe vorhanden.
     if (!status.hasConsent) {
       return Column(

@@ -1317,6 +1317,154 @@ check(tabellen_ohne_huelle('passkey-assets/en/eltern.html') == 0,
       'WEB: Auch die englische Elternseite hat die Huelle')
 
 # =====================================================================
+# 14) Der Standort-Check ist atomar (kein TOCTOU-Fenster)
+# =====================================================================
+#
+# BEFUND (Security-Audit 04.11.2026): process-location-check las die
+# alte Position und den alten Zeitstempel, rief check-location auf
+# (zwei Netzwerkaufrufe) und schrieb erst danach. In diesem Fenster
+# konnten zwei Aufrufe parallel laufen: Beide rechneten gegen
+# dieselbe veraltete Basis, und der normale Pfad schrieb das
+# Verdachtsflag mit dem Ergebnis der EIGENEN Pruefung - ein spaeterer,
+# unauffaelliger Aufruf konnte ein gerade gesetztes Flag wieder auf
+# false setzen.
+#
+# LOESUNG: Alles passiert in EINER Transaktion, unter einer
+# Zeilensperre (SELECT ... FOR UPDATE).
+
+sql_180 = read(MIG / '180_atomic_location_check_and_admin_audit.sql')
+sql_181 = read(MIG / '181_admin_review_video_path.sql')
+
+check('CREATE OR REPLACE FUNCTION public.apply_location_check('
+      in sql_180,
+      'DB: Der Standort-Check liegt in einer Datenbankfunktion '
+      '(eine Transaktion statt mehrerer Netzwerkaufrufe)')
+def sql_block(text: str, name: str) -> str:
+    """Der Rumpf einer CREATE OR REPLACE FUNCTION.
+
+    Wichtig: Die Pruefung muss im RUMPF stehen und nicht in der ganzen
+    Datei. Sonst zaehlt ein Kommentar oder der Selbsttest mit - und
+    eine Manipulation bliebe unbemerkt.
+    """
+    start = text.find('CREATE OR REPLACE FUNCTION public.%s(' % name)
+    if start < 0:
+        return ''
+    end = text.find('\n$$;', start)
+    block = text[start:end] if end > start else ''
+    # Die Kommentare entfernen.
+    #
+    # BEFUND 04.11.2026: Ohne diesen Schritt hat die Pruefung "FOR
+    # UPDATE" auch dann gepasst, wenn der Code die Zeile NICHT mehr
+    # sperrte - weil der Kommentar ueber der Sperre dasselbe Wort
+    # enthaelt. Eine Pruefung, die einen Kommentar mitzaehlt, beweist
+    # nichts.
+    return re.sub(r'--[^\n]*', '', block)
+
+
+_loc = sql_block(sql_180, 'apply_location_check')
+check('FOR UPDATE' in _loc,
+      'DB: Der Standort-Check sperrt die Zeile - ohne die Sperre '
+      'koennte ein zweiter Aufruf gegen eine veraltete Basis rechnen')
+check('is_location_suspicious OR' in _loc,
+      'DB: Das Verdachtsflag wird nur gesetzt, nie zurueckgesetzt '
+      '(sonst koennte ein spaeterer Aufruf es wieder loeschen)')
+check('CREATE OR REPLACE FUNCTION public.haversine_km(' in sql_180,
+      'DB: Die Entfernung rechnet die Datenbank (Haversine, 6371 km) '
+      '- dieselbe Formel wie in check-location')
+check('public.haversine_km(v_prev_lat, v_prev_lon, p_lat, p_lon)'
+      in sql_180,
+      'DB: Die Entfernung wird zwischen der GESPEICHERTEN Vorposition '
+      'und der neuen Position gerechnet')
+check('v_distance >= 15' in sql_180,
+      'DB: Die 15-km-Schwelle bleibt unveraendert')
+check('v_speed_kmh > 300' in sql_180,
+      'DB: Die 300-km/h-Grenze fuer "unmoeglich schnell" bleibt '
+      'unveraendert')
+check("'implausible_speed'" in sql_180 and "'no_previous_location'" in sql_180,
+      'DB: Die beiden Sonderfaelle (keine Vorposition, unmoeglich '
+      'schnell) melden dasselbe wie vorher')
+check('REVOKE ALL ON FUNCTION public.apply_location_check('
+      in sql_180 and 'TO service_role' in sql_180,
+      'DB: Nur der service_role darf den Standort-Check ausloesen')
+
+# Die Edge Function darf den Weg ueber die Datenbank nicht wieder
+# aufmachen (der Weg ueber Netzwerkaufrufe IST das TOCTOU-Fenster).
+check(has('supabase/functions/process-location-check/index.ts',
+          '"apply_location_check"'),
+      'EDGE: process-location-check ruft die Datenbankfunktion auf')
+check('check-location' not in
+      read(FN / 'process-location-check' / 'index.ts')
+      .split('// BEFUND 04.11.2026 (Migration 180)')[0]
+      .replace('// Der Aufruf an check-location entfaellt in diesem Pfad.',
+               ''),
+      'EDGE: process-location-check ruft check-location nicht mehr auf '
+      '(das war das Zeitfenster)')
+
+# =====================================================================
+# 15) Das Admin-Review: Rate-Limit und Audit-Spur
+# =====================================================================
+#
+# BEFUND (Security-Audit 04.11.2026): Der Review-Pfad war die einzige
+# Aktion ohne Bremse. Mit einem geleakten Admin-Token konnte jemand
+# massenhaft Freigaben erteilen - und es gab keine Spur, wer wen wann
+# freigegeben hat.
+
+check('CREATE TABLE IF NOT EXISTS public.admin_action_audit' in sql_180,
+      'DB: Es gibt eine Spur fuer die Admin-Arbeit')
+check('INSERT INTO public.admin_action_audit' in sql_180,
+      'DB: Jedes Review schreibt einen Audit-Eintrag')
+check('CREATE OR REPLACE FUNCTION public.admin_review_verification('
+      in sql_180,
+      'DB: Das Review laeuft ueber eine Datenbankfunktion')
+_rev = sql_block(sql_180, 'admin_review_verification')
+check('is_admin INTO v_is_admin' in _rev,
+      'DB: Die Datenbank prueft selbst, dass der Aufrufer Admin ist')
+check("'admin-review:' || p_admin_id::text, 60, 3600" in _rev,
+      'DB: Das Review ist auf 60 Aktionen pro Admin und Stunde begrenzt')
+check('INSERT INTO public.admin_action_audit' in _rev,
+      'DB: Der Audit-Eintrag entsteht in derselben Transaktion wie die '
+      'Aenderung - ein Review ohne Spur ist nicht moeglich')
+check('REVOKE ALL ON FUNCTION public.admin_review_verification('
+      in sql_180,
+      'DB: Niemand ausser dem service_role darf ein Review ausloesen')
+check('verification_video_path  = CASE WHEN p_is_verified' in sql_181,
+      'DB: Bei einer Ablehnung wird der Videopfad geloescht - sonst '
+      'zeigt die Spalte auf eine Datei, die es nicht mehr gibt')
+
+check(has('supabase/functions/verify-account/index.ts',
+          '"admin_review_verification"'),
+      'EDGE: verify-account ruft die gepruefte Datenbankfunktion auf')
+check('.from("profiles")' not in
+      read(FN / 'verify-account' / 'index.ts')
+      .split('// -----------------------------------------------------------------\n'
+             '    // Das Review passiert jetzt in EINER Datenbanktransaktion.')[-1],
+      'EDGE: Der Review-Pfad schreibt nicht mehr direkt - der direkte '
+      'Schreibweg waere die Luecke, die die Datenbank gerade schliesst')
+
+# =====================================================================
+# 16) Die App sagt, was mit der E-Mail des Elternteils passiert ist
+# =====================================================================
+check(has('lib/models/guardian_status.dart',
+          'final DateTime? emailDeletedAt;',
+          "status == 'revoked' || status == 'expired'",
+          'isGuardianEmailDeleted'),
+      'APP: Das Modell kennt den Zustand "beendet" und weiss, ob die '
+      'E-Mail des Elternteils geloescht wurde')
+check(has('lib/widgets/guardian_section.dart',
+          "'guardian.endedTextEmailDeleted'",
+          "'guardian.endedTextEmailPending'"),
+      'APP: Der Screen sagt dem Nutzer, dass die E-Mail des '
+      'Elternteils geloescht wurde')
+check(has('lib/l10n/app_strings.dart',
+          "'guardian.endedTextEmailDeleted'",
+          "'guardian.endedTitle'"),
+      'APP: Die Texte gibt es auf Deutsch und Englisch')
+check(has('supabase/migrations/180_atomic_location_check_and_admin_audit.sql',
+          "'emailDeletedAt'"),
+      'DB: Der Server meldet, WANN die E-Mail geloescht wurde - die '
+      'App behauptet es nicht ohne Beleg')
+
+# =====================================================================
 # Ausgabe
 # =====================================================================
 print('SICHERHEITS-INVARIANTEN\n' + '=' * 78)

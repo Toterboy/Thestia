@@ -759,25 +759,53 @@ serve(async (req) => {
       }
     }
 
-    const { error: updateError } = await supabaseAdmin
-      .from("profiles")
-      .update({
-        is_verified: isVerified,
-        verification_status: isVerified ? "approved" : "rejected",
-        // Bei Ablehnung Pfad entfernen (Video wird unten geloescht).
-        ...(isVerified ? {} : { verification_video_path: null }),
-        // Bei Ablehnung das verifizierte Alter wieder loeschen - ein
-        // abgelehntes Konto darf kein verifiziertes Alter behalten.
-        ...(isVerified ? { verified_age: verifiedAge } : { verified_age: null }),
-        // Zeitpunkt der Freigabe (v0.10.0, Migration 171): Startpunkt
-        // der 30-Tage-Frist fuer das Verifikations-Video. Bei einer
-        // Ablehnung wird er geloescht - dort laeuft die Frist ab dem
-        // Upload.
-        ...(isVerified
-          ? { verification_approved_at: new Date().toISOString() }
-          : { verification_approved_at: null }),
-      })
-      .eq("user_id", targetUserId);
+    // -----------------------------------------------------------------
+    // Das Review passiert jetzt in EINER Datenbanktransaktion.
+    //
+    // BEFUND (Security-Audit 04.11.2026): Der Review-Pfad war die
+    // EINZIGE Aktion ohne Bremse. Die Pfade "submit" und "auto"
+    // hatten ein Rate-Limit, dieser nicht - mit einem geleakten
+    // Admin-Token konnte jemand massenhaft Freigaben erteilen oder
+    // verweigern. Und es gab keinen Audit-Eintrag: wer wann wen
+    // freigab, war nicht nachvollziehbar.
+    //
+    // public.admin_review_verification() (Migration 180) prueft selbst,
+    // dass der Aufrufer Admin ist, begrenzt auf 60 Reviews pro Admin und
+    // Stunde und schreibt den Audit-Eintrag in derselben Transaktion
+    // wie die Aenderung. Ein Review ohne Spur ist damit nicht moeglich.
+    // -----------------------------------------------------------------
+    const { data: reviewData, error: reviewError } = await supabaseAdmin.rpc(
+      "admin_review_verification",
+      {
+        p_admin_id: user.id,
+        p_target_user_id: targetUserId,
+        p_is_verified: isVerified,
+        p_verified_age: verifiedAge,
+      },
+    );
+
+    if (reviewError || !reviewData) {
+      console.error("admin_review_verification fehlgeschlagen:", reviewError);
+      return new Response(JSON.stringify({ error: "Review failed" }), {
+        status: 500, headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const review = reviewData as { ok?: boolean; error?: string };
+    if (review.ok !== true) {
+      // not_admin: die Datenbank hat den Admin bestaetigt - die
+      // Edge Function war zu lax. rate_limited: 60 pro Stunde.
+      const status = review.error === "not_admin"
+        ? 403
+        : review.error === "rate_limited"
+          ? 429
+          : 400;
+      console.error("Review abgelehnt:", review.error);
+      return new Response(
+        JSON.stringify({ error: review.error ?? "review_rejected" }),
+        { status, headers: { "Content-Type": "application/json" } },
+      );
+    }
 
     // Bei Ablehnung auch den Schluessel loeschen (v0.10.0, Migration
     // 151). Sonst bleibt der Schluessel liegen, obwohl das Video weg
@@ -787,13 +815,6 @@ serve(async (req) => {
         .from("verification_video_keys")
         .delete()
         .eq("user_id", targetUserId);
-    }
-
-    if (updateError) {
-      console.error("Update error:", updateError);
-      return new Response(JSON.stringify({ error: "Update failed" }), {
-        status: 500, headers: { "Content-Type": "application/json" },
-      });
     }
 
     // Bei Ablehnung das private Video endgueltig loeschen (DSGVO).

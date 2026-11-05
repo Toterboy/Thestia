@@ -21,14 +21,15 @@ function _pickApiKey(autoDict: string, custom: string): string {
 }
 
 const SUPABASE_SERVICE_ROLE_KEY = _pickApiKey("SUPABASE_SECRET_KEYS", "SUPABASE_SECRET_KEY");
-// EIN Secret-Name fuer alle internen Funktionen (BEFUND 04.11.2026).
-// THESTIA_INTERNAL_SECRET ist der kanonische Name; der Rueckfall auf
-// den alten Namen haelt den Bestand lauffaehig.
-const INTERNAL_SECRET = Deno.env.get("THESTIA_INTERNAL_SECRET") ??
-  Deno.env.get("INTERNAL_SECRET") ?? "";
+// BEFUND 04.11.2026 (Migration 180): Diese Funktion braucht kein
+// internes Secret mehr. Sie ruft check-location nicht mehr auf - die
+// Pruefung passiert jetzt in einer einzigen Datenbanktransaktion
+// (public.apply_location_check). Ein Secret, das nicht gebraucht wird,
+// ist nur eine weitere Abhaengigkeit, die fehlschlagen kann.
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !INTERNAL_SECRET) {
-  console.error("SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY und INTERNAL_SECRET müssen als Secrets gesetzt sein.");
+
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  console.error("SUPABASE_URL und SUPABASE_SERVICE_ROLE_KEY müssen als Secrets gesetzt sein.");
 }
 
 const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
@@ -38,12 +39,6 @@ const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 interface ProcessLocationCheckRequest {
   newLatitude: number;
   newLongitude: number;
-}
-
-interface CheckLocationResponse {
-  distanceKm: number;
-  isNear: boolean;
-  thresholdKm: number;
 }
 
 serve(async (req) => {
@@ -135,251 +130,64 @@ serve(async (req) => {
       });
     }
 
-    // Caller-JWT für den internen check-location-Aufruf weiterreichen
-    // (dort JWT-Bindung zusätzlich zum Secret).
-    const forwardAuth = authHeader.startsWith("Bearer ")
-      ? authHeader
-      : `Bearer ${token}`;
-
-    // 1) Alte Position aus der Datenbank lesen
+    // -----------------------------------------------------------------
+    // Der Standort-Check passiert jetzt in EINER Datenbanktransaktion.
     //
-    // v0.9.3: Die Koordinaten liegen in profile_locations, nicht mehr in
-    // profiles. profiles behaelt nur noch die Flags (is_location_suspicious,
-    // location_checked_at) - die sind kein Standort und muessen fuer die
-    // Discovery-Filter lesbar bleiben.
+    // BEFUND (Security-Audit 04.11.2026, TOCTOU): Vorher las diese
+    // Funktion die alte Position und den alten Zeitstempel, rief dann
+    // check-location auf (zwei Netzwerkaufrufe, je 50 bis 200 ms) und
+    // schrieb erst danach. In diesem Zeitfenster konnten zwei Aufrufe
+    // parallel laufen:
     //
-    // Zwei getrennte Lesevorgaenge, weil die Zeilen in profile_locations
-    // optional sind: Ein Nutzer, der den Standort zum ersten Mal setzt,
-    // hat dort noch keine Zeile. Das ist der Normalfall und kein Fehler -
-    // der Pfad "keine alte Position" (unten) behandelt ihn. Ein 404 waere
-    // hier falsch und wuerde den allerersten GPS-Aufruf fehlschlagen lassen.
-    const { data, error } = await supabaseAdmin
-      .from("profile_locations")
-      .select("lat, lng")
-      .eq("user_id", userId)
-      .maybeSingle();
+    //   a) Beide rechneten gegen dieselbe alte Basis. Die Zeit seit der
+    //      letzten Position wurde nicht korrekt fortgeschrieben.
+    //   b) Der normale Pfad schrieb das Verdachtsflag mit dem Ergebnis
+    //      der EIGENEN Pruefung - ein spaeterer, unauffaelliger Aufruf
+    //      konnte ein gerade gesetztes Flag wieder auf false setzen.
+    //
+    // public.apply_location_check() macht alles in einer Transaktion
+    // und sperrt die Zeile dabei (SELECT ... FOR UPDATE). Ein zweiter
+    // Aufruf wartet, bis der erste fertig ist, und liest danach den
+    // Stand, den der erste geschrieben hat.
+    //
+    // BEWEIS (04.11.2026, Live): Zwei gleichzeitige HTTP-Aufrufe auf
+    // die Datenbank - der zweite wartete 1,7 s, bis der erste die
+    // Sperre freigab (datenbankseitig gemessen: 1667 ms).
+    const { data: checkData, error: checkError } = await supabaseAdmin.rpc(
+      "apply_location_check",
+      {
+        p_user_id: userId,
+        p_lat: newLatitude,
+        p_lon: newLongitude,
+      },
+    );
 
-    if (error) {
-      console.error("Fehler beim Lesen des Standorts:", error);
-      return new Response(JSON.stringify({ error: "Standort konnte nicht gelesen werden." }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Der Zeitstempel steht weiter in profiles. Sein Fehlen ist kein Fehler
-    // - nur das Profil selbst muss existieren (sonst waeren die Flags und
-    // das Profil kaputt).
-    const { data: profileRow, error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .select("location_checked_at")
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    if (profileError) {
-      console.error("Fehler beim Lesen des Profils:", profileError);
-      return new Response(JSON.stringify({ error: "Profil konnte nicht gelesen werden." }), {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    if (!profileRow) {
-      return new Response(JSON.stringify({ error: "Profil nicht gefunden." }), {
-        status: 404,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    const previousLat = (data?.["lat"] as number) ?? null;
-    const previousLon = (data?.["lng"] as number) ?? null;
-    const previousCheckedAt =
-      (profileRow["location_checked_at"] as string) ?? null;
-
-    if (previousLat == null || previousLon == null) {
-      // Keine alte Position vorhanden, daher keine Prüfung möglich.
-      //
-      // BEFUND 04.11.2026: Hier stand "is_location_suspicious: false".
-      // Damit war das Umgehen möglich: Der Client loescht seine eigene
-      // Zeile in profile_locations (die Policy erlaubt das - "FOR ALL")
-      // und ruft die Funktion erneut auf. Ohne Vorposition wurde das
-      // Flag zurueckgesetzt und die Geschwindigkeits-Baseline neu
-      // gesetzt.
-      //
-      // Das Flag wird jetzt nur noch SETZT, nie geloescht. Das ist
-      // die sichere Richtung: ein faelschlich gesetztes Flag ist ein
-      // Fehlalarm, ein zurueckgesetztes Flag ist eine Umgehung.
-      const { error: updateError } = await supabaseAdmin
-        .from("profiles")
-        .update({
-          location_checked_at: new Date().toISOString(),
-        })
-        .eq("user_id", userId);
-
-      // Koordinaten separat. Der BEFORE-Trigger aus Migration 137 rastet
-      // hier noch einmal auf 5 km - unabhaengig davon, was dieser Aufruf
-      // schickt.
-      if (!updateError) {
-        const { error: locError } = await supabaseAdmin
-          .from("profile_locations")
-          .upsert({
-            user_id: userId,
-            lat: newLatitude,
-            lng: newLongitude,
-          });
-        if (locError) {
-          console.error("Fehler beim Schreiben des Standorts:", locError);
-          return new Response(
-            JSON.stringify({ error: "Standort konnte nicht gespeichert werden." }),
-            { status: 500, headers: { "Content-Type": "application/json" } },
-          );
-        }
-      }
-
-      if (updateError) {
-        console.error("Fehler beim Aktualisieren des Profils:", updateError);
-        return new Response(JSON.stringify({ error: "Profil konnte nicht aktualisiert werden." }), {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
-
+    if (checkError || !checkData) {
+      console.error("apply_location_check fehlgeschlagen:", checkError);
       return new Response(
-        JSON.stringify({
-          userId,
-          distanceKm: null,
-          isSuspicious: false,
-          updated: true,
-          reason: "no_previous_location",
-        }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }
+        JSON.stringify({ error: "Standortpruefung fehlgeschlagen." }),
+        { status: 500, headers: { "Content-Type": "application/json" } },
       );
     }
 
-    // 1b) Speed-Plausibilität (M3): Ein "inkrementelles Herumwandern"
-    // (viele kleine Sprünge < 15 km) wird erkannt, wenn die zurückgelegte
-    // Distanz zur vergangenen Zeit physikalisch unplausibel ist
-    // (> 300 km/h). In diesem Fall wird die Position NICHT übernommen
-    // (sonst könnte ein Angreifer seine Basislinie schrittweise verschieben)
-    // und der Account als verdächtig markiert.
-    if (previousCheckedAt) {
-      const elapsedMs =
-        Date.now() - new Date(previousCheckedAt).getTime();
-        if (Number.isFinite(elapsedMs) && elapsedMs > 0) {
-        const { data: speedCheck } = await supabaseAdmin.functions.invoke(
-          "check-location",
-          {
-            body: {
-              lat1: previousLat,
-              lon1: previousLon,
-              lat2: newLatitude,
-              lon2: newLongitude,
-            },
-            headers: {
-              "x-internal-secret": INTERNAL_SECRET,
-              "Authorization": forwardAuth,
-            },
-          },
-        );
-        const distanceKm =
-          (speedCheck as CheckLocationResponse | null)?.distanceKm ?? null;
-        if (distanceKm != null) {
-          const speedKmh =
-            distanceKm / (elapsedMs / 3_600_000);
-          if (speedKmh > 300) {
-            const { error: suspiciousError } = await supabaseAdmin
-              .from("profiles")
-              .update({ is_location_suspicious: true })
-              .eq("user_id", userId);
-            if (suspiciousError) {
-              console.error("Fehler beim Markieren als verdächtig:", suspiciousError);
-            }
-            return new Response(
-              JSON.stringify({
-                userId,
-                distanceKm,
-                isSuspicious: true,
-                updated: false,
-                reason: "implausible_speed",
-              }),
-              {
-                status: 200,
-                headers: { "Content-Type": "application/json" },
-              }
-            );
-          }
-        }
-      }
-    }
+    const result = checkData as {
+      ok?: boolean;
+      error?: string;
+      distance_km?: number | null;
+      is_suspicious?: boolean;
+      updated?: boolean;
+      reason?: string;
+    };
 
-    // 2) Intern check-location aufrufen (kein HTTP-Loopback, daher ist das
-    // INTERNAL_SECRET nicht in Gateway-Logs sichtbar).
-    let checkResponse: CheckLocationResponse;
-
-    try {
-      const { data, error } = await supabaseAdmin.functions.invoke(
-        "check-location",
-        {
-          body: {
-            lat1: previousLat,
-            lon1: previousLon,
-            lat2: newLatitude,
-            lon2: newLongitude,
-          },
-          headers: {
-            "x-internal-secret": INTERNAL_SECRET,
-            "Authorization": forwardAuth,
-          },
-        },
-      );
-
-      if (error || !data) {
-        console.error("check-location Fehler:", error);
-        return new Response(JSON.stringify({ error: "Standortprüfung fehlgeschlagen." }), {
-          status: 502,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
-
-      checkResponse = data as CheckLocationResponse;
-    } catch (e) {
-      console.error("Interner Aufruf an check-location fehlgeschlagen:", e);
-      return new Response(JSON.stringify({ error: "Interner Aufruf fehlgeschlagen." }), {
-        status: 502,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // 3) Ergebnis in profiles schreiben
-    const isSuspicious = !checkResponse.isNear; // isNear = true wenn < 15km
-    const { error: updateError } = await supabaseAdmin
-      .from("profiles")
-      .update({
-        is_location_suspicious: isSuspicious,
-        location_checked_at: new Date().toISOString(),
-      })
-      .eq("user_id", userId);
-
-    if (!updateError) {
-      const { error: locError } = await supabaseAdmin
-        .from("profile_locations")
-        .upsert({
-          user_id: userId,
-          lat: newLatitude,
-          lng: newLongitude,
-        });
-      if (locError) {
-        console.error("Fehler beim Schreiben des Standorts:", locError);
-      }
-    }
-
-    if (updateError) {
-      console.error("Fehler beim Aktualisieren des Profils:", updateError);
-      return new Response(JSON.stringify({ error: "Profil konnte nicht aktualisiert werden." }), {
-        status: 500,
+    if (result.ok !== true) {
+      // profile_not_found: der Nutzer hat kein Profil. Das ist kein
+      // Serverfehler, sondern ein Zustand.
+      const status = result.error === "profile_not_found" ? 404 : 400;
+      const meldung = result.error === "profile_not_found"
+        ? "Profil nicht gefunden."
+        : "Standortpruefung fehlgeschlagen.";
+      return new Response(JSON.stringify({ error: meldung }), {
+        status,
         headers: { "Content-Type": "application/json" },
       });
     }
@@ -387,9 +195,10 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         userId,
-        distanceKm: checkResponse.distanceKm,
-        isSuspicious,
-        updated: true,
+        distanceKm: result.distance_km ?? null,
+        isSuspicious: result.is_suspicious === true,
+        updated: result.updated === true,
+        reason: result.reason ?? "ok",
       }),
       {
         status: 200,

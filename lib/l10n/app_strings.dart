@@ -441,6 +441,16 @@ const Map<String, Map<String, String>> _strings = {
     'guardian.notifyFrequency.daily': 'Täglich',
     'guardian.notifyFrequency.weekly': 'Wöchentlich',
     'guardian.notifyFrequency.monthly': 'Monatlich',
+  'guardian.endedTitle': 'Die Freigabe ist beendet',
+  'guardian.endedText':
+      'Die elterliche Freigabe wurde beendet und gilt nicht mehr.',
+  'guardian.endedTextEmailDeleted':
+      'Die elterliche Freigabe wurde beendet. Die E-Mail-Adresse des '
+      'Elternteils wurde dabei gelöscht - sie wird nicht mehr gebraucht '
+      'und nicht mehr aufbewahrt.',
+  'guardian.endedTextEmailPending':
+      'Die elterliche Freigabe wurde beendet. Die E-Mail-Adresse des '
+      'Elternteils wird mit dem Ende der Freigabe gelöscht.',
     'guardian.notifyFrequency.none': 'Gar nicht',
     'guardian.usageTitle': 'Nutzungszeit',
     'guardian.usageText':
@@ -3654,6 +3664,15 @@ const Map<String, Map<String, String>> _strings = {
     'guardian.notifyFrequency.daily': 'Daily',
     'guardian.notifyFrequency.weekly': 'Weekly',
     'guardian.notifyFrequency.monthly': 'Monthly',
+  'guardian.endedTitle': 'The approval has ended',
+  'guardian.endedText':
+      'The parental approval has ended and no longer applies.',
+  'guardian.endedTextEmailDeleted':
+      'The parental approval has ended. The parent\'s email address was '
+      'deleted with it - it is no longer needed and no longer kept.',
+  'guardian.endedTextEmailPending':
+      'The parental approval has ended. The parent\'s email address is '
+      'deleted when the approval ends.',
     'guardian.notifyFrequency.none': 'Never',
     'guardian.usageTitle': 'Usage time',
     'guardian.usageText':

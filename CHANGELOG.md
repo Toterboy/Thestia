@@ -282,6 +282,65 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 ### Hinzugefügt
 
+- **Der Standort-Check ist jetzt atomar** (04.11.2026, Migration 180):
+  Bisher las die Funktion die alte Position, rief `check-location` auf
+  (zwei Netzwerkaufrufe) und schrieb erst danach. In diesem Zeitfenster
+  konnten zwei Aufrufe parallel laufen: Beide rechneten gegen dieselbe
+  veraltete Basis, und der normale Pfad schrieb das Verdachtsflag mit
+  dem Ergebnis der *eigenen* Prüfung - ein späterer, unauffälliger
+  Aufruf konnte ein gerade gesetztes Flag wieder auf false setzen.
+  Jetzt passiert alles in **einer** Datenbanktransaktion unter einer
+  Zeilensperre (`SELECT ... FOR UPDATE`). *Bewiesen:* Zwei gleichzeitige
+  Aufrufe auf die Live-Datenbank - der zweite wartete 1,7 s, bis der
+  erste die Sperre freigab (datenbankseitig gemessen: 1667 ms).
+- **Das Admin-Review hat jetzt eine Bremse und eine Spur**
+  (04.11.2026, Migration 180/181): Der Review-Pfad war die einzige
+  Aktion ohne Rate-Limit - mit einem geleakten Admin-Token ließ sich
+  massenhaft freigeben oder verweigern. Und es gab keinen einzigen
+  Eintrag darüber, wer wen wann freigegeben hat. Jetzt prüft die
+  *Datenbank* selbst, dass der Aufrufer Admin ist, begrenzt auf 60
+  Reviews pro Admin und Stunde und schreibt jeden Vorgang in eine neue
+  Tabelle `admin_action_audit` - in derselben Transaktion wie die
+  Änderung. Ein Review ohne Spur ist damit nicht mehr möglich.
+- **Die App sagt jetzt, was mit der E-Mail des Elternteils passiert**
+  (04.11.2026): Nach dem Ende der Freigabe sah der Screen aus wie
+  "es gab nie eine Freigabe". Jetzt steht dort "Die Freigabe ist
+  beendet" - und, dass die E-Mail-Adresse des Elternteils dabei
+  gelöscht wurde. Der Server meldet den Löschzeitpunkt mit, die App
+  behauptet es also nicht ohne Beleg.
+- **Die Tabellen der Website sind abgerundet** (04.11.2026): Das pinke
+  Element (der Tabellenkopf) bei "Daten löschen" hatte eckige Ecken,
+  weil die Tabellen nicht in der abgerundeten Hülle lagen. Jetzt tun
+  sie das.
+- **Der Freigabe-Link für Elternteile gilt nur noch 24 Stunden**
+  (04.11.2026, Migration 179): Bisher war er 14 Tage gültig - und ein
+  Link, der zwei Wochen in einem Postkasten liegt, wird irgendwann von
+  einer fremden Person benutzt. Die Frist steht jetzt im Server
+  (`token_expires_at = now() + interval '24 hours'`), nicht nur im
+  Text. Auch die offenen Links aus dem Bestand wurden auf 24 Stunden
+  gekürzt.
+- **Die E-Mail-Adresse des Elternteils verschwindet mit der Freigabe**
+  (04.11.2026, Migration 179): Endet die Freigabe, wird die Adresse
+  gelöscht - sie wird dann für nichts mehr gebraucht (keine
+  Benachrichtigungen, kein Zugang zum Elternportal). Das gilt für alle
+  drei Wege: der Jugendliche beendet, der Elternteil widerruft, der
+  Zugriff endet sofort. **Eine Ausnahme:** Wer „noch einen Monat
+  behalten" wählt, hat die Freigabe noch nicht beendet - dann bleibt
+  die Adresse bis nach dem Monat stehen und wird erst dann gelöscht
+  (der Cron räumt sie ab). Wann gelöscht wurde, steht in
+  `email_deleted_at`.
+- **Jede Website-Seite hat jetzt eine englische Fassung** (04.11.2026):
+  Die Bestätigungsseite war die letzte ohne. Alle 20 Seiten sind jetzt
+  zweisprachig, jede verlinkt auf die andere Fassung, und eine neue
+  Dauerprüfung (`tool/check_publish_folder.py`) sagt es, wenn eine
+  Seite fehlt.
+- **Die Kopfschaltflächen der Website sitzen wieder auf gleicher Höhe**
+  (04.11.2026): Der Modus-Knopf (Hell/Dunkel) und der Sprachknopf waren
+  im Elternbereich 5,6 px versetzt. Ursache war eine seiten-eigene
+  Formular-Regel, die auch den Modus-Knopf traf - er ist ja ein
+  `label`. Die Kopf-Knöpfe bekommen jetzt kein `margin` mehr, und ihr
+  Kürzel sitzt mittig im Knopf.
+
 - **Der Freigabe-Link für Elternteile gilt nur noch 24 Stunden**
   (04.11.2026, Migration 179): Bisher war er 14 Tage gültig - und ein
   Link, der zwei Wochen in einem Postkasten liegt, wird irgendwann von
