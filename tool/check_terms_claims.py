@@ -124,8 +124,10 @@ def main() -> int:
          "using the app",
          "the parental approval is voluntary"),
     ]
+    # Auch die App-Texte: der Jugendliche liest sie im Elternbereich.
     alle_seiten = sorted(
         p for p in (ROOT / "passkey-assets").rglob("*.html"))
+    alle_seiten.append(ROOT / "lib" / "l10n" / "app_strings.dart")
     for satz, warum in verboten:
         for seite in alle_seiten:
             inhalt = lies(seite)
@@ -153,18 +155,25 @@ def main() -> int:
         r'must (?:have|obtain) (?:a )?(?:legal )?guardian',
     ]
     freiwillig_woerter = ('freiwillig', 'voluntary', 'ablehnen', 'without it')
+    def saetze(inhalt: str) -> list:
+        """Der Text in Saetzen - fuer die HTML-Seiten wird der Absatz
+        genommen, damit ein Absatz nicht als ein Riesensatz gilt."""
+        roh = re.split(r'(?<=</p>)|(?<=\n\n)|(?<=\n)', inhalt)
+        return [s for s in roh if s.strip()]
+
     for seite in alle_seiten:
         rel = str(seite.relative_to(ROOT))
         inhalt = lies(seite)
-        behauptet_pflicht = any(
-            re.search(m, inhalt, re.I) for m in pflicht_muster)
-        if behauptet_pflicht:
-            if not any(w in inhalt for w in freiwillig_woerter):
+        for absatz in saetze(inhalt):
+            if not any(re.search(m, absatz, re.I) for m in pflicht_muster):
+                continue
+            if not any(w in absatz for w in freiwillig_woerter):
                 fehlend.append((
                     "%s: behauptet eine Pflicht der Zustimmung" % rel,
                     "die Zustimmung ist freiwillig (Par. 3a JUG)"))
                 print("  FEHLT   %s behauptet eine Pflicht der Zustimmung, "
-                      "nennt sie aber nicht freiwillig" % rel)
+                      "nennt sie aber nicht freiwillig:" % rel)
+                print("            %s" % " ".join(absatz.split())[:130])
 
     print("=" * 74)
     if fehlend:
