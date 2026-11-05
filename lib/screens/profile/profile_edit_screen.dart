@@ -33,6 +33,7 @@ import 'package:thestia/widgets/gender_preference_selector.dart';
 import 'package:thestia/widgets/music_taste_widgets.dart';
 import 'package:thestia/widgets/habitude_selector.dart';
 import 'package:thestia/widgets/intro_editor.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Unterstützte Wohnsitzländer (Auswahl für die Profilangabe).
 
@@ -367,11 +368,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     _dirtyController = null;
     if (dirtyController != null) {
       scheduleMicrotask(() {
-        try {
+                // Container bereits weg (App-Ende) - nichts zu tun.
+bestEffortSync(' dirtyController.state = false;', () {
           dirtyController.state = false;
-        } catch (_) {
-          // Container bereits weg (App-Ende) - nichts zu tun.
-        }
+        });
       });
     }
     _profileSub?.close();

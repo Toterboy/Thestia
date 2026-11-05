@@ -16,6 +16,7 @@ import 'package:thestia/screens/interests/interessen_screen.dart'
 import 'package:thestia/services/seen_service.dart';
 import 'package:thestia/utils/age_safety_rules.dart';
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Hat der Nutzer schon wirklich jemanden angeschrieben?
 ///
@@ -132,11 +133,11 @@ class _EntdeckeCard extends StatelessWidget {
 /// Erhalten (1), Funken/Nachrichten -> Funken (2). Zurück landet wieder
 /// auf Aktuelles.
 void _goToInteressenTab(BuildContext context, int tab) {
-  try {
+  bestEffortSync('containerOf.read', () {
     ProviderScope.containerOf(context)
         .read(interessenInitialTabProvider.notifier)
         .state = tab;
-  } catch (_) {}
+  });
   context.push(AppRoutes.interessen);
 }
 
@@ -174,9 +175,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    try {
+    bestEffortSync('unsubscribe', () {
       routeObserver.unsubscribe(this);
-    } catch (_) {}
+    });
     super.dispose();
   }
 
@@ -196,11 +197,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _refreshCounts() {
-    try {
+    bestEffortSync('invalidate', () {
       ref.invalidate(pendingLikesCountProvider);
       ref.invalidate(receivedLikesProvider);
       ref.invalidate(serverMatchesProvider);
-    } catch (_) {}
+    });
   }
 
   @override

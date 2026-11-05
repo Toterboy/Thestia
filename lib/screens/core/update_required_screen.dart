@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Screen fuer "dieses Build ist zu alt".
 ///
@@ -77,17 +78,22 @@ class UpdateRequiredScreen extends StatelessWidget {
           'https://play.google.com/store/apps/details?id=com.thestia.app'),
     ];
     for (final uri in uris) {
-      try {
-        // Nur den ersten Eintrag versuchen, der ueberhaupt startbar
-        // ist - sonst tappt der Nutzer auf einen Store, den es auf
-        // dem Geraet nicht gibt.
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-          return;
-        }
-      } catch (_) {
-        // naechste Option versuchen
-      }
+      // naechste Option versuchen
+      final gestartet = await bestEffortOr(
+        'launchUrl',
+        () async {
+          // Nur den ersten Eintrag versuchen, der ueberhaupt startbar
+          // ist - sonst tappt der Nutzer auf einen Store, den es auf
+          // dem Geraet nicht gibt.
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+            return true;
+          }
+          return false;
+        },
+        false,
+      );
+      if (gestartet) return;
     }
   }
 }

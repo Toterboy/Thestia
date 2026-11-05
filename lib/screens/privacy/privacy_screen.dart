@@ -25,6 +25,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show UserAttributes;
 import 'package:thestia/services/mfa_service.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/utils/constants.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// DSGVO-relevanter Datenschutz- und Account-Screen.
 ///
@@ -118,11 +119,10 @@ class PrivacyScreen extends ConsumerWidget {
         // Temporäre Export-Datei (enthält alle Profildaten) wieder
         // löschen, damit nichts im Temp-Verzeichnis liegen bleibt
         // (Audit N2).
-        try {
+                // Best effort.
+await bestEffort('delete', () async {
           if (await file.exists()) await file.delete();
-        } catch (_) {
-          // Best effort.
-        }
+        });
       }
     } catch (e) {
       if (context.mounted) {

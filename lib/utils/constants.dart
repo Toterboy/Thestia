@@ -1,4 +1,5 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// App-weite Konstanten (Schlüssel, Defaults).
 class AppConstants {
@@ -20,12 +21,16 @@ class AppConstants {
   /// Gibt die Supabase-User-ID zurück, wenn eine Session aktiv ist,
   /// sonst die Demo-ID `'me'` für den lokalen Modus.
   static String get currentUserId {
-    try {
-      // ignore: avoid_dynamic_calls
-      final uid = _supabaseUserIdGetter?.call();
-      if (uid != null && uid.isNotEmpty) return uid;
-    } catch (_) {}
-    return _demoUserId;
+    final uid = bestEffortOrSync(
+      'supabaseUserId',
+      () {
+        // ignore: avoid_dynamic_calls
+        final wert = _supabaseUserIdGetter?.call();
+        return (wert != null && wert.isNotEmpty) ? wert : '';
+      },
+      '',
+    );
+    return uid.isEmpty ? _demoUserId : uid;
   }
 
   /// Wird in main.dart gesetzt, um die Supabase-User-ID abzurufen,

@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
 import 'package:thestia/services/verification_service.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Regressionstest für den Root-Cause-Fix "Einreichen schlägt fehl":
 /// VerificationVideo hat KEINEN Hive-TypeAdapter und wird deshalb als
@@ -70,9 +71,9 @@ void main() {
 
     tearDown(() async {
       await Hive.close();
-      try {
+      await bestEffort('tempDir.delete', () async {
         await tempDir.delete(recursive: true);
-      } catch (_) {}
+      });
     });
 
     test(

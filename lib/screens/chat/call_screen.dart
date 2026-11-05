@@ -13,6 +13,7 @@ import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/data/icebreaker_catalog.dart';
 import 'package:thestia/services/p2p_chat_service.dart';
 import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// ID des aktuell aktiven Anrufs (oder null).
 ///
@@ -104,9 +105,9 @@ class _CallScreenState extends ConsumerState<CallScreen> {
       _recorder.stop().catchError((_) => '');
     }
     _playQueue.clear();
-    try {
+    bestEffortSync('stop', () {
       _player.stop();
-    } catch (_) {}
+    });
     _player.dispose();
     _recorder.dispose();
     if (ref.read(activeCallIdProvider) == _callId) {
@@ -147,15 +148,14 @@ class _CallScreenState extends ConsumerState<CallScreen> {
       // Auf offenen DataChannel warten (max. 10 s), bevor das Invite raus
       // geht - vorher scheiterte es sofort mit StateError.
       if (!widget.isIncoming && !p2p.isDataChannelOpen) {
-        try {
+                // Timeout oder Stream-Ende: unten folgt die Prüfung.
+await bestEffort('Duration', () async {
           await p2p.connectionState
               .firstWhere(
                 (s) => s == RTCDataChannelState.RTCDataChannelOpen,
               )
               .timeout(const Duration(seconds: 10));
-        } catch (_) {
-          // Timeout oder Stream-Ende: unten folgt die Prüfung.
-        }
+        });
         if (!p2p.isDataChannelOpen) {
           throw StateError('DataChannel nicht offen');
         }
@@ -308,9 +308,9 @@ class _CallScreenState extends ConsumerState<CallScreen> {
           '${dir.path}/thestia_call_${DateTime.now().millisecondsSinceEpoch}.m4a');
       await file.writeAsBytes(record.data);
       if (_disposed) {
-        try {
+        await bestEffort('delete', () async {
           await file.delete();
-        } catch (_) {}
+        });
         return;
       }
       _playQueue.add(file.path);
@@ -335,13 +335,13 @@ class _CallScreenState extends ConsumerState<CallScreen> {
       } catch (e) {
         debugPrint('[CallScreen] Wiedergabe fehlgeschlagen: $e');
       } finally {
-        try {
+        await bestEffort('stop', () async {
           await _player.stop();
-        } catch (_) {}
+        });
         final f = File(path);
-        try {
+        await bestEffort('delete', () async {
           if (await f.exists()) await f.delete();
-        } catch (_) {}
+        });
       }
     }
     _playing = false;
@@ -409,9 +409,9 @@ class _CallScreenState extends ConsumerState<CallScreen> {
     _recordingPath = null;
     _recording = false;
     if (!mounted) {
-      try {
+      await bestEffort('stop', () async {
         await _recorder.stop();
-      } catch (_) {}
+      });
       return;
     }
     setState(() {
@@ -426,9 +426,9 @@ class _CallScreenState extends ConsumerState<CallScreen> {
       }
       final file = File(recordedPath);
       final bytes = await file.readAsBytes();
-      try {
+      await bestEffort('delete', () async {
         await file.delete();
-      } catch (_) {}
+      });
 
       if (bytes.isEmpty) {
         if (mounted) setState(() => _sendingAudio = false);

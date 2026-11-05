@@ -10,6 +10,7 @@ import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/services/whats_new_service.dart';
 import 'package:thestia/widgets/birthday_style.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// "Neu in dieser Version"-Screen (NUTZERWUNSCH): Bei einem App-Update
 /// bekommen bereits registrierte Nutzer einmalig die Änderungs-
@@ -62,14 +63,13 @@ class _WhatsNewScreenState extends ConsumerState<WhatsNewScreen> {
           birthdayStyle: _pickedStyle ?? currentStyle,
         );
     if (SupabaseService.isInitialized) {
-      try {
+            // Fail-open: Lokal gespeichert, Auto-Sync holt es nach.
+await bestEffort('SupabaseDatabaseService.updateOwnProfile', () async {
         await SupabaseDatabaseService(SupabaseService.client)
             .updateOwnProfile({
           'birthday_style': _pickedStyle ?? currentStyle,
         });
-      } catch (_) {
-        // Fail-open: Lokal gespeichert, Auto-Sync holt es nach.
-      }
+      });
     }
     if (mounted) {
       context.go(AppRoutes.home);

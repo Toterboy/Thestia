@@ -11,6 +11,7 @@ import 'package:thestia/models/signal_key_models.dart';
 import 'package:thestia/services/backup_crypto.dart';
 import 'package:thestia/services/hive_signal_store.dart';
 import 'package:thestia/services/secure_hive.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Zentrale Service-Klasse für Ende-zu-Ende-Verschlüsselung mit dem Signal Protocol.
 ///
@@ -564,11 +565,13 @@ class EncryptionService {
     final peerKeyB64 = _decodeTrustEntry(peerId)?['identityKeyPublic'] as String?;
     if (peerKeyB64 == null || _identityKeyPair == null) return null;
     if (localUserId != null) {
-      try {
-        return fingerprintSafetyNumber(peerId, peerKeyB64);
-      } catch (_) {
-        // Fall through zum Legacy-Schema.
-      }
+      // Fall through zum Legacy-Schema.
+      final sicher = bestEffortOrSync(
+        'fingerprintSafetyNumber',
+        () => fingerprintSafetyNumber(peerId, peerKeyB64),
+        null,
+      );
+      if (sicher != null) return sicher;
     }
     return computeSafetyNumber(
       _identityKeyPair!.getPublicKey().serialize(),

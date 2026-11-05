@@ -11,6 +11,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:thestia/services/transit_encounter_service.dart';
 import 'package:thestia/services/transit_ble_privacy.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// BLE-Schicht für Transit Spark (Phase 1, v0.9.0).
 ///
@@ -90,28 +91,33 @@ class TransitBleService {
       // (besonders Android 11) ohne klare Exception. Die App kann den
       // Dienst nicht selbst einschalten (Android verbietet das), aber die
       // UI kann per Geolocator.openLocationSettings() dorthin führen.
-      try {
-        final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-        if (!serviceEnabled) {
-          lastError = 'location_service';
-          return false;
-        }
-      } catch (_) {
-        // Geolocator nicht verfügbar -> nicht blockieren.
+      // Geolocator nicht verfügbar -> nicht blockieren.
+      final dienstOk = await bestEffortOr(
+        'Geolocator.isLocationServiceEnabled',
+        () async => await Geolocator.isLocationServiceEnabled(),
+        true,
+      );
+      if (!dienstOk) {
+        lastError = 'location_service';
+        return false;
       }
 
       // Bluetooth AUS? (Fix "Bluetooth-Popup kam nicht"): Permissions
       // können vollständig erteilt sein und der Adapter trotzdem AUS
       // sein - dann schlägt Advertising mit 'advertise_failed' fehl und
       // der Screen bricht ab, ohne den Aktivieren-Dialog zu zeigen.
-      try {
-        final adapterState = await FlutterBluePlus.adapterState.first;
-        if (adapterState != BluetoothAdapterState.on) {
-          lastError = 'bluetooth_off';
-          return false;
-        }
-      } catch (_) {
-        // Adapter-Status nicht ablesbar -> nicht blockieren.
+      // Adapter-Status nicht ablesbar -> nicht blockieren.
+      final adapterOk = await bestEffortOr(
+        'FlutterBluePlus.adapterState',
+        () async {
+          final adapterState = await FlutterBluePlus.adapterState.first;
+          return adapterState == BluetoothAdapterState.on;
+        },
+        true,
+      );
+      if (!adapterOk) {
+        lastError = 'bluetooth_off';
+        return false;
       }
 
       final info = await DeviceInfoPlugin().androidInfo;

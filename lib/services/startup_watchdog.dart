@@ -1,3 +1,4 @@
+import 'package:thestia/utils/best_effort.dart';
 import 'dart:async';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -80,7 +81,8 @@ class StartupWatchdog {
   }
 
   static Future<void> _write(String step, Object? error) async {
-    try {
+        // never let the watchdog cause the failure it watches
+await bestEffort('now.toIso8601String', () async {
       final p = await _prefs();
       await p.setString(_stepKey, step);
       await p.setString(_timeKey, DateTime.now().toIso8601String());
@@ -91,9 +93,7 @@ class StartupWatchdog {
       } else {
         await p.remove(_errorKey);
       }
-    } catch (_) {
-      // never let the watchdog cause the failure it watches
-    }
+    });
   }
 
   /// Markiert den Start als erfolgreich abgeschlossen.
@@ -102,11 +102,11 @@ class StartupWatchdog {
   }
 
   static Future<void> _markAlive() async {
-    try {
+    await bestEffort('remove', () async {
       final p = await _prefs();
       await p.setBool(_aliveKey, true);
       await p.remove(_errorKey);
-    } catch (_) {}
+    });
   }
 
   /// Befund über den letzten Startversuch.

@@ -8,6 +8,7 @@ import 'package:unifiedpush/unifiedpush.dart';
 
 import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Google-freier Push über UnifiedPush (F-Droid-Variante, Roadmap-Spike).
 ///
@@ -89,14 +90,14 @@ class UnifiedPushService {
 
   /// Deaktiviert: Abmeldung + Endpunkt serverseitig entfernen.
   static Future<void> disable() async {
-    try {
+    await bestEffort('unregister', () async {
       await UnifiedPush.unregister();
-    } catch (_) {}
+    });
     if (SupabaseService.isInitialized) {
-      try {
+      await bestEffort('SupabaseDatabaseService.updateOwnProfile', () async {
         await SupabaseDatabaseService(SupabaseService.client)
             .updateOwnProfile({'up_endpoint': null});
-      } catch (_) {}
+      });
     }
   }
   static Future<void> _onNewEndpoint(
@@ -137,7 +138,7 @@ class UnifiedPushService {
     String body = 'Du hast eine neue Nachricht erhalten.';
     String? kind;
     String? from;
-    try {
+    await bestEffort('PushMessage.decode', () async {
       final text = utf8.decode(message.content);
       if (text.startsWith('{')) {
         final map = jsonDecode(text) as Map<String, dynamic>;
@@ -148,11 +149,17 @@ class UnifiedPushService {
       } else {
         body = text;
       }
-    } catch (_) {}
+    });
     // Chat offen + Vordergrund -> unterdrücken (wie im FCM-Pfad).
+    //
+    // Der Absender wird in eine eigene Variable geholt: "from" wird
+    // oben in einer Closure zugewiesen, und eine Variable, die in
+    // einer Closure zugewiesen wird, lässt sich nicht mehr auf
+    // "nicht null" hochrechnen.
+    final absender = from;
     if (kind == 'messages' &&
-        from != null &&
-        suppressCheck?.call(from) == true) {
+        absender != null &&
+        suppressCheck?.call(absender) == true) {
       return;
     }
     await _showLocalNotification(title: title, message: body);

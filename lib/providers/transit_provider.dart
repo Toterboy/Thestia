@@ -11,6 +11,7 @@ import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/services/transit_ble_service.dart';
 import 'package:thestia/services/transit_ble_privacy.dart';
 import 'package:thestia/services/transit_encounter_service.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Transit-Aktivitätsdauer (Session-Fenster).
 const Duration kTransitSessionDuration = Duration(minutes: 45);
@@ -135,10 +136,10 @@ class TransitNotifier extends StateNotifier<TransitState>
     final ok = await TransitBleService.instance.resume(token: neuerToken);
     if (!ok) return;
     if (SupabaseService.isInitialized) {
-      try {
+      await bestEffort('SupabaseDatabaseService.transitPresenceHeartbeat', () async {
         await SupabaseDatabaseService(SupabaseService.client)
             .transitPresenceHeartbeat(neuerToken);
-      } catch (_) {}
+      });
     }
   }
 
@@ -286,10 +287,10 @@ class TransitNotifier extends StateNotifier<TransitState>
         onEncounter: _recordEncounter,
       );
       if (SupabaseService.isInitialized) {
-        try {
+        await bestEffort('SupabaseDatabaseService.transitPresenceHeartbeat', () async {
           await SupabaseDatabaseService(SupabaseService.client)
               .transitPresenceHeartbeat(newToken);
-        } catch (_) {}
+        });
       }
       if (state.active) _scheduleRotation();
     });

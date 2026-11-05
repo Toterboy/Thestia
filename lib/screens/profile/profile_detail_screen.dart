@@ -25,6 +25,7 @@ import 'package:thestia/widgets/intro_audio_player.dart';
 import 'package:thestia/widgets/new_account_badge.dart';
 import 'package:thestia/widgets/profile_widgets.dart';
 import 'package:thestia/widgets/music_taste_widgets.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Versucht, ein Nutzerprofil anhand seiner ID aus den verfügbaren Quellen
 /// aufzulösen (eigenes Profil, Matches). Liefert null, wenn kein Profil in
@@ -88,7 +89,8 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
     // Frische Serverdaten bevorzugen (v0.9.1-Fix: der lokale Chat-Partner
     // war oft veraltet - ohne Vorstellungstext/Audio-Pfad wirkte die
     // Vorstellung als "nicht sichtbar/hörbar"). Server-Fehler -> lokal.
-    try {
+        // Kein Supabase verfügbar oder User nicht gefunden.
+await bestEffort('from', () async {
       final db = ref.read(supabaseDatabaseServiceProvider);
       final row = await db.fetchPublicProfile(userId);
       if (row != null) {
@@ -96,14 +98,12 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
           Map<String, dynamic>.from(row as Map),
         );
       }
-    } catch (_) {
-      // Kein Supabase verfügbar oder User nicht gefunden.
-    }
+    });
 
     // Distanz serverseitig berechnet, Anzeige als 10-km-Stufe.
     //   Der Server liefert null, wenn die andere Person die Anzeige
     //   nicht freigegeben hat - dann steht hier nichts.
-    try {
+    await bestEffort('t', () async {
       final db = ref.read(supabaseDatabaseServiceProvider);
       final distance = await db.fetchDistanceKm(userId);
       if (mounted) {
@@ -114,7 +114,7 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
           );
         });
       }
-    } catch (_) {}
+    });
 
     if (mounted) {
       setState(() {

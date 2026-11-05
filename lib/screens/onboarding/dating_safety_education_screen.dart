@@ -10,6 +10,7 @@ import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/providers/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Ausführliche Fassung der Sicherheits-Aufklärung (statische Seite).
 ///
@@ -177,9 +178,9 @@ class _DatingSafetyEducationScreenState
     } catch (_) {
       // Wiederherstellung fehlgeschlagen (kaputter/alter Eintrag,
       // Storage-Fehler): von vorn beginnen.
-      try {
+      await bestEffort('localStorageProvider.remove', () async {
         await ref.read(localStorageProvider).remove(_progressKey);
-      } catch (_) {}
+      });
       if (!mounted) return;
       setState(() {
         _progress = const _SafetyProgress();
@@ -189,14 +190,13 @@ class _DatingSafetyEducationScreenState
   }
 
   Future<void> _save() async {
-    try {
+        // Speichern ist Komfort, kein Gate: der Abschluss wird am Ende
+      // separat und dauerhaft gesetzt.
+await bestEffort('localStorageProvider.saveString', () async {
       await ref
           .read(localStorageProvider)
           .saveString(_progressKey, jsonEncode(_progress.toJson()));
-    } catch (_) {
-      // Speichern ist Komfort, kein Gate: der Abschluss wird am Ende
-      // separat und dauerhaft gesetzt.
-    }
+    });
   }
 
   void _setStep(_SafetyStep step) {
@@ -290,9 +290,9 @@ class _DatingSafetyEducationScreenState
     _finishing = true;
     _ticker?.cancel();
     await ref.read(settingsProvider.notifier).completeDatingSafetyEducation();
-    try {
+    await bestEffort('localStorageProvider.remove', () async {
       await ref.read(localStorageProvider).remove(_progressKey);
-    } catch (_) {}
+    });
     if (!mounted) return;
     context.go(AppRoutes.home);
   }
@@ -663,15 +663,14 @@ class _DatingSafetyEducationScreenState
   /// (url_launcher, externer Browser). Keine Nutzungsdaten, keine
   /// Parameter.
   Future<void> _openWebsite() async {
-    try {
+        // Kein Browser oder kein Netz: die Aufklärung läuft ohnehin
+      // weiter, der Link ist nur ein Extra.
+await bestEffort('parse', () async {
       await launchUrl(
         Uri.parse(kDatingSafetyUrl),
         mode: LaunchMode.externalApplication,
       );
-    } catch (_) {
-      // Kein Browser oder kein Netz: die Aufklärung läuft ohnehin
-      // weiter, der Link ist nur ein Extra.
-    }
+    });
   }
 }
 

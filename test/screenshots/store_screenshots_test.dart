@@ -32,6 +32,7 @@ import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/services/secure_storage.dart';
 import 'package:thestia/theme/app_theme.dart';
 import 'package:thestia/widgets/theme_picker.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 bool _fontsLoaded = false;
 
@@ -61,7 +62,8 @@ Future<void> _loadFontsOnce() async {
     }
   }
   // Material Icons (liegen im Flutter-Cache).
-  try {
+  // Ohne Icon-Font rendern Icons als Platzhalter - Screens bleiben nutzbar.
+  await bestEffort('FontLoader.load', () async {
     final dartExe = File(Platform.resolvedExecutable);
     // .../flutter/bin/cache/dart-sdk/bin/dart.exe -> .../flutter/bin/cache
     final cacheDir = dartExe.parent.parent.parent.parent;
@@ -76,9 +78,7 @@ Future<void> _loadFontsOnce() async {
         ..addFont(Future.value(ByteData.sublistView(bytes)));
       await loader.load();
     }
-  } catch (_) {
-    // Ohne Icon-Font rendern Icons als Platzhalter - Screens bleiben nutzbar.
-  }
+  });
   _fontsLoaded = true;
 }
 

@@ -13,6 +13,7 @@ import 'package:thestia/providers/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/services/mfa_service.dart';
 import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// 2FA-Einrichtung (Authenticator-App / TOTP) – wird nach der
 /// E-Mail-Bestätigung als optionaler Schritt angezeigt.
@@ -70,14 +71,13 @@ class _MfaSetupScreenState extends ConsumerState<MfaSetupScreen> {
   Future<void> _refreshStatus() async {
     final service = _tryGetService();
     if (service == null) return;
-    try {
+    // Best effort: Intro bleibt sichtbar.
+    await bestEffort('mfaService.loadStatus', () async {
       final status = await service.loadStatus();
       if (!mounted) return;
       ref.read(mfaStatusProvider.notifier).state = status;
       setState(() => _twoFaActive = status.hasVerifiedFactors);
-    } catch (_) {
-      // Best effort: Intro bleibt sichtbar.
-    }
+    });
   }
 
   @override
@@ -185,11 +185,10 @@ class _MfaSetupScreenState extends ConsumerState<MfaSetupScreen> {
     // Fix: Ein Fehler beim Persistieren (z. B. Server-Sync) darf die
     // Navigation NICHT blockieren - sonst bleibt der Nutzer hier hängen
     // ("Später erinnern" ohne Wirkung).
-    try {
+        // Best-effort: Der Dismiss-Flag wird beim nächsten Erfolg nachgezogen.
+await bestEffort('read.setMfaSetupDismissed', () async {
       await ref.read(settingsProvider.notifier).setMfaSetupDismissed(true);
-    } catch (_) {
-      // Best-effort: Der Dismiss-Flag wird beim nächsten Erfolg nachgezogen.
-    }
+    });
     if (mounted) _continueFlow();
   }
 

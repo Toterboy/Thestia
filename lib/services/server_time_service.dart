@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Service für Serverzeit-Synchronisation.
 ///
@@ -26,11 +27,10 @@ class ServerTimeService with WidgetsBindingObserver {
   ServerTimeService._() {
     // In Unit-Tests ohne initialisiertes WidgetsBinding würde
     // `WidgetsBinding.instance` werfen - Observer ist dort auch unnötig.
-    try {
+        // Kein Binding (Unit-Test): Lifecycle-Beobachtung entfällt.
+bestEffortSync('addObserver', () {
       WidgetsBinding.instance.addObserver(this);
-    } catch (_) {
-      // Kein Binding (Unit-Test): Lifecycle-Beobachtung entfällt.
-    }
+    });
   }
 
   static final ServerTimeService instance = ServerTimeService._();
@@ -205,11 +205,10 @@ class ServerTimeService with WidgetsBindingObserver {
   }
 
   void dispose() {
-    try {
+        // Unit-Test ohne Binding.
+bestEffortSync('removeObserver', () {
       WidgetsBinding.instance.removeObserver(this);
-    } catch (_) {
-      // Unit-Test ohne Binding.
-    }
+    });
     _syncTimer?.cancel();
     _offsetController.close();
   }

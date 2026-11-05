@@ -1,3 +1,4 @@
+import 'package:thestia/utils/best_effort.dart';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -27,11 +28,10 @@ Future<void> cleanupDecryptedTempFiles() async {
       if ((name.startsWith('thestia_incoming_') ||
               name.startsWith('wisp_incoming_')) &&
           name.endsWith('.m4a')) {
-        try {
+                // Einzelne Datei gesperrt -> überspringen, Rest weiter aufräumen.
+await bestEffort('delete', () async {
           await entity.delete();
-        } catch (_) {
-          // Einzelne Datei gesperrt -> überspringen, Rest weiter aufräumen.
-        }
+        });
       }
     }
   } catch (e) {

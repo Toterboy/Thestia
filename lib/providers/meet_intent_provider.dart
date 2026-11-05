@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/models/meet_intent.dart';
 import 'package:thestia/services/meet_intent_service.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Verwaltet den "echtes Treffen"-Vorschlag eines einzelnen Matches.
 class MeetIntentNotifier extends StateNotifier<MeetIntent?> {
@@ -13,14 +14,13 @@ class MeetIntentNotifier extends StateNotifier<MeetIntent?> {
   final String _matchId;
 
   Future<void> _load() async {
-    try {
+    // still null -> UI zeigt nichts an.
+    await bestEffort('meetIntentService.get', () async {
       final value = await _service.get(_matchId);
       // Family-Elemente werden beim Routenwechsel disposed, während der
       // Server-Call noch läuft -> State-Zuweisung wäre ein Crash.
       if (mounted) state = value;
-    } catch (e) {
-      // still null -> UI zeigt nichts an.
-    }
+    });
   }
 
   /// Lädt den aktuellen Stand neu vom Server.

@@ -15,6 +15,7 @@ import 'package:thestia/services/verification_crypto.dart';
 import 'package:thestia/services/secure_hive.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/services/supabase_storage_service.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Merker "Verifizierung eingereicht" für die Pending-Anzeige im Profil.
 ///
@@ -372,9 +373,9 @@ class VerificationService {
       stale.add(key as String);
       final f = File(old.filePath);
       if (await f.exists()) {
-        try {
+        await bestEffort('delete', () async {
           await f.delete();
-        } catch (_) {}
+        });
       }
     }
     if (stale.isNotEmpty) {
@@ -398,9 +399,9 @@ class VerificationService {
           'Aufnahme konnte nicht gesichert werden: $e');
     }
     // Cache-Original entfernen (best effort - gehört dem Kamera-Plugin).
-    try {
+    await bestEffort('delete', () async {
       await source.delete();
-    } catch (_) {}
+    });
 
     final video = VerificationVideo(
       filePath: finalPath,

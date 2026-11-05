@@ -15,6 +15,7 @@ import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/utils/constants.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/widgets/ai_badge.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Ergebnis der Bild-Meldung mit KI-Vorprüfung.
 class ImageReportOutcome {
@@ -154,12 +155,11 @@ Future<void> showImageReportDialog({
     return;
   }
   Uint8List localBytes = Uint8List(0);
-  try {
-    localBytes = Uint8List.fromList(base64Decode(imageBase64));
-  } catch (_) {
     // Dekodierung fehlgeschlagen: lokale Prüfung überspringen, die
     // Meldung selbst bleibt weiterhin möglich.
-  }
+bestEffortSync('base64Decode', () {
+    localBytes = Uint8List.fromList(base64Decode(imageBase64));
+  });
 
   ReportType? selectedType;
   final descriptionController = TextEditingController();

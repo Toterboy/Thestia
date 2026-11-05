@@ -66,6 +66,7 @@ import 'package:thestia/screens/qr/qr_profile_screen.dart';
 import 'package:thestia/screens/qr/qr_scan_screen.dart';
 import 'package:thestia/screens/legal/community_guidelines_screen.dart';
 import 'package:thestia/widgets/back_to_route_scope.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Zentrale Routen der App.
 class AppRoutes {
@@ -566,29 +567,34 @@ GoRouter createRouter(Ref ref) {
       // sich selbst zu Home ab. Fail-open: Bei Fehlern (z. B. Storage)
       // wird der Screen übersprungen, nie blockiert.
       if (!goingToWhatsNew) {
-        try {
-          final currentBuild = await WhatsNewService.currentBuild();
-          final shown = await WhatsNewService.shownBuild(
-            ref.read(localStorageProvider),
-          );
-          final show = WhatsNewService.shouldShow(
-            currentBuild: currentBuild,
-            shownBuild: shown,
-            registered: true,
-            onboardingDone: settings.onboardingDone,
-          );
-          if (show) {
-            // Sofort markieren (Kill-Schutz: kein Endlos-Popup, siehe
-            // WhatsNewService-Doku).
-            await WhatsNewService.markShown(
+        // Fail-open: Gate überspringen statt App zu blockieren.
+        final route = await bestEffortOr<String?>(
+          'WhatsNewService.shouldShow',
+          () async {
+            final currentBuild = await WhatsNewService.currentBuild();
+            final shown = await WhatsNewService.shownBuild(
               ref.read(localStorageProvider),
-              currentBuild,
             );
-            return AppRoutes.whatsNew;
-          }
-        } catch (_) {
-          // Fail-open: Gate überspringen statt App zu blockieren.
-        }
+            final show = WhatsNewService.shouldShow(
+              currentBuild: currentBuild,
+              shownBuild: shown,
+              registered: true,
+              onboardingDone: settings.onboardingDone,
+            );
+            if (show) {
+              // Sofort markieren (Kill-Schutz: kein Endlos-Popup, siehe
+              // WhatsNewService-Doku).
+              await WhatsNewService.markShown(
+                ref.read(localStorageProvider),
+                currentBuild,
+              );
+              return AppRoutes.whatsNew;
+            }
+            return null;
+          },
+          null,
+        );
+        if (route != null) return route;
       }
 
       // Ab hier ist die Einrichtung vollständig abgeschlossen.

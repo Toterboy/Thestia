@@ -1,3 +1,4 @@
+import 'package:thestia/utils/best_effort.dart';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -22,12 +23,11 @@ class _AppVersionFooterState extends State<AppVersionFooter> {
   }
 
   Future<void> _load() async {
-    try {
+        // Version bleibt leer – nicht kritisch.
+await bestEffort('setState', () async {
       final info = await PackageInfo.fromPlatform();
       if (mounted) setState(() => _version = info.version);
-    } catch (_) {
-      // Version bleibt leer – nicht kritisch.
-    }
+    });
   }
 
   @override

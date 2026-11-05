@@ -39,6 +39,7 @@ import 'package:thestia/widgets/privacy_section.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/widgets/language_switch.dart';
 import 'package:thestia/widgets/theme_picker.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Der Eintrag "Kinderschutz & Elternzugriff" in den Einstellungen.
 ///
@@ -204,13 +205,12 @@ class SettingsScreen extends ConsumerWidget {
                         // dem Einrichten fälschlich "nicht aktiv" und der
                         // Passkey-Precheck unten greift nicht.
                         if (SupabaseService.isInitialized) {
-                          try {
+                                                    // Best-Effort: alter Stand bleibt.
+await bestEffort('MfaService.loadStatus', () async {
                             final fresh = await MfaService(SupabaseService.client)
                                 .loadStatus();
                             ref.read(mfaStatusProvider.notifier).state = fresh;
-                          } catch (_) {
-                            // Best-Effort: alter Stand bleibt.
-                          }
+                          });
                         }
                         if (context.mounted) {
                           context.push(AppRoutes.mfaSetup);
@@ -750,12 +750,11 @@ Future<void> _restoreIdentityBackup(
 Future<bool> _ensurePasskeyAal2(BuildContext context, WidgetRef ref) async {
   var mfa = ref.read(mfaStatusProvider);
   if (!SupabaseService.isInitialized) return true;
-  try {
+    // Fail-closed: Mit dem alten Stand weiter.
+await bestEffort('MfaService.loadStatus', () async {
     mfa = await MfaService(SupabaseService.client).loadStatus();
     ref.read(mfaStatusProvider.notifier).state = mfa;
-  } catch (_) {
-    // Fail-closed: Mit dem alten Stand weiter.
-  }
+  });
   if (!mfa.hasVerifiedFactors || mfa.currentAal == 'aal2') return true;
   if (!context.mounted) return false;
   final code = await promptTotpCode(context);

@@ -9,6 +9,7 @@ import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
 import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Kategorie einer Benachrichtigung – für die Einzel-Schalter in den
 /// Einstellungen (Matches, Likes, Chatnachrichten, Dating Hour).
@@ -43,12 +44,11 @@ class NotificationService {
 
     // Zeitzonen für geplante Benachrichtigungen (Dating Hour).
     tzdata.initializeTimeZones();
-    try {
+        // Fallback: UTC bleibt aktiv.
+await bestEffort('getLocation', () async {
       final tzInfo = await FlutterTimezone.getLocalTimezone();
       tz.setLocalLocation(tz.getLocation(tzInfo.identifier));
-    } catch (_) {
-      // Fallback: UTC bleibt aktiv.
-    }
+    });
 
     // Small Icon: rundes notification_icon (drawable) statt ic_launcher -
     // das Launcher-Icon ist ein voll opakes Adaptive-Icon und erscheint

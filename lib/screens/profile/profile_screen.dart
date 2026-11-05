@@ -31,6 +31,7 @@ import 'package:thestia/utils/age_safety_rules.dart';
 import 'package:thestia/utils/constants.dart';
 import 'package:thestia/widgets/profile_widgets.dart';
 import 'package:thestia/widgets/scroll_more_hint.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Form der Profil-Dialoge (Profil-Menü, Profil-Vorschau, Vorstellung).
 ///
@@ -816,20 +817,23 @@ class _VerificationStatusCard extends ConsumerWidget {
       // Robustheit: Service-Init abwarten (ungeöffnete Box würfe sonst
       // und der Chip bliebe fälschlich versteckt).
       final verificationService = ref.read(verificationServiceProvider);
-      try {
+      await bestEffort('verificationService.initialize', () async {
         await verificationService.initialize();
-      } catch (_) {}
+      });
       final video = verificationService.getVerificationVideo();
       if (video == null) {
         await storage.remove(verificationSubmittedKey);
         return false;
       }
-      try {
-        if (!await File(video.filePath).exists()) {
-          await storage.remove(verificationSubmittedKey);
-          return false;
-        }
-      } catch (_) {}
+      final dateiFehlt = await bestEffortOr(
+        'File.exists',
+        () async => !await File(video.filePath).exists(),
+        false,
+      );
+      if (dateiFehlt) {
+        await storage.remove(verificationSubmittedKey);
+        return false;
+      }
       return true;
     } catch (_) {
       return false;

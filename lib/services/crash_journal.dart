@@ -1,3 +1,4 @@
+import 'package:thestia/utils/best_effort.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -51,7 +52,8 @@ class CrashJournal {
   /// redigiert wird: der Fehlertyp und die Stackform (Zeilennummern,
   /// Klassen) - denn nur damit ist der Absturz überhaupt zuzuordnen.
   static Future<void> capture(Object error, StackTrace? stack) async {
-    try {
+        // Journal ist best-effort - niemals wegen eines Journals crashen.
+await bestEffort('_redigiere.substring', () async {
       final prefs = await SharedPreferences.getInstance();
       final stackText = (stack?.toString() ?? '')
           .split('\n')
@@ -62,9 +64,7 @@ class CrashJournal {
               0, _redigiere(error.toString()).length.clamp(0, 400)));
       await prefs.setString('${_key}_stack',
           _redigiere(stackText).substring(0, _redigiere(stackText).length.clamp(0, 2000)));
-    } catch (_) {
-      // Journal ist best-effort - niemals wegen eines Journals crashen.
-    }
+    });
   }
 
   /// Entfernt erkennbare personenbezogene Daten aus einem Text.
@@ -127,10 +127,10 @@ class CrashJournal {
 
   /// Nach dem Behandeln aufräumen (bestätigt oder verworfen).
   static Future<void> clear() async {
-    try {
+    await bestEffort('remove', () async {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_key);
       await prefs.remove('${_key}_stack');
-    } catch (_) {}
+    });
   }
 }

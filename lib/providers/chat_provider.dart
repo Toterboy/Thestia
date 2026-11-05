@@ -11,6 +11,7 @@ import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/services/notification_service.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/utils/constants.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Match-ID des aktuell im VORDERGRUND geöffneten Chats (sonst null).
 ///
@@ -251,22 +252,20 @@ final chatProvider = StateNotifierProvider<ChatNotifier, List<Match>>((ref) {
   // Opt-in-Einstellung (Geräte-lokal) beim Start anwenden - fail-safe
   // gekapselt, damit Tests/Container ohne localStorage nicht brechen.
   unawaited(() async {
-    try {
+        // Ohne Storage läuft der Chat einfach ohne Verlauf.
+await bestEffort('setHistoryPersistence', () async {
       final storage = ref.read(localStorageProvider);
       final enabled = await storage.getBool('chat_history_local') ?? true;
       final limitRaw = await storage.getBool('chat_history_all');
       final limit = (limitRaw ?? true) ? null : 200;
       service.setHistoryPersistence(enabled, limit: limit);
-    } catch (_) {
-      // Ohne Storage läuft der Chat einfach ohne Verlauf.
-    }
+    });
     // Persistente QR-Kontakte ("gespeicherte Profile") nach dem Start
     // wiederherstellen - Maximal 5, einzeln löschbar.
-    try {
+        // Best-effort: Ohne Restore funktioniert der Chat trotzdem.
+await bestEffort('restorePersistedQrContacts', () async {
       await notifier.restorePersistedQrContacts();
-    } catch (_) {
-      // Best-effort: Ohne Restore funktioniert der Chat trotzdem.
-    }
+    });
   }());
   return notifier;
 });

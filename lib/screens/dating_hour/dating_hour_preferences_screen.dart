@@ -12,6 +12,7 @@ import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/services/dating_hour_service.dart';
 import 'package:thestia/widgets/age_range_sliders.dart';
 import 'package:thestia/widgets/habitude_selector.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Screen für Dating-Hour-Präferenzen (vor dem Event-Beitritt).
 class DatingHourPreferencesScreen extends ConsumerStatefulWidget {
@@ -81,7 +82,8 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
   }
 
   Future<void> _loadLastPreferences() async {
-    try {
+    // Best-Effort: Ohne Server-Antwort gelten die Einrichtungs-Defaults.
+    await bestEffort('datingHourService.getMyLastPreferences', () async {
       final saved = await ref.read(datingHourServiceProvider).getMyLastPreferences();
       if (saved == null || !mounted) return;
       final last = DatingHourPreferences.fromJson(saved);
@@ -97,9 +99,7 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
         _alcohol = HabitudeLevel.fromServer(last.alcohol);
         _drugs = HabitudeLevel.fromServer(last.drugs);
       });
-    } catch (_) {
-      // Best-Effort: Ohne Server-Antwort gelten die Einrichtungs-Defaults.
-    }
+    });
   }
 
   @override

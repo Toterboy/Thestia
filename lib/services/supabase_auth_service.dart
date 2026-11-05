@@ -9,6 +9,7 @@ import 'package:thestia/services/encryption_service.dart';
 import 'package:thestia/services/passkey_auth.dart';
 import 'package:thestia/services/secure_storage.dart';
 import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/utils/best_effort.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Echte Authentifizierung über Supabase Auth (ersetzt den Mock [AuthService]).
@@ -122,11 +123,10 @@ class SupabaseAuthService implements AppAuthService {
   /// [GoTrueClient.signOut] ist ohne Angabe rein lokal (scope: local) –
   /// es wird kein Netzwerk-Call unternommen, der hängen bleiben könnte.
   Future<void> _clearLocalSession() async {
-    try {
+        // Best-effort
+await bestEffort('signOut', () async {
       await _supabase.auth.signOut();
-    } catch (_) {
-      // Best-effort
-    }
+    });
     await _tokens.clear();
   }
 
@@ -466,11 +466,10 @@ class SupabaseAuthService implements AppAuthService {
     } catch (_) {
       // Offline-Fallback: nur lokal ausloggen; die serverseitige Session
       // läuft bis zum Ablauf des Refresh-Tokens weiter.
-      try {
+            // Best-effort: lokales Löschen der Tokens erfolgt trotzdem.
+await bestEffort('signOut', () async {
         await _supabase.auth.signOut();
-      } catch (_) {
-        // Best-effort: lokales Löschen der Tokens erfolgt trotzdem.
-      }
+      });
     }
     await _tokens.clear();
   }
@@ -546,11 +545,10 @@ class SupabaseAuthService implements AppAuthService {
         );
       }
     }
-    try {
+        // Best-effort
+await bestEffort('signOut', () async {
       await _supabase.auth.signOut();
-    } catch (_) {
-      // Best-effort
-    }
+    });
     await _tokens.clear();
   }
 }

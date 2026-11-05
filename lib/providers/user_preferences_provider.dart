@@ -9,6 +9,7 @@ import 'package:thestia/models/gender.dart';
 import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Filter-Modus für die Entfernungs-Suche.
 enum DistanceFilterMode {
@@ -169,31 +170,29 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
     final storage = _storage;
     final legacyPrefs = _legacyRawPrefs;
     if (storage is SecurePreferencesStorage && legacyPrefs != null) {
-      try {
+            // Migration ist Best-Effort.
+await bestEffort('migrateStringFrom', () async {
         await storage.migrateStringFrom(legacyPrefs, _prefsKey);
-      } catch (_) {
-        // Migration ist Best-Effort.
-      }
+      });
     }
     final raw = await _storage.getString(_prefsKey);
     if (raw != null && raw.isNotEmpty) {
-      try {
+            // Bei korrupten Daten: Defaults beibehalten.
+bestEffortSync('fromJson', () {
         final map = jsonDecode(raw) as Map<String, dynamic>;
         state = UserPreferences.fromJson(map);
-      } catch (_) {
-        // Bei korrupten Daten: Defaults beibehalten.
-      }
+      });
       return;
     }
     // Fallback: alter Stand (falls die Migration noch nicht lief).
     final legacyRaw = _legacyRawPrefs?.getString(_prefsKey);
     if (legacyRaw != null && legacyRaw.isNotEmpty) {
-      try {
+      await bestEffort('remove', () async {
         state =
             UserPreferences.fromJson(jsonDecode(legacyRaw) as Map<String, dynamic>);
         await _persist(); // Sofort im sicheren Speicher ablegen.
         await _legacyRawPrefs?.remove(_prefsKey);
-      } catch (_) {}
+      });
     }
   }
 

@@ -14,6 +14,7 @@ import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/services/secure_hive.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/utils/constants.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Pseudonymisiert einen Identifier/Name mit SHA-256 (H-06).
 ///
@@ -146,14 +147,13 @@ class ReportService {
 
   /// Löscht lokale Melde-Entwürfe (Account-Löschung/Logout, DSGVO).
   Future<void> clearDrafts() async {
-    try {
+        // Best-effort: Ein Rest darf die Löschung nie blockieren.
+await bestEffort('clear', () async {
       if (!_initialized) {
         await initialize();
       }
       await _box.clear();
-    } catch (_) {
-      // Best-effort: Ein Rest darf die Löschung nie blockieren.
-    }
+    });
   }
 
   /// Erstellt eine Meldung: lokal (Hive) und – wenn möglich – beim

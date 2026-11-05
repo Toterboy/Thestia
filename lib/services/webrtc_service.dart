@@ -11,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:thestia/services/encryption_service.dart';
 import 'package:thestia/utils/cert_pinning.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Service für WebRTC Peer-to-Peer Verbindungen.
 ///
@@ -279,9 +280,9 @@ class WebRTCService {
     // sich pro connect() ein toter Realtime-Kanal (Socket-Leak) und eine
     // alte PeerConnection (stale ICE) an - beides verhinderte zuvor, dass
     // ein späterer Handshake je durchkam.
-    try {
+    await bestEffort('close', () async {
       await _peerConnection?.close();
-    } catch (_) {}
+    });
     _peerConnection = null;
     _dataChannel = null;
     _isConnected = false;
@@ -504,9 +505,9 @@ class WebRTCService {
     final myId = _myUserId;
     if (peerId == null || myId == null || _signalingChannel == null) return;
     if (myId.compareTo(peerId) >= 0) return; // Kein Initiator: warten.
-    try {
+    await bestEffort('close', () async {
       await _peerConnection?.close();
-    } catch (_) {}
+    });
     _peerConnection = null;
     _dataChannel = null;
     _remoteDescriptionSet = false;
@@ -542,9 +543,9 @@ class WebRTCService {
     // Stale Verbindungsversuche verwerfen, damit ein Re-Offer des
     // Initiators (Retry) übernommen wird statt zu verhallen.
     if (!_isConnected) {
-      try {
+      await bestEffort('close', () async {
         await _peerConnection?.close();
-      } catch (_) {}
+      });
       _peerConnection = null;
       _dataChannel = null;
       _remoteDescriptionSet = false;
@@ -762,14 +763,19 @@ class WebRTCService {
           // landet die Nachricht als normaler Chat-Text statt zu
           // verschwinden (Fix: "Nachricht kommt nicht an").
           if (plaintext.startsWith(controlPrefix)) {
-            try {
-              final payload =
-                  jsonDecode(plaintext.substring(controlPrefix.length));
-              if (payload is Map<String, dynamic>) {
-                _controlController.add(payload);
-                return;
-              }
-            } catch (_) {}
+            final payload = bestEffortOrSync<Map<String, dynamic>?>(
+              'jsonDecode',
+              () {
+                final dekodiert =
+                    jsonDecode(plaintext.substring(controlPrefix.length));
+                return dekodiert is Map<String, dynamic> ? dekodiert : null;
+              },
+              null,
+            );
+            if (payload != null) {
+              _controlController.add(payload);
+              return;
+            }
           }
           _incomingMessageController.add(plaintext);
         } else {

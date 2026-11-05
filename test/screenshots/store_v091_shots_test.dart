@@ -42,6 +42,7 @@ import 'package:thestia/widgets/app_logo.dart';
 import 'package:thestia/widgets/chat_background_picker.dart';
 import 'package:thestia/widgets/privacy_section.dart';
 import 'package:thestia/widgets/theme_picker.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Ohne STORE_SHOTS=1 werden diese Tests uebersprungen (kein Goldens-Vergleich
 /// in der normalen Testsuite).
@@ -141,7 +142,7 @@ Future<void> _loadFontsOnce() async {
       break;
     }
   }
-  try {
+  await bestEffort('FontLoader.load', () async {
     final dartExe = File(Platform.resolvedExecutable);
     final cacheDir = dartExe.parent.parent.parent.parent;
     final icons = File(
@@ -154,7 +155,7 @@ Future<void> _loadFontsOnce() async {
         ..addFont(Future.value(ByteData.sublistView(icons.readAsBytesSync())));
       await loader.load();
     }
-  } catch (_) {}
+  });
 
   // Emoji (31.10.2026): Die Startseite begruesst mit "Hallo, du! <Emoji>".
   // Ohne Emoji-Schrift zeichnet der Test ein leeres Kaestchen - im
@@ -169,13 +170,19 @@ Future<void> _loadFontsOnce() async {
   ]) {
     final f = File(pfad);
     if (!f.existsSync()) continue;
-    try {
-      final loader = FontLoader('Noto Color Emoji')
-        ..addFont(Future.value(ByteData.sublistView(f.readAsBytesSync())));
-      await loader.load();
-      break;    } catch (_) {
-      // Manche Systemschriften kann Flutter nicht laden - dann eben ohne.
-    }
+    // Manche Systemschriften kann Flutter nicht laden - dann eben ohne.
+    final geladen = await bestEffortOr(
+      'FontLoader.load',
+      () async {
+        final loader = FontLoader('Noto Color Emoji')
+          ..addFont(
+              Future.value(ByteData.sublistView(f.readAsBytesSync())));
+        await loader.load();
+        return true;
+      },
+      false,
+    );
+    if (geladen) break;
   }
   _fontsLoaded = true;
 }
@@ -789,12 +796,11 @@ Future<void> _vorbereiteChatSpeicher(WidgetTester tester) async {
       Directory.systemTemp.createTempSync('thestia_store_chat');
   Hive.init(hiveDir.path);
   addTearDown(() {
-    try {
+    // Dateikoepfe bleiben unter Windows gern kurz offen - fuer
+    // einen Temp-Ordner ist das kein Fehler.
+    bestEffortSync('hiveDir.deleteSync', () {
       hiveDir.deleteSync(recursive: true);
-    } catch (_) {
-      // Dateikoepfe bleiben unter Windows gern kurz offen - fuer
-      // einen Temp-Ordner ist das kein Fehler.
-    }
+    });
   });
 
   const secure = MethodChannel('plugins.it_nomads.com/'

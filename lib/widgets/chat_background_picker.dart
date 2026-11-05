@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/providers/settings_provider.dart';
 import 'package:thestia/utils/chat_backgrounds.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Dateiname des eigenen Hintergrundbildes im App-Verzeichnis.
 const String _customFileName = 'chat_bg_custom.jpg';
@@ -117,11 +118,11 @@ class ChatBackgroundPicker extends ConsumerWidget {
 
   Future<void> _removeCustom(BuildContext context, WidgetRef ref) async {
     await ref.read(settingsProvider.notifier).setCustomChatBackground(null);
-    try {
+    await bestEffort('delete', () async {
       final dir = await getApplicationDocumentsDirectory();
       final f = File('${dir.path}/$_customFileName');
       if (await f.exists()) await f.delete();
-    } catch (_) {}
+    });
   }
 
   @override

@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/contact_share_profile.dart';
 import 'package:thestia/providers/contact_share_provider.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// "Connect to others": Kontaktdaten lokal speichern und teilen.
 ///
@@ -358,14 +359,13 @@ class _ContactShareFormState extends ConsumerState<_ContactShareForm> {
   void _scheduleClipboardClear(String text) {
     _clipboardTimer?.cancel();
     _clipboardTimer = Timer(const Duration(seconds: 60), () async {
-      try {
+            // Zwischenablage nicht lesbar - dann bleibt sie, wie sie ist.
+await bestEffort('ClipboardData', () async {
         final data = await Clipboard.getData('text/plain');
         if (data?.text == text) {
           await Clipboard.setData(const ClipboardData(text: ''));
         }
-      } catch (_) {
-        // Zwischenablage nicht lesbar - dann bleibt sie, wie sie ist.
-      }
+      });
     });
   }
 

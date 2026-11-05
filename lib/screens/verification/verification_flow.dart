@@ -20,6 +20,7 @@ import 'package:thestia/services/verification_service.dart';
 import 'package:thestia/services/location_verification_service.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/widgets/ai_badge.dart';
+import 'package:thestia/utils/best_effort.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 /// Ergebnis der Verifizierung für den Abschluss-Screen (v0.9.1):
@@ -465,12 +466,11 @@ class _VerificationVideoScreenState
     final controller = _cameraController;
     _cameraController = null;
     if (controller == null) return;
-    try {
-      await controller.dispose();
-    } catch (_) {
-      // Beim Freigeben darf nichts werfen - der Aufrufer ist im
+        // Beim Freigeben darf nichts werfen - der Aufrufer ist im
       // catch-Block einer Fehlerbehandlung.
-    }
+await bestEffort('dispose', () async {
+      await controller.dispose();
+    });
     if (mounted) setState(() {});
   }
 
@@ -654,9 +654,9 @@ class _VerificationVideoScreenState
       try {
         final photo = await _cameraController!.takePicture();
         final bytes = await File(photo.path).readAsBytes();
-        try {
+        await bestEffort('File.delete', () async {
           await File(photo.path).delete();
-        } catch (_) {}
+        });
         return bytes;
       } catch (e) {
         debugPrint('[Verification] Selfie-Aufnahme 1. Versuch fehl: $e');
@@ -664,9 +664,9 @@ class _VerificationVideoScreenState
       // Neuaufbau der Kamera + zweiter Versuch. Ein Fehlschlag der
       // Neuinitialisierung setzt _error (Fehler-Screen) - bei Erfolg
       // wird er unten wieder gelöscht, damit die Einreichung läuft.
-      try {
+      await bestEffort('dispose', () async {
         await _cameraController!.dispose();
-      } catch (_) {}
+      });
       _cameraController = null;
       await _initializeCamera();
       if (_cameraController == null ||
@@ -676,9 +676,9 @@ class _VerificationVideoScreenState
       try {
         final photo = await _cameraController!.takePicture();
         final bytes = await File(photo.path).readAsBytes();
-        try {
+        await bestEffort('File.delete', () async {
           await File(photo.path).delete();
-        } catch (_) {}
+        });
         // Re-Init hatte ggf. _error gesetzt (Fehler-Screen): Erfolg
         // heißt, die Kamera läuft - Flag zurücksetzen.
         if (mounted) setState(() => _error = null);
@@ -719,7 +719,7 @@ class _VerificationVideoScreenState
     // Prüfung, auch wenn die KI-Abweichung längst ok war.
     var statedAge = statedAgeLocal;
     if (statedAge == null && SupabaseService.isInitialized) {
-      try {
+      await bestEffort('toInt', () async {
         final myId = SupabaseService.currentUser?.id;
         if (myId != null) {
           final row = await SupabaseService.client.rpc(
@@ -730,7 +730,7 @@ class _VerificationVideoScreenState
             statedAge = ((row as Map)['age'] as num?)?.toInt();
           }
         }
-      } catch (_) {}
+      });
     }
     final stated = statedAge;
     final autoOk =
@@ -790,11 +790,11 @@ class _VerificationVideoScreenState
     if (!mounted) return;
     if (done) {
       ref.read(verificationResultProvider.notifier).state = result;
-      try {
+      await bestEffort('localStorageProvider.saveBool', () async {
         await ref
             .read(localStorageProvider)
             .saveBool(verificationSubmittedKey, true);
-      } catch (_) {}
+      });
       if (!mounted) return;
       context.go(AppRoutes.verificationComplete);
     } else {
@@ -1179,14 +1179,14 @@ class _VerificationSuccessScreenState
       );
       if (!mounted || open == 'later') return;
       if (open == 'location') {
-        try {
+        await bestEffort('openLocationSettings', () async {
           await Geolocator.openLocationSettings();
-        } catch (_) {}
+        });
       } else if (open == 'app' && mounted) {
         // Kamera + Mikrofon: App-Berechtigungsseite (beide abdrehbar).
-        try {
+        await bestEffort('openAppSettings', () async {
           await openAppSettings();
-        } catch (_) {}
+        });
       }
     });
   }

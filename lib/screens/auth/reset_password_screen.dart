@@ -9,6 +9,7 @@ import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/utils/validators.dart';
 import 'package:thestia/widgets/buttons.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Screen zum Setzen eines neuen Passworts nach der Passwort-Reset-Mail.
 ///
@@ -53,14 +54,13 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       // (auch die dieses Geräts) global invalidiert - ein gestohlener
       // Refresh-Token überlebt den Passwortwechsel damit nicht. Der
       // Nutzer meldet sich einfach mit dem neuen Passwort neu an.
-      try {
+            // Fail-open beim lokalen SignOut: Das Passwort ist trotzdem
+        // geändert; beim nächsten App-Start greift die Session-Validierung.
+await bestEffort('signOut.timeout', () async {
         await SupabaseService.client.auth
             .signOut(scope: SignOutScope.global)
             .timeout(const Duration(seconds: 5));
-      } catch (_) {
-        // Fail-open beim lokalen SignOut: Das Passwort ist trotzdem
-        // geändert; beim nächsten App-Start greift die Session-Validierung.
-      }
+      });
       // Reset abgeschlossen: Recovery-Flag löschen, damit der Router wieder
       // die normale Flusslogik übernimmt (Login mit dem neuen Passwort).
       ref.read(passwordRecoveryPendingProvider.notifier).state = false;

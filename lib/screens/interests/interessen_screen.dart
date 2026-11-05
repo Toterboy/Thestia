@@ -24,6 +24,7 @@ import 'package:thestia/widgets/intro_audio_player.dart';
 import 'package:thestia/widgets/states.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/widgets/calm_loading.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Automatisches Nachladen eines Tabs (v0.9.1): bei Rückkehr von einem
 /// gepushten Screen (RouteObserver.didPopNext, z. B. aus dem Chat) und
@@ -63,9 +64,9 @@ mixin _AutoReloadTab<T extends ConsumerStatefulWidget>
   /// In dispose aufrufen.
   void autoReloadDispose() {
     WidgetsBinding.instance.removeObserver(this);
-    try {
+    bestEffortSync('unsubscribe', () {
       routeObserver.unsubscribe(this);
-    } catch (_) {}
+    });
   }
 }
 
@@ -1288,13 +1289,12 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     final staleIds = stale.map((m) => m.matchId).toSet();
     var cooledAny = false;
     for (final m in stale) {
-      try {
+            // Bereits gekühlt (Gegenseite war schneller) oder Netzwerkfehler:
+        // ignorieren, beim nächsten Laden wird erneut geprüft.
+await bestEffort('findYourMatchServiceProvider.coolMatch', () async {
         await ref.read(findYourMatchServiceProvider).coolMatch(m.matchId);
         cooledAny = true;
-      } catch (_) {
-        // Bereits gekühlt (Gegenseite war schneller) oder Netzwerkfehler:
-        // ignorieren, beim nächsten Laden wird erneut geprüft.
-      }
+      });
     }
     if (cooledAny && mounted) {
       // Lokal sofort umziehen (ohne erneuten Server-Roundtrip).
@@ -1400,7 +1400,7 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
         goodbyeTextForChoice(context, choice);
     if (goodbye != null) {
       // Absage-Text ohne geöffneten Chat zustellen (Relay, best-effort).
-      try {
+      await bestEffort('relayServiceProvider.storeText', () async {
         await ref.read(relayServiceProvider).storeText(
               peerId: match.partner.id,
               text: goodbye,
@@ -1414,7 +1414,7 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
             },
           );
         }
-      } catch (_) {}
+      });
       if (!mounted) return;
     }
     setState(() {

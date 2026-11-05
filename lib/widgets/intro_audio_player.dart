@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/services/find_your_match_service.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Wiedergabe der Audio-Vorstellung eines Nutzers.
 ///
@@ -35,9 +36,9 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
 
   Future<void> _toggle() async {
     if (_playing) {
-      try {
+      await bestEffort('stop', () async {
         await _player.stop();
-      } catch (_) {}
+      });
       if (mounted) setState(() => _playing = false);
       return;
     }

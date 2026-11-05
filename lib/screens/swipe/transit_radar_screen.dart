@@ -19,6 +19,7 @@ import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/services/transit_ble_service.dart';
 import 'package:thestia/widgets/funke_overlay.dart';
 import 'package:thestia/widgets/transit_mode_selector.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Lokale Speicher-Stelle für die gemerkte Radar-Exit-Entscheidung
 /// ('stop' | 'keep' | null = immer fragen).
@@ -61,22 +62,22 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
   }
 
   Future<void> _loadRadioCleanup() async {
-    try {
+    await bestEffort('localStorageProvider.getBool', () async {
       final v = await ref.read(localStorageProvider).getBool(
             kTransitRadioCleanupKey,
           );
       if (mounted) setState(() => _radioCleanupEnabled = v ?? false);
-    } catch (_) {}
+    });
   }
 
   Future<void> _setRadioCleanup(bool value) async {
     setState(() => _radioCleanupEnabled = value);
-    try {
+    await bestEffort('localStorageProvider.saveBool', () async {
       await ref.read(localStorageProvider).saveBool(
             kTransitRadioCleanupKey,
             value,
           );
-    } catch (_) {}
+    });
   }
 
   /// Nach Radar-Ende (wenn Opt-in aktiv): Hinweis zum manuellen
@@ -121,9 +122,9 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
         // ignore: deprecated_member_use
         await FlutterBluePlus.turnOff();
       } catch (_) {
-        try {
+        await bestEffort('openAppSettings', () async {
           await openAppSettings();
-        } catch (_) {}
+        });
       }
       if (mounted) {
         // Danach noch den Standort-Hinweis anbieten.
@@ -145,17 +146,17 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
           ),
         );
         if (loc == true && mounted) {
-          try {
+          await bestEffort('openLocationSettings', () async {
             await Geolocator.openLocationSettings();
-          } catch (_) {}
+          });
         }
       }
       return;
     }
     if (open == 'location' && mounted) {
-      try {
+      await bestEffort('openLocationSettings', () async {
         await Geolocator.openLocationSettings();
-      } catch (_) {}
+      });
     }
   }
 
@@ -246,9 +247,9 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
           ),
         );
         if (open == true) {
-          try {
+          await bestEffort('openLocationSettings', () async {
             await Geolocator.openLocationSettings();
-          } catch (_) {}
+          });
           // Fix: Nach Rückkehr aus den Einstellungen einen Bestätigungs-
           // Dialog zeigen ("Standort ist jetzt aktiv"), damit der Nutzer
           // nicht alles neu eingeben muss - ein Tap startet das Radar
@@ -308,9 +309,9 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
           ),
         );
         if (open == true) {
-          try {
+          await bestEffort('openAppSettings', () async {
             await openAppSettings();
-          } catch (_) {}
+          });
           ok = await transit.activate();
           continue;
         }
@@ -345,9 +346,9 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
         ),
       );
       if (enable == true) {
-        try {
+        await bestEffort('turnOn', () async {
           await FlutterBluePlus.turnOn();
-        } catch (_) {}
+        });
         ok = await transit.activate();
       } else {
         break;
@@ -471,7 +472,8 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
         _lateSparkTimer = null;
         return;
       }
-      try {
+      // Netzwerkfehler: nächster Tick versucht es erneut.
+      await bestEffort('findYourMatchService.listMatchesWithState', () async {
         final matches = await ref
             .read(findYourMatchServiceProvider)
             .listMatchesWithState();
@@ -492,9 +494,7 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
             ),
           );
         }
-      } catch (_) {
-        // Netzwerkfehler: nächster Tick versucht es erneut.
-      }
+      });
     });
   }
 
@@ -1319,12 +1319,12 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
 
   Future<void> _dismiss(Map<String, dynamic> ping) async {
     // Still ausblenden: Zeile loeschen (Absender sieht nichts).
-    try {
+    await bestEffort('from.delete', () async {
       await SupabaseService.client
           .from('transit_soft_pings')
           .delete()
           .eq('id', ping['id'] as String);
-    } catch (_) {}
+    });
     if (mounted) _load();
   }
 
@@ -1403,17 +1403,22 @@ Future<bool> confirmTransitExit(
   if (!ref.read(transitProvider).active) return true;
 
   final storage = ref.read(localStorageProvider);
-  try {
-    final saved = await storage.getString(kTransitExitPolicyKey);
-    if (saved == 'stop') {
-      await ref.read(transitProvider.notifier).deactivate();
-      await onStopped?.call();
-      return true;
-    }
-    if (saved == 'keep') return true;
-  } catch (_) {
-    // Kein Storage -> immer fragen.
-  }
+  // Kein Storage -> immer fragen.
+  final behalten = await bestEffortOr(
+    'localStorage.getString',
+    () async {
+      final saved = await storage.getString(kTransitExitPolicyKey);
+      if (saved == 'stop') {
+        await ref.read(transitProvider.notifier).deactivate();
+        await onStopped?.call();
+        return true;
+      }
+      if (saved == 'keep') return true;
+      return false;
+    },
+    false,
+  );
+  if (behalten) return true;
   if (!context.mounted) return false;
 
   var remember = false;
@@ -1457,11 +1462,11 @@ Future<bool> confirmTransitExit(
   );
   if (choice == null) return false; // Bleiben.
   if (remember && context.mounted) {
-    try {
+    await bestEffort('localStorageProvider.saveString', () async {
       await ref
           .read(localStorageProvider)
           .saveString(kTransitExitPolicyKey, choice);
-    } catch (_) {}
+    });
   }
   if (choice == 'stop') {
     await ref.read(transitProvider.notifier).deactivate();

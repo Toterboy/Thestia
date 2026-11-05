@@ -40,6 +40,7 @@ import 'package:thestia/utils/chat_backgrounds.dart';
 import 'package:thestia/utils/cert_pinning.dart';
 import 'package:thestia/utils/constants.dart';
 import 'package:thestia/utils/pinned_http_overrides.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Einstiegspunkt der App.
 ///
@@ -66,12 +67,18 @@ import 'package:thestia/utils/pinned_http_overrides.dart';
 String _supabaseSessionKey() {
   const raw = String.fromEnvironment('SUPABASE_URL');
   if (raw.isNotEmpty) {
-    try {
-      final host = Uri.parse(raw).host;
-      if (host.isNotEmpty) return 'sb-${host.split('.').first}-auth-token';
-    } catch (_) {
-      // Unparsbare URL -> Fallback unten.
-    }
+    // Unparsbare URL -> Fallback unten.
+    final token = bestEffortOrSync(
+      'Uri.parse',
+      () {
+        final host = Uri.parse(raw).host;
+        return host.isNotEmpty
+            ? 'sb-${host.split('.').first}-auth-token'
+            : '';
+      },
+      '',
+    );
+    if (token.isNotEmpty) return token;
   }
   return 'sb-auth-token';
 }
@@ -299,12 +306,12 @@ Future<_BootstrapInit?> _initializeApp() async {
 
     // Letzte Route für die Wiederherstellung nach Prozesstod merken
     // (v0.9.1) - der Router verbraucht sie genau einmal nach Login+Setup.
-    try {
+    bestEffortSync('setPendingRouteRestore', () {
       final lastRoute = prefs.getString('last_route');
       if (lastRoute != null && lastRoute.isNotEmpty) {
         setPendingRouteRestore(lastRoute);
       }
-    } catch (_) {}
+    });
 
     // Das Mindest-Build-Gate (app_config.min_app_version_build)
     // braucht Netz - und es stand auf dem kritischen Pfad: der
@@ -627,10 +634,10 @@ class _BootstrapAppState extends State<_BootstrapApp> {
   Future<StartupFailure?> _readPreviousFailure() async {
     if (_previousFailureChecked) return _previousFailure;
     _previousFailureChecked = true;
-    try {
+    await bestEffort('setState', () async {
       final f = await StartupWatchdog.readPreviousAttempt();
       if (mounted) setState(() => _previousFailure = f);
-    } catch (_) {}
+    });
     return _previousFailure;
   }
 

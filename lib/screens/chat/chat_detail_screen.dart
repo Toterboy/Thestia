@@ -55,6 +55,7 @@ import 'package:thestia/widgets/end_spark_dialog.dart';
 import 'package:thestia/widgets/intro_audio_player.dart';
 import 'package:thestia/widgets/meet_intent_card.dart';
 import 'package:thestia/widgets/profile_widgets.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Präfix für geteilte Eisbrecher-Fragen im Textkanal (v0.9.1): Beide Seiten
 /// stellen solche Nachrichten als gemeinsame mittige Bubble dar.
@@ -164,17 +165,17 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   Future<void> _loadHeartState() async {
     final serverId = int.tryParse(widget.matchId);
     if (serverId == null || !SupabaseService.isInitialized) return;
-    try {
+    await bestEffort('findYourMatchServiceProvider.listMatchesWithState', () async {
       final all =
           await ref.read(findYourMatchServiceProvider).listMatchesWithState();
       _serverMatch = all.where((m) => m.matchId == serverId).firstOrNull;
-    } catch (_) {}
-    try {
+    });
+    await bestEffort('toSet', () async {
       final storage = ref.read(localStorageProvider);
       final raw = await storage.getString(_milestoneDismissedKey);
       _milestoneDismissed =
           (jsonDecode(raw ?? '[]') as List).map((e) => '$e').toSet();
-    } catch (_) {}
+    });
     if (mounted) setState(() {});
   }
 
@@ -480,13 +481,18 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         .any((m) => m.isFrom(myId));
     if (sent) return;
     // Einmalig je Match (Prefs).
-    try {
-      final storage = ref.read(localStorageProvider);
-      final raw = await storage.getString(_icebreakerSuggestedKey);
-      final done =
-          (jsonDecode(raw ?? '[]') as List).map((e) => '$e').toSet();
-      if (done.contains(match.id)) return;
-    } catch (_) {}
+    final schonVorgeschlagen = await bestEffortOr(
+      'localStorageProvider.getString',
+      () async {
+        final storage = ref.read(localStorageProvider);
+        final raw = await storage.getString(_icebreakerSuggestedKey);
+        final done =
+            (jsonDecode(raw ?? '[]') as List).map((e) => '$e').toSet();
+        return done.contains(match.id);
+      },
+      false,
+    );
+    if (schonVorgeschlagen) return;
     _icebreakerSuggestTimer?.cancel();
     _icebreakerSuggestTimer = Timer(const Duration(minutes: 5), () async {
       if (!mounted) return;
@@ -500,7 +506,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         return; // Inzwischen geschrieben - kein Vorschlag nötig.
       }
       // Als gezeigt vermerken (auch bei "Später" - kein Nerven).
-      try {
+      await bestEffort('toList', () async {
         final storage = ref.read(localStorageProvider);
         final raw = await storage.getString(_icebreakerSuggestedKey);
         final done =
@@ -508,7 +514,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         done.add(current.id);
         await storage.saveString(
             _icebreakerSuggestedKey, jsonEncode(done.toList()));
-      } catch (_) {}
+      });
       if (!mounted) return;
       // Zufällige Frage aus dem Katalog (Sprache des Geräts).
       final lang = Localizations.localeOf(context).languageCode;
@@ -618,15 +624,20 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         kind == 'icebreaker' ? '$icebreakerPrefix$text' : text;
     final p2p = _p2p;
     if (p2p != null) {
-      try {
-        if (await p2p.trySendText(wireText)) {
-          unawaited(_notifyPeerAboutMessage(match));
-          return;
-        }
-      } catch (_) {}
+      final ueberP2p = await bestEffortOr(
+        'p2p.trySendText',
+        () async => await p2p.trySendText(wireText),
+        false,
+      );
+      if (ueberP2p) {
+        unawaited(_notifyPeerAboutMessage(match));
+        return;
+      }
     }
     // Kanal zu: Relay-Fallback (nur Ciphertext zum Server, E2E bleibt).
-    try {
+    final ueberRelay = await bestEffortOr(
+      'relayServiceProvider.storeText',
+      () async {
       await ref.read(relayServiceProvider).storeText(
             peerId: match.partner.id,
             text: text,
@@ -644,12 +655,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
       // KEINE "zwischengespeichert"-SnackBar mehr (Fix: war bei jeder
       // Nachricht störend - die Nachricht kommt zuverlässig an, der
       // Nutzer braucht keinen Hinweis auf den Transportweg).
-      return;
-    } catch (_) {}
+      return true;
+      },
+      false,
+    );
+    if (ueberRelay) return;
     // Letzte Reserve: Outbox (wird bei späterer Direktverbindung geflusht).
-    try {
+    await bestEffort('sendText', () async {
       await p2p?.sendText(wireText);
-    } catch (_) {}
+    });
     unawaited(_notifyPeerAboutMessage(match));
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -733,7 +747,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
 
   /// Lädt, ob das Date-Rad für diesen Chat ausgeblendet wurde.
   Future<void> _loadIdeaWheelHidden() async {
-    try {
+    await bestEffort('localStorageProvider.getString', () async {
       final raw =
           await ref.read(localStorageProvider).getString(_ideaWheelHiddenKey);
       if (raw == null || raw.isEmpty || !mounted) return;
@@ -742,13 +756,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
       if (mounted && hidden.contains(widget.matchId)) {
         setState(() => _ideaWheelHidden = true);
       }
-    } catch (_) {}
+    });
   }
 
   /// Blendet das Date-Rad für diesen Chat dauerhaft aus.
   Future<void> _hideIdeaWheel() async {
     setState(() => _ideaWheelHidden = true);
-    try {
+    await bestEffort('toList', () async {
       final storage = ref.read(localStorageProvider);
       final raw = await storage.getString(_ideaWheelHiddenKey);
       final hidden = <String>{
@@ -758,7 +772,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
       };
       await storage.saveString(
           _ideaWheelHiddenKey, jsonEncode(hidden.toList()));
-    } catch (_) {}
+    });
   }
 
   /// Prüft serverseitig, ob dieses Match noch quiz-gesperrt ist.
@@ -1212,7 +1226,8 @@ Future<bool> _ensureMicDisclosure() async {
       // SHA-256-Hash - niemals das Bild. Damit kann eine spätere Meldung
       // dieses Bildes NACHGEWIESEN werden (Edge Function `report-image`
       // lehnt Bilder ohne Registrierung ab).
-      try {
+            // Best effort - Senden darf daran nicht scheitern.
+await bestEffort('convert.toString', () async {
         final imageHash = sha256.convert(bytes).toString();
         unawaited(
           SupabaseService.client.rpc(
@@ -1223,9 +1238,7 @@ Future<bool> _ensureMicDisclosure() async {
             },
           ),
         );
-      } catch (_) {
-        // Best effort - Senden darf daran nicht scheitern.
-      }
+      });
 
       // E2E-verschlüsselt über den DataChannel senden.
       await _p2p?.sendBinary(Uint8List.fromList(bytes), contentType: 'image/jpeg');
@@ -1526,13 +1539,13 @@ Future<bool> _ensureMicDisclosure() async {
       _recordingPath = null;
       _levels.clear();
     });
-    try {
+    await bestEffort('delete', () async {
       await _audioRecorder.stop();
       if (path != null) {
         final file = File(path);
         if (await file.exists()) await file.delete();
       }
-    } catch (_) {}
+    });
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(L10n.t(context, 'chat.voiceCancelled'))),
@@ -2004,11 +2017,10 @@ Future<bool> _ensureMicDisclosure() async {
         );
         ref.read(chatProvider.notifier).addMessage(match.id, localMsg,
             ref: ref);
-        try {
+                // Best-Effort: Die Verbindung kühlt trotzdem.
+await bestEffort('_transmitText', () async {
           await _transmitText(match, goodbye);
-        } catch (_) {
-          // Best-Effort: Die Verbindung kühlt trotzdem.
-        }
+        });
       }
     }
 
@@ -2094,15 +2106,14 @@ Future<bool> _ensureMicDisclosure() async {
   /// Entfernt eine wiedergegebene Voice-Datei sofort (Audit M-17).
   Future<void> _deleteVoiceFile(String? path) async {
     if (path == null) return;
-    try {
+        // Best-effort: Der globale Sweep (temp_cleanup) entfernt Reste.
+await bestEffort('remove', () async {
       final file = File(path);
       if (await file.exists()) {
         await file.delete();
       }
       _voiceTempFiles.remove(path);
-    } catch (_) {
-      // Best-effort: Der globale Sweep (temp_cleanup) entfernt Reste.
-    }
+    });
   }
 
   @override
@@ -2693,7 +2704,7 @@ Future<bool> _ensureMicDisclosure() async {
                           // Dismiss je Match+Moment (Prefs).
                           final key =
                               '${serverId ?? widget.matchId.hashCode}:${milestone.type}';
-                          try {
+                          await bestEffort('toList', () async {
                             final storage = ref.read(localStorageProvider);
                             final raw = await storage
                                 .getString(_milestoneDismissedKey);
@@ -2706,7 +2717,7 @@ Future<bool> _ensureMicDisclosure() async {
                                 _milestoneDismissedKey,
                                 jsonEncode(dismissed.toList()));
                             _milestoneDismissed = dismissed;
-                          } catch (_) {}
+                          });
                           if (mounted) setState(() {});
                         },
                       ),
@@ -2740,19 +2751,22 @@ Future<bool> _ensureMicDisclosure() async {
                     if (serverId == null) return;
                     final messenger = ScaffoldMessenger.of(context);
                     final l10nHint = L10n.t(context, 'friends.toggleHint');
-                    try {
-                      await ref
-                          .read(findYourMatchServiceProvider)
-                          .setMatchKind(serverId, friends: false);
-                      if (!mounted) return;
-                      messenger.showSnackBar(
-                        SnackBar(
-                          content: Text(l10nHint),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                      setState(() {});
-                    } catch (_) {}
+                    await bestEffort(
+                      'findYourMatchServiceProvider.setMatchKind',
+                      () async {
+                        await ref
+                            .read(findYourMatchServiceProvider)
+                            .setMatchKind(serverId, friends: false);
+                        if (!mounted) return;
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(l10nHint),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                        setState(() {});
+                      },
+                    );
                   },
                 ),
               ),
@@ -3588,14 +3602,13 @@ class _VoiceMessageState extends State<_VoiceMessage> {
   /// Audit M-17: Löscht die lokal entschlüsselte Voice-Datei nach der
   /// Wiedergabe.
   Future<void> _deletePlayedFile() async {
-    try {
+        // Best-effort: der globale Sweep (temp_cleanup) entfernt Reste.
+await bestEffort('delete', () async {
       final file = File(widget.path);
       if (await file.exists()) {
         await file.delete();
       }
-    } catch (_) {
-      // Best-effort: der globale Sweep (temp_cleanup) entfernt Reste.
-    }
+    });
   }
 
   @override

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import 'package:thestia/models/transit_models.dart';
 import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Lokaler Encounter-Cache für Transit Spark (Phase 1).
 ///
@@ -131,9 +132,9 @@ class TransitEncounterService {
   /// Alles verwerfen (Deaktivierung / Privacy).
   Future<void> clear() async {
     _cache.clear();
-    try {
+    await bestEffort('remove', () async {
       await _storage.remove(_key);
-    } catch (_) {}
+    });
   }
 
   void _purgeExpired() {

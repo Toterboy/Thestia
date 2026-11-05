@@ -1,3 +1,4 @@
+import 'package:thestia/utils/best_effort.dart';
 import 'dart:math' as math;
 
 import 'package:crypto/crypto.dart';
@@ -196,12 +197,12 @@ class AgeEstimationService {
   /// neu.
   void release() {
     _initFuture = null;
-    try {
+    bestEffortSync('release', () {
       _detector?.release();
-    } catch (_) {}
-    try {
+    });
+    bestEffortSync('release', () {
       _ageSession?.release();
-    } catch (_) {}
+    });
     _detector = null;
     _ageSession = null;
     _detectInputNames = const [];

@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:thestia/services/secure_storage_namespaces.dart';
+import 'package:thestia/utils/best_effort.dart';
 import 'package:hive/hive.dart';
 
 /// Öffnet Hive-Boxen AES-256-verschlüsselt (Audit K6/M11).
@@ -167,9 +168,9 @@ class SecureHive {
       if (kDebugMode) {
         debugPrint('[SecureHive] Box "$name" unlesbar, wird zurückgesetzt: $e');
       }
-      try {
+      await bestEffort('deleteBoxFromDisk', () async {
         await Hive.deleteBoxFromDisk(name);
-      } catch (_) {}
+      });
     }
 
     final box = await Hive.openBox<T>(name, encryptionCipher: cipher);

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Service für den Versand von Bug-Reports per E-Mail über Brevo.
 ///
@@ -101,7 +102,8 @@ class BrevoBugReportService {
     }
 
     // Genaue Systemversion.
-    try {
+        // Ohne die Angabe ist der Report trotzdem brauchbar.
+await bestEffort('writeln', () async {
       if (!kIsWeb && Platform.isAndroid) {
         final info = await DeviceInfoPlugin().androidInfo;
         buffer.writeln(
@@ -112,15 +114,13 @@ class BrevoBugReportService {
         buffer.writeln('iOS: ${info.systemVersion}');
         buffer.writeln('Geraet: ${info.model}');
       }
-    } catch (_) {
-      // Ohne die Angabe ist der Report trotzdem brauchbar.
-    }
+    });
 
     // App-Version: zu welchem Build der Fehler gehoert.
-    try {
+    await bestEffort('writeln', () async {
       final info = await PackageInfo.fromPlatform();
       buffer.writeln('App: ${info.version} (Build ${info.buildNumber})');
-    } catch (_) {}
+    });
 
     return buffer.toString().trim();
   }

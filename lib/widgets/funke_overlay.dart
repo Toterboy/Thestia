@@ -1,3 +1,4 @@
+import 'package:thestia/utils/best_effort.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -65,16 +66,15 @@ class _FunkeOverlayState extends State<FunkeOverlay>
     _ctrl.forward();
     Future.delayed(const Duration(milliseconds: 1900), () {
       if (!mounted) return;
-      try {
+            // Best-effort: Overlay darf nie hängen bleiben.
+bestEffortSync('maybePop', () {
         final nav = Navigator.of(context);
         if (nav.canPop()) {
           nav.pop();
         } else {
           nav.maybePop();
         }
-      } catch (_) {
-        // Best-effort: Overlay darf nie hängen bleiben.
-      }
+      });
     });
   }
 

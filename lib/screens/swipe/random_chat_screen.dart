@@ -19,6 +19,7 @@ import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/widgets/chat_bubbles.dart';
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Zufallschat: echtes Matching über die Supabase-Warteschlange
 /// (Migration 032) und E2E-verschlüsselter Chat über den P2P-DataChannel.
@@ -519,12 +520,12 @@ setState(() {
         // Metadaten; Beziehung = aktive Zufallschat-Session, Migration im
         // notify-user-Update).
         unawaited(() async {
-          try {
+          await bestEffort('invoke', () async {
             await SupabaseService.client.functions.invoke(
               'notify-user',
               body: {'kind': 'messages', 'target_user_id': _partnerId},
             );
-          } catch (_) {}
+          });
         }());
       } catch (e) {
         debugPrint('[RandomChat] Relay-Send fehlgeschlagen: $e');
@@ -594,7 +595,8 @@ setState(() {
   Future<void> _fetchRelay() async {
     final peerId = _partnerId;
     if (peerId == null || !SupabaseService.isInitialized) return;
-    try {
+    // Netzwerkfehler: nächster Poll-Takt versucht es erneut.
+    await bestEffort('relayServiceProvider.fetchPending', () async {
       // Nur Zeilen des AKTUELLEN Partners abholen/bestätigen.
       final pending =
           await ref.read(relayServiceProvider).fetchPending(from: peerId);
@@ -611,9 +613,7 @@ setState(() {
         ref.read(chatProvider.notifier)
             .addMessage(_sessionId ?? 'random', msg, ref: ref);
       }
-    } catch (_) {
-      // Netzwerkfehler: nächster Poll-Takt versucht es erneut.
-    }
+    });
   }
 
   Message _localMessage(String text, {required String senderId}) {
@@ -645,12 +645,12 @@ setState(() {
         debugPrint('[RandomChat] Server-Like fehlgeschlagen: $e');
       }
       // Push an die Person (sie sieht den Like in "Erhalten").
-      try {
+      await bestEffort('invoke', () async {
         await SupabaseService.client.functions.invoke(
           'notify-user',
           body: {'kind': 'likes', 'target_user_id': partner.id},
         );
-      } catch (_) {}
+      });
     }
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -859,10 +859,10 @@ setState(() {
                                   L10n.t(context,
                                       'random.fallbackPartnerName'));
                           String timeLabel = '';
-                          try {
+                          bestEffortSync('Hm.format', () {
                             timeLabel = DateFormat.Hm()
                                 .format(msg.timestamp.toLocal());
-                          } catch (_) {}
+                          });
                           return Align(
                             alignment: mine
                                 ? Alignment.centerRight

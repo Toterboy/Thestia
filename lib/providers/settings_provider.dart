@@ -11,6 +11,7 @@ import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/utils/chat_backgrounds.dart';
 import 'package:thestia/utils/constants.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// StateNotifier, der die App-Einstellungen verwaltet und sicher persistiert.
 ///
@@ -46,12 +47,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     try {
       final raw = await _storage.getString(AppConstants.prefsSettingsKey);
       if (raw != null) {
-        try {
+                // Bei korrupten Daten: Defaults beibehalten.
+bestEffortSync('fromJson', () {
           final map = jsonDecode(raw) as Map<String, dynamic>;
           state = AppSettings.fromJson(map);
-        } catch (_) {
-          // Bei korrupten Daten: Defaults beibehalten.
-        }
+        });
       }
     } finally {
       // Router benachrichtigen, dass die Settings geladen sind.

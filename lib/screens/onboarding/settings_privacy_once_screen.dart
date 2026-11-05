@@ -42,6 +42,7 @@ import 'package:thestia/widgets/interview_bubble.dart';
 import 'package:thestia/widgets/music_taste_widgets.dart';
 import 'package:thestia/widgets/selectable_tile.dart';
 import 'package:thestia/widgets/theme_picker.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Einmaliger Einstellungen- & Privatsphäre-Screen direkt nach der Anmeldung.
 /// Danach sind diese Einstellungen jederzeit in den normalen Einstellungen änderbar.
@@ -576,7 +577,8 @@ class _SettingsPrivacyOnceScreenState
     // Migration 066). Kein city mehr - die Spalte ist mit Migration 138
     // entfernt.
     if (SupabaseService.isInitialized) {
-      try {
+            // Best-Effort: Blockiert den Abschluss nicht.
+await bestEffort('prefsNotifier.savePreferencesToServer', () async {
         final s = ref.read(settingsProvider);
         final profileState = ref.read(profileProvider).state;
         await prefsNotifier.savePreferencesToServer(
@@ -584,9 +586,7 @@ class _SettingsPrivacyOnceScreenState
           ageRangeMax: s.ageRangeMax,
           stateStr: profileState,
         );
-      } catch (_) {
-        // Best-Effort: Blockiert den Abschluss nicht.
-      }
+      });
     }
     if (mounted && !flagsSaved) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -741,7 +741,8 @@ class _SettingsPrivacyOnceScreenState
             locationLng: snapped.lng,
           );
       if (SupabaseService.isInitialized) {
-        try {
+                // Best-Effort: Standort-Sync darf den Flow nicht blockieren.
+await bestEffort('supabaseDatabaseServiceProvider.saveOwnLocation', () async {
           final userId = SupabaseService.client.auth.currentUser?.id;
           if (userId != null) {
             unawaited(
@@ -772,9 +773,7 @@ class _SettingsPrivacyOnceScreenState
                 .read(supabaseDatabaseServiceProvider)
                 .saveOwnLocation(snapped.lat, snapped.lng);
           }
-        } catch (_) {
-          // Best-Effort: Standort-Sync darf den Flow nicht blockieren.
-        }
+        });
       }
 
 setState(() {

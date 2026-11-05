@@ -32,6 +32,7 @@ import 'package:thestia/services/webrtc_service.dart';
 import 'package:thestia/utils/constants.dart';
 import 'package:thestia/utils/demo_mode.dart';
 import 'package:thestia/utils/temp_cleanup.dart';
+import 'package:thestia/utils/best_effort.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Verwaltet den Auth-Status. Unterstützt drei Modi:
@@ -150,11 +151,11 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
       // Chat-Besitzer setzen (Audit Kontowechsel): Trennt Verlauf,
       // Kontakte und State pro Konto, BEVOR irgendetwas nachlädt.
       // Gleicher Besitzer = No-op (kein Flackern bei Folge-Syncs).
-      try {
+      await bestEffort('read.setOwner', () async {
         await _ref
             .read(chatProvider.notifier)
             .setOwner(SupabaseService.currentUser?.id);
-      } catch (_) {}
+      });
       final database = SupabaseDatabaseService(SupabaseService.client);
 
       // FCM-Token-Registrierung NIE den kritischen Sync-Pfad blockieren
@@ -511,13 +512,13 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
     // Server-Reste VOR dem Abmelden räumen (braucht die Session):
     // FCM-Token abmelden, damit Pushes des alten Kontos nicht auf
     // diesem Gerät landen, wenn sich danach ein anderes anmeldet.
-    try {
+    await bestEffort('SupabaseDatabaseService.updateOwnProfile', () async {
       if (SupabaseService.isInitialized &&
           SupabaseService.client.auth.currentUser != null) {
         await SupabaseDatabaseService(SupabaseService.client)
             .updateOwnProfile({'fcm_token': null});
       }
-    } catch (_) {}
+    });
     // Eigenen Geräte-Eintrag entfernen (Best effort, VOR dem Abmelden -
     // danach gibt es keine gültige Session mehr für den Aufruf).
     await _ref.read(deviceSessionServiceProvider).deregisterCurrentDevice();
@@ -537,51 +538,51 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
     await _ref.read(settingsProvider.notifier).resetToDefaults();
     await _ref.read(userPreferencesProvider.notifier).resetToDefaults();
     await _ref.read(profileProvider.notifier).resetToDefaults();
-    try {
+    await bestEffort('localStorageProvider.remove', () async {
       await _ref
           .read(localStorageProvider)
           .remove(verificationSubmittedKey);
-    } catch (_) {}
+    });
     // Gleiches Geräte-Cleanup wie bei Löschung (keine fremden Reste für
     // den nächsten Account): Verlauf, Entwürfe, Crash-Journal,
     // Verifikations-Videos/Dateien, Temp-Dateien, Signal-Identität und
     // PreKey-Sessions (sonst würde der neue Account mit der Identität
     // des Vorgängers senden).
-    try {
+    await bestEffort('chatServiceProvider.clearLocalHistory', () async {
       await _ref.read(chatServiceProvider).clearLocalHistory();
-    } catch (_) {}
-    try {
+    });
+    await bestEffort('reportServiceProvider.clearDrafts', () async {
       await _ref.read(reportServiceProvider).clearDrafts();
-    } catch (_) {}
-    try {
+    });
+    await bestEffort('CrashJournal.clear', () async {
       await CrashJournal.clear();
-    } catch (_) {}
-    try {
+    });
+    await bestEffort('verificationServiceProvider.deleteAllLocalData', () async {
       await _ref.read(verificationServiceProvider).deleteAllLocalData();
-    } catch (_) {}
+    });
     unawaited(cleanupDecryptedTempFiles());
-    try {
+    await bestEffort('encryptionServiceProvider.clearAllData', () async {
       await _ref.read(encryptionServiceProvider).clearAllData();
-    } catch (_) {}
-    try {
+    });
+    bestEffortSync('preKeyServiceProvider.reset', () {
       _ref.read(preKeyServiceProvider).reset();
-    } catch (_) {}
+    });
     // P2P-Outbox verwerfen + WebRTC-Verbindung schließen (keine
     // Vorgänger-Chiffre unter neuem Konto, kein offener Kanal).
-    try {
+    bestEffortSync('p2pChatServiceProvider.clearOutbox', () {
       _ref.read(p2pChatServiceProvider).clearOutbox();
-    } catch (_) {}
-    try {
+    });
+    await bestEffort('webRTCServiceProvider.close', () async {
       await _ref.read(webRTCServiceProvider).close();
-    } catch (_) {}
-    try {
+    });
+    await bestEffort('read.setOwner', () async {
       await _ref.read(chatProvider.notifier).setOwner(null);
-    } catch (_) {}
+    });
     // Gesicherte Route verwerfen (v0.9.1): Nach Logout kein Restore in
     // fremde/nicht mehr gültige Screens.
-    try {
+    await bestEffort('localStorageProvider.remove', () async {
       await _ref.read(localStorageProvider).remove(lastRoutePrefsKey);
-    } catch (_) {}
+    });
     setPendingRouteRestore(null);
     state = const AsyncValue.data(false);
   }
@@ -642,13 +643,12 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
     await _auth.deleteAccount();
 
     // 2) Lokale Daten vollständig löschen (DSGVO Art. 17).
-    try {
+        // Best-effort: Token kann bereits ungültig sein.
+await bestEffort('deleteToken', () async {
       if (!AppConstants.fdroidBuild) {
         await FirebaseMessaging.instance.deleteToken();
       }
-    } catch (_) {
-      // Best-effort: Token kann bereits ungültig sein.
-    }
+    });
     try {
       await _ref.read(encryptionServiceProvider).clearAllData();
     } catch (e) {

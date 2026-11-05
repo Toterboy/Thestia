@@ -1,3 +1,4 @@
+import 'package:thestia/utils/best_effort.dart';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -23,7 +24,8 @@ class ThestiaPasskeyAuthenticator implements PasskeyAuthenticatorInterface {
   /// verification failed") - siehe docs/PASSKEYS_SERVER_SETUP.md.
   void _logClientData(String clientDataJsonB64) {
     if (!kDebugMode) return;
-    try {
+        // Diagnose ist best-effort.
+bestEffortSync('sein', () {
       final normalized = base64Url.normalize(clientDataJsonB64);
       final json = utf8.decode(base64Url.decode(normalized));
       final type = RegExp(r'"type"\s*:\s*"([^"]+)"').firstMatch(json)?.group(1);
@@ -32,9 +34,7 @@ class ThestiaPasskeyAuthenticator implements PasskeyAuthenticatorInterface {
       debugPrint('[Passkey] clientDataJSON: type=$type origin=$origin');
       debugPrint('[Passkey] ^ dieser Origin muss in GOTRUE_WEBAUTHN_RP_ORIGINS '
           'enthalten sein (auth.thestia.de)!');
-    } catch (_) {
-      // Diagnose ist best-effort.
-    }
+    });
   }
 
   @override

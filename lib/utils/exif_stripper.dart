@@ -25,6 +25,7 @@ library;
 
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
+import 'package:thestia/utils/best_effort.dart';
 
 /// Maximale Eingabegröße für das Scrubbing (24 MB).
 ///
@@ -107,13 +108,14 @@ Uint8List? _stripSync((Uint8List, int) args) {
 /// Liest (wenn der Decoder es anbietet) die Bildgröße, ohne die Bitmap zu
 /// allokieren. Gibt `(0, 0)` zurück, wenn der Decoder das nicht kann.
 (int, int) _probeDimensions(img.Decoder decoder, Uint8List bytes) {
-  try {
-    final start = decoder.startDecode(bytes);
-    if (start != null) {
-      return (start.width, start.height);
-    }
-  } catch (_) {
-    // Manche Formate werfen hier; dann greift der Check nach dem Decode.
+  // Manche Formate werfen hier; dann greift der Check nach dem Decode.
+  final start = bestEffortOrSync(
+    'decoder.startDecode',
+    () => decoder.startDecode(bytes),
+    null,
+  );
+  if (start != null) {
+    return (start.width, start.height);
   }
   return (0, 0);
 }

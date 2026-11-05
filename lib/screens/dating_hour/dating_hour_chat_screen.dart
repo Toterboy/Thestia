@@ -24,6 +24,7 @@ import 'package:thestia/services/find_your_match_service.dart';
 import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/p2p_chat_service.dart';
 import 'package:thestia/services/relay_service.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Screen für den aktiven Dating Hour Chat (5-Minuten-Timer).
 ///
@@ -433,11 +434,14 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
     // (Migration 093/106 - Dating-Hour-Sessions sind relay-berechtigt).
     // Vorher gab es NUR den P2P-Pfad: Ohne Direktverbindung lief die
     // Nachricht still in die Outbox und kam im 5-Minuten-Fenster nie an.
-    try {
-      if (await _p2p?.trySendText(text) == true) {
-        return;
-      }
-    } catch (_) {}
+    final ueberP2p = await bestEffortOr(
+      'p2p.trySendText',
+      () async => await _p2p?.trySendText(text) == true,
+      false,
+    );
+    if (ueberP2p) {
+      return;
+    }
     try {
       await ref
           .read(relayServiceProvider)
@@ -450,12 +454,12 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
       // NUTZERWUNSCH: Push, dass eine Nachricht wartet (nur Metadaten;
       // Beziehung = offene Dating-Hour-Session).
       unawaited(() async {
-        try {
+        await bestEffort('invoke', () async {
           await SupabaseService.client.functions.invoke(
             'notify-user',
             body: {'kind': 'messages', 'target_user_id': peerId},
           );
-        } catch (_) {}
+        });
       }());
       return;
     } catch (e) {
@@ -485,7 +489,8 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
     final peerId = _peerId;
     if (peerId == null || peerId.isEmpty || !mounted) return;
     if (!SupabaseService.isInitialized) return;
-    try {
+    // Netzwerkfehler: nächster Timer-Takt versucht es erneut.
+    await bestEffort('relayServiceProvider.fetchPending', () async {
       final pending =
           await ref.read(relayServiceProvider).fetchPending(from: peerId);
       if (!mounted || pending.isEmpty) return;
@@ -502,9 +507,7 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
         );
         ref.read(chatProvider.notifier).addMessage(widget.sessionId, msg, ref: ref);
       }
-    } catch (_) {
-      // Netzwerkfehler: nächster Timer-Takt versucht es erneut.
-    }
+    });
   }
 
   /// Handshake-Retry, gedrosselt (der 1-s-Timer ruft max. alle 25 s auf).
@@ -659,11 +662,11 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
       if (mounted) {
         // Direkt auf den Funken-Tab (v0.9.1): sonst landet man auf
         // "Gesendet" und der neue Funke wirkt unsichtbar.
-        try {
+        bestEffortSync('containerOf.read', () {
           ProviderScope.containerOf(context)
               .read(interessenInitialTabProvider.notifier)
               .state = 2;
-        } catch (_) {}
+        });
         context.go(AppRoutes.interessen);
       }
     }
@@ -1282,9 +1285,9 @@ class _MessageBubble extends StatelessWidget {
         ? Colors.white
         : Theme.of(context).colorScheme.onSurfaceVariant;
     String timeLabel = '';
-    try {
+    bestEffortSync('Hm.format', () {
       timeLabel = DateFormat.Hm().format(msg.timestamp.toLocal());
-    } catch (_) {}
+    });
 
     // Der System-Hinweis (z. B. die Fuenf-Minuten-Marke) steht
     // mittig in der Mitte - so wie die Eisbrecher-Fragen im normalen

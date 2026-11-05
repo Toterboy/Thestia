@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:thestia/services/secure_hive.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// In-Memory-Fake für den Keystore (flutter_secure_storage).
 class _FakeSecureStorage extends FlutterSecureStorage {
@@ -67,9 +68,9 @@ void main() {
 
   tearDown(() async {
     await Hive.close();
-    try {
+    await bestEffort('tempDir.delete', () async {
       await tempDir.delete(recursive: true);
-    } catch (_) {}
+    });
   });
 
   SecureHive newHive() => SecureHive.forTesting(_FakeSecureStorage(keystore));

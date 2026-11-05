@@ -9,6 +9,7 @@ import 'package:thestia/models/message.dart';
 import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/services/secure_hive.dart';
 import 'package:thestia/utils/constants.dart';
+import 'package:thestia/utils/best_effort.dart';
 
 /// Lokaler Speicher für Matches und Chat-Verläufe.
 ///
@@ -92,14 +93,14 @@ class ChatService {
       _legacyHistoryBox,
       _legacyQrBox,
     ]) {
-      try {
+      await bestEffort('close', () async {
         if (Hive.isBoxOpen(name)) {
           await Hive.box<dynamic>(name).close();
         }
-      } catch (_) {}
-      try {
+      });
+      await bestEffort('deleteBoxFromDisk', () async {
         await Hive.deleteBoxFromDisk(name);
-      } catch (_) {}
+      });
     }
   }
 
@@ -118,21 +119,21 @@ class ChatService {
       if (!await Hive.boxExists(legacy)) return;
       if (await Hive.boxExists(namespaced)) {
         // Bereits migriert (oder Ziel befüllt): Legacy-Rest löschen.
-        try {
+        await bestEffort('deleteBoxFromDisk', () async {
           if (Hive.isBoxOpen(legacy)) {
             await Hive.box<dynamic>(legacy).close();
           }
           await Hive.deleteBoxFromDisk(legacy);
-        } catch (_) {}
+        });
         return;
       }
       final oldBox =
           await SecureHive.instance.openBox<String>(legacy);
       if (oldBox.isEmpty) {
         await oldBox.close();
-        try {
+        await bestEffort('deleteBoxFromDisk', () async {
           await Hive.deleteBoxFromDisk(legacy);
-        } catch (_) {}
+        });
         return;
       }
       final newBox =
@@ -244,9 +245,9 @@ class ChatService {
     unawaited(() async {
       final box = await _qrContactsBoxFuture();
       if (box == null) return;
-      try {
+      await bestEffort('delete', () async {
         await box.delete(matchId);
-      } catch (_) {}
+      });
     }());
   }
 
@@ -268,20 +269,20 @@ class ChatService {
     // Nachrichten pro Chat (Nutzerwahl: nichts / 200 / alles).
     _historyLimit = limit;
     if (!enabled) {
-      try {
+            // Best-effort.
+bestEffortSync('clear', () {
         if (Hive.isBoxOpen(_historyBoxName)) {
           Hive.box<String>(_historyBoxName).clear();
         }
-      } catch (_) {
-        // Best-effort.
-      }
+      });
     }
   }
 
   /// Löscht den lokalen Chat-Verlauf (Account-Löschung/Logout, DSGVO),
   /// OHNE die Opt-in-Einstellung zu ändern.
   Future<void> clearLocalHistory() async {
-    try {
+        // Best-effort: Ein Rest darf die Löschung nie blockieren.
+await bestEffort('clear', () async {
       _historyBox = null;
       if (Hive.isBoxOpen(_historyBoxName)) {
         await Hive.box<String>(_historyBoxName).clear();
@@ -291,9 +292,7 @@ class ChatService {
         );
         await box.clear();
       }
-    } catch (_) {
-      // Best-effort: Ein Rest darf die Löschung nie blockieren.
-    }
+    });
   }
 
   Future<Box<String>?> _historyBoxFuture() async {
@@ -472,12 +471,11 @@ class ChatService {
 
   Future<void> _deleteHistory(String matchId) async {
     if (!_historyEnabled) return;
-    try {
+        // Best-effort.
+await bestEffort('delete', () async {
       final box = await _historyBoxFuture();
       await box?.delete(matchId);
-    } catch (_) {
-      // Best-effort.
-    }
+    });
   }
 
   /// Setzt ein bestehendes Match vollständig zurück (alte Nachrichten und
