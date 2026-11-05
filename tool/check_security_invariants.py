@@ -1442,6 +1442,31 @@ check('.from("profiles")' not in
       'Schreibweg waere die Luecke, die die Datenbank gerade schliesst')
 
 # =====================================================================
+# 15b) Der Freigabe-Status muss die beendete Freigabe melden
+# =====================================================================
+#
+# BEFUND (04.11.2026, im Android-Emulator gefunden): Die RPC
+# public.get_my_guardian_status() suchte die Freigabe mit
+#
+#     status IN ('pending','active','expired')
+#
+# 'revoked' fehlte. Bei einer widerrufenen Freigabe fand sie KEINE
+# Zeile und meldete 'status': 'none' zurueck - die App zeigte also
+# "Keine Elternfreigabe", obwohl es eine Freigabe GAB und der
+# Elternteil seine E-Mail-Adresse verloren hatte.
+#
+# Genau so ein Fehler entgeht dem Widget-Test: der fuettert das Modell
+# direkt mit dem Status. Nur der Weg App -> Server -> App findet ihn.
+
+sql_182 = read(MIG / '182_guardian_status_reports_ended.sql')
+check("status IN ('pending','active','expired','revoked')" in sql_182,
+      'DB: Der Freigabe-Status meldet auch die BEENDETE Freigabe - '
+      'sonst zeigt die App "keine Freigabe", obwohl es eine gab')
+check('emailDeletedAt' in sql_182,
+      'DB: Der Freigabe-Status meldet weiterhin, WANN die Adresse des '
+      'Elternteils geloescht wurde')
+
+# =====================================================================
 # 16) Die App sagt, was mit der E-Mail des Elternteils passiert ist
 # =====================================================================
 check(has('lib/models/guardian_status.dart',

@@ -308,6 +308,22 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   beendet" - und, dass die E-Mail-Adresse des Elternteils dabei
   gelöscht wurde. Der Server meldet den Löschzeitpunkt mit, die App
   behauptet es also nicht ohne Beleg.
+- **BEFUND im Emulator-Test: Die App erfuhr nie, dass die Freigabe
+  beendet war** (04.11.2026, Migration 182): Die RPC, die den Stand
+  meldet, suchte die Freigabe mit `status IN
+  ('pending','active','expired')` - "revoked" fehlte. Bei einer
+  widerrufenen Freigabe fand sie keine Zeile und meldete "keine
+  Freigabe" zurueck. Die neue Anzeige ("Die Freigabe ist beendet")
+  waere also **nie** erschienen.
+  *Warum der Widget-Test das nicht gefunden hat:* Er fuettert das
+  Modell direkt mit dem Status. Nur der Weg App -> Server -> App findet
+  einen Fehler in der RPC. Genau deshalb wurde die App auf einem
+  echten Android-Emulator durchgetippt - Registrierung, Login,
+  Onboarding, Einstellungen, Elternbereich - und der Zustand in der
+  Datenbank von Hand gesetzt. Beide Faelle wurden danach am echten
+  Geraet nachgewiesen: aktive Freigabe (zeigt die Eltern-Adresse und
+  die Einstellungen) und beendete Freigabe (zeigt "Die Freigabe ist
+  beendet" und dass die Adresse geloescht wurde).
 - **Die Tabellen der Website sind abgerundet** (04.11.2026): Das pinke
   Element (der Tabellenkopf) bei "Daten löschen" hatte eckige Ecken,
   weil die Tabellen nicht in der abgerundeten Hülle lagen. Jetzt tun
