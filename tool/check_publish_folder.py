@@ -331,26 +331,38 @@ def main() -> int:
             print("  OK: %s nennt keine ODR-Plattform" % name)
 
     # Die Anschrift: § 5 Abs. 1 Nr. 1 DDG verlangt eine ladungsfaehige
-    # Anschrift. Ein Postfach genuegt nicht. Solange nicht eingetragen
-    # ist, gibt es einen Hinweis (kein Fehler) - aber nur EINEN
-    # Platzhalter, sonst wird es ein Fehler.
+    # Anschrift - Straße, Hausnummer, PLZ und Ort. Ein Postfach genuegt
+    # nicht.
+    #
+    # Drei Faelle (siehe Kommentar im Skript):
+    #   1) Platzhalter noch drin  -> HINWEIS
+    #   2) Anschrift erkennbar     -> OK
+    #   3) nichts davon            -> FEHLER
+    #
+    # Erkannt wird PLZ + Ort; die Hausnummer wird zusaetzlich geprueft,
+    # weil sie das Gesetz ausdruecklich verlangt.
+    adress_muster = re.compile(r"\b\d{5}\s+[A-Za-zÄÖÜäöüß][^<\n]{2,40}")
+    hausnummer_muster = re.compile(r"\b\w+stra(?:ß|ss)e?\s+\d+"
+                                   r"|\b\d+\s*,?\s*\d{5}\s")
     for name, inhalt, marker in (
             ("impressum.html", impressum_de, "[Straße, Hausnummer, PLZ, Ort]"),
             ("en/impressum.html", impressum_en,
              "[street, house number, postcode, city]")):
-        hat_adressfeld = marker in inhalt
-        if not hat_adressfeld:
-            fehler.append(
-                "%s: kein Feld fuer die ladungsfaehige Anschrift - § 5 "
-                "Abs. 1 Nr. 1 DDG verlangt sie auf der Seite selbst" % name)
-            print("  FEHLER: %s hat kein Anschriftfeld" % name)
-        else:
+        if marker in inhalt:
             hinweise.append(
                 "%s: die Anschrift ist noch nicht eingetragen. Vor dem "
                 "Hochladen ersetzen: Straße, Hausnummer, PLZ, Ort - und "
                 "zustellmoeglich (kein Postfach, keine erfundene Adresse)."
                 % name)
             print("  HINWEIS: %s - Anschrift noch offen" % name)
+        elif adress_muster.search(inhalt) and hausnummer_muster.search(inhalt):
+            print("  OK: %s nennt eine Anschrift mit Hausnummer" % name)
+        else:
+            fehler.append(
+                "%s: keine ladungsfaehige Anschrift (Straße, Hausnummer, "
+                "PLZ, Ort) - § 5 Abs. 1 Nr. 1 DDG verlangt sie auf der "
+                "Seite selbst" % name)
+            print("  FEHLER: %s nennt keine Anschrift" % name)
 
     # Die Meldestelle muss den Meldeweg fuer rechtswidrige Inhalte
     # nennen (DSA Art. 18 - die Bundesnetzagentur).
