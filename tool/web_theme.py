@@ -748,6 +748,132 @@ def sprachknopf(ziel: str, sprache: str) -> str:
         % (ziel, sprache.lower(), label, label, sprache)
     )
 
+# =====================================================================
+# Die Suchmaschinen-Beschreibung der Seiten
+# =====================================================================
+#
+# WARUM (05.11.2026): Ohne <meta name="description"> zeigt Google im
+# Suchergebnis einen beliebigen Textausschnitt der Seite. Bei der
+# Datenschutzerklaerung oder dem Impressum ist das der schlechteste
+# moegliche Ausschnitt - meistens ein Nebensatz ueber Cookies.
+#
+# Der Schluessel ist der Seitenname OHNE den Ordner "en/" und OHNE
+# ".html" - "eltern-einstellungen.html" steht fuer beide Fassungen
+# (de/en/eltern/einstellungen.html), denn beide bekommen denselben
+# Text in ihrer Sprache.
+#
+# KEIN Eintrag fuer die transienten Seiten (bestaetigt.html,
+# eltern-einstellungen.html): sie stehen auf noindex - eine
+# Suchmaschinen-Beschreibung waere dort sinnlos.
+BESCHREIBUNG = {
+    'impressum': (
+        'Impressum von Thestia: Anbieterkennzeichnung nach Par. 5 DDG '
+        'mit Anschrift, Kontakt und Hinweisen zum Jugendschutz und zu '
+        'den Nutzungsbedingungen.',
+        'Legal notice for Thestia: provider identification under Sec. 5 '
+        'DDG with address, contact details and notes on child '
+        'protection and the terms of use.',
+    ),
+    'kinderschutz': (
+        'Kinderschutz bei Thestia: Altersprüfung, die Regeln für 16- '
+        'und 17-Jährige, die Meldestelle bei Verstößen und '
+        'Sofortmaßnahmen gegen Kontakte zu Minderjährigen.',
+        'Child protection at Thestia: age verification, the rules for 16 '
+        'and 17 year olds, the reporting point for violations and '
+        'immediate measures against contact with minors.',
+    ),
+    'dating-sicherheit': (
+        'Die Sicherheits-Aufklärung von Thestia: Fake-Profile, '
+        'Datenschutz, das erste Treffen, Grenzen und Hilfe im Notfall.',
+        'The safety guidance of Thestia: fake profiles, data privacy, '
+        'the first meeting, boundaries and help in an emergency.',
+    ),
+    'konto-loeschen': (
+        'Konto löschen bei Thestia: so löschst du dein Konto und deine '
+        'Daten in der App, und welche Angaben aus steuerlichen Gründen '
+        'erhalten bleiben.',
+        'Deleting your account at Thestia: how to delete your account '
+        'and your data in the app, and which details are retained for '
+        'tax reasons.',
+    ),
+    'daten-loeschen': (
+        'Daten löschen bei Thestia: welche Daten du in der App löschen '
+        'kannst, wie die Löschung abläuft und welche '
+        'Aufbewahrungsfristen es gibt.',
+        'Deleting data at Thestia: which data you can delete in the '
+        'app, how the deletion works and which retention periods apply.',
+    ),
+    'datenschutz': (
+        'Datenschutzerklärung von Thestia: welche Daten verarbeitet '
+        'werden, auf welcher Rechtsgrundlage, wie lange sie gespeichert '
+        'bleiben und welche Rechte du hast.',
+        'Privacy policy for Thestia: which data is processed, on what '
+        'legal basis, how long it is stored and what rights you have.',
+    ),
+    'eltern': (
+        'Eltern und Jugendliche bei Thestia: die freiwillige '
+        'Elternaufsicht für 16- und 17-Jährige, der Ablauf der '
+        'Zustimmung und die Rechte des Kindes.',
+        'Parents and young people at Thestia: the voluntary parental '
+        'supervision for 16 and 17 year olds, how the consent works and '
+        'the rights of the child.',
+    ),
+    'nutzungsbedingungen': (
+        'Nutzungsbedingungen von Thestia: die Regeln für die Nutzung, '
+        'die besonderen Regeln für 16- und 17-Jährige, der Meldeweg '
+        'und der Kontakt.',
+        'Terms of use for Thestia: the rules for using the app, the '
+        'special rules for 16 and 17 year olds, the reporting route and '
+        'the contact details.',
+    ),
+    'index': (
+        'Thestia ist eine Dating-App für Android: Ende-zu-Ende-'
+        'verschlüsselte Chats, Blind Dates nach Vorstellung statt Foto, '
+        'Jugendschutz ab 16 Jahren und Datenschutz ohne Werbung.',
+        'Thestia is a dating app for Android: end-to-end encrypted '
+        'chats, blind dates based on personality instead of photos, '
+        'child protection from 16, and privacy without ads.',
+    ),
+}
+
+
+def beschreibung(seitenname: str, sprache: str = 'de') -> str:
+    """Die Suchmaschinen-Beschreibung fuer eine Seite (leer, wenn keine).
+
+    [seitenname] ist der Pfad relativ zu passkey-assets/, z. B.
+    "en/eltern/einstellungen.html" oder "impressum.html".
+
+    [sprache] ist "de" oder "en" - die Seite ist zweisprachig, die
+    Beschreibung auch.
+    """
+    name = seitenname
+    if name.startswith('en/'):
+        name = name[3:]
+    name = name.replace('/', '-')
+    if name.endswith('.html'):
+        name = name[:-len('.html')]
+    eintrag = BESCHREIBUNG.get(name)
+    if not eintrag:
+        return ''
+    return eintrag[0] if sprache == 'de' else eintrag[1]
+
+
+def meta_description(html: str, text: str) -> str:
+    """Setzt die meta description - aber nur, wenn noch keine da ist.
+
+    NUR wenn noch keine da ist: Das Werkzeug muss wiederholbar sein.
+    Ein Ersetzen wuerde bei jedem Durchlauf die Datei anruehren.
+    """
+    if not text or 'name="description"' in html:
+        return html
+    import re
+    zeile = '<meta name="description" content="%s">' % text
+    m = re.search(r'<title>.*?</title>', html, re.S)
+    if m:
+        return html[:m.end()] + '\n' + zeile + html[m.end():]
+    return html.replace('</head>', zeile + '\n</head>', 1)
+
+
 # Kurzname fuer den Generator, der bisher ein eigenes CSS hatte.
 CSS = THEME_CSS
 
@@ -874,7 +1000,8 @@ def strip_theme(html: str, remove_chrome: bool = True) -> str:
 def apply_theme(html: str, css_extra: str = '',
                 insert_chrome: bool = True,
                 sprach_ziel: str = '',
-                sprache: str = 'EN') -> str:
+                sprache: str = 'EN',
+                beschreibung: str = '') -> str:
     """Haengt Design, Kopfzeile und Umschalt-Knopf in eine HTML-Seite ein.
 
     [css_extra] sind seiten-eigene Regeln, die VOR den gemeinsamen
@@ -894,11 +1021,22 @@ def apply_theme(html: str, css_extra: str = '',
 
     [sprache] = Kuerzel des ZIELS: "EN" auf der deutschen Seite,
     "DE" auf der englischen.
+
+    [beschreibung] = der Text fuer <meta name="description">. Wird
+    nur gesetzt, wenn die Seite noch keinen hat. Leer lassen, wenn
+    die Seite keine bekommen soll (transiente Seiten auf noindex).
     """
     # Ein altes Design wird entfernt, damit die Seite nie zweimal
     # gestyled wird. Die Kopfzeile wird nur entfernt, wenn sie auch
     # automatisch eingefuegt wurde.
     html = strip_theme(html, remove_chrome=insert_chrome)
+
+    # 0) Die Suchmaschinen-Beschreibung (nur, wenn noch keine da ist).
+    #
+    #    WICHTIG (05.11.2026): Vor der Kopfzeile. Der meta-Tag gehoert
+    #    in den <head> - er darf nicht zwischen <body> und der
+    #    Kopfzeile landen.
+    html = meta_description(html, beschreibung)
 
     # 1) Die alte eigenstaendige :root-Zeile braucht es nicht mehr.
     #

@@ -249,7 +249,8 @@ EN = {
 # Idempotenz-Gate der CI ("Web-Theme wiederholbar") ist erfuellt.
 import sys as _sys
 _sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from web_theme import CSS, KOPF_HTML, sprachknopf  # noqa: E402
+from web_theme import (CSS, KOPF_HTML,  # noqa: E402
+                       beschreibung, sprachknopf)
 
 
 def seite(sprache, daten, pfad):
@@ -268,6 +269,8 @@ def seite(sprache, daten, pfad):
              'initial-scale=1">',
              '  <link rel="canonical" href="%s">' % canonical,
              '  <title>%s - Thestia</title>' % daten['titel'],
+             '  <meta name="description" content="%s">'
+             % beschreibung('nutzungsbedingungen.html', sprache),
              '  <style>',
              # Eigenes CSS VOR dem gemeinsamen (siehe Kommentar oben:
              # sonst ist strip_theme/apply_theme nicht wiederholbar).

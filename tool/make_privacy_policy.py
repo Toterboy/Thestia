@@ -122,7 +122,8 @@ SPRACHEN = [
 import pathlib as _pathlib
 import sys as _sys
 _sys.path.insert(0, str(_pathlib.Path(__file__).resolve().parent))
-from web_theme import CSS, KOPF_HTML, sprachknopf  # noqa: E402
+from web_theme import (CSS, KOPF_HTML,  # noqa: E402
+                       beschreibung, sprachknopf)
 
 # Der Fuss-Text steht in der Sprachbeschreibung (SPRACHEN).
 
@@ -366,6 +367,8 @@ def render_html(blocks, sprache: dict):
            '<meta name="viewport" content="width=device-width, '
            'initial-scale=1">',
            '<title>%s</title>' % sprache['titel'],
+    '<meta name="description" content="%s">'
+    % beschreibung('datenschutz.html', sprache['sprache']),
            # Die kanonische Adresse: die Seite ist unter zwei Adressen
            # erreichbar (/datenschutz und /datenschutz.html). Ohne diese
            # Angabe entscheidet die Suchmaschine, welche davon gilt.

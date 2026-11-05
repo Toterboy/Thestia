@@ -234,6 +234,8 @@ if (Soll 'static-checks') {
         (G 'Uebrige statische Pruefer (Edge-Syntax)' @($py, 'tool/check_edge_syntax.py'))
         (G 'Publish-Ordner vorbereit' @($py, 'tool/check_publish_folder.py'))
         (G 'Nutzungsbedingungen belegt' @($py, 'tool/check_terms_claims.py'))
+        (G 'Website-Seiten pruefen' @($py, 'tool/check_web_pages.py'))
+        (G 'Website-Pruefer Selbsttest' @($py, 'tool/check_web_pages_selftest.py'))
         (G 'Mojibake' @($py, 'tool/check_mojibake.py', '--skip-known'))
         (G '.gitignore auf Luecken' @($py, 'tool/check_gitignore.py'))
         (G 'PNG-Dateien auf Korruption' @($py, 'tool/check_png_integrity.py'))

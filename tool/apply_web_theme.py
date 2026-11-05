@@ -28,7 +28,8 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / 'tool'))
 
-from web_theme import apply_theme, strip_theme  # noqa: E402
+from web_theme import (apply_theme, beschreibung,  # noqa: E402
+                       strip_theme)
 
 ASSETS = ROOT / 'passkey-assets'
 
@@ -153,7 +154,12 @@ def main() -> int:
         vorher = pfad.read_text(encoding='utf-8')
         quelle = strip_theme(vorher) if force else vorher
         ziel, sprache = sprachziel(name)
-        nachher = apply_theme(quelle, sprach_ziel=ziel, sprache=sprache)
+        # Die Suchmaschinen-Beschreibung kommt aus der gemeinsamen
+        # Tabelle in web_theme.py. Die transienten Seiten (Token-URL)
+        # stehen auf noindex - fuer sie gibt es keine.
+        text = beschreibung(name, 'en' if name.startswith('en/') else 'de')
+        nachher = apply_theme(quelle, sprach_ziel=ziel, sprache=sprache,
+                              beschreibung=text)
         if nachher == vorher:
             print(f'  {name}: bereits bearbeitet - unveraendert')
             continue
@@ -167,7 +173,10 @@ def main() -> int:
             continue
         vorher = pfad.read_text(encoding='utf-8')
         quelle = strip_theme(vorher, remove_chrome=False) if force else vorher
-        nachher = apply_theme(quelle, insert_chrome=False)
+        nachher = apply_theme(quelle, insert_chrome=False,
+                              beschreibung=beschreibung(
+                                  name,
+                                  'en' if name.startswith('en/') else 'de'))
         if nachher == vorher:
             print(f'  {name}: bereits bearbeitet - unveraendert')
             continue

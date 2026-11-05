@@ -343,6 +343,8 @@ jobs:
           # ein toter Link.
           python3 tool/check_publish_folder.py
           python3 tool/check_terms_claims.py
+          python3 tool/check_web_pages.py
+          python3 tool/check_web_pages_selftest.py
 
       # Doppelkodierte Umlaute sind gueltiges UTF-8, deshalb findet sie
       # weder der Analyzer noch ein Test. Sie fielen nur auf, als eine

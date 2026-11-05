@@ -30,6 +30,7 @@ Prueft:
 import pathlib
 import re
 import sys
+import tomllib
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -94,6 +95,65 @@ def main() -> int:
                           % (ziel, quelle))
         rewrite_ziele.append((quelle, ziel))
     print("  %d Regeln, alle Ziele vorhanden" % len(rewrite_ziele))
+
+    # -----------------------------------------------------------------
+    # 2b) netlify.toml
+    # -----------------------------------------------------------------
+    #
+    # GEFUNDEN 05.11.2026: Hier stand ein [[redirects]]-Block ohne
+    # "from" und "to" - eine ungueltige Regel. Sie fiel nicht auf,
+    # weil kein Gate die Datei gelesen hat (nur _redirects und
+    # _headers wurden geprueft). Jetzt wird sie es.
+    print("\n2b) netlify.toml:")
+    toml_pfad = A / "netlify.toml"
+    toml_regeln = []
+    if not toml_pfad.exists():
+        fehler.append("netlify.toml fehlt im Publish-Ordner")
+        print("  FEHLER: die Datei fehlt")
+    else:
+        roh_toml = toml_pfad.read_text(encoding="utf-8")
+        try:
+            daten = tomllib.loads(roh_toml)
+        except tomllib.TOMLDecodeError as e:
+            fehler.append("netlify.toml ist kein gueltiges TOML: %s" % e)
+            print("  FEHLER: ungueltiges TOML: %s" % e)
+            daten = {}
+        else:
+            print("  TOML gueltig")
+        for regel in daten.get("redirects", []):
+            quelle = regel.get("from")
+            ziel = regel.get("to")
+            status = regel.get("status")
+            if not quelle or not ziel:
+                fehler.append("netlify.toml: Regel ohne from/to: %r" % regel)
+                print("  FEHLER: Regel ohne from/to: %r" % regel)
+                continue
+            if ziel.startswith("http"):
+                # Ein Rewrite auf eine fremde Adresse - das Ziel kann
+                # nicht im Ordner liegen.
+                toml_regeln.append((quelle, ziel))
+                continue
+            if not (A / ziel.lstrip("/")).exists():
+                fehler.append("netlify.toml: Ziel %s existiert nicht (%s)"
+                              % (ziel, quelle))
+                print("  FEHLER: Ziel %s existiert nicht" % ziel)
+            if status not in (200, 301, 302, 303, 307, 308):
+                fehler.append("netlify.toml: unbekannter Status %r bei %s"
+                              % (status, quelle))
+            toml_regeln.append((quelle, ziel))
+        print("  %d Regeln geprueft" % len(toml_regeln))
+
+        # Dieselbe Adresse in beiden Quellen: dann muss dasselbe Ziel
+        # das Ziel sein. Sonst schattiert eine Quelle die andere
+        # lautlos - genau das warnt der Kopf von _redirects.
+        redirect_map = dict(rewrite_ziele)
+        for quelle, ziel in toml_regeln:
+            if quelle in redirect_map and redirect_map[quelle] != ziel:
+                fehler.append(
+                    "netlify.toml und _redirects nennen dieselbe Adresse "
+                    "%s, aber unterschiedliche Ziele (%s vs %s)"
+                    % (quelle, ziel, redirect_map[quelle]))
+                print("  FEHLER: %s zeigt auf zwei Ziele" % quelle)
 
     # -----------------------------------------------------------------
     # 3) _headers
