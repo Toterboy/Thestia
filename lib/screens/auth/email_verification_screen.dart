@@ -417,6 +417,9 @@ class _EmailVerificationScreenState
     controller.dispose();
     if (neue == null || neue.isEmpty) return;
     if (neue.toLowerCase() == creds.email.toLowerCase()) return;
+    // Der Dialog war modal, aber die Route darunter kann inzwischen
+    // geschlossen worden sein (z. B. durch eine Weiterleitung).
+    if (!mounted) return;
 
     setState(() => _changingEmail = true);
     try {

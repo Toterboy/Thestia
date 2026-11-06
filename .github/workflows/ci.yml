@@ -356,6 +356,7 @@ jobs:
           python3 tool/check_web_pages.py
           python3 tool/check_web_pages_selftest.py
           python3 tool/check_no_empty_catches.py
+          python3 tool/check_async_setstate.py
 
       # Doppelkodierte Umlaute sind gueltiges UTF-8, deshalb findet sie
       # weder der Analyzer noch ein Test. Sie fielen nur auf, als eine

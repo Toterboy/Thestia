@@ -775,6 +775,9 @@ class _SettingsPrivacyOnceScreenState
         );
       }
 
+      // Der Nutzer kann den Schritt inzwischen verlassen haben - dann
+      // waere das setState ein Absturz.
+      if (!mounted) return;
       setState(() {
         _isDetectingLocation = false;
         _locationError = null;

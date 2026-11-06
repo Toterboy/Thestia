@@ -655,6 +655,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       // passiert erst mit dem Speichern. Dadurch kann ein versehentlich
       // gewähltes Bild per "Abbrechen" verworfen werden, ohne dass es
       // je den Server erreicht hat (NSFW-Check lief oben bereits).
+      // Die Bildauswahl dauert real mehrere Hundert Millisekunden - der
+      // Nutzer kann in dieser Zeit zurueckgehen. Dann waere das
+      // setState ein Absturz ("setState() called after dispose()").
+      if (!mounted) return;
       setState(() {
         _pendingAvatarBytes = bytes;
         // Slot 0 wird ersetzt -> Entfernen-Markierung hinfällig.
@@ -816,6 +820,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         );
       }
 
+      // Der Nutzer kann inzwischen zurueckgegangen sein - dann waere
+      // das setState ein Absturz.
+      if (!mounted) return;
       setState(() {
         _isDetectingLocation = false;
         _locationError = null;
