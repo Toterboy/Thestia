@@ -183,7 +183,7 @@ class TransitNotifier extends StateNotifier<TransitState>
     // (dichte BLE-Umgebungen fluten sonst den Cache).
     if (state.mode.rssiThreshold > rssi) return;
     _encounters.recordEncounter(token);
-    state = state.copyWith(encounterCount: _encounters.count);
+    state = state.copyWith(encounterCount: _encounters.freshCount);
     // Persist entprellt (nicht bei jedem Treffer schreiben).
     _persistTimer?.cancel();
     _persistTimer = Timer(const Duration(seconds: 5), () {

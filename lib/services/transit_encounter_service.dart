@@ -127,7 +127,23 @@ class TransitEncounterService {
     return _cache.values.map((e) => e.token).take(100).toList();
   }
 
+  /// Alle bekannten Begegnungen (inklusive der abgelaufenen - die
+  /// werden beim Zugriff aussortiert).
   int get count => _cache.length;
+
+  /// Die Begegnungen, die noch zaehlen - also die FRISCHEN (45
+  /// Minuten). Das ist genau das Fenster, in dem der Server sie noch
+  /// zuordnen kann.
+  ///
+  /// BEFUND (06.11.2026, Betreiber): "Es werden immer mehr (aktuell
+  /// ueber 100 gefunden)." Der Zaehler nahm alle Eintraege (zwei
+  /// Stunden) und nannte sie "Geraete" - dabei liefert ein einziges
+  /// Geraet mehrere Signale, weil sein Token alle 6-14 Minuten
+  /// wechselt.
+  int get freshCount {
+    _purgeExpired();
+    return _cache.values.where((e) => e.isFresh).length;
+  }
 
   /// Persistenz: kleines JSON (best-effort; Verlust ist unkritisch).
   Future<void> persist() async {

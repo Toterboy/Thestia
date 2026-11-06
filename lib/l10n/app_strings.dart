@@ -671,7 +671,9 @@ const Map<String, Map<String, String>> _strings = {
         'Radar aktiv - du bist sichtbar für Thestia-Geräte in der Nähe.',
     'transit.inactive': 'Radar aus. Aktiviere es, wenn du unterwegs bist.',
     'transit.remaining': 'Noch {time} aktiv',
-    'transit.seenCount': '{count} Thestia-Geräte in Reichweite gesehen.',
+    // "Signale" und nicht "Geräte": ein Gerät liefert mehrere Signale,
+    // weil sein Token alle 6-14 Minuten wechselt (Datenschutz).
+    'transit.seenCount': '{count} Thestia-Signale in Reichweite empfangen.',
     'transit.exchanged': 'Blicke getauscht',
     'transit.modeLabel': 'Wie weit soll die Erkennung reichen?',
     'transit.mode.transit': 'Normal',
@@ -3919,7 +3921,9 @@ const Map<String, Map<String, String>> _strings = {
     'transit.active': 'Radar active - visible to nearby Thestia devices.',
     'transit.inactive': 'Radar off. Activate it when you are on the go.',
     'transit.remaining': 'Active for another {time}',
-    'transit.seenCount': 'Seen {count} Thestia devices in range.',
+    // "Signals" and not "devices": one device delivers several signals,
+    // because its token changes every 6-14 minutes (privacy).
+    'transit.seenCount': 'Received {count} Thestia signals in range.',
     'transit.exchanged': 'Exchanged glances',
     'transit.modeLabel': 'How far should detection reach?',
     'transit.mode.transit': 'Normal',
