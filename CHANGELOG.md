@@ -722,6 +722,90 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   ein Regressionstest, der verhindert, dass der Passkey-Plugin wieder aus
   dem Build verschwindet.
 
+### Nachtrag: Build 33 (06.11.2026) - P2P reparariert und drei Blocker behoben
+
+Der Build 33 enthaelt dieselbe Version (0.10.0) mit einer neuen
+Build-Nummer, weil Android ein Update nur installiert, wenn die
+Build-Nummer hoeher ist. Build 32 wurde fuer den zurueckgenommenen
+Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
+
+#### Behoben
+
+- **Das Ende-zu-Ende-Chat war tot** (06.11.2026, live am echten
+  Server gemessen): Der Realtime-Client setzt in seiner
+  `send()`-Methode `payload['type'] = 'broadcast'`. Die App las aber
+  ebenfalls `type` - und der Wert war damit immer `'broadcast'`.
+  **Jede** Signaling-Nachricht (Offer, Answer, ICE-Kandidat,
+  Relay-Weckmeldung) wurde stillschweigend verworfen, ohne jede
+  Fehlermeldung. Live gemessen: gesendet wurde
+  `{kind: relay-ping, from: 11111111-…}`, empfangen wurde
+  `{event: signal, from: 11111111-…, kind: relay-ping, type: broadcast}`.
+  Das Feld der App heisst jetzt `kind` - `type` ist vom
+  Realtime-Client reserviert.
+- **Der Neuversuch des Handshakes konnte die Verbindung nicht mehr
+  reparieren:** Zwischen Offer und Answer lag kein Generationszaehler -
+  eine Antwort zu einem alten Angebot kam an und wurde verworfen,
+  waehrend der neue Aufbau schon lief. Der Zaehler trennt die
+  Versuche jetzt sauber.
+- **Ein verbrauchter Einmal-Schluessel wurde wiederbelebt:** Wurde ein
+  PreKey zweimal angeboten, uebernahm der zweite Peer ihn erneut.
+  Jetzt wird ein verbrauchter Schluessel wirklich entfernt.
+- **Ein fehlendes PreKey-Bundle brach den ganzen Aufbau ab:** Kam vom
+  Partner kein Bundle (404), wurde nicht weiter versucht - die anderen
+  Schluessel des Partners wurden nicht mehr probiert.
+- **Nach dem Login blieb der Login-Screen mit einer Fehlermeldung
+  stehen** (06.11.2026, live im Emulator gefunden): Die Anmeldung war
+  erfolgreich (`[AuthNotifier] login erfolgreich`), danach warf die App
+  einen `CircularDependencyError`. Ursache: `login()` und
+  `loginWithPasskey()` riefen `_ref.invalidate(emailConfirmedProvider)`.
+  Der Erzeuger dieses Providers hoert im Konstruktor auf den
+  `authProvider` - die Invalidierung laeuft also im `authProvider`
+  selbst, Riverpod erkennt den Kreis und wirft. Die Invalidierung
+  entfaellt; ihre Absicht (sofort pruefen statt auf den 3-s-Poller zu
+  warten) erreicht der Notifier selbst ueber seinen eigenen Listener.
+- **Die App konnte beim Start in einen Fehlerzustand geraten**
+  (06.11.2026, live im Emulator gefunden - Android zeigte "Thestia
+  isn't responding"): `app.dart` setzte in `initState` den
+  `globalRelayInboxProvider`. Riverpod verbietet Provider-
+  Schreibzugriffe im Lebenszyklus ("Tried to modify a provider while
+  the widget tree was building"). Die Zuweisung wartet jetzt einen
+  Frame (`addPostFrameCallback`).
+- **Der Dialog "Chat-Hintergrund" blieb leer und der Chat war damit
+  unbrauchbar** (06.11.2026, live im Emulator gefunden): Flutter packt
+  den Inhalt eines `AlertDialog` in ein `IntrinsicWidth` und fragt
+  damit die intrinsische Breite der Kinder ab. Eine Liste
+  (`GridView`/`ListView`) kann die nicht liefern - Flutter wirft "Render
+  Viewport does not support returning intrinsic dimensions". Der Picker
+  bekommt jetzt eine feste Breite; die Liste scrollt intern. **Wichtig
+  fuer den Test:** Dieser Dialog erscheint beim *ersten* Chat-Besuch -
+  wer den Chat nicht aufbekommt, testet das P2P nie.
+- **Fuenf Stellen mit `setState` nach `dispose`** (06.11.2026,
+  systematischer Audit aller 227 Dateien unter `lib/`): Nach einem
+  `await` (Serveraufruf, Bildauswahl) wurde `setState` gerufen, ohne den
+  `mounted` zu pruefen. Navigiert der Nutzer in dieser Zeit weg, ist das
+  im Debug-Build ein Absturz ("setState() called after dispose()"). Der
+  Analyzer sieht das nicht - er prueft den BuildContext, nicht den State.
+
+#### Geaendert
+
+- **Die P2P-Diagnose ist auch im Store-Build sichtbar** (06.11.2026):
+  Die internen Meldungen des WebRTC-Service gingen nur in den
+  Debug-Log. Im Store-Build - dem, in dem der Betreiber testet - war
+  deshalb nicht zu sehen, woran der Aufbau scheiterte. Der Service
+  meldet seine Probleme jetzt auf einem Stream, und die Diagnosezeile
+  im Chat zeigt den letzten Eintrag. Die Texte enthalten keine
+  personenbezogenen Daten; Ausnahmen werden nur als Typ genannt.
+
+#### Neu (Pruefwerkzeuge)
+
+- **Vier neue Waechter**, alle in der CI und im lokalen Spiegel
+  (`tool/check_local_ci.ps1`): `check_async_setstate.py` (findet
+  `setState` nach einem `await` ohne `mounted`-Check), `check_provider_
+  in_lifecycle.py` (findet Provider-Schreibzugriffe in `initState` und
+  `build`), `check_no_empty_catches.py` und `check_web_pages.py` mit
+  Selbsttest. Der erste Wächter fand fuenf echte Faelle, der zweite
+  einen - beide gegen Negativproben geprueft.
+
 ## [0.10.0] - 2026-10-24 (Build 31)
 
 ### Sicherheit
