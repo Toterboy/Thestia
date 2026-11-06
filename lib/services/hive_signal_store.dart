@@ -29,9 +29,21 @@ class HiveSignalProtocolStore extends InMemorySignalProtocolStore {
     super.localRegistrationId,
     this._sessionBox, [
     Box<SignalIdentityKeyStoreAdapter>? identityTrustBox,
-  ]) : _identityTrustBox = identityTrustBox;
+    Box<SignalPreKeyRecordAdapter>? preKeyBox,
+  ]) : _identityTrustBox = identityTrustBox,
+       _preKeyBox = preKeyBox;
 
   final Box<SignalSessionRecordAdapter> _sessionBox;
+
+  /// Die persistente PreKey-Box (Audit H-7/E-2).
+  ///
+  /// WICHTIG (06.11.2026): Sie muss beim Verbrauch eines PreKeys
+  /// mitgeleert werden. Sonst laedt [_loadOrEnsurePreKeys] den bereits
+  /// verbrauchten Key wieder in den Store - und derselbe Einmal-
+  /// Schluessel geht an zwei Peers. Die Einmal-Nutzung ist eine
+  /// Annahme von X3DH; sie zu brechen nimmt der Forward-Secrecy-
+  /// Eigenschaft die Grundlage.
+  final Box<SignalPreKeyRecordAdapter>? _preKeyBox;
 
   /// Persistenter Identity-Trust (Audit H-7/E-4). NULL = Legacy-Verhalten
   /// (In-Memory), z. B. wenn die Box nicht geöffnet werden konnte.
@@ -43,12 +55,14 @@ class HiveSignalProtocolStore extends InMemorySignalProtocolStore {
     required int localRegistrationId,
     required Box<SignalSessionRecordAdapter> sessionBox,
     Box<SignalIdentityKeyStoreAdapter>? identityTrustBox,
+    Box<SignalPreKeyRecordAdapter>? preKeyBox,
   }) async {
     final store = HiveSignalProtocolStore(
       identityKeyPair,
       localRegistrationId,
       sessionBox,
       identityTrustBox,
+      preKeyBox,
     );
 
     // Bestehende Sessions aus Hive laden.
@@ -72,6 +86,20 @@ class HiveSignalProtocolStore extends InMemorySignalProtocolStore {
     }
 
     return store;
+  }
+
+  /// Ein verbrauchter PreKey wird auch aus der persistenten Box
+  /// entfernt.
+  ///
+  /// libsignal ruft [removePreKey], wenn ein PreKey fuer eine Session
+  /// benutzt wurde. Ohne dieses Override blieb der Key in der Box -
+  /// und _loadOrEnsurePreKeys (EncryptionService) legte ihn beim
+  /// naechsten Mal wieder in den Store. Damit waere ein PreKey mehrfach
+  /// benutzbar (gebrochene Einmal-Nutzung, siehe Audit H-7/E-2).
+  @override
+  Future<void> removePreKey(int preKeyId) async {
+    await super.removePreKey(preKeyId);
+    await _preKeyBox?.delete(preKeyId.toString());
   }
 
   // ==========================================================================

@@ -51,36 +51,39 @@ void main() {
       expect(
         pings,
         1,
-        reason: 'die Nachricht wurde verworfen - dann passt das Feld '
+        reason:
+            'die Nachricht wurde verworfen - dann passt das Feld '
             '"kind" nicht zur Realtime-Client-Vereinbarung',
       );
     });
 
-    test('das alte Feld "type" geht verloren (der urspruengliche Bug)',
-        () async {
-      // Der Client ueberschreibt 'type' mit 'broadcast' - die Nachricht
-      // kommt also als type='broadcast' an und der Schalter in
-      // _handleSignal verwirft sie. Genau das war der Grund, warum P2P
-      // nie aufging.
-      final service = WebRTCService(EncryptionService());
-      service.currentPeerIdForTesting = 'peer-1';
-      var pings = 0;
-      final abo = service.relayPing.listen((_) => pings++);
-      addTearDown(abo.cancel);
+    test(
+      'das alte Feld "type" geht verloren (der urspruengliche Bug)',
+      () async {
+        // Der Client ueberschreibt 'type' mit 'broadcast' - die Nachricht
+        // kommt also als type='broadcast' an und der Schalter in
+        // _handleSignal verwirft sie. Genau das war der Grund, warum P2P
+        // nie aufging.
+        final service = WebRTCService(EncryptionService());
+        service.currentPeerIdForTesting = 'peer-1';
+        var pings = 0;
+        final abo = service.relayPing.listen((_) => pings++);
+        addTearDown(abo.cancel);
 
-      await service.routeSignalingForTesting(
-        wieRealtime({'type': 'relay-ping', 'from': 'peer-1'}),
-      );
-      await Future<void>.delayed(Duration.zero);
+        await service.routeSignalingForTesting(
+          wieRealtime({'type': 'relay-ping', 'from': 'peer-1'}),
+        );
+        await Future<void>.delayed(Duration.zero);
 
-      expect(
-        pings,
-        0,
-        reason:
-            'eine Nachricht mit dem Feld "type" kam an - dann wuerde der '
-            'Realtime-Client sie doch nicht ueberschreiben',
-      );
-    });
+        expect(
+          pings,
+          0,
+          reason:
+              'eine Nachricht mit dem Feld "type" kam an - dann wuerde der '
+              'Realtime-Client sie doch nicht ueberschreiben',
+        );
+      },
+    );
 
     test('ein fremder Absender wird verworfen', () async {
       // Der Fix darf die Haertung NICHT aufweichen.

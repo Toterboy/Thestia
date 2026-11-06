@@ -141,6 +141,11 @@ class EncryptionService {
       localRegistrationId: _registrationId,
       sessionBox: _sessionBox,
       identityTrustBox: _identityTrustBox,
+      // Wichtig (06.11.2026): die PreKey-Box mitgeben, damit ein
+      // verbrauchter PreKey auch persistent verschwindet. Sonst wuerde
+      // er beim naechsten _loadOrEnsurePreKeys wiederbelebt und ein
+      // Einmal-Schluessel ginge an zwei Peers.
+      preKeyBox: _preKeysBox,
     );
 
     // Persistierte Keys laden; fehlende generieren (Audit H-7/E-2).
