@@ -202,7 +202,10 @@ class WebRTCService {
       return servers;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('[WebRTC] ice-config nicht verfuegbar, Fallback aktiv: $e');
+        _melde(
+          'Die ICE-Konfiguration war nicht erreichbar (Ersatzliste aktiv).',
+          e,
+        );
       }
       return _fallbackIceServers;
     }
@@ -267,6 +270,35 @@ class WebRTCService {
   /// Stream des ICE-Verbindungsstatus.
   Stream<RTCIceConnectionState> get iceConnectionState =>
       _iceConnectionStateController.stream;
+
+  /// Die Probleme, die beim Verbindungsaufbau auftreten.
+  ///
+  /// WARUM (06.11.2026): Die internen Meldungen gingen nur in den
+  /// Debug-Log. Im Store-Build (dem, in dem der Betreiber testet) war
+  /// damit nicht zu sehen, WORAN der P2P-Aufbau scheiterte. Der Chat
+  /// zeigt jetzt den letzten Eintrag in seiner Diagnosezeile - im
+  /// Debug- UND im Release-Build.
+  ///
+  /// Die Texte enthalten keine personenbezogenen Daten (keine
+  /// User-IDs, keine SDPs). Ausnahmen stehen deshalb nicht im Text,
+  /// sondern nur ihr Typ - der Text landet in der Oberflaeche.
+  final StreamController<String> _problemController =
+      StreamController<String>.broadcast();
+
+  Stream<String> get problems => _problemController.stream;
+
+  /// Meldet ein Problem: in den Debug-Log UND fuer die Diagnosezeile.
+  ///
+  /// [text] ist fuer Menschen lesbar und darf KEINE
+  /// personenbezogenen Daten enthalten. [fehler] wird nur als Typ
+  /// genannt (der Text koennte eine User-ID enthalten).
+  void _melde(String text, [Object? fehler]) {
+    final typ = fehler == null ? '' : ' (${fehler.runtimeType})';
+    debugPrint('[WebRTC] $text$typ');
+    if (!_problemController.isClosed) {
+      _problemController.add(text);
+    }
+  }
 
   /// Der LETZTE ICE-Zustand - auch fuer einen Aufrufer, der erst nach
   /// dem Zustandswechsel zuhört.
@@ -345,7 +377,11 @@ class WebRTCService {
         await Supabase.instance.client.realtime.setAuth(accessToken);
       } catch (e) {
         if (kDebugMode) {
-          debugPrint('[WebRTC] realtime.setAuth fehlgeschlagen: $e');
+          _melde(
+            'Die Anmeldung fuer das Signaling ist fehlgeschlagen '
+            '(der Kanal bleibt zu).',
+            e,
+          );
         }
       }
     }
@@ -440,7 +476,7 @@ class WebRTCService {
     try {
       await channel.sendBroadcastMessage(event: 'signal', payload: message);
     } catch (e) {
-      if (kDebugMode) debugPrint('[WebRTC] Broadcast-Fehler: $e');
+      _melde('Das Senden der Signaling-Nachricht ist fehlgeschlagen.', e);
     }
   }
 
@@ -461,7 +497,7 @@ class WebRTCService {
       final from = msg['from'] as String?;
       if (from == null || from != _currentPeerId) {
         if (kDebugMode) {
-          debugPrint('[WebRTC] Signaling von unerwartetem Absender verworfen.');
+          _melde('Eine fremde Signaling-Nachricht wurde verworfen.');
         }
         return;
       }
@@ -501,7 +537,7 @@ class WebRTCService {
         final sdp = msg['sdp'] as String?;
         if (sdp == null || _isConnected) break;
         if (utf8Length(sdp) > _maxSdpBytes) {
-          if (kDebugMode) debugPrint('[WebRTC] Offer zu groß, verworfen.');
+          _melde('Das Angebot war zu groß und wurde verworfen.');
           break;
         }
         // Identische Offer-Wiederholung: kein Neustart.
@@ -526,7 +562,10 @@ class WebRTCService {
         }
         if (_peerConnection == null || utf8Length(sdp) > _maxSdpBytes) {
           if (kDebugMode) {
-            debugPrint('[WebRTC] Answer verworfen (kein PC/zu groß).');
+            _melde(
+              'Die Antwort des Partners wurde verworfen (keine Verbindung '
+              'oder zu groß).',
+            );
           }
           break;
         }
@@ -707,7 +746,10 @@ class WebRTCService {
     final pc = _peerConnection;
     if (pc == null) {
       if (kDebugMode) {
-        debugPrint('[WebRTC] Answer ohne PeerConnection verworfen.');
+        _melde(
+          'Die Antwort des Partners kam ohne Verbindung an und wurde '
+          'verworfen.',
+        );
       }
       return;
     }
@@ -891,7 +933,7 @@ class WebRTCService {
     try {
       if (message.text.length > _maxEnvelopeBytes ||
           message.binary.lengthInBytes > _maxEnvelopeBytes) {
-        if (kDebugMode) debugPrint('[WebRTC] Nachricht zu groß, verworfen.');
+        _melde('Eine Nachricht war zu groß und wurde verworfen.');
         return;
       }
       final data = jsonDecode(message.text) as Map<String, dynamic>;
@@ -969,7 +1011,7 @@ class WebRTCService {
         }
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('[WebRTC] Fehler beim Entschlüsseln: $e');
+      _melde('Eine Nachricht konnte nicht entschlüsselt werden.', e);
     }
   }
 
@@ -1000,7 +1042,7 @@ class WebRTCService {
         payload: {'kind': 'relay-ping', 'from': _myUserId ?? _currentPeerId},
       );
     } catch (e) {
-      if (kDebugMode) debugPrint('[WebRTC] Relay-Ping fehlgeschlagen: $e');
+      _melde('Die Relay-Weckmeldung ist fehlgeschlagen.', e);
     }
   }
 

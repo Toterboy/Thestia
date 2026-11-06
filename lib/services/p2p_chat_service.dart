@@ -90,6 +90,13 @@ class P2PChatService {
   Stream<RTCIceConnectionState> get iceConnectionState =>
       _webrtc.iceConnectionState;
 
+  /// Die Probleme beim Verbindungsaufbau (fuer die Diagnosezeile).
+  ///
+  /// WARUM (06.11.2026): Im Store-Build war nicht sichtbar, woran der
+  /// P2P-Aufbau scheiterte - die internen Meldungen gingen nur in den
+  /// Debug-Log.
+  Stream<String> get problems => _webrtc.problems;
+
   /// Der LETZTE ICE-Verbindungsstatus - auch fuer einen Aufrufer, der
   /// erst nach dem Zustandswechsel zuhört.
   ///

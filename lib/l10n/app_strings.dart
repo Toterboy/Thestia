@@ -3073,6 +3073,7 @@ const Map<String, Map<String, String>> _strings = {
     'chat.e2eWaiting': 'E2E-Verbindung wird aufgebaut.',
     'chat.connDiag': 'Technik: ICE {ice} - automatischer Neuversuch läuft.',
     'chat.connError': 'Letzter Fehler: {error}',
+    'chat.connProblem': 'Problem: {problem}',
     // Datenschutz: TOTP-Bestätigung
     'privacy.totpTitle': 'Konto bestätigen',
     'privacy.totpLabel': 'TOTP-Code (Authenticator-App)',
@@ -6189,6 +6190,7 @@ const Map<String, Map<String, String>> _strings = {
     'chat.e2eWaiting': 'E2E connection is being established.',
     'chat.connDiag': 'Tech: ICE {ice} - automatic retry in progress.',
     'chat.connError': 'Last error: {error}',
+    'chat.connProblem': 'Problem: {problem}',
     // Privacy: TOTP confirmation
     'privacy.totpTitle': 'Confirm account',
     'privacy.totpLabel': 'TOTP code (authenticator app)',

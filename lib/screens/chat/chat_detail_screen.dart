@@ -104,6 +104,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   StreamSubscription<Map<String, dynamic>>? _callControlSub;
   StreamSubscription<dynamic>? _connSub;
   StreamSubscription<void>? _relayPingSub;
+  StreamSubscription<String>? _problemSub;
+
+  /// Das letzte Problem aus dem P2P-Aufbau (fuer die Diagnosezeile).
+  ///
+  /// 06.11.2026: Die internen Meldungen des WebRTC-Service gingen nur
+  /// in den Debug-Log. Im Store-Build - dem, in dem der Betreiber
+  /// testet - war deshalb nicht zu sehen, woran der Aufbau scheiterte.
+  String? _lastP2pProblem;
   bool _p2pConnected = false;
   // Deduplication: bereits verarbeitete Message-IDs.
   final Set<String> _seenMessageIds = {};
@@ -836,6 +844,16 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
       if (mounted) unawaited(_fetchRelay());
     });
 
+    // Probleme beim Verbindungsaufbau (06.11.2026): Die internen
+    // Meldungen des WebRTC-Service gingen nur in den Debug-Log - im
+    // Store-Build war damit nicht zu sehen, WORAN der Aufbau
+    // scheiterte. Der letzte Eintrag steht jetzt in der Diagnosezeile.
+    _problemSub?.cancel();
+    _problemSub = _p2p!.problems.listen((problem) {
+      if (!mounted) return;
+      setState(() => _lastP2pProblem = problem);
+    });
+
     // Textnachrichten abonnieren. Nachrichten mit Eisbrecher-Präfix werden
     // als gemeinsame mittige Bubble dargestellt (v0.9.1, beide Seiten).
     _msgSub = _p2p!.incomingMessages.listen((text) {
@@ -1070,6 +1088,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     _callControlSub?.cancel();
     _connSub?.cancel();
     _relayPingSub?.cancel();
+    _problemSub?.cancel();
     _relayTimer?.cancel();
     _p2p?.disconnect();
     _ctrl.dispose();
@@ -2585,12 +2604,28 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                                             .last ??
                                         '-';
                                     final err = _lastP2pError;
+                                    // Das letzte interne Problem (z. B.
+                                    // 'Das Senden der Signaling-Nachricht
+                                    // ist fehlgeschlagen'). Es kommt aus
+                                    // dem WebRTC-Service und ist im
+                                    // Release-Build genauso sichtbar wie
+                                    // im Debug-Build.
+                                    final problem = _lastP2pProblem;
+                                    final zeilen = <String>[
+                                      L10n.tf(context, 'chat.connDiag', {
+                                        'ice': ice,
+                                      }),
+                                      if (err != null)
+                                        L10n.tf(context, 'chat.connError', {
+                                          'error': err,
+                                        }),
+                                      if (problem != null)
+                                        L10n.tf(context, 'chat.connProblem', {
+                                          'problem': problem,
+                                        }),
+                                    ];
                                     return Text(
-                                      err == null
-                                          ? L10n.tf(context, 'chat.connDiag', {
-                                              'ice': ice,
-                                            })
-                                          : '${L10n.tf(context, 'chat.connDiag', {'ice': ice})}\n${L10n.tf(context, 'chat.connError', {'error': err})}',
+                                      zeilen.join('\n'),
                                       style: Theme.of(context)
                                           .textTheme
                                           .labelSmall
