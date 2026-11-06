@@ -308,11 +308,26 @@ class TransitBleService {
   void _onResults(List<ScanResult> results) {
     for (final r in results) {
       final token = _extractToken(r);
-      if (token != null && token != _currentToken) {
-        _onEncounter?.call(token, r.rssi);
-      }
+      if (token == null || token == _currentToken) continue;
+      // Jedes Token nur EINMAL melden.
+      //
+      // BEFUND (06.11.2026): Das Advertising läuft im ~100-ms-Takt. Jede
+      // Advertisement fuehrte zu einem setState im Provider und zu einem
+      // Schreibvorgang des Caches - bei 10 Signalen pro Sekunde ein
+      // Bildschirm-Neuaufbau pro Signal. Das Token selbst aendert sich
+      // nur alle 6-14 Minuten (Rotation), also reicht die Meldung beim
+      // ersten Sichtkontakt.
+      if (!_gemeldeteTokens.add(token)) continue;
+      _onEncounter?.call(token, r.rssi);
     }
   }
+
+  /// Die bereits gemeldeten Tokens (Sitzung).
+  ///
+  /// Wird beim Stop geleert - ein neuer Radarlauf darf die gleichen
+  /// Geraete wieder melden (die Zahl in der Anzeige ist dann wieder
+  /// aktuell).
+  final Set<String> _gemeldeteTokens = <String>{};
 
   /// Haelt das Funk-Radio an, ohne die Sitzung zu beenden.
   ///
@@ -393,11 +408,35 @@ class TransitBleService {
       _advertising = false;
       _onEncounter = null;
       _currentToken = null;
+      // Die gemeldeten Tokens gehoeren zur Sitzung: ein neuer Radarlauf
+      // darf die gleichen Geraete wieder zaehlen.
+      _gemeldeteTokens.clear();
     }
   }
 
   /// Extrahiert das Thestia-Transit-Token aus einem Scan-Ergebnis
   /// (Hersteller-Feld kThestiaManufacturerId: Marker + Token).
+  ///
+  /// BEFUND (06.11.2026, Betreiber): "Android 16 erkennt praktisch
+  /// unendlich Thestia-Geräte (Es gibt maximal 1 anderes). Es werden
+  /// immer mehr (aktuell über 100 gefunden)."
+  ///
+  /// Die Ursache: Die Hersteller-ID 0xFFFF ist die reservierte
+  /// SIG-Nummer - sie wird von vielen echten Geraeten benutzt. Die alte
+  /// Pruefung take nur die ersten vier Bytes ("WST1") und liest den Rest
+  /// als Token. Auf Android 16 wird der Plattformfilter nicht
+  /// zuverlaessig angewandt, es kamen also viele fremde Geraete herein -
+  /// und jedes erzeugte einen neuen "Token", der im Cache landete. Die
+  /// Zahl "Thestia-Geräte in Reichweite" war damit eine Zahl ueber
+  /// fremde Bluetooth-Geraete.
+  ///
+  /// DIE REGEL: Ein echtes Thestia-Token ist EXAKT 20 Hexzeichen
+  /// (10 Byte, siehe [TransitEncounterService.generateToken]). Alles
+  /// andere wird verworfen. Damit kann die Zahl nur noch echte
+  /// Thestia-Geraete zaehlen.
+  ///
+  /// Der Marker wird GESUCHT und nicht nur an Position 0 geprueft:
+  /// manche Android-Versionen liefern die Firmen-ID mit im Payload.
   String? _extractToken(ScanResult r) {
     try {
       final md = r.advertisementData.manufacturerData;
@@ -408,18 +447,34 @@ class TransitBleService {
       final entry = md[kThestiaManufacturerId];
       if (entry == null || entry.isEmpty) return null;
       final markerBytes = utf8.encode(TransitEncounterService.bleMarker);
-      if (entry.length <= markerBytes.length) return null;
-      for (var i = 0; i < markerBytes.length; i++) {
-        if (entry[i] != markerBytes[i]) return null;
-      }
+      final markerPos = _findeMarker(entry, markerBytes);
+      if (markerPos < 0) return null;
+      // Danach muss das Token stehen - genau 20 Hexzeichen.
+      final rest = entry.sublist(markerPos + markerBytes.length);
+      if (rest.length < TransitEncounterService.tokenLaenge) return null;
       final token = utf8.decode(
-        entry.sublist(markerBytes.length),
-        allowMalformed: true,
+        rest.sublist(0, TransitEncounterService.tokenLaenge),
       );
-      if (token.length < 8 || token.length > 64) return null;
+      if (!TransitEncounterService.isValidToken(token)) return null;
       return token;
     } catch (_) {
       return null;
     }
+  }
+
+  /// Die Position des Markers im Payload (-1 = nicht gefunden).
+  static int _findeMarker(List<int> entry, List<int> marker) {
+    if (entry.length < marker.length) return -1;
+    for (var start = 0; start <= entry.length - marker.length; start++) {
+      var passt = true;
+      for (var i = 0; i < marker.length; i++) {
+        if (entry[start + i] != marker[i]) {
+          passt = false;
+          break;
+        }
+      }
+      if (passt) return start;
+    }
+    return -1;
   }
 }

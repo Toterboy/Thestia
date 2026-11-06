@@ -27,6 +27,7 @@ class GuardianStatus {
     this.revokedAt,
     this.transitionPending = false,
     this.loaded = false,
+    this.loadError,
   });
 
   /// `none` | `pending` | `granted` | `revoked`
@@ -91,8 +92,22 @@ class GuardianStatus {
   /// Wurde der Stand einmal vom Server gelesen?
   final bool loaded;
 
+  /// Warum der Stand NICHT gelesen werden konnte (null = kein Fehler).
+  ///
+  /// NUR clientseitig - der Server weiss das nicht. Das Feld unterscheidet
+  /// "laedt noch" von "der Abruf ist gescheitert": ohne diese
+  /// Unterscheidung zeigte der Elternbereich bei JEDEM Fehler einen
+  /// endlosen Ladekreis (BEFUND 06.11.2026: "Der Elternbereich laedt
+  /// ewig lang"). Der Nutzer hatte damit keinen Weg aus dem Bildschirm
+  /// heraus.
+  final String? loadError;
+
   /// Der Stand ist noch nicht bekannt (nicht: "es gibt nichts").
   bool get isUnknown => !loaded;
+
+  /// Der Abruf ist gescheitert - der Bildschirm muss einen Ausweg
+  /// anbieten (erneut versuchen), nicht ewig drehen.
+  bool get isError => loadError != null;
 
   /// Die Freigabe wartet auf die Bestaetigung des Elternteils.
   bool get isPending => status == 'pending';

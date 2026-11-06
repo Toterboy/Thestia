@@ -384,13 +384,18 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
     if (!mounted) return;
     if (result == null) {
       final reason = ref.read(transitProvider).lastError;
+      // Eigene Lage statt Rohfehler: "kein Geraet in Reichweite" ist
+      // kein Fehler, sondern der Normalfall, wenn niemand nearby ist.
+      // Der Serverfehler dazu war "Bad request" (400) - fuer den
+      // Nutzer eine tote Meldung (BEFUND 06.11.2026).
+      final text = reason == 'no_devices'
+          ? L10n.t(context, 'transit.noDevices')
+          : (reason == null
+                ? L10n.t(context, 'transit.sendFailed')
+                : '${L10n.t(context, 'transit.sendFailed')} ($reason)');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            reason == null
-                ? L10n.t(context, 'transit.sendFailed')
-                : '${L10n.t(context, 'transit.sendFailed')} ($reason)',
-          ),
+          content: Text(text),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 8),
         ),
@@ -524,6 +529,16 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
     return showModalBottomSheet<({List<String> tags, String note})>(
       context: context,
       isScrollControlled: true,
+      // BEFUND (06.11.2026, Betreiber): "Bei Transit Spark mit 'Wie
+      // siehst du aus' hat die Ueberschrift in der Statusleiste
+      // stecken." Das Sheet ist hoeher als der Bildschirm (Suchfeld,
+      // Kategoriefilter, Merkmale, Freitextfeld) und reicht deshalb bis
+      // an den oberen Rand - ohne SafeArea liegt die Ueberschrift
+      // unter der Statusleiste des Systems.
+      //
+      // useSafeArea: true rueckt den Inhalt des Sheets unterhalb der
+      // Systemleiste ein. Ohne das ragt der Titel in die Statusleiste.
+      useSafeArea: true,
       builder: (ctx) => _TransitTagPickerSheet(
         titleKey: titleKey,
         hintKey: hintKey,

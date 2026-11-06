@@ -466,6 +466,15 @@ const Map<String, Map<String, String>> _strings = {
     'guardian.accessIndefinite': 'Bis ich es beende',
     'guardian.accessUntil': 'Zugriff bis {date}',
     'guardian.endAccessBtn': 'Elternzugriff beenden',
+    // Der Stand liess sich nicht laden (Netz, Server, Sitzung).
+    // Vorher zeigte der Bildschirm hier einen endlosen Ladekreis -
+    // der Nutzer hatte keinen Weg aus dem Bereich heraus.
+    'guardian.loadErrorTitle': 'Stand nicht geladen',
+    'guardian.loadErrorText':
+        'Der Stand der Aufsicht liess sich gerade nicht abrufen. '
+        'Pruefe deine Internetverbindung und versuche es noch '
+        'einmal.',
+    'guardian.retry': 'Erneut versuchen',
     'guardian.confirmEndTitle': 'Elternzugriff beenden?',
     'guardian.confirmEndText':
         'Damit endet die Freigabe sofort. Dein Elternteil bekommt keine '
@@ -966,6 +975,13 @@ const Map<String, Map<String, String>> _strings = {
     'transit.tag.top': 'Oberteil',
     'transit.colorOptional': 'Farbe (optional)',
     'transit.color.blonde': 'Blond',
+    // Neue Haarfarben (06.11.2026).
+    'transit.color.darkbrown': 'Dunkelbraun',
+    'transit.color.lightbrown': 'Hellbraun',
+    'transit.color.copper': 'Kupferrot',
+    'transit.color.platinum': 'Platinblond',
+    'transit.color.silver': 'Silbergrau',
+    'transit.color.saltpepper': 'Salz und Pfeffer',
     'transit.color.auburn': 'Kastanienrot',
     'transit.color.bald': 'Glatze',
     'transit.color.hazel': 'Haselnussbraun',
@@ -1264,6 +1280,9 @@ const Map<String, Map<String, String>> _strings = {
         'nicht mehr brauchst.',
     'transit.self.noteHint':
         'Eigene Ergänzung (optional, z. B. "Rote Mütze, grüner Rucksack") …',
+    'transit.noDevices':
+        'Kein Gerät in Reichweite. Warte, bis jemand in der Nähe '
+        'ist, und versuche es dann noch einmal.',
     'transit.sendFailed':
         'Das Signal konnte gerade nicht gesendet werden. Prüfe deine Verbindung und versuche es gleich noch einmal.',
     'transit.stored':
@@ -3709,6 +3728,11 @@ const Map<String, Map<String, String>> _strings = {
     'guardian.accessIndefinite': 'Until I end it',
     'guardian.accessUntil': 'Access until {date}',
     'guardian.endAccessBtn': 'End parental access',
+    'guardian.loadErrorTitle': 'Status not loaded',
+    'guardian.loadErrorText':
+        'The supervision status could not be fetched right now. '
+        'Check your connection and try again.',
+    'guardian.retry': 'Try again',
     'guardian.confirmEndTitle': 'End parental access?',
     'guardian.confirmEndText':
         'The consent ends immediately. Your parent will no longer receive '
@@ -3999,6 +4023,12 @@ const Map<String, Map<String, String>> _strings = {
     'transit.tag.top': 'Top',
     'transit.colorOptional': 'Color (optional)',
     'transit.color.blonde': 'Blonde',
+    'transit.color.darkbrown': 'Dark brown',
+    'transit.color.lightbrown': 'Light brown',
+    'transit.color.copper': 'Copper',
+    'transit.color.platinum': 'Platinum blonde',
+    'transit.color.silver': 'Silver',
+    'transit.color.saltpepper': 'Salt and pepper',
     'transit.color.auburn': 'Auburn',
     'transit.color.bald': 'Bald',
     'transit.color.hazel': 'Hazel',
@@ -4105,6 +4135,9 @@ const Map<String, Map<String, String>> _strings = {
         'noticeably more battery. Stop the radar when you no longer need it.',
     'transit.self.noteHint':
         'Your own note (optional, e.g. "Red cap, green backpack") …',
+    'transit.noDevices':
+        'No device in range. Wait until someone is nearby and '
+        'try again.',
     'transit.sendFailed':
         'The signal could not be sent right now. Check your connection and try again in a moment.',
     'transit.stored':

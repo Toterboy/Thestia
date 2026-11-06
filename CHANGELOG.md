@@ -806,6 +806,42 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
   Selbsttest. Der erste Wächter fand fuenf echte Faelle, der zweite
   einen - beide gegen Negativproben geprueft.
 
+### Nachtrag: Build 34 (06.11.2026) - vier Befunde vom Betreiber
+
+1. **Der Elternbereich lädt ewig lang.** Der Abruf des Aufsichtsstands
+   schlug fehl (keine Sitzung beim App-Start, Netz, Server) - und der
+   Bildschirm zeigte für *jeden* Fehler einen endlosen Ladekreis. Der
+   Provider wird beim App-Start erzeugt, also bevor die Sitzung sicher
+   wiederhergestellt ist; niemand hat je wieder nachgesehen. Jetzt
+   unterscheidet der Zustand "lädt" von "gescheitert": es gibt einen
+   Grund und einen Knopf ("Erneut versuchen"), der Provider versucht es
+   selbst mit wachsender Wartezeit erneut und lädt neu, sobald sich
+   jemand anmeldet. Beide Serveraufrufe haben jetzt eine Zeitgrenze.
+2. **Die Überschrift im Transit-Blatt lag in der Statusleiste.** Das
+   Merkmals-Sheet reicht bis an den oberen Bildschirmrand; jetzt rückt
+   der Inhalt unter die Systemleiste (`useSafeArea`).
+3. **Mehr Haarfarben**: von 8 auf 14 (dunkelbraun, hellbraun, Kupferrot,
+   Platinblond, Silbergrau, Salz und Pfeffer). Die App bietet nur Werte
+   an, die der Server kennt - Migration 184 erweitert den Katalog auf
+   dem Produktivsystem.
+4. **BLE auf Android 16 und 11:**
+   - Android 16 zählte über 100 "Thestia-Geräte", obwohl höchstens eines
+     in der Nähe war: Die Hersteller-ID 0xFFFF ist die reservierte
+     SIG-Nummer und wird von vielen echten Geräten benutzt; die alte
+     Prüfung las "irgendwas nach dem Marker" als Token. Ein Token ist
+     jetzt **exakt 20 Hexzeichen** - alles andere wird verworfen. Und:
+     jedes Token wird nur einmal gemeldet (vorher löste jede
+     Advertisement im ~100-ms-Takt einen Bildschirm-Neuaufbau aus).
+   - Android 11 fand gar keins: Der BLE-Scan ist auf Android 10/11 nur
+     mit der **genauen** Standort-Berechtigung erlaubt, die war per
+     `tools:node="remove"` komplett entfernt. Android hat den Scan still
+     blockiert. Jetzt ist sie mit `maxSdkVersion="30"` deklariert (auf
+     aktuellen Geräten ändert sich nichts - dort reicht
+     `BLUETOOTH_SCAN`).
+   - Das "Bad request" war der Serverfehler bei leerer Token-Liste. Die
+     App sagt jetzt selbst: "Kein Gerät in Reichweite."
+
+
 ## [0.10.0] - 2026-10-24 (Build 31)
 
 ### Sicherheit

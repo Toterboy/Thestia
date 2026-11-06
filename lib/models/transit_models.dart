@@ -181,13 +181,30 @@ class TransitTag {
   ];
 
   /// Haarfarben. EIGENE Palette, siehe [allowedColors].
+  ///
+  /// BEFUND (06.11.2026, Betreiber): "Es muss mehr Haarfarben zur
+  /// Auswahl geben." Die acht Werte decken nur die grobsten
+  /// Unterscheidungen ab - "dunkelbraun" und "hellbraun" sind fuer
+  /// viele Menschen genau die Unterscheidung, die zaehlt, und "Kupferrot"
+  /// sieht anders aus als "Rot".
+  ///
+  /// Die Reihenfolge hier ist die Reihenfolge in der Auswahl. Der
+  /// Server kennt dieselben Werte (public.transit_tag_catalog,
+  /// Migration 184) - ein Wert, den der Server nicht kennt, wird beim
+  /// Senden abgelehnt.
   static const List<String> hairColors = [
     'black',
-    'blonde',
     'brown',
+    'darkbrown',
+    'lightbrown',
+    'blonde',
+    'platinum',
     'red',
+    'copper',
     'auburn',
     'grey',
+    'silver',
+    'saltpepper',
     'white',
     'bald',
   ];
@@ -229,6 +246,12 @@ class TransitTag {
     'blonde': Color(0xFFD9B36C),
     'auburn': Color(0xFF8B3A2A),
     'bald': Color(0xFFE0C9A6),
+    'darkbrown': Color(0xFF4E342E),
+    'lightbrown': Color(0xFFA1887F),
+    'copper': Color(0xFFB87333),
+    'platinum': Color(0xFFE8D8A0),
+    'silver': Color(0xFFC0C0C0),
+    'saltpepper': Color(0xFF7A7A7A),
     // Augenfarben
     'hazel': Color(0xFF9C7B4E),
     'bluegrey': Color(0xFF7A8C99),

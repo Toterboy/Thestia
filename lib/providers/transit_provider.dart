@@ -385,6 +385,18 @@ class TransitNotifier extends StateNotifier<TransitState>
     state = state.copyWith(busy: true, clearResult: true);
     try {
       final tokens = _encounters.freshTokens();
+      // BEFUND (06.11.2026, Betreiber: "Android 11 findet gar keins
+      // Bad request."): Mit einer LEEREN Token-Liste ging der Aufruf an
+      // den Server, der antwortete mit einem 400 und dem Rohfehler im
+      // Text ("Bad request"). Der Nutzer wusste damit nichts.
+      //
+      // Ohne Geraet in Reichweite gibt es nichts zu vergleichen - das
+      // ist kein Fehler, sondern eine Lage. Die App sagt es jetzt
+      // selbst.
+      if (tokens.isEmpty) {
+        state = state.copyWith(busy: false, lastError: 'no_devices');
+        return null;
+      }
       final res = await SupabaseDatabaseService(SupabaseService.client)
           .matchProximitySpark(
             tokens: tokens,

@@ -1,5 +1,5 @@
 <!-- xmlns:tools wird fuer die Manifest-Merge-Regel gebraucht: ohne die
-     ACCESS_FINE_LOCATION aus den Plugins (geolocator) zu entfernen, muss
+     ACCESS_FINE_LOCATION aus den Plugins (geolocator) zu begrenzen, muss
      der Merge darueber informiert werden. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
@@ -59,18 +59,25 @@
          - Entfernungsanzeige: ungefaehr reicht, der Nutzer sieht den
            Umkreis ohne Straassennamen.
          - Standortverifikation: bestaetigt die Stadt, nicht die Adresse.
-         - Transit Spark: BLE selbst liefert die Naehe, nicht GPS.
-         Ein Wegfall der genaueren Berechtigung verschlechtert keinen
-         dieser drei Punkte.
 
-         `tools:node="remove"` entfernt die Berechtigung aus den
-         Plugins (geolocator deklariert sie mit). Eine zweite
-         FINE-Zeile mit `maxSdkVersion="0"` als Fallback wurde entfernt:
-         der Manifest-Merger meldet beide Eintraege als Duplikat und
-         bricht den Build ab. Eine Entfernung reicht; ob sie gegriffen
-         hat, steht im Merge-Report, den Gradle mit "info" ausgiebt. -->
+         AUSNAHME: DER BLE-SCAN AUF ANDROID 11 UND AELTER (BEFUND
+         06.11.2026, Betreiber: "Android 11 findet gar keins"). Der
+         BLE-Scan ist auf Android 10/11 (API 29/30) nur mit der
+         GENAUEN Standort-Berechtigung erlaubt - der ungefaehre
+         Standort reicht dort NICHT. Mit `tools:node="remove"` war die
+         genaue Berechtigung komplett entfernt: Android hat den Scan
+         still blockiert, ohne jede Meldung. Es wurde "0 Geraete in
+         Reichweite" gemeldet, und das Senden scheiterte mit einem
+         Serverfehler ("Bad request"), weil die Token-Liste leer war.
+
+         AB ANDROID 12 (API 31) gilt das nicht mehr: dort reicht
+         BLUETOOTH_SCAN (mit `neverForLocation`) - den Standort
+         braucht die App dafuer gar nicht. Deshalb ist die
+         Berechtigung auf `maxSdkVersion="30"` begrenzt: auf aelteren
+         Geraeten wird sie deklariert (und fuer den Scan angefragt), auf
+         aktuellen nicht - dort aendert sich durch diese Zeile nichts. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
-        tools:node="remove" />
+        android:maxSdkVersion="30" />
 
     <!-- Legacy-Speicherzugriffe aus image_picker: seit Android 13
          (API 33) gibt es diese Berechtigungen nicht mehr, und seit

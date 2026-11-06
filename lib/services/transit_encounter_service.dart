@@ -34,19 +34,48 @@ class TransitEncounterService {
 
   /// Kryptografisch zufälliges, ephemeres Token (hex, 20 Zeichen = 10 Byte).
   ///
-  /// ABSICHTLICH kurz: Das Token geht als BLE-Manufacturer-Payload
-  /// ("WST1" + Token) aufs Air - ein Legacy-Advertisement fasst max.
-  /// 31 Byte (Flags + Header + Company-ID + Payload = 7 Byte Overhead,
-  /// Rest 24). Mit 32-Zeichen-Tokens (früher) scheiterte JEDES Advertising
-  /// still mit ADVERTISE_FAILED_DATA_TOO_LARGE ("0 in Reichweite").
-  /// 80 Bit Entropie reichen für 45-Minuten-Ephemeren dicke.
-  /// Server-Regex ([0-9a-fA-F-]{8,64}) und Cache akzeptieren die Länge.
+  /// ACHTUNG: Die Laenge ist Teil des Protokolls. Der Scanner erkennt
+  /// ein Token nur, wenn es exakt [tokenLaenge] Hexzeichen hat - und
+  /// sonst nichts. Das ist Absicht (BEFUND 06.11.2026): die alte
+  /// Pruefung ("irgendetwas nach dem Marker") hat auf Android 16 jedes
+  /// fremde Bluetooth-Geraet als Thestia-Geraet gezaehlt - die Anzeige
+  /// "X Thestia-Geräte in Reichweite" zeigte ueber 100 Geraete, obwohl
+  /// hoechstens eines in der Naehe war.
+  ///
+  /// Das Token geht als BLE-Manufacturer-Payload ("WST1" + Token) aufs
+  /// Air - ein Legacy-Advertisement fasst max. 31 Byte (Flags + Header +
+  /// Company-ID + Payload = 7 Byte Overhead, Rest 24). Mit 32-Zeichen-
+  /// Tokens (frueher) scheiterte JEDES Advertising still mit
+  /// ADVERTISE_FAILED_DATA_TOO_LARGE ("0 in Reichweite"). 80 Bit
+  /// Entropie reichen fuer 45-Minuten-Ephemeren dicke.
+  /// Server-Regex ([0-9a-fA-F-]{8,64}) und Cache akzeptieren die Laenge.
   static String generateToken() {
     final rnd = Random.secure();
     return List.generate(
       10,
       (_) => rnd.nextInt(256).toRadixString(16).padLeft(2, '0'),
     ).join();
+  }
+
+  /// Laenge des Tokens in Zeichen (10 Byte = 20 Hexzeichen).
+  static const int tokenLaenge = 20;
+
+  /// Ist [token] ein wohlgeformtes Thestia-Token?
+  ///
+  /// Genau [tokenLaenge] Hexzeichen, sonst nichts. Ein echtes Token
+  /// kann nicht von einem fremden Bluetooth-Geraet erzeugt werden -
+  /// der Zufallsanteil macht eine Verwechslung praktisch unmoeglich.
+  static bool isValidToken(String token) {
+    if (token.length != tokenLaenge) return false;
+    for (var i = 0; i < token.length; i++) {
+      final c = token.codeUnitAt(i);
+      final istHex =
+          (c >= 0x30 && c <= 0x39) || // 0-9
+          (c >= 0x41 && c <= 0x46) || // A-F
+          (c >= 0x61 && c <= 0x66); // a-f
+      if (!istHex) return false;
+    }
+    return true;
   }
 
   /// Max. nutzbare BLE-Manufacturer-Payload (31 B Paket - 3 B Flags -
@@ -64,7 +93,11 @@ class TransitEncounterService {
 
   /// Trägt eine Sichtung ein (dedupe per Token, frischeste Zeit gewinnt).
   void recordEncounter(String token) {
-    if (token.length < 8) return;
+    // Nur echte Tokens zaehlen (BEFUND 06.11.2026): der Cache landet
+    // in der Anzeige "X Thestia-Geräte in Reichweite" UND wird beim
+    // Senden als Token-Liste an den Server geschickt. Unbekannte Werte
+    // haben dort keine Entsprechung.
+    if (!isValidToken(token)) return;
     _purgeExpired();
     _cache[token] = TransitEncounter(token: token, seenAt: DateTime.now());
   }

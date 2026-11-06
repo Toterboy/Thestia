@@ -198,7 +198,7 @@ class _GuardianSectionState extends ConsumerState<GuardianSection> {
                   style: theme.textTheme.bodyMedium?.copyWith(height: 1.4),
                 ),
                 const SizedBox(height: 16),
-                if (status.isUnknown)
+                if (status.isUnknown && !status.isError)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 8),
                     child: Center(
@@ -209,11 +209,67 @@ class _GuardianSectionState extends ConsumerState<GuardianSection> {
                       ),
                     ),
                   )
+                else if (status.isError)
+                  _ladeFehler(context, status)
                 else
                   _inhalt(context, status),
               ],
             ),
           ),
+        ),
+      ],
+    );
+  }
+
+  /// Der Abruf ist gescheitert.
+  ///
+  /// BEFUND (06.11.2026, Betreiber): "Der Elternbereich laedt ewig
+  /// lang." Vorher stand hier - bei JEDEM Fehler - ein endloser
+  /// Ladekreis: der Nutzer konnte den Bereich nicht verlassen und
+  /// nicht erfahren, dass etwas nicht funktioniert hat. Jetzt gibt es
+  /// einen Grund und einen Knopf.
+  Widget _ladeFehler(BuildContext context, GuardianStatus status) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.cloud_off,
+              size: 20,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    L10n.t(context, 'guardian.loadErrorTitle'),
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    L10n.t(context, 'guardian.loadErrorText'),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: () {
+            ref.read(guardianProvider.notifier).load();
+          },
+          icon: const Icon(Icons.refresh, size: 18),
+          label: Text(L10n.t(context, 'guardian.retry')),
         ),
       ],
     );

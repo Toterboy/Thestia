@@ -51,6 +51,10 @@ class _GuardianSettingsEntry extends ConsumerWidget {
 
   /// Der Stand in einem Satz - ohne Zahlen, ohne Geheimnis.
   String _status(BuildContext context, GuardianStatus status) {
+    // Der Abruf ist gescheitert: nicht "laedt" sagen (das stimmt nicht
+    // mehr) und nicht "keine Aufsicht" (das waere eine falsche Aussage
+    // ueber die Aufsicht). BEFUND 06.11.2026.
+    if (status.isError) return L10n.t(context, 'guardian.loadErrorTitle');
     if (status.isUnknown) return L10n.t(context, 'common.loading');
     if (!status.hasConsent) return L10n.t(context, 'guardian.noConsentTitle');
     if (status.isPending) return L10n.t(context, 'guardian.pendingTitle');

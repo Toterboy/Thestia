@@ -3,6 +3,7 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:thestia/models/guardian_status.dart';
+import 'package:thestia/services/supabase_service.dart';
 
 /// Alle Aufrufe rund um die elterliche Freigabe.
 ///
@@ -15,10 +16,25 @@ class GuardianService {
 
   /// Liest den aktuellen Stand.
   ///
-  /// Fehler werden zu einem "unbekannten" Stand: ein Fehler darf nicht
-  /// so aussehen, als gaebe es keine Aufsicht. [GuardianStatus.isUnknown]
-  /// sagt dem Bildschirm, dass er den Zustand nicht kennt.
+  /// FEHLER WERDEN WEITERGEGEBEN (BEFUND 06.11.2026): Vorher hat diese
+  /// Methode jeden Fehler in "unbekannt" verwandelt. Der Bildschirm
+  /// konnte dann nicht unterscheiden zwischen "laedt noch" und "der
+  /// Abruf ist gescheitert" - und zeigte in beiden Faellen einen
+  /// endlosen Ladekreis. Der Aufrufer entscheidet jetzt, was passiert.
+  ///
+  /// Zusaetzlich gibt es fuer beide Schritte eine Zeitgrenze: ein
+  /// haengender Server darf den Elternbereich nicht blockieren.
   Future<GuardianStatus> fetchStatus() async {
+    // Noch nicht bereit (App-Start, Testlauf): das ist KEIN Fehler des
+    // Dienstes, sondern eine Lage - der Aufrufer darf sie von einem
+    // echten Fehler unterscheiden und spaeter erneut versuchen.
+    //
+    // DIE PRUEFUNG STEHT HIER UND NICHT IM PROVIDER (06.11.2026): so
+    // laesst sich der Fehlerpfad testen, ohne die Supabase-Verbindung
+    // in einem Test aufbauen zu muessen.
+    if (!SupabaseService.isInitialized) {
+      throw const GuardianServiceException('not_ready');
+    }
     // Die Zeitzone melden, BEVOR der Status gelesen wird.
     //
     // Der Server braucht sie, um die elterliche Nutzungszeit in der
@@ -27,17 +43,17 @@ class GuardianService {
     // blockiert dann fail-closed.
     //
     // Das Melden ist ein eigener Schritt und darf den Status nicht
-    // verhindern: schlaegt er fehl, lesen wir trotzdem den Status.
+    // verhindern: schlaegt er fehl, lesen wir trotzdem den Status. Die
+    // Zeitgrenze ist wichtig - ein haengender Aufruf wuerde den
+    // Elternblock dauerhaft am Ladekreis festhalten (BEFUND 06.11.2026).
     await _meldeZeitzone();
-    try {
-      final res = await _client.rpc('get_my_guardian_status');
-      if (res is Map) {
-        return GuardianStatus.fromJson(Map<String, dynamic>.from(res));
-      }
-    } catch (e) {
-      debugPrint('[Guardian] Status nicht lesbar: $e');
+    final res = await _client
+        .rpc('get_my_guardian_status')
+        .timeout(const Duration(seconds: 12));
+    if (res is Map) {
+      return GuardianStatus.fromJson(Map<String, dynamic>.from(res));
     }
-    return GuardianStatus.unknown;
+    throw const GuardianServiceException('empty_response');
   }
 
   /// Meldet die Zeitzone des Geraets an den Server.
@@ -62,7 +78,9 @@ class GuardianService {
       final tz = await FlutterTimezone.getLocalTimezone();
       final name = tz.identifier;
       if (name.isEmpty) return;
-      await _client.rpc('report_my_timezone', params: {'p_timezone': name});
+      await _client
+          .rpc('report_my_timezone', params: {'p_timezone': name})
+          .timeout(const Duration(seconds: 5));
     } catch (e) {
       if (kDebugMode) {
         debugPrint('[Guardian] Zeitzone nicht meldbar: $e');
@@ -194,4 +212,24 @@ class GuardianService {
     if (text.contains('invalid_pin')) return 'invalid_pin';
     return null;
   }
+}
+
+/// Fehler beim Lesen des Aufsichtsstands.
+///
+/// Eigene Klasse, damit der Aufrufer "gescheitert" von "unbekannt"
+/// unterscheiden kann: der Elternbereich zeigte sonst bei jedem Fehler
+/// einen endlosen Ladekreis (BEFUND 06.11.2026).
+class GuardianServiceException implements Exception {
+  const GuardianServiceException(this.code, [this.cause]);
+
+  /// Maschinenlesbarer Grund: 'empty_response' | 'timeout' | 'network' |
+  /// 'not_authenticated' | 'server'.
+  final String code;
+
+  /// Die urspruengliche Ausnahme (fuer das Log).
+  final Object? cause;
+
+  @override
+  String toString() =>
+      'GuardianServiceException($code${cause == null ? '' : ': $cause'})';
 }
