@@ -2908,6 +2908,7 @@ const Map<String, Map<String, String>> _strings = {
     'admin.mailReadOnly':
         'Nur zum Lesen - antworten geht über das Mail-Programm.',
     'admin.tabBans': 'Sperren',
+    'admin.tabLocations': 'Standort',
     'admin.close': 'Schließen',
     'admin.error': 'Fehler: {error}',
     'admin.retry': 'Erneut versuchen',
@@ -3353,6 +3354,17 @@ const Map<String, Map<String, String>> _strings = {
         'Keine Sperre passt zu dieser Suche. Suchbegriff loeschen oder '
         'anders schreiben.',
     'admin.searchBansClear': 'Suche leeren',
+    'admin.locationsTitle': 'Auffällige Standort-Prüfungen',
+    'admin.locationsEmpty': 'Kein Profil ist beim Standort-Check aufgefallen.',
+    'admin.locationsCheckedAt': 'Letzte Prüfung: {date}',
+    'admin.locationsVerified': 'Altersprüfung abgeschlossen',
+    'admin.locationsUnverified': 'Altersprüfung offen',
+    'admin.locationsHint':
+        'Diese Profile sind beim Standort-Check aufgefallen: der '
+        'Standort sprang um mehr als 15 km oder die '
+        'Fortbewegungsgeschwindigkeit lag über 300 km/h. Das ist ein '
+        'Hinweis, kein Verstoß - niemand wird dadurch aus der '
+        'Discovery genommen und niemand gesperrt.',
     'admin.emptyReportsTitle': 'Nichts zu bearbeiten',
     'admin.emptyBugsTitle': 'Keine neuen Bugs',
     'admin.emptyModerationTitle': 'Keine offenen Moderationen',
@@ -6022,6 +6034,7 @@ const Map<String, Map<String, String>> _strings = {
     'admin.mailEmptyBody': '(no text)',
     'admin.mailReadOnly': 'Read only - replies go through your email program.',
     'admin.tabBans': 'Bans',
+    'admin.tabLocations': 'Location',
     'admin.close': 'Close',
     'admin.error': 'Error: {error}',
     'admin.retry': 'Try again',
@@ -6451,6 +6464,17 @@ const Map<String, Map<String, String>> _strings = {
         'No ban matches this search. Clear the search term or try a '
         'different one.',
     'admin.searchBansClear': 'Clear search',
+    'admin.locationsTitle': 'Suspicious location checks',
+    'admin.locationsEmpty': 'No profile stood out during the location check.',
+    'admin.locationsCheckedAt': 'Last check: {date}',
+    'admin.locationsVerified': 'Age verification completed',
+    'admin.locationsUnverified': 'Age verification pending',
+    'admin.locationsHint':
+        'These profiles stood out during the location check: the '
+        'location jumped by more than 15 km or the speed of travel '
+        'was above 300 km/h. This is a hint, not an offence - nobody '
+        'is removed from discovery and nobody is banned because of '
+        'it.',
     'admin.emptyReportsTitle': 'Nothing to handle',
     'admin.emptyBugsTitle': 'No new bugs',
     'admin.emptyModerationTitle': 'No open moderations',

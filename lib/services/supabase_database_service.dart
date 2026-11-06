@@ -908,6 +908,23 @@ class SupabaseDatabaseService {
   Future<List<Map<String, dynamic>>> fetchBannedEmails() =>
       _adminList('admin_list_banned_emails');
 
+  /// Profile mit gesetztem Standort-Verdachtsflag (Anzeige, nur lesen).
+  ///
+  /// Das Flag `is_location_suspicious` wird seit Migration 180
+  /// korrekt geschrieben, aber von KEINER Abfrage ausgewertet - es
+  /// gibt keinen Filter, der einen auffaelligen Nutzer aus der
+  /// Discovery nimmt. Es ist ein Hinweis, kein Filter.
+  ///
+  /// Der Admin sieht hier, bei wem der Standort-Check aufgefallen ist
+  /// (Sprung ueber 15 km oder mehr als 300 km/h). Das Verhalten der
+  /// App aendert sich dadurch nicht - die Entscheidung des Nutzers
+  /// (06.11.2026) war ausdruecklich: nur anzeigen.
+  ///
+  /// Die RPC prueft selbst, ob der Aufrufer Admin ist; ohne Admin
+  /// liefert sie eine leere Liste.
+  Future<List<Map<String, dynamic>>> fetchLocationChecks() =>
+      _adminList('admin_list_location_checks');
+
   // =========================================================================
 
   /// Holt Matches des eingeloggten Nutzers.

@@ -470,6 +470,41 @@ for _name in ('send_mail', 'reply_mail', 'insert_mail_message',
           'aus der App heraus wird nicht geantwortet')
 
 # =====================================================================
+# 1i) Die Standort-Flag-Anzeige ist NUR LESBAR und NUR fuer Admins
+# =====================================================================
+#
+# BETREIBER-ENTSCHEIDUNG (06.11.2026): Das Flag is_location_suspicious
+# wird seit Migration 180 korrekt geschrieben, aber von KEINER Abfrage
+# ausgewertet - es war ein Hinweis ohne Wirkung. Der Betreiber hat
+# entschieden: das Flag soll im Admin-Bereich sichtbar werden, das
+# Verhalten der App bleibt unveraendert (niemand wird aus der
+# Discovery genommen, niemand gesperrt).
+#
+# Die Entscheidung hat eine Bedingung: was der Admin sieht, darf
+# sonst nirgends wirken. Deshalb stehen hier beide Seiten - die
+# Sichtbarkeit (nur Admins) und die Wirkungslosigkeit (kein Filter).
+
+_location = _neueste_definition(all_sql, 'admin_list_location_checks')
+
+check('is_current_user_admin' in _location,
+      'DB: admin_list_location_checks prueft den Admin-Status',
+      'die Liste nennt Profile, deren Standort aufgefallen ist - sie '
+      'gehoert nur in die Hand des Betreibers')
+
+for _verb in ('UPDATE public.profiles',
+              'DELETE FROM public.profiles',
+              'INSERT INTO public.profiles'):
+    check(_verb not in _location,
+          f'DB: admin_list_location_checks schreibt nicht ({_verb})',
+          'die Anzeige ist ein Hinweis - sie darf das Flag nicht '
+          'aendern und niemanden sperren')
+
+check('FUNCTION public.clear_location_suspicious' not in all_sql,
+      'DB: Es gibt keine Funktion, die das Verdachtsflag zuruecksetzt',
+      'ein zurueckgesetztes Flag waere eine Umgehung - das Flag wird '
+      'nur gesetzt, nie geloescht')
+
+# =====================================================================
 # 1h) Die selektive Datenloeschung loescht NUR die eigenen Daten
 # =====================================================================
 #

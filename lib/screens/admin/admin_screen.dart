@@ -188,6 +188,13 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                       icon: Icons.block,
                       count: (counts?.bans ?? 0) > 0 ? counts!.bans : null,
                     ),
+                    // Die Standort-Pruefungen: Profile, bei denen der
+                    // Standort-Check aufgefallen ist. Reiner Hinweis -
+                    // die App verhaelt sich dadurch nicht anders.
+                    PillTab(
+                      label: L10n.t(context, 'admin.tabLocations'),
+                      icon: Icons.location_on_outlined,
+                    ),
                     // Der Posteingang: eingehende Mails an die Adresse
                     // des Betreibers, nach Rubrik gefiltert. Nur lesen -
                     // antworten geht weiterhin ueber das Mail-Programm.
@@ -226,6 +233,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
                       _PhotoModerationList(),
                       _PhotoAppealsTab(),
                       _BansTab(),
+                      _LocationChecksTab(),
                       AdminMailInboxTab(),
                     ],
                   ),
@@ -1736,6 +1744,123 @@ class _SignedAppealImageState extends ConsumerState<_SignedAppealImage> {
         return const ColoredBox(
           color: Color(0x22000000),
           child: Icon(Icons.image_not_supported),
+        );
+      },
+    );
+  }
+}
+
+// ===========================================================================
+// Tab: Standort-Pruefungen (Profile mit gesetztem Verdachtsflag)
+// ===========================================================================
+//
+// WAS DAS ZEIGT: Profile, bei denen der Standort-Check aufgefallen ist -
+// der Standort sprang um mehr als 15 km oder die Fortbewegungs-
+// geschwindigkeit lag ueber 300 km/h.
+//
+// WAS ES NICHT TUT: Niemand wird aus der Discovery genommen, niemand
+// gesperrt, kein Verhalten der App aendert sich. Das Flag
+// `is_location_suspicious` wird seit Migration 180 geschrieben, aber
+// von keiner Abfrage ausgewertet - es ist ein Hinweis fuer den Admin,
+// kein Filter. Die Entscheidung des Nutzers (06.11.2026) war
+// ausdruecklich "nur im Admin-Bereich anzeigen".
+//
+// DIE DATENLOESUNG: Die RPC admin_list_location_checks prueft selbst,
+// ob der Aufrufer Admin ist - ohne Admin liefert sie eine leere
+// Liste. Die Anzeige ist damit nicht nur im Admin-Bereich, sondern
+// nur fuer Admins erreichbar.
+class _LocationChecksTab extends ConsumerStatefulWidget {
+  const _LocationChecksTab();
+
+  @override
+  ConsumerState<_LocationChecksTab> createState() => _LocationChecksTabState();
+}
+
+class _LocationChecksTabState extends ConsumerState<_LocationChecksTab> {
+  List<Map<String, dynamic>> _items = [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final db = ref.read(supabaseDatabaseServiceProvider);
+      final rows = await db.fetchLocationChecks();
+      _items = rows.map((r) {
+        final copy = Map<String, dynamic>.from(r);
+        copy['checkedAt'] = DateTime.tryParse(
+          '${copy['checkedAt']}',
+        )?.toLocal();
+        return copy;
+      }).toList();
+    } catch (e) {
+      _error = e.toString();
+    }
+    if (mounted) setState(() => _loading = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final thema = Theme.of(context);
+    return _AsyncList(
+      loading: _loading,
+      error: _error,
+      items: _items,
+      emptyIcon: Icons.location_on_outlined,
+      emptyTitle: L10n.t(context, 'admin.locationsTitle'),
+      emptyText: L10n.t(context, 'admin.locationsEmpty'),
+      onRetry: _load,
+      // Der Hinweis steht ueber der Liste: ohne ihn haelt der Admin
+      // das Flag fuer ein Verdict.
+      header: Padding(
+        padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
+        child: Text(
+          L10n.t(context, 'admin.locationsHint'),
+          style: thema.textTheme.bodySmall,
+        ),
+      ),
+      itemBuilder: (context, data) {
+        final verified = data['isVerified'] == true;
+        return ListTile(
+          leading: Icon(
+            Icons.location_off_outlined,
+            color: thema.colorScheme.error,
+          ),
+          title: Text(data['name'] as String? ?? '?'),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                L10n.tf(context, 'admin.locationsCheckedAt', {
+                  'date': _fmtTs(context, data['checkedAt']),
+                }),
+                style: thema.textTheme.bodySmall,
+              ),
+              Text(
+                verified
+                    ? L10n.t(context, 'admin.locationsVerified')
+                    : L10n.t(context, 'admin.locationsUnverified'),
+                style: thema.textTheme.bodySmall,
+              ),
+              // Die User-ID: ohne sie kann der Admin den Fall nicht
+              // zuordnen (der Name ist frei gewaehlt).
+              SelectableText(
+                data['userId'] as String? ?? '?',
+                style: thema.textTheme.bodySmall?.copyWith(
+                  color: thema.colorScheme.outline,
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
