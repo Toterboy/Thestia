@@ -10,8 +10,7 @@ class IcebreakerQuestion {
   final String de;
   final String en;
 
-  String textFor(String languageCode) =>
-      languageCode == 'en' ? en : de;
+  String textFor(String languageCode) => languageCode == 'en' ? en : de;
 }
 
 class IcebreakerCategory {
@@ -29,8 +28,7 @@ class IcebreakerCategory {
   final IconData icon;
   final List<IcebreakerQuestion> questions;
 
-  String titleFor(String languageCode) =>
-      languageCode == 'en' ? en : de;
+  String titleFor(String languageCode) => languageCode == 'en' ? en : de;
 }
 
 const List<IcebreakerCategory> icebreakerCatalog = [

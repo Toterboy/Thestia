@@ -7,16 +7,22 @@ import 'package:thestia/utils/cert_pinning.dart';
 void main() {
   test('Alle konfigurierten DER-Pins sind gültiges Base64', () {
     for (final pin in CertPinning.pinnedCertHashes) {
-      expect(() => base64Decode(pin), returnsNormally,
-          reason: 'Pin $pin ist kein gültiges Base64.');
+      expect(
+        () => base64Decode(pin),
+        returnsNormally,
+        reason: 'Pin $pin ist kein gültiges Base64.',
+      );
     }
   });
 
   test('Alle DER-Pins haben SHA-256-Länge (32 Bytes)', () {
     for (final pin in CertPinning.pinnedCertHashes) {
       final bytes = base64Decode(pin);
-      expect(bytes.length, equals(32),
-          reason: 'Pin $pin hat ${bytes.length} Bytes, erwartet 32.');
+      expect(
+        bytes.length,
+        equals(32),
+        reason: 'Pin $pin hat ${bytes.length} Bytes, erwartet 32.',
+      );
     }
   });
 

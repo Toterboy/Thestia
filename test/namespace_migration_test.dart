@@ -130,20 +130,26 @@ void main() {
       expect(storage.data['']?.containsKey('sb-test-auth-token'), isFalse);
     });
 
-    test('ein bereits gefuellter Ziel-Namespace wird nicht angefasst',
-        () async {
-      final storage = _FakeSecureStorage({
-        '': {'auth_access_token': 'alt'},
-        SecureNamespaces.tokens: {'auth_access_token': 'neu'},
-      });
+    test(
+      'ein bereits gefuellter Ziel-Namespace wird nicht angefasst',
+      () async {
+        final storage = _FakeSecureStorage({
+          '': {'auth_access_token': 'alt'},
+          SecureNamespaces.tokens: {'auth_access_token': 'neu'},
+        });
 
-      await migrateLegacyNamespaces(storage: storage);
+        await migrateLegacyNamespaces(storage: storage);
 
-      final tokens = storage.data[SecureNamespaces.tokens] ?? {};
-      expect(tokens['auth_access_token'], 'neu',
-          reason: 'Der Wert im neuen Namespace gewinnt - er ist der '
-              'aktuellere.');
-    });
+        final tokens = storage.data[SecureNamespaces.tokens] ?? {};
+        expect(
+          tokens['auth_access_token'],
+          'neu',
+          reason:
+              'Der Wert im neuen Namespace gewinnt - er ist der '
+              'aktuellere.',
+        );
+      },
+    );
 
     test('ohne Altdaten passiert nichts', () async {
       final storage = _FakeSecureStorage({});
@@ -168,29 +174,39 @@ void main() {
 
       await migrateLegacyNamespaces(storage: storage);
 
-      expect(storage.readAllCalls, lessThanOrEqualTo(6),
-          reason: 'Der Legacy-Namespace wird einmal gelesen, die '
-              'Ziel-Namespaces hoechstens je einmal.');
-      expect(storage.singleReadCalls, 0,
-          reason: 'Die Migration liest nicht mehr einzeln - das war der '
-              'teure Teil vor dem ersten Frame.');
+      expect(
+        storage.readAllCalls,
+        lessThanOrEqualTo(6),
+        reason:
+            'Der Legacy-Namespace wird einmal gelesen, die '
+            'Ziel-Namespaces hoechstens je einmal.',
+      );
+      expect(
+        storage.singleReadCalls,
+        0,
+        reason:
+            'Die Migration liest nicht mehr einzeln - das war der '
+            'teure Teil vor dem ersten Frame.',
+      );
     });
 
-    test('der Legacy-Namespace wird auch bei Altdaten nur einmal gelesen',
-        () async {
-      final storage = _FakeSecureStorage({
-        '': {
-          'auth_access_token': 'a',
-          'user_profile_secure': '{}',
-          'hive_encryption_key': 'k',
-        },
-      });
+    test(
+      'der Legacy-Namespace wird auch bei Altdaten nur einmal gelesen',
+      () async {
+        final storage = _FakeSecureStorage({
+          '': {
+            'auth_access_token': 'a',
+            'user_profile_secure': '{}',
+            'hive_encryption_key': 'k',
+          },
+        });
 
-      await migrateLegacyNamespaces(storage: storage);
+        await migrateLegacyNamespaces(storage: storage);
 
-      // Der Legacy selbst genau einmal, plus je Ziel-Namespace einer.
-      // Fuenf Namespaces, aber nur die mit Altdaten brauchen einen.
-      expect(storage.readAllCalls, lessThanOrEqualTo(4));
-    });
+        // Der Legacy selbst genau einmal, plus je Ziel-Namespace einer.
+        // Fuenf Namespaces, aber nur die mit Altdaten brauchen einen.
+        expect(storage.readAllCalls, lessThanOrEqualTo(4));
+      },
+    );
   });
 }

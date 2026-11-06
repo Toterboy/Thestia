@@ -83,8 +83,9 @@ class _IntroRecordingGuideState extends State<IntroRecordingGuide> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final automatisch =
-        IntroRecordingGuide.stepForSeconds(widget.elapsedSeconds);
+    final automatisch = IntroRecordingGuide.stepForSeconds(
+      widget.elapsedSeconds,
+    );
     final aktiv = _manualStep ?? automatisch;
 
     return Container(
@@ -92,8 +93,7 @@ class _IntroRecordingGuideState extends State<IntroRecordingGuide> {
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(14),
-        border:
-            Border.all(color: scheme.outlineVariant.withValues(alpha: 0.6)),
+        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.6)),
       ),
       child: Opacity(
         opacity: widget.paused ? 0.55 : 1.0,
@@ -108,9 +108,9 @@ class _IntroRecordingGuideState extends State<IntroRecordingGuide> {
                   child: Text(
                     L10n.t(context, 'intro.guide.title'),
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: scheme.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      color: scheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -121,9 +121,9 @@ class _IntroRecordingGuideState extends State<IntroRecordingGuide> {
             const SizedBox(height: 2),
             Text(
               L10n.t(context, 'intro.guide.hint'),
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -137,11 +137,7 @@ class _IntroRecordingGuideState extends State<IntroRecordingGuide> {
   ///   * aktiv   - gefuellter Kreis, Text in der Akzentfarbe, fett
   ///   * erledigt- Haken im Kreis, Text zurueckgenommen
   ///   * offen   - offener Kreis, Text zurueckgenommen
-  Widget _stepRow(
-    BuildContext context,
-    int index,
-    int aktiv,
-  ) {
+  Widget _stepRow(BuildContext context, int index, int aktiv) {
     final scheme = Theme.of(context).colorScheme;
     final istAktiv = index == aktiv;
     final istVorbei = index < aktiv;
@@ -174,11 +170,11 @@ class _IntroRecordingGuideState extends State<IntroRecordingGuide> {
                   : Text(
                       '${index + 1}',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: istAktiv
-                                ? scheme.onPrimary
-                                : scheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        color: istAktiv
+                            ? scheme.onPrimary
+                            : scheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
             ),
             const SizedBox(width: 10),
@@ -186,12 +182,9 @@ class _IntroRecordingGuideState extends State<IntroRecordingGuide> {
               child: Text(
                 L10n.t(context, IntroRecordingGuide.stepKeys[index]),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: istAktiv
-                          ? scheme.primary
-                          : scheme.onSurfaceVariant,
-                      fontWeight:
-                          istAktiv ? FontWeight.w700 : FontWeight.w400,
-                    ),
+                  color: istAktiv ? scheme.primary : scheme.onSurfaceVariant,
+                  fontWeight: istAktiv ? FontWeight.w700 : FontWeight.w400,
+                ),
               ),
             ),
             if (istAktiv)

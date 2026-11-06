@@ -20,7 +20,8 @@ const int chatMaxPerGroup = 3;
 /// Berechnet pro Nachricht (Liste ÄLTESTE zuerst), ob Namens-Header und
 /// Zeit angezeigt werden. Rückgabe parallel zur Eingabeliste.
 List<({bool showName, bool showTime})> computeBubbleGroups(
-    List<Message> oldestFirst) {
+  List<Message> oldestFirst,
+) {
   final out = <({bool showName, bool showTime})>[];
   var runSender = '';
   var runCount = 0;
@@ -28,7 +29,8 @@ List<({bool showName, bool showTime})> computeBubbleGroups(
   for (var i = 0; i < oldestFirst.length; i++) {
     final msg = oldestFirst[i];
     final sameSender = msg.senderId == runSender;
-    final gapOk = runStart != null &&
+    final gapOk =
+        runStart != null &&
         msg.timestamp.difference(runStart).abs() <= chatGroupWindow;
     var showName = false;
     if (!sameSender) {

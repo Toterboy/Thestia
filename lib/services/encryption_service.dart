@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart' show sha512;
@@ -116,15 +116,18 @@ class EncryptionService {
     }
   }
 
-  Future<void> _initializeInner() async {    _identityBox = await SecureHive.instance.openBox<SignalIdentityKeyPairAdapter>(
-      _boxNameIdentity,
-    );
+  Future<void> _initializeInner() async {
+    _identityBox = await SecureHive.instance
+        .openBox<SignalIdentityKeyPairAdapter>(_boxNameIdentity);
     _sessionBox = await SecureHive.instance.openBox<SignalSessionRecordAdapter>(
       _boxNameSessions,
     );
-    _peerTrustBox = await SecureHive.instance.openBox<String>(_boxNamePeerTrust);
-    _preKeysBox =
-        await SecureHive.instance.openBox<SignalPreKeyRecordAdapter>(_boxNamePreKeys);
+    _peerTrustBox = await SecureHive.instance.openBox<String>(
+      _boxNamePeerTrust,
+    );
+    _preKeysBox = await SecureHive.instance.openBox<SignalPreKeyRecordAdapter>(
+      _boxNamePreKeys,
+    );
     _signedPreKeysBox = await SecureHive.instance
         .openBox<SignalSignedPreKeyRecordAdapter>(_boxNameSignedPreKeys);
     _identityTrustBox = await SecureHive.instance
@@ -196,8 +199,7 @@ class EncryptionService {
       );
       await _metaBox.put(_registrationIdKey, _registrationId.toString());
     }
-    _preKeyIndex =
-        int.tryParse(_metaBox.get(_preKeyCursorKey) ?? '') ?? 0;
+    _preKeyIndex = int.tryParse(_metaBox.get(_preKeyCursorKey) ?? '') ?? 0;
   }
 
   /// Gibt das eigene Identitätsschlüsselpaar zurück.
@@ -230,7 +232,9 @@ class EncryptionService {
       final persisted = _preKeysBox.get(keyId.toString());
       if (persisted != null) {
         try {
-          final record = PreKeyRecord.fromBuffer(base64Decode(persisted.keyPairJson));
+          final record = PreKeyRecord.fromBuffer(
+            base64Decode(persisted.keyPairJson),
+          );
           await _store!.storePreKey(keyId, record);
           available++;
           continue;
@@ -304,7 +308,8 @@ class EncryptionService {
           final record = SignedPreKeyRecord.fromSerialized(
             base64Decode(persisted.keyPairJson),
           );
-          final age = DateTime.now().millisecondsSinceEpoch - persisted.timestamp;
+          final age =
+              DateTime.now().millisecondsSinceEpoch - persisted.timestamp;
           // Noch gültig UND im Store vorhanden -> übernehmen.
           if (Duration(milliseconds: age) < _signedPreKeyLifetime &&
               await _store!.containsSignedPreKey(activeId)) {
@@ -408,7 +413,9 @@ class EncryptionService {
       'preKeyId': preKey.id,
       'preKeyPublic': base64Encode(preKey.getKeyPair().publicKey.serialize()),
       'signedPreKeyId': activeSignedPreKeyId,
-      'signedPreKeyPublic': base64Encode(signedPreKey.getKeyPair().publicKey.serialize()),
+      'signedPreKeyPublic': base64Encode(
+        signedPreKey.getKeyPair().publicKey.serialize(),
+      ),
       'signedPreKeySignature': base64Encode(signedPreKey.signature),
     };
   }
@@ -443,14 +450,21 @@ class EncryptionService {
       );
     }
 
-    final recipientIdentityKey =
-        IdentityKey.fromBytes(base64Decode(recipientIdentityKeyB64), 0);
-    final recipientPreKey =
-        Curve.decodePoint(base64Decode(recipientPreKeyB64), 0);
-    final recipientSignedPreKey =
-        Curve.decodePoint(base64Decode(recipientSignedPreKeyB64), 0);
-    final recipientSignedPreKeySignature =
-        base64Decode(recipientSignedPreKeySignatureB64);
+    final recipientIdentityKey = IdentityKey.fromBytes(
+      base64Decode(recipientIdentityKeyB64),
+      0,
+    );
+    final recipientPreKey = Curve.decodePoint(
+      base64Decode(recipientPreKeyB64),
+      0,
+    );
+    final recipientSignedPreKey = Curve.decodePoint(
+      base64Decode(recipientSignedPreKeyB64),
+      0,
+    );
+    final recipientSignedPreKeySignature = base64Decode(
+      recipientSignedPreKeySignatureB64,
+    );
 
     final address = SignalProtocolAddress(recipientId, 1);
     final sessionBuilder = SessionBuilder.fromSignalStore(_store!, address);
@@ -469,10 +483,13 @@ class EncryptionService {
 
     // Peer-Identity für Safety-Number persistieren (TOFU; weitere
     // Änderungen werden durch den Check oben blockiert).
-    await _peerTrustBox.put(recipientId, jsonEncode({
-      'identityKeyPublic': recipientIdentityKeyB64,
-      'verified': false,
-    }));
+    await _peerTrustBox.put(
+      recipientId,
+      jsonEncode({
+        'identityKeyPublic': recipientIdentityKeyB64,
+        'verified': false,
+      }),
+    );
   }
 
   /// Setzt den gespeicherten Trust für einen Peer zurück (NUR nach
@@ -503,7 +520,10 @@ class EncryptionService {
   /// Konkatenation beider öffentlicher Keys; die ersten 15 Bytes werden
   /// auf je 2 Dezimalziffern abgebildet → 30 Ziffern in 6 Blöcken à 5.
   @visibleForTesting
-  static String computeSafetyNumber(Uint8List ourIdentityPub, Uint8List theirIdentityPub) {
+  static String computeSafetyNumber(
+    Uint8List ourIdentityPub,
+    Uint8List theirIdentityPub,
+  ) {
     // Kanonische Reihenfolge: byte-lexikografisch kleinerer Key zuerst
     // (unabhängig davon, wer die Nummer berechnet).
     final first = Uint8List.fromList(ourIdentityPub);
@@ -528,10 +548,9 @@ class EncryptionService {
       buffer.write((digest[i] % 100).toString().padLeft(2, '0'));
     }
     final digits = buffer.toString();
-    return RegExp(r'.{5}')
-        .allMatches(digits)
-        .map((m) => digits.substring(m.start, m.end))
-        .join(' ');
+    return RegExp(
+      r'.{5}',
+    ).allMatches(digits).map((m) => digits.substring(m.start, m.end)).join(' ');
   }
 
   static int _compareBytes(Uint8List x, Uint8List y) {
@@ -562,7 +581,8 @@ class EncryptionService {
   /// Signal-Standard-Fingerprint (N-6); fällt ohne bekannte eigene User-ID
   /// auf das Legacy-Schema zurück.
   String? safetyNumberFor(String peerId) {
-    final peerKeyB64 = _decodeTrustEntry(peerId)?['identityKeyPublic'] as String?;
+    final peerKeyB64 =
+        _decodeTrustEntry(peerId)?['identityKeyPublic'] as String?;
     if (peerKeyB64 == null || _identityKeyPair == null) return null;
     if (localUserId != null) {
       // Fall through zum Legacy-Schema.
@@ -606,19 +626,21 @@ class EncryptionService {
   Future<void> setRequiresPeerVerification(String peerId, bool value) async {
     final entry = _decodeTrustEntry(peerId);
     if (entry == null) return;
-    await _peerTrustBox.put(peerId, jsonEncode({
-      'identityKeyPublic': entry['identityKeyPublic'],
-      'verified': entry['verified'] == true,
-      'requireVerification': value,
-    }));
+    await _peerTrustBox.put(
+      peerId,
+      jsonEncode({
+        'identityKeyPublic': entry['identityKeyPublic'],
+        'verified': entry['verified'] == true,
+        'requireVerification': value,
+      }),
+    );
   }
 
   /// Wirft, wenn fuer [peerId] eine verzwungene Verifikation gilt, die
   /// Identity aber nicht bestaetigt ist. Aufrufer behandeln das als
   /// "erst verifizieren".
   void assertPeerUsable(String peerId) {
-    if (requiresPeerVerification(peerId) &&
-        !isPeerIdentityVerified(peerId)) {
+    if (requiresPeerVerification(peerId) && !isPeerIdentityVerified(peerId)) {
       throw StateError(
         'peer_unverified: Fuer $peerId ist die Safety-Nummer-Pruefung '
         'aktiviert, die Identitaet ist aber nicht bestaetigt. Bitte im Chat '
@@ -633,12 +655,15 @@ class EncryptionService {
   Future<void> setPeerIdentityVerified(String peerId, bool verified) async {
     final entry = _decodeTrustEntry(peerId);
     if (entry == null) return;
-    await _peerTrustBox.put(peerId, jsonEncode({
-      'identityKeyPublic': entry['identityKeyPublic'],
-      'verified': verified,
-      // Nicht zuruecksetzen: eine aktivierte Erzwingung bleibt bestehen.
-      'requireVerification': entry['requireVerification'] == true,
-    }));
+    await _peerTrustBox.put(
+      peerId,
+      jsonEncode({
+        'identityKeyPublic': entry['identityKeyPublic'],
+        'verified': verified,
+        // Nicht zuruecksetzen: eine aktivierte Erzwingung bleibt bestehen.
+        'requireVerification': entry['requireVerification'] == true,
+      }),
+    );
   }
 
   // ==========================================================================
@@ -652,18 +677,20 @@ class EncryptionService {
   /// diesen Check wäre der Schalter in [setRequiresPeerVerification] reine
   /// Dekoration - das `verified`-Flag wurde vorher nirgends ausgewertet.
   Future<CiphertextMessage> encryptMessage(
-      String recipientId, String plaintext) async {
+    String recipientId,
+    String plaintext,
+  ) async {
     assertPeerUsable(recipientId);
     final address = SignalProtocolAddress(recipientId, 1);
     final sessionCipher = SessionCipher.fromStore(_store!, address);
-    return sessionCipher.encrypt(
-      Uint8List.fromList(utf8.encode(plaintext)),
-    );
+    return sessionCipher.encrypt(Uint8List.fromList(utf8.encode(plaintext)));
   }
 
   /// Entschlüsselt eine empfangene Nachricht.
   Future<String> decryptMessage(
-      String senderId, CiphertextMessage message) async {
+    String senderId,
+    CiphertextMessage message,
+  ) async {
     final address = SignalProtocolAddress(senderId, 1);
     final sessionCipher = SessionCipher.fromStore(_store!, address);
     late final Uint8List plaintext;
@@ -679,7 +706,9 @@ class EncryptionService {
 
   /// Verschlüsselt Binärdaten (Bilder, Sprachnachrichten).
   Future<CiphertextMessage> encryptBinary(
-      String recipientId, Uint8List data) async {
+    String recipientId,
+    Uint8List data,
+  ) async {
     final address = SignalProtocolAddress(recipientId, 1);
     final sessionCipher = SessionCipher.fromStore(_store!, address);
     return sessionCipher.encrypt(data);
@@ -687,7 +716,9 @@ class EncryptionService {
 
   /// Entschlüsselt Binärdaten.
   Future<Uint8List> decryptBinary(
-      String senderId, CiphertextMessage message) async {
+    String senderId,
+    CiphertextMessage message,
+  ) async {
     final address = SignalProtocolAddress(senderId, 1);
     final sessionCipher = SessionCipher.fromStore(_store!, address);
     if (message is PreKeySignalMessage) {
@@ -734,7 +765,9 @@ class EncryptionService {
       });
       return BackupCrypto.encrypt(backup, password);
     } catch (e) {
-      debugPrint('[EncryptionService] Backup-Verschlüsselung fehlgeschlagen: $e');
+      debugPrint(
+        '[EncryptionService] Backup-Verschlüsselung fehlgeschlagen: $e',
+      );
       return null;
     }
   }

@@ -74,8 +74,11 @@ class TransitBlePrivacy {
   static Duration advertiseCycleDelay({Random? random}) {
     final r = random ?? _secure();
     return Duration(
-      milliseconds: _between(r, kAdvertiseCycleMin.inMilliseconds,
-          kAdvertiseCycleMax.inMilliseconds),
+      milliseconds: _between(
+        r,
+        kAdvertiseCycleMin.inMilliseconds,
+        kAdvertiseCycleMax.inMilliseconds,
+      ),
     );
   }
 
@@ -94,7 +97,10 @@ class TransitBlePrivacy {
     final r = random ?? _secure();
     return Duration(
       milliseconds: _between(
-          r, kScanPulseOffMin.inMilliseconds, kScanPulseOffMax.inMilliseconds),
+        r,
+        kScanPulseOffMin.inMilliseconds,
+        kScanPulseOffMax.inMilliseconds,
+      ),
     );
   }
 

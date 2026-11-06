@@ -129,7 +129,7 @@ class _MfaSetupScreenState extends ConsumerState<MfaSetupScreen> {
           _error = e is AuthException
               ? e.message
               : 'Einrichtung konnte nicht gestartet werden. '
-                  'Bitte versuche es später erneut.';
+                    'Bitte versuche es später erneut.';
           _loading = false;
         });
       }
@@ -173,7 +173,8 @@ class _MfaSetupScreenState extends ConsumerState<MfaSetupScreen> {
       if (kDebugMode) debugPrint('[MfaSetup] verify fehlgeschlagen: $e');
       if (mounted) {
         setState(() {
-          _error = 'Code nicht akzeptiert. Prüfe, ob deine Authenticator-App '
+          _error =
+              'Code nicht akzeptiert. Prüfe, ob deine Authenticator-App '
               'den QR-Code erfasst hat und gib den AKTUELLEN Code ein.';
           _loading = false;
         });
@@ -185,8 +186,8 @@ class _MfaSetupScreenState extends ConsumerState<MfaSetupScreen> {
     // Fix: Ein Fehler beim Persistieren (z. B. Server-Sync) darf die
     // Navigation NICHT blockieren - sonst bleibt der Nutzer hier hängen
     // ("Später erinnern" ohne Wirkung).
-        // Best-effort: Der Dismiss-Flag wird beim nächsten Erfolg nachgezogen.
-await bestEffort('read.setMfaSetupDismissed', () async {
+    // Best-effort: Der Dismiss-Flag wird beim nächsten Erfolg nachgezogen.
+    await bestEffort('read.setMfaSetupDismissed', () async {
       await ref.read(settingsProvider.notifier).setMfaSetupDismissed(true);
     });
     if (mounted) _continueFlow();
@@ -219,24 +220,22 @@ await bestEffort('read.setMfaSetupDismissed', () async {
         if (!didPop && !_leaving) _continueFlow();
       },
       child: Scaffold(
-      appBar: AppBar(
-        title: Text(L10n.t(context, 'mfa.setupTitle')),
-        automaticallyImplyLeading: false,
-        leading: canLeave
-            ? BackButton(onPressed: () => context.pop())
-            : null,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: switch (_phase) {
-            _SetupPhase.intro => _buildIntro(),
-            _SetupPhase.scan => _buildScan(),
-            _SetupPhase.confirm => _buildConfirm(),
-            _SetupPhase.done => _buildDone(),
-          },
+        appBar: AppBar(
+          title: Text(L10n.t(context, 'mfa.setupTitle')),
+          automaticallyImplyLeading: false,
+          leading: canLeave ? BackButton(onPressed: () => context.pop()) : null,
         ),
-      ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: switch (_phase) {
+              _SetupPhase.intro => _buildIntro(),
+              _SetupPhase.scan => _buildScan(),
+              _SetupPhase.confirm => _buildConfirm(),
+              _SetupPhase.done => _buildDone(),
+            },
+          ),
+        ),
       ),
     );
   }
@@ -249,11 +248,7 @@ await bestEffort('read.setMfaSetupDismissed', () async {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(
-            Icons.verified_user,
-            size: 64,
-            color: Colors.green,
-          ),
+          const Icon(Icons.verified_user, size: 64, color: Colors.green),
           const SizedBox(height: 16),
           Text(
             L10n.t(context, 'mfa.activeTitle'),
@@ -261,10 +256,7 @@ await bestEffort('read.setMfaSetupDismissed', () async {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
-          Text(
-            L10n.t(context, 'mfa.activeBody'),
-            textAlign: TextAlign.center,
-          ),
+          Text(L10n.t(context, 'mfa.activeBody'), textAlign: TextAlign.center),
           const SizedBox(height: 32),
           FilledButton.icon(
             onPressed: _continueFlow,
@@ -285,10 +277,7 @@ await bestEffort('read.setMfaSetupDismissed', () async {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 12),
-        Text(
-          L10n.t(context, 'mfa.introBody'),
-          textAlign: TextAlign.center,
-        ),
+        Text(L10n.t(context, 'mfa.introBody'), textAlign: TextAlign.center),
         const SizedBox(height: 12),
         Text(
           L10n.t(context, 'mfa.introSkip'),
@@ -327,8 +316,10 @@ await bestEffort('read.setMfaSetupDismissed', () async {
   Widget _buildScan() {
     // Responsiver QR: Auf schmalen Screens (oder großer Schrift) darf das
     // fixed 220px-Bild den Platz nicht wegdrücken.
-    final qrSize = (MediaQuery.of(context).size.width - 120)
-        .clamp(140.0, 220.0);
+    final qrSize = (MediaQuery.of(context).size.width - 120).clamp(
+      140.0,
+      220.0,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -357,35 +348,32 @@ await bestEffort('read.setMfaSetupDismissed', () async {
           ),
         if (_secret != null) ...[
           const SizedBox(height: 16),
-          Text(
-            L10n.t(context, 'mfa.manualKey'),
-            textAlign: TextAlign.center,
-          ),
+          Text(L10n.t(context, 'mfa.manualKey'), textAlign: TextAlign.center),
           const SizedBox(height: 8),
           InkWell(
             onTap: () {
               Clipboard.setData(ClipboardData(text: _secret!));
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(L10n.t(context, 'mfa.copied')),
-                ),
+                SnackBar(content: Text(L10n.t(context, 'mfa.copied'))),
               );
               _clipboardClearTimer?.cancel();
-              _clipboardClearTimer = Timer(const Duration(seconds: 30), () async {
-                final data = await Clipboard.getData('text/plain');
-                if (data?.text == _secret) {
-                  await Clipboard.setData(const ClipboardData(text: ''));
-                }
-              });
+              _clipboardClearTimer = Timer(
+                const Duration(seconds: 30),
+                () async {
+                  final data = await Clipboard.getData('text/plain');
+                  if (data?.text == _secret) {
+                    await Clipboard.setData(const ClipboardData(text: ''));
+                  }
+                },
+              );
             },
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Theme.of(context)
-                    .colorScheme
-                    .surfaceContainerHighest
-                    .withValues(alpha: 0.5),
+                color: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -502,10 +490,7 @@ await bestEffort('read.setMfaSetupDismissed', () async {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 12),
-        Text(
-          L10n.t(context, 'mfa.doneBody'),
-          textAlign: TextAlign.center,
-        ),
+        Text(L10n.t(context, 'mfa.doneBody'), textAlign: TextAlign.center),
         const SizedBox(height: 32),
         FilledButton(
           onPressed: _continueFlow,

@@ -51,7 +51,10 @@ class SignalSessionRecordAdapter extends HiveObject {
   @HiveField(1)
   final String recordJson;
 
-  SignalSessionRecordAdapter({required this.sessionId, required this.recordJson});
+  SignalSessionRecordAdapter({
+    required this.sessionId,
+    required this.recordJson,
+  });
 }
 
 @HiveType(typeId: 4)
@@ -62,7 +65,10 @@ class SignalSenderKeyRecordAdapter extends HiveObject {
   @HiveField(1)
   final String recordJson;
 
-  SignalSenderKeyRecordAdapter({required this.senderKeyId, required this.recordJson});
+  SignalSenderKeyRecordAdapter({
+    required this.senderKeyId,
+    required this.recordJson,
+  });
 }
 
 @HiveType(typeId: 5)

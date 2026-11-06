@@ -18,10 +18,7 @@ import 'package:flutter/material.dart';
 /// anderen waeren unwichtig. Ausserdem ist die Zeile lesbar, ohne dass der
 /// Admin scrollen muss.
 class AdminMetricRow extends StatelessWidget {
-  const AdminMetricRow({
-    super.key,
-    required this.metrics,
-  });
+  const AdminMetricRow({super.key, required this.metrics});
 
   final List<AdminMetric> metrics;
 
@@ -36,10 +33,7 @@ class AdminMetricRow extends StatelessWidget {
         children: [
           for (var i = 0; i < metrics.length; i++) ...[
             Expanded(
-              child: _MetricTile(
-                metric: metrics[i],
-                radius: _radius,
-              ),
+              child: _MetricTile(metric: metrics[i], radius: _radius),
             ),
             if (i != metrics.length - 1) const SizedBox(width: 8),
           ],
@@ -84,10 +78,7 @@ class AdminMetric {
 }
 
 class _MetricTile extends StatelessWidget {
-  const _MetricTile({
-    required this.metric,
-    required this.radius,
-  });
+  const _MetricTile({required this.metric, required this.radius});
 
   final AdminMetric metric;
   final double radius;
@@ -162,7 +153,8 @@ class _MetricTile extends StatelessWidget {
     return Semantics(
       container: true,
       button: metric.onTap != null,
-      label: metric.semanticsLabel ??
+      label:
+          metric.semanticsLabel ??
           '${metric.label}: ${metric.value}'
               '${metric.subtitle != null ? ', ${metric.subtitle}' : ''}',
       child: ExcludeSemantics(child: body),

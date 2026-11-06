@@ -22,8 +22,7 @@ class _FakeSecureStorage extends FlutterSecureStorage {
     AppleOptions? mOptions,
     WindowsOptions? wOptions,
     WebOptions? webOptions,
-  }) async =>
-      store[key];
+  }) async => store[key];
 
   @override
   Future<void> write({
@@ -101,8 +100,11 @@ void main() {
     // At-rest-Check: Rohdaten dürfen den Klartext NICHT enthalten.
     final raw = File(boxPath!).readAsBytesSync();
     final rawString = latin1Decode(raw);
-    expect(rawString.contains('private-identity-key-material'), isFalse,
-        reason: 'Hive-Datei enthält Klartext – Box wurde nicht verschlüsselt.');
+    expect(
+      rawString.contains('private-identity-key-material'),
+      isFalse,
+      reason: 'Hive-Datei enthält Klartext – Box wurde nicht verschlüsselt.',
+    );
 
     // Reopen mit demselben (persistierten) Schlüssel liefert die Daten.
     final hive2 = newHive();
@@ -122,9 +124,13 @@ void main() {
 
     final hive2 = newHive();
     final box2 = await hive2.openBox<String>('locked');
-    expect(box2.isEmpty, isTrue,
-        reason: 'Mit fremdem Schlüssel unlesbare Box muss zurückgesetzt '
-            'werden (fail-closed, keine Klartext-Weiterverwendung).');
+    expect(
+      box2.isEmpty,
+      isTrue,
+      reason:
+          'Mit fremdem Schlüssel unlesbare Box muss zurückgesetzt '
+          'werden (fail-closed, keine Klartext-Weiterverwendung).',
+    );
   });
 
   test('Klartext-Altbestand wird transparent in verschlüsselte Box '
@@ -144,15 +150,18 @@ void main() {
     expect(raw.contains('legacy-value'), isFalse);
   });
 
-  test('Ungültiger gespeicherter Schlüssel (falsche Länge) wird ersetzt', () async {
-    keystore['hive_encryption_key'] = base64Encode(List.filled(16, 1));
-    final hive = newHive();
-    final box = await hive.openBox<String>('recover');
-    await box.put('k', 'v');
-    expect(box.get('k'), equals('v'));
-    final newKey = base64Decode(keystore['hive_encryption_key']!);
-    expect(newKey.length, equals(32));
-  });
+  test(
+    'Ungültiger gespeicherter Schlüssel (falsche Länge) wird ersetzt',
+    () async {
+      keystore['hive_encryption_key'] = base64Encode(List.filled(16, 1));
+      final hive = newHive();
+      final box = await hive.openBox<String>('recover');
+      await box.put('k', 'v');
+      expect(box.get('k'), equals('v'));
+      final newKey = base64Decode(keystore['hive_encryption_key']!);
+      expect(newKey.length, equals(32));
+    },
+  );
 }
 
 String latin1Decode(List<int> bytes) => String.fromCharCodes(bytes);

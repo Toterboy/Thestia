@@ -86,19 +86,25 @@ class ImageSafetyService {
   Future<bool> _initInternal() async {
     try {
       final data = await rootBundle.load(_assetPath);
-      final bytes = data.buffer
-          .asUint8List(data.offsetInBytes, data.lengthInBytes);
+      final bytes = data.buffer.asUint8List(
+        data.offsetInBytes,
+        data.lengthInBytes,
+      );
 
       OrtEnv.instance.init();
       final session = OrtSession.fromBuffer(bytes, OrtSessionOptions());
       _session = session;
       _inputNames = session.inputNames;
-      debugPrint('[ImageSafety] Modell geladen. Inputs: $_inputNames, '
-          'Outputs: ${session.outputNames}');
+      debugPrint(
+        '[ImageSafety] Modell geladen. Inputs: $_inputNames, '
+        'Outputs: ${session.outputNames}',
+      );
       return true;
     } catch (e) {
-      debugPrint('[ImageSafety] Modell konnte nicht geladen werden '
-          '(lokale Prüfung deaktiviert): $e');
+      debugPrint(
+        '[ImageSafety] Modell konnte nicht geladen werden '
+        '(lokale Prüfung deaktiviert): $e',
+      );
       _session = null;
       return false;
     }
@@ -119,17 +125,15 @@ class ImageSafetyService {
       // pure-Dart image-Package dauert Sekunden - im Hintergrund-Isolate
       // statt auf dem UI-Thread.
       final tensor = await compute(_preprocessSync, bytes);
-      final inputName =
-          _inputNames.isNotEmpty ? _inputNames.first : 'input';
-      final inputOrt = OrtValueTensor.createTensorWithDataList(
-        tensor,
-        [1, 3, _inputSize, _inputSize],
-      );
+      final inputName = _inputNames.isNotEmpty ? _inputNames.first : 'input';
+      final inputOrt = OrtValueTensor.createTensorWithDataList(tensor, [
+        1,
+        3,
+        _inputSize,
+        _inputSize,
+      ]);
 
-      final outputs = session.run(
-        OrtRunOptions(),
-        {inputName: inputOrt},
-      );
+      final outputs = session.run(OrtRunOptions(), {inputName: inputOrt});
 
       final first = outputs.isNotEmpty ? outputs.first : null;
       if (first == null) return null;
@@ -155,11 +159,7 @@ class ImageSafetyService {
         probs = [exps[0] / expSum, exps[1] / expSum, exps[2] / expSum];
       }
 
-      return ImageSafetyResult(
-        nsfl: probs[0],
-        nsfw: probs[1],
-        sfw: probs[2],
-      );
+      return ImageSafetyResult(nsfl: probs[0], nsfw: probs[1], sfw: probs[2]);
     } catch (e) {
       debugPrint('[ImageSafety] Lokale Inferenz fehlgeschlagen: $e');
       return null;

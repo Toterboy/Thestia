@@ -19,10 +19,12 @@ class DatingHourPreferencesScreen extends ConsumerStatefulWidget {
   const DatingHourPreferencesScreen({super.key});
 
   @override
-  ConsumerState<DatingHourPreferencesScreen> createState() => _DatingHourPreferencesScreenState();
+  ConsumerState<DatingHourPreferencesScreen> createState() =>
+      _DatingHourPreferencesScreenState();
 }
 
-class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferencesScreen> {
+class _DatingHourPreferencesScreenState
+    extends ConsumerState<DatingHourPreferencesScreen> {
   final _traitController = TextEditingController();
 
   // Altersbereich (Dating Hour ist 18+): Zwei gekoppelte Werte statt
@@ -38,9 +40,16 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
   HabitudeLevel? _drugs;
 
   static const List<String> _suggestedTraits = [
-    'Humor', 'Ehrlichkeit', 'Abenteuerlust', 'Intelligenz',
-    'Empathie', 'Spontanität', 'Zuverlässigkeit', 'Leidenschaft',
-    'Offenheit', 'Bodenständigkeit',
+    'Humor',
+    'Ehrlichkeit',
+    'Abenteuerlust',
+    'Intelligenz',
+    'Empathie',
+    'Spontanität',
+    'Zuverlässigkeit',
+    'Leidenschaft',
+    'Offenheit',
+    'Bodenständigkeit',
   ];
 
   /// Angezeigter Name für gespeicherte (deutsche) Trait-Werte.
@@ -84,7 +93,9 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
   Future<void> _loadLastPreferences() async {
     // Best-Effort: Ohne Server-Antwort gelten die Einrichtungs-Defaults.
     await bestEffort('datingHourService.getMyLastPreferences', () async {
-      final saved = await ref.read(datingHourServiceProvider).getMyLastPreferences();
+      final saved = await ref
+          .read(datingHourServiceProvider)
+          .getMyLastPreferences();
       if (saved == null || !mounted) return;
       final last = DatingHourPreferences.fromJson(saved);
       setState(() {
@@ -93,7 +104,9 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
           _ageMax = last.ageMax.clamp(_ageMin, 99);
         }
         _genderPreference = genderPrefFromList([last.genderPreference]);
-        if (last.preferredTrait.isNotEmpty) _selectedTrait = last.preferredTrait;
+        if (last.preferredTrait.isNotEmpty) {
+          _selectedTrait = last.preferredTrait;
+        }
         if (last.maxDistanceKm > 0) _maxDistanceKm = last.maxDistanceKm.round();
         _smoking = HabitudeLevel.fromServer(last.smoking);
         _alcohol = HabitudeLevel.fromServer(last.alcohol);
@@ -154,10 +167,13 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
                       Expanded(
                         child: Text(
                           L10n.t(context, 'dh.prefs.header'),
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: Theme.of(context).colorScheme.onPrimaryContainer,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimaryContainer,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                       ),
                     ],
@@ -166,7 +182,9 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
                   Text(
                     L10n.t(context, 'dh.prefs.intro'),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
                     ),
                   ),
                 ],
@@ -184,31 +202,39 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-              Text(
-              L10n.tf(context, 'dh.prefs.ageRange',
-                      {'min': '$_ageMin', 'max': '$_ageMax'}),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Zwei gekoppelte Slider: Bei identischen Werten blieb der
-            // RangeSlider "eingefroren" (Regler ausgegraut, keine Bewegung).
-            AgeRangeSliders(
-              minValue: _ageMin,
-              maxValue: _ageMax,
-              boundsMin: 18,
-              boundsMax: 99,
-              minLabelPrefix: L10n.t(context, 'profile.edit.minAgeLabel'),
-              maxLabelPrefix: L10n.t(context, 'profile.edit.maxAgeLabel'),
-              labelSuffix: L10n.t(context, 'common.years'),
-              onChanged: (min, max) {
-                setState(() {
-                  _ageMin = min;
-                  _ageMax = max;
-                });
-              },
-            ),
+                    Text(
+                      L10n.tf(context, 'dh.prefs.ageRange', {
+                        'min': '$_ageMin',
+                        'max': '$_ageMax',
+                      }),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Zwei gekoppelte Slider: Bei identischen Werten blieb der
+                    // RangeSlider "eingefroren" (Regler ausgegraut, keine Bewegung).
+                    AgeRangeSliders(
+                      minValue: _ageMin,
+                      maxValue: _ageMax,
+                      boundsMin: 18,
+                      boundsMax: 99,
+                      minLabelPrefix: L10n.t(
+                        context,
+                        'profile.edit.minAgeLabel',
+                      ),
+                      maxLabelPrefix: L10n.t(
+                        context,
+                        'profile.edit.maxAgeLabel',
+                      ),
+                      labelSuffix: L10n.t(context, 'common.years'),
+                      onChanged: (min, max) {
+                        setState(() {
+                          _ageMin = min;
+                          _ageMax = max;
+                        });
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -250,9 +276,7 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
             Card(
               child: SwitchListTile(
                 title: Text(L10n.t(context, 'dh.prefs.autoJoin')),
-                subtitle: Text(
-                  L10n.t(context, 'dh.prefs.autoJoinHint'),
-                ),
+                subtitle: Text(L10n.t(context, 'dh.prefs.autoJoinHint')),
                 value: ref.watch(settingsProvider).datingHourAutoJoin,
                 onChanged: (v) => ref
                     .read(settingsProvider.notifier)
@@ -282,7 +306,9 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
                   selected: isSelected,
                   onSelected: (v) => setState(() => _selectedTrait = trait),
                   selectedColor: Theme.of(context).colorScheme.primaryContainer,
-                  checkmarkColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                  checkmarkColor: Theme.of(
+                    context,
+                  ).colorScheme.onPrimaryContainer,
                 );
               }).toList(),
             ),
@@ -292,7 +318,9 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
               decoration: InputDecoration(
                 labelText: L10n.t(context, 'dh.prefs.traitOwn'),
                 hintText: L10n.t(context, 'dh.prefs.traitHintField'),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 prefixIcon: const Icon(Icons.edit),
               ),
               onChanged: (v) => setState(() => _selectedTrait = v.trim()),
@@ -302,14 +330,16 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
             const SizedBox(height: 32),
 
             // Gewohnheiten als weiche Matching-Präferenz
-            Text(L10n.t(context, 'dh.prefs.habits'),
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              L10n.t(context, 'dh.prefs.habits'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 4),
             Text(
               L10n.t(context, 'dh.prefs.habitsHint2'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 16),
             HabitudeSelector(
@@ -367,8 +397,11 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
       ageMin: _ageMin,
       ageMax: _ageMax,
       genderPreference: _genderPreference,
-      preferredTrait: _selectedTrait.isNotEmpty ? _selectedTrait : _suggestedTraits.first,
-      maxDistanceKm: _maxDistanceKm.toDouble(), // aus den Einrichtungs-Einstellungen
+      preferredTrait: _selectedTrait.isNotEmpty
+          ? _selectedTrait
+          : _suggestedTraits.first,
+      maxDistanceKm: _maxDistanceKm
+          .toDouble(), // aus den Einrichtungs-Einstellungen
       smoking: _smoking?.toServer(),
       alcohol: _alcohol?.toServer(),
       drugs: _drugs?.toServer(),
@@ -396,8 +429,10 @@ class _DatingHourPreferencesScreenState extends ConsumerState<DatingHourPreferen
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(L10n.tf(context, 'common.errorWith',
-                  {'error': e.message}))),
+            content: Text(
+              L10n.tf(context, 'common.errorWith', {'error': e.message}),
+            ),
+          ),
         );
       }
     }
@@ -440,9 +475,9 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-        fontWeight: FontWeight.bold,
-      ),
+      style: Theme.of(
+        context,
+      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
     );
   }
 }

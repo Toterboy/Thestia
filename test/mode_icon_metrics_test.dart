@@ -36,33 +36,44 @@ void main() {
 
   testWidgets('Tintenausdehnung messen', (tester) async {
     final kandidaten = <String, Widget>{
-      'EIGEN find': ModeSymbol((x) => FindSparkPainter(x),
-          size: size, color: const Color(0xFF000000)),
-      'EIGEN transit': ModeSymbol((x) => TransitSparkPainter(x),
-          size: size, color: const Color(0xFF000000)),
-      'EIGEN zufall': ModeSymbol((x) => QuestionChatPainter(x),
-          size: size, color: const Color(0xFF000000)),
+      'EIGEN find': ModeSymbol(
+        (x) => FindSparkPainter(x),
+        size: size,
+        color: const Color(0xFF000000),
+      ),
+      'EIGEN transit': ModeSymbol(
+        (x) => TransitSparkPainter(x),
+        size: size,
+        color: const Color(0xFF000000),
+      ),
+      'EIGEN zufall': ModeSymbol(
+        (x) => QuestionChatPainter(x),
+        size: size,
+        color: const Color(0xFF000000),
+      ),
     };
 
     final key = GlobalKey();
-    await tester.pumpWidget(MaterialApp(
-      home: RepaintBoundary(
-        key: key,
-        // KEIN Hintergrund: gemessen wird der Alphakanal. Ein weisses
-        // Rect haette dort ueber Alpha 255 und die Tinte wuerde die
-        // ganze Flaeche fuellen.
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final e in kandidaten.entries)
-              SizedBox(
-                height: zeileDp,
-                child: Center(child: e.value),
-              ),
-          ],
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RepaintBoundary(
+          key: key,
+          // KEIN Hintergrund: gemessen wird der Alphakanal. Ein weisses
+          // Rect haette dort ueber Alpha 255 und die Tinte wuerde die
+          // ganze Flaeche fuellen.
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final e in kandidaten.entries)
+                SizedBox(
+                  height: zeileDp,
+                  child: Center(child: e.value),
+                ),
+            ],
+          ),
         ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
 
     final randung =
@@ -106,12 +117,14 @@ void main() {
       }
       final bw = (maxX - minX + 1).toDouble();
       final bh = (maxY - minY + 1).toDouble();
-      debugPrint('$name '
-          'b ${bw.toStringAsFixed(1).padLeft(5)}dp  '
-          'h ${bh.toStringAsFixed(1).padLeft(5)}dp  '
-          'mitte ${((minX + maxX) / 2).toStringAsFixed(1).padLeft(5)}  '
-          'tinte ${(tinte / (bw * bh) * 100).toStringAsFixed(0).padLeft(3)}%  '
-          'diag ${math.sqrt(bw * bw + bh * bh).toStringAsFixed(1)}');
+      debugPrint(
+        '$name '
+        'b ${bw.toStringAsFixed(1).padLeft(5)}dp  '
+        'h ${bh.toStringAsFixed(1).padLeft(5)}dp  '
+        'mitte ${((minX + maxX) / 2).toStringAsFixed(1).padLeft(5)}  '
+        'tinte ${(tinte / (bw * bh) * 100).toStringAsFixed(0).padLeft(3)}%  '
+        'diag ${math.sqrt(bw * bw + bh * bh).toStringAsFixed(1)}',
+      );
     }
   });
 }

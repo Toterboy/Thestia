@@ -74,18 +74,14 @@ class _GuardianTransitionScreenState
 
               // 1) Beenden
               OutlinedButton(
-                onPressed: _busy
-                    ? null
-                    : () => _entscheiden('ended'),
+                onPressed: _busy ? null : () => _entscheiden('ended'),
                 child: Text(L10n.t(context, 'guardian.transitionEnd')),
               ),
               const SizedBox(height: 20),
 
               // 2) Nachfrist
               Text(
-                L10n.tf(context, 'guardian.graceLabel', {
-                  'months': '$_monate',
-                }),
+                L10n.tf(context, 'guardian.graceLabel', {'months': '$_monate'}),
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),

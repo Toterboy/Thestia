@@ -71,7 +71,10 @@ class GuardianNotifier extends StateNotifier<GuardianStatus> {
     String policy, {
     int? graceMonths,
   }) async {
-    final result = await _service.setAccessPolicy(policy, graceMonths: graceMonths);
+    final result = await _service.setAccessPolicy(
+      policy,
+      graceMonths: graceMonths,
+    );
     if (result.isOk) {
       await load();
     }

@@ -39,53 +39,89 @@ class SecureTokenStore {
   final FlutterSecureStorage _storage;
 
   SecureTokenStore([FlutterSecureStorage? storage])
-      : _storage = storage ?? const FlutterSecureStorage();
+    : _storage = storage ?? const FlutterSecureStorage();
 
   Future<void> saveTokens({
     required String accessToken,
     required String refreshToken,
     required String userId,
   }) async {
-    await _storage.write(key: _accessKey, value: accessToken, aOptions: _androidOptions, iOptions: _iOSOptions);
-    await _storage.write(key: _refreshKey, value: refreshToken, aOptions: _androidOptions, iOptions: _iOSOptions);
-    await _storage.write(key: _userIdKey, value: userId, aOptions: _androidOptions, iOptions: _iOSOptions);
+    await _storage.write(
+      key: _accessKey,
+      value: accessToken,
+      aOptions: _androidOptions,
+      iOptions: _iOSOptions,
+    );
+    await _storage.write(
+      key: _refreshKey,
+      value: refreshToken,
+      aOptions: _androidOptions,
+      iOptions: _iOSOptions,
+    );
+    await _storage.write(
+      key: _userIdKey,
+      value: userId,
+      aOptions: _androidOptions,
+      iOptions: _iOSOptions,
+    );
   }
 
-  Future<String?> get accessToken =>
-      _storage.read(key: _accessKey, aOptions: _androidOptions, iOptions: _iOSOptions);
-  Future<String?> get refreshToken =>
-      _storage.read(key: _refreshKey, aOptions: _androidOptions, iOptions: _iOSOptions);
-  Future<String?> get userId =>
-      _storage.read(key: _userIdKey, aOptions: _androidOptions, iOptions: _iOSOptions);
+  Future<String?> get accessToken => _storage.read(
+    key: _accessKey,
+    aOptions: _androidOptions,
+    iOptions: _iOSOptions,
+  );
+  Future<String?> get refreshToken => _storage.read(
+    key: _refreshKey,
+    aOptions: _androidOptions,
+    iOptions: _iOSOptions,
+  );
+  Future<String?> get userId => _storage.read(
+    key: _userIdKey,
+    aOptions: _androidOptions,
+    iOptions: _iOSOptions,
+  );
 
   /// Demo-Modus: gesalzener Credential-Hash (`salt$hash`, siehe AuthService).
   /// Liegt bewusst IM Keystore/Keychain statt in SharedPreferences (M10).
   Future<String?> readDemoCredentials() => _storage.read(
-        key: _demoCredentialsKey,
-        aOptions: _androidOptions,
-        iOptions: _iOSOptions,
-      );
+    key: _demoCredentialsKey,
+    aOptions: _androidOptions,
+    iOptions: _iOSOptions,
+  );
 
   Future<void> writeDemoCredentials(String value) => _storage.write(
-        key: _demoCredentialsKey,
-        value: value,
-        aOptions: _androidOptions,
-        iOptions: _iOSOptions,
-      );
+    key: _demoCredentialsKey,
+    value: value,
+    aOptions: _androidOptions,
+    iOptions: _iOSOptions,
+  );
 
   Future<void> deleteDemoCredentials() => _storage.delete(
-        key: _demoCredentialsKey,
-        aOptions: _androidOptions,
-        iOptions: _iOSOptions,
-      );
+    key: _demoCredentialsKey,
+    aOptions: _androidOptions,
+    iOptions: _iOSOptions,
+  );
 
   /// Löscht alle Tokens (Logout / Account-Löschung). Bewusst "best-effort":
   /// Bei Fehlern (z. B. gesperrtes Gerät) wird geloggt, aber nicht abgestürzt.
   Future<void> clear() async {
     try {
-      await _storage.delete(key: _accessKey, aOptions: _androidOptions, iOptions: _iOSOptions);
-      await _storage.delete(key: _refreshKey, aOptions: _androidOptions, iOptions: _iOSOptions);
-      await _storage.delete(key: _userIdKey, aOptions: _androidOptions, iOptions: _iOSOptions);
+      await _storage.delete(
+        key: _accessKey,
+        aOptions: _androidOptions,
+        iOptions: _iOSOptions,
+      );
+      await _storage.delete(
+        key: _refreshKey,
+        aOptions: _androidOptions,
+        iOptions: _iOSOptions,
+      );
+      await _storage.delete(
+        key: _userIdKey,
+        aOptions: _androidOptions,
+        iOptions: _iOSOptions,
+      );
     } catch (e) {
       debugPrint('[SecureTokenStore] Löschen fehlgeschlagen: $e');
     }
@@ -118,26 +154,26 @@ class SecureProfileStore {
   final FlutterSecureStorage _storage;
 
   SecureProfileStore([FlutterSecureStorage? storage])
-      : _storage = storage ?? const FlutterSecureStorage();
+    : _storage = storage ?? const FlutterSecureStorage();
 
   Future<String?> read() => _storage.read(
-        key: _profileKey,
-        aOptions: _androidOptions,
-        iOptions: _iOSOptions,
-      );
+    key: _profileKey,
+    aOptions: _androidOptions,
+    iOptions: _iOSOptions,
+  );
 
   Future<void> write(String json) => _storage.write(
-        key: _profileKey,
-        value: json,
-        aOptions: _androidOptions,
-        iOptions: _iOSOptions,
-      );
+    key: _profileKey,
+    value: json,
+    aOptions: _androidOptions,
+    iOptions: _iOSOptions,
+  );
 
   Future<void> delete() => _storage.delete(
-        key: _profileKey,
-        aOptions: _androidOptions,
-        iOptions: _iOSOptions,
-      );
+    key: _profileKey,
+    aOptions: _androidOptions,
+    iOptions: _iOSOptions,
+  );
 }
 
 /// Provider für den [SecureProfileStore].

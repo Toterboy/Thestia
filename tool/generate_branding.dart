@@ -43,7 +43,8 @@ void main() {
   for (var i = 0; i <= 120; i++) {
     final t = 2 * math.pi * i / 120;
     final x = 16 * math.pow(math.sin(t), 3).toDouble();
-    final y = 13 * math.cos(t) -
+    final y =
+        13 * math.cos(t) -
         5 * math.cos(2 * t) -
         2 * math.cos(3 * t) -
         math.cos(4 * t);
@@ -84,9 +85,12 @@ void main() {
       p.a = (p.a * fade).round().clamp(0, 255);
     }
   }
-  File('android/app/src/main/res/drawable/notification_icon.png')
-      .writeAsBytesSync(img.encodePng(n));
+  File(
+    'android/app/src/main/res/drawable/notification_icon.png',
+  ).writeAsBytesSync(img.encodePng(n));
 
-  stdout.writeln('Branding erzeugt (Quelle: thestia_icon_base.png): '
-      'Notification-Icon (weiss=$whitePixels px)');
+  stdout.writeln(
+    'Branding erzeugt (Quelle: thestia_icon_base.png): '
+    'Notification-Icon (weiss=$whitePixels px)',
+  );
 }

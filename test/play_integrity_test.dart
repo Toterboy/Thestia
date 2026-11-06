@@ -16,10 +16,10 @@ void main() {
   test('fetchViaChannel liefert Token bei Erfolg', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {
-      expect(call.method, 'requestToken');
-      expect((call.arguments as Map)['nonce'], isNotEmpty);
-      return 'token-abc';
-    });
+          expect(call.method, 'requestToken');
+          expect((call.arguments as Map)['nonce'], isNotEmpty);
+          return 'token-abc';
+        });
     expect(
       await PlayIntegrityService.fetchViaChannel('nonce-xyz'),
       'token-abc',
@@ -29,8 +29,8 @@ void main() {
   test('fetchViaChannel liefert null bei PlatformException', () async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (_) async {
-      throw PlatformException(code: 'UNAVAILABLE');
-    });
+          throw PlatformException(code: 'UNAVAILABLE');
+        });
     expect(await PlayIntegrityService.fetchViaChannel('n'), isNull);
   });
 

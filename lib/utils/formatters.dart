@@ -35,6 +35,5 @@ class Formatters {
 
   /// Alter aus einem Geburtsjahr berechnen (veraltet - nutze ageFromBirthDate).
   @Deprecated('Nutze ageFromBirthDate mit DateTime statt Jahr')
-  static int ageFromYear(int birthYear) =>
-      DateTime.now().year - birthYear;
+  static int ageFromYear(int birthYear) => DateTime.now().year - birthYear;
 }

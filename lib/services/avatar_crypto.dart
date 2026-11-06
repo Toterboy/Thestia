@@ -38,26 +38,15 @@ class AvatarCrypto {
     );
 
     final gcm = GCMBlockCipher(AESEngine())
-      ..init(
-        true,
-        AEADParameters(KeyParameter(key), 128, iv, Uint8List(0)),
-      );
+      ..init(true, AEADParameters(KeyParameter(key), 128, iv, Uint8List(0)));
     final cipher = gcm.process(plaintext);
 
-    return (
-      cipher: cipher,
-      keyB64: base64Encode(key),
-      ivB64: base64Encode(iv),
-    );
+    return (cipher: cipher, keyB64: base64Encode(key), ivB64: base64Encode(iv));
   }
 
   /// Entschlüsselt Ciphertext mit Schlüssel/IV. Wirft bei Manipulation
   /// (GCM-Auth-Tag-Mismatch) - der Aufrufer zeigt dann den Platzhalter.
-  static Uint8List decrypt(
-    Uint8List cipher,
-    Uint8List key,
-    Uint8List iv,
-  ) {
+  static Uint8List decrypt(Uint8List cipher, Uint8List key, Uint8List iv) {
     final gcm = GCMBlockCipher(AESEngine())
       ..init(false, AEADParameters(KeyParameter(key), 128, iv, Uint8List(0)));
     return gcm.process(cipher);

@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -41,7 +41,8 @@ class DatingHourChatScreen extends ConsumerStatefulWidget {
   final String sessionId;
 
   @override
-  ConsumerState<DatingHourChatScreen> createState() => _DatingHourChatScreenState();
+  ConsumerState<DatingHourChatScreen> createState() =>
+      _DatingHourChatScreenState();
 }
 
 class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
@@ -120,9 +121,7 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
       _timer?.cancel();
       _timer = null;
     } else if (state == AppLifecycleState.resumed && mounted) {
-      if (_timer == null &&
-          _session != null &&
-          !_session!.bothDecided) {
+      if (_timer == null && _session != null && !_session!.bothDecided) {
         _startTimer();
         _loadSession();
       }
@@ -152,7 +151,9 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
         setState(() => _ageWarningShown = true);
       }
     } catch (e) {
-      debugPrint('[DatingHourChat] Partner-Alter konnte nicht geladen werden: $e');
+      debugPrint(
+        '[DatingHourChat] Partner-Alter konnte nicht geladen werden: $e',
+      );
     }
   }
 
@@ -190,7 +191,9 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
         text: text,
         timestamp: DateTime.now(),
       );
-      ref.read(chatProvider.notifier).addMessage(widget.sessionId, msg, ref: ref);
+      ref
+          .read(chatProvider.notifier)
+          .addMessage(widget.sessionId, msg, ref: ref);
     });
 
     // Relay-Wake-up: Partner hat eine Relay-Nachricht hinterlegt.
@@ -225,8 +228,10 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(L10n.tf(context, 'common.errorWith',
-                  {'error': e.message}))),
+            content: Text(
+              L10n.tf(context, 'common.errorWith', {'error': e.message}),
+            ),
+          ),
         );
       }
     } catch (e) {
@@ -340,7 +345,9 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
       timestamp: DateTime.now(),
       type: MessageType.notice,
     );
-    ref.read(chatProvider.notifier).addMessage(widget.sessionId, hinweis, ref: ref);
+    ref
+        .read(chatProvider.notifier)
+        .addMessage(widget.sessionId, hinweis, ref: ref);
     if (mounted) setState(() {});
   }
 
@@ -427,7 +434,9 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
       text: text,
       timestamp: DateTime.now(),
     );
-    ref.read(chatProvider.notifier).addMessage(widget.sessionId, localMsg, ref: ref);
+    ref
+        .read(chatProvider.notifier)
+        .addMessage(widget.sessionId, localMsg, ref: ref);
 
     // ... und ECHT E2E-verschlüsselt zustellen: erst direkt per
     // P2P-DataChannel, bei geschlossenem Kanal über den Server-Relay
@@ -491,8 +500,9 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
     if (!SupabaseService.isInitialized) return;
     // Netzwerkfehler: nächster Timer-Takt versucht es erneut.
     await bestEffort('relayServiceProvider.fetchPending', () async {
-      final pending =
-          await ref.read(relayServiceProvider).fetchPending(from: peerId);
+      final pending = await ref
+          .read(relayServiceProvider)
+          .fetchPending(from: peerId);
       if (!mounted || pending.isEmpty) return;
       for (final r in pending) {
         final msgId = 'relay_${r.id}';
@@ -505,7 +515,9 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
           text: r.text,
           timestamp: r.createdAt,
         );
-        ref.read(chatProvider.notifier).addMessage(widget.sessionId, msg, ref: ref);
+        ref
+            .read(chatProvider.notifier)
+            .addMessage(widget.sessionId, msg, ref: ref);
       }
     });
   }
@@ -525,8 +537,7 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
     }
     final now = DateTime.now();
     if (_lastDhHandshakeRetry != null &&
-        now.difference(_lastDhHandshakeRetry!) <
-            const Duration(seconds: 25)) {
+        now.difference(_lastDhHandshakeRetry!) < const Duration(seconds: 25)) {
       return;
     }
     _lastDhHandshakeRetry = now;
@@ -572,8 +583,10 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(L10n.tf(context, 'common.errorWith',
-                  {'error': e.message}))),
+            content: Text(
+              L10n.tf(context, 'common.errorWith', {'error': e.message}),
+            ),
+          ),
         );
       }
     }
@@ -626,8 +639,9 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
         final fym = ref.read(findYourMatchServiceProvider);
         await fym.likeUser(partnerId);
         serverMatchOk = true;
-        final row = await SupabaseDatabaseService(SupabaseService.client)
-            .fetchPublicProfile(partnerId);
+        final row = await SupabaseDatabaseService(
+          SupabaseService.client,
+        ).fetchPublicProfile(partnerId);
         if (row != null) {
           partnerProfile = UserProfile.fromJson({
             'id': row['user_id'],
@@ -653,9 +667,7 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
       await FunkeOverlay.show(context);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content:
-                  Text(L10n.t(context, 'dh.chat.sparkJumped'))),
+          SnackBar(content: Text(L10n.t(context, 'dh.chat.sparkJumped'))),
         );
       }
       await Future.delayed(const Duration(milliseconds: 1500));
@@ -663,9 +675,9 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
         // Direkt auf den Funken-Tab (v0.9.1): sonst landet man auf
         // "Gesendet" und der neue Funke wirkt unsichtbar.
         bestEffortSync('containerOf.read', () {
-          ProviderScope.containerOf(context)
-              .read(interessenInitialTabProvider.notifier)
-              .state = 2;
+          ProviderScope.containerOf(
+            context,
+          ).read(interessenInitialTabProvider.notifier).state = 2;
         });
         context.go(AppRoutes.interessen);
       }
@@ -679,7 +691,10 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
       builder: (ctx) => AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.favorite_border, color: Theme.of(context).colorScheme.primary),
+            Icon(
+              Icons.favorite_border,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(width: 8),
             Text(L10n.t(context, 'dh.chat.noSpark')),
           ],
@@ -716,10 +731,14 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
 
   @override
   Widget build(BuildContext context) {
-    final messages = ref.watch(chatProvider.notifier).messagesFor(widget.sessionId);
+    final messages = ref
+        .watch(chatProvider.notifier)
+        .messagesFor(widget.sessionId);
     final session = _session;
     final partnerName = session != null
-        ? (session.isParticipantA(_currentUserId ?? '') ? 'Teilnehmer B' : 'Teilnehmer A')
+        ? (session.isParticipantA(_currentUserId ?? '')
+              ? 'Teilnehmer B'
+              : 'Teilnehmer A')
         : 'Verbinde...';
     // Nutzerwunsch Gruppierung: Namens-Header an Gruppenstarts (max. 3
     // Nachrichten / 3 Minuten pro Gruppe), Zeit an jeder Bubble.
@@ -731,7 +750,8 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
     // Altersdifferenz-Hinweis: >= 10 Jahre Unterschied (einmalig oben im
     // Chat sichtbar, solange der Screen offen ist).
     final myAge = ref.watch(profileProvider).age;
-    final showAgeGapHint = _ageWarningShown &&
+    final showAgeGapHint =
+        _ageWarningShown &&
         myAge != null &&
         _partnerAge != null &&
         (myAge - _partnerAge!).abs() >= 10;
@@ -762,7 +782,8 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
                         color: Theme.of(context).colorScheme.primary,
                       ),
                       const SizedBox(width: 4),
-                      Text(L10n.t(context, 'dh.chat.e2e'),
+                      Text(
+                        L10n.t(context, 'dh.chat.e2e'),
                         style: TextStyle(
                           fontSize: 10,
                           color: Theme.of(context).colorScheme.primary,
@@ -770,7 +791,10 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 1,
+                        ),
                         decoration: BoxDecoration(
                           // In der zweiten Phase (nach den 5 Minuten)
                           // zaehlt der Timer bis zum automatischen
@@ -779,10 +803,10 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
                           color: session.isDecisionPhase
                               ? Colors.blue
                               : session.remainingSeconds > 60
-                                  ? Colors.green
-                                  : session.remainingSeconds > 30
-                                      ? Colors.orange
-                                      : Colors.red,
+                              ? Colors.green
+                              : session.remainingSeconds > 30
+                              ? Colors.orange
+                              : Colors.red,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -802,55 +826,57 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
                   ),
                 ),
               ),
-              if (partnerId != null)
-                FutureBuilder<Map<String, dynamic>?>(
-                  future: partnerHabitsCache.putIfAbsent(
-                      partnerId,
-                      () => ref
-                          .read(supabaseDatabaseServiceProvider)
-                          .fetchPublicProfile(partnerId)),
-                  builder: (ctx, snap) {
-                    final habits = <String>[];
-                    final row = snap.data;
-                    if (row != null) {
-                      final s = row['smoking'] as String?;
-                      final a = row['alcohol'] as String?;
-                      final d = row['drugs'] as String?;
-                      if (s != null && s.isNotEmpty) {
-                        habits.add('Rauchen: $s');
-                      }
-                      if (a != null && a.isNotEmpty) {
-                        habits.add('Alkohol: $a');
-                      }
-                      if (d != null && d.isNotEmpty) {
-                        habits.add('Drogen: $d');
-                      }
-                    }
-                    if (habits.isEmpty) return const SizedBox.shrink();
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Wrap(
-                        spacing: 6,
-                        runSpacing: 2,
-                        children: [
-                          for (final h in habits)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .secondaryContainer,
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(h,
-                                  style: const TextStyle(fontSize: 9)),
-                            ),
-                        ],
-                      ),
-                    );
-                  },
+            if (partnerId != null)
+              FutureBuilder<Map<String, dynamic>?>(
+                future: partnerHabitsCache.putIfAbsent(
+                  partnerId,
+                  () => ref
+                      .read(supabaseDatabaseServiceProvider)
+                      .fetchPublicProfile(partnerId),
                 ),
+                builder: (ctx, snap) {
+                  final habits = <String>[];
+                  final row = snap.data;
+                  if (row != null) {
+                    final s = row['smoking'] as String?;
+                    final a = row['alcohol'] as String?;
+                    final d = row['drugs'] as String?;
+                    if (s != null && s.isNotEmpty) {
+                      habits.add('Rauchen: $s');
+                    }
+                    if (a != null && a.isNotEmpty) {
+                      habits.add('Alkohol: $a');
+                    }
+                    if (d != null && d.isNotEmpty) {
+                      habits.add('Drogen: $d');
+                    }
+                  }
+                  if (habits.isEmpty) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 2,
+                      children: [
+                        for (final h in habits)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 1,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.secondaryContainer,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(h, style: const TextStyle(fontSize: 9)),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
           ],
         ),
         leading: IconButton(
@@ -896,130 +922,132 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
                 ),
               ),
               Column(
-          children: [
-          // Timer-Balken (tickt isoliert, v0.9.1, Akku).
-          if (session != null && !session.bothDecided && _showTimer)
-            _PerSecond(
-              builder: (_) => _TimerBar(
-                remainingSeconds: session.remainingSeconds,
-                totalSeconds: 300,
-              ),
-            ),
-
-          // Altersdifferenz-Hinweis (>= 10 Jahre Unterschied).
-          if (showAgeGapHint)
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade100,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
                 children: [
-                  Icon(
-                    Icons.info_outline,
-                    size: 20,
-                    color: Colors.orange.shade900,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Hinweis: Ihr seid $myAge und $_partnerAge Jahre alt - '
-                      'es liegen mindestens 10 Jahre zwischen euch. Bitte '
-                      'geht respektvoll miteinander um.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.orange.shade900,
+                  // Timer-Balken (tickt isoliert, v0.9.1, Akku).
+                  if (session != null && !session.bothDecided && _showTimer)
+                    _PerSecond(
+                      builder: (_) => _TimerBar(
+                        remainingSeconds: session.remainingSeconds,
+                        totalSeconds: 300,
                       ),
                     ),
+
+                  // Altersdifferenz-Hinweis (>= 10 Jahre Unterschied).
+                  if (showAgeGapHint)
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            size: 20,
+                            color: Colors.orange.shade900,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Hinweis: Ihr seid $myAge und $_partnerAge Jahre alt - '
+                              'es liegen mindestens 10 Jahre zwischen euch. Bitte '
+                              'geht respektvoll miteinander um.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.orange.shade900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  // Status-Hinweis (Match / Kein Match / Warte)
+                  if (session != null && session.bothDecided)
+                    _buildOutcomeBanner(session),
+
+                  // Chat-Bereich
+                  Expanded(
+                    child: messages.isEmpty
+                        ? _EmptyChatState(
+                            partnerName: partnerName,
+                            onIceBreaker: () => _sendIceBreaker(),
+                          )
+                        : ListView.builder(
+                            controller: _scrollController,
+                            padding: const EdgeInsets.all(12),
+                            reverse: true,
+                            itemCount: messages.length,
+                            itemBuilder: (context, i) {
+                              final idx = messages.length - 1 - i;
+                              final msg = messages[idx];
+                              final mine = msg.isFrom(_currentUserId ?? '');
+                              final group =
+                                  idx >= 0 && idx < bubbleGroups.length
+                                  ? bubbleGroups[idx]
+                                  : (showName: true, showTime: true);
+                              return _MessageBubble(
+                                msg: msg,
+                                mine: mine,
+                                showName: group.showName,
+                                senderName: mine
+                                    ? L10n.t(context, 'chat.you')
+                                    : partnerName,
+                              );
+                            },
+                          ),
                   ),
+
+                  // Eingabe oder Entscheidungs-Buttons
+                  // Eingabe oder Entscheidungs-Buttons
+                  //
+                  // NUTZERWUNSCH 04.11.2026: "Wenn die 5 Minuten vorbei
+                  // sind, soll ... eine Nachricht kommen, dass die 5 Minuten
+                  // um sind und sich langsam entschieden werden soll."
+                  //
+                  // Die 5 Minuten sind deshalb eine ENTSCHEIDUNGSphase, nicht
+                  // das Ende des Gespraechs: Der Chat bleibt bedienbar, und
+                  // die Entscheidung kommt ZUSATZLICH dazu. Vorher hat der
+                  // abgelaufene Timer den Eingabebereich ersetzt - es war
+                  // danach nicht mehr moeglich, weiterzuschreiben, und das
+                  // Gespraech war nach 5 Minuten beendet, bevor der
+                  // automatische Funke bei Minute 10 ueberhaupt greifen konnte.
+                  if (session != null && !session.bothDecided) ...[
+                    if (!_hasVoted) ...[
+                      // Frage-Karten für Schüchterne (v0.8.0): ein Tap übernimmt
+                      // eine sanfte Frage aus einem thematischen Bereich.
+                      _ShyQuestionChips(
+                        onPick: (question) {
+                          _messageController.text = question;
+                          _sendMessage();
+                        },
+                      ),
+                      _ChatInput(
+                        controller: _messageController,
+                        onSend: _sendMessage,
+                      ),
+                    ] else
+                      _WaitingForPartner(
+                        onBack: () {
+                          if (mounted) context.go(AppRoutes.datingHourEvent);
+                        },
+                      ),
+                    // In der Entscheidungsphase (nach den 5 Minuten) wird die
+                    // Entscheidung angeboten - der Chat bleibt aber offen.
+                    if (session.isExpired && !_hasVoted)
+                      _DecisionButtons(
+                        onAccept: () => _handleDecision(true),
+                        onReject: () => _handleDecision(false),
+                      ),
+                  ],
                 ],
               ),
-            ),
-
-          // Status-Hinweis (Match / Kein Match / Warte)
-          if (session != null && session.bothDecided) _buildOutcomeBanner(session),
-
-          // Chat-Bereich
-          Expanded(
-            child: messages.isEmpty
-                ? _EmptyChatState(
-                    partnerName: partnerName,
-                    onIceBreaker: () => _sendIceBreaker(),
-                  )
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(12),
-                    reverse: true,
-                    itemCount: messages.length,
-                    itemBuilder: (context, i) {
-                      final idx = messages.length - 1 - i;
-                      final msg = messages[idx];
-                      final mine = msg.isFrom(_currentUserId ?? '');
-                      final group = idx >= 0 && idx < bubbleGroups.length
-                          ? bubbleGroups[idx]
-                          : (showName: true, showTime: true);
-                      return _MessageBubble(
-                        msg: msg,
-                        mine: mine,
-                        showName: group.showName,
-                        senderName: mine
-                            ? L10n.t(context, 'chat.you')
-                            : partnerName,
-                      );
-                    },
-                  ),
-          ),
-
-          // Eingabe oder Entscheidungs-Buttons
-          // Eingabe oder Entscheidungs-Buttons
-          //
-          // NUTZERWUNSCH 04.11.2026: "Wenn die 5 Minuten vorbei
-          // sind, soll ... eine Nachricht kommen, dass die 5 Minuten
-          // um sind und sich langsam entschieden werden soll."
-          //
-          // Die 5 Minuten sind deshalb eine ENTSCHEIDUNGSphase, nicht
-          // das Ende des Gespraechs: Der Chat bleibt bedienbar, und
-          // die Entscheidung kommt ZUSATZLICH dazu. Vorher hat der
-          // abgelaufene Timer den Eingabebereich ersetzt - es war
-          // danach nicht mehr moeglich, weiterzuschreiben, und das
-          // Gespraech war nach 5 Minuten beendet, bevor der
-          // automatische Funke bei Minute 10 ueberhaupt greifen konnte.
-          if (session != null && !session.bothDecided) ...[
-            if (!_hasVoted) ...[
-              // Frage-Karten für Schüchterne (v0.8.0): ein Tap übernimmt
-              // eine sanfte Frage aus einem thematischen Bereich.
-              _ShyQuestionChips(
-                onPick: (question) {
-                  _messageController.text = question;
-                  _sendMessage();
-                },
-              ),
-              _ChatInput(
-                controller: _messageController,
-                onSend: _sendMessage,
-              ),
-            ] else
-              _WaitingForPartner(
-                onBack: () {
-                  if (mounted) context.go(AppRoutes.datingHourEvent);
-                },
-              ),
-            // In der Entscheidungsphase (nach den 5 Minuten) wird die
-            // Entscheidung angeboten - der Chat bleibt aber offen.
-            if (session.isExpired && !_hasVoted)
-              _DecisionButtons(
-                onAccept: () => _handleDecision(true),
-                onReject: () => _handleDecision(false),
-              ),
-          ],
             ],
-          ),
-        ],
-      );
-    },
+          );
+        },
       ),
     );
   }
@@ -1037,7 +1065,10 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
             SizedBox(width: 8),
             Text(
               'Ein Funke ist übersprungen!',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -1053,7 +1084,7 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
           Icon(Icons.favorite_border, color: Colors.white),
           SizedBox(width: 8),
           Text(
-                  'Kein Funke diesmal, aber weiter so!',
+            'Kein Funke diesmal, aber weiter so!',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
         ],
@@ -1069,7 +1100,8 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
       'Hast du ein verborgenes Talent? 🎯',
       'Was würdest du tun, wenn du für einen Tag unsichtbar wärst? 👻',
     ];
-    _messageController.text = iceBreakers[DateTime.now().millisecondsSinceEpoch % iceBreakers.length];
+    _messageController.text =
+        iceBreakers[DateTime.now().millisecondsSinceEpoch % iceBreakers.length];
     _sendMessage();
   }
 
@@ -1078,9 +1110,7 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(L10n.t(ctx, 'dh.chat.leaveTitle')),
-        content: Text(
-          L10n.t(ctx, 'dh.chat.leaveBody'),
-        ),
+        content: Text(L10n.t(ctx, 'dh.chat.leaveBody')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
@@ -1145,24 +1175,20 @@ class _TimerBar extends StatelessWidget {
     final color = remainingSeconds > 60
         ? Colors.green
         : remainingSeconds > 30
-            ? Colors.orange
-            : Colors.red;
+        ? Colors.orange
+        : Colors.red;
 
     return SizedBox(
       height: 4,
       child: Stack(
         children: [
-          Container(
-            color: color.withValues(alpha: 0.2),
-          ),
+          Container(color: color.withValues(alpha: 0.2)),
           FractionallySizedBox(
             widthFactor: progress.clamp(0.0, 1.0),
             child: Container(color: color),
           ),
           if (remainingSeconds <= 30)
-            Positioned.fill(
-              child: _PulsingBorder(color: color),
-            ),
+            Positioned.fill(child: _PulsingBorder(color: color)),
         ],
       ),
     );
@@ -1177,7 +1203,8 @@ class _PulsingBorder extends StatefulWidget {
   State<_PulsingBorder> createState() => _PulsingBorderState();
 }
 
-class _PulsingBorderState extends State<_PulsingBorder> with SingleTickerProviderStateMixin {
+class _PulsingBorderState extends State<_PulsingBorder>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
   @override
@@ -1215,7 +1242,10 @@ class _PulsingBorderState extends State<_PulsingBorder> with SingleTickerProvide
 
 /// Leerer Chat-State mit Ice-Breaker.
 class _EmptyChatState extends StatelessWidget {
-  const _EmptyChatState({required this.partnerName, required this.onIceBreaker});
+  const _EmptyChatState({
+    required this.partnerName,
+    required this.onIceBreaker,
+  });
   final String partnerName;
   final VoidCallback onIceBreaker;
 
@@ -1230,7 +1260,9 @@ class _EmptyChatState extends StatelessWidget {
             Icon(
               Icons.chat_bubble_outline,
               size: 64,
-              color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
             Text(
@@ -1243,8 +1275,8 @@ class _EmptyChatState extends StatelessWidget {
               'Ihr habt 5 Minuten Zeit, euch kennenzulernen. '
               'Danach entscheidet ihr beide: Funke oder weitersuchen?',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -1262,11 +1294,12 @@ class _EmptyChatState extends StatelessWidget {
 
 /// Nachrichtenblase.
 class _MessageBubble extends StatelessWidget {
-  const _MessageBubble(
-      {required this.msg,
-      required this.mine,
-      this.showName = false,
-      this.senderName = ''});
+  const _MessageBubble({
+    required this.msg,
+    required this.mine,
+    this.showName = false,
+    this.senderName = '',
+  });
   final Message msg;
   final bool mine;
 
@@ -1319,8 +1352,9 @@ class _MessageBubble extends StatelessWidget {
     return Align(
       alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
       child: Column(
-        crossAxisAlignment:
-            mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: mine
+            ? CrossAxisAlignment.end
+            : CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           if (showName && senderName.isNotEmpty)
@@ -1329,15 +1363,14 @@ class _MessageBubble extends StatelessWidget {
               child: Text(
                 senderName,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
             ),
           Container(
             margin: const EdgeInsets.symmetric(vertical: 4),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             constraints: BoxConstraints(
               maxWidth: MediaQuery.of(context).size.width * 0.75,
             ),
@@ -1352,10 +1385,7 @@ class _MessageBubble extends StatelessWidget {
                     : const Radius.circular(4),
               ),
             ),
-            child: Text(
-              msg.text,
-              style: TextStyle(color: textColor),
-            ),
+            child: Text(msg.text, style: TextStyle(color: textColor)),
           ),
           if (timeLabel.isNotEmpty)
             Padding(
@@ -1363,12 +1393,11 @@ class _MessageBubble extends StatelessWidget {
               child: Text(
                 timeLabel,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurfaceVariant
-                          .withValues(alpha: 0.7),
-                      fontSize: 10,
-                    ),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                  fontSize: 10,
+                ),
               ),
             ),
         ],
@@ -1458,7 +1487,10 @@ class _ChatInput extends StatelessWidget {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                 ),
                 onSubmitted: (_) => onSend(),
                 maxLines: null,
@@ -1468,9 +1500,7 @@ class _ChatInput extends StatelessWidget {
             IconButton.filled(
               onPressed: onSend,
               icon: const Icon(Icons.send),
-              style: IconButton.styleFrom(
-                padding: const EdgeInsets.all(12),
-              ),
+              style: IconButton.styleFrom(padding: const EdgeInsets.all(12)),
             ),
           ],
         ),
@@ -1493,7 +1523,8 @@ class _DecisionButtons extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(L10n.t(context, 'dh.chat.timeUp'),
+            Text(
+              L10n.t(context, 'dh.chat.timeUp'),
               style: Theme.of(context).textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
@@ -1529,8 +1560,8 @@ class _DecisionButtons extends StatelessWidget {
             Text(
               L10n.t(context, 'dh.chat.bothMustAccept'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -1564,8 +1595,8 @@ class _WaitingForPartner extends StatelessWidget {
             Text(
               L10n.t(context, 'dh.chat.resultPending'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),

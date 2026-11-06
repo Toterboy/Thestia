@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('Gender', () {
-test('Alle Werte vorhanden', () {
+    test('Alle Werte vorhanden', () {
       expect(Gender.values.length, 6);
       expect(Gender.male.value, 'male');
       expect(Gender.female.value, 'female');
@@ -45,7 +45,7 @@ test('Alle Werte vorhanden', () {
   });
 
   group('GenderPreference', () {
-test('Alle Werte vorhanden', () {
+    test('Alle Werte vorhanden', () {
       expect(GenderPreference.values.length, 7);
       expect(GenderPreference.male.value, 'male');
       expect(GenderPreference.female.value, 'female');
@@ -87,4 +87,3 @@ test('Alle Werte vorhanden', () {
     });
   });
 }
-

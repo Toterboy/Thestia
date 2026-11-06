@@ -1,4 +1,4 @@
-﻿// Store-Screenshot-Generator (KEIN regulärer Test).
+// Store-Screenshot-Generator (KEIN regulärer Test).
 //
 // Rendert echte App-Screens in Phone-Auflösung (1080x1920, dpr 3) und
 // schreibt sie als PNG-Goldens nach goldens/. Aufruf (schreibt/neu):
@@ -40,8 +40,7 @@ bool _fontsLoaded = false;
 /// Lauf ueberspringt diese Tests (Golden-Vergleiche gehoeren nicht in die
 /// Standardsuite). Generieren mit:
 ///   STORE_SHOTS=1 flutter test --update-goldens test/screenshots/
-final bool _storeShotsEnabled =
-    Platform.environment.containsKey('STORE_SHOTS');
+final bool _storeShotsEnabled = Platform.environment.containsKey('STORE_SHOTS');
 
 /// Lädt echte Fonts, damit Goldens keinen Ahem-Blocktext zeigen.
 Future<void> _loadFontsOnce() async {
@@ -145,17 +144,12 @@ class _FakeSecureProfileStore extends SecureProfileStore {
 // Harness
 // ---------------------------------------------------------------------------
 
-Widget _harness(
-  Widget child, {
-  List<Override> overrides = const [],
-}) {
+Widget _harness(Widget child, {List<Override> overrides = const []}) {
   return ProviderScope(
     overrides: [
       localStorageProvider.overrideWithValue(_FakeLocalStorage()),
       securePrefsProvider.overrideWithValue(_FakeSecurePrefs()),
-      secureProfileStoreProvider.overrideWithValue(
-        _FakeSecureProfileStore(),
-      ),
+      secureProfileStoreProvider.overrideWithValue(_FakeSecureProfileStore()),
       ...overrides,
     ],
     child: MaterialApp(
@@ -195,10 +189,12 @@ Future<void> _pumpShot(
     (call) async => null,
   );
 
-  await tester.pumpWidget(_harness(child, overrides: [
-    sharedPrefsProvider.overrideWithValue(prefs),
-    ...overrides,
-  ]));
+  await tester.pumpWidget(
+    _harness(
+      child,
+      overrides: [sharedPrefsProvider.overrideWithValue(prefs), ...overrides],
+    ),
+  );
   await tester.pumpAndSettle(const Duration(milliseconds: 300));
   // Echtes Async laufen lassen (Bild-Dekodierung): Runde 1 lässt z. B. den
   // Logo-PreCache des Welcome-Screens abschließen, wodurch der Inhalt
@@ -219,17 +215,14 @@ Future<void> _pumpShot(
 }
 
 UserProfile _seedProfile() => const UserProfile(
-      id: 'screenshot-user',
-      name: 'Lena',
-      birthDate: null,
-      bio: '',
-    );
+  id: 'screenshot-user',
+  name: 'Lena',
+  birthDate: null,
+  bio: '',
+);
 
 /// Registriert einen Screenshot-Test; ohne STORE_SHOTS=1 uebersprungen.
-void _shot(
-  String description,
-  Future<void> Function(WidgetTester) body,
-) {
+void _shot(String description, Future<void> Function(WidgetTester) body) {
   testWidgets(description, body, skip: !_storeShotsEnabled);
 }
 
@@ -244,12 +237,7 @@ void main() {
   });
 
   _shot('02 Anmelden', (tester) async {
-    await _pumpShot(
-      tester,
-      const LoginScreen(),
-      const [],
-      '02_anmelden.png',
-    );
+    await _pumpShot(tester, const LoginScreen(), const [], '02_anmelden.png');
     // Beispielhafte Eingaben für den Store (after first frame).
     final fields = find.byType(TextFormField);
     if (tester.widgetList(fields).length >= 2) {
@@ -327,10 +315,7 @@ void main() {
                   'bleibt gespeichert, auch nach dem Wechsel des Geräts.',
                 ),
                 const SizedBox(height: 24),
-                ThemePicker(
-                  selectedName: 'classic',
-                  onChanged: (_) {},
-                ),
+                ThemePicker(selectedName: 'classic', onChanged: (_) {}),
               ],
             ),
           ),
@@ -345,7 +330,8 @@ void main() {
     // Profil-Editor (unterer Bereich): Bio + Gewohnheiten als Flirt-relevantes
     // Feature-Bild. Wir pumpen denselben Screen und scrollen nach unten.
     final profile = _seedProfile().copyWith(
-      bio: 'Kaffee, Wandern und gute Gespräche. '
+      bio:
+          'Kaffee, Wandern und gute Gespräche. '
           'Ich zeige erst nach dem Match, wie ich aussehe.',
       smoking: HabitudeLevel.never,
     );

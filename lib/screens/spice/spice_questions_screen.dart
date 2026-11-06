@@ -64,10 +64,7 @@ class _SpiceQuestionsScreenState extends ConsumerState<SpiceQuestionsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(L10n.t(ctx, 'spice.sendTitle')),
-        content: Text(
-          text,
-          style: Theme.of(ctx).textTheme.bodyMedium,
-        ),
+        content: Text(text, style: Theme.of(ctx).textTheme.bodyMedium),
         actions: [
           TextButton.icon(
             onPressed: () => Navigator.of(ctx).pop('copy'),
@@ -105,17 +102,21 @@ class _SpiceQuestionsScreenState extends ConsumerState<SpiceQuestionsScreen> {
     final visible = q.isEmpty
         ? icebreakerCatalog
         : icebreakerCatalog
-            .map((cat) {
-              final matches = cat.questions
-                  .where((item) =>
-                      item.de.toLowerCase().contains(q) ||
-                      item.en.toLowerCase().contains(q))
-                  .toList();
-              if (matches.isEmpty) return null;
-              return (cat: cat, questions: matches);
-            })
-            .whereType<({IcebreakerCategory cat, List<IcebreakerQuestion> questions})>()
-            .toList();
+              .map((cat) {
+                final matches = cat.questions
+                    .where(
+                      (item) =>
+                          item.de.toLowerCase().contains(q) ||
+                          item.en.toLowerCase().contains(q),
+                    )
+                    .toList();
+                if (matches.isEmpty) return null;
+                return (cat: cat, questions: matches);
+              })
+              .whereType<
+                ({IcebreakerCategory cat, List<IcebreakerQuestion> questions})
+              >()
+              .toList();
 
     final total = icebreakerCatalog.fold<int>(
       0,
@@ -167,8 +168,8 @@ class _SpiceQuestionsScreenState extends ConsumerState<SpiceQuestionsScreen> {
               child: Text(
                 L10n.tf(context, 'spice.countHint', {'n': '$total'}),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           ),
@@ -200,8 +201,12 @@ class _SpiceQuestionsScreenState extends ConsumerState<SpiceQuestionsScreen> {
                           onTap: _onQuestionTap,
                         );
                       }
-                      final entry = visible[index]
-                          as ({IcebreakerCategory cat, List<IcebreakerQuestion> questions});
+                      final entry =
+                          visible[index]
+                              as ({
+                                IcebreakerCategory cat,
+                                List<IcebreakerQuestion> questions,
+                              });
                       return _CategoryCard(
                         title: entry.cat.titleFor(lang),
                         icon: entry.cat.icon,
@@ -250,15 +255,10 @@ class _CategoryCard extends StatelessWidget {
       child: ExpansionTile(
         shape: tileShape,
         collapsedShape: tileShape,
-        leading: Icon(icon,
-            color: Theme.of(context).colorScheme.primary),
-        title: Text(
-          title,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        leading: Icon(icon, color: Theme.of(context).colorScheme.primary),
+        title: Text(title, style: Theme.of(context).textTheme.titleMedium),
         subtitle: Text(
-          L10n.tf(context, 'spice.perCategory',
-              {'n': '${questions.length}'}),
+          L10n.tf(context, 'spice.perCategory', {'n': '${questions.length}'}),
           style: Theme.of(context).textTheme.bodySmall,
         ),
         children: [

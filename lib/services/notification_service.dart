@@ -1,7 +1,6 @@
-﻿import 'dart:io';
+import 'dart:io';
 
-import 'package:flutter/material.dart'
-    show Color;
+import 'package:flutter/material.dart' show Color;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
@@ -13,12 +12,7 @@ import 'package:thestia/utils/best_effort.dart';
 
 /// Kategorie einer Benachrichtigung – für die Einzel-Schalter in den
 /// Einstellungen (Matches, Likes, Chatnachrichten, Dating Hour).
-enum NotificationType {
-  matches,
-  likes,
-  messages,
-  datingHour,
-}
+enum NotificationType { matches, likes, messages, datingHour }
 
 /// Zentraler Benachrichtigungs-Dienst.
 ///
@@ -44,8 +38,8 @@ class NotificationService {
 
     // Zeitzonen für geplante Benachrichtigungen (Dating Hour).
     tzdata.initializeTimeZones();
-        // Fallback: UTC bleibt aktiv.
-await bestEffort('getLocation', () async {
+    // Fallback: UTC bleibt aktiv.
+    await bestEffort('getLocation', () async {
       final tzInfo = await FlutterTimezone.getLocalTimezone();
       tz.setLocalLocation(tz.getLocation(tzInfo.identifier));
     });
@@ -71,44 +65,57 @@ await bestEffort('getLocation', () async {
     if (Platform.isAndroid) {
       await _plugin
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
+            AndroidFlutterLocalNotificationsPlugin
+          >()
           ?.requestNotificationsPermission();
       await _plugin
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(const AndroidNotificationChannel(
-            'messages',
-            'Nachrichten',
-            description: 'Neue Chat Nachrichten',
-            importance: Importance.high,
-          ));
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.createNotificationChannel(
+            const AndroidNotificationChannel(
+              'messages',
+              'Nachrichten',
+              description: 'Neue Chat Nachrichten',
+              importance: Importance.high,
+            ),
+          );
       await _plugin
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(const AndroidNotificationChannel(
-            'likes',
-            'Likes',
-            description: 'Jemand hat dein Profil geliked',
-            importance: Importance.defaultImportance,
-          ));
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.createNotificationChannel(
+            const AndroidNotificationChannel(
+              'likes',
+              'Likes',
+              description: 'Jemand hat dein Profil geliked',
+              importance: Importance.defaultImportance,
+            ),
+          );
       await _plugin
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(const AndroidNotificationChannel(
-            'matches',
-            'Matches',
-            description: 'Neue Matches',
-            importance: Importance.high,
-          ));
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.createNotificationChannel(
+            const AndroidNotificationChannel(
+              'matches',
+              'Matches',
+              description: 'Neue Matches',
+              importance: Importance.high,
+            ),
+          );
       await _plugin
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(const AndroidNotificationChannel(
-            'events',
-            'Event Erinnerungen',
-            description: 'Erinnerung an Events oder Start bald',
-            importance: Importance.defaultImportance,
-          ));
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.createNotificationChannel(
+            const AndroidNotificationChannel(
+              'events',
+              'Event Erinnerungen',
+              description: 'Erinnerung an Events oder Start bald',
+              importance: Importance.defaultImportance,
+            ),
+          );
     }
 
     _initialized = true;
@@ -194,10 +201,10 @@ await bestEffort('getLocation', () async {
       channelDescription: channelId == 'messages'
           ? 'Neue Chat Nachrichten'
           : channelId == 'likes'
-              ? 'Jemand hat dein Profil geliked'
-              : channelId == 'matches'
-                  ? 'Neue Matches'
-                  : 'Event Erinnerungen',
+          ? 'Jemand hat dein Profil geliked'
+          : channelId == 'matches'
+          ? 'Neue Matches'
+          : 'Event Erinnerungen',
       icon: 'notification_icon',
       color: const Color(0xFFFF6B9D),
       importance: Importance.high,
@@ -205,8 +212,9 @@ await bestEffort('getLocation', () async {
       // Audit N-16: Nachrichteninhalte nicht auf dem Sperrbildschirm
       // zeigen (privat = nur entsperrent sichtbar). Andere Kategorien
       // enthalten ohnehin nur Metadaten.
-      visibility:
-          channelId == 'messages' ? NotificationVisibility.private : null,
+      visibility: channelId == 'messages'
+          ? NotificationVisibility.private
+          : null,
     );
     const iosDetails = DarwinNotificationDetails(
       presentSound: true,

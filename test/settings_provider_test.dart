@@ -29,13 +29,12 @@ class _FakeStorage implements LocalStorage {
   Future<void> remove(String key) async => _data.remove(key);
 
   @override
-  Future<void> saveInt(String key, int value) async => _data[key] = value.toString();
+  Future<void> saveInt(String key, int value) async =>
+      _data[key] = value.toString();
 
   @override
   Future<int?> getInt(String key) async =>
       _data[key] == null ? null : int.tryParse(_data[key]!);
-
-
 }
 
 ProviderContainer _createContainer() {
@@ -57,10 +56,14 @@ void main() {
 
       // Auch ein gespeicherter alter Stand (Blind Mode aus) darf die
       // App nicht wieder ausblenden.
-      final alt = container.read(settingsProvider)
+      final alt = container
+          .read(settingsProvider)
           .copyWith(blindModeEnabled: false);
-      expect(alt.blindModeEnabled, isTrue,
-          reason: 'copyWith darf den Blind Mode nicht abschalten');
+      expect(
+        alt.blindModeEnabled,
+        isTrue,
+        reason: 'copyWith darf den Blind Mode nicht abschalten',
+      );
     });
 
     test('Standard-Einstellungen haben Blind Mode an', () {
@@ -76,24 +79,34 @@ void main() {
 
     test('setRevealPhotosAfterMatch aendert Einstellung', () async {
       final container = _createContainer();
-      await container.read(settingsProvider.notifier).setRevealPhotosAfterMatch(true);
+      await container
+          .read(settingsProvider.notifier)
+          .setRevealPhotosAfterMatch(true);
       expect(container.read(settingsProvider).revealPhotosAfterMatch, isTrue);
 
-      await container.read(settingsProvider.notifier).setRevealPhotosAfterMatch(false);
+      await container
+          .read(settingsProvider.notifier)
+          .setRevealPhotosAfterMatch(false);
       expect(container.read(settingsProvider).revealPhotosAfterMatch, isFalse);
     });
 
     test('setProfileVisibility aendert Sichtbarkeit', () async {
       final container = _createContainer();
-      await container.read(settingsProvider.notifier)
+      await container
+          .read(settingsProvider.notifier)
           .setProfileVisibility(ProfileVisibility.matchesOnly);
-      expect(container.read(settingsProvider).profileVisibility,
-          ProfileVisibility.matchesOnly);
+      expect(
+        container.read(settingsProvider).profileVisibility,
+        ProfileVisibility.matchesOnly,
+      );
 
-      await container.read(settingsProvider.notifier)
+      await container
+          .read(settingsProvider.notifier)
           .setProfileVisibility(ProfileVisibility.hidden);
-      expect(container.read(settingsProvider).profileVisibility,
-          ProfileVisibility.hidden);
+      expect(
+        container.read(settingsProvider).profileVisibility,
+        ProfileVisibility.hidden,
+      );
     });
 
     test('setDarkMode aendert Theme-Einstellung', () async {
@@ -115,24 +128,41 @@ void main() {
 
     test('completePersonalityTest markiert Test als abgeschlossen', () async {
       final container = _createContainer();
-      expect(container.read(settingsProvider).personalityTestCompleted, isFalse);
+      expect(
+        container.read(settingsProvider).personalityTestCompleted,
+        isFalse,
+      );
       await container.read(settingsProvider.notifier).completePersonalityTest();
       expect(container.read(settingsProvider).personalityTestCompleted, isTrue);
     });
 
-    test('completeOnboarding: Onboarding ist standardmäßig bereits abgeschlossen', () async {
-      final container = _createContainer();
-      expect(container.read(settingsProvider).onboardingCompleted, isTrue);
-      await container.read(settingsProvider.notifier).completeOnboarding();
-      expect(container.read(settingsProvider).onboardingCompleted, isTrue);
-    });
+    test(
+      'completeOnboarding: Onboarding ist standardmäßig bereits abgeschlossen',
+      () async {
+        final container = _createContainer();
+        expect(container.read(settingsProvider).onboardingCompleted, isTrue);
+        await container.read(settingsProvider.notifier).completeOnboarding();
+        expect(container.read(settingsProvider).onboardingCompleted, isTrue);
+      },
+    );
 
-    test('completeOneTimeSettings markiert Settings als abgeschlossen', () async {
-      final container = _createContainer();
-      expect(container.read(settingsProvider).oneTimeSettingsCompleted, isFalse);
-      await container.read(settingsProvider.notifier).completeOneTimeSettings();
-      expect(container.read(settingsProvider).oneTimeSettingsCompleted, isTrue);
-    });
+    test(
+      'completeOneTimeSettings markiert Settings als abgeschlossen',
+      () async {
+        final container = _createContainer();
+        expect(
+          container.read(settingsProvider).oneTimeSettingsCompleted,
+          isFalse,
+        );
+        await container
+            .read(settingsProvider.notifier)
+            .completeOneTimeSettings();
+        expect(
+          container.read(settingsProvider).oneTimeSettingsCompleted,
+          isTrue,
+        );
+      },
+    );
 
     test('markIntroSeen markiert Einfuehrung als gesehen', () async {
       final container = _createContainer();
@@ -150,8 +180,11 @@ void main() {
       );
 
       await container.read(settingsProvider.notifier).setMaxDistanceKm(42);
-      await container.read(settingsProvider.notifier).setMfaSetupDismissed(true);
-      await container.read(settingsProvider.notifier)
+      await container
+          .read(settingsProvider.notifier)
+          .setMfaSetupDismissed(true);
+      await container
+          .read(settingsProvider.notifier)
           .setProfileVisibility(ProfileVisibility.hidden);
       await container.read(settingsProvider.notifier).setDarkMode(true);
 

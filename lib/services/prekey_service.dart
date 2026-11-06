@@ -155,7 +155,7 @@ class PreKeyService {
       );
     }
     throw StateError(
-        'PreKey Bundle für $peerId konnte nicht geladen werden (Status: $lastError).',
+      'PreKey Bundle für $peerId konnte nicht geladen werden (Status: $lastError).',
     );
   }
 
@@ -163,10 +163,7 @@ class PreKeyService {
   /// Damit andere Nutzer Sessions zu UNS aufbauen können.
   Future<void> publishOwnPreKeys(Map<String, dynamic> bundle) async {
     try {
-      await Supabase.instance.client.functions.invoke(
-        'prekeys',
-        body: bundle,
-      );
+      await Supabase.instance.client.functions.invoke('prekeys', body: bundle);
       return;
     } on FunctionException catch (e) {
       // invoke wirft bei non-2xx (kein Response-Check möglich).
@@ -174,7 +171,8 @@ class PreKeyService {
           ? (e.details as Map)['error'] ?? 'Unbekannter Fehler'
           : e.details ?? e.status;
       throw StateError(
-          'PreKey Bundle konnte nicht hochgeladen werden: $detail');
+        'PreKey Bundle konnte nicht hochgeladen werden: $detail',
+      );
     }
   }
 

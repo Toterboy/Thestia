@@ -49,26 +49,27 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
     // Wichtig: exakt DIESELBE Datei precachen, die AppLogo auch anzeigt
     // (assets/images/thestia_icon_base.png) - sonst erscheinen Logo und
     // Text nicht gleichzeitig.
-    final imageProvider =
-        const AssetImage('assets/images/thestia_icon_base.png');
+    final imageProvider = const AssetImage(
+      'assets/images/thestia_icon_base.png',
+    );
     _logoReady = precacheImage(imageProvider, context);
   }
 
   /// Seiten lokalisiert aufbauen (kein static const: Texte kommen aus L10n).
   List<_PageData> _pages(BuildContext context) => [
-        _PageData(
-          title: L10n.t(context, 'welcome.t1'),
-          body: L10n.t(context, 'welcome.b1'),
-        ),
-        _PageData(
-          title: L10n.t(context, 'welcome.t2'),
-          body: L10n.t(context, 'welcome.b2'),
-        ),
-        _PageData(
-          title: L10n.t(context, 'welcome.t3'),
-          body: L10n.t(context, 'welcome.b3'),
-        ),
-      ];
+    _PageData(
+      title: L10n.t(context, 'welcome.t1'),
+      body: L10n.t(context, 'welcome.b1'),
+    ),
+    _PageData(
+      title: L10n.t(context, 'welcome.t2'),
+      body: L10n.t(context, 'welcome.b2'),
+    ),
+    _PageData(
+      title: L10n.t(context, 'welcome.t3'),
+      body: L10n.t(context, 'welcome.b3'),
+    ),
+  ];
 
   Future<void> _leave() async {
     // introSeen wird bereits beim Anzeigen gesetzt (initState) – hier nur
@@ -171,12 +172,14 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 onPressed: isLast
                     ? _leave
                     : () => _pageController.nextPage(
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        ),
-                child: Text(isLast
-                    ? L10n.t(context, 'welcome.start')
-                    : L10n.t(context, 'common.continue')),
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      ),
+                child: Text(
+                  isLast
+                      ? L10n.t(context, 'welcome.start')
+                      : L10n.t(context, 'common.continue'),
+                ),
               ),
             ],
           ),
@@ -217,10 +220,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
 }
 
 class _PageData {
-  const _PageData({
-    required this.title,
-    required this.body,
-  });
+  const _PageData({required this.title, required this.body});
   final String title;
   final String body;
 }

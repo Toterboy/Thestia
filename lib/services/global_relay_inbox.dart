@@ -14,12 +14,13 @@ import 'package:thestia/services/supabase_service.dart';
 /// Benachrichtigungs-Hook (vom App-Wurzel-Widget mit WidgetRef verdrahtet,
 /// da Ref != WidgetRef). `title` darf null sein (Hook ergänzt den
 /// l10n-Fallback-Namen über seinen Kontext).
-typedef RelayInboxNotifier = Future<void> Function({
-  required int id,
-  String? title,
-  required String body,
-  required String senderId,
-});
+typedef RelayInboxNotifier =
+    Future<void> Function({
+      required int id,
+      String? title,
+      required String body,
+      required String senderId,
+    });
 
 /// True, wenn die App gerade im Vordergrund ist (Delegation, damit der
 /// Inbox-Ticker keine Lifecycle-Imports braucht).
@@ -134,8 +135,9 @@ class GlobalRelayInbox with WidgetsBindingObserver {
       // ack: false - der Inbox-Poller ackt SELEKTIV nur routierte Zeilen
       // (sonst würde er Dating-Hour-Zeilen löschen, die ihr Screen noch
       // braucht).
-      final pending =
-          await _ref.read(relayServiceProvider).fetchPending(ack: false);
+      final pending = await _ref
+          .read(relayServiceProvider)
+          .fetchPending(ack: false);
       await _handlePending(pending);
     } catch (e) {
       // WICHTIG: auch der Fehlerfall streckt das Intervall. Vorher stand
@@ -247,7 +249,7 @@ class GlobalRelayInbox with WidgetsBindingObserver {
 
   /// Aktive Zufallschat-Session (30 s gecacht).
   Future<({String sessionId, String partnerId})?>
-      _resolveActiveRandomChat() async {
+  _resolveActiveRandomChat() async {
     final now = DateTime.now();
     final cached = _activeRandomChat;
     if (cached != null &&

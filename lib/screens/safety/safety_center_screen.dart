@@ -17,8 +17,7 @@ class SafetyCenterScreen extends ConsumerStatefulWidget {
   const SafetyCenterScreen({super.key});
 
   @override
-  ConsumerState<SafetyCenterScreen> createState() =>
-      _SafetyCenterScreenState();
+  ConsumerState<SafetyCenterScreen> createState() => _SafetyCenterScreenState();
 }
 
 class _SafetyCenterScreenState extends ConsumerState<SafetyCenterScreen> {
@@ -39,28 +38,27 @@ class _SafetyCenterScreenState extends ConsumerState<SafetyCenterScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           Card(
-            color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.5),
+            color: Theme.of(
+              context,
+            ).colorScheme.errorContainer.withValues(alpha: 0.5),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.emergency_outlined,
-                      color: Theme.of(context).colorScheme.onErrorContainer),
+                  Icon(
+                    Icons.emergency_outlined,
+                    color: Theme.of(context).colorScheme.onErrorContainer,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'Bei akuter Gefahr rufe sofort die Polizei: 110. '
                       'Du bist nicht allein. Die folgenden Stellen helfen '
                       'kostenlos und vertraulich.',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onErrorContainer,
-                          ),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onErrorContainer,
+                      ),
                     ),
                   ),
                 ],
@@ -68,8 +66,10 @@ class _SafetyCenterScreenState extends ConsumerState<SafetyCenterScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          Text(L10n.t(context, 'safety.sectionHelp'),
-              style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            L10n.t(context, 'safety.sectionHelp'),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: 8),
           ListTile(
             leading: const Icon(Icons.phone_in_talk),
@@ -81,10 +81,10 @@ class _SafetyCenterScreenState extends ConsumerState<SafetyCenterScreen> {
           ListTile(
             leading: const Icon(Icons.phone_in_talk),
             title: Text(L10n.t(context, 'safety.hotline2')),
-            subtitle:
-                Text(L10n.t(context, 'safety.hotline2Sub')),
+            subtitle: Text(L10n.t(context, 'safety.hotline2Sub')),
             trailing: const Icon(Icons.call),
-            onTap: () => _open(context, Uri(scheme: 'tel', path: '08001110111')),
+            onTap: () =>
+                _open(context, Uri(scheme: 'tel', path: '08001110111')),
           ),
           ListTile(
             leading: const Icon(Icons.language),
@@ -98,12 +98,13 @@ class _SafetyCenterScreenState extends ConsumerState<SafetyCenterScreen> {
             title: Text(L10n.t(context, 'safety.hotline4')),
             subtitle: Text(L10n.t(context, 'safety.hotline4Sub')),
             trailing: const Icon(Icons.open_in_new),
-            onTap: () =>
-                _open(context, Uri.parse('https://weisser-ring.de')),
+            onTap: () => _open(context, Uri.parse('https://weisser-ring.de')),
           ),
           const Divider(height: 32),
-          Text(L10n.t(context, 'safety.sectionProtect'),
-              style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            L10n.t(context, 'safety.sectionProtect'),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: 8),
           const _SchutzKachel(
             icon: Icons.flag_outlined,
@@ -139,8 +140,10 @@ class _SafetyCenterScreenState extends ConsumerState<SafetyCenterScreen> {
             onTap: () => context.push(AppRoutes.privacy),
           ),
           const Divider(height: 32),
-          Text(L10n.t(context, 'safety.stalkingGuide'),
-              style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            L10n.t(context, 'safety.stalkingGuide'),
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
           const SizedBox(height: 4),
           Text(
             L10n.t(context, 'safety.stalkingBody'),
@@ -240,8 +243,10 @@ class _MyReportsSectionState extends ConsumerState<_MyReportsSection> {
     final response = await SupabaseService.client.rpc('list_my_reports');
     final rows = (response as List<dynamic>? ?? <dynamic>[]);
     return rows
-        .map((row) =>
-            MyReportEntry.fromJson(Map<String, dynamic>.from(row as Map)))
+        .map(
+          (row) =>
+              MyReportEntry.fromJson(Map<String, dynamic>.from(row as Map)),
+        )
         .toList();
   }
 
@@ -250,18 +255,24 @@ class _MyReportsSectionState extends ConsumerState<_MyReportsSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(L10n.t(context, 'safety.myReports'),
-            style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          L10n.t(context, 'safety.myReports'),
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         if (_reports == null)
           const Center(
-              child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2)))
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          )
         else if (_reports!.isEmpty)
-          Text(L10n.t(context, 'safety.noReports'),
-              style: const TextStyle(color: Colors.grey))
+          Text(
+            L10n.t(context, 'safety.noReports'),
+            style: const TextStyle(color: Colors.grey),
+          )
         else
           for (final report in _reports!)
             ListTile(
@@ -274,9 +285,11 @@ class _MyReportsSectionState extends ConsumerState<_MyReportsSection> {
                 size: 20,
                 color: Theme.of(context).colorScheme.primary,
               ),
-            title: Text(report.reportType.isEmpty
-                ? L10n.t(context, 'report.type.default')
-                : report.reportType),
+              title: Text(
+                report.reportType.isEmpty
+                    ? L10n.t(context, 'report.type.default')
+                    : report.reportType,
+              ),
               subtitle: Text(report.statusLabel),
             ),
       ],
@@ -289,7 +302,8 @@ class _BlockedUsersSection extends ConsumerStatefulWidget {
   const _BlockedUsersSection();
 
   @override
-  ConsumerState<_BlockedUsersSection> createState() => _BlockedUsersSectionState();
+  ConsumerState<_BlockedUsersSection> createState() =>
+      _BlockedUsersSectionState();
 }
 
 class _BlockedUsersSectionState extends ConsumerState<_BlockedUsersSection> {
@@ -303,12 +317,14 @@ class _BlockedUsersSectionState extends ConsumerState<_BlockedUsersSection> {
 
   Future<void> _load() async {
     try {
-      final response =
-          await SupabaseService.client.rpc('list_blocked_users');
+      final response = await SupabaseService.client.rpc('list_blocked_users');
       final rows = (response as List<dynamic>? ?? <dynamic>[]);
       final blocked = rows
-          .map((row) =>
-              BlockedUserEntry.fromJson(Map<String, dynamic>.from(row as Map)))
+          .map(
+            (row) => BlockedUserEntry.fromJson(
+              Map<String, dynamic>.from(row as Map),
+            ),
+          )
           .toList();
       if (mounted) setState(() => _blocked = blocked);
     } catch (_) {
@@ -318,8 +334,10 @@ class _BlockedUsersSectionState extends ConsumerState<_BlockedUsersSection> {
 
   Future<void> _unblock(BlockedUserEntry entry) async {
     try {
-      await SupabaseService.client
-          .rpc('unblock_user', params: {'p_blocked': entry.blockedUserId});
+      await SupabaseService.client.rpc(
+        'unblock_user',
+        params: {'p_blocked': entry.blockedUserId},
+      );
       _load();
     } catch (_) {
       if (mounted) {
@@ -338,18 +356,24 @@ class _BlockedUsersSectionState extends ConsumerState<_BlockedUsersSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(L10n.t(context, 'safety.blockedUsers'),
-            style: Theme.of(context).textTheme.titleMedium),
+        Text(
+          L10n.t(context, 'safety.blockedUsers'),
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
         const SizedBox(height: 8),
         if (_blocked == null)
           const Center(
-              child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2)))
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          )
         else if (_blocked!.isEmpty)
-          Text(L10n.t(context, 'safety.noBlocked'),
-              style: const TextStyle(color: Colors.grey))
+          Text(
+            L10n.t(context, 'safety.noBlocked'),
+            style: const TextStyle(color: Colors.grey),
+          )
         else
           for (final entry in _blocked!)
             ListTile(

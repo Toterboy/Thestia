@@ -19,35 +19,33 @@ class DatingHourHowItWorksScreen extends ConsumerWidget {
 
   /// Die 5 Schritte (v0.8.0 zweisprachig über L10n-Keys).
   List<_HowItWorksItem> _steps(BuildContext context) => [
-        _HowItWorksItem(
-          L10n.t(context, 'dh.how.step1.title'),
-          L10n.t(context, 'dh.how.step1.body'),
-        ),
-        _HowItWorksItem(
-          L10n.t(context, 'dh.how.step2.title'),
-          L10n.t(context, 'dh.how.step2.body'),
-        ),
-        _HowItWorksItem(
-          L10n.t(context, 'dh.how.step3.title'),
-          L10n.t(context, 'dh.how.step3.body'),
-        ),
-        _HowItWorksItem(
-          L10n.t(context, 'dh.how.step4.title'),
-          L10n.t(context, 'dh.how.step4.body'),
-        ),
-        _HowItWorksItem(
-          L10n.t(context, 'dh.how.step5.title'),
-          L10n.t(context, 'dh.how.step5.body'),
-        ),
-      ];
+    _HowItWorksItem(
+      L10n.t(context, 'dh.how.step1.title'),
+      L10n.t(context, 'dh.how.step1.body'),
+    ),
+    _HowItWorksItem(
+      L10n.t(context, 'dh.how.step2.title'),
+      L10n.t(context, 'dh.how.step2.body'),
+    ),
+    _HowItWorksItem(
+      L10n.t(context, 'dh.how.step3.title'),
+      L10n.t(context, 'dh.how.step3.body'),
+    ),
+    _HowItWorksItem(
+      L10n.t(context, 'dh.how.step4.title'),
+      L10n.t(context, 'dh.how.step4.body'),
+    ),
+    _HowItWorksItem(
+      L10n.t(context, 'dh.how.step5.title'),
+      L10n.t(context, 'dh.how.step5.body'),
+    ),
+  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final steps = _steps(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(L10n.t(context, 'dh.how.title')),
-      ),
+      appBar: AppBar(title: Text(L10n.t(context, 'dh.how.title'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -58,9 +56,7 @@ class DatingHourHowItWorksScreen extends ConsumerWidget {
               style: Theme.of(context).textTheme.bodyLarge,
             ),
             const SizedBox(height: 24),
-            ...steps.map(
-              (step) => _StepExpansion(step: step),
-            ),
+            ...steps.map((step) => _StepExpansion(step: step)),
             const SizedBox(height: 24),
             FilledButton(
               onPressed: () async {
@@ -72,13 +68,14 @@ class DatingHourHowItWorksScreen extends ConsumerWidget {
                 if (SupabaseService.isInitialized) {
                   unawaited(() async {
                     try {
-                      await SupabaseDatabaseService(SupabaseService.client)
-                          .updateOwnProfile({
-                        'dating_hour_intro_seen': true,
-                      });
+                      await SupabaseDatabaseService(
+                        SupabaseService.client,
+                      ).updateOwnProfile({'dating_hour_intro_seen': true});
                     } catch (e) {
-                      debugPrint('[DatingHour] Intro-Flag-Sync fehlgeschlagen:'
-                          ' $e');
+                      debugPrint(
+                        '[DatingHour] Intro-Flag-Sync fehlgeschlagen:'
+                        ' $e',
+                      );
                     }
                   }());
                 }
@@ -107,10 +104,7 @@ class _StepExpansion extends StatelessWidget {
       child: ExpansionTile(
         // Keine Trennlinien ober-/unterhalb der Bubble.
         shape: const Border(),
-        title: Text(
-          step.title,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        title: Text(step.title, style: Theme.of(context).textTheme.titleMedium),
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),

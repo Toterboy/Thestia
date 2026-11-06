@@ -97,9 +97,9 @@ class ChatBackgroundPicker extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(L10n.tf(context, 'common.errorWith', {
-              'error': '$e',
-            })),
+            content: Text(
+              L10n.tf(context, 'common.errorWith', {'error': '$e'}),
+            ),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -157,7 +157,8 @@ class ChatBackgroundPicker extends ConsumerWidget {
               ref.read(settingsProvider.notifier).setChatBackground(id);
             }
           },
-          onDelete: id == ChatBackgrounds.custom &&
+          onDelete:
+              id == ChatBackgrounds.custom &&
                   settings.chatBackgroundPath != null
               ? () => _removeCustom(context, ref)
               : null,
@@ -207,7 +208,9 @@ class _Tile extends StatelessWidget {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: selected ? scheme.primary : scheme.outlineVariant,
+                        color: selected
+                            ? scheme.primary
+                            : scheme.outlineVariant,
                         width: selected ? 2.5 : 1,
                       ),
                     ),
@@ -226,8 +229,11 @@ class _Tile extends StatelessWidget {
                     child: CircleAvatar(
                       radius: 11,
                       backgroundColor: scheme.primary,
-                      child: Icon(Icons.check,
-                          size: 14, color: scheme.onPrimary),
+                      child: Icon(
+                        Icons.check,
+                        size: 14,
+                        color: scheme.onPrimary,
+                      ),
                     ),
                   ),
                 if (onDelete != null)
@@ -239,8 +245,11 @@ class _Tile extends StatelessWidget {
                       child: CircleAvatar(
                         radius: 11,
                         backgroundColor: scheme.errorContainer,
-                        child: Icon(Icons.delete_outline,
-                            size: 14, color: scheme.onErrorContainer),
+                        child: Icon(
+                          Icons.delete_outline,
+                          size: 14,
+                          color: scheme.onErrorContainer,
+                        ),
                       ),
                     ),
                   ),

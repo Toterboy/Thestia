@@ -22,7 +22,9 @@ import 'package:thestia/theme/app_theme.dart';
 import 'package:thestia/widgets/usage_time_gate.dart';
 
 /// Laufende Instanz des globalen Relay-Eingangs (für [App.dispose]).
-final globalRelayInboxProvider = StateProvider<GlobalRelayInbox?>((ref) => null);
+final globalRelayInboxProvider = StateProvider<GlobalRelayInbox?>(
+  (ref) => null,
+);
 
 /// Wurzel-Widget der App.
 ///
@@ -119,12 +121,14 @@ class _AppState extends ConsumerState<App> {
   }) async {
     // Chat mit dem Absender offen -> Nachricht ist sichtbar (kein Ping).
     if (shouldSuppressNotificationForPeer(ref, senderId)) return;
-    await ref.read(notificationServiceProvider).showMessageNotification(
-      id: id,
-      title: title ?? L10n.t(context, 'random.fallbackPartnerName'),
-      body: body,
-      ref: ref,
-    );
+    await ref
+        .read(notificationServiceProvider)
+        .showMessageNotification(
+          id: id,
+          title: title ?? L10n.t(context, 'random.fallbackPartnerName'),
+          body: body,
+          ref: ref,
+        );
   }
 
   @override
@@ -180,20 +184,22 @@ class _AppState extends ConsumerState<App> {
     ];
     // Serverseitig generierte Titel (notify-user) stehen in der
     // notification-Sektion; Fallback: feste Servertexte.
-    await ref.read(notificationServiceProvider).show(
-      id: DateTime.now().millisecondsSinceEpoch & 0xFFFFFF,
-      title: title ?? 'Thestia',
-      body: body ?? fallbacks[kindIndex].$1,
-      channelId: fallbacks[kindIndex].$2,
-      payload: null,
-      ref: ref,
-      type: switch (kindIndex) {
-        0 => NotificationType.messages,
-        1 => NotificationType.likes,
-        2 => NotificationType.matches,
-        _ => NotificationType.datingHour,
-      },
-    );
+    await ref
+        .read(notificationServiceProvider)
+        .show(
+          id: DateTime.now().millisecondsSinceEpoch & 0xFFFFFF,
+          title: title ?? 'Thestia',
+          body: body ?? fallbacks[kindIndex].$1,
+          channelId: fallbacks[kindIndex].$2,
+          payload: null,
+          ref: ref,
+          type: switch (kindIndex) {
+            0 => NotificationType.messages,
+            1 => NotificationType.likes,
+            2 => NotificationType.matches,
+            _ => NotificationType.datingHour,
+          },
+        );
   }
 
   @override
@@ -217,56 +223,59 @@ class _AppState extends ConsumerState<App> {
         ? null
         : (settings.useDarkMode! ? Brightness.dark : Brightness.light);
 
-    return L10nScope(child: MaterialApp.router(
-      title: 'Thestia',
-      debugShowCheckedModeBanner: false,
-      locale: locale,
-      // Audit/Fix: Delegates fuer de+en PFLICHT. Ohne sie unterstuetzt
-      // Flutters DefaultMaterialLocalizations nur 'en' - bei gesetzter
-      // Locale 'de' wurde gar kein MaterialLocalizations geladen und
-      // Material-Widgets (AppBar, PopupMenuButton, Tooltips) crashten
-      // mit "No MaterialLocalizations found" (grauer Fehler-Screen).
-      localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      supportedLocales: const [Locale('de'), Locale('en')],
-      // Gecachte Themes (AppTheme.of): stabile Identitaet, kein Neubau von
-      // ColorScheme.fromSeed bei jedem Settings-Change.
-      theme: AppTheme.of(theme, Brightness.light),
-      darkTheme: AppTheme.of(theme, Brightness.dark),
-      // Sofort umschalten. Mit der Standard-Animation (200 ms) lief die
-      // ganze Oberflaeche inkl. Chat-Hintergruende erst sichtbar hinterher -
-      // der Wechsel wirkt dadurch "verzögert".
-      themeAnimationDuration: Duration.zero,
-      themeMode: brightness == null
-          ? ThemeMode.system
-          : (brightness == Brightness.dark
-              ? ThemeMode.dark
-              : ThemeMode.light),
-      routerConfig: router,
-      // Der Update-Hinweis als Deckschicht ueber der laufenden App.
-      // Er erscheint, wenn der Server strenger geworden ist, seitdem
-      // der Cache gefuellt wurde (siehe _checkMinBuildInBackground).
-      //
-      // "Trotzdem fortfahren" ist hier aktiv - die App laeuft ja
-      // bereits. Beim Start (main.dart) ist derselbe Bildschirm eine
-      // Sperre; dort bleibt der Knopf ohne Wirkung.
-      builder: (context, child) {
-        // Die Nutzungszeit-Sperre (v0.10.0) umschliesst JEDE Route - auch
-        // die rechtlichen Seiten. Sie wird VOR dem Update-Hinweis
-        // eingebaut: das Update-Gate ist technisch wichtiger, die
-        // Nutzungszeit ist eine Hausregel.
-        final mitSperre = UsageTimeGate(child: child ?? const SizedBox.shrink());
-        if (!_lateUpdateRequired) return mitSperre;
-        return Stack(
-          children: [
-            mitSperre,
-            Positioned.fill(
-              child: UpdateRequiredScreen(
-                onDismiss: () => setState(() => _lateUpdateRequired = false),
+    return L10nScope(
+      child: MaterialApp.router(
+        title: 'Thestia',
+        debugShowCheckedModeBanner: false,
+        locale: locale,
+        // Audit/Fix: Delegates fuer de+en PFLICHT. Ohne sie unterstuetzt
+        // Flutters DefaultMaterialLocalizations nur 'en' - bei gesetzter
+        // Locale 'de' wurde gar kein MaterialLocalizations geladen und
+        // Material-Widgets (AppBar, PopupMenuButton, Tooltips) crashten
+        // mit "No MaterialLocalizations found" (grauer Fehler-Screen).
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        supportedLocales: const [Locale('de'), Locale('en')],
+        // Gecachte Themes (AppTheme.of): stabile Identitaet, kein Neubau von
+        // ColorScheme.fromSeed bei jedem Settings-Change.
+        theme: AppTheme.of(theme, Brightness.light),
+        darkTheme: AppTheme.of(theme, Brightness.dark),
+        // Sofort umschalten. Mit der Standard-Animation (200 ms) lief die
+        // ganze Oberflaeche inkl. Chat-Hintergruende erst sichtbar hinterher -
+        // der Wechsel wirkt dadurch "verzögert".
+        themeAnimationDuration: Duration.zero,
+        themeMode: brightness == null
+            ? ThemeMode.system
+            : (brightness == Brightness.dark
+                  ? ThemeMode.dark
+                  : ThemeMode.light),
+        routerConfig: router,
+        // Der Update-Hinweis als Deckschicht ueber der laufenden App.
+        // Er erscheint, wenn der Server strenger geworden ist, seitdem
+        // der Cache gefuellt wurde (siehe _checkMinBuildInBackground).
+        //
+        // "Trotzdem fortfahren" ist hier aktiv - die App laeuft ja
+        // bereits. Beim Start (main.dart) ist derselbe Bildschirm eine
+        // Sperre; dort bleibt der Knopf ohne Wirkung.
+        builder: (context, child) {
+          // Die Nutzungszeit-Sperre (v0.10.0) umschliesst JEDE Route - auch
+          // die rechtlichen Seiten. Sie wird VOR dem Update-Hinweis
+          // eingebaut: das Update-Gate ist technisch wichtiger, die
+          // Nutzungszeit ist eine Hausregel.
+          final mitSperre = UsageTimeGate(
+            child: child ?? const SizedBox.shrink(),
+          );
+          if (!_lateUpdateRequired) return mitSperre;
+          return Stack(
+            children: [
+              mitSperre,
+              Positioned.fill(
+                child: UpdateRequiredScreen(
+                  onDismiss: () => setState(() => _lateUpdateRequired = false),
+                ),
               ),
-            ),
-          ],
-        );
-      },
+            ],
+          );
+        },
       ),
     );
   }

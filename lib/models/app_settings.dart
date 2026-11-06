@@ -247,10 +247,9 @@ class AppSettings {
       datingHourAutoJoin: json['datingHourAutoJoin'] as bool? ?? false,
       mfaSetupDismissed: json['mfaSetupDismissed'] as bool? ?? false,
       blurChatImages: json['blurChatImages'] as bool? ?? true,
-    micDisclosureAccepted:
-        json['micDisclosureAccepted'] as bool? ?? false,
-    cameraDisclosureAccepted:
-        json['cameraDisclosureAccepted'] as bool? ?? false,
+      micDisclosureAccepted: json['micDisclosureAccepted'] as bool? ?? false,
+      cameraDisclosureAccepted:
+          json['cameraDisclosureAccepted'] as bool? ?? false,
       themeName: json['themeName'] as String? ?? 'classic',
       paused: json['paused'] as bool? ?? false,
       habitsDealbreaker: json['habitsDealbreaker'] as bool? ?? false,
@@ -387,9 +386,10 @@ class AppSettings {
       datingHourAutoJoin: datingHourAutoJoin ?? this.datingHourAutoJoin,
       mfaSetupDismissed: mfaSetupDismissed ?? this.mfaSetupDismissed,
       blurChatImages: blurChatImages ?? this.blurChatImages,
-    micDisclosureAccepted: micDisclosureAccepted ?? this.micDisclosureAccepted,
-    cameraDisclosureAccepted:
-        cameraDisclosureAccepted ?? this.cameraDisclosureAccepted,
+      micDisclosureAccepted:
+          micDisclosureAccepted ?? this.micDisclosureAccepted,
+      cameraDisclosureAccepted:
+          cameraDisclosureAccepted ?? this.cameraDisclosureAccepted,
       themeName: themeName ?? this.themeName,
       paused: paused ?? this.paused,
       habitsDealbreaker: habitsDealbreaker ?? this.habitsDealbreaker,
@@ -398,8 +398,8 @@ class AppSettings {
       chatBackground: chatBackground ?? this.chatBackground,
       chatBackgroundPath:
           identical(chatBackgroundPath, _chatBackgroundPathUnset)
-              ? this.chatBackgroundPath
-              : chatBackgroundPath as String?,
+          ? this.chatBackgroundPath
+          : chatBackgroundPath as String?,
       signupWelcomeSeen: signupWelcomeSeen ?? this.signupWelcomeSeen,
       datingSafetyEducationCompleted:
           datingSafetyEducationCompleted ?? this.datingSafetyEducationCompleted,

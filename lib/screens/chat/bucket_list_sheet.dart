@@ -80,8 +80,9 @@ class _BucketListSheetState extends ConsumerState<BucketListSheet> {
     final scheme = Theme.of(context).colorScheme;
     final stale = BucketReminder.shouldRemind(
       items: items ?? const [],
-      messages:
-          ref.read(chatProvider.notifier).messagesFor('${widget.matchId}'),
+      messages: ref
+          .read(chatProvider.notifier)
+          .messagesFor('${widget.matchId}'),
     );
     return SafeArea(
       child: Padding(
@@ -93,18 +94,17 @@ class _BucketListSheetState extends ConsumerState<BucketListSheet> {
             children: [
               Text(
                 L10n.t(context, 'bucket.title'),
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 4),
               Text(
                 L10n.t(context, 'bucket.hint'),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
@@ -120,8 +120,11 @@ class _BucketListSheetState extends ConsumerState<BucketListSheet> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.wb_twilight_outlined,
-                          size: 18, color: scheme.onSecondaryContainer),
+                      Icon(
+                        Icons.wb_twilight_outlined,
+                        size: 18,
+                        color: scheme.onSecondaryContainer,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -129,11 +132,8 @@ class _BucketListSheetState extends ConsumerState<BucketListSheet> {
                             'days':
                                 '${BucketReminder.idleDays(items ?? const [])}',
                           }),
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(
-                                  color: scheme.onSecondaryContainer),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: scheme.onSecondaryContainer),
                         ),
                       ),
                     ],
@@ -169,58 +169,62 @@ class _BucketListSheetState extends ConsumerState<BucketListSheet> {
                 child: items == null
                     ? const Center(child: CircularProgressIndicator())
                     : items.isEmpty
-                        ? Center(
-                            child: Text(
-                              L10n.t(context, 'bucket.empty'),
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
-                              textAlign: TextAlign.center,
-                            ),
-                          )
-                        : ListView(
-                            children: [
-                              for (final item in items)
-                                ListTile(
-                                  leading: Checkbox(
-                                    value: item.done,
-                                    onChanged: (_) => _toggle(item),
-                                  ),
-                                  title: Text(
-                                    item.text,
-                                    style: TextStyle(
-                                      decoration: item.done
-                                          ? TextDecoration.lineThrough
-                                          : TextDecoration.none,
-                                      color: item.done
-                                          ? Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant
-                                          : null,
-                                    ),
-                                  ),
-                                  subtitle: Text(item.createdBy ==
-                                          widget.myId
-                                      ? L10n.t(context, 'bucket.mine')
-                                      : L10n.tf(context, 'bucket.theirs',
-                                          {'name': widget.partnerName})),
-                                  trailing: item.createdBy == widget.myId
-                                      ? IconButton(
-                                          icon: const Icon(Icons.delete_outline,
-                                              size: 18),
-                                          tooltip: L10n.t(
-                                              context, 'common.discard'),
-                                          onPressed: () => _delete(item),
-                                        )
+                    ? Center(
+                        child: Text(
+                          L10n.t(context, 'bucket.empty'),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                          textAlign: TextAlign.center,
+                        ),
+                      )
+                    : ListView(
+                        children: [
+                          for (final item in items)
+                            ListTile(
+                              leading: Checkbox(
+                                value: item.done,
+                                onChanged: (_) => _toggle(item),
+                              ),
+                              title: Text(
+                                item.text,
+                                style: TextStyle(
+                                  decoration: item.done
+                                      ? TextDecoration.lineThrough
+                                      : TextDecoration.none,
+                                  color: item.done
+                                      ? Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant
                                       : null,
                                 ),
-                            ],
-                          ),
+                              ),
+                              subtitle: Text(
+                                item.createdBy == widget.myId
+                                    ? L10n.t(context, 'bucket.mine')
+                                    : L10n.tf(context, 'bucket.theirs', {
+                                        'name': widget.partnerName,
+                                      }),
+                              ),
+                              trailing: item.createdBy == widget.myId
+                                  ? IconButton(
+                                      icon: const Icon(
+                                        Icons.delete_outline,
+                                        size: 18,
+                                      ),
+                                      tooltip: L10n.t(
+                                        context,
+                                        'common.discard',
+                                      ),
+                                      onPressed: () => _delete(item),
+                                    )
+                                  : null,
+                            ),
+                        ],
+                      ),
               ),
             ],
           ),

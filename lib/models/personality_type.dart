@@ -12,10 +12,22 @@ class PersonalityType {
 
   /// Alle 16 MBTI-Typen.
   static const List<String> allTypes = [
-    'INTJ', 'INTP', 'ENTJ', 'ENTP',
-    'INFJ', 'INFP', 'ENFJ', 'ENFP',
-    'ISTJ', 'ISFJ', 'ESTJ', 'ESFJ',
-    'ISTP', 'ISFP', 'ESTP', 'ESFP',
+    'INTJ',
+    'INTP',
+    'ENTJ',
+    'ENTP',
+    'INFJ',
+    'INFP',
+    'ENFJ',
+    'ENFP',
+    'ISTJ',
+    'ISFJ',
+    'ESTJ',
+    'ESFJ',
+    'ISTP',
+    'ISFP',
+    'ESTP',
+    'ESFP',
   ];
 
   /// Liefert den [PersonalityType] für einen Code (null-safe).
@@ -54,11 +66,6 @@ class MbtiCompatibility {
   /// Zerlegt einen Typ in seine 4 Buchstaben.
   static List<String> _dichotomy(String code) {
     if (code.length < 4) return ['', '', '', ''];
-    return [
-      code[0],
-      code[1],
-      code[2],
-      code[3],
-    ];
+    return [code[0], code[1], code[2], code[3]];
   }
 }

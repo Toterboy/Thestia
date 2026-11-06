@@ -133,10 +133,7 @@ Future<void> _pump(
       overrides: _overrides(profil),
       child: MediaQuery(
         data: MediaQueryData(textScaler: TextScaler.linear(scale)),
-        child: MaterialApp(
-          theme: ThemeData(useMaterial3: true),
-          home: kind,
-        ),
+        child: MaterialApp(theme: ThemeData(useMaterial3: true), home: kind),
       ),
     ),
   );
@@ -159,8 +156,7 @@ void main() {
   });
 
   group('Interessen-Screen', () {
-    testWidgets('rendert mit den beiden geschlossenen Blasen',
-        (tester) async {
+    testWidgets('rendert mit den beiden geschlossenen Blasen', (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -175,8 +171,7 @@ void main() {
       expect(find.byIcon(Icons.auto_awesome), findsWidgets);
     });
 
-    testWidgets('das Oeffnen schiebt die Funken nach unten',
-        (tester) async {
+    testWidgets('das Oeffnen schiebt die Funken nach unten', (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -191,9 +186,13 @@ void main() {
 
       expect(tester.takeException(), isNull);
       final nachher = tester.getRect(find.byIcon(Icons.auto_awesome).first).top;
-      expect(nachher, greaterThan(vorher),
-          reason: 'Die Funken müssen beim Oeffnen nach unten '
-              'geschoben werden');
+      expect(
+        nachher,
+        greaterThan(vorher),
+        reason:
+            'Die Funken müssen beim Oeffnen nach unten '
+            'geschoben werden',
+      );
 
       // Und wieder schliessen - dann stehen sie wieder oben.
       await tester.tap(find.text('Erhalten'));
@@ -227,16 +226,22 @@ void main() {
         );
         final deco = container.decoration as BoxDecoration;
         final radius = deco.borderRadius as BorderRadius;
-        expect(radius.bottomLeft.x, greaterThan(100),
-            reason: '"$label" muss unten abgerundet sein - nicht eckig. '
-                'Gefunden: ${radius.bottomLeft.x}');
-        expect(radius.bottomLeft.x, radius.topLeft.x,
-            reason: '"$label" muss oben und unten gleich gerundet sein');
+        expect(
+          radius.bottomLeft.x,
+          greaterThan(100),
+          reason:
+              '"$label" muss unten abgerundet sein - nicht eckig. '
+              'Gefunden: ${radius.bottomLeft.x}',
+        );
+        expect(
+          radius.bottomLeft.x,
+          radius.topLeft.x,
+          reason: '"$label" muss oben und unten gleich gerundet sein',
+        );
       }
     });
 
-    testWidgets('kein Ladekreis auf dem Interessen-Screen',
-        (tester) async {
+    testWidgets('kein Ladekreis auf dem Interessen-Screen', (tester) async {
       // NUTZERWUNSCH (31.10.2026): "der kurze Ladekreis ist stoerend
       // fuer die Animation dort". Der Ring ersetzte den Inhalt und
       // unterbrach das Aufblenden des Panels.
@@ -249,13 +254,16 @@ void main() {
 
       await _pump(tester, const InteressenScreen(), _profilMitGeburtstag());
 
-      expect(find.byType(CircularProgressIndicator), findsNothing,
-          reason: 'Der Ladekreis unterbricht die Animation - er darf nicht '
-              'mehr vorkommen.');
+      expect(
+        find.byType(CircularProgressIndicator),
+        findsNothing,
+        reason:
+            'Der Ladekreis unterbricht die Animation - er darf nicht '
+            'mehr vorkommen.',
+      );
     });
 
-    testWidgets('der Wechsel zwischen den Blasen funktioniert',
-        (tester) async {
+    testWidgets('der Wechsel zwischen den Blasen funktioniert', (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -272,8 +280,7 @@ void main() {
   });
 
   group('Profil-Screen', () {
-    testWidgets('zeigt die Geburtstags-Flaeche am Geburtstag',
-        (tester) async {
+    testWidgets('zeigt die Geburtstags-Flaeche am Geburtstag', (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -285,12 +292,14 @@ void main() {
       final flaeche = tester.widget<BirthdayStyleSurface>(
         find.byType(BirthdayStyleSurface).first,
       );
-      expect(flaeche.active, isTrue,
-          reason: 'Am Geburtstag muss die ganze Flaeche getoent sein');
+      expect(
+        flaeche.active,
+        isTrue,
+        reason: 'Am Geburtstag muss die ganze Flaeche getoent sein',
+      );
     });
 
-    testWidgets('ohne Geburtstag bleibt die Flaeche inaktiv',
-        (tester) async {
+    testWidgets('ohne Geburtstag bleibt die Flaeche inaktiv', (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -306,8 +315,7 @@ void main() {
   });
 
   group('Fremdes Profil', () {
-    testWidgets('zeigt die Geburtstags-Flaeche am Geburtstag',
-        (tester) async {
+    testWidgets('zeigt die Geburtstags-Flaeche am Geburtstag', (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -332,8 +340,10 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final profil = _profilMitGeburtstag(name: 'Mira', fremd: true)
-          .copyWith(mood: 'happy');
+      final profil = _profilMitGeburtstag(
+        name: 'Mira',
+        fremd: true,
+      ).copyWith(mood: 'happy');
       await _pump(
         tester,
         const ProfileDetailScreen(userId: 'test-user'),
@@ -355,7 +365,9 @@ void main() {
       // Sie kommen aus dem lokalen Speicher - ohne Supabase laeuft das
       // ohne Fehler.
       final container = ProviderContainer(
-        overrides: [localStorageProvider.overrideWithValue(_FakeLocalStorage())],
+        overrides: [
+          localStorageProvider.overrideWithValue(_FakeLocalStorage()),
+        ],
       );
       addTearDown(container.dispose);
       expect(container.read(settingsProvider).blindModeEnabled, isTrue);
@@ -373,8 +385,9 @@ void main() {
   };
 
   scales.forEach((name, scale) {
-    testWidgets('Interessen rendert ohne Overflow bei Schrift $name',
-        (tester) async {
+    testWidgets('Interessen rendert ohne Overflow bei Schrift $name', (
+      tester,
+    ) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -399,13 +412,18 @@ void main() {
   });
 
   scales.forEach((name, scale) {
-    testWidgets('Profil rendert ohne Overflow bei Schrift $name',
-        (tester) async {
+    testWidgets('Profil rendert ohne Overflow bei Schrift $name', (
+      tester,
+    ) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await _pump(tester, const ProfileScreen(), _profilMitGeburtstag(),
-          scale: scale);
+      await _pump(
+        tester,
+        const ProfileScreen(),
+        _profilMitGeburtstag(),
+        scale: scale,
+      );
       final scroller = find.descendant(
         of: find.byType(ProfileScreen),
         matching: find.byType(Scrollable),
@@ -420,8 +438,9 @@ void main() {
   });
 
   scales.forEach((name, scale) {
-    testWidgets('fremdes Profil rendert ohne Overflow bei Schrift $name',
-        (tester) async {
+    testWidgets('fremdes Profil rendert ohne Overflow bei Schrift $name', (
+      tester,
+    ) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 

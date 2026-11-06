@@ -38,8 +38,8 @@ class _PrivacyPolicyTextScreenState
   /// Die zur App-Sprache passende Fassung.
   List<PrivacyBlock> get _bloecke =>
       ref.watch(localeProvider).languageCode == 'en'
-          ? kPrivacyPolicyEn
-          : kPrivacyPolicyDe;
+      ? kPrivacyPolicyEn
+      : kPrivacyPolicyDe;
 
   /// Spaltenüberschriften je Tabellenzeile.
   ///
@@ -103,16 +103,21 @@ class _PrivacyPolicyTextScreenState
     );
   }
 
-  Widget _block(BuildContext context, PrivacyBlock block,
-      List<String> headers, ThemeData theme) {
+  Widget _block(
+    BuildContext context,
+    PrivacyBlock block,
+    List<String> headers,
+    ThemeData theme,
+  ) {
     switch (block.kind) {
       case 'h1':
         return Padding(
           padding: const EdgeInsets.only(top: 4, bottom: 12),
           child: Text(
             _plain(block.text),
-            style: theme.textTheme.headlineSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
         );
 
@@ -133,8 +138,9 @@ class _PrivacyPolicyTextScreenState
           padding: const EdgeInsets.only(top: 18, bottom: 6),
           child: Text(
             _plain(block.text),
-            style: theme.textTheme.titleSmall
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
         );
 
@@ -157,8 +163,12 @@ class _PrivacyPolicyTextScreenState
         return const SizedBox.shrink();
 
       case 'table':
-        return _dataRow(context, block.cells ?? const <String>[], headers,
-            theme);
+        return _dataRow(
+          context,
+          block.cells ?? const <String>[],
+          headers,
+          theme,
+        );
 
       default:
         return Padding(
@@ -175,15 +185,20 @@ class _PrivacyPolicyTextScreenState
   /// vier Spalten mit langen Texten. Auf einem Telefon wären die Spalten
   /// unlesbar schmal; als Karte bleibt alles lesbar und es geht keine
   /// Information verloren.
-  Widget _dataRow(BuildContext context, List<String> cells,
-      List<String> headers, ThemeData theme) {
+  Widget _dataRow(
+    BuildContext context,
+    List<String> cells,
+    List<String> headers,
+    ThemeData theme,
+  ) {
     if (cells.isEmpty) return const SizedBox.shrink();
     final scheme = theme.colorScheme;
 
     final labelled = <(String, String)>[];
     for (var i = 1; i < cells.length; i++) {
-      final label =
-          (i < headers.length && headers[i].isNotEmpty) ? headers[i] : null;
+      final label = (i < headers.length && headers[i].isNotEmpty)
+          ? headers[i]
+          : null;
       labelled.add((label ?? '', cells[i]));
     }
 
@@ -199,8 +214,9 @@ class _PrivacyPolicyTextScreenState
         children: [
           Text(
             _plain(cells.first),
-            style:
-                theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 6),
           for (final entry in labelled)
@@ -208,9 +224,7 @@ class _PrivacyPolicyTextScreenState
               padding: const EdgeInsets.only(top: 4),
               child: _rich(
                 context,
-                entry.$1.isEmpty
-                    ? entry.$2
-                    : '**${entry.$1}:** ${entry.$2}',
+                entry.$1.isEmpty ? entry.$2 : '**${entry.$1}:** ${entry.$2}',
                 theme,
               ),
             ),
@@ -235,10 +249,12 @@ class _PrivacyPolicyTextScreenState
       if (match.start > 0) {
         spans.add(TextSpan(text: rest.substring(0, match.start)));
       }
-      spans.add(TextSpan(
-        text: match.group(1),
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ));
+      spans.add(
+        TextSpan(
+          text: match.group(1),
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+      );
       rest = rest.substring(match.end);
     }
 

@@ -7,8 +7,11 @@ void main() {
     test('mindestens 10 Kategorien mit je mindestens 5 Fragen', () {
       expect(icebreakerCatalog.length, greaterThanOrEqualTo(10));
       for (final cat in icebreakerCatalog) {
-        expect(cat.questions.length, greaterThanOrEqualTo(5),
-            reason: 'Kategorie ${cat.id} hat zu wenige Fragen');
+        expect(
+          cat.questions.length,
+          greaterThanOrEqualTo(5),
+          reason: 'Kategorie ${cat.id} hat zu wenige Fragen',
+        );
       }
     });
 
@@ -37,16 +40,22 @@ void main() {
     test('keine doppelten Fragen innerhalb einer Kategorie', () {
       for (final cat in icebreakerCatalog) {
         final texts = cat.questions.map((q) => q.de).toList();
-        expect(texts.toSet().length, texts.length,
-            reason: 'Duplikate in Kategorie ${cat.id}');
+        expect(
+          texts.toSet().length,
+          texts.length,
+          reason: 'Duplikate in Kategorie ${cat.id}',
+        );
       }
     });
 
     test('exakt 10 Kategorien mit je 6 Fragen (60 insgesamt)', () {
       expect(icebreakerCatalog.length, 10);
       for (final cat in icebreakerCatalog) {
-        expect(cat.questions.length, 6,
-            reason: 'Kategorie ${cat.id} hat nicht 6 Fragen');
+        expect(
+          cat.questions.length,
+          6,
+          reason: 'Kategorie ${cat.id} hat nicht 6 Fragen',
+        );
       }
       final total = icebreakerCatalog.fold<int>(
         0,
@@ -86,8 +95,7 @@ void main() {
         }
       }
       // Mindestens 90 % müssen sich unterscheiden (Tippfehler-Puffer).
-      expect(identical / (total + icebreakerCatalog.length),
-          lessThan(0.1));
+      expect(identical / (total + icebreakerCatalog.length), lessThan(0.1));
     });
 
     test('textFor/titleFor wählen nach Sprachcode', () {

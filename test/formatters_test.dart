@@ -53,7 +53,9 @@ void main() {
       final fiveMinAgo = DateTime.now().subtract(const Duration(minutes: 5));
       expect(Formatters.relative(fiveMinAgo), 'vor 5 Min.');
 
-      final fiftyNineMinAgo = DateTime.now().subtract(const Duration(minutes: 59));
+      final fiftyNineMinAgo = DateTime.now().subtract(
+        const Duration(minutes: 59),
+      );
       expect(Formatters.relative(fiftyNineMinAgo), 'vor 59 Min.');
     });
 
@@ -61,7 +63,9 @@ void main() {
       final twoHoursAgo = DateTime.now().subtract(const Duration(hours: 2));
       expect(Formatters.relative(twoHoursAgo), 'vor 2 Std.');
 
-      final twentyThreeHoursAgo = DateTime.now().subtract(const Duration(hours: 23));
+      final twentyThreeHoursAgo = DateTime.now().subtract(
+        const Duration(hours: 23),
+      );
       expect(Formatters.relative(twentyThreeHoursAgo), 'vor 23 Std.');
     });
 
@@ -97,4 +101,3 @@ void main() {
     });
   });
 }
-

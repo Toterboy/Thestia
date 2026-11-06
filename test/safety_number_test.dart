@@ -36,11 +36,9 @@ void main() {
   test('Angriffsszenario: unterschobener Key (MITM) erzeugt ABWEICHENDE '
       'Nummer -> wird im Out-of-Band-Vergleich erkannt', () {
     // Alice <-> Bob (echte Keys)
-    final aliceBob =
-        EncryptionService.computeSafetyNumber(key(1), key(2));
+    final aliceBob = EncryptionService.computeSafetyNumber(key(1), key(2));
     // Alice <-> Angreifer (unterschobener Key) sieht für Alice anders aus
-    final aliceMallory =
-        EncryptionService.computeSafetyNumber(key(1), key(66));
+    final aliceMallory = EncryptionService.computeSafetyNumber(key(1), key(66));
     expect(aliceBob, isNot(equals(aliceMallory)));
   });
 

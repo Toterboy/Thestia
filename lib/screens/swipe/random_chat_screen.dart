@@ -11,7 +11,8 @@ import 'package:thestia/models/message.dart';
 import 'package:thestia/models/random_chat_session.dart';
 import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/providers/chat_provider.dart';
-import 'package:thestia/routing/app_router.dart';import 'package:thestia/services/find_your_match_service.dart';
+import 'package:thestia/routing/app_router.dart';
+import 'package:thestia/services/find_your_match_service.dart';
 import 'package:thestia/services/p2p_chat_service.dart';
 import 'package:thestia/services/random_chat_service.dart';
 import 'package:thestia/services/relay_service.dart';
@@ -229,14 +230,16 @@ class _RandomChatScreenState extends ConsumerState<RandomChatScreen>
     // Partner-Profil laden (Name/Alter für die Anzeige). Best effort.
     if (_partnerId != null && SupabaseService.isInitialized) {
       try {
-        final row = await SupabaseDatabaseService(SupabaseService.client)
-            .fetchPublicProfile(_partnerId!);
+        final row = await SupabaseDatabaseService(
+          SupabaseService.client,
+        ).fetchPublicProfile(_partnerId!);
         if (row != null && mounted) {
           setState(() {
             _partner = UserProfile(
               id: _partnerId!,
-                name: (row['name'] as String?) ??
-                    L10n.t(context, 'random.fallbackPartnerName'),
+              name:
+                  (row['name'] as String?) ??
+                  L10n.t(context, 'random.fallbackPartnerName'),
               bio: '',
               interests: const [],
             );
@@ -247,12 +250,13 @@ class _RandomChatScreenState extends ConsumerState<RandomChatScreen>
       }
     }
     if (_partner == null && mounted) {
-setState(() {
-  _partner = UserProfile(
-      id: _partnerId!,
-      name: L10n.t(context, 'random.fallbackPartnerName'),
-      bio: '');
-});
+      setState(() {
+        _partner = UserProfile(
+          id: _partnerId!,
+          name: L10n.t(context, 'random.fallbackPartnerName'),
+          bio: '',
+        );
+      });
     }
 
     await _initP2P();
@@ -300,7 +304,8 @@ setState(() {
     _msgSub = p2p.incomingMessages.listen((text) {
       if (!mounted) return;
       final msg = _localMessage(text, senderId: peerId);
-      ref.read(chatProvider.notifier)
+      ref
+          .read(chatProvider.notifier)
           .addMessage(_sessionId ?? 'random', msg, ref: ref);
     });
 
@@ -368,8 +373,7 @@ setState(() {
             content: Text(
               waitingForPartner
                   ? L10n.t(context, 'random.waitingForPartner')
-                  : L10n.tf(context, 'random.connectFailed',
-                      {'error': '$e'}),
+                  : L10n.tf(context, 'random.connectFailed', {'error': '$e'}),
             ),
             behavior: SnackBarBehavior.floating,
             duration: waitingForPartner
@@ -455,11 +459,15 @@ setState(() {
     final relayPeer = _partnerId!;
     final p2p = _p2p;
     if (p2p != null) {
-      unawaited(p2p
-          .drainOutboxViaRelay((text) => ref
-              .read(relayServiceProvider)
-              .storeText(peerId: relayPeer, text: text))
-          .then((_) => unawaited(p2p.sendRelayPing())));
+      unawaited(
+        p2p
+            .drainOutboxViaRelay(
+              (text) => ref
+                  .read(relayServiceProvider)
+                  .storeText(peerId: relayPeer, text: text),
+            )
+            .then((_) => unawaited(p2p.sendRelayPing())),
+      );
     }
     _startRelayPolling();
   }
@@ -478,8 +486,7 @@ setState(() {
     if (myId == null || peerId == null) return;
     final now = DateTime.now();
     if (_lastHandshakeRetry != null &&
-        now.difference(_lastHandshakeRetry!) <
-            const Duration(seconds: 25)) {
+        now.difference(_lastHandshakeRetry!) < const Duration(seconds: 25)) {
       return;
     }
     _lastHandshakeRetry = now;
@@ -503,7 +510,8 @@ setState(() {
     _ctrl.clear();
 
     final local = _localMessage(text, senderId: _myUserId!);
-    ref.read(chatProvider.notifier)
+    ref
+        .read(chatProvider.notifier)
         .addMessage(_sessionId ?? 'random', local, ref: ref);
 
     // Relay-Modus (kein direkter Kanal, z. B. Mobilfunk): E2E-verschlüsselt
@@ -598,8 +606,9 @@ setState(() {
     // Netzwerkfehler: nächster Poll-Takt versucht es erneut.
     await bestEffort('relayServiceProvider.fetchPending', () async {
       // Nur Zeilen des AKTUELLEN Partners abholen/bestätigen.
-      final pending =
-          await ref.read(relayServiceProvider).fetchPending(from: peerId);
+      final pending = await ref
+          .read(relayServiceProvider)
+          .fetchPending(from: peerId);
       if (!mounted || pending.isEmpty) return;
       if (_relayBackoffStep != 0) {
         // Zustellung lief -> wieder schnell pollen.
@@ -610,7 +619,8 @@ setState(() {
         if (_seenRelayIds.contains(msgId)) continue;
         _seenRelayIds.add(msgId);
         final msg = _localMessage(r.text, senderId: peerId);
-        ref.read(chatProvider.notifier)
+        ref
+            .read(chatProvider.notifier)
             .addMessage(_sessionId ?? 'random', msg, ref: ref);
       }
     });
@@ -620,8 +630,9 @@ setState(() {
     return Message(
       id: Message.newId('p2p'),
       senderId: senderId,
-      receiverId:
-          senderId == _myUserId ? (_partnerId ?? '') : (_myUserId ?? ''),
+      receiverId: senderId == _myUserId
+          ? (_partnerId ?? '')
+          : (_myUserId ?? ''),
       text: text,
       timestamp: DateTime.now(),
     );
@@ -655,8 +666,7 @@ setState(() {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-              L10n.t(context, 'random.likeSentWaiting')),
+          content: Text(L10n.t(context, 'random.likeSentWaiting')),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -727,8 +737,9 @@ setState(() {
     // (der NIE wechselt) — die UI rebuildete daher NIE, und Nachrichten
     // "verschwanden im Nichts", obwohl sie im Store waren.
     ref.watch(chatProvider);
-    final messages =
-        ref.read(chatProvider.notifier).messagesFor(_sessionId ?? 'random');
+    final messages = ref
+        .read(chatProvider.notifier)
+        .messagesFor(_sessionId ?? 'random');
     final partner = _partner;
     // Nutzerwunsch Gruppierung: Namens-Header an Gruppenstarts (max. 3
     // Nachrichten / 3 Minuten pro Gruppe), Zeit an jeder Bubble.
@@ -740,8 +751,7 @@ setState(() {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => _confirmLeave(),
         ),
-        title: Text(partner?.name ??
-            L10n.t(context, 'random.fallbackTitle')),
+        title: Text(partner?.name ?? L10n.t(context, 'random.fallbackTitle')),
         actions: [
           if (_state == _RandomChatState.chat)
             IconButton(
@@ -760,226 +770,236 @@ setState(() {
         _RandomChatState.searching => const _SearchingView(),
         _RandomChatState.matched => const _ConnectingView(),
         _RandomChatState.error => _ErrorView(
-            message: L10n.t(
-                context, _errorKey ?? 'random.errorUnavailable'),
-          ),
+          message: L10n.t(context, _errorKey ?? 'random.errorUnavailable'),
+        ),
         _RandomChatState.ended => _ErrorView(
-            message: L10n.t(context, 'random.errorEnded'),
-          ),
+          message: L10n.t(context, 'random.errorEnded'),
+        ),
         _RandomChatState.chat => Column(
-            children: [
-              // Verbindungsstatus als abgerundetes Popup (Banner) — mit
-              // Ladekreis, wenn der Verbindungsaufbau läuft.
-              Container(
-                margin: const EdgeInsets.only(top: 8, left: 16, right: 16),
-                padding:
-                    const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: _dataChannelOpen
-                      ? Colors.green.withValues(alpha: 0.12)
-                      : _relayMode
-                          ? Theme.of(context).colorScheme.secondaryContainer
-                          : Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(20),
-                ),
+          children: [
+            // Verbindungsstatus als abgerundetes Popup (Banner) — mit
+            // Ladekreis, wenn der Verbindungsaufbau läuft.
+            Container(
+              margin: const EdgeInsets.only(top: 8, left: 16, right: 16),
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+              decoration: BoxDecoration(
+                color: _dataChannelOpen
+                    ? Colors.green.withValues(alpha: 0.12)
+                    : _relayMode
+                    ? Theme.of(context).colorScheme.secondaryContainer
+                    : Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!_dataChannelOpen &&
+                      !_relayMode &&
+                      _state == _RandomChatState.chat) ...[
+                    const SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                    const SizedBox(width: 8),
+                  ] else ...[
+                    Icon(
+                      _dataChannelOpen
+                          ? Icons.check_circle_outline
+                          : Icons.cloud_sync_outlined,
+                      size: 14,
+                      color: _dataChannelOpen
+                          ? Colors.green
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Flexible(
+                    child: Text(
+                      _dataChannelOpen
+                          ? 'Verbunden (E2E P2P)'
+                          : _relayMode
+                          ? L10n.t(context, 'random.relayStatus')
+                          : 'Verbindung wird hergestellt…',
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 4),
+            Expanded(
+              child: messages.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.chat_bubble_outline,
+                              size: 56,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              L10n.tf(context, 'random.hello', {
+                                'name':
+                                    partner?.name ??
+                                    L10n.t(context, 'random.helloDefault'),
+                              }),
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(12),
+                      reverse: true,
+                      itemCount: messages.length,
+                      itemBuilder: (context, i) {
+                        final idx = messages.length - 1 - i;
+                        final msg = messages[idx];
+                        final mine = msg.isFrom(_myUserId ?? '');
+                        final group = idx >= 0 && idx < bubbleGroups.length
+                            ? bubbleGroups[idx]
+                            : (showName: true, showTime: true);
+                        final name = mine
+                            ? L10n.t(context, 'chat.you')
+                            : (partner?.name ??
+                                  L10n.t(
+                                    context,
+                                    'random.fallbackPartnerName',
+                                  ));
+                        String timeLabel = '';
+                        bestEffortSync('Hm.format', () {
+                          timeLabel = DateFormat.Hm().format(
+                            msg.timestamp.toLocal(),
+                          );
+                        });
+                        return Align(
+                          alignment: mine
+                              ? Alignment.centerRight
+                              : Alignment.centerLeft,
+                          child: Column(
+                            crossAxisAlignment: mine
+                                ? CrossAxisAlignment.end
+                                : CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (group.showName)
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    bottom: 2,
+                                    left: 4,
+                                    right: 4,
+                                  ),
+                                  child: Text(
+                                    name,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
+                                  ),
+                                ),
+                              Container(
+                                margin: const EdgeInsets.symmetric(vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 10,
+                                ),
+                                constraints: BoxConstraints(
+                                  maxWidth:
+                                      MediaQuery.of(context).size.width * 0.75,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: mine
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Theme.of(
+                                          context,
+                                        ).colorScheme.surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                child: Text(
+                                  msg.text,
+                                  style: TextStyle(
+                                    color: mine
+                                        ? Colors.white
+                                        : Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                              if (timeLabel.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: 2,
+                                    left: 6,
+                                    right: 6,
+                                  ),
+                                  child: Text(
+                                    timeLabel,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurfaceVariant
+                                              .withValues(alpha: 0.7),
+                                          fontSize: 10,
+                                        ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (!_dataChannelOpen && !_relayMode &&
-                        _state == _RandomChatState.chat) ...[
-                      const SizedBox(
-                        width: 12,
-                        height: 12,
-                        child: CircularProgressIndicator(strokeWidth: 2),
+                    Expanded(
+                      child: TextField(
+                        controller: _ctrl,
+                        keyboardType: TextInputType.multiline,
+                        textInputAction: TextInputAction.newline,
+                        maxLines: 5,
+                        minLines: 1,
+                        decoration: InputDecoration(
+                          hintText: L10n.t(context, 'random.hint'),
+                          border: const OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(24)),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                        ),
+                        onSubmitted: (_) => _send(),
                       ),
-                      const SizedBox(width: 8),
-                    ] else ...[
-                      Icon(
-                        _dataChannelOpen
-                            ? Icons.check_circle_outline
-                            : Icons.cloud_sync_outlined,
-                        size: 14,
-                        color: _dataChannelOpen
-                            ? Colors.green
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    Flexible(
-                      child: Text(
-                        _dataChannelOpen
-                            ? 'Verbunden (E2E P2P)'
-                            : _relayMode
-                                ? L10n.t(context, 'random.relayStatus')
-                                : 'Verbindung wird hergestellt…',
-                        style: Theme.of(context).textTheme.labelSmall,
-                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton.filled(
+                      onPressed: _send,
+                      icon: const Icon(Icons.send),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 4),
-              Expanded(
-                child: messages.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.chat_bubble_outline,
-                                  size: 56, color: Colors.grey),
-                              const SizedBox(height: 12),
-                              Text(
-                                L10n.tf(context, 'random.hello', {
-                                  'name': partner?.name ??
-                                      L10n.t(context,
-                                          'random.helloDefault')
-                                }),
-                                style: Theme.of(context).textTheme.titleMedium,
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                      : ListView.builder(
-                        padding: const EdgeInsets.all(12),
-                        reverse: true,
-                        itemCount: messages.length,
-                        itemBuilder: (context, i) {
-                          final idx = messages.length - 1 - i;
-                          final msg = messages[idx];
-                          final mine = msg.isFrom(_myUserId ?? '');
-                          final group = idx >= 0 && idx < bubbleGroups.length
-                              ? bubbleGroups[idx]
-                              : (showName: true, showTime: true);
-                          final name = mine
-                              ? L10n.t(context, 'chat.you')
-                              : (partner?.name ??
-                                  L10n.t(context,
-                                      'random.fallbackPartnerName'));
-                          String timeLabel = '';
-                          bestEffortSync('Hm.format', () {
-                            timeLabel = DateFormat.Hm()
-                                .format(msg.timestamp.toLocal());
-                          });
-                          return Align(
-                            alignment: mine
-                                ? Alignment.centerRight
-                                : Alignment.centerLeft,
-                            child: Column(
-                              crossAxisAlignment: mine
-                                  ? CrossAxisAlignment.end
-                                  : CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (group.showName)
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                        bottom: 2, left: 4, right: 4),
-                                    child: Text(
-                                      name,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelSmall
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .primary,
-                                          ),
-                                    ),
-                                  ),
-                                Container(
-                                  margin: const EdgeInsets.symmetric(
-                                      vertical: 4),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 14, vertical: 10),
-                                  constraints: BoxConstraints(
-                                    maxWidth:
-                                        MediaQuery.of(context).size.width *
-                                            0.75,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: mine
-                                        ? Theme.of(context)
-                                            .colorScheme
-                                            .primary
-                                        : Theme.of(context)
-                                            .colorScheme
-                                            .surfaceContainerHighest,
-                                    borderRadius: BorderRadius.circular(18),
-                                  ),
-                                  child: Text(
-                                    msg.text,
-                                    style: TextStyle(
-                                      color: mine
-                                          ? Colors.white
-                                          : Theme.of(context)
-                                              .colorScheme
-                                              .onSurfaceVariant,
-                                    ),
-                                  ),
-                                ),
-                                if (timeLabel.isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                        top: 2, left: 6, right: 6),
-                                    child: Text(
-                                      timeLabel,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelSmall
-                                          ?.copyWith(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurfaceVariant
-                                                .withValues(alpha: 0.7),
-                                            fontSize: 10,
-                                          ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-              ),
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _ctrl,
-                          keyboardType: TextInputType.multiline,
-                          textInputAction: TextInputAction.newline,
-                          maxLines: 5,
-                          minLines: 1,
-                          decoration: InputDecoration(
-                            hintText: L10n.t(context, 'random.hint'),
-                            border: const OutlineInputBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(24)),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 10),
-                          ),
-                          onSubmitted: (_) => _send(),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton.filled(
-                        onPressed: _send,
-                        icon: const Icon(Icons.send),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
+        ),
       },
     );
   }

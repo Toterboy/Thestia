@@ -24,17 +24,21 @@ class HuggingFaceService {
   HuggingFaceService._();
 
   static Future<
-      ({
-        bool isSafe,
-        bool isNsfw,
-        bool needsReview,
-        Map<String, dynamic> categories,
-        String label,
-      })> checkImage(Uint8List imageBytes) async {
+    ({
+      bool isSafe,
+      bool isNsfw,
+      bool needsReview,
+      Map<String, dynamic> categories,
+      String label,
+    })
+  >
+  checkImage(Uint8List imageBytes) async {
     if (!AppConstants.nsfwModerationEnabled) {
       if (kDebugMode) {
-        debugPrint('[HF] NSFW-Moderation deaktiviert (Feature-Flag). '
-            'Bild wird ohne Prüfung durchgelassen.');
+        debugPrint(
+          '[HF] NSFW-Moderation deaktiviert (Feature-Flag). '
+          'Bild wird ohne Prüfung durchgelassen.',
+        );
       }
       return (
         isSafe: true,

@@ -364,8 +364,11 @@ void main() {
         'blindModeEnabled': false,
         'swipeMode': 'invalid_mode',
       });
-      expect(s.blindModeEnabled, isTrue,
-          reason: 'Der Blind Mode laesst sich nicht abschalten.');
+      expect(
+        s.blindModeEnabled,
+        isTrue,
+        reason: 'Der Blind Mode laesst sich nicht abschalten.',
+      );
       expect(s.profileVisibility, ProfileVisibility.everyone);
     });
 

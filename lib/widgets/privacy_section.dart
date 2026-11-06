@@ -19,11 +19,7 @@ import 'package:thestia/widgets/selectable_tile.dart';
 const Color _abgesetzterKasten = Color(0xFF17141C);
 
 class PrivacySectionCard extends ConsumerWidget {
-  const PrivacySectionCard({
-    super.key,
-    this.readOnly = false,
-    this.maxHeight,
-  });
+  const PrivacySectionCard({super.key, this.readOnly = false, this.maxHeight});
 
   final bool readOnly;
 
@@ -114,8 +110,7 @@ class PrivacySectionCard extends ConsumerWidget {
     // strengste Fall: gesperrt.
     final profil = ref.watch(profileProvider);
     final alter = profil.age ?? 0;
-    final entfernungGesperrt =
-        AgeSafetyRules.isRoughDistanceForced(alter);
+    final entfernungGesperrt = AgeSafetyRules.isRoughDistanceForced(alter);
 
     final karte = Card(
       child: Padding(
@@ -135,12 +130,18 @@ class PrivacySectionCard extends ConsumerWidget {
                 groupValue: settings.profileVisibility,
                 title: L10n.t(context, v.labelKey),
                 subtitle: switch (v) {
-                  ProfileVisibility.everyone =>
-                    L10n.t(context, 'settings.visEveryoneSub'),
-                  ProfileVisibility.matchesOnly =>
-                    L10n.t(context, 'settings.visMatchesSub'),
-                  ProfileVisibility.hidden =>
-                    L10n.t(context, 'settings.visHiddenSub'),
+                  ProfileVisibility.everyone => L10n.t(
+                    context,
+                    'settings.visEveryoneSub',
+                  ),
+                  ProfileVisibility.matchesOnly => L10n.t(
+                    context,
+                    'settings.visMatchesSub',
+                  ),
+                  ProfileVisibility.hidden => L10n.t(
+                    context,
+                    'settings.visHiddenSub',
+                  ),
                 },
                 onChanged: (val) =>
                     unawaited(_handleVisibility(context, ref, val)),
@@ -194,10 +195,7 @@ class PrivacySectionCard extends ConsumerWidget {
                 entfernungGesperrt
                     ? L10n.t(context, 'settings.showDistanceSubMinor')
                     : L10n.t(context, 'settings.showDistanceSub'),
-                style: const TextStyle(
-                  color: Color(0xFFC9C4D2),
-                  height: 1.35,
-                ),
+                style: const TextStyle(color: Color(0xFFC9C4D2), height: 1.35),
               ),
               // Bei Minderjaehrigen ist der Schalter gesperrt und der
               // Wert bleibt aus - auch wenn er im Server (etwa aus
@@ -242,9 +240,9 @@ class PrivacySectionTitle extends StatelessWidget {
       child: Text(
         text,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }

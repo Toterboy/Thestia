@@ -65,6 +65,7 @@ class ProfileDetailScreen extends ConsumerStatefulWidget {
 
 class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
   UserProfile? _profile;
+
   /// Fertiger Anzeigetext fuer die Entfernung (v0.10.0).
   ///
   /// Gespeichert wird der TEXT, nicht die Kilometerzahl: die Umrechnung
@@ -89,8 +90,8 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
     // Frische Serverdaten bevorzugen (v0.9.1-Fix: der lokale Chat-Partner
     // war oft veraltet - ohne Vorstellungstext/Audio-Pfad wirkte die
     // Vorstellung als "nicht sichtbar/hörbar"). Server-Fehler -> lokal.
-        // Kein Supabase verfügbar oder User nicht gefunden.
-await bestEffort('from', () async {
+    // Kein Supabase verfügbar oder User nicht gefunden.
+    await bestEffort('from', () async {
       final db = ref.read(supabaseDatabaseServiceProvider);
       final row = await db.fetchPublicProfile(userId);
       if (row != null) {
@@ -487,7 +488,9 @@ await bestEffort('from', () async {
                                   Icon(
                                     Icons.favorite,
                                     size: 16,
-                                    color: Theme.of(context).colorScheme.primary,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
@@ -495,7 +498,9 @@ await bestEffort('from', () async {
                                       context,
                                       'profile.detail.commonWithYou',
                                     ),
-                                    style: Theme.of(context).textTheme.labelLarge
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge
                                         ?.copyWith(
                                           color: Theme.of(
                                             context,
@@ -505,7 +510,10 @@ await bestEffort('from', () async {
                                 ],
                               ),
                               const SizedBox(height: 8),
-                              InterestChips(interests: common, highlighted: true),
+                              InterestChips(
+                                interests: common,
+                                highlighted: true,
+                              ),
                               const SizedBox(height: 12),
                             ],
                             if (others.isNotEmpty) ...[
@@ -555,7 +563,9 @@ await bestEffort('from', () async {
                                 const SizedBox(width: 6),
                                 Text(
                                   L10n.t(context, 'profile.detail.music'),
-                                  style: Theme.of(context).textTheme.titleMedium,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.titleMedium,
                                 ),
                               ],
                             ),
@@ -567,7 +577,9 @@ await bestEffort('from', () async {
                                   Icon(
                                     Icons.star_outline,
                                     size: 16,
-                                    color: Theme.of(context).colorScheme.primary,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                   ),
                                   const SizedBox(width: 6),
                                   Expanded(
@@ -594,7 +606,9 @@ await bestEffort('from', () async {
                                   Icon(
                                     Icons.music_note_outlined,
                                     size: 16,
-                                    color: Theme.of(context).colorScheme.primary,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                   ),
                                   const SizedBox(width: 6),
                                   Expanded(
@@ -619,12 +633,16 @@ await bestEffort('from', () async {
                                   Icon(
                                     Icons.favorite,
                                     size: 16,
-                                    color: Theme.of(context).colorScheme.primary,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
                                     L10n.t(context, 'profile.detail.sameTaste'),
-                                    style: Theme.of(context).textTheme.labelLarge
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge
                                         ?.copyWith(
                                           color: Theme.of(
                                             context,
@@ -661,7 +679,7 @@ await bestEffort('from', () async {
                 ),
               ],
             ],
-      ),
+          ),
         ),
       ),
     );
@@ -697,13 +715,9 @@ class _PublicProfileAvatarState extends ConsumerState<_PublicProfileAvatar> {
   /// Fehlern wird nichts gecacht -> Endlos-Netz bei jedem Rebuild.
   final Map<String, Future<Uint8List?>> _thumbFutures = {};
 
-  Future<Uint8List?> _thumbFuture(String path) =>
-      _thumbFutures[path] ??= ref
-          .read(supabaseStorageServiceProvider)
-          .loadPartnerAvatarBytes(
-            targetUserId: widget.profile.id,
-            path: path,
-          );
+  Future<Uint8List?> _thumbFuture(String path) => _thumbFutures[path] ??= ref
+      .read(supabaseStorageServiceProvider)
+      .loadPartnerAvatarBytes(targetUserId: widget.profile.id, path: path);
 
   @override
   void initState() {

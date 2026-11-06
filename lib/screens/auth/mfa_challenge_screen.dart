@@ -64,9 +64,9 @@ class _MfaChallengeScreenState extends ConsumerState<MfaChallengeScreen> {
           // ließe den Nutzer mit korrektem 2FA-Stand hängen.
           _error = verified
               ? 'Anmeldung erfolgreich, Status konnte nicht geladen werden. '
-                  'Bitte erneut versuchen.'
+                    'Bitte erneut versuchen.'
               : 'Code nicht korrekt. Bitte gib den aktuellen Code aus '
-                  'deiner Authenticator-App ein.';
+                    'deiner Authenticator-App ein.';
           _loading = false;
         });
       }
@@ -124,18 +124,21 @@ class _MfaChallengeScreenState extends ConsumerState<MfaChallengeScreen> {
                     icon: const Icon(Icons.content_paste),
                     tooltip: L10n.t(context, 'mfa.paste'),
                     onPressed: () async {
-                      final data =
-                          await Clipboard.getData('text/plain');
+                      final data = await Clipboard.getData('text/plain');
                       // Dieser Screen wird per GoRouter-Redirect verlassen,
                       // sobald sich der Auth-State aendert - genau dann kann
                       // Clipboard.getData zurueckkommen.
                       if (!mounted) return;
-                      final text =
-                          (data?.text ?? '').replaceAll(RegExp(r'\D'), '');
+                      final text = (data?.text ?? '').replaceAll(
+                        RegExp(r'\D'),
+                        '',
+                      );
                       if (text.isNotEmpty) {
                         setState(() {
                           _codeCtrl.text = text.substring(
-                              0, text.length > 6 ? 6 : text.length);
+                            0,
+                            text.length > 6 ? 6 : text.length,
+                          );
                         });
                       }
                     },

@@ -83,18 +83,13 @@ class _CalmLoadingState extends State<CalmLoading>
                 final ende = math.min(begin + 0.45, 1.0);
                 final anim = CurvedAnimation(
                   parent: _controller,
-                  curve: Interval(
-                    begin,
-                    ende,
-                    curve: Curves.easeInOut,
-                  ),
+                  curve: Interval(begin, ende, curve: Curves.easeInOut),
                 );
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: FadeTransition(
-                    opacity:
-                        Tween<double>(begin: 0.30, end: 1.0).animate(anim),
+                    opacity: Tween<double>(begin: 0.30, end: 1.0).animate(anim),
                     child: Container(
                       width: breite * (i.isEven ? 1.0 : 0.62),
                       height: 12,

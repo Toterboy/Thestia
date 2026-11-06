@@ -104,8 +104,11 @@ void main() {
         'AuthApiException(captcha_verification_failed): 400',
         login: true,
       );
-      expect(PasskeyAuth.requiresCaptcha(e), isTrue,
-          reason: 'Dann fragt die App den Sicherheitscheck ab.');
+      expect(
+        PasskeyAuth.requiresCaptcha(e),
+        isTrue,
+        reason: 'Dann fragt die App den Sicherheitscheck ab.',
+      );
     });
 
     test('andere Fehler loesen KEINEN Sicherheitscheck aus', () {
@@ -146,8 +149,11 @@ void main() {
         login: false,
       );
       expect(e, isA<AppException>());
-      expect(e.message, contains('nicht verfügbar'),
-          reason: 'Die Meldung muss die Ursache nennen.');
+      expect(
+        e.message,
+        contains('nicht verfügbar'),
+        reason: 'Die Meldung muss die Ursache nennen.',
+      );
       expect(e.messageKey, isNotNull);
     });
   });

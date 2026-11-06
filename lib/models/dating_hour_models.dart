@@ -98,8 +98,10 @@ class DatingHourSession {
       ServerTimeService.instance.getVerifiedNow().isAfter(expiresAt);
 
   /// Verbleibende Zeit in Sekunden.
-  int get remainingSeconds =>
-      expiresAt.difference(ServerTimeService.instance.getVerifiedNow()).inSeconds.clamp(0, 300);
+  int get remainingSeconds => expiresAt
+      .difference(ServerTimeService.instance.getVerifiedNow())
+      .inSeconds
+      .clamp(0, 300);
 
   /// Ob beide Nutzer "Annehmen" gedrückt haben.
   bool get isMutualMatch =>
@@ -122,7 +124,8 @@ class DatingHourSession {
   int get autoMatchSecondsLeft {
     final at = autoMatchAt;
     if (at == null) return 0;
-    final rest = at.difference(ServerTimeService.instance.getVerifiedNow())
+    final rest = at
+        .difference(ServerTimeService.instance.getVerifiedNow())
         .inSeconds;
     return rest.clamp(0, 600);
   }
@@ -131,8 +134,7 @@ class DatingHourSession {
   ///
   /// Das ist die Phase, in der die App im Chat sagt: die Zeit ist um,
   /// entscheidet in Ruhe.
-  bool get isDecisionPhase =>
-      remainingSeconds <= 0 && autoMatchSecondsLeft > 0;
+  bool get isDecisionPhase => remainingSeconds <= 0 && autoMatchSecondsLeft > 0;
 
   /// Der Funke wurde automatisch erzeugt.
   bool get isAutoMatched => autoMatched;
@@ -224,17 +226,17 @@ class DatingHourPreferences {
 
   /// Wird als `preferences::jsonb` an `join_dating_hour` übergeben.
   Map<String, dynamic> toJson() => {
-        'ageMin': ageMin,
-        'ageMax': ageMax,
-        'genderPreference': genderPreference,
-        'preferredTrait': preferredTrait.trim().length > 50
-            ? preferredTrait.trim().substring(0, 50)
-            : preferredTrait.trim(),
-        'maxDistanceKm': maxDistanceKm,
-        if (smoking != null) 'smoking': smoking,
-        if (alcohol != null) 'alcohol': alcohol,
-        if (drugs != null) 'drugs': drugs,
-      };
+    'ageMin': ageMin,
+    'ageMax': ageMax,
+    'genderPreference': genderPreference,
+    'preferredTrait': preferredTrait.trim().length > 50
+        ? preferredTrait.trim().substring(0, 50)
+        : preferredTrait.trim(),
+    'maxDistanceKm': maxDistanceKm,
+    if (smoking != null) 'smoking': smoking,
+    if (alcohol != null) 'alcohol': alcohol,
+    if (drugs != null) 'drugs': drugs,
+  };
 
   factory DatingHourPreferences.fromJson(Map<String, dynamic> json) {
     return DatingHourPreferences(
@@ -307,21 +309,21 @@ class DatingHourEvent {
 
   /// Startzeit des Events (lokale Zeitkomponenten aus der DB).
   DateTime get startTime => DateTime(
-        eventDate.year,
-        eventDate.month,
-        eventDate.day,
-        startHour,
-        startMinute,
-      );
+    eventDate.year,
+    eventDate.month,
+    eventDate.day,
+    startHour,
+    startMinute,
+  );
 
   /// Endzeit des Events.
   DateTime get endTime => DateTime(
-        eventDate.year,
-        eventDate.month,
-        eventDate.day,
-        endHour,
-        endMinute,
-      );
+    eventDate.year,
+    eventDate.month,
+    eventDate.day,
+    endHour,
+    endMinute,
+  );
 
   /// Beitritts-Startzeit (10 Minuten vorher).
   DateTime get joinStartTime => startTime.subtract(const Duration(minutes: 10));

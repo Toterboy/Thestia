@@ -43,10 +43,7 @@ const int kMaxScrubDimension = 8192;
 /// werden.
 const int kMaxScrubPixels = 24 * 1000 * 1000;
 
-Future<Uint8List?> stripImageMetadata(
-  Uint8List bytes, {
-  int jpegQuality = 88,
-}) {
+Future<Uint8List?> stripImageMetadata(Uint8List bytes, {int jpegQuality = 88}) {
   // Byte-Limit VOR allem anderen: der Aufrufer soll ein klares `null`
   // bekommen und nicht in einen OOM des Isolates laufen.
   if (bytes.isEmpty || bytes.length > kMaxScrubBytes) {
@@ -88,7 +85,8 @@ Uint8List? _stripSync((Uint8List, int) args) {
     }
 
     // Format beibehalten: JPEG bleibt JPEG (Fotos), alles andere PNG.
-    final isJpegSource = bytes.length > 3 &&
+    final isJpegSource =
+        bytes.length > 3 &&
         bytes[0] == 0xFF &&
         bytes[1] == 0xD8 &&
         bytes[2] == 0xFF;

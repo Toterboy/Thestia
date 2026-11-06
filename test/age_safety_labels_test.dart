@@ -12,10 +12,7 @@ void main() {
     });
 
     test('Meldegrund Falsches Alter existiert', () {
-      expect(
-        ReportType.values.map((t) => t.name),
-        contains('wrongAge'),
-      );
+      expect(ReportType.values.map((t) => t.name), contains('wrongAge'));
       expect(ReportType.wrongAge.labelKey, 'report.type.wrongAge');
       expect(ReportType.wrongAge.value, 'wrongAge');
     });

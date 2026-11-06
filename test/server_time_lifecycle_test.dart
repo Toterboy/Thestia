@@ -50,10 +50,13 @@ void main() {
     );
   });
 
-  test('syncNow() ohne Supabase wirft nicht und bleibt unverifiziert', () async {
-    await service.syncNow();
-    expect(service.isVerified, isFalse);
-  });
+  test(
+    'syncNow() ohne Supabase wirft nicht und bleibt unverifiziert',
+    () async {
+      await service.syncNow();
+      expect(service.isVerified, isFalse);
+    },
+  );
 
   test('syncNowWithResult() ohne Supabase liefert false', () async {
     expect(await service.syncNowWithResult(), isFalse);

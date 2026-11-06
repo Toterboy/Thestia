@@ -41,11 +41,9 @@ class MeetIntentNotifier extends StateNotifier<MeetIntent?> {
 
 /// Provider (Family) für den Meet-Intent eines Matches.
 final meetIntentProvider =
-    StateNotifierProvider.family<MeetIntentNotifier, MeetIntent?, String>(
-  (ref, matchId) {
-    return MeetIntentNotifier(
-      ref.watch(meetIntentServiceProvider),
+    StateNotifierProvider.family<MeetIntentNotifier, MeetIntent?, String>((
+      ref,
       matchId,
-    );
-  },
-);
+    ) {
+      return MeetIntentNotifier(ref.watch(meetIntentServiceProvider), matchId);
+    });

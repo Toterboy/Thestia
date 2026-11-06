@@ -56,15 +56,14 @@ void main() {
     await tester.pumpWidget(_host('light'));
     await tester.pumpAndSettle();
 
-    final breiten = [
-      for (final n in namen) _segmentRect(tester, n).width,
-    ];
+    final breiten = [for (final n in namen) _segmentRect(tester, n).width];
 
     for (var i = 0; i < namen.length; i++) {
       expect(
         (breiten[i] - breiten.first).abs(),
         lessThanOrEqualTo(0.5),
-        reason: '"${namen[i]}" ist ${breiten[i].toStringAsFixed(1)} px breit, '
+        reason:
+            '"${namen[i]}" ist ${breiten[i].toStringAsFixed(1)} px breit, '
             '"${namen.first}" ist ${breiten.first.toStringAsFixed(1)} px. '
             'Die Segmente muessen gleich breit sein - sonst ist der '
             'Abstand links nicht derselbe wie rechts.',
@@ -72,8 +71,9 @@ void main() {
     }
   });
 
-  testWidgets('Der Abstand zwischen den Segmenten ist ueberall gleich',
-      (tester) async {
+  testWidgets('Der Abstand zwischen den Segmenten ist ueberall gleich', (
+    tester,
+  ) async {
     await tester.pumpWidget(_host('light'));
     await tester.pumpAndSettle();
 
@@ -87,15 +87,17 @@ void main() {
     expect(
       (abstaende[1] - abstaende[0]).abs(),
       lessThanOrEqualTo(0.5),
-      reason: 'Die Abstaende unterscheiden sich um '
+      reason:
+          'Die Abstaende unterscheiden sich um '
           '${(abstaende[1] - abstaende[0]).toStringAsFixed(1)} px '
           '(${abstaende.map((a) => a.toStringAsFixed(1)).join(" und ")}). '
           'Sie muessen gleich sein.',
     );
   });
 
-  testWidgets('Die Zeile endet genauso weit rechts wie sie links beginnt',
-      (tester) async {
+  testWidgets('Die Zeile endet genauso weit rechts wie sie links beginnt', (
+    tester,
+  ) async {
     // Der Nutzerwunsch war "gleich links und rechts": der Abstand
     // zwischen dem Rand des Containers und dem ersten Segment muss
     // gleich sein wie der zwischen dem letzten Segment und dem Rand.
@@ -124,7 +126,8 @@ void main() {
     expect(
       (links - rechts).abs(),
       lessThanOrEqualTo(0.5),
-      reason: 'Links sind es ${links.toStringAsFixed(1)} px, rechts '
+      reason:
+          'Links sind es ${links.toStringAsFixed(1)} px, rechts '
           '${rechts.toStringAsFixed(1)} px. Beide muessen gleich sein.',
     );
   });
@@ -143,9 +146,13 @@ void main() {
       breiten.add(_segmentRect(tester, 'Hell').width);
     }
     for (final b in breiten) {
-      expect((b - breiten.first).abs(), lessThanOrEqualTo(0.5),
-          reason: 'Die Segmentbreite springt beim Wechsel des Modus: '
-              '${breiten.map((x) => x.toStringAsFixed(1)).join(", ")} px.');
+      expect(
+        (b - breiten.first).abs(),
+        lessThanOrEqualTo(0.5),
+        reason:
+            'Die Segmentbreite springt beim Wechsel des Modus: '
+            '${breiten.map((x) => x.toStringAsFixed(1)).join(", ")} px.',
+      );
     }
   });
 }

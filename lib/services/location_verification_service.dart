@@ -112,7 +112,10 @@ class LocationVerificationService {
   ///
   /// Schwellenwert: 100 Meter (konfigurierbar).
   /// In Produktion: Server-seitige Prüfung gegen alle verifizierten Standorte.
-  Future<bool> isLocationSuspicious(Position newPosition, {double thresholdMeters = 100}) async {
+  Future<bool> isLocationSuspicious(
+    Position newPosition, {
+    double thresholdMeters = 100,
+  }) async {
     final saved = await getVerificationLocation();
     if (saved == null) return false;
 
@@ -131,6 +134,7 @@ class LocationVerificationService {
 }
 
 /// Provider für den LocationVerificationService.
-final locationVerificationServiceProvider = Provider<LocationVerificationService>((ref) {
-  return LocationVerificationService();
-});
+final locationVerificationServiceProvider =
+    Provider<LocationVerificationService>((ref) {
+      return LocationVerificationService();
+    });

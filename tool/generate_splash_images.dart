@@ -58,8 +58,10 @@ Future<void> main() async {
     img.compositeImage(canvas, resized, dstX: offsetX, dstY: offsetY);
 
     File(outputPath).writeAsBytesSync(img.encodePng(canvas));
-    stdout.writeln('OK: $outputPath ($canvasSize x $canvasSize, '
-        'Logo $logoSize px)');
+    stdout.writeln(
+      'OK: $outputPath ($canvasSize x $canvasSize, '
+      'Logo $logoSize px)',
+    );
   }
 
   // 1) Regulaerer Splash (Android < 12): Logo ~47 % der Leinwand.

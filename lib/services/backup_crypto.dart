@@ -56,8 +56,7 @@ class BackupCrypto {
         true,
         AEADParameters(KeyParameter(key), tagLengthBits, iv, Uint8List(0)),
       );
-    final ciphertext =
-        gcm.process(Uint8List.fromList(utf8.encode(plaintext)));
+    final ciphertext = gcm.process(Uint8List.fromList(utf8.encode(plaintext)));
 
     final combined = Uint8List(salt.length + iv.length + ciphertext.length)
       ..setAll(0, salt)
@@ -84,9 +83,7 @@ class BackupCrypto {
     }
 
     if (combined.length < saltLength + ivLength + tagLengthBits ~/ 8) {
-      throw const FormatException(
-        'Backup Daten sind beschädigt oder zu kurz.',
-      );
+      throw const FormatException('Backup Daten sind beschädigt oder zu kurz.');
     }
 
     final salt = combined.sublist(0, saltLength);
@@ -117,11 +114,7 @@ class BackupCrypto {
   static Uint8List _deriveKey(String password, List<int> salt) {
     final derivator = PBKDF2KeyDerivator(HMac(SHA256Digest(), 64));
     derivator.init(
-      Pbkdf2Parameters(
-        Uint8List.fromList(salt),
-        pbkdf2Iterations,
-        keyLength,
-      ),
+      Pbkdf2Parameters(Uint8List.fromList(salt), pbkdf2Iterations, keyLength),
     );
     return Uint8List.fromList(
       derivator.process(Uint8List.fromList(utf8.encode(password))),
@@ -133,9 +126,13 @@ class BackupCrypto {
   /// Zufallsgenerator der Plattform, z. B. /dev/urandom).
   static Uint8List _randomBytes(int length) {
     final rng = SecureRandom('Fortuna')
-      ..seed(KeyParameter(Uint8List.fromList(
-        List<int>.generate(32, (_) => Random.secure().nextInt(256)),
-      )));
+      ..seed(
+        KeyParameter(
+          Uint8List.fromList(
+            List<int>.generate(32, (_) => Random.secure().nextInt(256)),
+          ),
+        ),
+      );
     return Uint8List.fromList(rng.nextBytes(length));
   }
 }

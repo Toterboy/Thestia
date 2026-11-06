@@ -80,17 +80,15 @@ const Map<String, List<String>> _legacyKeys = {
     'seen_qr_ids',
   ],
   // v0.9.2 (Release-Blocker): Beide Namespaces wurden bei der Umstellung
-// vergessen. `hive_encryption_key` ohne Migration bedeutet einen NEUEN
-// Verschluesselungsschluessel - jede verschluesselte Box waere danach nicht
-// mehr lesbar, bei Signal-Keys also Verlust der E2E-Identitaet.
-// `session` bleibt hier leer, weil der Key projektabhaengig ist
-// (`sb-<host-prefix>-auth-token`); er wird ueber `extraSessionKeys`
-// dazugefuegt.
-SecureNamespaces.session: [],
-SecureNamespaces.signals: [
-  'hive_encryption_key',
-],
-SecureNamespaces.location: [
+  // vergessen. `hive_encryption_key` ohne Migration bedeutet einen NEUEN
+  // Verschluesselungsschluessel - jede verschluesselte Box waere danach nicht
+  // mehr lesbar, bei Signal-Keys also Verlust der E2E-Identitaet.
+  // `session` bleibt hier leer, weil der Key projektabhaengig ist
+  // (`sb-<host-prefix>-auth-token`); er wird ueber `extraSessionKeys`
+  // dazugefuegt.
+  SecureNamespaces.session: [],
+  SecureNamespaces.signals: ['hive_encryption_key'],
+  SecureNamespaces.location: [
     'thestia_loc_lat',
     'thestia_loc_lng',
     'thestia_loc_ts',

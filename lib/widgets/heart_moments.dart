@@ -25,36 +25,38 @@ class Milestones {
     final now = DateTime.now();
     final candidates = <Milestone>[];
     if (quizPassedAt != null) {
-      candidates.add(Milestone(
-        type: 'quizPassed',
-        date: quizPassedAt,
-        titleKey: 'milestone.quizPassed',
-        bodyKey: 'milestone.quizPassedBody',
-      ));
+      candidates.add(
+        Milestone(
+          type: 'quizPassed',
+          date: quizPassedAt,
+          titleKey: 'milestone.quizPassed',
+          bodyKey: 'milestone.quizPassedBody',
+        ),
+      );
     }
     if (matchedAt != null) {
-      candidates.add(Milestone(
-        type: 'sparkDay',
-        titleKey: 'milestone.sparkDay',
-        bodyKey: 'milestone.sparkDayBody',
-        date: matchedAt,
-      ));
-      final months = [
-        (1, 'month1'),
-        (3, 'month3'),
-        (12, 'year1'),
-      ];
+      candidates.add(
+        Milestone(
+          type: 'sparkDay',
+          titleKey: 'milestone.sparkDay',
+          bodyKey: 'milestone.sparkDayBody',
+          date: matchedAt,
+        ),
+      );
+      final months = [(1, 'month1'), (3, 'month3'), (12, 'year1')];
       for (final (n, type) in months) {
         final at = _addMonths(matchedAt, n);
         // Zeigen, solange der Moment <= 3 Tage her ist (nicht ewig nach-
         // hinken), und nur wenn er erreicht wurde.
         if (now.isAfter(at) && now.difference(at).inDays <= 3) {
-          candidates.add(Milestone(
-            type: type,
-            date: at,
-            titleKey: 'milestone.$type',
-            bodyKey: 'milestone.${type}Body',
-          ));
+          candidates.add(
+            Milestone(
+              type: type,
+              date: at,
+              titleKey: 'milestone.$type',
+              bodyKey: 'milestone.${type}Body',
+            ),
+          );
         }
       }
     }
@@ -73,8 +75,7 @@ class Milestones {
       m -= 12;
       y++;
     }
-    return DateTime(y, m, base.day,
-        base.hour, base.minute, base.second);
+    return DateTime(y, m, base.day, base.hour, base.minute, base.second);
   }
 }
 
@@ -96,8 +97,8 @@ class Milestone {
   String formattedDate(String languageCode) {
     try {
       return DateFormat.yMMMMd(
-              languageCode == 'en' ? 'en_US' : 'de_DE')
-          .format(date.toLocal());
+        languageCode == 'en' ? 'en_US' : 'de_DE',
+      ).format(date.toLocal());
     } catch (_) {
       final d = date.toLocal();
       return '${d.day}.${d.month}.${d.year}';

@@ -363,30 +363,28 @@ class _VerificationVideoScreenState
       await ref
           .read(settingsProvider.notifier)
           .setCameraDisclosureAccepted(true);
-      await ref
-          .read(settingsProvider.notifier)
-          .setMicDisclosureAccepted(true);
+      await ref.read(settingsProvider.notifier).setMicDisclosureAccepted(true);
     }
     await _initializeCamera();
   }
 
   Future<bool?> _askCameraDisclosure() => showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(L10n.t(context, 'verify.cameraDisclosureTitle')),
-          content: Text(L10n.t(context, 'verify.cameraDisclosureBody')),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: Text(L10n.t(context, 'common.cancel')),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(L10n.t(context, 'verify.cameraDisclosureAccept')),
-            ),
-          ],
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(L10n.t(context, 'verify.cameraDisclosureTitle')),
+      content: Text(L10n.t(context, 'verify.cameraDisclosureBody')),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Text(L10n.t(context, 'common.cancel')),
         ),
-      );
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: Text(L10n.t(context, 'verify.cameraDisclosureAccept')),
+        ),
+      ],
+    ),
+  );
 
   Future<void> _initializeCamera() async {
     try {
@@ -466,9 +464,9 @@ class _VerificationVideoScreenState
     final controller = _cameraController;
     _cameraController = null;
     if (controller == null) return;
-        // Beim Freigeben darf nichts werfen - der Aufrufer ist im
-      // catch-Block einer Fehlerbehandlung.
-await bestEffort('dispose', () async {
+    // Beim Freigeben darf nichts werfen - der Aufrufer ist im
+    // catch-Block einer Fehlerbehandlung.
+    await bestEffort('dispose', () async {
       await controller.dispose();
     });
     if (mounted) setState(() {});
@@ -583,21 +581,23 @@ await bestEffort('dispose', () async {
       // (Future.wait liefert sie in der Reihenfolge der Futures), der
       // Median rechnet also mit denselben Werten wie vorher.
       final zeitpunkte = AgeEstimationService.verificationFrameTimeMs;
-      final ergebnisse = await Future.wait(zeitpunkte.map((ms) async {
-        try {
-          final Uint8List? bytes = await thumb.VideoThumbnail.thumbnailData(
-            video: videoPath,
-            imageFormat: thumb.ImageFormat.JPEG,
-            maxWidth: 480,
-            quality: 80,
-            timeMs: ms,
-          ).timeout(const Duration(seconds: 10), onTimeout: () => null);
-          return bytes;
-        } catch (e) {
-          debugPrint('[Verification] Frame @$ms ms übersprungen: $e');
-          return null;
-        }
-      }));
+      final ergebnisse = await Future.wait(
+        zeitpunkte.map((ms) async {
+          try {
+            final Uint8List? bytes = await thumb.VideoThumbnail.thumbnailData(
+              video: videoPath,
+              imageFormat: thumb.ImageFormat.JPEG,
+              maxWidth: 480,
+              quality: 80,
+              timeMs: ms,
+            ).timeout(const Duration(seconds: 10), onTimeout: () => null);
+            return bytes;
+          } catch (e) {
+            debugPrint('[Verification] Frame @$ms ms übersprungen: $e');
+            return null;
+          }
+        }),
+      );
       return ergebnisse
           .whereType<Uint8List>()
           .where((bytes) => bytes.isNotEmpty)
@@ -937,10 +937,12 @@ await bestEffort('dispose', () async {
                       FittedBox(
                         fit: BoxFit.cover,
                         child: SizedBox(
-                          width: _cameraController!.value.previewSize?.height ??
+                          width:
+                              _cameraController!.value.previewSize?.height ??
                               360,
                           height:
-                              _cameraController!.value.previewSize?.width ?? 640,
+                              _cameraController!.value.previewSize?.width ??
+                              640,
                           child: CameraPreview(_cameraController!),
                         ),
                       )

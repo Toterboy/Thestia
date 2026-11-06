@@ -36,12 +36,12 @@ class _MeetIntentCardState extends ConsumerState<MeetIntentCard> {
 
   /// Date-Ideen lokalisiert (meet.idea.1..5).
   List<String> _dateIdeas(BuildContext context) => [
-        L10n.t(context, 'meet.idea.1'),
-        L10n.t(context, 'meet.idea.2'),
-        L10n.t(context, 'meet.idea.3'),
-        L10n.t(context, 'meet.idea.4'),
-        L10n.t(context, 'meet.idea.5'),
-      ];
+    L10n.t(context, 'meet.idea.1'),
+    L10n.t(context, 'meet.idea.2'),
+    L10n.t(context, 'meet.idea.3'),
+    L10n.t(context, 'meet.idea.4'),
+    L10n.t(context, 'meet.idea.5'),
+  ];
 
   @override
   void dispose() {
@@ -82,8 +82,7 @@ class _MeetIntentCardState extends ConsumerState<MeetIntentCard> {
         icon: Icons.schedule,
         color: Theme.of(context).colorScheme.primary,
         title: L10n.t(context, 'meet.youWant'),
-        body: L10n.tf(context, 'meet.waitBody',
-            {'name': widget.partnerName}),
+        body: L10n.tf(context, 'meet.waitBody', {'name': widget.partnerName}),
       );
     }
 
@@ -137,12 +136,12 @@ class _MeetIntentCardState extends ConsumerState<MeetIntentCard> {
               children: [
                 const Icon(Icons.handshake),
                 const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  L10n.t(context, 'meet.planningTitle'),
-                  style: Theme.of(context).textTheme.titleMedium,
+                Expanded(
+                  child: Text(
+                    L10n.t(context, 'meet.planningTitle'),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                 ),
-              ),
               ],
             ),
             const SizedBox(height: 8),
@@ -151,9 +150,9 @@ class _MeetIntentCardState extends ConsumerState<MeetIntentCard> {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: _dateIdeas(context)
-                  .map((idea) => Chip(label: Text(idea)))
-                  .toList(),
+              children: _dateIdeas(
+                context,
+              ).map((idea) => Chip(label: Text(idea))).toList(),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -163,7 +162,9 @@ class _MeetIntentCardState extends ConsumerState<MeetIntentCard> {
                 hintText: L10n.t(context, 'meet.noteHint'),
                 border: const OutlineInputBorder(),
                 contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 8),
+                  horizontal: 12,
+                  vertical: 8,
+                ),
               ),
             ),
             const SizedBox(height: 12),

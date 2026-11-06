@@ -44,11 +44,11 @@ class DeviceSession {
       deviceModel: map['device_model'] as String?,
       lastSeenAt:
           DateTime.tryParse(map['last_seen_at'] as String? ?? '') ??
-              DateTime.now(),
-      createdAt: DateTime.tryParse(map['created_at'] as String? ?? '') ??
           DateTime.now(),
-      isCurrent:
-          currentDeviceId != null && map['device_id'] == currentDeviceId,
+      createdAt:
+          DateTime.tryParse(map['created_at'] as String? ?? '') ??
+          DateTime.now(),
+      isCurrent: currentDeviceId != null && map['device_id'] == currentDeviceId,
     );
   }
 
@@ -77,9 +77,8 @@ class DeviceSessionService {
 
   final LocalStorage _storage;
 
-  SupabaseDatabaseService get _db => SupabaseDatabaseService(
-        SupabaseService.client,
-      );
+  SupabaseDatabaseService get _db =>
+      SupabaseDatabaseService(SupabaseService.client);
 
   /// Stabile Geräte-ID dieser Installation (lazy erzeugt).
   Future<String> getDeviceId() async {
@@ -164,7 +163,7 @@ class DeviceSessionService {
         final m = manufacturer.isEmpty
             ? model
             : '${manufacturer[0].toUpperCase()}'
-                '${manufacturer.substring(1)} $model';
+                  '${manufacturer.substring(1)} $model';
         return m.length > 80 ? m.substring(0, 80) : m;
       }
       if (Platform.isIOS) {
@@ -195,8 +194,7 @@ class DeviceSessionService {
     if (!SupabaseService.isInitialized) return;
     // WICHTIG: Erst die Server-Sessions invalidieren, dann die Liste
     // aufräumen - schlägt der Logout fehl, bleibt alles wie es war.
-    await SupabaseService.client.auth
-        .signOut(scope: SignOutScope.others);
+    await SupabaseService.client.auth.signOut(scope: SignOutScope.others);
     await _db.deleteOtherOwnDevices(await getDeviceId());
   }
 

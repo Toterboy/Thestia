@@ -66,8 +66,8 @@ class FindYourMatchNotifier extends StateNotifier<List<UserProfile>> {
 /// Provider für den Find-your-Match-Notifier.
 final findYourMatchProvider =
     StateNotifierProvider<FindYourMatchNotifier, List<UserProfile>>((ref) {
-  return FindYourMatchNotifier(ref.watch(findYourMatchServiceProvider));
-});
+      return FindYourMatchNotifier(ref.watch(findYourMatchServiceProvider));
+    });
 
 /// Anzahl offener Likes (eigene + erhaltene) für das Dashboard.
 final pendingLikesCountProvider = FutureProvider<int>((ref) async {
@@ -84,8 +84,7 @@ final pendingLikesCountProvider = FutureProvider<int>((ref) async {
 });
 
 /// Erhaltene Likes (Liste, für "Neue Likes"-Badge mit Seen-Abgleich).
-final receivedLikesProvider =
-    FutureProvider<List<ReceivedLike>>((ref) async {
+final receivedLikesProvider = FutureProvider<List<ReceivedLike>>((ref) async {
   if (!SupabaseService.isInitialized) return const [];
   try {
     return await ref.watch(findYourMatchServiceProvider).listReceivedLikes();
@@ -97,13 +96,10 @@ final receivedLikesProvider =
 
 /// Server-Funken mit Zustand (v0.9.1): für "Neue Funken"-Badge mit
 /// Seen-Abgleich (unabhängig vom lokalen Chat-Cache).
-final serverMatchesProvider =
-    FutureProvider<List<MatchWithState>>((ref) async {
+final serverMatchesProvider = FutureProvider<List<MatchWithState>>((ref) async {
   if (!SupabaseService.isInitialized) return const [];
   try {
-    return await ref
-        .watch(findYourMatchServiceProvider)
-        .listMatchesWithState();
+    return await ref.watch(findYourMatchServiceProvider).listMatchesWithState();
   } catch (e) {
     debugPrint('[ServerMatches] Laden fehlgeschlagen: $e');
     return const [];

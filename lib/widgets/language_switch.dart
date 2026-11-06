@@ -22,10 +22,9 @@ class LanguageSwitch extends ConsumerStatefulWidget {
 class _LanguageSwitchState extends ConsumerState<LanguageSwitch> {
   bool _expanded = false;
 
-  String _label(BuildContext context, String code) =>
-      code == 'de'
-          ? L10n.t(context, 'language.german')
-          : L10n.t(context, 'language.english');
+  String _label(BuildContext context, String code) => code == 'de'
+      ? L10n.t(context, 'language.german')
+      : L10n.t(context, 'language.english');
 
   void _select(String code) {
     saveLocale(ref, Locale(code));
@@ -59,11 +58,7 @@ class _LanguageSwitchState extends ConsumerState<LanguageSwitch> {
             color: scheme.primary,
             shape: BoxShape.circle,
           ),
-          child: Icon(
-            Icons.translate,
-            size: 22,
-            color: scheme.onPrimary,
-          ),
+          child: Icon(Icons.translate, size: 22, color: scheme.onPrimary),
         ),
         itemBuilder: (context) => [
           CheckedPopupMenuItem(
@@ -102,8 +97,8 @@ class _LanguageSwitchState extends ConsumerState<LanguageSwitch> {
                 Text(
                   _label(context, current),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
+                    color: scheme.onSurfaceVariant,
+                  ),
                 ),
                 AnimatedRotation(
                   turns: _expanded ? 0.5 : 0,

@@ -18,7 +18,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// bestehenden System), primär nutzt Supabase Auth aber seine eigene
 /// persistente Session.
 class SupabaseAuthService implements AppAuthService {
-  SupabaseAuthService(this._supabase, this._tokens, this._encryption, this._database);
+  SupabaseAuthService(
+    this._supabase,
+    this._tokens,
+    this._encryption,
+    this._database,
+  );
 
   final SupabaseClient _supabase;
   final SecureTokenStore _tokens;
@@ -61,9 +66,9 @@ class SupabaseAuthService implements AppAuthService {
           await Future<void>.delayed(Duration(seconds: 2 * attempt));
         }
         try {
-          final refreshed = await _supabase.auth
-              .refreshSession()
-              .timeout(const Duration(seconds: 10));
+          final refreshed = await _supabase.auth.refreshSession().timeout(
+            const Duration(seconds: 10),
+          );
           if (refreshed.session != null) {
             session = refreshed.session;
             lastError = null;
@@ -74,8 +79,10 @@ class SupabaseAuthService implements AppAuthService {
         }
       }
       if (lastError != null || session == null) {
-        debugPrint('[AuthService] Session-Refresh nach Stunden '
-            'fehlgeschlagen (Abmeldung): $lastError');
+        debugPrint(
+          '[AuthService] Session-Refresh nach Stunden '
+          'fehlgeschlagen (Abmeldung): $lastError',
+        );
         return false;
       }
     }
@@ -90,9 +97,9 @@ class SupabaseAuthService implements AppAuthService {
   /// Prüft die lokale Session im Hintergrund gegen die Auth-API.
   Future<void> _validateSession() async {
     try {
-      final userResponse = await _supabase.auth
-          .getUser()
-          .timeout(const Duration(seconds: 5));
+      final userResponse = await _supabase.auth.getUser().timeout(
+        const Duration(seconds: 5),
+      );
       final serverUser = userResponse.user;
       if (serverUser == null || serverUser.emailConfirmedAt == null) {
         // E-Mail (noch) nicht bestätigt bzw. User weg: Session verwerfen.
@@ -113,7 +120,9 @@ class SupabaseAuthService implements AppAuthService {
     } catch (e) {
       // Unbekannter Fehler – Session behalten (offline-tolerant).
       if (kDebugMode) {
-        debugPrint('[SupabaseAuthService] getUser()-Validierung fehlgeschlagen: $e');
+        debugPrint(
+          '[SupabaseAuthService] getUser()-Validierung fehlgeschlagen: $e',
+        );
       }
     }
   }
@@ -123,8 +132,8 @@ class SupabaseAuthService implements AppAuthService {
   /// [GoTrueClient.signOut] ist ohne Angabe rein lokal (scope: local) –
   /// es wird kein Netzwerk-Call unternommen, der hängen bleiben könnte.
   Future<void> _clearLocalSession() async {
-        // Best-effort
-await bestEffort('signOut', () async {
+    // Best-effort
+    await bestEffort('signOut', () async {
       await _supabase.auth.signOut();
     });
     await _tokens.clear();
@@ -168,7 +177,8 @@ await bestEffort('signOut', () async {
       throw EmailBannedException(email: email.trim(), reason: banStatus.reason);
     }
 
-    final birth = '${birthDate.year.toString().padLeft(4, '0')}-'
+    final birth =
+        '${birthDate.year.toString().padLeft(4, '0')}-'
         '${birthDate.month.toString().padLeft(2, '0')}-'
         '${birthDate.day.toString().padLeft(2, '0')}';
 
@@ -185,7 +195,9 @@ await bestEffort('signOut', () async {
     // WICHTIG: Das Passwort darf NIEMALS in raw_user_meta_data landen!
     // Nur unkritische Profilfelder: name, gender, birth_date.
     if (kDebugMode) {
-      debugPrint('[SupabaseAuthService] signUp() wird aufgerufen: email=$email');
+      debugPrint(
+        '[SupabaseAuthService] signUp() wird aufgerufen: email=$email',
+      );
       debugPrint('[SupabaseAuthService] Supabase-URL: ${_supabase.rest.url}');
     }
 
@@ -206,10 +218,16 @@ await bestEffort('signOut', () async {
         debugPrint('[SupabaseAuthService] signUp() abgeschlossen.');
       }
 
-      user = authResponse.user ?? (throw AppException('Registrierung fehlgeschlagen. Bitte versuche es erneut.'));
+      user =
+          authResponse.user ??
+          (throw AppException(
+            'Registrierung fehlgeschlagen. Bitte versuche es erneut.',
+          ));
     } on AuthException catch (e) {
       if (kDebugMode) {
-        debugPrint('[SupabaseAuthService] AuthException: ${e.message} (Code: ${e.statusCode})');
+        debugPrint(
+          '[SupabaseAuthService] AuthException: ${e.message} (Code: ${e.statusCode})',
+        );
       }
       // Serverseitige Sperre (handle_new_user-Trigger, Migration 045):
       // auch dann den Entsperrungs-Flow anbieten, wenn der Vorab-Check
@@ -220,7 +238,9 @@ await bestEffort('signOut', () async {
       rethrow;
     } catch (e, st) {
       if (kDebugMode) {
-        debugPrint('[SupabaseAuthService] UNERWARTETER Fehler bei signUp(): $e');
+        debugPrint(
+          '[SupabaseAuthService] UNERWARTETER Fehler bei signUp(): $e',
+        );
         debugPrint('[SupabaseAuthService] StackTrace: $st');
       }
       rethrow;
@@ -236,17 +256,19 @@ await bestEffort('signOut', () async {
     //   bestätigte Registrierung; ein frisch angelegter Account ist
     //   Sekunden alt).
     if (authResponse.session == null) {
-      final alreadyConfirmed =
-          (user.emailConfirmedAt ?? '').trim().isNotEmpty;
+      final alreadyConfirmed = (user.emailConfirmedAt ?? '').trim().isNotEmpty;
       final createdAt = DateTime.tryParse(user.createdAt);
-      final staleSignup = createdAt != null &&
+      final staleSignup =
+          createdAt != null &&
           DateTime.now().toUtc().difference(createdAt) >
               const Duration(minutes: 30);
       if (alreadyConfirmed || staleSignup) {
         if (kDebugMode) {
-          debugPrint('[SupabaseAuthService] Registrierung blockiert: '
-              'E-Mail bereits registriert (confirmed=$alreadyConfirmed, '
-              'stale=$staleSignup).');
+          debugPrint(
+            '[SupabaseAuthService] Registrierung blockiert: '
+            'E-Mail bereits registriert (confirmed=$alreadyConfirmed, '
+            'stale=$staleSignup).',
+          );
         }
         throw AppException('EMAIL_ALREADY_REGISTERED');
       }
@@ -263,8 +285,12 @@ await bestEffort('signOut', () async {
     //    DB existiert, sobald der Nutzer nach E-Mail-Bestätigung vollständig
     //    authentifiziert ist.
     if (kDebugMode) {
-      debugPrint('[SupabaseAuthService] Registration erfolgreich: userId=${user.id}');
-      debugPrint('[SupabaseAuthService] Profil wurde via handle_new_user-Trigger angelegt.');
+      debugPrint(
+        '[SupabaseAuthService] Registration erfolgreich: userId=${user.id}',
+      );
+      debugPrint(
+        '[SupabaseAuthService] Profil wurde via handle_new_user-Trigger angelegt.',
+      );
       debugPrint('[SupabaseAuthService] Bestätigungs-E-Mail wurde versendet.');
     }
 
@@ -425,7 +451,8 @@ await bestEffort('signOut', () async {
     final session = _supabase.auth.currentSession;
     if (user == null || session == null) {
       throw AppException(
-          'Passkey-Anmeldung fehlgeschlagen. Bitte erneut versuchen.');
+        'Passkey-Anmeldung fehlgeschlagen. Bitte erneut versuchen.',
+      );
     }
 
     await _tokens.saveTokens(
@@ -445,10 +472,7 @@ await bestEffort('signOut', () async {
   Future<void> sendEmailConfirmation() async {
     final user = _supabase.auth.currentUser;
     if (user == null) throw AppException('Nicht eingeloggt.');
-    await _supabase.auth.resend(
-      type: OtpType.signup,
-      email: user.email ?? '',
-    );
+    await _supabase.auth.resend(type: OtpType.signup, email: user.email ?? '');
   }
 
   /// Loggt den Nutzer aus Supabase Auth aus und löscht lokale Tokens.
@@ -466,8 +490,8 @@ await bestEffort('signOut', () async {
     } catch (_) {
       // Offline-Fallback: nur lokal ausloggen; die serverseitige Session
       // läuft bis zum Ablauf des Refresh-Tokens weiter.
-            // Best-effort: lokales Löschen der Tokens erfolgt trotzdem.
-await bestEffort('signOut', () async {
+      // Best-effort: lokales Löschen der Tokens erfolgt trotzdem.
+      await bestEffort('signOut', () async {
         await _supabase.auth.signOut();
       });
     }
@@ -493,8 +517,8 @@ await bestEffort('signOut', () async {
         // statt kryptisch abzulehnen.
         try {
           await _supabase.auth.refreshSession().timeout(
-                const Duration(seconds: 15),
-              );
+            const Duration(seconds: 15),
+          );
         } catch (_) {
           throw AppException(
             'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an '
@@ -522,10 +546,10 @@ await bestEffort('signOut', () async {
         // Echte Server-Antwort statt Generik: details enthält den
         // JSON-Body der Function ({"error": "..."}). So wird aus
         // "konnte nicht übermittelt werden" eine Diagnose.
-        final serverError =
-            e.details is Map ? (e.details as Map)['error']?.toString() : null;
-        if (serverError != null &&
-            serverError.contains('mfa_required')) {
+        final serverError = e.details is Map
+            ? (e.details as Map)['error']?.toString()
+            : null;
+        if (serverError != null && serverError.contains('mfa_required')) {
           throw AppException(
             'Für die Löschung ist ein aktueller MFA-Code nötig. Bitte '
             'schließe zuerst die 2FA-Abfrage ab und versuche es erneut.',
@@ -545,8 +569,8 @@ await bestEffort('signOut', () async {
         );
       }
     }
-        // Best-effort
-await bestEffort('signOut', () async {
+    // Best-effort
+    await bestEffort('signOut', () async {
       await _supabase.auth.signOut();
     });
     await _tokens.clear();

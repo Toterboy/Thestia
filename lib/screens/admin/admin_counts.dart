@@ -68,8 +68,7 @@ class AdminCounts {
   /// `true`, wenn die Bug-Zahl gegenueber dem Vortag mehr als verdoppelt
   /// hat UND mindestens drei neue dazugekommen sind. Ohne die Mindestmenge
   /// waere "1 -> 2" ein Alarm, der jeder Fehlbedienung folgt.
-  bool get bugsRising =>
-      bugsLast24h >= 3 && bugsLast24h > bugsPrevious24h * 2;
+  bool get bugsRising => bugsLast24h >= 3 && bugsLast24h > bugsPrevious24h * 2;
 
   /// Platzhalter, solange nichts geladen ist: -1 statt 0, weil eine echte
   /// Null etwas anderes bedeutet als "noch nicht bekannt".

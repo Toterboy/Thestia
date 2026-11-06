@@ -220,8 +220,7 @@ class AgeEstimationService {
   ///
   /// compute() legt die Arbeit in ein Hintergrund-Isolate. Der
   /// sha256-Import bleibt fuer die Vergleichsfunktion noetig.
-  static Future<String> _hash(Uint8List bytes) =>
-      compute(_hashArgs, bytes);
+  static Future<String> _hash(Uint8List bytes) => compute(_hashArgs, bytes);
 
   /// Die Arbeit fuer [compute] - muss statisch und top-level sein.
   static String _hashArgs(Uint8List bytes) => sha256.convert(bytes).toString();
@@ -240,10 +239,7 @@ class AgeEstimationService {
         data.offsetInBytes,
         data.lengthInBytes,
       );
-      if (!isExpectedSha256(
-        await _hash(bytes),
-        expectedDetectorSha256,
-      )) {
+      if (!isExpectedSha256(await _hash(bytes), expectedDetectorSha256)) {
         debugPrint(
           '[AgeEstimation] Detektor-Hash weicht ab (Modell '
           'ausgetauscht?) - Detektor deaktiviert, manuelle Prüfung.',
@@ -268,10 +264,7 @@ class AgeEstimationService {
         data.offsetInBytes,
         data.lengthInBytes,
       );
-      if (!isExpectedSha256(
-        await _hash(bytes),
-        expectedAgeModelSha256,
-      )) {
+      if (!isExpectedSha256(await _hash(bytes), expectedAgeModelSha256)) {
         debugPrint(
           '[AgeEstimation] Altersmodell-Hash weicht ab (Modell '
           'ausgetauscht?) - Schätzung deaktiviert, manuelle Prüfung.',

@@ -110,8 +110,13 @@ void main() {
         pending: const [],
         throwBeforeHandling: true,
       );
-      expect(step, 1, reason: 'Fehler muss den Backoff genau so strecken '
-          'wie ein leerer Poll');
+      expect(
+        step,
+        1,
+        reason:
+            'Fehler muss den Backoff genau so strecken '
+            'wie ein leerer Poll',
+      );
     });
 
     test('fuenf Fehlversuche landen bei Stufe 3 (45 s)', () async {
@@ -130,10 +135,7 @@ void main() {
       final leer = GlobalRelayInbox(_FakeRef());
       final fehler = GlobalRelayInbox(_FakeRef());
       await leer.debugPollOnce(pending: const []);
-      await fehler.debugPollOnce(
-        pending: const [],
-        throwBeforeHandling: true,
-      );
+      await fehler.debugPollOnce(pending: const [], throwBeforeHandling: true);
       expect(leer.debugBackoffStep, fehler.debugBackoffStep);
       expect(fehler.debugBackoffStep, 1);
     });

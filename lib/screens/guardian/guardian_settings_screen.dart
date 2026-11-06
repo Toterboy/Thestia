@@ -29,14 +29,10 @@ class GuardianSettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(L10n.t(context, 'guardian.sectionTitle')),
-      ),
+      appBar: AppBar(title: Text(L10n.t(context, 'guardian.sectionTitle'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: const [
-          GuardianSection(showTitle: false),
-        ],
+        children: const [GuardianSection(showTitle: false)],
       ),
     );
   }

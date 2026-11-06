@@ -20,10 +20,7 @@ void main() {
     });
 
     test('RelayMessage.fromJson ist tolerant (Defaults)', () {
-      final msg = RelayMessage.fromJson({
-        'id': 7,
-        'sender': 'x',
-      });
+      final msg = RelayMessage.fromJson({'id': 7, 'sender': 'x'});
       expect(msg.kind, 'text');
       expect(msg.text, '');
     });

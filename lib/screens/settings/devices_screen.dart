@@ -50,7 +50,8 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
     } on AppException catch (e) {
       enrollError = e.message;
     } catch (_) {
-      enrollError = 'Das eigene Gerät konnte nicht registriert werden. '
+      enrollError =
+          'Das eigene Gerät konnte nicht registriert werden. '
           'Bitte Verbindung prüfen.';
     }
     final devices = await service.listDevices();
@@ -65,8 +66,11 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        icon: Icon(Icons.logout,
-            color: Theme.of(ctx).colorScheme.primary, size: 36),
+        icon: Icon(
+          Icons.logout,
+          color: Theme.of(ctx).colorScheme.primary,
+          size: 36,
+        ),
         title: Text(L10n.t(ctx, 'devices.logoutTitle')),
         content: Text(L10n.t(ctx, 'devices.logoutBody')),
         actions: [
@@ -99,10 +103,7 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
     } on AppException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message),
-          behavior: SnackBarBehavior.floating,
-        ),
+        SnackBar(content: Text(e.message), behavior: SnackBarBehavior.floating),
       );
     } catch (_) {
       if (!mounted) return;
@@ -159,19 +160,17 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
           }
           if (snapshot.hasError) {
             final err = snapshot.error!;
-            final message =
-                err is AppException ? err.message : err.toString();
+            final message = err is AppException ? err.message : err.toString();
             return ListView(
               padding: const EdgeInsets.all(24),
               children: [
-                Icon(Icons.devices_other,
-                    size: 48,
-                    color: Theme.of(context).colorScheme.outline),
-                const SizedBox(height: 16),
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
+                Icon(
+                  Icons.devices_other,
+                  size: 48,
+                  color: Theme.of(context).colorScheme.outline,
                 ),
+                const SizedBox(height: 16),
+                Text(message, textAlign: TextAlign.center),
                 const SizedBox(height: 16),
                 SecondaryButton(
                   label: L10n.t(context, 'devices.retry'),
@@ -180,35 +179,32 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
               ],
             );
           }
-          final result =
-              snapshot.data ?? const _DevicesLoadResult([], null);
+          final result = snapshot.data ?? const _DevicesLoadResult([], null);
           final devices = result.devices;
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
               if (result.enrollError != null) ...[
                 Card(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .errorContainer
-                      .withValues(alpha: 0.5),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.errorContainer.withValues(alpha: 0.5),
                   child: Padding(
                     padding: const EdgeInsets.all(12),
                     child: Row(
                       children: [
-                        Icon(Icons.warning_amber_rounded,
-                            size: 20,
-                            color: Theme.of(context).colorScheme.error),
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          size: 20,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             result.enrollError!,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
+                            style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(
-                                  color:
-                                      Theme.of(context).colorScheme.error,
+                                  color: Theme.of(context).colorScheme.error,
                                 ),
                           ),
                         ),
@@ -221,17 +217,15 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
               Text(
                 L10n.t(context, 'devices.hint'),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 16),
               for (final device in devices)
                 Card(
                   child: ListTile(
                     leading: Icon(
-                      device.isCurrent
-                          ? Icons.smartphone
-                          : Icons.devices_other,
+                      device.isCurrent ? Icons.smartphone : Icons.devices_other,
                       color: device.isCurrent
                           ? Theme.of(context).colorScheme.primary
                           : null,
@@ -241,8 +235,7 @@ class _DevicesScreenState extends ConsumerState<DevicesScreen> {
                       style: device.isCurrent
                           ? TextStyle(
                               fontWeight: FontWeight.bold,
-                              color:
-                                  Theme.of(context).colorScheme.primary,
+                              color: Theme.of(context).colorScheme.primary,
                             )
                           : null,
                     ),

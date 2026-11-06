@@ -100,8 +100,9 @@ class _AudioReviewSheetState extends State<_AudioReviewSheet> {
   @override
   Widget build(BuildContext context) {
     final tooShort = widget.durationSeconds < widget.minimumSeconds;
-    final total =
-        _audioLength > Duration.zero ? _audioLength : const Duration();
+    final total = _audioLength > Duration.zero
+        ? _audioLength
+        : const Duration();
     final progress = total.inMilliseconds > 0
         ? _position.inMilliseconds / total.inMilliseconds
         : 0.0;
@@ -132,17 +133,17 @@ class _AudioReviewSheetState extends State<_AudioReviewSheet> {
             Text(
               lengthText,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: tooShort ? scheme.error : scheme.onSurfaceVariant,
-                  ),
+                color: tooShort ? scheme.error : scheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
             if (_loadError != null) ...[
               const SizedBox(height: 8),
               Text(
                 _loadError!,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: scheme.error,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: scheme.error),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -177,15 +178,12 @@ class _AudioReviewSheetState extends State<_AudioReviewSheet> {
                     child: Column(
                       children: [
                         LinearProgressIndicator(
-                            value: progress.clamp(0.0, 1.0)),
+                          value: progress.clamp(0.0, 1.0),
+                        ),
                         const SizedBox(height: 4),
                         Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(_fmt(_position)),
-                            Text(_fmt(total)),
-                          ],
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [Text(_fmt(_position)), Text(_fmt(total))],
                         ),
                       ],
                     ),
@@ -196,11 +194,12 @@ class _AudioReviewSheetState extends State<_AudioReviewSheet> {
             const SizedBox(height: 24),
             if (tooShort) ...[
               Text(
-                L10n.tf(context, 'intro.review.tooShort',
-                    {'min': '${widget.minimumSeconds}'}),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: scheme.error,
-                    ),
+                L10n.tf(context, 'intro.review.tooShort', {
+                  'min': '${widget.minimumSeconds}',
+                }),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: scheme.error),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -213,8 +212,9 @@ class _AudioReviewSheetState extends State<_AudioReviewSheet> {
               FilledButton.icon(
                 onPressed: () => Navigator.of(context).pop(true),
                 icon: const Icon(Icons.check),
-                label: Text(widget.confirmLabel ??
-                    L10n.t(context, 'intro.review.send')),
+                label: Text(
+                  widget.confirmLabel ?? L10n.t(context, 'intro.review.send'),
+                ),
               ),
               const SizedBox(height: 8),
               TextButton.icon(

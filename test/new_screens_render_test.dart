@@ -72,10 +72,7 @@ class _FakeContactStore extends SecureContactShareStore {
 Widget _huelle(Widget kind, {List<Override> overrides = const []}) {
   return ProviderScope(
     overrides: overrides,
-    child: MaterialApp(
-      theme: ThemeData(useMaterial3: true),
-      home: kind,
-    ),
+    child: MaterialApp(theme: ThemeData(useMaterial3: true), home: kind),
   );
 }
 
@@ -86,18 +83,20 @@ void main() {
   });
 
   group('Connect to others', () {
-    testWidgets('rendert den leeren Zustand ohne Absturz',
-        (tester) async {
+    testWidgets('rendert den leeren Zustand ohne Absturz', (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(_huelle(
-        const ContactShareScreen(),
-        overrides: [
-          contactShareStoreProvider
-              .overrideWithValue(_FakeContactStore(const ContactShareProfile())),
-        ],
-      ));
+      await tester.pumpWidget(
+        _huelle(
+          const ContactShareScreen(),
+          overrides: [
+            contactShareStoreProvider.overrideWithValue(
+              _FakeContactStore(const ContactShareProfile()),
+            ),
+          ],
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
@@ -108,8 +107,7 @@ void main() {
       expect(find.text('nicht empfohlen'), findsNWidgets(3));
     });
 
-    testWidgets('rendert gespeicherte Daten (Telefon + Apps)',
-        (tester) async {
+    testWidgets('rendert gespeicherte Daten (Telefon + Apps)', (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -125,13 +123,16 @@ void main() {
         ],
       );
 
-      await tester.pumpWidget(_huelle(
-        const ContactShareScreen(),
-        overrides: [
-          contactShareStoreProvider
-              .overrideWithValue(_FakeContactStore(profil)),
-        ],
-      ));
+      await tester.pumpWidget(
+        _huelle(
+          const ContactShareScreen(),
+          overrides: [
+            contactShareStoreProvider.overrideWithValue(
+              _FakeContactStore(profil),
+            ),
+          ],
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
@@ -142,18 +143,20 @@ void main() {
       expect(find.text('empfohlen'), findsNWidgets(3));
     });
 
-    testWidgets('ein eigener Eintrag laesst sich anlegen',
-        (tester) async {
+    testWidgets('ein eigener Eintrag laesst sich anlegen', (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(_huelle(
-        const ContactShareScreen(),
-        overrides: [
-          contactShareStoreProvider
-              .overrideWithValue(_FakeContactStore(const ContactShareProfile())),
-        ],
-      ));
+      await tester.pumpWidget(
+        _huelle(
+          const ContactShareScreen(),
+          overrides: [
+            contactShareStoreProvider.overrideWithValue(
+              _FakeContactStore(const ContactShareProfile()),
+            ),
+          ],
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('Weitere App hinzufügen'), findsOneWidget);
@@ -176,10 +179,12 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(_huelle(
-        const DatingSafetyEducationScreen(),
-        overrides: [localStorageProvider.overrideWithValue(_FakeStorage())],
-      ));
+      await tester.pumpWidget(
+        _huelle(
+          const DatingSafetyEducationScreen(),
+          overrides: [localStorageProvider.overrideWithValue(_FakeStorage())],
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
@@ -189,15 +194,18 @@ void main() {
       expect(find.textContaining('5 Minuten'), findsOneWidget);
     });
 
-    testWidgets('fuehrt von der Bestaetigung zur Frage und weiter',
-        (tester) async {
+    testWidgets('fuehrt von der Bestaetigung zur Frage und weiter', (
+      tester,
+    ) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(_huelle(
-        const DatingSafetyEducationScreen(),
-        overrides: [localStorageProvider.overrideWithValue(_FakeStorage())],
-      ));
+      await tester.pumpWidget(
+        _huelle(
+          const DatingSafetyEducationScreen(),
+          overrides: [localStorageProvider.overrideWithValue(_FakeStorage())],
+        ),
+      );
       await tester.pumpAndSettle();
 
       // Schritt 1: Bestaetigung.
@@ -205,8 +213,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Hast du schon einmal eine Dating-App benutzt?'),
-          findsOneWidget);
+      expect(
+        find.text('Hast du schon einmal eine Dating-App benutzt?'),
+        findsOneWidget,
+      );
 
       // Schritt 2: "Nein" -> die Aufklaerung startet.
       await tester.tap(find.text('Nein'));
@@ -222,10 +232,12 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      await tester.pumpWidget(_huelle(
-        const DatingSafetyEducationScreen(),
-        overrides: [localStorageProvider.overrideWithValue(_FakeStorage())],
-      ));
+      await tester.pumpWidget(
+        _huelle(
+          const DatingSafetyEducationScreen(),
+          overrides: [localStorageProvider.overrideWithValue(_FakeStorage())],
+        ),
+      );
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Ich habe verstanden'));

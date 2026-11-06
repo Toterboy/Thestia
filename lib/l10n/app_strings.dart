@@ -228,8 +228,7 @@ const Map<String, Map<String, String>> _strings = {
         'Bestätigung wird dann erneut gesendet.',
     'email.deleteFailed': 'Löschen fehlgeschlagen: {error}',
     'email.addressLabel': 'E-Mail-Adresse',
-    'email.addressHint':
-        'An diese Adresse ging die Bestätigungsmail.',
+    'email.addressHint': 'An diese Adresse ging die Bestätigungsmail.',
     'email.changeAddress': 'Adresse ändern',
     'email.changeAddressTitle': 'E-Mail-Adresse ändern',
     'email.changeAddressBody':
@@ -330,7 +329,8 @@ const Map<String, Map<String, String>> _strings = {
         'Zeit ein und versuche es erneut.',
     'captcha.err.timeout':
         'Der Sicherheitscheck hat zu lange gebraucht. Bitte versuche es '
-        'noch einmal.',    'captcha.retry': 'Erneut versuchen',
+        'noch einmal.',
+    'captcha.retry': 'Erneut versuchen',
     'language.german': 'Deutsch',
     'language.english': 'Englisch',
     // Navigation
@@ -349,12 +349,10 @@ const Map<String, Map<String, String>> _strings = {
     'appearance.light': 'Hell',
     'appearance.system': 'System',
     'appearance.dark': 'Dunkel',
-    'appearanceDesc.light':
-        'Immer helle Oberfläche, auch am Abend.',
+    'appearanceDesc.light': 'Immer helle Oberfläche, auch am Abend.',
     'appearanceDesc.system':
         'Folgt deinem Gerät: hell am Tag, dunkel bei Dunkelmodus.',
-    'appearanceDesc.dark':
-        'Immer dunkle Oberfläche, schon am Morgen.',
+    'appearanceDesc.dark': 'Immer dunkle Oberfläche, schon am Morgen.',
     'settings.colors': 'Farbwelt',
     'settings.language': 'Sprache',
     'settings.notifications': 'Benachrichtigungen',
@@ -395,8 +393,7 @@ const Map<String, Map<String, String>> _strings = {
     'chatbg.stars': 'Sterne',
     'chatbg.waves': 'Wellen',
     'chatbg.custom': 'Eigenes Bild',
-    'chatbg.tooLarge':
-        'Bild zu groß (max. 8 MB), bitte ein kleineres wählen.',
+    'chatbg.tooLarge': 'Bild zu groß (max. 8 MB), bitte ein kleineres wählen.',
     'chatbg.badImage': 'Diese Datei ist kein unterstütztes Bild.',
     'chatbg.hintTitle': 'Chat-Hintergrund',
     'chatbg.hintBody':
@@ -430,8 +427,7 @@ const Map<String, Map<String, String>> _strings = {
         'Wir haben {email} eine E-Mail geschickt. Erst wenn dein Elternteil '
         'den Link in der Mail bestätigt, ist die Freigabe aktiv.',
     'guardian.activeTitle': 'Freigabe aktiv',
-    'guardian.activeText':
-        'Dein Konto steht unter Aufsicht von {email}.',
+    'guardian.activeText': 'Dein Konto steht unter Aufsicht von {email}.',
     'guardian.notifyTitle': 'Benachrichtigungen',
     'guardian.notifyText':
         'Dein Elternteil wird benachrichtigt, wenn ein Funke entsteht - in '
@@ -441,16 +437,16 @@ const Map<String, Map<String, String>> _strings = {
     'guardian.notifyFrequency.daily': 'Täglich',
     'guardian.notifyFrequency.weekly': 'Wöchentlich',
     'guardian.notifyFrequency.monthly': 'Monatlich',
-  'guardian.endedTitle': 'Die Freigabe ist beendet',
-  'guardian.endedText':
-      'Die elterliche Freigabe wurde beendet und gilt nicht mehr.',
-  'guardian.endedTextEmailDeleted':
-      'Die elterliche Freigabe wurde beendet. Die E-Mail-Adresse des '
-      'Elternteils wurde dabei gelöscht - sie wird nicht mehr gebraucht '
-      'und nicht mehr aufbewahrt.',
-  'guardian.endedTextEmailPending':
-      'Die elterliche Freigabe wurde beendet. Die E-Mail-Adresse des '
-      'Elternteils wird mit dem Ende der Freigabe gelöscht.',
+    'guardian.endedTitle': 'Die Freigabe ist beendet',
+    'guardian.endedText':
+        'Die elterliche Freigabe wurde beendet und gilt nicht mehr.',
+    'guardian.endedTextEmailDeleted':
+        'Die elterliche Freigabe wurde beendet. Die E-Mail-Adresse des '
+        'Elternteils wurde dabei gelöscht - sie wird nicht mehr gebraucht '
+        'und nicht mehr aufbewahrt.',
+    'guardian.endedTextEmailPending':
+        'Die elterliche Freigabe wurde beendet. Die E-Mail-Adresse des '
+        'Elternteils wird mit dem Ende der Freigabe gelöscht.',
     'guardian.notifyFrequency.none': 'Gar nicht',
     'guardian.usageTitle': 'Nutzungszeit',
     'guardian.usageText':
@@ -504,7 +500,8 @@ const Map<String, Map<String, String>> _strings = {
         'eintragen.',
     'guardian.errorNotEligible':
         'Die Elternfreigabe ist nur für 16- und 17-Jährige vorgesehen.',
-    'guardian.errorInvalidEmail': 'Bitte eine gültige E-Mail-Adresse eintragen.',
+    'guardian.errorInvalidEmail':
+        'Bitte eine gültige E-Mail-Adresse eintragen.',
     'guardian.errorRateLimited':
         'Zu viele Anfragen. Bitte später noch einmal versuchen.',
     'guardian.errorGeneric':
@@ -538,7 +535,8 @@ const Map<String, Map<String, String>> _strings = {
         'Die Löschung ist unwiderruflich - es gibt kein Wiederherstellen. '
         'Dein Konto, deine E-Mail-Adresse und dein Passwort bleiben.',
     'del.fotos': 'Profilfotos',
-    'del.fotosSub': 'Alle Bilder im Profil, auch die in der Cloud gespeicherten.',
+    'del.fotosSub':
+        'Alle Bilder im Profil, auch die in der Cloud gespeicherten.',
     'del.standort': 'Standortdaten',
     'del.standortSub':
         'Deine Koordinaten und dein Bundesland. Danach sieht niemand mehr, '
@@ -632,8 +630,7 @@ const Map<String, Map<String, String>> _strings = {
     'dm.randomChat': 'Zufallschat',
     'dm.randomChatDesc': 'Direkter Text-Chat mit zufällig passender Person',
     'dm.qrScan': 'Mit anderen verbinden',
-    'dm.qrScanDesc':
-        'QR-Code scannen oder Kontaktdaten teilen',
+    'dm.qrScanDesc': 'QR-Code scannen oder Kontaktdaten teilen',
     'dm.datingHour': 'Dating Hour (Event)',
     'dm.datingHourDesc':
         'Samstags 20 bis 21 Uhr: 5-Minuten-Chats mit Entscheidungsphase',
@@ -732,8 +729,7 @@ const Map<String, Map<String, String>> _strings = {
         'Dein Bundesland wurde nicht erkannt. Bitte wähle es unten aus.',
     'setup.passkeyDone':
         'Passkey eingerichtet. Du kannst dich künftig damit anmelden.',
-    'setup.passkeyAlreadyThere':
-        'Passkey ist schon eingerichtet.',
+    'setup.passkeyAlreadyThere': 'Passkey ist schon eingerichtet.',
     // Erst-Einrichtung als Interview (Thestia-Fragen-Bubbles)
     'setupq.visibility':
         'Wie privat magst du bleiben, und wie soll die App aussehen?',
@@ -871,7 +867,8 @@ const Map<String, Map<String, String>> _strings = {
     'interests.pinSparkOn': 'Funke fixiert',
     'interests.pinSparkOff': 'Fixierung aufgehoben',
 
-    'interests.pinnedSub': 'Deine ausgewählten Funken - immer oben.',    'interests.pinnedSection': 'Fixiert',
+    'interests.pinnedSub': 'Deine ausgewählten Funken - immer oben.',
+    'interests.pinnedSection': 'Fixiert',
     'interests.deleteSpark': 'Funke löschen',
     'interests.deleteSparkTitle': 'Funke löschen?',
     'interests.deleteSparkBody':
@@ -880,7 +877,8 @@ const Map<String, Map<String, String>> _strings = {
     'interests.deleteSparkDone': 'Funke gelöscht.',
     'interests.archiveSpark': 'Archivieren',
     'interests.archiveSparkDone': 'Funke archiviert.',
-    'interests.unarchiveSpark': 'Wieder aktivieren',    'interests.decline': 'Ignorieren',
+    'interests.unarchiveSpark': 'Wieder aktivieren',
+    'interests.decline': 'Ignorieren',
     'interests.sparkAccepted':
         'Ein Funke mit {name} ist entstanden! Ihr könnt direkt chatten.',
     'interests.likeDeclined': 'Like von {name} abgelehnt.',
@@ -940,13 +938,11 @@ const Map<String, Map<String, String>> _strings = {
     'setupq.intro': 'Wie klingst du? Erzähl von dir, als Text und gesprochen.',
     'setupq.habits': 'Wie stehst du zu Rauchen, Alkohol und Drogen?',
     // v0.10.0: Geburtstags-Stil als eigene Seite der Einrichtung.
-    'setupq.birthday':
-        'Wie soll dein Profil an deinem Geburtstag aussehen?',
+    'setupq.birthday': 'Wie soll dein Profil an deinem Geburtstag aussehen?',
     'setup.birthdaySub':
         'Einmal im Jahr, an einem einzigen Tag. Waehle eine Richtung.',
     'setupq.music': 'Was hoerst du gern?',
-    'setup.musicSub':
-        'Gemaeckte, die du magst und solche, die du nicht magst.',
+    'setup.musicSub': 'Gemaeckte, die du magst und solche, die du nicht magst.',
     'setupq.passkey':
         'Magst du dein Konto mit einem Passkey absichern? Geht schnell.',
     'setupq.mfa': 'Magst du zusätzlich einen zweiten Faktor einrichten?',
@@ -1641,14 +1637,20 @@ const Map<String, Map<String, String>> _strings = {
     'intro.prompt.friends': 'Was schätzen deine Freunde an dir?',
     'intro.prompt.laugh': 'Worüber kannst du richtig lachen?',
     'intro.prompt.dream': 'Wovon träumst du gerade?',
-    'intro.prompt.everyday.sunday': 'Wie sieht dein ganz gewöhnlicher Sonntag aus?',
-    'intro.prompt.everyday.coffee': 'Wie sieht dein idealer Kaffee aus, und wo trinkst du ihn?',
+    'intro.prompt.everyday.sunday':
+        'Wie sieht dein ganz gewöhnlicher Sonntag aus?',
+    'intro.prompt.everyday.coffee':
+        'Wie sieht dein idealer Kaffee aus, und wo trinkst du ihn?',
     'intro.prompt.people.proud': 'Wofür hat dich zuletzt jemand gelobt?',
-    'intro.prompt.people.call': 'Wann hast du zuletzt jemanden einfach nur angerufen, ohne Grund?',
-    'intro.prompt.humor.embarrassing': 'Was war dein peinlichster Moment, über den du immer noch lachst?',
-    'intro.prompt.humor.silent': 'Was bringt dich zum Lachen, das niemand mitbekommt?',
+    'intro.prompt.people.call':
+        'Wann hast du zuletzt jemanden einfach nur angerufen, ohne Grund?',
+    'intro.prompt.humor.embarrassing':
+        'Was war dein peinlichster Moment, über den du immer noch lachst?',
+    'intro.prompt.humor.silent':
+        'Was bringt dich zum Lachen, das niemand mitbekommt?',
     'intro.prompt.dream.learn': 'Was möchtest du unbedingt einmal lernen?',
-    'intro.prompt.dream.trip': 'Wohin würdest du fahren, wenn Geld keine Rolle spielt?',
+    'intro.prompt.dream.trip':
+        'Wohin würdest du fahren, wenn Geld keine Rolle spielt?',
     // Leitfaden fuer die Audio-Vorstellung (3 Schritte, ROADMAP 0.10.0)
     'intro.guide.title': 'Leitfaden für deine Vorstellung',
     'intro.guide.step1': 'Wer bist du?',
@@ -1908,8 +1910,7 @@ const Map<String, Map<String, String>> _strings = {
     'startupFail.share': 'Text senden',
     'startupFail.shareFailed': 'Senden nicht möglich. Bitte den Text kopieren.',
     'startupFail.continue': 'Trotzdem fortfahren',
-    'startupFail.hint':
-        'Der Text enthält keine persönlichen Daten.',
+    'startupFail.hint': 'Der Text enthält keine persönlichen Daten.',
     'profile.aboutMe': 'Über mich',
     'profile.noBio': 'Noch keine Bio.',
     'profile.interests': 'Interessen',
@@ -1920,8 +1921,7 @@ const Map<String, Map<String, String>> _strings = {
     'profile.donateNotConfigured':
         'Für diese App ist noch keine Spendenadresse hinterlegt. '
         'Es wurde nichts abgebucht und nichts verbucht.',
-    'profile.donateOpenFailed':
-        'Die Seite ließ sich nicht öffnen.',
+    'profile.donateOpenFailed': 'Die Seite ließ sich nicht öffnen.',
     'profile.edit.title': 'Profil bearbeiten',
     'profile.edit.name': 'Name',
     'profile.edit.birthDate': 'Geburtsdatum',
@@ -2107,8 +2107,7 @@ const Map<String, Map<String, String>> _strings = {
         'benannten Kontaktperson und dem Meldeweg an die zustaendigen '
         'Stellen.',
     'cg.childSafetyLink.open': 'Kinderschutz-Seite öffnen',
-    'report.type.childSafety':
-        'Hinweis auf Kindesmissbrauch (CSAE/CSAM)',
+    'report.type.childSafety': 'Hinweis auf Kindesmissbrauch (CSAE/CSAM)',
     'cg.5.title': '§5 Melden & Konsequenzen',
     'cg.5.titleShort':
         'Ehrlichkeit zahlt sich aus: Sei authentisch in deinem Profil.',
@@ -2180,40 +2179,40 @@ const Map<String, Map<String, String>> _strings = {
     'whatsnew.v090.bucketList':
         'Gemeinsame Erinnerungsliste im Chat: Das wollt ihr zusammen '
         'erleben - ankreuzbar, ohne Druck.',
-        'whatsnew.v090.birthdayStyles':
-            '5 schicke Geburtstags-Stile für dein Profil (unten auswählen '
-            'oder später im Profil-Bearbeiten).',
-        // Build 30 (v0.9.2). EIN Key pro Anzeigepunkt, jeder Punkt ein
-        // vollstaendiger Satz - siehe Bug-Hinweis in
-        // lib/services/whats_new_service.dart: bei hartkodiertem Text
-        // waren es Satzbausteine, und die Abschneidegrenze zerschnitt
-        // mitten im Satz. Ausserdem waren diese Zeilen ueberhaupt nicht
-        // uebersetzt, englische Nutzer sahen deutschen Text.
-        'whatsnew.v092.rotatingPrompts':
-            'Vorstellungen, die sich nicht wiederholen: Die Ideen-Karten '
-            'rotieren jetzt, statt immer dieselben vier zu zeigen.',
-        'whatsnew.v092.emailRequired':
-            'Wichtig: Eine bestätigte E-Mail-Adresse ist jetzt '
-            'Voraussetzung für Funken, Daumen und Nachrichten.',
-        'whatsnew.v092.safetyNumber':
-            'Neu: Du kannst festlegen, dass ein Chat erst nach dem Vergleich '
-            'der Sicherheitsnummern beginnt.',
-        'whatsnew.v092.proximityJitter':
-            'Nähefunk sendet jetzt unregelmäßig statt im festen Takt und '
-            'hört nur noch Signale von Thestia.',
-        // v0.10.0 (Build 31): Standort-Privatisierung
-        'whatsnew.v1000.noCity':
-            'Dein Profil nennt jetzt nur noch dein Bundesland. Ein Ort, eine '
-            'Stadt oder ein Adressbereich wird nicht mehr gespeichert und '
-            'niemandem angezeigt.',
-        'whatsnew.v1000.grid':
-            'Deine Position wird nur als Rasterpunkt im Abstand von 5 km '
-            'gespeichert. Die Rasterung passiert auf dem Server, nicht nur '
-            'in der App.',
-        'whatsnew.v1000.distanceOptIn':
-            'Andere sehen erst dann eine ungefähre Entfernung, wenn du das '
-            'einschaltest. Selbst dann nur grobe Stufen von 10 km, nie eine '
-            'Zahl.',
+    'whatsnew.v090.birthdayStyles':
+        '5 schicke Geburtstags-Stile für dein Profil (unten auswählen '
+        'oder später im Profil-Bearbeiten).',
+    // Build 30 (v0.9.2). EIN Key pro Anzeigepunkt, jeder Punkt ein
+    // vollstaendiger Satz - siehe Bug-Hinweis in
+    // lib/services/whats_new_service.dart: bei hartkodiertem Text
+    // waren es Satzbausteine, und die Abschneidegrenze zerschnitt
+    // mitten im Satz. Ausserdem waren diese Zeilen ueberhaupt nicht
+    // uebersetzt, englische Nutzer sahen deutschen Text.
+    'whatsnew.v092.rotatingPrompts':
+        'Vorstellungen, die sich nicht wiederholen: Die Ideen-Karten '
+        'rotieren jetzt, statt immer dieselben vier zu zeigen.',
+    'whatsnew.v092.emailRequired':
+        'Wichtig: Eine bestätigte E-Mail-Adresse ist jetzt '
+        'Voraussetzung für Funken, Daumen und Nachrichten.',
+    'whatsnew.v092.safetyNumber':
+        'Neu: Du kannst festlegen, dass ein Chat erst nach dem Vergleich '
+        'der Sicherheitsnummern beginnt.',
+    'whatsnew.v092.proximityJitter':
+        'Nähefunk sendet jetzt unregelmäßig statt im festen Takt und '
+        'hört nur noch Signale von Thestia.',
+    // v0.10.0 (Build 31): Standort-Privatisierung
+    'whatsnew.v1000.noCity':
+        'Dein Profil nennt jetzt nur noch dein Bundesland. Ein Ort, eine '
+        'Stadt oder ein Adressbereich wird nicht mehr gespeichert und '
+        'niemandem angezeigt.',
+    'whatsnew.v1000.grid':
+        'Deine Position wird nur als Rasterpunkt im Abstand von 5 km '
+        'gespeichert. Die Rasterung passiert auf dem Server, nicht nur '
+        'in der App.',
+    'whatsnew.v1000.distanceOptIn':
+        'Andere sehen erst dann eine ungefähre Entfernung, wenn du das '
+        'einschaltest. Selbst dann nur grobe Stufen von 10 km, nie eine '
+        'Zahl.',
     // Sprachnachrichten im Chat (Einmal-Anhören, M-17)
     'chat.voiceOnce':
         'Diese Sprachnachricht wurde bereits angehört und entfernt '
@@ -2355,7 +2354,8 @@ const Map<String, Map<String, String>> _strings = {
         'Nur aktivieren, wenn die Nummern übereinstimmen.',
     'chat.more': 'Weitere Optionen',
     'chat.requireVerifiedTitle': 'Schluessel immer pruefen',
-    'chat.requireVerifiedHint': 'Senden erst erlauben, wenn ihr die Safety-Nummern verglichen habt. Das schuetzt davor, dass jemand die Schluessel eurer Chats ersetzt und mitliest.',
+    'chat.requireVerifiedHint':
+        'Senden erst erlauben, wenn ihr die Safety-Nummern verglichen habt. Das schuetzt davor, dass jemand die Schluessel eurer Chats ersetzt und mitliest.',
     'dh.event.startingSoon': 'Dating Hour startet gleich',
     'dh.event.cancelledToday':
         'Heute fällt die Dating Hour aus: Es haben sich nicht genug '
@@ -2441,27 +2441,27 @@ const Map<String, Map<String, String>> _strings = {
     'dh.chat.noSpark': 'Kein Funke',
     'dh.chat.keepSearching': 'Weiter suchen',
     'dh.chat.e2e': 'Ende zu Ende verschlüsselt',
-  'dh.chat.timerHide': 'Timer ausblenden',
-  'dh.chat.timerShow': 'Timer anzeigen',
-  'dh.chat.fiveMinutesDone':
-      'Die 5 Minuten sind um. Ihr habt Zeit, in Ruhe zu entscheiden, '
-      'was ihr von eurem Gespräch haltet.',
-  'dh.chat.endConversation': 'Gespräch beenden',
-  'dh.chat.endConversationTitle': 'Gespräch beenden?',
-  'dh.chat.endConversationBody':
-      'Wenn du das Gespräch beendest, entsteht daraus kein Funke. '
-      'Das ist völlig in Ordnung. Wenn sich euer Gespräch richtig '
-      'angefühlt hat, entscheidet ihr einfach beide dafür.',
-  'dh.chat.endConversationDone': 'Das Gespräch ist beendet.',
-  'dh.autoMatch.badge': 'Automatisch',
-  'dh.autoMatch.title': 'Automatischer Funke',
-  'dh.autoMatch.body':
-      'Aus eurem Gespräch ist automatisch ein Funke geworden. '
-      'Passt das zu euch?',
-  'dh.autoMatch.keep': 'Behalten',
-  'dh.autoMatch.remove': 'Person entfernen',
-  'dh.autoMatch.done': 'Alles klar, der Hinweis ist weg.',
-  'dh.autoMatch.failed': 'Der Hinweis konnte nicht entfernt werden.',
+    'dh.chat.timerHide': 'Timer ausblenden',
+    'dh.chat.timerShow': 'Timer anzeigen',
+    'dh.chat.fiveMinutesDone':
+        'Die 5 Minuten sind um. Ihr habt Zeit, in Ruhe zu entscheiden, '
+        'was ihr von eurem Gespräch haltet.',
+    'dh.chat.endConversation': 'Gespräch beenden',
+    'dh.chat.endConversationTitle': 'Gespräch beenden?',
+    'dh.chat.endConversationBody':
+        'Wenn du das Gespräch beendest, entsteht daraus kein Funke. '
+        'Das ist völlig in Ordnung. Wenn sich euer Gespräch richtig '
+        'angefühlt hat, entscheidet ihr einfach beide dafür.',
+    'dh.chat.endConversationDone': 'Das Gespräch ist beendet.',
+    'dh.autoMatch.badge': 'Automatisch',
+    'dh.autoMatch.title': 'Automatischer Funke',
+    'dh.autoMatch.body':
+        'Aus eurem Gespräch ist automatisch ein Funke geworden. '
+        'Passt das zu euch?',
+    'dh.autoMatch.keep': 'Behalten',
+    'dh.autoMatch.remove': 'Person entfernen',
+    'dh.autoMatch.done': 'Alles klar, der Hinweis ist weg.',
+    'dh.autoMatch.failed': 'Der Hinweis konnte nicht entfernt werden.',
     'dh.chat.leaveTitle': 'Chat verlassen?',
     'dh.chat.leaveBody':
         'Wenn du den Chat verlässt, gilt das als "Ablehnen". Möchtest du '
@@ -2713,18 +2713,17 @@ const Map<String, Map<String, String>> _strings = {
     'privacy.validator.tooShort': 'Zu kurz',
     'privacy.validator.mismatch': 'Nicht identisch',
     'privacy.policyTitle': 'Datenschutzerklärung',
-  'privacy.imprintTitle': 'Impressum',
-  'privacy.imprintSub':
-      'Anbieterkennzeichnung nach § 5 DDG - Anschrift und Kontakt',
-  'privacy.termsTitle': 'Nutzungsbedingungen',
-  'privacy.termsSub':
-      'Was beim Benutzen der App erlaubt ist und was nicht',
-  'privacy.termsFailed':
-      'Die Nutzungsbedingungen konnten nicht geöffnet werden. Bitte öffne '
-      'https://thestia.de/nutzungsbedingungen im Browser.',
-  'privacy.imprintFailed':
-      'Das Impressum konnte nicht geöffnet werden. Bitte öffne '
-      'https://thestia.de/impressum im Browser.',
+    'privacy.imprintTitle': 'Impressum',
+    'privacy.imprintSub':
+        'Anbieterkennzeichnung nach § 5 DDG - Anschrift und Kontakt',
+    'privacy.termsTitle': 'Nutzungsbedingungen',
+    'privacy.termsSub': 'Was beim Benutzen der App erlaubt ist und was nicht',
+    'privacy.termsFailed':
+        'Die Nutzungsbedingungen konnten nicht geöffnet werden. Bitte öffne '
+        'https://thestia.de/nutzungsbedingungen im Browser.',
+    'privacy.imprintFailed':
+        'Das Impressum konnte nicht geöffnet werden. Bitte öffne '
+        'https://thestia.de/impressum im Browser.',
     'privacy.policySub':
         'Was wir erheben, warum, und wie lange. Vollständiger Text.',
     'privacy.yourData': 'Deine Daten',
@@ -3017,7 +3016,7 @@ const Map<String, Map<String, String>> _strings = {
         'Video wird ausgewertet. Bitte kurz warten, das kann bis zu '
         'einer halben Minute dauern.',
     'verify.cameraError': 'Kamera konnte nicht initialisiert werden: {error}',
-// Prominente Kamera-Offenlegung: Google Play verlangt fuer CAMERA
+    // Prominente Kamera-Offenlegung: Google Play verlangt fuer CAMERA
     // dieselbe vorangezeigte Begruendung wie fuer das Mikrofon. Ohne
     // Kamera ist die Alterspruefung nicht moeglich - deshalb endet eine
     // Ablehnung in einem erklaerenden Zustand und nicht in einer Sackgasse.
@@ -3027,7 +3026,8 @@ const Map<String, Map<String, String>> _strings = {
     // fuer mitgeteilt - das waere eine unvollstaendige Offenlegung.
     'verify.cameraDeclined':
         'Ohne Kamera koennen wir dein Alter nicht einschaetzen. Du kannst sie jederzeit in den Einstellungen erlauben.',
-    'verify.cameraDisclosureTitle': 'Kamera und Mikrofon fuer die Alterspruefung',
+    'verify.cameraDisclosureTitle':
+        'Kamera und Mikrofon fuer die Alterspruefung',
     'verify.cameraDisclosureBody':
         'Um dein Alter zu schaetzen, braucht die App Zugriff auf Kamera und Mikrofon. Die Aufnahme startet erst, wenn du unten bestaetigst. Das Bild wird ausgewertet und danach nicht gespeichert.',
     'verify.cameraDisclosureAccept': 'Kamera freigeben',
@@ -3223,8 +3223,7 @@ const Map<String, Map<String, String>> _strings = {
     'safetyOnboarding.timeHint':
         'Die Aufklärung dauert höchstens 5 Minuten. Dein Fortschritt '
         'bleibt gespeichert.',
-    'safetyOnboarding.q1Title':
-        'Hast du schon einmal eine Dating-App benutzt?',
+    'safetyOnboarding.q1Title': 'Hast du schon einmal eine Dating-App benutzt?',
     'safetyOnboarding.q1Body':
         'Es gibt keine richtige Antwort. Die Frage hilft uns nur, dich '
         'dort abzuholen, wo du gerade stehst.',
@@ -3279,15 +3278,13 @@ const Map<String, Map<String, String>> _strings = {
         'rechtfertigen. Bei Bedrohung, Stalking oder Gewalt hilft die '
         'Polizei (110) oder der Notruf (112). Im Safety Center findest '
         'du weitere Wege.',
-    'safetyOnboarding.edu5Hint':
-        'Hilfe zu holen ist Stärke, nicht Schwäche.',
+    'safetyOnboarding.edu5Hint': 'Hilfe zu holen ist Stärke, nicht Schwäche.',
     // "Connect to others": Kontaktdaten teilen
     'contactShare.title': 'Mit anderen verbinden',
     'contactShare.subtitle':
         'Teile deine Kontaktdaten, aber nur wenn du willst.',
     'contactShare.qrCardTitle': 'Telefon & Social Media',
-    'contactShare.qrCardSub':
-        'Kontaktdaten lokal speichern und teilen',
+    'contactShare.qrCardSub': 'Kontaktdaten lokal speichern und teilen',
     'contactShare.intro':
         'Speichere hier, wie dich andere außerhalb von Thestia erreichen '
         'können. Du entscheidest bei jedem Teilen neu.',
@@ -3313,12 +3310,10 @@ const Map<String, Map<String, String>> _strings = {
     'contactShare.customEntry': 'Eigene App',
     'contactShare.customApp': 'App-Name',
     'contactShare.customAppHint': 'z. B. Telegram',
-    'contactShare.customNeedsName':
-        'Bitte App-Namen und Handle ausfüllen.',
+    'contactShare.customNeedsName': 'Bitte App-Namen und Handle ausfüllen.',
     'contactShare.handleMissing':
         'Bitte gib einen Handle ein oder schalte die App aus.',
-    'contactShare.invalidPhone':
-        'Bitte gib eine gültige Telefonnummer ein.',
+    'contactShare.invalidPhone': 'Bitte gib eine gültige Telefonnummer ein.',
     'contactShare.save': 'Speichern',
     'contactShare.saved': 'Kontaktdaten gespeichert.',
     'contactShare.share': 'Kontaktdaten teilen',
@@ -3483,8 +3478,7 @@ const Map<String, Map<String, String>> _strings = {
         'will be re-sent.',
     'email.deleteFailed': 'Delete failed: {error}',
     'email.addressLabel': 'Email address',
-    'email.addressHint':
-        'The confirmation email went to this address.',
+    'email.addressHint': 'The confirmation email went to this address.',
     'email.changeAddress': 'Change address',
     'email.changeAddressTitle': 'Change email address',
     'email.changeAddressBody':
@@ -3494,8 +3488,7 @@ const Map<String, Map<String, String>> _strings = {
     'email.newAddress': 'New email address',
     'email.addressChanged':
         'Address changed. A new confirmation email is on its way.',
-    'email.addressChangeFailed':
-        'The address could not be changed: {error}',
+    'email.addressChangeFailed': 'The address could not be changed: {error}',
     'email.captchaNeeded':
         'Please confirm the CAPTCHA - without it we cannot continue.',
     'forgot.title': 'Forgot password',
@@ -3576,7 +3569,8 @@ const Map<String, Map<String, String>> _strings = {
         'The device clock is wrong. Please enable automatic time and try '
         'again.',
     'captcha.err.timeout':
-        'The security check took too long. Please try again.',    'captcha.retry': 'Try again',
+        'The security check took too long. Please try again.',
+    'captcha.retry': 'Try again',
     'language.german': 'German',
     'language.english': 'English',
     'nav.home': 'Home',
@@ -3588,12 +3582,11 @@ const Map<String, Map<String, String>> _strings = {
     'appearance.light': 'Light',
     'appearance.system': 'System',
     'appearance.dark': 'Dark',
-    'appearanceDesc.light':
-        'Always a light interface, even in the evening.',
+    'appearanceDesc.light': 'Always a light interface, even in the evening.',
     'appearanceDesc.system':
         'Follows your device: light by day, dark when it is in dark mode.',
-    'appearanceDesc.dark':
-        'Always a dark interface, starting in the morning.',    'settings.colors': 'Color scheme',
+    'appearanceDesc.dark': 'Always a dark interface, starting in the morning.',
+    'settings.colors': 'Color scheme',
     'settings.language': 'Language',
     'settings.notifications': 'Notifications',
     'settings.push': 'Push notifications',
@@ -3640,8 +3633,7 @@ const Map<String, Map<String, String>> _strings = {
         'messages - it is just a surface behind the text.',
     'chatbg.hintDone': 'Background set.',
     'paused.homeTitle': 'Your profile is paused',
-    'paused.homeBody':
-        'You are invisible to new people. Tap to unpause.',
+    'paused.homeBody': 'You are invisible to new people. Tap to unpause.',
     'paused.popupTitle': 'Profile paused',
     'paused.popupBody':
         'While your profile is paused, you cannot use Discovery modes. '
@@ -3676,15 +3668,15 @@ const Map<String, Map<String, String>> _strings = {
     'guardian.notifyFrequency.daily': 'Daily',
     'guardian.notifyFrequency.weekly': 'Weekly',
     'guardian.notifyFrequency.monthly': 'Monthly',
-  'guardian.endedTitle': 'The approval has ended',
-  'guardian.endedText':
-      'The parental approval has ended and no longer applies.',
-  'guardian.endedTextEmailDeleted':
-      'The parental approval has ended. The parent\'s email address was '
-      'deleted with it - it is no longer needed and no longer kept.',
-  'guardian.endedTextEmailPending':
-      'The parental approval has ended. The parent\'s email address is '
-      'deleted when the approval ends.',
+    'guardian.endedTitle': 'The approval has ended',
+    'guardian.endedText':
+        'The parental approval has ended and no longer applies.',
+    'guardian.endedTextEmailDeleted':
+        'The parental approval has ended. The parent\'s email address was '
+        'deleted with it - it is no longer needed and no longer kept.',
+    'guardian.endedTextEmailPending':
+        'The parental approval has ended. The parent\'s email address is '
+        'deleted when the approval ends.',
     'guardian.notifyFrequency.none': 'Never',
     'guardian.usageTitle': 'Usage time',
     'guardian.usageText':
@@ -3738,16 +3730,13 @@ const Map<String, Map<String, String>> _strings = {
     'guardian.errorNotEligible':
         'Parental consent is only provided for 16- and 17-year-olds.',
     'guardian.errorInvalidEmail': 'Please enter a valid email address.',
-    'guardian.errorRateLimited':
-        'Too many requests. Please try again later.',
-    'guardian.errorGeneric':
-        'That did not work. Please try again later.',
+    'guardian.errorRateLimited': 'Too many requests. Please try again later.',
+    'guardian.errorGeneric': 'That did not work. Please try again later.',
     'guardian.usageLockTitle': 'Your usage time is over for today',
     'guardian.usageLockText':
         'Usage time ends today at {time}. Tomorrow it starts again.',
     'guardian.pinTitle': 'Parent area',
-    'guardian.pinText':
-        'Please enter the four-digit PIN your parent set.',
+    'guardian.pinText': 'Please enter the four-digit PIN your parent set.',
     'guardian.pinWrong': 'The PIN is not correct.',
     'guardian.pinLocked': 'Unlock with PIN',
     'guardian.pinUnlocked': 'Unlocked',
@@ -3970,13 +3959,10 @@ const Map<String, Map<String, String>> _strings = {
         'How do you sound? Tell about yourself - in text and voice.',
     'setupq.habits': 'How do you feel about smoking, alcohol and drugs?',
     // v0.10.0: birthday style as its own setup page.
-    'setupq.birthday':
-        'How should your profile look on your birthday?',
-    'setup.birthdaySub':
-        'Once a year, on a single day. Pick a direction.',
+    'setupq.birthday': 'How should your profile look on your birthday?',
+    'setup.birthdaySub': 'Once a year, on a single day. Pick a direction.',
     'setupq.music': 'What do you like to listen to?',
-    'setup.musicSub':
-        'Tastes you enjoy, and ones you would rather skip.',
+    'setup.musicSub': 'Tastes you enjoy, and ones you would rather skip.',
     'setupq.passkey':
         'Would you like to secure your account with a passkey? It is quick.',
     'setupq.mfa': 'Would you like to add a second factor on top?',
@@ -4643,14 +4629,20 @@ const Map<String, Map<String, String>> _strings = {
     'intro.prompt.friends': 'What do your friends appreciate about you?',
     'intro.prompt.laugh': 'What makes you really laugh?',
     'intro.prompt.dream': 'What are you dreaming of right now?',
-    'intro.prompt.everyday.sunday': 'What does an ordinary Sunday look like for you?',
-    'intro.prompt.everyday.coffee': 'What does your ideal coffee look like, and where do you drink it?',
+    'intro.prompt.everyday.sunday':
+        'What does an ordinary Sunday look like for you?',
+    'intro.prompt.everyday.coffee':
+        'What does your ideal coffee look like, and where do you drink it?',
     'intro.prompt.people.proud': 'What did someone recently praise you for?',
-    'intro.prompt.people.call': 'When did you last call someone just because, with no reason?',
-    'intro.prompt.humor.embarrassing': 'What is your most embarrassing moment that still makes you laugh?',
-    'intro.prompt.humor.silent': 'What makes you laugh when nobody is watching?',
+    'intro.prompt.people.call':
+        'When did you last call someone just because, with no reason?',
+    'intro.prompt.humor.embarrassing':
+        'What is your most embarrassing moment that still makes you laugh?',
+    'intro.prompt.humor.silent':
+        'What makes you laugh when nobody is watching?',
     'intro.prompt.dream.learn': 'What would you really like to learn?',
-    'intro.prompt.dream.trip': 'Where would you travel if money were no object?',
+    'intro.prompt.dream.trip':
+        'Where would you travel if money were no object?',
     // Guide for the audio intro (3 steps, roadmap 0.10.0)
     'intro.guide.title': 'Guide for your intro',
     'intro.guide.step1': 'Who are you?',
@@ -5212,7 +5204,8 @@ const Map<String, Map<String, String>> _strings = {
     'interests.pinSparkOn': 'Spark pinned',
     'interests.pinSparkOff': 'Unpinned',
 
-    'interests.pinnedSub': 'Your chosen sparks - always on top.',    'interests.pinnedSection': 'Pinned',
+    'interests.pinnedSub': 'Your chosen sparks - always on top.',
+    'interests.pinnedSection': 'Pinned',
     'interests.deleteSpark': 'Delete spark',
     'interests.deleteSparkTitle': 'Delete spark?',
     'interests.deleteSparkBody':
@@ -5221,7 +5214,8 @@ const Map<String, Map<String, String>> _strings = {
     'interests.deleteSparkDone': 'Spark deleted.',
     'interests.archiveSpark': 'Archive',
     'interests.archiveSparkDone': 'Spark archived.',
-    'interests.unarchiveSpark': 'Make active again',    'interests.decline': 'Ignore',
+    'interests.unarchiveSpark': 'Make active again',
+    'interests.decline': 'Ignore',
     'interests.sparkAccepted':
         'A spark with {name} was created! You can chat right away.',
     'interests.likeDeclined': 'Like from {name} declined.',
@@ -5335,32 +5329,32 @@ const Map<String, Map<String, String>> _strings = {
     'whatsnew.v090.bucketList':
         'Shared memory list in the chat: things you want to experience '
         'together - checkable, no pressure.',
-        'whatsnew.v090.birthdayStyles':
-            '5 tasteful birthday styles for your profile (choose below or '
-            'later in profile editing).',
-        // Build 30 (v0.9.2) - siehe deutsche Fassung oben.
-        'whatsnew.v092.rotatingPrompts':
-            'Introductions that do not repeat: the prompt cards now rotate '
-            'instead of always showing the same four.',
-        'whatsnew.v092.emailRequired':
-            'Important: a confirmed email address is now required for '
-            'sparks, thumbs and messages.',
-        'whatsnew.v092.safetyNumber':
-            'New: you can require a chat to start only after comparing '
-            'safety numbers.',
-        'whatsnew.v092.proximityJitter':
-            'Proximity now sends at irregular intervals instead of a fixed '
-            'rhythm, and listens only for Thestia signals.',
-        // v0.10.0 (Build 31): location privacy
-        'whatsnew.v1000.noCity':
-            'Your profile now names only your state. No city, place or '
-            'address area is stored or shown to anyone.',
-        'whatsnew.v1000.grid':
-            'Your position is stored only as a grid point at 5 km. The '
-            'snapping happens on the server, not just in the app.',
-        'whatsnew.v1000.distanceOptIn':
-            'Others see an approximate distance only after you switch it '
-            'on. Even then just coarse 10 km steps, never a number.',
+    'whatsnew.v090.birthdayStyles':
+        '5 tasteful birthday styles for your profile (choose below or '
+        'later in profile editing).',
+    // Build 30 (v0.9.2) - siehe deutsche Fassung oben.
+    'whatsnew.v092.rotatingPrompts':
+        'Introductions that do not repeat: the prompt cards now rotate '
+        'instead of always showing the same four.',
+    'whatsnew.v092.emailRequired':
+        'Important: a confirmed email address is now required for '
+        'sparks, thumbs and messages.',
+    'whatsnew.v092.safetyNumber':
+        'New: you can require a chat to start only after comparing '
+        'safety numbers.',
+    'whatsnew.v092.proximityJitter':
+        'Proximity now sends at irregular intervals instead of a fixed '
+        'rhythm, and listens only for Thestia signals.',
+    // v0.10.0 (Build 31): location privacy
+    'whatsnew.v1000.noCity':
+        'Your profile now names only your state. No city, place or '
+        'address area is stored or shown to anyone.',
+    'whatsnew.v1000.grid':
+        'Your position is stored only as a grid point at 5 km. The '
+        'snapping happens on the server, not just in the app.',
+    'whatsnew.v1000.distanceOptIn':
+        'Others see an approximate distance only after you switch it '
+        'on. Even then just coarse 10 km steps, never a number.',
     // Voice messages (listen once, M-17)
     'chat.voiceOnce':
         'This voice message was already listened to and removed (privacy: '
@@ -5495,7 +5489,8 @@ const Map<String, Map<String, String>> _strings = {
     'chat.identityVerifiedHint': 'Only enable if the numbers match.',
     'chat.more': 'More options',
     'chat.requireVerifiedTitle': 'Always verify keys',
-        'chat.requireVerifiedHint': 'Only allow sending after you compared the safety numbers. This protects against someone substituting your chat keys.',
+    'chat.requireVerifiedHint':
+        'Only allow sending after you compared the safety numbers. This protects against someone substituting your chat keys.',
     'dh.event.startingSoon': 'Dating Hour starts soon',
     'dh.event.cancelledToday':
         "Today's Dating Hour is cancelled: not enough people signed up.",
@@ -5578,27 +5573,27 @@ const Map<String, Map<String, String>> _strings = {
     'dh.chat.noSpark': 'No spark',
     'dh.chat.keepSearching': 'Keep searching',
     'dh.chat.e2e': 'End-to-end encrypted',
-  'dh.chat.timerHide': 'Hide the timer',
-  'dh.chat.timerShow': 'Show the timer',
-  'dh.chat.fiveMinutesDone':
-      'The 5 minutes are up. Take your time and decide at ease what '
-      'you think of your conversation.',
-  'dh.chat.endConversation': 'End the conversation',
-  'dh.chat.endConversationTitle': 'End the conversation?',
-  'dh.chat.endConversationBody':
-      'If you end the conversation, it will not become a spark. '
-      'That is completely fine. If your conversation felt right, you '
-      'can both decide for it.',
-  'dh.chat.endConversationDone': 'The conversation has ended.',
-  'dh.autoMatch.badge': 'Automatic',
-  'dh.autoMatch.title': 'Automatic spark',
-  'dh.autoMatch.body':
-      'Your conversation has become a spark automatically. '
-      'Does that feel right to you?',
-  'dh.autoMatch.keep': 'Keep',
-  'dh.autoMatch.remove': 'Remove the person',
-  'dh.autoMatch.done': 'All good, the hint is gone.',
-  'dh.autoMatch.failed': 'The hint could not be removed.',
+    'dh.chat.timerHide': 'Hide the timer',
+    'dh.chat.timerShow': 'Show the timer',
+    'dh.chat.fiveMinutesDone':
+        'The 5 minutes are up. Take your time and decide at ease what '
+        'you think of your conversation.',
+    'dh.chat.endConversation': 'End the conversation',
+    'dh.chat.endConversationTitle': 'End the conversation?',
+    'dh.chat.endConversationBody':
+        'If you end the conversation, it will not become a spark. '
+        'That is completely fine. If your conversation felt right, you '
+        'can both decide for it.',
+    'dh.chat.endConversationDone': 'The conversation has ended.',
+    'dh.autoMatch.badge': 'Automatic',
+    'dh.autoMatch.title': 'Automatic spark',
+    'dh.autoMatch.body':
+        'Your conversation has become a spark automatically. '
+        'Does that feel right to you?',
+    'dh.autoMatch.keep': 'Keep',
+    'dh.autoMatch.remove': 'Remove the person',
+    'dh.autoMatch.done': 'All good, the hint is gone.',
+    'dh.autoMatch.failed': 'The hint could not be removed.',
     'dh.chat.leaveTitle': 'Leave chat?',
     'dh.chat.leaveBody':
         'Leaving the chat counts as "declining". Do you really want to '
@@ -5842,20 +5837,18 @@ const Map<String, Map<String, String>> _strings = {
     'privacy.validator.tooShort': 'Too short',
     'privacy.validator.mismatch': 'Does not match',
     'privacy.policyTitle': 'Privacy policy',
-  'privacy.imprintTitle': 'Imprint',
-  'privacy.imprintSub':
-      'Provider identification pursuant to Sec. 5 DDG - address and contact',
-  'privacy.termsTitle': 'Terms of use',
-  'privacy.termsSub':
-      'What is allowed when using the app, and what is not',
-  'privacy.termsFailed':
-      'The terms of use could not be opened. Please open '
-      'https://thestia.de/en/nutzungsbedingungen in your browser.',
-  'privacy.imprintFailed':
-      'The imprint could not be opened. Please open '
-      'https://thestia.de/impressum in your browser.',
-    'privacy.policySub':
-        'What we collect, why, and for how long. Full text.',
+    'privacy.imprintTitle': 'Imprint',
+    'privacy.imprintSub':
+        'Provider identification pursuant to Sec. 5 DDG - address and contact',
+    'privacy.termsTitle': 'Terms of use',
+    'privacy.termsSub': 'What is allowed when using the app, and what is not',
+    'privacy.termsFailed':
+        'The terms of use could not be opened. Please open '
+        'https://thestia.de/en/nutzungsbedingungen in your browser.',
+    'privacy.imprintFailed':
+        'The imprint could not be opened. Please open '
+        'https://thestia.de/impressum in your browser.',
+    'privacy.policySub': 'What we collect, why, and for how long. Full text.',
     'privacy.yourData': 'Your data',
     'privacy.dataInfo':
         'Thestia stores profile information, location data (only if you '
@@ -6027,8 +6020,7 @@ const Map<String, Map<String, String>> _strings = {
         'mailbox, they arrive after the next fetch.',
     'admin.mailWithoutSubject': '(no subject)',
     'admin.mailEmptyBody': '(no text)',
-    'admin.mailReadOnly':
-        'Read only - replies go through your email program.',
+    'admin.mailReadOnly': 'Read only - replies go through your email program.',
     'admin.tabBans': 'Bans',
     'admin.close': 'Close',
     'admin.error': 'Error: {error}',
@@ -6139,7 +6131,8 @@ const Map<String, Map<String, String>> _strings = {
     // RECORD_AUDIO undisclosed.
     'verify.cameraDeclined':
         'Without the camera we cannot estimate your age. You can allow it in the settings at any time.',
-    'verify.cameraDisclosureTitle': 'Camera and microphone for age verification',
+    'verify.cameraDisclosureTitle':
+        'Camera and microphone for age verification',
     'verify.cameraDisclosureBody':
         'To estimate your age, the app needs access to the camera and the microphone. Capture starts only after you confirm below. The image is evaluated and not saved afterwards.',
     'verify.cameraDisclosureAccept': 'Allow camera',
@@ -6362,8 +6355,7 @@ const Map<String, Map<String, String>> _strings = {
         'Phone numbers, addresses, employers and ID photos are sensitive. '
         'Share them only when you know the person well. Screenshots can '
         'pass on everything - even disappearing messages.',
-    'safetyOnboarding.edu2Hint':
-        'A screenshot is taken faster than you think.',
+    'safetyOnboarding.edu2Hint': 'A screenshot is taken faster than you think.',
     'safetyOnboarding.edu3Title': 'The first meeting',
     'safetyOnboarding.edu3Body':
         'Meet during the day in a public place. Tell someone you know '
@@ -6419,8 +6411,7 @@ const Map<String, Map<String, String>> _strings = {
     'contactShare.customApp': 'App name',
     'contactShare.customAppHint': 'e.g. Telegram',
     'contactShare.customNeedsName': 'Please fill in app name and handle.',
-    'contactShare.handleMissing':
-        'Please enter a handle or turn the app off.',
+    'contactShare.handleMissing': 'Please enter a handle or turn the app off.',
     'contactShare.invalidPhone': 'Please enter a valid phone number.',
     'contactShare.save': 'Save',
     'contactShare.saved': 'Contact details saved.',

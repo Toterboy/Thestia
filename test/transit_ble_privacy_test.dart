@@ -8,30 +8,40 @@ void main() {
   group('TransitBlePrivacy - Advertising-Zyklus', () {
     test('bleibt immer innerhalb des Fensters 20-45 s', () {
       for (int seed = 0; seed < 400; seed++) {
-        final d = TransitBlePrivacy.advertiseCycleDelay(
-            random: Random(seed));
-        expect(d.inMilliseconds,
-            greaterThanOrEqualTo(kAdvertiseCycleMin.inMilliseconds));
-        expect(d.inMilliseconds,
-            lessThanOrEqualTo(kAdvertiseCycleMax.inMilliseconds));
+        final d = TransitBlePrivacy.advertiseCycleDelay(random: Random(seed));
+        expect(
+          d.inMilliseconds,
+          greaterThanOrEqualTo(kAdvertiseCycleMin.inMilliseconds),
+        );
+        expect(
+          d.inMilliseconds,
+          lessThanOrEqualTo(kAdvertiseCycleMax.inMilliseconds),
+        );
       }
     });
 
     test('erzeugt tatsächlich verschiedene Werte (kein fester Takt)', () {
       final values = <int>{};
       for (int seed = 0; seed < 200; seed++) {
-        values.add(TransitBlePrivacy.advertiseCycleDelay(
-                random: Random(seed))
-            .inMilliseconds);
+        values.add(
+          TransitBlePrivacy.advertiseCycleDelay(
+            random: Random(seed),
+          ).inMilliseconds,
+        );
       }
       // Bei 200 Ziehungen aus ~26 s Spielraum sind viele Werte zu erwarten.
-      expect(values.length, greaterThan(100),
-          reason: 'fester Takt würde genau 1 distinct liefern');
+      expect(
+        values.length,
+        greaterThan(100),
+        reason: 'fester Takt würde genau 1 distinct liefern',
+      );
     });
 
     test('deterministisch bei gleichem Random-Seed', () {
-      expect(TransitBlePrivacy.advertiseCycleDelay(random: Random(42)),
-          TransitBlePrivacy.advertiseCycleDelay(random: Random(42)));
+      expect(
+        TransitBlePrivacy.advertiseCycleDelay(random: Random(42)),
+        TransitBlePrivacy.advertiseCycleDelay(random: Random(42)),
+      );
     });
   });
 
@@ -48,21 +58,26 @@ void main() {
       // ein Fingerprint. Der exakte Basiswert darf also selten sein.
       final exact = <int>{};
       for (int seed = 0; seed < 400; seed++) {
-        if (TransitBlePrivacy.tokenRotationDelay(random: Random(seed))
-                .inMilliseconds ==
+        if (TransitBlePrivacy.tokenRotationDelay(
+              random: Random(seed),
+            ).inMilliseconds ==
             kTokenRotationBase.inMilliseconds) {
           exact.add(seed);
         }
       }
-      expect(exact.length, lessThan(5),
-          reason: 'zu oft exakt die Basisperiode - Jitter wirkungslos');
+      expect(
+        exact.length,
+        lessThan(5),
+        reason: 'zu oft exakt die Basisperiode - Jitter wirkungslos',
+      );
     });
 
     test('erlaubt beide Richtungen (früher UND später als 10 min)', () {
       var early = 0, late = 0;
       for (int seed = 0; seed < 400; seed++) {
-        final ms = TransitBlePrivacy.tokenRotationDelay(random: Random(seed))
-            .inMilliseconds;
+        final ms = TransitBlePrivacy.tokenRotationDelay(
+          random: Random(seed),
+        ).inMilliseconds;
         if (ms < kTokenRotationBase.inMilliseconds) early++;
         if (ms > kTokenRotationBase.inMilliseconds) late++;
       }
@@ -75,10 +90,14 @@ void main() {
     test('Pause liegt zwischen 8 und 20 s', () {
       for (int seed = 0; seed < 400; seed++) {
         final d = TransitBlePrivacy.scanPulseOff(random: Random(seed));
-        expect(d.inMilliseconds,
-            greaterThanOrEqualTo(kScanPulseOffMin.inMilliseconds));
-        expect(d.inMilliseconds,
-            lessThanOrEqualTo(kScanPulseOffMax.inMilliseconds));
+        expect(
+          d.inMilliseconds,
+          greaterThanOrEqualTo(kScanPulseOffMin.inMilliseconds),
+        );
+        expect(
+          d.inMilliseconds,
+          lessThanOrEqualTo(kScanPulseOffMax.inMilliseconds),
+        );
       }
     });
 
@@ -89,18 +108,24 @@ void main() {
       var total = 0;
       const n = 500;
       for (int seed = 0; seed < n; seed++) {
-        total += TransitBlePrivacy.scanPulseOff(random: Random(seed))
-            .inMilliseconds;
+        total += TransitBlePrivacy.scanPulseOff(
+          random: Random(seed),
+        ).inMilliseconds;
       }
       offSum.add(total);
       final meanOff = total / n;
-      final duty = kScanPulseOn.inMilliseconds /
-          (kScanPulseOn.inMilliseconds + meanOff);
-      expect(duty, greaterThan(0.40),
-          reason: 'Duty-Cycle $duty zu niedrig - Begegnungen werden verpasst');
+      final duty =
+          kScanPulseOn.inMilliseconds / (kScanPulseOn.inMilliseconds + meanOff);
+      expect(
+        duty,
+        greaterThan(0.40),
+        reason: 'Duty-Cycle $duty zu niedrig - Begegnungen werden verpasst',
+      );
       // Gegenprobe: die Konstanten selbst duerfen nicht zu pessimistisch sein
-      expect(kScanPulseOffMax.inMilliseconds,
-          lessThanOrEqualTo(kScanPulseOn.inMilliseconds * 2));
+      expect(
+        kScanPulseOffMax.inMilliseconds,
+        lessThanOrEqualTo(kScanPulseOn.inMilliseconds * 2),
+      );
     });
   });
 
@@ -127,10 +152,14 @@ void main() {
 
     test('Werte bleiben auch ohne injizierten Random im gültigen Band', () {
       for (int i = 0; i < 50; i++) {
-        expect(TransitBlePrivacy.tokenRotationDelay().inMinutes,
-            inInclusiveRange(6, 14));
-        expect(TransitBlePrivacy.advertiseCycleDelay().inSeconds,
-            inInclusiveRange(20, 45));
+        expect(
+          TransitBlePrivacy.tokenRotationDelay().inMinutes,
+          inInclusiveRange(6, 14),
+        );
+        expect(
+          TransitBlePrivacy.advertiseCycleDelay().inSeconds,
+          inInclusiveRange(20, 45),
+        );
       }
     });
   });

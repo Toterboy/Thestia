@@ -48,9 +48,7 @@ class SupabaseStorageService {
     // Der Host aus der Konfiguration (falls er nicht auf .supabase.co
     // endet - z. B. bei einer selbst gehosteten Instanz).
     final eigener = Uri.tryParse(AppConstants.supabaseUrlBase)?.host;
-    return eigener != null &&
-        eigener.isNotEmpty &&
-        h == eigener.toLowerCase();
+    return eigener != null && eigener.isNotEmpty && h == eigener.toLowerCase();
   }
 
   /// Lädt eine Chat-Media-Datei (Bild, Sprache) in den Storage hoch.
@@ -65,22 +63,22 @@ class SupabaseStorageService {
 
     // Pfad-Traversal/Injektion verhindern (Audit N1): Nur harmlose
     // Datei-Endungen erlauben, alles andere neutralisieren.
-    final safeExtension =
-        RegExp(r'^[A-Za-z0-9]{1,8}$').hasMatch(fileExtension)
-            ? fileExtension.toLowerCase()
-            : 'bin';
+    final safeExtension = RegExp(r'^[A-Za-z0-9]{1,8}$').hasMatch(fileExtension)
+        ? fileExtension.toLowerCase()
+        : 'bin';
 
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final path = '$userId/chat/$timestamp.$safeExtension';
     if (kDebugMode) {
-      log('[SupabaseStorageService] Upload chat media: '
-          'bucket=$_bucket size=${data.length}');
+      log(
+        '[SupabaseStorageService] Upload chat media: '
+        'bucket=$_bucket size=${data.length}',
+      );
     }
 
-    await _client.storage.from(_bucket).uploadBinary(
-          path,
-          Uint8List.fromList(data),
-        );
+    await _client.storage
+        .from(_bucket)
+        .uploadBinary(path, Uint8List.fromList(data));
 
     final signedUrl = await _client.storage
         .from(_bucket)
@@ -101,13 +99,16 @@ class SupabaseStorageService {
     if (userId == null) {
       throw AppException('Nicht eingeloggt.');
     }
-    final path =
-        '$userId/appeals/${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final path = '$userId/appeals/${DateTime.now().millisecondsSinceEpoch}.jpg';
     if (kDebugMode) {
-      log('[SupabaseStorageService] Upload appeal image: '
-          'bucket=$_bucket size=${data.length}');
+      log(
+        '[SupabaseStorageService] Upload appeal image: '
+        'bucket=$_bucket size=${data.length}',
+      );
     }
-    await _client.storage.from(_bucket).uploadBinary(
+    await _client.storage
+        .from(_bucket)
+        .uploadBinary(
           path,
           Uint8List.fromList(data),
           fileOptions: const FileOptions(contentType: 'image/jpeg'),
@@ -171,13 +172,17 @@ class SupabaseStorageService {
     final enc = AvatarCrypto.encrypt(Uint8List.fromList(data));
     final path = _avatarPathForUser(userId);
     if (kDebugMode) {
-      log('[SupabaseStorageService] Upload avatar (verschlüsselt): '
-          'bucket=$_bucket size=${enc.cipher.length}');
+      log(
+        '[SupabaseStorageService] Upload avatar (verschlüsselt): '
+        'bucket=$_bucket size=${enc.cipher.length}',
+      );
     }
 
     // upsert: Erneutes Hochladen (neues Bild) ueberschreibt das alte -
     // ohne upsert wuerde der zweite Upload mit 409 scheitern.
-    await _client.storage.from(_bucket).uploadBinary(
+    await _client.storage
+        .from(_bucket)
+        .uploadBinary(
           path,
           enc.cipher,
           fileOptions: const FileOptions(upsert: true),
@@ -202,7 +207,9 @@ class SupabaseStorageService {
 
     final enc = AvatarCrypto.encrypt(Uint8List.fromList(data));
     final path = '$userId/photos/${index + 1}.jpg';
-    await _client.storage.from(_bucket).uploadBinary(
+    await _client.storage
+        .from(_bucket)
+        .uploadBinary(
           path,
           enc.cipher,
           fileOptions: const FileOptions(upsert: true),
@@ -231,22 +238,24 @@ class SupabaseStorageService {
     try {
       final parsed = AvatarCrypto.parseRef(ref);
       final path = parsed?.path ?? AvatarCrypto.pathOf(ref);
-      final data =
-          await _client.storage.from(_bucket).download(path);
+      final data = await _client.storage.from(_bucket).download(path);
       // FREEZE-FIX (v0.8.1): GCM-Entschlüsselung in pure Dart (1-2 MB)
       // dauert spürbar - Hintergrund-Isolate statt UI-Thread.
       final result = parsed == null
           ? data // Legacy: Klartext.
-          : await compute(
-              AvatarCrypto.decryptArgs,
-              (data, parsed.key, parsed.iv),
-            );
+          : await compute(AvatarCrypto.decryptArgs, (
+              data,
+              parsed.key,
+              parsed.iv,
+            ));
       _avatarMemoryCache[ref] = result;
       return result;
     } catch (e) {
       if (kDebugMode) {
-        log('[SupabaseStorageService] Avatar-Download/Entschlüsselung '
-            'fehlgeschlagen: $e');
+        log(
+          '[SupabaseStorageService] Avatar-Download/Entschlüsselung '
+          'fehlgeschlagen: $e',
+        );
       }
       return null;
     }
@@ -298,8 +307,10 @@ class SupabaseStorageService {
       final res = await http.get(Uri.parse(url));
       if (res.statusCode != 200) {
         if (kDebugMode) {
-          log('[SupabaseStorageService] Partner-Avatar Download fehl: '
-              'HTTP ${res.statusCode}');
+          log(
+            '[SupabaseStorageService] Partner-Avatar Download fehl: '
+            'HTTP ${res.statusCode}',
+          );
         }
         return null;
       }
@@ -312,10 +323,11 @@ class SupabaseStorageService {
       }
       final Uint8List result;
       try {
-        result = await compute(
-          AvatarCrypto.decryptArgs,
-          (bytes, base64Decode(keyB64), base64Decode(ivB64)),
-        );
+        result = await compute(AvatarCrypto.decryptArgs, (
+          bytes,
+          base64Decode(keyB64),
+          base64Decode(ivB64),
+        ));
       } catch (e) {
         // NUTZERWUNSCH "Bild einfach nicht sichtbar": Schlüssel passt
         // nicht zum Ciphertext (z. B. alter Refs-Cache) - NICHT cachen,
@@ -338,12 +350,8 @@ class SupabaseStorageService {
   /// Entfernt einen Partner-Avatar aus dem Memory-Cache (NUTZERWUNSCH
   /// "Bild einfach nicht sichtbar": Bei Retry keinen veralteten
   /// Schlüssel-Cache behalten, damit match-media frisch antwortet).
-  void invalidatePartnerAvatar({
-    required String targetUserId,
-    String? path,
-  }) {
-    _partnerAvatarMemoryCache
-        .remove('$targetUserId|${path ?? 'avatar.jpg'}');
+  void invalidatePartnerAvatar({required String targetUserId, String? path}) {
+    _partnerAvatarMemoryCache.remove('$targetUserId|${path ?? 'avatar.jpg'}');
   }
 
   /// Erzeugt eine temporäre signierte URL für den angegebenen Storage-Pfad.
@@ -390,10 +398,14 @@ class SupabaseStorageService {
 
     final path = _introPathForUser(userId);
     if (kDebugMode) {
-      log('[SupabaseStorageService] Upload intro audio: bucket=$_bucket size=${data.length}');
+      log(
+        '[SupabaseStorageService] Upload intro audio: bucket=$_bucket size=${data.length}',
+      );
     }
 
-    await _client.storage.from(_bucket).uploadBinary(
+    await _client.storage
+        .from(_bucket)
+        .uploadBinary(
           path,
           Uint8List.fromList(data),
           // upsert: Erneutes Hochladen (z. B. zweite Aufnahme in der
@@ -453,14 +465,18 @@ class SupabaseStorageService {
     // versehentlich als vollstaendig gelesen gilt.
     final path = '$userId/video.mp4.enc';
     if (kDebugMode) {
-      log('[SupabaseStorageService] Upload verification video: '
-          'size=${data.length}');
+      log(
+        '[SupabaseStorageService] Upload verification video: '
+        'size=${data.length}',
+      );
     }
 
     // NUTZERWUNSCH-DIAGNOSE: uploadBinary wirft bei "Objekt existiert
     // bereits" (409) - der REUPLOAD (nach abgelehnter Einreichung)
     // scheiterte dadurch still. Upsert macht die Einreichung wiederholbar.
-    await _client.storage.from(_verificationBucket).uploadBinary(
+    await _client.storage
+        .from(_verificationBucket)
+        .uploadBinary(
           path,
           Uint8List.fromList(data),
           fileOptions: const FileOptions(

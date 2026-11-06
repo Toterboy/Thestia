@@ -21,15 +21,27 @@ import 'package:thestia/routing/verification_required_routes.dart';
 void main() {
   group('Routen, die ein verifiziertes Profil voraussetzen', () {
     test('Find your Spark, Transit Spark und Dating Hour sind gesperrt', () {
-      expect(routeNeedsVerification(AppRoutes.findYourMatch), isTrue,
-          reason: 'Find your Spark vermittelt an Fremde - dafuer ist die '
-              'Verifikation da.');
-      expect(routeNeedsVerification(AppRoutes.transitRadar), isTrue,
-          reason: 'Transit Spark erzeugt Begegnungen im oeffentlichen '
-              'Raum - dafuer ist die Verifikation da.');
-      expect(routeNeedsVerification(AppRoutes.datingHourEvent), isTrue,
-          reason: 'Dating Hour vermittelt an Fremde - dafuer ist die '
-              'Verifikation da.');
+      expect(
+        routeNeedsVerification(AppRoutes.findYourMatch),
+        isTrue,
+        reason:
+            'Find your Spark vermittelt an Fremde - dafuer ist die '
+            'Verifikation da.',
+      );
+      expect(
+        routeNeedsVerification(AppRoutes.transitRadar),
+        isTrue,
+        reason:
+            'Transit Spark erzeugt Begegnungen im oeffentlichen '
+            'Raum - dafuer ist die Verifikation da.',
+      );
+      expect(
+        routeNeedsVerification(AppRoutes.datingHourEvent),
+        isTrue,
+        reason:
+            'Dating Hour vermittelt an Fremde - dafuer ist die '
+            'Verifikation da.',
+      );
     });
 
     test('Die Erklaerungsseiten bleiben frei', () {
@@ -46,11 +58,17 @@ void main() {
       // Wer mitten in einer Runde rausfliegt, verliert das Gespraech.
       // Der Zutritt wurde beim Join geprueft - die Runde existiert
       // bereits.
-      final chat = AppRoutes.datingHourChatPath('12345678-1234-1234-1234-'
-          '123456789abc');
-      expect(routeNeedsVerification(chat), isFalse,
-          reason: 'Der Chat einer laufenden Runde ist keine neue '
-              'Begegnung.');
+      final chat = AppRoutes.datingHourChatPath(
+        '12345678-1234-1234-1234-'
+        '123456789abc',
+      );
+      expect(
+        routeNeedsVerification(chat),
+        isFalse,
+        reason:
+            'Der Chat einer laufenden Runde ist keine neue '
+            'Begegnung.',
+      );
     });
 
     test('Allgemeine Seiten sind nicht gesperrt', () {
@@ -61,8 +79,11 @@ void main() {
         AppRoutes.swipeModeSelection,
         AppRoutes.admin,
       ]) {
-        expect(routeNeedsVerification(route), isFalse,
-            reason: '$route ist nicht verifikationspflichtig.');
+        expect(
+          routeNeedsVerification(route),
+          isFalse,
+          reason: '$route ist nicht verifikationspflichtig.',
+        );
       }
     });
   });

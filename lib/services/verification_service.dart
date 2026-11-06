@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -86,17 +86,17 @@ class VerificationVideo {
   }
 
   Map<String, dynamic> toJson() => {
-        'filePath': filePath,
-        'recordedAt': recordedAt.toIso8601String(),
-        'durationSeconds': durationSeconds,
-        'challengeText': challengeText,
-        'challengeGesture': challengeGesture,
-        'location': location != null
-            ? {'lat': location!.latitude, 'lng': location!.longitude}
-            : null,
-        'isVerified': isVerified,
-        'faceEmbedding': faceEmbedding,
-      };
+    'filePath': filePath,
+    'recordedAt': recordedAt.toIso8601String(),
+    'durationSeconds': durationSeconds,
+    'challengeText': challengeText,
+    'challengeGesture': challengeGesture,
+    'location': location != null
+        ? {'lat': location!.latitude, 'lng': location!.longitude}
+        : null,
+    'isVerified': isVerified,
+    'faceEmbedding': faceEmbedding,
+  };
 
   factory VerificationVideo.fromJson(Map<String, dynamic> json) {
     return VerificationVideo(
@@ -120,7 +120,9 @@ class VerificationVideo {
               altitudeAccuracy: 0,
             ),
       isVerified: json['isVerified'] as bool? ?? false,
-      faceEmbedding: (json['faceEmbedding'] as List<dynamic>?)?.map((e) => (e as num).toDouble()).toList(),
+      faceEmbedding: (json['faceEmbedding'] as List<dynamic>?)
+          ?.map((e) => (e as num).toDouble())
+          .toList(),
     );
   }
 }
@@ -129,10 +131,13 @@ class VerificationVideo {
 enum VerificationChallengeType {
   /// Zufällige Zahl/Ziffernfolge vorlesen.
   speakNumber,
+
   /// Bestimmte Geste machen (z. B. blinzeln, Zunge raus).
   makeGesture,
+
   /// Kopf drehen (links/rechts).
   turnHead,
+
   /// Lächeln.
   smile,
 }
@@ -254,14 +259,12 @@ class VerificationService {
   /// [challengeDataLabel]. Challenge-Texte erreichen den Server ohnehin
   /// nie (nur lokale Hive-Ablage + Anzeige).
   (VerificationChallengeType, String) generateChallenge() {
-    final type =
-        _challengeTypes[_secureRandom.nextInt(_challengeTypes.length)];
+    final type = _challengeTypes[_secureRandom.nextInt(_challengeTypes.length)];
     String challengeData;
 
     switch (type) {
       case VerificationChallengeType.speakNumber:
-        final number =
-            (1000 + _secureRandom.nextInt(9000)).toString();
+        final number = (1000 + _secureRandom.nextInt(9000)).toString();
         challengeData = number;
         break;
       case VerificationChallengeType.makeGesture:
@@ -269,8 +272,7 @@ class VerificationService {
         challengeData = gestures[_secureRandom.nextInt(gestures.length)];
         break;
       case VerificationChallengeType.turnHead:
-        challengeData =
-            _secureRandom.nextBool() ? 'left_right' : 'right_left';
+        challengeData = _secureRandom.nextBool() ? 'left_right' : 'right_left';
         break;
       case VerificationChallengeType.smile:
         challengeData = 'smile';
@@ -284,7 +286,10 @@ class VerificationService {
 
   /// Lokalisiertes Label für Challenge-Daten-Codes (Zahlen kommen durch).
   static String challengeDataLabel(
-      BuildContext context, VerificationChallengeType type, String data) {
+    BuildContext context,
+    VerificationChallengeType type,
+    String data,
+  ) {
     switch (type) {
       case VerificationChallengeType.speakNumber:
         return data;
@@ -298,8 +303,11 @@ class VerificationService {
   }
 
   /// Holt die lokalisierten Anzeigetexte für eine Challenge.
-  String challengeDescription(BuildContext context,
-      VerificationChallengeType type, String challengeData) {
+  String challengeDescription(
+    BuildContext context,
+    VerificationChallengeType type,
+    String challengeData,
+  ) {
     final base = L10n.t(context, 'verify.challenge.base.${type.name}');
     final label = challengeDataLabel(context, type, challengeData);
     return '$base\n\n${L10n.t(context, 'verify.challenge.task')} "$label"';
@@ -389,14 +397,14 @@ class VerificationService {
     final source = File(filePath);
     if (!await source.exists()) {
       throw StateError(
-          'Aufnahme-Datei fehlt nach dem Stoppen ($filePath) - bitte '
-          'erneut aufnehmen.');
+        'Aufnahme-Datei fehlt nach dem Stoppen ($filePath) - bitte '
+        'erneut aufnehmen.',
+      );
     }
     try {
       await source.copy(finalPath);
     } catch (e) {
-      throw StateError(
-          'Aufnahme konnte nicht gesichert werden: $e');
+      throw StateError('Aufnahme konnte nicht gesichert werden: $e');
     }
     // Cache-Original entfernen (best effort - gehört dem Kamera-Plugin).
     await bestEffort('delete', () async {
@@ -407,8 +415,12 @@ class VerificationService {
       filePath: finalPath,
       recordedAt: DateTime.now(),
       durationSeconds: _maxDurationSeconds,
-      challengeText: challengeType == VerificationChallengeType.speakNumber ? challengeData : null,
-      challengeGesture: challengeType != VerificationChallengeType.speakNumber ? challengeData : null,
+      challengeText: challengeType == VerificationChallengeType.speakNumber
+          ? challengeData
+          : null,
+      challengeGesture: challengeType != VerificationChallengeType.speakNumber
+          ? challengeData
+          : null,
       location: location,
     );
 
@@ -458,7 +470,10 @@ class VerificationService {
     if (!_box.containsKey(filePath)) return;
     final video = _videoFromBox(filePath);
     if (video == null) return;
-    await _box.put(filePath, jsonEncode(video.copyWith(isVerified: true).toJson()));
+    await _box.put(
+      filePath,
+      jsonEncode(video.copyWith(isVerified: true).toJson()),
+    );
   }
 
   /// Löscht das Video (z. B. bei erneuter Verifizierung).
@@ -513,7 +528,11 @@ class VerificationService {
         }
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('[VerificationService] deleteAllLocalData fehlgeschlagen: $e');
+      if (kDebugMode) {
+        debugPrint(
+          '[VerificationService] deleteAllLocalData fehlgeschlagen: $e',
+        );
+      }
     }
   }
 
@@ -585,10 +604,7 @@ class VerificationService {
       final fc = faceCount;
       if (fc != null) submitBody['faceCount'] = fc;
       final response = await SupabaseService.client.functions
-          .invoke(
-            'verify-account',
-            body: submitBody,
-          )
+          .invoke('verify-account', body: submitBody)
           .timeout(const Duration(seconds: 45));
 
       if (response.data is Map<String, dynamic>) {
@@ -626,8 +642,10 @@ class VerificationService {
       // durchgehen - dann ist der Retry beim naechsten Start sinnvoll.
       final netzausfall = _istNetzausfall(e);
       if (kDebugMode) {
-        debugPrint('[VerificationService] Server-Submit fehlgeschlagen '
-            '${netzausfall ? '(lokal pending)' : '(Fehler gemeldet)'}: $e');
+        debugPrint(
+          '[VerificationService] Server-Submit fehlgeschlagen '
+          '${netzausfall ? '(lokal pending)' : '(Fehler gemeldet)'}: $e',
+        );
       }
       if (netzausfall) {
         // Server nicht erreichbar: Video ist LOKAL gespeichert, die

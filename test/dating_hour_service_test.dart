@@ -42,13 +42,17 @@ void main() {
     });
 
     test('isSessionExpired: true, wenn Serverzeit nach expiresAt liegt', () {
-      serverTime.setOffsetForTesting(const Duration(minutes: 10).inMilliseconds);
+      serverTime.setOffsetForTesting(
+        const Duration(minutes: 10).inMilliseconds,
+      );
       expect(service.isSessionExpired(session()), isTrue);
     });
 
     test('isSessionExpired ignoriert eine verstellte Geräte-Uhr', () {
       // Geräte-Uhr zeigt 10 Minuten NACH expiresAt, Serverzeit ist korrekt.
-      serverTime.setOffsetForTesting(const Duration(minutes: -10).inMilliseconds);
+      serverTime.setOffsetForTesting(
+        const Duration(minutes: -10).inMilliseconds,
+      );
       expect(service.isSessionExpired(session(expiresInSeconds: 300)), isFalse);
     });
 
@@ -58,7 +62,9 @@ void main() {
     });
 
     test('remainingSeconds: nie negativ (clamp 0..300)', () {
-      serverTime.setOffsetForTesting(const Duration(minutes: 10).inMilliseconds);
+      serverTime.setOffsetForTesting(
+        const Duration(minutes: 10).inMilliseconds,
+      );
       expect(service.remainingSeconds(session()), 0);
     });
 
@@ -77,7 +83,11 @@ void main() {
   });
 
   group('Event-Zeitlogik', () {
-    DatingHourEvent event({DateTime? startsAt, DateTime? endsAt, String status = 'scheduled'}) {
+    DatingHourEvent event({
+      DateTime? startsAt,
+      DateTime? endsAt,
+      String status = 'scheduled',
+    }) {
       final now = DateTime.now();
       return DatingHourEvent(
         id: 'e1',
@@ -99,8 +109,12 @@ void main() {
     });
 
     test('isEnded/canJoin: Serverzeit nach Ende → beendet, kein Beitritt', () {
-      serverTime.setOffsetForTesting(const Duration(minutes: 10).inMilliseconds);
-      final e = event(endsAt: DateTime.now().subtract(const Duration(minutes: 5)));
+      serverTime.setOffsetForTesting(
+        const Duration(minutes: 10).inMilliseconds,
+      );
+      final e = event(
+        endsAt: DateTime.now().subtract(const Duration(minutes: 5)),
+      );
       expect(e.isEnded, isTrue);
       expect(e.canJoin, isFalse);
     });
@@ -108,7 +122,9 @@ void main() {
     test('canJoin berücksichtigt eine verstellte Geräte-Uhr nicht', () {
       // Geräte-Uhr ist 10 Minuten VOR (Serverzeit = Gerätezeit - 10 min).
       // Das Event endete vor 5 Minuten in ECHTER Zeit.
-      serverTime.setOffsetForTesting(const Duration(minutes: -10).inMilliseconds);
+      serverTime.setOffsetForTesting(
+        const Duration(minutes: -10).inMilliseconds,
+      );
       final realNow = DateTime.now().subtract(const Duration(minutes: 10));
       final e = event(endsAt: realNow.subtract(const Duration(minutes: 5)));
       expect(e.canJoin, isFalse);

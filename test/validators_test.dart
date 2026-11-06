@@ -5,12 +5,16 @@ import 'package:flutter_test/flutter_test.dart';
 /// Liefert einen BuildContext (Default-Locale Deutsch, wie ohne Scope).
 Future<BuildContext> _ctx(WidgetTester tester) async {
   late BuildContext ctx;
-  await tester.pumpWidget(MaterialApp(
-    home: Builder(builder: (c) {
-      ctx = c;
-      return const SizedBox();
-    }),
-  ));
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Builder(
+        builder: (c) {
+          ctx = c;
+          return const SizedBox();
+        },
+      ),
+    ),
+  );
   return ctx;
 }
 
@@ -72,7 +76,10 @@ void main() {
 
     testWidgets('trimmt Leerzeichen', (tester) async {
       final context = await _ctx(tester);
-      expect(Validators.name(context, ' A'), isNotNull); // Nach Trim nur 1 Zeichen
+      expect(
+        Validators.name(context, ' A'),
+        isNotNull,
+      ); // Nach Trim nur 1 Zeichen
       expect(Validators.name(context, '  AB  '), isNull);
     });
   });
@@ -113,14 +120,18 @@ void main() {
       expect(Validators.age(context, '200'), isNotNull);
     });
 
-    testWidgets('Alter unter 16 wird mit klarer Meldung abgelehnt', (tester) async {
+    testWidgets('Alter unter 16 wird mit klarer Meldung abgelehnt', (
+      tester,
+    ) async {
       final context = await _ctx(tester);
       final msg = Validators.age(context, '14');
       expect(msg, isNotNull);
       expect(msg, contains('mindestens $minimumAge Jahre alt'));
     });
 
-    testWidgets('Alter ueber 99 wird mit passender Meldung abgelehnt', (tester) async {
+    testWidgets('Alter ueber 99 wird mit passender Meldung abgelehnt', (
+      tester,
+    ) async {
       final context = await _ctx(tester);
       final msg = Validators.age(context, '100');
       expect(msg, isNotNull);
@@ -162,7 +173,10 @@ void main() {
       expect(Validators.email(context, 'keinemail'), isNotNull);
       expect(Validators.email(context, 'max@beispiel'), isNotNull); // keine TLD
       expect(Validators.email(context, 'max@@de'), isNotNull);
-      expect(Validators.email(context, 'max@beispiel.d'), isNotNull); // TLD zu kurz
+      expect(
+        Validators.email(context, 'max@beispiel.d'),
+        isNotNull,
+      ); // TLD zu kurz
       expect(Validators.email(context, ' @beispiel.de'), isNotNull);
       expect(Validators.email(context, 'max @beispiel.de'), isNotNull);
       expect(Validators.email(context, 'max@'), isNotNull);
@@ -195,7 +209,9 @@ void main() {
       expect(Validators.password(context, '1234567'), isNotNull);
     });
 
-    testWidgets('akzeptiert ab 8 Zeichen mit Buchstabe und Zahl', (tester) async {
+    testWidgets('akzeptiert ab 8 Zeichen mit Buchstabe und Zahl', (
+      tester,
+    ) async {
       final context = await _ctx(tester);
       expect(Validators.password(context, 'langgenug1'), isNull);
       expect(Validators.password(context, 'meinSicheres99'), isNull);
@@ -225,7 +241,9 @@ void main() {
       expect(Validators.isOldEnough(null), isFalse);
     });
 
-    testWidgets('Alter unter 16 wird mit klarer Meldung abgelehnt', (tester) async {
+    testWidgets('Alter unter 16 wird mit klarer Meldung abgelehnt', (
+      tester,
+    ) async {
       final context = await _ctx(tester);
       final msg = Validators.age(context, '14');
       expect(msg, isNotNull);
@@ -293,7 +311,11 @@ void main() {
 
     testWidgets('ueber 99 wird abgelehnt', (tester) async {
       final context = await _ctx(tester);
-      final tooOld = DateTime(DateTime.now().year - 100, DateTime.now().month, DateTime.now().day);
+      final tooOld = DateTime(
+        DateTime.now().year - 100,
+        DateTime.now().month,
+        DateTime.now().day,
+      );
       expect(Validators.birthDate(context, tooOld), isNotNull);
     });
 

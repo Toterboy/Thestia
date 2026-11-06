@@ -29,8 +29,10 @@ void main() {
         jsonDecode(encoded) as Map<String, dynamic>,
       );
       expect(decoded.filePath, original.filePath);
-      expect(decoded.recordedAt.toIso8601String(),
-          original.recordedAt.toIso8601String());
+      expect(
+        decoded.recordedAt.toIso8601String(),
+        original.recordedAt.toIso8601String(),
+      );
       expect(decoded.durationSeconds, 15);
       expect(decoded.challengeText, '4832');
       expect(decoded.challengeGesture, isNull);
@@ -76,8 +78,7 @@ void main() {
       });
     });
 
-    test(
-        'Box<VerificationVideo> OHNE Adapter wirft beim put (das war der '
+    test('Box<VerificationVideo> OHNE Adapter wirft beim put (das war der '
         'Einreichungs-Abbruch)', () async {
       final box = await Hive.openBox<VerificationVideo>('verify_typed');
       final video = VerificationVideo(
@@ -87,10 +88,7 @@ void main() {
       );
       // Der alte Code tat genau das -> HiveError "unknown type".
       // Wäre dieser Fehler weg, wäre der Fix nie nötig gewesen.
-      await expectLater(
-        box.put('k', video),
-        throwsA(isA<HiveError>()),
-      );
+      await expectLater(box.put('k', video), throwsA(isA<HiveError>()));
     });
 
     test('Box<String> mit JSON funktioniert (der Fix)', () async {

@@ -12,8 +12,7 @@ void main() {
 
     test('Tokens sind (praktisch) eindeutig', () {
       final tokens = {
-        for (var i = 0; i < 200; i++)
-          TransitEncounterService.generateToken(),
+        for (var i = 0; i < 200; i++) TransitEncounterService.generateToken(),
       };
       expect(tokens.length, 200);
     });
@@ -24,7 +23,8 @@ void main() {
       expect(TransitEncounterService.bleMarker, 'WST1');
       expect(
         TransitEncounterService.blePayloadFits(
-            TransitEncounterService.generateToken()),
+          TransitEncounterService.generateToken(),
+        ),
         isTrue,
       );
       // Das alte 32-Zeichen-Format hätte NIE funktioniert (36 > 24).
@@ -38,10 +38,7 @@ void main() {
 
     test('Token-Format erfüllt Server-Regex ([0-9a-fA-F-]{8,64})', () {
       final token = TransitEncounterService.generateToken();
-      expect(
-        RegExp(r'^[0-9a-fA-F-]{8,64}$').hasMatch(token),
-        isTrue,
-      );
+      expect(RegExp(r'^[0-9a-fA-F-]{8,64}$').hasMatch(token), isTrue);
     });
   });
 
@@ -49,12 +46,14 @@ void main() {
     test('PGRST202 und Funktions-nicht-gefunden steigen ab', () {
       expect(
         SupabaseDatabaseService.isRpcSignatureMismatch(
-            Exception('PGRST202 Could not find the function')),
+          Exception('PGRST202 Could not find the function'),
+        ),
         isTrue,
       );
       expect(
         SupabaseDatabaseService.isRpcSignatureMismatch(
-            'function public.match_proximity_spark does not exist'),
+          'function public.match_proximity_spark does not exist',
+        ),
         isTrue,
       );
     });
@@ -63,9 +62,10 @@ void main() {
       expect(
         SupabaseDatabaseService.isRpcSignatureMismatch(
           Exception(
-              'PGRST203 Could not choose the best candidate function between '
-              'public.match_proximity_spark(text[]), '
-              'public.match_proximity_spark(text[], text[], text)'),
+            'PGRST203 Could not choose the best candidate function between '
+            'public.match_proximity_spark(text[]), '
+            'public.match_proximity_spark(text[], text[], text)',
+          ),
         ),
         isTrue,
       );
@@ -74,17 +74,20 @@ void main() {
     test('echte Fachfehler steigen NICHT ab (Rate-Limit etc.)', () {
       expect(
         SupabaseDatabaseService.isRpcSignatureMismatch(
-            Exception('Kurz durchatmen: Bitte kurz warten.')),
+          Exception('Kurz durchatmen: Bitte kurz warten.'),
+        ),
         isFalse,
       );
       expect(
         SupabaseDatabaseService.isRpcSignatureMismatch(
-            Exception('Kein Profil')),
+          Exception('Kein Profil'),
+        ),
         isFalse,
       );
       expect(
         SupabaseDatabaseService.isRpcSignatureMismatch(
-            Exception('PGRST301 JWT expired')),
+          Exception('PGRST301 JWT expired'),
+        ),
         isFalse,
       );
     });

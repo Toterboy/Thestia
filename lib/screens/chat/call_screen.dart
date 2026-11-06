@@ -22,7 +22,15 @@ import 'package:thestia/utils/best_effort.dart';
 final activeCallIdProvider = StateProvider<String?>((ref) => null);
 
 /// Anruf-Status.
-enum CallStatus { connecting, ringingOutgoing, ringingIncoming, connected, declined, ended, unreachable }
+enum CallStatus {
+  connecting,
+  ringingOutgoing,
+  ringingIncoming,
+  connected,
+  declined,
+  ended,
+  unreachable,
+}
 
 /// Anruf-Screen mit echter E2E-P2P-Sprachkommunikation.
 ///
@@ -70,7 +78,10 @@ class _CallScreenState extends ConsumerState<CallScreen> {
   bool _muted = false;
 
   StreamSubscription<Map<String, dynamic>>? _controlSub;
-  StreamSubscription<({Uint8List data, String contentType, Map<String, dynamic>? metadata})>? _audioSub;
+  StreamSubscription<
+    ({Uint8List data, String contentType, Map<String, dynamic>? metadata})
+  >?
+  _audioSub;
 
   // Sprachaufnahme (echtes Mikrofon via record).
   final AudioRecorder _recorder = AudioRecorder();
@@ -86,7 +97,8 @@ class _CallScreenState extends ConsumerState<CallScreen> {
   @override
   void initState() {
     super.initState();
-    _callId = widget.incomingCallId ??
+    _callId =
+        widget.incomingCallId ??
         'call_${DateTime.now().millisecondsSinceEpoch}';
     _init();
   }
@@ -148,12 +160,10 @@ class _CallScreenState extends ConsumerState<CallScreen> {
       // Auf offenen DataChannel warten (max. 10 s), bevor das Invite raus
       // geht - vorher scheiterte es sofort mit StateError.
       if (!widget.isIncoming && !p2p.isDataChannelOpen) {
-                // Timeout oder Stream-Ende: unten folgt die Prüfung.
-await bestEffort('Duration', () async {
+        // Timeout oder Stream-Ende: unten folgt die Prüfung.
+        await bestEffort('Duration', () async {
           await p2p.connectionState
-              .firstWhere(
-                (s) => s == RTCDataChannelState.RTCDataChannelOpen,
-              )
+              .firstWhere((s) => s == RTCDataChannelState.RTCDataChannelOpen)
               .timeout(const Duration(seconds: 10));
         });
         if (!p2p.isDataChannelOpen) {
@@ -297,7 +307,9 @@ await bestEffort('Duration', () async {
   static const int _maxPlayQueue = 5;
 
   void _onCallAudio(
-      ({Uint8List data, String contentType, Map<String, dynamic>? metadata}) record) async {
+    ({Uint8List data, String contentType, Map<String, dynamic>? metadata})
+    record,
+  ) async {
     // Nur im verbundenen Anruf abspielen (kein Klingel-/End-Geplapper),
     // Queue begrenzen (kein /tmp-Vollaufen bei Spam).
     if (_disposed || _status != CallStatus.connected) return;
@@ -305,7 +317,8 @@ await bestEffort('Duration', () async {
     try {
       final dir = await getTemporaryDirectory();
       final file = File(
-          '${dir.path}/thestia_call_${DateTime.now().millisecondsSinceEpoch}.m4a');
+        '${dir.path}/thestia_call_${DateTime.now().millisecondsSinceEpoch}.m4a',
+      );
       await file.writeAsBytes(record.data);
       if (_disposed) {
         await bestEffort('delete', () async {
@@ -316,7 +329,9 @@ await bestEffort('Duration', () async {
       _playQueue.add(file.path);
       _processQueue();
     } catch (e) {
-      debugPrint('[CallScreen] Sprachpaket konnte nicht gespeichert werden: $e');
+      debugPrint(
+        '[CallScreen] Sprachpaket konnte nicht gespeichert werden: $e',
+      );
     }
   }
 
@@ -331,7 +346,10 @@ await bestEffort('Duration', () async {
         await _player.play();
         await _player.playerStateStream
             .firstWhere((s) => s.processingState == ProcessingState.completed)
-            .timeout(const Duration(minutes: 2), onTimeout: () => _player.playerState);
+            .timeout(
+              const Duration(minutes: 2),
+              onTimeout: () => _player.playerState,
+            );
       } catch (e) {
         debugPrint('[CallScreen] Wiedergabe fehlgeschlagen: $e');
       } finally {
@@ -525,20 +543,17 @@ await bestEffort('Duration', () async {
                   children: [
                     Text(
                       L10n.t(ctx, 'call.icebreakerTitle'),
-                      style: Theme.of(ctx)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(fontWeight: FontWeight.bold),
+                      style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 4),
                     Text(
                       L10n.t(ctx, 'call.icebreakerHint'),
                       style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(ctx)
-                                .colorScheme
-                                .onSurfaceVariant,
-                          ),
+                        color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
@@ -550,8 +565,8 @@ await bestEffort('Duration', () async {
                           ChoiceChip(
                             label: Text(L10n.t(ctx, 'genderpref.all')),
                             selected: selectedCategory == null,
-                            onSelected: (_) => setSheetState(
-                                () => selectedCategory = null),
+                            onSelected: (_) =>
+                                setSheetState(() => selectedCategory = null),
                           ),
                           const SizedBox(width: 6),
                           for (final c in cats) ...[
@@ -559,8 +574,8 @@ await bestEffort('Duration', () async {
                               avatar: Icon(c.icon, size: 16),
                               label: Text(c.titleFor(lang)),
                               selected: selectedCategory == c.id,
-                              onSelected: (_) => setSheetState(() =>
-                                  selectedCategory = c.id),
+                              onSelected: (_) =>
+                                  setSheetState(() => selectedCategory = c.id),
                             ),
                             const SizedBox(width: 6),
                           ],
@@ -574,18 +589,18 @@ await bestEffort('Duration', () async {
                           for (final c in active) ...[
                             if (selectedCategory == null)
                               Padding(
-                                padding:
-                                    const EdgeInsets.only(top: 8, bottom: 4),
+                                padding: const EdgeInsets.only(
+                                  top: 8,
+                                  bottom: 4,
+                                ),
                                 child: Text(
                                   c.titleFor(lang),
-                                  style: Theme.of(ctx)
-                                      .textTheme
-                                      .labelLarge
+                                  style: Theme.of(ctx).textTheme.labelLarge
                                       ?.copyWith(
                                         fontWeight: FontWeight.bold,
-                                        color: Theme.of(ctx)
-                                            .colorScheme
-                                            .primary,
+                                        color: Theme.of(
+                                          ctx,
+                                        ).colorScheme.primary,
                                       ),
                                 ),
                               ),
@@ -595,8 +610,7 @@ await bestEffort('Duration', () async {
                                   padding: const EdgeInsets.all(12),
                                   child: Text(
                                     q.textFor(lang),
-                                    style:
-                                        Theme.of(ctx).textTheme.bodyMedium,
+                                    style: Theme.of(ctx).textTheme.bodyMedium,
                                   ),
                                 ),
                               ),
@@ -630,20 +644,19 @@ await bestEffort('Duration', () async {
   }
 
   String _statusText(BuildContext context) => switch (_status) {
-        CallStatus.connecting => L10n.t(context, 'chat.callStatusConnecting'),
-        CallStatus.ringingOutgoing =>
-          L10n.t(context, 'chat.callStatusRingingOut'),
-        CallStatus.ringingIncoming =>
-          L10n.t(context, 'chat.callStatusRingingIn'),
-        CallStatus.connected => _recording
-            ? L10n.tf(context, 'chat.callStatusRecording',
-                {'s': '$_recordSeconds'})
-            : L10n.t(context, 'chat.callStatusConnected'),
-        CallStatus.declined => L10n.t(context, 'chat.callStatusDeclined'),
-        CallStatus.ended => L10n.t(context, 'chat.callStatusEnded'),
-        CallStatus.unreachable =>
-          L10n.t(context, 'chat.callStatusUnreachable'),
-      };
+    CallStatus.connecting => L10n.t(context, 'chat.callStatusConnecting'),
+    CallStatus.ringingOutgoing => L10n.t(context, 'chat.callStatusRingingOut'),
+    CallStatus.ringingIncoming => L10n.t(context, 'chat.callStatusRingingIn'),
+    CallStatus.connected =>
+      _recording
+          ? L10n.tf(context, 'chat.callStatusRecording', {
+              's': '$_recordSeconds',
+            })
+          : L10n.t(context, 'chat.callStatusConnected'),
+    CallStatus.declined => L10n.t(context, 'chat.callStatusDeclined'),
+    CallStatus.ended => L10n.t(context, 'chat.callStatusEnded'),
+    CallStatus.unreachable => L10n.t(context, 'chat.callStatusUnreachable'),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -651,7 +664,8 @@ await bestEffort('Duration', () async {
     final isRingIncoming = _status == CallStatus.ringingIncoming;
     final isRingOutgoing = _status == CallStatus.ringingOutgoing;
     final isConnected = _status == CallStatus.connected;
-    final isFinal = _status == CallStatus.declined ||
+    final isFinal =
+        _status == CallStatus.declined ||
         _status == CallStatus.ended ||
         _status == CallStatus.unreachable;
 
@@ -661,15 +675,9 @@ await bestEffort('Duration', () async {
         child: Column(
           children: [
             const SizedBox(height: 48),
-            const CircleAvatar(
-              radius: 56,
-              child: Icon(Icons.person, size: 56),
-            ),
+            const CircleAvatar(radius: 56, child: Icon(Icons.person, size: 56)),
             const SizedBox(height: 24),
-            Text(
-              widget.partnerName,
-              style: theme.textTheme.headlineSmall,
-            ),
+            Text(widget.partnerName, style: theme.textTheme.headlineSmall),
             const SizedBox(height: 8),
             Text(
               isConnected ? _formatDuration() : _statusText(context),
@@ -700,14 +708,18 @@ await bestEffort('Duration', () async {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.errorContainer.withValues(
-                        alpha: 0.5),
+                      alpha: 0.5,
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.wifi_off,
-                          size: 18, color: theme.colorScheme.onErrorContainer),
+                      Icon(
+                        Icons.wifi_off,
+                        size: 18,
+                        color: theme.colorScheme.onErrorContainer,
+                      ),
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
@@ -771,8 +783,7 @@ await bestEffort('Duration', () async {
                         backgroundColor: _muted
                             ? theme.colorScheme.errorContainer
                             : theme.colorScheme.surfaceContainerHighest,
-                        onPressed: () =>
-                            setState(() => _muted = !_muted),
+                        onPressed: () => setState(() => _muted = !_muted),
                         child: Icon(
                           _muted ? Icons.mic_off : Icons.mic,
                           color: _muted
@@ -804,10 +815,10 @@ await bestEffort('Duration', () async {
                         shape: BoxShape.circle,
                         color: _muted
                             ? theme.colorScheme.surfaceContainerHighest
-                                .withValues(alpha: 0.5)
+                                  .withValues(alpha: 0.5)
                             : _recording
-                                ? Colors.red
-                                : Colors.green,
+                            ? Colors.red
+                            : Colors.green,
                         boxShadow: _muted
                             ? null
                             : [
@@ -822,8 +833,8 @@ await bestEffort('Duration', () async {
                         _muted
                             ? Icons.mic_off_outlined
                             : _recording
-                                ? Icons.stop
-                                : Icons.mic,
+                            ? Icons.stop
+                            : Icons.mic,
                         size: 40,
                         color: Colors.white,
                       ),
@@ -838,8 +849,8 @@ await bestEffort('Duration', () async {
                     children: [
                       FloatingActionButton(
                         heroTag: 'icebreakers',
-                        backgroundColor: theme
-                            .colorScheme.surfaceContainerHighest,
+                        backgroundColor:
+                            theme.colorScheme.surfaceContainerHighest,
                         onPressed: _showIcebreakerSheet,
                         child: Icon(
                           Icons.lightbulb_outline,

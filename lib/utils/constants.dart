@@ -21,15 +21,11 @@ class AppConstants {
   /// Gibt die Supabase-User-ID zurück, wenn eine Session aktiv ist,
   /// sonst die Demo-ID `'me'` für den lokalen Modus.
   static String get currentUserId {
-    final uid = bestEffortOrSync(
-      'supabaseUserId',
-      () {
-        // ignore: avoid_dynamic_calls
-        final wert = _supabaseUserIdGetter?.call();
-        return (wert != null && wert.isNotEmpty) ? wert : '';
-      },
-      '',
-    );
+    final uid = bestEffortOrSync('supabaseUserId', () {
+      // ignore: avoid_dynamic_calls
+      final wert = _supabaseUserIdGetter?.call();
+      return (wert != null && wert.isNotEmpty) ? wert : '';
+    }, '');
     return uid.isEmpty ? _demoUserId : uid;
   }
 
@@ -64,11 +60,31 @@ class AppConstants {
 
   /// Standard-Interessen zur schnellen Auswahl beim Profil.
   static const List<String> presetInterests = [
-    'Sport', 'Musik', 'Reisen', 'Kochen', 'Filme', 'Gaming',
-    'Kunst', 'Lesen', 'Fotografie', 'Tiere', 'Fitness', 'Natur',
-    'Technologie', 'Mode', 'Tanzen', 'Yoga', 'Wandern', 'Kaffee',
-    'Party', 'Nachhaltigkeit', 'Theater', 'Schreiben', 'Motorrad',
-    'Klettern', 'Volunteering',
+    'Sport',
+    'Musik',
+    'Reisen',
+    'Kochen',
+    'Filme',
+    'Gaming',
+    'Kunst',
+    'Lesen',
+    'Fotografie',
+    'Tiere',
+    'Fitness',
+    'Natur',
+    'Technologie',
+    'Mode',
+    'Tanzen',
+    'Yoga',
+    'Wandern',
+    'Kaffee',
+    'Party',
+    'Nachhaltigkeit',
+    'Theater',
+    'Schreiben',
+    'Motorrad',
+    'Klettern',
+    'Volunteering',
   ];
 
   /// Musik-Genres zur Auswahl im Interview (Nutzer-Regel: Genres +
@@ -76,9 +92,24 @@ class AppConstants {
   /// [presetInterests] (kein L10n); die Werte landen 1:1 in
   /// profiles.music_liked und damit im Matching (Migration 074).
   static const List<String> presetMusicGenres = [
-    'Pop', 'Rock', 'Hip-Hop', 'Elektro', 'House', 'Techno',
-    'Klassik', 'Jazz', 'Metal', 'Punk', 'Indie', 'R&B',
-    'Soul', 'Funk', 'Reggae', 'Latin', 'Country', 'Schlager',
+    'Pop',
+    'Rock',
+    'Hip-Hop',
+    'Elektro',
+    'House',
+    'Techno',
+    'Klassik',
+    'Jazz',
+    'Metal',
+    'Punk',
+    'Indie',
+    'R&B',
+    'Soul',
+    'Funk',
+    'Reggae',
+    'Latin',
+    'Country',
+    'Schlager',
   ];
 
   /// Maximale Distanz (km) für den Entfernungsfilter (Slider-Obergrenze).
@@ -102,8 +133,10 @@ class AppConstants {
   /// Reaktivierung später: `--dart-define=NSFW_MODERATION_ENABLED=true`
   /// zusammen mit der Edge-Function-Implementierung (Token serverseitig,
   /// HuggingFaceService muss dann den Function-Call ausführen).
-  static const bool nsfwModerationEnabled =
-      bool.fromEnvironment('NSFW_MODERATION_ENABLED', defaultValue: false);
+  static const bool nsfwModerationEnabled = bool.fromEnvironment(
+    'NSFW_MODERATION_ENABLED',
+    defaultValue: false,
+  );
 
   /// Video-Verifizierung mit lokaler KI-Triage (v0.9.1: aktiviert).
   ///
@@ -111,14 +144,18 @@ class AppConstants {
   /// und manuelle Prüfung laufen wie bisher, plus KI-Sofortfreigabe bei
   /// unauffälliger Schätzung (Abweichung <= 2 Jahre) und Admin-Queue mit
   /// KI-Schätzung. Deaktivierung: `--dart-define=VERIFICATION_ENABLED=false`.
-  static const bool verificationEnabled =
-      bool.fromEnvironment('VERIFICATION_ENABLED', defaultValue: true);
+  static const bool verificationEnabled = bool.fromEnvironment(
+    'VERIFICATION_ENABLED',
+    defaultValue: true,
+  );
 
   /// F-Droid-Build: komplett ohne Firebase/FCM kompiliert und zur Laufzeit
   /// deaktiviert. Build mit:
   ///   flutter build apk --release --flavor fdroid --dart-define=FDROID=true
-  static const bool fdroidBuild =
-      bool.fromEnvironment('FDROID', defaultValue: false);
+  static const bool fdroidBuild = bool.fromEnvironment(
+    'FDROID',
+    defaultValue: false,
+  );
 
   /// Basis-URL des Supabase-Projekts, ohne trailing slash.
   /// Wird u. a. für die captcha-page Edge Function benötigt.
@@ -185,8 +222,10 @@ class AppConstants {
   /// Aktivierung (Authentication → CAPTCHA, gleicher Anbieter + Secret).
   /// Ohne Dashboard-Aktivierung wird das Token vom Server ignoriert.
   static String get captchaProvider {
-    const fromEnv = String.fromEnvironment('CAPTCHA_PROVIDER',
-        defaultValue: 'turnstile');
+    const fromEnv = String.fromEnvironment(
+      'CAPTCHA_PROVIDER',
+      defaultValue: 'turnstile',
+    );
     if (fromEnv.isNotEmpty) return fromEnv;
     if (_dotenvReady) {
       final v = dotenv.env['CAPTCHA_PROVIDER']?.trim() ?? '';

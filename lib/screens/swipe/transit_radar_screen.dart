@@ -41,8 +41,7 @@ class TransitRadarScreen extends ConsumerStatefulWidget {
   const TransitRadarScreen({super.key});
 
   @override
-  ConsumerState<TransitRadarScreen> createState() =>
-      _TransitRadarScreenState();
+  ConsumerState<TransitRadarScreen> createState() => _TransitRadarScreenState();
 }
 
 class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
@@ -63,9 +62,9 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
 
   Future<void> _loadRadioCleanup() async {
     await bestEffort('localStorageProvider.getBool', () async {
-      final v = await ref.read(localStorageProvider).getBool(
-            kTransitRadioCleanupKey,
-          );
+      final v = await ref
+          .read(localStorageProvider)
+          .getBool(kTransitRadioCleanupKey);
       if (mounted) setState(() => _radioCleanupEnabled = v ?? false);
     });
   }
@@ -73,10 +72,9 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
   Future<void> _setRadioCleanup(bool value) async {
     setState(() => _radioCleanupEnabled = value);
     await bestEffort('localStorageProvider.saveBool', () async {
-      await ref.read(localStorageProvider).saveBool(
-            kTransitRadioCleanupKey,
-            value,
-          );
+      await ref
+          .read(localStorageProvider)
+          .saveBool(kTransitRadioCleanupKey, value);
     });
   }
 
@@ -258,8 +256,11 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
           final confirmed = await showDialog<bool>(
             context: context,
             builder: (ctx) => AlertDialog(
-              icon: const Icon(Icons.location_on, size: 40,
-                  color: Colors.green),
+              icon: const Icon(
+                Icons.location_on,
+                size: 40,
+                color: Colors.green,
+              ),
               title: Text(L10n.t(ctx, 'transit.locationActiveTitle')),
               content: Text(L10n.t(ctx, 'transit.locationActiveBody')),
               actions: [
@@ -293,9 +294,11 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
           builder: (ctx) => AlertDialog(
             icon: const Icon(Icons.lock_outline, size: 40),
             title: Text(L10n.t(ctx, 'transit.permissionTitle')),
-            content: Text(isAdvertise
-                ? L10n.t(ctx, 'transit.advertiseBody')
-                : L10n.t(ctx, 'transit.permissionBody')),
+            content: Text(
+              isAdvertise
+                  ? L10n.t(ctx, 'transit.advertiseBody')
+                  : L10n.t(ctx, 'transit.permissionBody'),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
@@ -375,8 +378,9 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
     );
     if (picked == null || picked.tags.isEmpty || !mounted) return;
 
-    final result =
-        await ref.read(transitProvider.notifier).sendSpark(picked.tags);
+    final result = await ref
+        .read(transitProvider.notifier)
+        .sendSpark(picked.tags);
     if (!mounted) return;
     if (result == null) {
       final reason = ref.read(transitProvider).lastError;
@@ -397,8 +401,11 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
-          icon: Icon(Icons.auto_awesome,
-              color: Theme.of(ctx).colorScheme.primary, size: 40),
+          icon: Icon(
+            Icons.auto_awesome,
+            color: Theme.of(ctx).colorScheme.primary,
+            size: 40,
+          ),
           title: Text(L10n.t(ctx, 'transit.matchTitle')),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -411,9 +418,7 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Theme.of(ctx)
-                        .colorScheme
-                        .secondaryContainer,
+                    color: Theme.of(ctx).colorScheme.secondaryContainer,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
@@ -462,8 +467,7 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
   /// zuletzt drückte, sah den Match-Dialog).
   void _watchForLateSpark() {
     _lateSparkTimer?.cancel();
-    final pressTime =
-        DateTime.now().subtract(const Duration(seconds: 2));
+    final pressTime = DateTime.now().subtract(const Duration(seconds: 2));
     var checks = 0;
     _lateSparkTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
       checks++;
@@ -477,10 +481,12 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
         final matches = await ref
             .read(findYourMatchServiceProvider)
             .listMatchesWithState();
-        final fresh = matches.where((m) =>
-            m.status == 'active' &&
-            m.createdAt != null &&
-            m.createdAt!.isAfter(pressTime));
+        final fresh = matches.where(
+          (m) =>
+              m.status == 'active' &&
+              m.createdAt != null &&
+              m.createdAt!.isAfter(pressTime),
+        );
         if (fresh.isNotEmpty) {
           _lateSparkTimer?.cancel();
           _lateSparkTimer = null;
@@ -533,11 +539,7 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
   /// so beibehalten"). Gespeicherte Entscheidung wird ohne Dialog
   /// angewendet; Abbrechen bleibt auf der Seite.
   Future<bool> _confirmExitWhileActive() async {
-    return confirmTransitExit(
-      context,
-      ref,
-      onStopped: _maybeOfferRadioCleanup,
-    );
+    return confirmTransitExit(context, ref, onStopped: _maybeOfferRadioCleanup);
   }
 
   @override
@@ -573,290 +575,268 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
         }
       },
       child: Scaffold(
-      appBar: AppBar(
-        title: Text(L10n.t(context, 'transit.title')),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Radar-Grafik / Status.
-            Center(
-              child: SizedBox(
-                width: 180,
-                height: 180,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    if (transit.active) ..._radarPulse(context),
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: transit.active
-                            ? Theme.of(context)
-                                .colorScheme
-                                .primaryContainer
-                            : Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest,
-                      ),
-                      child: Icon(
-                        transit.active
-                            ? Icons.radar
-                            : Icons.radar_outlined,
-                        size: 56,
-                        color: transit.active
-                            ? Theme.of(context).colorScheme.primary
-                            : Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Center(
-              child: Text(
-                transit.active
-                    ? L10n.t(context, 'transit.active')
-                    : L10n.t(context, 'transit.inactive'),
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            if (transit.active && transit.endsAt != null) ...[
-              const SizedBox(height: 4),
+        appBar: AppBar(title: Text(L10n.t(context, 'transit.title'))),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Radar-Grafik / Status.
               Center(
-                child: _CountdownText(endsAt: transit.endsAt!),
-              ),
-            ],
-            if (transit.active) ...[
-              const SizedBox(height: 8),
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                child: SizedBox(
+                  width: 180,
+                  height: 180,
+                  child: Stack(
+                    alignment: Alignment.center,
                     children: [
-                      Icon(
-                        Icons.battery_charging_full_outlined,
-                        size: 14,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          L10n.t(context, 'transit.batteryHint'),
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurfaceVariant,
-                              ),
-                          textAlign: TextAlign.center,
+                      if (transit.active) ..._radarPulse(context),
+                      Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: transit.active
+                              ? Theme.of(context).colorScheme.primaryContainer
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest,
+                        ),
+                        child: Icon(
+                          transit.active ? Icons.radar : Icons.radar_outlined,
+                          size: 56,
+                          color: transit.active
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Center(
-                child: Text(
-                  L10n.tf(context, 'transit.seenCount',
-                      {'count': '${transit.encounterCount}'}),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant,
-                      ),
-                ),
-              ),
-            ],
-            const SizedBox(height: 24),
-            // Modus-Auswahl (v0.9.0): Bahn/Café vs. Messe/Event - der
-            // Messe-Modus nimmt nur starke BLE-Signale auf (echter
-            // Sichtkontakt in dichten Umgebungen). Nur inaktiv umschaltbar.
-            if (!transit.active) ...[
-              Text(
-                L10n.t(context, 'transit.modeLabel'),
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
-              const SizedBox(height: 10),
-              TransitModeSelector(
-                value: transit.mode,
-                onChanged: (mode) =>
-                    ref.read(transitProvider.notifier).setMode(mode),
               ),
               const SizedBox(height: 16),
-            ],
-            // Aktivieren/Deaktivieren.
-            FilledButton.tonalIcon(
-              onPressed: _toggle,
-              icon: Icon(transit.active
-                  ? Icons.stop
-                  : Icons.play_arrow),
-              label: Text(transit.active
-                  ? L10n.t(context, 'transit.stop')
-                  : L10n.t(context, 'transit.start')),
-            ),
-            const SizedBox(height: 12),
-            // "Blicke getauscht".
-            FilledButton.icon(
-              onPressed: transit.active && !transit.busy
-                  ? _sendSpark
-                  : null,
-              icon: transit.busy
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.auto_awesome),
-              label: Text(L10n.t(context, 'transit.exchanged')),
-            ),
-            const SizedBox(height: 12),
-            // Opt-in (v0.9.1, Standard AUS): Nach Radar-Ende an das
-            // manuelle Ausschalten von Bluetooth/Standort erinnern.
-            SwitchListTile(
-              value: _radioCleanupEnabled,
-              onChanged: _setRadioCleanup,
-              title: Text(L10n.t(context, 'transit.cleanupToggle')),
-              subtitle: Text(
-                L10n.t(context, 'transit.cleanupToggleSub'),
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurfaceVariant,
-                    ),
+              Center(
+                child: Text(
+                  transit.active
+                      ? L10n.t(context, 'transit.active')
+                      : L10n.t(context, 'transit.inactive'),
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
               ),
-              secondary: const Icon(Icons.signal_cellular_off_outlined),
-              contentPadding: EdgeInsets.zero,
-              dense: true,
-            ),
-            // Eigene Ergänzung zur Selbstbeschreibung (v0.9.1).
-            if (transit.selfNote.isNotEmpty) ...[
+              if (transit.active && transit.endsAt != null) ...[
+                const SizedBox(height: 4),
+                Center(child: _CountdownText(endsAt: transit.endsAt!)),
+              ],
+              if (transit.active) ...[
+                const SizedBox(height: 8),
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.battery_charging_full_outlined,
+                          size: 14,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            L10n.t(context, 'transit.batteryHint'),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Center(
+                  child: Text(
+                    L10n.tf(context, 'transit.seenCount', {
+                      'count': '${transit.encounterCount}',
+                    }),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 24),
+              // Modus-Auswahl (v0.9.0): Bahn/Café vs. Messe/Event - der
+              // Messe-Modus nimmt nur starke BLE-Signale auf (echter
+              // Sichtkontakt in dichten Umgebungen). Nur inaktiv umschaltbar.
+              if (!transit.active) ...[
+                Text(
+                  L10n.t(context, 'transit.modeLabel'),
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const SizedBox(height: 10),
+                TransitModeSelector(
+                  value: transit.mode,
+                  onChanged: (mode) =>
+                      ref.read(transitProvider.notifier).setMode(mode),
+                ),
+                const SizedBox(height: 16),
+              ],
+              // Aktivieren/Deaktivieren.
+              FilledButton.tonalIcon(
+                onPressed: _toggle,
+                icon: Icon(transit.active ? Icons.stop : Icons.play_arrow),
+                label: Text(
+                  transit.active
+                      ? L10n.t(context, 'transit.stop')
+                      : L10n.t(context, 'transit.start'),
+                ),
+              ),
               const SizedBox(height: 12),
+              // "Blicke getauscht".
+              FilledButton.icon(
+                onPressed: transit.active && !transit.busy ? _sendSpark : null,
+                icon: transit.busy
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.auto_awesome),
+                label: Text(L10n.t(context, 'transit.exchanged')),
+              ),
+              const SizedBox(height: 12),
+              // Opt-in (v0.9.1, Standard AUS): Nach Radar-Ende an das
+              // manuelle Ausschalten von Bluetooth/Standort erinnern.
+              SwitchListTile(
+                value: _radioCleanupEnabled,
+                onChanged: _setRadioCleanup,
+                title: Text(L10n.t(context, 'transit.cleanupToggle')),
+                subtitle: Text(
+                  L10n.t(context, 'transit.cleanupToggleSub'),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                secondary: const Icon(Icons.signal_cellular_off_outlined),
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+              ),
+              // Eigene Ergänzung zur Selbstbeschreibung (v0.9.1).
+              if (transit.selfNote.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.edit_note_outlined,
+                          size: 18,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            transit.selfNote,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+              if (transit.active) ...[
+                const SizedBox(height: 20),
+                Text(
+                  L10n.t(context, 'transit.greetSection'),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                const _EncounterGreetList(),
+              ],
+              // v0.9.0-Nutzerwunsch: Nach dem Radar-Ende bleiben gesehene
+              // Personen 2 Stunden - Bottom-Button öffnet die Liste ("in
+              // Ruhe finden"). WATCH statt READ (Fix "Button verschwindet
+              // plötzlich"): das Reaktivieren nach neuen Encounters läuft
+              // sonst nie, weil der Build nie neu lief.
+              if (!transit.active &&
+                  ref.watch(transitProvider).encounterCount > 0) ...[
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () => _showRetainedEncounters(),
+                  icon: const Icon(Icons.history, size: 18),
+                  label: Text(L10n.t(context, 'transit.retainedBtn')),
+                ),
+              ],
+              const SizedBox(height: 20),
+              const _SoftPingInbox(),
+              const SizedBox(height: 24),
+              // Erklärung.
               Card(
+                color: Theme.of(context).colorScheme.primaryContainer,
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.edit_note_outlined,
-                          size: 18,
-                          color: Theme.of(context).colorScheme.primary),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          transit.selfNote,
-                          style: Theme.of(context).textTheme.bodyMedium,
+                      Text(
+                        L10n.t(context, 'transit.howTitle'),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onPrimaryContainer,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        L10n.t(context, 'transit.howBody'),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        L10n.t(context, 'transit.privacyNote'),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onPrimaryContainer,
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
+              const SizedBox(height: 32),
             ],
-            if (transit.active) ...[
-              const SizedBox(height: 20),
-              Text(
-                L10n.t(context, 'transit.greetSection'),
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 8),
-              const _EncounterGreetList(),
-            ],
-            // v0.9.0-Nutzerwunsch: Nach dem Radar-Ende bleiben gesehene
-            // Personen 2 Stunden - Bottom-Button öffnet die Liste ("in
-            // Ruhe finden"). WATCH statt READ (Fix "Button verschwindet
-            // plötzlich"): das Reaktivieren nach neuen Encounters läuft
-            // sonst nie, weil der Build nie neu lief.
-            if (!transit.active &&
-                ref.watch(transitProvider).encounterCount > 0) ...[
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: () => _showRetainedEncounters(),
-                icon: const Icon(Icons.history, size: 18),
-                label: Text(L10n.t(context, 'transit.retainedBtn')),
-              ),
-            ],
-            const SizedBox(height: 20),
-            const _SoftPingInbox(),
-            const SizedBox(height: 24),
-            // Erklärung.
-            Card(
-              color: Theme.of(context).colorScheme.primaryContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      L10n.t(context, 'transit.howTitle'),
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onPrimaryContainer,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      L10n.t(context, 'transit.howBody'),
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onPrimaryContainer,
-                          ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      L10n.t(context, 'transit.privacyNote'),
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onPrimaryContainer,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
-          ],
+          ),
         ),
-      ),
       ),
     );
   }
 
-    /// Ersatzansicht fuer Nutzende unter 18 bzw. ohne hinterlegtes
+  /// Ersatzansicht fuer Nutzende unter 18 bzw. ohne hinterlegtes
   /// Geburtsdatum. Erklaert die Sperre, statt sie kommentarlos zu
   /// zeigen - und verlinkt auf die Profildaten, damit der Weg zur
   /// Loesung sichtbar ist.
@@ -879,9 +859,12 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              L10n.t(context, missingBirthDate
-                  ? 'transit.adultOnly.missingAge'
-                  : 'transit.adultOnly.body'),
+              L10n.t(
+                context,
+                missingBirthDate
+                    ? 'transit.adultOnly.missingAge'
+                    : 'transit.adultOnly.body',
+              ),
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: scheme.onSurfaceVariant,
                 height: 1.45,
@@ -912,9 +895,9 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
             children: [
               Text(
                 L10n.t(ctx, 'transit.retainedTitle'),
-                style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  ctx,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 4),
@@ -958,10 +941,9 @@ class _PulseCircle extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Theme.of(context)
-            .colorScheme
-            .primary
-            .withAlpha((opacity * 255).round()),
+        color: Theme.of(
+          context,
+        ).colorScheme.primary.withAlpha((opacity * 255).round()),
       ),
     );
   }
@@ -1007,7 +989,6 @@ class _CountdownTextState extends State<_CountdownText> {
   }
 }
 
-
 /// Gruessen-Sektion (v0.9.1): Frische Encounters als anonyme Eintraege
 /// ("vor 2 Minuten") - jeder EINMAL per Soft-Ping ansprechbar. Kein
 /// Name, kein Foto: Die Person bleibt anonym, bis sie den Gruß annimmt.
@@ -1026,11 +1007,13 @@ class _EncounterGreetListState extends ConsumerState<_EncounterGreetList> {
     final d = DateTime.now().difference(seenAt);
     if (d.inSeconds < 60) return L10n.t(context, 'transit.justNow');
     if (d.inMinutes < 60) {
-      return L10n.tf(context, 'transit.minutesAgo',
-          {'count': d.inMinutes.toString()});
+      return L10n.tf(context, 'transit.minutesAgo', {
+        'count': d.inMinutes.toString(),
+      });
     }
-    return L10n.tf(context, 'transit.hoursAgo',
-        {'count': d.inHours.toString()});
+    return L10n.tf(context, 'transit.hoursAgo', {
+      'count': d.inHours.toString(),
+    });
   }
 
   Future<void> _greet(TransitEncounter e) async {
@@ -1064,8 +1047,8 @@ class _EncounterGreetListState extends ConsumerState<_EncounterGreetList> {
       return Text(
         L10n.t(context, 'transit.noEncounters'),
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
       );
     }
     return Column(
@@ -1077,8 +1060,10 @@ class _EncounterGreetListState extends ConsumerState<_EncounterGreetList> {
             leading: const Icon(Icons.person_outline),
             title: Text(_ago(context, e.seenAt)),
             trailing: _pinged.contains(e.token)
-                ? Icon(Icons.check,
-                    color: Theme.of(context).colorScheme.primary)
+                ? Icon(
+                    Icons.check,
+                    color: Theme.of(context).colorScheme.primary,
+                  )
                 : TextButton(
                     onPressed: () => _greet(e),
                     child: Text(L10n.t(context, 'transit.greet')),
@@ -1126,17 +1111,16 @@ class _SoftPingSheetState extends ConsumerState<_SoftPingSheet> {
         children: [
           Text(
             L10n.t(context, 'transit.pingSheetTitle'),
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
             L10n.t(context, 'transit.pingSheetHint'),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 16),
           RadioGroup<String>(
@@ -1274,7 +1258,9 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
       final db = SupabaseDatabaseService(SupabaseService.client);
       final pings = await db.listMySoftPings();
       if (pings.isEmpty) {
-        _idleTicks = _idleTicks < _intervals.length - 1 ? _idleTicks + 1 : _idleTicks;
+        _idleTicks = _idleTicks < _intervals.length - 1
+            ? _idleTicks + 1
+            : _idleTicks;
       } else {
         _idleTicks = 0;
       }
@@ -1337,9 +1323,9 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
       children: [
         Text(
           L10n.t(context, 'transit.inboxTitle'),
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         for (final ping in pings)
@@ -1350,8 +1336,10 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    L10n.t(context,
-                        'transit.preset.${ping['messageKey'] ?? 'wave'}'),
+                    L10n.t(
+                      context,
+                      'transit.preset.${ping['messageKey'] ?? 'wave'}',
+                    ),
                   ),
                   if ((ping['customLine'] as String?)?.isNotEmpty == true)
                     Padding(
@@ -1404,20 +1392,16 @@ Future<bool> confirmTransitExit(
 
   final storage = ref.read(localStorageProvider);
   // Kein Storage -> immer fragen.
-  final behalten = await bestEffortOr(
-    'localStorage.getString',
-    () async {
-      final saved = await storage.getString(kTransitExitPolicyKey);
-      if (saved == 'stop') {
-        await ref.read(transitProvider.notifier).deactivate();
-        await onStopped?.call();
-        return true;
-      }
-      if (saved == 'keep') return true;
-      return false;
-    },
-    false,
-  );
+  final behalten = await bestEffortOr('localStorage.getString', () async {
+    final saved = await storage.getString(kTransitExitPolicyKey);
+    if (saved == 'stop') {
+      await ref.read(transitProvider.notifier).deactivate();
+      await onStopped?.call();
+      return true;
+    }
+    if (saved == 'keep') return true;
+    return false;
+  }, false);
   if (behalten) return true;
   if (!context.mounted) return false;
 
@@ -1521,8 +1505,7 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
   final Set<String> _selected = <String>{};
   final Map<String, String?> _colors = <String, String?>{};
   final TextEditingController _searchCtrl = TextEditingController();
-  final TextEditingController _customCtrl =
-      TextEditingController(text: '');
+  final TextEditingController _customCtrl = TextEditingController(text: '');
   String _query = '';
   String _kategorie = '';
 
@@ -1605,8 +1588,9 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
           children: [
             Text(
               L10n.t(context, widget.titleKey),
-              style: theming.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: theming.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
@@ -1651,8 +1635,7 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
                         label: Text(L10n.t(context, k.labelKey)),
                         selected: _kategorie == k.slug,
                         onSelected: (_) => setState(
-                          () => _kategorie =
-                              _kategorie == k.slug ? '' : k.slug,
+                          () => _kategorie = _kategorie == k.slug ? '' : k.slug,
                         ),
                       ),
                     ),
@@ -1665,11 +1648,9 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
               children: [
                 Expanded(
                   child: Text(
-                    L10n.tf(
-                      context,
-                      'transit.selectedCount',
-                      {'count': '${_selected.length}'},
-                    ),
+                    L10n.tf(context, 'transit.selectedCount', {
+                      'count': '${_selected.length}',
+                    }),
                     style: theming.textTheme.bodySmall,
                   ),
                 ),
@@ -1688,11 +1669,7 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Center(
                   child: Text(
-                    L10n.tf(
-                      context,
-                      'transit.searchEmpty',
-                      {'query': _query},
-                    ),
+                    L10n.tf(context, 'transit.searchEmpty', {'query': _query}),
                     style: theming.textTheme.bodyMedium?.copyWith(
                       color: theming.colorScheme.onSurfaceVariant,
                     ),
@@ -1740,68 +1717,68 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
                 ],
               ],
             // ---- Farbschritt: nur fuer gewaehlte farbige Merkmale
-            for (final tag in _selected
-                .map(TransitTag.bySlug)
-                .whereType<TransitTag>()
-                .where((t) => t.colorizable))
-              ...[
-                const SizedBox(height: 12),
-                Text(
-                  '${L10n.t(context, tag.labelKey)}: '
-                  '${L10n.t(context, 'transit.colorOptional')}',
-                  style: theming.textTheme.labelLarge,
-                ),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final color in tag.availableColors)
-                      Tooltip(
-                        message: L10n.t(
-                          context,
-                          TransitTag.colorLabelKey(color),
-                        ),
-                        child: GestureDetector(
-                          onTap: () => setState(() {
-                            _colors[tag.slug] = _colors[tag.slug] == color
-                                ? null
-                                : color;
-                          }),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            width: 34,
-                            height: 34,
-                            decoration: BoxDecoration(
-                              color: TransitTag.swatchOf(color),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: color == 'white'
-                                    ? theming.colorScheme.outline
-                                    : Colors.transparent,
-                                width: 1,
-                              ),
-                              boxShadow: _colors[tag.slug] == color
-                                  ? [
-                                      BoxShadow(
-                                        color: theming.colorScheme.primary
-                                            .withValues(alpha: 0.9),
-                                        blurRadius: 0,
-                                        spreadRadius: 3,
-                                      ),
-                                    ]
-                                  : null,
+            for (final tag
+                in _selected
+                    .map(TransitTag.bySlug)
+                    .whereType<TransitTag>()
+                    .where((t) => t.colorizable)) ...[
+              const SizedBox(height: 12),
+              Text(
+                '${L10n.t(context, tag.labelKey)}: '
+                '${L10n.t(context, 'transit.colorOptional')}',
+                style: theming.textTheme.labelLarge,
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final color in tag.availableColors)
+                    Tooltip(
+                      message: L10n.t(context, TransitTag.colorLabelKey(color)),
+                      child: GestureDetector(
+                        onTap: () => setState(() {
+                          _colors[tag.slug] = _colors[tag.slug] == color
+                              ? null
+                              : color;
+                        }),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: TransitTag.swatchOf(color),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: color == 'white'
+                                  ? theming.colorScheme.outline
+                                  : Colors.transparent,
+                              width: 1,
                             ),
-                            child: _colors[tag.slug] == color
-                                ? const Icon(Icons.check,
-                                    size: 16, color: Colors.white)
+                            boxShadow: _colors[tag.slug] == color
+                                ? [
+                                    BoxShadow(
+                                      color: theming.colorScheme.primary
+                                          .withValues(alpha: 0.9),
+                                      blurRadius: 0,
+                                      spreadRadius: 3,
+                                    ),
+                                  ]
                                 : null,
                           ),
+                          child: _colors[tag.slug] == color
+                              ? const Icon(
+                                  Icons.check,
+                                  size: 16,
+                                  color: Colors.white,
+                                )
+                              : null,
                         ),
                       ),
-                  ],
-                ),
-              ],
+                    ),
+                ],
+              ),
+            ],
             // ---- Eigenes Textfeld zur Ergaenzung (optional)
             if (widget.customHintKey != null) ...[
               const SizedBox(height: 16),
@@ -1822,21 +1799,20 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: (widget.requireSelection &&
-                        _selected.length < minMerkmale)
+                onPressed:
+                    (widget.requireSelection && _selected.length < minMerkmale)
                     ? null
                     : () {
                         final out = <String>[];
                         for (final slug in _selected) {
                           final c = _colors[slug];
-                          out.add((c != null && c.isNotEmpty)
-                              ? '$slug:$c'
-                              : slug);
+                          out.add(
+                            (c != null && c.isNotEmpty) ? '$slug:$c' : slug,
+                          );
                         }
-                        Navigator.of(context).pop((
-                          tags: out,
-                          note: _customCtrl.text.trim(),
-                        ));
+                        Navigator.of(
+                          context,
+                        ).pop((tags: out, note: _customCtrl.text.trim()));
                       },
                 child: Text(L10n.t(context, 'transit.sheetSend')),
               ),

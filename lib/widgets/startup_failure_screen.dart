@@ -39,8 +39,11 @@ class StartupFailureScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            Icon(Icons.report_gmailerrorred_outlined,
-                size: 56, color: theme.colorScheme.error),
+            Icon(
+              Icons.report_gmailerrorred_outlined,
+              size: 56,
+              color: theme.colorScheme.error,
+            ),
             const SizedBox(height: 16),
             Text(
               L10n.t(context, 'startupFail.heading'),
@@ -53,8 +56,9 @@ class StartupFailureScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest
-                    .withValues(alpha: 0.6),
+                color: theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.6,
+                ),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Column(
@@ -62,8 +66,8 @@ class StartupFailureScreen extends StatelessWidget {
                 children: [
                   _Row(
                     label: L10n.t(context, 'startupFail.stepLabel'),
-                    value: failure.step ??
-                        L10n.t(context, 'startupFail.noStep'),
+                    value:
+                        failure.step ?? L10n.t(context, 'startupFail.noStep'),
                   ),
                   if (failure.error != null) ...[
                     const SizedBox(height: 12),
@@ -77,11 +81,15 @@ class StartupFailureScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              L10n.t(context, failure.diedBeforeDart
-                  ? 'startupFail.explainEarly'
-                  : 'startupFail.explainLate'),
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              L10n.t(
+                context,
+                failure.diedBeforeDart
+                    ? 'startupFail.explainEarly'
+                    : 'startupFail.explainLate',
+              ),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 24),
             FilledButton.icon(
@@ -105,8 +113,9 @@ class StartupFailureScreen extends StatelessWidget {
             const SizedBox(height: 20),
             Text(
               L10n.t(context, 'startupFail.hint'),
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -125,10 +134,7 @@ class StartupFailureScreen extends StatelessWidget {
 
     await Clipboard.setData(ClipboardData(text: report));
     messenger?.showSnackBar(
-      SnackBar(
-        content: Text(copiedText),
-        behavior: SnackBarBehavior.floating,
-      ),
+      SnackBar(content: Text(copiedText), behavior: SnackBarBehavior.floating),
     );
   }
 
@@ -137,9 +143,7 @@ class StartupFailureScreen extends StatelessWidget {
     final failedText = L10n.t(context, 'startupFail.shareFailed');
     final report = failure.toReport();
     try {
-      await SharePlus.instance.share(
-        ShareParams(text: report),
-      );
+      await SharePlus.instance.share(ShareParams(text: report));
     } catch (_) {
       // Teilen ist nicht verfuegbar (z. B. kein Empfaenger). Der
       // Kopierknopf ist der verlaessliche Weg.
@@ -165,13 +169,17 @@ class _Row extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: theme.textTheme.labelSmall
-                ?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
         const SizedBox(height: 2),
-        SelectableText(value,
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(fontFamily: 'monospace')),
+        SelectableText(
+          value,
+          style: theme.textTheme.bodyMedium?.copyWith(fontFamily: 'monospace'),
+        ),
       ],
     );
   }

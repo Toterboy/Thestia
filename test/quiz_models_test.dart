@@ -3,21 +3,17 @@ import 'package:thestia/models/find_match_models.dart';
 import 'package:thestia/models/user_profile.dart';
 
 UserProfile _partner() => UserProfile(
-      id: 'u1',
-      name: 'Alex',
-      birthDate: DateTime(2000, 1, 1),
-      bio: '',
-    );
+  id: 'u1',
+  name: 'Alex',
+  birthDate: DateTime(2000, 1, 1),
+  bio: '',
+);
 
 /// Server-Form für UserProfile.fromPublicView (user_id + age statt
 /// id + birthDate).
 Map<String, dynamic> _profileJson() => {
-      'profile': {
-        'user_id': 'u1',
-        'name': 'Alex',
-        'age': 26,
-      },
-    };
+  'profile': {'user_id': 'u1', 'name': 'Alex', 'age': 26},
+};
 
 void main() {
   group('MatchWithState', () {
@@ -53,20 +49,19 @@ void main() {
 
     test('cooled nur bei Status cooled', () {
       MatchWithState m(String status) => MatchWithState(
-            matchId: 1,
-            partner: _partner(),
-            unlockLevel: 0,
-            failedAttempts: 0,
-            status: status,
-          );
+        matchId: 1,
+        partner: _partner(),
+        unlockLevel: 0,
+        failedAttempts: 0,
+        status: status,
+      );
       expect(m('cooled').cooled, isTrue);
       expect(m('active').cooled, isFalse);
       expect(m('ended').cooled, isFalse);
     });
 
     test('fromJson: Defaults + Distanz als Geschwister-Feld', () {
-      final json = _profileJson()
-        ..addAll({'matchId': 9, 'distanceKm': 12});
+      final json = _profileJson()..addAll({'matchId': 9, 'distanceKm': 12});
       final m = MatchWithState.fromJson(json);
       expect(m.matchId, 9);
       expect(m.unlockLevel, 0);

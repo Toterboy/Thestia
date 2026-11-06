@@ -1,8 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart'
-    show Color;
+import 'package:flutter/material.dart' show Color;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:unifiedpush/unifiedpush.dart';
 
@@ -70,9 +69,10 @@ class UnifiedPushService {
     await _ensurePlugin();
 
     final hasDistributor = await UnifiedPush.initialize(
-        onNewEndpoint: _onNewEndpoint,
-        onUnregistered: (_) {},
-        onMessage: _onMessage);
+      onNewEndpoint: _onNewEndpoint,
+      onUnregistered: (_) {},
+      onMessage: _onMessage,
+    );
 
     if (!hasDistributor) {
       final distributors = await UnifiedPush.getDistributors();
@@ -95,13 +95,17 @@ class UnifiedPushService {
     });
     if (SupabaseService.isInitialized) {
       await bestEffort('SupabaseDatabaseService.updateOwnProfile', () async {
-        await SupabaseDatabaseService(SupabaseService.client)
-            .updateOwnProfile({'up_endpoint': null});
+        await SupabaseDatabaseService(
+          SupabaseService.client,
+        ).updateOwnProfile({'up_endpoint': null});
       });
     }
   }
+
   static Future<void> _onNewEndpoint(
-      PushEndpoint endpoint, String instance) async {
+    PushEndpoint endpoint,
+    String instance,
+  ) async {
     final url = endpoint.url;
     if (url.isEmpty || !SupabaseService.isInitialized) return;
 
@@ -118,8 +122,9 @@ class UnifiedPushService {
       return;
     }
     try {
-      await SupabaseDatabaseService(SupabaseService.client)
-          .updateOwnProfile({'up_endpoint': url});
+      await SupabaseDatabaseService(
+        SupabaseService.client,
+      ).updateOwnProfile({'up_endpoint': url});
       debugPrint('[UnifiedPush] Endpunkt gespeichert.');
     } catch (e) {
       debugPrint('[UnifiedPush] Endpunkt-Sync fehlgeschlagen: $e');
@@ -132,8 +137,7 @@ class UnifiedPushService {
   /// Build 25 in den Push-Metadaten mit).
   static bool Function(String fromUserId)? suppressCheck;
 
-  static Future<void> _onMessage(
-      PushMessage message, String instance) async {
+  static Future<void> _onMessage(PushMessage message, String instance) async {
     String title = 'Thestia';
     String body = 'Du hast eine neue Nachricht erhalten.';
     String? kind;
@@ -165,8 +169,10 @@ class UnifiedPushService {
     await _showLocalNotification(title: title, message: body);
   }
 
-  static Future<void> _showLocalNotification(
-      {required String title, required String message}) async {
+  static Future<void> _showLocalNotification({
+    required String title,
+    required String message,
+  }) async {
     await _ensurePlugin();
     await _plugin.show(
       id: DateTime.now().millisecondsSinceEpoch % 0x7fffffff,

@@ -66,7 +66,10 @@ class DatingHourService {
   ///
   /// [userId] wird aus Kompatibilitätsgründen akzeptiert, die eigentliche
   /// Autorisierung läuft serverseitig über `auth.uid()` in der RPC.
-  Future<void> joinEvent(String userId, DatingHourPreferences preferences) async {
+  Future<void> joinEvent(
+    String userId,
+    DatingHourPreferences preferences,
+  ) async {
     final event = await getCurrentOrNextEvent();
     if (event == null) throw DatingHourException('Kein Event verfügbar');
     if (!event.canJoin) throw DatingHourException('Event ist nicht beitretbar');
@@ -74,10 +77,7 @@ class DatingHourService {
     return _safeCall('joinEvent', () async {
       await SupabaseService.client.rpc(
         'join_dating_hour',
-        params: {
-          'p_event_id': event.id,
-          'p_preferences': preferences.toJson(),
-        },
+        params: {'p_event_id': event.id, 'p_preferences': preferences.toJson()},
       );
     });
   }
@@ -94,10 +94,7 @@ class DatingHourService {
     return _safeCall('savePreferences', () async {
       await SupabaseService.client.rpc(
         'save_dating_hour_preferences',
-        params: {
-          'p_event_id': eventId,
-          'p_preferences': preferences.toJson(),
-        },
+        params: {'p_event_id': eventId, 'p_preferences': preferences.toJson()},
       );
     });
   }
@@ -225,10 +222,7 @@ class DatingHourService {
       final decision = accepted ? 'accept' : 'reject';
       final result = await SupabaseService.client.rpc(
         'record_dating_hour_decision',
-        params: {
-          'p_session_id': sessionId,
-          'p_decision': decision,
-        },
+        params: {'p_session_id': sessionId, 'p_decision': decision},
       );
 
       if (kDebugMode) {

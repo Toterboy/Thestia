@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -101,21 +101,17 @@ class _EntdeckeCard extends StatelessWidget {
                   children: [
                     Text(
                       L10n.t(context, 'home.discover'),
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleMedium
-                          ?.copyWith(
-                            color: scheme.onPrimaryContainer,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: scheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       L10n.t(context, 'home.discoverSub'),
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: scheme.onPrimaryContainer),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onPrimaryContainer,
+                      ),
                     ),
                   ],
                 ),
@@ -134,9 +130,9 @@ class _EntdeckeCard extends StatelessWidget {
 /// auf Aktuelles.
 void _goToInteressenTab(BuildContext context, int tab) {
   bestEffortSync('containerOf.read', () {
-    ProviderScope.containerOf(context)
-        .read(interessenInitialTabProvider.notifier)
-        .state = tab;
+    ProviderScope.containerOf(
+      context,
+    ).read(interessenInitialTabProvider.notifier).state = tab;
   });
   context.push(AppRoutes.interessen);
 }
@@ -216,46 +212,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final seen = ref.read(seenProvider.notifier);
 
     // Ungelesene Nachrichten über alle Matches
-    final newMessages = matches.fold<int>(
-      0,
-      (sum, m) => sum + m.unreadCount,
-    );
+    final newMessages = matches.fold<int>(0, (sum, m) => sum + m.unreadCount);
 
     // Neue Likes = erhaltene, noch nicht angesehene (Fallback: Summe).
-    final received =
-        ref.watch(receivedLikesProvider).valueOrNull;
+    final received = ref.watch(receivedLikesProvider).valueOrNull;
     final likedCount = received == null
         ? (ref.watch(pendingLikesCountProvider).valueOrNull ?? 0)
-        : received
-            .where((l) => !seen.likeIds.contains(l.likeId))
-            .length;
+        : received.where((l) => !seen.likeIds.contains(l.likeId)).length;
 
     // Neue Funken = aktive Server-Funken, noch nicht angesehen, plus
     // QR-Kontakte mit ungelesenen Nachrichten (Fallback: lokale Anzahl).
-    final serverMatches =
-        ref.watch(serverMatchesProvider).valueOrNull;
+    final serverMatches = ref.watch(serverMatchesProvider).valueOrNull;
     final int newMatches;
     if (serverMatches == null) {
       newMatches = matches.length;
     } else {
       final unseenServer = serverMatches
-          .where((m) =>
-              m.status == 'active' && !seen.matchIds.contains(m.matchId))
+          .where(
+            (m) => m.status == 'active' && !seen.matchIds.contains(m.matchId),
+          )
           .length;
       final unseenQr = matches
-          .where((m) =>
-              m.isQrContact &&
-              m.unreadCount > 0 &&
-              !seen.qrIds.contains(m.id))
+          .where(
+            (m) =>
+                m.isQrContact &&
+                m.unreadCount > 0 &&
+                !seen.qrIds.contains(m.id),
+          )
           .length;
       newMatches = unseenServer + unseenQr;
     }
 
     // Neueste 5 Matches mit ungelesenen Nachrichten für Vorschau
-    final recentMatchesWithMessages = matches
-        .where((m) => m.unreadCount > 0)
-        .toList()
-      ..sort((a, b) => b.matchedAt.compareTo(a.matchedAt));
+    final recentMatchesWithMessages =
+        matches.where((m) => m.unreadCount > 0).toList()
+          ..sort((a, b) => b.matchedAt.compareTo(a.matchedAt));
     final messagePreviews = recentMatchesWithMessages.take(5).toList();
 
     final name = profile.name.isNotEmpty
@@ -313,57 +304,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     color: Theme.of(context).colorScheme.primaryContainer,
                     child: ListTile(
                       leading: Icon(
-                        verificationState ==
-                                VerificationState.underReview
+                        verificationState == VerificationState.underReview
                             ? Icons.hourglass_top
                             : Icons.verified_user_outlined,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onPrimaryContainer,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
                       title: Text(
                         L10n.t(
                           context,
-                          verificationState ==
-                                  VerificationState.underReview
+                          verificationState == VerificationState.underReview
                               ? 'verify.stateUnderReview'
                               : 'verify.stateUnverified',
                         ),
                         style: TextStyle(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onPrimaryContainer,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onPrimaryContainer,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       subtitle: Text(
                         L10n.t(
                           context,
-                          verificationState ==
-                                  VerificationState.underReview
+                          verificationState == VerificationState.underReview
                               ? 'dm.lockedBodyReview'
                               : 'dm.lockedBody',
                         ),
                         style: TextStyle(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onPrimaryContainer,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onPrimaryContainer,
                         ),
                       ),
-                      trailing: verificationState ==
-                              VerificationState.underReview
+                      trailing:
+                          verificationState == VerificationState.underReview
                           ? null
                           : Icon(
                               Icons.chevron_right,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onPrimaryContainer,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onPrimaryContainer,
                             ),
-                      onTap: verificationState ==
-                              VerificationState.underReview
+                      onTap: verificationState == VerificationState.underReview
                           ? null
-                          : () =>
-                              context.push(AppRoutes.verificationInfo),
+                          : () => context.push(AppRoutes.verificationInfo),
                     ),
                   ),
                 ),
@@ -379,25 +363,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     child: ListTile(
                       leading: Icon(
                         Icons.pause_circle_outline,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSecondaryContainer,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSecondaryContainer,
                       ),
                       title: Text(
                         L10n.t(context, 'paused.homeTitle'),
                         style: TextStyle(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSecondaryContainer,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSecondaryContainer,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       subtitle: Text(
                         L10n.t(context, 'paused.homeBody'),
                         style: TextStyle(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSecondaryContainer,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSecondaryContainer,
                         ),
                       ),
                       trailing: const Icon(Icons.chevron_right),
@@ -407,82 +391,74 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 ),
               ),
             SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Hallo, $name! 🙂',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Finde Verbindungen, die mehr sehen als nur ein Foto.',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // AKTIONS-BUTTON: Leute entdecken
-          //
-          // NUTZERWUNSCH (27.10.2026): die beiden Buttons am ENDE der
-          // Seite ("Leute entdecken" und "Zufallschat starten") sollen
-          // verschwinden. Der Einstieg gehoert nach OBEN - direkt unter
-          // die Begruessung, wo er im Blick ist, bevor die Liste
-          // beginnt. Frueher stand die Karte am Seitenende; das war
-          // genau die Stelle, von der sie weg sollte.
-          //
-          // Er bleibt stehen, bis der Nutzer wirklich jemanden
-          // angeschrieben hat (siehe
-          // [hatJemandenAngeschriebenProvider]). Wer nur empfaengt,
-          // hat die App noch nicht benutzt - da hilft der Einstieg noch.
-          //
-          // Der Zufallschat-BUTTON ist entfallen: er war eine zweite
-          // Aktion auf derselben Flaeche, ohne erkennbaren Grund -
-          // "Zufallschat" ist ein Modus und laesst sich im Auswahl-
-          // screen waehlen, der ohnehin ueber "Leute entdecken" erreicht
-          // wird.
-          if (!ref.watch(hatJemandenAngeschriebenProvider))
-            SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: _EntdeckeCard(
-                  onTap: () => context.go(AppRoutes.swipeModeSelection),
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Hallo, $name! 🙂',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Finde Verbindungen, die mehr sehen als nur ein Foto.',
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ],
                 ),
               ),
             ),
 
-          // BEREICH 1: Neue Nachrichten
-          _buildMessagesSection(
-            context,
-            ref,
-            messagePreviews,
-            newMessages,
-            profile,
-            settings,
-          ),
+            // AKTIONS-BUTTON: Leute entdecken
+            //
+            // NUTZERWUNSCH (27.10.2026): die beiden Buttons am ENDE der
+            // Seite ("Leute entdecken" und "Zufallschat starten") sollen
+            // verschwinden. Der Einstieg gehoert nach OBEN - direkt unter
+            // die Begruessung, wo er im Blick ist, bevor die Liste
+            // beginnt. Frueher stand die Karte am Seitenende; das war
+            // genau die Stelle, von der sie weg sollte.
+            //
+            // Er bleibt stehen, bis der Nutzer wirklich jemanden
+            // angeschrieben hat (siehe
+            // [hatJemandenAngeschriebenProvider]). Wer nur empfaengt,
+            // hat die App noch nicht benutzt - da hilft der Einstieg noch.
+            //
+            // Der Zufallschat-BUTTON ist entfallen: er war eine zweite
+            // Aktion auf derselben Flaeche, ohne erkennbaren Grund -
+            // "Zufallschat" ist ein Modus und laesst sich im Auswahl-
+            // screen waehlen, der ohnehin ueber "Leute entdecken" erreicht
+            // wird.
+            if (!ref.watch(hatJemandenAngeschriebenProvider))
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                  child: _EntdeckeCard(
+                    onTap: () => context.go(AppRoutes.swipeModeSelection),
+                  ),
+                ),
+              ),
 
-          // BEREICH 2: Neue Likes
-          _buildLikesSection(
-            context,
-            likedCount,
-            profile,
-          ),
+            // BEREICH 1: Neue Nachrichten
+            _buildMessagesSection(
+              context,
+              ref,
+              messagePreviews,
+              newMessages,
+              profile,
+              settings,
+            ),
 
-          // BEREICH 3: Neue Matches
-          _buildMatchesSection(
-            context,
-            newMatches,
-            profile,
-          ),
+            // BEREICH 2: Neue Likes
+            _buildLikesSection(context, likedCount, profile),
 
-          // Abstand unten für SafeArea
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-        ],
-      ),
+            // BEREICH 3: Neue Matches
+            _buildMatchesSection(context, newMatches, profile),
+
+            // Abstand unten für SafeArea
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          ],
+        ),
       ),
     );
   }
@@ -517,8 +493,7 @@ Widget _buildMessagesSection(
               child: _EmptyStateCard(
                 icon: Icons.chat_bubble_outline,
                 title: L10n.t(context, 'home.noMessages'),
-                subtitle:
-                    L10n.t(context, 'home.noMessagesSub'),
+                subtitle: L10n.t(context, 'home.noMessagesSub'),
               ),
             )
           else
@@ -543,8 +518,7 @@ Widget _buildMessagesSection(
                       onTap: () {
                         // Gelesen + Funke gesehen markieren (Badge weg).
                         ref.read(chatProvider.notifier).markRead(match.id);
-                        final seenBox =
-                            ref.read(seenProvider.notifier);
+                        final seenBox = ref.read(seenProvider.notifier);
                         if (match.isQrContact) {
                           seenBox.markQrSeen([match.id]);
                         } else {
@@ -561,11 +535,19 @@ Widget _buildMessagesSection(
                             CircleAvatar(
                               radius: 26,
                               backgroundColor: isPhotosVisible
-                                  ? Theme.of(context).colorScheme.primaryContainer
+                                  ? Theme.of(
+                                      context,
+                                    ).colorScheme.primaryContainer
                                   : Colors.grey.shade300,
                               child: !isPhotosVisible
-                                  ? const Icon(Icons.visibility_off, color: Colors.white)
-                                  : const Icon(Icons.person, color: Colors.white),
+                                  ? const Icon(
+                                      Icons.visibility_off,
+                                      color: Colors.white,
+                                    )
+                                  : const Icon(
+                                      Icons.person,
+                                      color: Colors.white,
+                                    ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -577,7 +559,10 @@ Widget _buildMessagesSection(
                                       Expanded(
                                         child: Text(
                                           partner.name,
-                                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.copyWith(
                                                 fontWeight: FontWeight.w600,
                                               ),
                                           overflow: TextOverflow.ellipsis,
@@ -590,8 +575,12 @@ Widget _buildMessagesSection(
                                             vertical: 2,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: Theme.of(context).colorScheme.primary,
-                                            borderRadius: BorderRadius.circular(12),
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
                                           ),
                                           child: Text(
                                             '${match.unreadCount}',
@@ -606,8 +595,13 @@ Widget _buildMessagesSection(
                                   const SizedBox(height: 4),
                                   Text(
                                     lastMessage,
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
                                         ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -660,17 +654,15 @@ Widget _buildLikesSection(
           _SectionHeader(
             title: 'Neue Likes',
             count: likedCount,
-            onTap: likedCount > 0
-                ? () => _goToInteressenTab(context, 1)
-                : null,
+            onTap: likedCount > 0 ? () => _goToInteressenTab(context, 1) : null,
           ),
           const SizedBox(height: 12),
           if (likedCount == 0)
             SizedBox(
               width: double.infinity,
-child: _EmptyStateCard(
-icon: Icons.favorite_border,
-title: L10n.t(context, 'home.noLikes'),
+              child: _EmptyStateCard(
+                icon: Icons.favorite_border,
+                title: L10n.t(context, 'home.noLikes'),
                 subtitle: L10n.t(context, 'home.discoverSub'),
               ),
             )
@@ -697,15 +689,17 @@ title: L10n.t(context, 'home.noLikes'),
                             children: [
                               Text(
                                 '$likedCount ${likedCount == 1 ? 'neues Like' : 'neue Likes'}',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w600),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 'Tippe, um zu sehen, wer dich geliked hat',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
                                     ),
                               ),
                             ],
@@ -739,17 +733,15 @@ Widget _buildMatchesSection(
           _SectionHeader(
             title: 'Neue Funken',
             count: newMatches,
-            onTap: newMatches > 0
-                ? () => _goToInteressenTab(context, 2)
-                : null,
+            onTap: newMatches > 0 ? () => _goToInteressenTab(context, 2) : null,
           ),
           const SizedBox(height: 12),
           if (newMatches == 0)
             SizedBox(
               width: double.infinity,
-child: _EmptyStateCard(
-icon: Icons.people_outline,
-title: L10n.t(context, 'home.noSparks'),
+              child: _EmptyStateCard(
+                icon: Icons.people_outline,
+                title: L10n.t(context, 'home.noSparks'),
                 subtitle: L10n.t(context, 'home.likesSub'),
               ),
             )
@@ -776,15 +768,17 @@ title: L10n.t(context, 'home.noSparks'),
                             children: [
                               Text(
                                 '$newMatches ${newMatches == 1 ? 'neuer Funke' : 'neue Funken'}',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w600),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 'Tippe, um alle Funken zu sehen',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
                                     ),
                               ),
                             ],
@@ -805,11 +799,7 @@ title: L10n.t(context, 'home.noSparks'),
 
 /// Section-Header mit Titel, Anzahl und optionaler Navigation
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({
-    required this.title,
-    required this.count,
-    this.onTap,
-  });
+  const _SectionHeader({required this.title, required this.count, this.onTap});
 
   final String title;
   final int count;
@@ -829,9 +819,9 @@ class _SectionHeader extends StatelessWidget {
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
         ),
         if (onTap != null)
@@ -840,8 +830,7 @@ class _SectionHeader extends StatelessWidget {
             icon: const Icon(Icons.chevron_right, size: 18),
             label: Text(
               count > 0
-                  ? L10n.tf(context, 'home.viewCount',
-                      {'count': '$count'})
+                  ? L10n.tf(context, 'home.viewCount', {'count': '$count'})
                   : L10n.t(context, 'home.viewAll'),
               style: Theme.of(context).textTheme.labelLarge,
             ),
@@ -871,12 +860,18 @@ class _EmptyStateCard extends StatelessWidget {
       // der Card würde dann einzelne Buchstaben (z. B. das "n" in
       // "Keine neuen Funken") abschneiden.
       clipBehavior: Clip.none,
-      color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+      color: Theme.of(
+        context,
+      ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            Icon(icon, size: 48, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            Icon(
+              icon,
+              size: 48,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(height: 12),
             Text(
               title,
@@ -888,8 +883,8 @@ class _EmptyStateCard extends StatelessWidget {
             Text(
               subtitle,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               textAlign: TextAlign.center,
             ),
           ],

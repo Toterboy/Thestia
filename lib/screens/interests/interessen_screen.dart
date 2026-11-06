@@ -241,8 +241,8 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen> {
           // (Positioned.top). Ihr Inhalt kann gar nicht mehr unter ihnen
           // durchlaufen - die Reiter stehen immer vor dem Fenster.
           Positioned(
-            top: _reiterRandOben + _pillenHoehe(context) +
-                _abstandReiterBereich,
+            top:
+                _reiterRandOben + _pillenHoehe(context) + _abstandReiterBereich,
             left: 0,
             right: 0,
             bottom: 0,
@@ -251,12 +251,7 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen> {
               child: ListView(
                 controller: _scrollController,
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(
-                  16,
-                  4,
-                  16,
-                  28,
-                ),
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
                 children: [
                   // clipBehavior: Clip.hardEdge - OHNE das war die
                   // Blase waehrend des Aufklappens nicht beschnitten:
@@ -295,15 +290,16 @@ class _InteressenScreenState extends ConsumerState<InteressenScreen> {
                               ],
                             ),
                             transitionBuilder: (child, animation) {
-                              final offset = Tween<Offset>(
-                                begin: const Offset(0, -0.03),
-                                end: Offset.zero,
-                              ).animate(
-                                CurvedAnimation(
-                                  parent: animation,
-                                  curve: Curves.easeOutCubic,
-                                ),
-                              );
+                              final offset =
+                                  Tween<Offset>(
+                                    begin: const Offset(0, -0.03),
+                                    end: Offset.zero,
+                                  ).animate(
+                                    CurvedAnimation(
+                                      parent: animation,
+                                      curve: Curves.easeOutCubic,
+                                    ),
+                                  );
                               return FadeTransition(
                                 opacity: animation,
                                 child: SlideTransition(
@@ -559,9 +555,7 @@ Future<void> bestaetigeBlockieren(
   );
   if (confirmed != true || !context.mounted) return;
   try {
-    await SupabaseDatabaseService(
-      SupabaseService.client,
-    ).blockUser(personId);
+    await SupabaseDatabaseService(SupabaseService.client).blockUser(personId);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -760,90 +754,90 @@ class _OwnLikesTabState extends ConsumerState<_OwnLikesTab>
       itemCount: _likes.length,
       separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, i) {
-          final like = _likes[i];
-          final profile = like.profile;
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: CircleAvatar(
-                      radius: 24,
-                      backgroundColor:
-                          Theme.of(context).colorScheme.primaryContainer,
-                      child: const Icon(Icons.person, color: Colors.white),
-                    ),
-                    // NUTZERWUNSCH (31.10.2026): "Verifizierung soll
-                    // fuer alle Personen sichtbar sein" - auch in der
-                    // Liste, nicht nur im Profil.
-                    title: Row(
-                      children: [
-                        Flexible(child: Text(profile.name)),
-                        if (profile.isVerified) ...[
-                          const SizedBox(width: 6),
-                          Tooltip(
-                            message: L10n.t(context, 'verify.badge'),
-                            child: Icon(
-                              Icons.verified,
-                              size: 18,
-                              color: Colors.lightBlue.shade400,
-                            ),
+        final like = _likes[i];
+        final profile = like.profile;
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: CircleAvatar(
+                    radius: 24,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer,
+                    child: const Icon(Icons.person, color: Colors.white),
+                  ),
+                  // NUTZERWUNSCH (31.10.2026): "Verifizierung soll
+                  // fuer alle Personen sichtbar sein" - auch in der
+                  // Liste, nicht nur im Profil.
+                  title: Row(
+                    children: [
+                      Flexible(child: Text(profile.name)),
+                      if (profile.isVerified) ...[
+                        const SizedBox(width: 6),
+                        Tooltip(
+                          message: L10n.t(context, 'verify.badge'),
+                          child: Icon(
+                            Icons.verified,
+                            size: 18,
+                            color: Colors.lightBlue.shade400,
                           ),
-                        ],
+                        ),
                       ],
-                    ),
-                    subtitle: Text([
+                    ],
+                  ),
+                  subtitle: Text(
+                    [
                       '${profile.age ?? '?'} Jahre',
                       // Serverseitig berechnet, angezeigt als
                       // 10-km-Stufe (v0.10.0).
                       if (profile.distanceKm > 0)
-                        profile.distanceLabel(
-                          (key) => L10n.t(context, key),
-                        ),
+                        profile.distanceLabel((key) => L10n.t(context, key)),
                       // WANN der Like rausging (NUTZERWUNSCH,
                       // 28.10.2026: "kann ... auch sehen, an welchem
                       // Tag man den Like gesendet hat").
                       if (like.createdAt != null)
                         _likeDatum(context, like.createdAt!),
-                    ].join(' · ')),
-                    // Die Werkzeuge fuer die Person (NUTZERWUNSCH
-                    // 01.11.2026): "Die Bearbeitungstools auf der
-                    // Interessen Seite sehe ich auch nicht ... entfernen,
-                    // blockieren, melden ... usw."
-                    //
-                    // Vorher stand hier nur ein X (Like zuruecknehmen).
-                    // Blockieren und Melden waren ausschliesslich bei
-                    // den FUNKEN erreichbar - wer nur geliked hatte,
-                    // konnte nichts machen.
-                    trailing: _PersonenMenue(
-                      personId: profile.id,
-                      personName: profile.name,
-                      aktionen: [
-                        _MenueEintrag(
-                          wert: 'entfernen',
-                          icon: Icons.close,
-                          label: L10n.t(
-                              context, 'interests.likeWithdrawTooltip'),
-                          rot: true,
-                        ),
-                      ],
-                      onAktion: (wert) {
-                        if (wert == 'entfernen') _removeLike(like);
-                      },
-                    ),
+                    ].join(' · '),
                   ),
-                  if (profile.introAudioPath != null) ...[
-                    const SizedBox(height: 4),
-                    IntroAudioPlayer(targetUserId: profile.id),
-                  ],
+                  // Die Werkzeuge fuer die Person (NUTZERWUNSCH
+                  // 01.11.2026): "Die Bearbeitungstools auf der
+                  // Interessen Seite sehe ich auch nicht ... entfernen,
+                  // blockieren, melden ... usw."
+                  //
+                  // Vorher stand hier nur ein X (Like zuruecknehmen).
+                  // Blockieren und Melden waren ausschliesslich bei
+                  // den FUNKEN erreichbar - wer nur geliked hatte,
+                  // konnte nichts machen.
+                  trailing: _PersonenMenue(
+                    personId: profile.id,
+                    personName: profile.name,
+                    aktionen: [
+                      _MenueEintrag(
+                        wert: 'entfernen',
+                        icon: Icons.close,
+                        label: L10n.t(context, 'interests.likeWithdrawTooltip'),
+                        rot: true,
+                      ),
+                    ],
+                    onAktion: (wert) {
+                      if (wert == 'entfernen') _removeLike(like);
+                    },
+                  ),
+                ),
+                if (profile.introAudioPath != null) ...[
+                  const SizedBox(height: 4),
+                  IntroAudioPlayer(targetUserId: profile.id),
                 ],
-              ),
+              ],
             ),
-          );
-        },
+          ),
+        );
+      },
     );
 
     // Eingebettet zieht die Seite den RefreshIndicator - ein zweiter
@@ -1064,109 +1058,116 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
       itemCount: _likes.length,
       separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, i) {
-          final like = _likes[i];
-          final profile = like.profile;
-          final busy = _busyLikeId == like.likeId;
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: CircleAvatar(
-                      radius: 24,
-                      backgroundColor:
-                          Theme.of(context).colorScheme.primaryContainer,
-                      child: const Icon(Icons.visibility_off,
-                          color: Colors.white),
+        final like = _likes[i];
+        final profile = like.profile;
+        final busy = _busyLikeId == like.likeId;
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: CircleAvatar(
+                    radius: 24,
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer,
+                    child: const Icon(
+                      Icons.visibility_off,
+                      color: Colors.white,
                     ),
-                    title: Text([
+                  ),
+                  title: Text(
+                    [
                       '${profile.name}, ${profile.age ?? '?'}',
                       if (profile.distanceKm > 0)
-                        profile.distanceLabel(
-                          (key) => L10n.t(context, key),
-                        ),
-                    ].join(' · ')),
-                    subtitle: Text(
-                      profile.introText.isNotEmpty
-                          ? profile.introText
-                          : L10n.t(context, 'interests.likedYou'),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    onTap: () =>
-                        context.go(AppRoutes.profileDetailPath(profile.id)),
-                    // Die Werkzeuge fuer die Person (NUTZERWUNSCH
-                    // 01.11.2026). Die aktionsspezifischen Knöpfe
-                    // stehen gleich darunter - hier kommen die
-                    // allgemeinen (Profil, Melden, Blockieren), die es
-                    // vorher nur bei den Funken gab.
-                    trailing: _PersonenMenue(
-                      personId: profile.id,
-                      personName: profile.name,
-                      aktiv: !busy,
-                    ),
+                        profile.distanceLabel((key) => L10n.t(context, key)),
+                    ].join(' · '),
                   ),
-                  if (profile.introAudioPath != null) ...[
-                    const SizedBox(height: 8),
-                    IntroAudioPlayer(targetUserId: profile.id),
-                  ],
+                  subtitle: Text(
+                    profile.introText.isNotEmpty
+                        ? profile.introText
+                        : L10n.t(context, 'interests.likedYou'),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  onTap: () =>
+                      context.go(AppRoutes.profileDetailPath(profile.id)),
+                  // Die Werkzeuge fuer die Person (NUTZERWUNSCH
+                  // 01.11.2026). Die aktionsspezifischen Knöpfe
+                  // stehen gleich darunter - hier kommen die
+                  // allgemeinen (Profil, Melden, Blockieren), die es
+                  // vorher nur bei den Funken gab.
+                  trailing: _PersonenMenue(
+                    personId: profile.id,
+                    personName: profile.name,
+                    aktiv: !busy,
+                  ),
+                ),
+                if (profile.introAudioPath != null) ...[
                   const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      // IGNORIEREN (NUTZERWUNSCH, 28.10.2026: "auch den
-                      // like ignorieren kann"). Bewusst ein Icon-Button
-                      // und kein Text-Button: es ist die LEISE Variante
-                      // - sie nimmt den Like aus der Liste, ohne dass
-                      // daraus etwas wird.
-                      IconButton(
-                        icon: const Icon(Icons.visibility_off_outlined),
-                        tooltip: L10n.t(context, 'interests.decline'),
-                        onPressed:
-                            busy ? null : () => _respond(like, accept: false),
-                      ),
-                      const SizedBox(width: 8),
-                      // ZURÜCK LIKEN (NUTZERWUNSCH, 28.10.2026: "also
-                      // zurück liken ... kann"). Ich mag sie auch - aber
-                      // ohne sofort einen Funken daraus zu machen. Der
-                      // Funke entsteht, wenn sie meinen Like annimmt.
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: busy ? null : () => _likeBack(like),
-                          icon: const Icon(Icons.favorite_border, size: 18),
-                          label: Text(L10n.t(context, 'interests.likeBack')),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: FilledButton.icon(
-                          onPressed:
-                              busy ? null : () => _respond(like, accept: true),
-                          // Kein Ladekreis im Knopf (NUTZERWUNSCH,
-                          // 31.10.2026): der Ring war 16 px breit
-                          // statt 24 px - die Knopfbreite sprang
-                          // damit hin und her, und bei einem kurzen
-                          // Vorgang war der Ring nur ein Blitzer.
-                          //
-                          // Das Symbol bleibt an seiner Stelle und
-                          // atmet nur leiser. Die Breite bleibt
-                          // konstant.
-                          icon: _BusyIcon(
-                            busy: busy,
-                            child: const Icon(Icons.favorite),
-                          ),
-                          label: Text(L10n.t(context, 'interests.sparkConfirmBtn')),
-                        ),
-                      ),
-                    ],
-                  ),
+                  IntroAudioPlayer(targetUserId: profile.id),
                 ],
-              ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    // IGNORIEREN (NUTZERWUNSCH, 28.10.2026: "auch den
+                    // like ignorieren kann"). Bewusst ein Icon-Button
+                    // und kein Text-Button: es ist die LEISE Variante
+                    // - sie nimmt den Like aus der Liste, ohne dass
+                    // daraus etwas wird.
+                    IconButton(
+                      icon: const Icon(Icons.visibility_off_outlined),
+                      tooltip: L10n.t(context, 'interests.decline'),
+                      onPressed: busy
+                          ? null
+                          : () => _respond(like, accept: false),
+                    ),
+                    const SizedBox(width: 8),
+                    // ZURÜCK LIKEN (NUTZERWUNSCH, 28.10.2026: "also
+                    // zurück liken ... kann"). Ich mag sie auch - aber
+                    // ohne sofort einen Funken daraus zu machen. Der
+                    // Funke entsteht, wenn sie meinen Like annimmt.
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: busy ? null : () => _likeBack(like),
+                        icon: const Icon(Icons.favorite_border, size: 18),
+                        label: Text(L10n.t(context, 'interests.likeBack')),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: busy
+                            ? null
+                            : () => _respond(like, accept: true),
+                        // Kein Ladekreis im Knopf (NUTZERWUNSCH,
+                        // 31.10.2026): der Ring war 16 px breit
+                        // statt 24 px - die Knopfbreite sprang
+                        // damit hin und her, und bei einem kurzen
+                        // Vorgang war der Ring nur ein Blitzer.
+                        //
+                        // Das Symbol bleibt an seiner Stelle und
+                        // atmet nur leiser. Die Breite bleibt
+                        // konstant.
+                        icon: _BusyIcon(
+                          busy: busy,
+                          child: const Icon(Icons.favorite),
+                        ),
+                        label: Text(
+                          L10n.t(context, 'interests.sparkConfirmBtn'),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          );
-        },
+          ),
+        );
+      },
     );
 
     // Eingebettet zieht die Seite den RefreshIndicator - ein zweiter
@@ -1207,6 +1208,7 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
   /// es noch nichts zu zeigen gibt. Ab dann bleibt der Inhalt
   /// stehen und aktualisiert sich still im Hintergrund.
   bool _everLoaded = false;
+
   /// Chats verwalten (v0.8.0): Mehrfachauswahl + "Aus Liste entfernen".
   /// Ein-/Ausgang über das AppBar-Icon (NUTZERWUNSCH: weniger Platz);
   /// der Zustand lebt im [matchSelectModeProvider] (AppBar <-> Tab).
@@ -1289,9 +1291,9 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     final staleIds = stale.map((m) => m.matchId).toSet();
     var cooledAny = false;
     for (final m in stale) {
-            // Bereits gekühlt (Gegenseite war schneller) oder Netzwerkfehler:
-        // ignorieren, beim nächsten Laden wird erneut geprüft.
-await bestEffort('findYourMatchServiceProvider.coolMatch', () async {
+      // Bereits gekühlt (Gegenseite war schneller) oder Netzwerkfehler:
+      // ignorieren, beim nächsten Laden wird erneut geprüft.
+      await bestEffort('findYourMatchServiceProvider.coolMatch', () async {
         await ref.read(findYourMatchServiceProvider).coolMatch(m.matchId);
         cooledAny = true;
       });
@@ -1396,22 +1398,17 @@ await bestEffort('findYourMatchServiceProvider.coolMatch', () async {
     }
     final choice = await showEndSparkDialog(context);
     if (choice == null || !mounted) return;
-    final goodbye =
-        goodbyeTextForChoice(context, choice);
+    final goodbye = goodbyeTextForChoice(context, choice);
     if (goodbye != null) {
       // Absage-Text ohne geöffneten Chat zustellen (Relay, best-effort).
       await bestEffort('relayServiceProvider.storeText', () async {
-        await ref.read(relayServiceProvider).storeText(
-              peerId: match.partner.id,
-              text: goodbye,
-            );
+        await ref
+            .read(relayServiceProvider)
+            .storeText(peerId: match.partner.id, text: goodbye);
         if (SupabaseService.isInitialized) {
           await SupabaseService.client.functions.invoke(
             'notify-user',
-            body: {
-              'kind': 'messages',
-              'target_user_id': match.partner.id,
-            },
+            body: {'kind': 'messages', 'target_user_id': match.partner.id},
           );
         }
       });
@@ -1544,8 +1541,9 @@ await bestEffort('findYourMatchServiceProvider.coolMatch', () async {
     if (!context.mounted) return;
     if (ok) {
       setState(() {
-        _serverMatches =
-            _serverMatches.where((x) => x.matchId != m.matchId).toList();
+        _serverMatches = _serverMatches
+            .where((x) => x.matchId != m.matchId)
+            .toList();
       });
       await _load();
       return;
@@ -1832,26 +1830,32 @@ await bestEffort('findYourMatchServiceProvider.coolMatch', () async {
       if (prev != next) setState(() => _selected.clear());
     });
     // QR-Kontakte sind nur lokal gespeichert (kein DB-Match).
-    final qrContacts =
-        ref.watch(chatProvider).where((m) => m.isQrContact).toList();
+    final qrContacts = ref
+        .watch(chatProvider)
+        .where((m) => m.isQrContact)
+        .toList();
     final selectMode = ref.watch(matchSelectModeProvider);
 
     // v0.8.0: aktive Funken oben, gekühlte ("Erschlossene Funken") unten -
     // ohne Countdown, ohne Ablauf-Benachrichtigung, ohne Verlängerungsdruck.
-    final activeMatches =
-        _serverMatches.where((m) => m.status == 'active').toList();
-    final cooledMatches =
-        _serverMatches.where((m) => m.status == 'cooled').toList();
+    final activeMatches = _serverMatches
+        .where((m) => m.status == 'active')
+        .toList();
+    final cooledMatches = _serverMatches
+        .where((m) => m.status == 'cooled')
+        .toList();
 
     // Fixierte Funken stehen oben (NUTZERWUNSCH, 28.10.2026:
     // "sowie Einstellungen haben, wie Funke löschen, fixieren,
     // archivieren"). Die Fixierung ist lokal - sie gehört dem
     // Geraet, nicht dem Konto.
     final gepinnt = ref.watch(pinnedMatchesProvider);
-    final fixierteFunken =
-        activeMatches.where((m) => gepinnt.contains(m.matchId)).toList();
-    final uebrigeFunken =
-        activeMatches.where((m) => !gepinnt.contains(m.matchId)).toList();
+    final fixierteFunken = activeMatches
+        .where((m) => gepinnt.contains(m.matchId))
+        .toList();
+    final uebrigeFunken = activeMatches
+        .where((m) => !gepinnt.contains(m.matchId))
+        .toList();
 
     // Nur beim ersten Laden: ein ruhiger Platzhalter statt eines
     // kreisenden Rings. Beim Nachladen bleibt der Inhalt stehen -
@@ -1896,176 +1900,171 @@ await bestEffort('findYourMatchServiceProvider.coolMatch', () async {
           : const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(vertical: 12),
       children: [
-          if (_serverMatches.isNotEmpty) ...[
-            // NUTZERWUNSCH: Der "Verwalten"-Textbutton nahm zu viel Platz
-            // ein. Er lebt jetzt als Icon-Button in der AppBar (aktiver
-            // Modus: Abbrechen + Zähler bleiben hier in der Zeile).
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-              child: Row(
+        if (_serverMatches.isNotEmpty) ...[
+          // NUTZERWUNSCH: Der "Verwalten"-Textbutton nahm zu viel Platz
+          // ein. Er lebt jetzt als Icon-Button in der AppBar (aktiver
+          // Modus: Abbrechen + Zähler bleiben hier in der Zeile).
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: Row(
+              children: [
+                if (selectMode) ...[
+                  TextButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _selected.clear();
+                      });
+                      ref.read(matchSelectModeProvider.notifier).state = false;
+                    },
+                    icon: const Icon(Icons.close, size: 18),
+                    label: Text(L10n.t(context, 'common.cancel')),
+                  ),
+                  const Spacer(),
+                  FilledButton.icon(
+                    onPressed: _selected.isEmpty ? null : _hideSelected,
+                    icon: const Icon(Icons.visibility_off, size: 18),
+                    label: Text(
+                      L10n.tf(context, 'interests.hideSelected', {
+                        'n': '${_selected.length}',
+                      }),
+                    ),
+                  ),
+                ] else ...[
+                  const Spacer(),
+                ],
+              ],
+            ),
+          ),
+        ],
+        if (qrContacts.isNotEmpty) ...[
+          _SectionHeader(
+            icon: Icons.bookmark,
+            title: L10n.t(context, 'interests.savedTitle'),
+            subtitle: L10n.t(context, 'interests.savedSub'),
+          ),
+          ...qrContacts.map(
+            (m) => ListTile(
+              leading: GestureDetector(
+                onTap: () =>
+                    context.push(AppRoutes.profileDetailPath(m.partner.id)),
+                child: const CircleAvatar(child: Icon(Icons.person)),
+              ),
+              title: Text('${m.partner.name}, ${m.partner.age}'),
+              subtitle: Text(L10n.t(context, 'interests.savedTileSub')),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (selectMode) ...[
-                    TextButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          _selected.clear();
-                        });
-                        ref.read(matchSelectModeProvider.notifier).state =
-                            false;
-                      },
-                      icon: const Icon(Icons.close, size: 18),
-                      label: Text(L10n.t(context, 'common.cancel')),
-                    ),
-                    const Spacer(),
-                    FilledButton.icon(
-                      onPressed: _selected.isEmpty ? null : _hideSelected,
-                      icon: const Icon(Icons.visibility_off, size: 18),
-                      label: Text(L10n.tf(context, 'interests.hideSelected',
-                          {'n': '${_selected.length}'})),
-                    ),
-                  ] else ...[
-                    const Spacer(),
-                  ],
+                  if (m.unreadCount > 0) Badge.count(count: m.unreadCount),
+                  IconButton(
+                    icon: const Icon(Icons.person_outline),
+                    tooltip: L10n.t(context, 'profile.detail.aboutMe'),
+                    onPressed: () =>
+                        context.push(AppRoutes.profileDetailPath(m.partner.id)),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    tooltip: L10n.t(context, 'qr.savedDeleteTooltip'),
+                    onPressed: () => _deleteSavedProfile(context, ref, m),
+                  ),
                 ],
               ),
-            ),
-          ],
-          if (qrContacts.isNotEmpty) ...[
-            _SectionHeader(
-              icon: Icons.bookmark,
-              title: L10n.t(context, 'interests.savedTitle'),
-              subtitle: L10n.t(context, 'interests.savedSub'),
-            ),
-            ...qrContacts.map((m) => ListTile(
-                  leading: GestureDetector(
-                    onTap: () => context.push(
-                      AppRoutes.profileDetailPath(m.partner.id),
-                    ),
-                    child: const CircleAvatar(
-                      child: Icon(Icons.person),
-                    ),
-                  ),
-                  title: Text('${m.partner.name}, ${m.partner.age}'),
-                  subtitle: Text(L10n.t(context, 'interests.savedTileSub')),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (m.unreadCount > 0)
-                        Badge.count(count: m.unreadCount),
-                      IconButton(
-                        icon: const Icon(Icons.person_outline),
-                        tooltip: L10n.t(
-                            context, 'profile.detail.aboutMe'),
-                        onPressed: () => context.push(
-                          AppRoutes.profileDetailPath(m.partner.id),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline,
-                            color: Colors.red),
-                        tooltip: L10n.t(context, 'qr.savedDeleteTooltip'),
-                        onPressed: () =>
-                            _deleteSavedProfile(context, ref, m),
-                      ),
-                    ],
-                  ),
-                  onTap: () {
-                    ref.read(chatProvider.notifier).markRead(m.id);
-                    // Gelesen + gesehen (Badges weg, v0.9.1).
-                    unawaited(ref
-                        .read(seenProvider.notifier)
-                        .markQrSeen([m.id]));
-                    // Push: Zurück landet wieder exakt hier (gleicher Tab).
-                    context.push(AppRoutes.chatDetailPath(m.id));
-                  },
-                )),
-            const SizedBox(height: 8),
-            const Divider(indent: 16, endIndent: 16),
-          ],
-          // Fixierte Funken stehen in ihrem eigenen Abschnitt ganz oben
-          // (NUTZERWUNSCH, 28.10.2026: "fixieren").
-          if (fixierteFunken.isNotEmpty) ...[
-            _SectionHeader(
-              icon: Icons.push_pin,
-              title: L10n.t(context, 'interests.pinnedSection'),
-              subtitle: L10n.t(context, 'interests.pinnedSub'),
-            ),
-            ...fixierteFunken.map((m) => _MatchTile(
-                  match: m,
-                  pinned: true,
-                  onTap: () => _openFunke(context, ref, m),
-                  onProfile: () => context.push(
-                    AppRoutes.profileDetailPath(m.partner.id),
-                  ),
-                  onCool: () => _cool(m),
-                  onHide: () => _hide(m),
-                  onPin: () => _pin(m),
-                  onDelete: () => _delete(m),
-                )),
-            const SizedBox(height: 8),
-            const Divider(indent: 16, endIndent: 16),
-          ],
-          if (uebrigeFunken.isNotEmpty) ...[
-            _SectionHeader(
-              icon: Icons.favorite,
-              title: L10n.t(context, 'interests.sparksTitle'),
-              subtitle: L10n.t(context, 'interests.matchesSub'),
-            ),
-            ...uebrigeFunken.map((m) {
-              if (selectMode) {
-                return CheckboxListTile(
-                  value: _selected.contains(m.matchId),
-                  onChanged: (_) => _toggleSelect(m.matchId),
-                  title: Text('${m.partner.name}, ${m.partner.age ?? '?'}'),
-                  secondary: const Icon(Icons.chat_bubble_outline),
-                );
-              }
-              return _MatchTile(
-                match: m,
-                pinned: gepinnt.contains(m.matchId),
-                // v0.9.0-Feedback: "Auf die Person klicken -> kommt direkt
-                // das Kennenlern-Quiz" - jetzt öffnet die Kachel IMMER den
-                // Chat; das Quiz ist als Button im Chat erreichbar (es
-                // schaltet nur das Foto frei). Das Profil (inkl.
-                // Vorstellung) ist über den Personen-Button erreichbar.
-                // Kühlen/Entfernen geht direkt über das Menü (v0.9.1).
+              onTap: () {
+                ref.read(chatProvider.notifier).markRead(m.id);
+                // Gelesen + gesehen (Badges weg, v0.9.1).
+                unawaited(ref.read(seenProvider.notifier).markQrSeen([m.id]));
                 // Push: Zurück landet wieder exakt hier (gleicher Tab).
-                //
-                // Bei einem automatisch entstandenen Funke kommt vorher
-                // die einmalige Rueckfrage (Migration 177).
-                onTap: () => _openFunke(context, ref, m),
-                onProfile: () => context.push(
-                  AppRoutes.profileDetailPath(m.partner.id),
-                ),
-                onCool: () => _cool(m),
-                onHide: () => _hide(m),
-                onPin: () => _pin(m),
-                onDelete: () => _delete(m),
-              );
-            }),
-          ],
-          // "Erschlossene Funken" (v0.8.0): gekühlte Verbindungen, ganz
-          // unten. KEIN Countdown, KEINE Ablauf-Benachrichtigung, KEINE
-          // "jetzt verlängern!"-Aktion - nur der freiwillige Re-Funke.
-          if (cooledMatches.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            const Divider(indent: 16, endIndent: 16),
-            _SectionHeader(
-              icon: Icons.archive_outlined,
-              title: L10n.t(context, 'interests.cooledTitle'),
-              subtitle: L10n.t(context, 'interests.cooledSub'),
+                context.push(AppRoutes.chatDetailPath(m.id));
+              },
             ),
-            ...cooledMatches.map((m) => _CooledMatchTile(
-                  match: m,
-                  onOpen: () => _openFunke(context, ref, m),
-                  onProfile: () => context.push(
-                    AppRoutes.profileDetailPath(m.partner.id),
-                  ),
-                  onRespark: () => _respark(m),
-                  onDelete: () => _delete(m),
-                )),
-          ],
+          ),
+          const SizedBox(height: 8),
+          const Divider(indent: 16, endIndent: 16),
         ],
+        // Fixierte Funken stehen in ihrem eigenen Abschnitt ganz oben
+        // (NUTZERWUNSCH, 28.10.2026: "fixieren").
+        if (fixierteFunken.isNotEmpty) ...[
+          _SectionHeader(
+            icon: Icons.push_pin,
+            title: L10n.t(context, 'interests.pinnedSection'),
+            subtitle: L10n.t(context, 'interests.pinnedSub'),
+          ),
+          ...fixierteFunken.map(
+            (m) => _MatchTile(
+              match: m,
+              pinned: true,
+              onTap: () => _openFunke(context, ref, m),
+              onProfile: () =>
+                  context.push(AppRoutes.profileDetailPath(m.partner.id)),
+              onCool: () => _cool(m),
+              onHide: () => _hide(m),
+              onPin: () => _pin(m),
+              onDelete: () => _delete(m),
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Divider(indent: 16, endIndent: 16),
+        ],
+        if (uebrigeFunken.isNotEmpty) ...[
+          _SectionHeader(
+            icon: Icons.favorite,
+            title: L10n.t(context, 'interests.sparksTitle'),
+            subtitle: L10n.t(context, 'interests.matchesSub'),
+          ),
+          ...uebrigeFunken.map((m) {
+            if (selectMode) {
+              return CheckboxListTile(
+                value: _selected.contains(m.matchId),
+                onChanged: (_) => _toggleSelect(m.matchId),
+                title: Text('${m.partner.name}, ${m.partner.age ?? '?'}'),
+                secondary: const Icon(Icons.chat_bubble_outline),
+              );
+            }
+            return _MatchTile(
+              match: m,
+              pinned: gepinnt.contains(m.matchId),
+              // v0.9.0-Feedback: "Auf die Person klicken -> kommt direkt
+              // das Kennenlern-Quiz" - jetzt öffnet die Kachel IMMER den
+              // Chat; das Quiz ist als Button im Chat erreichbar (es
+              // schaltet nur das Foto frei). Das Profil (inkl.
+              // Vorstellung) ist über den Personen-Button erreichbar.
+              // Kühlen/Entfernen geht direkt über das Menü (v0.9.1).
+              // Push: Zurück landet wieder exakt hier (gleicher Tab).
+              //
+              // Bei einem automatisch entstandenen Funke kommt vorher
+              // die einmalige Rueckfrage (Migration 177).
+              onTap: () => _openFunke(context, ref, m),
+              onProfile: () =>
+                  context.push(AppRoutes.profileDetailPath(m.partner.id)),
+              onCool: () => _cool(m),
+              onHide: () => _hide(m),
+              onPin: () => _pin(m),
+              onDelete: () => _delete(m),
+            );
+          }),
+        ],
+        // "Erschlossene Funken" (v0.8.0): gekühlte Verbindungen, ganz
+        // unten. KEIN Countdown, KEINE Ablauf-Benachrichtigung, KEINE
+        // "jetzt verlängern!"-Aktion - nur der freiwillige Re-Funke.
+        if (cooledMatches.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          const Divider(indent: 16, endIndent: 16),
+          _SectionHeader(
+            icon: Icons.archive_outlined,
+            title: L10n.t(context, 'interests.cooledTitle'),
+            subtitle: L10n.t(context, 'interests.cooledSub'),
+          ),
+          ...cooledMatches.map(
+            (m) => _CooledMatchTile(
+              match: m,
+              onOpen: () => _openFunke(context, ref, m),
+              onProfile: () =>
+                  context.push(AppRoutes.profileDetailPath(m.partner.id)),
+              onRespark: () => _respark(m),
+              onDelete: () => _delete(m),
+            ),
+          ),
+        ],
+      ],
     );
 
     // Eingebettet zieht die Seite den RefreshIndicator - ein zweiter
@@ -2233,10 +2232,7 @@ class _BusyIconState extends State<_BusyIcon>
 
   @override
   Widget build(BuildContext context) {
-    final anim = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-    );
+    final anim = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     return AnimatedBuilder(
       animation: anim,
       child: widget.child,
@@ -2283,19 +2279,19 @@ class _InterestPanelButton extends StatelessWidget {
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeOutCubic,
             padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: open
-                ? scheme.primaryContainer
-                : scheme.surfaceContainerHighest.withValues(alpha: 0.5),
-            // Pille: oben und unten gleich gerundet
-            // (NUTZERWUNSCH 31.10.2026).
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
+            decoration: BoxDecoration(
               color: open
-                  ? scheme.primary.withValues(alpha: 0.35)
-                  : scheme.outlineVariant.withValues(alpha: 0.45),
+                  ? scheme.primaryContainer
+                  : scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              // Pille: oben und unten gleich gerundet
+              // (NUTZERWUNSCH 31.10.2026).
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: open
+                    ? scheme.primary.withValues(alpha: 0.35)
+                    : scheme.outlineVariant.withValues(alpha: 0.45),
+              ),
             ),
-          ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -2553,11 +2549,13 @@ class _MatchTile extends ConsumerWidget {
         title: Row(
           children: [
             Expanded(
-              child: Text([
-                '${p.name}, ${p.age ?? '?'}',
-                if (p.distanceKm > 0)
-                  p.distanceLabel((key) => L10n.t(context, key)),
-              ].join(' · ')),
+              child: Text(
+                [
+                  '${p.name}, ${p.age ?? '?'}',
+                  if (p.distanceKm > 0)
+                    p.distanceLabel((key) => L10n.t(context, key)),
+                ].join(' · '),
+              ),
             ),
             // Der automatische Funke (Migration 177): er kam nicht von
             // beiden Seiten zustande. Das Sternchen weist darauf hin -

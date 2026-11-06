@@ -4,8 +4,7 @@ import 'package:thestia/theme/app_theme.dart';
 
 void main() {
   group('AppTheme-Cache', () {
-    test('of() liefert fuer gleiche (Schema, Helligkeit) dieselbe Instanz',
-        () {
+    test('of() liefert fuer gleiche (Schema, Helligkeit) dieselbe Instanz', () {
       // Stabile Identitaet ist der Kern des Fixes: nur so ersetzt ein
       // Settings-Change das Theme nicht durch eine neue Objekt-Identitaet
       // (was previously eine erneute Theme-Animation ausloeste).
@@ -23,8 +22,10 @@ void main() {
       expect(identical(light, ocean), isFalse);
       expect(light.brightness, Brightness.light);
       expect(dark.brightness, Brightness.dark);
-      expect(ocean.colorScheme.primary,
-          isNot(ThestiaTheme.classic.primaryColor));
+      expect(
+        ocean.colorScheme.primary,
+        isNot(ThestiaTheme.classic.primaryColor),
+      );
     });
 
     test('light()/dark() erzeugen dieselben Werte wie of()', () {

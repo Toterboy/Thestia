@@ -31,16 +31,13 @@ class EmptyState extends StatelessWidget {
               tween: Tween(begin: 0.8, end: 1),
               duration: const Duration(milliseconds: 600),
               curve: Curves.elasticOut,
-              builder: (context, value, child) => Transform.scale(
-                scale: value,
-                child: child,
-              ),
+              builder: (context, value, child) =>
+                  Transform.scale(scale: value, child: child),
               child: Container(
                 width: 96,
                 height: 96,
                 decoration: BoxDecoration(
-                  color:
-                      Theme.of(context).colorScheme.primaryContainer,
+                  color: Theme.of(context).colorScheme.primaryContainer,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -60,19 +57,15 @@ class EmptyState extends StatelessWidget {
             Text(
               message,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.6),
-                  ),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.6),
+              ),
               textAlign: TextAlign.center,
             ),
             if (actionLabel != null && onAction != null) ...[
               const SizedBox(height: 20),
-              FilledButton(
-                onPressed: onAction,
-                child: Text(actionLabel!),
-              ),
+              FilledButton(onPressed: onAction, child: Text(actionLabel!)),
             ],
           ],
         ),
@@ -83,11 +76,7 @@ class EmptyState extends StatelessWidget {
 
 /// Einheitliche Fehlermeldung mit Retry-Option.
 class ErrorState extends StatelessWidget {
-  const ErrorState({
-    required this.message,
-    this.onRetry,
-    super.key,
-  });
+  const ErrorState({required this.message, this.onRetry, super.key});
 
   final String message;
   final VoidCallback? onRetry;

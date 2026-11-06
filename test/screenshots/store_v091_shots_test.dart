@@ -63,8 +63,8 @@ final bool _enabled = Platform.environment.containsKey('STORE_SHOTS');
 ///       test/screenshots/store_v091_shots_test.dart
 ///   $env:STORE_SHOTS="1"; $env:STORE_SHOTS_LANG="en"; flutter test \
 ///       --update-goldens test/screenshots/store_v091_shots_test.dart
-final String _lang =
-    (Platform.environment['STORE_SHOTS_LANG'] ?? 'de').toLowerCase();
+final String _lang = (Platform.environment['STORE_SHOTS_LANG'] ?? 'de')
+    .toLowerCase();
 
 /// Waehlt den Text passend zur Render-Sprache.
 String _t(String de, String en) => _lang == 'en' ? en : de;
@@ -119,8 +119,10 @@ SharedPreferences? _sharedPrefsOrNull;
 SharedPreferences get _sharedPrefs {
   final p = _sharedPrefsOrNull;
   if (p == null) {
-    throw StateError('SharedPreferences noch nicht initialisiert - '
-        '_sharedPrefsOrNull wird in _pump() gesetzt');
+    throw StateError(
+      'SharedPreferences noch nicht initialisiert - '
+      '_sharedPrefsOrNull wird in _pump() gesetzt',
+    );
   }
   return p;
 }
@@ -164,24 +166,19 @@ Future<void> _loadFontsOnce() async {
   // nichts nachgeladen - der Render laeuft dann eben mit dem
   // Kaestchen.
   for (final pfad in const [
-    r'C:\Windows\Fonts\seguiemj.ttf',   // Windows: Segoe UI Emoji
-    '/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf',   // Linux
-    '/System/Library/Fonts/Apple Color Emoji.ttc',          // macOS
+    r'C:\Windows\Fonts\seguiemj.ttf', // Windows: Segoe UI Emoji
+    '/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf', // Linux
+    '/System/Library/Fonts/Apple Color Emoji.ttc', // macOS
   ]) {
     final f = File(pfad);
     if (!f.existsSync()) continue;
     // Manche Systemschriften kann Flutter nicht laden - dann eben ohne.
-    final geladen = await bestEffortOr(
-      'FontLoader.load',
-      () async {
-        final loader = FontLoader('Noto Color Emoji')
-          ..addFont(
-              Future.value(ByteData.sublistView(f.readAsBytesSync())));
-        await loader.load();
-        return true;
-      },
-      false,
-    );
+    final geladen = await bestEffortOr('FontLoader.load', () async {
+      final loader = FontLoader('Noto Color Emoji')
+        ..addFont(Future.value(ByteData.sublistView(f.readAsBytesSync())));
+      await loader.load();
+      return true;
+    }, false);
     if (geladen) break;
   }
   _fontsLoaded = true;
@@ -211,6 +208,7 @@ class _FakeLocalStorage implements LocalStorage {
     if (key == AppConstants.prefsSettingsKey) return _settingsMitDialogGesehen;
     return map[key];
   }
+
   @override
   Future<void> saveBool(String key, bool value) async =>
       map[key] = value ? 'true' : 'false';
@@ -247,7 +245,9 @@ class _FakeSecureProfileStore extends SecureProfileStore {
 // Harness
 // ---------------------------------------------------------------------------
 
-Widget _harness(Widget child, SharedPreferences prefs, {
+Widget _harness(
+  Widget child,
+  SharedPreferences prefs, {
   List<Override> extra = const [],
   bool dark = false,
 }) {
@@ -300,27 +300,29 @@ Widget _harness(Widget child, SharedPreferences prefs, {
           _FakeLocalStorage(),
           _FakeSecureProfileStore(),
         );
-        notifier.setProfile(UserProfile(
-          id: AppConstants.currentUserId,
-          name: '',
-          bio: '',
-          // ERWACHSENEN-ALTER (03.11.2026).
-          //
-          // Ohne birthDate ist `profil.age` null, der Code rechnet dann
-          // mit 0 - und 0 ist ein Minderjaehriger. Der Datenschutz-
-          // Bildschirm zeigte deshalb die Jugendschutz-Variante
-          // ("In deinem Alter bleibt die Entfernung aus"), waehrend
-          // die Kachel-Ueberschrift das Verhalten von Erwachsenen
-          // beschreibt ("erst, wenn du sie erlaubst: Stufen von
-          // 10 km"). Zwei widersprechende Aussagen in EINEM Bild.
-          //
-          // Das Play-Listing richtet sich an Erwachsene (Zielgruppe
-          // 18+, "Restrict Minor Access"). Das Bild zeigt darum einen
-          // erwachsenen Nutzer - mit dem Text, den ER sieht.
-          birthDate: DateTime(1994, 4, 12),
-          isVerified: true,
-          verificationState: VerificationState.verified,
-        ));
+        notifier.setProfile(
+          UserProfile(
+            id: AppConstants.currentUserId,
+            name: '',
+            bio: '',
+            // ERWACHSENEN-ALTER (03.11.2026).
+            //
+            // Ohne birthDate ist `profil.age` null, der Code rechnet dann
+            // mit 0 - und 0 ist ein Minderjaehriger. Der Datenschutz-
+            // Bildschirm zeigte deshalb die Jugendschutz-Variante
+            // ("In deinem Alter bleibt die Entfernung aus"), waehrend
+            // die Kachel-Ueberschrift das Verhalten von Erwachsenen
+            // beschreibt ("erst, wenn du sie erlaubst: Stufen von
+            // 10 km"). Zwei widersprechende Aussagen in EINEM Bild.
+            //
+            // Das Play-Listing richtet sich an Erwachsene (Zielgruppe
+            // 18+, "Restrict Minor Access"). Das Bild zeigt darum einen
+            // erwachsenen Nutzer - mit dem Text, den ER sieht.
+            birthDate: DateTime(1994, 4, 12),
+            isVerified: true,
+            verificationState: VerificationState.verified,
+          ),
+        );
         return notifier;
       }),
       ...extra,
@@ -328,20 +330,25 @@ Widget _harness(Widget child, SharedPreferences prefs, {
     // Der L10nScope steht UEBER dem MaterialApp: `L10n.t` sucht ihn
     // ueber den Kontext. Wer ihn weglässt, bekommt deutsche Texte in
     // einem englischen Listing.
-    child: L10nScope(child: MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: theme.copyWith(
-        cardTheme: theme.cardTheme.copyWith(elevation: 0, shadowColor: const Color(0x00000000)),
+    child: L10nScope(
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: theme.copyWith(
+          cardTheme: theme.cardTheme.copyWith(
+            elevation: 0,
+            shadowColor: const Color(0x00000000),
+          ),
+        ),
+        locale: Locale(_lang),
+        supportedLocales: const [Locale('de'), Locale('en')],
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: child,
       ),
-      locale: Locale(_lang),
-      supportedLocales: const [Locale('de'), Locale('en')],
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      home: child,
-    )),
+    ),
   );
 }
 
@@ -407,7 +414,8 @@ Future<void> _pump(
   for (var i = 0; i < 3; i++) {
     await tester.pumpAndSettle(const Duration(milliseconds: 300));
     await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 500)));
+      () => Future<void>.delayed(const Duration(milliseconds: 500)),
+    );
   }
   if (after != null) {
     await after(tester);
@@ -446,17 +454,17 @@ Future<void> _wegtippeVerbindungshinweis(WidgetTester tester) async {
 
   // Der Knopf sitzt in derselben Karte wie der Text.
   final karte = find.ancestor(of: text, matching: find.byType(Card));
-  final knopf = find.descendant(
-    of: karte,
-    matching: find.byIcon(Icons.close),
-  );
+  final knopf = find.descendant(of: karte, matching: find.byIcon(Icons.close));
   if (knopf.evaluate().isEmpty) return;
 
   await tester.tap(knopf.first);
   await tester.pumpAndSettle(const Duration(milliseconds: 400));
 
-  expect(find.text(hinweis), findsNothing,
-      reason: 'Der Verbindungs-Hinweis muss im Store-Bild weg sein.');
+  expect(
+    find.text(hinweis),
+    findsNothing,
+    reason: 'Der Verbindungs-Hinweis muss im Store-Bild weg sein.',
+  );
 }
 
 /// Liest `version: x.y.z+build` aus pubspec.yaml.
@@ -482,7 +490,6 @@ Future<void> _wegtippeVerbindungshinweis(WidgetTester tester) async {
     'Screenshot-Renderer kann die Version nicht ermitteln.',
   );
 }
-
 
 /// No-op-Callback fuer gerenderte Auswahl-Widgets.
 void _noop(String _) {}
@@ -511,18 +518,24 @@ Widget _anpassenScreen(String erscheinung) {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(_t('Farbschema', 'Color scheme'),
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              _t('Farbschema', 'Color scheme'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
             ThemePicker(selectedName: 'classic', onChanged: (_) {}),
             const SizedBox(height: 16),
-            Text(_t('Erscheinung', 'Light or dark'),
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              _t('Erscheinung', 'Light or dark'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
             AppearanceSelector(value: erscheinung, onChanged: _noop),
             const SizedBox(height: 16),
-            Text(_t('Chat-Hintergrund', 'Chat background'),
-                style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              _t('Chat-Hintergrund', 'Chat background'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
             const ChatBackgroundPicker(),
           ],
@@ -617,33 +630,35 @@ Widget _soleTileHost(Card card) {
       sharedPrefsProvider.overrideWithValue(_sharedPrefs),
       localeProvider.overrideWith((ref) => Locale(_lang)),
     ],
-    child: L10nScope(child: MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: theme,
-      locale: Locale(_lang),
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      home: Scaffold(
-        // Die Kachel darf die View NICHT fuellen. Im Listen-Kontext
-        // bestimmt ihr Inhalt die Hoehe; hier wuerde sie sonst
-        // gestreckt und das Icon landete unten. Column mit
-        // mainAxisSize.min erzwingt die Inhaltshoehe.
-        body: Align(
-          alignment: Alignment.topCenter,
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [card],
+    child: L10nScope(
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: theme,
+        locale: Locale(_lang),
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: Scaffold(
+          // Die Kachel darf die View NICHT fuellen. Im Listen-Kontext
+          // bestimmt ihr Inhalt die Hoehe; hier wuerde sie sonst
+          // gestreckt und das Icon landete unten. Column mit
+          // mainAxisSize.min erzwingt die Inhaltshoehe.
+          body: Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [card],
+              ),
             ),
           ),
         ),
       ),
-    )),
+    ),
   );
 }
 
@@ -658,21 +673,23 @@ Widget _soleTileHost(Card card) {
 /// behaelt seine natuerliche Hoehe und steht auf dem Hintergrund. Das
 /// ist die Form, in der die Kachel spaeter erscheint.
 Widget _cardHost(Widget child, {double maxWidth = 340}) {
-  return Builder(builder: (context) {
-    final theme = Theme.of(context);
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: maxWidth),
-            child: child,
+  return Builder(
+    builder: (context) {
+      final theme = Theme.of(context);
+      return Scaffold(
+        backgroundColor: theme.colorScheme.surface,
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: child,
+            ),
           ),
         ),
-      ),
-    );
-  });
+      );
+    },
+  );
 }
 
 /// Zielverzeichnis fuer die Rechteck-Dateien, ABSOLUT aufgeloest.
@@ -749,7 +766,6 @@ Future<void> _writeCardRects(
   });
 }
 
-
 /// Findet die Modus-Kacheln im gerenderten Screen, in Bildschirmreihenfolge.
 ///
 /// Die Kacheln tragen in der App den Key `mode-tile-<name>`.
@@ -762,9 +778,13 @@ List<Finder> _findModeCards(WidgetTester tester) {
   final out = <Finder>[];
   for (final name in _modeOrder) {
     final f = find.byKey(ValueKey('mode-tile-$name'));
-    expect(f, findsOneWidget,
-        reason: "Modus '$name' nicht gefunden - der Key in _ModeCard "
-            'passt nicht zum Enum-Namen');
+    expect(
+      f,
+      findsOneWidget,
+      reason:
+          "Modus '$name' nicht gefunden - der Key in _ModeCard "
+          'passt nicht zum Enum-Namen',
+    );
     out.add(f);
   }
   return out;
@@ -792,8 +812,7 @@ List<Finder> _findModeCards(WidgetTester tester) {
 /// (Identity-Key, PreKeys, Session-Ratchet). Im Test geht das in
 /// ein temporaeres Verzeichnis.
 Future<void> _vorbereiteChatSpeicher(WidgetTester tester) async {
-  final hiveDir =
-      Directory.systemTemp.createTempSync('thestia_store_chat');
+  final hiveDir = Directory.systemTemp.createTempSync('thestia_store_chat');
   Hive.init(hiveDir.path);
   addTearDown(() {
     // Dateikoepfe bleiben unter Windows gern kurz offen - fuer
@@ -803,8 +822,10 @@ Future<void> _vorbereiteChatSpeicher(WidgetTester tester) async {
     });
   });
 
-  const secure = MethodChannel('plugins.it_nomads.com/'
-      'flutter_secure_storage');
+  const secure = MethodChannel(
+    'plugins.it_nomads.com/'
+    'flutter_secure_storage',
+  );
   tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
     secure,
     (call) async => switch (call.method) {
@@ -814,8 +835,12 @@ Future<void> _vorbereiteChatSpeicher(WidgetTester tester) async {
       _ => null,
     },
   );
-  addTearDown(() => tester.binding.defaultBinaryMessenger
-      .setMockMethodCallHandler(secure, null));
+  addTearDown(
+    () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      secure,
+      null,
+    ),
+  );
 }
 
 class _FakeChatService extends ChatService {
@@ -826,12 +851,12 @@ class _FakeChatService extends ChatService {
 
   @override
   List<Match> getMatches() => [
-        Match(
-          id: 'store-shot-match',
-          partner: _partner,
-          matchedAt: DateTime(2026, 1, 1),
-        ),
-      ];
+    Match(
+      id: 'store-shot-match',
+      partner: _partner,
+      matchedAt: DateTime(2026, 1, 1),
+    ),
+  ];
 
   @override
   Match? getMatchById(String matchId) =>
@@ -843,59 +868,77 @@ class _FakeChatService extends ChatService {
 }
 
 UserProfile _chatPartner() => UserProfile(
-      id: 'store-shot-peer',
-      name: 'Mara',
-      bio: _t('Bücher, Rad, Kaffee.', 'Books, bikes, coffee.'),
-      state: 'Nordrhein-Westfalen',
-      interests: _lang == 'en'
-          ? const ['Photography', 'Hiking', 'Cooking']
-          : const ['Fotografieren', 'Wandern', 'Kochen'],
-      isVerified: true,
-      introText: _t(
-        'Erzähl mir etwas, das nicht auf deinem Profil steht.',
-        'Tell me something that is not on your profile.',
-      ),
-    );
+  id: 'store-shot-peer',
+  name: 'Mara',
+  bio: _t('Bücher, Rad, Kaffee.', 'Books, bikes, coffee.'),
+  state: 'Nordrhein-Westfalen',
+  interests: _lang == 'en'
+      ? const ['Photography', 'Hiking', 'Cooking']
+      : const ['Fotografieren', 'Wandern', 'Kochen'],
+  isVerified: true,
+  introText: _t(
+    'Erzähl mir etwas, das nicht auf deinem Profil steht.',
+    'Tell me something that is not on your profile.',
+  ),
+);
 
 List<Message> _chatHistory() {
   final now = DateTime(2026, 1, 2, 20, 15);
   Message m(String id, String from, String text, int min) => Message(
-        id: id,
-        senderId: from,
-        receiverId: from == 'me' ? 'store-shot-peer' : 'me',
-        text: text,
-        timestamp: now.add(Duration(minutes: min)),
-      );
+    id: id,
+    senderId: from,
+    receiverId: from == 'me' ? 'store-shot-peer' : 'me',
+    text: text,
+    timestamp: now.add(Duration(minutes: min)),
+  );
 
   // 'me' ist die Demo-ID, die AppConstants.currentUserId ohne
   // Supabase-Session zurueckgibt. Nachrichten mit dieser Absender-ID
   // landen auf der eigenen Seite, die anderen beim Partner.
   // Absurder und nicht/generischer Chat-Inhalt fuer den Store-Screenshot.
-//
-// "Hey, schreib mir" verkauft eine App nicht. Der Text soll zeigen,
-// dass hier Menschen miteinander reden und nicht miteinander
-// ausfuellen - und er soll auf den ersten Blick ungewoehnlich genug
-// sein, dass jemand innehaelt und weiterklickt.
-//
-// Bewusst ohne Schwaeren ("Kaffee am Wochenende?") - der Screenshot
-// soll Spass machen, nicht kraenkend sein.
-//
-// Die letzte Nachricht beantwortet die davor ("Gewinnst du meistens?")
-// und bleibt im selben Thema. Ein Themenwechsel auf eine Date-Einladung
-// an der letzten Zeile wirkt, als haette man den Faden verloren - und
-// genau so gelesen wird das Bild zuerst.
+  //
+  // "Hey, schreib mir" verkauft eine App nicht. Der Text soll zeigen,
+  // dass hier Menschen miteinander reden und nicht miteinander
+  // ausfuellen - und er soll auf den ersten Blick ungewoehnlich genug
+  // sein, dass jemand innehaelt und weiterklickt.
+  //
+  // Bewusst ohne Schwaeren ("Kaffee am Wochenende?") - der Screenshot
+  // soll Spass machen, nicht kraenkend sein.
+  //
+  // Die letzte Nachricht beantwortet die davor ("Gewinnst du meistens?")
+  // und bleibt im selben Thema. Ein Themenwechsel auf eine Date-Einladung
+  // an der letzten Zeile wirkt, als haette man den Faden verloren - und
+  // genau so gelesen wird das Bild zuerst.
   return [
-    m('1', 'store-shot-peer',
-        _t('Ich muss dir was Beunruhigendes sagen.',
-           'I have to tell you something unsettling.'), 0),
+    m(
+      '1',
+      'store-shot-peer',
+      _t(
+        'Ich muss dir was Beunruhigendes sagen.',
+        'I have to tell you something unsettling.',
+      ),
+      0,
+    ),
     m('2', 'me', _t('Jetzt bin ich neugierig.', 'Now I am curious.'), 2),
-    m('3', 'store-shot-peer',
-        _t('Ich verhandle nachts mit meinem Toaster.',
-           'I negotiate with my toaster at night.'), 4),
+    m(
+      '3',
+      'store-shot-peer',
+      _t(
+        'Ich verhandle nachts mit meinem Toaster.',
+        'I negotiate with my toaster at night.',
+      ),
+      4,
+    ),
     m('4', 'me', _t('Gewinnst du meistens?', 'Do you usually win?'), 6),
-    m('5', 'store-shot-peer',
-        _t('Selten. Er akzeptiert nur exakt zwei Scheiben.',
-           'Rarely. It accepts exactly two slices.'), 8),
+    m(
+      '5',
+      'store-shot-peer',
+      _t(
+        'Selten. Er akzeptiert nur exakt zwei Scheiben.',
+        'Rarely. It accepts exactly two slices.',
+      ),
+      8,
+    ),
   ];
 }
 
@@ -918,19 +961,27 @@ void main() {
   //    Rechtecke exakt sind.
   if (_enabled) {
     testWidgets('export Kacheln 01 (Logo und Text)', (tester) async {
-      await _pump(tester, const WelcomeScreen(),
-          outDir: outCards, name: '01_willkommen', size: _phone, dpr: _dpr);
+      await _pump(
+        tester,
+        const WelcomeScreen(),
+        outDir: outCards,
+        name: '01_willkommen',
+        size: _phone,
+        dpr: _dpr,
+      );
       final content = find.byKey(const Key('welcome-page-content'));
-      expect(content, findsOneWidget,
-          reason: 'der Key welcome-page-content fehlt in WelcomeScreen');
+      expect(
+        content,
+        findsOneWidget,
+        reason: 'der Key welcome-page-content fehlt in WelcomeScreen',
+      );
       // Das Rechteck ist die VEREINIGUNG von Logo, Titel und Text, nicht
       // die Column. Die Column fuellt den ganzen Seitenbereich
       // (mainAxisAlignment.center in einem Expanded), ihr Rechteck ist
       // deshalb 574 dp hoch und die Kachel wurde ein grosses weisses
       // Rechteck mit einem Fleck darin. Der weisse Rand kommt in
       // make_store_screenshots.py dazu (CARD_MARGIN_LOGICAL).
-      final logo =
-          find.descendant(of: content, matching: find.byType(AppLogo));
+      final logo = find.descendant(of: content, matching: find.byType(AppLogo));
       expect(logo, findsOneWidget, reason: 'AppLogo nicht gefunden');
       final texts = find.descendant(of: content, matching: find.byType(Text));
       final boxes = <Rect>[
@@ -948,8 +999,7 @@ void main() {
       // Capture erzeugte nur eine doppelte PNG.
     });
 
-    testWidgets('export Kacheln 04 (drei Auswahlkacheln)',
-        (tester) async {
+    testWidgets('export Kacheln 04 (drei Auswahlkacheln)', (tester) async {
       // Die drei Widgets werden einzeln in einen Host gehaengt und
       // vermessen. Sie sind ausgelagerte Widgets und in der App noch
       // nicht in einen Screen eingebaut - siehe die Anmerkung in
@@ -962,16 +1012,29 @@ void main() {
       final cards = <String, Map<String, Object>>{};
       for (final entry in <String, Widget>{
         'anpassen_farbschema': const ThemePicker(
-            selectedName: 'classic', onChanged: _noopTheme),
-        'anpassen_erscheinung':
-            const AppearanceSelector(value: 'light', onChanged: _noop),
+          selectedName: 'classic',
+          onChanged: _noopTheme,
+        ),
+        'anpassen_erscheinung': const AppearanceSelector(
+          value: 'light',
+          onChanged: _noop,
+        ),
         'anpassen_chat': const ChatBackgroundPicker(),
       }.entries) {
-        await _pump(tester, _cardHost(entry.value),
-            outDir: outCards, name: entry.key, size: _phone, dpr: _dpr);
+        await _pump(
+          tester,
+          _cardHost(entry.value),
+          outDir: outCards,
+          name: entry.key,
+          size: _phone,
+          dpr: _dpr,
+        );
         final finder = find.byWidget(entry.value);
-        expect(finder, findsOneWidget,
-            reason: '${entry.key}: Widget nicht gefunden, Rect waere falsch');
+        expect(
+          finder,
+          findsOneWidget,
+          reason: '${entry.key}: Widget nicht gefunden, Rect waere falsch',
+        );
         final r = tester.getRect(finder);
         cards[entry.key] = {
           'file': '${entry.key}.png',
@@ -995,11 +1058,20 @@ void main() {
     testWidgets('export 06_datenschutz Kachel', (tester) async {
       final cards = <String, Map<String, Object>>{};
       const section = PrivacySection(readOnly: true);
-      await _pump(tester, _cardHost(section),
-          outDir: outCards, name: '06_datenschutz', size: _phone, dpr: _dpr);
+      await _pump(
+        tester,
+        _cardHost(section),
+        outDir: outCards,
+        name: '06_datenschutz',
+        size: _phone,
+        dpr: _dpr,
+      );
       final finder = find.byWidget(section);
-      expect(finder, findsOneWidget,
-          reason: 'Datenschutz-Abschnitt nicht gefunden, Rect waere falsch');
+      expect(
+        finder,
+        findsOneWidget,
+        reason: 'Datenschutz-Abschnitt nicht gefunden, Rect waere falsch',
+      );
       final r = tester.getRect(finder);
       cards['datenschutz'] = {
         'file': 'datenschutz.png',
@@ -1009,8 +1081,14 @@ void main() {
     });
 
     testWidgets('export Kacheln 05 (alle Kategorien)', (tester) async {
-      await _pump(tester, const SpiceQuestionsScreen(matchId: 1),
-          outDir: outCards, name: '05_eisbrecher', size: _phone, dpr: _dpr);
+      await _pump(
+        tester,
+        const SpiceQuestionsScreen(matchId: 1),
+        outDir: outCards,
+        name: '05_eisbrecher',
+        size: _phone,
+        dpr: _dpr,
+      );
       // Die Kategorien stehen in einem ListView.builder: gerendert wird
       // nur, was im Viewport liegt. Also wird durch die Liste gelaufen
       // und jede Kachel dann aufgenommen, wenn sie vollstaendig sichtbar
@@ -1024,7 +1102,10 @@ void main() {
       final list = find.byType(Scrollable).last;
       final cards = <String, Map<String, Object>>{};
       await tester.dragUntilVisible(
-          find.byType(ExpansionTile).first, list, const Offset(0, 200));
+        find.byType(ExpansionTile).first,
+        list,
+        const Offset(0, 200),
+      );
       await tester.pumpAndSettle();
 
       for (var step = 0; step < 40; step++) {
@@ -1046,8 +1127,10 @@ void main() {
         }
         if (added == 0) break; // nichts Neues mehr im Viewport
 
-        await expectLater(find.byType(MaterialApp).last,
-            matchesGoldenFile('$outCards/05_$step.png'));
+        await expectLater(
+          find.byType(MaterialApp).last,
+          matchesGoldenFile('$outCards/05_$step.png'),
+        );
         await _writeCardList(tester, '05_eisbrecher', cards);
 
         await tester.drag(list, const Offset(0, -420));
@@ -1078,7 +1161,8 @@ void main() {
         after: _wegtippeVerbindungshinweis,
         extra: [
           chatServiceProvider.overrideWithValue(
-              _FakeChatService(_chatPartner(), _chatHistory())),
+            _FakeChatService(_chatPartner(), _chatHistory()),
+          ),
         ],
       );
       await _pump(
@@ -1091,12 +1175,16 @@ void main() {
         after: _wegtippeVerbindungshinweis,
         extra: [
           chatServiceProvider.overrideWithValue(
-              _FakeChatService(_chatPartner(), _chatHistory())),
+            _FakeChatService(_chatPartner(), _chatHistory()),
+          ),
         ],
       );
       expect(find.byType(ChatDetailScreen), findsOneWidget);
-      expect(find.text('Mara'), findsWidgets,
-          reason: 'der Partner-Name fehlt - die Attrappe greift nicht');
+      expect(
+        find.text('Mara'),
+        findsWidgets,
+        reason: 'der Partner-Name fehlt - die Attrappe greift nicht',
+      );
     });
 
     // 2) Aktuelles: die Startseite.
@@ -1118,7 +1206,8 @@ void main() {
         dpr: _dpr,
         extra: [
           chatServiceProvider.overrideWithValue(
-              _FakeChatService(_chatPartner(), _chatHistory())),
+            _FakeChatService(_chatPartner(), _chatHistory()),
+          ),
         ],
       );
       expect(find.byType(HomeScreen), findsOneWidget);
@@ -1164,11 +1253,20 @@ void main() {
       // bricht der Text nicht mehr um, die Kachel wird flacher (88 statt
       // 92 px hoch) und zeigt etwas anderes als die App. Sie kommt
       // ueber den Capture-Finder, siehe unten.
-      await _pump(tester, const SwipeModeSelectionScreen(),
-          outDir: outTiles, name: 'screen', size: _phone, dpr: _dpr);
+      await _pump(
+        tester,
+        const SwipeModeSelectionScreen(),
+        outDir: outTiles,
+        name: 'screen',
+        size: _phone,
+        dpr: _dpr,
+      );
       final cards = _findModeCards(tester);
-      expect(cards.length, _modeOrder.length,
-          reason: 'jeder Entdeckungs-Modus muss exportiert werden');
+      expect(
+        cards.length,
+        _modeOrder.length,
+        reason: 'jeder Entdeckungs-Modus muss exportiert werden',
+      );
 
       // WICHTIG: alle Kacheln VOR dem Umbau als Widgets materialisieren.
       // Sobald einmal ein neues Widget gerendert wird, ist der alte
@@ -1263,25 +1361,31 @@ void main() {
   // System-Symbole. Das ist kein Kosmetikfehler, sondern das Bild sähe
   // aus wie ein Bild statt wie ein Gerät.
   // `const` steht hier nur vor `Padding`, nicht vor dem Scaffold: der
-// AppBar-Konstruktor dieser Material-Version ist nicht const. Beides
-// zusammen verlangt der Analyzer nicht - er verlangt const fuer
-// `SingleChildScrollView`, weil dessen Parameter alle konstant sind.
-_shot('06_datenschutz', () => Scaffold(
+  // AppBar-Konstruktor dieser Material-Version ist nicht const. Beides
+  // zusammen verlangt der Analyzer nicht - er verlangt const fuer
+  // `SingleChildScrollView`, weil dessen Parameter alle konstant sind.
+  _shot(
+    '06_datenschutz',
+    () => Scaffold(
       appBar: AppBar(title: Text(_t('Einstellungen', 'Settings'))),
       body: const SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
         child: PrivacySection(readOnly: true),
       ),
-    ));
+    ),
+  );
 
   // 5) Eisbrecher-Fragen (Spice Questions): das Herzstueck im Chat.
   //    Erste Kategorie aufgeklappt, damit echte Fragen sichtbar sind.
-  _shot('05_eisbrecher', () => const SpiceQuestionsScreen(matchId: 1),
-      after: (tester) async {
-        final tiles = find.byType(ExpansionTile);
-        if (tester.widgetList(tiles).isNotEmpty) {
-          await tester.tap(tiles.first);
-          await tester.pumpAndSettle(const Duration(milliseconds: 400));
-        }
-      });
+  _shot(
+    '05_eisbrecher',
+    () => const SpiceQuestionsScreen(matchId: 1),
+    after: (tester) async {
+      final tiles = find.byType(ExpansionTile);
+      if (tester.widgetList(tiles).isNotEmpty) {
+        await tester.tap(tiles.first);
+        await tester.pumpAndSettle(const Duration(milliseconds: 400));
+      }
+    },
+  );
 }

@@ -34,8 +34,7 @@ void main() {
     // SystemTemp statt eines festen Windows-Pfads: auf einer
     // Linux-Pipeline wuerde ein fester Pfad ein Verzeichnis mit
     // Backslashes im Arbeitsverzeichnis anlegen.
-    final out = Directory(
-        '${Directory.systemTemp.path}/opencode/m133/symbole');
+    final out = Directory('${Directory.systemTemp.path}/opencode/m133/symbole');
     try {
       if (!out.existsSync()) out.createSync(recursive: true);
     } catch (_) {
@@ -55,10 +54,7 @@ void main() {
     // zeichnet mit `package: 'flutter'` - ohne den zweiten Eintrag
     // waere dort wieder das Ersatzkaestchen zu sehen.
     final bytes = Uint8List.fromList(fontdatei.readAsBytesSync());
-    for (final familie in [
-      'MaterialIcons',
-      'packages/flutter/MaterialIcons',
-    ]) {
+    for (final familie in ['MaterialIcons', 'packages/flutter/MaterialIcons']) {
       final loader = FontLoader(familie)
         ..addFont(Future.value(ByteData.view(bytes.buffer)));
       await loader.load();
@@ -78,33 +74,34 @@ void main() {
     for (final groesse in [k, 28.0]) {
       for (final eintrag in faelle.entries) {
         final key = GlobalKey();
-        await tester.pumpWidget(MaterialApp(
-          home: Center(
-            child: RepaintBoundary(
-              key: key,
-              child: Container(
-                color: const Color(0xFF6750A4),
-                width: groesse,
-                height: groesse,
-                child: CustomPaint(
-                  painter: eintrag.value(const Color(0xFFFFFFFF)),
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Center(
+              child: RepaintBoundary(
+                key: key,
+                child: Container(
+                  color: const Color(0xFF6750A4),
+                  width: groesse,
+                  height: groesse,
+                  child: CustomPaint(
+                    painter: eintrag.value(const Color(0xFFFFFFFF)),
+                  ),
                 ),
               ),
             ),
           ),
-        ));
+        );
         await tester.pumpAndSettle();
 
         await tester.runAsync(() async {
-          final randung = key.currentContext?.findRenderObject()
-              as RenderRepaintBoundary?;
+          final randung =
+              key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
           if (randung == null) return;
           final bild = await randung.toImage();
           final daten = await bild.toByteData(format: ui.ImageByteFormat.png);
           if (daten == null) return;
           final suffix = groesse > 100 ? '' : '_klein';
-          final datei =
-              File('${out.path}/real_${eintrag.key}$suffix.png');
+          final datei = File('${out.path}/real_${eintrag.key}$suffix.png');
           await datei.writeAsBytes(daten.buffer.asUint8List());
           debugPrint('geschrieben: ${datei.path}');
         });

@@ -17,7 +17,8 @@ class SecureLocationStorage {
   SecureLocationStorage._internal();
 
   /// Singleton-Instanz.
-  static final SecureLocationStorage instance = SecureLocationStorage._internal();
+  static final SecureLocationStorage instance =
+      SecureLocationStorage._internal();
 
   // Eigener Namespace (secure_storage_namespaces.dart): verhindert, dass ein
   // Dekrypt-Fehler hier auch Tokens/Profil loescht.
@@ -103,7 +104,9 @@ class SecureLocationStorage {
   /// Aufrufe prüfen diesen Marker und sind dann No-Ops.
   ///
   /// Sollte VOR dem ersten Zugriff auf [read]/[hasLocation] aufgerufen werden.
-  static Future<void> migrateFromSharedPreferences(SharedPreferences prefs) async {
+  static Future<void> migrateFromSharedPreferences(
+    SharedPreferences prefs,
+  ) async {
     final storage = instance;
 
     // Bereits migriert? Dann nichts tun.
@@ -123,7 +126,9 @@ class SecureLocationStorage {
           accuracy: prefs.getString(_legacyKeyAcc) ?? '',
         );
         if (kDebugMode) {
-          debugPrint('[SecureLocationStorage] Klartext-Standort erfolgreig migriert.');
+          debugPrint(
+            '[SecureLocationStorage] Klartext-Standort erfolgreig migriert.',
+          );
         }
       } catch (e) {
         if (kDebugMode) {

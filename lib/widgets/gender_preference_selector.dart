@@ -28,10 +28,13 @@ class GenderPreferenceSelector extends ConsumerWidget {
     if (!SupabaseService.isInitialized) return;
     unawaited(() async {
       try {
-        await SupabaseDatabaseService(SupabaseService.client)
-            .updateOwnProfile({'gender_preferences': values});
+        await SupabaseDatabaseService(
+          SupabaseService.client,
+        ).updateOwnProfile({'gender_preferences': values});
       } catch (e) {
-        debugPrint('[GenderPreferenceSelector] DB-Persistenz fehlgeschlagen: $e');
+        debugPrint(
+          '[GenderPreferenceSelector] DB-Persistenz fehlgeschlagen: $e',
+        );
       }
     }());
   }

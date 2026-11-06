@@ -47,8 +47,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     try {
       final raw = await _storage.getString(AppConstants.prefsSettingsKey);
       if (raw != null) {
-                // Bei korrupten Daten: Defaults beibehalten.
-bestEffortSync('fromJson', () {
+        // Bei korrupten Daten: Defaults beibehalten.
+        bestEffortSync('fromJson', () {
           final map = jsonDecode(raw) as Map<String, dynamic>;
           state = AppSettings.fromJson(map);
         });
@@ -117,8 +117,9 @@ bestEffortSync('fromJson', () {
     if (SupabaseService.isInitialized && isPause != wasPause) {
       unawaited(() async {
         try {
-          await SupabaseDatabaseService(SupabaseService.client)
-              .updateOwnProfile({'paused': isPause});
+          await SupabaseDatabaseService(
+            SupabaseService.client,
+          ).updateOwnProfile({'paused': isPause});
         } catch (e) {
           if (kDebugMode) {
             debugPrint('[Settings] Pause-Sync fehlgeschlagen: $e');
@@ -485,8 +486,9 @@ bestEffortSync('fromJson', () {
   Future<void> _syncThemeNameServer(String name) async {
     try {
       if (!SupabaseService.isInitialized) return;
-      await SupabaseDatabaseService(SupabaseService.client)
-          .updateOwnProfile({'theme_name': name});
+      await SupabaseDatabaseService(
+        SupabaseService.client,
+      ).updateOwnProfile({'theme_name': name});
     } catch (e) {
       if (kDebugMode) {
         debugPrint('[Settings] Theme-Sync fehlgeschlagen: $e');
@@ -540,8 +542,9 @@ bestEffortSync('fromJson', () {
   Future<void> setCustomChatBackground(String? path) async {
     state = state.copyWith(
       chatBackgroundPath: path,
-      chatBackground:
-          path == null ? ChatBackgrounds.none : ChatBackgrounds.custom,
+      chatBackground: path == null
+          ? ChatBackgrounds.none
+          : ChatBackgrounds.custom,
     );
     await _persist();
   }
@@ -662,8 +665,9 @@ bestEffortSync('fromJson', () {
       if (!SupabaseService.isInitialized) return;
       final userId = SupabaseService.currentUser?.id;
       if (userId == null || userId.isEmpty) return;
-      final row = await SupabaseDatabaseService(SupabaseService.client)
-          .fetchOwnSwitches();
+      final row = await SupabaseDatabaseService(
+        SupabaseService.client,
+      ).fetchOwnSwitches();
       await applyServerSwitches(row);
     } catch (e) {
       if (kDebugMode) {
@@ -704,34 +708,33 @@ void scheduleUiPrefsServerSync(AppSettings settings) {
   _uiPrefsSyncTimer = Timer(const Duration(milliseconds: 1500), () {
     unawaited(() async {
       try {
-          await SupabaseDatabaseService(SupabaseService.client)
-              .updateOwnProfile({
-            // DIE ECHTEN SPALTEN (v0.10.0).
-            //
-            // Die Push-Einstellungen standen bisher NUR in ui_prefs.
-            // Die Edge Function notify-user liest aber die fuenf
-            // Einzelspalten (notifications_enabled, notify_matches,
-            // notify_likes, notify_messages, notify_dating_hour) - und
-            // die blieben dauerhaft auf ihrem Default true.
-            //
-            // Folge: die fuenf Schalter in den Einstellungen waren
-            // sichtbar und bedienbar, hatten aber KEINE Wirkung. Wer
-            // Push fuer "Likes" abgeschaltet hat, bekam weiter welche.
-            //
-            // ui_prefs bleibt unberuehrt - dort steht die Spiegelung
-            // fuer den schnellen Zugriff, aber die Serverlogik wertet
-            // die Spalten aus.
-            'notifications_enabled': settings.notificationsEnabled,
-            'notify_matches': settings.notifyMatches,
-            'notify_likes': settings.notifyLikes,
-            'notify_messages': settings.notifyMessages,
-            'notify_dating_hour': settings.notifyDatingHour,
-            'ui_prefs': {
-              'blindModeEnabled': settings.blindModeEnabled,
-              'revealPhotosAfterMatch': settings.revealPhotosAfterMatch,
-              'profileVisibility': settings.profileVisibility.value,
-              'paused': settings.paused,
-              'useDarkMode': settings.useDarkMode,
+        await SupabaseDatabaseService(SupabaseService.client).updateOwnProfile({
+          // DIE ECHTEN SPALTEN (v0.10.0).
+          //
+          // Die Push-Einstellungen standen bisher NUR in ui_prefs.
+          // Die Edge Function notify-user liest aber die fuenf
+          // Einzelspalten (notifications_enabled, notify_matches,
+          // notify_likes, notify_messages, notify_dating_hour) - und
+          // die blieben dauerhaft auf ihrem Default true.
+          //
+          // Folge: die fuenf Schalter in den Einstellungen waren
+          // sichtbar und bedienbar, hatten aber KEINE Wirkung. Wer
+          // Push fuer "Likes" abgeschaltet hat, bekam weiter welche.
+          //
+          // ui_prefs bleibt unberuehrt - dort steht die Spiegelung
+          // fuer den schnellen Zugriff, aber die Serverlogik wertet
+          // die Spalten aus.
+          'notifications_enabled': settings.notificationsEnabled,
+          'notify_matches': settings.notifyMatches,
+          'notify_likes': settings.notifyLikes,
+          'notify_messages': settings.notifyMessages,
+          'notify_dating_hour': settings.notifyDatingHour,
+          'ui_prefs': {
+            'blindModeEnabled': settings.blindModeEnabled,
+            'revealPhotosAfterMatch': settings.revealPhotosAfterMatch,
+            'profileVisibility': settings.profileVisibility.value,
+            'paused': settings.paused,
+            'useDarkMode': settings.useDarkMode,
             'notificationsEnabled': settings.notificationsEnabled,
             'notifyMatches': settings.notifyMatches,
             'notifyLikes': settings.notifyLikes,
@@ -756,8 +759,9 @@ void scheduleUiPrefsServerSync(AppSettings settings) {
 }
 
 /// Provider für die App-Einstellungen.
-final settingsProvider =
-    StateNotifierProvider<SettingsNotifier, AppSettings>((ref) {
+final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>((
+  ref,
+) {
   final storage = ref.watch(localStorageProvider);
   return SettingsNotifier(storage, ref);
 });

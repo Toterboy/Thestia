@@ -16,7 +16,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:thestia/app.dart';
 import 'package:thestia/routing/route_restore.dart' show setPendingRouteRestore;
-import 'package:thestia/providers/user_preferences_provider.dart' show sharedPrefsProvider;
+import 'package:thestia/providers/user_preferences_provider.dart'
+    show sharedPrefsProvider;
 import 'package:thestia/screens/core/loading_screen.dart';
 import 'package:thestia/screens/core/update_required_screen.dart';
 import 'package:thestia/services/app_config_service.dart';
@@ -68,16 +69,10 @@ String _supabaseSessionKey() {
   const raw = String.fromEnvironment('SUPABASE_URL');
   if (raw.isNotEmpty) {
     // Unparsbare URL -> Fallback unten.
-    final token = bestEffortOrSync(
-      'Uri.parse',
-      () {
-        final host = Uri.parse(raw).host;
-        return host.isNotEmpty
-            ? 'sb-${host.split('.').first}-auth-token'
-            : '';
-      },
-      '',
-    );
+    final token = bestEffortOrSync('Uri.parse', () {
+      final host = Uri.parse(raw).host;
+      return host.isNotEmpty ? 'sb-${host.split('.').first}-auth-token' : '';
+    }, '');
     if (token.isNotEmpty) return token;
   }
   return 'sb-auth-token';
@@ -160,8 +155,7 @@ Future<void> main() async {
     FlutterError.dumpErrorToConsole(details);
     // Crash-Journal (v0.8.0): letzten Absturz lokal speichern. Beim
     // nächsten Start fragt die App, ob ein Report gesendet werden soll.
-    unawaited(
-        CrashJournal.capture(details.exception, details.stack));
+    unawaited(CrashJournal.capture(details.exception, details.stack));
     if (kDebugMode) {
       // StackTraces/Exceptions nicht in Release-Builds loggen (M11).
       debugPrint('[GLOBAL_ERROR] ${details.exception}\n${details.stack}');
@@ -186,20 +180,22 @@ Future<void> main() async {
                   Text(
                     L10n.t(context, 'common.errorOccurred'),
                     style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
-                const SizedBox(height: 8),
-                Text(
-                  details.exception.toString(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Text(
+                    details.exception.toString(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
     );
   };
 
@@ -212,9 +208,7 @@ Future<void> main() async {
 
   // Supabase-User-ID-Getter registrieren, damit AppConstants.currentUserId
   // die echte User-ID liefert, sobald eine Session aktiv ist.
-  AppConstants.registerUserIdGetter(
-    () => SupabaseService.currentUser?.id,
-  );
+  AppConstants.registerUserIdGetter(() => SupabaseService.currentUser?.id);
 
   // Bootstrap-UI anzeigen (Logo + drehender Kreis): Der EINZIGE runApp-
   // Aufruf. Die Initialisierung (Env, Supabase, Prefs) läuft DANACH im
@@ -290,9 +284,9 @@ Future<_BootstrapInit?> _initializeApp() async {
     // Preferences können auf manchen Geräten träge sein") - es war nur
     // nie abgesichert.
     unawaited(
-      SecureLocationStorage.migrateFromSharedPreferences(prefs)
-          .timeout(const Duration(seconds: 8))
-          .catchError((Object e) {
+      SecureLocationStorage.migrateFromSharedPreferences(
+        prefs,
+      ).timeout(const Duration(seconds: 8)).catchError((Object e) {
         debugPrint('[MAIN] Standort-Migration uebersprungen: $e');
       }),
     );
@@ -380,13 +374,15 @@ Future<void> _initializeFirebase() async {
   }
 
   try {
-    await FirebaseMessaging.instance
-        .requestPermission()
-        .timeout(const Duration(seconds: 5));
+    await FirebaseMessaging.instance.requestPermission().timeout(
+      const Duration(seconds: 5),
+    );
     FirebaseMessaging.onMessage.listen((message) {
       // N-17: Kein Benachrichtigungsinhalt in Release-Logs.
       if (kDebugMode) {
-        debugPrint('[MAIN] FCM-Message erhalten: ${message.notification?.title}');
+        debugPrint(
+          '[MAIN] FCM-Message erhalten: ${message.notification?.title}',
+        );
       }
     });
     FirebaseMessaging.instance.onTokenRefresh.listen((token) {
@@ -397,11 +393,14 @@ Future<void> _initializeFirebase() async {
       unawaited(() async {
         try {
           if (!SupabaseService.isInitialized) return;
-          await SupabaseDatabaseService(SupabaseService.client)
-              .updateOwnProfile({'fcm_token': token});
+          await SupabaseDatabaseService(
+            SupabaseService.client,
+          ).updateOwnProfile({'fcm_token': token});
         } catch (e) {
           if (kDebugMode) {
-            debugPrint('[MAIN] FCM-Token-Refresh persistieren fehlgeschlagen: $e');
+            debugPrint(
+              '[MAIN] FCM-Token-Refresh persistieren fehlgeschlagen: $e',
+            );
           }
         }
       }());
@@ -414,7 +413,7 @@ Future<void> _initializeFirebase() async {
 /// Initialisiert Supabase mit Timeout.
 ///
 /// Ohne Timeout kann ein langsames/unerreichbares Netzwerk den App-Start
-      /// unbegrenzt blockieren ("Thestia isn't responding"). Bei Timeout oder Fehler
+/// unbegrenzt blockieren ("Thestia isn't responding"). Bei Timeout oder Fehler
 /// startet die App im Limit-Modus weiter
 /// ([SupabaseService.isInitialized] == false).
 Future<void> _initializeSupabase() async {
@@ -448,8 +447,8 @@ Future<void> _initializeSupabase() async {
     return v.isNotEmpty
         ? v.trim()
         : (dotenv.isInitialized
-            ? (dotenv.env['SUPABASE_URL'] ?? '').trim()
-            : '');
+              ? (dotenv.env['SUPABASE_URL'] ?? '').trim()
+              : '');
   }();
 
   final supabaseAnonKey = () {
@@ -457,10 +456,9 @@ Future<void> _initializeSupabase() async {
     return v.isNotEmpty
         ? v.trim()
         : (dotenv.isInitialized
-            ? (dotenv.env['SUPABASE_PUBLISHABLE_KEY'] ?? '').trim()
-            : '');
+              ? (dotenv.env['SUPABASE_PUBLISHABLE_KEY'] ?? '').trim()
+              : '');
   }();
-
 
   if (supabaseUrl.isEmpty ||
       supabaseUrl.contains('example.com') ||
@@ -469,8 +467,10 @@ Future<void> _initializeSupabase() async {
   }
 
   // Host fuer das strikte Pinning aus der URL ableiten (ohne Schema/Port).
-  final supabaseHost =
-      supabaseUrl.replaceFirst(RegExp(r'^https?://'), '').split('/').first;
+  final supabaseHost = supabaseUrl
+      .replaceFirst(RegExp(r'^https?://'), '')
+      .split('/')
+      .first;
 
   try {
     await Supabase.initialize(
@@ -566,7 +566,9 @@ Future<void> _initializeServices() async {
     hiveOk = true;
   } catch (e) {
     debugPrint('[MAIN] KRITISCH: Hive.initFlutter fehlgeschlagen: $e');
-    debugPrint('[MAIN] Verschlüsselung, Reports und DatingHour sind nicht verfügbar.');
+    debugPrint(
+      '[MAIN] Verschlüsselung, Reports und DatingHour sind nicht verfügbar.',
+    );
   }
   if (!hiveOk) {
     // Hive-abhängige Services deaktivieren/nicht initialisieren.
@@ -679,10 +681,7 @@ class _BootstrapAppState extends State<_BootstrapApp> {
             theme: AppTheme.of(ThestiaTheme.classic, Brightness.light),
             darkTheme: AppTheme.of(ThestiaTheme.classic, Brightness.dark),
             home: previous != null
-                ? StartupFailureScreen(
-                    failure: previous,
-                    onDismiss: _retry,
-                  )
+                ? StartupFailureScreen(failure: previous, onDismiss: _retry)
                 : _StartupErrorScreen(onRetry: _retry),
           );
         }
@@ -742,7 +741,9 @@ class _StartupErrorScreen extends StatelessWidget {
                 L10n.t(context, 'startup.failedTitle'),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 16),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
@@ -752,8 +753,9 @@ class _StartupErrorScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               FilledButton(
-                  onPressed: onRetry,
-                  child: Text(L10n.t(context, 'admin.retry'))),
+                onPressed: onRetry,
+                child: Text(L10n.t(context, 'admin.retry')),
+              ),
             ],
           ),
         ),

@@ -82,24 +82,24 @@ Future<ProviderContainer> _pumpEditor(WidgetTester tester) async {
     (call) async => null,
   );
 
-  final container = ProviderContainer(overrides: [
-    localStorageProvider.overrideWithValue(_FakeLocalStorage()),
-    securePrefsProvider.overrideWithValue(_FakeSecurePrefs()),
-    secureProfileStoreProvider.overrideWithValue(_FakeSecureProfileStore()),
-    sharedPrefsProvider.overrideWithValue(prefs),
-    profileProvider.overrideWith((ref) {
-      final notifier = ProfileNotifier(
-        _FakeLocalStorage(),
-        _FakeSecureProfileStore(),
-      );
-      notifier.setProfile(const UserProfile(
-        id: 'test-user',
-        name: 'Lena',
-        bio: 'Hallo',
-      ));
-      return notifier;
-    }),
-  ]);
+  final container = ProviderContainer(
+    overrides: [
+      localStorageProvider.overrideWithValue(_FakeLocalStorage()),
+      securePrefsProvider.overrideWithValue(_FakeSecurePrefs()),
+      secureProfileStoreProvider.overrideWithValue(_FakeSecureProfileStore()),
+      sharedPrefsProvider.overrideWithValue(prefs),
+      profileProvider.overrideWith((ref) {
+        final notifier = ProfileNotifier(
+          _FakeLocalStorage(),
+          _FakeSecureProfileStore(),
+        );
+        notifier.setProfile(
+          const UserProfile(id: 'test-user', name: 'Lena', bio: 'Hallo'),
+        );
+        return notifier;
+      }),
+    ],
+  );
   addTearDown(container.dispose);
 
   await tester.pumpWidget(
@@ -113,8 +113,9 @@ Future<ProviderContainer> _pumpEditor(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('Text-Änderung setzt Dirty-Flag und blockiert Zurück',
-      (tester) async {
+  testWidgets('Text-Änderung setzt Dirty-Flag und blockiert Zurück', (
+    tester,
+  ) async {
     final container = await _pumpEditor(tester);
 
     // Ohne Änderung: nicht dirty, Pop erlaubt.
@@ -123,34 +124,50 @@ void main() {
     // PopScope<Object>, der Type-Literal vergleicht aber PopScope<dynamic>.
     final popScopeFinder = find.byWidgetPredicate((w) => w is PopScope);
     final popScope = tester.widget<PopScope>(popScopeFinder);
-    expect(popScope.canPop, isTrue,
-        reason: 'Ohne Änderungen muss die Zurück-Geste ohne Nachfrage '
-            'durchgelassen werden.');
+    expect(
+      popScope.canPop,
+      isTrue,
+      reason:
+          'Ohne Änderungen muss die Zurück-Geste ohne Nachfrage '
+          'durchgelassen werden.',
+    );
 
     // Name ändern (das erste TextFormular im Formular ist das Name-Feld).
     final nameField = find.byType(TextFormField).first;
     await tester.enterText(nameField, 'Lena Bearbeitet');
     await tester.pumpAndSettle();
 
-    expect(container.read(profileEditDirtyProvider), isTrue,
-        reason: 'Nach einer Text-Änderung muss der Dirty-Flag true sein - '
-            'sonst erscheint weder beim Tab-Wechsel noch beim Zurückgehen '
-            'die Speichern-Nachfrage.');
-    final popScopeAfter =
-        tester.widget<PopScope>(find.byWidgetPredicate((w) => w is PopScope));
-    expect(popScopeAfter.canPop, isFalse,
-        reason: 'Mit Änderungen muss PopScope die Zurück-Geste blockieren.');
+    expect(
+      container.read(profileEditDirtyProvider),
+      isTrue,
+      reason:
+          'Nach einer Text-Änderung muss der Dirty-Flag true sein - '
+          'sonst erscheint weder beim Tab-Wechsel noch beim Zurückgehen '
+          'die Speichern-Nachfrage.',
+    );
+    final popScopeAfter = tester.widget<PopScope>(
+      find.byWidgetPredicate((w) => w is PopScope),
+    );
+    expect(
+      popScopeAfter.canPop,
+      isFalse,
+      reason: 'Mit Änderungen muss PopScope die Zurück-Geste blockieren.',
+    );
   });
 
-  testWidgets('Slider-Änderung (Altersspanne) setzt Dirty-Flag',
-      (tester) async {
+  testWidgets('Slider-Änderung (Altersspanne) setzt Dirty-Flag', (
+    tester,
+  ) async {
     final container = await _pumpEditor(tester);
 
     // Zum Altersspannen-Bereich scrollen (Form ist lang) und den
     // Mindestalter-Slider antippen (Mitte des Tracks = neuer Wert).
     final minLabel = find.text('Mindestalter: 18 Jahre');
-    await tester.scrollUntilVisible(minLabel, 300,
-        scrollable: find.byType(Scrollable).first);
+    await tester.scrollUntilVisible(
+      minLabel,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pumpAndSettle();
 
     final sliders = find.byType(Slider);
@@ -163,8 +180,12 @@ void main() {
     // Testende kein Timer mehr pendet.
     await tester.pump(const Duration(seconds: 2));
 
-    expect(container.read(profileEditDirtyProvider), isTrue,
-        reason: 'Regler-Änderungen müssen ebenfalls als "ungespeichert" '
-            'gelten (Nachfrage beim Verlassen).');
+    expect(
+      container.read(profileEditDirtyProvider),
+      isTrue,
+      reason:
+          'Regler-Änderungen müssen ebenfalls als "ungespeichert" '
+          'gelten (Nachfrage beim Verlassen).',
+    );
   });
 }

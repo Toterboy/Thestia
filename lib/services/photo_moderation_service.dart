@@ -41,7 +41,9 @@ class PhotoModerationService {
       await _supabase.from('photo_moderation').insert({
         'user_id': userId,
         'photo_hash': hash,
-        'status': result.isSafe ? 'approved' : (result.needsReview ? 'pending_review' : 'rejected'),
+        'status': result.isSafe
+            ? 'approved'
+            : (result.needsReview ? 'pending_review' : 'rejected'),
         'hf_categories': jsonEncode(result.categories),
         'hf_label': result.label,
       });
@@ -75,7 +77,8 @@ class PhotoModerationService {
 
     return const ModerationResult(
       approved: false,
-      reason: 'Unangemessener Inhalt erkannt. Bei wiederholten Verstößen wird dein Konto gesperrt.',
+      reason:
+          'Unangemessener Inhalt erkannt. Bei wiederholten Verstößen wird dein Konto gesperrt.',
       type: PhotoModerationType.nudityContent,
     );
   }
@@ -134,8 +137,7 @@ class PhotoModerationService {
           .order('created_at', ascending: false)
           .limit(50);
 
-      return (response as List<dynamic>? ?? [])
-          .cast<Map<String, dynamic>>();
+      return (response as List<dynamic>? ?? []).cast<Map<String, dynamic>>();
     } catch (e) {
       debugPrint('[PhotoModeration] Admin-Fetch fehlgeschlagen: $e');
       return [];

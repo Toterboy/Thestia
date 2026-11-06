@@ -102,14 +102,16 @@ class QuizService {
   /// Liefert das Partner-Profil. Bei unlock < 2 eingeschränkt (keine
   /// sensiblen Detailfelder), ab unlock 2 vollständig.
   Future<({UserProfile profile, bool unlocked, int unlockLevel})?>
-      fetchPartnerProfile(int matchId) async {
+  fetchPartnerProfile(int matchId) async {
     final data = await getPartnerProfile(matchId);
     if (data == null) return null;
     final unlocked = data['unlocked'] as bool? ?? false;
     final level = (data['unlockLevel'] as num?)?.toInt() ?? 0;
     final raw = Map<String, dynamic>.from(data['profile'] as Map? ?? {});
 
-    final profile = unlocked ? _fullProfileFromRow(raw) : UserProfile.fromPublicView(raw);
+    final profile = unlocked
+        ? _fullProfileFromRow(raw)
+        : UserProfile.fromPublicView(raw);
     return (profile: profile, unlocked: unlocked, unlockLevel: level);
   }
 

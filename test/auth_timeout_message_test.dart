@@ -17,9 +17,10 @@ void main() {
   // Die Quelle wird statisch gelesen, nicht ueber ein Widget: der
   // Timeout-Zweig liegt in einer privaten Methode mit BuildContext, und
   // ein Widget-Test wuerde Supabase initialisieren muessen.
-  final loginSrc = File('lib/screens/auth/login_screen.dart').readAsStringSync();
-  final stringsSrc =
-      File('lib/l10n/app_strings.dart').readAsStringSync();
+  final loginSrc = File(
+    'lib/screens/auth/login_screen.dart',
+  ).readAsStringSync();
+  final stringsSrc = File('lib/l10n/app_strings.dart').readAsStringSync();
 
   group('Timeout-Zweig im catch', () {
     test('der catch behandelt TimeoutException ausdruecklich', () {
@@ -31,8 +32,7 @@ void main() {
       expect(loginSrc.contains("'error.serverUnreachable'"), isTrue);
     });
 
-    test('der Zweig steht VOR dem generischen else im selben catch',
-        () {
+    test('der Zweig steht VOR dem generischen else im selben catch', () {
       // Ein Timeout-Zweig nach dem generischen else waere toter Code.
       //
       // Nur der catch-Block zaehlt: `error.generic` kommt weiter oben
@@ -50,7 +50,8 @@ void main() {
       expect(
         timeoutAt,
         lessThan(genericAt),
-        reason: 'der Timeout-Zweig muss vor dem generischen else stehen, '
+        reason:
+            'der Timeout-Zweig muss vor dem generischen else stehen, '
             'sonst ist er toter Code',
       );
     });
@@ -93,7 +94,8 @@ void main() {
       expect(
         loginSrc.contains('Duration(seconds: 20)'),
         isTrue,
-        reason: 'Die Abnahme fordert "Fehler in 20 s". 8 oder 60 wären '
+        reason:
+            'Die Abnahme fordert "Fehler in 20 s". 8 oder 60 wären '
             'beides Rückschritte bzw. Umstellungen ohne sichtbaren Grund.',
       );
     });
@@ -101,17 +103,14 @@ void main() {
     test('gilt für Registrierung UND Login', () {
       // Genau zwei .timeout(_authTimeout): einmal je Pfad. Ein drittes
       // oder nur eines wäre eine der beiden halb abgesichert.
-      final count = RegExp(r'\.timeout\(_authTimeout\)')
-          .allMatches(loginSrc)
-          .length;
+      final count = RegExp(
+        r'\.timeout\(_authTimeout\)',
+      ).allMatches(loginSrc).length;
       expect(count, 2, reason: 'Beide Pfade brauchen dieselbe Grenze');
     });
 
     test('der Timeout ist als Konstante benannt, nicht inline', () {
-      expect(
-        loginSrc.contains('static const Duration _authTimeout'),
-        isTrue,
-      );
+      expect(loginSrc.contains('static const Duration _authTimeout'), isTrue);
     });
   });
 }

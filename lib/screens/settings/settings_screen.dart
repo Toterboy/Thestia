@@ -1,4 +1,4 @@
-﻿// Passkeys sind ein Supabase-Beta-Feature (@experimental) - die Nutzung
+// Passkeys sind ein Supabase-Beta-Feature (@experimental) - die Nutzung
 // ist bewusst; die Hinweise werden auf Dateiebene ignoriert.
 // ignore_for_file: experimental_member_use
 
@@ -6,8 +6,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'
-    show Clipboard, ClipboardData;
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -19,7 +18,8 @@ import 'package:thestia/providers/chat_provider.dart';
 import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/providers/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/screens/privacy/privacy_screen.dart' show promptTotpCode;
+import 'package:thestia/screens/privacy/privacy_screen.dart'
+    show promptTotpCode;
 import 'package:thestia/services/auth_exception.dart';
 import 'package:thestia/services/encryption_service.dart';
 import 'package:thestia/services/local_storage.dart';
@@ -102,7 +102,9 @@ class SettingsScreen extends ConsumerWidget {
     final userAge = profile.age;
     if (kDebugMode) {
       // Geburtsdatum ist PII – nur im Debug-Modus loggen (Audit H4).
-      debugPrint('[SETTINGS] profile.age=${profile.age}, birthDate=${profile.birthDate}, userAge=$userAge');
+      debugPrint(
+        '[SETTINGS] profile.age=${profile.age}, birthDate=${profile.birthDate}, userAge=$userAge',
+      );
     }
     // Falls kein Alter bekannt (kein birthDate), Mindestalter 16 als Fallback für UI
     final effectiveAge = userAge ?? 16;
@@ -113,11 +115,14 @@ class SettingsScreen extends ConsumerWidget {
       filterMax: settings.ageRangeMax,
     );
     if (kDebugMode) {
-      debugPrint('[SETTINGS] ageGroup=$ageGroup, allowedAgeMin=$allowedAgeMin, allowedAgeMax=$allowedAgeMax');
+      debugPrint(
+        '[SETTINGS] ageGroup=$ageGroup, allowedAgeMin=$allowedAgeMin, allowedAgeMax=$allowedAgeMax',
+      );
     }
 
     // Falls die aktuellen Werte außerhalb des erlaubten Bereichs liegen, korrigieren
-    if (settings.ageRangeMin != allowedAgeMin || settings.ageRangeMax != allowedAgeMax) {
+    if (settings.ageRangeMin != allowedAgeMin ||
+        settings.ageRangeMax != allowedAgeMax) {
       // Async-Korrektur (nicht im build)
       WidgetsBinding.instance.addPostFrameCallback((_) {
         notifier.setAgeRange(allowedAgeMin, allowedAgeMax);
@@ -174,8 +179,9 @@ class SettingsScreen extends ConsumerWidget {
                   ListTile(
                     leading: const Icon(Icons.gavel),
                     title: Text(L10n.t(context, 'settings.communityRules')),
-                    subtitle:
-                        Text(L10n.t(context, 'settings.communityRulesSub')),
+                    subtitle: Text(
+                      L10n.t(context, 'settings.communityRulesSub'),
+                    ),
                     trailing: const Icon(Icons.chevron_right),
                     contentPadding: EdgeInsets.zero,
                     onTap: () => context.push(AppRoutes.communityGuidelines),
@@ -205,10 +211,11 @@ class SettingsScreen extends ConsumerWidget {
                         // dem Einrichten fälschlich "nicht aktiv" und der
                         // Passkey-Precheck unten greift nicht.
                         if (SupabaseService.isInitialized) {
-                                                    // Best-Effort: alter Stand bleibt.
-await bestEffort('MfaService.loadStatus', () async {
-                            final fresh = await MfaService(SupabaseService.client)
-                                .loadStatus();
+                          // Best-Effort: alter Stand bleibt.
+                          await bestEffort('MfaService.loadStatus', () async {
+                            final fresh = await MfaService(
+                              SupabaseService.client,
+                            ).loadStatus();
                             ref.read(mfaStatusProvider.notifier).state = fresh;
                           });
                         }
@@ -238,8 +245,7 @@ await bestEffort('MfaService.loadStatus', () async {
                   SwitchListTile.adaptive(
                     contentPadding: EdgeInsets.zero,
                     title: Text(L10n.t(context, 'settings.pushEnable')),
-                    subtitle:
-                        Text(L10n.t(context, 'settings.pushEnableSub')),
+                    subtitle: Text(L10n.t(context, 'settings.pushEnableSub')),
                     value: settings.notificationsEnabled,
                     onChanged: (v) {
                       notifier.setNotificationsEnabled(v);
@@ -250,8 +256,7 @@ await bestEffort('MfaService.loadStatus', () async {
                   SwitchListTile.adaptive(
                     contentPadding: EdgeInsets.zero,
                     title: Text(L10n.t(context, 'settings.notifyFunken')),
-                    subtitle:
-                        Text(L10n.t(context, 'settings.notifyFunkenSub')),
+                    subtitle: Text(L10n.t(context, 'settings.notifyFunkenSub')),
                     value: settings.notifyMatches,
                     onChanged: settings.notificationsEnabled
                         ? (v) {
@@ -263,8 +268,7 @@ await bestEffort('MfaService.loadStatus', () async {
                   SwitchListTile.adaptive(
                     contentPadding: EdgeInsets.zero,
                     title: Text(L10n.t(context, 'settings.notifyLikes')),
-                    subtitle:
-                        Text(L10n.t(context, 'settings.notifyLikesSub')),
+                    subtitle: Text(L10n.t(context, 'settings.notifyLikesSub')),
                     value: settings.notifyLikes,
                     onChanged: settings.notificationsEnabled
                         ? (v) {
@@ -276,8 +280,9 @@ await bestEffort('MfaService.loadStatus', () async {
                   SwitchListTile.adaptive(
                     contentPadding: EdgeInsets.zero,
                     title: Text(L10n.t(context, 'settings.notifyMessages')),
-                    subtitle:
-                        Text(L10n.t(context, 'settings.notifyMessagesSub')),
+                    subtitle: Text(
+                      L10n.t(context, 'settings.notifyMessagesSub'),
+                    ),
                     value: settings.notifyMessages,
                     onChanged: settings.notificationsEnabled
                         ? (v) {
@@ -288,10 +293,10 @@ await bestEffort('MfaService.loadStatus', () async {
                   ),
                   SwitchListTile.adaptive(
                     contentPadding: EdgeInsets.zero,
-                    title:
-                        Text(L10n.t(context, 'settings.notifyDatingHour')),
+                    title: Text(L10n.t(context, 'settings.notifyDatingHour')),
                     subtitle: Text(
-                        L10n.t(context, 'settings.notifyDatingHourSub')),
+                      L10n.t(context, 'settings.notifyDatingHourSub'),
+                    ),
                     value: settings.notifyDatingHour,
                     onChanged: settings.notificationsEnabled
                         ? (v) {
@@ -340,8 +345,10 @@ await bestEffort('MfaService.loadStatus', () async {
                     },
                   ),
                   const SizedBox(height: 12),
-                  Text(L10n.t(context, 'settings.colors'),
-                      style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    L10n.t(context, 'settings.colors'),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   const SizedBox(height: 8),
                   ThemePicker(
                     selectedName: settings.themeName,
@@ -355,15 +362,17 @@ await bestEffort('MfaService.loadStatus', () async {
                   const SizedBox(height: 16),
                   const LanguageSwitch(),
                   const SizedBox(height: 12),
-                  Text(L10n.t(context, 'settings.chatBg'),
-                      style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    L10n.t(context, 'settings.chatBg'),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   const SizedBox(height: 4),
-                  Text(L10n.t(context, 'settings.chatBgSub'),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurfaceVariant,
-                          )),
+                  Text(
+                    L10n.t(context, 'settings.chatBgSub'),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   const ChatBackgroundPicker(),
                 ],
@@ -401,21 +410,22 @@ await bestEffort('MfaService.loadStatus', () async {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(L10n.t(context, 'settings.keyBackup'),
-                      style: Theme.of(context).textTheme.titleMedium),
+                  Text(
+                    L10n.t(context, 'settings.keyBackup'),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     L10n.t(context, 'settings.keyBackupSub'),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   ListTile(
                     leading: const Icon(Icons.download_outlined),
                     title: Text(L10n.t(context, 'settings.backupCreate')),
-                    subtitle:
-                        Text(L10n.t(context, 'settings.backupCreateSub')),
+                    subtitle: Text(L10n.t(context, 'settings.backupCreateSub')),
                     contentPadding: EdgeInsets.zero,
                     onTap: SupabaseService.isInitialized
                         ? () => _createIdentityBackup(context, ref)
@@ -424,8 +434,9 @@ await bestEffort('MfaService.loadStatus', () async {
                   ListTile(
                     leading: const Icon(Icons.restore),
                     title: Text(L10n.t(context, 'settings.backupRestore')),
-                    subtitle:
-                        Text(L10n.t(context, 'settings.backupRestoreSub')),
+                    subtitle: Text(
+                      L10n.t(context, 'settings.backupRestoreSub'),
+                    ),
                     contentPadding: EdgeInsets.zero,
                     onTap: SupabaseService.isInitialized
                         ? () => _restoreIdentityBackup(context, ref)
@@ -446,8 +457,7 @@ await bestEffort('MfaService.loadStatus', () async {
                   ListTile(
                     leading: const Icon(Icons.health_and_safety_outlined),
                     title: Text(L10n.t(context, 'settings.safetyCenter')),
-                    subtitle:
-                        Text(L10n.t(context, 'settings.safetyCenterSub')),
+                    subtitle: Text(L10n.t(context, 'settings.safetyCenterSub')),
                     trailing: const Icon(Icons.chevron_right),
                     contentPadding: EdgeInsets.zero,
                     onTap: () => context.push(AppRoutes.safetyCenter),
@@ -463,8 +473,7 @@ await bestEffort('MfaService.loadStatus', () async {
                   ListTile(
                     leading: const Icon(Icons.cleaning_services_outlined),
                     title: Text(L10n.t(context, 'settings.deleteData')),
-                    subtitle:
-                        Text(L10n.t(context, 'settings.deleteDataSub')),
+                    subtitle: Text(L10n.t(context, 'settings.deleteDataSub')),
                     trailing: const Icon(Icons.chevron_right),
                     contentPadding: EdgeInsets.zero,
                     onTap: () => context.push(AppRoutes.deleteData),
@@ -473,7 +482,8 @@ await bestEffort('MfaService.loadStatus', () async {
                     leading: const Icon(Icons.privacy_tip),
                     title: Text(L10n.t(context, 'settings.privacyAccount')),
                     subtitle: Text(
-                        L10n.t(context, 'settings.privacyAccountSub')),
+                      L10n.t(context, 'settings.privacyAccountSub'),
+                    ),
                     trailing: const Icon(Icons.chevron_right),
                     contentPadding: EdgeInsets.zero,
                     onTap: () => context.push(AppRoutes.privacy),
@@ -526,15 +536,13 @@ class _SectionTitle extends StatelessWidget {
       child: Text(
         text,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
 }
-
-
 
 // ===========================================================================
 // E2E-Identität: verschlüsseltes Key-Backup (Migration Roadmap 0.6)
@@ -543,10 +551,7 @@ class _SectionTitle extends StatelessWidget {
 /// Erstellt ein passwortverschlüsseltes Backup der Signal-Identität und
 /// zeigt es zum Kopieren an. Der Nutzer bewahrt den Code selbst auf
 /// (Passwortmanager/Papier) - kein Cloud-Zwang.
-Future<void> _createIdentityBackup(
-  BuildContext context,
-  WidgetRef ref,
-) async {
+Future<void> _createIdentityBackup(BuildContext context, WidgetRef ref) async {
   final pwCtrl = TextEditingController();
   final pw2Ctrl = TextEditingController();
   final formKey = GlobalKey<FormState>();
@@ -576,7 +581,8 @@ Future<void> _createIdentityBackup(
               controller: pw2Ctrl,
               obscureText: true,
               decoration: InputDecoration(
-                  labelText: L10n.t(ctx, 'settings.backupPwRepeat')),
+                labelText: L10n.t(ctx, 'settings.backupPwRepeat'),
+              ),
               validator: (v) => v == pwCtrl.text
                   ? null
                   : L10n.t(ctx, 'settings.backupPwMismatch'),
@@ -605,8 +611,7 @@ Future<void> _createIdentityBackup(
   if (!context.mounted) return;
   if (blob == null) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text(L10n.t(context, 'settings.backupCreateFailed'))),
+      SnackBar(content: Text(L10n.t(context, 'settings.backupCreateFailed'))),
     );
     return;
   }
@@ -621,8 +626,10 @@ Future<void> _createIdentityBackup(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SelectableText(blob,
-                  style: const TextStyle(fontSize: 11, fontFamily: 'monospace')),
+              SelectableText(
+                blob,
+                style: const TextStyle(fontSize: 11, fontFamily: 'monospace'),
+              ),
               const SizedBox(height: 12),
               Text(
                 L10n.t(context, 'settings.backupKeepSafe'),
@@ -637,8 +644,7 @@ Future<void> _createIdentityBackup(
           onPressed: () {
             Clipboard.setData(ClipboardData(text: blob));
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text(L10n.t(context, 'settings.backupCopied'))),
+              SnackBar(content: Text(L10n.t(context, 'settings.backupCopied'))),
             );
           },
           icon: const Icon(Icons.copy),
@@ -656,17 +662,12 @@ Future<void> _createIdentityBackup(
 /// Stellt die E2E-Identität aus einem Backup-Code wieder her und
 /// veröffentlicht anschließend frische PreKeys auf dem Server, damit
 /// Partner wieder verschlüsselte Sessions aufbauen können.
-Future<void> _restoreIdentityBackup(
-  BuildContext context,
-  WidgetRef ref,
-) async {
+Future<void> _restoreIdentityBackup(BuildContext context, WidgetRef ref) async {
   final proceed = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
       title: Text(L10n.t(context, 'settings.restoreConfirmTitle')),
-      content: Text(
-        L10n.t(context, 'settings.restoreOverwrite'),
-      ),
+      content: Text(L10n.t(context, 'settings.restoreOverwrite')),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(false),
@@ -701,8 +702,9 @@ Future<void> _restoreIdentityBackup(
           TextField(
             controller: pwCtrl,
             obscureText: true,
-            decoration:
-                InputDecoration(labelText: L10n.t(ctx, 'settings.restorePw')),
+            decoration: InputDecoration(
+              labelText: L10n.t(ctx, 'settings.restorePw'),
+            ),
           ),
         ],
       ),
@@ -729,15 +731,12 @@ Future<void> _restoreIdentityBackup(
     await ref.read(preKeyServiceProvider).publishOwnPreKeysFromStore();
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text(L10n.t(context, 'settings.restored'))),
+      SnackBar(content: Text(L10n.t(context, 'settings.restored'))),
     );
   } catch (_) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(L10n.t(context, 'settings.restoreFailed')),
-      ),
+      SnackBar(content: Text(L10n.t(context, 'settings.restoreFailed'))),
     );
   }
 }
@@ -750,8 +749,8 @@ Future<void> _restoreIdentityBackup(
 Future<bool> _ensurePasskeyAal2(BuildContext context, WidgetRef ref) async {
   var mfa = ref.read(mfaStatusProvider);
   if (!SupabaseService.isInitialized) return true;
-    // Fail-closed: Mit dem alten Stand weiter.
-await bestEffort('MfaService.loadStatus', () async {
+  // Fail-closed: Mit dem alten Stand weiter.
+  await bestEffort('MfaService.loadStatus', () async {
     mfa = await MfaService(SupabaseService.client).loadStatus();
     ref.read(mfaStatusProvider.notifier).state = mfa;
   });
@@ -805,14 +804,17 @@ class _PasskeyTileState extends ConsumerState<_PasskeyTile> {
         final proceed = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            icon: Icon(Icons.fingerprint,
-                color: Theme.of(ctx).colorScheme.primary, size: 36),
+            icon: Icon(
+              Icons.fingerprint,
+              color: Theme.of(ctx).colorScheme.primary,
+              size: 36,
+            ),
             title: Text(L10n.t(ctx, 'settings.passkeyExistsTitle')),
-            content: Text(L10n.tf(
-              ctx,
-              'settings.passkeyExistsBody',
-              {'count': '$existing'},
-            )),
+            content: Text(
+              L10n.tf(ctx, 'settings.passkeyExistsBody', {
+                'count': '$existing',
+              }),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(false),
@@ -874,10 +876,7 @@ class _PasskeyTileState extends ConsumerState<_PasskeyTile> {
           PasskeyAuth.explainForUi(e, login: false),
         );
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(msg),
-            behavior: SnackBarBehavior.floating,
-          ),
+          SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
         );
       }
     } finally {
@@ -947,9 +946,8 @@ class _PasskeyManagerCardState extends ConsumerState<_PasskeyManagerCard> {
     } catch (e) {
       if (!mounted) return;
       final text = e.toString().toLowerCase();
-      final aal2Needed = text.contains('aal2') ||
-          text.contains('mfa') ||
-          text.contains('403');
+      final aal2Needed =
+          text.contains('aal2') || text.contains('mfa') || text.contains('403');
       setState(() {
         _passkeys = null;
         _needsStepUp = aal2Needed;
@@ -1005,14 +1003,17 @@ class _PasskeyManagerCardState extends ConsumerState<_PasskeyManagerCard> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        icon: Icon(Icons.delete_outline,
-            color: Theme.of(ctx).colorScheme.error, size: 36),
+        icon: Icon(
+          Icons.delete_outline,
+          color: Theme.of(ctx).colorScheme.error,
+          size: 36,
+        ),
         title: Text(L10n.t(context, 'settings.passkeyDeleteTitle')),
-        content: Text(L10n.tf(
-          context,
-          'passkey.deleteBody',
-          {'name': passkey.friendlyName ?? L10n.t(context, 'passkey.name')},
-        )),
+        content: Text(
+          L10n.tf(context, 'passkey.deleteBody', {
+            'name': passkey.friendlyName ?? L10n.t(context, 'passkey.name'),
+          }),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -1064,8 +1065,9 @@ class _PasskeyManagerCardState extends ConsumerState<_PasskeyManagerCard> {
   Widget build(BuildContext context) {
     final subtitle = _passkeys == null
         ? (_error ?? L10n.t(context, 'passkey.managerSub'))
-        : L10n.tf(context, 'passkey.managerHint',
-            {'count': '${_passkeys!.length}'});
+        : L10n.tf(context, 'passkey.managerHint', {
+            'count': '${_passkeys!.length}',
+          });
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1086,15 +1088,18 @@ class _PasskeyManagerCardState extends ConsumerState<_PasskeyManagerCard> {
         for (final passkey in _passkeys ?? const <Passkey>[])
           ListTile(
             leading: const Icon(Icons.fingerprint, size: 20),
-                    title: Text(passkey.friendlyName ??
-                        L10n.t(context, 'passkey.name')),
+            title: Text(
+              passkey.friendlyName ?? L10n.t(context, 'passkey.name'),
+            ),
             subtitle: Text(
               [
-                L10n.tf(context, 'settings.passkeyCreatedAt',
-                    {'date': _formatDate(passkey.createdAt)}),
+                L10n.tf(context, 'settings.passkeyCreatedAt', {
+                  'date': _formatDate(passkey.createdAt),
+                }),
                 if (passkey.lastUsedAt != null)
-                  L10n.tf(context, 'settings.passkeyLastUsed',
-                      {'date': _formatDate(passkey.lastUsedAt)}),
+                  L10n.tf(context, 'settings.passkeyLastUsed', {
+                    'date': _formatDate(passkey.lastUsedAt),
+                  }),
               ].join(' · '),
             ),
             dense: true,
@@ -1109,8 +1114,11 @@ class _PasskeyManagerCardState extends ConsumerState<_PasskeyManagerCard> {
                 ),
                 IconButton(
                   tooltip: L10n.t(context, 'settings.delete'),
-                  icon: Icon(Icons.delete_outline,
-                      size: 20, color: Theme.of(context).colorScheme.error),
+                  icon: Icon(
+                    Icons.delete_outline,
+                    size: 20,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                   onPressed: () => _delete(passkey),
                 ),
               ],
@@ -1159,8 +1167,10 @@ class _UnifiedPushTileState extends ConsumerState<_UnifiedPushTile> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(L10n.tf(
-                  context, 'common.errorWith', {'error': '$e'}))),
+            content: Text(
+              L10n.tf(context, 'common.errorWith', {'error': '$e'}),
+            ),
+          ),
         );
       }
     } finally {
@@ -1228,7 +1238,9 @@ class _ChatHistoryTileState extends ConsumerState<_ChatHistoryTile> {
       final storage = ref.read(localStorageProvider);
       await storage.saveBool('chat_history_local', mode != _HistoryMode.off);
       await storage.saveBool('chat_history_all', mode == _HistoryMode.all);
-      ref.read(chatProvider.notifier).setHistoryPersistence(
+      ref
+          .read(chatProvider.notifier)
+          .setHistoryPersistence(
             mode != _HistoryMode.off,
             limit: mode == _HistoryMode.cap200 ? 200 : null,
           );
@@ -1246,7 +1258,8 @@ class _ChatHistoryTileState extends ConsumerState<_ChatHistoryTile> {
         content: RadioGroup<_HistoryMode>(
           groupValue: _mode,
           onChanged: (v) => Navigator.of(ctx).pop(v),
-          child: Column(            mainAxisSize: MainAxisSize.min,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               for (final mode in _HistoryMode.values)
                 RadioListTile<_HistoryMode>(
@@ -1297,7 +1310,8 @@ class _ChatHistoryTileState extends ConsumerState<_ChatHistoryTile> {
           ? const SizedBox(
               width: 18,
               height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2))
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
           : const Icon(Icons.chevron_right),
       onTap: _busy ? null : _pickMode,
     );

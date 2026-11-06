@@ -156,9 +156,7 @@ class _AdminMailInboxTabState extends ConsumerState<AdminMailInboxTab> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: _MailKarte(
                   mail: mail,
-                  rubrik: _rubrikText(
-                    '${mail['category'] ?? 'sonstiges'}',
-                  ),
+                  rubrik: _rubrikText('${mail['category'] ?? 'sonstiges'}'),
                 ),
               ),
         ],
@@ -196,8 +194,7 @@ class _MailKarte extends StatelessWidget {
       child: ExpansionTile(
         // Der Kinderschutz-Bereich faellt auf: dort ist eine Mail das
         // Wichtigste, was im Admin-Bereich liegen kann.
-        backgroundColor:
-            mail['category'] == 'kinderschutz'
+        backgroundColor: mail['category'] == 'kinderschutz'
             ? theme.colorScheme.errorContainer.withValues(alpha: 0.25)
             : null,
         shape: const Border(),
@@ -206,10 +203,7 @@ class _MailKarte extends StatelessWidget {
         childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
         title: Row(
           children: [
-            Chip(
-              label: Text(rubrik),
-              visualDensity: VisualDensity.compact,
-            ),
+            Chip(label: Text(rubrik), visualDensity: VisualDensity.compact),
             const SizedBox(width: 8),
             Expanded(
               child: Text(

@@ -96,8 +96,8 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
         _playing
             ? L10n.t(context, 'intro.stop')
             : _errorKey != null
-                ? L10n.t(context, _errorKey!)
-                : L10n.t(context, 'intro.listen'),
+            ? L10n.t(context, _errorKey!)
+            : L10n.t(context, 'intro.listen'),
       ),
     );
   }

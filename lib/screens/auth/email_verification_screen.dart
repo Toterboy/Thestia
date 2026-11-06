@@ -343,18 +343,13 @@ class _EmailVerificationScreenState
     final response = await SupabaseService.client.functions
         .invoke(
           'cancel-registration',
-          body: {
-            'email': email,
-            'password': passwort,
-            'captchaToken': captcha,
-          },
+          body: {'email': email, 'password': passwort, 'captchaToken': captcha},
         )
         .timeout(const Duration(seconds: 30));
     final ok = (response.data as Map?)?['deleted'] == true;
     if (!ok) {
       final err =
-          (response.data as Map?)?['error']?.toString() ??
-          'Unbekannter Fehler';
+          (response.data as Map?)?['error']?.toString() ?? 'Unbekannter Fehler';
       throw StateError(err);
     }
   }
@@ -432,7 +427,9 @@ class _EmailVerificationScreenState
       if (captcha == null) {
         throw Exception(captchaHinweis);
       }
-      await ref.read(authProvider.notifier).register(
+      await ref
+          .read(authProvider.notifier)
+          .register(
             name: creds.name,
             email: neue,
             password: creds.password,
@@ -452,9 +449,7 @@ class _EmailVerificationScreenState
       debugPrint('[EmailVerification] Adresse aendern fehlgeschlagen: $e');
       if (!mounted) return;
       setState(() => _changingEmail = false);
-      _melde(
-        L10n.tf(context, 'email.addressChangeFailed', {'error': '$e'}),
-      );
+      _melde(L10n.tf(context, 'email.addressChangeFailed', {'error': '$e'}));
     }
   }
 
@@ -462,10 +457,7 @@ class _EmailVerificationScreenState
   void _melde(String text) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text),
-        behavior: SnackBarBehavior.floating,
-      ),
+      SnackBar(content: Text(text), behavior: SnackBarBehavior.floating),
     );
   }
 
@@ -740,7 +732,6 @@ class _EmailVerificationScreenState
   }
 }
 
-
 /// Die E-Mail-Adresse der laufenden Registrierung.
 ///
 /// NUTZERWUNSCH (01.11.2026): "Bei Email bestaetigen soll die
@@ -775,9 +766,7 @@ class _Adresskarte extends StatelessWidget {
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: 0.5),
-        ),
+        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -797,16 +786,16 @@ class _Adresskarte extends StatelessWidget {
           const SizedBox(height: 4),
           SelectableText(
             email,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 2),
           Text(
             L10n.t(context, 'email.addressHint'),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
           ),
           Align(
             alignment: Alignment.centerLeft,

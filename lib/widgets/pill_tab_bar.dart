@@ -75,8 +75,10 @@ class PillTabBar extends StatelessWidget {
               )
             : ListView(
                 scrollDirection: Axis.horizontal,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 children: [
                   for (var i = 0; i < tabs.length; i++)
                     _PillTabItem(
@@ -96,11 +98,7 @@ class PillTabBar extends StatelessWidget {
 
 /// Ein Tab: Label, Symbol, optionale Kennzahl (Badge).
 class PillTab {
-  const PillTab({
-    required this.label,
-    required this.icon,
-    this.count,
-  });
+  const PillTab({required this.label, required this.icon, this.count});
 
   final String label;
   final IconData icon;
@@ -163,8 +161,7 @@ class _PillTabItem extends StatelessWidget {
                   color: selected
                       ? scheme.primaryContainer
                       : scheme.surfaceContainerHighest.withValues(alpha: 0.45),
-                  borderRadius:
-                      BorderRadius.circular(PillTabBar._pillRadius),
+                  borderRadius: BorderRadius.circular(PillTabBar._pillRadius),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -175,8 +172,9 @@ class _PillTabItem extends StatelessWidget {
                       tab.label,
                       style: theme.textTheme.labelLarge?.copyWith(
                         color: fg,
-                        fontWeight:
-                            selected ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight: selected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
                       ),
                     ),
                     if (showCount) ...[

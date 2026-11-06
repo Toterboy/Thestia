@@ -94,10 +94,7 @@ class _GuardianConsentScreenState extends ConsumerState<GuardianConsentScreen> {
       ),
       body: SafeArea(
         child: _sent
-            ? _Fertig(
-                email: email,
-                onDone: () => context.go('/'),
-              )
+            ? _Fertig(email: email, onDone: () => context.go('/'))
             : SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
                 child: Form(
@@ -188,10 +185,7 @@ class _Fertig extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
-          PrimaryButton(
-            label: L10n.t(context, 'common.ok'),
-            onPressed: onDone,
-          ),
+          PrimaryButton(label: L10n.t(context, 'common.ok'), onPressed: onDone),
         ],
       ),
     );

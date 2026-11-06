@@ -24,20 +24,20 @@ enum ThestiaTheme {
 
   /// Kompakter Anzeigename für den Picker (feste Kachelbreite).
   String get shortLabel => switch (this) {
-        ThestiaTheme.classic => 'Classic',
-        ThestiaTheme.ocean => 'Ozean',
-        ThestiaTheme.forest => 'Wald',
-        ThestiaTheme.sunset => 'Sonnenuntergang',
-        ThestiaTheme.lila => 'Lavendel',
-        ThestiaTheme.mono => 'Schiefer',
-      };
+    ThestiaTheme.classic => 'Classic',
+    ThestiaTheme.ocean => 'Ozean',
+    ThestiaTheme.forest => 'Wald',
+    ThestiaTheme.sunset => 'Sonnenuntergang',
+    ThestiaTheme.lila => 'Lavendel',
+    ThestiaTheme.mono => 'Schiefer',
+  };
 
   /// Aufhellung für Dark-Mode-Akzente.
   Color get lightPrimary => Color.lerp(primaryColor, Colors.white, 0.25)!;
 
-  static ThestiaTheme fromName(String? name) => ThestiaTheme.values
-      .where((t) => t.name == name)
-      .firstOrNull ?? ThestiaTheme.classic;
+  static ThestiaTheme fromName(String? name) =>
+      ThestiaTheme.values.where((t) => t.name == name).firstOrNull ??
+      ThestiaTheme.classic;
 }
 
 /// Zentrale Design-Farben der App (warm, einladend, modern).
@@ -109,116 +109,109 @@ class AppTheme {
     final surface = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
     final bg = isDark ? AppColors.backgroundDark : AppColors.backgroundLight;
     return ThemeData(
-        useMaterial3: true,
+      useMaterial3: true,
+      brightness: brightness,
+      // Emoji-Rueckfall (31.10.2026): Die Begruessung der Startseite
+      // nutzt ein Emoji. Ohne Rueckfall-Liste fehlt das Zeichen auf
+      // Geraeten, die die Emoji-Schrift nicht als erste Schrift fuehren -
+      // und im Store-Screenshot (Render ohne Systemschriften) blieb
+      // ein leeres Kaestchen stehen. Die Liste deckt Android (Noto),
+      // iOS/macOS (Apple) und Windows (Segoe) ab.
+      fontFamilyFallback: const [
+        'Noto Color Emoji',
+        'Apple Color Emoji',
+        'Segoe UI Emoji',
+      ],
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: theme.primaryColor,
         brightness: brightness,
-        // Emoji-Rueckfall (31.10.2026): Die Begruessung der Startseite
-        // nutzt ein Emoji. Ohne Rueckfall-Liste fehlt das Zeichen auf
-        // Geraeten, die die Emoji-Schrift nicht als erste Schrift fuehren -
-        // und im Store-Screenshot (Render ohne Systemschriften) blieb
-        // ein leeres Kaestchen stehen. Die Liste deckt Android (Noto),
-        // iOS/macOS (Apple) und Windows (Segoe) ab.
-        fontFamilyFallback: const [
-          'Noto Color Emoji',
-          'Apple Color Emoji',
-          'Segoe UI Emoji',
-        ],
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: theme.primaryColor,
-          brightness: brightness,
-          surface: surface,
+        surface: surface,
+      ),
+      scaffoldBackgroundColor: bg,
+      cardTheme: _cardTheme(surface),
+      popupMenuTheme: _popupMenuTheme(surface),
+      // Klick-Animation (Ripple) folgt der 24-px-Rundung der Karten -
+      // überall derselbe abgerundete Effekt, auch beim Antippen (v0.8.1).
+      listTileTheme: const ListTileThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(24)),
         ),
-        scaffoldBackgroundColor: bg,
-        cardTheme: _cardTheme(surface),
-        popupMenuTheme: _popupMenuTheme(surface),
-        // Klick-Animation (Ripple) folgt der 24-px-Rundung der Karten -
-        // überall derselbe abgerundete Effekt, auch beim Antippen (v0.8.1).
-        listTileTheme: const ListTileThemeData(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(24)),
-          ),
+      ),
+      elevatedButtonTheme: _elevatedButtonTheme,
+      filledButtonTheme: _filledButtonTheme,
+      outlinedButtonTheme: _outlinedButtonTheme,
+      // NUTZERWUNSCH (31.10.2026): "Ladekreise sollen auch abgerundet
+      // sein." Die Enden des Kreises sind jetzt rund statt flach -
+      // das passt zur uebrigen runden Sprache der App (Karten mit 24 px,
+      // Knöpfe, Snackbars) und gilt fuer JEDEN Ladeindikator, ohne
+      // dass eine einzige Stelle im Code angefasst werden muss.
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        strokeCap: StrokeCap.round,
+      ),
+      inputDecorationTheme: _inputDecorationTheme(surface, theme.primaryColor),
+      appBarTheme: AppBarTheme(
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        // Transparente AppBar: im Dark-Mode darf die Schriftfarbe nicht
+        // schwarz bleiben, sonst ist sie auf dunklem Grund unlesbar.
+        foregroundColor: isDark ? Colors.white : Colors.black87,
+        surfaceTintColor: Colors.transparent,
+        // STATUSLEISTE (Nutzerwunsch, 27.10.2026).
+        //
+        // Ohne diese Angabe setzt Flutter in der AppBar die WEISSEN
+        // System-Icons - auch im Light-Mode. Auf hellem Grund sind
+        // Uhrzeit, Akkustand und Empfangsanzeige dann unlesbar.
+        // Deshalb wird die Icon-Helligkeit aus dem Theme-Modus
+        // abgeleitet: dunkle Icons auf hell, helle Icons auf dunkel.
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+          statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
         ),
-        elevatedButtonTheme: _elevatedButtonTheme,
-        filledButtonTheme: _filledButtonTheme,
-        outlinedButtonTheme: _outlinedButtonTheme,
-        // NUTZERWUNSCH (31.10.2026): "Ladekreise sollen auch abgerundet
-        // sein." Die Enden des Kreises sind jetzt rund statt flach -
-        // das passt zur uebrigen runden Sprache der App (Karten mit 24 px,
-        // Knöpfe, Snackbars) und gilt fuer JEDEN Ladeindikator, ohne
-        // dass eine einzige Stelle im Code angefasst werden muss.
-        progressIndicatorTheme: const ProgressIndicatorThemeData(
-          strokeCap: StrokeCap.round,
+      ),
+      // Die Navigationsleiste unten laeuft ueber SystemUiOverlayStyle -
+      // ThemeData kennt dafuer kein eigenes Feld. Die passende Angabe
+      // steht in der AnnotatedRegion der Hauptnavigation
+      // (main_navigation.dart), damit sie fuer den ganzen Bildschirm
+      // gilt.
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        elevation: 8,
+        selectedItemColor: isDark ? theme.lightPrimary : theme.primaryColor,
+      ),
+      // Snackbars als schwebende Bubbles am unteren Rand – konsistent
+      // für Light- und Dark-Mode.
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 4,
+      ),
+      extensions: <ThemeExtension<dynamic>>[
+        BlindModeTheme(
+          placeholderColor: isDark
+              ? const Color(0xFF2C2C2C)
+              : const Color(0xFFE1E1EC),
         ),
-        inputDecorationTheme: _inputDecorationTheme(
-            surface, theme.primaryColor),
-        appBarTheme: AppBarTheme(
-          centerTitle: true,
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          // Transparente AppBar: im Dark-Mode darf die Schriftfarbe nicht
-          // schwarz bleiben, sonst ist sie auf dunklem Grund unlesbar.
-          foregroundColor: isDark ? Colors.white : Colors.black87,
-          surfaceTintColor: Colors.transparent,
-          // STATUSLEISTE (Nutzerwunsch, 27.10.2026).
-          //
-          // Ohne diese Angabe setzt Flutter in der AppBar die WEISSEN
-          // System-Icons - auch im Light-Mode. Auf hellem Grund sind
-          // Uhrzeit, Akkustand und Empfangsanzeige dann unlesbar.
-          // Deshalb wird die Icon-Helligkeit aus dem Theme-Modus
-          // abgeleitet: dunkle Icons auf hell, helle Icons auf dunkel.
-          systemOverlayStyle: SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
-            statusBarIconBrightness:
-                isDark ? Brightness.light : Brightness.dark,
-            statusBarBrightness:
-                isDark ? Brightness.dark : Brightness.light,
-          ),
-        ),
-        // Die Navigationsleiste unten laeuft ueber SystemUiOverlayStyle -
-        // ThemeData kennt dafuer kein eigenes Feld. Die passende Angabe
-        // steht in der AnnotatedRegion der Hauptnavigation
-        // (main_navigation.dart), damit sie fuer den ganzen Bildschirm
-        // gilt.
-        bottomNavigationBarTheme: BottomNavigationBarThemeData(
-          elevation: 8,
-          selectedItemColor:
-              isDark ? theme.lightPrimary : theme.primaryColor,
-        ),
-        // Snackbars als schwebende Bubbles am unteren Rand – konsistent
-        // für Light- und Dark-Mode.
-        snackBarTheme: SnackBarThemeData(
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 4,
-        ),
-        extensions: <ThemeExtension<dynamic>>[
-          BlindModeTheme(
-              placeholderColor: isDark
-                  ? const Color(0xFF2C2C2C)
-                  : const Color(0xFFE1E1EC)),
-        ],
-      );
+      ],
+    );
   }
 
   /// Popup-Menüs (z. B. Sprachumschalter) mit demselben 16-px-Radius wie
   /// Cards/Snackbars/Inputs - konsistent abgerundet in der ganzen App.
-  static PopupMenuThemeData _popupMenuTheme(Color surface) => PopupMenuThemeData(
+  static PopupMenuThemeData _popupMenuTheme(Color surface) =>
+      PopupMenuThemeData(
         color: surface,
         elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       );
 
-  static CardThemeData _cardTheme(Color surface) => CardThemeData(        color: surface,
-        elevation: 6,
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        shadowColor: Colors.black.withValues(alpha: 0.12),
-      );
+  static CardThemeData _cardTheme(Color surface) => CardThemeData(
+    color: surface,
+    elevation: 6,
+    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+    shadowColor: Colors.black.withValues(alpha: 0.12),
+  );
 
   static ElevatedButtonThemeData get _elevatedButtonTheme =>
       ElevatedButtonThemeData(
@@ -232,13 +225,11 @@ class AppTheme {
       );
 
   static FilledButtonThemeData get _filledButtonTheme => FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
-        ),
-      );
+    style: FilledButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+    ),
+  );
 
   static OutlinedButtonThemeData get _outlinedButtonTheme =>
       OutlinedButtonThemeData(
@@ -251,33 +242,33 @@ class AppTheme {
       );
 
   static InputDecorationTheme _inputDecorationTheme(
-      Color surface, Color primary) =>
-      InputDecorationTheme(
-        filled: true,
-        fillColor: surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
-        ),
-        // FIX Farbthemes: Bisher waren die Rahmen auf die Classic-Pink
-        // (AppColors.primary/primaryLight) hartcodiert - Ozean, Wald,
-        // Sonnenuntergang, Lavendel und Schiefer wurden an den Rahmen
-        // nicht uebernommen. Jetzt leiten sich beide aus der aktiven
-        // Primärfarbe ab (aktiv halbtransparent, fokussiert voll).
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(
-            color: primary.withValues(alpha: 0.45),
-            width: 1.5,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: primary, width: 2),
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      );
+    Color surface,
+    Color primary,
+  ) => InputDecorationTheme(
+    filled: true,
+    fillColor: surface,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide.none,
+    ),
+    // FIX Farbthemes: Bisher waren die Rahmen auf die Classic-Pink
+    // (AppColors.primary/primaryLight) hartcodiert - Ozean, Wald,
+    // Sonnenuntergang, Lavendel und Schiefer wurden an den Rahmen
+    // nicht uebernommen. Jetzt leiten sich beide aus der aktiven
+    // Primärfarbe ab (aktiv halbtransparent, fokussiert voll).
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(
+        color: primary.withValues(alpha: 0.45),
+        width: 1.5,
+      ),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide(color: primary, width: 2),
+    ),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+  );
 }
 
 /// Theme-Extension für Blind-Mode-spezifische Farben.
@@ -300,7 +291,7 @@ class BlindModeTheme extends ThemeExtension<BlindModeTheme> {
     return BlindModeTheme(
       placeholderColor:
           Color.lerp(placeholderColor, other.placeholderColor, t) ??
-              placeholderColor,
+          placeholderColor,
     );
   }
 }

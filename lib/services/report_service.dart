@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
@@ -35,10 +35,7 @@ String hashPii(String value) => sha256.convert(utf8.encode(value)).toString();
 /// zeigte lange Zeit in beiden Fällen die grüne Bestätigung
 /// (Security-Audit 22.10.2026).
 class ReportSubmission {
-  const ReportSubmission({
-    required this.report,
-    required this.serverAccepted,
-  });
+  const ReportSubmission({required this.report, required this.serverAccepted});
 
   final UserReport report;
   final bool serverAccepted;
@@ -112,30 +109,34 @@ class ReportService {
 
   /// Eigene Meldungen inkl. Status (v0.8.0 Meldungs-Feedback, RPC 076).
   Future<List<MyReportEntry>> listMyReports() async {
-    final response =
-        await SupabaseService.client.rpc('list_my_reports');
+    final response = await SupabaseService.client.rpc('list_my_reports');
     final rows = (response as List<dynamic>? ?? <dynamic>[]);
     return rows
-        .map((row) =>
-            MyReportEntry.fromJson(Map<String, dynamic>.from(row as Map)))
+        .map(
+          (row) =>
+              MyReportEntry.fromJson(Map<String, dynamic>.from(row as Map)),
+        )
         .toList();
   }
 
   /// Blockierte Nutzer (v0.8.0 Blockierliste, RPC 076).
   Future<List<BlockedUserEntry>> listBlockedUsers() async {
-    final response =
-        await SupabaseService.client.rpc('list_blocked_users');
+    final response = await SupabaseService.client.rpc('list_blocked_users');
     final rows = (response as List<dynamic>? ?? <dynamic>[]);
     return rows
-        .map((row) =>
-            BlockedUserEntry.fromJson(Map<String, dynamic>.from(row as Map)))
+        .map(
+          (row) =>
+              BlockedUserEntry.fromJson(Map<String, dynamic>.from(row as Map)),
+        )
         .toList();
   }
 
   /// Blockierung aufheben (RPC unblock_user aus Migration 043).
   Future<void> unblockUser(String blockedUserId) async {
-    await SupabaseService.client
-        .rpc('unblock_user', params: {'p_blocked': blockedUserId});
+    await SupabaseService.client.rpc(
+      'unblock_user',
+      params: {'p_blocked': blockedUserId},
+    );
   }
 
   Future<void> initialize() async {
@@ -147,8 +148,8 @@ class ReportService {
 
   /// Löscht lokale Melde-Entwürfe (Account-Löschung/Logout, DSGVO).
   Future<void> clearDrafts() async {
-        // Best-effort: Ein Rest darf die Löschung nie blockieren.
-await bestEffort('clear', () async {
+    // Best-effort: Ein Rest darf die Löschung nie blockieren.
+    await bestEffort('clear', () async {
       if (!_initialized) {
         await initialize();
       }
@@ -243,25 +244,19 @@ await bestEffort('clear', () async {
 
   List<UserReport> getReportsByReporter(String reporterId) {
     final hash = hashPii(reporterId);
-    return _box.values
-        .where((r) => r.reporterId == hash)
-        .toList()
+    return _box.values.where((r) => r.reporterId == hash).toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
   List<UserReport> getReportsAgainstUser(String userId) {
     // Audit N-18: Lookup über den Hash (lokale Speicherung ist gehasht).
     final hash = hashPii(userId);
-    return _box.values
-        .where((r) => r.reportedUserId == hash)
-        .toList()
+    return _box.values.where((r) => r.reportedUserId == hash).toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
   List<UserReport> getPendingReports() {
-    return _box.values
-        .where((r) => r.status == 'pending')
-        .toList()
+    return _box.values.where((r) => r.status == 'pending').toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
@@ -281,11 +276,14 @@ await bestEffort('clear', () async {
   }) async {
     final report = _box.get(reportId);
     if (report != null) {
-      await _box.put(reportId, report.copyWith(
-        status: status,
-        moderatorNote: moderatorNote,
-        resolvedAt: status != 'pending' ? DateTime.now() : null,
-      ));
+      await _box.put(
+        reportId,
+        report.copyWith(
+          status: status,
+          moderatorNote: moderatorNote,
+          resolvedAt: status != 'pending' ? DateTime.now() : null,
+        ),
+      );
     }
   }
 
@@ -325,11 +323,16 @@ Future<void> showReportUserDialog({
       builder: (ctx, setState) => AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.flag_outlined, color: Theme.of(context).colorScheme.primary),
+            Icon(
+              Icons.flag_outlined,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(width: 8),
             Expanded(
-                child: Text(L10n.tf(ctx, 'report.userTitle',
-                    {'name': reportedUserName}))),
+              child: Text(
+                L10n.tf(ctx, 'report.userTitle', {'name': reportedUserName}),
+              ),
+            ),
           ],
         ),
         content: SizedBox(
@@ -343,8 +346,9 @@ Future<void> showReportUserDialog({
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer
-                          .withValues(alpha: 0.5),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primaryContainer.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -375,9 +379,9 @@ Future<void> showReportUserDialog({
                 ],
                 Text(
                   'Waehle den Grund fuer die Meldung:',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 12),
                 RadioGroup<ReportType>(
@@ -385,11 +389,13 @@ Future<void> showReportUserDialog({
                   onChanged: (v) => setState(() => selectedType = v),
                   child: Column(
                     children: [
-                      ...ReportType.values.map((type) => RadioListTile<ReportType>(
-                        title: Text(L10n.t(context, type.labelKey)),
-                        value: type,
-                        contentPadding: EdgeInsets.zero,
-                      )),
+                      ...ReportType.values.map(
+                        (type) => RadioListTile<ReportType>(
+                          title: Text(L10n.t(context, type.labelKey)),
+                          value: type,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -400,7 +406,9 @@ Future<void> showReportUserDialog({
                   decoration: InputDecoration(
                     labelText: L10n.t(ctx, 'report.detailsOptional'),
                     hintText: L10n.t(ctx, 'common.whatHappened'),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                 ),
               ],
@@ -419,8 +427,8 @@ Future<void> showReportUserDialog({
                     Navigator.of(ctx).pop();
                     final reporterName =
                         ref.read(profileProvider).name.isNotEmpty
-                            ? ref.read(profileProvider).name
-                            : AppConstants.currentUserId;
+                        ? ref.read(profileProvider).name
+                        : AppConstants.currentUserId;
                     final ergebnis = await ref
                         .read(reportServiceProvider)
                         .createReport(
@@ -429,10 +437,9 @@ Future<void> showReportUserDialog({
                           reportedUserId: reportedUserId,
                           reportedUserName: reportedUserName,
                           type: selectedType!,
-                          description:
-                              descriptionController.text.trim().isEmpty
-                                  ? null
-                                  : descriptionController.text.trim(),
+                          description: descriptionController.text.trim().isEmpty
+                              ? null
+                              : descriptionController.text.trim(),
                           messages: messages,
                         );
                     if (context.mounted) {

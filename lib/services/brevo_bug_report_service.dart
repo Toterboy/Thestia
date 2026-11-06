@@ -51,10 +51,7 @@ class BrevoBugReportService {
       if (images.isNotEmpty) {
         body['images'] = [
           for (var i = 0; i < images.length; i++)
-            {
-              'name': 'screenshot_${i + 1}.jpg',
-              'content': images[i],
-            },
+            {'name': 'screenshot_${i + 1}.jpg', 'content': images[i]},
         ];
       }
 
@@ -102,12 +99,13 @@ class BrevoBugReportService {
     }
 
     // Genaue Systemversion.
-        // Ohne die Angabe ist der Report trotzdem brauchbar.
-await bestEffort('writeln', () async {
+    // Ohne die Angabe ist der Report trotzdem brauchbar.
+    await bestEffort('writeln', () async {
       if (!kIsWeb && Platform.isAndroid) {
         final info = await DeviceInfoPlugin().androidInfo;
         buffer.writeln(
-            'Android: ${info.version.release} (API ${info.version.sdkInt})');
+          'Android: ${info.version.release} (API ${info.version.sdkInt})',
+        );
         buffer.writeln('Geraet: ${info.brand} ${info.model}');
       } else if (!kIsWeb && Platform.isIOS) {
         final info = await DeviceInfoPlugin().iosInfo;
@@ -127,7 +125,6 @@ await bestEffort('writeln', () async {
 }
 
 /// Provider für den Brevo Bug-Report-Service.
-final brevoBugReportServiceProvider =
-    Provider<BrevoBugReportService>((ref) {
+final brevoBugReportServiceProvider = Provider<BrevoBugReportService>((ref) {
   return BrevoBugReportService._();
 });

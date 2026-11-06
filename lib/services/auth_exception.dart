@@ -9,11 +9,7 @@
 /// ([messageKey]) mit {platzhalter}-Params mitliefern; die Anzeige-Stellen
 /// lokalisieren dann via [L10n.exc] (Fallschlüssel: [message]).
 class AppException implements Exception {
-  AppException(
-    this.message, {
-    this.messageKey,
-    this.params = const {},
-  });
+  AppException(this.message, {this.messageKey, this.params = const {}});
 
   /// Deutsch (Fallback): wird angezeigt, wenn [messageKey] leer ist.
   final String message;
@@ -31,15 +27,13 @@ class AppException implements Exception {
 /// Migration 045): Registrierung und Login sind nicht möglich. Der Nutzer
 /// kann stattdessen einen Entsperrungsantrag senden.
 class EmailBannedException extends AppException {
-  EmailBannedException({
-    required this.email,
-    this.reason,
-  }) : super(
-          reason != null && reason.isNotEmpty
-              ? 'Dieser Account wurde gesperrt: $reason'
-              : 'Dieser Account wurde gesperrt. Du kannst einen '
-                    'Entsperrungsantrag senden.',
-        );
+  EmailBannedException({required this.email, this.reason})
+    : super(
+        reason != null && reason.isNotEmpty
+            ? 'Dieser Account wurde gesperrt: $reason'
+            : 'Dieser Account wurde gesperrt. Du kannst einen '
+                  'Entsperrungsantrag senden.',
+      );
 
   final String email;
   final String? reason;

@@ -32,9 +32,8 @@ class _MemoryStorage implements LocalStorage {
   }
 
   @override
-  Future<int?> getInt(String key) async => _map[key] is int
-      ? _map[key] as int
-      : (int.tryParse('${_map[key]}'));
+  Future<int?> getInt(String key) async =>
+      _map[key] is int ? _map[key] as int : (int.tryParse('${_map[key]}'));
 }
 
 void main() {

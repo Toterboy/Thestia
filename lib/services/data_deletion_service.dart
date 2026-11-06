@@ -50,9 +50,7 @@ class DataDeletionService {
   ];
 
   /// Loescht die gewaehlten Kategorien.
-  Future<DataDeletionResult> deleteCategories(
-    List<String> kategorien,
-  ) async {
+  Future<DataDeletionResult> deleteCategories(List<String> kategorien) async {
     try {
       final response = await _client.functions.invoke(
         'delete-user-data',

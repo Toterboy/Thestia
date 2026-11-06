@@ -122,19 +122,21 @@ void main() {
   });
 
   group('Persist-Fehler', () {
-    test('ein Keystore-Fehler wirft nicht nach oben (kein unhandled)',
-        () async {
-      final broken = _BrokenStorage();
-      final c = ProviderContainer(
-        overrides: [localStorageProvider.overrideWithValue(broken)],
-      );
-      // Der State wird optimistisch gesetzt; der Schreibfehler darf die UI
-      // nicht mit einer unbehandelten Async-Exception zerstoeren.
-      await c.read(settingsProvider.notifier).setMfaSetupDismissed(true);
-      expect(c.read(settingsProvider).mfaSetupDismissed, isTrue);
-      expect(broken.attempts, greaterThan(0));
-      c.dispose();
-    });
+    test(
+      'ein Keystore-Fehler wirft nicht nach oben (kein unhandled)',
+      () async {
+        final broken = _BrokenStorage();
+        final c = ProviderContainer(
+          overrides: [localStorageProvider.overrideWithValue(broken)],
+        );
+        // Der State wird optimistisch gesetzt; der Schreibfehler darf die UI
+        // nicht mit einer unbehandelten Async-Exception zerstoeren.
+        await c.read(settingsProvider.notifier).setMfaSetupDismissed(true);
+        expect(c.read(settingsProvider).mfaSetupDismissed, isTrue);
+        expect(broken.attempts, greaterThan(0));
+        c.dispose();
+      },
+    );
   });
 
   group('Gespeicherter State ist round-trip-faehig', () {

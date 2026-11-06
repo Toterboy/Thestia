@@ -25,26 +25,40 @@ final String publishPath =
 /// Binary und wird gerendert.
 void main() {
   test('Die Erklaerung ist als Text in der App vorhanden', () {
-    expect(kPrivacyPolicyDe, isNotEmpty,
-        reason: 'Ohne Bloecke gibt es keinen Text in der App.');
+    expect(
+      kPrivacyPolicyDe,
+      isNotEmpty,
+      reason: 'Ohne Bloecke gibt es keinen Text in der App.',
+    );
 
     // Mehr als eine Ueberschrift und ein Absatz: Play verlangt eine
     // Erklaerung, keinen Satz.
-    expect(kPrivacyPolicyDe.where((b) => b.kind == 'h2').length,
-        greaterThanOrEqualTo(5));
-    expect(kPrivacyPolicyDe.where((b) => b.kind == 'p').length,
-        greaterThanOrEqualTo(10));
+    expect(
+      kPrivacyPolicyDe.where((b) => b.kind == 'h2').length,
+      greaterThanOrEqualTo(5),
+    );
+    expect(
+      kPrivacyPolicyDe.where((b) => b.kind == 'p').length,
+      greaterThanOrEqualTo(10),
+    );
   });
 
   test('Jeder Block ist gerendert - keine unbekannte Art', () {
     const erlaubt = <String>{
-      'h1', 'h2', 'h3', 'p', 'li', 'table', 'table_head',
+      'h1',
+      'h2',
+      'h3',
+      'p',
+      'li',
+      'table',
+      'table_head',
     };
     for (final block in kPrivacyPolicyDe) {
       expect(
         erlaubt.contains(block.kind),
         isTrue,
-        reason: 'Blockart "${block.kind}" wird im Screen nicht behandelt '
+        reason:
+            'Blockart "${block.kind}" wird im Screen nicht behandelt '
             'und faellt auf den Absatz-Zweig zurueck. Das sieht dann '
             'aus wie Fliesstext statt wie eine Tabelle.',
       );
@@ -59,10 +73,10 @@ void main() {
     // zweimal beginnt. Der Dart-Text fuer die App war nicht betroffen.
     final html = File(publishPath).readAsStringSync();
 
-    final headings = RegExp(r'<h[123]>(.*?)</h[123]>', dotAll: true)
-        .allMatches(html)
-        .map((m) => m.group(1)!.trim())
-        .toList();
+    final headings = RegExp(
+      r'<h[123]>(.*?)</h[123]>',
+      dotAll: true,
+    ).allMatches(html).map((m) => m.group(1)!.trim()).toList();
     final paragraphs = RegExp(r'<p>(.*?)</p>', dotAll: true)
         .allMatches(html)
         .map((m) => m.group(1)!.replaceAll(RegExp(r'<[^>]+>'), '').trim())
@@ -80,29 +94,39 @@ void main() {
 
   test('Die HTML-Datei enthaelt die Entitaet aus dem Store-Eintrag', () {
     final html = File(publishPath).readAsStringSync();
-    expect(html, contains('Verantwortliche Stelle im Sinne der DSGVO '
-        'ist <strong>Thestia</strong>'),
-        reason: 'Play verlangt, dass die im Store-Eintrag genannte '
-            'Entitaet in der Erklaerung auftaucht. Store: "Thestia".');
-  });
-
-  test('Die HTML-Datei ist statisch - kein Skript, keine externen Requests',
-      () {
-    final html = File(publishPath).readAsStringSync();
-    expect(html, isNot(contains('<script')));
-    expect(RegExp(r'src\s*=\s*"http').hasMatch(html), isFalse);
-    // Erlaubt sind Links zur eigenen Domain - auch Unterseiten wie
-    // auth.thestia.de. Vorher stand hier "(?!thestia)": das liess nur
-    // Links, die mit "thestia" BEGINNEN, und flaggerte den Link auf
-    // die eigene Seite auth.thestia.de als "externen Request".
     expect(
-      RegExp(r'href\s*=\s*"https?://(?!([a-z0-9-]+\.)*thestia\.de)')
-          .hasMatch(html),
-      isFalse,
-      reason: 'Externe Requests wuerden die Seite verlangsamen und '
-          'einen Besuch bei Dritten registrieren.',
+      html,
+      contains(
+        'Verantwortliche Stelle im Sinne der DSGVO '
+        'ist <strong>Thestia</strong>',
+      ),
+      reason:
+          'Play verlangt, dass die im Store-Eintrag genannte '
+          'Entitaet in der Erklaerung auftaucht. Store: "Thestia".',
     );
   });
+
+  test(
+    'Die HTML-Datei ist statisch - kein Skript, keine externen Requests',
+    () {
+      final html = File(publishPath).readAsStringSync();
+      expect(html, isNot(contains('<script')));
+      expect(RegExp(r'src\s*=\s*"http').hasMatch(html), isFalse);
+      // Erlaubt sind Links zur eigenen Domain - auch Unterseiten wie
+      // auth.thestia.de. Vorher stand hier "(?!thestia)": das liess nur
+      // Links, die mit "thestia" BEGINNEN, und flaggerte den Link auf
+      // die eigene Seite auth.thestia.de als "externen Request".
+      expect(
+        RegExp(
+          r'href\s*=\s*"https?://(?!([a-z0-9-]+\.)*thestia\.de)',
+        ).hasMatch(html),
+        isFalse,
+        reason:
+            'Externe Requests wuerden die Seite verlangsamen und '
+            'einen Besuch bei Dritten registrieren.',
+      );
+    },
+  );
 
   test('Tabellenzeilen haben Zellen, andere Bloecke keinen', () {
     for (final block in kPrivacyPolicyDe) {
@@ -110,11 +134,18 @@ void main() {
         expect(block.cells, isNotNull);
         expect(block.cells, isNotEmpty);
       } else {
-        expect(block.cells, isNull,
-            reason: 'Absatz "${block.text}" traegt unnoetige Zell-Daten.');
-        expect(block.text.trim(), isNotEmpty,
-            reason: 'Leerer Textblock ohne Zellen: erzeugt einen '
-                'unsichtbaren Absatz mit Abstand.');
+        expect(
+          block.cells,
+          isNull,
+          reason: 'Absatz "${block.text}" traegt unnoetige Zell-Daten.',
+        );
+        expect(
+          block.text.trim(),
+          isNotEmpty,
+          reason:
+              'Leerer Textblock ohne Zellen: erzeugt einen '
+              'unsichtbaren Absatz mit Abstand.',
+        );
       }
     }
   });
@@ -128,52 +159,62 @@ void main() {
     for (final block in kPrivacyPolicyDe) {
       if (block.kind == 'table' || block.kind == 'table_head') continue;
       final t = block.text.trim();
-      expect(t, isNot(endsWith(',')),
-          reason: 'Text endet mit einem Komma - ein Satzbruch wurde '
-              'als eigener Block abgetrennt: "${t.substring(t.length > 40 ? t.length - 40 : 0)}"');
-      expect(t, isNot(endsWith('und')),
-          reason: 'Text endet mit "und" - mitten im Satz abgeschnitten.');
+      expect(
+        t,
+        isNot(endsWith(',')),
+        reason:
+            'Text endet mit einem Komma - ein Satzbruch wurde '
+            'als eigener Block abgetrennt: "${t.substring(t.length > 40 ? t.length - 40 : 0)}"',
+      );
+      expect(
+        t,
+        isNot(endsWith('und')),
+        reason: 'Text endet mit "und" - mitten im Satz abgeschnitten.',
+      );
     }
   });
 
-  testWidgets('Der Bildschirm zeigt den Anfang der Erklaerung',
-      (tester) async {
-    await tester.pumpWidget(const ProviderScope(
-      child: MaterialApp(home: PrivacyPolicyTextScreen()),
-    ));
+  testWidgets('Der Bildschirm zeigt den Anfang der Erklaerung', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(child: MaterialApp(home: PrivacyPolicyTextScreen())),
+    );
     await tester.pump();
 
     final ersterH1 = kPrivacyPolicyDe.firstWhere((b) => b.kind == 'h1');
     expect(
       find.text(ersterH1.text.replaceAll('**', '').trim()),
       findsOneWidget,
-      reason: 'Der Titel muss sichtbar sein - sonst ist nicht erkennbar, '
+      reason:
+          'Der Titel muss sichtbar sein - sonst ist nicht erkennbar, '
           'dass hier die Datenschutzerklaerung steht.',
     );
   });
 
-  testWidgets('Die englische Fassung erscheint bei englischer App-Sprache',
-      (tester) async {
-    await tester.pumpWidget(ProviderScope(
-      overrides: [localeProvider.overrideWith((ref) => const Locale('en'))],
-      child: const MaterialApp(home: PrivacyPolicyTextScreen()),
-    ));
+  testWidgets('Die englische Fassung erscheint bei englischer App-Sprache', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [localeProvider.overrideWith((ref) => const Locale('en'))],
+        child: const MaterialApp(home: PrivacyPolicyTextScreen()),
+      ),
+    );
     await tester.pump();
 
     final ersterH1 = kPrivacyPolicyEn.firstWhere((b) => b.kind == 'h1');
     expect(
       find.text(ersterH1.text.replaceAll('**', '').trim()),
       findsOneWidget,
-      reason: 'Wer die App auf Englisch stellt, bekommt die englische '
+      reason:
+          'Wer die App auf Englisch stellt, bekommt die englische '
           'Erklaerung - nicht die deutsche.',
     );
   });
 
-  testWidgets('Kein Textblock wird als Markdown angezeigt',
-      (tester) async {
-    await tester.pumpWidget(const ProviderScope(
-      child: MaterialApp(home: PrivacyPolicyTextScreen()),
-    ));
+  testWidgets('Kein Textblock wird als Markdown angezeigt', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(child: MaterialApp(home: PrivacyPolicyTextScreen())),
+    );
     await tester.pump();
 
     // Die Sterne duerfen nirgends im sichtbaren Text landen. Sie sind

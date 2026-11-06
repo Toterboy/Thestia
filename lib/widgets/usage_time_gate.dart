@@ -92,7 +92,8 @@ class _UsageTimeGateState extends ConsumerState<UsageTimeGate>
 
   /// Startet oder stoppt den Ticker passend zur Lage.
   void _tickerAnpassen(GuardianStatus status) {
-    final sperreAktiv = status.usageLimitEnabled &&
+    final sperreAktiv =
+        status.usageLimitEnabled &&
         status.usageStartMin != null &&
         status.usageEndMin != null;
 
@@ -105,12 +106,9 @@ class _UsageTimeGateState extends ConsumerState<UsageTimeGate>
     // Alle 30 Sekunden nachsehen: sonst bleibt die App offen, wenn die
     // erlaubte Zeit ablaeuft, und der Jugendliche merkt es erst beim
     // naechsten Bildschirmwechsel.
-    _ticker = Timer.periodic(
-      const Duration(seconds: 30),
-      (_) {
-        if (mounted) setState(() {});
-      },
-    );
+    _ticker = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) setState(() {});
+    });
   }
 
   @override

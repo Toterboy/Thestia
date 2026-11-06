@@ -25,8 +25,7 @@ class _NoopSecureStorage extends FlutterSecureStorage {
     WebOptions? webOptions,
     AppleOptions? mOptions,
     WindowsOptions? wOptions,
-  }) async =>
-      null;
+  }) async => null;
 
   @override
   Future<void> write({
@@ -58,15 +57,15 @@ Future<void> _pumpSettings(WidgetTester tester, double scale) async {
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
-        localStorageProvider
-            .overrideWithValue(SharedPreferencesStorage(prefs)),
-        secureProfileStoreProvider
-            .overrideWithValue(SecureProfileStore(_NoopSecureStorage())),
-      ],
-        child: MediaQuery(
-          data: MediaQueryData(textScaler: TextScaler.linear(scale)),
-          child: const MaterialApp(home: SettingsScreen()),
+        localStorageProvider.overrideWithValue(SharedPreferencesStorage(prefs)),
+        secureProfileStoreProvider.overrideWithValue(
+          SecureProfileStore(_NoopSecureStorage()),
         ),
+      ],
+      child: MediaQuery(
+        data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+        child: const MaterialApp(home: SettingsScreen()),
+      ),
     ),
   );
   await tester.pump();
@@ -96,8 +95,9 @@ void main() {
   };
 
   scales.forEach((name, scale) {
-    testWidgets('Einstellungen rendern ohne Overflow bei Schrift $name',
-        (tester) async {
+    testWidgets('Einstellungen rendern ohne Overflow bei Schrift $name', (
+      tester,
+    ) async {
       await _pumpSettings(tester, scale);
       // Scrollen bis zum Ende: Auch unten darf nichts platzen.
       final scroller = find.descendant(
@@ -117,41 +117,47 @@ void main() {
 
   scales.forEach((name, scale) {
     testWidgets(
-        'Sicherheits-Aufklaerung rendert ohne Overflow bei Schrift $name',
-        (tester) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      SharedPreferences.setMockInitialValues(<String, Object>{});
-      final prefs = await SharedPreferences.getInstance();
+      'Sicherheits-Aufklaerung rendert ohne Overflow bei Schrift $name',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+        SharedPreferences.setMockInitialValues(<String, Object>{});
+        final prefs = await SharedPreferences.getInstance();
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            localStorageProvider
-                .overrideWithValue(SharedPreferencesStorage(prefs)),
-          ],
-          child: MediaQuery(
-            data: MediaQueryData(textScaler: TextScaler.linear(scale)),
-            child: const MaterialApp(home: DatingSafetyEducationScreen()),
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              localStorageProvider.overrideWithValue(
+                SharedPreferencesStorage(prefs),
+              ),
+            ],
+            child: MediaQuery(
+              data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+              child: const MaterialApp(home: DatingSafetyEducationScreen()),
+            ),
           ),
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
 
-      expect(tester.takeException(), isNull);
+        expect(tester.takeException(), isNull);
 
-      // Der Knopf muss auch bei grosser Schrift erreichbar bleiben.
-      expect(find.text('Ich habe verstanden'), findsOneWidget);
-      final knopf = tester.getRect(find.text('Ich habe verstanden'));
-      expect(knopf.bottom, lessThanOrEqualTo(844),
-          reason: 'Der Knopf liegt unterhalb des Bildschirms');
-    });
+        // Der Knopf muss auch bei grosser Schrift erreichbar bleiben.
+        expect(find.text('Ich habe verstanden'), findsOneWidget);
+        final knopf = tester.getRect(find.text('Ich habe verstanden'));
+        expect(
+          knopf.bottom,
+          lessThanOrEqualTo(844),
+          reason: 'Der Knopf liegt unterhalb des Bildschirms',
+        );
+      },
+    );
   });
 
   scales.forEach((name, scale) {
-    testWidgets('Connect to others rendert ohne Overflow bei Schrift $name',
-        (tester) async {
+    testWidgets('Connect to others rendert ohne Overflow bei Schrift $name', (
+      tester,
+    ) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -159,17 +165,19 @@ void main() {
         ProviderScope(
           overrides: [
             contactShareStoreProvider.overrideWithValue(
-              _FakeContactStore(const ContactShareProfile(
-                phone: '+49 170 1234567',
-                entries: [
-                  ContactShareEntry(
-                    app: 'signal',
-                    label: 'Signal',
-                    handle: '@thorst',
-                    recommended: true,
-                  ),
-                ],
-              )),
+              _FakeContactStore(
+                const ContactShareProfile(
+                  phone: '+49 170 1234567',
+                  entries: [
+                    ContactShareEntry(
+                      app: 'signal',
+                      label: 'Signal',
+                      handle: '@thorst',
+                      recommended: true,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
           child: MediaQuery(
@@ -198,8 +206,9 @@ void main() {
   });
 
   scales.forEach((name, scale) {
-    testWidgets('Das Dock rendert ohne Overflow bei Schrift $name',
-        (tester) async {
+    testWidgets('Das Dock rendert ohne Overflow bei Schrift $name', (
+      tester,
+    ) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -214,7 +223,11 @@ void main() {
                 index: 0,
                 onSelected: (_) {},
                 tabs: const [
-                  DockTab(route: '/', icon: Icons.newspaper, labelKey: 'nav.home'),
+                  DockTab(
+                    route: '/',
+                    icon: Icons.newspaper,
+                    labelKey: 'nav.home',
+                  ),
                   DockTab(
                     route: '/entdecken',
                     icon: Icons.favorite,
@@ -248,8 +261,11 @@ void main() {
         'Interessen',
         'Profil',
       ]) {
-        expect(find.text(beschriftung), findsOneWidget,
-            reason: 'Beschriftung "$beschriftung" fehlt');
+        expect(
+          find.text(beschriftung),
+          findsOneWidget,
+          reason: 'Beschriftung "$beschriftung" fehlt',
+        );
       }
     });
   });

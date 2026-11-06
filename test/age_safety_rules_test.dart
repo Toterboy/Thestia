@@ -42,43 +42,118 @@ void main() {
     // nie erteilt. Ein 18-Jaehriger sieht niemals einen
     // Minderjaehrigen.
     test('Erwachsene sehen keine Minderjaehrigen', () {
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 18, targetAge: 16), isFalse);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 18, targetAge: 17), isFalse);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 19, targetAge: 17), isFalse);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 19, targetAge: 16), isFalse);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 25, targetAge: 17), isFalse);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 30, targetAge: 16), isFalse);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 40, targetAge: 17), isFalse);
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 18, targetAge: 16),
+        isFalse,
+      );
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 18, targetAge: 17),
+        isFalse,
+      );
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 19, targetAge: 17),
+        isFalse,
+      );
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 19, targetAge: 16),
+        isFalse,
+      );
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 25, targetAge: 17),
+        isFalse,
+      );
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 30, targetAge: 16),
+        isFalse,
+      );
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 40, targetAge: 17),
+        isFalse,
+      );
     });
 
     test('Erwachsene sehen Erwachsene', () {
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 18, targetAge: 18), isTrue);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 18, targetAge: 19), isTrue);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 19, targetAge: 18), isTrue);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 19, targetAge: 19), isTrue);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 20, targetAge: 18), isTrue);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 25, targetAge: 19), isTrue);
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 18, targetAge: 18),
+        isTrue,
+      );
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 18, targetAge: 19),
+        isTrue,
+      );
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 19, targetAge: 18),
+        isTrue,
+      );
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 19, targetAge: 19),
+        isTrue,
+      );
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 20, targetAge: 18),
+        isTrue,
+      );
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 25, targetAge: 19),
+        isTrue,
+      );
     });
 
     test('Minor (16-17) cannot see adult (18+)', () {
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 16, targetAge: 18), isFalse);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 17, targetAge: 19), isFalse);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 16, targetAge: 20), isFalse);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 17, targetAge: 25), isFalse);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 16, targetAge: 30), isFalse);
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 16, targetAge: 18),
+        isFalse,
+      );
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 17, targetAge: 19),
+        isFalse,
+      );
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 16, targetAge: 20),
+        isFalse,
+      );
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 17, targetAge: 25),
+        isFalse,
+      );
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 16, targetAge: 30),
+        isFalse,
+      );
     });
 
     test('Minderjaehrige sehen nur Minderjaehrige', () {
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 16, targetAge: 16), isTrue);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 16, targetAge: 17), isTrue);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 17, targetAge: 16), isTrue);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 17, targetAge: 17), isTrue);
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 16, targetAge: 16),
+        isTrue,
+      );
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 16, targetAge: 17),
+        isTrue,
+      );
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 17, targetAge: 16),
+        isTrue,
+      );
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 17, targetAge: 17),
+        isTrue,
+      );
     });
 
     test('Erwachsene sehen Erwachsene (gleiche Gruppe)', () {
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 18, targetAge: 18), isTrue);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 19, targetAge: 19), isTrue);
-      expect(AgeSafetyRules.canViewProfile(viewerAge: 25, targetAge: 25), isTrue);
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 18, targetAge: 18),
+        isTrue,
+      );
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 19, targetAge: 19),
+        isTrue,
+      );
+      expect(
+        AgeSafetyRules.canViewProfile(viewerAge: 25, targetAge: 25),
+        isTrue,
+      );
     });
   });
 
@@ -160,7 +235,8 @@ void main() {
         expect(
           AgeSafetyRules.minFilterAge(alter),
           equals(erwartet),
-          reason: 'minFilterAge($alter) muss max_age_range_min($alter) = '
+          reason:
+              'minFilterAge($alter) muss max_age_range_min($alter) = '
               '$erwartet entsprechen',
         );
       });
@@ -277,114 +353,165 @@ void main() {
   group('AgeSafetyRules - arePhotosVisible', () {
     test('Minor target (16-17): photos only visible to other minors', () {
       // Minor target, minor viewer -> visible
-      expect(AgeSafetyRules.arePhotosVisible(
-        targetAge: 16,
-        viewerAge: 16,
-        blindModeEnabled: false,
-        revealPhotosAfterMatch: false,
-        isMatched: false,
-      ), isTrue);
+      expect(
+        AgeSafetyRules.arePhotosVisible(
+          targetAge: 16,
+          viewerAge: 16,
+          blindModeEnabled: false,
+          revealPhotosAfterMatch: false,
+          isMatched: false,
+        ),
+        isTrue,
+      );
 
-      expect(AgeSafetyRules.arePhotosVisible(
-        targetAge: 17,
-        viewerAge: 17,
-        blindModeEnabled: true,
-        revealPhotosAfterMatch: true,
-        isMatched: false,
-      ), isTrue);
+      expect(
+        AgeSafetyRules.arePhotosVisible(
+          targetAge: 17,
+          viewerAge: 17,
+          blindModeEnabled: true,
+          revealPhotosAfterMatch: true,
+          isMatched: false,
+        ),
+        isTrue,
+      );
 
       // Minor target, adult viewer -> NOT visible
-      expect(AgeSafetyRules.arePhotosVisible(
-        targetAge: 16,
-        viewerAge: 18,
-        blindModeEnabled: false,
-        revealPhotosAfterMatch: false,
-        isMatched: false,
-      ), isFalse);
+      expect(
+        AgeSafetyRules.arePhotosVisible(
+          targetAge: 16,
+          viewerAge: 18,
+          blindModeEnabled: false,
+          revealPhotosAfterMatch: false,
+          isMatched: false,
+        ),
+        isFalse,
+      );
 
-      expect(AgeSafetyRules.arePhotosVisible(
-        targetAge: 16,
-        viewerAge: 20,
-        blindModeEnabled: false,
-        revealPhotosAfterMatch: false,
-        isMatched: false,
-      ), isFalse);
+      expect(
+        AgeSafetyRules.arePhotosVisible(
+          targetAge: 16,
+          viewerAge: 20,
+          blindModeEnabled: false,
+          revealPhotosAfterMatch: false,
+          isMatched: false,
+        ),
+        isFalse,
+      );
     });
 
     test('Adult target (18+): follows blind mode settings', () {
       // Adult target, blind mode OFF -> visible immediately
-      expect(AgeSafetyRules.arePhotosVisible(
-        targetAge: 18,
-        viewerAge: 18,
-        blindModeEnabled: false,
-        revealPhotosAfterMatch: false,
-        isMatched: false,
-      ), isTrue);
+      expect(
+        AgeSafetyRules.arePhotosVisible(
+          targetAge: 18,
+          viewerAge: 18,
+          blindModeEnabled: false,
+          revealPhotosAfterMatch: false,
+          isMatched: false,
+        ),
+        isTrue,
+      );
 
-      expect(AgeSafetyRules.arePhotosVisible(
-        targetAge: 20,
-        viewerAge: 20,
-        blindModeEnabled: false,
-        revealPhotosAfterMatch: false,
-        isMatched: false,
-      ), isTrue);
+      expect(
+        AgeSafetyRules.arePhotosVisible(
+          targetAge: 20,
+          viewerAge: 20,
+          blindModeEnabled: false,
+          revealPhotosAfterMatch: false,
+          isMatched: false,
+        ),
+        isTrue,
+      );
 
       // Adult target, blind mode ON, not matched -> NOT visible
-      expect(AgeSafetyRules.arePhotosVisible(
-        targetAge: 18,
-        viewerAge: 18,
-        blindModeEnabled: true,
-        revealPhotosAfterMatch: true,
-        isMatched: false,
-      ), isFalse);
+      expect(
+        AgeSafetyRules.arePhotosVisible(
+          targetAge: 18,
+          viewerAge: 18,
+          blindModeEnabled: true,
+          revealPhotosAfterMatch: true,
+          isMatched: false,
+        ),
+        isFalse,
+      );
 
-      expect(AgeSafetyRules.arePhotosVisible(
-        targetAge: 25,
-        viewerAge: 25,
-        blindModeEnabled: true,
-        revealPhotosAfterMatch: true,
-        isMatched: false,
-      ), isFalse);
+      expect(
+        AgeSafetyRules.arePhotosVisible(
+          targetAge: 25,
+          viewerAge: 25,
+          blindModeEnabled: true,
+          revealPhotosAfterMatch: true,
+          isMatched: false,
+        ),
+        isFalse,
+      );
 
       // Adult target, blind mode ON, matched -> visible
-      expect(AgeSafetyRules.arePhotosVisible(
-        targetAge: 18,
-        viewerAge: 18,
-        blindModeEnabled: true,
-        revealPhotosAfterMatch: true,
-        isMatched: true,
-      ), isTrue);
+      expect(
+        AgeSafetyRules.arePhotosVisible(
+          targetAge: 18,
+          viewerAge: 18,
+          blindModeEnabled: true,
+          revealPhotosAfterMatch: true,
+          isMatched: true,
+        ),
+        isTrue,
+      );
 
-      expect(AgeSafetyRules.arePhotosVisible(
-        targetAge: 25,
-        viewerAge: 25,
-        blindModeEnabled: true,
-        revealPhotosAfterMatch: true,
-        isMatched: true,
-      ), isTrue);
+      expect(
+        AgeSafetyRules.arePhotosVisible(
+          targetAge: 25,
+          viewerAge: 25,
+          blindModeEnabled: true,
+          revealPhotosAfterMatch: true,
+          isMatched: true,
+        ),
+        isTrue,
+      );
 
       // Adult target, blind mode ON, matched, revealPhotosAfterMatch=false -> visible (match overrides)
-      expect(AgeSafetyRules.arePhotosVisible(
-        targetAge: 30,
-        viewerAge: 30,
-        blindModeEnabled: true,
-        revealPhotosAfterMatch: false,
-        isMatched: true,
-      ), isTrue);
+      expect(
+        AgeSafetyRules.arePhotosVisible(
+          targetAge: 30,
+          viewerAge: 30,
+          blindModeEnabled: true,
+          revealPhotosAfterMatch: false,
+          isMatched: true,
+        ),
+        isTrue,
+      );
     });
   });
 
   group('AgeSafetyRules - clampFilterAge', () {
     // v0.10.0 (Migration 154): Minderjaehrige sehen nur 16 und 17.
     test('Minor filter clamped to 16-17', () {
-      expect(AgeSafetyRules.clampFilterAge(viewerAge: 16, filterMin: 16, filterMax: 99),
-          equals((16, 17)));
-      expect(AgeSafetyRules.clampFilterAge(viewerAge: 17, filterMin: 10, filterMax: 30),
-          equals((16, 17)));
+      expect(
+        AgeSafetyRules.clampFilterAge(
+          viewerAge: 16,
+          filterMin: 16,
+          filterMax: 99,
+        ),
+        equals((16, 17)),
+      );
+      expect(
+        AgeSafetyRules.clampFilterAge(
+          viewerAge: 17,
+          filterMin: 10,
+          filterMax: 30,
+        ),
+        equals((16, 17)),
+      );
       // Obergrenze fuer Minderjaehrige ist jetzt 17 - beides wird
       // auf 17 geklemmt.
-      expect(AgeSafetyRules.clampFilterAge(viewerAge: 16, filterMin: 18, filterMax: 19),
-          equals((17, 17)));
+      expect(
+        AgeSafetyRules.clampFilterAge(
+          viewerAge: 16,
+          filterMin: 18,
+          filterMax: 19,
+        ),
+        equals((17, 17)),
+      );
     });
 
     // v0.10.0 (Migration 154): nach unten max. 10 Jahre unter dem
@@ -392,19 +519,55 @@ void main() {
     test('Adult filter clamped to eigenes Alter minus 10', () {
       // Ein 18-Jaehriger bekommt auf 18 geklemmt: 16 waere ein toter
       // Filter (der Server liefert fuer ihn nur Erwachsene).
-      expect(AgeSafetyRules.clampFilterAge(viewerAge: 18, filterMin: 16, filterMax: 99),
-          equals((18, 99)));
-      expect(AgeSafetyRules.clampFilterAge(viewerAge: 19, filterMin: 16, filterMax: 99),
-          equals((18, 99)));
-      expect(AgeSafetyRules.clampFilterAge(viewerAge: 20, filterMin: 16, filterMax: 99),
-          equals((18, 99)));
-      expect(AgeSafetyRules.clampFilterAge(viewerAge: 25, filterMin: 16, filterMax: 30),
-          equals((18, 30)));
-      expect(AgeSafetyRules.clampFilterAge(viewerAge: 40, filterMin: 16, filterMax: 99),
-          equals((30, 99)));
+      expect(
+        AgeSafetyRules.clampFilterAge(
+          viewerAge: 18,
+          filterMin: 16,
+          filterMax: 99,
+        ),
+        equals((18, 99)),
+      );
+      expect(
+        AgeSafetyRules.clampFilterAge(
+          viewerAge: 19,
+          filterMin: 16,
+          filterMax: 99,
+        ),
+        equals((18, 99)),
+      );
+      expect(
+        AgeSafetyRules.clampFilterAge(
+          viewerAge: 20,
+          filterMin: 16,
+          filterMax: 99,
+        ),
+        equals((18, 99)),
+      );
+      expect(
+        AgeSafetyRules.clampFilterAge(
+          viewerAge: 25,
+          filterMin: 16,
+          filterMax: 30,
+        ),
+        equals((18, 30)),
+      );
+      expect(
+        AgeSafetyRules.clampFilterAge(
+          viewerAge: 40,
+          filterMin: 16,
+          filterMax: 99,
+        ),
+        equals((30, 99)),
+      );
       // Untergrenze fuer 25-Jaehrige ist max(18, 25-10) = 18.
-      expect(AgeSafetyRules.clampFilterAge(viewerAge: 25, filterMin: 10, filterMax: 5),
-          equals((18, 18)));
+      expect(
+        AgeSafetyRules.clampFilterAge(
+          viewerAge: 25,
+          filterMin: 10,
+          filterMax: 5,
+        ),
+        equals((18, 18)),
+      );
     });
   });
 
@@ -413,26 +576,117 @@ void main() {
       // v0.10.0 (Migration 154): Minderjaehrige duerfen hoechstens
       // bis 17; Volljaehrige hoechstens 10 Jahre unter ihr eigenes
       // Alter.
-      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 16, filterMin: 16, filterMax: 17), isTrue);
-      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 18, filterMin: 18, filterMax: 30), isTrue);
-      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 20, filterMin: 18, filterMax: 35), isTrue);
-      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 20, filterMin: 18, filterMax: 25), isTrue);
-      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 40, filterMin: 30, filterMax: 60), isTrue);
+      expect(
+        AgeSafetyRules.isValidFilterAge(
+          viewerAge: 16,
+          filterMin: 16,
+          filterMax: 17,
+        ),
+        isTrue,
+      );
+      expect(
+        AgeSafetyRules.isValidFilterAge(
+          viewerAge: 18,
+          filterMin: 18,
+          filterMax: 30,
+        ),
+        isTrue,
+      );
+      expect(
+        AgeSafetyRules.isValidFilterAge(
+          viewerAge: 20,
+          filterMin: 18,
+          filterMax: 35,
+        ),
+        isTrue,
+      );
+      expect(
+        AgeSafetyRules.isValidFilterAge(
+          viewerAge: 20,
+          filterMin: 18,
+          filterMax: 25,
+        ),
+        isTrue,
+      );
+      expect(
+        AgeSafetyRules.isValidFilterAge(
+          viewerAge: 40,
+          filterMin: 30,
+          filterMax: 60,
+        ),
+        isTrue,
+      );
     });
 
     test('Invalid filter ranges', () {
       // Minderjaehrige ueber 17 hinaus, unter 16 hinunter, bei
       // Volljaehrigen mehr als 10 Jahre unter das eigene Alter.
-      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 16, filterMin: 16, filterMax: 20), isFalse);
-      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 16, filterMin: 15, filterMax: 17), isFalse);
-      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 20, filterMin: 15, filterMax: 35), isFalse);
-      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 16, filterMin: 20, filterMax: 16), isFalse);
-      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 20, filterMin: 16, filterMax: 35), isFalse);
-      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 40, filterMin: 25, filterMax: 60), isFalse);
+      expect(
+        AgeSafetyRules.isValidFilterAge(
+          viewerAge: 16,
+          filterMin: 16,
+          filterMax: 20,
+        ),
+        isFalse,
+      );
+      expect(
+        AgeSafetyRules.isValidFilterAge(
+          viewerAge: 16,
+          filterMin: 15,
+          filterMax: 17,
+        ),
+        isFalse,
+      );
+      expect(
+        AgeSafetyRules.isValidFilterAge(
+          viewerAge: 20,
+          filterMin: 15,
+          filterMax: 35,
+        ),
+        isFalse,
+      );
+      expect(
+        AgeSafetyRules.isValidFilterAge(
+          viewerAge: 16,
+          filterMin: 20,
+          filterMax: 16,
+        ),
+        isFalse,
+      );
+      expect(
+        AgeSafetyRules.isValidFilterAge(
+          viewerAge: 20,
+          filterMin: 16,
+          filterMax: 35,
+        ),
+        isFalse,
+      );
+      expect(
+        AgeSafetyRules.isValidFilterAge(
+          viewerAge: 40,
+          filterMin: 25,
+          filterMax: 60,
+        ),
+        isFalse,
+      );
       // Ein 18-Jaehriger mit Untergrenze 16: der Server liefert ihm
       // niemals einen Minderjaehrigen - der Filter waere tot.
-      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 18, filterMin: 16, filterMax: 30), isFalse);
-      expect(AgeSafetyRules.isValidFilterAge(viewerAge: 19, filterMin: 17, filterMax: 30), isFalse);
+      expect(
+        AgeSafetyRules.isValidFilterAge(
+          viewerAge: 18,
+          filterMin: 16,
+          filterMax: 30,
+        ),
+        isFalse,
+      );
+      expect(
+        AgeSafetyRules.isValidFilterAge(
+          viewerAge: 19,
+          filterMin: 17,
+          filterMax: 30,
+        ),
+        isFalse,
+      );
     });
   });
 }

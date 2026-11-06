@@ -23,8 +23,7 @@ import 'package:thestia/widgets/mode_icons.dart';
 ///   flutter test test/mode_symbol_ink_test.dart
 void main() {
   testWidgets('Tinten-Boxen messen', (tester) async {
-    final out = Directory(
-        '${Directory.systemTemp.path}/opencode/m133/symbole');
+    final out = Directory('${Directory.systemTemp.path}/opencode/m133/symbole');
     try {
       if (!out.existsSync()) out.createSync(recursive: true);
     } catch (_) {
@@ -40,27 +39,31 @@ void main() {
 
     for (final eintrag in faelle.entries) {
       final key = GlobalKey();
-      await tester.pumpWidget(MaterialApp(
-        home: Center(
-          // RepaintBoundary INNERHALB des Center: der Center gibt dem
-          // Kind lockere Constraints, das SizedBox bleibt also exakt
-          // 400x400 und die Randung erfasst genau den Icon-Bereich.
-          child: RepaintBoundary(
-            key: key,
-            child: Container(
-              color: const Color(0xFF000000),
-              width: k,
-              height: k,
-              child: CustomPaint(painter: eintrag.value(const Color(0xFFFFFFFF))),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Center(
+            // RepaintBoundary INNERHALB des Center: der Center gibt dem
+            // Kind lockere Constraints, das SizedBox bleibt also exakt
+            // 400x400 und die Randung erfasst genau den Icon-Bereich.
+            child: RepaintBoundary(
+              key: key,
+              child: Container(
+                color: const Color(0xFF000000),
+                width: k,
+                height: k,
+                child: CustomPaint(
+                  painter: eintrag.value(const Color(0xFFFFFFFF)),
+                ),
+              ),
             ),
           ),
         ),
-      ));
+      );
       await tester.pumpAndSettle();
 
       await tester.runAsync(() async {
-        final randung = key.currentContext?.findRenderObject()
-            as RenderRepaintBoundary?;
+        final randung =
+            key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
         if (randung == null) return;
         final bild = await randung.toImage();
         final daten = await bild.toByteData(format: ui.ImageByteFormat.png);
@@ -110,15 +113,19 @@ void main() {
               treffer++;
             }
           }
-          profil.add('${u(x.toDouble()).toStringAsFixed(1)}:'
-              '${'#' * (treffer ~/ 4)}');
+          profil.add(
+            '${u(x.toDouble()).toStringAsFixed(1)}:'
+            '${'#' * (treffer ~/ 4)}',
+          );
         }
         debugPrint('PROFIL ${eintrag.key}\n  ${profil.join(" ")}');
 
-        debugPrint('${eintrag.key}: Tinte x=${u(minX.toDouble()).toStringAsFixed(2)}..'
-            '${u(maxX.toDouble()).toStringAsFixed(2)}  '
-            'y=${u(minY.toDouble()).toStringAsFixed(2)}..'
-            '${u(maxY.toDouble()).toStringAsFixed(2)}');
+        debugPrint(
+          '${eintrag.key}: Tinte x=${u(minX.toDouble()).toStringAsFixed(2)}..'
+          '${u(maxX.toDouble()).toStringAsFixed(2)}  '
+          'y=${u(minY.toDouble()).toStringAsFixed(2)}..'
+          '${u(maxY.toDouble()).toStringAsFixed(2)}',
+        );
       });
       await tester.pumpAndSettle();
     }

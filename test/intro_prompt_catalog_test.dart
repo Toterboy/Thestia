@@ -11,15 +11,21 @@ void main() {
 
     test('jedes Thema hat drei Prompts, damit Rotation etwas bewirkt', () {
       for (final t in IntroPromptCatalog.themes) {
-        expect(t.promptKeys.length, greaterThanOrEqualTo(3),
-            reason: 'Thema ${t.id} hat zu wenige Prompts fuer Rotation');
+        expect(
+          t.promptKeys.length,
+          greaterThanOrEqualTo(3),
+          reason: 'Thema ${t.id} hat zu wenige Prompts fuer Rotation',
+        );
       }
     });
 
     test('jedes Thema hat mindestens DREI DISTINKTE Keys', () {
       for (final t in IntroPromptCatalog.themes) {
-        expect(t.promptKeys.toSet().length, t.promptKeys.length,
-            reason: 'Thema ${t.id} hat doppelte Keys - Rotation liefert Lücken');
+        expect(
+          t.promptKeys.toSet().length,
+          t.promptKeys.length,
+          reason: 'Thema ${t.id} hat doppelte Keys - Rotation liefert Lücken',
+        );
       }
     });
 
@@ -30,8 +36,11 @@ void main() {
 
     test('alle Keys sind global eindeutig', () {
       final all = IntroPromptCatalog.allPromptKeys;
-      expect(all.toSet().length, all.length,
-          reason: 'doppelte Keys über Themen hinweg');
+      expect(
+        all.toSet().length,
+        all.length,
+        reason: 'doppelte Keys über Themen hinweg',
+      );
     });
   });
 
@@ -46,25 +55,33 @@ void main() {
       expect(IntroPromptCatalog.rotated(seed: 0, perTheme: 3), hasLength(12));
     });
 
-    test('KRITISCH: gleicher Seed -> gleiches Ergebnis (Chips springen nicht)', () {
-      // Wenn der Seed pro build neu gewuerfelt wuerde, wuerde der Chip unter
-      // dem Finger weiterspringen. Deshalb muss die Funktion bei gleichem
-      // Seed exakt dasselbe liefern.
-      for (int seed = 0; seed < 50; seed++) {
-        expect(IntroPromptCatalog.rotated(seed: seed),
-            IntroPromptCatalog.rotated(seed: seed));
-      }
-    });
+    test(
+      'KRITISCH: gleicher Seed -> gleiches Ergebnis (Chips springen nicht)',
+      () {
+        // Wenn der Seed pro build neu gewuerfelt wuerde, wuerde der Chip unter
+        // dem Finger weiterspringen. Deshalb muss die Funktion bei gleichem
+        // Seed exakt dasselbe liefern.
+        for (int seed = 0; seed < 50; seed++) {
+          expect(
+            IntroPromptCatalog.rotated(seed: seed),
+            IntroPromptCatalog.rotated(seed: seed),
+          );
+        }
+      },
+    );
 
     test('rotiert ueber die Seeds', () {
       // Es gibt so viele distinkte Auswahlen wie ein Theme Prompts hat
       // (3). Wichtig ist, dass es MEHR als eine ist.
       final sets = <String>{
         for (int seed = 0; seed < 12; seed++)
-          IntroPromptCatalog.rotated(seed: seed).join('|')
+          IntroPromptCatalog.rotated(seed: seed).join('|'),
       };
-      expect(sets.length, greaterThanOrEqualTo(3),
-          reason: 'nahezu konstante Auswahl - Rotation wirkungslos');
+      expect(
+        sets.length,
+        greaterThanOrEqualTo(3),
+        reason: 'nahezu konstante Auswahl - Rotation wirkungslos',
+      );
     });
 
     test('Themen rotieren NICHT im Gleichtakt', () {
@@ -82,8 +99,11 @@ void main() {
       }
       // In mindestens einer Auswahl unterscheiden sich die Themen-Indizes.
       final mixed = idx.where((o) => o.toSet().length > 1).length;
-      expect(mixed, greaterThan(0),
-          reason: 'alle Themen zeigen stets denselben Index - Gleichtakt');
+      expect(
+        mixed,
+        greaterThan(0),
+        reason: 'alle Themen zeigen stets denselben Index - Gleichtakt',
+      );
     });
 
     test('jeder Seed liefert nur Keys, die es wirklich gibt', () {
@@ -170,8 +190,11 @@ void main() {
       for (final key in IntroPromptCatalog.allPromptKeys) {
         expect(valueOf(b.de, key), isNotEmpty, reason: 'DE leer: $key');
         expect(valueOf(b.en, key), isNotEmpty, reason: 'EN leer: $key');
-        expect(valueOf(b.de, key), isNot(valueOf(b.en, key)),
-            reason: 'DE == EN bei $key');
+        expect(
+          valueOf(b.de, key),
+          isNot(valueOf(b.en, key)),
+          reason: 'DE == EN bei $key',
+        );
       }
     });
 

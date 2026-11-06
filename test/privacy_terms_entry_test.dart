@@ -18,11 +18,7 @@ import 'package:thestia/screens/privacy/privacy_screen.dart';
 void main() {
   Future<void> zeigeScreen(WidgetTester tester) async {
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: PrivacyScreen(),
-        ),
-      ),
+      const ProviderScope(child: MaterialApp(home: PrivacyScreen())),
     );
     await tester.pump(const Duration(milliseconds: 400));
   }
@@ -31,17 +27,15 @@ void main() {
     final kachel = find.text(L10n.tWithoutContext('privacy.termsTitle'));
     if (kachel.evaluate().isNotEmpty) return;
     for (var i = 0; i < 12; i++) {
-      await tester.drag(
-        find.byType(Scrollable).first,
-        const Offset(0, -260),
-      );
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -260));
       await tester.pump(const Duration(milliseconds: 120));
       if (kachel.evaluate().isNotEmpty) return;
     }
   }
 
-  testWidgets('die Datenschutz-Einstellungen nennen die Nutzungsbedingungen',
-      (tester) async {
+  testWidgets('die Datenschutz-Einstellungen nennen die Nutzungsbedingungen', (
+    tester,
+  ) async {
     await zeigeScreen(tester);
     await scrolleZurKachel(tester);
 
@@ -51,8 +45,9 @@ void main() {
     );
   });
 
-  testWidgets('die Nutzungsbedingungen sind eine Kachel (kein blosser Text)',
-      (tester) async {
+  testWidgets('die Nutzungsbedingungen sind eine Kachel (kein blosser Text)', (
+    tester,
+  ) async {
     await zeigeScreen(tester);
     await scrolleZurKachel(tester);
 
@@ -63,8 +58,9 @@ void main() {
     expect(eintrag, findsOneWidget);
   });
 
-  testWidgets('das Impressum steht daneben (beides gehoert zusammen)',
-      (tester) async {
+  testWidgets('das Impressum steht daneben (beides gehoert zusammen)', (
+    tester,
+  ) async {
     await zeigeScreen(tester);
     await scrolleZurKachel(tester);
 

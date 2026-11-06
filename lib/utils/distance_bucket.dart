@@ -80,9 +80,9 @@ class DistanceBucket {
     if (km == 0) {
       return t('distance.bucketUnder').replaceAll('{km}', '$upper');
     }
-    return t('distance.bucketRange')
-        .replaceAll('{from}', '$km')
-        .replaceAll('{to}', '$upper');
+    return t(
+      'distance.bucketRange',
+    ).replaceAll('{from}', '$km').replaceAll('{to}', '$upper');
   }
 
   /// Bequemlichkeit: Stufe + Text in einem Aufruf.

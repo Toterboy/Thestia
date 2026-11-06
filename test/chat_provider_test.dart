@@ -114,19 +114,24 @@ void main() {
       final partner = _createPartner();
       final match = service.createMatch(partner);
 
-      service.addMessage(match.id, Message(
-        id: 'msg_1',
-        senderId: 'me',
-        receiverId: match.id,
-        text: 'Alt',
-        timestamp: DateTime.now(),
-      ));
+      service.addMessage(
+        match.id,
+        Message(
+          id: 'msg_1',
+          senderId: 'me',
+          receiverId: match.id,
+          text: 'Alt',
+          timestamp: DateTime.now(),
+        ),
+      );
 
       final newPartner = _createPartner(id: 'p2', name: 'Neu');
       service.resetMatch(match.id, partner: newPartner);
 
       expect(service.getMatchById(match.id), isNull);
-      final newMatch = service.getMatches().firstWhere((m) => m.partner.id == 'p2');
+      final newMatch = service.getMatches().firstWhere(
+        (m) => m.partner.id == 'p2',
+      );
       expect(newMatch.partner.name, 'Neu');
       expect(service.getMessages(newMatch.id), isEmpty);
     });
@@ -176,19 +181,21 @@ void main() {
       expect(container.read(chatProvider).length, 1);
     });
 
-    test('findOrCreateMatch navigierbare Match-ID: Chat-Detail findet Match',
-        () {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-      final notifier = container.read(chatProvider.notifier);
+    test(
+      'findOrCreateMatch navigierbare Match-ID: Chat-Detail findet Match',
+      () {
+        final container = ProviderContainer();
+        addTearDown(container.dispose);
+        final notifier = container.read(chatProvider.notifier);
 
-      final match = notifier.findOrCreateMatch('peer_1')!;
-      // Regression v0.9.0: vor der Fix wurde die PARTNER-ID navigiert
-      // (/chat/<peerId>), der Screen fand das Match anhand seiner
-      // generierten ID nicht -> "Dieser Chat existiert nicht mehr".
-      expect(notifier.getMatchById(match.id), isNotNull);
-      expect(notifier.getMatchById(match.id)!.partner.id, 'peer_1');
-    });
+        final match = notifier.findOrCreateMatch('peer_1')!;
+        // Regression v0.9.0: vor der Fix wurde die PARTNER-ID navigiert
+        // (/chat/<peerId>), der Screen fand das Match anhand seiner
+        // generierten ID nicht -> "Dieser Chat existiert nicht mehr".
+        expect(notifier.getMatchById(match.id), isNotNull);
+        expect(notifier.getMatchById(match.id)!.partner.id, 'peer_1');
+      },
+    );
 
     test('updatePartner ersetzt das Partner-Profil (QR-Server-Fetch)', () {
       final container = ProviderContainer();
@@ -196,7 +203,10 @@ void main() {
       final notifier = container.read(chatProvider.notifier);
 
       final match = notifier.findOrCreateMatch('peer_1')!;
-      notifier.updatePartner(match.id, _createPartner(id: 'peer_1', name: 'Lia'));
+      notifier.updatePartner(
+        match.id,
+        _createPartner(id: 'peer_1', name: 'Lia'),
+      );
 
       final updated = notifier.getMatchById(match.id)!;
       expect(updated.partner.name, 'Lia');
@@ -209,8 +219,11 @@ void main() {
       final notifier = container.read(chatProvider.notifier);
 
       for (var i = 1; i <= 5; i++) {
-        expect(notifier.findOrCreateMatch('peer_$i'), isNotNull,
-            reason: 'Kontakt $i muss bis zum Limit anlegbar sein');
+        expect(
+          notifier.findOrCreateMatch('peer_$i'),
+          isNotNull,
+          reason: 'Kontakt $i muss bis zum Limit anlegbar sein',
+        );
       }
       // Sechster Kontakt: Maximum erreicht -> null (kein stilles Verdrängen).
       expect(notifier.findOrCreateMatch('peer_6'), isNull);
@@ -230,10 +243,15 @@ void main() {
       }
       expect(notifier.findOrCreateMatch('peer_6'), isNull);
 
-      final fifth =
-          container.read(chatProvider).where((m) => m.isQrContact).first;
+      final fifth = container
+          .read(chatProvider)
+          .where((m) => m.isQrContact)
+          .first;
       notifier.deleteQrContact(fifth.id);
-      expect(container.read(chatProvider).where((m) => m.isQrContact).length, 4);
+      expect(
+        container.read(chatProvider).where((m) => m.isQrContact).length,
+        4,
+      );
 
       // Slot frei -> neuer Kontakt geht wieder.
       expect(notifier.findOrCreateMatch('peer_6'), isNotNull);
@@ -248,13 +266,16 @@ void main() {
       notifier.addMatch(partner);
       final match = container.read(chatProvider).first;
 
-      notifier.addMessage(match.id, Message(
-        id: 'p2p_1',
-        senderId: 'other',
-        receiverId: 'me',
-        text: 'Hey',
-        timestamp: DateTime.now(),
-      ));
+      notifier.addMessage(
+        match.id,
+        Message(
+          id: 'p2p_1',
+          senderId: 'other',
+          receiverId: 'me',
+          text: 'Hey',
+          timestamp: DateTime.now(),
+        ),
+      );
 
       final messages = notifier.messagesFor(match.id);
       expect(messages.length, 1);

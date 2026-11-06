@@ -1,4 +1,4 @@
-﻿import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/models/user_profile.dart';
 
 /// Ein erhaltener Like inklusive Profil (Vorstellung) des Likers.
 class ReceivedLike {
@@ -20,7 +20,9 @@ class ReceivedLike {
     return ReceivedLike(
       likeId: json['likeId'] as int,
       // Distanz kommt als Geschwister-Feld der RPC-Antwort (5-km-Schritte).
-      profile: distanceKm == null ? profile : profile.copyWith(distanceKm: distanceKm),
+      profile: distanceKm == null
+          ? profile
+          : profile.copyWith(distanceKm: distanceKm),
       createdAt: json['createdAt'] == null
           ? null
           : DateTime.tryParse(json['createdAt'] as String),
@@ -98,7 +100,9 @@ class MatchWithState {
     return MatchWithState(
       matchId: json['matchId'] as int,
       // Distanz kommt als Geschwister-Feld der RPC-Antwort (5-km-Schritte).
-      partner: distanceKm == null ? profile : profile.copyWith(distanceKm: distanceKm),
+      partner: distanceKm == null
+          ? profile
+          : profile.copyWith(distanceKm: distanceKm),
       unlockLevel: (json['unlockLevel'] as num?)?.toInt() ?? 0,
       failedAttempts: (json['failedAttempts'] as num?)?.toInt() ?? 0,
       createdVia: json['createdVia'] as String? ?? 'swipe',

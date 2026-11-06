@@ -36,10 +36,7 @@ Future<void> bestEffort(
 /// Für Schritte, die sofort fertig sind (ein Cache leeren, eine
 /// Identität zurücksetzen) - dort wäre ein `await` auf einen
 /// synchronen Aufruf nur eine leere Warteschleife.
-void bestEffortSync(
-  String beschreibung,
-  void Function() schritt,
-) {
+void bestEffortSync(String beschreibung, void Function() schritt) {
   try {
     schritt();
   } catch (fehler, stapel) {
@@ -81,11 +78,7 @@ Future<T> bestEffortOr<T>(
 }
 
 /// Wie [bestEffortOr], aber für einen Schritt, der nicht wartet.
-T bestEffortOrSync<T>(
-  String beschreibung,
-  T Function() schritt,
-  T fallback,
-) {
+T bestEffortOrSync<T>(String beschreibung, T Function() schritt, T fallback) {
   try {
     return schritt();
   } catch (fehler, stapel) {

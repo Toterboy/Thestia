@@ -49,9 +49,7 @@ class SeenNotifier extends StateNotifier<int> {
   Future<List<int>> _readInts(String key) async {
     final raw = await _storage.getString(key);
     if (raw == null || raw.isEmpty) return const [];
-    return (jsonDecode(raw) as List)
-        .map((e) => (e as num).toInt())
-        .toList();
+    return (jsonDecode(raw) as List).map((e) => (e as num).toInt()).toList();
   }
 
   Future<List<String>> _readStrings(String key) async {

@@ -85,8 +85,9 @@ class TransitModeSelector extends StatelessWidget {
             radius: _radius,
             title: L10n.t(context, mode.labelKey),
             description: L10n.t(context, 'transit.modeDesc.${mode.value}'),
-            thresholdLabel: L10n.tf(
-                context, 'transit.rssiValue', {'value': '${mode.rssiThreshold}'}),
+            thresholdLabel: L10n.tf(context, 'transit.rssiValue', {
+              'value': '${mode.rssiThreshold}',
+            }),
             onTap: () => onChanged(mode),
           ),
           if (mode != TransitMode.values.last) const SizedBox(height: 10),
@@ -124,8 +125,10 @@ class _RangeCard extends StatelessWidget {
 
     // Auswahl: Rand + Fuellung. Beide aus dem Theme, keine
     // Markenfarben im Widget.
-    final borderColor =
-        selected ? scheme.primary : scheme.outlineVariant.withValues(alpha: 0.6);    final background = selected
+    final borderColor = selected
+        ? scheme.primary
+        : scheme.outlineVariant.withValues(alpha: 0.6);
+    final background = selected
         ? scheme.primaryContainer.withValues(alpha: 0.55)
         : scheme.surface;
 
@@ -190,9 +193,9 @@ class _RangeCard extends StatelessWidget {
                                 Expanded(
                                   child: Text(
                                     title,
-                                    style: theme.textTheme.titleSmall
-                                        ?.copyWith(
-                                            fontWeight: FontWeight.w600),
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -207,8 +210,9 @@ class _RangeCard extends StatelessWidget {
                             ),
                             const SizedBox(height: 10),
                             _Threshold(
-                              filled:
-                                  TransitModeSelector.filledBars(mode.rssiThreshold),
+                              filled: TransitModeSelector.filledBars(
+                                mode.rssiThreshold,
+                              ),
                             ),
                           ],
                         ),
@@ -265,16 +269,16 @@ class _ModeBadge extends StatelessWidget {
 /// mehr in einem Chip versteckt, sondern steht als Klartext neben den
 /// Balken.
 /// Die gefuellten Balken einer Schwelle.
-  ///
-  /// Ohne Zahlenwert. "Signal ab -100 dBm" sagt einem Nutzer nichts -
-  /// die Einheit gehoert zu Funktechnik, nicht zu einer Dating-App. Die
-  /// Balken zeigen dasselbe Verhaeltnis und brauchen keine Uebersetzung:
-  /// mehr Balken = staerkeres Signal noetig = weniger Reichweite.
-  ///
-  /// Der Wert bleibt in der Semantics-Beschreibung der Kachel (oben im
-  /// `Semantics(... label: ...)`), damit Screenreader ihn vorlesen. Er
-  /// ist nur nicht mehr sichtbar.
-  class _Threshold extends StatelessWidget {
+///
+/// Ohne Zahlenwert. "Signal ab -100 dBm" sagt einem Nutzer nichts -
+/// die Einheit gehoert zu Funktechnik, nicht zu einer Dating-App. Die
+/// Balken zeigen dasselbe Verhaeltnis und brauchen keine Uebersetzung:
+/// mehr Balken = staerkeres Signal noetig = weniger Reichweite.
+///
+/// Der Wert bleibt in der Semantics-Beschreibung der Kachel (oben im
+/// `Semantics(... label: ...)`), damit Screenreader ihn vorlesen. Er
+/// ist nur nicht mehr sichtbar.
+class _Threshold extends StatelessWidget {
   const _Threshold({required this.filled});
 
   final int filled;

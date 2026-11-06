@@ -54,9 +54,9 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       // (auch die dieses Geräts) global invalidiert - ein gestohlener
       // Refresh-Token überlebt den Passwortwechsel damit nicht. Der
       // Nutzer meldet sich einfach mit dem neuen Passwort neu an.
-            // Fail-open beim lokalen SignOut: Das Passwort ist trotzdem
-        // geändert; beim nächsten App-Start greift die Session-Validierung.
-await bestEffort('signOut.timeout', () async {
+      // Fail-open beim lokalen SignOut: Das Passwort ist trotzdem
+      // geändert; beim nächsten App-Start greift die Session-Validierung.
+      await bestEffort('signOut.timeout', () async {
         await SupabaseService.client.auth
             .signOut(scope: SignOutScope.global)
             .timeout(const Duration(seconds: 5));
@@ -71,7 +71,8 @@ await bestEffort('signOut.timeout', () async {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                L10n.tf(context, 'common.errorWith', {'error': '$e'})),
+              L10n.tf(context, 'common.errorWith', {'error': '$e'}),
+            ),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -138,7 +139,11 @@ await bestEffort('signOut.timeout', () async {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Icon(Icons.lock_reset, size: 64, color: Theme.of(context).colorScheme.primary),
+                      Icon(
+                        Icons.lock_reset,
+                        size: 64,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         L10n.t(context, 'reset.heading'),
@@ -161,9 +166,11 @@ await bestEffort('signOut.timeout', () async {
                           labelText: L10n.t(context, 'reset.newPassword'),
                           border: const OutlineInputBorder(),
                           suffixIcon: IconButton(
-                            icon: Icon(_obscure
-                                ? Icons.visibility
-                                : Icons.visibility_off),
+                            icon: Icon(
+                              _obscure
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
                             onPressed: () =>
                                 setState(() => _obscure = !_obscure),
                           ),

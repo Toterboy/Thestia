@@ -359,8 +359,8 @@ class _ContactShareFormState extends ConsumerState<_ContactShareForm> {
   void _scheduleClipboardClear(String text) {
     _clipboardTimer?.cancel();
     _clipboardTimer = Timer(const Duration(seconds: 60), () async {
-            // Zwischenablage nicht lesbar - dann bleibt sie, wie sie ist.
-await bestEffort('ClipboardData', () async {
+      // Zwischenablage nicht lesbar - dann bleibt sie, wie sie ist.
+      await bestEffort('ClipboardData', () async {
         final data = await Clipboard.getData('text/plain');
         if (data?.text == text) {
           await Clipboard.setData(const ClipboardData(text: ''));
@@ -622,11 +622,7 @@ class _PresetTile extends StatelessWidget {
                       color: preset.farbe.withValues(alpha: 0.14),
                       borderRadius: BorderRadius.circular(11),
                     ),
-                    child: Icon(
-                      preset.icon,
-                      size: 20,
-                      color: preset.farbe,
-                    ),
+                    child: Icon(preset.icon, size: 20, color: preset.farbe),
                   ),
                   const SizedBox(width: 12),
                   Expanded(child: Text(label)),

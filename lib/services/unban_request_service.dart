@@ -24,10 +24,7 @@ class UnbanRequestService {
     try {
       final response = await SupabaseService.client.functions.invoke(
         'request-unban',
-        body: {
-          'email': email.trim(),
-          'reason': reason.trim(),
-        },
+        body: {'email': email.trim(), 'reason': reason.trim()},
       );
 
       if (response.status == 200) {

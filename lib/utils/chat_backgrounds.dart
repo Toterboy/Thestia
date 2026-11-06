@@ -91,9 +91,9 @@ class ChatBackgroundView extends StatelessWidget {
           ),
           // Overlay für Lesbarkeit in beiden Modi.
           Container(
-            color: Theme.of(context)
-                .scaffoldBackgroundColor
-                .withValues(alpha: 0.55),
+            color: Theme.of(
+              context,
+            ).scaffoldBackgroundColor.withValues(alpha: 0.55),
           ),
         ],
       );
@@ -187,7 +187,8 @@ class _PatternPainter extends CustomPainter {
     for (var i = 0; i <= steps; i++) {
       final t = i / steps * 2 * math.pi;
       final x = 16 * math.pow(math.sin(t), 3);
-      final y = 13 * math.cos(t) -
+      final y =
+          13 * math.cos(t) -
           5 * math.cos(2 * t) -
           2 * math.cos(3 * t) -
           math.cos(4 * t);
@@ -235,8 +236,7 @@ class _PatternPainter extends CustomPainter {
             pts.add(Offset(x, y));
           }
         }
-        canvas.drawPoints(
-            ui.PointMode.points, pts, fill..strokeWidth = 6);
+        canvas.drawPoints(ui.PointMode.points, pts, fill..strokeWidth = 6);
 
       case ChatBackgrounds.lines:
         // Alle Diagonalen in EIN Pfad: 1 drawPath statt ~270 drawLine.
@@ -253,8 +253,7 @@ class _PatternPainter extends CustomPainter {
         // Ein Pfad, der alle Kacheln enthaelt. [addPath] verschiebt die
         // bereits fertige, massgestabte Form - ohne die Kurve neu zu
         // berechnen. Abschluss: EIN drawPath fuer das ganze Muster.
-        final shape =
-            id == ChatBackgrounds.hearts ? _heartShape : _starShape;
+        final shape = id == ChatBackgrounds.hearts ? _heartShape : _starShape;
         final path = Path();
         var row = 0;
         for (var y = _tile / 2; y < size.height + _tile; y += _tile) {

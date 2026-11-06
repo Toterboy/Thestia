@@ -41,9 +41,9 @@ class WebRTCService {
   /// gewünscht ist: ice-config Edge Function um kurzlebige TURN-REST-
   /// Credentials erweitern (siehe Git-Historie).
   static final List<Map<String, dynamic>> _fallbackIceServers = [
-    {'urls': 'stun:stun.nextcloud.com:443'},  // Hetzner, DE
-    {'urls': 'stun:stun.miwifi.com:3478'},    // OVH, FR
-    {'urls': 'stun:stun.voipgate.com:3478'},  // DE
+    {'urls': 'stun:stun.nextcloud.com:443'}, // Hetzner, DE
+    {'urls': 'stun:stun.miwifi.com:3478'}, // OVH, FR
+    {'urls': 'stun:stun.voipgate.com:3478'}, // DE
     {'urls': 'stun:stun.voipstunt.com:3478'}, // NL
   ];
 
@@ -51,9 +51,15 @@ class WebRTCService {
   List<Map<String, dynamic>>? _cachedIceServers;
   DateTime? _cacheExpiry;
 
-  final StreamController<String> _incomingMessageController = StreamController<String>.broadcast();
-  final StreamController<({Uint8List data, String contentType, Map<String, dynamic>? metadata})> _incomingBinaryController =
-      StreamController<({Uint8List data, String contentType, Map<String, dynamic>? metadata})>.broadcast();
+  final StreamController<String> _incomingMessageController =
+      StreamController<String>.broadcast();
+  final StreamController<
+    ({Uint8List data, String contentType, Map<String, dynamic>? metadata})
+  >
+  _incomingBinaryController =
+      StreamController<
+        ({Uint8List data, String contentType, Map<String, dynamic>? metadata})
+      >.broadcast();
 
   /// Kontroll-Kanal (Anruf-Signaling): entschlüsselte JSON-Payloads, die mit
   /// dem Präfix [controlPrefix] gesendet wurden. Landet NICHT im normalen
@@ -63,8 +69,13 @@ class WebRTCService {
 
   /// Kontroll-Audio-Kanal: Sprachpakete eines Anrufs (contentType audio/call).
   /// Ebenfalls E2E-verschlüsselt und vom normalen Chat getrennt.
-  final StreamController<({Uint8List data, String contentType, Map<String, dynamic>? metadata})> _controlAudioController =
-      StreamController<({Uint8List data, String contentType, Map<String, dynamic>? metadata})>.broadcast();
+  final StreamController<
+    ({Uint8List data, String contentType, Map<String, dynamic>? metadata})
+  >
+  _controlAudioController =
+      StreamController<
+        ({Uint8List data, String contentType, Map<String, dynamic>? metadata})
+      >.broadcast();
 
   /// Präfix für Steuerungsnachrichten im verschlüsselten Textkanal.
   static const String controlPrefix = 'CALL:';
@@ -82,8 +93,10 @@ class WebRTCService {
   /// ContentType für Sprachpakete eines Anrufs.
   static const String callAudioContentType = 'audio/call';
 
-  final StreamController<RTCDataChannelState> _connectionStateController = StreamController<RTCDataChannelState>.broadcast();
-  final StreamController<RTCIceConnectionState> _iceConnectionStateController = StreamController<RTCIceConnectionState>.broadcast();
+  final StreamController<RTCDataChannelState> _connectionStateController =
+      StreamController<RTCDataChannelState>.broadcast();
+  final StreamController<RTCIceConnectionState> _iceConnectionStateController =
+      StreamController<RTCIceConnectionState>.broadcast();
 
   RealtimeChannel? _signalingChannel;
   String? _myUserId;
@@ -127,7 +140,7 @@ class WebRTCService {
   /// Signaling-Broadcast (Audit: beide Endpunkte laufen gegen denselben
   /// Supabase-Host wie der ApiClient - derselbe Pin-Schutz gilt).
   WebRTCService(this._encryptionService, {http.Client? httpClient})
-      : _httpClient = httpClient ?? _buildPinnedClient();
+    : _httpClient = httpClient ?? _buildPinnedClient();
 
   static http.Client _buildPinnedClient() {
     if (kIsWeb) {
@@ -158,7 +171,8 @@ class WebRTCService {
       // wurden vom Gateway mit 401 abgelehnt (Fallback STUN rettete die
       // Verbindung, aber die Config kam nie). Basis-URL sauber ableiten.
       final supabaseUrl = deriveFunctionBaseUrl(
-          Supabase.instance.client.rest.url);
+        Supabase.instance.client.rest.url,
+      );
       final token = Supabase.instance.client.auth.currentSession?.accessToken;
       if (token == null) throw StateError('Keine aktive Session');
       // HARTES Timeout: Der Offer-Aufbau wartet hier drauf - ohne Limit
@@ -237,26 +251,29 @@ class WebRTCService {
 
   /// Stream eingehender entschlüsselter Binärdaten (Bilder, Audio).
   Stream<({Uint8List data, String contentType, Map<String, dynamic>? metadata})>
-      get incomingBinary => _incomingBinaryController.stream;
+  get incomingBinary => _incomingBinaryController.stream;
 
   /// Stream entschlüsselter Kontroll-Nachrichten (Anruf-Signaling).
   Stream<Map<String, dynamic>> get callControl => _controlController.stream;
 
   /// Stream entschlüsselter Anruf-Sprachpakete.
   Stream<({Uint8List data, String contentType, Map<String, dynamic>? metadata})>
-      get callAudio => _controlAudioController.stream;
+  get callAudio => _controlAudioController.stream;
 
   /// Stream des DataChannel-Verbindungsstatus.
-  Stream<RTCDataChannelState> get connectionState => _connectionStateController.stream;
+  Stream<RTCDataChannelState> get connectionState =>
+      _connectionStateController.stream;
 
   /// Stream des ICE-Verbindungsstatus.
-  Stream<RTCIceConnectionState> get iceConnectionState => _iceConnectionStateController.stream;
+  Stream<RTCIceConnectionState> get iceConnectionState =>
+      _iceConnectionStateController.stream;
 
   bool get isConnected => _isConnected;
 
   /// True, wenn der DataChannel offen und sendebereit ist (v0.9.1:
   /// Anruf-Invite wartet hierauf statt sofort zu scheitern).
-  bool get isDataChannelOpen => _dataChannel?.state == RTCDataChannelState.RTCDataChannelOpen;
+  bool get isDataChannelOpen =>
+      _dataChannel?.state == RTCDataChannelState.RTCDataChannelOpen;
 
   /// Aktiviert die Signaling-Schicht via Supabase Realtime für [myUserId]
   /// und [peerId]. Wird von [P2PChatService.connect] aufgerufen.
@@ -308,7 +325,8 @@ class WebRTCService {
     // geprueft und verweigert -> "Signaling-Kanal nicht verfügbar".
     // Fix (Supabase-Doku): setAuth mit dem aktuellen Session-Token
     // unmittelbar vor dem Subscribe erzwingen.
-    final accessToken = Supabase.instance.client.auth.currentSession?.accessToken;
+    final accessToken =
+        Supabase.instance.client.auth.currentSession?.accessToken;
     if (accessToken != null) {
       try {
         await Supabase.instance.client.realtime.setAuth(accessToken);
@@ -345,7 +363,9 @@ class WebRTCService {
           final msg = Map<String, dynamic>.from(payload as Map);
           unawaited(_routeSignaling(msg));
         } catch (e) {
-          if (kDebugMode) debugPrint('[WebRTC] Fehler beim Signaling-Routing: $e');
+          if (kDebugMode) {
+            debugPrint('[WebRTC] Fehler beim Signaling-Routing: $e');
+          }
         }
       },
     );
@@ -353,8 +373,10 @@ class WebRTCService {
     _signalingChannel!.subscribe((status, error) {
       if (subscribed.isCompleted) return;
       if (kDebugMode) {
-        debugPrint('[WebRTC] Signaling-Subscribe-Status: ${status.name}'
-            '${error != null ? ' ($error)' : ''}');
+        debugPrint(
+          '[WebRTC] Signaling-Subscribe-Status: ${status.name}'
+          '${error != null ? ' ($error)' : ''}',
+        );
       }
       if (status == RealtimeSubscribeStatus.subscribed) {
         subscribed.complete();
@@ -450,7 +472,9 @@ class WebRTCService {
         final sdp = msg['sdp'] as String?;
         if (sdp == null || _isConnected || _remoteDescriptionSet) break;
         if (_peerConnection == null || utf8Length(sdp) > _maxSdpBytes) {
-          if (kDebugMode) debugPrint('[WebRTC] Answer verworfen (kein PC/zu groß).');
+          if (kDebugMode) {
+            debugPrint('[WebRTC] Answer verworfen (kein PC/zu groß).');
+          }
           break;
         }
         await handleAnswer(_currentPeerId!, sdp);
@@ -556,7 +580,9 @@ class WebRTCService {
       _setupDataChannel(channel);
     };
 
-    await _peerConnection!.setRemoteDescription(RTCSessionDescription(offerSdp, 'offer'));
+    await _peerConnection!.setRemoteDescription(
+      RTCSessionDescription(offerSdp, 'offer'),
+    );
     _remoteDescriptionSet = true;
     // Pufferierte ICE-Kandidaten (vor der Remote-Description eingetroffen)
     // jetzt nachreichen - sie sind nicht verloren.
@@ -576,7 +602,9 @@ class WebRTCService {
   Future<void> handleAnswer(String peerId, String answerSdp) async {
     final pc = _peerConnection;
     if (pc == null) {
-      if (kDebugMode) debugPrint('[WebRTC] Answer ohne PeerConnection verworfen.');
+      if (kDebugMode) {
+        debugPrint('[WebRTC] Answer ohne PeerConnection verworfen.');
+      }
       return;
     }
     await pc.setRemoteDescription(RTCSessionDescription(answerSdp, 'answer'));
@@ -589,7 +617,10 @@ class WebRTCService {
   /// werden gepuffert statt verworfen (Fix: Kandidatenverlust beim
   /// Offer-Handling). Die Flush-Punkte (handleOffer/handleAnswer)
   /// reichen sie nach setRemoteDescription nach.
-  Future<void> handleIceCandidate(String peerId, RTCIceCandidate candidate) async {
+  Future<void> handleIceCandidate(
+    String peerId,
+    RTCIceCandidate candidate,
+  ) async {
     if (!_remoteDescriptionSet) {
       _candidateBacklog.add(candidate);
       if (_candidateBacklog.length > 100) _candidateBacklog.removeAt(0);
@@ -608,7 +639,9 @@ class WebRTCService {
       try {
         await pc.addCandidate(candidate);
       } catch (e) {
-        if (kDebugMode) debugPrint('[WebRTC] Backlog-Kandidat fehlgeschlagen: $e');
+        if (kDebugMode) {
+          debugPrint('[WebRTC] Backlog-Kandidat fehlgeschlagen: $e');
+        }
       }
     }
     _candidateBacklog.clear();
@@ -616,11 +649,15 @@ class WebRTCService {
 
   /// Sendet eine verschlüsselte Nachricht über den DataChannel.
   Future<void> sendMessage(String plaintext) async {
-    if (_dataChannel == null || _dataChannel!.state != RTCDataChannelState.RTCDataChannelOpen) {
+    if (_dataChannel == null ||
+        _dataChannel!.state != RTCDataChannelState.RTCDataChannelOpen) {
       throw StateError('DataChannel nicht verbunden');
     }
 
-    final encrypted = await _encryptionService.encryptMessage(_currentPeerId!, plaintext);
+    final encrypted = await _encryptionService.encryptMessage(
+      _currentPeerId!,
+      plaintext,
+    );
     final messageJson = jsonEncode({
       'type': 'signal_message',
       'ciphertext': base64Encode(encrypted.serialize()),
@@ -646,12 +683,20 @@ class WebRTCService {
   }
 
   /// Sendet Binärdaten (Bild, Audio) verschlüsselt.
-  Future<void> sendBinary(Uint8List data, {String contentType = 'application/octet-stream', Map<String, dynamic>? metadata}) async {
-    if (_dataChannel == null || _dataChannel!.state != RTCDataChannelState.RTCDataChannelOpen) {
+  Future<void> sendBinary(
+    Uint8List data, {
+    String contentType = 'application/octet-stream',
+    Map<String, dynamic>? metadata,
+  }) async {
+    if (_dataChannel == null ||
+        _dataChannel!.state != RTCDataChannelState.RTCDataChannelOpen) {
       throw StateError('DataChannel nicht verbunden');
     }
 
-    final encrypted = await _encryptionService.encryptBinary(_currentPeerId!, data);
+    final encrypted = await _encryptionService.encryptBinary(
+      _currentPeerId!,
+      data,
+    );
     final envelope = <String, dynamic>{
       'type': 'signal_binary',
       'ciphertext': base64Encode(encrypted.serialize()),
@@ -695,9 +740,10 @@ class WebRTCService {
       if (state == RTCIceConnectionState.RTCIceConnectionStateConnected ||
           state == RTCIceConnectionState.RTCIceConnectionStateCompleted) {
         _isConnected = true;
-      } else if (state == RTCIceConnectionState.RTCIceConnectionStateDisconnected ||
-                 state == RTCIceConnectionState.RTCIceConnectionStateFailed ||
-                 state == RTCIceConnectionState.RTCIceConnectionStateClosed) {
+      } else if (state ==
+              RTCIceConnectionState.RTCIceConnectionStateDisconnected ||
+          state == RTCIceConnectionState.RTCIceConnectionStateFailed ||
+          state == RTCIceConnectionState.RTCIceConnectionStateClosed) {
         _isConnected = false;
       }
     };
@@ -705,7 +751,10 @@ class WebRTCService {
 
   /// Erstellt den DataChannel (nur Initiator).
   Future<void> _createDataChannel() async {
-    final channel = await _peerConnection!.createDataChannel(_dataChannelLabel, RTCDataChannelInit());
+    final channel = await _peerConnection!.createDataChannel(
+      _dataChannelLabel,
+      RTCDataChannelInit(),
+    );
     _setupDataChannel(channel);
   }
 
@@ -751,8 +800,8 @@ class WebRTCService {
         if (type == 'signal_message') {
           final CiphertextMessage signalMessage =
               messageType == CiphertextMessage.prekeyType
-                  ? PreKeySignalMessage(ciphertext)
-                  : SignalMessage.fromSerialized(ciphertext);
+              ? PreKeySignalMessage(ciphertext)
+              : SignalMessage.fromSerialized(ciphertext);
 
           final plaintext = await _encryptionService.decryptMessage(
             _currentPeerId!,
@@ -766,8 +815,9 @@ class WebRTCService {
             final payload = bestEffortOrSync<Map<String, dynamic>?>(
               'jsonDecode',
               () {
-                final dekodiert =
-                    jsonDecode(plaintext.substring(controlPrefix.length));
+                final dekodiert = jsonDecode(
+                  plaintext.substring(controlPrefix.length),
+                );
                 return dekodiert is Map<String, dynamic> ? dekodiert : null;
               },
               null,
@@ -783,8 +833,8 @@ class WebRTCService {
           // da decryptMessage einen UTF-8-Text-Decoder anwendet.
           final CiphertextMessage signalMessage =
               messageType == CiphertextMessage.prekeyType
-                  ? PreKeySignalMessage(ciphertext)
-                  : SignalMessage.fromSerialized(ciphertext);
+              ? PreKeySignalMessage(ciphertext)
+              : SignalMessage.fromSerialized(ciphertext);
 
           final plaintext = await _encryptionService.decryptBinary(
             _currentPeerId!,
@@ -797,10 +847,13 @@ class WebRTCService {
           final metadataRaw = data['metadata'];
           final metadata =
               (metadataRaw is Map && metadataRaw.length <= _maxMetadataEntries)
-                  ? Map<String, dynamic>.from(metadataRaw)
-                  : null;
-          final record =
-              (data: plaintext, contentType: contentType, metadata: metadata);
+              ? Map<String, dynamic>.from(metadataRaw)
+              : null;
+          final record = (
+            data: plaintext,
+            contentType: contentType,
+            metadata: metadata,
+          );
           // Anruf-Sprachpakete in den Kontroll-Stream, sonst normaler
           // Binärkanal (Bilder, Sprachnachrichten).
           if (contentType == callAudioContentType) {

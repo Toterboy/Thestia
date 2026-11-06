@@ -52,18 +52,25 @@ class CrashJournal {
   /// redigiert wird: der Fehlertyp und die Stackform (Zeilennummern,
   /// Klassen) - denn nur damit ist der Absturz überhaupt zuzuordnen.
   static Future<void> capture(Object error, StackTrace? stack) async {
-        // Journal ist best-effort - niemals wegen eines Journals crashen.
-await bestEffort('_redigiere.substring', () async {
+    // Journal ist best-effort - niemals wegen eines Journals crashen.
+    await bestEffort('_redigiere.substring', () async {
       final prefs = await SharedPreferences.getInstance();
       final stackText = (stack?.toString() ?? '')
           .split('\n')
           .take(12)
           .join('\n');
       await prefs.setString(
-          _key, _redigiere(error.toString()).substring(
-              0, _redigiere(error.toString()).length.clamp(0, 400)));
-      await prefs.setString('${_key}_stack',
-          _redigiere(stackText).substring(0, _redigiere(stackText).length.clamp(0, 2000)));
+        _key,
+        _redigiere(
+          error.toString(),
+        ).substring(0, _redigiere(error.toString()).length.clamp(0, 400)),
+      );
+      await prefs.setString(
+        '${_key}_stack',
+        _redigiere(
+          stackText,
+        ).substring(0, _redigiere(stackText).length.clamp(0, 2000)),
+      );
     });
   }
 
@@ -92,22 +99,29 @@ await bestEffort('_redigiere.substring', () async {
     var out = text;
     // E-Mail-Adressen.
     out = out.replaceAll(
-        RegExp(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'),
-        '<E-Mail entfernt>');
+      RegExp(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'),
+      '<E-Mail entfernt>',
+    );
     // Bearer-Token (mit oder ohne Prefix).
     //
     // HINWEIS: Dart kennt keine Inline-Flags wie (?i) - die
     // Gross-/Kleinschreibung wird ueber das Argument gesteuert.
     out = out.replaceAll(
-        RegExp(r'bearer\s+[A-Za-z0-9._\-]{20,}', caseSensitive: false),
-        '<Token entfernt>');
+      RegExp(r'bearer\s+[A-Za-z0-9._\-]{20,}', caseSensitive: false),
+      '<Token entfernt>',
+    );
     // JWT (drei durch Punkte getrennte Base64-Teile).
     out = out.replaceAll(
-        RegExp(r'eyJ[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{5,}'),
-        '<Token entfernt>');
+      RegExp(
+        r'eyJ[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{5,}',
+      ),
+      '<Token entfernt>',
+    );
     // Lange zufaellige Zeichenketten (Hex-Hashes, Base64-Bloecke).
     out = out.replaceAll(
-        RegExp(r'\b[A-Fa-f0-9]{32,}\b'), '<Schluessel entfernt>');
+      RegExp(r'\b[A-Fa-f0-9]{32,}\b'),
+      '<Schluessel entfernt>',
+    );
     return out;
   }
 

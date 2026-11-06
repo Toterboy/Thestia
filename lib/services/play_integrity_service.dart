@@ -32,8 +32,9 @@ class PlayIntegrityService {
         return null;
       }
       final nonce = _newNonce();
-      final token = await fetchViaChannel(nonce)
-          .timeout(const Duration(seconds: 25), onTimeout: () => null);
+      final token = await fetchViaChannel(
+        nonce,
+      ).timeout(const Duration(seconds: 25), onTimeout: () => null);
       if (token == null || token.isEmpty) return null;
       return (token: token, nonce: nonce);
     } catch (_) {
@@ -44,10 +45,9 @@ class PlayIntegrityService {
   /// Reiner Channel-Aufruf (testbar via gemocktem BinaryMessenger).
   static Future<String?> fetchViaChannel(String nonce) async {
     try {
-      return await _channel.invokeMethod<String>(
-        'requestToken',
-        {'nonce': nonce},
-      );
+      return await _channel.invokeMethod<String>('requestToken', {
+        'nonce': nonce,
+      });
     } on PlatformException catch (e) {
       debugPrint('[Integrity] nicht verfügbar: ${e.code}');
       return null;

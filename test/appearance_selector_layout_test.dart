@@ -36,8 +36,7 @@ Widget _host(String value) {
   );
 }
 
-double _center(WidgetTester tester, Finder f) =>
-    tester.getRect(f).center.dx;
+double _center(WidgetTester tester, Finder f) => tester.getRect(f).center.dx;
 
 void main() {
   // Suche nach den drei Segment-Beschriftungen anhand ihrer Texte.
@@ -66,7 +65,8 @@ void main() {
       expect(
         (textCenter - iconCenter).abs(),
         lessThanOrEqualTo(0.5),
-        reason: 'Text "${entry.key}" ist um '
+        reason:
+            'Text "${entry.key}" ist um '
             '${(textCenter - iconCenter).toStringAsFixed(1)} px aus der '
             'Mitte - er muesste mittig ueber dem Symbol stehen',
       );
@@ -85,8 +85,12 @@ void main() {
     //
     // Vorher waeren es 16 px plus diese 2 px gewesen.
     double widthOf(String text) => tester
-        .getRect(find.ancestor(of: caption(text),
-            matching: find.byType(AnimatedContainer)))
+        .getRect(
+          find.ancestor(
+            of: caption(text),
+            matching: find.byType(AnimatedContainer),
+          ),
+        )
         .width;
 
     await tester.pumpWidget(_host('light'));
@@ -110,7 +114,8 @@ void main() {
       expect(
         (e.value.$2 - e.value.$1).abs(),
         lessThanOrEqualTo(borderStep),
-        reason: '${e.key} aendert seine Breite um '
+        reason:
+            '${e.key} aendert seine Breite um '
             '${(e.value.$2 - e.value.$1).toStringAsFixed(1)} px beim Wechsel '
             '- erlaubt ist nur der Rahmenwechsel (2 px). Ein Sprung von 16 px '
             'wuerde bedeuten, dass der Haken wieder am Text klebt.',
@@ -118,58 +123,64 @@ void main() {
     }
   });
 
-// ---------------------------------------------------------------------------
-// Zweiter Befund, eigene Ursache.
-// ---------------------------------------------------------------------------
-// Der erste Test verglich Textmitte gegen ICONmitte. Beide lagen
-// korrekt uebereinander - nur an der FALSCHEN Stelle: beide waren im
-// Segment nach links verschoben.
-//
-// Ursache: ein Stack richtet sein nicht positioniertes Kind standard-
-// maessig oben links aus. Die Column ist schmal, der Kasten ist durch
-// die Mindestbreite (92 px) breiter. Bei "Hell" ist der Unterschied am
-// groessten.
-//
-// Dieser Test misst deshalb gegen die Segmentkante, nicht gegen das
-// Symbol: genau die Groesse, die ein Nutzer als "nicht mittig" sieht.
-testWidgets('Symbol und Beschriftung sitzen mittig IM Segment',
-    (tester) async {
-  await tester.pumpWidget(_host('light'));
-  await tester.pumpAndSettle();
+  // ---------------------------------------------------------------------------
+  // Zweiter Befund, eigene Ursache.
+  // ---------------------------------------------------------------------------
+  // Der erste Test verglich Textmitte gegen ICONmitte. Beide lagen
+  // korrekt uebereinander - nur an der FALSCHEN Stelle: beide waren im
+  // Segment nach links verschoben.
+  //
+  // Ursache: ein Stack richtet sein nicht positioniertes Kind standard-
+  // maessig oben links aus. Die Column ist schmal, der Kasten ist durch
+  // die Mindestbreite (92 px) breiter. Bei "Hell" ist der Unterschied am
+  // groessten.
+  //
+  // Dieser Test misst deshalb gegen die Segmentkante, nicht gegen das
+  // Symbol: genau die Groesse, die ein Nutzer als "nicht mittig" sieht.
+  testWidgets('Symbol und Beschriftung sitzen mittig IM Segment', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_host('light'));
+    await tester.pumpAndSettle();
 
-  for (final entry in {
-    'Hell': Icons.light_mode_outlined,
-    'System': Icons.brightness_auto_outlined,
-    'Dunkel': Icons.dark_mode_outlined,
-  }.entries) {
-    final icon = find.byIcon(entry.value);
-    final text = caption(entry.key);
+    for (final entry in {
+      'Hell': Icons.light_mode_outlined,
+      'System': Icons.brightness_auto_outlined,
+      'Dunkel': Icons.dark_mode_outlined,
+    }.entries) {
+      final icon = find.byIcon(entry.value);
+      final text = caption(entry.key);
 
-    // Das Segment ist der Vorfahr mit dem AnimatedContainer. Gesucht
-    // wird der naechste Container, der breiter ist als der Inhalt -
-    // das ist genau der, der den sichtbaren Rahmen zeichnet.
-    final box = find.ancestor(
-      of: icon,
-      matching: find.byType(AnimatedContainer),
-    );
-    expect(box, findsWidgets, reason: 'Segment-Rahmen fuer ${entry.key} fehlt');
+      // Das Segment ist der Vorfahr mit dem AnimatedContainer. Gesucht
+      // wird der naechste Container, der breiter ist als der Inhalt -
+      // das ist genau der, der den sichtbaren Rahmen zeichnet.
+      final box = find.ancestor(
+        of: icon,
+        matching: find.byType(AnimatedContainer),
+      );
+      expect(
+        box,
+        findsWidgets,
+        reason: 'Segment-Rahmen fuer ${entry.key} fehlt',
+      );
 
-    final ink = tester.getRect(box.first);
-    final iconRect = tester.getRect(icon);
+      final ink = tester.getRect(box.first);
+      final iconRect = tester.getRect(icon);
 
-    // 1 px Toleranz: halbe Pixel und Rundung im Text-Layout.
-    expect(
-      (iconRect.center.dx - ink.center.dx).abs(),
-      lessThanOrEqualTo(1.0),
-      reason: 'Symbol "${entry.key}" ist um '
-          '${(iconRect.center.dx - ink.center.dx).toStringAsFixed(1)} px '
-          'aus der Segmentmitte verschoben.',
-    );
-    expect(
-      (_center(tester, text) - ink.center.dx).abs(),
-      lessThanOrEqualTo(1.0),
-      reason: 'Text "${entry.key}" ist nicht mittig im Segment.',
-    );
-  }
-});
+      // 1 px Toleranz: halbe Pixel und Rundung im Text-Layout.
+      expect(
+        (iconRect.center.dx - ink.center.dx).abs(),
+        lessThanOrEqualTo(1.0),
+        reason:
+            'Symbol "${entry.key}" ist um '
+            '${(iconRect.center.dx - ink.center.dx).toStringAsFixed(1)} px '
+            'aus der Segmentmitte verschoben.',
+      );
+      expect(
+        (_center(tester, text) - ink.center.dx).abs(),
+        lessThanOrEqualTo(1.0),
+        reason: 'Text "${entry.key}" ist nicht mittig im Segment.',
+      );
+    }
+  });
 }

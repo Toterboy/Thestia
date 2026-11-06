@@ -34,7 +34,8 @@ class RelayMessage {
       senderId: json['sender'] as String,
       text: json['text'] as String? ?? '',
       kind: json['kind'] as String? ?? 'text',
-      createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
           DateTime.now(),
     );
   }
@@ -52,8 +53,7 @@ class RelayService {
 
   final Ref _ref;
 
-  EncryptionService get _encryption =>
-      _ref.read(encryptionServiceProvider);
+  EncryptionService get _encryption => _ref.read(encryptionServiceProvider);
   PreKeyService get _prekey => _ref.read(preKeyServiceProvider);
 
   /// Verschlüsselt [text] für [peerId] und legt ihn im Relay ab.
@@ -100,10 +100,12 @@ class RelayService {
   static const int _maxDecryptRetries = 5;
   final Map<int, int> _decryptFailures = {};
 
-  Future<List<RelayMessage>> fetchPending({String? from, bool ack = true}) async {
+  Future<List<RelayMessage>> fetchPending({
+    String? from,
+    bool ack = true,
+  }) async {
     if (!SupabaseService.isInitialized) return const [];
-    final response =
-        await SupabaseService.client.rpc('relay_fetch');
+    final response = await SupabaseService.client.rpc('relay_fetch');
     final rows = response is List ? response : const <dynamic>[];
     final out = <RelayMessage>[];
     final ackIds = <int>[];
@@ -113,23 +115,19 @@ class RelayService {
         // Fremde Absender (anderer Chat) überspringen, OHNE sie zu
         // bestätigen - ihr Chat holt sie später selbst ab.
         if (from != null && map['sender'] != from) continue;
-        final cipherBytes =
-            base64Decode(map['ciphertext'] as String);
-        final msgType = (map['msgType'] as num?)?.toInt() ??
-            CiphertextMessage.prekeyType;
+        final cipherBytes = base64Decode(map['ciphertext'] as String);
+        final msgType =
+            (map['msgType'] as num?)?.toInt() ?? CiphertextMessage.prekeyType;
         final CiphertextMessage signalMessage =
             msgType == CiphertextMessage.prekeyType
-                ? PreKeySignalMessage(cipherBytes)
-                : SignalMessage.fromSerialized(cipherBytes);
+            ? PreKeySignalMessage(cipherBytes)
+            : SignalMessage.fromSerialized(cipherBytes);
         final senderId = map['sender'] as String;
         // KEIN ensureSession hier: Für das Entschlüsseln wird die
         // Session automatisch aus der PreKey-Nachricht aufgebaut. Ein
         // fehlgeschlagener Bundle-Fetch würde sonst die Nachricht
         // blockieren.
-        final text = await _encryption.decryptMessage(
-          senderId,
-          signalMessage,
-        );
+        final text = await _encryption.decryptMessage(senderId, signalMessage);
         out.add(RelayMessage.fromJson({...map, 'text': text}));
         ackIds.add((map['id'] as num).toInt());
         _decryptFailures.remove((map['id'] as num).toInt());
@@ -147,11 +145,15 @@ class RelayService {
           // Dauerhaft unlesbar: jetzt erst löschen.
           ackIds.add(rowId);
           _decryptFailures.remove(rowId);
-          debugPrint('[Relay] Nachricht $rowId nach $failures Versuchen '
-              'endgültig verworfen: $e');
+          debugPrint(
+            '[Relay] Nachricht $rowId nach $failures Versuchen '
+            'endgültig verworfen: $e',
+          );
         } else {
-          debugPrint('[Relay] Entschlüsselung fehlgeschlagen ($failures/'
-              '$_maxDecryptRetries), Nachricht bleibt im Relay: $e');
+          debugPrint(
+            '[Relay] Entschlüsselung fehlgeschlagen ($failures/'
+            '$_maxDecryptRetries), Nachricht bleibt im Relay: $e',
+          );
         }
       }
     }
@@ -169,10 +171,7 @@ class RelayService {
   Future<void> ackRows(List<int> ids) async {
     if (ids.isEmpty) return;
     try {
-      await SupabaseService.client.rpc(
-        'relay_ack',
-        params: {'p_ids': ids},
-      );
+      await SupabaseService.client.rpc('relay_ack', params: {'p_ids': ids});
     } catch (e) {
       debugPrint('[Relay] Ack fehlgeschlagen: $e');
     }

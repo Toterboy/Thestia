@@ -45,8 +45,9 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            L10n.tf(context, 'bugreport.maxImages',
-                {'n': '${BugReportLimits.maxImages}'}),
+            L10n.tf(context, 'bugreport.maxImages', {
+              'n': '${BugReportLimits.maxImages}',
+            }),
           ),
           behavior: SnackBarBehavior.floating,
         ),
@@ -70,11 +71,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
     if (!valid) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            L10n.t(context, 'bugreport.badFormat'),
-          ),
-        ),
+        SnackBar(content: Text(L10n.t(context, 'bugreport.badFormat'))),
       );
       return;
     }
@@ -85,11 +82,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
       // EXIF-Entfernung) wird der Screenshot NICHT angehängt.
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            L10n.t(context, 'bugreport.prepareFailed'),
-          ),
-        ),
+        SnackBar(content: Text(L10n.t(context, 'bugreport.prepareFailed'))),
       );
       return;
     }
@@ -101,7 +94,8 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
 
   bool _isValidImage(Uint8List bytes, String filename) {
     final lower = filename.toLowerCase();
-    final hasValidExtension = lower.endsWith('.jpg') ||
+    final hasValidExtension =
+        lower.endsWith('.jpg') ||
         lower.endsWith('.jpeg') ||
         lower.endsWith('.png');
 
@@ -161,13 +155,16 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
   }
 
   List<String> _base64Images() {
-    return _images.map((image) {
-      try {
-        return base64Encode(image);
-      } catch (_) {
-        return '';
-      }
-    }).where((value) => value.isNotEmpty).toList();
+    return _images
+        .map((image) {
+          try {
+            return base64Encode(image);
+          } catch (_) {
+            return '';
+          }
+        })
+        .where((value) => value.isNotEmpty)
+        .toList();
   }
 
   Future<void> _submitBrevo() async {
@@ -227,9 +224,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
               FilledButton.icon(
                 onPressed: () async {
                   await _launchUrl(
-                    Uri.parse(
-                      'https://github.com/Toterboy/Thestia/issues',
-                    ),
+                    Uri.parse('https://github.com/Toterboy/Thestia/issues'),
                   );
                 },
                 icon: const Icon(Icons.open_in_browser),
@@ -266,7 +261,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
                   }
                   if (value.length > BugReportLimits.maxDescriptionLength) {
                     return L10n.tf(context, 'bug.descLong', {
-                      'n': '${BugReportLimits.maxDescriptionLength}'
+                      'n': '${BugReportLimits.maxDescriptionLength}',
                     });
                   }
                   return null;
@@ -343,7 +338,7 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
               Text(
                 L10n.tf(context, 'bug.limits', {
                   'images': '${BugReportLimits.maxImages}',
-                  'text': '${BugReportLimits.maxDescriptionLength}'
+                  'text': '${BugReportLimits.maxDescriptionLength}',
                 }),
                 style: Theme.of(context).textTheme.bodySmall,
               ),

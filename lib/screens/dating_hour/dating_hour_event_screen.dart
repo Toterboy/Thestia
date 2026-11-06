@@ -26,7 +26,8 @@ class DatingHourEventScreen extends ConsumerStatefulWidget {
   const DatingHourEventScreen({super.key});
 
   @override
-  ConsumerState<DatingHourEventScreen> createState() => _DatingHourEventScreenState();
+  ConsumerState<DatingHourEventScreen> createState() =>
+      _DatingHourEventScreenState();
 }
 
 class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen>
@@ -115,7 +116,8 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen>
     );
     final remindAt = start.subtract(const Duration(minutes: 10));
     final now = ServerTimeService.instance.getVerifiedNow();
-    if (remindAt.isBefore(now) || remindAt.difference(now) > const Duration(hours: 24)) {
+    if (remindAt.isBefore(now) ||
+        remindAt.difference(now) > const Duration(hours: 24)) {
       return;
     }
 
@@ -146,9 +148,7 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen>
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(L10n.t(ctx, 'dh.event.joinConfirmTitle')),
-        content: Text(
-          L10n.t(ctx, 'dh.event.joinConfirmBody'),
-        ),
+        content: Text(L10n.t(ctx, 'dh.event.joinConfirmBody')),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -187,8 +187,10 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(L10n.tf(context, 'common.errorWith',
-                  {'error': e.message}))),
+            content: Text(
+              L10n.tf(context, 'common.errorWith', {'error': e.message}),
+            ),
+          ),
         );
       }
     }
@@ -210,8 +212,10 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(L10n.tf(context, 'common.errorWith',
-                  {'error': e.message}))),
+            content: Text(
+              L10n.tf(context, 'common.errorWith', {'error': e.message}),
+            ),
+          ),
         );
       }
     }
@@ -242,9 +246,11 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen>
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(rejoin
-              ? L10n.t(context, 'dh.event.autoJoinOn')
-              : L10n.t(context, 'dh.event.autoJoinOff')),
+          content: Text(
+            rejoin
+                ? L10n.t(context, 'dh.event.autoJoinOn')
+                : L10n.t(context, 'dh.event.autoJoinOff'),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -271,15 +277,23 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                '${L10n.t(context, 'dh.event.welcomeBack')} '
-                '${L10n.t(context, 'dh.event.prefsNote')}'),
+              '${L10n.t(context, 'dh.event.welcomeBack')} '
+              '${L10n.t(context, 'dh.event.prefsNote')}',
+            ),
           ),
         );
       }
     } on DatingHourException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(L10n.t(context, 'dh.event.autoJoinFailed').replaceAll('{error}', e.message))),
+          SnackBar(
+            content: Text(
+              L10n.t(
+                context,
+                'dh.event.autoJoinFailed',
+              ).replaceAll('{error}', e.message),
+            ),
+          ),
         );
       }
     }
@@ -346,84 +360,93 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen>
         if (mounted) context.go(AppRoutes.swipeModeSelection);
       },
       child: Scaffold(
-      appBar: AppBar(
-        title: Text(L10n.t(context, 'dh.event.title')),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          // Dating Hour wird via context.go(...) erreicht (kein Stack zum
-          // poppen) -> zurück zum Entdecken-Tab navigieren.
-          onPressed: () => context.go(AppRoutes.swipeModeSelection),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              // Event UND aktive Session neu laden.
-              ref.invalidate(currentDatingHourEventProvider);
-              ref.invalidate(myActiveDatingHourSessionProvider);
-            },
-            tooltip: L10n.t(context, 'common.refresh'),
+        appBar: AppBar(
+          title: Text(L10n.t(context, 'dh.event.title')),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            // Dating Hour wird via context.go(...) erreicht (kein Stack zum
+            // poppen) -> zurück zum Entdecken-Tab navigieren.
+            onPressed: () => context.go(AppRoutes.swipeModeSelection),
           ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // B-05: Ohne verifizierte Server-Zeit sind Countdown/Status
-            // manipulationsanfällig (lokale Uhr) — Nutzer transparent warnen.
-            if (!ServerTimeService.instance.isVerified)
-              const _ServerTimeWarningBanner(),
-            // Event fällt aus: zu wenige Teilnehmer (Migration 067).
-            if (event.status == 'cancelled') ...[
-              Card(
-                color: Theme.of(context).colorScheme.errorContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Icon(Icons.event_busy,
-                          color: Theme.of(context).colorScheme.onErrorContainer),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          L10n.t(context, 'dh.event.cancelledToday'),
-                          style: TextStyle(
-                            color:
-                                Theme.of(context).colorScheme.onErrorContainer,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-            // Fortschritt zum Teilnehmer-Ziel: "X von 20" + was fehlt
-            // (Ziel in der DB-Logik verankert, Migration 067).
-            if (event.status != 'cancelled') ...[
-              _ParticipantProgress(eventId: event.id),
-              const SizedBox(height: 16),
-            ],
-            _EventStatusCard(
-              event: event,
-              isRunning: isRunning,
-              isEnded: isEnded,
-              isParticipating: isParticipating,
-              minutesUntilStart: minutesUntilStart,
-              minutesUntilEnd: minutesUntilEnd,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: () {
+                // Event UND aktive Session neu laden.
+                ref.invalidate(currentDatingHourEventProvider);
+                ref.invalidate(myActiveDatingHourSessionProvider);
+              },
+              tooltip: L10n.t(context, 'common.refresh'),
             ),
-            const SizedBox(height: 24),
-            _buildActionArea(event, isRunning, isEnded, isParticipating, canJoin),
-            const SizedBox(height: 24),
-            const _EventInfoCard(),
-            const SizedBox(height: 24),
-            const _RulesCard(),
           ],
         ),
-      ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // B-05: Ohne verifizierte Server-Zeit sind Countdown/Status
+              // manipulationsanfällig (lokale Uhr) — Nutzer transparent warnen.
+              if (!ServerTimeService.instance.isVerified)
+                const _ServerTimeWarningBanner(),
+              // Event fällt aus: zu wenige Teilnehmer (Migration 067).
+              if (event.status == 'cancelled') ...[
+                Card(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.event_busy,
+                          color: Theme.of(context).colorScheme.onErrorContainer,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            L10n.t(context, 'dh.event.cancelledToday'),
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onErrorContainer,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+              // Fortschritt zum Teilnehmer-Ziel: "X von 20" + was fehlt
+              // (Ziel in der DB-Logik verankert, Migration 067).
+              if (event.status != 'cancelled') ...[
+                _ParticipantProgress(eventId: event.id),
+                const SizedBox(height: 16),
+              ],
+              _EventStatusCard(
+                event: event,
+                isRunning: isRunning,
+                isEnded: isEnded,
+                isParticipating: isParticipating,
+                minutesUntilStart: minutesUntilStart,
+                minutesUntilEnd: minutesUntilEnd,
+              ),
+              const SizedBox(height: 24),
+              _buildActionArea(
+                event,
+                isRunning,
+                isEnded,
+                isParticipating,
+                canJoin,
+              ),
+              const SizedBox(height: 24),
+              const _EventInfoCard(),
+              const SizedBox(height: 24),
+              const _RulesCard(),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -500,11 +523,15 @@ class _DatingHourEventScreenState extends ConsumerState<DatingHourEventScreen>
 
 String _formatDuration(BuildContext context, int minutes) {
   String mins(int m) => L10n.tf(
-      context, m == 1 ? 'dh.duration.minute' : 'dh.duration.minutes',
-      {'m': '$m'});
+    context,
+    m == 1 ? 'dh.duration.minute' : 'dh.duration.minutes',
+    {'m': '$m'},
+  );
   String hrs(int h) => L10n.tf(
-      context, h == 1 ? 'dh.duration.hour' : 'dh.duration.hours',
-      {'h': '$h'});
+    context,
+    h == 1 ? 'dh.duration.hour' : 'dh.duration.hours',
+    {'h': '$h'},
+  );
   if (minutes < 60) return mins(minutes);
   final h = minutes ~/ 60;
   final m = minutes % 60;
@@ -523,8 +550,7 @@ class _ParticipantProgress extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return FutureBuilder<int>(
-      future:
-          ref.read(datingHourServiceProvider).getParticipantCount(eventId),
+      future: ref.read(datingHourServiceProvider).getParticipantCount(eventId),
       builder: (context, snapshot) {
         final count = snapshot.data ?? 0;
         return Card(
@@ -543,11 +569,12 @@ class _ParticipantProgress extends ConsumerWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        L10n.tf(context, 'dh.event.participants',
-                            {'n': '$count'}),
+                        L10n.tf(context, 'dh.event.participants', {
+                          'n': '$count',
+                        }),
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ],
@@ -556,8 +583,8 @@ class _ParticipantProgress extends ConsumerWidget {
                 Text(
                   L10n.t(context, 'dh.event.participantsSub'),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -578,9 +605,9 @@ class _ActiveSessionButton extends ConsumerWidget {
     final sessionAsync = ref.watch(myActiveDatingHourSessionProvider(eventId));
 
     return sessionAsync.when(
-        loading: () => _PrimaryActionButton(
-          icon: Icons.hourglass_top,
-          label: L10n.t(context, 'dh.searching'),
+      loading: () => _PrimaryActionButton(
+        icon: Icons.hourglass_top,
+        label: L10n.t(context, 'dh.searching'),
         onPressed: null,
         color: Colors.grey,
       ),
@@ -671,7 +698,10 @@ class _ErrorScreen extends StatelessWidget {
             const Icon(Icons.error_outline, size: 48, color: Colors.red),
             const SizedBox(height: 16),
             Text(
-              L10n.t(context, 'dh.event.loadErrorFull').replaceAll('{error}', error.toString()),
+              L10n.t(
+                context,
+                'dh.event.loadErrorFull',
+              ).replaceAll('{error}', error.toString()),
               textAlign: TextAlign.center,
             ),
           ],
@@ -726,9 +756,10 @@ class _EventStatusCard extends StatelessWidget {
     final title = isRunning
         ? L10n.t(context, 'dh.event.liveNow')
         : isEnded
-            ? L10n.t(context, 'dh.event.ended')
-            : L10n.tf(context, 'dh.event.nextAt',
-                {'date': _formatDate(event.eventDate)});
+        ? L10n.t(context, 'dh.event.ended')
+        : L10n.tf(context, 'dh.event.nextAt', {
+            'date': _formatDate(event.eventDate),
+          });
 
     return Card(
       color: isRunning ? colorScheme.primaryContainer : null,
@@ -751,9 +782,9 @@ class _EventStatusCard extends StatelessWidget {
                   child: Text(
                     title,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: isRunning ? colorScheme.onPrimaryContainer : null,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      color: isRunning ? colorScheme.onPrimaryContainer : null,
+                    ),
                   ),
                 ),
               ],
@@ -762,8 +793,8 @@ class _EventStatusCard extends StatelessWidget {
             Text(
               '${_pad(event.startHour)}:${_pad(event.startMinute)} bis ${_pad(event.endHour)}:${_pad(event.endMinute)} Uhr',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: isRunning ? colorScheme.onPrimaryContainer : null,
-                  ),
+                color: isRunning ? colorScheme.onPrimaryContainer : null,
+              ),
             ),
             const SizedBox(height: 16),
             Wrap(
@@ -773,22 +804,24 @@ class _EventStatusCard extends StatelessWidget {
                 _InfoChip(
                   icon: Icons.people,
                   label: isParticipating
-                    ? L10n.t(context, 'dh.event.chipParticipating')
-                    : L10n.t(context, 'dh.event.chipNotParticipating'),
+                      ? L10n.t(context, 'dh.event.chipParticipating')
+                      : L10n.t(context, 'dh.event.chipNotParticipating'),
                   color: isRunning ? colorScheme.onPrimaryContainer : null,
                 ),
                 if (isRunning)
                   _InfoChip(
                     icon: Icons.timer,
-                    label: L10n.tf(context, 'dh.event.remaining',
-                        {'d': _formatDuration(context, minutesUntilEnd)}),
+                    label: L10n.tf(context, 'dh.event.remaining', {
+                      'd': _formatDuration(context, minutesUntilEnd),
+                    }),
                     color: colorScheme.onPrimaryContainer,
                   )
                 else if (!isEnded && minutesUntilStart > 0)
                   _InfoChip(
                     icon: Icons.timer,
-                    label: L10n.tf(context, 'dh.event.startIn',
-                        {'d': _formatDuration(context, minutesUntilStart)}),
+                    label: L10n.tf(context, 'dh.event.startIn', {
+                      'd': _formatDuration(context, minutesUntilStart),
+                    }),
                     color: colorScheme.primary,
                   ),
               ],
@@ -823,10 +856,8 @@ class _EventStatusCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         isRunning
-                            ? L10n.t(context,
-                                'dh.event.participatingLive')
-                            : L10n.t(context,
-                                'dh.event.participatingWaiting'),
+                            ? L10n.t(context, 'dh.event.participatingLive')
+                            : L10n.t(context, 'dh.event.participatingWaiting'),
                         style: TextStyle(
                           color: isRunning
                               ? colorScheme.onPrimaryContainer
@@ -861,7 +892,8 @@ class _InfoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveColor = color ?? Theme.of(context).colorScheme.onSurfaceVariant;
+    final effectiveColor =
+        color ?? Theme.of(context).colorScheme.onSurfaceVariant;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -876,9 +908,9 @@ class _InfoChip extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: effectiveColor,
-                  fontWeight: FontWeight.w500,
-                ),
+              color: effectiveColor,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),
@@ -932,9 +964,9 @@ class _EventInfoCard extends StatelessWidget {
           children: [
             Text(
               L10n.t(context, 'dh.info.title'),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             _InfoRow(
@@ -992,16 +1024,18 @@ class _InfoRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w600)),
-                Text(subtitle,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                Text(
+                  title,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                Text(
+                  subtitle,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ],
             ),
           ),
@@ -1025,10 +1059,9 @@ class _RulesCard extends StatelessWidget {
           children: [
             Text(
               L10n.t(context, 'dh.event.rulesTitle'),
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             _RuleItem('1', L10n.t(context, 'dh.event.rule.1')),
@@ -1078,7 +1111,9 @@ class _RuleItem extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Expanded(child: Text(text, style: Theme.of(context).textTheme.bodyMedium)),
+          Expanded(
+            child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
+          ),
         ],
       ),
     );

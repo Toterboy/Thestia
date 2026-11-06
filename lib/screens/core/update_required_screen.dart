@@ -39,8 +39,11 @@ class UpdateRequiredScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.system_update_alt,
-                    size: 56, color: Theme.of(context).colorScheme.primary),
+                Icon(
+                  Icons.system_update_alt,
+                  size: 56,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
                 const SizedBox(height: 24),
                 Text(
                   L10n.t(context, 'update.required'),
@@ -75,24 +78,21 @@ class UpdateRequiredScreen extends StatelessWidget {
     final uris = [
       Uri.parse('market://details?id=com.thestia.app'),
       Uri.parse(
-          'https://play.google.com/store/apps/details?id=com.thestia.app'),
+        'https://play.google.com/store/apps/details?id=com.thestia.app',
+      ),
     ];
     for (final uri in uris) {
       // naechste Option versuchen
-      final gestartet = await bestEffortOr(
-        'launchUrl',
-        () async {
-          // Nur den ersten Eintrag versuchen, der ueberhaupt startbar
-          // ist - sonst tappt der Nutzer auf einen Store, den es auf
-          // dem Geraet nicht gibt.
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-            return true;
-          }
-          return false;
-        },
-        false,
-      );
+      final gestartet = await bestEffortOr('launchUrl', () async {
+        // Nur den ersten Eintrag versuchen, der ueberhaupt startbar
+        // ist - sonst tappt der Nutzer auf einen Store, den es auf
+        // dem Geraet nicht gibt.
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          return true;
+        }
+        return false;
+      }, false);
       if (gestartet) return;
     }
   }

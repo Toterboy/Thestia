@@ -41,12 +41,24 @@ class SwipeModeSelectionScreen extends ConsumerWidget {
             headerKey: 'dm.groupMeet',
             verificationState: verificationState,
             modes: [
-              (DiscoveryMode.findMatch,
-                  () => _openMode(context, ref, DiscoveryMode.findMatch,
-                          AppRoutes.findYourMatch)),
-              (DiscoveryMode.datingHour,
-                  () => _openMode(context, ref, DiscoveryMode.datingHour,
-                          AppRoutes.datingHourEvent)),
+              (
+                DiscoveryMode.findMatch,
+                () => _openMode(
+                  context,
+                  ref,
+                  DiscoveryMode.findMatch,
+                  AppRoutes.findYourMatch,
+                ),
+              ),
+              (
+                DiscoveryMode.datingHour,
+                () => _openMode(
+                  context,
+                  ref,
+                  DiscoveryMode.datingHour,
+                  AppRoutes.datingHourEvent,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -54,9 +66,15 @@ class SwipeModeSelectionScreen extends ConsumerWidget {
             headerKey: 'dm.groupDirect',
             verificationState: verificationState,
             modes: [
-              (DiscoveryMode.randomChat,
-                  () => _openMode(context, ref, DiscoveryMode.randomChat,
-                          AppRoutes.randomChat)),
+              (
+                DiscoveryMode.randomChat,
+                () => _openMode(
+                  context,
+                  ref,
+                  DiscoveryMode.randomChat,
+                  AppRoutes.randomChat,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -64,12 +82,24 @@ class SwipeModeSelectionScreen extends ConsumerWidget {
             headerKey: 'dm.groupOnTheGo',
             verificationState: verificationState,
             modes: [
-              (DiscoveryMode.qrScan,
-                  () => _openMode(context, ref, DiscoveryMode.qrScan,
-                          AppRoutes.qrScan)),
-              (DiscoveryMode.transitSpark,
-                  () => _openMode(context, ref, DiscoveryMode.transitSpark,
-                          AppRoutes.transitRadar)),
+              (
+                DiscoveryMode.qrScan,
+                () => _openMode(
+                  context,
+                  ref,
+                  DiscoveryMode.qrScan,
+                  AppRoutes.qrScan,
+                ),
+              ),
+              (
+                DiscoveryMode.transitSpark,
+                () => _openMode(
+                  context,
+                  ref,
+                  DiscoveryMode.transitSpark,
+                  AppRoutes.transitRadar,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -88,12 +118,15 @@ class SwipeModeSelectionScreen extends ConsumerWidget {
                         color: Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
                       const SizedBox(width: 8),
-Text(
-L10n.t(context, 'common.hint'),
-style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Text(
+                        L10n.t(context, 'common.hint'),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onPrimaryContainer,
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                     ],
                   ),
@@ -112,7 +145,6 @@ style: Theme.of(context).textTheme.titleMedium?.copyWith(
       ),
     );
   }
-
 }
 
 /// Modus nur bei aktivem Profil öffnen (v0.9.1): Ist das Profil
@@ -123,8 +155,12 @@ style: Theme.of(context).textTheme.titleMedium?.copyWith(
 /// dem Absprung geprueft, damit die Sperre nicht erst auf der
 /// Radarseite sichtbar wird. Fail-closed - ohne Geburtsdatum bleibt
 /// der Modus zu, genau wie in der Datenbank (Migration 131).
-void _openMode(BuildContext context, WidgetRef ref, DiscoveryMode mode,
-    String route) {
+void _openMode(
+  BuildContext context,
+  WidgetRef ref,
+  DiscoveryMode mode,
+  String route,
+) {
   // Verifikationssperre (v0.10.0).
   //
   // Geprueft wird der DREISTUFIGE Zustand: wer "wird geprueft" ist,
@@ -196,9 +232,14 @@ void _showAdultOnlyDialog(
         size: 40,
       ),
       title: Text(L10n.t(ctx, 'transit.adultOnly.title')),
-      content: Text(L10n.t(ctx, missingBirthDate
-          ? 'transit.adultOnly.missingAge'
-          : 'transit.adultOnly.body')),
+      content: Text(
+        L10n.t(
+          ctx,
+          missingBirthDate
+              ? 'transit.adultOnly.missingAge'
+              : 'transit.adultOnly.body',
+        ),
+      ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(),
@@ -279,21 +320,28 @@ bool _modeNeedsVerification(DiscoveryMode mode) =>
 /// auch dann erzeugt wurde, wenn das Symbol nicht angezeigt wurde.
 extension DiscoveryModeSymbol on DiscoveryMode {
   Widget symbol(Color color, {double size = 28}) => switch (this) {
-        DiscoveryMode.findMatch => ModeSymbol((c) => FindSparkPainter(c),
-            size: size, color: color),
-        DiscoveryMode.transitSpark => ModeSymbol(
-            (c) => TransitSparkPainter(c),
-            size: size,
-            color: color),
-        DiscoveryMode.randomChat => ModeSymbol(
-            (c) => QuestionChatPainter(c),
-            size: size,
-            color: color),
-        DiscoveryMode.datingHour =>
-          Icon(Icons.event, color: color, size: size),
-        DiscoveryMode.qrScan =>
-          Icon(Icons.qr_code_scanner, color: color, size: size),
-      };
+    DiscoveryMode.findMatch => ModeSymbol(
+      (c) => FindSparkPainter(c),
+      size: size,
+      color: color,
+    ),
+    DiscoveryMode.transitSpark => ModeSymbol(
+      (c) => TransitSparkPainter(c),
+      size: size,
+      color: color,
+    ),
+    DiscoveryMode.randomChat => ModeSymbol(
+      (c) => QuestionChatPainter(c),
+      size: size,
+      color: color,
+    ),
+    DiscoveryMode.datingHour => Icon(Icons.event, color: color, size: size),
+    DiscoveryMode.qrScan => Icon(
+      Icons.qr_code_scanner,
+      color: color,
+      size: size,
+    ),
+  };
 }
 
 /// Gruppenkopf + Karten einer Zweck-Gruppe (v0.9.0).
@@ -323,16 +371,17 @@ class _ModeGroup extends StatelessWidget {
         Text(
           L10n.t(context, headerKey),
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
-              ),
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.primary,
+          ),
         ),
         const SizedBox(height: 8),
         for (final (mode, onTap) in modes) ...[
           _ModeCard(
             mode: mode,
             isSelected: false,
-            isLocked: _modeNeedsVerification(mode) &&
+            isLocked:
+                _modeNeedsVerification(mode) &&
                 verificationState != VerificationState.verified,
             onTap: onTap,
           ),
@@ -346,7 +395,9 @@ class _ModeGroup extends StatelessWidget {
 /// Erklaert, warum ein Modus gesperrt ist, und bietet den Weg zur
 /// Verifizierung an.
 void _showVerificationRequiredDialog(
-    BuildContext context, VerificationState state) {
+  BuildContext context,
+  VerificationState state,
+) {
   final router = GoRouter.of(context);
   showDialog<void>(
     context: context,
@@ -357,9 +408,11 @@ void _showVerificationRequiredDialog(
         size: 40,
       ),
       title: Text(L10n.t(ctx, 'dm.lockedTitle')),
-      content: Text(state == VerificationState.underReview
-          ? L10n.t(ctx, 'dm.lockedBodyReview')
-          : L10n.t(ctx, 'dm.lockedBody')),
+      content: Text(
+        state == VerificationState.underReview
+            ? L10n.t(ctx, 'dm.lockedBodyReview')
+            : L10n.t(ctx, 'dm.lockedBody'),
+      ),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(),
@@ -410,16 +463,11 @@ class _ModeCard extends StatelessWidget {
       key: ValueKey('mode-tile-${mode.name}'),
       margin: EdgeInsets.zero,
       elevation: isSelected ? 4 : 1,
-      color: isSelected
-          ? Theme.of(context).colorScheme.primaryContainer
-          : null,
+      color: isSelected ? Theme.of(context).colorScheme.primaryContainer : null,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: isSelected
-            ? BorderSide(
-                color: Theme.of(context).colorScheme.primary,
-                width: 2,
-              )
+            ? BorderSide(color: Theme.of(context).colorScheme.primary, width: 2)
             : BorderSide.none,
       ),
       child: InkWell(
@@ -433,79 +481,75 @@ class _ModeCard extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: mode.symbol(
+                    isSelected
+                        ? Theme.of(context).colorScheme.onPrimary
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
-                child: mode.symbol(
-                  isSelected
-                      ? Theme.of(context).colorScheme.onPrimary
-                      : Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        if (isLocked) ...[
-                          Icon(
-                            Icons.lock_outline,
-                            size: 16,
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
-                          const SizedBox(width: 6),
-                        ],
-                        Flexible(
-                          child: Text(
-                            L10n.t(context, mode.labelKey),
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: isSelected
-                                  ? Theme.of(context)
-                                      .colorScheme
-                                      .onPrimaryContainer
-                                  : null,
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          if (isLocked) ...[
+                            Icon(
+                              Icons.lock_outline,
+                              size: 16,
+                              color: Theme.of(context).colorScheme.outline,
+                            ),
+                            const SizedBox(width: 6),
+                          ],
+                          Flexible(
+                            child: Text(
+                              L10n.t(context, mode.labelKey),
+                              style: Theme.of(context).textTheme.titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: isSelected
+                                        ? Theme.of(
+                                            context,
+                                          ).colorScheme.onPrimaryContainer
+                                        : null,
+                                  ),
                             ),
                           ),
-                        ),
-                        // Der NEU-Badge ist entfernt (Nutzerwunsch,
-                        // 27.10.2026): "Das neu bei Transit Spark kann weg."
-                        // Der Modus ist seit dem Release nicht mehr neu,
-                        // und ein Badge, der dauerhaft steht, ist keiner
-                        // mehr - er wird zum Dekor und stoert nur.
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      L10n.t(context, mode.descriptionKey),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: isSelected
-                            ? Theme.of(context)
-                                .colorScheme
-                                .onPrimaryContainer
-                                .withValues(alpha: 0.8)
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                          // Der NEU-Badge ist entfernt (Nutzerwunsch,
+                          // 27.10.2026): "Das neu bei Transit Spark kann weg."
+                          // Der Modus ist seit dem Release nicht mehr neu,
+                          // und ein Badge, der dauerhaft steht, ist keiner
+                          // mehr - er wird zum Dekor und stoert nur.
+                        ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        L10n.t(context, mode.descriptionKey),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.onPrimaryContainer
+                                    .withValues(alpha: 0.8)
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              // Q: Bewusst KEIN Haken-Icon. Die Karten sind reine
-              // Auswahl-Kacheln; ein Tap führt direkt in den Modus.
-            ],
-          ),
+                // Q: Bewusst KEIN Haken-Icon. Die Karten sind reine
+                // Auswahl-Kacheln; ein Tap führt direkt in den Modus.
+              ],
+            ),
           ),
         ),
       ),

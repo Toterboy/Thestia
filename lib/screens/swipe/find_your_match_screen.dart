@@ -57,7 +57,9 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
       );
       return;
     }
-    await ref.read(profileProvider.notifier).update(
+    await ref
+        .read(profileProvider.notifier)
+        .update(
           introText: _introText.trim(),
           introAudioPath: _introAudioPath,
           clearIntroAudio: _introAudioPath == null,
@@ -94,7 +96,7 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
         content: Text(
           ok
               ? 'Du hast ${profile.name} geliked! 💚 '
-                  'Bei gegenseitigem Interesse entsteht ein Funke.'
+                    'Bei gegenseitigem Interesse entsteht ein Funke.'
               : 'Like konnte nicht gespeichert werden.',
         ),
         behavior: SnackBarBehavior.floating,
@@ -158,14 +160,13 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
               ),
             )
           : current == null
-              ? Center(
+          ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.headphones,
-                        size: 64, color: Colors.grey),
+                    const Icon(Icons.headphones, size: 64, color: Colors.grey),
                     const SizedBox(height: 16),
                     Text(
                       L10n.t(context, 'match.empty'),
@@ -207,11 +208,13 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
                               children: [
                                 CircleAvatar(
                                   radius: 28,
-                                  backgroundColor: Theme.of(context)
-                                      .colorScheme
-                                      .primaryContainer,
-                                  child: const Icon(Icons.visibility_off,
-                                      color: Colors.white),
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.primaryContainer,
+                                  child: const Icon(
+                                    Icons.visibility_off,
+                                    color: Colors.white,
+                                  ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -219,64 +222,68 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                       Text(
-                                         '${current.name}${current.age != null ? ', ${current.age}' : ''}',
-                                         style: Theme.of(context)
-                                             .textTheme
-                                             .titleLarge
-                                             ?.copyWith(
-                                                 fontWeight: FontWeight.bold),
-                                       ),
-                                       // Verbindungs-Score (0-100):
-                                       // Distanz + gemeinsame Interessen +
-                                       // Musik (serverseitig berechnet).
-                                       if (current.matchScore != null)
-                                         Text(
-                                           'Match: ${current.matchScore} %',
-                                           style: Theme.of(context)
-                                               .textTheme
-                                               .labelLarge
-                                               ?.copyWith(
-                                                 color: Theme.of(context)
-                                                     .colorScheme
-                                                     .primary,
-                                                 fontWeight: FontWeight.bold,
-                                               ),
-                                         ),
-                                       // v0.10.0: Der Ortsname ist
-                                       // entfallen. Stattdessen das
-                                       // Bundesland - die grobe
-                                       // Angabe, die ohnehin fuer
-                                       // andere sichtbar ist.
-                                       if ((current.state ?? '').isNotEmpty)
-                                         Text(
-                                           current.state!,
-                                           style: const TextStyle(
-                                               color: Colors.grey),
-                                         ),
-// Distanz als 10-km-Stufe (v0.10.0),
-                                       // serverseitig berechnet. Ohne
-                                       // Freigabe der anderen Person
-                                       // kommt der Wert nicht an.
-                                       if (current.distanceKm > 0)
-                                         Text(
-                                           current.distanceLabel(
-                                             (key) => L10n.t(context, key),
-                                           ),
+                                      Text(
+                                        '${current.name}${current.age != null ? ', ${current.age}' : ''}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      ),
+                                      // Verbindungs-Score (0-100):
+                                      // Distanz + gemeinsame Interessen +
+                                      // Musik (serverseitig berechnet).
+                                      if (current.matchScore != null)
+                                        Text(
+                                          'Match: ${current.matchScore} %',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelLarge
+                                              ?.copyWith(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                      // v0.10.0: Der Ortsname ist
+                                      // entfallen. Stattdessen das
+                                      // Bundesland - die grobe
+                                      // Angabe, die ohnehin fuer
+                                      // andere sichtbar ist.
+                                      if ((current.state ?? '').isNotEmpty)
+                                        Text(
+                                          current.state!,
+                                          style: const TextStyle(
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      // Distanz als 10-km-Stufe (v0.10.0),
+                                      // serverseitig berechnet. Ohne
+                                      // Freigabe der anderen Person
+                                      // kommt der Wert nicht an.
+                                      if (current.distanceKm > 0)
+                                        Text(
+                                          current.distanceLabel(
+                                            (key) => L10n.t(context, key),
+                                          ),
                                           style: Theme.of(context)
                                               .textTheme
                                               .bodySmall
                                               ?.copyWith(
-                                                color: Theme.of(context)
-                                                    .colorScheme
-                                                    .primary,
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
                                               ),
                                         ),
                                     ],
                                   ),
                                 ),
-                                const Icon(Icons.photo_size_select_small,
-                                    color: Colors.grey),
+                                const Icon(
+                                  Icons.photo_size_select_small,
+                                  color: Colors.grey,
+                                ),
                               ],
                             ),
                             const SizedBox(height: 8),
@@ -284,9 +291,7 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
                               'Ohne Foto: Diese Person stellt sich mit '
                               'Worten vor. Hör rein oder lies ihre '
                               'Vorstellung.',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
+                              style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(color: Colors.grey),
                             ),
                             const SizedBox(height: 16),
@@ -298,14 +303,13 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
                               Text(
                                 L10n.t(context, 'match.introTitle'),
                                 style: const TextStyle(
-                                    fontWeight: FontWeight.bold),
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 current.introText,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyLarge,
+                                style: Theme.of(context).textTheme.bodyLarge,
                               ),
                             ],
                             if (current.introAudioPath == null &&
@@ -319,17 +323,20 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
                               Text(
                                 L10n.t(context, 'match.interestsTitle'),
                                 style: const TextStyle(
-                                    fontWeight: FontWeight.bold),
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               const SizedBox(height: 8),
                               Wrap(
                                 spacing: 6,
                                 runSpacing: 6,
                                 children: current.interests
-                                    .map((i) => Chip(
-                                          label: Text(i),
-                                          visualDensity: VisualDensity.compact,
-                                        ))
+                                    .map(
+                                      (i) => Chip(
+                                        label: Text(i),
+                                        visualDensity: VisualDensity.compact,
+                                      ),
+                                    )
                                     .toList(),
                               ),
                             ],
@@ -361,7 +368,9 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
                                 width: 24,
                                 height: 24,
                                 child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white),
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
                               )
                             : const Icon(Icons.favorite),
                         style: IconButton.styleFrom(

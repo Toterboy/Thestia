@@ -24,7 +24,10 @@ void main() {
       );
 
       // Pfad: otpauth://totp/Thestia:<account>
-      expect(uri, contains(RegExp('otpauth://totp/Thestia:test%2Btag%40beispiel\\.de')));
+      expect(
+        uri,
+        contains(RegExp('otpauth://totp/Thestia:test%2Btag%40beispiel\\.de')),
+      );
       expect(uri, isNot(contains('+tag@beispiel.de?')));
     });
 

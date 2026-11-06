@@ -43,8 +43,11 @@ void main() {
       // Jeder Wert kurz UNTER einer Grenze gehoert noch zur unteren
       // Stufe, die Grenze selbst zur oberen. Keine Luecke, keine
       // Ueberschneidung.
-      for (var g = 10; g < DistanceBucket.lastThresholdKm;
-          g += DistanceBucket.stepKm) {
+      for (
+        var g = 10;
+        g < DistanceBucket.lastThresholdKm;
+        g += DistanceBucket.stepKm
+      ) {
         final below = DistanceBucket.bucketFor(g - 0.1)!;
         final at = DistanceBucket.bucketFor(g.toDouble())!;
         expect(below.kmUpper, g, reason: 'Stufe unter $g endet falsch');
@@ -74,8 +77,11 @@ void main() {
     test('die Grenzen liegen dort, wo die Beschriftung sagt', () {
       // Jede beschriftete Stufe muss genau 10 km breit sein - sonst
       // waere die Anzeige nicht die zugesagte Grobung.
-      for (var lower = 0; lower < DistanceBucket.lastThresholdKm;
-          lower += DistanceBucket.stepKm) {
+      for (
+        var lower = 0;
+        lower < DistanceBucket.lastThresholdKm;
+        lower += DistanceBucket.stepKm
+      ) {
         final b = DistanceBucket.bucketFor(lower == 0 ? 5 : lower.toDouble());
         expect(b, isNotNull, reason: 'Stufe $lower fehlt');
         final lo = b!.km!;

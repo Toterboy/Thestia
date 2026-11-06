@@ -15,39 +15,37 @@ class DatingHourRulesScreen extends ConsumerWidget {
 
   /// Die 6 Kernregeln (v0.8.0 zweisprachig über L10n-Keys).
   List<_RuleItem> _rules(BuildContext context) => [
-        _RuleItem(
-          L10n.t(context, 'dh.rules.1.title'),
-          L10n.t(context, 'dh.rules.1.body'),
-        ),
-        _RuleItem(
-          L10n.t(context, 'dh.rules.2.title'),
-          L10n.t(context, 'dh.rules.2.body'),
-        ),
-        _RuleItem(
-          L10n.t(context, 'dh.rules.3.title'),
-          L10n.t(context, 'dh.rules.3.body'),
-        ),
-        _RuleItem(
-          L10n.t(context, 'dh.rules.4.title'),
-          L10n.t(context, 'dh.rules.4.body'),
-        ),
-        _RuleItem(
-          L10n.t(context, 'dh.rules.5.title'),
-          L10n.t(context, 'dh.rules.5.body'),
-        ),
-        _RuleItem(
-          L10n.t(context, 'dh.rules.6.title'),
-          L10n.t(context, 'dh.rules.6.body'),
-        ),
-      ];
+    _RuleItem(
+      L10n.t(context, 'dh.rules.1.title'),
+      L10n.t(context, 'dh.rules.1.body'),
+    ),
+    _RuleItem(
+      L10n.t(context, 'dh.rules.2.title'),
+      L10n.t(context, 'dh.rules.2.body'),
+    ),
+    _RuleItem(
+      L10n.t(context, 'dh.rules.3.title'),
+      L10n.t(context, 'dh.rules.3.body'),
+    ),
+    _RuleItem(
+      L10n.t(context, 'dh.rules.4.title'),
+      L10n.t(context, 'dh.rules.4.body'),
+    ),
+    _RuleItem(
+      L10n.t(context, 'dh.rules.5.title'),
+      L10n.t(context, 'dh.rules.5.body'),
+    ),
+    _RuleItem(
+      L10n.t(context, 'dh.rules.6.title'),
+      L10n.t(context, 'dh.rules.6.body'),
+    ),
+  ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final rules = _rules(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(L10n.t(context, 'dh.rules.title')),
-      ),
+      appBar: AppBar(title: Text(L10n.t(context, 'dh.rules.title'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -58,9 +56,7 @@ class DatingHourRulesScreen extends ConsumerWidget {
               style: Theme.of(context).textTheme.bodyLarge,
             ),
             const SizedBox(height: 24),
-            ...rules.map(
-              (rule) => _RuleExpansion(rule: rule),
-            ),
+            ...rules.map((rule) => _RuleExpansion(rule: rule)),
             const SizedBox(height: 24),
             FilledButton(
               onPressed: () {
@@ -95,10 +91,7 @@ class _RuleExpansion extends StatelessWidget {
         // Keine Trennlinien ober-/unterhalb der Bubble (Default-Zeichnung
         // des ExpansionTile zieht im aufgeklappten Zustand Divider-Linien).
         shape: const Border(),
-        title: Text(
-          rule.title,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        title: Text(rule.title, style: Theme.of(context).textTheme.titleMedium),
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),

@@ -56,8 +56,9 @@ void main() {
       expect(find.byIcon(Icons.block), findsOneWidget);
     });
 
-    testWidgets('der erste Tab ist ausgewählt, nicht der letzte',
-        (tester) async {
+    testWidgets('der erste Tab ist ausgewählt, nicht der letzte', (
+      tester,
+    ) async {
       // Der Fehler, den die Material-TabBar-Indikation erzeugte: der
       // Indikator stand zwischen den Labels und war nicht eindeutig.
       final controller = TabController(length: 3, vsync: tester);
@@ -81,8 +82,7 @@ void main() {
       );
     });
 
-    testWidgets('Tipp auf die zweite Pille wechselt den Tab',
-        (tester) async {
+    testWidgets('Tipp auf die zweite Pille wechselt den Tab', (tester) async {
       final controller = TabController(length: 3, vsync: tester);
       addTearDown(controller.dispose);
       await pumpTabs(tester, controller, const [
@@ -104,8 +104,9 @@ void main() {
       );
     });
 
-    testWidgets('die Auswahl wandert mit (kein Zurueckspringen)',
-        (tester) async {
+    testWidgets('die Auswahl wandert mit (kein Zurueckspringen)', (
+      tester,
+    ) async {
       // Ohne AnimatedBuilder um den Controller waere die Pille beim
       // Wischen stehen geblieben und erst nach dem Loslassen gewandert.
       final controller = TabController(length: 3, vsync: tester);
@@ -129,8 +130,9 @@ void main() {
       );
     });
 
-    testWidgets('eine Kennzahl wird angezeigt, eine Null nicht',
-        (tester) async {
+    testWidgets('eine Kennzahl wird angezeigt, eine Null nicht', (
+      tester,
+    ) async {
       // Null heisst "nichts offen" und darf keinen Platz beanspruchen:
       // sonst stuende eine leere Kachel neben jeder geschlossenen Queue.
       final controller = TabController(length: 2, vsync: tester);
@@ -141,10 +143,7 @@ void main() {
       ]);
 
       expect(find.text('7'), findsOneWidget);
-      expect(
-        find.byKey(const ValueKey('pill_tab_count_Bugs')),
-        findsNothing,
-      );
+      expect(find.byKey(const ValueKey('pill_tab_count_Bugs')), findsNothing);
       expect(
         find.byKey(const ValueKey('pill_tab_count_Meldungen')),
         findsOneWidget,
@@ -177,8 +176,7 @@ void main() {
       expect(semantics.properties.label, 'Meldungen. 7');
     });
 
-    testWidgets('Tipp auf einen ausgewaehlten Tab bleibt dort',
-        (tester) async {
+    testWidgets('Tipp auf einen ausgewaehlten Tab bleibt dort', (tester) async {
       final controller = TabController(length: 2, vsync: tester);
       addTearDown(controller.dispose);
       await pumpTabs(tester, controller, const [
@@ -192,8 +190,9 @@ void main() {
       expect(controller.index, 0);
     });
 
-    testWidgets('Gegenprobe: die Pille ist wirklich die Auswahl',
-        (tester) async {
+    testWidgets('Gegenprobe: die Pille ist wirklich die Auswahl', (
+      tester,
+    ) async {
       // Ohne Auswahl waere jede Pille gleich aussehend und der Test
       // "der erste Tab ist ausgewaehlt" koennte nie fallen. Geprueft wird
       // die gezeichnete Hintergrundfarbe, nicht nur das Semantics-Flag.
@@ -284,11 +283,7 @@ void main() {
     testWidgets('tippbare Kachel meldet den Tipp', (tester) async {
       var taps = 0;
       await pumpMetrics(tester, [
-        AdminMetric(
-          label: 'Offene Meldungen',
-          value: '3',
-          onTap: () => taps++,
-        ),
+        AdminMetric(label: 'Offene Meldungen', value: '3', onTap: () => taps++),
       ]);
 
       await tester.tap(find.text('Offene Meldungen'));
@@ -306,9 +301,7 @@ void main() {
         AdminMetric(label: 'Nur Anzeige', value: '0'),
       ]);
 
-      final node = tester.getSemantics(find.bySemanticsLabel(
-        'Nur Anzeige: 0',
-      ));
+      final node = tester.getSemantics(find.bySemanticsLabel('Nur Anzeige: 0'));
       expect(node.flagsCollection.isButton, isFalse);
 
       handle.dispose();
@@ -321,8 +314,9 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('drei Kacheln teilen sich die Breite ohne Overflow',
-        (tester) async {
+    testWidgets('drei Kacheln teilen sich die Breite ohne Overflow', (
+      tester,
+    ) async {
       await pumpMetrics(tester, const [
         AdminMetric(label: 'Offene Meldungen', value: '12'),
         AdminMetric(label: 'Neue Bugs', value: '6', subtitle: 'letzte 24 h'),
@@ -368,8 +362,9 @@ void main() {
       );
     });
 
-    testWidgets('eigene Semantik gewinnt gegen die automatische',
-        (tester) async {
+    testWidgets('eigene Semantik gewinnt gegen die automatische', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -387,10 +382,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(
-        find.bySemanticsLabel('Meldungen: mehr als 99'),
-        findsOneWidget,
-      );
+      expect(find.bySemanticsLabel('Meldungen: mehr als 99'), findsOneWidget);
     });
   });
 }

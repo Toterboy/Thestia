@@ -11,7 +11,9 @@ import 'package:thestia/utils/constants.dart';
 /// V: Die eigene Teilnahme wird serverseitig über RLS geprüft; der Client kann
 /// keine fremden Teilnehmer-IDs sehen. `activeParticipants` enthält daher im
 /// MVP nur die eigene ID, falls der User opt-in hat.
-final currentDatingHourEventProvider = FutureProvider<DatingHourEvent?>((ref) async {
+final currentDatingHourEventProvider = FutureProvider<DatingHourEvent?>((
+  ref,
+) async {
   final service = ref.watch(datingHourServiceProvider);
   final event = await service.getCurrentOrNextEvent();
   if (event == null) return null;
@@ -25,6 +27,6 @@ final currentDatingHourEventProvider = FutureProvider<DatingHourEvent?>((ref) as
 /// Liefert die aktive Dating-Hour-Session des aktuellen Users für ein Event.
 final myActiveDatingHourSessionProvider =
     FutureProvider.family<DatingHourSession?, String>((ref, eventId) async {
-  final service = ref.watch(datingHourServiceProvider);
-  return service.getMyActiveSession(eventId);
-});
+      final service = ref.watch(datingHourServiceProvider);
+      return service.getMyActiveSession(eventId);
+    });

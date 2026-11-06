@@ -43,8 +43,10 @@ Future<String?> showCaptchaChallenge(BuildContext context) async {
 
   if (kIsWeb) {
     if (kDebugMode) {
-      debugPrint('[CAPTCHA] Web-Build: WebView-CAPTCHA nicht unterstützt, '
-          'Flows laufen ohne Token. Für Web später HtmlElementView nutzen.');
+      debugPrint(
+        '[CAPTCHA] Web-Build: WebView-CAPTCHA nicht unterstützt, '
+        'Flows laufen ohne Token. Für Web später HtmlElementView nutzen.',
+      );
     }
     return null;
   }
@@ -206,9 +208,7 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
                 Text(
                   _errorText(context),
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                  ),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
                 const SizedBox(height: 8),
                 TextButton.icon(
@@ -218,9 +218,7 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
                 ),
                 const SizedBox(height: 8),
               ],
-              Expanded(
-                child: WebViewWidget(controller: _controller),
-              ),
+              Expanded(child: WebViewWidget(controller: _controller)),
             ],
           ),
         ),

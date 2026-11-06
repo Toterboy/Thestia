@@ -19,8 +19,7 @@ void main() {
     });
 
     test('entfernt mehrere E-Mail-Adressen', () {
-      const fehler =
-          'von a@b.de nach c@d.de, Fehler in x@y.de und z@w.de';
+      const fehler = 'von a@b.de nach c@d.de, Fehler in x@y.de und z@w.de';
       final redigiert = CrashJournal.redact(fehler);
 
       expect(redigiert, isNot(contains('@b.de')));
@@ -54,7 +53,10 @@ void main() {
           '.abcdefghijk';
       final redigiert = CrashJournal.redact(jwt);
 
-      expect(redigiert, isNot(contains('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9')));
+      expect(
+        redigiert,
+        isNot(contains('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9')),
+      );
     });
 
     test('entfernt einen langen Hex-Schluessel', () {

@@ -45,12 +45,9 @@ void main() {
   group('ICE-Cache (H-03)', () {
     test('resolveIceServers liefert gecachte Server ohne Netzwerk', () async {
       final service = WebRTCService(EncryptionService());
-      service.setIceServerCache(
-        [
-          {'urls': 'stun:stun.cached.example.com:3478'},
-        ],
-        const Duration(hours: 1),
-      );
+      service.setIceServerCache([
+        {'urls': 'stun:stun.cached.example.com:3478'},
+      ], const Duration(hours: 1));
 
       final servers = await service.resolveIceServers();
       expect(servers.length, 1);
@@ -117,8 +114,7 @@ void main() {
   });
 
   group('Serialisiertes Signaling + Candidate-Backlog (Verbindungs-Fix)', () {
-    test(
-        'ICE-Kandidat VOR jeglicher PeerConnection wird gepuffert '
+    test('ICE-Kandidat VOR jeglicher PeerConnection wird gepuffert '
         '(kein Crash, kein Verlust - frueher: Null-Check-Exception)', () async {
       final service = WebRTCService(EncryptionService());
       service.currentPeerIdForTesting = 'peer-a';
@@ -133,8 +129,7 @@ void main() {
       });
     });
 
-    test(
-        'Reihenfolge bleibt erhalten: Offer-Queue verarbeitet seriell '
+    test('Reihenfolge bleibt erhalten: Offer-Queue verarbeitet seriell '
         '(mehrere Events einer Flut laufen ohne Interleaving durch)', () async {
       final service = WebRTCService(EncryptionService());
       service.currentPeerIdForTesting = 'peer-a';
@@ -143,25 +138,32 @@ void main() {
       // ein fremder Absender dazwischen verworfen - nichts knallt und die
       // Queue leert sich deterministisch.
       await service.routeSignalingForTesting({
-        'type': 'answer', 'from': 'peer-a', 'sdp': 'v=0 fake-answer',
+        'type': 'answer',
+        'from': 'peer-a',
+        'sdp': 'v=0 fake-answer',
       });
       await service.routeSignalingForTesting({
-        'type': 'ice', 'from': 'peer-a',
+        'type': 'ice',
+        'from': 'peer-a',
         'candidate': 'candidate:1 1 UDP 1 10.0.0.2 40000 typ host',
-        'sdpMid': '0', 'sdpMLineIndex': 0,
+        'sdpMid': '0',
+        'sdpMLineIndex': 0,
       });
       await service.routeSignalingForTesting({
-        'type': 'offer', 'from': 'intruder', 'sdp': 'v=0 intruder-sdp',
+        'type': 'offer',
+        'from': 'intruder',
+        'sdp': 'v=0 intruder-sdp',
       });
       await service.routeSignalingForTesting({
-        'type': 'ice', 'from': 'peer-a',
+        'type': 'ice',
+        'from': 'peer-a',
         'candidate': 'candidate:2 1 UDP 1 10.0.0.2 40001 typ host',
-        'sdpMid': '0', 'sdpMLineIndex': 0,
+        'sdpMid': '0',
+        'sdpMLineIndex': 0,
       });
     });
 
-    test(
-        'Überdimensionales Offer-SDP wird verworfen, BEVOR eine '
+    test('Überdimensionales Offer-SDP wird verworfen, BEVOR eine '
         'PeerConnection gebaut wird (DoS-Schutz S4)', () async {
       final service = WebRTCService(EncryptionService());
       service.currentPeerIdForTesting = 'peer-a';
@@ -171,18 +173,25 @@ void main() {
       // MissingPluginException im Unit-Test) - der Test schlägt fehl.
       final hugeSdp = 'v=0\n${'x' * (70 * 1024)}';
       await service.routeSignalingForTesting({
-        'type': 'offer', 'from': 'peer-a', 'sdp': hugeSdp,
+        'type': 'offer',
+        'from': 'peer-a',
+        'sdp': hugeSdp,
       });
     });
 
-    test('Answer ohne PeerConnection wird verworfen statt zu crashen', () async {
-      final service = WebRTCService(EncryptionService());
-      service.currentPeerIdForTesting = 'peer-a';
+    test(
+      'Answer ohne PeerConnection wird verworfen statt zu crashen',
+      () async {
+        final service = WebRTCService(EncryptionService());
+        service.currentPeerIdForTesting = 'peer-a';
 
-      await service.routeSignalingForTesting({
-        'type': 'answer', 'from': 'peer-a', 'sdp': 'v=0 answer-sdp',
-      });
-    });
+        await service.routeSignalingForTesting({
+          'type': 'answer',
+          'from': 'peer-a',
+          'sdp': 'v=0 answer-sdp',
+        });
+      },
+    );
 
     test('sdpMLineIndex als double (Web-JSON) wird akzeptiert', () async {
       final service = WebRTCService(EncryptionService());

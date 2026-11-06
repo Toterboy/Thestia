@@ -1,4 +1,4 @@
-﻿// Repräsentiert ein Nutzerprofil in der App.
+// Repräsentiert ein Nutzerprofil in der App.
 //
 // Enthält die für Dating relevanten Felder. Fotos werden als Liste von
 // (Mock-)Bild-Pfaden/URLs gespeichert. Der Blind Mode sorgt dafür, dass
@@ -308,10 +308,13 @@ class UserProfile {
     // hatte. Die Modus-Sperre (Verifikation noetig) blieb dadurch auch
     // bei verifizierten Personen bestehen.
     final publicVerified = json['is_verified'] as bool? ?? false;
-    final publicState =
-        VerificationState.fromJson(json, isVerified: publicVerified);
+    final publicState = VerificationState.fromJson(
+      json,
+      isVerified: publicVerified,
+    );
 
-    return UserProfile(      id: json['user_id'] as String,
+    return UserProfile(
+      id: json['user_id'] as String,
       name: json['name'] as String,
       bio: json['bio'] as String? ?? '',
       // Profilbilder (v0.9.0, max. 3): verschlüsselte Refs - Lesen via
@@ -326,10 +329,12 @@ class UserProfile {
       personalityType: json['personality_type'] as String?,
       birthDate: birthDate,
       mood: json['mood'] as String?,
-      favoriteSong: (json['favorite_song'] as String?)?.trim().isNotEmpty == true
+      favoriteSong:
+          (json['favorite_song'] as String?)?.trim().isNotEmpty == true
           ? (json['favorite_song'] as String).trim()
           : null,
-      favoriteBand: (json['favorite_band'] as String?)?.trim().isNotEmpty == true
+      favoriteBand:
+          (json['favorite_band'] as String?)?.trim().isNotEmpty == true
           ? (json['favorite_band'] as String).trim()
           : null,
       introText: json['intro_text'] as String? ?? '',
@@ -365,10 +370,7 @@ class UserProfile {
   /// Server-Wert ('under_review'). Beim Lesen wird deshalb zuerst der
   /// eigene Name versucht, danach der Server-Wert, und zuletzt der
   /// Rueckfall auf [isVerified].
-  static VerificationState _stateFromStorage(
-    Object? raw,
-    bool isVerified,
-  ) {
+  static VerificationState _stateFromStorage(Object? raw, bool isVerified) {
     if (raw is String) {
       for (final st in VerificationState.values) {
         if (st.name == raw) return st;
@@ -421,8 +423,7 @@ class UserProfile {
         json['verification_state'],
         json['is_verified'] as bool? ?? false,
       ),
-      isLocationSuspicious:
-          json['is_location_suspicious'] as bool? ?? false,
+      isLocationSuspicious: json['is_location_suspicious'] as bool? ?? false,
       mood: json['mood'] as String?,
       introText: json['intro_text'] as String? ?? '',
       introAudioPath: json['intro_audio_path'] as String?,
@@ -443,43 +444,43 @@ class UserProfile {
 
   /// Wandelt das Profil in ein JSON-Map um (Persistenz).
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'bio': bio,
-        'interests': interests,
-        'photos': photos,
-        'state': state,
-        'country': country,
-        'distanceKm': distanceKm,
-        'gender': gender,
-        'genderPreference': genderPreference,
-        'birthDate': birthDate?.toIso8601String(),
-        'personalityResult': personalityResult,
-        'personalityType': personalityType,
-        'videoUrl': videoUrl,
-        'audioUrl': audioUrl,
-        'favoriteSong': favoriteSong,
-        'favoriteBand': favoriteBand,
-        'location_lat': locationLat,
-        'location_lng': locationLng,
-        'is_verified': isVerified,
-      // Der Dreifachzustand wird mitgespeichert. Ohne das faellt er
-      // nach dem Neustart auf is_verified zurueck - und "wird geprueft"
-      // waere dann nicht mehr von "nicht verifiziert" zu unterscheiden.
-      'verification_state': verificationState.name,
-        'is_location_suspicious': isLocationSuspicious,
-        'mood': mood,
-        'introText': introText,
-        'introAudioPath': introAudioPath,
-        'smoking': smoking?.toServer(),
-        'alcohol': alcohol?.toServer(),
-        'drugs': drugs?.toServer(),
-        'music_liked': musicLiked,
-        'music_disliked': musicDisliked,
-        'birthdayStyle': birthdayStyle,
-        'birthdayToday': birthdayToday,
-        'createdAt': createdAt?.toIso8601String(),
-      };
+    'id': id,
+    'name': name,
+    'bio': bio,
+    'interests': interests,
+    'photos': photos,
+    'state': state,
+    'country': country,
+    'distanceKm': distanceKm,
+    'gender': gender,
+    'genderPreference': genderPreference,
+    'birthDate': birthDate?.toIso8601String(),
+    'personalityResult': personalityResult,
+    'personalityType': personalityType,
+    'videoUrl': videoUrl,
+    'audioUrl': audioUrl,
+    'favoriteSong': favoriteSong,
+    'favoriteBand': favoriteBand,
+    'location_lat': locationLat,
+    'location_lng': locationLng,
+    'is_verified': isVerified,
+    // Der Dreifachzustand wird mitgespeichert. Ohne das faellt er
+    // nach dem Neustart auf is_verified zurueck - und "wird geprueft"
+    // waere dann nicht mehr von "nicht verifiziert" zu unterscheiden.
+    'verification_state': verificationState.name,
+    'is_location_suspicious': isLocationSuspicious,
+    'mood': mood,
+    'introText': introText,
+    'introAudioPath': introAudioPath,
+    'smoking': smoking?.toServer(),
+    'alcohol': alcohol?.toServer(),
+    'drugs': drugs?.toServer(),
+    'music_liked': musicLiked,
+    'music_disliked': musicDisliked,
+    'birthdayStyle': birthdayStyle,
+    'birthdayToday': birthdayToday,
+    'createdAt': createdAt?.toIso8601String(),
+  };
 
   /// Liest `created_at` robust.
   ///
@@ -554,8 +555,7 @@ class UserProfile {
       locationLng: locationLng ?? this.locationLng,
       isVerified: isVerified ?? this.isVerified,
       verificationState: verificationState ?? this.verificationState,
-      isLocationSuspicious:
-          isLocationSuspicious ?? this.isLocationSuspicious,
+      isLocationSuspicious: isLocationSuspicious ?? this.isLocationSuspicious,
       mood: mood ?? this.mood,
       introText: introText ?? this.introText,
       introAudioPath: clearIntroAudio
@@ -585,23 +585,23 @@ class UserProfile {
           other.genderPreference == genderPreference &&
           other.personalityType == personalityType &&
           other.isVerified == isVerified &&
-      other.verificationState == verificationState &&
+          other.verificationState == verificationState &&
           other.isLocationSuspicious == isLocationSuspicious &&
           other.mood == mood;
 
   @override
   int get hashCode => Object.hash(
-        id,
-        name,
-        birthDate,
-        bio,
-        gender,
-        genderPreference,
-        personalityType,
-        isVerified,
-        isLocationSuspicious,
-        mood,
-      );
+    id,
+    name,
+    birthDate,
+    bio,
+    gender,
+    genderPreference,
+    personalityType,
+    isVerified,
+    isLocationSuspicious,
+    mood,
+  );
 }
 
 /// Einheitliches Distanz-Label fuer andere Nutzer (v0.10.0).

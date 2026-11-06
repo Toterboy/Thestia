@@ -60,7 +60,7 @@ class SpeechLevelDetector {
   final int _maxSamples;
 
   SpeechLevelDetector({int window = 60})
-      : _maxSamples = window < 1 ? 1 : window;
+    : _maxSamples = window < 1 ? 1 : window;
 
   /// Anzahl der gehaltenen Messungen (10 Hz => 60 = 6 Sekunden).
   int get windowSeconds => _maxSamples ~/ 10;

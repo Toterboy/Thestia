@@ -21,7 +21,10 @@ void main() {
     const testPasswordB = 'TEST_ONLY_p4ssw0rd_B';
 
     test('Format: saltHex + \$ + sha256Hex (32 + 1 + 64 Zeichen)', () {
-      final stored = AuthService.hashCredentialsForTest(testEmailA, testPasswordA);
+      final stored = AuthService.hashCredentialsForTest(
+        testEmailA,
+        testPasswordA,
+      );
       expect(stored, hasLength(32 + 1 + 64));
       expect(stored.contains(r'$'), isTrue);
       final parts = stored.split(r'$');
@@ -31,7 +34,10 @@ void main() {
     });
 
     test('Verifikation mit korrekten Zugangsdaten gelingt', () {
-      final stored = AuthService.hashCredentialsForTest(testEmailA, testPasswordA);
+      final stored = AuthService.hashCredentialsForTest(
+        testEmailA,
+        testPasswordA,
+      );
       expect(
         AuthService.verifyCredentialsForTest(stored, testEmailA, testPasswordA),
         isTrue,
@@ -39,7 +45,10 @@ void main() {
     });
 
     test('Verifikation mit falschem Passwort scheitert', () {
-      final stored = AuthService.hashCredentialsForTest(testEmailA, testPasswordA);
+      final stored = AuthService.hashCredentialsForTest(
+        testEmailA,
+        testPasswordA,
+      );
       expect(
         AuthService.verifyCredentialsForTest(stored, testEmailA, testPasswordB),
         isFalse,
@@ -47,7 +56,10 @@ void main() {
     });
 
     test('Verifikation mit falscher E-Mail scheitert', () {
-      final stored = AuthService.hashCredentialsForTest(testEmailA, testPasswordA);
+      final stored = AuthService.hashCredentialsForTest(
+        testEmailA,
+        testPasswordA,
+      );
       expect(
         AuthService.verifyCredentialsForTest(stored, testEmailB, testPasswordA),
         isFalse,
@@ -65,8 +77,14 @@ void main() {
         'abgelehnt (fail-closed)', () {
       const email = testEmailA;
       const password = testPasswordA;
-      expect(AuthService.verifyCredentialsForTest('', email, password), isFalse);
-      expect(AuthService.verifyCredentialsForTest('nureinhash', email, password), isFalse);
+      expect(
+        AuthService.verifyCredentialsForTest('', email, password),
+        isFalse,
+      );
+      expect(
+        AuthService.verifyCredentialsForTest('nureinhash', email, password),
+        isFalse,
+      );
       expect(
         AuthService.verifyCredentialsForTest('zz\$deadbeef', email, password),
         isFalse,
@@ -80,7 +98,10 @@ void main() {
     test('Unicode-E-Mail und -Passwort werden korrekt verarbeitet', () {
       const unicodeEmail = 'TEST_FIXTURE_müller@äöü.test';
       const unicodePw = 'TEST_pässwörd🔐';
-      final stored = AuthService.hashCredentialsForTest(unicodeEmail, unicodePw);
+      final stored = AuthService.hashCredentialsForTest(
+        unicodeEmail,
+        unicodePw,
+      );
       expect(
         AuthService.verifyCredentialsForTest(stored, unicodeEmail, unicodePw),
         isTrue,

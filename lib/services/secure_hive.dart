@@ -25,7 +25,7 @@ import 'package:hive/hive.dart';
 /// [SecureHive.forTesting].
 class SecureHive {
   SecureHive([FlutterSecureStorage? secureStorage])
-      : _storage = secureStorage ?? const FlutterSecureStorage();
+    : _storage = secureStorage ?? const FlutterSecureStorage();
 
   /// App-weite Standardinstanz (Keystore/Keychain der Plattform).
   static final SecureHive instance = SecureHive();
@@ -33,7 +33,7 @@ class SecureHive {
   /// Instanz mit explizitem Storage-Backend (für Tests).
   @visibleForTesting
   SecureHive.forTesting(FlutterSecureStorage secureStorage)
-      : _storage = secureStorage;
+    : _storage = secureStorage;
 
   static const String _keyName = 'hive_encryption_key';
 
@@ -75,8 +75,9 @@ class SecureHive {
     if (bytes == null) {
       // Neuen 32-Byte-Schlüssel kryptografisch sicher erzeugen.
       final random = Random.secure();
-      bytes =
-          Uint8List.fromList(List<int>.generate(32, (_) => random.nextInt(256)));
+      bytes = Uint8List.fromList(
+        List<int>.generate(32, (_) => random.nextInt(256)),
+      );
       b64 = _encodeKey(bytes);
       await _storage.write(
         key: _keyName,
@@ -124,8 +125,7 @@ class SecureHive {
 
     Box<String> meta;
     try {
-      meta = await Hive.openBox<String>(_metaBoxName,
-          encryptionCipher: cipher);
+      meta = await Hive.openBox<String>(_metaBoxName, encryptionCipher: cipher);
     } catch (e) {
       // Meta-Box unlesbar (Schlüsselwechsel/-verlust): zurücksetzen. Alle
       // Datenboxen laufen dann durch den Migrations-/Reset-Pfad.
@@ -145,8 +145,10 @@ class SecureHive {
         return box;
       } catch (e) {
         if (kDebugMode) {
-          debugPrint('[SecureHive] Box "$name" nicht verschlüsselt öffnbar '
-              '($e). Versuche Migration von Klartext-Altbestand.');
+          debugPrint(
+            '[SecureHive] Box "$name" nicht verschlüsselt öffnbar '
+            '($e). Versuche Migration von Klartext-Altbestand.',
+          );
         }
       }
     }
@@ -178,8 +180,10 @@ class SecureHive {
     if (legacy.isNotEmpty) await box.flush();
     await meta.put(name, 'v1');
     if (kDebugMode && legacy.isNotEmpty) {
-      debugPrint('[SecureHive] Box "$name" verschlüsselt migriert '
-          '(${legacy.length} Einträge).');
+      debugPrint(
+        '[SecureHive] Box "$name" verschlüsselt migriert '
+        '(${legacy.length} Einträge).',
+      );
     }
     return box;
   }

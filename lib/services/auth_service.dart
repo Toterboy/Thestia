@@ -139,12 +139,9 @@ class AuthService implements AppAuthService {
   static const int _demoKdfIterations = 600000;
 
   static String _hash(List<int> salt, String email, String password) {
-    final derivator = PBKDF2KeyDerivator(HMac(SHA256Digest(), 64))
-      ..init(Pbkdf2Parameters(
-        Uint8List.fromList(salt),
-        _demoKdfIterations,
-        32,
-      ));
+    final derivator = PBKDF2KeyDerivator(
+      HMac(SHA256Digest(), 64),
+    )..init(Pbkdf2Parameters(Uint8List.fromList(salt), _demoKdfIterations, 32));
     final derived = derivator.process(
       Uint8List.fromList(utf8.encode('$email\x00$password')),
     );
@@ -172,8 +169,7 @@ class AuthService implements AppAuthService {
   /// WebAuthn benötigt einen Server für Challenge/Verifikation.
   @override
   Future<void> loginWithPasskey({String? captchaToken}) async {
-    throw AppException(
-        'Passkey-Anmeldung ist im Demo-Modus nicht verfügbar.');
+    throw AppException('Passkey-Anmeldung ist im Demo-Modus nicht verfügbar.');
   }
 
   /// Logout - entfernt die Session lokal.
@@ -193,4 +189,3 @@ class AuthService implements AppAuthService {
     await _storeCredentials('');
   }
 }
-

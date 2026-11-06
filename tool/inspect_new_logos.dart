@@ -1,4 +1,4 @@
-﻿// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print
 import 'dart:io';
 import 'package:image/image.dart' as img;
 
@@ -40,13 +40,16 @@ void main(List<String> args) {
     }
     final bboxW = maxX - minX + 1;
     final bboxH = maxY - minY + 1;
-    final isCircleLike = opaque > 0 &&
+    final isCircleLike =
+        opaque > 0 &&
         (bboxW / im.width) > 0.8 &&
         (bboxH / im.height) > 0.8 &&
         transparent > 0;
-    print('$name: ${im.width}x${im.height} transparent='
-        '${(transparent * 100 / total).toStringAsFixed(0)}% weiss='
-        '${(white * 100 / total).toStringAsFixed(0)}% bbox=${bboxW}x$bboxH'
-        '${isCircleLike ? " [rund]" : ""}');
+    print(
+      '$name: ${im.width}x${im.height} transparent='
+      '${(transparent * 100 / total).toStringAsFixed(0)}% weiss='
+      '${(white * 100 / total).toStringAsFixed(0)}% bbox=${bboxW}x$bboxH'
+      '${isCircleLike ? " [rund]" : ""}',
+    );
   }
 }

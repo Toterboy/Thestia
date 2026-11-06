@@ -17,7 +17,8 @@ class SupabaseService {
   static User? get currentUser => Supabase.instance.client.auth.currentUser;
 
   /// Aktive Session (null = keine gültige Session).
-  static Session? get currentSession => Supabase.instance.client.auth.currentSession;
+  static Session? get currentSession =>
+      Supabase.instance.client.auth.currentSession;
 
   /// Prüft, ob der Supabase-Client erfolgreich initialisiert wurde.
   static bool get isInitialized {

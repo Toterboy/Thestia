@@ -67,8 +67,8 @@ class QrProfileWidget extends StatelessWidget {
           Text(
             'Scanne diesen Code, um mich\nzu finden und anzuschreiben.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             textAlign: TextAlign.center,
           ),
         ],
@@ -87,4 +87,3 @@ String generateUserCode(String userId) {
       ? normalized.substring(0, 8)
       : normalized.padRight(8, '0');
 }
-

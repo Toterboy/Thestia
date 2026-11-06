@@ -32,10 +32,7 @@ class HabitudeSelector extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          topic.label,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        Text(topic.label, style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,

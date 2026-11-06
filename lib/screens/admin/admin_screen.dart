@@ -78,13 +78,15 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
       // wie ein Fehler der App aus statt wie ein Baufehler.
       if (kDebugMode) {
         final eingeloggt = SupabaseService.currentUser?.id;
-        debugPrint('[AdminScreen] Client-Check abgelehnt. '
-            'adminUserId konfiguriert: '
-            '${AppConstants.adminUserId.isNotEmpty}, '
-            'eingeloggt: $eingeloggt. '
-            'Haeufigste Ursache: oeffentliche APK statt ADMIN-APK '
-            'installiert - die oeffentliche enthaelt die Admin-UUID '
-            'absichtlich nicht.');
+        debugPrint(
+          '[AdminScreen] Client-Check abgelehnt. '
+          'adminUserId konfiguriert: '
+          '${AppConstants.adminUserId.isNotEmpty}, '
+          'eingeloggt: $eingeloggt. '
+          'Haeufigste Ursache: oeffentliche APK statt ADMIN-APK '
+          'installiert - die oeffentliche enthaelt die Admin-UUID '
+          'absichtlich nicht.',
+        );
       }
       context.go(AppRoutes.home);
     }
@@ -354,11 +356,7 @@ class _AsyncList extends StatelessWidget {
       );
     }
     if (items.isEmpty) {
-      return EmptyState(
-        icon: emptyIcon,
-        title: emptyTitle,
-        message: emptyText,
-      );
+      return EmptyState(icon: emptyIcon, title: emptyTitle, message: emptyText);
     }
     return RefreshIndicator(
       onRefresh: onRetry,
@@ -1420,9 +1418,7 @@ class _BansTabState extends ConsumerState<_BansTab> {
                         'total': '${_items.length}',
                       }),
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurfaceVariant,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   )
@@ -1583,49 +1579,47 @@ class _AppealCard extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: SizedBox(
-                    width: 96,
-                    height: 96,
-                    child: _SignedAppealImage(path: path),
-                  ),
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  width: 96,
+                  height: 96,
+                  child: _SignedAppealImage(path: path),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        userName,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      userName,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        L10n.tf(context, 'admin.appealSubmitted', {
-                          'time': createdAt.toLocal().toString().substring(
-                            0,
-                            16,
-                          ),
-                        }),
-                      ),
-                      Text(
-                        L10n.tf(context, 'admin.appealFinding', {
-                          'label': label.isEmpty ? 'n/a' : label,
-                          'score': (score * 100).toStringAsFixed(0),
-                        }),
-                      ),
-                      // KI-Transparenz (Nutzerwunsch): Dieser Befund stammt
-                      // aus der lokalen On-Device-KI.
-                      const SizedBox(height: 4),
-                      const AiBadge.localCompact(),
-                      const SizedBox(height: 4),
-                      _StatusChip(status: status),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      L10n.tf(context, 'admin.appealSubmitted', {
+                        'time': createdAt.toLocal().toString().substring(0, 16),
+                      }),
+                    ),
+                    Text(
+                      L10n.tf(context, 'admin.appealFinding', {
+                        'label': label.isEmpty ? 'n/a' : label,
+                        'score': (score * 100).toStringAsFixed(0),
+                      }),
+                    ),
+                    // KI-Transparenz (Nutzerwunsch): Dieser Befund stammt
+                    // aus der lokalen On-Device-KI.
+                    const SizedBox(height: 4),
+                    const AiBadge.localCompact(),
+                    const SizedBox(height: 4),
+                    _StatusChip(status: status),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
           if (status == 'pending') ...[
             const SizedBox(height: 10),
             Row(
@@ -1718,8 +1712,9 @@ class _SignedAppealImageState extends ConsumerState<_SignedAppealImage> {
     }
     if (_loadedPath == widget.path && _urlFuture != null) return;
     _loadedPath = widget.path;
-    _urlFuture =
-        ref.read(supabaseStorageServiceProvider).getSignedUrlFor(widget.path);
+    _urlFuture = ref
+        .read(supabaseStorageServiceProvider)
+        .getSignedUrlFor(widget.path);
   }
 
   @override

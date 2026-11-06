@@ -102,14 +102,14 @@ class UserReport extends HiveObject {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'reporterId': reporterId,
-        'reportedUserId': reportedUserId,
-        'type': type.label,
-        'description': description ?? '',
-        'createdAt': createdAt.toIso8601String(),
-        'status': status,
-        'moderatorNote': moderatorNote ?? '',
-        'resolvedAt': resolvedAt?.toIso8601String(),
-      };
+    'id': id,
+    'reporterId': reporterId,
+    'reportedUserId': reportedUserId,
+    'type': type.label,
+    'description': description ?? '',
+    'createdAt': createdAt.toIso8601String(),
+    'status': status,
+    'moderatorNote': moderatorNote ?? '',
+    'resolvedAt': resolvedAt?.toIso8601String(),
+  };
 }

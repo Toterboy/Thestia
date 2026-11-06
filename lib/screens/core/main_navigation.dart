@@ -38,16 +38,22 @@ class MainNavigation extends ConsumerWidget {
   final Widget child;
 
   static const _tabs = [
+    DockTab(route: AppRoutes.home, icon: Icons.newspaper, labelKey: 'nav.home'),
     DockTab(
-        route: AppRoutes.home, icon: Icons.newspaper, labelKey: 'nav.home'),
+      route: AppRoutes.swipeModeSelection,
+      icon: Icons.favorite,
+      labelKey: 'nav.discover',
+    ),
     DockTab(
-        route: AppRoutes.swipeModeSelection,
-        icon: Icons.favorite,
-        labelKey: 'nav.discover'),
+      route: AppRoutes.interessen,
+      icon: Icons.people,
+      labelKey: 'nav.interests',
+    ),
     DockTab(
-        route: AppRoutes.interessen, icon: Icons.people, labelKey: 'nav.interests'),
-    DockTab(
-        route: AppRoutes.profile, icon: Icons.person, labelKey: 'nav.profile'),
+      route: AppRoutes.profile,
+      icon: Icons.person,
+      labelKey: 'nav.profile',
+    ),
   ];
 
   static const _routes = [
@@ -142,11 +148,7 @@ class MainNavigation extends ConsumerWidget {
   /// URI-Ermittlung über den Router-Delegate war fehleranfällig (der
   /// Kontext der Bottom-Nav sah die Unter-Route je nach Zeitpunkt nicht),
   /// wodurch die Nachfrage stil blieb.
-  Future<void> _goToTab(
-    BuildContext context,
-    WidgetRef ref,
-    int i,
-  ) async {
+  Future<void> _goToTab(BuildContext context, WidgetRef ref, int i) async {
     final dirty = ref.read(profileEditDirtyProvider);
     if (dirty) {
       final choice = await showDialog<String>(
@@ -211,8 +213,9 @@ class MainNavigation extends ConsumerWidget {
       statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
       statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
       systemNavigationBarColor: Theme.of(context).colorScheme.surface,
-      systemNavigationBarIconBrightness:
-          isDark ? Brightness.light : Brightness.dark,
+      systemNavigationBarIconBrightness: isDark
+          ? Brightness.light
+          : Brightness.dark,
     );
   }
 
@@ -331,23 +334,20 @@ class MainNavigation extends ConsumerWidget {
                 // Geraet dasselbe schwebende Objekt sein.
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color:
-                        Theme.of(context).colorScheme.surfaceContainer,
+                    color: Theme.of(context).colorScheme.surfaceContainer,
                     borderRadius: BorderRadius.circular(32),
                     // Eine feine Lichtkante: sie hebt das Dock vom
                     // Hintergrund ab, ohne die Kanten zu ueberzeichnen.
                     border: Border.all(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .outlineVariant
-                          .withValues(alpha: 0.5),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.outlineVariant.withValues(alpha: 0.5),
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .shadow
-                            .withValues(alpha: 0.20),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.shadow.withValues(alpha: 0.20),
                         blurRadius: 26,
                         offset: const Offset(0, 10),
                       ),
@@ -369,6 +369,7 @@ class MainNavigation extends ConsumerWidget {
     );
   }
 }
+
 /// Wischen zwischen den Haupt-Reitern der App.
 ///
 /// NUTZERWUNSCH (28.10.2026): das Wischen soll NICHT mehr zwischen den
@@ -404,8 +405,7 @@ class _TabSwipe extends StatefulWidget {
   State<_TabSwipe> createState() => _TabSwipeState();
 }
 
-class _TabSwipeState extends State<_TabSwipe>
-    with TickerProviderStateMixin {
+class _TabSwipeState extends State<_TabSwipe> with TickerProviderStateMixin {
   /// Weg der aktuellen Geste in Pixeln (mit Widerstand gedaempft).
   double _weg = 0;
 

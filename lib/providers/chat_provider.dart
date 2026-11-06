@@ -139,7 +139,10 @@ class ChatNotifier extends StateNotifier<List<Match>> {
   /// Funken-Tab, die nur serverseitig existieren). Existiert bereits eines,
   /// wird es zurückgegeben.
   Match? restoreServerMatch(
-      String matchId, UserProfile partner, DateTime matchedAt) {
+    String matchId,
+    UserProfile partner,
+    DateTime matchedAt,
+  ) {
     final match = _chat.restoreServerMatch(matchId, partner, matchedAt);
     if (match != null) {
       state = _chat.getMatches();
@@ -160,8 +163,7 @@ class ChatNotifier extends StateNotifier<List<Match>> {
   /// QR-Kontakte aus dem Speicher (für den Datenexport): enthält die
   /// ORIGINAL-Match-IDs, damit importierte Verläufe wieder zuordnenbar
   /// sind.
-  List<Map<String, String>> exportQrContacts() =>
-      _chat.exportQrContacts();
+  List<Map<String, String>> exportQrContacts() => _chat.exportQrContacts();
 
   /// Liefert Nachrichten eines Matches.
   List<Message> messagesFor(String matchId) => _chat.getMessages(matchId);
@@ -216,21 +218,27 @@ class ChatNotifier extends StateNotifier<List<Match>> {
     // (App pausiert) zeigt die System-Benachrichtigung die Nachricht an.
     final open = ref.read(activeChatIdProvider);
     if (open != null && open == matchId && appInForeground()) return;
-    ref.read(notificationServiceProvider).showMessageNotification(
-      id: matchId.hashCode ^ (DateTime.now().millisecondsSinceEpoch & 0xFFFFFF),
-      title: match.partner.name,
-      body: msg.text,
-      ref: ref,
-    );
+    ref
+        .read(notificationServiceProvider)
+        .showMessageNotification(
+          id:
+              matchId.hashCode ^
+              (DateTime.now().millisecondsSinceEpoch & 0xFFFFFF),
+          title: match.partner.name,
+          body: msg.text,
+          ref: ref,
+        );
   }
 
   void _notifyMatch(UserProfile partner, WidgetRef ref) {
-    ref.read(notificationServiceProvider).showMatchNotification(
-      id: partner.id.hashCode,
-      title: 'Neuer Funke!',
-      body: 'Du und ${partner.name} haben sich gegenseitig geliked 🎉',
-      ref: ref,
-    );
+    ref
+        .read(notificationServiceProvider)
+        .showMatchNotification(
+          id: partner.id.hashCode,
+          title: 'Neuer Funke!',
+          body: 'Du und ${partner.name} haben sich gegenseitig geliked 🎉',
+          ref: ref,
+        );
   }
 }
 
@@ -252,8 +260,8 @@ final chatProvider = StateNotifierProvider<ChatNotifier, List<Match>>((ref) {
   // Opt-in-Einstellung (Geräte-lokal) beim Start anwenden - fail-safe
   // gekapselt, damit Tests/Container ohne localStorage nicht brechen.
   unawaited(() async {
-        // Ohne Storage läuft der Chat einfach ohne Verlauf.
-await bestEffort('setHistoryPersistence', () async {
+    // Ohne Storage läuft der Chat einfach ohne Verlauf.
+    await bestEffort('setHistoryPersistence', () async {
       final storage = ref.read(localStorageProvider);
       final enabled = await storage.getBool('chat_history_local') ?? true;
       final limitRaw = await storage.getBool('chat_history_all');
@@ -262,27 +270,28 @@ await bestEffort('setHistoryPersistence', () async {
     });
     // Persistente QR-Kontakte ("gespeicherte Profile") nach dem Start
     // wiederherstellen - Maximal 5, einzeln löschbar.
-        // Best-effort: Ohne Restore funktioniert der Chat trotzdem.
-await bestEffort('restorePersistedQrContacts', () async {
+    // Best-effort: Ohne Restore funktioniert der Chat trotzdem.
+    await bestEffort('restorePersistedQrContacts', () async {
       await notifier.restorePersistedQrContacts();
     });
   }());
   return notifier;
 });
 
-  /// Hilfsprovider, um den Notification-Service in Provider-Buildern
-  /// verfügbar zu machen, ohne direkte Singleton-Nutzung.
-  final notificationServiceProvider = Provider<NotificationService>((ref) {
-    return NotificationService.instance;
-  });
+/// Hilfsprovider, um den Notification-Service in Provider-Buildern
+/// verfügbar zu machen, ohne direkte Singleton-Nutzung.
+final notificationServiceProvider = Provider<NotificationService>((ref) {
+  return NotificationService.instance;
+});
 
 /// Ob der verschlüsselte lokale Chat-Verlauf aktiv ist (v0.8.0) - für
 /// den Datenexport: Chats landen nur im Export, wenn der Nutzer den
 /// Verlauf eingeschaltet hat.
 final chatHistoryLocalEnabledProvider = FutureProvider<bool>((ref) async {
   try {
-    final v = await ref.watch(localStorageProvider).getBool(
-        'chat_history_local');
+    final v = await ref
+        .watch(localStorageProvider)
+        .getBool('chat_history_local');
     return v ?? false;
   } catch (_) {
     return false;

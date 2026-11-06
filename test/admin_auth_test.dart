@@ -17,8 +17,11 @@ void main() {
 
     // Direkter Test: Der defaultValue von String.fromEnvironment('ADMIN_UUID')
     // im Test ist immer '', weil flutter test keinen --dart-define übergibt.
-    expect(AppConstants.adminUserId, isEmpty,
-      reason: 'Ohne --dart-define=ADMIN_UUID muss adminUserId leer sein.');
+    expect(
+      AppConstants.adminUserId,
+      isEmpty,
+      reason: 'Ohne --dart-define=ADMIN_UUID muss adminUserId leer sein.',
+    );
   });
 
   test('isCurrentUserAdmin() gibt false, wenn adminUserId leer ist', () {
@@ -26,7 +29,6 @@ void main() {
     // die Funktion false zurückgeben — selbst wenn ein User eingeloggt wäre.
     // Der isEmpty-Check in Zeile 17 läuft VOR der User-Prüfung.
     final result = isCurrentUserAdmin();
-    expect(result, isFalse,
-      reason: 'Ohne ADMIN_UUID darf NIEMAND Admin sein.');
+    expect(result, isFalse, reason: 'Ohne ADMIN_UUID darf NIEMAND Admin sein.');
   });
 }

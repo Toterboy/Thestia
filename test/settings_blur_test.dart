@@ -14,8 +14,7 @@ class _FakeStorage implements LocalStorage {
   final Map<String, String> _data = {};
 
   @override
-  Future<void> saveString(String key, String value) async =>
-      _data[key] = value;
+  Future<void> saveString(String key, String value) async => _data[key] = value;
 
   @override
   Future<String?> getString(String key) async => _data[key];
@@ -32,13 +31,12 @@ class _FakeStorage implements LocalStorage {
   Future<void> remove(String key) async => _data.remove(key);
 
   @override
-  Future<void> saveInt(String key, int value) async => _data[key] = value.toString();
+  Future<void> saveInt(String key, int value) async =>
+      _data[key] = value.toString();
 
   @override
   Future<int?> getInt(String key) async =>
       _data[key] == null ? null : int.tryParse(_data[key]!);
-
-
 }
 
 /// Tests für den Bild-Blur-Schutz im Chat:
@@ -61,8 +59,10 @@ void main() {
     // Persistenz: ein JSON-Blob unter prefsSettingsKey.
     final raw = storage._data[AppConstants.prefsSettingsKey];
     expect(raw, isNotNull);
-    expect((jsonDecode(raw!) as Map<String, dynamic>)['blurChatImages'],
-        isFalse);
+    expect(
+      (jsonDecode(raw!) as Map<String, dynamic>)['blurChatImages'],
+      isFalse,
+    );
 
     // Simulierter App-Neustart: gleicher Speicher, neuer Container.
     final restarted = ProviderContainer(

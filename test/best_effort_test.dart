@@ -91,11 +91,7 @@ void main() {
 
     test('liefert den Ersatzwert, wenn der Schritt fehlschlaegt', () {
       expect(
-        bestEffortOrSync(
-          'Schritt',
-          () => throw StateError('kaputt'),
-          -1,
-        ),
+        bestEffortOrSync('Schritt', () => throw StateError('kaputt'), -1),
         -1,
       );
     });

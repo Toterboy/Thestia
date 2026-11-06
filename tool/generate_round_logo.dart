@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:image/image.dart' as img;
@@ -70,12 +70,9 @@ void main(List<String> args) {
         }
       }
       if (fill != null) {
-        square.getPixel(x, y).setRgba(
-              fill.r.toInt(),
-              fill.g.toInt(),
-              fill.b.toInt(),
-              255,
-            );
+        square
+            .getPixel(x, y)
+            .setRgba(fill.r.toInt(), fill.g.toInt(), fill.b.toInt(), 255);
       }
     }
   }
@@ -144,8 +141,9 @@ void main(List<String> args) {
     }
   }
 
-  File('assets/images/thestia_logo_round.png')
-      .writeAsBytesSync(img.encodePng(round));
+  File(
+    'assets/images/thestia_logo_round.png',
+  ).writeAsBytesSync(img.encodePng(round));
 
   // Dark: Hintergrund-Motive ~12 % abgedunkelt; nahe-weiße Design-Elemente
   // (Schriftzug/Herz) bleiben weiß.
@@ -162,9 +160,12 @@ void main(List<String> args) {
       );
     }
   }
-  File('assets/images/thestia_logo_round_dark.png')
-      .writeAsBytesSync(img.encodePng(dark));
+  File(
+    'assets/images/thestia_logo_round_dark.png',
+  ).writeAsBytesSync(img.encodePng(dark));
 
-  stdout.writeln('Rundes Logo erzeugt: ${round.width}px '
-      '(Quelle: thestia_icon_base.png), zoom=${zoom.toStringAsFixed(3)}');
+  stdout.writeln(
+    'Rundes Logo erzeugt: ${round.width}px '
+    '(Quelle: thestia_icon_base.png), zoom=${zoom.toStringAsFixed(3)}',
+  );
 }

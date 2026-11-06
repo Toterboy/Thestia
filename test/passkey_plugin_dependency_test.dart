@@ -32,7 +32,8 @@ void main() {
       expect(
         dependencies,
         matches(RegExp(r'^\s*passkeys:\s*\d', multiLine: true)),
-        reason: 'Das app-seitige passkeys-Paket muss eine direkte '
+        reason:
+            'Das app-seitige passkeys-Paket muss eine direkte '
             'Abhaengigkeit sein - ohne es baut Flutter das Plugin nicht.',
       );
 
@@ -52,11 +53,14 @@ void main() {
       final eintrag = RegExp(
         r'\r?\n  passkeys:\r?\n(?:[^\n]*\r?\n)*?    dependency: "([^"]+)"',
       ).firstMatch(lock);
-      expect(eintrag, isNotNull,
-          reason: 'passkeys muss im Lockfile stehen');
-      expect(eintrag!.group(1), 'direct main',
-          reason: 'Nur eine direkte Abhaengigkeit baut das Plugin ein - '
-              '"transitive" oder "direct overridden" tun es nicht.');
+      expect(eintrag, isNotNull, reason: 'passkeys muss im Lockfile stehen');
+      expect(
+        eintrag!.group(1),
+        'direct main',
+        reason:
+            'Nur eine direkte Abhaengigkeit baut das Plugin ein - '
+            '"transitive" oder "direct overridden" tun es nicht.',
+      );
     });
 
     test('passkeys_android ist als Fork eingebunden', () {
@@ -82,14 +86,16 @@ void main() {
       final daten =
           jsonDecode(datei.readAsStringSync()) as Map<String, dynamic>;
       final android = (daten['plugins'] as Map<String, dynamic>?)?['android'];
-      final namen = (android as List<dynamic>?)
+      final namen =
+          (android as List<dynamic>?)
               ?.map((e) => (e as Map<String, dynamic>)['name'] as String)
               .toList() ??
           <String>[];
       expect(
         namen,
         contains('passkeys_android'),
-        reason: 'passkeys_android muss in der Android-Plugin-Liste stehen - '
+        reason:
+            'passkeys_android muss in der Android-Plugin-Liste stehen - '
             'nur dann landet der Plugin im Build.',
       );
     });

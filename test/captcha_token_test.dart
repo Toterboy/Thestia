@@ -30,9 +30,11 @@ void main() {
       // Cloudflare aendert die Versionsziffer - die App darf daran
       // nicht kleben. Genau das war der Fehler.
       for (final praefix in ['0.', '1.', '2.', '9.']) {
-        expect(isTurnstileToken('$praefix${_echtesToken.substring(2)}'),
-            isTrue,
-            reason: 'Praefix $praefix');
+        expect(
+          isTurnstileToken('$praefix${_echtesToken.substring(2)}'),
+          isTrue,
+          reason: 'Praefix $praefix',
+        );
       }
     });
 
@@ -78,8 +80,7 @@ void main() {
       // meldet Fehler mit "ERROR:..." - die App wertet das im
       // Fehler-Zweig aus, aber die Formatpruefung muss es auch
       // zurueckweisen.
-      expect(isTurnstileToken('ERROR:CAPTCHA_ERROR:invalid-domain'),
-          isFalse);
+      expect(isTurnstileToken('ERROR:CAPTCHA_ERROR:invalid-domain'), isFalse);
       expect(isTurnstileToken('ERROR:SCRIPT_NOT_LOADED'), isFalse);
     });
 

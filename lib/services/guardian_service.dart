@@ -62,10 +62,7 @@ class GuardianService {
       final tz = await FlutterTimezone.getLocalTimezone();
       final name = tz.identifier;
       if (name.isEmpty) return;
-      await _client.rpc(
-        'report_my_timezone',
-        params: {'p_timezone': name},
-      );
+      await _client.rpc('report_my_timezone', params: {'p_timezone': name});
     } catch (e) {
       if (kDebugMode) {
         debugPrint('[Guardian] Zeitzone nicht meldbar: $e');
@@ -93,7 +90,10 @@ class GuardianService {
   /// Beendet die Freigabe (der Jugendliche selbst).
   Future<GuardianResult> revoke() async {
     try {
-      await _client.rpc('revoke_guardian_consent', params: {'p_actor': 'youth'});
+      await _client.rpc(
+        'revoke_guardian_consent',
+        params: {'p_actor': 'youth'},
+      );
       return const GuardianResult.ok();
     } catch (e) {
       return GuardianResult.failed(_codeOf(e), e.toString());

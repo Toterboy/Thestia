@@ -30,8 +30,7 @@ void main() {
         reason: 'Verlauf von A darf für B unsichtbar sein',
       );
       expect(
-        ChatService.qrBoxNameFor('userA') !=
-            ChatService.qrBoxNameFor('userB'),
+        ChatService.qrBoxNameFor('userA') != ChatService.qrBoxNameFor('userB'),
         isTrue,
         reason: 'QR-Kontakte von A dürfen für B unsichtbar sein',
       );

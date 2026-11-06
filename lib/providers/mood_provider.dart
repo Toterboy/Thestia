@@ -43,9 +43,9 @@ final moodServiceProvider = Provider<MoodService>((ref) {
 /// `autoDispose`, damit er sich automatisch aufräumt, wenn kein Screen
 /// mehr darauf zuhört. Beim erneuten Betreten wird das aktuelle Mood
 /// frisch vom Server geladen.
-final moodProvider = StateNotifierProvider.autoDispose<MoodNotifier, Mood?>(
-  (ref) {
-    final service = ref.watch(moodServiceProvider);
-    return MoodNotifier(service);
-  },
-);
+final moodProvider = StateNotifierProvider.autoDispose<MoodNotifier, Mood?>((
+  ref,
+) {
+  final service = ref.watch(moodServiceProvider);
+  return MoodNotifier(service);
+});

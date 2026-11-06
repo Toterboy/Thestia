@@ -23,8 +23,8 @@ class _AppVersionFooterState extends State<AppVersionFooter> {
   }
 
   Future<void> _load() async {
-        // Version bleibt leer – nicht kritisch.
-await bestEffort('setState', () async {
+    // Version bleibt leer – nicht kritisch.
+    await bestEffort('setState', () async {
       final info = await PackageInfo.fromPlatform();
       if (mounted) setState(() => _version = info.version);
     });
@@ -38,18 +38,16 @@ await bestEffort('setState', () async {
       child: _version.isEmpty
           ? Text(
               'Version …',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: color),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: color),
               textAlign: widget.textAlign ?? TextAlign.center,
             )
           : Text(
               'Version $_version',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: color),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: color),
               textAlign: widget.textAlign ?? TextAlign.center,
             ),
     );

@@ -116,8 +116,7 @@ class WhatsNewService {
   /// Merkt den gezeigten Build (LOKAL - der Wert ist pro Gerät gültig;
   /// ein Server-Write wäre für diese UX unnötig und würde RLS/Offline
   /// komplizierter machen).
-  static Future<void> markShown(
-      LocalStorage storage, int build) async {
+  static Future<void> markShown(LocalStorage storage, int build) async {
     try {
       await storage.saveInt(shownBuildKey, build);
     } catch (e) {
@@ -151,10 +150,11 @@ class WhatsNewService {
     required int? shownBuild,
   }) {
     final last = shownBuild ?? 0;
-    final relevant = contentByBuild.entries
-        .where((e) => e.key > last && e.key <= currentBuild)
-        .toList()
-      ..sort((a, b) => b.key.compareTo(a.key)); // juengste zuerst
+    final relevant =
+        contentByBuild.entries
+            .where((e) => e.key > last && e.key <= currentBuild)
+            .toList()
+          ..sort((a, b) => b.key.compareTo(a.key)); // juengste zuerst
     final out = <String>[];
     for (final entry in relevant) {
       out.addAll(entry.value);

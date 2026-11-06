@@ -46,9 +46,9 @@ void main() {
   });
 
   group('Einrichtungs-Struktur', () {
-    final src =
-        File('lib/screens/onboarding/settings_privacy_once_screen.dart')
-            .readAsStringSync();
+    final src = File(
+      'lib/screens/onboarding/settings_privacy_once_screen.dart',
+    ).readAsStringSync();
 
     test('die Seite mit dem Geburtstags-Stil existiert', () {
       expect(src.contains("questionKey: 'setupq.birthday'"), isTrue);
@@ -140,9 +140,9 @@ void main() {
   });
 
   group('Musik-Schluessel (Slugs, keine Labels)', () {
-    final setupSrc =
-        File('lib/screens/onboarding/settings_privacy_once_screen.dart')
-            .readAsStringSync();
+    final setupSrc = File(
+      'lib/screens/onboarding/settings_privacy_once_screen.dart',
+    ).readAsStringSync();
 
     test('die Musik-Seite existiert', () {
       expect(setupSrc.contains("questionKey: 'setupq.music'"), isTrue);

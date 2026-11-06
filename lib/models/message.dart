@@ -95,8 +95,7 @@ class Message {
       ),
       mediaUrl: json['mediaUrl'] as String?,
       durationSeconds: (json['durationSeconds'] as num? ?? 0).toInt(),
-      timestamp:
-          DateTime.fromMillisecondsSinceEpoch(json['timestamp'] as int),
+      timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp'] as int),
       viewOnce: json['viewOnce'] as bool? ?? false,
       viewed: json['viewed'] as bool? ?? false,
     );
@@ -104,17 +103,17 @@ class Message {
 
   /// Wandelt die Nachricht in ein JSON-Map um.
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'senderId': senderId,
-        'receiverId': receiverId,
-        'text': text,
-        'type': type.name,
-        'mediaUrl': mediaUrl,
-        'durationSeconds': durationSeconds,
-        'timestamp': timestamp.millisecondsSinceEpoch,
-        'viewOnce': viewOnce,
-        'viewed': viewed,
-      };
+    'id': id,
+    'senderId': senderId,
+    'receiverId': receiverId,
+    'text': text,
+    'type': type.name,
+    'mediaUrl': mediaUrl,
+    'durationSeconds': durationSeconds,
+    'timestamp': timestamp.millisecondsSinceEpoch,
+    'viewOnce': viewOnce,
+    'viewed': viewed,
+  };
 
   /// True, wenn die Nachricht vom aktuellen Nutzer gesendet wurde.
   bool isFrom(String currentUserId) => senderId == currentUserId;

@@ -54,8 +54,9 @@ class HiveSignalProtocolStore extends InMemorySignalProtocolStore {
     // Bestehende Sessions aus Hive laden.
     for (final adapter in sessionBox.values) {
       try {
-        final record =
-            SessionRecord.fromSerialized(base64Decode(adapter.recordJson));
+        final record = SessionRecord.fromSerialized(
+          base64Decode(adapter.recordJson),
+        );
         final address = _addressFromId(adapter.sessionId);
         await store.storeSession(address, record);
       } catch (e) {
@@ -104,7 +105,10 @@ class HiveSignalProtocolStore extends InMemorySignalProtocolStore {
     final stored = box.get(_trustId(address));
     if (stored == null) return true; // Erster Kontakt (TOFU)
     try {
-      final trusted = IdentityKey.fromBytes(base64Decode(stored.trustedKeyJson), 0);
+      final trusted = IdentityKey.fromBytes(
+        base64Decode(stored.trustedKeyJson),
+        0,
+      );
       return _bytesEqual(trusted.serialize(), identityKey.serialize());
     } catch (_) {
       return false; // Beschädigter Eintrag -> fail-closed

@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -75,12 +75,12 @@ class UserPreferences {
 
   /// Serialisierung zu JSON.
   Map<String, dynamic> toJson() => {
-        'genderPreferences': genderPreferences,
-        'distanceFilterMode': distanceFilterMode.name,
-        'maxDistanceKm': maxDistanceKm,
-        'preferredState': preferredState,
-        'relationshipType': relationshipType?.value,
-      };
+    'genderPreferences': genderPreferences,
+    'distanceFilterMode': distanceFilterMode.name,
+    'maxDistanceKm': maxDistanceKm,
+    'preferredState': preferredState,
+    'relationshipType': relationshipType?.value,
+  };
 
   /// Deserialisierung aus JSON.
   ///
@@ -117,12 +117,12 @@ class UserPreferences {
   /// Standardwerte: KEINE Geschlechts-Präferenz ausgewählt
   /// (leer = kein Filter; "Alle" ist eine explizite, abwählbare Auswahl).
   factory UserPreferences.defaults() => const UserPreferences(
-        genderPreferences: [],
-        distanceFilterMode: DistanceFilterMode.distanceKm,
-        maxDistanceKm: 100,
-        preferredState: null,
-        relationshipType: RelationshipType.open,
-      );
+    genderPreferences: [],
+    distanceFilterMode: DistanceFilterMode.distanceKm,
+    maxDistanceKm: 100,
+    preferredState: null,
+    relationshipType: RelationshipType.open,
+  );
 }
 
 /// StateNotifier für Nutzerpräferenzen.
@@ -134,7 +134,7 @@ class UserPreferences {
 /// werden beim Laden migriert und entfernt.
 class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
   UserPreferencesNotifier(this._storage, this._legacyRawPrefs)
-      : super(UserPreferences.defaults()) {
+    : super(UserPreferences.defaults()) {
     _load();
   }
 
@@ -158,10 +158,12 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
   void queueServerSync({int? ageRangeMin, int? ageRangeMax}) {
     _serverSyncDebounce?.cancel();
     _serverSyncDebounce = Timer(const Duration(milliseconds: 1500), () {
-      unawaited(savePreferencesToServer(
-        ageRangeMin: ageRangeMin,
-        ageRangeMax: ageRangeMax,
-      ));
+      unawaited(
+        savePreferencesToServer(
+          ageRangeMin: ageRangeMin,
+          ageRangeMax: ageRangeMax,
+        ),
+      );
     });
   }
 
@@ -170,15 +172,15 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
     final storage = _storage;
     final legacyPrefs = _legacyRawPrefs;
     if (storage is SecurePreferencesStorage && legacyPrefs != null) {
-            // Migration ist Best-Effort.
-await bestEffort('migrateStringFrom', () async {
+      // Migration ist Best-Effort.
+      await bestEffort('migrateStringFrom', () async {
         await storage.migrateStringFrom(legacyPrefs, _prefsKey);
       });
     }
     final raw = await _storage.getString(_prefsKey);
     if (raw != null && raw.isNotEmpty) {
-            // Bei korrupten Daten: Defaults beibehalten.
-bestEffortSync('fromJson', () {
+      // Bei korrupten Daten: Defaults beibehalten.
+      bestEffortSync('fromJson', () {
         final map = jsonDecode(raw) as Map<String, dynamic>;
         state = UserPreferences.fromJson(map);
       });
@@ -188,8 +190,9 @@ bestEffortSync('fromJson', () {
     final legacyRaw = _legacyRawPrefs?.getString(_prefsKey);
     if (legacyRaw != null && legacyRaw.isNotEmpty) {
       await bestEffort('remove', () async {
-        state =
-            UserPreferences.fromJson(jsonDecode(legacyRaw) as Map<String, dynamic>);
+        state = UserPreferences.fromJson(
+          jsonDecode(legacyRaw) as Map<String, dynamic>,
+        );
         await _persist(); // Sofort im sicheren Speicher ablegen.
         await _legacyRawPrefs?.remove(_prefsKey);
       });
@@ -300,7 +303,7 @@ bestEffortSync('fromJson', () {
       relationshipType: relationshipType,
       genderPreferences:
           (p['gender_preferences'] as List?)?.whereType<String>().toList() ??
-              state.genderPreferences,
+          state.genderPreferences,
     );
     await _persist();
   }
@@ -373,9 +376,11 @@ bestEffortSync('fromJson', () {
       final db = SupabaseDatabaseService(SupabaseService.client);
       final ok = await db.updateSetupFlagsAndVerify(body);
       if (!ok) {
-        debugPrint('[UserPreferences] Haupt-Sync fehlgeschlagen - '
-            'betroffen: max_distance_km, age_range, gender_preferences, '
-            'distance_filter_mode');
+        debugPrint(
+          '[UserPreferences] Haupt-Sync fehlgeschlagen - '
+          'betroffen: max_distance_km, age_range, gender_preferences, '
+          'distance_filter_mode',
+        );
       }
 
       // Der Sonderfall separat. Ein Fehler hier darf das Haupt-Update
@@ -383,8 +388,10 @@ bestEffortSync('fromJson', () {
       try {
         await db.updateOwnProfile(sonderBody);
       } catch (e) {
-        debugPrint('[UserPreferences] relationship_type/preferred_state '
-            'nicht gespeichert (CHECK-Constraint): $e');
+        debugPrint(
+          '[UserPreferences] relationship_type/preferred_state '
+          'nicht gespeichert (CHECK-Constraint): $e',
+        );
       }
 
       return ok;
@@ -422,12 +429,7 @@ bestEffortSync('fromJson', () {
   /// `distance_filter_mode`, die beide funktionieren.
   static Object? _dbPreferredState(String? state) {
     if (state == null || state.trim().isEmpty) return null;
-    const erlaubt = {
-      'single',
-      'polyamory',
-      'open',
-      'unspecified',
-    };
+    const erlaubt = {'single', 'polyamory', 'open', 'unspecified'};
     return erlaubt.contains(state) ? state : null;
   }
 }
@@ -435,9 +437,9 @@ bestEffortSync('fromJson', () {
 /// Provider für die Nutzerpräferenzen (Audit M-16: sicher gespeichert).
 final userPreferencesProvider =
     StateNotifierProvider<UserPreferencesNotifier, UserPreferences>((ref) {
-  final storage = ref.watch(securePrefsProvider);
-  return UserPreferencesNotifier(storage, ref.watch(sharedPrefsProvider));
-});
+      final storage = ref.watch(securePrefsProvider);
+      return UserPreferencesNotifier(storage, ref.watch(sharedPrefsProvider));
+    });
 
 /// Audit M-16: Sichere Speicher-Instanz für sensible Präferenzen.
 final securePrefsProvider = Provider<SecurePreferencesStorage>((ref) {

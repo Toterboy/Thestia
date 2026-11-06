@@ -39,17 +39,18 @@ void main() {
     CameraPlatform.instance = camera;
   });
 
-Widget harness() => ProviderScope(
-        overrides: [
-          // localStorageProvider wirft UnimplementedError, wenn es nicht
-          // gesetzt ist - die echte Einstellungskette laeuft darueber.
-          localStorageProvider.overrideWithValue(_FakeLocalStorage()),
-        ],
-        child: const MaterialApp(home: VerificationVideoScreen()),
-      );
+  Widget harness() => ProviderScope(
+    overrides: [
+      // localStorageProvider wirft UnimplementedError, wenn es nicht
+      // gesetzt ist - die echte Einstellungskette laeuft darueber.
+      localStorageProvider.overrideWithValue(_FakeLocalStorage()),
+    ],
+    child: const MaterialApp(home: VerificationVideoScreen()),
+  );
 
-  testWidgets('Kamera wird vor der Offenlegung nicht angefragt',
-      (tester) async {
+  testWidgets('Kamera wird vor der Offenlegung nicht angefragt', (
+    tester,
+  ) async {
     await tester.pumpWidget(harness());
     await tester.pump();
 
@@ -61,7 +62,8 @@ Widget harness() => ProviderScope(
     expect(
       camera.calls,
       0,
-      reason: 'Die Kamera wird angefragt, bevor der Nutzer gelesen hat, '
+      reason:
+          'Die Kamera wird angefragt, bevor der Nutzer gelesen hat, '
           'warum sie gebraucht wird. Das verletzt die Play-Richtlinie '
           'fuer CAMERA.',
     );
@@ -78,14 +80,14 @@ Widget harness() => ProviderScope(
     expect(
       find.textContaining('Ohne Kamera'),
       findsOneWidget,
-      reason: 'Ohne Kamera ist die Alterspruefung nicht moeglich. Der '
+      reason:
+          'Ohne Kamera ist die Alterspruefung nicht moeglich. Der '
           'Nutzer braucht einen Grund und einen Weg weiter, nicht nur '
           'eine leere Seite.',
     );
   });
 
-  testWidgets('Bestaetigen oeffnet die Kamera genau einmal',
-      (tester) async {
+  testWidgets('Bestaetigen oeffnet die Kamera genau einmal', (tester) async {
     await tester.pumpWidget(harness());
     await tester.pump();
 

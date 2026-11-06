@@ -60,7 +60,8 @@ class BlindPhotoPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final blind = Theme.of(context).extension<BlindModeTheme>() ??
+    final blind =
+        Theme.of(context).extension<BlindModeTheme>() ??
         const BlindModeTheme(placeholderColor: Color(0xFFE1E1EC));
     return Container(
       decoration: BoxDecoration(
@@ -90,4 +91,3 @@ class BlindPhotoPlaceholder extends StatelessWidget {
     );
   }
 }
-

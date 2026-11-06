@@ -13,28 +13,28 @@ class AiBadge extends StatelessWidget {
   /// Kompakter Standard-Badge (lokale KI) mit explizitem Sprachcode -
   /// verwendet in Dialog-Titeln (z. B. NSFW-Befund, lokale Prüfung).
   const AiBadge({required this.languageCode, super.key})
-      : _local = true,
-        _compact = true;
+    : _local = true,
+      _compact = true;
 
   const AiBadge.local({super.key})
-      : languageCode = null,
-        _local = true,
-        _compact = false;
+    : languageCode = null,
+      _local = true,
+      _compact = false;
 
   const AiBadge.cloud({super.key})
-      : languageCode = null,
-        _local = false,
-        _compact = false;
+    : languageCode = null,
+      _local = false,
+      _compact = false;
 
   const AiBadge.localCompact({super.key})
-      : languageCode = null,
-        _local = true,
-        _compact = true;
+    : languageCode = null,
+      _local = true,
+      _compact = true;
 
   const AiBadge.cloudCompact({super.key})
-      : languageCode = null,
-        _local = false,
-        _compact = true;
+    : languageCode = null,
+      _local = false,
+      _compact = true;
 
   /// Expliziter Sprachcode für den Badge-Text (null = Kontext-Locale).
   final String? languageCode;
@@ -47,11 +47,12 @@ class AiBadge extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final label = languageCode == 'en'
         ? (_local ? 'On-device AI' : 'Cloud AI')
-        : L10n.t(
-            context, _local ? 'ai.localBadge' : 'ai.cloudBadge');
+        : L10n.t(context, _local ? 'ai.localBadge' : 'ai.cloudBadge');
     return Container(
       padding: EdgeInsets.symmetric(
-          horizontal: _compact ? 6 : 8, vertical: _compact ? 2 : 4),
+        horizontal: _compact ? 6 : 8,
+        vertical: _compact ? 2 : 4,
+      ),
       decoration: BoxDecoration(
         color: _local
             ? scheme.tertiaryContainer
@@ -74,15 +75,16 @@ class AiBadge extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             label,
-            style: (_compact
-                    ? Theme.of(context).textTheme.labelSmall
-                    : Theme.of(context).textTheme.labelMedium)
-                ?.copyWith(
-              color: _local
-                  ? scheme.onTertiaryContainer
-                  : scheme.onSurfaceVariant,
-              fontWeight: FontWeight.bold,
-            ),
+            style:
+                (_compact
+                        ? Theme.of(context).textTheme.labelSmall
+                        : Theme.of(context).textTheme.labelMedium)
+                    ?.copyWith(
+                      color: _local
+                          ? scheme.onTertiaryContainer
+                          : scheme.onSurfaceVariant,
+                      fontWeight: FontWeight.bold,
+                    ),
           ),
         ],
       ),

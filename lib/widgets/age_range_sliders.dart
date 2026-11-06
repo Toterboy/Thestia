@@ -27,9 +27,9 @@ class AgeRangeSliders extends StatelessWidget {
     required this.maxLabelPrefix,
     required this.labelSuffix,
     super.key,
-  })  : assert(boundsMin <= boundsMax),
-        assert(minValue >= boundsMin && minValue <= boundsMax),
-        assert(maxValue >= boundsMin && maxValue <= boundsMax);
+  }) : assert(boundsMin <= boundsMax),
+       assert(minValue >= boundsMin && minValue <= boundsMax),
+       assert(maxValue >= boundsMin && maxValue <= boundsMax);
 
   /// Aktuell gewähltes Mindestalter.
   final int minValue;

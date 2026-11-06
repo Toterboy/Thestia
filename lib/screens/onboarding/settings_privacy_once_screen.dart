@@ -284,10 +284,9 @@ class _SettingsPrivacyOnceScreenState
     );
     if (SupabaseService.isInitialized) {
       unawaited(
-        SupabaseDatabaseService(SupabaseService.client).updateOwnProfile({
-          'intro_text': '',
-          'intro_audio_path': null,
-        }),
+        SupabaseDatabaseService(
+          SupabaseService.client,
+        ).updateOwnProfile({'intro_text': '', 'intro_audio_path': null}),
       );
     }
   }
@@ -355,8 +354,10 @@ class _SettingsPrivacyOnceScreenState
         ).updateOwnProfile({'birthday_style': _birthdayStyle});
       }
     } catch (e) {
-      debugPrint('[SettingsPrivacyOnce] Geburtstags-Stil speichern '
-          'fehlgeschlagen: $e');
+      debugPrint(
+        '[SettingsPrivacyOnce] Geburtstags-Stil speichern '
+        'fehlgeschlagen: $e',
+      );
     }
   }
 
@@ -381,9 +382,7 @@ class _SettingsPrivacyOnceScreenState
             favoriteBand: band,
           );
       if (SupabaseService.isInitialized) {
-        await SupabaseDatabaseService(
-          SupabaseService.client,
-        ).updateOwnProfile({
+        await SupabaseDatabaseService(SupabaseService.client).updateOwnProfile({
           'music_liked': _musicLiked.toList(),
           'music_disliked': _musicDisliked.toList(),
           'favorite_song': song,
@@ -444,9 +443,9 @@ class _SettingsPrivacyOnceScreenState
       // alte Stand, das Bild verschwand. Von aussen sah es damit aus,
       // als frage die Einrichtung gar kein Profilbild ab.
       if (SupabaseService.isInitialized) {
-        await ref
-            .read(supabaseDatabaseServiceProvider)
-            .updateOwnProfile({'photos': [path]});
+        await ref.read(supabaseDatabaseServiceProvider).updateOwnProfile({
+          'photos': [path],
+        });
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -527,10 +526,7 @@ class _SettingsPrivacyOnceScreenState
       debugPrint('[SettingsPrivacyOnce] Passkey-Setup fehlgeschlagen: $e');
       // Konkrete Meldung statt der generischen - auch bei unerwarteten
       // Fehlern (NUTZERWUNSCH 31.10.2026).
-      final msg = L10n.exc(
-        context,
-        PasskeyAuth.explainForUi(e, login: false),
-      );
+      final msg = L10n.exc(context, PasskeyAuth.explainForUi(e, login: false));
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
@@ -577,8 +573,8 @@ class _SettingsPrivacyOnceScreenState
     // Migration 066). Kein city mehr - die Spalte ist mit Migration 138
     // entfernt.
     if (SupabaseService.isInitialized) {
-            // Best-Effort: Blockiert den Abschluss nicht.
-await bestEffort('prefsNotifier.savePreferencesToServer', () async {
+      // Best-Effort: Blockiert den Abschluss nicht.
+      await bestEffort('prefsNotifier.savePreferencesToServer', () async {
         final s = ref.read(settingsProvider);
         final profileState = ref.read(profileProvider).state;
         await prefsNotifier.savePreferencesToServer(
@@ -741,42 +737,45 @@ await bestEffort('prefsNotifier.savePreferencesToServer', () async {
             locationLng: snapped.lng,
           );
       if (SupabaseService.isInitialized) {
-                // Best-Effort: Standort-Sync darf den Flow nicht blockieren.
-await bestEffort('supabaseDatabaseServiceProvider.saveOwnLocation', () async {
-          final userId = SupabaseService.client.auth.currentUser?.id;
-          if (userId != null) {
-            unawaited(
-              ref
-                  .read(locationCheckServiceProvider)
-                  .processLocationCheck(
-                    userId: userId,
-                    newLatitude: snapped.lat,
-                    newLongitude: snapped.lng,
-                  ),
-            );
-            // Bundesland serverseitig sichern, damit ein späterer
-            // Profil-Sync (fetchOwnProfile) den Wert nicht mit leer
-            // überschreibt. Kein city: den gibt es nicht mehr.
-            unawaited(
-              ref.read(supabaseDatabaseServiceProvider).updateOwnProfile({
-                'state': detectedState,
-              }),
-            );
+        // Best-Effort: Standort-Sync darf den Flow nicht blockieren.
+        await bestEffort(
+          'supabaseDatabaseServiceProvider.saveOwnLocation',
+          () async {
+            final userId = SupabaseService.client.auth.currentUser?.id;
+            if (userId != null) {
+              unawaited(
+                ref
+                    .read(locationCheckServiceProvider)
+                    .processLocationCheck(
+                      userId: userId,
+                      newLatitude: snapped.lat,
+                      newLongitude: snapped.lng,
+                    ),
+              );
+              // Bundesland serverseitig sichern, damit ein späterer
+              // Profil-Sync (fetchOwnProfile) den Wert nicht mit leer
+              // überschreibt. Kein city: den gibt es nicht mehr.
+              unawaited(
+                ref.read(supabaseDatabaseServiceProvider).updateOwnProfile({
+                  'state': detectedState,
+                }),
+              );
 
-            // v0.10.0: Die Koordinaten gehoeren nach profile_locations -
-            // die einzige Tabelle, in der die exakten Werte liegen und
-            // die nur der Eigentuemer lesen kann. Ohne diesen Schritt
-            // bleibt die Tabelle leer und die Entfernungsanzeige
-            // entfaellt (Migration 135 hatte sie nur befuellt fuer
-            // Bestandsprofile, nicht fuer neue Accounts).
-            await ref
-                .read(supabaseDatabaseServiceProvider)
-                .saveOwnLocation(snapped.lat, snapped.lng);
-          }
-        });
+              // v0.10.0: Die Koordinaten gehoeren nach profile_locations -
+              // die einzige Tabelle, in der die exakten Werte liegen und
+              // die nur der Eigentuemer lesen kann. Ohne diesen Schritt
+              // bleibt die Tabelle leer und die Entfernungsanzeige
+              // entfaellt (Migration 135 hatte sie nur befuellt fuer
+              // Bestandsprofile, nicht fuer neue Accounts).
+              await ref
+                  .read(supabaseDatabaseServiceProvider)
+                  .saveOwnLocation(snapped.lat, snapped.lng);
+            }
+          },
+        );
       }
 
-setState(() {
+      setState(() {
         _isDetectingLocation = false;
         _locationError = null;
         // Das erkannte Bundesland in die Auswahl uebernehmen, damit der
@@ -857,8 +856,7 @@ setState(() {
     // das Geburtsdatum nicht geladen ist, wird nichts geklemmt. Das
     // verhindert, dass ein Erwachsender während des Einrichtens
     // plötzlich auf 25 km springt.
-    final radiusGesperrt =
-        AgeSafetyRules.isDiscoveryRadiusCapped(effectiveAge);
+    final radiusGesperrt = AgeSafetyRules.isDiscoveryRadiusCapped(effectiveAge);
     final radiusMaxKm = AgeSafetyRules.maxDiscoveryRadiusKm(effectiveAge);
     // Der Slider darf keinen Wert ausserhalb [min, max] bekommen - sonst
     // wirft die Flutter-Assertion. Deshalb wird geklemmt angezeigt.
@@ -870,7 +868,9 @@ setState(() {
     if (userAge != null && radiusGesperrt) {
       if (userPrefs.distanceFilterMode == DistanceFilterMode.germany) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          userPrefsNotifier.setDistanceFilterMode(DistanceFilterMode.distanceKm);
+          userPrefsNotifier.setDistanceFilterMode(
+            DistanceFilterMode.distanceKm,
+          );
         });
       }
       if (userPrefs.maxDistanceKm != radiusWert) {
@@ -957,11 +957,11 @@ setState(() {
                           // Mehrfachauswahl per Chips (inkl. "Alle"-Kurzform).
                           // Ein einzelnes Geschlecht kann nicht abgewählt
                           // werden, solange es das letzte aktive ist.
-                           const GenderPreferenceSelector(),
-                           const SizedBox(height: 20),
-                           // Kein Doppel-Titel: Die Frage steht bereits in
-                           // der Bubble oben (setupq.filter).
-                           DropdownButtonFormField<RelationshipType>(
+                          const GenderPreferenceSelector(),
+                          const SizedBox(height: 20),
+                          // Kein Doppel-Titel: Die Frage steht bereits in
+                          // der Bubble oben (setupq.filter).
+                          DropdownButtonFormField<RelationshipType>(
                             initialValue: userPrefs.relationshipType,
                             borderRadius: BorderRadius.circular(16),
                             decoration: InputDecoration(
@@ -1025,9 +1025,11 @@ setState(() {
                               // gesperrt - ausgegraut, aber sichtbar
                               // (nicht versteckt: sonst wüsste niemand,
                               // warum die Auswahl fehlt).
-                              final gesperrt = mode == DistanceFilterMode.germany &&
+                              final gesperrt =
+                                  mode == DistanceFilterMode.germany &&
                                   !AgeSafetyRules.isWholeGermanyAllowed(
-                                      effectiveAge);
+                                    effectiveAge,
+                                  );
                               return DropdownMenuItem(
                                 value: mode,
                                 enabled: !gesperrt,
@@ -1115,10 +1117,7 @@ setState(() {
                                   : _selectedState!.trim(),
                               borderRadius: BorderRadius.circular(16),
                               decoration: InputDecoration(
-                                labelText: L10n.t(
-                                  context,
-                                  'setupp.stateLabel',
-                                ),
+                                labelText: L10n.t(context, 'setupp.stateLabel'),
                               ),
                               hint: Text(L10n.t(context, 'setup.pleasePick')),
                               items: kGermanStates
@@ -1180,9 +1179,7 @@ setState(() {
                                     ),
                                   )
                                 : const Icon(Icons.my_location),
-                            label: Text(
-                              L10n.t(context, 'setupp.detectState'),
-                            ),
+                            label: Text(L10n.t(context, 'setupp.detectState')),
                             style: OutlinedButton.styleFrom(
                               minimumSize: const Size.fromHeight(48),
                             ),
@@ -1312,8 +1309,7 @@ setState(() {
                             isExpanded: true,
                             borderRadius: BorderRadius.circular(16),
                             decoration: InputDecoration(
-                              labelText:
-                                  L10n.t(context, 'setupp.countryLabel'),
+                              labelText: L10n.t(context, 'setupp.countryLabel'),
                             ),
                             items: kSupportedCountries
                                 .map(
@@ -1442,8 +1438,7 @@ setState(() {
                             TextFormField(
                               controller: _songCtrl,
                               maxLength: 120,
-                              scrollPadding:
-                                  const EdgeInsets.only(bottom: 180),
+                              scrollPadding: const EdgeInsets.only(bottom: 180),
                               decoration: InputDecoration(
                                 labelText: L10n.t(
                                   context,
@@ -1456,8 +1451,7 @@ setState(() {
                             TextFormField(
                               controller: _bandCtrl,
                               maxLength: 120,
-                              scrollPadding:
-                                  const EdgeInsets.only(bottom: 180),
+                              scrollPadding: const EdgeInsets.only(bottom: 180),
                               decoration: InputDecoration(
                                 labelText: L10n.t(
                                   context,
@@ -1490,10 +1484,15 @@ setState(() {
                           // serverseitig ausgeschlossen.
                           SwitchListTile(
                             contentPadding: EdgeInsets.zero,
-                            title: Text(L10n.t(context,
-                                'profile.edit.habitsDealbreaker')),
-                            subtitle: Text(L10n.t(context,
-                                'profile.edit.habitsDealbreakerSub')),
+                            title: Text(
+                              L10n.t(context, 'profile.edit.habitsDealbreaker'),
+                            ),
+                            subtitle: Text(
+                              L10n.t(
+                                context,
+                                'profile.edit.habitsDealbreakerSub',
+                              ),
+                            ),
                             value: _habitsDealbreaker,
                             onChanged: (v) =>
                                 setState(() => _habitsDealbreaker = v),

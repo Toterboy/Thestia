@@ -16,10 +16,7 @@ import 'package:thestia/services/webrtc_service.dart';
 /// [incomingMessages] (der [WebRTCService] entschlüsselt mit dem Signal
 /// Protocol).
 class P2PChatService {
-  P2PChatService(
-    this._webrtc,
-    this._prekey,
-  ) {
+  P2PChatService(this._webrtc, this._prekey) {
     _incomingSub = _webrtc.incomingMessages.listen(
       (text) => _messageController.add(text),
     );
@@ -51,24 +48,35 @@ class P2PChatService {
 
   final _messageController = StreamController<String>.broadcast();
   final _binaryController =
-      StreamController<({Uint8List data, String contentType, Map<String, dynamic>? metadata})>.broadcast();
-  final _callControlController = StreamController<Map<String, dynamic>>.broadcast();
+      StreamController<
+        ({Uint8List data, String contentType, Map<String, dynamic>? metadata})
+      >.broadcast();
+  final _callControlController =
+      StreamController<Map<String, dynamic>>.broadcast();
   final _callAudioController =
-      StreamController<({Uint8List data, String contentType, Map<String, dynamic>? metadata})>.broadcast();
+      StreamController<
+        ({Uint8List data, String contentType, Map<String, dynamic>? metadata})
+      >.broadcast();
   late final StreamSubscription<String> _incomingSub;
-  late final StreamSubscription<({Uint8List data, String contentType, Map<String, dynamic>? metadata})> _incomingBinarySub;
+  late final StreamSubscription<
+    ({Uint8List data, String contentType, Map<String, dynamic>? metadata})
+  >
+  _incomingBinarySub;
   late final StreamSubscription<Map<String, dynamic>> _callControlSub;
-  late final StreamSubscription<({Uint8List data, String contentType, Map<String, dynamic>? metadata})> _callAudioSub;
+  late final StreamSubscription<
+    ({Uint8List data, String contentType, Map<String, dynamic>? metadata})
+  >
+  _callAudioSub;
   Stream<String> get incomingMessages => _messageController.stream;
   Stream<({Uint8List data, String contentType, Map<String, dynamic>? metadata})>
-      get incomingBinary => _binaryController.stream;
+  get incomingBinary => _binaryController.stream;
 
   /// Eingehende Anruf-Signalisierung (invite/accept/decline/end).
   Stream<Map<String, dynamic>> get callControl => _callControlController.stream;
 
   /// Eingehende Sprachpakete eines Anrufs (entschlüsselt).
   Stream<({Uint8List data, String contentType, Map<String, dynamic>? metadata})>
-      get callAudio => _callAudioController.stream;
+  get callAudio => _callAudioController.stream;
 
   bool get isConnected => _webrtc.isConnected;
 
@@ -76,8 +84,7 @@ class P2PChatService {
   bool get isDataChannelOpen => _webrtc.isDataChannelOpen;
 
   /// Stream des DataChannel-Status (zum Warten auf "offen").
-  Stream<RTCDataChannelState> get connectionState =>
-      _webrtc.connectionState;
+  Stream<RTCDataChannelState> get connectionState => _webrtc.connectionState;
 
   /// Stream des ICE-Verbindungsstatus (Diagnose im Chat).
   Stream<RTCIceConnectionState> get iceConnectionState =>
@@ -140,8 +147,15 @@ class P2PChatService {
   // Outbox (Senden vor verbundenem DataChannel)
   // ---------------------------------------------------------------------
   static const int _maxOutbox = 200;
-  final List<({String? text, Uint8List? data, String contentType, Map<String, dynamic>? metadata})>
-      _outbox = [];
+  final List<
+    ({
+      String? text,
+      Uint8List? data,
+      String contentType,
+      Map<String, dynamic>? metadata,
+    })
+  >
+  _outbox = [];
   String? _outboxPeerId;
   late final StreamSubscription<RTCDataChannelState> _connSub;
 
@@ -168,7 +182,8 @@ class P2PChatService {
   /// (continue statt break - Fix: sonst blockiert ein Bild alle
   /// dahinterliegenden Relay-fähigen Texte für immer).
   Future<void> drainOutboxViaRelay(
-      Future<void> Function(String text) send) async {
+    Future<void> Function(String text) send,
+  ) async {
     var i = 0;
     while (i < _outbox.length) {
       final item = _outbox[i];
@@ -213,8 +228,10 @@ class P2PChatService {
       contentType: contentType,
       metadata: metadata,
     ));
-    debugPrint('[P2P] DataChannel nicht offen - Nachricht in die Outbox '
-        '(${_outbox.length} wartend).');
+    debugPrint(
+      '[P2P] DataChannel nicht offen - Nachricht in die Outbox '
+      '(${_outbox.length} wartend).',
+    );
   }
 
   /// Flush-Fehlversuche je Outbox-Eintrag (gegen Poison-Head-Blockade,
@@ -229,8 +246,11 @@ class P2PChatService {
         if (item.text != null) {
           await _webrtc.sendMessage(item.text!);
         } else {
-          await _webrtc.sendBinary(item.data!,
-              contentType: item.contentType, metadata: item.metadata);
+          await _webrtc.sendBinary(
+            item.data!,
+            contentType: item.contentType,
+            metadata: item.metadata,
+          );
         }
         _outbox.removeAt(0);
         _flushFailures.remove(identityHashCode(item));
@@ -245,12 +265,16 @@ class P2PChatService {
         final key = identityHashCode(item);
         final fails = (_flushFailures[key] ?? 0) + 1;
         if (fails >= _maxFlushFailures) {
-          debugPrint('[P2P] Outbox-Eintrag nach $fails Versuchen verworfen: $e');
+          debugPrint(
+            '[P2P] Outbox-Eintrag nach $fails Versuchen verworfen: $e',
+          );
           _outbox.removeAt(0);
           _flushFailures.remove(key);
         } else {
           _flushFailures[key] = fails;
-          debugPrint('[P2P] Outbox-Eintrag vorerst behalten ($fails/$_maxFlushFailures): $e');
+          debugPrint(
+            '[P2P] Outbox-Eintrag vorerst behalten ($fails/$_maxFlushFailures): $e',
+          );
           break;
         }
       }
@@ -334,11 +358,17 @@ class P2PChatService {
   }
 
   /// Sendet Binärdaten E2E - oder puffert sie, bis der Kanal offen ist.
-  Future<void> sendBinary(Uint8List data,
-      {String contentType = 'application/octet-stream',
-      Map<String, dynamic>? metadata}) async {
+  Future<void> sendBinary(
+    Uint8List data, {
+    String contentType = 'application/octet-stream',
+    Map<String, dynamic>? metadata,
+  }) async {
     try {
-      await _webrtc.sendBinary(data, contentType: contentType, metadata: metadata);
+      await _webrtc.sendBinary(
+        data,
+        contentType: contentType,
+        metadata: metadata,
+      );
     } on StateError {
       _enqueue(data: data, contentType: contentType, metadata: metadata);
     }
@@ -357,7 +387,10 @@ class P2PChatService {
   }
 
   /// Sendet ein Sprachpaket eines Anrufs (E2E-verschlüsselt) - oder puffert.
-  Future<void> sendCallAudio(Uint8List data, {Map<String, dynamic>? metadata}) async {
+  Future<void> sendCallAudio(
+    Uint8List data, {
+    Map<String, dynamic>? metadata,
+  }) async {
     try {
       await _webrtc.sendCallAudio(data, metadata: metadata);
     } on StateError {
@@ -376,8 +409,10 @@ class P2PChatService {
       _controlQueue.removeAt(0);
     }
     _controlQueue.add(Map<String, dynamic>.from(payload));
-    debugPrint('[P2P] DataChannel nicht offen - Control in Queue '
-        '(${_controlQueue.length} wartend).');
+    debugPrint(
+      '[P2P] DataChannel nicht offen - Control in Queue '
+      '(${_controlQueue.length} wartend).',
+    );
   }
 
   Future<void> _flushControlQueue() async {

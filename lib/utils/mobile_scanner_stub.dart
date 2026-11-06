@@ -10,11 +10,7 @@ class MobileScannerController {
 }
 
 class MobileScanner extends StatelessWidget {
-  const MobileScanner({
-    super.key,
-    this.controller,
-    this.onDetect,
-  });
+  const MobileScanner({super.key, this.controller, this.onDetect});
 
   final MobileScannerController? controller;
   final void Function(dynamic capture)? onDetect;

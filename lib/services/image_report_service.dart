@@ -75,8 +75,9 @@ class ImageReportService {
     // Pseudonymisierte Reporter-ID (SHA-256): Der Klartext-UUID geht nicht
     // über die Kabel, das Moderations-Team kann Meldungen desselben
     // Meldenden trotzdem als zusammengehörig erkennen.
-    final reporterIdSha256 =
-        sha256.convert(utf8.encode(AppConstants.currentUserId)).toString();
+    final reporterIdSha256 = sha256
+        .convert(utf8.encode(AppConstants.currentUserId))
+        .toString();
 
     final response = await SupabaseService.client.functions.invoke(
       'report-image',
@@ -90,8 +91,7 @@ class ImageReportService {
         'reporterIdSha256': reporterIdSha256,
         // Lokales On-Device-Ergebnis (v0.8.0): nur Hinweis für das
         // manuelle Team-Review - KEINE automatischen Kontosperren.
-        if (localScore != null)
-          'localAi': {'score': localScore},
+        if (localScore != null) 'localAi': {'score': localScore},
       },
     );
 
@@ -155,9 +155,9 @@ Future<void> showImageReportDialog({
     return;
   }
   Uint8List localBytes = Uint8List(0);
-    // Dekodierung fehlgeschlagen: lokale Prüfung überspringen, die
-    // Meldung selbst bleibt weiterhin möglich.
-bestEffortSync('base64Decode', () {
+  // Dekodierung fehlgeschlagen: lokale Prüfung überspringen, die
+  // Meldung selbst bleibt weiterhin möglich.
+  bestEffortSync('base64Decode', () {
     localBytes = Uint8List.fromList(base64Decode(imageBase64));
   });
 
@@ -171,12 +171,16 @@ bestEffortSync('base64Decode', () {
       builder: (ctx, setState) => AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.flag_outlined,
-                color: Theme.of(context).colorScheme.primary),
+            Icon(
+              Icons.flag_outlined,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(width: 8),
             Expanded(
-                child: Text(L10n.tf(ctx, 'report.imageTitle',
-                    {'name': reportedUserName}))),
+              child: Text(
+                L10n.tf(ctx, 'report.imageTitle', {'name': reportedUserName}),
+              ),
+            ),
           ],
         ),
         content: SizedBox(
@@ -197,10 +201,9 @@ bestEffortSync('base64Decode', () {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .primaryContainer
-                        .withValues(alpha: 0.5),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -227,9 +230,9 @@ bestEffortSync('base64Decode', () {
                 const SizedBox(height: 12),
                 Text(
                   'Wähle den Grund für die Meldung:',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 12),
                 RadioGroup<ReportType>(
@@ -255,7 +258,8 @@ bestEffortSync('base64Decode', () {
                     labelText: L10n.t(context, 'report.detailsOptional'),
                     hintText: L10n.t(ctx, 'common.whatHappened'),
                     border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                 ),
               ],
@@ -333,8 +337,9 @@ class _LocalSafetyCheckSectionState extends State<_LocalSafetyCheckSection> {
   }
 
   Future<void> _run() async {
-    final result =
-        await ImageSafetyService.instance.classifyImage(widget.imageBytes);
+    final result = await ImageSafetyService.instance.classifyImage(
+      widget.imageBytes,
+    );
     if (!mounted) return;
     setState(() {
       _result = result;
@@ -357,22 +362,17 @@ class _LocalSafetyCheckSectionState extends State<_LocalSafetyCheckSection> {
         children: [
           Row(
             children: [
-              Icon(Icons.phone_iphone,
-                  size: 20, color: scheme.primary),
+              Icon(Icons.phone_iphone, size: 20, color: scheme.primary),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Lokale Prüfung (auf diesem Gerät)',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(fontWeight: FontWeight.w500),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
                 ),
               ),
-              AiBadge(
-                languageCode:
-                    L10n.localeOf(context).languageCode,
-              ),
+              AiBadge(languageCode: L10n.localeOf(context).languageCode),
             ],
           ),
           const SizedBox(height: 8),
@@ -385,9 +385,7 @@ class _LocalSafetyCheckSectionState extends State<_LocalSafetyCheckSection> {
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: Text(L10n.t(context, 'report.analyzing')),
-                ),
+                Expanded(child: Text(L10n.t(context, 'report.analyzing'))),
               ],
             )
           else if (_result == null)
@@ -399,17 +397,19 @@ class _LocalSafetyCheckSectionState extends State<_LocalSafetyCheckSection> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.warning_amber_rounded,
-                    size: 20, color: scheme.error),
+                Icon(
+                  Icons.warning_amber_rounded,
+                  size: 20,
+                  color: scheme.error,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Dieses Bild wurde lokal als potenziell anstößig '
                     'eingestuft (Score ${(_result!.criticalScore * 100).toStringAsFixed(0)} %).',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: scheme.error),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: scheme.error),
                   ),
                 ),
               ],
@@ -418,8 +418,11 @@ class _LocalSafetyCheckSectionState extends State<_LocalSafetyCheckSection> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.check_circle_outline,
-                    size: 20, color: scheme.primary),
+                Icon(
+                  Icons.check_circle_outline,
+                  size: 20,
+                  color: scheme.primary,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -473,44 +476,46 @@ Future<void> _runAiCheck({
               'Bild-Meldung: $reason${details.isEmpty ? '' : ' - $details'}',
         )
         .then((ergebnis) {
-      if (ergebnis.serverAccepted) return;
-      debugPrint('[ImageReportService] Meldung nicht beim Support '
-          'angekommen: ${ergebnis.report.type.value}');
-    }),
+          if (ergebnis.serverAccepted) return;
+          debugPrint(
+            '[ImageReportService] Meldung nicht beim Support '
+            'angekommen: ${ergebnis.report.type.value}',
+          );
+        }),
   );
 
   // Lade-Dialog (nicht abbrechbar - der Scan dauert wenige Sekunden).
-  unawaited(showDialog<void>(
-    context: context,
-    barrierDismissible: false,
-    builder: (ctx) => PopScope(
-      canPop: false,
-      child: AlertDialog(
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(L10n.t(context, 'report.checkingTitle')),
-            ),
-            AiBadge(
-              languageCode: L10n.localeOf(context).languageCode,
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 16),
-            Text(L10n.t(context, 'report.checkingSub')),
-          ],
+  unawaited(
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          title: Row(
+            children: [
+              Expanded(child: Text(L10n.t(context, 'report.checkingTitle'))),
+              AiBadge(languageCode: L10n.localeOf(context).languageCode),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(L10n.t(context, 'report.checkingSub')),
+            ],
+          ),
         ),
       ),
     ),
-  ));
+  );
 
   ImageReportOutcome outcome;
   try {
-    outcome = await ref.read(imageReportServiceProvider).reportChatImage(
+    outcome = await ref
+        .read(imageReportServiceProvider)
+        .reportChatImage(
           imageBase64: imageBase64,
           reportedUserId: reportedUserId,
           reason: reason,
@@ -552,19 +557,17 @@ Future<void> _runAiCheck({
       builder: (ctx) => AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.verified_user_outlined,
-                color: Theme.of(context).colorScheme.primary),
+            Icon(
+              Icons.verified_user_outlined,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(width: 8),
             Expanded(child: Text(L10n.t(context, 'report.confirmed'))),
-            AiBadge(
-              languageCode: L10n.localeOf(context).languageCode,
-            ),
+            AiBadge(languageCode: L10n.localeOf(context).languageCode),
           ],
         ),
         content: Text(
-          '${L10n.tf(ctx, 'report.aiConfirm', {
-                'score': (outcome.score * 100).toStringAsFixed(0)
-              })}\n\n${outcome.operatorNotified ? L10n.t(ctx, 'report.aiEscalated') : L10n.t(ctx, 'report.aiNotNotified')}',
+          '${L10n.tf(ctx, 'report.aiConfirm', {'score': (outcome.score * 100).toStringAsFixed(0)})}\n\n${outcome.operatorNotified ? L10n.t(ctx, 'report.aiEscalated') : L10n.t(ctx, 'report.aiNotNotified')}',
         ),
         actions: [
           FilledButton(
@@ -580,27 +583,27 @@ Future<void> _runAiCheck({
   // Fall 2: KI widerspricht ODER nicht verfügbar -> Eskalations-Option.
   final aiText = outcome.aiAvailable
       ? 'Die KI stuft das Bild NICHT als unangemessen ein '
-          '(Score ${(outcome.score * 100).toStringAsFixed(0)}%). '
-          'Falls sie damit falsch liegt, kannst du das Bild zur manuellen '
-          'Prüfung durch unser Team weiterleiten.'
+            '(Score ${(outcome.score * 100).toStringAsFixed(0)}%). '
+            'Falls sie damit falsch liegt, kannst du das Bild zur manuellen '
+            'Prüfung durch unser Team weiterleiten.'
       : 'Die automatische KI-Prüfung ist gerade nicht verfügbar. '
-          'Du kannst das Bild direkt zur manuellen Prüfung durch unser '
-          'Team weiterleiten.';
+            'Du kannst das Bild direkt zur manuellen Prüfung durch unser '
+            'Team weiterleiten.';
 
   final escalate = await showDialog<bool>(
     context: context,
-      builder: (ctx) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(Icons.psychology_alt_outlined,
-                color: Theme.of(context).colorScheme.primary),
-            const SizedBox(width: 8),
-            Expanded(child: Text(L10n.t(ctx, 'report.aiResult'))),
-            AiBadge(
-              languageCode: L10n.localeOf(ctx).languageCode,
-            ),
-          ],
-        ),
+    builder: (ctx) => AlertDialog(
+      title: Row(
+        children: [
+          Icon(
+            Icons.psychology_alt_outlined,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: Text(L10n.t(ctx, 'report.aiResult'))),
+          AiBadge(languageCode: L10n.localeOf(ctx).languageCode),
+        ],
+      ),
       content: Text(aiText),
       actions: [
         TextButton(
@@ -620,7 +623,9 @@ Future<void> _runAiCheck({
   // Eskalation: erneut senden (escalate=true) - Bild, Report und frisches
   // KI-Ergebnis gehen an das Team.
   try {
-    await ref.read(imageReportServiceProvider).reportChatImage(
+    await ref
+        .read(imageReportServiceProvider)
+        .reportChatImage(
           imageBase64: imageBase64,
           reportedUserId: reportedUserId,
           reason: reason,
@@ -634,9 +639,7 @@ Future<void> _runAiCheck({
         context: context,
         builder: (ctx) => AlertDialog(
           title: Text(L10n.t(ctx, 'report.forwardedTitle')),
-          content: Text(
-            L10n.t(ctx, 'report.forwardedBody'),
-          ),
+          content: Text(L10n.t(ctx, 'report.forwardedBody')),
           actions: [
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(),
@@ -651,8 +654,7 @@ Future<void> _runAiCheck({
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content:
-              Text(L10n.t(context, 'report.forwardFailed')),
+          content: Text(L10n.t(context, 'report.forwardFailed')),
           behavior: SnackBarBehavior.floating,
         ),
       );

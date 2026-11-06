@@ -157,7 +157,9 @@ class PasskeyAuth {
     final optionen = Map<String, dynamic>.from(daten['options'] as Map);
 
     // Native Zeremonie (Fingerabdruck / Face-ID / Geräte-PIN).
-    final response = await _authenticator.register(_requestAusOptionen(optionen));
+    final response = await _authenticator.register(
+      _requestAusOptionen(optionen),
+    );
 
     // Fertigstellen: der Server prüft die Signatur.
     await SupabaseService.client.auth.passkey.verifyRegistration(
@@ -174,7 +176,9 @@ class PasskeyAuth {
   ///   * die Challenge kommt base64url MIT Fuellzeichen; das Plugin
   ///     lehnt gefuellte Werte ab,
   ///   * jedes excluded Credential braucht eine (leere) Transport-Liste.
-  static RegisterRequestType _requestAusOptionen(Map<String, dynamic> optionen) {
+  static RegisterRequestType _requestAusOptionen(
+    Map<String, dynamic> optionen,
+  ) {
     final json = Map<String, dynamic>.of(optionen);
 
     final challenge = json['challenge'];
@@ -372,18 +376,17 @@ class PasskeyAuth {
       name: 'PasskeyAuth',
     );
     if (kDebugMode) {
-      debugPrint('[PasskeyAuth] $action ROHER Fehler '
-          '(${e.runtimeType}): $text');
+      debugPrint(
+        '[PasskeyAuth] $action ROHER Fehler '
+        '(${e.runtimeType}): $text',
+      );
     }
-
 
     if (text.contains('cancelled') ||
         text.toLowerCase().contains('cancellationexception')) {
       return AppException(
         'Passkey-$action abgebrochen.',
-        messageKey: login
-            ? '${k}cancelledLogin'
-            : '${k}cancelledRegister',
+        messageKey: login ? '${k}cancelledLogin' : '${k}cancelledRegister',
       );
     }
     if (text.contains('NotAllowedError')) {
@@ -427,10 +430,12 @@ class PasskeyAuth {
       return AppException(
         login
             ? 'Kein Passkey für dieses Konto gefunden. Richte zuerst einen '
-                'unter Einstellungen ein.'
+                  'unter Einstellungen ein.'
             : 'Kein Passkey-Speicher verfügbar. Prüfe Sperrbildschirm und '
-                'Google Play Services.',
-        messageKey: login ? '${k}noCredentialLogin' : '${k}noCredentialRegister',
+                  'Google Play Services.',
+        messageKey: login
+            ? '${k}noCredentialLogin'
+            : '${k}noCredentialRegister',
       );
     }
 
@@ -495,7 +500,8 @@ class PasskeyAuth {
       );
     }
 
-    final isAuthApiError = text.contains('AuthApiException') ||
+    final isAuthApiError =
+        text.contains('AuthApiException') ||
         RegExp(r'\bstatus: 4\d\d\b').hasMatch(text) ||
         text.toLowerCase().contains('webauthn');
     if (isAuthApiError) {

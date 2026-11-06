@@ -14,11 +14,15 @@ class Validators {
   Validators._();
 
   /// Pflichtfeld - darf nicht leer sein.
-  static String? required(BuildContext context, String? value,
-      {String? field}) {
+  static String? required(
+    BuildContext context,
+    String? value, {
+    String? field,
+  }) {
     if (value == null || value.trim().isEmpty) {
-      return L10n.tf(context, 'validation.required',
-          {'field': field ?? L10n.t(context, 'validation.field')});
+      return L10n.tf(context, 'validation.required', {
+        'field': field ?? L10n.t(context, 'validation.field'),
+      });
     }
     return null;
   }
@@ -133,8 +137,9 @@ class Validators {
       missing.add(L10n.t(context, 'validation.pwSpecial'));
     }
     if (missing.isNotEmpty) {
-      return L10n.tf(
-          context, 'validation.pwMissing', {'list': missing.join(', ')});
+      return L10n.tf(context, 'validation.pwMissing', {
+        'list': missing.join(', '),
+      });
     }
     // Normalisiert vergleichen (Kleinbuchstaben, ohne Sonderzeichen):
     // Sonst wäre die Liste wirkungslos, weil jedes Passwort mit allen
@@ -154,7 +159,9 @@ class Validators {
     if (value.contains(RegExp('[a-z]'))) score++;
     if (value.contains(RegExp('[A-ZÄÖÜ]'))) score++;
     if (value.contains(RegExp('[0-9]'))) score++;
-    if (value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;/~`]'))) score++;
+    if (value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;/~`]'))) {
+      score++;
+    }
     if (score <= 2) return L10n.t(context, 'validation.pwWeak');
     if (score <= 4) return L10n.t(context, 'validation.pwMedium');
     return L10n.t(context, 'validation.pwStrong');
@@ -177,12 +184,12 @@ class Validators {
     }
     final age = calculateAge(value);
     if (age == null || age < minimumAge) {
-      return L10n.tf(
-          context, 'validation.ageMin', {'age': '$minimumAge'});
+      return L10n.tf(context, 'validation.ageMin', {'age': '$minimumAge'});
     }
     if (age > 99) return L10n.t(context, 'validation.birthInvalid');
     return null;
   }
+
   static final RegExp _emailRegExp = RegExp(
     r'^[a-zA-Z0-9._%+-äöüßÄÖÜ]+@[a-zA-Z0-9._%+-äöüßÄÖÜ]+\.[a-zA-Z]{2,}$',
   );

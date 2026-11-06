@@ -184,14 +184,16 @@ class BirthdayStylePreview extends StatelessWidget {
                   SizedBox(height: large ? 14 : 8),
                   Text(
                     L10n.t(context, BirthdayStyle.labelKey(style)),
-                    style: (large
-                            ? Theme.of(context).textTheme.titleMedium
-                            : Theme.of(context).textTheme.labelSmall)
-                        ?.copyWith(
-                          fontWeight:
-                              selected ? FontWeight.bold : FontWeight.normal,
-                          color: fg,
-                        ),
+                    style:
+                        (large
+                                ? Theme.of(context).textTheme.titleMedium
+                                : Theme.of(context).textTheme.labelSmall)
+                            ?.copyWith(
+                              fontWeight: selected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: fg,
+                            ),
                   ),
                 ],
               ),
@@ -225,32 +227,29 @@ class BirthdayStylePreview extends StatelessWidget {
     );
   }
 
-  Widget _placeholder(Color fg) => Icon(
-        Icons.person,
-        size: large ? 34 : 17,
-        color: fg,
-      );
+  Widget _placeholder(Color fg) =>
+      Icon(Icons.person, size: large ? 34 : 17, color: fg);
 
   /// Kleine Interessen-Chip-Andeutung in der Vorschau.
   Widget _miniChip(Color fg, bool large) => Container(
-        width: large ? 68 : 30,
-        height: large ? 26 : 12,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(large ? 13 : 6),
-          color: fg.withValues(alpha: 0.22),
-          border: Border.all(color: fg.withValues(alpha: 0.4)),
-        ),
-      );
+    width: large ? 68 : 30,
+    height: large ? 26 : 12,
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(large ? 13 : 6),
+      color: fg.withValues(alpha: 0.22),
+      border: Border.all(color: fg.withValues(alpha: 0.4)),
+    ),
+  );
 
   /// Feiner Balken (Platzhalter für Textzeilen).
   Widget _line(Color fg, double w, double alpha, bool large) => Container(
-        width: w,
-        height: large ? 8 : 3,
-        decoration: BoxDecoration(
-          color: fg.withValues(alpha: alpha),
-          borderRadius: BorderRadius.circular(2),
-        ),
-      );
+    width: w,
+    height: large ? 8 : 3,
+    decoration: BoxDecoration(
+      color: fg.withValues(alpha: alpha),
+      borderRadius: BorderRadius.circular(2),
+    ),
+  );
 
   /// Dezente Verläufe je Stil (Light/Dark-tauglich über Scheme-Farben
   /// gemischt mit Stil-Akzent).
@@ -339,44 +338,51 @@ class BirthdayStylePreview extends StatelessWidget {
       case 'midnight':
         return [
           BoxShadow(
-              color: const Color(0xFF6C7BFF).withValues(alpha: 0.28),
-              blurRadius: 10,
-              spreadRadius: 1),
+            color: const Color(0xFF6C7BFF).withValues(alpha: 0.28),
+            blurRadius: 10,
+            spreadRadius: 1,
+          ),
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.18),
-              blurRadius: 14),
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 14,
+          ),
         ];
       case 'mono':
         return [
           BoxShadow(
-              color: Colors.white.withValues(alpha: 0.18),
-              blurRadius: 8,
-              spreadRadius: 1),
+            color: Colors.white.withValues(alpha: 0.18),
+            blurRadius: 8,
+            spreadRadius: 1,
+          ),
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.18),
-              blurRadius: 12),
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 12,
+          ),
         ];
       case 'rose':
         return [
           BoxShadow(
-              color: const Color(0xFFE8B4B8).withValues(alpha: 0.45),
-              blurRadius: 10,
-              spreadRadius: 1),
+            color: const Color(0xFFE8B4B8).withValues(alpha: 0.45),
+            blurRadius: 10,
+            spreadRadius: 1,
+          ),
         ];
       case 'sage':
         return [
           BoxShadow(
-              color: const Color(0xFF9CAF88).withValues(alpha: 0.35),
-              blurRadius: 10,
-              spreadRadius: 1),
+            color: const Color(0xFF9CAF88).withValues(alpha: 0.35),
+            blurRadius: 10,
+            spreadRadius: 1,
+          ),
         ];
       case 'classic':
       default:
         return [
           BoxShadow(
-              color: const Color(0xFFC9A227).withValues(alpha: 0.35),
-              blurRadius: 10,
-              spreadRadius: 1),
+            color: const Color(0xFFC9A227).withValues(alpha: 0.35),
+            blurRadius: 10,
+            spreadRadius: 1,
+          ),
         ];
     }
   }
@@ -511,9 +517,9 @@ class _LargeStyleChip extends StatelessWidget {
           child: Text(
             label,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: selected ? scheme.onPrimaryContainer : scheme.onSurface,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                ),
+              color: selected ? scheme.onPrimaryContainer : scheme.onSurface,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            ),
           ),
         ),
       ),
@@ -538,8 +544,11 @@ class BirthdayChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.cake_outlined,
-              size: 14, color: scheme.onTertiaryContainer),
+          Icon(
+            Icons.cake_outlined,
+            size: 14,
+            color: scheme.onTertiaryContainer,
+          ),
           const SizedBox(width: 6),
           // Flexible: der Text darf umbrechen. Ohne das waere der Chip
           // bei grosser Schrift (bis 3,2x) breiter als der Bildschirm -
@@ -548,9 +557,9 @@ class BirthdayChip extends StatelessWidget {
             child: Text(
               L10n.t(context, 'birthday.todayTitle'),
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: scheme.onTertiaryContainer,
-                    fontWeight: FontWeight.bold,
-                  ),
+                color: scheme.onTertiaryContainer,
+                fontWeight: FontWeight.bold,
+              ),
               textAlign: TextAlign.center,
             ),
           ),
@@ -659,7 +668,9 @@ class BirthdayStyleFrame extends StatelessWidget {
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         gradient: BirthdayStylePreview._gradientFor(
-            BirthdayStyle.orDefault(style), context),
+          BirthdayStyle.orDefault(style),
+          context,
+        ),
         borderRadius: BorderRadius.circular(borderRadius + 3),
       ),
       child: ClipRRect(

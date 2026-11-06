@@ -227,6 +227,5 @@ Future<void> openDonateLink(BuildContext context) async {
     await HapticFeedback.selectionClick();
     return;
   }
-  await launchUrl(Uri.parse(kDonateUrl),
-      mode: LaunchMode.externalApplication);
+  await launchUrl(Uri.parse(kDonateUrl), mode: LaunchMode.externalApplication);
 }

@@ -181,7 +181,8 @@ class _DockTabItem extends StatelessWidget {
                   child: AnimatedDefaultTextStyle(
                     duration: const Duration(milliseconds: 200),
                     curve: Curves.easeOutCubic,
-                    style: theme.textTheme.labelSmall?.copyWith(
+                    style:
+                        theme.textTheme.labelSmall?.copyWith(
                           color: selected
                               ? scheme.primary
                               : scheme.onSurfaceVariant,

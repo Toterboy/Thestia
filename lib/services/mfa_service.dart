@@ -32,11 +32,11 @@ class MfaService {
     if (!_hasSession) return const MfaStatus.initial();
 
     Future<MfaStatus> readStatus() async {
-      final aalResponse =
-          _client.auth.mfa.getAuthenticatorAssuranceLevel();
+      final aalResponse = _client.auth.mfa.getAuthenticatorAssuranceLevel();
       final factorsResponse = await _client.auth.mfa.listFactors();
-      final hasVerifiedFactors = factorsResponse.all
-          .any((f) => f.status == FactorStatus.verified);
+      final hasVerifiedFactors = factorsResponse.all.any(
+        (f) => f.status == FactorStatus.verified,
+      );
       final hasAnyFactor = factorsResponse.all.isNotEmpty;
 
       return MfaStatus(
@@ -63,7 +63,9 @@ class MfaService {
         return status;
       } catch (e2) {
         if (kDebugMode) {
-          debugPrint('[MfaService] loadStatus nach Refresh fehlgeschlagen: $e2');
+          debugPrint(
+            '[MfaService] loadStatus nach Refresh fehlgeschlagen: $e2',
+          );
         }
         // Fail-closed: Bei Fehler keine Aussage — Router zeigt keinen
         // Setup-Prompt an, verlangt aber auch keine Challenge.
@@ -92,10 +94,14 @@ class MfaService {
       // ein zweiter Faktor wird vom Server abgelehnt (Limit). Klare
       // Meldung statt kryptischem "Einrichtung konnte nicht gestartet
       // werden" (User-Bericht: "Einrichten drücken und es geht nicht").
-      if (existing.all.any((f) =>
-          f.status == FactorStatus.verified &&
-          f.factorType == FactorType.totp)) {
-        throw const AuthException('2FA ist für dieses Konto bereits aktiviert.');
+      if (existing.all.any(
+        (f) =>
+            f.status == FactorStatus.verified &&
+            f.factorType == FactorType.totp,
+      )) {
+        throw const AuthException(
+          '2FA ist für dieses Konto bereits aktiviert.',
+        );
       }
     } catch (e) {
       if (e is AuthException) rethrow;
@@ -140,8 +146,7 @@ class MfaService {
   @visibleForTesting
   static String buildOtpAuthUri(String secret, {String? email}) {
     const issuer = 'Thestia';
-    final account =
-        (email == null || email.isEmpty) ? 'Nutzer' : email;
+    final account = (email == null || email.isEmpty) ? 'Nutzer' : email;
     return 'otpauth://totp/${Uri.encodeComponent(issuer)}:'
         '${Uri.encodeComponent(account)}'
         '?secret=$secret'
@@ -155,10 +160,7 @@ class MfaService {
     required String factorId,
     required String code,
   }) async {
-    await _client.auth.mfa.challengeAndVerify(
-      factorId: factorId,
-      code: code,
-    );
+    await _client.auth.mfa.challengeAndVerify(factorId: factorId, code: code);
   }
 
   /// Verwirft eine unvollständige TOTP-Einrichtung (z. B. Screen verlassen).
@@ -175,8 +177,9 @@ class MfaService {
   /// Prüft einen TOTP-Code beim Login (Session damit auf AAL2 anheben).
   Future<void> verifyChallenge({required String code}) async {
     final factors = await _client.auth.mfa.listFactors();
-    final totpFactor = factors.totp
-        .firstWhere((f) => f.status == FactorStatus.verified);
+    final totpFactor = factors.totp.firstWhere(
+      (f) => f.status == FactorStatus.verified,
+    );
     await _client.auth.mfa.challengeAndVerify(
       factorId: totpFactor.id,
       code: code,
@@ -195,10 +198,10 @@ class MfaStatus {
 
   /// Neutraler Initialzustand (nichts geladen, keine Aussage).
   const MfaStatus.initial()
-      : currentAal = 'aal1',
-        hasVerifiedFactors = false,
-        hasAnyFactor = false,
-        loaded = false;
+    : currentAal = 'aal1',
+      hasVerifiedFactors = false,
+      hasAnyFactor = false,
+      loaded = false;
 
   /// Aktuelles Assurance-Level der Session ('aal1' = nur Passwort,
   /// 'aal2' = zweiter Faktor verifiziert).
@@ -214,7 +217,8 @@ class MfaStatus {
   final bool loaded;
 
   /// Beim Login nötig: Faktoren existieren, Session ist aber nur AAL1.
-  bool get needsChallenge => loaded && hasVerifiedFactors && currentAal != 'aal2';
+  bool get needsChallenge =>
+      loaded && hasVerifiedFactors && currentAal != 'aal2';
 
   /// Einrichtungshinweis sinnvoll: keine Faktoren, Session läuft.
   bool get shouldPromptSetup => loaded && !hasAnyFactor;

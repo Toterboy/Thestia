@@ -22,14 +22,14 @@ import 'package:thestia/utils/constants.dart';
 /// migriert und gelöscht.
 class ProfileNotifier extends StateNotifier<UserProfile> {
   ProfileNotifier(this._storage, this._secure)
-      : super(
-          UserProfile(
-            id: AppConstants.currentUserId,
-            name: '',
-            birthDate: null,
-            bio: '',
-          ),
-        ) {
+    : super(
+        UserProfile(
+          id: AppConstants.currentUserId,
+          name: '',
+          birthDate: null,
+          bio: '',
+        ),
+      ) {
     _load();
   }
 
@@ -58,8 +58,7 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
         // birthdayToday hängt vom Tagesdatum ab - gespeicherter Wert
         // (ggf. von gestern) wird beim Laden neu berechnet.
         state = loaded.copyWith(
-          birthdayToday:
-              UserProfile.isBirthdayToday(loaded.birthDate),
+          birthdayToday: UserProfile.isBirthdayToday(loaded.birthDate),
         );
       } catch (e) {
         debugPrint('[ProfileNotifier] Korrupte Profil-Daten erkannt: $e');
@@ -100,8 +99,10 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
         body: L10n.tWithoutContext('verify.autoBody'),
       );
     } catch (e) {
-      debugPrint('[ProfileNotifier] Verifizierungs-Meldung fehlgeschlagen: '
-          '$e');
+      debugPrint(
+        '[ProfileNotifier] Verifizierungs-Meldung fehlgeschlagen: '
+        '$e',
+      );
     }
   }
 
@@ -145,9 +146,11 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
         return;
       }
 
-      debugPrint('[ProfileNotifier] Verifikation vom Server: '
-          'is_verified ${state.isVerified} -> $serverVerified, '
-          'status ${state.verificationState.name} -> ${serverState.name}');
+      debugPrint(
+        '[ProfileNotifier] Verifikation vom Server: '
+        'is_verified ${state.isVerified} -> $serverVerified, '
+        'status ${state.verificationState.name} -> ${serverState.name}',
+      );
       final warVerifiziert = state.isVerified;
       state = state.copyWith(
         isVerified: serverVerified,
@@ -231,8 +234,7 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
       birthdayStyle: birthdayStyle,
       // birthdayToday für das eigene Profil immer lokal neu berechnen
       // (Stichtag hängt vom Tagesdatum ab, nicht vom State).
-      birthdayToday: UserProfile.isBirthdayToday(
-          birthDate ?? state.birthDate),
+      birthdayToday: UserProfile.isBirthdayToday(birthDate ?? state.birthDate),
       clearIntroAudio: clearIntroAudio,
     );
     await _persist();
@@ -274,10 +276,10 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
 }
 
 /// Provider für das eigene Profil.
-final profileProvider =
-    StateNotifierProvider<ProfileNotifier, UserProfile>((ref) {
+final profileProvider = StateNotifierProvider<ProfileNotifier, UserProfile>((
+  ref,
+) {
   final storage = ref.watch(localStorageProvider);
   final secure = ref.watch(secureProfileStoreProvider);
   return ProfileNotifier(storage, secure);
 });
-

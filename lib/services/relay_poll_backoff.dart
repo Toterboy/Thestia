@@ -16,18 +16,20 @@ class RelayPollBackoff {
     Duration? baseInterval,
     this.jitterFraction = 0.2,
     Random? random,
-  })  : ladder = ladder ??
-            const [
-              Duration(seconds: 6),
-              Duration(seconds: 12),
-              Duration(seconds: 25),
-              Duration(seconds: 45),
-            ],
-        baseInterval = baseInterval ??
-            (ladder == null || ladder.isEmpty
-                ? const Duration(seconds: 6)
-                : ladder.first),
-        _random = random ?? Random();
+  }) : ladder =
+           ladder ??
+           const [
+             Duration(seconds: 6),
+             Duration(seconds: 12),
+             Duration(seconds: 25),
+             Duration(seconds: 45),
+           ],
+       baseInterval =
+           baseInterval ??
+           (ladder == null || ladder.isEmpty
+               ? const Duration(seconds: 6)
+               : ladder.first),
+       _random = random ?? Random();
 
   /// Stufen von aktiv nach Ruhezustand.
   final List<Duration> ladder;
@@ -79,6 +81,8 @@ class RelayPollBackoff {
     final spread = (ms * jitterFraction).round();
     if (spread <= 0) return base;
     // Untergrenze 1 ms, damit ein sehr kurzes Intervall nicht auf 0 faellt.
-    return Duration(milliseconds: max(1, ms + _random.nextInt(2 * spread + 1) - spread));
+    return Duration(
+      milliseconds: max(1, ms + _random.nextInt(2 * spread + 1) - spread),
+    );
   }
 }

@@ -23,18 +23,17 @@ class PersonalityTestScreen extends ConsumerStatefulWidget {
       _PersonalityTestScreenState();
 }
 
-class _PersonalityTestScreenState
-    extends ConsumerState<PersonalityTestScreen> {
+class _PersonalityTestScreenState extends ConsumerState<PersonalityTestScreen> {
   /// Fragen mit je zwei gegensätzlichen Polen (A/B). Die Auswahl steuert
   /// die Dimensionen E/I, S/N, T/F, J/P. Lokalisiert (pt.q1..q10).
   List<(String, String, String)> _questions(BuildContext context) => [
-        for (var i = 1; i <= 10; i++)
-          (
-            L10n.t(context, 'pt.q$i'),
-            L10n.t(context, 'pt.q${i}a'),
-            L10n.t(context, 'pt.q${i}b'),
-          ),
-      ];
+    for (var i = 1; i <= 10; i++)
+      (
+        L10n.t(context, 'pt.q$i'),
+        L10n.t(context, 'pt.q${i}a'),
+        L10n.t(context, 'pt.q${i}b'),
+      ),
+  ];
 
   /// Anzahl der Fragen (s. [_questions]).
   static const int questionCount = 10;
@@ -47,10 +46,14 @@ class _PersonalityTestScreenState
   /// Ermittelt den MBTI-Typ aus den Antworten (A-Pole = erste Dimension,
   /// B-Pole = zweite Dimension).
   String _type() {
-    final ei = _answers[0] == 0 || _answers[3] == 0 || _answers[7] == 0 ? 'E' : 'I';
+    final ei = _answers[0] == 0 || _answers[3] == 0 || _answers[7] == 0
+        ? 'E'
+        : 'I';
     final sn = _answers[2] == 1 || _answers[4] == 0 ? 'S' : 'N';
     final tf = _answers[2] == 0 || _answers[6] == 0 ? 'T' : 'F';
-    final jp = _answers[1] == 1 || _answers[5] == 1 || _answers[9] == 1 ? 'J' : 'P';
+    final jp = _answers[1] == 1 || _answers[5] == 1 || _answers[9] == 1
+        ? 'J'
+        : 'P';
     return ei + sn + tf + jp;
   }
 
@@ -67,10 +70,9 @@ class _PersonalityTestScreenState
   Future<void> _finish() async {
     final type = _type();
     final result = _resultLabel(context, type);
-    await ref.read(profileProvider.notifier).update(
-          personalityType: type,
-          personalityResult: result,
-        );
+    await ref
+        .read(profileProvider.notifier)
+        .update(personalityType: type, personalityResult: result);
     await ref.read(settingsProvider.notifier).completePersonalityTest();
     // Setup-Stand zusätzlich serverseitig sichern (Einrichtung erscheint
     // nach Neuinstallation/neuem Login nicht erneut). onboarding_done ist
@@ -79,9 +81,7 @@ class _PersonalityTestScreenState
     // fire-and-forget: Schlägt das still fehl, erscheint der Test nach der
     // nächsten Neuinstallation erneut - deshalb bei Misserfolg derselbe
     // sichtbare Hinweis wie im Einstellungs-Screen.
-    final flagsSaved = await _persistSetupFlagsToServer(
-      personalityType: type,
-    );
+    final flagsSaved = await _persistSetupFlagsToServer(personalityType: type);
     if (mounted && !flagsSaved) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -92,7 +92,8 @@ class _PersonalityTestScreenState
     }
     if (mounted) {
       // Ergebnis anzeigen
-      await showDialog<void>(        context: context,
+      await showDialog<void>(
+        context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
           title: Text(L10n.t(context, 'pt.doneTitle')),
@@ -137,25 +138,26 @@ class _PersonalityTestScreenState
   /// Schreibt den Test-Flag verifiziert in die profiles-Tabelle
   /// (siehe [SupabaseDatabaseService.updateSetupFlagsAndVerify]).
   /// Sichert die Setup-Flags und - falls vorhanden - den Persoenlichkeitstyp.
-///
-/// Der TYP wird mitgeschrieben (v0.10.0, Security-Audit).
-///
-/// BUG: `profiles.personality_type` wurde NIE auf den Server
-/// geschrieben - der Test speicherte den Typ nur lokal. Die Spalte
-/// behielt damit dauerhaft den Default 'INTJ'. Das ist schlimmer als
-/// es aussieht: `profile_to_jsonb` und `get_match_partner_profile`
-/// liefern `personality_type` an ALLE anderen weiter. Der letzte
-/// Schritt der Einrichtung war damit fuer niemanden sichtbar, und das
-/// Matching lief gegen den Default.
-///
-/// Ohne Typ (Ueberspringen) wird nichts geschrieben - es gibt dann
-/// keinen, und 'INTJ' als Platzhalter zu erfinden waere eine
-/// erfundene Tatsache.
-Future<bool> _persistSetupFlagsToServer({String? personalityType}) async {
+  ///
+  /// Der TYP wird mitgeschrieben (v0.10.0, Security-Audit).
+  ///
+  /// BUG: `profiles.personality_type` wurde NIE auf den Server
+  /// geschrieben - der Test speicherte den Typ nur lokal. Die Spalte
+  /// behielt damit dauerhaft den Default 'INTJ'. Das ist schlimmer als
+  /// es aussieht: `profile_to_jsonb` und `get_match_partner_profile`
+  /// liefern `personality_type` an ALLE anderen weiter. Der letzte
+  /// Schritt der Einrichtung war damit fuer niemanden sichtbar, und das
+  /// Matching lief gegen den Default.
+  ///
+  /// Ohne Typ (Ueberspringen) wird nichts geschrieben - es gibt dann
+  /// keinen, und 'INTJ' als Platzhalter zu erfinden waere eine
+  /// erfundene Tatsache.
+  Future<bool> _persistSetupFlagsToServer({String? personalityType}) async {
     if (!SupabaseService.isInitialized) return true;
     try {
-      return await SupabaseDatabaseService(SupabaseService.client)
-          .updateSetupFlagsAndVerify({
+      return await SupabaseDatabaseService(
+        SupabaseService.client,
+      ).updateSetupFlagsAndVerify({
         'personality_test_completed': true,
         'onboarding_done': true,
         if (personalityType != null && personalityType.isNotEmpty)
@@ -180,9 +182,7 @@ Future<bool> _persistSetupFlagsToServer({String? personalityType}) async {
   Widget build(BuildContext context) {
     final questions = _questions(context);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(L10n.t(context, 'pt.title')),
-      ),
+      appBar: AppBar(title: Text(L10n.t(context, 'pt.title'))),
       body: SafeArea(
         child: Column(
           children: [
@@ -204,8 +204,7 @@ Future<bool> _persistSetupFlagsToServer({String? personalityType}) async {
                   LinearProgressIndicator(
                     value: _allAnswered
                         ? 1
-                        : _answers.whereType<int>().length /
-                            questions.length,
+                        : _answers.whereType<int>().length / questions.length,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ],
@@ -227,8 +226,10 @@ Future<bool> _persistSetupFlagsToServer({String? personalityType}) async {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('${i + 1}. ${q.$1}',
-                            style: Theme.of(context).textTheme.titleMedium),
+                        Text(
+                          '${i + 1}. ${q.$1}',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
                         const SizedBox(height: 8),
                         RadioGroup<int>(
                           groupValue: _answers[i],
@@ -241,12 +242,15 @@ Future<bool> _persistSetupFlagsToServer({String? personalityType}) async {
                               return RadioListTile<int>(
                                 title: Text(text),
                                 value: j,
-                                activeColor: Theme.of(context).colorScheme.primary,
+                                activeColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(24),
                                 ),
-                                contentPadding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
                               );
                             }).toList(),
                           ),
@@ -312,4 +316,3 @@ Future<bool> _persistSetupFlagsToServer({String? personalityType}) async {
     );
   }
 }
-

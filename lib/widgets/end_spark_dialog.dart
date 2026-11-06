@@ -15,9 +15,9 @@ Future<String?> showEndSparkDialog(BuildContext context) {
   var choice = 'silent';
   return showDialog<String>(
     context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(L10n.t(ctx, 'chat.endSparkTitle')),
+    builder: (ctx) => StatefulBuilder(
+      builder: (ctx, setDialogState) => AlertDialog(
+        title: Text(L10n.t(ctx, 'chat.endSparkTitle')),
         content: SizedBox(
           width: double.maxFinite,
           child: Column(
@@ -30,8 +30,7 @@ Future<String?> showEndSparkDialog(BuildContext context) {
               const SizedBox(height: 12),
               RadioGroup<String>(
                 groupValue: choice,
-                onChanged: (v) =>
-                    setDialogState(() => choice = v ?? 'silent'),
+                onChanged: (v) => setDialogState(() => choice = v ?? 'silent'),
                 child: Column(
                   children: [
                     RadioListTile<String>(

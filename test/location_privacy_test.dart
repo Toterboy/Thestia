@@ -20,8 +20,7 @@ Map<String, String> _sprache(String sprache) {
   final block = src.substring(start, end);
 
   final out = <String, String>{};
-  final keyRe = RegExp(
-    r"(?:^|[{,]) *'([A-Za-z0-9_.]+)':", multiLine: true);
+  final keyRe = RegExp(r"(?:^|[{,]) *'([A-Za-z0-9_.]+)':", multiLine: true);
   final matches = keyRe.allMatches(block).toList();
   for (var i = 0; i < matches.length; i++) {
     final key = matches[i].group(1)!;
@@ -66,7 +65,10 @@ void main() {
       // garantiert mittig im Raster.
       final mitte = LocationPrivacy.snapToGrid(53.10, 8.20);
       // ~8 m noerdlich, ~5 m oestlich
-      final nah = LocationPrivacy.snapToGrid(mitte.lat + 0.000072, mitte.lng + 0.000072);
+      final nah = LocationPrivacy.snapToGrid(
+        mitte.lat + 0.000072,
+        mitte.lng + 0.000072,
+      );
       expect(nah.lat, mitte.lat);
       expect(nah.lng, mitte.lng);
     });
@@ -137,20 +139,14 @@ void main() {
 
     test('zwei Punkte in verschiedenen Rastern gelten als verschieden', () {
       // Hamburg und München muessen auseinanderfallen.
-      expect(
-        LocationPrivacy.sameGridSpot(53.55, 9.99, 48.14, 11.58),
-        isFalse,
-      );
+      expect(LocationPrivacy.sameGridSpot(53.55, 9.99, 48.14, 11.58), isFalse);
     });
 
     test('Rundungsrauschen gilt nicht als Wechsel', () {
       // Toleranz von 1 m: sonst wuerde ein Punkt, der exakt auf dem
       // Raster liegt, beim Sync springen.
       final p = LocationPrivacy.snapToGrid(53.1, 8.2);
-      expect(
-        LocationPrivacy.sameGridSpot(p.lat, p.lng, p.lat, p.lng),
-        isTrue,
-      );
+      expect(LocationPrivacy.sameGridSpot(p.lat, p.lng, p.lat, p.lng), isTrue);
     });
 
     test('die Toleranz ist winzig gegenueber einem Rasterschritt', () {
@@ -167,8 +163,9 @@ void main() {
     // Einrichtungs-Screen aufgerufen und nach city geschrieben wird, ist
     // die Privatisierung nicht erreicht - unabhaengig davon, wie korrekt
     // die Rasterung ist.
-    final src = File('lib/screens/onboarding/settings_privacy_once_screen.dart')
-        .readAsStringSync();
+    final src = File(
+      'lib/screens/onboarding/settings_privacy_once_screen.dart',
+    ).readAsStringSync();
 
     test('der Screen ruft describePlace nicht mehr auf', () {
       // describePlace() LIEGT weiter in geo_names.dart (dort liefert der
@@ -195,8 +192,9 @@ void main() {
   // wieder in profiles.city - nur eben beim Bearbeiten, nicht bei der
   // Einrichtung. Der Test haelt beide Wege dicht.
   group('Auch der Profil-Edit-Screen kennt keinen Ortsnamen', () {
-    final src = File('lib/screens/profile/profile_edit_screen.dart')
-        .readAsStringSync();
+    final src = File(
+      'lib/screens/profile/profile_edit_screen.dart',
+    ).readAsStringSync();
 
     test('kein Orts-Textfeld und kein city-Parameter', () {
       expect(src.contains('describePlace'), isFalse);
@@ -222,8 +220,9 @@ void main() {
   });
 
   group('Bundesland statt Ortsname', () {
-    final src = File('lib/screens/onboarding/settings_privacy_once_screen.dart')
-        .readAsStringSync();
+    final src = File(
+      'lib/screens/onboarding/settings_privacy_once_screen.dart',
+    ).readAsStringSync();
 
     test('die Standortermittlung leitet das Bundesland ab', () {
       // Der Aufruf muss die administrativeArea-Version nutzen, nicht
@@ -233,8 +232,9 @@ void main() {
   });
 
   group('Der Praeferenz-Provider fuehrt keinen Ort mit', () {
-    final src = File('lib/providers/user_preferences_provider.dart')
-        .readAsStringSync();
+    final src = File(
+      'lib/providers/user_preferences_provider.dart',
+    ).readAsStringSync();
 
     test('kein location-Feld in den Praeferenzen', () {
       expect(src.contains('setLocation'), isFalse);
@@ -251,8 +251,9 @@ void main() {
   // und die Entfernungsanzeige faellt aus. Migration 135 hat die Tabelle
   // nur fuer Bestandsprofile gefuellt.
   group('Die Koordinaten landen in profile_locations', () {
-    final db = File('lib/services/supabase_database_service.dart')
-        .readAsStringSync();
+    final db = File(
+      'lib/services/supabase_database_service.dart',
+    ).readAsStringSync();
 
     test('der Service schreibt per upsert in profile_locations', () {
       expect(db.contains('saveOwnLocation'), isTrue);
@@ -267,10 +268,16 @@ void main() {
         'lib/screens/profile/profile_edit_screen.dart',
       ]) {
         final s = File(pfad).readAsStringSync();
-        expect(s.contains('saveOwnLocation'), isTrue,
-            reason: '$pfad schreibt nicht nach profile_locations');
-        expect(s.contains('snapToGrid'), isTrue,
-            reason: '$pfad sendet ungerundete Koordinaten');
+        expect(
+          s.contains('saveOwnLocation'),
+          isTrue,
+          reason: '$pfad schreibt nicht nach profile_locations',
+        );
+        expect(
+          s.contains('snapToGrid'),
+          isTrue,
+          reason: '$pfad sendet ungerundete Koordinaten',
+        );
       }
     });
 
@@ -287,12 +294,8 @@ void main() {
   // gar nicht. Ein zurueckgerutschter Meter-Zaehler waere genauso schlimm
   // wie der alte Ortsname.
   group('Die Entfernung wird in Stufen angezeigt, nicht in Metern', () {
-    UserProfile mit(double km) => UserProfile(
-          id: 'x',
-          name: 'X',
-          bio: '',
-          distanceKm: km,
-        );
+    UserProfile mit(double km) =>
+        UserProfile(id: 'x', name: 'X', bio: '', distanceKm: km);
 
     String? label(double km) =>
         DistanceBucket.labelForKm(km, (k) => _de[k] ?? k);

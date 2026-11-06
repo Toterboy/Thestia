@@ -61,12 +61,12 @@ class StartupWatchdog {
   /// Nutzer kann mit "Schritt 4 von 7" nichts anfangen. Mit dem Namen
   /// schon eher.
   static const List<String> steps = <String>[
-    'dart-main',            // main() läuft
-    'binding',              // Flutter-Binding steht
-    'keystore',             // Keystore-Migration durch oder übersprungen
-    'ui',                   // runApp() gerufen, erster Frame möglich
-    'dienste',              // Supabase, Prefs, Env
-    'app',                  // Bootstrap fertig, echte App läuft
+    'dart-main', // main() läuft
+    'binding', // Flutter-Binding steht
+    'keystore', // Keystore-Migration durch oder übersprungen
+    'ui', // runApp() gerufen, erster Frame möglich
+    'dienste', // Supabase, Prefs, Env
+    'app', // Bootstrap fertig, echte App läuft
   ];
 
   /// Meldet einen erreichten Schritt.
@@ -81,15 +81,17 @@ class StartupWatchdog {
   }
 
   static Future<void> _write(String step, Object? error) async {
-        // never let the watchdog cause the failure it watches
-await bestEffort('now.toIso8601String', () async {
+    // never let the watchdog cause the failure it watches
+    await bestEffort('now.toIso8601String', () async {
       final p = await _prefs();
       await p.setString(_stepKey, step);
       await p.setString(_timeKey, DateTime.now().toIso8601String());
       if (error != null) {
         final text = error.toString();
         await p.setString(
-            _errorKey, text.substring(0, text.length.clamp(0, 400)));
+          _errorKey,
+          text.substring(0, text.length.clamp(0, 400)),
+        );
       } else {
         await p.remove(_errorKey);
       }
@@ -182,7 +184,7 @@ class StartupFailure {
   String get headline => diedBeforeDart
       ? 'Absturz vor dem Start der App-Logik'
       : 'Absturz bei Schritt ${stepIndex + 1} von '
-          '${StartupWatchdog.steps.length}: $step';
+            '${StartupWatchdog.steps.length}: $step';
 
   /// Vollständiger Text zum Kopieren und Teilen.
   String toReport() {
@@ -197,10 +199,12 @@ class StartupFailure {
     }
     if (diedBeforeDart) {
       b.writeln();
-      b.writeln('Hinweis: Es wurde kein Dart-Schritt erreicht. Der '
-          'Absturz liegt damit vor dem Start der App-Logik, also im '
-          'nativen Teil (Application/Activity) oder in einem Plugin, '
-          'das beim Laden fehlschlaegt.');
+      b.writeln(
+        'Hinweis: Es wurde kein Dart-Schritt erreicht. Der '
+        'Absturz liegt damit vor dem Start der App-Logik, also im '
+        'nativen Teil (Application/Activity) oder in einem Plugin, '
+        'das beim Laden fehlschlaegt.',
+      );
     }
     b.writeln();
     b.writeln('Schritte: ${StartupWatchdog.steps.join(' -> ')}');

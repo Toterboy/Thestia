@@ -83,8 +83,7 @@ class _ThemeSwatch extends StatelessWidget {
                   ),
                 ),
                 child: selected
-                    ? const Icon(Icons.check,
-                        color: Colors.white, size: 22)
+                    ? const Icon(Icons.check, color: Colors.white, size: 22)
                     : null,
               ),
               const SizedBox(height: 6),
@@ -93,9 +92,8 @@ class _ThemeSwatch extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      fontWeight:
-                          selected ? FontWeight.bold : FontWeight.w400,
-                    ),
+                  fontWeight: selected ? FontWeight.bold : FontWeight.w400,
+                ),
               ),
             ],
           ),

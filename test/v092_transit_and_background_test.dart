@@ -61,16 +61,25 @@ void main() {
         final rec = _CountingCanvas();
         rec.paintPattern(id, screen, const Color(0xFF6750A4));
         final tiles = _tileCount(screen);
-        expect(tiles, greaterThan(500),
-            reason: 'Testraster zu klein fuer einen aussagekraeftigen Wert');
+        expect(
+          tiles,
+          greaterThan(500),
+          reason: 'Testraster zu klein fuer einen aussagekraeftigen Wert',
+        );
         // Muster = genau ein drawPath-Aufruf (bzw. ein drawPoints fuer
         // "dots"). Vorher waeren es ~817 drawPath + 817 Allokationen.
-        expect(rec.pathDraws, lessThanOrEqualTo(1),
-            reason: '$id erzeugt ${rec.pathDraws} Pfad-Zeichnungen');
+        expect(
+          rec.pathDraws,
+          lessThanOrEqualTo(1),
+          reason: '$id erzeugt ${rec.pathDraws} Pfad-Zeichnungen',
+        );
         // Vorher: hearts = 817 Kacheln x 64 Segmente = ~52.000.
         // Jetzt: 817 x 16 = ~13.000 und ohne Trigonometrie.
-        expect(rec.segmentCount, lessThan(tiles * 24),
-            reason: '$id zeichnet ${rec.segmentCount} Segmente');
+        expect(
+          rec.segmentCount,
+          lessThan(tiles * 24),
+          reason: '$id zeichnet ${rec.segmentCount} Segmente',
+        );
       });
     }
 
@@ -86,71 +95,84 @@ void main() {
       // ist der Grund, warum die RepaintBoundary Energie spart.
       expect(
         _repaintDecision(
-            oldId: 'hearts',
-            oldColor: const Color(0xFF000001),
-            id: 'hearts',
-            color: const Color(0xFF000001)),
+          oldId: 'hearts',
+          oldColor: const Color(0xFF000001),
+          id: 'hearts',
+          color: const Color(0xFF000001),
+        ),
         isFalse,
       );
       expect(
         _repaintDecision(
-            oldId: 'hearts',
-            oldColor: const Color(0xFF000001),
-            id: 'hearts',
-            color: const Color(0xFF000002)),
+          oldId: 'hearts',
+          oldColor: const Color(0xFF000001),
+          id: 'hearts',
+          color: const Color(0xFF000002),
+        ),
         isTrue,
         reason: 'Farbwechsel muss neu zeichnen',
       );
       expect(
         _repaintDecision(
-            oldId: 'hearts',
-            oldColor: const Color(0xFF000001),
-            id: 'stars',
-            color: const Color(0xFF000001)),
+          oldId: 'hearts',
+          oldColor: const Color(0xFF000001),
+          id: 'stars',
+          color: const Color(0xFF000001),
+        ),
         isTrue,
         reason: 'Musterwechsel muss neu zeichnen',
       );
     });
 
-    testWidgets('alle Presets bauen in Hell- und Dunkelmodus',
-        (tester) async {
+    testWidgets('alle Presets bauen in Hell- und Dunkelmodus', (tester) async {
       for (final id in ChatBackgrounds.presets) {
         for (final dark in [false, true]) {
-          await tester.pumpWidget(MaterialApp(
-            theme: dark ? ThemeData.dark() : ThemeData.light(),
-            home: Scaffold(
-              body: ChatBackgroundView(backgroundId: id),
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: dark ? ThemeData.dark() : ThemeData.light(),
+              home: Scaffold(body: ChatBackgroundView(backgroundId: id)),
             ),
-          ));
+          );
           // Der Theme-Wechsel auf dem gleichen Screen ist exakt der
           // Fall, der vorher sichtbar gehaengt hat.
           await tester.pumpAndSettle();
-          expect(find.byType(ChatBackgroundView), findsOneWidget,
-              reason: '$id/dark=$dark');
+          expect(
+            find.byType(ChatBackgroundView),
+            findsOneWidget,
+            reason: '$id/dark=$dark',
+          );
         }
       }
     });
 
     testWidgets('none und unbekannte IDs zeichnen nichts', (tester) async {
       for (final id in [ChatBackgrounds.none, 'glow', '']) {
-        await tester.pumpWidget(MaterialApp(
-          home: Scaffold(body: ChatBackgroundView(backgroundId: id)),
-        ));
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(body: ChatBackgroundView(backgroundId: id)),
+          ),
+        );
         // Kein MALS-Painter: SizedBox.shrink() statt CustomPaint. Ein
         // CustomPaint kann auch aus dem Scaffold/Material kommen, daher
         // gezielt auf den Painter des Musters pruefen.
-        expect(find.byWidgetPredicate(
-          (w) => w is CustomPaint && w.painter.toString().contains('Pattern'),
-        ), findsNothing, reason: id);
+        expect(
+          find.byWidgetPredicate(
+            (w) => w is CustomPaint && w.painter.toString().contains('Pattern'),
+          ),
+          findsNothing,
+          reason: id,
+        );
       }
     });
 
     testWidgets('custom ohne Pfad zeichnet nichts', (tester) async {
-      await tester.pumpWidget(const MaterialApp(
-        home: Scaffold(
-          body: ChatBackgroundView(backgroundId: ChatBackgrounds.custom),
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: ChatBackgroundView(backgroundId: ChatBackgrounds.custom),
+          ),
         ),
-      ));
+      );
       expect(find.byType(Image), findsNothing);
     });
   });
@@ -250,16 +272,20 @@ void main() {
       // Primärrand hat - bei beiden wäre die Auswahl mehrdeutig.
       await tester.pumpWidget(_host(TransitMode.convention));
 
-      expect(find.byIcon(Icons.check_circle), findsNothing,
-          reason: 'der Haken sollte nicht mehr da sein');
+      expect(
+        find.byIcon(Icons.check_circle),
+        findsNothing,
+        reason: 'der Haken sollte nicht mehr da sein',
+      );
 
-// Die Auswahl traegt die Kachel selbst; das Semantics-Flag ist das
+      // Die Auswahl traegt die Kachel selbst; das Semantics-Flag ist das
       // verlässliche Kriterium (siehe unten).
       // Zwei Container mit Rahmen sind hier Container mit Rahmen - kein
       // Auswahlkritium.
       expect(
-        find.byWidgetPredicate((w) =>
-            w is Semantics && (w.properties.selected ?? false)),
+        find.byWidgetPredicate(
+          (w) => w is Semantics && (w.properties.selected ?? false),
+        ),
         findsOneWidget,
         reason: 'genau eine Kachel muss als ausgewählt gelten',
       );
@@ -267,9 +293,14 @@ void main() {
 
     testWidgets('meldet den Wechsel nach außen', (tester) async {
       TransitMode? picked;
-      await tester.pumpWidget(_host(TransitMode.transit, onChanged: (m) {
-        picked = m;
-      }));
+      await tester.pumpWidget(
+        _host(
+          TransitMode.transit,
+          onChanged: (m) {
+            picked = m;
+          },
+        ),
+      );
 
       await tester.tap(find.text('Nur direkt daneben'));
       await tester.pumpAndSettle();
@@ -277,14 +308,20 @@ void main() {
       expect(picked, TransitMode.convention);
     });
 
-    testWidgets('Tippen auf die bereits gewaehlte Option meldet nichts',
-        (tester) async {
+    testWidgets('Tippen auf die bereits gewaehlte Option meldet nichts', (
+      tester,
+    ) async {
       // Sonst wuerde ein Tipp auf die aktive Option als "Wechsel"
       // zaehlen und Haptik ausloesen, obwohl sich nichts aendert.
       var calls = 0;
-      await tester.pumpWidget(_host(TransitMode.transit, onChanged: (_) {
-        calls++;
-      }));
+      await tester.pumpWidget(
+        _host(
+          TransitMode.transit,
+          onChanged: (_) {
+            calls++;
+          },
+        ),
+      );
 
       await tester.tap(find.text('Normal'));
       await tester.pumpAndSettle();
@@ -310,22 +347,24 @@ void main() {
       // Die Balken muessen aber da sein - sie sind die Information.
       await tester.pumpWidget(_host(TransitMode.convention));
       await tester.pumpAndSettle();
-      expect(find.byKey(const Key('transit-threshold-bars')),
-          findsWidgets);
+      expect(find.byKey(const Key('transit-threshold-bars')), findsWidgets);
     });
 
-    testWidgets('verkuendet die Schwelle weiterhin fuer Screenreader',
-        (tester) async {
+    testWidgets('verkuendet die Schwelle weiterhin fuer Screenreader', (
+      tester,
+    ) async {
       // Der Wert bleibt in der Semantics-Beschreibung: "transit: ...
       // Signal ab -100 dBm". Nur das SICHTBARE Text-Widget ist weg.
       // Geprueft wird das Semantics-Widget direkt - ueber `label`, weil
       // `value` intern als String gehalten wird.
       await tester.pumpWidget(_host(TransitMode.transit));
       expect(
-        find.byWidgetPredicate((w) =>
-            w is Semantics &&
-            w.properties.selected == true &&
-            (w.properties.label?.contains('dBm') ?? false)),
+        find.byWidgetPredicate(
+          (w) =>
+              w is Semantics &&
+              w.properties.selected == true &&
+              (w.properties.label?.contains('dBm') ?? false),
+        ),
         findsOneWidget,
         reason: 'die Schwelle muss weiterhin fuer Screenreader stehen',
       );
@@ -337,12 +376,17 @@ void main() {
       // Abbildung auf einen gemeinsamen Wert zurueck, sehen beide
       // gleich aus und die Entscheidung ist wieder blind.
       final transit = TransitModeSelector.filledBars(
-          TransitMode.transit.rssiThreshold);
+        TransitMode.transit.rssiThreshold,
+      );
       final convention = TransitModeSelector.filledBars(
-          TransitMode.convention.rssiThreshold);
+        TransitMode.convention.rssiThreshold,
+      );
 
-      expect(transit, isNot(convention),
-          reason: 'die Modi muessen sich optisch unterscheiden');
+      expect(
+        transit,
+        isNot(convention),
+        reason: 'die Modi muessen sich optisch unterscheiden',
+      );
       // Grenzen: -100 dBm -> 5, -60 dBm (nur sehr nah) -> 1.
       //
       // NUTZERWUNSCH (27.10.2026): die Abbildung war UMGEKEHRT. Der Modus
@@ -354,19 +398,27 @@ void main() {
       expect(convention, 2);
       for (final mode in TransitMode.values) {
         final bars = TransitModeSelector.filledBars(mode.rssiThreshold);
-        expect(bars, inInclusiveRange(1, TransitModeSelector.bars),
-            reason: '${mode.name}: $bars Balken liegen ausserhalb 1..'
-                '${TransitModeSelector.bars}');
+        expect(
+          bars,
+          inInclusiveRange(1, TransitModeSelector.bars),
+          reason:
+              '${mode.name}: $bars Balken liegen ausserhalb 1..'
+              '${TransitModeSelector.bars}',
+        );
       }
     });
 
-
     testWidgets('deaktiviert: Tippen bleibt wirkungslos', (tester) async {
       var calls = 0;
-      await tester.pumpWidget(_host(TransitMode.transit, enabled: false,
+      await tester.pumpWidget(
+        _host(
+          TransitMode.transit,
+          enabled: false,
           onChanged: (_) {
-        calls++;
-      }));
+            calls++;
+          },
+        ),
+      );
 
       await tester.tap(find.text('Nur direkt daneben'));
       await tester.pumpAndSettle();
@@ -376,7 +428,11 @@ void main() {
   });
 }
 
-Widget _host(TransitMode value, {ValueChanged<TransitMode>? onChanged, bool enabled = true}) {
+Widget _host(
+  TransitMode value, {
+  ValueChanged<TransitMode>? onChanged,
+  bool enabled = true,
+}) {
   return MaterialApp(
     home: Scaffold(
       body: TransitModeSelector(
@@ -472,8 +528,7 @@ bool _repaintDecision({
   required Color oldColor,
   required String id,
   required Color color,
-}) =>
-    oldId != id || oldColor != color;
+}) => oldId != id || oldColor != color;
 
 // L10n-Schluessel werden statisch aus app_strings.dart gelesen: `L10n.t`
 // braucht einen BuildContext mit gesetzter Locale, was ausserhalb eines
@@ -490,10 +545,12 @@ Map<String, String> _parseLocale(String src, String marker) {
   final end = marker == "  'de': {" ? body.indexOf("  'en': {") : -1;
   final block = end > 0 ? body.substring(0, end) : body;
   final out = <String, String>{};
-  for (final m in RegExp(r"'((?:[^'\\]|\\.)*)':\s*((?:'[^']*'\s*)+),",
-      multiLine: true)
-      .allMatches(block)) {
-    final value = m.group(2)!
+  for (final m in RegExp(
+    r"'((?:[^'\\]|\\.)*)':\s*((?:'[^']*'\s*)+),",
+    multiLine: true,
+  ).allMatches(block)) {
+    final value = m
+        .group(2)!
         .replaceAll(RegExp(r"'\s*", multiLine: true), '')
         .replaceAll("'", '')
         .trim();

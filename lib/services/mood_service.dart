@@ -12,7 +12,7 @@ import 'package:thestia/services/supabase_service.dart';
 /// reagieren kann.
 class MoodService {
   MoodService([SupabaseClient? client])
-      : _client = client ?? SupabaseService.client;
+    : _client = client ?? SupabaseService.client;
 
   final SupabaseClient _client;
 
@@ -20,10 +20,7 @@ class MoodService {
   /// eingeloggten Nutzer.
   Future<void> setMood(Mood mood) async {
     try {
-      await _client.rpc(
-        'set_user_mood',
-        params: {'p_mood': mood.value},
-      );
+      await _client.rpc('set_user_mood', params: {'p_mood': mood.value});
     } on PostgrestException catch (e) {
       debugPrint('[MoodService] setMood RPC-Fehler: ${e.message}');
       throw AppException('Mood konnte nicht gespeichert werden.');

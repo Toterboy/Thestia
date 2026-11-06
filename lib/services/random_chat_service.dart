@@ -22,7 +22,9 @@ class RandomChatService {
     try {
       final response = await _client.rpc('join_random_chat');
       if (response == null) return null;
-      return RandomChatSession.fromJson(Map<String, dynamic>.from(response as Map));
+      return RandomChatSession.fromJson(
+        Map<String, dynamic>.from(response as Map),
+      );
     } catch (e) {
       debugPrint('[RandomChat] join fehlgeschlagen: $e');
       return null;
@@ -37,7 +39,9 @@ class RandomChatService {
         params: {'p_session_id': sessionId},
       );
       if (response == null) return null;
-      return RandomChatSession.fromJson(Map<String, dynamic>.from(response as Map));
+      return RandomChatSession.fromJson(
+        Map<String, dynamic>.from(response as Map),
+      );
     } catch (e) {
       debugPrint('[RandomChat] getSession fehlgeschlagen: $e');
       return null;

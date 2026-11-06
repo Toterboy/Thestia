@@ -82,10 +82,10 @@ void main() {
   group('UsageTimeGate.isWithinWindow', () {
     test('normales Fenster (9:00 bis 21:00)', () {
       bool drin(int min) => UsageTimeGate.isWithinWindow(
-            nowMinutes: min,
-            startMinutes: 9 * 60,
-            endMinutes: 21 * 60,
-          );
+        nowMinutes: min,
+        startMinutes: 9 * 60,
+        endMinutes: 21 * 60,
+      );
       expect(drin(9 * 60), isTrue);
       expect(drin(12 * 60), isTrue);
       expect(drin(20 * 60 + 59), isTrue);
@@ -96,10 +96,10 @@ void main() {
 
     test('Fenster ueber Mitternacht (20:00 bis 06:00)', () {
       bool drin(int min) => UsageTimeGate.isWithinWindow(
-            nowMinutes: min,
-            startMinutes: 20 * 60,
-            endMinutes: 6 * 60,
-          );
+        nowMinutes: min,
+        startMinutes: 20 * 60,
+        endMinutes: 6 * 60,
+      );
       expect(drin(22 * 60), isTrue);
       expect(drin(2 * 60), isTrue);
       expect(drin(5 * 60 + 59), isTrue);

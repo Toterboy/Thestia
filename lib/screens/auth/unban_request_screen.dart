@@ -25,8 +25,9 @@ class UnbanRequestScreen extends ConsumerStatefulWidget {
 
 class _UnbanRequestScreenState extends ConsumerState<UnbanRequestScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _emailCtrl =
-      TextEditingController(text: widget.initialEmail ?? '');
+  late final TextEditingController _emailCtrl = TextEditingController(
+    text: widget.initialEmail ?? '',
+  );
   final _reasonCtrl = TextEditingController();
   bool _sending = false;
   bool _done = false;
@@ -43,10 +44,9 @@ class _UnbanRequestScreenState extends ConsumerState<UnbanRequestScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _sending = true);
     try {
-      await ref.read(unbanRequestServiceProvider).submitUnbanRequest(
-            email: _emailCtrl.text,
-            reason: _reasonCtrl.text,
-          );
+      await ref
+          .read(unbanRequestServiceProvider)
+          .submitUnbanRequest(email: _emailCtrl.text, reason: _reasonCtrl.text);
       if (!mounted) return;
       setState(() => _done = true);
     } catch (e) {
@@ -56,10 +56,7 @@ class _UnbanRequestScreenState extends ConsumerState<UnbanRequestScreen> {
             : 'Der Antrag konnte nicht gesendet werden. '
                   'Bitte versuche es später erneut.';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            behavior: SnackBarBehavior.floating,
-          ),
+          SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
         );
       }
     } finally {
@@ -78,7 +75,11 @@ class _UnbanRequestScreenState extends ConsumerState<UnbanRequestScreen> {
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Icon(Icons.mark_email_read, size: 80, color: Theme.of(context).colorScheme.primary),
+                    Icon(
+                      Icons.mark_email_read,
+                      size: 80,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                     const SizedBox(height: 24),
                     Text(
                       L10n.t(context, 'unban.doneTitle'),
@@ -103,7 +104,11 @@ class _UnbanRequestScreenState extends ConsumerState<UnbanRequestScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Icon(Icons.lock_person, size: 64, color: Theme.of(context).colorScheme.primary),
+                      Icon(
+                        Icons.lock_person,
+                        size: 64,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         L10n.t(context, 'unban.heading'),
@@ -130,8 +135,9 @@ class _UnbanRequestScreenState extends ConsumerState<UnbanRequestScreen> {
                           if (value.isEmpty) {
                             return L10n.t(context, 'unban.emailMissing');
                           }
-                          if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
-                              .hasMatch(value)) {
+                          if (!RegExp(
+                            r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
+                          ).hasMatch(value)) {
                             return L10n.t(context, 'unban.emailInvalid');
                           }
                           return null;

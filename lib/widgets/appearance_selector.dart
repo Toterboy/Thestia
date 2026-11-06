@@ -76,8 +76,7 @@ class AppearanceSelector extends StatelessWidget {
     // der L10n-Test erlaubt benannte dynamische Familien, und eine
     // zweite Vorlage mit anderem Variablennamen waere ein unzulaessiger
     // Key-Familien-Mix.
-    String describe(String mode) =>
-        L10n.t(context, 'appearanceDesc.$mode');
+    String describe(String mode) => L10n.t(context, 'appearanceDesc.$mode');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,9 +155,7 @@ class AppearanceSelector extends StatelessWidget {
             return Wrap(
               spacing: spacing,
               runSpacing: spacing,
-              children: [
-                for (final mode in _order) segment(mode),
-              ],
+              children: [for (final mode in _order) segment(mode)],
             );
           },
         ),
@@ -167,8 +164,10 @@ class AppearanceSelector extends StatelessWidget {
         // waere die Auswahl wieder drei Karten hoch.
         Text(
           describe(value),
-          style: theme.textTheme.bodySmall
-              ?.copyWith(color: scheme.onSurfaceVariant, height: 1.35),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: scheme.onSurfaceVariant,
+            height: 1.35,
+          ),
         ),
       ],
     );
@@ -211,8 +210,9 @@ class _Segment extends StatelessWidget {
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
 
-    final borderColor =
-        selected ? scheme.primary : scheme.outlineVariant.withValues(alpha: 0.6);
+    final borderColor = selected
+        ? scheme.primary
+        : scheme.outlineVariant.withValues(alpha: 0.6);
     final background = selected
         ? scheme.primaryContainer.withValues(alpha: 0.55)
         : scheme.surface;
@@ -236,10 +236,7 @@ class _Segment extends StatelessWidget {
             decoration: BoxDecoration(
               color: background,
               borderRadius: BorderRadius.circular(radius),
-              border: Border.all(
-                color: borderColor,
-                width: selected ? 2 : 1,
-              ),
+              border: Border.all(color: borderColor, width: selected ? 2 : 1),
             ),
             child: Material(
               type: MaterialType.transparency,
@@ -258,12 +255,12 @@ class _Segment extends StatelessWidget {
                   //
                   // [breite] schlaegt die Mindestbreite: dann sind alle
                   // drei Segmente gleich breit (siehe [AppearanceSelector]).
-                  constraints: BoxConstraints(
-                    minWidth: mindestBreite,
-                  ),
+                  constraints: BoxConstraints(minWidth: mindestBreite),
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     // Der Haken liegt als OVERLAY in der oberen rechten
                     // Ecke, nicht als Platzhalter neben dem Text.
                     //
@@ -306,8 +303,7 @@ class _Segment extends StatelessWidget {
                               title,
                               textAlign: TextAlign.center,
                               style: theme.textTheme.labelLarge?.copyWith(
-                                color:
-                                    selected ? scheme.onSurface : fg,
+                                color: selected ? scheme.onSurface : fg,
                                 fontWeight: selected
                                     ? FontWeight.w700
                                     : FontWeight.w500,

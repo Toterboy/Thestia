@@ -63,11 +63,12 @@ class AgeSafetyRules {
   /// benutzt hätte, hätte eine Altersfreigabe gebaut, die der Server
   /// nie erteilt. Ein 18-Jähriger sieht keinen 16-Jährigen, und ein
   /// 19-Jähriger keinen 17-Jährigen.
-  static bool canViewProfile({
-    required int viewerAge,
-    required int targetAge,
-  }) {
-    if (kDebugMode) debugPrint('[AGE_SAFETY] canViewProfile: viewerAge=$viewerAge, targetAge=$targetAge');
+  static bool canViewProfile({required int viewerAge, required int targetAge}) {
+    if (kDebugMode) {
+      debugPrint(
+        '[AGE_SAFETY] canViewProfile: viewerAge=$viewerAge, targetAge=$targetAge',
+      );
+    }
     // Die beidseitige Server-Regel in ihrer einfachsten Form:
     // Minderjaehrige sehen nur Minderjaehrige, Erwachsene nur
     // Erwachsene.

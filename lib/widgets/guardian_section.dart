@@ -404,7 +404,7 @@ class _GuardianSectionState extends ConsumerState<GuardianSection> {
     eintraege.add(
       Text(
         '${L10n.t(context, 'guardian.notifyFrequencyLabel')}: '
-            '${_frequenzText(status.notifyFrequency)}',
+        '${_frequenzText(status.notifyFrequency)}',
         style: theme.textTheme.bodyMedium,
       ),
     );
@@ -439,16 +439,12 @@ class _GuardianSectionState extends ConsumerState<GuardianSection> {
           isExpanded: true,
           decoration: InputDecoration(
             labelText: L10n.t(context, 'guardian.notifyFrequencyLabel'),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
           ),
           items: const ['daily', 'weekly', 'monthly', 'none']
               .map(
-                (f) => DropdownMenuItem(
-                  value: f,
-                  child: Text(_frequenzText(f)),
-                ),
+                (f) =>
+                    DropdownMenuItem(value: f, child: Text(_frequenzText(f))),
               )
               .toList(),
           onChanged: (v) => setState(() => _frequency = v),
@@ -546,12 +542,7 @@ class _GuardianSectionState extends ConsumerState<GuardianSection> {
       ),
     );
     eintraege.add(const SizedBox(height: 6));
-    eintraege.add(
-      Text(
-        _zugangText(status),
-        style: theme.textTheme.bodyMedium,
-      ),
-    );
+    eintraege.add(Text(_zugangText(status), style: theme.textTheme.bodyMedium));
 
     eintraege.add(const SizedBox(height: 14));
     eintraege.add(

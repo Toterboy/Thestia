@@ -82,8 +82,7 @@ class TransitState {
       endsAt: endsAt ?? this.endsAt,
       encounterCount: encounterCount ?? this.encounterCount,
       busy: busy ?? this.busy,
-      lastResult:
-          clearResult ? null : (lastResult ?? this.lastResult),
+      lastResult: clearResult ? null : (lastResult ?? this.lastResult),
       selfTags: selfTags ?? this.selfTags,
       selfNote: selfNote ?? this.selfNote,
       lastError: lastError,
@@ -136,10 +135,14 @@ class TransitNotifier extends StateNotifier<TransitState>
     final ok = await TransitBleService.instance.resume(token: neuerToken);
     if (!ok) return;
     if (SupabaseService.isInitialized) {
-      await bestEffort('SupabaseDatabaseService.transitPresenceHeartbeat', () async {
-        await SupabaseDatabaseService(SupabaseService.client)
-            .transitPresenceHeartbeat(neuerToken);
-      });
+      await bestEffort(
+        'SupabaseDatabaseService.transitPresenceHeartbeat',
+        () async {
+          await SupabaseDatabaseService(
+            SupabaseService.client,
+          ).transitPresenceHeartbeat(neuerToken);
+        },
+      );
     }
   }
 
@@ -168,8 +171,8 @@ class TransitNotifier extends StateNotifier<TransitState>
   /// und wann. Das ist ein Ortungsdatum (DSGVO Art. 9); die restlichen
   /// Art.-9-Preferenzen liegen bereits im Keystore
   /// (user_preferences_provider.dart), dieser Store war die Ausnahme.
-  TransitEncounterService get _encounters => _encountersField ??=
-      TransitEncounterService(SecurePreferencesStorage());
+  TransitEncounterService get _encounters =>
+      _encountersField ??= TransitEncounterService(SecurePreferencesStorage());
 
   Timer? _countdownTimer;
   Timer? _rotateTimer;
@@ -228,8 +231,9 @@ class TransitNotifier extends StateNotifier<TransitState>
     if (SupabaseService.isInitialized) {
       unawaited(() async {
         try {
-          await SupabaseDatabaseService(SupabaseService.client)
-              .transitPresenceHeartbeat(token);
+          await SupabaseDatabaseService(
+            SupabaseService.client,
+          ).transitPresenceHeartbeat(token);
         } catch (e) {
           debugPrint('[Transit] Presence-Heartbeat fehlgeschlagen: ');
         }
@@ -287,10 +291,14 @@ class TransitNotifier extends StateNotifier<TransitState>
         onEncounter: _recordEncounter,
       );
       if (SupabaseService.isInitialized) {
-        await bestEffort('SupabaseDatabaseService.transitPresenceHeartbeat', () async {
-          await SupabaseDatabaseService(SupabaseService.client)
-              .transitPresenceHeartbeat(newToken);
-        });
+        await bestEffort(
+          'SupabaseDatabaseService.transitPresenceHeartbeat',
+          () async {
+            await SupabaseDatabaseService(
+              SupabaseService.client,
+            ).transitPresenceHeartbeat(newToken);
+          },
+        );
       }
       if (state.active) _scheduleRotation();
     });
@@ -305,8 +313,9 @@ class TransitNotifier extends StateNotifier<TransitState>
     // adressierbar).
     if (SupabaseService.isInitialized) {
       try {
-        await SupabaseDatabaseService(SupabaseService.client)
-            .transitPresenceLeave();
+        await SupabaseDatabaseService(
+          SupabaseService.client,
+        ).transitPresenceLeave();
       } catch (e) {
         debugPrint('[Transit] Presence-Leave fehlgeschlagen: ');
       }
@@ -378,12 +387,12 @@ class TransitNotifier extends StateNotifier<TransitState>
       final tokens = _encounters.freshTokens();
       final res = await SupabaseDatabaseService(SupabaseService.client)
           .matchProximitySpark(
-        tokens: tokens,
-        tags: tags,
-        mode: state.mode.value,
-        selfTags: state.selfTags,
-        selfNote: state.selfNote.isEmpty ? null : state.selfNote,
-      );
+            tokens: tokens,
+            tags: tags,
+            mode: state.mode.value,
+            selfTags: state.selfTags,
+            selfNote: state.selfNote.isEmpty ? null : state.selfNote,
+          );
       final result = TransitSparkResult.fromJson(res);
       state = state.copyWith(busy: false, lastResult: result, lastError: null);
       return result;
@@ -413,7 +422,8 @@ class TransitNotifier extends StateNotifier<TransitState>
 }
 
 /// Provider für Transit Spark.
-final transitProvider =
-    StateNotifierProvider<TransitNotifier, TransitState>((ref) {
+final transitProvider = StateNotifierProvider<TransitNotifier, TransitState>((
+  ref,
+) {
   return TransitNotifier();
 });

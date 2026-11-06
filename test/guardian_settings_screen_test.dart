@@ -14,33 +14,30 @@ import 'package:thestia/screens/guardian/guardian_settings_screen.dart';
 void main() {
   testWidgets('der Screen zeigt den Titel im Kopf', (tester) async {
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: GuardianSettingsScreen(),
-        ),
-      ),
+      const ProviderScope(child: MaterialApp(home: GuardianSettingsScreen())),
     );
     await tester.pump();
 
-    expect(find.text(L10n.tWithoutContext('guardian.sectionTitle')),
-        findsOneWidget);
+    expect(
+      find.text(L10n.tWithoutContext('guardian.sectionTitle')),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('der Screen zeigt den Elternbereich (das gemeinsame Widget)',
-      (tester) async {
+  testWidgets('der Screen zeigt den Elternbereich (das gemeinsame Widget)', (
+    tester,
+  ) async {
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: GuardianSettingsScreen(),
-        ),
-      ),
+      const ProviderScope(child: MaterialApp(home: GuardianSettingsScreen())),
     );
     await tester.pump();
 
     // Der Abschnitt selbst kommt aus dem gemeinsamen Widget - es gibt
     // keine zweite, abweichende Darstellung.
-    expect(find.text(L10n.tWithoutContext('guardian.sectionIntro')),
-        findsOneWidget);
+    expect(
+      find.text(L10n.tWithoutContext('guardian.sectionIntro')),
+      findsOneWidget,
+    );
   });
 
   test('die Route ist registriert', () {

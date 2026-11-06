@@ -50,8 +50,7 @@ class _WhatsNewScreenState extends ConsumerState<WhatsNewScreen> {
     if (!mounted) return;
     setState(() {
       _currentBuild = build;
-      _keys = WhatsNewService.keysFor(
-          currentBuild: build, shownBuild: shown);
+      _keys = WhatsNewService.keysFor(currentBuild: build, shownBuild: shown);
       _loaded = true;
     });
   }
@@ -59,16 +58,15 @@ class _WhatsNewScreenState extends ConsumerState<WhatsNewScreen> {
   Future<void> _finish() async {
     // Geburtstags-Stil persistieren (lokal immer; Server best effort).
     final currentStyle = ref.read(profileProvider).birthdayStyle;
-    await ref.read(profileProvider.notifier).update(
-          birthdayStyle: _pickedStyle ?? currentStyle,
-        );
+    await ref
+        .read(profileProvider.notifier)
+        .update(birthdayStyle: _pickedStyle ?? currentStyle);
     if (SupabaseService.isInitialized) {
-            // Fail-open: Lokal gespeichert, Auto-Sync holt es nach.
-await bestEffort('SupabaseDatabaseService.updateOwnProfile', () async {
-        await SupabaseDatabaseService(SupabaseService.client)
-            .updateOwnProfile({
-          'birthday_style': _pickedStyle ?? currentStyle,
-        });
+      // Fail-open: Lokal gespeichert, Auto-Sync holt es nach.
+      await bestEffort('SupabaseDatabaseService.updateOwnProfile', () async {
+        await SupabaseDatabaseService(
+          SupabaseService.client,
+        ).updateOwnProfile({'birthday_style': _pickedStyle ?? currentStyle});
       });
     }
     if (mounted) {
@@ -100,9 +98,11 @@ await bestEffort('SupabaseDatabaseService.updateOwnProfile', () async {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.auto_awesome,
-                        size: 16,
-                        color: Theme.of(context).colorScheme.primary),
+                    Icon(
+                      Icons.auto_awesome,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Padding(
@@ -121,16 +121,16 @@ await bestEffort('SupabaseDatabaseService.updateOwnProfile', () async {
                 const SizedBox(height: 12),
                 Text(
                   L10n.t(context, 'whatsnew.inputsTitle'),
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 BirthdayStylePicker(
-                  selected: _pickedStyle ??
+                  selected:
+                      _pickedStyle ??
                       BirthdayStyle.orDefault(profile.birthdayStyle),
-                  onSelected: (style) =>
-                      setState(() => _pickedStyle = style),
+                  onSelected: (style) => setState(() => _pickedStyle = style),
                 ),
               ],
               const SizedBox(height: 24),

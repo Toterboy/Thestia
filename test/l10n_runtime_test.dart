@@ -46,22 +46,30 @@ void main() {
     expect(find.text('Only right next to me'), findsNothing);
   });
 
-  testWidgets('Locale-Wechsel auf EN zieht bis zur Oberflaeche durch',
-      (tester) async {
+  testWidgets('Locale-Wechsel auf EN zieht bis zur Oberflaeche durch', (
+    tester,
+  ) async {
     await tester.pumpWidget(host());
     await tester.pumpAndSettle();
     expect(find.text('Nur direkt daneben'), findsOneWidget);
 
     // Umschalten exakt wie die Sprachumschaltung es tut.
     final container = ProviderScope.containerOf(
-        tester.element(find.byType(TransitModeSelector)));
+      tester.element(find.byType(TransitModeSelector)),
+    );
     container.read(localeProvider.notifier).state = const Locale('en');
     await tester.pumpAndSettle();
 
-    expect(find.text('Only right next to me'), findsOneWidget,
-        reason: 'EN-Text muss erscheinen');
-    expect(find.text('Nur direkt daneben'), findsNothing,
-        reason: 'DE-Text muss verschwinden');
+    expect(
+      find.text('Only right next to me'),
+      findsOneWidget,
+      reason: 'EN-Text muss erscheinen',
+    );
+    expect(
+      find.text('Nur direkt daneben'),
+      findsNothing,
+      reason: 'DE-Text muss verschwinden',
+    );
   });
 
   testWidgets('zurueck auf DE', (tester) async {
@@ -70,7 +78,8 @@ void main() {
     expect(find.text('Only right next to me'), findsOneWidget);
 
     final container = ProviderScope.containerOf(
-        tester.element(find.byType(TransitModeSelector)));
+      tester.element(find.byType(TransitModeSelector)),
+    );
     container.read(localeProvider.notifier).state = const Locale('de');
     await tester.pumpAndSettle();
 
@@ -101,7 +110,9 @@ void main() {
 
         for (final key in keys) {
           final txt = L10n.t(
-              tester.element(find.byType(TransitModeSelector)), key);
+            tester.element(find.byType(TransitModeSelector)),
+            key,
+          );
           expect(txt, isNot(key), reason: '$locale: $key nicht uebersetzt');
           expect(txt.trim(), isNotEmpty, reason: '$locale: $key leer');
         }
@@ -119,8 +130,11 @@ void main() {
         'Eng begrenzt',
         'Signal ab',
       ]) {
-        expect(find.textContaining(german), findsNothing,
-            reason: 'deutscher Rest in EN: $german');
+        expect(
+          find.textContaining(german),
+          findsNothing,
+          reason: 'deutscher Rest in EN: $german',
+        );
       }
     });
 
@@ -129,15 +143,21 @@ void main() {
         await tester.pumpWidget(host(initial: Locale(locale)));
         await tester.pumpAndSettle();
         // {value} muss ersetzt sein, nicht als Literal dastehen.
-        expect(find.textContaining('{value}'), findsNothing,
-            reason: '$locale: Platzhalter nicht gefuellt');
+        expect(
+          find.textContaining('{value}'),
+          findsNothing,
+          reason: '$locale: Platzhalter nicht gefuellt',
+        );
         // Die Schwelle in dBm ist seit v0.10.0 NICHT mehr sichtbar -
         // Nutzer koennen mit dBm nichts anfangen, die Balken zeigen
         // dasselbe Verhaeltnis. Der Wert steht nur noch in der
         // Semantics-Beschreibung der Kachel. Deshalb: KEIN sichtbarer
         // dBm-Text mehr.
-        expect(find.textContaining('dBm'), findsNothing,
-            reason: '$locale: dBm sollte nicht mehr sichtbar sein');
+        expect(
+          find.textContaining('dBm'),
+          findsNothing,
+          reason: '$locale: dBm sollte nicht mehr sichtbar sein',
+        );
       }
     });
   });
@@ -179,8 +199,7 @@ void main() {
       expect(find.textContaining('Folgt deinem Gerät'), findsOneWidget);
     });
 
-    testWidgets('EN zeigt englischen Text ohne deutsche Reste',
-        (tester) async {
+    testWidgets('EN zeigt englischen Text ohne deutsche Reste', (tester) async {
       await tester.pumpWidget(_appearanceHost(initial: const Locale('en')));
       await tester.pumpAndSettle();
 
@@ -196,11 +215,15 @@ void main() {
       for (final mode in ['light', 'system', 'dark']) {
         await tester.pumpWidget(_appearanceHost(mode: mode));
         await tester.pumpAndSettle();
-        expect(find.byIcon(Icons.check_circle), findsNothing,
-            reason: 'Modus $mode: der Haken sollte nicht mehr da sein');
+        expect(
+          find.byIcon(Icons.check_circle),
+          findsNothing,
+          reason: 'Modus $mode: der Haken sollte nicht mehr da sein',
+        );
         expect(
           find.byWidgetPredicate(
-              (w) => w is Semantics && (w.properties.selected ?? false)),
+            (w) => w is Semantics && (w.properties.selected ?? false),
+          ),
           findsOneWidget,
           reason: 'Modus $mode: Auswahl nicht eindeutig',
         );
@@ -209,8 +232,9 @@ void main() {
 
     testWidgets('meldet den Wechsel nach außen', (tester) async {
       String? picked;
-      await tester.pumpWidget(_appearanceHost(
-          mode: 'light', onChanged: (m) => picked = m));
+      await tester.pumpWidget(
+        _appearanceHost(mode: 'light', onChanged: (m) => picked = m),
+      );
 
       await tester.tap(find.text('Dunkel'));
       await tester.pumpAndSettle();
@@ -226,16 +250,18 @@ void main() {
       await tester.pumpWidget(_appearanceHost());
       await tester.pumpAndSettle();
 
-      double centerOf(String label) =>
-          tester.getCenter(find.text(label)).dy;
+      double centerOf(String label) => tester.getCenter(find.text(label)).dy;
 
       final ys = ['Hell', 'System', 'Dunkel'].map(centerOf).toList();
       for (final y in ys) {
         // 3 px Toleranz: die gewaehlte Option ist fetter gesetzt, was die
         // Zeilenhoehe um etwa ein Pixel aendert. Gestapelte Karten lagen
         // dagegen rund 60 px auseinander.
-        expect(y, closeTo(ys.first, 3.0),
-            reason: 'Optionen nicht in einer Zeile: $ys');
+        expect(
+          y,
+          closeTo(ys.first, 3.0),
+          reason: 'Optionen nicht in einer Zeile: $ys',
+        );
       }
     });
 
@@ -244,8 +270,7 @@ void main() {
     ) async {
       // Wrap statt Row+Expanded: bei 3,2-facher Schrift waere jede
       // feste Segmentbreite ein RenderFlex-Overflow.
-      tester.platformDispatcher
-          .textScaleFactorTestValue = 3.2;
+      tester.platformDispatcher.textScaleFactorTestValue = 3.2;
       addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 
       await tester.pumpWidget(_appearanceHost());
@@ -271,8 +296,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Transit Spark nur ab 18'), findsOneWidget);
-      expect(
-          find.textContaining('nur volljährigen Personen'), findsOneWidget);
+      expect(find.textContaining('nur volljährigen Personen'), findsOneWidget);
     });
 
     testWidgets('Alterssperre erscheint auf Englisch', (tester) async {
@@ -298,7 +322,8 @@ void main() {
           overrides: [localeProvider.overrideWith((ref) => const Locale('en'))],
           child: const MaterialApp(
             home: Scaffold(
-                body: L10nScope(child: _GateNotice(missingAge: true))),
+              body: L10nScope(child: _GateNotice(missingAge: true)),
+            ),
           ),
         ),
       );
@@ -344,11 +369,18 @@ class _GateNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(children: [
-      Text(L10n.t(context, 'transit.adultOnly.title')),
-      Text(L10n.t(context, missingAge
-          ? 'transit.adultOnly.missingAge'
-          : 'transit.adultOnly.body')),
-    ]);
+    return Column(
+      children: [
+        Text(L10n.t(context, 'transit.adultOnly.title')),
+        Text(
+          L10n.t(
+            context,
+            missingAge
+                ? 'transit.adultOnly.missingAge'
+                : 'transit.adultOnly.body',
+          ),
+        ),
+      ],
+    );
   }
 }

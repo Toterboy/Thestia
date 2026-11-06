@@ -20,20 +20,17 @@ import 'package:thestia/models/user_mood.dart';
   final keys = <String>{};
   final placeholders = <String, Set<String>>{};
   // Keys stehen am Zeilenanfang ODER nach "{"/"," (mehrere Keys pro Zeile).
-  final keyRe =
-      RegExp(r"(?:^|[{,]) *'([A-Za-z0-9_.]+)':", multiLine: true);
+  final keyRe = RegExp(r"(?:^|[{,]) *'([A-Za-z0-9_.]+)':", multiLine: true);
   final matches = keyRe.allMatches(block).toList();
   for (var i = 0; i < matches.length; i++) {
     final key = matches[i].group(1)!;
     keys.add(key);
     final start = matches[i].end;
-    final end =
-        i + 1 < matches.length ? matches[i + 1].start : block.length;
+    final end = i + 1 < matches.length ? matches[i + 1].start : block.length;
     final region = block.substring(start, end);
-    placeholders[key] = RegExp(r'\{([A-Za-z_][A-Za-z0-9_]*)\}')
-        .allMatches(region)
-        .map((m) => m.group(1)!)
-        .toSet();
+    placeholders[key] = RegExp(
+      r'\{([A-Za-z_][A-Za-z0-9_]*)\}',
+    ).allMatches(region).map((m) => m.group(1)!).toSet();
   }
   return (placeholders: placeholders, keys: keys);
 }
@@ -42,8 +39,7 @@ bool _sameElements(Set<String> a, Set<String> b) =>
     a.length == b.length && a.containsAll(b);
 
 Map<String, Map<String, Set<String>>> _loadStrings() {
-  final src =
-      File('lib/l10n/app_strings.dart').readAsStringSync();
+  final src = File('lib/l10n/app_strings.dart').readAsStringSync();
   final deMarker = "  'de': {";
   final enMarker = "  'en': {";
   final deStart = src.indexOf(deMarker);
@@ -51,9 +47,9 @@ Map<String, Map<String, Set<String>>> _loadStrings() {
   assert(deStart >= 0 && enStart > deStart, 'Locale-Blöcke nicht gefunden');
   // NACH der Marker-Zeile beginnen, sonst wird 'de'/'en' als Key geparst.
   final de = _parseBlock(
-      src.substring(src.indexOf('\n', deStart) + 1, enStart));
-  final en =
-      _parseBlock(src.substring(src.indexOf('\n', enStart) + 1));
+    src.substring(src.indexOf('\n', deStart) + 1, enStart),
+  );
+  final en = _parseBlock(src.substring(src.indexOf('\n', enStart) + 1));
   return {'de': de.placeholders, 'en': en.placeholders};
 }
 
@@ -61,8 +57,7 @@ Map<String, Map<String, Set<String>>> _loadStrings() {
 /// app_strings.dart selbst).
 Set<String> _usedKeys() {
   final used = <String>{};
-  final useRe =
-      RegExp(r"L10n\.tf?\(\s*(?:context|ctx)\s*,\s*'([^']+)'");
+  final useRe = RegExp(r"L10n\.tf?\(\s*(?:context|ctx)\s*,\s*'([^']+)'");
   for (final entity in Directory('lib').listSync(recursive: true)) {
     if (entity is! File || !entity.path.endsWith('.dart')) continue;
     if (entity.path.endsWith('app_strings.dart')) continue;
@@ -101,10 +96,10 @@ void main() {
       final problems = <String>[];
       for (final key in deKeys.intersection(enKeys)) {
         // Hinweis: Set-== ist Identität, daher elementweiser Vergleich.
-        if (!_sameElements(
-            dePlaceholders[key]!, enPlaceholders[key]!)) {
+        if (!_sameElements(dePlaceholders[key]!, enPlaceholders[key]!)) {
           problems.add(
-              '$key: de=${dePlaceholders[key]} en=${enPlaceholders[key]}');
+            '$key: de=${dePlaceholders[key]} en=${enPlaceholders[key]}',
+          );
         }
       }
       expect(problems, isEmpty, reason: problems.join('\n'));
@@ -113,15 +108,13 @@ void main() {
 
   group('L10n-Textqualität', () {
     test('keine Gedankenstriche (– —) in app_strings.dart', () {
-      final src =
-          File('lib/l10n/app_strings.dart').readAsStringSync();
+      final src = File('lib/l10n/app_strings.dart').readAsStringSync();
       expect(src.contains('–'), isFalse);
       expect(src.contains('—'), isFalse);
     });
 
     test('kein Mojibake (Ã Â als Doppelkodierungs-Reste)', () {
-      final src =
-          File('lib/l10n/app_strings.dart').readAsStringSync();
+      final src = File('lib/l10n/app_strings.dart').readAsStringSync();
       expect(src.contains('Ã'), isFalse, reason: 'U+00C3 gefunden');
       expect(src.contains('Â'), isFalse, reason: 'U+00C2 gefunden');
     });
@@ -137,8 +130,7 @@ void main() {
     });
 
     test('nur bekannte dynamische Key-Familien', () {
-      final dynamic =
-          _usedKeys().where((k) => k.contains(r'$')).toList();
+      final dynamic = _usedKeys().where((k) => k.contains(r'$')).toList();
       final allowed = <String>{
         'chat.goodbye.\${index + 1}',
         'chat.goodbye.\$i',
@@ -159,8 +151,9 @@ void main() {
         'safetyOnboarding.edu\${n}Hint',
       };
       final unknown = dynamic
-          .where((k) =>
-              !allowed.contains(k) && !k.startsWith('transit.preset.\${'))
+          .where(
+            (k) => !allowed.contains(k) && !k.startsWith('transit.preset.\${'),
+          )
           .toList();
       expect(unknown, isEmpty, reason: unknown.join(', '));
     });
@@ -187,12 +180,7 @@ void main() {
       }
       // Challenge-Familien (verification_service, Codes aus
       // generateChallenge).
-      for (final base in [
-        'speakNumber',
-        'makeGesture',
-        'turnHead',
-        'smile'
-      ]) {
+      for (final base in ['speakNumber', 'makeGesture', 'turnHead', 'smile']) {
         expect(deKeys, contains('verify.challenge.base.$base'));
       }
       for (final gesture in ['tongue', 'blink', 'brows']) {
@@ -251,8 +239,11 @@ void main() {
         expect(deKeys, contains(tag.labelKey), reason: tag.slug);
       }
       for (final color in TransitTag.colors) {
-        expect(deKeys, contains(TransitTag.colorLabelKey(color)),
-            reason: color);
+        expect(
+          deKeys,
+          contains(TransitTag.colorLabelKey(color)),
+          reason: color,
+        );
       }
       for (final mode in TransitMode.values) {
         expect(deKeys, contains(mode.labelKey));

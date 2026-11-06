@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:image/image.dart' as img;
@@ -73,7 +73,8 @@ bool _isInsidePolygon(Offset point, List<Offset> polygon) {
     final xi = polygon[i].dx, yi = polygon[i].dy;
     final xj = polygon[j].dx, yj = polygon[j].dy;
 
-    final intersect = ((yi > point.dy) != (yj > point.dy)) &&
+    final intersect =
+        ((yi > point.dy) != (yj > point.dy)) &&
         (point.dx < (xj - xi) * (point.dy - yi) / (yj - yi) + xi);
     if (intersect) inside = !inside;
   }

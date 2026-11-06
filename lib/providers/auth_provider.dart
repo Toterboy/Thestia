@@ -41,7 +41,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// 3. Eigenes API-Backend (Signaling-Server + SQLite)
 class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
   AuthNotifier(this._auth, this._profileNotifier, this._ref)
-      : super(const AsyncValue.loading()) {
+    : super(const AsyncValue.loading()) {
     _restore();
     _listenToSupabaseAuth();
   }
@@ -67,32 +67,32 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
   /// Session im E-Mail-Bestätigungs-Screen und hängt fest.
   void _listenToSupabaseAuth() {
     if (!SupabaseService.isInitialized) return;
-    _authStateSub = SupabaseService.client.auth.onAuthStateChange.listen(
-      (authState) {
-        final event = authState.event;
-        if (event == AuthChangeEvent.signedOut) {
-          state = const AsyncValue.data(false);
-        } else if (event == AuthChangeEvent.passwordRecovery) {
-          // Passwort-Reset (Recovery-Deep-Link aus der E-Mail, von
-          // getSessionFromUrl via detectSessionInUriPredicate verarbeitet):
-          // Der Router erzwingt jetzt den Reset-Screen, bis das neue
-          // Passwort gesetzt ist (updateUser).
-          _ref.read(passwordRecoveryPendingProvider.notifier).state = true;
-          if (!state.hasValue || state.value != true) {
-            state = const AsyncValue.data(true);
-            unawaited(_syncFromServer());
-          }
-        } else if (event == AuthChangeEvent.signedIn ||
-            event == AuthChangeEvent.initialSession) {
-          // Passkey-Login (oder andere stille Anmeldung) meldet sich hier
-          // an, ohne dass login()/register() den State gesetzt hat.
-          if (!state.hasValue || state.value != true) {
-            state = const AsyncValue.data(true);
-            unawaited(_syncFromServer());
-          }
+    _authStateSub = SupabaseService.client.auth.onAuthStateChange.listen((
+      authState,
+    ) {
+      final event = authState.event;
+      if (event == AuthChangeEvent.signedOut) {
+        state = const AsyncValue.data(false);
+      } else if (event == AuthChangeEvent.passwordRecovery) {
+        // Passwort-Reset (Recovery-Deep-Link aus der E-Mail, von
+        // getSessionFromUrl via detectSessionInUriPredicate verarbeitet):
+        // Der Router erzwingt jetzt den Reset-Screen, bis das neue
+        // Passwort gesetzt ist (updateUser).
+        _ref.read(passwordRecoveryPendingProvider.notifier).state = true;
+        if (!state.hasValue || state.value != true) {
+          state = const AsyncValue.data(true);
+          unawaited(_syncFromServer());
         }
-      },
-    );
+      } else if (event == AuthChangeEvent.signedIn ||
+          event == AuthChangeEvent.initialSession) {
+        // Passkey-Login (oder andere stille Anmeldung) meldet sich hier
+        // an, ohne dass login()/register() den State gesetzt hat.
+        if (!state.hasValue || state.value != true) {
+          state = const AsyncValue.data(true);
+          unawaited(_syncFromServer());
+        }
+      }
+    });
   }
 
   @override
@@ -107,9 +107,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
       // API-Backend-Modus bei nicht erreichbarem Server) HÄNGT und nie
       // zurückkehrt, würde der Router ewig auf dem Lade-Screen bleiben.
       // Nach dem Timeout wird sicher als "nicht eingeloggt" fortgefahren.
-      final loggedIn = await _auth
-          .restoreSession()
-          .timeout(const Duration(seconds: 10), onTimeout: () => false);
+      final loggedIn = await _auth.restoreSession().timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => false,
+      );
       state = AsyncValue.data(loggedIn);
       if (loggedIn) {
         // „Angemeldet bleiben"-Wunsch respektieren (Default: AN). Wenn der
@@ -117,7 +118,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
         // Session beim Start still verworfen -> Login-Screen.
         final keepLoggedIn =
             await _ref.read(localStorageProvider).getBool('keep_logged_in') ??
-                true;
+            true;
         if (!keepLoggedIn) {
           await _auth.logout();
           state = const AsyncValue.data(false);
@@ -171,16 +172,16 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
             .enrollCurrentDevice()
             .timeout(const Duration(seconds: 8))
             .catchError((Object e) {
-          debugPrint('[AuthNotifier] Geräte-Registrierung fehlgeschlagen: $e');
-        }),
+              debugPrint(
+                '[AuthNotifier] Geräte-Registrierung fehlgeschlagen: $e',
+              );
+            }),
       );
 
       // Audit H-7/E-3: Eigenes PreKey-Bundle veröffentlichen, falls noch
       // keines existiert (sonst schlägt jeder E2E-Session-Aufbau durch
       // Dritte fehl). Hintergrund, blockiert den Sync nicht.
-      unawaited(
-        _ref.read(preKeyServiceProvider).ensureOwnBundlePublished(),
-      );
+      unawaited(_ref.read(preKeyServiceProvider).ensureOwnBundlePublished());
 
       // MFA-Status UNABHÄNGIG vom Profil-Fetch laden (eigener try-Block):
       // Schlägt der Profil-Fetch per Timeout fehl, darf die App trotzdem
@@ -189,12 +190,14 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
       try {
         _ref.read(mfaStatusProvider.notifier).state =
             await MfaService(SupabaseService.client).loadStatus().timeout(
-                  const Duration(seconds: 5),
-                  onTimeout: () => const MfaStatus.initial(),
-                );
+              const Duration(seconds: 5),
+              onTimeout: () => const MfaStatus.initial(),
+            );
       } catch (e) {
         if (kDebugMode) {
-          debugPrint('[AuthNotifier] MFA-Status konnte nicht geladen werden: $e');
+          debugPrint(
+            '[AuthNotifier] MFA-Status konnte nicht geladen werden: $e',
+          );
         }
       }
 
@@ -210,9 +213,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
       // Blöcke deklariert, weil der Flags-Sync unten sie übernimmt.
       String? serverThemeName;
       try {
-        final profile = await database
-            .fetchOwnProfile()
-            .timeout(const Duration(seconds: 5));
+        final profile = await database.fetchOwnProfile().timeout(
+          const Duration(seconds: 5),
+        );
         if (profile == null) {
           // Nur die SESSION verwerfen - lokale Daten (Profil, Einstellungen,
           // Praeferenzen) bleiben als Cache erhalten. Vorher wurden sie hier
@@ -225,46 +228,46 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
           );
           await _auth.logout();
           _ref.read(pendingVerificationEmailProvider.notifier).state = null;
-          _ref
-              .read(pendingVerificationCredentialsProvider.notifier)
-              .state = null;
+          _ref.read(pendingVerificationCredentialsProvider.notifier).state =
+              null;
           state = const AsyncValue.data(false);
           return;
         }
-      _profileNotifier.setProfile(profile);
+        _profileNotifier.setProfile(profile);
 
-      // Präferenzen (Entfernung, Altersspanne, "Ich suche", Bundesland,
-      // Ort, Geschlechts-Filter) serverseitig nachziehen - "Nichts geht
-      // verloren"-Garantie bei Neuinstallation (Migration 066). Best
-      // effort: Ein Fehlschlag blockiert den Sync nicht.
-      try {
-        final prefsMap =
-            await database.fetchOwnPreferencesWithRetry();
-        if (prefsMap != null) {
-          await _ref
-              .read(userPreferencesProvider.notifier)
-              .applyServerValues(prefsMap);
-          final sMin = (prefsMap['age_range_min'] as num?)?.toInt();
-          final sMax = (prefsMap['age_range_max'] as num?)?.toInt();
-          if (sMin != null && sMax != null) {
-            await _ref.read(settingsProvider.notifier).setAgeRange(sMin, sMax);
-          }
-          // Entfernung auch in die AppSettings spiegeln (u. a. Dating
-          // Hour liest sie von dort) - war bisher nur lokal, wurde also
-          // nach Neuinstallation auf den Default zurückgesetzt.
-          final sDist = (prefsMap['max_distance_km'] as num?)?.toInt();
-          if (sDist != null) {
+        // Präferenzen (Entfernung, Altersspanne, "Ich suche", Bundesland,
+        // Ort, Geschlechts-Filter) serverseitig nachziehen - "Nichts geht
+        // verloren"-Garantie bei Neuinstallation (Migration 066). Best
+        // effort: Ein Fehlschlag blockiert den Sync nicht.
+        try {
+          final prefsMap = await database.fetchOwnPreferencesWithRetry();
+          if (prefsMap != null) {
             await _ref
-                .read(settingsProvider.notifier)
-                .setMaxDistanceKm(sDist);
+                .read(userPreferencesProvider.notifier)
+                .applyServerValues(prefsMap);
+            final sMin = (prefsMap['age_range_min'] as num?)?.toInt();
+            final sMax = (prefsMap['age_range_max'] as num?)?.toInt();
+            if (sMin != null && sMax != null) {
+              await _ref
+                  .read(settingsProvider.notifier)
+                  .setAgeRange(sMin, sMax);
+            }
+            // Entfernung auch in die AppSettings spiegeln (u. a. Dating
+            // Hour liest sie von dort) - war bisher nur lokal, wurde also
+            // nach Neuinstallation auf den Default zurückgesetzt.
+            final sDist = (prefsMap['max_distance_km'] as num?)?.toInt();
+            if (sDist != null) {
+              await _ref
+                  .read(settingsProvider.notifier)
+                  .setMaxDistanceKm(sDist);
+            }
+            // Themefarbe (Migration 071): Mit dem Login direkt wieder
+            // anwenden - auch nach Neuinstallation.
+            serverThemeName = prefsMap['theme_name'] as String?;
           }
-          // Themefarbe (Migration 071): Mit dem Login direkt wieder
-          // anwenden - auch nach Neuinstallation.
-          serverThemeName = prefsMap['theme_name'] as String?;
+        } catch (e) {
+          debugPrint('[AuthNotifier] Präferenz-Sync fehlgeschlagen: $e');
         }
-      } catch (e) {
-        debugPrint('[AuthNotifier] Präferenz-Sync fehlgeschlagen: $e');
-      }
       } catch (e) {
         debugPrint('[AuthNotifier] Profil-Fetch fehlgeschlagen: $e');
       }
@@ -282,7 +285,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
       }
       if (flags != null) {
         _ref.read(setupFlagsKnownProvider.notifier).state = true;
-        await _ref.read(settingsProvider.notifier).syncSetupFlagsFromServer(
+        await _ref
+            .read(settingsProvider.notifier)
+            .syncSetupFlagsFromServer(
               oneTimeSettingsCompleted:
                   flags['one_time_settings_completed'] == true,
               communityGuidelinesAccepted:
@@ -292,16 +297,16 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
               onboardingDone: flags['onboarding_done'] == true,
               // Dating-Hour-Regeln nur EINMAL zeigen (Migration 071):
               // Der Stand hängt am Konto, nicht an der Installation.
-              datingHourIntroSeen:
-                  flags['dating_hour_intro_seen'] == true,
+              datingHourIntroSeen: flags['dating_hour_intro_seen'] == true,
               // Themefarbe (Migration 071): null/leer = Server kennt keine
               // Farbe -> lokaler Stand bleibt.
               themeName: serverThemeName,
             );
         // UI-Einstellungen (Blind Mode, Sichtbarkeit, Notify-Schalter,
         // Dark Mode, Blur) aus profiles.ui_prefs übernehmen (v0.8.0).
-        final uiPrefs =
-            flags['ui_prefs'] is Map ? Map<String, dynamic>.from(flags['ui_prefs'] as Map) : null;
+        final uiPrefs = flags['ui_prefs'] is Map
+            ? Map<String, dynamic>.from(flags['ui_prefs'] as Map)
+            : null;
         if (uiPrefs != null) {
           await _ref
               .read(settingsProvider.notifier)
@@ -320,7 +325,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
         await _ref.read(settingsProvider.notifier).refreshServerSwitches();
 
         // Pausenmodus + Habit-Dealbreaker (Migration 076): Server gewinnt.
-        await _ref.read(settingsProvider.notifier).applyServerFlags(
+        await _ref
+            .read(settingsProvider.notifier)
+            .applyServerFlags(
               paused: flags['paused'] is bool ? flags['paused'] as bool : null,
               habitsDealbreaker: flags['habits_dealbreaker'] is bool
                   ? flags['habits_dealbreaker'] as bool
@@ -345,7 +352,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
                 'community_guidelines_accepted': s.communityGuidelinesAccepted,
               });
             } catch (e) {
-              debugPrint('[AuthNotifier] Setup-Flags-Nachzug fehlgeschlagen: $e');
+              debugPrint(
+                '[AuthNotifier] Setup-Flags-Nachzug fehlgeschlagen: $e',
+              );
             }
           }
         }
@@ -370,12 +379,14 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
     // F-Droid-Build: kein Firebase, Push via UnifiedPush (falls aktiv).
     if (AppConstants.fdroidBuild) return;
     try {
-      final token = await FirebaseMessaging.instance
-          .getToken()
-          .timeout(const Duration(seconds: 8), onTimeout: () => null);
+      final token = await FirebaseMessaging.instance.getToken().timeout(
+        const Duration(seconds: 8),
+        onTimeout: () => null,
+      );
       if (token == null) return;
-      await SupabaseDatabaseService(SupabaseService.client)
-          .updateOwnProfile({'fcm_token': token});
+      await SupabaseDatabaseService(
+        SupabaseService.client,
+      ).updateOwnProfile({'fcm_token': token});
     } catch (e) {
       if (kDebugMode) {
         debugPrint('[AuthNotifier] FCM-Token-Sync fehlgeschlagen: $e');
@@ -393,8 +404,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
   }) async {
     if (kDebugMode) {
       // PII (E-Mail, Name) nur im Debug-Modus loggen (Audit H4).
-      debugPrint('[AuthNotifier] register() aufgerufen: name=$name, '
-          'email=$email, gender=$gender');
+      debugPrint(
+        '[AuthNotifier] register() aufgerufen: name=$name, '
+        'email=$email, gender=$gender',
+      );
     }
     state = const AsyncValue.loading();
     try {
@@ -423,13 +436,13 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
       // der Bestätigung sichern (nie persistiert). Damit erkennt die App
       // die Bestätigung ohne Session und meldet den Nutzer automatisch an.
       _ref.read(pendingVerificationCredentialsProvider.notifier).state = (
-            email: email,
-            password: password,
-            createdAt: DateTime.now(),
-            name: name,
-            gender: gender,
-            birthDate: birthDate,
-          );
+        email: email,
+        password: password,
+        createdAt: DateTime.now(),
+        name: name,
+        gender: gender,
+        birthDate: birthDate,
+      );
       _profileNotifier.setProfile(profile);
       state = const AsyncValue.data(true);
       // Server-Sync auch NACH der Registrierung anstoßen: Er setzt
@@ -515,8 +528,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
     await bestEffort('SupabaseDatabaseService.updateOwnProfile', () async {
       if (SupabaseService.isInitialized &&
           SupabaseService.client.auth.currentUser != null) {
-        await SupabaseDatabaseService(SupabaseService.client)
-            .updateOwnProfile({'fcm_token': null});
+        await SupabaseDatabaseService(
+          SupabaseService.client,
+        ).updateOwnProfile({'fcm_token': null});
       }
     });
     // Eigenen Geräte-Eintrag entfernen (Best effort, VOR dem Abmelden -
@@ -539,9 +553,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
     await _ref.read(userPreferencesProvider.notifier).resetToDefaults();
     await _ref.read(profileProvider.notifier).resetToDefaults();
     await bestEffort('localStorageProvider.remove', () async {
-      await _ref
-          .read(localStorageProvider)
-          .remove(verificationSubmittedKey);
+      await _ref.read(localStorageProvider).remove(verificationSubmittedKey);
     });
     // Gleiches Geräte-Cleanup wie bei Löschung (keine fremden Reste für
     // den nächsten Account): Verlauf, Entwürfe, Crash-Journal,
@@ -557,9 +569,12 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
     await bestEffort('CrashJournal.clear', () async {
       await CrashJournal.clear();
     });
-    await bestEffort('verificationServiceProvider.deleteAllLocalData', () async {
-      await _ref.read(verificationServiceProvider).deleteAllLocalData();
-    });
+    await bestEffort(
+      'verificationServiceProvider.deleteAllLocalData',
+      () async {
+        await _ref.read(verificationServiceProvider).deleteAllLocalData();
+      },
+    );
     unawaited(cleanupDecryptedTempFiles());
     await bestEffort('encryptionServiceProvider.clearAllData', () async {
       await _ref.read(encryptionServiceProvider).clearAllData();
@@ -643,8 +658,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
     await _auth.deleteAccount();
 
     // 2) Lokale Daten vollständig löschen (DSGVO Art. 17).
-        // Best-effort: Token kann bereits ungültig sein.
-await bestEffort('deleteToken', () async {
+    // Best-effort: Token kann bereits ungültig sein.
+    await bestEffort('deleteToken', () async {
       if (!AppConstants.fdroidBuild) {
         await FirebaseMessaging.instance.deleteToken();
       }
@@ -735,14 +750,15 @@ await bestEffort('deleteToken', () async {
 /// URL-Heuristik nicht; ohne Supabase und ohne Flag bleibt der Modus
 /// aus (fail-closed).
 bool _isDemoMode() => resolveDemoMode(
-      isReleaseMode: kReleaseMode,
-      isSupabaseInitialized: SupabaseService.isInitialized,
-      demoModeFlag: AppConstants.demoMode,
-      baseUrl: '',
-    );
+  isReleaseMode: kReleaseMode,
+  isSupabaseInitialized: SupabaseService.isInitialized,
+  demoModeFlag: AppConstants.demoMode,
+  baseUrl: '',
+);
 
-final authProvider =
-    StateNotifierProvider<AuthNotifier, AsyncValue<bool>>((ref) {
+final authProvider = StateNotifierProvider<AuthNotifier, AsyncValue<bool>>((
+  ref,
+) {
   final tokens = ref.watch(secureTokenStoreProvider);
   final encryption = ref.watch(encryptionServiceProvider);
   final storage = ref.watch(localStorageProvider);
@@ -804,24 +820,26 @@ final pendingVerificationEmailProvider = StateProvider<String?>((ref) => null);
 /// Wert ebenfalls (Speicher-only). ABLAUF (Audit M1): [createdAt] begrenzt
 /// die Lebensdauer auf 15 Minuten – danach verweigert der Auto-Login das
 /// Passwort weiterzureichen (das Passwort bleibt nie unbegrenzt im Speicher).
-final pendingVerificationCredentialsProvider = StateProvider<
-        ({
-          String email,
-          String password,
-          DateTime createdAt,
-          // NUTZERWUNSCH (01.11.2026): "Falls man einen Fehler bemerkt,
-          // soll man an dieser Stelle die E-Mail-Adresse nochmal ändern."
-          //
-          // Das Ändern der Adresse heißt: das unbestätigte Konto löschen
-          // und mit der neuen Adresse neu registrieren. Dafür braucht es
-          // die Angaben aus dem Registrierungsformular - ohne sie
-          // entstünde ein Profil ohne Name und ohne Geburtsdatum.
-          //
-          // Alles NUR IM SPEICHER, nie persistiert.
-          String name,
-          String? gender,
-          DateTime birthDate,
-        })?>((ref) => null);
+final pendingVerificationCredentialsProvider =
+    StateProvider<
+      ({
+        String email,
+        String password,
+        DateTime createdAt,
+        // NUTZERWUNSCH (01.11.2026): "Falls man einen Fehler bemerkt,
+        // soll man an dieser Stelle die E-Mail-Adresse nochmal ändern."
+        //
+        // Das Ändern der Adresse heißt: das unbestätigte Konto löschen
+        // und mit der neuen Adresse neu registrieren. Dafür braucht es
+        // die Angaben aus dem Registrierungsformular - ohne sie
+        // entstünde ein Profil ohne Name und ohne Geburtsdatum.
+        //
+        // Alles NUR IM SPEICHER, nie persistiert.
+        String name,
+        String? gender,
+        DateTime birthDate,
+      })?
+    >((ref) => null);
 
 /// Zeigt an, ob ein Passwort-Reset (Recovery-Deep-Link) aussteht. Solange
 /// true ist, erzwingt der Router den Reset-Screen; nach erfolgreichem
@@ -962,8 +980,5 @@ class EmailConfirmedNotifier extends StateNotifier<bool?>
 
 final emailConfirmedProvider =
     StateNotifierProvider<EmailConfirmedNotifier, bool?>((ref) {
-  return EmailConfirmedNotifier(ref);
-});
-
-
-
+      return EmailConfirmedNotifier(ref);
+    });

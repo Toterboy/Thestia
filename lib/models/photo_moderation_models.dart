@@ -8,9 +8,11 @@ enum PhotoModerationType {
   /// Profilbild stimmt nicht mit Verifizierungs-Video überein (Gesichtsabgleich).
   @HiveField(0)
   faceMismatch,
+
   /// Nacktinhalt / sexuelle Inhalte erkannt.
   @HiveField(1)
   nudityContent,
+
   /// Anderer Verstoß (Gewalt, Hass, etc.).
   @HiveField(2)
   otherViolation,
@@ -22,12 +24,15 @@ enum PhotoModerationStatus {
   /// Noch nicht geprüft.
   @HiveField(0)
   pending,
+
   /// Bestanden (kein Verstoß).
   @HiveField(1)
   approved,
+
   /// Verstoß erkannt.
   @HiveField(2)
   flagged,
+
   /// Bild gelöscht.
   @HiveField(3)
   deleted,

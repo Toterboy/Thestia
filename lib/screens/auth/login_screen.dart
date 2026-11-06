@@ -42,7 +42,6 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-
   /// Wie lange ein Anmelde- oder Registrierungsversuch dauern darf.
   ///
   /// 20 Sekunden: genug fuer eine langsame Verbindung, kurz genug, damit
@@ -117,9 +116,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _pickBirthDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: _birthDate ??
-          DateTime(DateTime.now().year - 18, DateTime.now().month,
-              DateTime.now().day),
+      initialDate:
+          _birthDate ??
+          DateTime(
+            DateTime.now().year - 18,
+            DateTime.now().month,
+            DateTime.now().day,
+          ),
       firstDate: DateTime(1920),
       lastDate: DateTime.now(),
       helpText: 'Wähle dein Geburtsdatum',
@@ -176,8 +179,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content:
-                    Text(L10n.t(context, 'auth.ageConfirmRequired')),
+                content: Text(L10n.t(context, 'auth.ageConfirmRequired')),
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -206,25 +208,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           }
         }
 
-        await auth.register(
-          name: _nameCtrl.text.trim(),
-          email: _emailCtrl.text.trim(),
-          password: _passwordCtrl.text,
-          gender: _gender.value,
-          birthDate: _birthDate!,
-          captchaToken: captchaToken,
-          // v0.9.2: 20 Sekunden Limit.
-          //
-          // Ohne das kehrt der Aufruf auf einem Geraet ohne erreichbaren
-          // Server nie zurueck: weder Erfolg noch Fehler, der Button
-          // dreht sich endlos. Im Log stand danach nichts - und genau so
-          // sah es aus: "Registriere Nutzer..." und Stille.
-          //
-          // Die Meldung sagt dem Nutzer, was wirklich passiert ist, statt
-          // "Server fehlgeschlagen": wenn 20 Sekunden nichts kommen, ist
-          // es der Server, den es nicht erreicht - nicht der Nutzer,
-          // der sich geirrt haette.
-        ).timeout(_authTimeout);
+        await auth
+            .register(
+              name: _nameCtrl.text.trim(),
+              email: _emailCtrl.text.trim(),
+              password: _passwordCtrl.text,
+              gender: _gender.value,
+              birthDate: _birthDate!,
+              captchaToken: captchaToken,
+              // v0.9.2: 20 Sekunden Limit.
+              //
+              // Ohne das kehrt der Aufruf auf einem Geraet ohne erreichbaren
+              // Server nie zurueck: weder Erfolg noch Fehler, der Button
+              // dreht sich endlos. Im Log stand danach nichts - und genau so
+              // sah es aus: "Registriere Nutzer..." und Stille.
+              //
+              // Die Meldung sagt dem Nutzer, was wirklich passiert ist, statt
+              // "Server fehlgeschlagen": wenn 20 Sekunden nichts kommen, ist
+              // es der Server, den es nicht erreicht - nicht der Nutzer,
+              // der sich geirrt haette.
+            )
+            .timeout(_authTimeout);
         // Profil wurde bereits in AuthNotifier.register() via setProfile()
         // gesetzt – kein redundantes update() nötig.
       } else {
@@ -245,11 +249,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             return;
           }
         }
-        await auth.login(
-          email: _emailCtrl.text.trim(),
-          password: _passwordCtrl.text,
-          captchaToken: captchaToken,
-        ).timeout(_authTimeout);
+        await auth
+            .login(
+              email: _emailCtrl.text.trim(),
+              password: _passwordCtrl.text,
+              captchaToken: captchaToken,
+            )
+            .timeout(_authTimeout);
       }
 
       final result = ref.read(authProvider);
@@ -268,8 +274,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         // AppException.message bzw. der Servertext (z. B. "User already
         // registered", Captcha-Fehler). Das sind Meldungen, die fuer
         // die Fehlersuche gebraucht werden und keine Geheimnisse.
-        debugPrint('[LoginScreen] Auth-Provider hat Fehler '
-            '(${_isRegister ? 'Registrierung' : 'Login'}): ${result.error}');
+        debugPrint(
+          '[LoginScreen] Auth-Provider hat Fehler '
+          '(${_isRegister ? 'Registrierung' : 'Login'}): ${result.error}',
+        );
         if (mounted) {
           final message = result.error is AppException
               ? (result.error as AppException).message
@@ -288,16 +296,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       // zuverlässiger (vermeidet Timing-Probleme bei Provider-Initialisierung).
       // Nach Registrierung: zuerst E-Mail-Verifizierung, dann Einstellungen & Privatsphäre.
       // Nach Login: Home - Redirect-Logik leitet basierend auf Setup-Fortschritt weiter.
-      debugPrint('[LoginScreen] Auth erfolgreich, navigiere zu: '
-          '${_isRegister ? AppRoutes.emailVerification : AppRoutes.home}');
+      debugPrint(
+        '[LoginScreen] Auth erfolgreich, navigiere zu: '
+        '${_isRegister ? AppRoutes.emailVerification : AppRoutes.home}',
+      );
       if (mounted) {
-        context.go(
-          _isRegister ? AppRoutes.emailVerification : AppRoutes.home,
-        );
+        context.go(_isRegister ? AppRoutes.emailVerification : AppRoutes.home);
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('[LoginScreen] FEHLER bei ${_isRegister ? "Registrierung" : "Login"}: $e');
+        debugPrint(
+          '[LoginScreen] FEHLER bei ${_isRegister ? "Registrierung" : "Login"}: $e',
+        );
         debugPrint('[LoginScreen] Exception-Typ: ${e.runtimeType}');
       }
       if (mounted) {
@@ -318,10 +328,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           // `duration` ist bewusst nicht im Text: die Snackbar steht nach
           // 20 Sekunden, nicht "irgendwann". Eine Sekundenzahl im Text
           // waere eine Zusage, die der Nutzer nicht nachzaehlen kann.
-          debugPrint('[LoginScreen] Timeout nach ${authTimeout.inSeconds} s '
-              '(${_isRegister ? "Registrierung" : "Login"}) - Server nicht '
-              'erreichbar oder Anfrage haengt. '
-              'Supabase-URL und Netzverbindung pruefen.');
+          debugPrint(
+            '[LoginScreen] Timeout nach ${authTimeout.inSeconds} s '
+            '(${_isRegister ? "Registrierung" : "Login"}) - Server nicht '
+            'erreichbar oder Anfrage haengt. '
+            'Supabase-URL und Netzverbindung pruefen.',
+          );
           message = L10n.t(context, 'error.serverUnreachable');
         } else if (e is AppException) {
           // Duplikat-Marker aus SupabaseAuthService.register übersetzen
@@ -371,10 +383,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               : L10n.t(context, 'error.generic');
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            behavior: SnackBarBehavior.floating,
-          ),
+          SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
         );
       }
       return;
@@ -412,8 +421,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _dismissBlockingLoader() {
-    if (mounted &&
-        Navigator.of(context, rootNavigator: true).canPop()) {
+    if (mounted && Navigator.of(context, rootNavigator: true).canPop()) {
       Navigator.of(context, rootNavigator: true).pop();
     }
   }
@@ -444,14 +452,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       try {
         await ref.read(authProvider.notifier).loginWithPasskey();
         if (mounted) {
-          debugPrint('[LoginScreen] Passkey-Login erfolgreich, navigiere zu Home');
+          debugPrint(
+            '[LoginScreen] Passkey-Login erfolgreich, navigiere zu Home',
+          );
           context.go(AppRoutes.home);
         }
         return;
       } catch (e) {
         if (!PasskeyAuth.requiresCaptcha(e)) rethrow;
-        debugPrint('[LoginScreen] Server verlangt den Sicherheitscheck - '
-            'ich frage ihn jetzt ab.');
+        debugPrint(
+          '[LoginScreen] Server verlangt den Sicherheitscheck - '
+          'ich frage ihn jetzt ab.',
+        );
       }
 
       if (AppConstants.captchaEnabled) {
@@ -469,9 +481,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           return;
         }
       }
-      await ref.read(authProvider.notifier).loginWithPasskey(
-            captchaToken: captchaToken,
-          );
+      await ref
+          .read(authProvider.notifier)
+          .loginWithPasskey(captchaToken: captchaToken);
       // Explizite Navigation nach erfolgreichem Login - wie im
       // Passwort-Pfad (zuverlässiger als der Router-Redirect allein).
       debugPrint('[LoginScreen] Passkey-Login erfolgreich, navigiere zu Home');
@@ -521,10 +533,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ? const SizedBox.shrink()
                 : Text(
                     field.errorText!,
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: Theme.of(context).colorScheme.error),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                     maxLines: 2,
                     overflow: TextOverflow.visible,
                   ),
@@ -553,7 +564,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(Icons.favorite, size: 64, color: Theme.of(context).colorScheme.primary),
+                  Icon(
+                    Icons.favorite,
+                    size: 64,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                   const SizedBox(height: 12),
                   // Überschrift mit Sprach-Button auf derselben Höhe
                   // (rechtsbündig). Der Stack hält die Überschrift exakt
@@ -574,293 +589,288 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         right: 0,
                         top: 0,
                         bottom: 0,
-                        child: Center(
-                          child: LanguageSwitch(compact: true),
-                        ),
+                        child: Center(child: LanguageSwitch(compact: true)),
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
                   if (_isRegister) ...[
-                     _field(
-                        showError: _submitAttempted,
-                        child: TextFormField(
-                          controller: _nameCtrl,
-                          keyboardType: TextInputType.text,
-                          textCapitalization: TextCapitalization.words,
-                          decoration: InputDecoration(
-                              labelText: L10n.t(context, 'auth.name')),
-                          validator: (v) => Validators.name(context, v),
+                    _field(
+                      showError: _submitAttempted,
+                      child: TextFormField(
+                        controller: _nameCtrl,
+                        keyboardType: TextInputType.text,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: InputDecoration(
+                          labelText: L10n.t(context, 'auth.name'),
                         ),
+                        validator: (v) => Validators.name(context, v),
                       ),
-                      _field(
-                        showError: _submitAttempted,
-                        validate: () => Validators.birthDate(context, _birthDate),
-                        child: InkWell(
-                          onTap: _pickBirthDate,
-                          child: InputDecorator(
-                            decoration: InputDecoration(
-                              labelText: L10n.t(context, 'auth.birthDate'),
-                              hintText: L10n.t(context, 'auth.birthDateHint'),
-                              errorText: _submitAttempted
-                                  ? Validators.birthDate(context, _birthDate)
-                                  : null,
-                            ),
-                            child: Text(
-                              _birthDate == null
-                                  ? L10n.t(context, 'auth.birthDatePick')
-                                  : '${_birthDate!.day}.${_birthDate!.month}.'
+                    ),
+                    _field(
+                      showError: _submitAttempted,
+                      validate: () => Validators.birthDate(context, _birthDate),
+                      child: InkWell(
+                        onTap: _pickBirthDate,
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: L10n.t(context, 'auth.birthDate'),
+                            hintText: L10n.t(context, 'auth.birthDateHint'),
+                            errorText: _submitAttempted
+                                ? Validators.birthDate(context, _birthDate)
+                                : null,
+                          ),
+                          child: Text(
+                            _birthDate == null
+                                ? L10n.t(context, 'auth.birthDatePick')
+                                : '${_birthDate!.day}.${_birthDate!.month}.'
                                       '${_birthDate!.year}',
-                            ),
                           ),
                         ),
                       ),
-                      _field(
-                        showError: _submitAttempted,
-                        child: TextFormField(
-                          controller: _emailCtrl,
-                          keyboardType: TextInputType.text,
-                          decoration: InputDecoration(
-                              labelText: L10n.t(context, 'auth.email')),
-                          validator: (v) => Validators.email(context, v),
+                    ),
+                    _field(
+                      showError: _submitAttempted,
+                      child: TextFormField(
+                        controller: _emailCtrl,
+                        keyboardType: TextInputType.text,
+                        decoration: InputDecoration(
+                          labelText: L10n.t(context, 'auth.email'),
                         ),
+                        validator: (v) => Validators.email(context, v),
                       ),
-                       _field(
-                         showError: _submitAttempted,
-                         child: TextFormField(
-                           controller: _passwordCtrl,
-                           keyboardType: TextInputType.text,
-                           obscureText: _obscurePassword,
-                           textInputAction: TextInputAction.done,
-                           onFieldSubmitted: (_) => _submit(),
-                           decoration: InputDecoration(
-                            labelText: L10n.t(context, 'auth.password'),
-                            helperText: L10n.t(
-                                context, 'auth.passwordHintStrong'),
-                            suffixIcon: IconButton(
-                              icon: Icon(_obscurePassword
+                    ),
+                    _field(
+                      showError: _submitAttempted,
+                      child: TextFormField(
+                        controller: _passwordCtrl,
+                        keyboardType: TextInputType.text,
+                        obscureText: _obscurePassword,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => _submit(),
+                        decoration: InputDecoration(
+                          labelText: L10n.t(context, 'auth.password'),
+                          helperText: L10n.t(
+                            context,
+                            'auth.passwordHintStrong',
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
                                   ? Icons.visibility_off
-                                  : Icons.visibility),
-                              tooltip: _obscurePassword
-                                  ? L10n.t(context, 'auth.showPassword')
-                                  : L10n.t(context, 'auth.hidePassword'),
-                              onPressed: () =>
-                                  setState(() => _obscurePassword = !_obscurePassword),
+                                  : Icons.visibility,
+                            ),
+                            tooltip: _obscurePassword
+                                ? L10n.t(context, 'auth.showPassword')
+                                : L10n.t(context, 'auth.hidePassword'),
+                            onPressed: () => setState(
+                              () => _obscurePassword = !_obscurePassword,
                             ),
                           ),
-                           validator: (v) =>
-                               Validators.registrationPassword(context, v),
-                         ),
-                       ),
-                        _field(
-                          child: DropdownButtonFormField<Gender>(
-                           initialValue: _gender,
-                           // Abgerundetes Auswahlmenü (konsistent mit
-                           // popupMenuTheme/Cards, 16 px).
-                           borderRadius: BorderRadius.circular(16),
-                           decoration: InputDecoration(
-                              labelText: L10n.t(context, 'auth.gender')),
-                           items: [
-                             DropdownMenuItem(
-                                 value: Gender.male,
-                                 child: Text(L10n.t(context, 'gender.male'))),
-                             DropdownMenuItem(
-                                 value: Gender.maleTrans,
-                                 child: Text(L10n.t(context, 'gender.maleTrans'))),
-                             DropdownMenuItem(
-                                 value: Gender.female,
-                                 child: Text(L10n.t(context, 'gender.female'))),
-                             DropdownMenuItem(
-                                 value: Gender.femaleTrans,
-                                 child: Text(L10n.t(context, 'gender.femaleTrans'))),
-                             DropdownMenuItem(
-                                 value: Gender.diverse,
-                                 child: Text(L10n.t(context, 'gender.diverse'))),
-                             DropdownMenuItem(
-                                 value: Gender.other,
-                                 child: Text(L10n.t(context, 'gender.other'))),
-                           ],
-                            onChanged: (v) {
-                              if (v != null) setState(() => _gender = v);
-                            },
-                          ),
                         ),
-                        _field(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              CheckboxListTile.adaptive(
-                                contentPadding: EdgeInsets.zero,
-                                controlAffinity:
-                                    ListTileControlAffinity.leading,
-                                title: Text(L10n.t(context,
-                                    'auth.ageConfirmTitle')),
-                                subtitle: Text(L10n.t(context,
-                                    'auth.ageConfirmSub')),
-                                value: _ageConfirmed,
-                                onChanged: (v) => setState(
-                                    () => _ageConfirmed = v ?? false),
-                              ),
-                              if (_submitAttempted && !_ageConfirmed)
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 16, top: 4),
-                                  child: Text(
-                                    L10n.t(context,
-                                        'auth.ageConfirmRequired'),
-                                    style: TextStyle(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .error,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              const SizedBox(height: 4),
-                              Text(
-                                L10n.t(
-                                    context, 'auth.liabilityNote'),
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant,
-                                    ),
-                              ),
-                              const SizedBox(height: 10),
-                              // EINWILLIGUNG (03.11.2026): "In der
-                              // Datenschutzerklaerung muss ausdruecklich
-                              // ueber die Erhebung von Daten wie der
-                              // sexuellen Orientierung aufgeklaert werden
-                              // und das der User auch zustimmt."
-                              //
-                              // Die Angaben, aus denen sich die
-                              // Orientierung ergibt, sind Daten der
-                              // besonderen Kategorie (Art. 9 DSGVO). Die
-                              // Verarbeitung ist nur mit ausdruecklicher
-                              // Einwilligung zulaessig - die Registrierung
-                              // ist sie. Der Hinweis steht hier, im
-                              // Registrierungsformular, und verweist auf
-                              // die Erklaerung, in der es ausfuehrlich
-                              // steht (Abschnitt 2b).
-                              Container(
-                                padding: const EdgeInsets.only(top: 2),
-                                child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      L10n.t(
-                                          context, 'auth.privacyConsent'),
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodySmall
-                                          ?.copyWith(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onSurfaceVariant,
-                                          ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    GestureDetector(
-                                      onTap: () => context.push(
-                                        AppRoutes.privacyPolicy,
-                                      ),
-                                      child: Text(
-                                        L10n.t(context,
-                                            'auth.privacyConsentLink'),
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall
-                                            ?.copyWith(
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .primary,
-                                              decoration:
-                                                  TextDecoration.underline,
-                                              decorationColor:
-                                                  Theme.of(context)
-                                                      .colorScheme
-                                                      .primary,
-                                            ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                     ] else ...[
-                     _field(
-                       showError: _submitAttempted,
-                       child: TextFormField(
-                         controller: _emailCtrl,
-                         keyboardType: TextInputType.text,
-                         decoration: InputDecoration(
-                             labelText: L10n.t(context, 'auth.email')),
-                          validator: (v) => Validators.email(context, v),
-                       ),
-                     ),
-                      _field(
-                        showError: _submitAttempted,
-                        child: TextFormField(
-                          controller: _passwordCtrl,
-                          keyboardType: TextInputType.text,
-                          obscureText: _obscurePassword,
-                          textInputAction: TextInputAction.done,
-                          onFieldSubmitted: (_) => _submit(),
-                           decoration: InputDecoration(
-                             labelText: L10n.t(context, 'auth.password'),
-                             helperText:
-                                 L10n.t(context, 'auth.passwordHint'),
-                             suffixIcon: IconButton(
-                               icon: Icon(_obscurePassword
-                                   ? Icons.visibility_off
-                                   : Icons.visibility),
-                               tooltip: _obscurePassword
-                                   ? L10n.t(context, 'auth.showPassword')
-                                   : L10n.t(context, 'auth.hidePassword'),
-                              onPressed: () =>
-                                  setState(() => _obscurePassword = !_obscurePassword),
-                            ),
-                          ),
-                          validator: (v) => Validators.password(context, v),
-                        ),
+                        validator: (v) =>
+                            Validators.registrationPassword(context, v),
                       ),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: TextButton(
-                          onPressed: (_submitting || _passkeyLoading)
-                              ? null
-                              : () => context.go(AppRoutes.forgotPassword),
-                          child: Text(L10n.t(context, 'auth.forgot')),
+                    ),
+                    _field(
+                      child: DropdownButtonFormField<Gender>(
+                        initialValue: _gender,
+                        // Abgerundetes Auswahlmenü (konsistent mit
+                        // popupMenuTheme/Cards, 16 px).
+                        borderRadius: BorderRadius.circular(16),
+                        decoration: InputDecoration(
+                          labelText: L10n.t(context, 'auth.gender'),
                         ),
-                      ),
-                      CheckboxListTile.adaptive(
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(L10n.t(context, 'auth.keepLoggedIn')),
-                        subtitle: Text(
-                          L10n.t(context, 'auth.keepLoggedInSub'),
-                        ),
-                        value: _keepLoggedIn,
+                        items: [
+                          DropdownMenuItem(
+                            value: Gender.male,
+                            child: Text(L10n.t(context, 'gender.male')),
+                          ),
+                          DropdownMenuItem(
+                            value: Gender.maleTrans,
+                            child: Text(L10n.t(context, 'gender.maleTrans')),
+                          ),
+                          DropdownMenuItem(
+                            value: Gender.female,
+                            child: Text(L10n.t(context, 'gender.female')),
+                          ),
+                          DropdownMenuItem(
+                            value: Gender.femaleTrans,
+                            child: Text(L10n.t(context, 'gender.femaleTrans')),
+                          ),
+                          DropdownMenuItem(
+                            value: Gender.diverse,
+                            child: Text(L10n.t(context, 'gender.diverse')),
+                          ),
+                          DropdownMenuItem(
+                            value: Gender.other,
+                            child: Text(L10n.t(context, 'gender.other')),
+                          ),
+                        ],
                         onChanged: (v) {
-                          setState(() => _keepLoggedIn = v ?? true);
-                          _persistKeepLoggedIn(_keepLoggedIn);
+                          if (v != null) setState(() => _gender = v);
                         },
                       ),
-                   ],
+                    ),
+                    _field(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CheckboxListTile.adaptive(
+                            contentPadding: EdgeInsets.zero,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            title: Text(
+                              L10n.t(context, 'auth.ageConfirmTitle'),
+                            ),
+                            subtitle: Text(
+                              L10n.t(context, 'auth.ageConfirmSub'),
+                            ),
+                            value: _ageConfirmed,
+                            onChanged: (v) =>
+                                setState(() => _ageConfirmed = v ?? false),
+                          ),
+                          if (_submitAttempted && !_ageConfirmed)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 16, top: 4),
+                              child: Text(
+                                L10n.t(context, 'auth.ageConfirmRequired'),
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: 4),
+                          Text(
+                            L10n.t(context, 'auth.liabilityNote'),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                          const SizedBox(height: 10),
+                          // EINWILLIGUNG (03.11.2026): "In der
+                          // Datenschutzerklaerung muss ausdruecklich
+                          // ueber die Erhebung von Daten wie der
+                          // sexuellen Orientierung aufgeklaert werden
+                          // und das der User auch zustimmt."
+                          //
+                          // Die Angaben, aus denen sich die
+                          // Orientierung ergibt, sind Daten der
+                          // besonderen Kategorie (Art. 9 DSGVO). Die
+                          // Verarbeitung ist nur mit ausdruecklicher
+                          // Einwilligung zulaessig - die Registrierung
+                          // ist sie. Der Hinweis steht hier, im
+                          // Registrierungsformular, und verweist auf
+                          // die Erklaerung, in der es ausfuehrlich
+                          // steht (Abschnitt 2b).
+                          Container(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  L10n.t(context, 'auth.privacyConsent'),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
+                                      ),
+                                ),
+                                const SizedBox(height: 4),
+                                GestureDetector(
+                                  onTap: () =>
+                                      context.push(AppRoutes.privacyPolicy),
+                                  child: Text(
+                                    L10n.t(context, 'auth.privacyConsentLink'),
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                          decoration: TextDecoration.underline,
+                                          decorationColor: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else ...[
+                    _field(
+                      showError: _submitAttempted,
+                      child: TextFormField(
+                        controller: _emailCtrl,
+                        keyboardType: TextInputType.text,
+                        decoration: InputDecoration(
+                          labelText: L10n.t(context, 'auth.email'),
+                        ),
+                        validator: (v) => Validators.email(context, v),
+                      ),
+                    ),
+                    _field(
+                      showError: _submitAttempted,
+                      child: TextFormField(
+                        controller: _passwordCtrl,
+                        keyboardType: TextInputType.text,
+                        obscureText: _obscurePassword,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => _submit(),
+                        decoration: InputDecoration(
+                          labelText: L10n.t(context, 'auth.password'),
+                          helperText: L10n.t(context, 'auth.passwordHint'),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                            tooltip: _obscurePassword
+                                ? L10n.t(context, 'auth.showPassword')
+                                : L10n.t(context, 'auth.hidePassword'),
+                            onPressed: () => setState(
+                              () => _obscurePassword = !_obscurePassword,
+                            ),
+                          ),
+                        ),
+                        validator: (v) => Validators.password(context, v),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: (_submitting || _passkeyLoading)
+                            ? null
+                            : () => context.go(AppRoutes.forgotPassword),
+                        child: Text(L10n.t(context, 'auth.forgot')),
+                      ),
+                    ),
+                    CheckboxListTile.adaptive(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(L10n.t(context, 'auth.keepLoggedIn')),
+                      subtitle: Text(L10n.t(context, 'auth.keepLoggedInSub')),
+                      value: _keepLoggedIn,
+                      onChanged: (v) {
+                        setState(() => _keepLoggedIn = v ?? true);
+                        _persistKeepLoggedIn(_keepLoggedIn);
+                      },
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   PrimaryButton(
                     label: _submitting
                         ? L10n.t(context, 'common.loading')
                         : L10n.t(
                             context,
-                            _isRegister
-                                ? 'auth.register'
-                                : 'auth.login',
+                            _isRegister ? 'auth.register' : 'auth.login',
                           ),
                     onPressed: _submitting ? null : _submit,
                     loading: _submitting,
@@ -868,15 +878,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   if (!_isRegister && SupabaseService.isInitialized) ...[
                     const SizedBox(height: 12),
                     OutlinedButton.icon(
-                      onPressed:
-                          (_submitting || _passkeyLoading) ? null : _signInWithPasskey,
+                      onPressed: (_submitting || _passkeyLoading)
+                          ? null
+                          : _signInWithPasskey,
                       icon: _passkeyLoading
                           ? const SizedBox(
                               width: 16,
                               height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.fingerprint),
                       label: Text(L10n.t(context, 'auth.passkey')),
@@ -887,18 +896,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     onPressed: (_submitting || _passkeyLoading)
                         ? null
                         : () => setState(() {
-                              _isRegister = !_isRegister;
-                              _submitAttempted = false;
-                            }),
+                            _isRegister = !_isRegister;
+                            _submitAttempted = false;
+                          }),
                     child: Text(
                       _isRegister
                           ? L10n.t(context, 'auth.toLogin')
                           : L10n.t(context, 'auth.toRegister'),
                     ),
                   ),
-                   const SizedBox(height: 8),
-                   const AppVersionFooter(),
-                   const SizedBox(height: 8),
+                  const SizedBox(height: 8),
+                  const AppVersionFooter(),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
@@ -908,4 +917,3 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 }
-

@@ -48,18 +48,16 @@ class SelectableTile<T> extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: 4),
         child: Material(
           color: selected
-              ? Theme.of(context)
-                  .colorScheme
-                  .primaryContainer
-                  .withAlpha((255 * 0.5).round())
+              ? Theme.of(
+                  context,
+                ).colorScheme.primaryContainer.withAlpha((255 * 0.5).round())
               : Colors.transparent,
           borderRadius: borderRadius,
           child: InkWell(
             borderRadius: borderRadius,
             onTap: () => onChanged(value),
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Row(
                 children: [
                   Radio<T>(
@@ -83,13 +81,11 @@ class SelectableTile<T> extends StatelessWidget {
                               const SizedBox(height: 2),
                               Text(
                                 subtitle!,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
+                                style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
                                     ),
                               ),
                             ],
@@ -104,4 +100,3 @@ class SelectableTile<T> extends StatelessWidget {
     );
   }
 }
-

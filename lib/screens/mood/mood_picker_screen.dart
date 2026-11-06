@@ -38,17 +38,19 @@ class _MoodPickerScreenState extends ConsumerState<MoodPickerScreen> {
     try {
       await ref.read(moodProvider.notifier).setMood(mood);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(L10n.t(context, 'mood.saved'))),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(L10n.t(context, 'mood.saved'))));
         context.pop();
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(L10n.tf(
-                  context, 'common.errorWith', {'error': '$e'}))),
+            content: Text(
+              L10n.tf(context, 'common.errorWith', {'error': '$e'}),
+            ),
+          ),
         );
       }
     } finally {
@@ -170,11 +172,7 @@ class _MoodChoiceTile extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              mood.icon,
-              size: 40,
-              color: color,
-            ),
+            Icon(mood.icon, size: 40, color: color),
             const SizedBox(height: 12),
             Text(
               L10n.t(context, mood.labelKey),

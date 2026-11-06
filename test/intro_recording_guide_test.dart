@@ -12,10 +12,7 @@ Widget _app({required int elapsed, bool paused = false}) {
     child: L10nScope(
       child: MaterialApp(
         home: Scaffold(
-          body: IntroRecordingGuide(
-            elapsedSeconds: elapsed,
-            paused: paused,
-          ),
+          body: IntroRecordingGuide(elapsedSeconds: elapsed, paused: paused),
         ),
       ),
     ),
@@ -34,8 +31,10 @@ void main() {
     });
 
     test('die Schritt-Keys sind eindeutig', () {
-      expect(IntroRecordingGuide.stepKeys.toSet().length,
-          IntroRecordingGuide.stepKeys.length);
+      expect(
+        IntroRecordingGuide.stepKeys.toSet().length,
+        IntroRecordingGuide.stepKeys.length,
+      );
     });
 
     test('die Schrittdauer ist so gewaehlt, dass alle drei Winkel in eine '
@@ -62,15 +61,20 @@ void main() {
       expect(IntroRecordingGuide.stepForSeconds(30), 2);
     });
 
-    test('nach dem dritten Schritt bleibt der dritte stehen (keine Schleife)',
-        () {
-      // Die Aufnahme darf bis 5 Minuten laufen. Ein Leitfaden, der immer
-      // wieder zurueckspringt, wuerde den Sprecher verwirren.
-      for (final s in [45, 60, 120, 299, 300, 5000]) {
-        expect(IntroRecordingGuide.stepForSeconds(s), 2,
-            reason: 'bei $s Sekunden');
-      }
-    });
+    test(
+      'nach dem dritten Schritt bleibt der dritte stehen (keine Schleife)',
+      () {
+        // Die Aufnahme darf bis 5 Minuten laufen. Ein Leitfaden, der immer
+        // wieder zurueckspringt, wuerde den Sprecher verwirren.
+        for (final s in [45, 60, 120, 299, 300, 5000]) {
+          expect(
+            IntroRecordingGuide.stepForSeconds(s),
+            2,
+            reason: 'bei $s Sekunden',
+          );
+        }
+      },
+    );
 
     test('negative Werte werden nicht zu einem Absturz', () {
       expect(IntroRecordingGuide.stepForSeconds(-1), 0);
@@ -89,8 +93,9 @@ void main() {
   });
 
   group('IntroRecordingGuide - Anzeige', () {
-    testWidgets('zeigt alle drei Schritte und die Ueberschrift',
-        (tester) async {
+    testWidgets('zeigt alle drei Schritte und die Ueberschrift', (
+      tester,
+    ) async {
       await tester.pumpWidget(_app(elapsed: 0));
 
       expect(find.text('Leitfaden für deine Vorstellung'), findsOneWidget);
@@ -159,8 +164,9 @@ void main() {
       );
     });
 
-    testWidgets('im Pausenzustand ist der Leitfaden abgeblendet',
-        (tester) async {
+    testWidgets('im Pausenzustand ist der Leitfaden abgeblendet', (
+      tester,
+    ) async {
       await tester.pumpWidget(_app(elapsed: 0, paused: true));
       expect(find.text('Wer bist du?'), findsOneWidget);
     });
@@ -206,8 +212,11 @@ void main() {
       ]) {
         expect(valueOf(b.de, key), isNotEmpty, reason: 'DE leer: $key');
         expect(valueOf(b.en, key), isNotEmpty, reason: 'EN leer: $key');
-        expect(valueOf(b.de, key), isNot(valueOf(b.en, key)),
-            reason: 'DE == EN bei $key');
+        expect(
+          valueOf(b.de, key),
+          isNot(valueOf(b.en, key)),
+          reason: 'DE == EN bei $key',
+        );
       }
     });
   });

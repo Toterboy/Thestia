@@ -19,11 +19,7 @@ import 'package:thestia/screens/privacy/privacy_screen.dart';
 void main() {
   Future<void> zeigeScreen(WidgetTester tester) async {
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: PrivacyScreen(),
-        ),
-      ),
+      const ProviderScope(child: MaterialApp(home: PrivacyScreen())),
     );
     await tester.pump(const Duration(milliseconds: 400));
   }
@@ -32,17 +28,15 @@ void main() {
     final kachel = find.text(L10n.tWithoutContext('privacy.imprintTitle'));
     if (kachel.evaluate().isNotEmpty) return;
     for (var i = 0; i < 12; i++) {
-      await tester.drag(
-        find.byType(Scrollable).first,
-        const Offset(0, -260),
-      );
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -260));
       await tester.pump(const Duration(milliseconds: 120));
       if (kachel.evaluate().isNotEmpty) return;
     }
   }
 
-  testWidgets('die Datenschutz-Einstellungen zeigen einen Impressum-Eintrag',
-      (tester) async {
+  testWidgets('die Datenschutz-Einstellungen zeigen einen Impressum-Eintrag', (
+    tester,
+  ) async {
     await zeigeScreen(tester);
     await scrolleZurKachel(tester);
 
@@ -52,16 +46,18 @@ void main() {
     );
   });
 
-  testWidgets('der Impressum-Eintrag nennt die Rechtsgrundlage',
-      (tester) async {
+  testWidgets('der Impressum-Eintrag nennt die Rechtsgrundlage', (
+    tester,
+  ) async {
     await zeigeScreen(tester);
     await scrolleZurKachel(tester);
 
     expect(find.textContaining('5 DDG'), findsOneWidget);
   });
 
-  testWidgets('der Impressum-Eintrag ist eine Kachel (kein blosser Text)',
-      (tester) async {
+  testWidgets('der Impressum-Eintrag ist eine Kachel (kein blosser Text)', (
+    tester,
+  ) async {
     await zeigeScreen(tester);
     await scrolleZurKachel(tester);
 

@@ -66,8 +66,8 @@ class _FunkeOverlayState extends State<FunkeOverlay>
     _ctrl.forward();
     Future.delayed(const Duration(milliseconds: 1900), () {
       if (!mounted) return;
-            // Best-effort: Overlay darf nie hängen bleiben.
-bestEffortSync('maybePop', () {
+      // Best-effort: Overlay darf nie hängen bleiben.
+      bestEffortSync('maybePop', () {
         final nav = Navigator.of(context);
         if (nav.canPop()) {
           nav.pop();
@@ -90,93 +90,95 @@ bestEffortSync('maybePop', () {
       backgroundColor: Colors.transparent,
       body: SafeArea(
         child: AnimatedBuilder(
-        animation: _ctrl,
-        builder: (context, _) {
-          final t = _ctrl.value;
-          // Herz: 0-0.35 einblenden+skalieren (overshoot), 0.8-1.0 ausblenden.
-          final heartScale = t < 0.35
-              ? Curves.elasticOut.transform(t / 0.35)
-              : (t > 0.85
-                  ? 1.0 - Curves.easeIn.transform((t - 0.85) / 0.15)
-                  : 1.0);
-          final heartOpacity = t > 0.85
-              ? 1.0 - (t - 0.85) / 0.15
-              : (t < 0.08 ? t / 0.08 : 1.0);
-          // Partikel fliegen ab 0.25 nach außen und faden aus.
-          final particleT = ((t - 0.25) / 0.75).clamp(0.0, 1.0);
+          animation: _ctrl,
+          builder: (context, _) {
+            final t = _ctrl.value;
+            // Herz: 0-0.35 einblenden+skalieren (overshoot), 0.8-1.0 ausblenden.
+            final heartScale = t < 0.35
+                ? Curves.elasticOut.transform(t / 0.35)
+                : (t > 0.85
+                      ? 1.0 - Curves.easeIn.transform((t - 0.85) / 0.15)
+                      : 1.0);
+            final heartOpacity = t > 0.85
+                ? 1.0 - (t - 0.85) / 0.15
+                : (t < 0.08 ? t / 0.08 : 1.0);
+            // Partikel fliegen ab 0.25 nach außen und faden aus.
+            final particleT = ((t - 0.25) / 0.75).clamp(0.0, 1.0);
 
-          return Center(
-            child: SizedBox(
-              width: 320,
-              height: 320,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  for (final p in _particles)
-                    Positioned(
-                      left: 160 +
-                          math.cos(p.angle) * p.speed * 140 * particleT -
-                          p.size / 2,
-                      top: 160 +
-                          math.sin(p.angle) * p.speed * 140 * particleT -
-                          p.size / 2,
-                      child: Opacity(
-                        opacity: (1 - particleT).clamp(0.0, 1.0),
-                        child: Container(
-                          width: p.size,
-                          height: p.size,
-                          decoration: BoxDecoration(
-                            color: p.color,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: p.color.withValues(alpha: 0.6),
-                                blurRadius: 6,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  Transform.scale(
-                    scale: 0.4 + heartScale * 0.6,
-                    child: Opacity(
-                      opacity: heartOpacity.clamp(0.0, 1.0),
-                      child: const Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.local_fire_department,
-                            size: 96,
-                            color: Color(0xFFFF6B9D),
-                            shadows: [
-                              Shadow(
-                                color: Color(0x88FF6B9D),
-                                blurRadius: 32,
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 12),
-                          Text(
-                            'Ein Funke ist entstanden!',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              shadows: [
-                                Shadow(color: Colors.black45, blurRadius: 8),
+            return Center(
+              child: SizedBox(
+                width: 320,
+                height: 320,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    for (final p in _particles)
+                      Positioned(
+                        left:
+                            160 +
+                            math.cos(p.angle) * p.speed * 140 * particleT -
+                            p.size / 2,
+                        top:
+                            160 +
+                            math.sin(p.angle) * p.speed * 140 * particleT -
+                            p.size / 2,
+                        child: Opacity(
+                          opacity: (1 - particleT).clamp(0.0, 1.0),
+                          child: Container(
+                            width: p.size,
+                            height: p.size,
+                            decoration: BoxDecoration(
+                              color: p.color,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: p.color.withValues(alpha: 0.6),
+                                  blurRadius: 6,
+                                ),
                               ],
                             ),
                           ),
-                        ],
+                        ),
+                      ),
+                    Transform.scale(
+                      scale: 0.4 + heartScale * 0.6,
+                      child: Opacity(
+                        opacity: heartOpacity.clamp(0.0, 1.0),
+                        child: const Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.local_fire_department,
+                              size: 96,
+                              color: Color(0xFFFF6B9D),
+                              shadows: [
+                                Shadow(
+                                  color: Color(0x88FF6B9D),
+                                  blurRadius: 32,
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 12),
+                            Text(
+                              'Ein Funke ist entstanden!',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                shadows: [
+                                  Shadow(color: Colors.black45, blurRadius: 8),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
         ),
       ),
     );

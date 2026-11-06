@@ -26,10 +26,7 @@
 library;
 
 class IntroPromptTheme {
-  const IntroPromptTheme({
-    required this.id,
-    required this.promptKeys,
-  });
+  const IntroPromptTheme({required this.id, required this.promptKeys});
 
   /// Technische ID, nur für Rotation und Tests.
   final String id;
@@ -43,31 +40,44 @@ class IntroPromptCatalog {
 
   /// Themen in Anzeigereihenfolge. Jedes bekommt einen eigenen Chip.
   static const List<IntroPromptTheme> themes = [
-    IntroPromptTheme(id: 'everyday', promptKeys: [
-      'intro.prompt.weekend',
-      'intro.prompt.everyday.sunday',
-      'intro.prompt.everyday.coffee',
-    ]),
-    IntroPromptTheme(id: 'people', promptKeys: [
-      'intro.prompt.friends',
-      'intro.prompt.people.proud',
-      'intro.prompt.people.call',
-    ]),
-    IntroPromptTheme(id: 'humor', promptKeys: [
-      'intro.prompt.laugh',
-      'intro.prompt.humor.embarrassing',
-      'intro.prompt.humor.silent',
-    ]),
-    IntroPromptTheme(id: 'dream', promptKeys: [
-      'intro.prompt.dream',
-      'intro.prompt.dream.learn',
-      'intro.prompt.dream.trip',
-    ]),
+    IntroPromptTheme(
+      id: 'everyday',
+      promptKeys: [
+        'intro.prompt.weekend',
+        'intro.prompt.everyday.sunday',
+        'intro.prompt.everyday.coffee',
+      ],
+    ),
+    IntroPromptTheme(
+      id: 'people',
+      promptKeys: [
+        'intro.prompt.friends',
+        'intro.prompt.people.proud',
+        'intro.prompt.people.call',
+      ],
+    ),
+    IntroPromptTheme(
+      id: 'humor',
+      promptKeys: [
+        'intro.prompt.laugh',
+        'intro.prompt.humor.embarrassing',
+        'intro.prompt.humor.silent',
+      ],
+    ),
+    IntroPromptTheme(
+      id: 'dream',
+      promptKeys: [
+        'intro.prompt.dream',
+        'intro.prompt.dream.learn',
+        'intro.prompt.dream.trip',
+      ],
+    ),
   ];
 
   /// Alle Keys flach, für den Paritätstest.
-  static List<String> get allPromptKeys =>
-      [for (final t in themes) ...t.promptKeys];
+  static List<String> get allPromptKeys => [
+    for (final t in themes) ...t.promptKeys,
+  ];
 
   /// Liefert pro Thema [perTheme] Prompts, verschoben um [seed].
   ///
@@ -83,8 +93,8 @@ class IntroPromptCatalog {
     return [
       for (var themeIndex = 0; themeIndex < themes.length; themeIndex++)
         for (var i = 0; i < perTheme; i++)
-          themes[themeIndex]
-              .promptKeys[(seed + themeIndex + i) % themes[themeIndex].promptKeys.length],
+          themes[themeIndex].promptKeys[(seed + themeIndex + i) %
+              themes[themeIndex].promptKeys.length],
     ];
   }
 

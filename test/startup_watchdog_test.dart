@@ -115,13 +115,15 @@ void main() {
       expect(text, contains('native'), reason: 'muss sagen, wo man sucht');
     });
 
-    test('enthaelt keine leere Fehlerrubrik, wenn es keinen Fehler gab',
-        () async {
-      StartupWatchdog.reached(1);
-      await settle();
-      final f = await StartupWatchdog.readPreviousAttempt();
-      expect(f!.toReport(), isNot(contains('Fehler:')));
-    });
+    test(
+      'enthaelt keine leere Fehlerrubrik, wenn es keinen Fehler gab',
+      () async {
+        StartupWatchdog.reached(1);
+        await settle();
+        final f = await StartupWatchdog.readPreviousAttempt();
+        expect(f!.toReport(), isNot(contains('Fehler:')));
+      },
+    );
   });
 
   test('Schrittgrenzen werden nicht ueberschritten', () async {
@@ -131,7 +133,10 @@ void main() {
     StartupWatchdog.reached(-1);
     await settle();
     final f = await StartupWatchdog.readPreviousAttempt();
-    expect(f!.step, isNull,
-        reason: 'ungueltige Schrittnummer darf nichts schreiben');
+    expect(
+      f!.step,
+      isNull,
+      reason: 'ungueltige Schrittnummer darf nichts schreiben',
+    );
   });
 }

@@ -90,16 +90,13 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
     // (Funken-Tab "Erhalten" -> Funke -> Chat).
     if (SupabaseService.isInitialized) {
       try {
-        await ref
-            .read(findYourMatchServiceProvider)
-            .likeUser(peerId);
+        await ref.read(findYourMatchServiceProvider).likeUser(peerId);
       } catch (e) {
         debugPrint('[QR] Like fehlgeschlagen: $e');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                  L10n.tf(context, 'qr.likeFailed', {'error': '$e'})),
+              content: Text(L10n.tf(context, 'qr.likeFailed', {'error': '$e'})),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -113,10 +110,7 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
       try {
         await SupabaseService.client.functions.invoke(
           'notify-user',
-          body: {
-            'kind': 'likes',
-            'target_user_id': peerId,
-          },
+          body: {'kind': 'likes', 'target_user_id': peerId},
         );
       } catch (e) {
         if (kDebugMode) {
@@ -184,9 +178,7 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
                   return SizedBox(
                     height: 240,
                     child: qrContacts.isEmpty
-                        ? Center(
-                            child: Text(L10n.t(ctx, 'qr.limitEmpty')),
-                          )
+                        ? Center(child: Text(L10n.t(ctx, 'qr.limitEmpty')))
                         : ListView.builder(
                             shrinkWrap: true,
                             itemCount: qrContacts.length,
@@ -201,10 +193,11 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 trailing: IconButton(
-                                  icon: const Icon(Icons.delete_outline,
-                                      color: Colors.red),
-                                  tooltip:
-                                      L10n.t(ctx, 'qr.savedDeleteTooltip'),
+                                  icon: const Icon(
+                                    Icons.delete_outline,
+                                    color: Colors.red,
+                                  ),
+                                  tooltip: L10n.t(ctx, 'qr.savedDeleteTooltip'),
                                   onPressed: () {
                                     ref
                                         .read(chatProvider.notifier)
@@ -419,9 +412,13 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
           ),
           Center(
             child: Container(
-              width: 250, height: 250,
+              width: 250,
+              height: 250,
               decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).colorScheme.primary, width: 2),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 2,
+                ),
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
@@ -447,8 +444,11 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.person_search, size: 64,
-                    color: Theme.of(context).colorScheme.primary),
+                Icon(
+                  Icons.person_search,
+                  size: 64,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
                 const SizedBox(height: 24),
                 Text(
                   L10n.t(context, 'qr.enterCodeHint'),
@@ -461,9 +461,9 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
                   textAlign: TextAlign.center,
                   maxLength: 8,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        letterSpacing: 4,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    letterSpacing: 4,
+                    fontWeight: FontWeight.bold,
+                  ),
                   decoration: InputDecoration(
                     hintText: L10n.t(context, 'qr.codeHint'),
                     counterText: '',

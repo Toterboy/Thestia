@@ -16,8 +16,7 @@ import 'package:thestia/widgets/dock_tab_bar.dart';
 /// Reiterleiste, die man nie gesehen hat, ist geraten statt gezeichnet.
 void main() {
   testWidgets('Dock-Vorschau schreiben', (tester) async {
-    final out = Directory(
-        '${Directory.systemTemp.path}/opencode/m133/dock');
+    final out = Directory('${Directory.systemTemp.path}/opencode/m133/dock');
     try {
       if (!out.existsSync()) out.createSync(recursive: true);
     } catch (_) {
@@ -33,7 +32,8 @@ void main() {
     // WICHTIG: Die Dateien gibt es nur auf dem Rechner des
     // Entwicklers. Fehlen sie (Linux-CI), ueberspringt der Test das
     // Nachladen - er darf dort nicht scheitern.
-    final sdk = r'C:\Users\Thoralf\Flutter_SDK\flutter\bin\cache\artifacts'
+    final sdk =
+        r'C:\Users\Thoralf\Flutter_SDK\flutter\bin\cache\artifacts'
         r'\material_fonts';
     final material = File('$sdk\\materialicons-regular.otf');
     if (material.existsSync()) {
@@ -56,58 +56,68 @@ void main() {
     }
 
     final tabs = [
+      const DockTab(route: '/', icon: Icons.newspaper, labelKey: 'nav.home'),
       const DockTab(
-          route: '/', icon: Icons.newspaper, labelKey: 'nav.home'),
+        route: '/entdecken',
+        icon: Icons.favorite,
+        labelKey: 'nav.discover',
+      ),
       const DockTab(
-          route: '/entdecken',
-          icon: Icons.favorite,
-          labelKey: 'nav.discover'),
+        route: '/interessen',
+        icon: Icons.people,
+        labelKey: 'nav.interests',
+      ),
       const DockTab(
-          route: '/interessen', icon: Icons.people, labelKey: 'nav.interests'),
-      const DockTab(
-          route: '/profil', icon: Icons.person, labelKey: 'nav.profile'),
+        route: '/profil',
+        icon: Icons.person,
+        labelKey: 'nav.profile',
+      ),
     ];
 
     for (final index in [0, 1, 2, 3]) {
       final key = GlobalKey();
-      await tester.pumpWidget(MaterialApp(
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFE9457B)),
-          useMaterial3: true,
-          fontFamily: 'Roboto',
-        ),
-        home: Center(
-          child: RepaintBoundary(
-            key: key,
-            child: Container(
-              color: const Color(0xFFF7F7FB),
-              width: 400,
-              height: 120,
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFEDF4),
-                      borderRadius: BorderRadius.circular(32),
-                      border: Border.all(color: const Color(0xFFCAC4D0)),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x33000000),
-                          blurRadius: 26,
-                          offset: Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(32),
-                      child: Material(
-                        type: MaterialType.transparency,
-                        child: DockTabBar(
-                          index: index,
-                          tabs: tabs,
-                          onSelected: (_) {},
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFFE9457B),
+            ),
+            useMaterial3: true,
+            fontFamily: 'Roboto',
+          ),
+          home: Center(
+            child: RepaintBoundary(
+              key: key,
+              child: Container(
+                color: const Color(0xFFF7F7FB),
+                width: 400,
+                height: 120,
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFEDF4),
+                        borderRadius: BorderRadius.circular(32),
+                        border: Border.all(color: const Color(0xFFCAC4D0)),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x33000000),
+                            blurRadius: 26,
+                            offset: Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(32),
+                        child: Material(
+                          type: MaterialType.transparency,
+                          child: DockTabBar(
+                            index: index,
+                            tabs: tabs,
+                            onSelected: (_) {},
+                          ),
                         ),
                       ),
                     ),
@@ -117,12 +127,12 @@ void main() {
             ),
           ),
         ),
-      ));
+      );
       await tester.pumpAndSettle();
 
       await tester.runAsync(() async {
-        final randung = key.currentContext?.findRenderObject()
-            as RenderRepaintBoundary?;
+        final randung =
+            key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
         if (randung == null) return;
         final bild = await randung.toImage();
         final daten = await bild.toByteData(format: ui.ImageByteFormat.png);

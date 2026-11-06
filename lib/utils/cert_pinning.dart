@@ -160,8 +160,10 @@ class CertPinning {
       final client = HttpClient();
       client.badCertificateCallback = (cert, certHost, port) {
         if (kDebugMode) {
-          debugPrint('[CERT_PINNING] Keine Pins für $certHost:$port konfiguriert, '
-              'System-Validierung fehlgeschlagen, Verbindung abgelehnt.');
+          debugPrint(
+            '[CERT_PINNING] Keine Pins für $certHost:$port konfiguriert, '
+            'System-Validierung fehlgeschlagen, Verbindung abgelehnt.',
+          );
         }
         return false;
       };
@@ -175,13 +177,18 @@ class CertPinning {
       // auch bei systemseitig gültigen Zertifikaten (Schutz vor
       // nachinstallierten Fremd-CAs auf dem Gerät).
       if (verifyCertificate(
-          expectedHost: targetHost, cert: cert, certHost: certHost)) {
+        expectedHost: targetHost,
+        cert: cert,
+        certHost: certHost,
+      )) {
         return true;
       }
 
       if (kDebugMode) {
-          debugPrint('[CERT_PINNING] ACHTUNG: Zertifikat-Pin-Mismatch für '
-            '$certHost:$port, möglicher MITM-Angriff! Verbindung abgelehnt.');
+        debugPrint(
+          '[CERT_PINNING] ACHTUNG: Zertifikat-Pin-Mismatch für '
+          '$certHost:$port, möglicher MITM-Angriff! Verbindung abgelehnt.',
+        );
       }
       return false;
     };
@@ -203,8 +210,10 @@ class CertPinning {
     final hostOk = certHost.toLowerCase() == targetHost.toLowerCase();
     // Whitespace normalisieren, Kleinbuchstaben; ALLE Komponenten müssen
     // enthalten sein (CN des konkreten Intermediates + Organisation).
-    final issuerNormalized =
-        cert.issuer.toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+    final issuerNormalized = cert.issuer.toLowerCase().replaceAll(
+      RegExp(r'\s+'),
+      ' ',
+    );
     final issuerOk = expectedComponents.every(issuerNormalized.contains);
     final now = DateTime.now();
     final validityOk =

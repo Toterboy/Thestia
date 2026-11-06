@@ -62,8 +62,12 @@ const double _inset = (_viewport - inhalt) / 2.0;
 
 /// Zeichnet ein Symbol in der Größe [size] mit der Farbe [color].
 class ModeSymbol extends StatelessWidget {
-  const ModeSymbol(this.erstellen,
-      {super.key, this.size = 28, required this.color});
+  const ModeSymbol(
+    this.erstellen, {
+    super.key,
+    this.size = 28,
+    required this.color,
+  });
 
   /// Erzeugt den Painter mit der Farbe. Als Funktion, weil [CustomPainter]
   /// keine Farbe im Konstruktor annimmt — ein nachträgliches Setzen wäre
@@ -75,10 +79,10 @@ class ModeSymbol extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SizedBox(
-        width: size,
-        height: size,
-        child: CustomPaint(painter: erstellen(color)),
-      );
+    width: size,
+    height: size,
+    child: CustomPaint(painter: erstellen(color)),
+  );
 }
 
 /// Basis: 24x24-Viewport, Inhalt im [inhalt]-Feld.
@@ -173,10 +177,7 @@ void funkeMitSchleier(
   // Abstand und Groesse stehen deshalb jetzt nebeneinander: der
   // hintere Stern muss sichtbar bleiben, sonst ist es wieder kein
   // Schleier, sondern ein Punkt.
-  const spur = [
-    (abstand: 1.50, groesse: 0.28),
-    (abstand: 0.82, groesse: 0.46),
-  ];
+  const spur = [(abstand: 1.50, groesse: 0.28), (abstand: 0.82, groesse: 0.46)];
   for (final s in spur) {
     canvas.drawPath(
       stern(c + d * (r * s.abstand), r * s.groesse, mager),
@@ -210,13 +211,23 @@ Path fragezeichenBogen(Offset c, double s) {
   return Path()
     ..moveTo(c.dx - s * 0.44, c.dy - s * 0.18)
     // Bogen nach oben und über die rechte Schulter.
-    ..cubicTo(c.dx - s * 0.56, c.dy - s * 0.82,
-        c.dx + s * 0.56, c.dy - s * 0.82,
-        c.dx + s * 0.56, c.dy - s * 0.26)
+    ..cubicTo(
+      c.dx - s * 0.56,
+      c.dy - s * 0.82,
+      c.dx + s * 0.56,
+      c.dy - s * 0.82,
+      c.dx + s * 0.56,
+      c.dy - s * 0.26,
+    )
     // Herunter und zur Mitte, dort endet der Bogen als kurzer Stamm.
-    ..cubicTo(c.dx + s * 0.56, c.dy + s * 0.12,
-        c.dx + s * 0.18, c.dy + s * 0.10,
-        c.dx + s * 0.18, c.dy + s * 0.44);
+    ..cubicTo(
+      c.dx + s * 0.56,
+      c.dy + s * 0.12,
+      c.dx + s * 0.18,
+      c.dy + s * 0.10,
+      c.dx + s * 0.18,
+      c.dy + s * 0.44,
+    );
 }
 
 /// Strichstaerke des Fragezeichen-Bogens.
@@ -292,8 +303,14 @@ class TransitSparkPainter extends _ModeSymbolPainter {
     // Einheiten. Genau so gross wird gezeichnet - und damit ist die
     // Strichstaerke deckungsgleich mit den anderen Symbolen.
     final zug = Icons.train;
-    _glyphe(canvas, zug.codePoint, zug.fontFamily!, zug.fontPackage,
-        const Offset(zugMitteX, zugMitteY), zugGroesse);
+    _glyphe(
+      canvas,
+      zug.codePoint,
+      zug.fontFamily!,
+      zug.fontPackage,
+      const Offset(zugMitteX, zugMitteY),
+      zugGroesse,
+    );
 
     // --- Funke (oben rechts neben dem Zug) ---------------------------------
     //
@@ -342,8 +359,10 @@ class TransitSparkPainter extends _ModeSymbolPainter {
     )..layout();
     final sk = groesse / 100.0;
     canvas.save();
-    canvas.translate(mitte.dx - (tp.width * sk) / 2,
-        mitte.dy - (tp.height * sk) / 2);
+    canvas.translate(
+      mitte.dx - (tp.width * sk) / 2,
+      mitte.dy - (tp.height * sk) / 2,
+    );
     canvas.scale(sk);
     tp.paint(canvas, Offset.zero);
     canvas.restore();
@@ -411,10 +430,12 @@ class QuestionChatPainter extends _ModeSymbolPainter {
     // Bei gleicher Staerke wirkt sie deshalb breiter als der Zug.
     const st = 1.15;
     final aussen = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        const Rect.fromLTWH(1.9, 1.9, 13.2, 12.4),
-        const Radius.circular(3.4),
-      ));
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          const Rect.fromLTWH(1.9, 1.9, 13.2, 12.4),
+          const Radius.circular(3.4),
+        ),
+      );
     final schwanz = Path()
       ..moveTo(4.6, 13.2)
       ..lineTo(3.0, 16.6)
@@ -423,10 +444,12 @@ class QuestionChatPainter extends _ModeSymbolPainter {
     final mitSchwanz = Path.combine(PathOperation.union, aussen, schwanz);
 
     final innen = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        const Rect.fromLTWH(1.9 + st, 1.9 + st, 13.2 - 2 * st, 12.4 - 2 * st),
-        const Radius.circular(3.4 - st / 2),
-      ));
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          const Rect.fromLTWH(1.9 + st, 1.9 + st, 13.2 - 2 * st, 12.4 - 2 * st),
+          const Radius.circular(3.4 - st / 2),
+        ),
+      );
     canvas.drawPath(
       Path.combine(PathOperation.difference, mitSchwanz, innen),
       flaeche(color),

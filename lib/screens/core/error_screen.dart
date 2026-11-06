@@ -24,8 +24,11 @@ class ErrorScreen extends ConsumerWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline,
-                    size: 64, color: Colors.redAccent),
+                const Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: Colors.redAccent,
+                ),
                 const SizedBox(height: 24),
                 Text(
                   L10n.t(context, 'error.notFoundTitle'),
@@ -39,7 +42,7 @@ class ErrorScreen extends ConsumerWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
-FilledButton.icon(
+                FilledButton.icon(
                   icon: const Icon(Icons.home),
                   label: Text(L10n.t(context, 'error.goHome')),
                   onPressed: () {
@@ -60,7 +63,9 @@ FilledButton.icon(
                     } else {
                       target = introSeen ? AppRoutes.login : AppRoutes.welcome;
                     }
-                    debugPrint('[ErrorScreen] Button gedrückt, navigiere zu: $target');
+                    debugPrint(
+                      '[ErrorScreen] Button gedrückt, navigiere zu: $target',
+                    );
                     context.go(target);
                   },
                 ),
@@ -72,4 +77,3 @@ FilledButton.icon(
     );
   }
 }
-

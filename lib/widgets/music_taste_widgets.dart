@@ -112,8 +112,10 @@ class MusicTasteEditor extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(L10n.t(context, 'music.likedTitle'),
-            style: Theme.of(context).textTheme.bodyMedium),
+        Text(
+          L10n.t(context, 'music.likedTitle'),
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -128,8 +130,10 @@ class MusicTasteEditor extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        Text(L10n.t(context, 'music.dislikedTitle'),
-            style: Theme.of(context).textTheme.bodyMedium),
+        Text(
+          L10n.t(context, 'music.dislikedTitle'),
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -141,8 +145,7 @@ class MusicTasteEditor extends StatelessWidget {
                   label: Text(musicGenreLabelOf(context, genre.slug)),
                   selected: true,
                   checkmarkColor: Theme.of(context).colorScheme.error,
-                  selectedColor:
-                      Theme.of(context).colorScheme.errorContainer,
+                  selectedColor: Theme.of(context).colorScheme.errorContainer,
                   onSelected: (_) => _toggleDislike(genre.slug),
                 ),
             InputChip(
@@ -181,90 +184,89 @@ class MusicTasteEditor extends StatelessWidget {
                 child: SizedBox(
                   height: MediaQuery.of(ctx).size.height * 0.65,
                   child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Padding(
-                      padding:
-                          const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            L10n.t(ctx, 'music.excludeTitle'),
-                            style: Theme.of(ctx)
-                                .textTheme
-                                .titleMedium
-                                ?.copyWith(
-                                    fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            L10n.t(ctx, 'music.excludeHint'),
-                            style: Theme.of(ctx)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(
-                                  color: Theme.of(ctx)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-                      child: TextField(
-                        autofocus: true,
-                        decoration: InputDecoration(
-                          prefixIcon:
-                              const Icon(Icons.search, size: 20),
-                          hintText: L10n.t(ctx, 'music.excludeSearch'),
-                          isDense: true,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onChanged: (v) =>
-                            setSheetState(() => query = v),
-                      ),
-                    ),
-                    Expanded(
-                      child: ListView(
-                        children: [
-                          for (final genre in remaining)
-                            if (musicGenreLabelOf(ctx, genre.slug)
-                                .toLowerCase()
-                                .contains(query.toLowerCase()))
-                              ListTile(
-                                leading: const Icon(Icons.block_outlined,
-                                    size: 18),
-                                title: Text(
-                                    musicGenreLabelOf(ctx, genre.slug)),
-                                onTap: () =>
-                                    Navigator.of(ctx).pop(genre.slug),
-                              ),
-                          if (remaining
-                              .where((g) =>
-                                  musicGenreLabelOf(ctx, g.slug)
-                                      .toLowerCase()
-                                      .contains(query.toLowerCase()))
-                              .isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.all(24),
-                              child: Center(
-                                child: Text(L10n.t(
-                                    ctx, 'music.excludeNoMatch')),
-                              ),
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              L10n.t(ctx, 'music.excludeTitle'),
+                              style: Theme.of(ctx).textTheme.titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.bold),
                             ),
-                        ],
+                            const SizedBox(height: 4),
+                            Text(
+                              L10n.t(ctx, 'music.excludeHint'),
+                              style: Theme.of(ctx).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      ctx,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                        child: TextField(
+                          autofocus: true,
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(Icons.search, size: 20),
+                            hintText: L10n.t(ctx, 'music.excludeSearch'),
+                            isDense: true,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onChanged: (v) => setSheetState(() => query = v),
+                        ),
+                      ),
+                      Expanded(
+                        child: ListView(
+                          children: [
+                            for (final genre in remaining)
+                              if (musicGenreLabelOf(
+                                ctx,
+                                genre.slug,
+                              ).toLowerCase().contains(query.toLowerCase()))
+                                ListTile(
+                                  leading: const Icon(
+                                    Icons.block_outlined,
+                                    size: 18,
+                                  ),
+                                  title: Text(
+                                    musicGenreLabelOf(ctx, genre.slug),
+                                  ),
+                                  onTap: () =>
+                                      Navigator.of(ctx).pop(genre.slug),
+                                ),
+                            if (remaining
+                                .where(
+                                  (g) => musicGenreLabelOf(
+                                    ctx,
+                                    g.slug,
+                                  ).toLowerCase().contains(query.toLowerCase()),
+                                )
+                                .isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Center(
+                                  child: Text(
+                                    L10n.t(ctx, 'music.excludeNoMatch'),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
+            );
           },
         );
       },
@@ -316,10 +318,9 @@ class MusicTasteView extends StatelessWidget {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            backgroundColor: Theme.of(context)
-                .colorScheme
-                .surfaceContainerHighest
-                .withValues(alpha: 0.5),
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
           ),
       ],
     );

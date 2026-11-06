@@ -224,8 +224,10 @@ String? _requireIntParam(GoRouterState state, String name, String fallback) =>
     _intRouteParam(state, name) == null ? fallback : null;
 
 String? _requireStringParam(
-        GoRouterState state, String name, String fallback) =>
-    _stringRouteParam(state, name) == null ? fallback : null;
+  GoRouterState state,
+  String name,
+  String fallback,
+) => _stringRouteParam(state, name) == null ? fallback : null;
 
 /// Erstellt den [GoRouter] mit Redirect-Logik basierend auf
 /// Auth-Status und Onboarding-Fortschritt.
@@ -451,8 +453,7 @@ GoRouter createRouter(Ref ref) {
           // (Poller voraus, z. B. direkt nach Login)? Kurz auf Laden
           // halten statt fälschlich den Verifikations-Screen zu blitzen.
           // Ohne Session (frische Registrierung) direkt zur Verifizierung.
-          final hasSession =
-              SupabaseService.client.auth.currentSession != null;
+          final hasSession = SupabaseService.client.auth.currentSession != null;
           if (hasSession && emailConfirmed == null) {
             return state.matchedLocation == AppRoutes.loading
                 ? null
@@ -824,8 +825,8 @@ GoRouter createRouter(Ref ref) {
       ),
       GoRoute(
         path: AppRoutes.datingHourChat,
-        redirect: (context, state) => _requireStringParam(
-            state, 'sessionId', AppRoutes.datingHourEvent),
+        redirect: (context, state) =>
+            _requireStringParam(state, 'sessionId', AppRoutes.datingHourEvent),
         builder: (context, state) => BackToRouteScope(
           route: AppRoutes.datingHourEvent,
           child: DatingHourChatScreen(
@@ -862,9 +863,8 @@ GoRouter createRouter(Ref ref) {
             path: AppRoutes.quiz,
             redirect: (context, state) =>
                 _requireIntParam(state, 'matchId', AppRoutes.interessen),
-            builder: (context, state) => QuizScreen(
-              matchId: _intRouteParam(state, 'matchId')!,
-            ),
+            builder: (context, state) =>
+                QuizScreen(matchId: _intRouteParam(state, 'matchId')!),
           ),
           GoRoute(
             path: AppRoutes.spiceQuestions,
@@ -890,9 +890,8 @@ GoRouter createRouter(Ref ref) {
             path: AppRoutes.chatDetail,
             redirect: (context, state) =>
                 _requireStringParam(state, 'matchId', AppRoutes.interessen),
-            builder: (context, state) => ChatDetailScreen(
-              matchId: _stringRouteParam(state, 'matchId')!,
-            ),
+            builder: (context, state) =>
+                ChatDetailScreen(matchId: _stringRouteParam(state, 'matchId')!),
           ),
           GoRoute(
             path: AppRoutes.profileDetail,
@@ -928,4 +927,3 @@ GoRouter createRouter(Ref ref) {
 final routerProvider = Provider<GoRouter>((ref) {
   return createRouter(ref);
 });
-

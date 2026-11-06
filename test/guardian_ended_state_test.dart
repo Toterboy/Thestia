@@ -45,9 +45,7 @@ Future<void> _pump(WidgetTester tester, GuardianStatus status) async {
       overrides: [
         guardianProvider.overrideWith((ref) => _TestNotifier(ref, status)),
       ],
-      child: const MaterialApp(
-        home: Scaffold(body: GuardianSection()),
-      ),
+      child: const MaterialApp(home: Scaffold(body: GuardianSection())),
     ),
   );
   await tester.pumpAndSettle();
@@ -63,8 +61,9 @@ void main() {
       expect(find.text('Keine Freigabe'), findsNothing);
     });
 
-    testWidgets('sagt, dass die E-Mail des Elternteils geloescht wurde',
-        (tester) async {
+    testWidgets('sagt, dass die E-Mail des Elternteils geloescht wurde', (
+      tester,
+    ) async {
       await _pump(
         tester,
         _status(
@@ -81,15 +80,17 @@ void main() {
       expect(find.textContaining('gelöscht'), findsOneWidget);
     });
 
-    testWidgets('ein abgelaufener Status (expired) ist auch "beendet"',
-        (tester) async {
+    testWidgets('ein abgelaufener Status (expired) ist auch "beendet"', (
+      tester,
+    ) async {
       await _pump(tester, _status(status: 'expired', age: 18));
 
       expect(find.text('Die Freigabe ist beendet'), findsOneWidget);
     });
 
-    testWidgets('ohne Loeschvermerk steht der vorsichtige Text',
-        (tester) async {
+    testWidgets('ohne Loeschvermerk steht der vorsichtige Text', (
+      tester,
+    ) async {
       // Der Server weiss noch nicht, dass geloescht wurde (z. B. bei
       // einem alten Datensatz). Dann darf die App NICHT behaupten, es
       // sei geloescht worden.
@@ -105,8 +106,9 @@ void main() {
       );
     });
 
-    testWidgets('ohne Freigabe ueberhaupt bleibt der alte Text',
-        (tester) async {
+    testWidgets('ohne Freigabe ueberhaupt bleibt der alte Text', (
+      tester,
+    ) async {
       await _pump(tester, _status(status: 'none', age: 17));
 
       expect(find.text('Die Freigabe ist beendet'), findsNothing);

@@ -75,5 +75,5 @@ class PinnedMatchesNotifier extends StateNotifier<Set<int>> {
 /// Die angepinnten Funken (IDs der Matches).
 final pinnedMatchesProvider =
     StateNotifierProvider<PinnedMatchesNotifier, Set<int>>((ref) {
-  return PinnedMatchesNotifier(ref);
-});
+      return PinnedMatchesNotifier(ref);
+    });

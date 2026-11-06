@@ -9,19 +9,29 @@ import 'package:thestia/services/server_time_service.dart';
 /// manipulierbar ist. Das ist sicherheitskritisch für Jugendschutz & Altersprüfungen.
 int? calculateAge(DateTime? birthDate) {
   if (birthDate == null) {
-    if (kDebugMode) debugPrint('[AGE_CALCULATOR] birthDate is null, returning null');
+    if (kDebugMode) {
+      debugPrint('[AGE_CALCULATOR] birthDate is null, returning null');
+    }
     return null;
   }
   final now = ServerTimeService.instance.now;
   if (birthDate.isAfter(now)) {
-    if (kDebugMode) debugPrint('[AGE_CALCULATOR] birthDate=$birthDate is in the future, returning null');
+    if (kDebugMode) {
+      debugPrint(
+        '[AGE_CALCULATOR] birthDate=$birthDate is in the future, returning null',
+      );
+    }
     return null;
   }
   var age = now.year - birthDate.year;
   if (now.month < birthDate.month ||
       (now.month == birthDate.month && now.day < birthDate.day)) {
-     age--;
+    age--;
   }
-  if (kDebugMode) debugPrint('[AGE_CALCULATOR] birthDate=$birthDate, now=$now, calculatedAge=$age');
+  if (kDebugMode) {
+    debugPrint(
+      '[AGE_CALCULATOR] birthDate=$birthDate, now=$now, calculatedAge=$age',
+    );
+  }
   return age;
 }

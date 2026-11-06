@@ -38,7 +38,12 @@ void main() {
       // Defensive: der Status kommt aus JSONB. Fehlt er, ist die Meldung
       // nicht als "offen" ausgewiesen - lieber zu niedrig als eine
       // Meldung als offen zu zaehlen, die es nicht mehr ist.
-      expect(countOpenReports([{'id': 'x'}]), 0);
+      expect(
+        countOpenReports([
+          {'id': 'x'},
+        ]),
+        0,
+      );
     });
   });
 
@@ -82,7 +87,8 @@ void main() {
     });
 
     test('die beiden Fenster überschneiden sich nicht', () {
-      final beide = countBugsInWindow(bugs, dayAgo, now) +
+      final beide =
+          countBugsInWindow(bugs, dayAgo, now) +
           countBugsInWindow(bugs, twoDaysAgo, dayAgo);
       expect(beide, 3, reason: '4 Eintraege, einer davon aelter als 48 h');
       expect(beide, lessThanOrEqualTo(bugs.length));

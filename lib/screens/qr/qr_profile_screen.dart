@@ -10,16 +10,16 @@ import 'package:thestia/utils/constants.dart';
 
 /// Entschlüsselte Bild-Bytes des eigenen Avatars (Speicher-Cache im
 /// Storage-Service macht dies nach dem ersten Laden sofort verfügbar).
-final _qrAvatarBytesProvider =
-    FutureProvider.autoDispose.family<Uint8List?, String>((ref, ref1) async {
-  try {
-    return await ref
-        .read(supabaseStorageServiceProvider)
-        .loadAvatarBytes(ref1);
-  } catch (_) {
-    return null;
-  }
-});
+final _qrAvatarBytesProvider = FutureProvider.autoDispose
+    .family<Uint8List?, String>((ref, ref1) async {
+      try {
+        return await ref
+            .read(supabaseStorageServiceProvider)
+            .loadAvatarBytes(ref1);
+      } catch (_) {
+        return null;
+      }
+    });
 
 /// Zeigt den eigenen QR-Code und den teilbaren Nutzer-Code an.
 ///
@@ -33,16 +33,13 @@ class QrProfileScreen extends ConsumerWidget {
     final profile = ref.watch(profileProvider);
     final userId = AppConstants.currentUserId;
     final userCode = generateUserCode(userId);
-    final photoRef =
-        profile.photos.isNotEmpty ? profile.photos.first : null;
+    final photoRef = profile.photos.isNotEmpty ? profile.photos.first : null;
     final avatarBytes = photoRef == null
         ? null
         : ref.watch(_qrAvatarBytesProvider(photoRef)).valueOrNull;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(L10n.t(context, 'qr.myCode')),
-      ),
+      appBar: AppBar(title: Text(L10n.t(context, 'qr.myCode'))),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -55,10 +52,12 @@ class QrProfileScreen extends ConsumerWidget {
                 // Bild vorher nicht sichtbar).
                 CircleAvatar(
                   radius: 36,
-                  backgroundColor:
-                      Theme.of(context).colorScheme.primaryContainer,
-                  backgroundImage:
-                      avatarBytes != null ? MemoryImage(avatarBytes) : null,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.primaryContainer,
+                  backgroundImage: avatarBytes != null
+                      ? MemoryImage(avatarBytes)
+                      : null,
                   child: avatarBytes != null
                       ? null
                       : Text(
@@ -87,7 +86,9 @@ class QrProfileScreen extends ConsumerWidget {
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 16),
+                      horizontal: 24,
+                      vertical: 16,
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -96,21 +97,17 @@ class QrProfileScreen extends ConsumerWidget {
                           children: [
                             Text(
                               L10n.t(context, 'qr.yourCode'),
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelMedium
+                              style: Theme.of(context).textTheme.labelMedium
                                   ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                                   ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               userCode,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineMedium
+                              style: Theme.of(context).textTheme.headlineMedium
                                   ?.copyWith(
                                     letterSpacing: 2,
                                     fontWeight: FontWeight.bold,
@@ -141,8 +138,8 @@ class QrProfileScreen extends ConsumerWidget {
                 Text(
                   L10n.t(context, 'qr.shareHint'),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ],

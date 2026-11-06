@@ -1,4 +1,4 @@
-﻿// tool/generate_notification_icon.dart
+// tool/generate_notification_icon.dart
 //
 // Erzeugt das Android-Benachrichtigungs-Icon als sauber gezeichnete
 // Herz-Silhouette (weiss auf transparent, 96x96).
@@ -49,8 +49,9 @@ void main(List<String> args) {
   // wuerden angeschnitten. 84 px lassen 6 px Rand - das Herz ist damit
   // immer noch 88 % so breit wie vorher (60 px) und deutlich groesser
   // als die System-Icone daneben.
-  final zielBreite =
-      args.isNotEmpty ? double.tryParse(args.first) ?? 84.0 : 84.0;
+  final zielBreite = args.isNotEmpty
+      ? double.tryParse(args.first) ?? 84.0
+      : 84.0;
 
   // 4-fach ueberabtastet und danach heruntergerechnet: nur so bekommt
   // die Silhouette saubere, weiche Kanten. Ohne das hat das Icon
@@ -77,7 +78,8 @@ void main(List<String> args) {
   for (var i = 0; i < punkteAnzahl; i++) {
     final t = i / punkteAnzahl * 2 * math.pi;
     final x = 16 * math.pow(math.sin(t), 3).toDouble();
-    final y = 13 * math.cos(t) -
+    final y =
+        13 * math.cos(t) -
         5 * math.cos(2 * t) -
         2 * math.cos(3 * t) -
         math.cos(4 * t);
@@ -101,11 +103,13 @@ void main(List<String> args) {
   final gross = img.Image(width: leinwand, height: leinwand, numChannels: 4);
   final punkte = <img.Point>[];
   for (final p in kurve) {
-    punkte.add(img.Point(
-      (versatzX + (p[0] - xMin) * scale).round(),
-      // y umkehren: mathematisch oben -> Bildschirm oben
-      (versatzY + (yMax - p[1]) * scale).round(),
-    ));
+    punkte.add(
+      img.Point(
+        (versatzX + (p[0] - xMin) * scale).round(),
+        // y umkehren: mathematisch oben -> Bildschirm oben
+        (versatzY + (yMax - p[1]) * scale).round(),
+      ),
+    );
   }
   img.fillPolygon(
     gross,
@@ -144,11 +148,17 @@ void main(List<String> args) {
   final bW = maxX - minX + 1;
   final bH = maxY - minY + 1;
   stdout.writeln('Geschrieben: $out (${size}x$size)');
-  stdout.writeln('  Kurve: ${kurvenBreite.toStringAsFixed(1)} x '
-      '${kurvenHoehe.toStringAsFixed(1)}  '
-      '(Seitenverhaeltnis ${(kurvenBreite / kurvenHoehe).toStringAsFixed(2)})');
-  stdout.writeln('  Tinten-Box: ($minX, $minY) - ($maxX, $maxY) '
-      '= $bW x $bH px '
-      '(${(bW * 100 / size).round()} % x ${(bH * 100 / size).round()} %)');
-  stdout.writeln('  Ziel-Hoehe (Rechnung): ${zielHoehePx.toStringAsFixed(1)} px');
+  stdout.writeln(
+    '  Kurve: ${kurvenBreite.toStringAsFixed(1)} x '
+    '${kurvenHoehe.toStringAsFixed(1)}  '
+    '(Seitenverhaeltnis ${(kurvenBreite / kurvenHoehe).toStringAsFixed(2)})',
+  );
+  stdout.writeln(
+    '  Tinten-Box: ($minX, $minY) - ($maxX, $maxY) '
+    '= $bW x $bH px '
+    '(${(bW * 100 / size).round()} % x ${(bH * 100 / size).round()} %)',
+  );
+  stdout.writeln(
+    '  Ziel-Hoehe (Rechnung): ${zielHoehePx.toStringAsFixed(1)} px',
+  );
 }

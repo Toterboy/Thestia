@@ -47,13 +47,15 @@ class PrivacyScreen extends ConsumerWidget {
     // Chat-Verläufe (v0.8.0): nur im Export, wenn der verschlüsselte
     // lokale Verlauf aktiv ist (Opt-in) - sonst existieren keine
     // gespeicherten Nachrichten.
-    final historyEnabled =
-        await ref.read(chatHistoryLocalEnabledProvider.future);
+    final historyEnabled = await ref.read(
+      chatHistoryLocalEnabledProvider.future,
+    );
     final chatExport = historyEnabled
         ? await ref.read(chatServiceProvider).exportHistory()
         : <String, dynamic>{};
-    final qrContacts =
-        historyEnabled ? ref.read(chatProvider.notifier).exportQrContacts() : <Map<String, String>>[];
+    final qrContacts = historyEnabled
+        ? ref.read(chatProvider.notifier).exportQrContacts()
+        : <Map<String, String>>[];
 
     final exportData = <String, dynamic>{
       'exportedAt': DateTime.now().toIso8601String(),
@@ -68,7 +70,8 @@ class PrivacyScreen extends ConsumerWidget {
       // hat. Beim Import werden sie wiederhergestellt (Gerätewechsel).
       if (chatExport.isNotEmpty) 'chats': chatExport,
       if (qrContacts.isNotEmpty) 'qrContacts': qrContacts,
-      'note': 'Chat-Verläufe sind Ende-zu-Ende verschlüsselt und verbleiben '
+      'note':
+          'Chat-Verläufe sind Ende-zu-Ende verschlüsselt und verbleiben '
           'auf deinen Geräten. Sie werden von keinem Server verarbeitet '
           'und können daher nicht exportiert werden.',
       'processors': [
@@ -119,8 +122,8 @@ class PrivacyScreen extends ConsumerWidget {
         // Temporäre Export-Datei (enthält alle Profildaten) wieder
         // löschen, damit nichts im Temp-Verzeichnis liegen bleibt
         // (Audit N2).
-                // Best effort.
-await bestEffort('delete', () async {
+        // Best effort.
+        await bestEffort('delete', () async {
           if (await file.exists()) await file.delete();
         });
       }
@@ -128,8 +131,8 @@ await bestEffort('delete', () async {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content:
-                  Text('${L10n.t(context, 'privacy.exportFailed')}: $e')),
+            content: Text('${L10n.t(context, 'privacy.exportFailed')}: $e'),
+          ),
         );
       }
     }
@@ -155,7 +158,8 @@ await bestEffort('delete', () async {
               decoration: InputDecoration(
                 hintText: L10n.t(context, 'privacy.importHint'),
                 border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ],
@@ -177,7 +181,8 @@ await bestEffort('delete', () async {
     Map<String, dynamic>? map;
     try {
       map = Map<String, dynamic>.from(
-          jsonDecode(ctrl.text) as Map<String, dynamic>);
+        jsonDecode(ctrl.text) as Map<String, dynamic>,
+      );
     } catch (_) {
       map = null;
     }
@@ -195,18 +200,23 @@ await bestEffort('delete', () async {
       // Profil.
       if (map['profile'] is Map) {
         final profile = UserProfile.fromJson(
-            Map<String, dynamic>.from(map['profile'] as Map));
+          Map<String, dynamic>.from(map['profile'] as Map),
+        );
         await ref.read(profileProvider.notifier).setProfile(profile);
       }
       // Einstellungen (blind mode, Sichtbarkeit, Dark Mode, ...).
       if (map['settings'] is Map) {
-        await ref.read(settingsProvider.notifier).applyServerUiPrefs(
-            Map<String, dynamic>.from(map['settings'] as Map));
+        await ref
+            .read(settingsProvider.notifier)
+            .applyServerUiPrefs(
+              Map<String, dynamic>.from(map['settings'] as Map),
+            );
       }
       // Präferenzen (Entfernung, Altersspanne, Geschlechter-Filter, ...).
       if (map['preferences'] is Map) {
         final prefs = UserPreferences.fromJson(
-            Map<String, dynamic>.from(map['preferences'] as Map));
+          Map<String, dynamic>.from(map['preferences'] as Map),
+        );
         final notifier = ref.read(userPreferencesProvider.notifier);
         await notifier.setGenderPreferences(prefs.genderPreferences);
         await notifier.setDistanceFilterMode(prefs.distanceFilterMode);
@@ -291,8 +301,7 @@ await bestEffort('delete', () async {
   /// danach updateUser - Supabase sendet Bestätigungs-Links an beide
   /// Adressen; die Änderung wird erst nach Bestätigung aktiv.
   Future<void> _changeEmail(BuildContext context, WidgetRef ref) async {
-    final currentEmail =
-        SupabaseService.currentUser?.email ?? '';
+    final currentEmail = SupabaseService.currentUser?.email ?? '';
     final emailCtrl = TextEditingController();
     final passwordCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
@@ -315,10 +324,9 @@ await bestEffort('delete', () async {
                   labelText: L10n.t(context, 'auth.email'),
                   hintText: currentEmail,
                 ),
-                validator: (v) =>
-                    v != null && v.contains('@')
-                        ? null
-                        : L10n.t(ctx, 'privacy.validator.invalidEmail'),
+                validator: (v) => v != null && v.contains('@')
+                    ? null
+                    : L10n.t(ctx, 'privacy.validator.invalidEmail'),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -327,10 +335,9 @@ await bestEffort('delete', () async {
                 decoration: InputDecoration(
                   labelText: L10n.t(ctx, 'auth.password'),
                 ),
-                validator: (v) =>
-                    v != null && v.length >= 8
-                        ? null
-                        : L10n.t(ctx, 'privacy.validator.tooShort'),
+                validator: (v) => v != null && v.length >= 8
+                    ? null
+                    : L10n.t(ctx, 'privacy.validator.tooShort'),
               ),
             ],
           ),
@@ -383,8 +390,7 @@ await bestEffort('delete', () async {
   /// Passwort ändern (v0.8.0): Re-Auth per aktuellem Passwort, danach
   /// updateUser - session bleibt bestehen.
   Future<void> _changePassword(BuildContext context, WidgetRef ref) async {
-    final currentEmail =
-        SupabaseService.currentUser?.email ?? '';
+    final currentEmail = SupabaseService.currentUser?.email ?? '';
     final currentCtrl = TextEditingController();
     final newCtrl = TextEditingController();
     final confirmCtrl = TextEditingController();
@@ -405,10 +411,9 @@ await bestEffort('delete', () async {
                 decoration: InputDecoration(
                   labelText: L10n.t(ctx, 'auth.passwordCurrent'),
                 ),
-                validator: (v) =>
-                    v != null && v.length >= 8
-                        ? null
-                        : L10n.t(ctx, 'privacy.validator.tooShort'),
+                validator: (v) => v != null && v.length >= 8
+                    ? null
+                    : L10n.t(ctx, 'privacy.validator.tooShort'),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -417,10 +422,9 @@ await bestEffort('delete', () async {
                 decoration: InputDecoration(
                   labelText: L10n.t(ctx, 'auth.passwordNew'),
                 ),
-                validator: (v) =>
-                    v != null && v.length >= 8
-                        ? null
-                        : L10n.t(ctx, 'privacy.validator.tooShort'),
+                validator: (v) => v != null && v.length >= 8
+                    ? null
+                    : L10n.t(ctx, 'privacy.validator.tooShort'),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -429,10 +433,9 @@ await bestEffort('delete', () async {
                 decoration: InputDecoration(
                   labelText: L10n.t(ctx, 'auth.passwordConfirm'),
                 ),
-                validator: (v) =>
-                    v == newCtrl.text
-                        ? null
-                        : L10n.t(ctx, 'privacy.validator.mismatch'),
+                validator: (v) => v == newCtrl.text
+                    ? null
+                    : L10n.t(ctx, 'privacy.validator.mismatch'),
               ),
             ],
           ),
@@ -461,8 +464,9 @@ await bestEffort('delete', () async {
         password: currentCtrl.text,
       );
       if (!okAuth) return;
-      await SupabaseService.client.auth
-          .updateUser(UserAttributes(password: newCtrl.text));
+      await SupabaseService.client.auth.updateUser(
+        UserAttributes(password: newCtrl.text),
+      );
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -540,8 +544,8 @@ await bestEffort('delete', () async {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content:
-                  Text('${L10n.t(context, 'privacy.deleteFailed')}: $e')),
+            content: Text('${L10n.t(context, 'privacy.deleteFailed')}: $e'),
+          ),
         );
       }
     }
@@ -706,10 +710,7 @@ Future<void> _openImprint(BuildContext context) async {
   const url = 'https://thestia.de/impressum';
   var ok = false;
   try {
-    ok = await launchUrl(
-      Uri.parse(url),
-      mode: LaunchMode.externalApplication,
-    );
+    ok = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   } catch (e) {
     debugPrint('[Privacy] Impressum konnte nicht geoeffnet werden: $e');
   }
@@ -733,13 +734,12 @@ Future<void> _openTerms(BuildContext context) async {
   const url = 'https://thestia.de/nutzungsbedingungen';
   var ok = false;
   try {
-    ok = await launchUrl(
-      Uri.parse(url),
-      mode: LaunchMode.externalApplication,
-    );
+    ok = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   } catch (e) {
-    debugPrint('[Privacy] Nutzungsbedingungen konnten nicht geoeffnet '
-        'werden: $e');
+    debugPrint(
+      '[Privacy] Nutzungsbedingungen konnten nicht geoeffnet '
+      'werden: $e',
+    );
   }
   if (!ok && context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -761,9 +761,9 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -777,10 +777,7 @@ class _InfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text(text),
-      ),
+      child: Padding(padding: const EdgeInsets.all(16), child: Text(text)),
     );
   }
 }

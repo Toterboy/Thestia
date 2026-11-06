@@ -175,16 +175,20 @@ class TransitBleService {
     // Android 12+ braucht SCAN/CONNECT) - vorher kam der Start mit einer
     // unbegründeten Exception nicht zustande.
     if (!await _ensurePermissions()) {
-      debugPrint('[TransitBle] Berechtigungen verweigert - Radar startet '
-          'nicht.');
+      debugPrint(
+        '[TransitBle] Berechtigungen verweigert - Radar startet '
+        'nicht.',
+      );
       return false;
     }
 
     // Defensive Längenprüfung: Ein zu langes Token würde nativ mit
     // ADVERTISE_FAILED_DATA_TOO_LARGE scheitern (stille Funkstille).
     if (!TransitEncounterService.blePayloadFits(token)) {
-      debugPrint('[TransitBle] Token zu lang für BLE-Paket - Radar startet '
-          'nicht.');
+      debugPrint(
+        '[TransitBle] Token zu lang für BLE-Paket - Radar startet '
+        'nicht.',
+      );
       lastError = 'advertise_failed';
       return false;
     }
@@ -193,12 +197,13 @@ class TransitBleService {
       // --- Advertising (nativ, ECHTES Ergebnis via AdvertiseCallback) ---
       final ok = await _channel
           .invokeMethod<bool>('startAdvertise', {
-        'token': token,
-        // Jitter-Zyklus: die native Seite startet das Advertising nach
-        // dieser Zeit neu. Ohne sie laeuft LOW_LATENCY 45 min im
-        // starren ~100-ms-Takt - ein Fingerprint.
-        'cycleMs': TransitBlePrivacy.advertiseCycleDelay().inMilliseconds,
-      }).timeout(const Duration(seconds: 10));
+            'token': token,
+            // Jitter-Zyklus: die native Seite startet das Advertising nach
+            // dieser Zeit neu. Ohne sie laeuft LOW_LATENCY 45 min im
+            // starren ~100-ms-Takt - ein Fingerprint.
+            'cycleMs': TransitBlePrivacy.advertiseCycleDelay().inMilliseconds,
+          })
+          .timeout(const Duration(seconds: 10));
       _advertising = ok ?? false;
       if (!_advertising) {
         debugPrint('[TransitBle] Natives Advertising abgelehnt.');
@@ -237,11 +242,12 @@ class TransitBleService {
     try {
       final ok = await _channel
           .invokeMethod<bool>('startAdvertise', {
-        'token': newToken,
-        // Neuer Zyklus mit neuer Jitter-Dauer: der Restart faellt dann
-        // nicht mit der Token-Rotation zusammen.
-        'cycleMs': TransitBlePrivacy.advertiseCycleDelay().inMilliseconds,
-      }).timeout(const Duration(seconds: 8));
+            'token': newToken,
+            // Neuer Zyklus mit neuer Jitter-Dauer: der Restart faellt dann
+            // nicht mit der Token-Rotation zusammen.
+            'cycleMs': TransitBlePrivacy.advertiseCycleDelay().inMilliseconds,
+          })
+          .timeout(const Duration(seconds: 8));
       if (ok != true) {
         debugPrint('[TransitBle] Rotation fehlgeschlagen');
       }
@@ -296,8 +302,7 @@ class TransitBleService {
       await FlutterBluePlus.stopScan();
     } catch (e) {
       debugPrint('[TransitBle] Scan-Fenster stop fehlgeschlagen: $e');
-    } finally {
-    }
+    } finally {}
   }
 
   void _onResults(List<ScanResult> results) {
@@ -353,9 +358,10 @@ class TransitBleService {
     try {
       final ok = await _channel
           .invokeMethod<bool>('startAdvertise', {
-        'token': token,
-        'cycleMs': TransitBlePrivacy.advertiseCycleDelay().inMilliseconds,
-      }).timeout(const Duration(seconds: 10));
+            'token': token,
+            'cycleMs': TransitBlePrivacy.advertiseCycleDelay().inMilliseconds,
+          })
+          .timeout(const Duration(seconds: 10));
       _advertising = ok ?? false;
       if (!_advertising) {
         debugPrint('[TransitBle] Resume abgelehnt.');
@@ -396,10 +402,10 @@ class TransitBleService {
     try {
       final md = r.advertisementData.manufacturerData;
       if (md.isEmpty) return null;
-    // Nur unser Hersteller-ID-Eintrag. Die Konstante ist dieselbe, die der
-    // withMsd-Filter beim Scannen benutzt - beide muessen zusammenpassen,
-    // sonst sieht der Scanner nichts (bzw. filtert zu viel weg).
-    final entry = md[kThestiaManufacturerId];
+      // Nur unser Hersteller-ID-Eintrag. Die Konstante ist dieselbe, die der
+      // withMsd-Filter beim Scannen benutzt - beide muessen zusammenpassen,
+      // sonst sieht der Scanner nichts (bzw. filtert zu viel weg).
+      final entry = md[kThestiaManufacturerId];
       if (entry == null || entry.isEmpty) return null;
       final markerBytes = utf8.encode(TransitEncounterService.bleMarker);
       if (entry.length <= markerBytes.length) return null;

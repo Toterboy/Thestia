@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 
 /// Ergebnis des Signal-Versands ("Blicke getauscht").
 class TransitSparkResult {
-  const TransitSparkResult({required this.matched, this.partnerId, this.partnerNote});
+  const TransitSparkResult({
+    required this.matched,
+    this.partnerId,
+    this.partnerNote,
+  });
 
   /// true = die andere Person hatte ebenfalls signalisiert - der Funke
   /// wurde erzeugt (Match-Übernahme läuft über die Bestandspipeline).
@@ -26,10 +30,7 @@ class TransitSparkResult {
 
 /// Ein lokal gecachter Encounter (anderes Gerät in BLE-Nähe).
 class TransitEncounter {
-  const TransitEncounter({
-    required this.token,
-    required this.seenAt,
-  });
+  const TransitEncounter({required this.token, required this.seenAt});
 
   /// Ephemeres Token des anderen Geräts (rotiert bei dessen Aktivierung).
   final String token;
@@ -50,8 +51,7 @@ class TransitEncounter {
   bool get isFresh => DateTime.now().difference(seenAt) < retention;
 
   /// 2-Stunden-Fenster: noch sichtbar in der Liste.
-  bool get isSoftFresh =>
-      DateTime.now().difference(seenAt) < softRetention;
+  bool get isSoftFresh => DateTime.now().difference(seenAt) < softRetention;
 }
 
 /// Kategorie eines Transit-Merkmals (v0.10.0, Migration 148).
@@ -166,19 +166,41 @@ class TransitTag {
 
   /// Kleidungsfarben - die Standardpalette.
   static const List<String> clothingColors = [
-    'black', 'white', 'grey', 'blue', 'green',
-    'red', 'yellow', 'orange', 'pink', 'brown',
-    'purple', 'teal',
+    'black',
+    'white',
+    'grey',
+    'blue',
+    'green',
+    'red',
+    'yellow',
+    'orange',
+    'pink',
+    'brown',
+    'purple',
+    'teal',
   ];
 
   /// Haarfarben. EIGENE Palette, siehe [allowedColors].
   static const List<String> hairColors = [
-    'black', 'blonde', 'brown', 'red', 'auburn', 'grey', 'white', 'bald',
+    'black',
+    'blonde',
+    'brown',
+    'red',
+    'auburn',
+    'grey',
+    'white',
+    'bald',
   ];
 
   /// Augenfarben. EIGENE Palette, siehe [allowedColors].
   static const List<String> eyeColors = [
-    'brown', 'blue', 'green', 'grey', 'hazel', 'bluegrey', 'amber',
+    'brown',
+    'blue',
+    'green',
+    'grey',
+    'hazel',
+    'bluegrey',
+    'amber',
   ];
 
   /// Die in der alten Fassung (v0.9.0) benutzten 12 Farben. Der Name
@@ -187,8 +209,7 @@ class TransitTag {
   static const List<String> colors = clothingColors;
 
   /// Material-Farbe je Farbslug (Fallback grau bei unbekanntem Slug).
-  static Color swatchOf(String color) =>
-      colorSwatch[color] ?? Colors.grey;
+  static Color swatchOf(String color) => colorSwatch[color] ?? Colors.grey;
 
   /// Hauptfarbe eines Kleckses (Fallback grau bei unbekanntem Slug).
   static const Map<String, Color> colorSwatch = {
@@ -222,123 +243,205 @@ class TransitTag {
   /// einer Kategorie, und je Kategorie ist hoechstens ein Wert waehlbar.
   static const List<TransitTag> catalog = [
     // ---- Oberteil
-    TransitTag('hemd', Icons.checkroom,
-        colorizable: true,
-        category: 'top',
-        searchAliases: ['shirt', 'hemden', 'oberhemd']),
-    TransitTag('bluse', Icons.checkroom_outlined,
-        colorizable: true,
-        category: 'top',
-        searchAliases: ['blouse']),
-    TransitTag('tshirt', Icons.abc,
-        colorizable: true,
-        category: 'top',
-        searchAliases: ['t-shirt', 'shirt', 'tee']),
-    TransitTag('hoodie', Icons.checkroom,
-        colorizable: true,
-        category: 'top',
-        searchAliases: ['kapuzenpulli', 'kapuzenpullover']),
-    TransitTag('pullover', Icons.dry_cleaning,
-        colorizable: true,
-        category: 'top',
-        searchAliases: ['pulli', 'strickpullover', 'sweater']),
-    TransitTag('jacke', Icons.dry_cleaning,
-        colorizable: true,
-        category: 'top',
-        searchAliases: ['jacken', 'mantel']),
-    TransitTag('weste', Icons.dry_cleaning,
-        colorizable: true,
-        category: 'top',
-        searchAliases: ['gilet', 'vest']),
+    TransitTag(
+      'hemd',
+      Icons.checkroom,
+      colorizable: true,
+      category: 'top',
+      searchAliases: ['shirt', 'hemden', 'oberhemd'],
+    ),
+    TransitTag(
+      'bluse',
+      Icons.checkroom_outlined,
+      colorizable: true,
+      category: 'top',
+      searchAliases: ['blouse'],
+    ),
+    TransitTag(
+      'tshirt',
+      Icons.abc,
+      colorizable: true,
+      category: 'top',
+      searchAliases: ['t-shirt', 'shirt', 'tee'],
+    ),
+    TransitTag(
+      'hoodie',
+      Icons.checkroom,
+      colorizable: true,
+      category: 'top',
+      searchAliases: ['kapuzenpulli', 'kapuzenpullover'],
+    ),
+    TransitTag(
+      'pullover',
+      Icons.dry_cleaning,
+      colorizable: true,
+      category: 'top',
+      searchAliases: ['pulli', 'strickpullover', 'sweater'],
+    ),
+    TransitTag(
+      'jacke',
+      Icons.dry_cleaning,
+      colorizable: true,
+      category: 'top',
+      searchAliases: ['jacken', 'mantel'],
+    ),
+    TransitTag(
+      'weste',
+      Icons.dry_cleaning,
+      colorizable: true,
+      category: 'top',
+      searchAliases: ['gilet', 'vest'],
+    ),
     // ---- Unterteil
-    TransitTag('hose', Icons.checkroom_outlined,
-        colorizable: true,
-        category: 'bottom',
-        searchAliases: ['hosen', 'pants']),
-    TransitTag('jeans', Icons.checkroom_outlined,
-        colorizable: true,
-        category: 'bottom',
-        searchAliases: ['denim']),
-    TransitTag('rock', Icons.dry_cleaning,
-        colorizable: true,
-        category: 'bottom',
-        searchAliases: ['rocke', 'kleid']),
-    TransitTag('shorts', Icons.airline_seat_legroom_reduced,
-        colorizable: true,
-        category: 'bottom',
-        searchAliases: ['kurze hose', 'kurzhosen']),
-    TransitTag('leggings', Icons.checkroom_outlined,
-        colorizable: true,
-        category: 'bottom',
-        searchAliases: ['leggins']),
+    TransitTag(
+      'hose',
+      Icons.checkroom_outlined,
+      colorizable: true,
+      category: 'bottom',
+      searchAliases: ['hosen', 'pants'],
+    ),
+    TransitTag(
+      'jeans',
+      Icons.checkroom_outlined,
+      colorizable: true,
+      category: 'bottom',
+      searchAliases: ['denim'],
+    ),
+    TransitTag(
+      'rock',
+      Icons.dry_cleaning,
+      colorizable: true,
+      category: 'bottom',
+      searchAliases: ['rocke', 'kleid'],
+    ),
+    TransitTag(
+      'shorts',
+      Icons.airline_seat_legroom_reduced,
+      colorizable: true,
+      category: 'bottom',
+      searchAliases: ['kurze hose', 'kurzhosen'],
+    ),
+    TransitTag(
+      'leggings',
+      Icons.checkroom_outlined,
+      colorizable: true,
+      category: 'bottom',
+      searchAliases: ['leggins'],
+    ),
     // ---- Kopf
-    TransitTag('cap', Icons.sports_baseball,
-        colorizable: true,
-        category: 'head',
-        searchAliases: ['muetze', 'kappe']),
-    TransitTag('muetze', Icons.face,
-        colorizable: true,
-        category: 'head',
-        searchAliases: ['beanie', 'stirnband']),
-    TransitTag('helm', Icons.motorcycle,
-        category: 'head'),
+    TransitTag(
+      'cap',
+      Icons.sports_baseball,
+      colorizable: true,
+      category: 'head',
+      searchAliases: ['muetze', 'kappe'],
+    ),
+    TransitTag(
+      'muetze',
+      Icons.face,
+      colorizable: true,
+      category: 'head',
+      searchAliases: ['beanie', 'stirnband'],
+    ),
+    TransitTag('helm', Icons.motorcycle, category: 'head'),
     // ---- Schuhe
-    TransitTag('sneaker', Icons.ice_skating,
-        colorizable: true,
-        category: 'shoes',
-        searchAliases: ['schuhe', 'turnschuhe', 'sneakers']),
-    TransitTag('stiefel', Icons.ice_skating,
-        colorizable: true,
-        category: 'shoes',
-        searchAliases: ['stiefel', 'boots']),
-    TransitTag('sandalen', Icons.ice_skating,
-        category: 'shoes'),
-    TransitTag('halbschuhe', Icons.ice_skating,
-        colorizable: true,
-        category: 'shoes',
-        searchAliases: ['schuhe', 'loafer']),
+    TransitTag(
+      'sneaker',
+      Icons.ice_skating,
+      colorizable: true,
+      category: 'shoes',
+      searchAliases: ['schuhe', 'turnschuhe', 'sneakers'],
+    ),
+    TransitTag(
+      'stiefel',
+      Icons.ice_skating,
+      colorizable: true,
+      category: 'shoes',
+      searchAliases: ['stiefel', 'boots'],
+    ),
+    TransitTag('sandalen', Icons.ice_skating, category: 'shoes'),
+    TransitTag(
+      'halbschuhe',
+      Icons.ice_skating,
+      colorizable: true,
+      category: 'shoes',
+      searchAliases: ['schuhe', 'loafer'],
+    ),
     // ---- Accessoires
-    TransitTag('brille', Icons.visibility,
-        category: 'accessory',
-        searchAliases: ['glasses', 'sonnenbrille']),
-    TransitTag('kopfhoerer', Icons.headphones,
-        category: 'accessory',
-        searchAliases: ['headphones', 'ohrhoerer']),
-    TransitTag('schal', Icons.stay_current_landscape,
-        colorizable: true,
-        category: 'accessory',
-        searchAliases: ['stola', 'tuch']),
-    TransitTag('rucksack', Icons.backpack,
-        category: 'accessory',
-        searchAliases: ['backpack']),
-    TransitTag('tasche', Icons.shopping_bag,
-        colorizable: true,
-        category: 'accessory',
-        searchAliases: ['shoppingbag', 'tote bag', 'umhaengetasche']),
-    TransitTag('ausweis', Icons.badge,
-        category: 'accessory',
-        searchAliases: ['lanyard', 'badge']),
-    TransitTag('sportlich', Icons.fitness_center,
-        category: 'accessory',
-        searchAliases: ['sportkleidung', 'sporty']),
+    TransitTag(
+      'brille',
+      Icons.visibility,
+      category: 'accessory',
+      searchAliases: ['glasses', 'sonnenbrille'],
+    ),
+    TransitTag(
+      'kopfhoerer',
+      Icons.headphones,
+      category: 'accessory',
+      searchAliases: ['headphones', 'ohrhoerer'],
+    ),
+    TransitTag(
+      'schal',
+      Icons.stay_current_landscape,
+      colorizable: true,
+      category: 'accessory',
+      searchAliases: ['stola', 'tuch'],
+    ),
+    TransitTag(
+      'rucksack',
+      Icons.backpack,
+      category: 'accessory',
+      searchAliases: ['backpack'],
+    ),
+    TransitTag(
+      'tasche',
+      Icons.shopping_bag,
+      colorizable: true,
+      category: 'accessory',
+      searchAliases: ['shoppingbag', 'tote bag', 'umhaengetasche'],
+    ),
+    TransitTag(
+      'ausweis',
+      Icons.badge,
+      category: 'accessory',
+      searchAliases: ['lanyard', 'badge'],
+    ),
+    TransitTag(
+      'sportlich',
+      Icons.fitness_center,
+      category: 'accessory',
+      searchAliases: ['sportkleidung', 'sporty'],
+    ),
     // ---- Haar
-    TransitTag('hair_color', Icons.face_retouching_natural,
-        colorizable: true,
-        category: 'hair',
-        allowedColors: hairColors,
-        searchAliases: ['haarfarbe', 'hair colour']),
-    TransitTag('hair_length', Icons.straighten,
-        category: 'hair',
-        searchAliases: ['haarlaenge', 'hair length']),
-    TransitTag('hair_style', Icons.auto_awesome,
-        category: 'hair',
-        searchAliases: ['frisur', 'haartyp']),
+    TransitTag(
+      'hair_color',
+      Icons.face_retouching_natural,
+      colorizable: true,
+      category: 'hair',
+      allowedColors: hairColors,
+      searchAliases: ['haarfarbe', 'hair colour'],
+    ),
+    TransitTag(
+      'hair_length',
+      Icons.straighten,
+      category: 'hair',
+      searchAliases: ['haarlaenge', 'hair length'],
+    ),
+    TransitTag(
+      'hair_style',
+      Icons.auto_awesome,
+      category: 'hair',
+      searchAliases: ['frisur', 'haartyp'],
+    ),
     // ---- Augen
-    TransitTag('eyes_color', Icons.remove_red_eye_outlined,
-        colorizable: true,
-        category: 'eyes',
-        allowedColors: eyeColors,
-        searchAliases: ['augenfarbe', 'eye colour']),
+    TransitTag(
+      'eyes_color',
+      Icons.remove_red_eye_outlined,
+      colorizable: true,
+      category: 'eyes',
+      allowedColors: eyeColors,
+      searchAliases: ['augenfarbe', 'eye colour'],
+    ),
   ];
 
   /// Alle Werte einer Kategorie, in Katalog-Reihenfolge.

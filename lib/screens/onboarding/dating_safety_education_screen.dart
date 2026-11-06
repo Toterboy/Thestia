@@ -190,9 +190,9 @@ class _DatingSafetyEducationScreenState
   }
 
   Future<void> _save() async {
-        // Speichern ist Komfort, kein Gate: der Abschluss wird am Ende
-      // separat und dauerhaft gesetzt.
-await bestEffort('localStorageProvider.saveString', () async {
+    // Speichern ist Komfort, kein Gate: der Abschluss wird am Ende
+    // separat und dauerhaft gesetzt.
+    await bestEffort('localStorageProvider.saveString', () async {
       await ref
           .read(localStorageProvider)
           .saveString(_progressKey, jsonEncode(_progress.toJson()));
@@ -397,12 +397,12 @@ await bestEffort('localStorageProvider.saveString', () async {
                         const SizedBox(height: 16),
                         Text(
                           L10n.t(context, 'safetyOnboarding.timeHint'),
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurfaceVariant,
-                                  ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -421,9 +421,7 @@ await bestEffort('localStorageProvider.saveString', () async {
               width: double.infinity,
               child: FilledButton(
                 onPressed: () => _setStep(_SafetyStep.usedBefore),
-                child: Text(
-                  L10n.t(context, 'safetyOnboarding.ackButton'),
-                ),
+                child: Text(L10n.t(context, 'safetyOnboarding.ackButton')),
               ),
             ),
           ),
@@ -431,6 +429,7 @@ await bestEffort('localStorageProvider.saveString', () async {
       ],
     );
   }
+
   Widget _buildQuestion(
     BuildContext context, {
     required String titleKey,
@@ -663,9 +662,9 @@ await bestEffort('localStorageProvider.saveString', () async {
   /// (url_launcher, externer Browser). Keine Nutzungsdaten, keine
   /// Parameter.
   Future<void> _openWebsite() async {
-        // Kein Browser oder kein Netz: die Aufklärung läuft ohnehin
-      // weiter, der Link ist nur ein Extra.
-await bestEffort('parse', () async {
+    // Kein Browser oder kein Netz: die Aufklärung läuft ohnehin
+    // weiter, der Link ist nur ein Extra.
+    await bestEffort('parse', () async {
       await launchUrl(
         Uri.parse(kDatingSafetyUrl),
         mode: LaunchMode.externalApplication,

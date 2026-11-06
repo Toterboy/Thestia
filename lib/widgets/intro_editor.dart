@@ -315,8 +315,9 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
         setState(() => _uploading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content:
-                Text(L10n.tf(context, 'intro.recordFailed', {'error': '$e'})),
+            content: Text(
+              L10n.tf(context, 'intro.recordFailed', {'error': '$e'}),
+            ),
           ),
         );
       }
@@ -326,7 +327,8 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
 
   /// Laufende Aufnahme verwerfen (nach Rückfrage).
   Future<void> _discardRecording() async {
-    final discard = await showDialog<bool>(
+    final discard =
+        await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
             title: Text(L10n.t(ctx, 'intro.discardTitle')),
@@ -369,7 +371,8 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
   // ---------------------------------------------------------------------
 
   Future<void> _deleteAudio() async {
-    final delete = await showDialog<bool>(
+    final delete =
+        await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
             title: Text(L10n.t(ctx, 'intro.deleteTitle')),
@@ -430,8 +433,8 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
               ? L10n.t(context, 'intro.hintRequired')
               : L10n.t(context, 'intro.hintOptional'),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 12),
         TextFormField(
@@ -463,8 +466,7 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
           spacing: 8,
           runSpacing: 8,
           children: [
-            for (final key
-                in IntroPromptCatalog.rotated(seed: _promptSeed))
+            for (final key in IntroPromptCatalog.rotated(seed: _promptSeed))
               ActionChip(
                 label: Text(L10n.t(context, key)),
                 onPressed: () {
@@ -500,19 +502,20 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
       children: [
         Row(
           children: [
-            Icon(_paused ? Icons.pause_circle : Icons.radio_button_checked,
-                size: 18, color: _paused ? scheme.onSurfaceVariant : scheme.error),
+            Icon(
+              _paused ? Icons.pause_circle : Icons.radio_button_checked,
+              size: 18,
+              color: _paused ? scheme.onSurfaceVariant : scheme.error,
+            ),
             const SizedBox(width: 8),
             Text(
               _paused
                   ? L10n.t(context, 'intro.pausedState')
                   : L10n.t(context, 'intro.recordingState'),
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: _paused
-                        ? scheme.onSurfaceVariant
-                        : scheme.error,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: _paused ? scheme.onSurfaceVariant : scheme.error,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const Spacer(),
             Text(
@@ -527,10 +530,7 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
         // sonst sagt am Ende jeder nur "Ja, also... ich bin halt so".
         // Die Text-Vorstellung hat die Prompt-Karten - fuer die Audio-
         // Vorstellung war das die letzte fehlende Haelfte.
-        IntroRecordingGuide(
-          elapsedSeconds: _recordSeconds,
-          paused: _paused,
-        ),
+        IntroRecordingGuide(elapsedSeconds: _recordSeconds, paused: _paused),
         const SizedBox(height: 12),
         // Lautstärke-Balken als EIGENES Widget: Die 10-Hz-Amplitude baut
         // sonst bei jedem Wert den kompletten Editor (Textfeld + Chips +
@@ -551,9 +551,9 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
               ? L10n.t(context, 'intro.silenceHint')
               : L10n.t(context, 'intro.voiceDetected'),
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: _silent ? scheme.error : scheme.primary,
-                fontWeight: FontWeight.w600,
-              ),
+            color: _silent ? scheme.error : scheme.primary,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         const SizedBox(height: 8),
         Row(
@@ -568,9 +568,11 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
               child: OutlinedButton.icon(
                 onPressed: _pauseResume,
                 icon: Icon(_paused ? Icons.play_arrow : Icons.pause),
-                label: Text(_paused
-                    ? L10n.t(context, 'intro.resume')
-                    : L10n.t(context, 'intro.pause')),
+                label: Text(
+                  _paused
+                      ? L10n.t(context, 'intro.resume')
+                      : L10n.t(context, 'intro.pause'),
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -604,22 +606,18 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
               ? L10n.t(context, 'intro.savedState')
               : L10n.t(context, 'profile.intro.audioEmpty'),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
-          L10n.tf(
-            context,
-            'intro.rangeHint',
-            {
-              'min': '${IntroEditor.minAudioSeconds}',
-              'max': '${IntroEditor.maxAudioSeconds}',
-            },
-          ),
+          L10n.tf(context, 'intro.rangeHint', {
+            'min': '${IntroEditor.minAudioSeconds}',
+            'max': '${IntroEditor.maxAudioSeconds}',
+          }),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 12),
         Row(
@@ -631,8 +629,7 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
                     ? const SizedBox(
                         width: 16,
                         height: 16,
-                        child:
-                            CircularProgressIndicator(strokeWidth: 2),
+                        child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : const Icon(Icons.mic),
                 label: Text(
@@ -710,21 +707,22 @@ class _AmplitudeBarsState extends State<_AmplitudeBars> {
     if (!widget.active) return;
     _sub = widget.recorder
         .onAmplitudeChanged(
-            const Duration(milliseconds: IntroEditor.ampIntervalMs))
+          const Duration(milliseconds: IntroEditor.ampIntervalMs),
+        )
         .listen((amp) {
-      if (!mounted) return;
-      // Rohwert weiterreichen, nicht den normalisierten - die
-      // Normalisierung gehoert in eine Stelle, dem Detector.
-      widget.onLevel?.call(amp.current);
-      // dBFS (-60..0) auf 0..1 normieren.
-      final db = amp.current.clamp(-60.0, 0.0);
-      setState(() {
-        _levels.add(((db + 60) / 60).clamp(0.0, 1.0));
-        while (_levels.length > IntroEditor.ampBarCount) {
-          _levels.removeAt(0);
-        }
-      });
-    });
+          if (!mounted) return;
+          // Rohwert weiterreichen, nicht den normalisierten - die
+          // Normalisierung gehoert in eine Stelle, dem Detector.
+          widget.onLevel?.call(amp.current);
+          // dBFS (-60..0) auf 0..1 normieren.
+          final db = amp.current.clamp(-60.0, 0.0);
+          setState(() {
+            _levels.add(((db + 60) / 60).clamp(0.0, 1.0));
+            while (_levels.length > IntroEditor.ampBarCount) {
+              _levels.removeAt(0);
+            }
+          });
+        });
   }
 
   void _unsubscribe() {
@@ -747,9 +745,7 @@ class _AmplitudeBarsState extends State<_AmplitudeBars> {
         children: [
           for (var i = 0; i < IntroEditor.ampBarCount; i++)
             _AmpBar(
-              level: _levels.length > i
-                  ? _levels[_levels.length - 1 - i]
-                  : 0.0,
+              level: _levels.length > i ? _levels[_levels.length - 1 - i] : 0.0,
               color: widget.color,
             ),
         ],

@@ -55,33 +55,27 @@ void main() {
       expect(decrypted, equals(unicode));
     });
 
-    test(
-      'Unterschiedliche Klartexte mit gleichem Passwort ergeben '
-      'unterschiedliche Chiffrate',
-      () {
-        const text1 = 'TEST_FIXTURE_message_alpha';
-        const text2 = 'TEST_FIXTURE_message_beta';
-        final c1 = BackupCrypto.encrypt(text1, testPassword);
-        final c2 = BackupCrypto.encrypt(text2, testPassword);
-        expect(c1, isNot(equals(c2)));
-      },
-    );
+    test('Unterschiedliche Klartexte mit gleichem Passwort ergeben '
+        'unterschiedliche Chiffrate', () {
+      const text1 = 'TEST_FIXTURE_message_alpha';
+      const text2 = 'TEST_FIXTURE_message_beta';
+      final c1 = BackupCrypto.encrypt(text1, testPassword);
+      final c2 = BackupCrypto.encrypt(text2, testPassword);
+      expect(c1, isNot(equals(c2)));
+    });
 
-    test(
-      'Gleicher Klartext mit gleichem Passwort erzeugt durch zufälligen IV '
-      'unterschiedliche Chiffrate',
-      () {
-        // AES-GCM erfordert einen eindeutigen IV pro Verschlüsselung.
-        // Selbst bei identischem Input + Passwort MUSS das Chiffrat
-        // unterschiedlich sein.
-        final c1 = BackupCrypto.encrypt(testPlaintext, testPassword);
-        final c2 = BackupCrypto.encrypt(testPlaintext, testPassword);
-        final c3 = BackupCrypto.encrypt(testPlaintext, testPassword);
-        expect(c1, isNot(equals(c2)));
-        expect(c2, isNot(equals(c3)));
-        expect(c1, isNot(equals(c3)));
-      },
-    );
+    test('Gleicher Klartext mit gleichem Passwort erzeugt durch zufälligen IV '
+        'unterschiedliche Chiffrate', () {
+      // AES-GCM erfordert einen eindeutigen IV pro Verschlüsselung.
+      // Selbst bei identischem Input + Passwort MUSS das Chiffrat
+      // unterschiedlich sein.
+      final c1 = BackupCrypto.encrypt(testPlaintext, testPassword);
+      final c2 = BackupCrypto.encrypt(testPlaintext, testPassword);
+      final c3 = BackupCrypto.encrypt(testPlaintext, testPassword);
+      expect(c1, isNot(equals(c2)));
+      expect(c2, isNot(equals(c3)));
+      expect(c1, isNot(equals(c3)));
+    });
 
     test('Chiffrat ist gültiges Base64', () {
       final encrypted = BackupCrypto.encrypt(testPlaintext, testPassword);
@@ -106,7 +100,8 @@ void main() {
       expect(
         () => BackupCrypto.decrypt(encrypted, 'TEST_ONLY_wrong_password'),
         throwsA(isA<Exception>()),
-        reason: 'AES-GCM Auth-Tag-Mismatch muss Exception werfen, '
+        reason:
+            'AES-GCM Auth-Tag-Mismatch muss Exception werfen, '
             'nicht still fehlschlagen.',
       );
     });
@@ -121,7 +116,8 @@ void main() {
       expect(
         () => BackupCrypto.decrypt(manipulated, testPassword),
         throwsA(isA<Exception>()),
-        reason: 'Manipulierter Ciphertext darf nicht still entschlüsselt '
+        reason:
+            'Manipulierter Ciphertext darf nicht still entschlüsselt '
             'werden — GCM-Auth-Tag-Mismatch muss werfen.',
       );
     });
@@ -145,11 +141,7 @@ void main() {
     });
 
     test('Roundtrip mit verschiedenen Passwörtern bleibt stabil', () {
-      const passwords = [
-        'TEST_pw_a',
-        'TEST_pw_b',
-        'TEST_pw_c',
-      ];
+      const passwords = ['TEST_pw_a', 'TEST_pw_b', 'TEST_pw_c'];
       for (final pw in passwords) {
         final enc = BackupCrypto.encrypt(testPlaintext, pw);
         final dec = BackupCrypto.decrypt(enc, pw);
@@ -178,8 +170,11 @@ void main() {
       for (final pw in specialPasswords) {
         final enc = BackupCrypto.encrypt(testPlaintext, pw);
         final dec = BackupCrypto.decrypt(enc, pw);
-        expect(dec, equals(testPlaintext),
-            reason: 'Roundtrip mit Passwort: ${pw.length} Zeichen');
+        expect(
+          dec,
+          equals(testPlaintext),
+          reason: 'Roundtrip mit Passwort: ${pw.length} Zeichen',
+        );
       }
     });
   });

@@ -17,8 +17,11 @@ import 'package:thestia/utils/constants.dart';
 void main() {
   test('Flag OFF (Default): checkImage gibt approved zurück (Betreiber-'
       'Entscheidung, kein Netzwerk-Call)', () async {
-    expect(AppConstants.nsfwModerationEnabled, isFalse,
-        reason: 'Im Test-Umfeld muss das Flag aus sein (kein --dart-define).');
+    expect(
+      AppConstants.nsfwModerationEnabled,
+      isFalse,
+      reason: 'Im Test-Umfeld muss das Flag aus sein (kein --dart-define).',
+    );
     final result = await HuggingFaceService.checkImage(
       Uint8List.fromList(List<int>.filled(16, 0)),
     );

@@ -19,19 +19,19 @@ class CommunityGuidelinesScreen extends StatelessWidget {
 
   /// 6 Paragraphen als L10n-Keys (cg.0 bis cg.5) - zweisprachig DE/EN.
   List<({String titleKey, String bodyKey})> _paragraphs() => [
-        (titleKey: 'cg.0.title', bodyKey: 'cg.0.body'),
-        (titleKey: 'cg.1.title', bodyKey: 'cg.1.body'),
-        (titleKey: 'cg.2.title', bodyKey: 'cg.2.body'),
-        (titleKey: 'cg.3.title', bodyKey: 'cg.3.body'),
-        (titleKey: 'cg.4.title', bodyKey: 'cg.4.body'),
-        (titleKey: 'cg.5.title', bodyKey: 'cg.5.body'),
-        // v0.10.0: Play verlangt fuer Dating- und Random-Chat-Apps ein
-        // AUSDRUECKLICHES Verbot von Kindesmissbrauch (CSAE/CSAM) in den
-        // veroeffentlichten Standards. Fehlt es dort, ist das ein
-        // Verstoss gegen die Child Safety Standards - unabhaengig von der
-        // Altersfreigabe.
-        (titleKey: 'cg.6.title', bodyKey: 'cg.6.body'),
-      ];
+    (titleKey: 'cg.0.title', bodyKey: 'cg.0.body'),
+    (titleKey: 'cg.1.title', bodyKey: 'cg.1.body'),
+    (titleKey: 'cg.2.title', bodyKey: 'cg.2.body'),
+    (titleKey: 'cg.3.title', bodyKey: 'cg.3.body'),
+    (titleKey: 'cg.4.title', bodyKey: 'cg.4.body'),
+    (titleKey: 'cg.5.title', bodyKey: 'cg.5.body'),
+    // v0.10.0: Play verlangt fuer Dating- und Random-Chat-Apps ein
+    // AUSDRUECKLICHES Verbot von Kindesmissbrauch (CSAE/CSAM) in den
+    // veroeffentlichten Standards. Fehlt es dort, ist das ein
+    // Verstoss gegen die Child Safety Standards - unabhaengig von der
+    // Altersfreigabe.
+    (titleKey: 'cg.6.title', bodyKey: 'cg.6.body'),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -73,8 +73,8 @@ class CommunityGuidelinesScreen extends StatelessWidget {
                     Text(
                       L10n.t(context, 'cg.childSafetyLink.title'),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -109,20 +109,20 @@ class CommunityGuidelinesScreen extends StatelessWidget {
                   Text(
                     L10n.t(context, rule.titleKey),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: isIntro
-                              ? Theme.of(context).colorScheme.onPrimaryContainer
-                              : null,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      color: isIntro
+                          ? Theme.of(context).colorScheme.onPrimaryContainer
+                          : null,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     L10n.t(context, rule.bodyKey),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: isIntro
-                              ? Theme.of(context).colorScheme.onPrimaryContainer
-                              : null,
-                        ),
+                      color: isIntro
+                          ? Theme.of(context).colorScheme.onPrimaryContainer
+                          : null,
+                    ),
                   ),
                 ],
               ),

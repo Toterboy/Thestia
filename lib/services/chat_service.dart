@@ -57,9 +57,8 @@ class ChatService {
   /// der Legacy-Name, sonst namespaced. Unterschiedliche Besitzer
   /// erhalten IMMER unterschiedliche Boxen (Kontowechsel-Trennung).
   @visibleForTesting
-  static String historyBoxNameFor(String? ownerId) => ownerId == null
-      ? _legacyHistoryBox
-      : '${_legacyHistoryBox}_$ownerId';
+  static String historyBoxNameFor(String? ownerId) =>
+      ownerId == null ? _legacyHistoryBox : '${_legacyHistoryBox}_$ownerId';
 
   /// Box-Name für QR-Kontakte eines Besitzers (testbar, s. o.).
   @visibleForTesting
@@ -127,8 +126,7 @@ class ChatService {
         });
         return;
       }
-      final oldBox =
-          await SecureHive.instance.openBox<String>(legacy);
+      final oldBox = await SecureHive.instance.openBox<String>(legacy);
       if (oldBox.isEmpty) {
         await oldBox.close();
         await bestEffort('deleteBoxFromDisk', () async {
@@ -136,8 +134,7 @@ class ChatService {
         });
         return;
       }
-      final newBox =
-          await SecureHive.instance.openBox<String>(namespaced);
+      final newBox = await SecureHive.instance.openBox<String>(namespaced);
       for (final key in oldBox.keys) {
         if (!newBox.containsKey(key)) {
           final v = oldBox.get(key);
@@ -172,8 +169,10 @@ class ChatService {
       _qrContactsBox = await SecureHive.instance.openBox<String>(_qrBoxName);
       return _qrContactsBox;
     } catch (e) {
-      debugPrint('[ChatService] QR-Kontakt-Box nicht verfügbar '
-          '(in-memory only): $e');
+      debugPrint(
+        '[ChatService] QR-Kontakt-Box nicht verfügbar '
+        '(in-memory only): $e',
+      );
       _qrContactsBox = null;
       return null;
     }
@@ -192,17 +191,18 @@ class ChatService {
         final raw = box.get(key);
         if (raw == null) continue;
         final map = jsonDecode(raw) as Map<dynamic, dynamic>;
-        final partner =
-            UserProfile.fromJson(Map<String, dynamic>.from(map));
+        final partner = UserProfile.fromJson(Map<String, dynamic>.from(map));
         if (getMatchByPartnerId(partner.id) != null) continue;
         if (getMatchById(key) != null) continue;
-        _matches.add(Match(
-          id: key,
-          partner: partner,
-          matchedAt: DateTime.now(),
-          photosUnlocked: true,
-          isQrContact: true,
-        ));
+        _matches.add(
+          Match(
+            id: key,
+            partner: partner,
+            matchedAt: DateTime.now(),
+            photosUnlocked: true,
+            isQrContact: true,
+          ),
+        );
         _messages[key] = _messages[key] ?? [];
       }
     } catch (e) {
@@ -269,8 +269,8 @@ class ChatService {
     // Nachrichten pro Chat (Nutzerwahl: nichts / 200 / alles).
     _historyLimit = limit;
     if (!enabled) {
-            // Best-effort.
-bestEffortSync('clear', () {
+      // Best-effort.
+      bestEffortSync('clear', () {
         if (Hive.isBoxOpen(_historyBoxName)) {
           Hive.box<String>(_historyBoxName).clear();
         }
@@ -281,15 +281,13 @@ bestEffortSync('clear', () {
   /// Löscht den lokalen Chat-Verlauf (Account-Löschung/Logout, DSGVO),
   /// OHNE die Opt-in-Einstellung zu ändern.
   Future<void> clearLocalHistory() async {
-        // Best-effort: Ein Rest darf die Löschung nie blockieren.
-await bestEffort('clear', () async {
+    // Best-effort: Ein Rest darf die Löschung nie blockieren.
+    await bestEffort('clear', () async {
       _historyBox = null;
       if (Hive.isBoxOpen(_historyBoxName)) {
         await Hive.box<String>(_historyBoxName).clear();
       } else {
-        final box = await SecureHive.instance.openBox<String>(
-          _historyBoxName,
-        );
+        final box = await SecureHive.instance.openBox<String>(_historyBoxName);
         await box.clear();
       }
     });
@@ -315,8 +313,7 @@ await bestEffort('clear', () async {
       final raw = box.get(matchId);
       if (raw == null) return;
       final list = (jsonDecode(raw) as List<dynamic>)
-          .map((e) =>
-              Message.fromJson(Map<String, dynamic>.from(e as Map)))
+          .map((e) => Message.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
       final existing = _messages.putIfAbsent(matchId, () => []);
       if (existing.isEmpty) {
@@ -342,10 +339,7 @@ await bestEffort('clear', () async {
       if (_historyLimit != null && msgs.length > _historyLimit!) {
         msgs = msgs.sublist(msgs.length - _historyLimit!);
       }
-      await box.put(
-        matchId,
-        jsonEncode(msgs.map((m) => m.toJson()).toList()),
-      );
+      await box.put(matchId, jsonEncode(msgs.map((m) => m.toJson()).toList()));
     } catch (e) {
       debugPrint('[ChatService] Verlauf-Persistenz fehlgeschlagen: $e');
     }
@@ -403,13 +397,15 @@ await bestEffort('clear', () async {
   /// den Chats zugeordnet.
   void restoreMatch(String matchId, String partnerId, String name) {
     if (getMatchById(matchId) != null) return;
-    _matches.add(Match(
-      id: matchId,
-      partner: UserProfile(id: partnerId, name: name, bio: ''),
-      matchedAt: DateTime.now(),
-      photosUnlocked: true,
-      isQrContact: true,
-    ));
+    _matches.add(
+      Match(
+        id: matchId,
+        partner: UserProfile(id: partnerId, name: name, bio: ''),
+        matchedAt: DateTime.now(),
+        photosUnlocked: true,
+        isQrContact: true,
+      ),
+    );
     _messages[matchId] = [];
   }
 
@@ -419,7 +415,10 @@ await bestEffort('clear', () async {
   /// "Dieser Chat existiert nicht mehr". Der Partner kommt aus
   /// list_my_matches_with_state.
   Match? restoreServerMatch(
-      String matchId, UserProfile partner, DateTime matchedAt) {
+    String matchId,
+    UserProfile partner,
+    DateTime matchedAt,
+  ) {
     final existing = getMatchById(matchId);
     if (existing != null) return existing;
     final match = Match(
@@ -471,8 +470,8 @@ await bestEffort('clear', () async {
 
   Future<void> _deleteHistory(String matchId) async {
     if (!_historyEnabled) return;
-        // Best-effort.
-await bestEffort('delete', () async {
+    // Best-effort.
+    await bestEffort('delete', () async {
       final box = await _historyBoxFuture();
       await box?.delete(matchId);
     });
@@ -520,11 +519,13 @@ await bestEffort('delete', () async {
   List<Map<String, String>> exportQrContacts() {
     return _matches
         .where((m) => m.isQrContact)
-        .map((m) => {
-              'matchId': m.id,
-              'partnerId': m.partner.id,
-              'name': m.partner.name,
-            })
+        .map(
+          (m) => {
+            'matchId': m.id,
+            'partnerId': m.partner.id,
+            'name': m.partner.name,
+          },
+        )
         .toList();
   }
 
@@ -538,10 +539,7 @@ await bestEffort('delete', () async {
     final box = await _historyBoxFuture();
     if (box == null) return 0;
     data.forEach((matchId, msgs) {
-      box.put(
-        matchId,
-        jsonEncode(msgs.map((m) => m.toJson()).toList()),
-      );
+      box.put(matchId, jsonEncode(msgs.map((m) => m.toJson()).toList()));
       _messages[matchId] = msgs;
       count += msgs.length;
     });

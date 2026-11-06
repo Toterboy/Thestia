@@ -27,8 +27,8 @@ class ServerTimeService with WidgetsBindingObserver {
   ServerTimeService._() {
     // In Unit-Tests ohne initialisiertes WidgetsBinding würde
     // `WidgetsBinding.instance` werfen - Observer ist dort auch unnötig.
-        // Kein Binding (Unit-Test): Lifecycle-Beobachtung entfällt.
-bestEffortSync('addObserver', () {
+    // Kein Binding (Unit-Test): Lifecycle-Beobachtung entfällt.
+    bestEffortSync('addObserver', () {
       WidgetsBinding.instance.addObserver(this);
     });
   }
@@ -67,7 +67,9 @@ bestEffortSync('addObserver', () {
   /// Initialisiert den Service und führt einen ersten Sync durch.
   /// Ist idempotent: mehrfache Aufrufe werden ignoriert, solange ein
   /// Initialisierungslauf läuft.
-  Future<void> initialize({Duration syncInterval = const Duration(minutes: 5)}) async {
+  Future<void> initialize({
+    Duration syncInterval = const Duration(minutes: 5),
+  }) async {
     if (_initializing) return;
     _initializing = true;
     try {
@@ -90,7 +92,11 @@ bestEffortSync('addObserver', () {
 
   /// Bis zu 3 Versuche mit Backoff, bis ein verifizierter Offset vorliegt.
   Future<void> _syncWithRetry() async {
-    const backoffs = [Duration(seconds: 0), Duration(seconds: 3), Duration(seconds: 8)];
+    const backoffs = [
+      Duration(seconds: 0),
+      Duration(seconds: 3),
+      Duration(seconds: 8),
+    ];
     for (var attempt = 0; attempt < backoffs.length; attempt++) {
       if (backoffs[attempt] > Duration.zero) {
         await Future<void>.delayed(backoffs[attempt]);
@@ -104,7 +110,9 @@ bestEffortSync('addObserver', () {
   Future<void> syncNow() async {
     if (!SupabaseService.isInitialized) {
       if (kDebugMode) {
-        debugPrint('[ServerTimeService] Supabase nicht initialisiert, Sync übersprungen');
+        debugPrint(
+          '[ServerTimeService] Supabase nicht initialisiert, Sync übersprungen',
+        );
       }
       return;
     }
@@ -135,7 +143,9 @@ bestEffortSync('addObserver', () {
       final serverTime = DateTime.tryParse(serverIso)?.toUtc();
       if (serverTime == null) {
         if (kDebugMode) {
-          debugPrint('[ServerTimeService] serverTime konnte nicht geparst werden');
+          debugPrint(
+            '[ServerTimeService] serverTime konnte nicht geparst werden',
+          );
         }
         return;
       }
@@ -155,7 +165,9 @@ bestEffortSync('addObserver', () {
         }
       } else {
         if (kDebugMode) {
-          debugPrint('[ServerTimeService] Offset implausibel ($newOffset ms), ignoriere');
+          debugPrint(
+            '[ServerTimeService] Offset implausibel ($newOffset ms), ignoriere',
+          );
         }
       }
     } catch (e) {
@@ -171,7 +183,8 @@ bestEffortSync('addObserver', () {
     return _offsetMs != before || _hasVerifiedOffset;
   }
 
-  DateTime corrected(DateTime local) => local.add(Duration(milliseconds: _offsetMs));
+  DateTime corrected(DateTime local) =>
+      local.add(Duration(milliseconds: _offsetMs));
 
   bool isToday(DateTime localDate) {
     final serverNow = now;
@@ -205,8 +218,8 @@ bestEffortSync('addObserver', () {
   }
 
   void dispose() {
-        // Unit-Test ohne Binding.
-bestEffortSync('removeObserver', () {
+    // Unit-Test ohne Binding.
+    bestEffortSync('removeObserver', () {
       WidgetsBinding.instance.removeObserver(this);
     });
     _syncTimer?.cancel();

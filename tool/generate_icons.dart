@@ -88,7 +88,10 @@ void main() {
   final dy = (side - ch) ~/ 2;
   for (var y = 0; y < ch; y++) {
     for (var x = 0; x < cw; x++) {
-      final edgeDist = math.min(math.min(x, y), math.min(cw - 1 - x, ch - 1 - y));
+      final edgeDist = math.min(
+        math.min(x, y),
+        math.min(cw - 1 - x, ch - 1 - y),
+      );
       var a = edgeDist / feather;
       if (a > 1.0) a = 1.0;
       final sp = src.getPixel(x + cx0, y + cy0);
@@ -101,10 +104,7 @@ void main() {
   // Padding-Bereich ausserhalb des Crops: reines Hintergrund-Pink.
   for (var y = 0; y < side; y++) {
     for (var x = 0; x < side; x++) {
-      final inCrop = x >= dx &&
-          x < dx + cw &&
-          y >= dy &&
-          y < dy + ch;
+      final inCrop = x >= dx && x < dx + cw && y >= dy && y < dy + ch;
       if (!inCrop) crop.setPixelRgba(x, y, bgR, bgG, bgB, 255);
     }
   }
@@ -113,8 +113,12 @@ void main() {
   img.Image scaledCanvas(img.Image source, int size, double scale) {
     final canvas = img.Image(width: size, height: size, numChannels: 4);
     final target = (size * scale).round();
-    final resized = img.copyResize(source,
-        width: target, height: target, interpolation: img.Interpolation.cubic);
+    final resized = img.copyResize(
+      source,
+      width: target,
+      height: target,
+      interpolation: img.Interpolation.cubic,
+    );
     final off = (size - target) ~/ 2;
     img.compositeImage(canvas, resized, dstX: off, dstY: off);
     return canvas;
@@ -145,9 +149,18 @@ void main() {
       ios.setPixelRgba(x, y, r, g, b, 255);
     }
   }
-  final baseResized = img.copyResize(src,
-      width: 983, height: 983, interpolation: img.Interpolation.cubic);
-  img.compositeImage(ios, baseResized, dstX: (1024 - 983) ~/ 2, dstY: (1024 - 983) ~/ 2);
+  final baseResized = img.copyResize(
+    src,
+    width: 983,
+    height: 983,
+    interpolation: img.Interpolation.cubic,
+  );
+  img.compositeImage(
+    ios,
+    baseResized,
+    dstX: (1024 - 983) ~/ 2,
+    dstY: (1024 - 983) ~/ 2,
+  );
   File(_iosPath).writeAsBytesSync(img.encodePng(ios));
   stdout.writeln('OK: $_iosPath');
 
@@ -161,8 +174,12 @@ void main() {
   for (final name in masks.keys) {
     final power = masks[name]!;
     const size = 512;
-    final preview = img.copyResize(foreground,
-        width: size, height: size, interpolation: img.Interpolation.cubic);
+    final preview = img.copyResize(
+      foreground,
+      width: size,
+      height: size,
+      interpolation: img.Interpolation.cubic,
+    );
     // Auf Weiss kompositen (Launcher-Hintergrund hell) zur Sichtpruefung.
     final flat = img.Image(width: size, height: size, numChannels: 4);
     img.fill(flat, color: img.ColorRgba8(255, 255, 255, 255));

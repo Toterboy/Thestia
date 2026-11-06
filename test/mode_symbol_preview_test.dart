@@ -33,11 +33,15 @@ void main() {
 
     final faelle = <String, Widget Function(Color)>{
       'transit_spark': (c) => CustomPaint(
-          painter: TransitSparkPainter(c), size: const Size(120, 120)),
-      'find_spark': (c) => CustomPaint(
-          painter: FindSparkPainter(c), size: const Size(120, 120)),
+        painter: TransitSparkPainter(c),
+        size: const Size(120, 120),
+      ),
+      'find_spark': (c) =>
+          CustomPaint(painter: FindSparkPainter(c), size: const Size(120, 120)),
       'zufallschat': (c) => CustomPaint(
-          painter: QuestionChatPainter(c), size: const Size(120, 120)),
+        painter: QuestionChatPainter(c),
+        size: const Size(120, 120),
+      ),
     };
 
     // Farben wie in der Kachel: ausgewählt (auf Primärfläche) und nicht
@@ -52,21 +56,23 @@ void main() {
       for (final eintrag in faelle.entries) {
         final datei = File('${out.path}/${eintrag.key}_$variant.png');
         final key = GlobalKey();
-        await tester.pumpWidget(MaterialApp(
-          home: RepaintBoundary(
-            key: key,
-            child: Container(
-              color: flaeche,
-              padding: const EdgeInsets.all(40),
-              child: eintrag.value(farbe),
+        await tester.pumpWidget(
+          MaterialApp(
+            home: RepaintBoundary(
+              key: key,
+              child: Container(
+                color: flaeche,
+                padding: const EdgeInsets.all(40),
+                child: eintrag.value(farbe),
+              ),
             ),
           ),
-        ));
+        );
         await tester.pumpAndSettle();
 
         await tester.runAsync(() async {
-          final randung = key.currentContext?.findRenderObject()
-              as RenderRepaintBoundary?;
+          final randung =
+              key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
           if (randung == null) {
             debugPrint('KEINE RANDUNG fuer ${eintrag.key}');
             return;

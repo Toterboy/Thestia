@@ -52,11 +52,11 @@ void main() {
 
     test('Ohne Flag: URL-Heuristik greift (Platzhalter-Config → Demo)', () {
       bool resolve(String baseUrl) => resolveDemoMode(
-            isReleaseMode: false,
-            isSupabaseInitialized: false,
-            demoModeFlag: false,
-            baseUrl: baseUrl,
-          );
+        isReleaseMode: false,
+        isSupabaseInitialized: false,
+        demoModeFlag: false,
+        baseUrl: baseUrl,
+      );
 
       expect(resolve('https://example.com'), isTrue);
       expect(resolve('http://localhost:8080'), isTrue);

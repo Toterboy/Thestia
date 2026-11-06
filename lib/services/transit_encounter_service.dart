@@ -16,16 +16,16 @@ import 'package:thestia/utils/best_effort.dart';
 /// datensparsam: Nur Token + Zeitstempel, keine Positionsdaten.
 class TransitEncounterService {
   TransitEncounterService([LocalStorage? storage])
-      // SECURITY (Audit 2026-09-26): Default ist jetzt der Keystore.
-      //
-      // Vorher bekam der Service `localStorageProvider`, im Betrieb also
-      // SharedPreferences = Klartext. Der Cache enthaelt BEGEHNACHWEISE
-      // (welche Geraete waren per BLE in Funkreichweite, wann) - das ist
-      // ein Ortungsdatum (DSGVO Art. 9), kein "nur ein Token". Die
-      // restlichen Art.-9-Preferenzen liegen bereits im Keystore
-      // (user_preferences_provider.dart:374), dieser Store war die
-      // Ausnahme.
-      : _storage = storage ?? SecurePreferencesStorage();
+    // SECURITY (Audit 2026-09-26): Default ist jetzt der Keystore.
+    //
+    // Vorher bekam der Service `localStorageProvider`, im Betrieb also
+    // SharedPreferences = Klartext. Der Cache enthaelt BEGEHNACHWEISE
+    // (welche Geraete waren per BLE in Funkreichweite, wann) - das ist
+    // ein Ortungsdatum (DSGVO Art. 9), kein "nur ein Token". Die
+    // restlichen Art.-9-Preferenzen liegen bereits im Keystore
+    // (user_preferences_provider.dart:374), dieser Store war die
+    // Ausnahme.
+    : _storage = storage ?? SecurePreferencesStorage();
 
   final LocalStorage _storage;
   static const String _key = 'transit_encounters';
@@ -66,10 +66,7 @@ class TransitEncounterService {
   void recordEncounter(String token) {
     if (token.length < 8) return;
     _purgeExpired();
-    _cache[token] = TransitEncounter(
-      token: token,
-      seenAt: DateTime.now(),
-    );
+    _cache[token] = TransitEncounter(token: token, seenAt: DateTime.now());
   }
 
   /// Frische Encounters sortiert (neueste zuerst) - fuer die

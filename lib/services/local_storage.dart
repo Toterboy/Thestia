@@ -13,6 +13,7 @@ abstract class LocalStorage {
   Future<String?> getString(String key);
   Future<void> saveBool(String key, bool value);
   Future<bool?> getBool(String key);
+
   /// Speichert eine Ganzzahl (z. B. zuletzt gezeigter WhatsNew-Build).
   Future<void> saveInt(String key, int value);
   Future<int?> getInt(String key);
@@ -71,10 +72,7 @@ class SecurePreferencesStorage implements LocalStorage {
 
   /// Migriert einen vorhandenen Klartext-Wert aus SharedPreferences in den
   /// sicheren Speicher und löscht die Klartext-Kopie.
-  Future<void> migrateStringFrom(
-    SharedPreferences prefs,
-    String key,
-  ) async {
+  Future<void> migrateStringFrom(SharedPreferences prefs, String key) async {
     if (await getString(key) != null) return; // Bereits migriert.
     final legacy = prefs.getString(key);
     if (legacy != null && legacy.isNotEmpty) {

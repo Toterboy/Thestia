@@ -44,17 +44,10 @@ class VerificationCrypto {
     );
 
     final gcm = GCMBlockCipher(AESEngine())
-      ..init(
-        true,
-        AEADParameters(KeyParameter(key), 128, iv, Uint8List(0)),
-      );
+      ..init(true, AEADParameters(KeyParameter(key), 128, iv, Uint8List(0)));
     final cipher = gcm.process(plaintext);
 
-    return (
-      cipher: cipher,
-      keyB64: base64Encode(key),
-      ivB64: base64Encode(iv),
-    );
+    return (cipher: cipher, keyB64: base64Encode(key), ivB64: base64Encode(iv));
   }
 
   /// Verschluesselt Videobytes OHNE den UI-Thread zu blockieren.
@@ -68,8 +61,9 @@ class VerificationCrypto {
   ///
   /// compute() legt die Arbeit in ein Hintergrund-Isolate. Das Muster
   /// stand schon hier (encryptArgs) - es wurde nur nie benutzt.
-  static Future<({Uint8List cipher, String keyB64, String ivB64})>
-      encryptAsync(Uint8List plaintext) async {
+  static Future<({Uint8List cipher, String keyB64, String ivB64})> encryptAsync(
+    Uint8List plaintext,
+  ) async {
     final key = Uint8List.fromList(
       List<int>.generate(_keyLength, (_) => _random.nextInt(256)),
     );
@@ -77,11 +71,7 @@ class VerificationCrypto {
       List<int>.generate(_ivLength, (_) => _random.nextInt(256)),
     );
     final cipher = await compute(encryptArgs, (plaintext, key, iv));
-    return (
-      cipher: cipher,
-      keyB64: base64Encode(key),
-      ivB64: base64Encode(iv),
-    );
+    return (cipher: cipher, keyB64: base64Encode(key), ivB64: base64Encode(iv));
   }
 
   /// Verschluesselung fuer einen grossen Block: AES-GCM in pure Dart
@@ -90,20 +80,13 @@ class VerificationCrypto {
   static Uint8List encryptArgs((Uint8List, Uint8List, Uint8List) args) {
     final (plaintext, key, iv) = args;
     final gcm = GCMBlockCipher(AESEngine())
-      ..init(
-        true,
-        AEADParameters(KeyParameter(key), 128, iv, Uint8List(0)),
-      );
+      ..init(true, AEADParameters(KeyParameter(key), 128, iv, Uint8List(0)));
     return gcm.process(plaintext);
   }
 
   /// Entschluesselt (serverseitig nicht noetig - das macht die Function).
   /// Hier fuer Tests und Roundtrip-Pruefungen.
-  static Uint8List decrypt(
-    Uint8List cipher,
-    Uint8List key,
-    Uint8List iv,
-  ) {
+  static Uint8List decrypt(Uint8List cipher, Uint8List key, Uint8List iv) {
     final gcm = GCMBlockCipher(AESEngine())
       ..init(false, AEADParameters(KeyParameter(key), 128, iv, Uint8List(0)));
     return gcm.process(cipher);

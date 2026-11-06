@@ -23,8 +23,10 @@ import 'package:thestia/widgets/pill_tab_bar.dart';
 /// gezeichnet.
 void main() {
   testWidgets('UI-Vorschau schreiben', (tester) async {
-    final out = Directory(r'C:\Users\Thoralf\AppData\Local\Temp\opencode'
-        r'\m133\ui');
+    final out = Directory(
+      r'C:\Users\Thoralf\AppData\Local\Temp\opencode'
+      r'\m133\ui',
+    );
     try {
       if (!out.existsSync()) out.createSync(recursive: true);
     } catch (_) {
@@ -35,19 +37,21 @@ void main() {
 
     Future<void> schreibe(String name, Widget widget) async {
       final key = GlobalKey();
-      await tester.pumpWidget(MaterialApp(
-        home: RepaintBoundary(
-          key: key,
-          child: Scaffold(
-            backgroundColor: const Color(0xFFF7F5F8),
-            body: Center(child: widget),
+      await tester.pumpWidget(
+        MaterialApp(
+          home: RepaintBoundary(
+            key: key,
+            child: Scaffold(
+              backgroundColor: const Color(0xFFF7F5F8),
+              body: Center(child: widget),
+            ),
           ),
         ),
-      ));
+      );
       await tester.pumpAndSettle();
       await tester.runAsync(() async {
-        final randung = key.currentContext?.findRenderObject()
-            as RenderRepaintBoundary?;
+        final randung =
+            key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
         if (randung == null) {
           debugPrint('KEINE RANDUNG fuer $name');
           return;
@@ -55,8 +59,9 @@ void main() {
         final bild = await randung.toImage();
         final daten = await bild.toByteData(format: ui.ImageByteFormat.png);
         if (daten == null) return;
-        await File('${out.path}/$name.png')
-            .writeAsBytes(daten.buffer.asUint8List());
+        await File(
+          '${out.path}/$name.png',
+        ).writeAsBytes(daten.buffer.asUint8List());
         debugPrint('geschrieben: $name.png');
       });
       await tester.pumpAndSettle();
@@ -113,8 +118,8 @@ void main() {
     );
     await tester.pumpAndSettle();
     await tester.runAsync(() async {
-      final randung = navKey.currentContext?.findRenderObject()
-          as RenderRepaintBoundary?;
+      final randung =
+          navKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (randung == null) {
         debugPrint('KEINE RANDUNG fuer bottom_navigation');
         return;
@@ -122,47 +127,17 @@ void main() {
       final bild = await randung.toImage();
       final daten = await bild.toByteData(format: ui.ImageByteFormat.png);
       if (daten == null) return;
-      await File('${out.path}/bottom_navigation.png')
-          .writeAsBytes(daten.buffer.asUint8List());
+      await File(
+        '${out.path}/bottom_navigation.png',
+      ).writeAsBytes(daten.buffer.asUint8List());
       debugPrint('geschrieben: bottom_navigation.png');
     });
 
     // 3) Die Interessen-Seite: Pillen-Leiste ueber dem Inhalt, Stift
     //    nur rechts oben.
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Interessen'),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: () {},
-            ),
-          ],
-        ),
-        body: Column(
-          children: [
-            PillTabBar(
-              controller: controller,
-              tabs: const [
-                PillTab(label: 'Gesendet', icon: Icons.outgoing_mail),
-                PillTab(label: 'Erhalten', icon: Icons.call_received),
-                PillTab(label: 'Funken', icon: Icons.flash_on, count: 3),
-              ],
-            ),
-            const Expanded(
-              child: Center(child: Text('Inhalt des Reiters')),
-            ),
-          ],
-        ),
-      ),
-    ));
-    await tester.pumpAndSettle();
-    final key = GlobalKey();
-    await tester.pumpWidget(MaterialApp(
-      home: RepaintBoundary(
-        key: key,
-        child: Scaffold(
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
           appBar: AppBar(
             title: const Text('Interessen'),
             actions: [
@@ -182,24 +157,58 @@ void main() {
                   PillTab(label: 'Funken', icon: Icons.flash_on, count: 3),
                 ],
               ),
-              const Expanded(
-                child: Center(child: Text('Inhalt des Reiters')),
-              ),
+              const Expanded(child: Center(child: Text('Inhalt des Reiters'))),
             ],
           ),
         ),
       ),
-    ));
+    );
+    await tester.pumpAndSettle();
+    final key = GlobalKey();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RepaintBoundary(
+          key: key,
+          child: Scaffold(
+            appBar: AppBar(
+              title: const Text('Interessen'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined),
+                  onPressed: () {},
+                ),
+              ],
+            ),
+            body: Column(
+              children: [
+                PillTabBar(
+                  controller: controller,
+                  tabs: const [
+                    PillTab(label: 'Gesendet', icon: Icons.outgoing_mail),
+                    PillTab(label: 'Erhalten', icon: Icons.call_received),
+                    PillTab(label: 'Funken', icon: Icons.flash_on, count: 3),
+                  ],
+                ),
+                const Expanded(
+                  child: Center(child: Text('Inhalt des Reiters')),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     await tester.runAsync(() async {
-      final randung = key.currentContext?.findRenderObject()
-          as RenderRepaintBoundary?;
+      final randung =
+          key.currentContext?.findRenderObject() as RenderRepaintBoundary?;
       if (randung == null) return;
       final bild = await randung.toImage();
       final daten = await bild.toByteData(format: ui.ImageByteFormat.png);
       if (daten == null) return;
-      await File('${out.path}/interessen_screen.png')
-          .writeAsBytes(daten.buffer.asUint8List());
+      await File(
+        '${out.path}/interessen_screen.png',
+      ).writeAsBytes(daten.buffer.asUint8List());
       debugPrint('geschrieben: interessen_screen.png');
     });
   });

@@ -15,8 +15,9 @@ import 'package:thestia/models/app_settings.dart';
 void main() {
   group('Chat-Hintergrund: einmaliger Hinweis', () {
     test('der Hinweis wird beim ersten Chat tatsaechlich gezeigt', () {
-      final src = File('lib/screens/chat/chat_detail_screen.dart')
-          .readAsStringSync();
+      final src = File(
+        'lib/screens/chat/chat_detail_screen.dart',
+      ).readAsStringSync();
 
       expect(src.contains('_maybeShowBackgroundHint'), isTrue);
       // Und er wird beim Oeffnen aufgerufen, nicht nur definiert.
@@ -24,8 +25,9 @@ void main() {
     });
 
     test('der Hinweis kommt nach dem ersten Frame, nicht im initState', () {
-      final src = File('lib/screens/chat/chat_detail_screen.dart')
-          .readAsStringSync();
+      final src = File(
+        'lib/screens/chat/chat_detail_screen.dart',
+      ).readAsStringSync();
 
       // Riverpod verbietet Provider-Schreibzugriffe waehrend des Aufbaus;
       // die Datei erklaert das ausdruecklich. Ein showDialog vor dem Frame
@@ -36,34 +38,40 @@ void main() {
     });
 
     test('"Spaeter" merkt den Hinweis ebenfalls - sonst kommt er wieder', () {
-      final src = File('lib/screens/chat/chat_detail_screen.dart')
-          .readAsStringSync();
+      final src = File(
+        'lib/screens/chat/chat_detail_screen.dart',
+      ).readAsStringSync();
 
       // Das Merken steht NACH dem Dialog, also fuer beide Ausgaenge.
       final dialogPos = src.indexOf('await showDialog<bool>');
-      final merkenPos = src.indexOf('await settingsNotifier.markChatBackgroundSeen()');
+      final merkenPos = src.indexOf(
+        'await settingsNotifier.markChatBackgroundSeen()',
+      );
       expect(merkenPos, greaterThan(dialogPos));
     });
 
     test('der Dialog enthaelt den echten Picker, nicht nur Text', () {
-      final src = File('lib/screens/chat/chat_detail_screen.dart')
-          .readAsStringSync();
+      final src = File(
+        'lib/screens/chat/chat_detail_screen.dart',
+      ).readAsStringSync();
       expect(src.contains('ChatBackgroundPicker()'), isTrue);
     });
 
     test('der Hinweis ist abschaltbar und kommt nicht bei jedem Chat', () {
       // Default aus, und der Bildschirm fragt danach.
       expect(const AppSettings().chatBackgroundSeen, isFalse);
-      final src = File('lib/screens/chat/chat_detail_screen.dart')
-          .readAsStringSync();
+      final src = File(
+        'lib/screens/chat/chat_detail_screen.dart',
+      ).readAsStringSync();
       expect(src.contains('settings.chatBackgroundSeen'), isTrue);
     });
   });
 
   group('Passkey: kein blindes Zweitregisterieren', () {
     test('die Einrichtung prueft vorher, ob ein Passkey existiert', () {
-      final src = File('lib/screens/onboarding/settings_privacy_once_screen.dart')
-          .readAsStringSync();
+      final src = File(
+        'lib/screens/onboarding/settings_privacy_once_screen.dart',
+      ).readAsStringSync();
 
       expect(src.contains('PasskeyAuth.hasRegisteredPasskey()'), isTrue);
       // Die Pruefung muss VOR dem Register kommen.
@@ -78,8 +86,9 @@ void main() {
       // Registrierung ein CAPTCHA-Token und lehnt die Challenge-Anfrage
       // sonst mit "captcha_failed" ab - BEVOR der native Dialog
       // erscheint. Die Einrichtung schlug deshalb immer fehl.
-      final src = File('lib/screens/onboarding/settings_privacy_once_screen.dart')
-          .readAsStringSync();
+      final src = File(
+        'lib/screens/onboarding/settings_privacy_once_screen.dart',
+      ).readAsStringSync();
 
       expect(src.contains('showCaptchaChallenge(context)'), isTrue);
       expect(
@@ -89,8 +98,9 @@ void main() {
     });
 
     test('der Bestandsfall gilt als erledigt, nicht als Fehler', () {
-      final src = File('lib/screens/onboarding/settings_privacy_once_screen.dart')
-          .readAsStringSync();
+      final src = File(
+        'lib/screens/onboarding/settings_privacy_once_screen.dart',
+      ).readAsStringSync();
 
       // Sonst zeigt der Screen "Einrichtung fehlgeschlagen", obwohl das
       // Konto in Ordnung ist.

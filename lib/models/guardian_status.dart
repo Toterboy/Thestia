@@ -108,8 +108,7 @@ class GuardianStatus {
   /// Das ist ein eigener Zustand und nicht dasselbe wie "es gab nie
   /// eine Freigabe": Der Jugendliche soll sehen, dass die Freigabe
   /// existiert hat und dass sie endgueltig vorbei ist.
-  bool get isEnded =>
-      status == 'revoked' || status == 'expired';
+  bool get isEnded => status == 'revoked' || status == 'expired';
 
   /// Die E-Mail-Adresse des Elternteils wurde geloescht.
   bool get isGuardianEmailDeleted => emailDeletedAt != null;

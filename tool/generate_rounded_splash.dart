@@ -1,11 +1,13 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:image/image.dart' as img;
 
 Future<void> main() async {
   const sourcePath = 'assets/images/thestia_icon_base.png';
-  const roundedForegroundPath = 'assets/images/thestia_icon_rounded_foreground.png';
-  const roundedBackgroundPath = 'assets/images/thestia_icon_rounded_background.png';
+  const roundedForegroundPath =
+      'assets/images/thestia_icon_rounded_foreground.png';
+  const roundedBackgroundPath =
+      'assets/images/thestia_icon_rounded_background.png';
 
   final sourceBytes = File(sourcePath).readAsBytesSync();
   final source = img.decodePng(sourceBytes);
@@ -55,10 +57,8 @@ Future<void> main() async {
 
 bool _isInsideRoundedRect(double x, double y, double size, double radius) {
   // Check if point is in the main rectangular area (ignoring corners)
-  final inMainRect = x >= radius &&
-      x <= size - radius &&
-      y >= radius &&
-      y <= size - radius;
+  final inMainRect =
+      x >= radius && x <= size - radius && y >= radius && y <= size - radius;
 
   if (inMainRect) return true;
 

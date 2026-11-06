@@ -187,8 +187,11 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
     if (question == null || selected == null || _submitting) return;
     setState(() => _submitting = true);
     final service = ref.read(quizServiceProvider);
-    final result =
-        await service.submitAnswer(widget.matchId, question.id, selected);
+    final result = await service.submitAnswer(
+      widget.matchId,
+      question.id,
+      selected,
+    );
     if (!mounted) return;
     setState(() {
       _submitting = false;
@@ -236,16 +239,16 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final state = _state;
     if (state == null) {
       return Scaffold(
         appBar: AppBar(title: Text(L10n.t(context, 'quiz.title'))),
-        body: Center(child: Text(_error ?? L10n.t(context, 'common.unknownError'))),
+        body: Center(
+          child: Text(_error ?? L10n.t(context, 'common.unknownError')),
+        ),
       );
     }
 
@@ -328,10 +331,26 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
         ),
         child: ColorFiltered(
           colorFilter: const ColorFilter.matrix(<double>[
-            0.2126, 0.7152, 0.0722, 0, 0,
-            0.2126, 0.7152, 0.0722, 0, 0,
-            0.2126, 0.7152, 0.0722, 0, 0,
-            0, 0, 0, 1, 0,
+            0.2126,
+            0.7152,
+            0.0722,
+            0,
+            0,
+            0.2126,
+            0.7152,
+            0.0722,
+            0,
+            0,
+            0.2126,
+            0.7152,
+            0.0722,
+            0,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
           ]),
           child: image,
         ),
@@ -370,8 +389,8 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
         Text(
           L10n.t(context, 'quiz.startPersonalHint'),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
@@ -407,7 +426,9 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                     : null,
                 alignment: Alignment.centerLeft,
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 12),
+                  horizontal: 16,
+                  vertical: 12,
+                ),
               ),
               child: Text(question.options[i]),
             ),
@@ -415,8 +436,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
         }),
         const SizedBox(height: 16),
         FilledButton(
-          onPressed:
-              (_selectedIndex == null || _submitting) ? null : _submit,
+          onPressed: (_selectedIndex == null || _submitting) ? null : _submit,
           child: _submitting
               ? const SizedBox(
                   width: 18,
@@ -448,9 +468,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
               if (Navigator.of(context).canPop()) {
                 context.pop();
               } else {
-                context.go(
-                  AppRoutes.chatDetailPath(widget.matchId.toString()),
-                );
+                context.go(AppRoutes.chatDetailPath(widget.matchId.toString()));
               }
             },
             child: Text(L10n.t(context, 'quiz.toChat')),
@@ -589,10 +607,9 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
                   children: [
                     Text(
                       L10n.t(context, 'quiz.partnerIntroTitle'),
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleSmall
-                          ?.copyWith(fontWeight: FontWeight.bold),
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 4),
@@ -612,8 +629,7 @@ class _QuizScreenState extends ConsumerState<QuizScreen>
             if (Navigator.of(context).canPop()) {
               context.pop();
             } else {
-              context.go(
-                  AppRoutes.chatDetailPath(widget.matchId.toString()));
+              context.go(AppRoutes.chatDetailPath(widget.matchId.toString()));
             }
           },
           icon: const Icon(Icons.chat_bubble_outline),
