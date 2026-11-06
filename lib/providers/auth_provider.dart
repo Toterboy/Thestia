@@ -479,10 +479,20 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
       _ref.read(pendingVerificationEmailProvider.notifier).state = null;
       _ref.read(pendingVerificationCredentialsProvider.notifier).state = null;
       state = const AsyncValue.data(true);
-      // E-Mail-Status sofort neu prüfen (statt auf den 3-s-Poller zu
-      // warten): Verhindert kurzes Aufblitzen des Verifikations-Screens
-      // direkt nach dem Login.
-      _ref.invalidate(emailConfirmedProvider);
+      // Der E-Mail-Status wird sofort neu geprueft (statt auf den
+      // 3-s-Poller zu warten) - das verhindert ein kurzes Aufblitzen
+      // des Verifikations-Screens direkt nach dem Login.
+      //
+      // WICHTIG (06.11.2026): Hier darf NICHT
+      // "invalidate(emailConfirmedProvider)" stehen. Der Erzeuger des
+      // Providers hoert im Konstruktor auf den authProvider - eine
+      // Invalidierung aus dem authProvider heraus ist ein Kreis, und
+      // Riverpod wirft dann "CircularDependencyError". Live im Emulator
+      // gesehen: die Anmeldung war erfolgreich, trotzdem blieb der
+      // Login-Screen mit einer Fehlermeldung stehen.
+      //
+      // Der Notifier prueft selbst: sein Listener auf den authProvider
+      // laeuft beim Anmelden ohnehin (siehe EmailConfirmedNotifier).
       unawaited(_syncFromServer());
     } catch (e, st) {
       if (kDebugMode) {
@@ -509,8 +519,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
       _ref.read(pendingVerificationEmailProvider.notifier).state = null;
       _ref.read(pendingVerificationCredentialsProvider.notifier).state = null;
       state = const AsyncValue.data(true);
-      // Wie im Passwort-Pfad: E-Mail-Status sofort neu prüfen.
-      _ref.invalidate(emailConfirmedProvider);
+      // Wie im Passwort-Pfad: der E-Mail-Status wird sofort neu geprueft.
+      // Das darf hier KEIN invalidate(emailConfirmedProvider) sein -
+      // siehe die Begruendung im login()-Pfad (Riverpod-Zirkel).
       unawaited(_syncFromServer());
     } catch (e, st) {
       if (kDebugMode) {
@@ -895,7 +906,15 @@ class EmailConfirmedNotifier extends StateNotifier<bool?>
     _ref.listen(authProvider, (prev, next) {
       final angemeldet = next.valueOrNull ?? false;
       if (angemeldet) {
-        if (_timer == null) _startPolling();
+        if (_timer == null) {
+          _startPolling();
+        } else {
+          // Der Poller laeuft schon: trotzdem sofort pruefen. Vorher
+          // wurde das ueber "invalidate(emailConfirmedProvider)" vom
+          // authProvider aus erledigt - das war der Kreis (siehe
+          // auth_provider.dart, login()).
+          unawaited(_check());
+        }
       } else {
         if (state != null) state = null;
         _stopPolling();

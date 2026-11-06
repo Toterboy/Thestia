@@ -23,7 +23,20 @@ const String _customFileName = 'chat_bg_custom.jpg';
 /// Hintergrund" oder ein eigenes Bild (Galerie, lokal unter
 /// `chat_bg_custom.jpg` im App-Verzeichnis abgelegt).
 class ChatBackgroundPicker extends ConsumerWidget {
-  const ChatBackgroundPicker({super.key});
+  const ChatBackgroundPicker({super.key, this.festeBreite});
+
+  /// Feste Breite in Logik-Pixeln - fuer die Verwendung in einem
+  /// AlertDialog.
+  ///
+  /// WARUM (06.11.2026): Flutter packt den Inhalt eines AlertDialog in
+  /// ein IntrinsicWidth und fragt damit die intrinsische Breite der
+  /// Kinder ab. Eine Liste (GridView/ListView) kann die nicht liefern -
+  /// Flutter wirft dann "RenderViewport does not support returning
+  /// intrinsic dimensions" und der Dialog bleibt leer.
+  ///
+  /// Mit einer festen Breite liefert der SizedBox die Breite, und der
+  /// Dialog muss die Liste nicht mehr fragen.
+  final double? festeBreite;
 
   static final ImagePicker _picker = ImagePicker();
 
@@ -133,9 +146,20 @@ class ChatBackgroundPicker extends ConsumerWidget {
       ...ChatBackgrounds.presets,
       ChatBackgrounds.custom,
     ];
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
+    // WICHTIG (06.11.2026): Das Grid darf NICHT shrink-wrappen, wenn es
+    // in einem scrollbaren AlertDialog steht. Flutter wirft dann
+    // "RenderShrinkWrappingViewport does not support returning intrinsic
+    // dimensions" - der Dialog bleibt leer und der Chat-Bildschirm ist
+    // damit unbrauchbar (live im Emulator gesehen: der Dialog ist beim
+    // ersten Chat-Besuch mit einem leeren Bildschirm gestorben).
+    //
+    // Die Loesung ist die, die Flutter selbst nennt: dem Viewport
+    // lockere Constraints geben statt die intrinsic dimensions zu
+    // messen. Das Grid bekommt eine feste Hoehe und scrollt intern -
+    // so sind alle Hintergruende erreichbar und der Dialog muss nicht
+    // selbst zu scrollen.
+    final raster = GridView.builder(
+      physics: const BouncingScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
         mainAxisSpacing: 8,
@@ -173,6 +197,8 @@ class ChatBackgroundPicker extends ConsumerWidget {
         );
       },
     );
+
+    return SizedBox(height: 280, width: festeBreite, child: raster);
   }
 }
 

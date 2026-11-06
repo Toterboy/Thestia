@@ -277,7 +277,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
           children: [
             Text(L10n.t(ctx, 'chatbg.hintBody')),
             const SizedBox(height: 16),
-            const ChatBackgroundPicker(),
+            // Feste Breite: der AlertDialog fragt sonst die intrinsische
+            // Breite der Liste ab - und Flutter kann die nicht liefern
+            // ("RenderViewport does not support returning intrinsic
+            // dimensions"). Live im Emulator gesehen: der Dialog blieb
+            // leer und der Chat-Bildschirm war unbrauchbar.
+            const ChatBackgroundPicker(festeBreite: 260),
           ],
         ),
         actions: [

@@ -87,7 +87,14 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
     WidgetsBinding.instance.addObserver(this);
     // NUTZERWUNSCH: Keine Benachrichtigung, solange dieser Chat sichtbar
     // ist (Nachrichten erscheinen direkt auf dem Bildschirm).
-    ref.read(activeChatIdProvider.notifier).state = widget.sessionId;
+    //
+    // WICHTIG (06.11.2026): Riverpod verbietet Provider-Schreibzugriffe
+    // im Lebenszyklus ("Tried to modify a provider while the widget tree
+    // was building"). Die Zuweisung wartet deshalb einen Frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(activeChatIdProvider.notifier).state = widget.sessionId;
+    });
     _loadSession();
     _startTimer();
   }

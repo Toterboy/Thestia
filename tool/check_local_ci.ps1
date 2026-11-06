@@ -248,6 +248,7 @@ if (Soll 'static-checks') {
         (G 'Website-Pruefer Selbsttest' @($py, 'tool/check_web_pages_selftest.py'))
         (G 'Keine leeren catch-Bloecke' @($py, 'tool/check_no_empty_catches.py'))
         (G 'mounted nach await' @($py, 'tool/check_async_setstate.py'))
+        (G 'Provider nur nach dem Frame' @($py, 'tool/check_provider_in_lifecycle.py'))
         (G 'Mojibake' @($py, 'tool/check_mojibake.py', '--skip-known'))
         (G '.gitignore auf Luecken' @($py, 'tool/check_gitignore.py'))
         (G 'PNG-Dateien auf Korruption' @($py, 'tool/check_png_integrity.py'))

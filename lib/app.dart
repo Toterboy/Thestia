@@ -76,7 +76,20 @@ class _AppState extends ConsumerState<App> {
     GlobalRelayInbox.notifier = _showRelayInboxNotification;
     final inbox = GlobalRelayInbox(ref);
     _inbox = inbox;
-    ref.read(globalRelayInboxProvider.notifier).state = inbox;
+    // WICHTIG (06.11.2026): Ein Provider darf im initState NICHT
+    // veraendert werden. Riverpod wirft dann "Tried to modify a
+    // provider while the widget tree was building" - im Debug-Build
+    // als Ausnahme (live im Emulator gesehen), im Release als
+    // inkonsistenter Zustand. Die Zuweisung wartet deshalb einen
+    // Frame.
+    //
+    // Aktuell liest niemand den Provider - die Zuweisung ist der
+    // Anker fuer den globalen Relay-Eingang. Sie bleibt, damit der
+    // Zustand fuer alle erreichbar ist, die ihn brauchen.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(globalRelayInboxProvider.notifier).state = inbox;
+    });
     inbox.start();
     _checkMinBuildInBackground();
   }

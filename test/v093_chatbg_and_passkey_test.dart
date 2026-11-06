@@ -54,7 +54,13 @@ void main() {
       final src = File(
         'lib/screens/chat/chat_detail_screen.dart',
       ).readAsStringSync();
-      expect(src.contains('ChatBackgroundPicker()'), isTrue);
+      // Der Picker wird mit fester Breite eingebaut: der AlertDialog
+      // fragt sonst die intrinsische Breite der Liste ab, und die kann
+      // Flutter nicht liefern ("RenderViewport does not support
+      // returning intrinsic dimensions" - live im Emulator gesehen:
+      // der Dialog blieb leer).
+      expect(src.contains('ChatBackgroundPicker(festeBreite:'), isTrue);
+      expect(src.contains('ChatBackgroundPicker()'), isFalse);
     });
 
     test('der Hinweis ist abschaltbar und kommt nicht bei jedem Chat', () {

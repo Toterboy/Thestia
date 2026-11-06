@@ -176,7 +176,7 @@ Future<Map<String, dynamic>> _session(
   anfrage.headers.set('apikey', secret);
   anfrage.headers.set('Authorization', 'Bearer $secret');
   anfrage.headers.contentType = ContentType.json;
-  anfrage.write(jsonEncode({'email': email, 'password': 'P2pTest!2026#a'}));
+  anfrage.write(jsonEncode({'email': email, 'password': 'P2pTest2026_a'}));
   final antwort = await anfrage.close();
   final text = await antwort.transform(utf8.decoder).join();
   if (antwort.statusCode != 200) {
