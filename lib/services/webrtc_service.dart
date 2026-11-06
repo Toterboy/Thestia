@@ -365,7 +365,20 @@ class WebRTCService {
 
     _signalingChannel = Supabase.instance.client.channel(
       channelName,
-      opts: const RealtimeChannelConfig(private: true),
+      opts: const RealtimeChannelConfig(
+        private: true,
+        // self: true (06.11.2026): Der Absender bekommt seine eigene
+        // Broadcast-Nachricht zurueck. Die Vorgabe ist 'self: false' -
+        // damit konnte die Gegenseite NIE das Offer empfangen, wenn
+        // beide Konten auf DEMSELBEN Geraet laufen (der haeufigste
+        // Testfall: ein Telefon, zwei Konten). Das Offer blieb im
+        // eigenen Socket stecken, der Handshake kam nie zu Ende.
+        //
+        // Schaden: keine. Die eigene Nachricht wird zwar zugestellt,
+        // aber das Peer-Pinning verwirft sie (from == eigene ID !=
+        // Partner-ID).
+        self: true,
+      ),
     );
 
     final subscribed = Completer<void>();

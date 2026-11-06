@@ -62,11 +62,11 @@ void main() {
     final topic = 'signaling:${ids[0]}:${ids[1]}';
     final channelA = clientA.channel(
       topic,
-      opts: const RealtimeChannelConfig(private: true),
+      opts: const RealtimeChannelConfig(private: true, self: true),
     );
     final channelB = clientB.channel(
       topic,
-      opts: const RealtimeChannelConfig(private: true),
+      opts: const RealtimeChannelConfig(private: true, self: true),
     );
 
     final empfangen = Completer<Map<String, dynamic>>();
