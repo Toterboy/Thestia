@@ -174,6 +174,16 @@ if (Soll 'analyze-and-test') {
     Gate -Name 'analyze-and-test: flutter analyze --fatal-infos' `
         -Argumente @('flutter', 'analyze', '--fatal-infos')
 
+    # Die Formatierung wird seit dem 06.11.2026 mitgeprueft. Ohne
+    # diesen Schritt laeuft der Code still auseinander - niemand
+    # merkt es, bis jemand anderes formatiert.
+    #
+    # third_party/ ist NICHT dabei: das sind fremde Forks, die bei
+    # einem Upstream-Update unveraendert bleiben muessen.
+    Gate -Name 'analyze-and-test: dart format (Dart 3.12)' `
+        -Argumente @('dart', 'format', '--output=none',
+                     '--set-exit-if-changed', 'lib', 'test', 'tool')
+
     if (-not $Schnell) {
         # Die CI baut die .env aus .env.example auf. Der echte lokale
         # .env kann andere Werte haben - dann laeuft der Test lokal

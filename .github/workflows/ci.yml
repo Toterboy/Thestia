@@ -66,6 +66,16 @@ jobs:
       - name: Analyze (muss fehlerfrei sein)
         run: flutter analyze --fatal-infos
 
+      # Die Formatierung wird seit dem 06.11.2026 geprueft. Vorher
+      # konnte der Code still auseinanderlaufen: Dart 3.12 (Tall-Style)
+      # haette 286 von 327 Projekt-Dateien umgeschrieben, und niemand
+      # haette es gemerkt.
+      #
+      # third_party/ ist NICHT dabei: das sind fremde Forks, die bei
+      # einem Upstream-Update unveraendert bleiben muessen.
+      - name: Formatierung (Dart 3.12)
+        run: dart format --output=none --set-exit-if-changed lib test tool
+
       - name: Tests
         run: flutter test
 
