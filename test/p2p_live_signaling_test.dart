@@ -22,6 +22,23 @@ import 'package:thestia/services/webrtc_service.dart';
 /// DER TEST LÄUFT NUR, WENN .env DA IST: Er braucht das echte Projekt
 /// (Zugangsdaten, zwei Konten, Netz). Ohne .env wird er übersprungen -
 /// die CI bleibt davon unberührt.
+///
+/// UND NUR, WENN DIE ZWEI KONTEN EXISTIEREN (06.11.2026): Der Betreiber
+/// hat die Testkonten gelöscht lassen (sie sollten nicht dauerhaft auf
+/// dem Produktivsystem liegen). Ohne sie würde der Test fehlschlagen und
+/// jeden lokalen Testlauf rot machen - das ist ein Testaufbau-Problem,
+/// kein Befund. Deshalb überspringt er in dem Fall mit einer klaren
+/// Meldung.
+///
+/// WIE MAN IHN WIEDER AKTIVIERT: Zwei Konten anlegen und ihre Daten in
+/// die .env schreiben:
+///
+///   P2P_TEST_EMAIL_A=...
+///   P2P_TEST_EMAIL_B=...
+///   P2P_TEST_PASSWORD=...
+///
+/// Ohne diese drei Eintraege werden die alten Adressen
+/// p2p-test-a@thestia.de / p2p-test-b@thestia.de benutzt.
 void main() {
   final env = _ladeEnv();
   final uebersprung = env == null
@@ -38,11 +55,30 @@ void main() {
     final url = e['SUPABASE_URL']!;
     final key = e['SUPABASE_PUBLISHABLE_KEY']!;
     final secret = e['SUPABASE_SECRET_KEY_NEW']!;
+    final emailA = e['P2P_TEST_EMAIL_A'] ?? 'p2p-test-a@thestia.de';
+    final emailB = e['P2P_TEST_EMAIL_B'] ?? 'p2p-test-b@thestia.de';
+    final passwort = e['P2P_TEST_PASSWORD'] ?? 'P2pTest2026_a';
 
     // Zwei Sessions holen (der CAPTCHA-Schutz gilt nur fuer normale
     // Clients; der Secret-Key umgeht ihn).
-    final a = await _session(url, secret, 'p2p-test-a@thestia.de');
-    final b = await _session(url, secret, 'p2p-test-b@thestia.de');
+    final a = await _session(url, secret, emailA, passwort);
+    if (a == null) {
+      markTestSkipped(
+        'das Testkonto $emailA ist nicht vorhanden oder das Passwort '
+        'stimmt nicht - der Live-Test braucht zwei existierende Konten '
+        '(siehe Kommentar oben)',
+      );
+      return;
+    }
+    final b = await _session(url, secret, emailB, passwort);
+    if (b == null) {
+      markTestSkipped(
+        'das Testkonto $emailB ist nicht vorhanden oder das Passwort '
+        'stimmt nicht - der Live-Test braucht zwei existierende Konten '
+        '(siehe Kommentar oben)',
+      );
+      return;
+    }
     final idA = a['user']['id'] as String;
     final idB = b['user']['id'] as String;
 
@@ -164,10 +200,17 @@ Map<String, String>? _ladeEnv() {
   return werte;
 }
 
-Future<Map<String, dynamic>> _session(
+/// Holt eine Session fuer das Testkonto.
+///
+/// Gibt null zurueck, wenn das Konto nicht existiert oder das Passwort
+/// nicht stimmt - das ist ein Testaufbau-Problem (der Test ueberspringt
+/// dann) und kein Fehler der App. Jeder andere Fehler (Netz, Server)
+/// wirft - das IST ein Befund.
+Future<Map<String, dynamic>?> _session(
   String url,
   String secret,
   String email,
+  String passwort,
 ) async {
   final client = HttpClient();
   final anfrage = await client.postUrl(
@@ -176,11 +219,15 @@ Future<Map<String, dynamic>> _session(
   anfrage.headers.set('apikey', secret);
   anfrage.headers.set('Authorization', 'Bearer $secret');
   anfrage.headers.contentType = ContentType.json;
-  anfrage.write(jsonEncode({'email': email, 'password': 'P2pTest2026_a'}));
+  anfrage.write(jsonEncode({'email': email, 'password': passwort}));
   final antwort = await anfrage.close();
   final text = await antwort.transform(utf8.decoder).join();
-  if (antwort.statusCode != 200) {
-    throw StateError('Login fehlgeschlagen ($email): $text');
+  if (antwort.statusCode == 200) {
+    return jsonDecode(text) as Map<String, dynamic>;
   }
-  return jsonDecode(text) as Map<String, dynamic>;
+  if (antwort.statusCode == 400 && text.contains('invalid_credentials')) {
+    // Das Konto gibt es nicht (oder das Passwort ist falsch).
+    return null;
+  }
+  throw StateError('Login fehlgeschlagen ($email): $text');
 }
