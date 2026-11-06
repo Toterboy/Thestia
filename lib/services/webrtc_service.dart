@@ -268,6 +268,19 @@ class WebRTCService {
   Stream<RTCIceConnectionState> get iceConnectionState =>
       _iceConnectionStateController.stream;
 
+  /// Der LETZTE ICE-Zustand - auch fuer einen Aufrufer, der erst nach
+  /// dem Zustandswechsel zuhört.
+  ///
+  /// WARUM (06.11.2026): Der ICE-Zustand lief ueber einen Broadcast-
+  /// Stream. Ein Broadcast-Stream wiederholt nichts: wer sich spaeter
+  /// anmeldet, bekommt den letzten Zustand nicht mehr zu sehen. Die
+  /// Diagnosezeile im Chat zeigte deshalb dauerhaft "-", obwohl der
+  /// Zustand "checking" war - der Betreiber hatte keine Anhalts-
+  /// punkte.
+  RTCIceConnectionState? get lastIceConnectionState => _lastIceState;
+
+  RTCIceConnectionState? _lastIceState;
+
   bool get isConnected => _isConnected;
 
   /// True, wenn der DataChannel offen und sendebereit ist (v0.9.1:
@@ -360,6 +373,10 @@ class WebRTCService {
       event: 'signal',
       callback: (payload) {
         try {
+          // Die Nutzlast kommt flach an - aber das Feld 'type' hat
+          // der Realtime-Client auf 'broadcast' gesetzt. Deshalb
+          // benutzt die App 'kind' fuer ihre Nachrichtenart (siehe
+          // _handleSignal).
           final msg = Map<String, dynamic>.from(payload as Map);
           unawaited(_routeSignaling(msg));
         } catch (e) {
@@ -454,7 +471,18 @@ class WebRTCService {
 
   /// Verarbeitet EINE Signaling-Nachricht (nur im seriellen Drain rufen).
   Future<void> _handleSignal(Map<String, dynamic> msg) async {
-    final type = msg['type'] as String?;
+    // WICHTIG (06.11.2026): Das Feld heisst 'kind', NICHT 'type'.
+    //
+    // Das realtime_client setzt in send() (realtime_channel.dart:792)
+    //   payload['type'] = 'broadcast';
+    // und ueberschreibt damit das eigene Feld der App. Der Empfaenger
+    // sah darum IMMER type == 'broadcast' statt 'offer'/'answer'/'ice'
+    // - und der Schalter hier fiel bei jedem Fall in 'default'.
+    // Jede Signaling-Nachricht wurde stillschweigend verworfen und der
+    // DataChannel oeffnete nie.
+    //
+    // 'kind' fasst der Client nicht an.
+    final type = msg['kind'] as String?;
     switch (type) {
       case 'offer':
         final sdp = msg['sdp'] as String?;
@@ -466,11 +494,23 @@ class WebRTCService {
         // Identische Offer-Wiederholung: kein Neustart.
         if (sdp == _lastOfferSdp && _peerConnection != null) break;
         _lastOfferSdp = sdp;
-        await handleOffer(_currentPeerId!, sdp);
+        await handleOffer(_currentPeerId!, sdp, generation: msg['gen'] as int?);
         break;
       case 'answer':
         final sdp = msg['sdp'] as String?;
         if (sdp == null || _isConnected || _remoteDescriptionSet) break;
+        // Eine Answer zu einem ALTEN Offer gehoert zu einer
+        // hinweggelegten PeerConnection. Sie darf die aktuelle nicht
+        // setzen - sonst wuerde die echte Answer verworfen.
+        if (isStaleAnswer(msg, _offerGeneration)) {
+          if (kDebugMode) {
+            debugPrint(
+              '[WebRTC] Answer zu einem alten Offer verworfen '
+              "(gen ${msg['gen']}, aktuell $_offerGeneration).",
+            );
+          }
+          break;
+        }
         if (_peerConnection == null || utf8Length(sdp) > _maxSdpBytes) {
           if (kDebugMode) {
             debugPrint('[WebRTC] Answer verworfen (kein PC/zu groß).');
@@ -508,6 +548,25 @@ class WebRTCService {
   /// UTF-8-Länge eines Strings (für Größenlimits).
   static int utf8Length(String s) => utf8.encode(s).length;
 
+  /// Gehört diese Answer zu einem ALTEN Offer?
+  ///
+  /// Szenario (06.11.2026): Nach einem Retry schließt [retryHandshake]
+  /// die alte PeerConnection und erzeugt ein neues Offer. Eine noch
+  /// fliegende ALTE Answer traf danach auf die NEUE PeerConnection,
+  /// setzte dort die Remote-Description - und die ECHTE neue Answer
+  /// wurde verworfen, weil die Remote-Description schon gesetzt war.
+  /// Ab dem zweiten Retry war die Verbindung unreparierbar.
+  ///
+  /// Die Regel: Eine Answer mit einer Generations-Nummer, die nicht zur
+  /// aktuellen gehört, ist veraltet. Eine Answer OHNE Nummer kommt von
+  /// einer älteren App-Version und wird angenommen (sonst wären Alt-
+  /// und Neu-Version nicht miteinander sprechbar).
+  @visibleForTesting
+  static bool isStaleAnswer(Map<String, dynamic> msg, int currentGeneration) {
+    final gen = msg['gen'] as int?;
+    return gen != null && gen != currentGeneration;
+  }
+
   /// Test-Hook: Peer-Pinning-Logik ([_routeSignaling]) ohne echte
   /// Verbindung prüfen.
   @visibleForTesting
@@ -517,6 +576,25 @@ class WebRTCService {
   /// Test-Hook: erwarteten Peer setzen, ohne einen Anruf aufzubauen.
   @visibleForTesting
   set currentPeerIdForTesting(String id) => _currentPeerId = id;
+
+  /// Generations-Nummer des aktuellen Offers.
+  ///
+  /// WARUM (06.11.2026): Nach einem Retry schliesst [retryHandshake]
+  /// die alte PeerConnection und erzeugt ein neues Offer. Eine noch
+  /// fliegende ALTE Answer traf danach auf die NEUE PeerConnection,
+  /// setzte dort die Remote-Description - und die ECHTE neue Answer
+  /// wurde verworfen, weil die Remote-Description schon gesetzt war.
+  /// Die Verbindung war danach unreparierbar ("es ging einmal, jetzt
+  /// nicht mehr").
+  ///
+  /// Die Nummer reist mit dem Offer und wird von der Gegenseite in
+  /// der Answer wiederholt. Eine Answer mit falscher Nummer gehoert zu
+  /// einem alten Offer und wird verworfen.
+  ///
+  /// TOLERANZ: Eine Answer OHNE Nummer kommt von einer aelteren
+  /// App-Version und wird angenommen (sonst waeren Alt- und Neu-
+  /// Version nicht miteinander sprechbar).
+  int _offerGeneration = 0;
 
   /// Sendet das Offer erneut über den BESTEHENDEN Signaling-Kanal
   /// (Retry, ohne neuen Kanal und ohne neue E2E-Session). Nur der
@@ -550,10 +628,16 @@ class WebRTCService {
     final offer = await _peerConnection!.createOffer();
     await _peerConnection!.setLocalDescription(offer);
 
+    // Jedes Offer bekommt eine neue Generation: damit kann die
+    // Gegenseite eine Answer zuordnen, und eine alte Answer kann die
+    // neue PeerConnection nicht mehr verseuchen.
+    _offerGeneration++;
+
     _sendSignaling({
-      'type': 'offer',
+      'kind': 'offer',
       'from': _myUserId ?? _currentPeerId,
       'sdp': offer.sdp,
+      'gen': _offerGeneration,
     });
   }
 
@@ -562,7 +646,11 @@ class WebRTCService {
   /// Der Peer ist seit [connect] fixiert (_currentPeerId) und wird hier
   /// NICHT mehr aus der Nachricht übernommen (Audit H8: ein Angreifer
   /// konnte sich per gefälschtem `from` als Peer etablieren).
-  Future<void> handleOffer(String peerId, String offerSdp) async {
+  Future<void> handleOffer(
+    String peerId,
+    String offerSdp, {
+    int? generation,
+  }) async {
     _currentPeerId ??= peerId;
     // Stale Verbindungsversuche verwerfen, damit ein Re-Offer des
     // Initiators (Retry) übernommen wird statt zu verhallen.
@@ -591,9 +679,12 @@ class WebRTCService {
     await _peerConnection!.setLocalDescription(answer);
 
     _sendSignaling({
-      'type': 'answer',
+      'kind': 'answer',
       'from': _myUserId ?? _currentPeerId,
       'sdp': answer.sdp,
+      // Die Generation des Offers durchreichen: so erkennt der
+      // Initiator, dass die Answer zu seinem aktuellen Offer gehoert.
+      'gen': ?generation,
     });
   }
 
@@ -726,7 +817,7 @@ class WebRTCService {
     _peerConnection!.onIceCandidate = (candidate) {
       if (_currentPeerId != null) {
         _sendSignaling({
-          'type': 'ice',
+          'kind': 'ice',
           'from': _myUserId ?? _currentPeerId,
           'candidate': candidate.candidate,
           'sdpMid': candidate.sdpMid,
@@ -736,6 +827,7 @@ class WebRTCService {
     };
 
     _peerConnection!.onIceConnectionState = (state) {
+      _lastIceState = state;
       _iceConnectionStateController.add(state);
       if (state == RTCIceConnectionState.RTCIceConnectionStateConnected ||
           state == RTCIceConnectionState.RTCIceConnectionStateCompleted) {
@@ -892,7 +984,7 @@ class WebRTCService {
     try {
       await channel.sendBroadcastMessage(
         event: 'signal',
-        payload: {'type': 'relay-ping', 'from': _myUserId ?? _currentPeerId},
+        payload: {'kind': 'relay-ping', 'from': _myUserId ?? _currentPeerId},
       );
     } catch (e) {
       if (kDebugMode) debugPrint('[WebRTC] Relay-Ping fehlgeschlagen: $e');

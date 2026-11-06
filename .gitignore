@@ -206,3 +206,6 @@ docs/*
 # Artefakte gehoeren in ein Release bzw. in die Ablage des
 # Betreibers - nicht in die Historie des Quelltexts.
 releases/
+
+# Lokale P2P-Test-Sessions (enthalten Tokens - niemals committen).
+.p2p_sessions.json

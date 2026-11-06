@@ -2571,8 +2571,18 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                                 child: StreamBuilder(
                                   stream: _p2p?.iceConnectionState,
                                   builder: (context, snap) {
+                                    // Der letzte Zustand wird zusaetzlich
+                                    // direkt vom Service geholt: der
+                                    // Broadcast-Stream wiederholt nichts,
+                                    // wer sich erst spaeter anmeldet, sah
+                                    // sonst gar nichts (die Zeile stand
+                                    // dauerhaft auf "-").
                                     final ice =
-                                        snap.data?.toString().split('.').last ??
+                                        (_p2p?.lastIceConnectionState ??
+                                                snap.data)
+                                            ?.toString()
+                                            .split('.')
+                                            .last ??
                                         '-';
                                     final err = _lastP2pError;
                                     return Text(

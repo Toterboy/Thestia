@@ -90,6 +90,16 @@ class P2PChatService {
   Stream<RTCIceConnectionState> get iceConnectionState =>
       _webrtc.iceConnectionState;
 
+  /// Der LETZTE ICE-Verbindungsstatus - auch fuer einen Aufrufer, der
+  /// erst nach dem Zustandswechsel zuhört.
+  ///
+  /// WARUM (06.11.2026): Der Status lief ueber einen Broadcast-Stream,
+  /// der nichts wiederholt. Die Diagnosezeile im Chat stand darum
+  /// dauerhaft auf "-", obwohl der Zustand "checking" war - wer den
+  /// Aufbau beurteilen wollte, hatte keine Anhaltspunkte.
+  RTCIceConnectionState? get lastIceConnectionState =>
+      _webrtc.lastIceConnectionState;
+
   /// Wake-up-Pings für den Relay-Fallback.
   Stream<void> get relayPing => _webrtc.relayPing;
 

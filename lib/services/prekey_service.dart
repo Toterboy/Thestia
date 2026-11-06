@@ -124,16 +124,23 @@ class PreKeyService {
         return;
       }
 
-      // Explizite 404-Behandlung (C-04): Der Partner hat (noch) kein
-      // PreKey-Bundle hochgeladen — ein Retry mit Backoff ändert daran
-      // nichts und verzögert nur die Fehlermeldung. Sofort abbrechen.
+      // Der 404 heisst: das Bundle ist (noch) nicht da.
+      //
+      // WICHTIG (06.11.2026): Der Partner veroeffentlicht sein Bundle
+      // beim Login - gedrosselt auf 1x/Minute. Ein 404 kurz nach
+      // seinem Login ist deshalb ERWARTET und voruebergehend. Vorher
+      // wurde hier sofort abgebrochen: der komplette P2P-Aufbau fiel
+      // aus und der Chat zeigte einen Fehler, obwohl gleich alles
+      // ginge. Deshalb wird der 404 jetzt MITPROBIERT (der Backoff
+      // unten laeuft weiter) und erst nach dem letzten Versuch geworfen.
+      //
+      // Der 404 kommt aus der Edge Function auch dann, wenn es gar
+      // keine Beziehung gibt (kein Match, kein QR-Chat). Fuer den
+      // Nutzer ist die Meldung "Bundle fehlt" dann irrefuehrend -
+      // deshalb steht jetzt "oder es gibt keine Freigabe" dabei.
       if (status == 404) {
-        throw StateError(
-          'Der Partner hat noch kein verschlüsseltes Schlüssel-Bundle '
-          'veröffentlicht (404). Dessen Gerät benötigt die aktuelle '
-          'App-Version und einen Neustart der App - danach verbindet sich '
-          'der Chat automatisch.',
-        );
+        lastError = 404;
+        continue;
       }
 
       // Transiente Fehler (503 "loading", 500er, Netzprobleme etc.):
@@ -152,6 +159,14 @@ class PreKeyService {
         'die deployte prekeys-Edge-Function veraltet oder die '
         'prekeys-Tabelle fehlt. Bitte die Function neu deployen '
         '(supabase functions deploy prekeys) und erneut versuchen.',
+      );
+    }
+    if (lastError == 404) {
+      throw StateError(
+        'Der Partner hat noch kein verschlüsseltes Schlüssel-Bundle '
+        'veröffentlicht (404) - oder es gibt keine Freigabe zwischen '
+        'euch. Dessen Gerät benötigt die aktuelle App-Version und einen '
+        'Neustart der App - danach verbindet sich der Chat automatisch.',
       );
     }
     throw StateError(
