@@ -1398,7 +1398,23 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
       „0:00", obwohl die Datei eine echte Länge hat. Die Länge wird
       jetzt beim Laden aus der Datei gelesen.
 
-42. **Ein Werkzeug, das die stummen Fehler findet.**
+42. **Der CI hat einen Fehler von mir gefunden - und das ist der Punkt.**
+    Beim neuen Test für den gemeinsamen Profilbild-Baustein fehlte ein
+    `const`. Der Analyzer meldete das **lokal nicht** (der Test war nach
+    dem letzten Analyzer-Lauf entstanden), der CI aber sofort:
+    `prefer_const_constructors` in `analyze-and-test`.
+
+    Das ist genau die Antwort auf die Frage, warum es immer neue
+    Probleme gab: **ein Test prüft den Quelltext, der CI prüft den
+    Quelltext bei jedem Commit, und die Werkzeuge prüfen den Server und
+    die ausgelieferte Datei.** Ein Fehler, den man beim Testen auf dem
+    Gerät nicht sieht, fällt spätestens beim CI auf - wenn man die
+    Kette laufen lässt.
+
+    *Und die Regel daraus: Bevor gepusht wird, laufen Analyzer und
+    Tests. Der CI ist die letzte Instanz, keine erste.*
+
+43. **Ein Werkzeug, das die stummen Fehler findet.**
     `tool/check_on_conflict.py` fragt die Produktivdatenbank ab und
     vergleicht **jedes** `ON CONFLICT`-Ziel mit den tatsächlichen
     Indizes. Es hat beide Fehler gefunden (Befunde 31 und 32) – und
