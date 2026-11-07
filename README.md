@@ -30,9 +30,11 @@ nicht vollständig funktional. Beiträge und Feedback sind willkommen.
 > Daten bleiben erhalten (Login genügt), nur Passkeys müssen einmal neu
 > registriert werden.
 >
-> **Aktuelle Version: v0.10.0** (Build 31). Die Download-Version v0.10.0 ist
-> **noch nicht veröffentlicht** – sie geht in den Store, sobald die offenen
-> Punkte geschlossen sind. Bis dahin gilt v0.9.2 als die unterstützte Fassung.
+> **Aktuelle Version: v0.10.0** (Build 38). Die App ist **noch nicht im
+> Play Store** – das Play-Console-Projekt wird erst angelegt. v0.10.0 ist
+> die erste Fassung, die in den Store geht; sie geht hinein, sobald die
+> offenen Punkte geschlossen sind. Zuletzt veröffentlicht wurde v0.9.1
+> (Prerelease auf GitHub).
 
 **Dokumentation:** [Beitragen](CONTRIBUTING.md) · [Verhaltenskodex](CODE_OF_CONDUCT.md) ·
 [Sicherheitslücken melden](SECURITY.md) · [Support](SUPPORT.md) ·
@@ -106,32 +108,39 @@ das Signal Protocol, die Verbindung direkt Peer-to-Peer per WebRTC.
 
 | Variante | Datei | Push |
 | --- | --- | --- |
-| Standard (empfohlen) | `Thestia-v0.9.2-play.apk` | Firebase/FCM |
-| Google-frei (F-Droid-Stil) | `Thestia-v0.9.2-fdroid.apk` | optional via UnifiedPush |
+| Standard (empfohlen) | `Thestia-v0.10.0-play.apk` | Firebase/FCM |
+| Google-frei (F-Droid-Stil) | `Thestia-v0.10.0-fdroid.apk` | optional via UnifiedPush |
 
-Beide finden sich unter [Releases](https://github.com/Toterboy/Thestia/releases).
+Für kleinere Downloads gibt es je CPU-Architektur eine eigene Datei
+(`-arm64`, `-armv7`, `-x86_64`), für den Store-Upload das Bundle
+`Thestia-v0.10.0-play.aab`.
+
+Beide finden sich unter [Releases](https://github.com/Toterboy/Thestia/releases)
+(dort liegt bisher v0.9.1 als Prerelease; v0.10.0 folgt mit dem
+Store-Upload).
 Hinweis: Beide Varianten nutzen dieselbe App-ID und können nicht parallel
 installiert werden. Ältere Dateien (`WispDating-v0.9.0-*.apk`) gehören zur
 Vorgänger-Version – bitte **Thestia neu installieren** (kein Update-Pfad, neue
 App-ID).
 
-**v0.10.0 (Build 31) ist in Vorbereitung.** Die veröffentlichte Fassung ist
-weiterhin **v0.9.2** – v0.10.0 geht in den Store, sobald die offenen Punkte
-geschlossen sind.
+**v0.10.0 (Build 38) ist in Vorbereitung** und die **erste Fassung für den
+Play Store** – sie geht hinein, sobald die offenen Punkte geschlossen sind
+(offen sind der BLE-Gerätetest auf zwei echten Geräten und die
+F-Droid-Einreichung).
 
 ## Unterstützte Versionen
 
 | Version | Status |
 | --- | --- |
-| unter v0.9.2 (Build < 30, inkl. aller WispDating-Builds) | **End of Support** – keine Fixes mehr, bitte Thestia neu installieren |
-| v0.9.2 (Build 30) | **Unterstützt**, bis v0.10.0 veröffentlicht ist – Bug-Reports willkommen, Security-Fixes |
-| v0.10.0 (Build 31) | **In Vorbereitung** |
+| unter v0.10.0 (Build < 31, inkl. aller WispDating-Builds) | **End of Support** – keine Fixes mehr, bitte Thestia neu installieren |
+| v0.10.0 (Build 38) | **In Vorbereitung** – die erste Fassung für den Play Store; ab da Bug-Reports und Security-Fixes |
 
 Ältere Builds werden über das serverseitige Mindest-Build-Gate
-(`app_config.min_app_version_build = 30`, Migration 132) markiert: Liegt der
-installierte Build darunter, zeigt die App beim Start einen Update-Hinweis. Der
-Support erst ab v0.9.2 ist eine Folge der Alterssperre für Transit Spark
-(Migration 131) – ältere Builds können diese umgehen. Details: [SUPPORT.md](SUPPORT.md).
+(`app_config.min_app_version_build = 31`, Migration 156) markiert: Liegt der
+installierte Build darunter, zeigt die App beim Start einen Update-Hinweis.
+Der Support beginnt deshalb bei **Build 31** – ältere Builds können die
+Alterssperre für Transit Spark (Migration 131) umgehen. Details:
+[SUPPORT.md](SUPPORT.md).
 
 ---
 
@@ -293,12 +302,19 @@ Support erst ab v0.9.2 ist eine Folge der Alterssperre für Transit Spark
 - **Angemeldete Geräte**: Übersicht aller Geräte, auf denen das Konto
   eingeloggt ist (echtes Gerätemodell wie „Samsung SM-S921B", App-Version,
   letzte Aktivität) – mit „Überall abmelden (außer diesem Gerät)" per Tastendruck
+- **Daten löschen ohne das Konto aufzugeben** (v0.10.0): einzeln
+  löschbar sind Profilfotos, Standortdaten, Profilangaben, Likes, Funken,
+  die selbst gesendeten Nachrichten, Geräteliste, Passkeys und
+  Push-Schlüssel, Stimmung und Verlauf, Meldungen und Fehlerberichte,
+  Transit-Spark-Daten und die elterliche Freigabe. „Alle Daten löschen"
+  entfernt sämtliche Daten zum Konto und lässt das Konto bestehen –
+  der Login bleibt.
 - **Account löschen** – löscht den Account serverseitig UND alle lokalen Daten
   vollständig (DSGVO)
 - **Privacy-Screen**: echte JSON-Exportfunktion (Profil, Einstellungen,
   Präferenzen, Mood) zum Teilen/Speichern, Daten-Import (JSON wieder
   einspielbar) sowie Auflistung der Auftragsverarbeiter (Supabase,
-  Google/Firebase, Hugging Face, Apple)
+  Google/Firebase, Brevo, Cloudflare, Netlify, Apple)
 - **Zweisprachig (DE/EN)**: Die App ist komplett zweisprachig – inklusive
   Farbschemata, Stimmungs-Chips und Entdecken-Modi; auf Deutsch heißt es
   konsequent „Funke(n)", auf Englisch „Spark(s)"
@@ -334,7 +350,8 @@ Support erst ab v0.9.2 ist eine Folge der Alterssperre für Transit Spark
 ### Datenschutz
 
 - **Standortdaten**: Distanzangaben sind auf 5-km-Schritte gerundet, Suchradius
-  maximal 200 km; exakte Koordinaten werden nie an andere Nutzer übertragen.
+  maximal 100 km (bei 16 und 17 höchstens 25 km); exakte Koordinaten werden
+  nie an andere Nutzer übertragen.
   Gespeichert ist nur das Bundesland.
 - **Pseudonymisierung**: Reporter-IDs werden gehasht (SHA-256), kein PII in
   lokalen Hive-Keys.
@@ -454,7 +471,7 @@ und benutzt dabei **genau die Flags der CI**:
 | --- | --- | --- |
 | Analyzer | `flutter analyze --fatal-infos` | ohne `--fatal-infos` ist ein *Hinweis* kein Fehler – lokal grün, in der CI rot |
 | Tests | `flutter test` mit `.env` aus `.env.example` | die CI baut die `.env` genauso auf |
-| Prüfer | 25 Skripte unter `tool/` | `python3` → `python`, weil Windows oft kein `python3` kennt |
+| Prüfer | 44 Skripte unter `tool/` (40 Gates im Spiegel) | `python3` → `python`, weil Windows oft kein `python3` kennt |
 
 Der Unterschied beim Analyzer ist der Grund, warum das Skript existiert:
 Ein Hinweis wie `unnecessary_brace_in_string_interps` lässt den
@@ -498,13 +515,15 @@ Folgende Bereiche sind noch nicht final:
   automatische Account-Sperren bei Wiederholungsverstößen (derzeit manuell)
 - **Foto-Moderation über die KI** (Hugging Face) ist standardmäßig deaktiviert
   (Aktivierung per Build-Flag)
-- **Fake-Account-Erkennung per Standort** – *teilweise umgesetzt*: Datenmodell
-  und Manipulationschutz (die Verifizierungs-Felder sind clientseitig nicht
-  schreibbar), Edge Functions mit Plausibilitätsprüfung und verschlüsselte
-  lokale Speicherung sind da. **Noch offen:** der serverseitige Abgleich, ob
-  an derselben Position bereits andere Accounts existieren, die Validierung
-  von GPS gegen Bundesland/Land, eine Admin-Ansicht zur Prüfung markierter
-  Accounts sowie Konsequenzen (z. B. Einschränkungen bei Verdacht)
+- **Fake-Account-Erkennung per Standort** – *größtenteils umgesetzt (v0.10.0)*:
+  Datenmodell und Manipulationschutz (die Verifizierungs-Felder sind
+  clientseitig nicht schreibbar), Edge Functions mit Plausibilitätsprüfung
+  und verschlüsselte lokale Speicherung, der Standort-Check läuft atomar
+  (Migration 180), und es gibt eine **Admin-Ansicht für markierte Konten**
+  (Migration 183). **Noch offen:** der serverseitige Abgleich, ob an
+  derselben Position bereits andere Accounts existieren, die Validierung
+  von GPS gegen Bundesland/Land sowie Konsequenzen (z. B.
+  Einschränkungen bei Verdacht)
 - **i18n-Rest**: Die App ist zweisprachig; einzelne ältere/hart codierte
   UI-Strings stehen noch nicht im L10n-Katalog
 

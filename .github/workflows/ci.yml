@@ -437,6 +437,13 @@ jobs:
       - name: Store-Listen vollstaendig und je Sprache eigenstaendig
         run: python3 tool/check_store_listing_languages.py
 
+      # Der Store zeigt den Aenderungstext anhand der VERSION-CODE.
+      # Fehlt die Datei fuer den aktuellen Build, erscheint beim
+      # Upload kein "Was ist neu" - das ist bei jedem
+      # Versionssprung moeglich und wurde bisher nicht geprueft.
+      - name: Store-Text fuer den aktuellen Build vorhanden
+        run: python3 tool/check_store_changelog.py
+
       # Die Signier-Passwoerter duerfen NICHT im Projektverzeichnis liegen.
       #
       # Sie lagen bis 04.11.2026 im Klartext in android/key.properties -

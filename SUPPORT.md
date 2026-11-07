@@ -6,10 +6,10 @@ Danke, dass du Thestia nutzt. Hier steht, welche Versionen unterstützt werden u
 
 | Version | Status | Anmerkung |
 | --- | --- | --- |
-| **v0.9.2 und höher** (Build 30+) | ✅ **Unterstützt** | Bug-Reports willkommen; Security-Fixes |
-| **unter v0.9.2** (v0.8.x, v0.9.0, v0.9.1; Build < 30) | ❌ **End of Support** (seit 29.09.2026) | Keine Bug-/Security-Fixes mehr – bitte aktualisieren |
+| **v0.10.0 und höher** (Build 31+) | ✅ **Unterstützt** | Bug-Reports willkommen; Security-Fixes |
+| **unter v0.10.0** (v0.8.x, v0.9.0, v0.9.1, v0.9.2; Build < 31) | ❌ **End of Support** | Keine Bug-/Security-Fixes mehr – bitte aktualisieren |
 
-### Warum der Support erst ab v0.9.2 beginnt
+### Warum der Support erst mit v0.10.0 beginnt
 
 Der Support-Zustieg ist eine Folge der Alterssperre für Transit Spark,
 nicht nur eine Versionspolitik.
@@ -22,12 +22,15 @@ weitergeliefert werden, lässt sich die Beschränkung umgehen – unabhängig
 vom Server, weil die alte App die serverseitige Prüfung gar nicht erst
 aufruft.
 
-Deshalb ist v0.9.2 die älteste unterstützte Version. Wer den Support
-früher auf v0.9.1 setzt, muss die Beschränkung entweder wieder aus dem
-Server entfernen (und damit aufheben) oder hinnehmen, dass sie für
-installierte v0.9.1-Clients nicht greift.
+Seit **Migration 156** steht das serverseitige Mindest-Build-Gate
+(`app_config.min_app_version_build`) auf **31**: Jeder ältere Build – auch
+v0.9.2 (Build 30) – bekommt beim Start den Update-Hinweis. Damit ist
+v0.10.0 die älteste unterstützte Version, und das Gate setzt die Grenze
+serverseitig durch, ohne dass ein Update alter Clients nötig wäre.
 
-Umsetzung: `supabase/migrations/131_transit_spark_adults_only.sql`.
+Umsetzung: `supabase/migrations/131_transit_spark_adults_only.sql`
+(Alterssperre) und `supabase/migrations/156_verification_trigger_repair_and_report_types.sql`
+(Mindest-Build-Gate auf 31).
 
 ### Installation von v0.9.2: deinstallieren statt aktualisieren
 

@@ -256,6 +256,7 @@ if (Soll 'static-checks') {
         (G 'Workflow-Datei ist gueltiges YAML' @($py, 'tool/check_workflows.py'))
         (G 'Screenshot-Schriftgroesse einheitlich' @($py, 'tool/check_screenshot_consistency.py'))
         (G 'Store-Listen vollstaendig und eigenstaendig' @($py, 'tool/check_store_listing_languages.py'))
+        (G 'Store-Text fuer den aktuellen Build' @($py, 'tool/check_store_changelog.py'))
         (G 'Keystore-Passwoerter nicht im Projektverzeichnis' @($py, 'tool/check_keystore_secrets.py'))
         (G 'Release-Checker Selbsttest' @($py, 'tool/check_release_artifacts_selftest.py'))
     )

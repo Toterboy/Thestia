@@ -163,12 +163,14 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
 > Kein eigener Meilenstein – dieser Abschnitt sammelt Arbeiten, die noch
 > keinem Release zugeordnet sind. Jeder Eintrag nennt unten sein Ziel.
 
-- [ ] Applogo & Branding-Feinschliff – Quelle ist
-      `assets/images/thestia_icon_base.png` (941×941, im Repo vorhanden);
-      Größen/Masken/Farbwelt-Abstimmung folgen. **Ziel: 0.10.0.**
-      Store-Icon (512×512) und Feature Graphic (1024×500) sind bereits
-      erzeugt, siehe `tool/make_play_icon.py` und
-      `tool/make_feature_graphic.py`
+- [~] Applogo & Branding-Feinschliff – Quelle ist
+      `assets/images/thestia_icon_base.png` (941×941, im Repo vorhanden).
+      **Im Kern erledigt:** Store-Icon (512×512) und Feature Graphic
+      (1024×500) sind erzeugt (`tool/make_play_icon.py`,
+      `tool/make_feature_graphic.py`), alle Icon-Masken sind geprüft, und
+      die Website führt jetzt ein Favicon (`tool/make_favicon.py`).
+      **Offen:** Feinschliff an Masken und Farbwirkung – kein
+      Blocker für den Upload.
 - [x] **Store-Listing auch auf Englisch** (03.11.2026) – die englische
       Liste war unvollständig: Sie hatte **keine** Phone-Screenshots, und
       die Tablet-Bilder waren Kopien der deutschen. Wer die englische
@@ -407,7 +409,11 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
 
 ## Umgesetzt: 0.10.0 – Standort-Privatisierung, Transit Spark auf echten Geräten & Qualitätssicherung
 
-> Status: v0.9.2 ist veröffentlicht, v0.10.0 ist in Vorbereitung.
+> Status: v0.10.0 ist in Vorbereitung (Build 38, 07.11.2026) und die
+> **erste Fassung für den Play Store** – das Play-Console-Projekt wird
+> erst angelegt. Zuletzt veröffentlicht wurde v0.9.1 (Prerelease auf
+> GitHub); intern wird v0.9.2 getestet. Der Stand ist unten bei den
+> Nachträgen festgehalten.
 >
 > **Dieses Release ist ein MINOR-Bump, und zwar nach der eigenen Regel
 > dieser Roadmap.** Die Regel sagt: „Neue Nutzerfunktionen sind immer
@@ -614,6 +620,61 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
 - [x] **FLAG_SECURE auf allen Bildschirmen** - auch auf dem Bild-Crop.
 - [x] **Downloads und Push-Endpunkte werden geprüft** - nur HTTPS und
       nur eigene Hosts.
+
+### Nachtrag vom 06./07.11.2026 (Build 34 bis 38)
+
+Der Test auf echten Geräten hat eine Reihe von Fehlern zutage
+gefördert, die alle im Code lagen – dazu die Korrekturen an der
+Website.
+
+- [x] **Der Ende-zu-Ende-Chat funktionierte nicht** – der Kernbefund:
+      das Feld `type` ist vom Realtime-Client reserviert (er setzt
+      `type = 'broadcast'`). Die App las aber `type` und verwarf
+      **jede** Signaling-Nachricht – Offer, Answer, ICE-Kandidaten und
+      Relay-Weckmeldung. Das Feld heisst jetzt `kind`. Dazu: die
+      Answer nach einem Retry konnte die Verbindung nicht mehr
+      reparieren, ein verbrauchter PreKey wurde wiederbelebt, ein
+      fehlendes Bundle brach den Aufbau ab, und die Diagnose war im
+      Store-Build blind (der Betreiber sah nicht, woran es lag).
+- [x] **Drei Blocker, live im Emulator gefunden** – nach dem Login
+      threw die App einen `CircularDependencyError` und blieb im
+      Login-Screen; beim Start geriet sie in einen Fehlerzustand
+      („Thestia isn't responding"); der Dialog „Chat-Hintergrund"
+      blieb leer – und genau der erscheint beim *ersten* Chat-Besuch.
+- [x] **Transit Spark zählte auf Android 16 jedes fremde
+      Bluetooth-Gerät als Thestia-Gerät** (über 100 bei höchstens einem
+      in der Nähe): die Hersteller-ID `0xFFFF` ist die reservierte
+      SIG-Nummer und wird von vielen echten Geräten benutzt, und die
+      alte Prüfung las „irgendetwas nach dem Marker" als Token. Ein Token
+      ist jetzt **exakt 20 Hexzeichen**.
+- [x] **Transit Spark fand auf Android 11 gar keins** – der BLE-Scan
+      ist dort nur mit der *genauen* Standortberechtigung erlaubt, und
+      die war per `tools:node="remove"` entfernt: Android blockierte
+      den Scan still. Die Berechtigung ist jetzt mit
+      `maxSdkVersion="30"` deklariert (auf aktuellen Geräten ändert
+      sich nichts – dort reicht `BLUETOOTH_SCAN`).
+- [x] **Der Standort bleibt ungefähr** – auf Android 11 und älter
+      kann die App den genauen Standort technisch bekommen; sie rastet
+      ihn deshalb selbst auf das 5-km-Raster, bevor sie ihn speichert
+      oder überträgt (auch der Verifizierungs-Standort, der bisher roh
+      im Keystore lag). Dazu eine prominente Offenlegung vor der
+      Anfrage – Google Play verlangt sie für empfindliche
+      Berechtigungen, und die App hatte sie für Kamera und Mikrofon
+      schon.
+- [x] **14 Haarfarben statt 8** (dunkelbraun, hellbraun, Kupferrot,
+      Platinblond, Silbergrau, Salz und Pfeffer) – Migration 184, auf
+      dem Produktivsystem ausgeführt.
+- [x] **Die Löschpunkte stehen unten** – „Daten löschen" stand
+      mitten in den Einstellungen; beide Löschwege stehen jetzt in
+      einer eigenen Gefahrenzone ganz unten.
+- [x] **Die Website hat ein Favicon** – in der Google-Suche stand
+      neben „Thestia" ein allgemeiner Globus-Knopf statt des Logos.
+
+> **Der BLE-Gerätetest bleibt offen** (siehe oben). Die Notbremse
+> (`transit_spark_enabled`, Migration 159) ist vorbereitet und steht
+> auf `true`. Sie wird **vor** dem Store-Upload auf `false` gesetzt,
+> wenn der Test bis dahin nicht auf zwei echten Geräten
+> verschiedener Hersteller durchgelaufen ist.
 
 ### Elternfreigabe und Aufsicht für 16- und 17-Jährige (Teil von 0.10.0)
 

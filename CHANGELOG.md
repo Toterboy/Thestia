@@ -806,7 +806,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
   Selbsttest. Der erste Wächter fand fuenf echte Faelle, der zweite
   einen - beide gegen Negativproben geprueft.
 
-### Nachtrag: Build 37 (07.11.2026) - vier Befunde vom Betreiber
+### Nachtrag: Build 34 bis 38 (06./07.11.2026) - vier Befunde vom Betreiber
 
 1. **Der Elternbereich lädt ewig lang.** Der Abruf des Aufsichtsstands
    schlug fehl (keine Sitzung beim App-Start, Netz, Server) - und der
@@ -875,6 +875,35 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
    stehen - und die CI prüft `dart format --set-exit-if-changed`. Der
    Generator konnte also das Format-Gate brechen, ohne dass etwas
    inhaltlich falsch war.
+
+10. **Die Löschpunkte stehen ganz unten.** In den Einstellungen stand
+    "Daten löschen" zwischen "Geräte" und "Datenschutz & Konto" - ein
+    zerstörerischer Eintrag mitten in der Liste. Beide Lösch-Wege
+    ("Daten löschen", "Konto löschen") stehen jetzt in einem eigenen
+    Abschnitt ganz unten, nach "Abmelden", und im Datenschutz-Bereich
+    stehen sie zusammen. Der Lösch-Ablauf (MFA-Step-up, Bestätigung,
+    Löschung) ist jetzt eine gemeinsame Funktion für beide Bildschirme -
+    er existiert nur einmal.
+
+11. **Die Website hat ein Favicon.** In der Google-Suche stand neben
+    "Thestia" ein allgemeiner Globus-Knopf statt des Logos - die Seite
+    hatte gar kein Favicon. Jetzt gibt es `favicon.png` (192×192),
+    `favicon.ico` (16-256) und `favicon.svg` (die Marke), und alle 22
+    Seiten verweisen darauf. Der falsche Suchtext war eine Folge der
+    `robots.txt`: Die sperrende Fassung galt auch für `thestia.de`, also
+    war die Seite nicht auffindbar, und Google zeigte die
+    Captcha-Fehlermeldung, die im HTML steht. Der Host-Rewrite (öffentlicher
+    Host indexierbar, Auth-Host gesperrt) ist jetzt live.
+
+12. **Der Deployment-Prüfer prüft `robots.txt` am richtigen Host.** Er
+    verglich die Datei gegen `auth.thestia.de` - wo absichtlich die
+    sperrende Fassung liegt. Er meldete deshalb immer eine Abweichung,
+    obwohl alles stimmte. Ein Gate, das immer anschlägt, wird irgendwann
+    ignoriert.
+
+13. **Die Nutzungsbedingungen waren nicht erreichbar** - der
+    Netlify-Upload war dem Repository hinterher. Sie sind jetzt live (und
+    im Sitemap, das die Suchmaschine findet).
 
 
 ## [0.10.0] - 2026-10-24 (Build 31)
