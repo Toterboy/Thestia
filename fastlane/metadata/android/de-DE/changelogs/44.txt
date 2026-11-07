@@ -1,0 +1,30 @@
+Dein Standort gehoert dir
+
+Deine Stadt wird nicht mehr erhoben. Gespeichert sind nur Koordinaten
+auf einem 5-km-Raster und dein Bundesland - das Raster wird serverseitig
+erzwungen. Die Entfernungsanzeige ist aus und wird deine Entscheidung:
+eingeschaltet sehen andere eine Stufe von 10 km, unter 5 km gar nichts.
+
+Daten loeschen ohne dein Konto aufzugeben
+
+Fotos, Standort, Profil, Likes, Funken, deine Nachrichten, Geraeteliste,
+Stimmung, Meldungen, Transit-Daten und die Elternfreigabe - einzeln
+oder alles. Der Login bleibt.
+
+Mehr Klarheit fuer 16 und 17
+
+Elternfreigabe, die freiwillig ist: Du kannst einen Elternteil
+eintragen, er bestaetigt selbst und kann es jederzeit rueckgaengig
+machen. Bleibt die Freigabe aus, ist die App trotzdem voll nutzbar.
+Mit 18 entscheidest du selbst. Und bei 16 und 17 gilt hoechstens 25 km
+Radius - oder nur dein eigenes Bundesland.
+
+Fehlerbehebungen
+
+- Der Ende-zu-Ende-Chat funktioniert wieder: jede Uebertragung wurde
+  zuvor stillschweigend verworfen
+- Der Elternbereich laedt nicht mehr endlos
+- Transit Spark zaehlt keine fremden Bluetooth-Geraete mehr und findet
+  auf Android 11 wieder etwas
+- Die Ueberschrift im Merkmalsblatt liegt nicht mehr in der
+  Statusleiste

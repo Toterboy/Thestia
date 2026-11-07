@@ -772,6 +772,46 @@ keine gemeinsamen Tokens.)
 > Fehler - aber `hair_length` und `hair_style` wären die logische
 > Ergänzung zu den 18 Haarfarben, wenn der Betreiber sie will.
 
+#### Build 44: der Funke erzeugt jetzt einen echten Funke
+
+BEFUND (07.11.2026, Betreiber, nach dem Test auf zwei echten
+Smartphones): „Der Funke entsteht, aber es ist nichts sichtbar.“ Und
+danach: „Funke wurde angezeigt, ist dann aber wieder verschwunden.“
+
+**Die Ursache** (live gelesen, nicht vermutet): Ein Match entsteht
+ausschliesslich durch einen INSERT in `public.matches` - den macht
+**nur** `create_match_if_mutual`. Der direkte Client-INSERT ist seit
+Migration 040 per RLS gesperrt.
+
+Transit Spark legte aber **nur Likes** an (`match_proximity_spark` und
+`accept_soft_ping`). Keine der beiden Funktionen ruft
+`create_match_if_mutual` auf - und kann es auch nicht: sie setzen fuer
+**beide** Seiten die Likes, ohne dass ein Client-Hook laeuft.
+
+*Die Likes sind fuer die App unsichtbar:* Die Chatliste liest aus
+`matches`, nicht aus `likes`. Der Funke „entstand“, aber er erschien
+nirgends.
+
+- [x] **Die Paarung legt den Match selbst an** (Migration 194) - mit
+      denselben Regeln wie `create_match_if_mutual`, also bleibt es bei
+      **einem** Match je Paar.
+- [x] **Die Annahme liefert die `match_id`** - damit fuehrt der
+      Chat-Knopf direkt in den neuen Chat.
+- [x] **„Ausblenden“ fragt vorher nach.** Vorher hat der Knopf die
+      Zeile unwiderruflich geloescht, ohne Rueckfrage - und er sitzt
+      genau dort, wo der Finger schon liegt, wenn die Liste gerade
+      gewachsen ist.
+- [x] **Das Aufräum-Werkzeug räumt nur auf, was es selbst angelegt
+      hat** (Vorher-Nachher-Vergleich) und **bricht ab**, wenn
+      zwischen den Testkonten schon etwas liegt.
+
+> **Und die ehrliche Lehre daraus:** Der erste Teil des Befunds war
+> **mein Verschulden** - das Aufräum-Skript hat die Testdaten des
+> Betreibers mitgelöscht, weil es pauschal alles zwischen den beiden
+> Testkonten im Zeitfenster löschte. Ein Werkzeug, das in der
+> Produktivdatenbank schreibt, muss genau das tun, was es behauptet:
+> nur seine eigenen Zeilen zurückräumen.
+
 #### Build 43: die Vorstellung, der Funke und die Rechte
 
 BEFUND (07.11.2026, Betreiber): 13 Meldungen auf zwei echten Geräten.
