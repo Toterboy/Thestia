@@ -18,6 +18,7 @@ import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/services/transit_ble_service.dart';
 import 'package:thestia/widgets/funke_overlay.dart';
+import 'package:thestia/widgets/location_disclosure.dart';
 import 'package:thestia/widgets/transit_mode_selector.dart';
 import 'package:thestia/utils/best_effort.dart';
 
@@ -215,6 +216,16 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
     if (self == null || !mounted) return;
     transit.setSelfTags(self.tags);
     transit.setSelfNote(self.note);
+
+    // BEFUND (06.11.2026): Auf Android 11 und aelter fragt der
+    // BLE-Scan den genauen Standort an - Google Play verlangt dafuer
+    // eine prominente Begruendung IN DER APP, bevor der Systemdialog
+    // erscheint. Ab Android 12 reicht Bluetooth, da wird gar nicht
+    // erst nach dem Standort gefragt.
+    if (await TransitBleService.brauchtStandort() && mounted) {
+      final zugestimmt = await ensureLocationDisclosure(context, ref);
+      if (!zugestimmt || !mounted) return;
+    }
 
     var ok = await transit.activate();
     // v0.9.1: Gezielte Fehlerbehandlung statt generischem startFailed.

@@ -412,6 +412,15 @@ const Map<String, Map<String, String>> _strings = {
     // ===================================================================
     // Elternfreigabe und Aufsicht (v0.10.0)
     // ===================================================================
+    'location.disclosureTitle': 'Standort freigeben?',
+    'location.disclosureBody':
+        'Für die Umkreis-Anzeige und die Altersprüfung braucht Thestia '
+        'deinen ungefähren Standort. Er wird nur einmalig abgefragt, '
+        'nicht an den Server weitergegeben und nach der Prüfung '
+        'gelöscht. Auf älteren Android-Versionen ist er außerdem '
+        'nötig, damit das Transit-Radar andere Geräte in der Nähe '
+        'erkennen kann.',
+    'location.disclosureAccept': 'Standort freigeben',
     'guardian.sectionTitle': 'Kinderschutz & Elternzugriff',
     'guardian.sectionIntro':
         'Hier steht, ob dein Konto unter Aufsicht steht. Für 16- und '
@@ -3677,6 +3686,14 @@ const Map<String, Map<String, String>> _strings = {
     // ===================================================================
     // Guardian consent and supervision (v0.10.0)
     // ===================================================================
+    'location.disclosureTitle': 'Share your location?',
+    'location.disclosureBody':
+        'Thestia needs your approximate location for the distance '
+        'display and the age check. It is queried once, never sent '
+        'to the server, and deleted after the check. On older '
+        'Android versions it is also required so that the transit '
+        'radar can detect nearby devices.',
+    'location.disclosureAccept': 'Share location',
     'guardian.sectionTitle': 'Child safety & parental access',
     'guardian.sectionIntro':
         'This is where you can see whether your account is supervised. For '

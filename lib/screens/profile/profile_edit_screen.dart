@@ -30,6 +30,7 @@ import 'package:thestia/widgets/birthday_style.dart';
 import 'package:thestia/widgets/buttons.dart';
 import 'package:thestia/widgets/age_range_sliders.dart';
 import 'package:thestia/widgets/gender_preference_selector.dart';
+import 'package:thestia/widgets/location_disclosure.dart';
 import 'package:thestia/widgets/music_taste_widgets.dart';
 import 'package:thestia/widgets/habitude_selector.dart';
 import 'package:thestia/widgets/intro_editor.dart';
@@ -731,6 +732,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     });
 
     try {
+      // Die prominente Standort-Offenlegung (Google Play verlangt sie
+      // vor der Anfrage einer empfindlichen Berechtigung).
+      if (!await ensureLocationDisclosure(context, ref) || !mounted) return;
+
       final locationService = ref.read(locationVerificationServiceProvider);
       final position = await locationService.getCurrentLocation();
       if (!mounted) return;

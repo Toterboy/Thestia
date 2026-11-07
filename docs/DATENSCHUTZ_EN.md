@@ -164,6 +164,22 @@ fixed address.
 **What is received:** since v0.9.2 the scanner is filtered to the
 manufacturer's ID of the app. Previously it processed every Bluetooth
 signal in range (watches, headphones, beacons); that has been corrected.
+Since 6 November 2026 a received signal is additionally checked
+strictly: only a complete Thestia token (20 hex characters after the
+"WST1" marker) counts. Everything else - every foreign Bluetooth device -
+is discarded and never reaches the list of encounters. The counter "X
+Thestia signals in range" therefore counts real app users only.
+
+**Location permission (Android 11 and older):** on these system versions
+Android additionally requires the precise location permission for
+Bluetooth scanning - without it the operating system silently blocks the
+scan. The app therefore declares this permission only for Android 11
+and older (`maxSdkVersion="30"`). From Android 12 on, `BLUETOOTH_SCAN` is
+sufficient; there the location is **not** requested for the radar at
+all. The location is neither stored nor transmitted for the radar - it
+only serves to let the operating system permit the scan. Before the
+request the app shows a short disclosure (as it does for camera and
+microphone), telling users what it is about.
 
 **What stays local:** encounters (token, timestamp, strongest RSSI) are
 stored exclusively on the device, with a retention period of 45 minutes,

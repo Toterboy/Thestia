@@ -78,33 +78,58 @@ class TransitBleService {
       }
       if (!Platform.isAndroid) return true;
 
-      var location = await Permission.locationWhenInUse.status;
-      if (!location.isGranted) {
-        location = await Permission.locationWhenInUse.request();
-      }
-      if (!location.isGranted) {
-        lastError = 'location_permission';
-        return false;
-      }
+      final info = await DeviceInfoPlugin().androidInfo;
+      final api = info.version.sdkInt;
 
-      // Standort-DIENST (GPS) muss AN sein - sonst scheitert der BLE-Scan
-      // (besonders Android 11) ohne klare Exception. Die App kann den
-      // Dienst nicht selbst einschalten (Android verbietet das), aber die
-      // UI kann per Geolocator.openLocationSettings() dorthin führen.
-      // Geolocator nicht verfügbar -> nicht blockieren.
-      final dienstOk = await bestEffortOr(
-        'Geolocator.isLocationServiceEnabled',
-        () async => await Geolocator.isLocationServiceEnabled(),
-        true,
-      );
-      if (!dienstOk) {
-        lastError = 'location_service';
-        return false;
+      // AB ANDROID 12 (API 31) braucht der BLE-Scan KEINEN Standort.
+      //
+      // BEFUND (06.11.2026): Die App fragte den Standort auf JEDER
+      // Android-Version an - auch dort, wo er nicht gebraucht wird. Das
+      // ist zweierlei schlecht: Der Nutzer wird um eine Berechtigung
+      // gebeten, die die App gar nicht nutzt (Google Play verlangt, nur
+      // das anzufragen, was noetig ist), und der Standort-DIENST muss
+      // eingeschaltet sein, obwohl Bluetooth genuegt.
+      //
+      // Ab Android 12 reicht BLUETOOTH_SCAN mit `neverForLocation` -
+      // der Scan liefert dann Ergebnisse ohne Standortbezug. Die App
+      // leitet aus den Scan-Ergebnissen nichts Ortliches ab (sie
+      // nutzt nur die Tokens), das ist genau die Voraussetzung fuer
+      // `neverForLocation`.
+      //
+      // BIS ANDROID 11 (API 30) ist der genaue Standort fuer den
+      // BLE-Scan Pflicht (ACCESS_FINE_LOCATION). Ohne ihn blockiert
+      // Android den Scan still - das war der Grund, warum dort
+      // "0 Geraete in Reichweite" gemeldet wurde.
+      if (api <= 30) {
+        var location = await Permission.locationWhenInUse.status;
+        if (!location.isGranted) {
+          location = await Permission.locationWhenInUse.request();
+        }
+        if (!location.isGranted) {
+          lastError = 'location_permission';
+          return false;
+        }
+
+        // Standort-DIENST (GPS) muss AN sein - sonst scheitert der
+        // BLE-Scan (besonders Android 11) ohne klare Exception. Die App
+        // kann den Dienst nicht selbst einschalten (Android verbietet
+        // das), aber die UI kann per Geolocator.openLocationSettings()
+        // dorthin fuehren.
+        // Geolocator nicht verfuegbar -> nicht blockieren.
+        final dienstOk = await bestEffortOr(
+          'Geolocator.isLocationServiceEnabled',
+          () async => await Geolocator.isLocationServiceEnabled(),
+          true,
+        );
+        if (!dienstOk) {
+          lastError = 'location_service';
+          return false;
+        }
       }
 
       // Bluetooth AUS? (Fix "Bluetooth-Popup kam nicht"): Permissions
-      // können vollständig erteilt sein und der Adapter trotzdem AUS
-      // sein - dann schlägt Advertising mit 'advertise_failed' fehl und
+      // koennen vollstaendig erteilt sein und der Adapter trotzdem AUS
+      // sein - dann schlaegt Advertising mit 'advertise_failed' fehl und
       // der Screen bricht ab, ohne den Aktivieren-Dialog zu zeigen.
       // Adapter-Status nicht ablesbar -> nicht blockieren.
       final adapterOk = await bestEffortOr(
@@ -120,8 +145,7 @@ class TransitBleService {
         return false;
       }
 
-      final info = await DeviceInfoPlugin().androidInfo;
-      if (info.version.sdkInt >= 31) {
+      if (api >= 31) {
         var scan = await Permission.bluetoothScan.status;
         if (!scan.isGranted) scan = await Permission.bluetoothScan.request();
         var connect = await Permission.bluetoothConnect.status;
@@ -148,6 +172,27 @@ class TransitBleService {
       return true;
     } catch (e) {
       debugPrint('[TransitBle] Berechtigungsprüfung fehlgeschlagen: $e');
+      return true;
+    }
+  }
+
+  /// Braucht der BLE-Scan auf diesem Geraet den Standort?
+  ///
+  /// BIS ANDROID 11 (API 30): ja. Dort ist der genaue Standort fuer den
+  /// BLE-Scan Pflicht - ohne ihn blockiert Android den Scan still.
+  /// AB ANDROID 12: nein. Dort reicht BLUETOOTH_SCAN mit
+  /// `neverForLocation`; der Scan liefert Ergebnisse ohne Standortbezug.
+  ///
+  /// Die UI braucht das, um zu entscheiden, ob sie die Standort-
+  /// Offenlegung zeigen muss (Google Play verlangt sie VOR der Anfrage
+  /// einer empfindlichen Berechtigung).
+  static Future<bool> brauchtStandort() async {
+    if (kIsWeb || !Platform.isAndroid) return false;
+    try {
+      final info = await DeviceInfoPlugin().androidInfo;
+      return info.version.sdkInt <= 30;
+    } catch (_) {
+      // Im Zweifel: lieber nachfragen als nicht.
       return true;
     }
   }

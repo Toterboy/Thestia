@@ -520,6 +520,17 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     await _persist();
   }
 
+  /// Die prominente Standort-Offenlegung wurde bestaetigt.
+  ///
+  /// Google Play verlangt fuer empfindliche Berechtigungen eine
+  /// sichtbare Begruendung IN DER APP, bevor der Systemdialog erscheint
+  /// (BEFUND 06.11.2026: fuer Kamera und Mikrofon gab es das bereits,
+  /// fuer den Standort fehlte es).
+  Future<void> setLocationDisclosureAccepted(bool value) async {
+    state = state.copyWith(locationDisclosureAccepted: value);
+    await _persist();
+  }
+
   /// Chat-Hintergrund wählen (v0.9.1): 'none', Muster oder 'custom'.
   /// Unbekannte IDs fallen auf 'none' zurück.
   Future<void> setChatBackground(String id) async {

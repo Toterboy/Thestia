@@ -324,7 +324,11 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
   ),
   PrivacyBlock(
     'p',
-    '**Was empfangen wird:** der Scanner ist seit v0.9.2 auf die Hersteller-ID der App gefiltert. Vorher verarbeitete er jedes Bluetooth-Signal in Reichweite (Uhren, Kopfhörer, Beacons); das ist korrigiert.',
+    '**Was empfangen wird:** der Scanner ist seit v0.9.2 auf die Hersteller-ID der App gefiltert. Vorher verarbeitete er jedes Bluetooth-Signal in Reichweite (Uhren, Kopfhörer, Beacons); das ist korrigiert. Seit dem 06.11.2026 wird ein empfangenes Signal zusätzlich streng geprüft: gültig ist nur ein vollständiges Thestia-Token (20 Hexzeichen nach der Kennung „WST1"). Alles andere – jedes fremde Bluetooth-Gerät – wird verworfen und kommt überhaupt nicht erst in die Begegnungsliste. Die Anzeige „X Thestia-Signale in Reichweite" zählt deshalb nur echte App-Nutzerinnen und -Nutzer.',
+  ),
+  PrivacyBlock(
+    'p',
+    '**Standortberechtigung (Android 11 und älter):** Auf diesen Systemversionen verlangt Android für das Bluetooth-Scannen zusätzlich die genaue Standortberechtigung – ohne sie blockiert das Betriebssystem den Scan stillschweigend. Die App deklariert diese Berechtigung deshalb ausschließlich für Android 11 und älter (`maxSdkVersion="30"`). Ab Android 12 genügt `BLUETOOTH_SCAN`; dort wird der Standort für das Radar **nicht** abgefragt. Der Standort wird für das Radar weder gespeichert noch übertragen – er dient allein der Freigabe des Scan-Vorgangs durch das Betriebssystem. Vor der Anfrage zeigt die App eine kurze Offenlegung (wie bei Kamera und Mikrofon), die den Nutzerinnen und Nutzern sagt, worum es geht.',
   ),
   PrivacyBlock(
     'p',

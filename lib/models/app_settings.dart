@@ -104,6 +104,15 @@ class AppSettings {
   /// sichtbare Begruendung VOR der Anfrage.
   final bool cameraDisclosureAccepted;
 
+  /// Hat der Nutzer die prominente Standort-Offenlegung bestaetigt?
+  ///
+  /// Wie [cameraDisclosureAccepted], aber fuer den Standort. Google Play
+  /// verlangt fuer empfindliche Berechtigungen (Kamera, Mikrofon,
+  /// Standort) eine sichtbare Begruendung VOR der Anfrage - die App hat
+  /// das fuer Kamera und Mikrofon, fuer den Standort fehlte es (BEFUND
+  /// 06.11.2026).
+  final bool locationDisclosureAccepted;
+
   /// Gewähltes Farbschema (Name aus ThestiaTheme, Default 'classic').
   final String themeName;
 
@@ -193,6 +202,7 @@ class AppSettings {
     this.blurChatImages = true,
     this.micDisclosureAccepted = false,
     this.cameraDisclosureAccepted = false,
+    this.locationDisclosureAccepted = false,
     this.themeName = 'classic',
     this.paused = false,
     this.habitsDealbreaker = false,
@@ -250,6 +260,8 @@ class AppSettings {
       micDisclosureAccepted: json['micDisclosureAccepted'] as bool? ?? false,
       cameraDisclosureAccepted:
           json['cameraDisclosureAccepted'] as bool? ?? false,
+      locationDisclosureAccepted:
+          json['locationDisclosureAccepted'] as bool? ?? false,
       themeName: json['themeName'] as String? ?? 'classic',
       paused: json['paused'] as bool? ?? false,
       habitsDealbreaker: json['habitsDealbreaker'] as bool? ?? false,
@@ -293,6 +305,7 @@ class AppSettings {
     'blurChatImages': blurChatImages,
     'micDisclosureAccepted': micDisclosureAccepted,
     'cameraDisclosureAccepted': cameraDisclosureAccepted,
+    'locationDisclosureAccepted': locationDisclosureAccepted,
     'themeName': themeName,
     'paused': paused,
     'habitsDealbreaker': habitsDealbreaker,
@@ -344,6 +357,7 @@ class AppSettings {
     bool? blurChatImages,
     bool? micDisclosureAccepted,
     bool? cameraDisclosureAccepted,
+    bool? locationDisclosureAccepted,
     String? themeName,
     bool? paused,
     bool? habitsDealbreaker,
@@ -390,6 +404,8 @@ class AppSettings {
           micDisclosureAccepted ?? this.micDisclosureAccepted,
       cameraDisclosureAccepted:
           cameraDisclosureAccepted ?? this.cameraDisclosureAccepted,
+      locationDisclosureAccepted:
+          locationDisclosureAccepted ?? this.locationDisclosureAccepted,
       themeName: themeName ?? this.themeName,
       paused: paused ?? this.paused,
       habitsDealbreaker: habitsDealbreaker ?? this.habitsDealbreaker,
