@@ -57,6 +57,24 @@ LOCAL = os.path.join(ASSETS, 'datenschutz.html')
 DEFAULT_URL = 'https://auth.thestia.de/datenschutz.html'
 BASIS_DEFAULT = 'https://auth.thestia.de'
 
+# Der oeffentliche Host. thestia.de und auth.thestia.de sind EIN
+# Netlify-Projekt, aber mit unterschiedlichen robots.txt: der
+# oeffentliche Host ist indexierbar, der Auth-Host gesperrt (dort
+# liegt der Sicherheitscheck).
+#
+# WARUM (06.11.2026): Der Pruefer verglich robots.txt gegen den
+# Auth-Host - und meldete dadurch IMMER eine Abweichung, obwohl alles
+# stimmte. Die Datei gehoert gegen den Host geprueft, auf dem sie
+# ausgeliefert wird.
+OEFFENTLICH_DEFAULT = 'https://thestia.de'
+
+# Datei -> Host, auf dem sie ausgeliefert wird. Alles andere liegt
+# auf dem Auth-Host.
+HOST_PRO_DATEI = {
+    'robots.txt': 'oeffentlich',
+    'robots-auth.txt': 'auth',
+}
+
 # Dateien, die Netlify NICHT ausliefert, sondern beim Deploy liest.
 # Sie koennen nicht gegen live geprueft werden (404) - sie gehoeren
 # aber trotzdem in jeden Upload, wenn sie sich geaendert haben.
@@ -165,6 +183,8 @@ def tote_verweise(basis: str) -> list:
 def main() -> int:
     url = os.environ.get('THESTIA_PRIVACY_URL', DEFAULT_URL)
     basis = os.environ.get('THESTIA_SITE_URL', BASIS_DEFAULT)
+    # Der oeffentliche Host (fuer die indexierbare robots.txt).
+    offen = os.environ.get('THESTIA_PUBLIC_URL', OEFFENTLICH_DEFAULT)
 
     if not os.path.exists(LOCAL):
         print(f'FEHLER: {LOCAL} existiert nicht.')
@@ -194,7 +214,16 @@ def main() -> int:
     for rel, pfad in dateien:
         with open(pfad, 'rb') as f:
             lokal = f.read()
-        code, live = hole(f'{basis}/{rel}')
+        # Je Datei der Host, auf dem sie ausgeliefert wird: der
+        # oeffentliche Host traegt die indexierbare robots.txt, der
+        # Auth-Host die sperrende (robots-auth.txt). Beides gegen
+        # denselben Host zu pruefen ergaebe IMMER eine Abweichung
+        # (BEFUND 06.11.2026).
+        if HOST_PRO_DATEI.get(rel) == 'oeffentlich':
+            ziel_basis = offen
+        else:
+            ziel_basis = basis
+        code, live = hole(f'{ziel_basis}/{rel}')
 
         if code == -1:
             nicht_erreichbar.append(rel)

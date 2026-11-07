@@ -1005,6 +1005,38 @@ def strip_theme(html: str, remove_chrome: bool = True) -> str:
     return html
 
 
+# Die Favicon-Links fuer alle Seiten.
+#
+# WARUM (06.11.2026, Betreiber): In der Google-Suche stand neben
+# "Thestia" ein allgemeiner Globus-Knopf statt des Logos - die Seite
+# hatte kein Favicon. Genau dieses Bild zeigt die Suche an.
+#
+# Zentral hier im Theme, damit es nicht auf 22 Seiten (x 2 Sprachen)
+# verteilt ist und beim naechsten Mal auf einer Seite fehlt.
+FAVICON_LINKS = (
+    '<link rel="icon" href="/favicon.ico" sizes="any">\n'
+    '<link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">\n'
+    '<link rel="icon" type="image/svg+xml" href="/favicon.svg">\n'
+    '<link rel="apple-touch-icon" href="/favicon.png">'
+)
+
+
+def favicon_links(html: str) -> str:
+    """Haengt die Favicon-Links in den Kopf - nur, wenn noch keiner da ist.
+
+    Nur wenn noch keiner da ist: Das Werkzeug muss wiederholbar sein
+    (wie bei der meta description). Ein Ersetzen wuerde bei jedem Lauf
+    die Datei anruehren.
+    """
+    if 'rel="icon"' in html or "rel='icon'" in html:
+        return html
+    import re
+    m = re.search(r'<title>.*?</title>', html, re.S)
+    if m:
+        return html[:m.end()] + '\n' + FAVICON_LINKS + html[m.end():]
+    return html.replace('</head>', FAVICON_LINKS + '\n</head>', 1)
+
+
 def apply_theme(html: str, css_extra: str = '',
                 insert_chrome: bool = True,
                 sprach_ziel: str = '',
@@ -1034,6 +1066,10 @@ def apply_theme(html: str, css_extra: str = '',
     nur gesetzt, wenn die Seite noch keinen hat. Leer lassen, wenn
     die Seite keine bekommen soll (transiente Seiten auf noindex).
     """
+    # Die Favicon-Links zuerst: sie gehören in den <head> und duerfen
+    # nicht zwischen <body> und der Kopfzeile landen.
+    html = favicon_links(html)
+
     # Ein altes Design wird entfernt, damit die Seite nie zweimal
     # gestyled wird. Die Kopfzeile wird nur entfernt, wenn sie auch
     # automatisch eingefuegt wurde.

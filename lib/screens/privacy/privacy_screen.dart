@@ -13,7 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/providers/auth_provider.dart';
+import 'package:thestia/screens/privacy/delete_account_action.dart';
 import 'package:thestia/providers/chat_provider.dart';
 import 'package:thestia/providers/mood_provider.dart';
 import 'package:thestia/providers/profile_provider.dart';
@@ -22,7 +22,6 @@ import 'package:thestia/providers/user_preferences_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/widgets/captcha_challenge.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show UserAttributes;
-import 'package:thestia/services/mfa_service.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/utils/constants.dart';
 import 'package:thestia/utils/best_effort.dart';
@@ -485,71 +484,10 @@ class PrivacyScreen extends ConsumerWidget {
     }
   }
 
-  Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
-    // Step-up (ASVS 7.5.3): Bei aktivem MFA ist vor der Konto-Löschung
-    // eine zusätzliche TOTP-Verifikation nötig – eine reine Passwort-
-    // Session (AAL1) reicht nicht (die Edge Function erzwingt AAL2
-    // serverseitig; der Pre-Check hier liefert die verständliche
-    // Fehlermeldung statt eines kryptischen Server-Fehlers).
-    final mfa = ref.read(mfaStatusProvider);
-    if (mfa.hasVerifiedFactors && mfa.currentAal != 'aal2') {
-      final code = await promptTotpCode(context);
-      if (code == null || !context.mounted) return; // abgebrochen
-      try {
-        await MfaService(SupabaseService.client).verifyChallenge(code: code);
-      } catch (_) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Ungültiger oder abgelaufener Code. '
-                'Die Löschung wurde abgebrochen.',
-              ),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-        return;
-      }
-    }
-    if (!context.mounted) return;
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(L10n.t(context, 'privacy.deleteTitle')),
-        content: Text(L10n.t(context, 'privacy.deleteBody')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(L10n.t(context, 'common.cancel')),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: Text(L10n.t(context, 'privacy.deleteConfirm')),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true || !context.mounted) return;
-
-    try {
-      await ref.read(authProvider.notifier).deleteAccount();
-      if (context.mounted) {
-        context.go(AppRoutes.welcome);
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${L10n.t(context, 'privacy.deleteFailed')}: $e'),
-          ),
-        );
-      }
-    }
-  }
+  /// Der Konto-Loesch-Ablauf - jetzt als gemeinsame Funktion, damit ihn
+  /// auch die Einstellungen nutzen (06.11.2026).
+  Future<void> _deleteAccount(BuildContext context, WidgetRef ref) =>
+      deleteAccountWithConfirmation(context, ref);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -684,6 +622,21 @@ class PrivacyScreen extends ConsumerWidget {
           ),
           const Divider(height: 32),
           _SectionTitle(L10n.t(context, 'privacy.dangerZone')),
+          // BEIDE Loesch-Wege stehen hier zusammen (06.11.2026,
+          // Betreiber): "Daten löschen" (ohne das Konto aufzugeben) und
+          // "Konto löschen" (mit).
+          ListTile(
+            leading: const Icon(
+              Icons.cleaning_services_outlined,
+              color: Colors.red,
+            ),
+            title: Text(
+              L10n.t(context, 'settings.deleteData'),
+              style: const TextStyle(color: Colors.red),
+            ),
+            subtitle: Text(L10n.t(context, 'settings.deleteDataSub')),
+            onTap: () => context.push(AppRoutes.deleteData),
+          ),
           ListTile(
             leading: const Icon(Icons.delete_forever, color: Colors.red),
             title: Text(
@@ -780,37 +733,4 @@ class _InfoCard extends StatelessWidget {
       child: Padding(padding: const EdgeInsets.all(16), child: Text(text)),
     );
   }
-}
-
-/// Fragt den 6-stelligen TOTP-Code für das Step-up vor einer sensiblen
-/// Aktion (Konto-Löschung, Passkey-Erstellung) ab.
-/// Liefert `null`, wenn der Nutzer abgebrochen hat.
-Future<String?> promptTotpCode(BuildContext context) {
-  final controller = TextEditingController();
-  return showDialog<String>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(L10n.t(ctx, 'privacy.totpTitle')),
-      content: TextField(
-        controller: controller,
-        autofocus: true,
-        keyboardType: TextInputType.number,
-        maxLength: 6,
-        decoration: InputDecoration(
-          labelText: L10n.t(ctx, 'privacy.totpLabel'),
-          counterText: '',
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(ctx).pop(),
-          child: Text(L10n.t(ctx, 'common.cancel')),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
-          child: Text(L10n.t(ctx, 'privacy.totpConfirm')),
-        ),
-      ],
-    ),
-  );
 }

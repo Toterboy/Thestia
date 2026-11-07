@@ -370,6 +370,17 @@ def render_html(blocks, sprache: dict):
            '<title>%s</title>' % sprache['titel'],
     '<meta name="description" content="%s">'
     % beschreibung('datenschutz.html', sprache['sprache']),
+           # Die Favicon-Links. WARUM (06.11.2026, Betreiber): In der
+           # Google-Suche stand neben "Thestia" ein allgemeiner
+           # Globus-Knopf statt des Logos - die Seite hatte kein Favicon.
+           # Die Datenschutz-Seiten werden hier erzeugt und NICHT von
+           # apply_web_theme.py bearbeitet (sie stehen nicht in dessen
+           # SEITEN-Liste) - die Links muessen deshalb hier stehen.
+           '<link rel="icon" href="/favicon.ico" sizes="any">',
+           '<link rel="icon" type="image/png" sizes="192x192" '
+           'href="/favicon.png">',
+           '<link rel="icon" type="image/svg+xml" href="/favicon.svg">',
+           '<link rel="apple-touch-icon" href="/favicon.png">',
            # Die kanonische Adresse: die Seite ist unter zwei Adressen
            # erreichbar (/datenschutz und /datenschutz.html). Ohne diese
            # Angabe entscheidet die Suchmaschine, welche davon gilt.

@@ -18,8 +18,8 @@ import 'package:thestia/providers/chat_provider.dart';
 import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/providers/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/screens/privacy/privacy_screen.dart'
-    show promptTotpCode;
+import 'package:thestia/screens/privacy/delete_account_action.dart'
+    show deleteAccountWithConfirmation, promptTotpCode;
 import 'package:thestia/services/auth_exception.dart';
 import 'package:thestia/services/encryption_service.dart';
 import 'package:thestia/services/local_storage.dart';
@@ -475,14 +475,6 @@ class SettingsScreen extends ConsumerWidget {
                     onTap: () => context.push(AppRoutes.devices),
                   ),
                   ListTile(
-                    leading: const Icon(Icons.cleaning_services_outlined),
-                    title: Text(L10n.t(context, 'settings.deleteData')),
-                    subtitle: Text(L10n.t(context, 'settings.deleteDataSub')),
-                    trailing: const Icon(Icons.chevron_right),
-                    contentPadding: EdgeInsets.zero,
-                    onTap: () => context.push(AppRoutes.deleteData),
-                  ),
-                  ListTile(
                     leading: const Icon(Icons.privacy_tip),
                     title: Text(L10n.t(context, 'settings.privacyAccount')),
                     subtitle: Text(
@@ -503,6 +495,48 @@ class SettingsScreen extends ConsumerWidget {
               await ref.read(authProvider.notifier).logout();
               if (context.mounted) context.go(AppRoutes.login);
             },
+          ),
+          // DIE LOESCH-WEGE STEHEN GANZ UNTEN (06.11.2026, Betreiber:
+          // "Konto loeschen und Daten loeschen sollen die untersten
+          // Punkte sein"). Sie sind zerstoererisch - dafuer gehoeren sie
+          // nicht zwischen "Geraete" und "Datenschutz & Konto".
+          const SizedBox(height: 32),
+          _SectionTitle(L10n.t(context, 'privacy.dangerZone')),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ListTile(
+                    leading: const Icon(
+                      Icons.cleaning_services_outlined,
+                      color: Colors.red,
+                    ),
+                    title: Text(
+                      L10n.t(context, 'settings.deleteData'),
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                    subtitle: Text(L10n.t(context, 'settings.deleteDataSub')),
+                    contentPadding: EdgeInsets.zero,
+                    onTap: () => context.push(AppRoutes.deleteData),
+                  ),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.delete_forever,
+                      color: Colors.red,
+                    ),
+                    title: Text(
+                      L10n.t(context, 'privacy.deleteAccount'),
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                    subtitle: Text(L10n.t(context, 'privacy.deleteAccountSub')),
+                    contentPadding: EdgeInsets.zero,
+                    onTap: () => deleteAccountWithConfirmation(context, ref),
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 24),
           FutureBuilder<PackageInfo>(
