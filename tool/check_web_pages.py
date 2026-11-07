@@ -20,10 +20,12 @@ nachgewiesen (Negativprobe), sonst waere sie nutzlos.
 
 Nutzung:  python tool/check_web_pages.py
 """
+import os
 import pathlib
 import re
 import subprocess
 import sys
+import time
 from html.parser import HTMLParser
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -349,7 +351,18 @@ def main() -> int:
         for art, inhalt in s.scripts:
             if art != "inline" or not inhalt.strip():
                 continue
-            tmp = ROOT / "tool" / ".web_pages_js_check.js"
+            # EIGENER Dateiname je Lauf (BEFUND 07.11.2026): Mit einem
+            # FESTEN Namen ("tool/.web_pages_js_check.js") haben sich
+            # zwei parallele Laeufe die Datei ueberschrieben - der eine
+            # pruefte dann die halbe Datei des anderen und meldete
+            # "JS-Syntaxfehler". Das Gate wurde dadurch rot, ohne dass
+            # etwas kaputt war: der Selbsttest lief zweimal nebeneinander
+            # (lokaler Spiegel plus Handlauf).
+            #
+            # Die PID und die Uhrzeit machen den Namen eindeutig.
+            tmp = (ROOT / "tool" /
+                   (".web_pages_js_check_%d_%d.js"
+                    % (os.getpid(), int(time.time() * 1000) % 1000000)))
             tmp.write_text(inhalt, encoding="utf-8")
             try:
                 r = subprocess.run(["node", "--check", str(tmp)],

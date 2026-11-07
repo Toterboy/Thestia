@@ -147,6 +147,11 @@ tool/*.txt
 # diese Ausnahme fehlt die Datei im Repo und der CI-Job static-checks
 # bricht, weil er sie per -r einliest.
 !tool/requirements.txt
+# Die temporaeren Dateien der JS-Syntaxpruefung (tool/check_web_pages.py).
+# Der Name enthaelt die PID und die Uhrzeit, damit parallele Laeufe sich
+# nicht in die Quere kommen (BEFUND 07.11.2026) - die Ignore-Regel deckt
+# deshalb das Muster ab, nicht einen festen Namen.
+tool/.web_pages_js_check*.js
 
 # Altersschaetzer-Modell (81 MB): bewusst NICHT im Repo, Aufnahme ist eine
 # bewusste Betreiber-Entscheidung (9f843fa). Ohne diese Zeile wuerde ein

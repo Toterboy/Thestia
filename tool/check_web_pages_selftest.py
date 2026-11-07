@@ -25,6 +25,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -87,7 +88,29 @@ def main() -> int:
         basis = pathlib.Path(tmp) / "assets"
         shutil.copytree(quelle, basis)
 
-        ausgabe = laufe(basis)
+        # Die Kopie muss gruen sein - sonst waeren die Proben nicht
+        # aussagekraeftig.
+        #
+        # MEHRFACH VERSUCHEN (BEFUND 07.11.2026): Die Kopie kann eine
+        # halb geschriebene Datei erwischen, wenn gerade ein anderes
+        # Werkzeug in passkey-assets/ schreibt (apply_web_theme.py,
+        # make_favicon.py, make_terms.py) - zum Beispiel, wenn der
+        # lokale CI-Spiegel und ein Handlauf gleichzeitig laufen. Der
+        # zweite Versuch sieht dann einen konsistenten Stand.
+        #
+        # Wichtig: Der Fehler wird NICHT geschluckt. Erst wenn alle
+        # Versuche scheitern, gilt die Kopie als nicht gruen - ein
+        # echter Inhaltsfehler bleibt also rot.
+        ausgabe = ""
+        for versuch in range(1, 4):
+            ausgabe = laufe(basis)
+            if "FEHLER" not in ausgabe:
+                break
+            if versuch < 3:
+                print("  ?      die Kopie war nicht gruen (Versuch %d) - "
+                      "das kann ein gleichzeitiger Schreibvorgang sein, "
+                      "ich versuche es noch einmal." % versuch)
+                time.sleep(1.0)
         if "FEHLER" in ausgabe:
             print("FEHLER: die Kopie ist nicht gruen - die Proben waeren "
                   "nicht aussagekraeftig.")
