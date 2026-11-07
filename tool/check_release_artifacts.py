@@ -296,6 +296,39 @@ def uuids_in_artifact(path):
     return found
 
 
+def alte_admin_builds(aktueller_ordner):
+    """Admin-Builds in den ALTEN Release-Ordnern.
+
+    BEFUND (07.11.2026, Betreiber): "Sind die APKs veraltet?" - ja. Der
+    Admin-Build im aktuellen Ordner war Build 33, getestet wurde der
+    Stand von vor dem Fix. Der Fehler fiel nicht auf, weil die Datei
+    genauso hiess wie die richtige.
+
+    Dieselbe Gefahr besteht fuer die alten Ordner: in
+    `releases/v0.9.2/admin/` liegen APKs mit der ALTEN UUID, die laut
+    Doku als kompromittiert gilt. Wer die falsche Datei nimmt, hat
+    einen Admin-Zugang mit einem geaecherten Geheimnis.
+
+    Deshalb wird hier gemeldet, dass alte Admin-Builds herumliegen -
+    mit dem Rat, sie zu loeschen.
+
+    In der CI gibt es diese Ordner nicht (releases/ ist ignoriert),
+    also meldet das Gate dort nichts.
+    """
+    alt = []
+    if not RELEASES.is_dir():
+        return alt
+    for ordner in sorted(RELEASES.iterdir()):
+        if not ordner.is_dir() or ordner == aktueller_ordner:
+            continue
+        admin_ordner = ordner / 'admin'
+        if not admin_ordner.is_dir():
+            continue
+        for apk in sorted(admin_ordner.glob('*.apk')):
+            alt.append(apk)
+    return alt
+
+
 def admin_uuid_known() -> bool:
     """Ist die Admin-UUID fuer den Inhaltscheck bekannt?
 
@@ -343,6 +376,19 @@ def main():
                     if p.suffix in ('.apk', '.aab'))
     admin_dir = vdir / 'admin'
     admin = sorted(admin_dir.glob('*.apk')) if admin_dir.is_dir() else []
+
+    # ------------------------------------------------------------------
+    # ALTE ADMIN-BUILDS: Sie tragen die alte (als kompromittiert
+    # geltende) UUID und sind von den aktuellen nicht zu unterscheiden.
+    # ------------------------------------------------------------------
+    alte = alte_admin_builds(vdir)
+    if alte:
+        warnings.append(
+            f'{len(alte)} alte Admin-Build(s) in anderen Release-Ordnern '
+            f'liegen herum - z. B. {alte[0].relative_to(ROOT).as_posix()}. '
+            f'Sie tragen eine alte UUID und sind von den aktuellen nicht '
+            f'zu unterscheiden. Vor einem Admin-Einsatz loeschen, sonst '
+            f'wird versehentlich die falsche Datei getestet.')
 
     # ------------------------------------------------------------------
     # BUILD-NUMMER: Der Admin-Build muss zum aktuellen Release passen.

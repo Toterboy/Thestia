@@ -1001,6 +1001,15 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     (README und SUPPORT.md waren schon korrekt; nur die Release Notes
     waren beim Durchgehen der Dokumente noch auf dem alten Stand.)
 
+22. **In den alten Release-Ordnern liegen 16 Admin-APKs mit der alten
+    UUID.** Sie tragen die UUID, die laut `docs/ADMIN-UUID.md` als
+    kompromittiert gilt, und sie sind von den aktuellen Admin-Builds
+    nicht zu unterscheiden - derselbe Fehlgriff wie oben, nur über
+    einen anderen Ordner. Das Release-Gate meldet sie jetzt als
+    Warnung, mit dem Rat, sie vor einem Admin-Einsatz zu löschen.
+    (Die Dateien selbst zu löschen ist Betreiber-Arbeit - sie liegen
+    in `releases/`, das ist nicht im Repository.)
+
 
 ## [0.10.0] - 2026-10-24 (Build 31)
 
