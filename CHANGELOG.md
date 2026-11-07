@@ -1214,7 +1214,29 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     fehl. Der Bild-Prüfhash aus der Datenschutzerklärung war also
     wirkungslos. (Migration 190 legt die Tabelle nach.)
 
-33. **Der Transit-Funke hat nie einen Match angelegt - er war unsichtbar.**
+33. **Der Geburtstag war in der Nacht falsch - fuer die andere Person.**
+    BEFUND (07.11.2026, Betreiber): „Geburtstagsvorschau."
+
+    **Die Ursache (live gemessen):** Der Server rechnet in **UTC**, die
+    App rechnet lokal. Zwischen 22:00 UTC und Mitternacht sieht der
+    Nutzer **seinen** Geburtstag (Rahmen, Chip) - die andere Person
+    aber keinen: der Server rechnet noch den Vortag. Umgekehrt gilt
+    es am Vorabend.
+
+    Der Betreiber hat an seinem Geburtstag (07.11.) in der App seinen
+    Geburtstagsstil gesehen, bei der anderen Person aber nicht.
+
+    **Jetzt** (Migration 195) rechnet der Server den Geburtstag in der
+    **Zeitzone des Betrachtenden** - die kennt die Datenbank bereits
+    (`profiles.timezone`). Und die App meldet ihre Zeitzone bei **jedem
+    Start** (bisher tat das nur der Elternbereich), weil sie sich mit
+    dem Reisen ändert.
+
+    Die gespeicherte Zone wird nur verwendet, wenn sie ein echter
+    Zonenname ist - sonst würde ein manipulierter Spaltenwert die
+    ganze Profilabfrage scheitern lassen.
+
+34. **Der Transit-Funke hat nie einen Match angelegt - er war unsichtbar.**
     BEFUND (07.11.2026, Betreiber): „Der Funke entsteht, aber es ist
     nichts sichtbar." Und später, nach dem Test auf zwei echten
     Geräten: „Funke wurde angezeigt, ist dann aber wieder verschwunden."
@@ -1242,14 +1264,14 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     `match_id: 10` → **eine Zeile in `public.matches`** → der Funke ist
     in der Chatliste sichtbar.
 
-34. **„Ausblenden" hat den Funken unwiderruflich gelöscht.**
+35. **„Ausblenden" hat den Funken unwiderruflich gelöscht.**
     Der Knopf löscht die Zeile - ohne Rückfrage. Und er sitzt genau
     dort, wo der Finger schon liegt, wenn die Liste gerade gewachsen
     ist: ein unbedachter Tipp vernichtet den Funken. Jetzt fragt die
     App vorher nach. Und nach dem Annehmen sagt sie, was passiert ist,
     und bietet den Chat an - als Knopf, nicht als Zwang.
 
-35. **Mein Aufräum-Skript hat den Test des Betreibers gelöscht.**
+36. **Mein Aufräum-Skript hat den Test des Betreibers gelöscht.**
     Der erste Teil des Befunds „Funke wurde angezeigt, ist dann aber
     wieder verschwunden" war **mein Verschulden**: Das Skript, das die
     Testdaten des Live-Nachweises aufräumte, hat pauschal alle Likes
@@ -1283,7 +1305,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     schreibt, was `fromJson()` liest und was die Server-Zuordnung
     kennt - und meldet jedes Feld, das verloren geht.
 
-36. **Die Vorstellung ließ sich nicht abhören.**
+37. **Die Vorstellung ließ sich nicht abhören.**
     BEFUND (07.11.2026, Betreiber): „Vorstellung von anderen nicht
     abhörbar. Sie lädt nicht oder braucht seeeeeeehr lange."
 
@@ -1300,7 +1322,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     (Intro-Player, eigene Vorstellung, Sprachnachricht im Chat) - sie
     sind alle behoben.
 
-37. **Der Funke war für die Gegenseite unsichtbar.**
+38. **Der Funke war für die Gegenseite unsichtbar.**
     BEFUND (07.11.2026, Betreiber): „Der Funke entsteht, aber es ist
     nichts sichtbar."
 
@@ -1321,7 +1343,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     legte einen Ping an. Jetzt verhalten sich beide gleich (Migration
     193).
 
-38. **Zwei Funktionen, die der Server nicht ausführen durfte.**
+39. **Zwei Funktionen, die der Server nicht ausführen durfte.**
     * **„Entblockieren" ging nie.** Der Aufruf antwortete mit
       `403 permission denied for function unblock_user`: Die Funktion
       existiert, aber die Rolle `authenticated` hatte **kein**
@@ -1341,7 +1363,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     welche Rechte die Rollen wirklich haben. Es meldet jede aufgerufene
     Funktion, die der Server nicht ausführen kann.
 
-39. **Der Zufallschat verlor Nachrichten.**
+40. **Der Zufallschat verlor Nachrichten.**
     BEFUND (07.11.2026, Betreiber): Zufallschat ohne Nachrichten.
 
     The Zufallschat sendete **ausschließlich** über den P2P-Kanal.
@@ -1355,7 +1377,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     Der Zufallschat hat jetzt denselben Dreistufen-Weg wie der normale
     Chat: P2P, dann E2E-Relay, dann Outbox.
 
-40. **Bedienung: Profilbild, Geburtstag, Wartebereich, Bestätigung.**
+41. **Bedienung: Profilbild, Geburtstag, Wartebereich, Bestätigung.**
     * **Doppeltes Profilbild** (Fremdprofil): Unter dem echten Bild
       stand ein Verlaufsblock mit Personen-Icon - der las sich wie ein
       zweites, kaputtes Bild. Der Block ist weg; die Bilder (Hauptbild
@@ -1376,7 +1398,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
       „0:00", obwohl die Datei eine echte Länge hat. Die Länge wird
       jetzt beim Laden aus der Datei gelesen.
 
-41. **Ein Werkzeug, das die stummen Fehler findet.**
+42. **Ein Werkzeug, das die stummen Fehler findet.**
     `tool/check_on_conflict.py` fragt die Produktivdatenbank ab und
     vergleicht **jedes** `ON CONFLICT`-Ziel mit den tatsächlichen
     Indizes. Es hat beide Fehler gefunden (Befunde 31 und 32) – und

@@ -805,6 +805,13 @@ nirgends.
       hat** (Vorher-Nachher-Vergleich) und **bricht ab**, wenn
       zwischen den Testkonten schon etwas liegt.
 
+- [x] **Der Geburtstag wird in der Zeitzone des Betrachtenden gerechnet**
+      (Migration 195). Der Server rechnete in UTC, die App lokal -
+      zwischen 22:00 UTC und Mitternacht sah der Nutzer seinen
+      Geburtstag, die andere Person aber nicht. Und die App meldet ihre
+      Zeitzone jetzt bei **jedem Start** (bisher nur der Elternbereich),
+      weil sie sich mit dem Reisen aendert.
+
 > **Und die ehrliche Lehre daraus:** Der erste Teil des Befunds war
 > **mein Verschulden** - das Aufräum-Skript hat die Testdaten des
 > Betreibers mitgelöscht, weil es pauschal alles zwischen den beiden

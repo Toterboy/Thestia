@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/models/habitude_level.dart';
@@ -122,11 +123,49 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
   ///
   /// Fehler werden verschluckt: ohne Server bleibt der lokale Stand
   /// stehen, und die App ist offline benutzbar.
+  /// Meldet die Zeitzone des Geraets dem Server.
+  ///
+  /// WARUM (Befund 07.11.2026, Betreiber: "Geburtstagsvorschau"): Der
+  /// Server rechnet den Geburtstag in der Zeitzone des BETRACHTENDEN
+  /// (Migration 195). Zwischen 22:00 UTC und Mitternacht sah der
+  /// Nutzer seinen eigenen Geburtstag, die andere Person aber nicht -
+  /// der Server rechnete noch den Vortag.
+  ///
+  /// Das Setzen der Zone ist harmlos: der Server prueft sie selbst
+  /// (pg_timezone_names) und verwirft einen unbekannten Namen
+  /// stillschweigend. Schlaegt der Aufruf fehl, rechnet der Server in
+  /// UTC - das ist der bisherige Zustand, kein Fehler.
+  Future<void> _meldeZeitzone() async {
+    try {
+      final tz = await FlutterTimezone.getLocalTimezone();
+      final name = tz.identifier;
+      if (name.isEmpty) return;
+      await SupabaseService.client
+          .rpc('report_my_timezone', params: {'p_timezone': name})
+          .timeout(const Duration(seconds: 5));
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Profile] Zeitzone nicht meldbar: $e');
+      }
+    }
+  }
+
   Future<void> _refreshServerManagedFields() async {
     try {
       if (!SupabaseService.isInitialized) return;
       final userId = SupabaseService.currentUser?.id;
       if (userId == null || userId.isEmpty) return;
+
+      // BEFUND (07.11.2026, Betreiber): "Geburtstagsvorschau."
+      //
+      // Der Server rechnet den Geburtstag in der Zeitzone des
+      // BETRACHTENDEN (Migration 195). Damit das stimmt, muss die App
+      // ihre Zeitzone kennen - bisher meldete sie nur der
+      // Elternbereich seine.
+      //
+      // Deshalb wird sie bei jedem Start gemeldet: sie aendert sich,
+      // wenn jemand reist.
+      unawaited(_meldeZeitzone());
 
       final res = await SupabaseService.client
           .from('profiles')
