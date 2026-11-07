@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """Erzeugt die Datenschutzerklaerung in zwei Formaten aus einer Quelle.
 
 Google Play verlangt die Erklaerung an zwei getrennten Stellen:
@@ -47,6 +47,7 @@ import html
 import io
 import os
 import re
+import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -487,6 +488,38 @@ def _schreibe_wenn_geaendert(pfad: str, inhalt: str) -> None:
         fh.write(inhalt)
 
 
+def _formatiere(dart_datei):
+    """Formatiert eine erzeugte Dart-Datei (ohne Dart: uebersprungen).
+
+    Warum: Die CI prueft "dart format --set-exit-if-changed lib test
+    tool". Ein Generatorlauf, der die Datei unformatiert zuruecklaesst,
+    bricht dieses Gate - obwohl der INHALT korrekt ist (BEFUND
+    06.11.2026).
+    """
+    pfad = _pathlib.Path(dart_datei)
+    if not pfad.exists():
+        return
+    # WICHTIG (Windows): "dart" und "flutter" sind .bat-Wrapper. Ohne
+    # shell=True findet Python sie nicht (FileNotFoundError) - der
+    # Generatorlauf blieb dann unformatiert und brach das Format-Gate
+    # der CI (BEFUND 06.11.2026).
+    for befehl in ('dart format "%s"' % pfad, 'flutter format "%s"' % pfad):
+        try:
+            ergebnis = subprocess.run(
+                befehl,
+                shell=(os.name == 'nt'),
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+        if ergebnis.returncode == 0:
+            return
+    print('  (HINWEIS: Konnte %s nicht formatieren - bitte "dart format %s '
+          'manuell ausfuehren)' % (pfad.name, pfad.name))
+
+
 def main():
     for sprache in SPRACHEN:
         quelle = sprache['quelle']
@@ -517,6 +550,13 @@ def main():
         _schreibe_wenn_geaendert(sprache['blocks'], render_blocks())
         _schreibe_wenn_geaendert(sprache['dart'],
                                  render_dart(blocks, sprache))
+        # Die Dart-Ausgabe SELBST formatieren (BEFUND 06.11.2026):
+        # Ohne das blieb nach einem Generatorlauf die unformatierte
+        # Fassung stehen - und die CI prueft
+        # "dart format --set-exit-if-changed lib test tool". Der
+        # Generator brach das Format-Gate also, ohne dass etwas
+        # inhaltlich falsch war.
+        _formatiere(sprache['dart'])
 
         os.makedirs(os.path.dirname(sprache['html']), exist_ok=True)
         _schreibe_wenn_geaendert(sprache['html'],

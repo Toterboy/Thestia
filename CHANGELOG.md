@@ -1,4 +1,4 @@
-# Changelog – Thestia
+﻿# Changelog – Thestia
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
@@ -806,7 +806,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
   Selbsttest. Der erste Wächter fand fuenf echte Faelle, der zweite
   einen - beide gegen Negativproben geprueft.
 
-### Nachtrag: Build 34 (06.11.2026) - vier Befunde vom Betreiber
+### Nachtrag: Build 37 (07.11.2026) - vier Befunde vom Betreiber
 
 1. **Der Elternbereich lädt ewig lang.** Der Abruf des Aufsichtsstands
    schlug fehl (keine Sitzung beim App-Start, Netz, Server) - und der
@@ -840,6 +840,41 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      `BLUETOOTH_SCAN`).
    - Das "Bad request" war der Serverfehler bei leerer Token-Liste. Die
      App sagt jetzt selbst: "Kein Gerät in Reichweite."
+   - Die Anzeige zählt jetzt "Thestia-Signale" statt "Thestia-Geräte":
+     ein Gerät liefert mehrere Signale, weil sein Token alle 6-14
+     Minuten wechselt.
+
+#### Datenschutz und Store
+
+5. **Die Standort-Berechtigung wird nur noch angefragt, wo sie
+   technisch nötig ist.** Der BLE-Pfad fragte den Standort auf *jeder*
+   Android-Version an - auch dort, wo er nicht gebraucht wird. Ab
+   Android 12 reicht `BLUETOOTH_SCAN` mit `neverForLocation`; dort wird
+   der Standort für das Radar nicht mehr abgefragt (und der
+   Standort-Dienst muss nicht mehr eingeschaltet sein).
+6. **Prominente Standort-Offenlegung** (Google Play verlangt sie für
+   empfindliche Berechtigungen, wie die App sie für Kamera und Mikrofon
+   schon hatte): ein Dialog an allen drei Stellen, an denen die App den
+   Standort anfragt - Transit Spark (nur auf Android 11 und älter),
+   "Standort erkennen" im Profil und in den Datenschutz-Einstellungen.
+   Er erscheint nur, wenn wirklich angefragt wird, und wird einmalig
+   bestätigt.
+7. **Der Verifizierungs-Standort liegt auf dem 5-km-Raster.** Auf
+   Android 11 und älter ist die genaue Standort-Berechtigung Pflicht
+   (für den BLE-Scan), und dort gibt es keine Wahl zwischen "ungefähr"
+   und "genau" - die Wahl kam erst mit Android 12. Die App hätte damit
+   einen exakten Standort bekommen und lokal gespeichert, obwohl sie
+   verspricht, den genauen Standort nicht zu speichern. Der
+   Verifizierungs-Standort geht jetzt durch dasselbe 5-km-Raster wie
+   das Profil. Die Datenschutzerklärung sagt das jetzt ausdrücklich.
+8. **Der Zähler im Transit-Radar zählt die frischen Begegnungen**
+   (45 Minuten - das Fenster, in dem der Server sie zuordnen kann)
+   statt aller zwei Stunden.
+9. **Der Generator der Datenschutzerklärung formatiert seine Ausgabe
+   jetzt selbst.** Vorher blieb nach einem Lauf die unformatierte Fassung
+   stehen - und die CI prüft `dart format --set-exit-if-changed`. Der
+   Generator konnte also das Format-Gate brechen, ohne dass etwas
+   inhaltlich falsch war.
 
 
 ## [0.10.0] - 2026-10-24 (Build 31)
