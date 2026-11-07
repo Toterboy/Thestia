@@ -107,13 +107,62 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
+    final view = tester.view;
+    final bildschirm = view.physicalSize.height / view.devicePixelRatio;
     final groesse = tester.getSize(find.byType(ChatBackgroundPicker));
     expect(
       groesse.height,
-      lessThanOrEqualTo(300),
+      lessThanOrEqualTo(bildschirm * 0.6 + 1),
       reason:
           'der Picker waechst unbegrenzt - in einem scrollbaren Dialog '
           'genau das, was Flutter nicht mag',
+    );
+  });
+
+  testWidgets('alle Muster sind ohne Scrollen sichtbar', (tester) async {
+    // BEFUND (07.11.2026, Betreiber): "Das mit Chat Hintergrund, dass
+    // man da scrollen muss ist nur so mittel gut bei den Einstellungen."
+    //
+    // Vorher stand im Picker ein festes SizedBox(height: 280). Bei
+    // sieben Mustern (ohne + fuenf Vorgaenge + eigenes) sind das drei
+    // Reihen - und 280 Pixel zeigten nur zwei. Man musste also
+    // scrollen, um den letzten Hintergrund zu sehen.
+    //
+    // Der Test prueft: der Picker ist mindestens so hoch wie sein Raster.
+    // Ein Grid, das hoeher ist als sein Platz, wuerde abgeschnitten
+    // (oder scrollen) - und genau das war der Befund.
+    tester.view.physicalSize = const Size(1200, 2400);
+    tester.view.devicePixelRatio = 3.0;
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(hause());
+    await tester.pumpAndSettle();
+
+    // Kein Overflow, kein Absturz.
+    expect(tester.takeException(), isNull);
+
+    final raster = find.byType(GridView);
+    expect(raster, findsOneWidget);
+
+    final rasterHoehe = tester.getSize(raster).height;
+    final picker = find.byType(ChatBackgroundPicker);
+    final pickerHoehe = tester.getSize(picker).height;
+
+    expect(
+      pickerHoehe + 0.5,
+      greaterThanOrEqualTo(rasterHoehe),
+      reason:
+          'der Picker ist kleiner als sein Raster - die letzten Muster '
+          'wuerden abgeschnitten und man muesste scrollen '
+          '($pickerHoehe < $rasterHoehe)',
+    );
+
+    // Und: der Picker hat kein eigenes Scrollen - das Raster waechst
+    // mit, statt in einem Scrollbereich zu liegen.
+    expect(
+      find.byType(SingleChildScrollView),
+      findsNothing,
+      reason: 'der Picker scrollt selbst - dann muss der Dialog scrollen',
     );
   });
 }

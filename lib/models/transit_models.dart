@@ -190,8 +190,12 @@ class TransitTag {
   ///
   /// Die Reihenfolge hier ist die Reihenfolge in der Auswahl. Der
   /// Server kennt dieselben Werte (public.transit_tag_catalog,
-  /// Migration 184) - ein Wert, den der Server nicht kennt, wird beim
-  /// Senden abgelehnt.
+  /// Migration 184 und 186) - ein Wert, den der Server nicht kennt,
+  /// wird beim Senden abgelehnt.
+  ///
+  /// BEFUND (07.11.2026, Betreiber): "Zudem soll bei Haarfarben auch
+  /// noch sowas wie lila usw. sein." Migration 186 hat die Palette um
+  /// lila, rosa, blau und gruen erweitert - 18 Werte.
   static const List<String> hairColors = [
     'black',
     'brown',
@@ -207,6 +211,10 @@ class TransitTag {
     'saltpepper',
     'white',
     'bald',
+    'purple',
+    'pink',
+    'blue',
+    'green',
   ];
 
   /// Augenfarben. EIGENE Palette, siehe [allowedColors].

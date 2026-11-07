@@ -397,6 +397,27 @@ class TransitNotifier extends StateNotifier<TransitState>
         state = state.copyWith(busy: false, lastError: 'no_devices');
         return null;
       }
+      // Der eigene Token (v0.10.0, Migration 185).
+      //
+      // BEFUND (07.11.2026, Betreiber): "Beide Geraete suchen eine
+      // Person bei Transit Spark ... aber gibt keinen Funken." Der
+      // Server verglich zwei Sichtungslisten - die sind bei zwei
+      // Personen, die nur einander sehen, disjunkt. Mit genau zwei
+      // Geraeten war ein Match mathematisch unmoeglich.
+      //
+      // Der eigene Token macht die Frage beantwortbar: "hat der
+      // andere mich gesehen?" - denn der eigene Token des anderen
+      // steht in dessen Sichtungsliste, wenn der andere mich gesehen
+      // hat.
+      final eigenerToken = TransitBleService.instance.currentToken;
+      if (eigenerToken == null || eigenerToken.isEmpty) {
+        // Das Radar laeuft, sendet aber noch kein Signal (oder der
+        // Token wurde gerade gewechselt). Ein Versuch ohne ihn kann
+        // keinen Match finden - das wird gesagt, statt still nichts
+        // zu tun.
+        state = state.copyWith(busy: false, lastError: 'own_token_missing');
+        return null;
+      }
       final res = await SupabaseDatabaseService(SupabaseService.client)
           .matchProximitySpark(
             tokens: tokens,
@@ -404,6 +425,7 @@ class TransitNotifier extends StateNotifier<TransitState>
             mode: state.mode.value,
             selfTags: state.selfTags,
             selfNote: state.selfNote.isEmpty ? null : state.selfNote,
+            selfToken: eigenerToken,
           );
       final result = TransitSparkResult.fromJson(res);
       state = state.copyWith(busy: false, lastResult: result, lastError: null);

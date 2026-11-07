@@ -409,7 +409,7 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
 
 ## Umgesetzt: 0.10.0 – Standort-Privatisierung, Transit Spark auf echten Geräten & Qualitätssicherung
 
-> Status: v0.10.0 ist in Vorbereitung (Build 39, 07.11.2026) und die
+> Status: v0.10.0 ist in Vorbereitung (Build 40, 07.11.2026) und die
 > **erste Fassung für den Play Store** – das Play-Console-Projekt wird
 > erst angelegt. Zuletzt veröffentlicht wurde v0.9.1 (Prerelease auf
 > GitHub); intern wird v0.9.2 getestet. Der Stand ist unten bei den
@@ -621,7 +621,7 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
 - [x] **Downloads und Push-Endpunkte werden geprüft** - nur HTTPS und
       nur eigene Hosts.
 
-### Nachtrag vom 06./07.11.2026 (Build 34 bis 39)
+### Nachtrag vom 06./07.11.2026 (Build 34 bis 40)
 
 Der Test auf echten Geräten hat eine Reihe von Fehlern zutage
 gefördert, die alle im Code lagen – dazu die Korrekturen an der
@@ -723,6 +723,54 @@ Und der Fehler selbst ist abgesichert: ein Test öffnet die
 Merkmals-Auswahl über den Weg, den die App geht, und misst, wo die
 Überschrift landet. Ohne den `useSafeArea` landet sie **in** der
 Statusleiste - der Test schlägt dann an.
+
+#### Build 40: der Match war mit genau zwei Geräten unmöglich
+
+Der Betreiber meldete am 07.11.2026: „Beide Geräte suchen eine Person
+bei Transit Spark (Beide haben gleiche beschreibung und beide haben
+sich gegenseitig blicke getauscht/gefunkt, aber gibt keinen Funken.)"
+
+**Das war kein Bedienfehler, sondern ein Bug in der Kernfunktion.**
+Das Signal enthielt die Tokens der *gesehenen Geräte*, nicht den
+eigenen Token des Absenders – und gesucht wurde mit genau diesen
+Tokens. Zwei Personen, die nur einander sehen, haben disjunkte
+Token-Mengen: **mit genau zwei Geräten konnte die Bedingung nie
+erfüllt werden.** (Belegt an den echten Signalen des Betreibers: zwei
+`pending`-Signale, 16 Sekunden auseinander, gleiche Beschreibung,
+keine gemeinsamen Tokens.)
+
+- [x] **Der eigene Token wird mitgeschickt** (Migration 185) und in
+      einer eigenen Spalte gespeichert. Damit lässt sich die Frage
+      stellen, die die Sache meint: *HAT DER ANDERE MICH GESEHEN?* –
+      denn der eigene Token des anderen steht in dessen
+      Sichtungsliste, wenn der andere mich gesehen hat. Die Bedingung
+      wird symmetrisch, und der Match ist an die Identität gebunden:
+      zwei Personen, die nur dasselbe dritte Gerät gesehen haben,
+      matchen nicht mehr.
+- [x] **Die Migration enthält einen Selbsttest**, der den Fall des
+      Betreibers nachstellt – und den Falschtreffer. Er läuft in einem
+      SAVEPOINT und wird zurückgerollt; bricht er ab, wird die
+      Migration nicht ausgerollt.
+- [x] **Ohne den eigenen Token wird gar nicht erst gesendet.** Ein
+      Versuch ohne ihn kann keinen Match finden und würde den Nutzer
+      mit einem stillen „kein Match" im Glauben lassen, es sei niemand
+      in der Nähe.
+- [x] **18 Haarfarben** (Migration 186) – lila, rosa, blau, grün sind
+      dazu gekommen. Und ein Werkzeug (`tool/check_transit_catalog.py`),
+      das prüft, dass App und Server dieselben Merkmale kennen: ein
+      Wert, den der Server nicht kennt, wird beim Senden
+      **stillschweigend weggefiltert** – der Nutzer wählt ihn, er
+      verschwindet, und der Funke kommt nie.
+- [x] **Die Chat-Hintergrund-Auswahl muss nicht mehr gescrollt
+      werden** (die feste Höhe 280 zeigte nur zwei von drei Reihen),
+      und **die Haarfarben liegen in einem Raster statt in einer
+      Reihe**, mit dem Namen der gewählten Farbe daneben.
+
+> **Der Server kennt neun Merkmale, die die App nicht anbietet**
+> (`ausweis`, `brille`, `hair_length`, `hair_style`, `helm`,
+> `kopfhoerer`, `rucksack`, `sandalen`, `sportlich`). Das ist kein
+> Fehler - aber `hair_length` und `hair_style` wären die logische
+> Ergänzung zu den 18 Haarfarben, wenn der Betreiber sie will.
 
 ### Elternfreigabe und Aufsicht für 16- und 17-Jährige (Teil von 0.10.0)
 

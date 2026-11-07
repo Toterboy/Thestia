@@ -399,11 +399,20 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
       // kein Fehler, sondern der Normalfall, wenn niemand nearby ist.
       // Der Serverfehler dazu war "Bad request" (400) - fuer den
       // Nutzer eine tote Meldung (BEFUND 06.11.2026).
+      //
+      // Und: der eigene Token fehlt (v0.10.0, Migration 185) - das
+      // heisst, das Radar sendet noch kein Signal. Ohne ihn kann der
+      // Server keinen Match finden; das wird gesagt statt still
+      // nichts zu tun.
       final text = reason == 'no_devices'
           ? L10n.t(context, 'transit.noDevices')
-          : (reason == null
-                ? L10n.t(context, 'transit.sendFailed')
-                : '${L10n.t(context, 'transit.sendFailed')} ($reason)');
+          : (reason == 'own_token_missing'
+                ? L10n.t(context, 'transit.ownTokenMissing')
+                : (reason == 'transit_server_too_old'
+                      ? L10n.t(context, 'transit.serverTooOld')
+                      : (reason == null
+                            ? L10n.t(context, 'transit.sendFailed')
+                            : '${L10n.t(context, 'transit.sendFailed')} ($reason)')));
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(text),
@@ -1787,54 +1796,79 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
                 style: theming.textTheme.labelLarge,
               ),
               const SizedBox(height: 6),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final color in tag.availableColors)
-                    Tooltip(
-                      message: L10n.t(context, TransitTag.colorLabelKey(color)),
-                      child: GestureDetector(
-                        onTap: () => setState(() {
-                          _colors[tag.slug] = _colors[tag.slug] == color
-                              ? null
-                              : color;
-                        }),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            color: TransitTag.swatchOf(color),
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: color == 'white'
-                                  ? theming.colorScheme.outline
-                                  : Colors.transparent,
-                              width: 1,
-                            ),
-                            boxShadow: _colors[tag.slug] == color
-                                ? [
-                                    BoxShadow(
-                                      color: theming.colorScheme.primary
-                                          .withValues(alpha: 0.9),
-                                      blurRadius: 0,
-                                      spreadRadius: 3,
-                                    ),
-                                  ]
-                                : null,
+              // Die gewaehlte Farbe steht als Text dabei - man soll
+              // nicht raten muessen, welcher Kreis gerade gewaehlt ist.
+              if (_colors[tag.slug] != null) ...[
+                Text(
+                  L10n.t(context, TransitTag.colorLabelKey(_colors[tag.slug]!)),
+                  style: theming.textTheme.bodySmall?.copyWith(
+                    color: theming.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              // Die Farben als Raster statt als Reihe.
+              //
+              // BEFUND (07.11.2026, Betreiber): "Vielleicht kann man das
+              // auch schoener als eine Reihe an Farben machen." Bei 18
+              // Haarfarben (Migration 186) bricht eine Wrap-Reihe in
+              // mehrere Reihen um, und die Reihen sitzen nicht auf
+              // einer Linie - das sah unordentlich aus.
+              //
+              // Ein Raster mit gleich grossen Kreisen ist geordneter,
+              // und die Kacheln behalten ihre Groesse (die Haarfarben
+              // werden sonst zu klein, um sie sicher zu treffen).
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: tag.availableColors.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                ),
+                itemBuilder: (context, i) {
+                  final color = tag.availableColors[i];
+                  final gewaehlt = _colors[tag.slug] == color;
+                  return Tooltip(
+                    message: L10n.t(context, TransitTag.colorLabelKey(color)),
+                    child: GestureDetector(
+                      onTap: () => setState(() {
+                        _colors[tag.slug] = gewaehlt ? null : color;
+                      }),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        decoration: BoxDecoration(
+                          color: TransitTag.swatchOf(color),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: color == 'white'
+                                ? theming.colorScheme.outline
+                                : Colors.transparent,
+                            width: 1,
                           ),
-                          child: _colors[tag.slug] == color
-                              ? const Icon(
-                                  Icons.check,
-                                  size: 16,
-                                  color: Colors.white,
-                                )
+                          boxShadow: gewaehlt
+                              ? [
+                                  BoxShadow(
+                                    color: theming.colorScheme.primary
+                                        .withValues(alpha: 0.9),
+                                    blurRadius: 0,
+                                    spreadRadius: 3,
+                                  ),
+                                ]
                               : null,
                         ),
+                        child: gewaehlt
+                            ? const Icon(
+                                Icons.check,
+                                size: 16,
+                                color: Colors.white,
+                              )
+                            : null,
                       ),
                     ),
-                ],
+                  );
+                },
               ),
             ],
             // ---- Eigenes Textfeld zur Ergaenzung (optional)

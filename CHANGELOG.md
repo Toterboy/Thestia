@@ -806,7 +806,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
   Selbsttest. Der erste Wächter fand fuenf echte Faelle, der zweite
   einen - beide gegen Negativproben geprueft.
 
-### Nachtrag: Build 34 bis 39 (06./07.11.2026) - vier Befunde vom Betreiber
+### Nachtrag: Build 34 bis 40 (06./07.11.2026) - vier Befunde vom Betreiber
 
 1. **Der Elternbereich lädt ewig lang.** Der Abruf des Aufsichtsstands
    schlug fehl (keine Sitzung beim App-Start, Netz, Server) - und der
@@ -1004,11 +1004,129 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 22. **In den alten Release-Ordnern liegen 16 Admin-APKs mit der alten
     UUID.** Sie tragen die UUID, die laut `docs/ADMIN-UUID.md` als
     kompromittiert gilt, und sie sind von den aktuellen Admin-Builds
-    nicht zu unterscheiden - derselbe Fehlgriff wie oben, nur über
+    nicht zu unterscheiden – derselbe Fehlgriff wie oben, nur über
     einen anderen Ordner. Das Release-Gate meldet sie jetzt als
     Warnung, mit dem Rat, sie vor einem Admin-Einsatz zu löschen.
-    (Die Dateien selbst zu löschen ist Betreiber-Arbeit - sie liegen
+    (Die Dateien selbst zu löschen ist Betreiber-Arbeit – sie liegen
     in `releases/`, das ist nicht im Repository.)
+
+23. **Transit Spark: mit genau zwei Geräten war ein Match mathematisch
+    unmöglich.** BEFUND (07.11.2026, Betreiber): „Beide Geräte suchen
+    eine Person bei Transit Spark (Beide haben gleiche beschreibung
+    und beide haben sich gegenseitig blicke getauscht/gefunkt, aber gibt
+    keinen Funken.)"
+
+    **Die Ursache** (an den echten Daten des Betreibers belegt): Das
+    Signal enthielt die Tokens der *Geräte*, die der Absender gesehen
+    hatte – nicht den eigenen Token des Absenders. Gesucht wurde mit
+    `s.tokens && v_clean`, also mit derselben Menge:
+
+    ```
+    A sendet -> Signal A.tokens = {Token von B}
+    B sendet -> Signal B.tokens = {Token von A}
+    A sucht  -> {Token von A} && {Token von B} = LEER
+    ```
+
+    Zwei Personen sehen nur einander, niemals sich selbst. Ihre
+    Token-Mengen sind deshalb disjunkt – die Bedingung konnte nie
+    stimmen. Mit drei Geräten wäre es über das gemeinsame dritte Token
+    gegangen; deshalb ist der Fehler nie aufgefallen.
+
+    **Die Lösung** (Migration 185): Der eigene Token wird mitgeschickt
+    und in einer eigenen Spalte `self_token` gespeichert. Damit lässt
+    sich die Frage stellen, die die Sache überhaupt meint: *HAT DER
+    ANDERE MICH GESEHEN?* – denn der eigene Token des anderen steht in
+    dessen Sichtungsliste, wenn der andere mich gesehen hat. Die
+    Bedingung wird symmetrisch:
+
+    ```
+    s.self_token = ANY(v_clean)   -- ich habe IHN gesehen
+    p_self_token = ANY(s.tokens)   -- ER hat MICH gesehen
+    ```
+
+    Das ist genau „Blicke getauscht". Und weil der Match an die
+    Identität gebunden ist, kann es nicht mehr passieren, dass zwei
+    Personen matchen, die nur dasselbe dritte Gerät gesehen haben.
+
+    **Abgesichert:** Die Migration enthält einen Selbsttest, der den
+    Fall des Betreibers nachstellt (zwei Personen, gleiche
+    Beschreibung, je ein Token) – und den Falschtreffer (zwei
+    Personen mit gemeinsamem drittem Gerät). Der Test läuft in einem
+    SAVEPOINT und wird zurückgerollt; bricht er ab, wird die Migration
+    nicht ausgerollt – dann fällt der Fehler beim Deployen auf, nicht
+    beim Benutzen. Auf der Client-Seite gibt es einen Test, dass der
+    eigene Token wirklich mitgeschickt wird und dass ohne ihn gar
+    nicht erst gesendet wird (ein Versuch ohne ihn kann keinen Match
+    finden und würde den Nutzer mit einem stillen „kein Match"
+    im Glauben lassen, es sei niemand in der Nähe).
+
+24. **Ausgefallene Haarfarben** (Migration 186): BEFUND (07.11.2026,
+    Betreiber): „Zudem soll bei Haarfarben auch noch sowas wie lila
+    usw. sein." Die Palette hat jetzt 18 Werte statt 14 – neu: lila,
+    rosa, blau, grün. Sie benutzen die vorhandenen Farb-Slugs (`purple`,
+    `pink`, `blue`, `green`); die Farbe selbst ist dieselbe wie in der
+    Kleidung, eindeutig bleibt die Angabe durch den Merkmals-Slug
+    (`hair_color:purple` ist etwas anderes als `hemd:purple`).
+
+    **Und ein Werkzeug, das die Brücke prüft:** App und Server führen
+    dieselben Merkmale zweimal – in `lib/models/transit_models.dart`
+    und in `public.transit_tag_catalog`. Die RPC baut ihre Whitelist
+    aus der Server-Tabelle; **ein Wert, den der Server nicht kennt,
+    wird beim Senden stillschweigend weggefiltert.** Bietet die App eine
+    solche Farbe an, sieht der Nutzer keinen Fehler: er wählt sie, sie
+    verschwindet, der Funke kommt nie. `tool/check_transit_catalog.py`
+    vergleicht deshalb beide Seiten.
+
+25. **Die Chat-Hintergrund-Auswahl muss nicht mehr gescrollt werden.**
+    BEFUND (07.11.2026, Betreiber): „Das mit Chat Hintergrund, dass man
+    da scrollen muss ist nur so mittel gut bei den Einstellungen." Der
+    Picker hatte ein festes `SizedBox(height: 280)` – bei sieben
+    Mustern sind das drei Reihen, von denen 280 Pixel nur zwei zeigen.
+    Die Höhe wird jetzt aus der Kachelgröße berechnet: so viele Reihen,
+    wie Muster da sind, und keine mehr. Auf einem kleinen Bildschirm
+    nimmt der Dialog 60 Prozent des Platzes – dort wird gescrollt,
+    weil es nicht anders geht.
+
+26. **Die Haarfarben-Auswahl ist ein Raster statt einer Reihe.**
+    BEFUND (07.11.2026, Betreiber): „Vielleicht kann man das auch
+    schöner als eine Reihe an Farben machen." Bei 18 Haarfarben brach
+    eine Wrap-Reihe in mehrere Reihen um, und die Reihen saßen nicht
+    auf einer Linie. Die Farben liegen jetzt in einem gleichmäßigen
+    Raster, und der Name der gewählten Farbe steht als Text dabei –
+    man muss nicht raten, welcher Kreis gerade gewählt ist.
+
+27. **Das Push-Reife-Gate hatte eine Lücke – und einen Absturz.**
+    Die Migration 185 hat eine neue Variante von
+    `match_proximity_spark` angelegt. Das Gate meldete daraufhin drei
+    Befunde:
+    * Zwei davon waren **formal falsch**: Das Gate verglich jede
+      Migrationsdatei mit *allen* jemals angelegten Signaturen. Eine
+      Migration kann aber keine Signatur revoken, die es noch gar nicht
+      gibt – Migration 131 und 156 wurden zu Recht gemeldet, obwohl
+      ihre Sperre vollständig war.
+    * Einer war **echt**: Die neue Funktion (SECURITY DEFINER) war
+      **für alle aufrufbar** – auch ohne jedes JWT. Der Postgres-
+      DEFAULT-Grant ist „EXECUTE … TO PUBLIC", und `PUBLIC` umfasst
+      `anon` mit. Jetzt ist sie wie ihre ältere Schwester gesperrt
+      (`REVOKE … FROM PUBLIC, anon`), mit einer Kontrolle, die live
+      prüft, dass `anon` sie nicht mehr aufrufen darf und
+      `authenticated` sie weiterhin darf.
+    * Und das Gate **stürzte ab**, statt zu prüfen: `os` war nicht
+      importiert. Das ist die schlimmste Sorte von Fehler – ein Gate,
+      das still nichts tut.
+
+    Die Regel lautet jetzt: **jede angelegte Variante muss gesperrt
+    sein** – von der Datei selbst oder von einer anderen, und
+    **zeitlich** richtig: Migration 123 macht einen Sweep über alle
+    Funktionen (er arbeitet über `pg_proc` und erfasst damit den
+    Bestand zur Zeit der Migration). Eine Variante, die **vor** dem
+    Sweep angelegt wurde, ist also gesperrt – eine, die **danach**
+    angelegt wurde, muss die anlegende Migration selbst sperren. Genau
+    das ist der Fall der Migration 185.
+
+    Und der Negativfall ist belegt: ohne den REVOKE meldet das Gate
+    `match_proximity_spark wird hier angelegt, aber (text[], text[],
+    text, text[], text, text) wird NICHT revokt`.
 
 
 ## [0.10.0] - 2026-10-24 (Build 31)

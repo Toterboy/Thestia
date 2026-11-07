@@ -45,6 +45,24 @@ class TransitBleService {
 
   bool get isActive => _advertising || _scanning;
 
+  /// Der eigene Token, der gerade per BLE gesendet wird.
+  ///
+  /// BEFUND (07.11.2026, Betreiber): "Beide Geraete suchen eine Person
+  /// bei Transit Spark ... aber gibt keinen Funken." Die Ursache war
+  /// nicht das Senden, sondern das FEHLEN dieses Tokens beim Server:
+  /// Das Signal enthielt nur die Tokens der gesehenen Geraete, und
+  /// gesucht wurde mit genau diesen - zwei Personen, die nur einander
+  /// sehen, haben disjunkte Mengen. Mit genau zwei Geraeten war ein
+  /// Match mathematisch unmoeglich (Migration 185).
+  ///
+  /// Der Server braucht den eigenen Token, um zu pruefen: "HAT DER
+  /// ANDERE MICH GESEHEN?" - denn der eigene Token des anderen steht in
+  /// dessen Sichtungsliste, wenn der andere mich gesehen hat.
+  ///
+  /// `null`, solange das Radar nicht laeuft (dann gibt es auch nichts
+  /// zu vergleichen).
+  String? get currentToken => _currentToken;
+
   /// Maschinenlesbarer Grund des letzten Fehlschlags (für gezielte
   /// UI-Hinweise statt generischem "startFailed"):
   /// 'location_permission' | 'location_service' | 'bluetooth_scan' |

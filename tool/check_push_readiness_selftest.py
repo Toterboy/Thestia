@@ -25,9 +25,23 @@ def m_anon_ohne_public(c):
 
 
 def m_overload_luecke(c):
+    # BEFUND (07.11.2026, Migration 185): Der alte Negativfall zielte auf
+    # Migration 126 - dort fehlte nach der Mutation der REVOKE der
+    # Variante profile_discovery_visible(uuid, uuid). Der Fall ist aber
+    # KEIN Fehler mehr: die Variante wurde VOR dem Sweep aus Migration
+    # 123 angelegt, und der Sweep (er arbeitet ueber pg_proc) hat sie
+    # erfasst. Die Datenbank bestaetigt das: fuer "anon" ist sie nicht
+    # aufrufbar.
+    #
+    # Der Fall, der zaehlt, ist der umgekehrte: eine Variante, die
+    # NACH dem Sweep angelegt wird. Dafuer steht Migration 185 - sie
+    # legt match_proximity_spark mit dem eigenen Token an. Ohne ihren
+    # REVOKE bleibt die Variante aufrufbar, und genau das muss der
+    # Checker melden.
     return c.replace(
-        'REVOKE ALL ON FUNCTION public.profile_discovery_visible(uuid, uuid) '
-        'FROM PUBLIC, anon, authenticated;', '', 1)
+        'REVOKE EXECUTE ON FUNCTION\n'
+        '  public.match_proximity_spark(text[], text[], text, text[], text, text)\n'
+        'FROM PUBLIC, anon;', '', 1)
 
 
 def m_prosrc_kommentar(c):
@@ -68,7 +82,7 @@ MUTATIONS = [
     ('1 PUBLIC-Revoke', 'REVOKE ... FROM anon ohne FROM PUBLIC',
      '123_revoke_public_execute.sql', m_anon_ohne_public),
     ('2 Overloads', 'eine Variante einer ueberladenen Function bleibt offen',
-     '126_discovery_privacy_filters.sql', m_overload_luecke),
+     '185_transit_match_own_token.sql', m_overload_luecke),
     ('3 prossrc-Check', 'Fail-Fast-Muster steht nur im Kommentar',
      '127_remaining_db_hardening.sql', m_prosrc_kommentar),
     ('4 LANGUAGE sql', 'spricht eine spaeter definierte Function an',

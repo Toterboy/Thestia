@@ -92,25 +92,44 @@ void main() {
     });
 
     test('die Haarfarben sind eigenstaendig zur Kleidung', () {
-      // "schwarz" bei der Kleidung und "schwarz" beim Haar sind
-      // verschiedene Angaben - die Farbe traegt das Praefix im Slug.
+      // Die Merkmale sind eindeutig, weil der MERKMALS-Slug sie trennt:
+      // "hair_color:purple" ist etwas anderes als "hemd:purple".
+      //
+      // Der alte Kommentar behauptete, die Farbe selbst traege ein
+      // Praefix im Slug ("haar_black"). Das stimmt nicht (und stimmte
+      // nie): die Farb-Slugs sind global und werden von mehreren
+      // Merkmalen benutzt - lila ist bei den Haaren und bei der
+      // Kleidung dieselbe Farbe.
       expect(
         TransitTag.hairColors.toSet().difference(
           TransitTag.clothingColors.toSet(),
         ),
         isNotEmpty,
         reason:
-            'die Haarpalette ist eine eigene - sonst wuerde ein schwarzes '
-            'Hemd mit schwarzem Haar gleichgesetzt',
+            'die Haarpalette enthaelt eigene Werte - sonst wuerde ein '
+            'schwarzes Hemd mit schwarzem Haar gleichgesetzt',
       );
+    });
+
+    test('die ausgefallenen Haarfarben sind dabei (Migration 186)', () {
+      // BEFUND (07.11.2026, Betreiber): "Zudem soll bei Haarfarben auch
+      // noch sowas wie lila usw. sein."
+      for (final farbe in const ['purple', 'pink', 'blue', 'green']) {
+        expect(
+          TransitTag.hairColors,
+          contains(farbe),
+          reason: 'die Haarfarbe $farbe fehlt in der Auswahl',
+        );
+      }
     });
 
     test('es sind mehr Haarfarben als vor dem 06.11.2026', () {
       // BEFUND: "Es muss mehr Haarfarben zur Auswahl geben." Vorher
-      // waren es acht.
+      // waren es acht, nach Migration 184 vierzehn, nach Migration 186
+      // achtzehn.
       expect(
         TransitTag.hairColors.length,
-        greaterThanOrEqualTo(14),
+        greaterThanOrEqualTo(18),
         reason: 'die Haarfarben wurden nicht erweitert',
       );
     });

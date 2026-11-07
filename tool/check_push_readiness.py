@@ -18,6 +18,7 @@ worden - die echte Datenbank hat sie abgelehnt.
 6) `RAISE EXCEPTION name` OHNE Anfuehrungszeichen ist ein Condition-Name und
    ergibt bei CREATE 42704 "unrecognized exception condition".
 """
+import os
 import pathlib
 import re
 import sys
@@ -114,6 +115,9 @@ for f in NEW:
 # Nur ein Problem, wenn eine MEHRFACH ueberladene Function per Signatur
 # revokt wird. Normale Signatur-Listen fuer Client-RPCs sind korrekt.
 overloads = {}
+# Welche Signaturen hat WELCHE Migration angelegt? Das braucht die
+# Regel unten: wer eine Variante anlegt, muss sie auch sperren.
+angelegt_pro_datei = {}
 for f in ALL:
     # WICHTIG: mit strip_comments. Sonst zaehlt eine AUSKOMMENTIERTE
     # Definition als Ueberladung - eine Migration, die in ihrem
@@ -123,10 +127,75 @@ for f in ALL:
     # 145 nennt die alte Signatur, und der Check flaggte daraufhin
     # genau diese - obwohl sie im Kommentar stand.
     c = strip_comments(read(f))
+    angelegt_hier = {}
     for m in pat_fn.finditer(c):
         _, args = sig_at(c, m.start())
-        overloads.setdefault(m.group(1).lower(), set()).add(tuple(a[1] for a in args))
+        sig = tuple(a[1] for a in args)
+        name = m.group(1).lower()
+        overloads.setdefault(name, set()).add(sig)
+        angelegt_hier.setdefault(name, set()).add(sig)
+    angelegt_pro_datei[f] = angelegt_hier
 multi = {k for k, v in overloads.items() if len(v) > 1}
+
+# Der erste dynamische Sweep (Migration 123). Alles, was VOR ihm
+# angelegt wurde, hat er erfasst - er arbeitet ueber pg_proc und
+# damit ueber den ganzen Bestand zur Zeit der Migration. Die statische
+# Analyse sieht diese Sperren nicht (im Quelltext steht kein
+# "REVOKE ... FUNCTION <name>(<typen>)" fuer sie).
+#
+# BEFUND (07.11.2026): Ohne diese Ausnahme meldete das Gate fuenf
+# Varianten als offen, die live nachweislich fuer "anon" gesperrt
+# sind (cool_match, end_match, hide_match, respark_match,
+# quiz_pick_personalized - alle mit der bigint-Signatur aus der
+# alten Generation).
+# Die Indizes aller Sweeps. Ein Sweep arbeitet ueber pg_proc und
+# erfasst damit den ganzen Bestand zur Zeit der Migration.
+sweep_indizes = [i for i, f_sweep in enumerate(ALL)
+                 if 'regprocedure' in strip_comments(read(f_sweep))]
+
+# Wann wurde jede Variante zum LETZTEN angelegt? (CREATE OR REPLACE
+# kann dieselbe Signatur mehrfach anlegen - massgeblich ist der letzte
+# Anlage-Index.)
+angelegt_index = {}
+for i, f_anl in enumerate(ALL):
+    c = strip_comments(read(f_anl))
+    for m in re.finditer(
+            r'CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+(?:public\.)?([a-z_0-9]+)\s*\(',
+            c, re.I):
+        _, args = sig_at(c, m.start())
+        angelegt_index[(m.group(1).lower(),
+                        tuple(a[1] for a in args))] = i
+
+
+def durch_sweep_gesperrt(name, sig):
+    """Hat ein Sweep diese Variante erfasst?
+
+    Der Sweep muss NACH ihrer Anlage laufen - sonst kann er sie nicht
+    erfasst haben."""
+    idx = angelegt_index.get((name, sig))
+    if idx is None:
+        return False
+    return any(s > idx for s in sweep_indizes)
+
+# Alle REVOKEs, ueber ALLE Migrationen gesammelt.
+#
+# WARUM alle und nicht nur die ab 123: Die historischen Sperren
+# (Migration 123, 131, 156) zaehlen natuerlich auch - eine Variante,
+# die dort gesperrt wurde, ist gesperrt. Die Regel unten ist
+# repo-weit: es zaehlt, ob eine Variante aufrufbar ist, nicht ob eine
+# bestimmte Datei sie selbst sperrt.
+alle_revokes = {}
+for f2 in ALL:
+    code2 = strip_comments(read(f2))
+    for m in re.finditer(
+            r'REVOKE[^;]*?ON\s+FUNCTION\s+(?:public\.)?([a-z_0-9]+)\s*\(([^)]*)\)',
+            code2, re.I | re.S):
+        nm = m.group(1).lower()
+        types = tuple(
+            re.sub(r'\s+', ' ', re.split(r'\bDEFAULT\b', a, flags=re.I)[0]
+                   .strip().lower()).split()[-1]
+            for a in split_top(m.group(2)))
+        alle_revokes.setdefault(nm, set()).add(types)
 
 # Per Signatur gedroppte Überladungen gelten als unschädlich: ein
 # DROP entfernt die aufrufbare Variante vollständig, ein Revoke
@@ -172,15 +241,39 @@ for f in NEW:
             for a in split_top(m.group(2)))
         revoked.setdefault(name, set()).add(types)
 
-    for name, sigs in revoked.items():
-        if name not in multi or dynamic:
-            continue
-        missing = (overloads[name] - sigs) - dropped.get(name, set())
-        if missing:
-            pretty = ', '.join('(' + ', '.join(s) + ')' for s in sorted(missing))
-            flag('2 Overloads', f,
-                 f'{name} ist {len(overloads[name])}x ueberladen, aber '
-                 f'{pretty} wird NICHT revokt - diese Variante bleibt aufrufbar')
+# Die Regel (BEFUND 07.11.2026, Migration 185):
+#
+#   Jede Variante, die irgendeine Migration ANLEGT, muss gesperrt
+#   werden - von der Datei selbst oder von einer anderen. Ab ihrer
+#   Anlage ist sie aufrufbar; eine Sperre, die erst in einer spaeteren
+#   Migration kommt, ist zu spaet.
+#
+#   Der alte Check verglich jede Datei mit ALLEN jemals angelegten
+#   Signaturen und verlangte, dass jede Datei ALLE Sperren selbst
+#   enthaelt. Das ist formal falsch: eine Migration kann keine
+#   Signatur revoken, die es noch gar nicht gibt. Er meldete deshalb
+#   Migration 131 und 156 als fehlerhaft, obwohl die dortige Sperre
+#   vollstaendig war - und Migration 185 als fehlerhaft, weil sie nur
+#   ihre EIGENE Variante sperrte (die andere war schon in 156
+#   gesperrt).
+#
+#   Geprueft wird jetzt repo-weit: eine Variante, die angelegt, nicht
+#   gedroppt und NIRGENDS gesperrt wurde, bleibt aufrufbar - genau
+#   das ist der Befund.
+#
+#   Ein Gate, das immer anschlaegt, wird irgendwann ignoriert.
+for name, sigs in overloads.items():
+    if name not in multi:
+        continue
+    offen = (sigs - alle_revokes.get(name, set())) - dropped.get(name, set())
+    offen = set(s for s in offen
+                if not durch_sweep_gesperrt(name, s))
+    if offen:
+        pretty = ', '.join('(' + ', '.join(s) + ')' for s in sorted(offen))
+        flag('2 Overloads', MIG / 'alle',
+             f'{name}: {pretty} wird nirgends revokt - diese Variante(n) '
+             f'bleiben aufrufbar')
+
 
 # ---------------------------------------------------------------- 3
 def bodies_of(c):

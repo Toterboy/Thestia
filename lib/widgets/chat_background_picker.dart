@@ -198,7 +198,32 @@ class ChatBackgroundPicker extends ConsumerWidget {
       },
     );
 
-    return SizedBox(height: 280, width: festeBreite, child: raster);
+    // Die Hoehe richtet sich nach dem, was tatsaechlich gebraucht wird.
+    //
+    // BEFUND (07.11.2026, Betreiber): "Das mit Chat Hintergrund, dass man
+    // da scrollen muss ist nur so mittel gut bei den Einstellungen."
+    //
+    // Vorher stand hier ein festes SizedBox(height: 280). Bei sieben
+    // Mustern (ohne + fuenf Vorgaenge + eigenes) sind das drei Reihen -
+    // und 280 Pixel zeigen nur zwei. Man musste also scrollen, um den
+    // letzten Hintergrund zu sehen.
+    //
+    // Die Hoehe wird jetzt aus der Kachelgroesse berechnet: so viele
+    // Reihen, wie Muster da sind, und keine mehr. Auf einem kleinen
+    // Bildschirm nimmt die Dialog hoehe den verfuegbaren Platz
+    // (60 Prozent) - dort wird gescrollt, weil es nicht anders geht.
+    final bildschirm = MediaQuery.sizeOf(context);
+    final breite = festeBreite ?? bildschirm.width * 0.72;
+    const spalten = 3;
+    const abstand = 8.0;
+    const seitenverhaeltnis = 0.85;
+    final kachelBreite = (breite - abstand * (spalten - 1)) / spalten;
+    final kachelHoehe = kachelBreite / seitenverhaeltnis;
+    final reihen = (ids.length / spalten).ceil();
+    final noetigeHoehe = reihen * kachelHoehe + (reihen - 1) * abstand;
+    final hoehe = noetigeHoehe.clamp(160.0, bildschirm.height * 0.6);
+
+    return SizedBox(height: hoehe, width: festeBreite, child: raster);
   }
 }
 

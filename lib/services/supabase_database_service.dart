@@ -344,19 +344,78 @@ class SupabaseDatabaseService {
   // Transit Spark (v0.9.0, Migration 081)
   // =========================================================================
 
+  /// Baut die Parameter fuer den Transit-Spark-Aufruf.
+  ///
+  /// Getrennt aus [matchProximitySpark], damit der Test pruefen kann,
+  /// was tatsaechlich gesendet wird - ohne einen Server.
+  ///
+  /// BEFUND (07.11.2026, Betreiber): "Beide Geraete suchen eine Person
+  /// bei Transit Spark ... aber gibt keinen Funken." Der Grund war, dass
+  /// der eigene Token nie zum Server kam. Die RPC verglich zwei
+  /// Sichtungslisten - und die sind bei zwei Personen, die nur einander
+  /// sehen, disjunkt. Mit genau zwei Geraeten war ein Match
+  /// mathematisch unmoeglich (Migration 185).
+  ///
+  /// Deshalb ist [selfToken] Pflicht: ohne ihn kann der Server nicht
+  /// beantworten, ob der andere einen gesehen hat.
+  static Map<String, dynamic> buildTransitSparkParams({
+    required List<String> tokens,
+    required List<String> tags,
+    required String mode,
+    List<String> selfTags = const [],
+    String? selfNote,
+    String? selfToken,
+  }) {
+    final eigener = selfToken?.trim() ?? '';
+    if (eigener.isEmpty) {
+      throw StateError('transit_own_token_missing');
+    }
+    return <String, dynamic>{
+      'p_tokens': tokens,
+      'p_tags': tags,
+      'p_mode': mode,
+      'p_self_tags': selfTags,
+      'p_self_note': selfNote?.trim() ?? '',
+      'p_self_token': eigener,
+    };
+  }
+
   /// "Blicke getauscht": frische Encounter-Tokens + 1-3 Merkmal-Tags
   /// senden. Match = beidseitiges Signal MIT gemeinsamem Merkmal
   /// (Bestandspipeline erzeugt den Funke), sonst 45 Minuten vorgehalten.
+  ///
+  /// BEFUND (07.11.2026, Betreiber): "Beide Geraete suchen eine Person
+  /// bei Transit Spark ... aber gibt keinen Funken." Die RPC verglich
+  /// zwei Sichtungslisten - und die sind bei zwei Personen, die nur
+  /// einander sehen, disjunkt. Mit genau zwei Geraeten war ein Match
+  /// mathematisch unmoeglich.
+  ///
+  /// [selfToken] ist deshalb PFLICHT: der eigene Token des Absenders.
+  /// Damit laesst sich "hat der andere mich gesehen?" beantworten
+  /// (Migration 185). Fehlt er, wird nicht gesendet - ein Versuch ohne
+  /// ihn kann keinen Match finden und wuerde den Nutzer mit einem
+  /// stillen "kein Match" im Glauben lassen, es sei niemand in der
+  /// Naehe.
   Future<Map<String, dynamic>> matchProximitySpark({
     required List<String> tokens,
     required List<String> tags,
     required String mode,
     List<String> selfTags = const [],
     String? selfNote,
+    String? selfToken,
   }) async {
+    final params = buildTransitSparkParams(
+      tokens: tokens,
+      tags: tags,
+      mode: mode,
+      selfTags: selfTags,
+      selfNote: selfNote,
+      selfToken: selfToken,
+    );
     // Fallback-Kette (v0.9.0/091/097): Der Server kann je nach
-    // Migrationsstand die 5-Parameter- (091, +self_note), 4-Parameter-
-    // (084), 3-Parameter- (082) oder 1-Parameter- (081) Signatur haben.
+    // Migrationsstand die 6-Parameter- (185, +self_token), 5-Parameter-
+    // (091, +self_note), 4-Parameter- (084), 3-Parameter- (082) oder
+    // 1-Parameter- (081) Signatur haben.
     // PostgREST matcht nach benannten Argumenten - ein Aufruf mit zu
     // vielen Parametern scheitert mit PGRST202. Zusaetzlich existierten
     // zeitweise MEHRERE Überladungen gleichzeitig (alte Signaturen wurden
@@ -366,25 +425,26 @@ class SupabaseDatabaseService {
     // p_self_note wird IMMER mitgeschickt (ggf. leer - serverseitig
     // nullif), damit der 5-Parameter-Aufruf auf 091er-Servern eindeutig
     // genau eine Überladung trifft.
-    final note = selfNote?.trim() ?? '';
+    //
+    // WICHTIG (v0.10.0, Migration 185): Die Kette beginnt mit der
+    // Fassung MIT dem eigenen Token. Faellt der Server auf eine aeltere
+    // Fassung zurueck, kann er keinen Match finden - dann wird das
+    // dem Nutzer gesagt statt still nichts zu tun (PGRST202/203 =>
+    // 'transit_server_too_old').
     final attempts = <Map<String, dynamic>>[
+      params,
       {
         'p_tokens': tokens,
         'p_tags': tags,
         'p_mode': mode,
         'p_self_tags': selfTags,
-        'p_self_note': note,
-      },
-      {
-        'p_tokens': tokens,
-        'p_tags': tags,
-        'p_mode': mode,
-        'p_self_tags': selfTags,
+        'p_self_note': selfNote?.trim() ?? '',
       },
       {'p_tokens': tokens, 'p_tags': tags, 'p_mode': mode},
       {'p_tokens': tokens},
     ];
     Object? lastError;
+    var ersterVersuch = true;
     for (final params in attempts) {
       try {
         final res = await _client.rpc('match_proximity_spark', params: params);
@@ -394,6 +454,14 @@ class SupabaseDatabaseService {
         // Echte Fachfehler (Rate-Limit, Jugendschutz etc.) nicht
         // verschlucken: Nur bei Signatur-Fehlmatch eine Stufe absteigen.
         if (!isRpcSignatureMismatch(e)) rethrow;
+        // Der Server kennt die neue Fassung nicht. Eine aeltere Fassung
+        // koennte zwar aufgerufen werden - sie findet aber nie einen
+        // Match. Das waere ein stilles Scheitern; besser ist eine
+        // klare Meldung.
+        if (ersterVersuch) {
+          throw StateError('transit_server_too_old');
+        }
+        ersterVersuch = false;
       }
     }
     throw lastError ?? StateError('match_proximity_spark fehlgeschlagen');

@@ -1294,6 +1294,17 @@ const Map<String, Map<String, String>> _strings = {
     'transit.noDevices':
         'Kein Gerät in Reichweite. Warte, bis jemand in der Nähe '
         'ist, und versuche es dann noch einmal.',
+    // BEFUND (07.11.2026): Das Radar sendet noch kein Signal. Ohne den
+    // eigenen Token kann der Server keinen Match finden - das wird
+    // gesagt, statt still nichts zu tun.
+    'transit.ownTokenMissing':
+        'Das Radar sendet noch kein Signal. Warte einen Moment und '
+        'versuche es dann noch einmal.',
+    // Der Server kennt die neue Fassung der Transit-Spark-Funktion
+    // noch nicht (Migration 185). Dann kann die App keinen Match
+    // finden - die Meldung sagt es, statt still zu scheitern.
+    'transit.serverTooOld':
+        'Die App ist zu alt für den Server. Bitte aktualisiere sie.',
     'transit.sendFailed':
         'Das Signal konnte gerade nicht gesendet werden. Prüfe deine Verbindung und versuche es gleich noch einmal.',
     'transit.stored':
@@ -4159,6 +4170,17 @@ const Map<String, Map<String, String>> _strings = {
     'transit.noDevices':
         'No device in range. Wait until someone is nearby and '
         'try again.',
+    // The radar is not sending a signal yet. Without its own token the
+    // server cannot find a match - it says so instead of failing
+    // quietly.
+    'transit.ownTokenMissing':
+        'The radar is not sending a signal yet. Wait a moment and '
+        'try again.',
+    // The server does not know the new version of the transit spark
+    // function yet (migration 185). The app cannot find a match then -
+    // it says so instead of failing quietly.
+    'transit.serverTooOld':
+        'The app is too old for the server. Please update it.',
     'transit.sendFailed':
         'The signal could not be sent right now. Check your connection and try again in a moment.',
     'transit.stored':
