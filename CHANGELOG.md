@@ -1214,7 +1214,54 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     fehl. Der Bild-Prüfhash aus der Datenschutzerklärung war also
     wirkungslos. (Migration 190 legt die Tabelle nach.)
 
-34. **Die Vorstellung war in der Datenbank - aber nicht in der App.**
+33. **Der Transit-Funke hat nie einen Match angelegt - er war unsichtbar.**
+    BEFUND (07.11.2026, Betreiber): „Der Funke entsteht, aber es ist
+    nichts sichtbar." Und später, nach dem Test auf zwei echten
+    Geräten: „Funke wurde angezeigt, ist dann aber wieder verschwunden."
+
+    **Die Ursache (live gelesen, nicht vermutet):** Ein Match entsteht
+    ausschließlich durch einen INSERT in `public.matches` - und den
+    macht **nur** `create_match_if_mutual`. Der direkte Client-INSERT
+    ist seit Migration 040 per RLS gesperrt.
+
+    Transit Spark legte aber **nur Likes** an: `match_proximity_spark`
+    (beide Überladungen) und `accept_soft_ping`. Keine der beiden ruft
+    `create_match_if_mutual` auf - und kann es auch nicht, sie setzen
+    für **beide** Seiten die Likes, ohne dass ein Client-Hook läuft.
+
+    *Die Likes sind für die App unsichtbar:* Die Chatliste liest aus
+    `matches`, nicht aus `likes`. Der Funke „entstand" (die Likes waren
+    da, der Ping erschien) - aber er erschien nirgends.
+
+    Migration 194 legt den Match jetzt in beiden Funktionen selbst an
+    (mit denselben Regeln wie `create_match_if_mutual`, also bleibt es
+    bei **einem** Match je Paar) und gibt die `match_id` zurück, damit
+    die App direkt in den Chat führen kann.
+
+    *Nachgewiesen live:* Match → Ping in der Liste → „Annehmen" →
+    `match_id: 10` → **eine Zeile in `public.matches`** → der Funke ist
+    in der Chatliste sichtbar.
+
+34. **„Ausblenden" hat den Funken unwiderruflich gelöscht.**
+    Der Knopf löscht die Zeile - ohne Rückfrage. Und er sitzt genau
+    dort, wo der Finger schon liegt, wenn die Liste gerade gewachsen
+    ist: ein unbedachter Tipp vernichtet den Funken. Jetzt fragt die
+    App vorher nach. Und nach dem Annehmen sagt sie, was passiert ist,
+    und bietet den Chat an - als Knopf, nicht als Zwang.
+
+35. **Mein Aufräum-Skript hat den Test des Betreibers gelöscht.**
+    Der erste Teil des Befunds „Funke wurde angezeigt, ist dann aber
+    wieder verschwunden" war **mein Verschulden**: Das Skript, das die
+    Testdaten des Live-Nachweises aufräumte, hat pauschal alle Likes
+    und Matches zwischen den beiden Testkonten im Zeitfenster gelöscht -
+    auch die des Betreibers, der gerade selbst getestet hat.
+
+    Das Werkzeug räumt jetzt **nur** auf, was es selbst angelegt hat
+    (Vorher-Nachher-Vergleich), und es **bricht ab**, wenn zwischen den
+    Testkonten schon etwas liegt - dann testet der Betreiber gerade,
+    und das Werkzeug legt sich nicht dazwischen.
+
+
     BEFUND (07.11.2026, Betreiber): „Meine Vorstellung stimmt auch nicht,
     da beide Nutzer eine Vorstellung gemacht haben aber hier steht, dass
     keine hinterlegt wurde (also bei Profil und dann meine Vorstellung)."
@@ -1236,7 +1283,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     schreibt, was `fromJson()` liest und was die Server-Zuordnung
     kennt - und meldet jedes Feld, das verloren geht.
 
-35. **Die Vorstellung ließ sich nicht abhören.**
+36. **Die Vorstellung ließ sich nicht abhören.**
     BEFUND (07.11.2026, Betreiber): „Vorstellung von anderen nicht
     abhörbar. Sie lädt nicht oder braucht seeeeeeehr lange."
 
@@ -1253,7 +1300,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     (Intro-Player, eigene Vorstellung, Sprachnachricht im Chat) - sie
     sind alle behoben.
 
-36. **Der Funke war für die Gegenseite unsichtbar.**
+37. **Der Funke war für die Gegenseite unsichtbar.**
     BEFUND (07.11.2026, Betreiber): „Der Funke entsteht, aber es ist
     nichts sichtbar."
 
@@ -1274,7 +1321,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     legte einen Ping an. Jetzt verhalten sich beide gleich (Migration
     193).
 
-37. **Zwei Funktionen, die der Server nicht ausführen durfte.**
+38. **Zwei Funktionen, die der Server nicht ausführen durfte.**
     * **„Entblockieren" ging nie.** Der Aufruf antwortete mit
       `403 permission denied for function unblock_user`: Die Funktion
       existiert, aber die Rolle `authenticated` hatte **kein**
@@ -1294,7 +1341,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     welche Rechte die Rollen wirklich haben. Es meldet jede aufgerufene
     Funktion, die der Server nicht ausführen kann.
 
-38. **Der Zufallschat verlor Nachrichten.**
+39. **Der Zufallschat verlor Nachrichten.**
     BEFUND (07.11.2026, Betreiber): Zufallschat ohne Nachrichten.
 
     The Zufallschat sendete **ausschließlich** über den P2P-Kanal.
@@ -1308,7 +1355,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     Der Zufallschat hat jetzt denselben Dreistufen-Weg wie der normale
     Chat: P2P, dann E2E-Relay, dann Outbox.
 
-39. **Bedienung: Profilbild, Geburtstag, Wartebereich, Bestätigung.**
+40. **Bedienung: Profilbild, Geburtstag, Wartebereich, Bestätigung.**
     * **Doppeltes Profilbild** (Fremdprofil): Unter dem echten Bild
       stand ein Verlaufsblock mit Personen-Icon - der las sich wie ein
       zweites, kaputtes Bild. Der Block ist weg; die Bilder (Hauptbild
@@ -1329,7 +1376,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
       „0:00", obwohl die Datei eine echte Länge hat. Die Länge wird
       jetzt beim Laden aus der Datei gelesen.
 
-33. **Ein Werkzeug, das die stummen Fehler findet.**
+41. **Ein Werkzeug, das die stummen Fehler findet.**
     `tool/check_on_conflict.py` fragt die Produktivdatenbank ab und
     vergleicht **jedes** `ON CONFLICT`-Ziel mit den tatsächlichen
     Indizes. Es hat beide Fehler gefunden (Befunde 31 und 32) – und

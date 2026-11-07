@@ -1,4 +1,4 @@
-﻿-- 190: die Dating-Hour-Paarung konnte NIE eine Sitzung anlegen
+-- 190: die Dating-Hour-Paarung konnte NIE eine Sitzung anlegen
 --
 -- BEFUND (07.11.2026, Betreiber): "Bei Dating Hour finden sich die
 -- Partner nicht (zwei user drin (meine geraete)) und es passiert

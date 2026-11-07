@@ -1297,10 +1297,34 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
       await _load();
       if (!mounted) return;
       if (res['matched'] == true) {
+        // BEFUND (07.11.2026, Betreiber): "Funke wurde angezeigt, ist
+        // dann aber wieder verschwunden." Nach dem Annehmen verschwand
+        // der Funke ersatzlos aus der Liste - der Nutzer wusste nicht,
+        // was daraus wurde.
+        //
+        // Deshalb sagt die App jetzt, was passiert ist, und bietet den
+        // Weg zum Chat an - als Knopf, nicht als Zwang (der Betreiber
+        // wollte ausdruecklich kein Chat-Erzwang).
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(L10n.t(context, 'transit.matchTitle')),
+            content: Text(L10n.t(context, 'transit.acceptDone')),
             behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 6),
+            action: SnackBarAction(
+              label: L10n.t(context, 'transit.toChat'),
+              onPressed: () {
+                if (!mounted) return;
+                // Die Annahme liefert die match_id (Migration 194) - damit
+                // geht es direkt in den Chat des neuen Funkens. Ohne sie
+                // (aelterer Server) geht es zu den Funken, wo er steht.
+                final matchId = res['match_id'];
+                if (matchId is num && matchId > 0) {
+                  context.push(AppRoutes.chatDetailPath(matchId.toString()));
+                } else {
+                  context.push(AppRoutes.interessen);
+                }
+              },
+            ),
           ),
         );
       }
@@ -1308,7 +1332,7 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
       // Vorher wurde der Fehler KOMPLETT verschluckt: kein Log, keine
       // Meldung. Der Nutzer tippte auf "annehmen" und es passierte
       // sichtbar nichts - genau der Befund. Ohne eine Ausgabe ist das
-      // nicht von einem wirkungsnlosen Aufruf zu unterscheiden.
+      // nicht von einem wirkungslosen Aufruf zu unterscheiden.
       debugPrint('[TransitRadar] Funke annehmen fehlgeschlagen: $e');
       if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
@@ -1323,6 +1347,32 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
   }
 
   Future<void> _dismiss(Map<String, dynamic> ping) async {
+    // BEFUND (07.11.2026, Betreiber): "Funke wurde angezeigt, ist dann
+    // aber wieder verschwunden."
+    //
+    // Das Ausblenden LOESCHT die Zeile - unwiderruflich. Und der Knopf
+    // sitzt genau dort, wo der Finger schon liegt, wenn die Liste
+    // gerade gewachsen ist: ein unbedachter Tippen vernichtet den
+    // Funken. Deshalb fragt die App jetzt vorher nach.
+    final bestaetigt = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(L10n.t(ctx, 'transit.ignoreConfirmTitle')),
+        content: Text(L10n.t(ctx, 'transit.ignoreConfirmBody')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(L10n.t(ctx, 'common.cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(L10n.t(ctx, 'transit.ignoreConfirmOk')),
+          ),
+        ],
+      ),
+    );
+    if (bestaetigt != true || !mounted) return;
+
     // Still ausblenden: Zeile loeschen (Absender sieht nichts).
     await bestEffort('from.delete', () async {
       await SupabaseService.client

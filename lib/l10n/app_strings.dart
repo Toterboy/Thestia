@@ -1075,6 +1075,13 @@ const Map<String, Map<String, String>> _strings = {
     'transit.inboxTitle': 'Grüße für dich',
     'transit.ignore': 'Ausblenden',
     'transit.accept': 'Funke annehmen',
+    'transit.ignoreConfirmTitle': 'Diesen Funke ausblenden?',
+    'transit.ignoreConfirmBody':
+        'Er verschwindet dann aus deiner Liste. Der Absender sieht nichts '
+        'davon - du kannst ihn auch einfach annehmen.',
+    'transit.ignoreConfirmOk': 'Ausblenden',
+    'transit.acceptDone': 'Funke angenommen - der Chat ist bereit.',
+    'transit.toChat': 'Zum Chat',
     'transit.locationActiveTitle': 'Standort aktiviert',
     'transit.locationActiveBody':
         'Dein Standort ist jetzt eingeschaltet. Tippe auf "Radar starten", '
@@ -4166,6 +4173,13 @@ const Map<String, Map<String, String>> _strings = {
     'transit.inboxTitle': 'Greetings for you',
     'transit.ignore': 'Hide',
     'transit.accept': 'Accept spark',
+    'transit.ignoreConfirmTitle': 'Hide this spark?',
+    'transit.ignoreConfirmBody':
+        'It disappears from your list. The sender does not see anything - '
+        'you can also simply accept it.',
+    'transit.ignoreConfirmOk': 'Hide',
+    'transit.acceptDone': 'Spark accepted - the chat is ready.',
+    'transit.toChat': 'To chat',
     'transit.locationActiveTitle': 'Location enabled',
     'transit.locationActiveBody':
         'Your location is now turned on. Tap "Start radar" to begin '

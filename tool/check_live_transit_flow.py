@@ -34,6 +34,7 @@ import subprocess
 import sys
 import urllib.error
 import urllib.request
+from datetime import datetime, timezone
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -152,8 +153,73 @@ def sql(text: str):
     return obj.get("rows", [])
 
 
-def aufraeumen() -> None:
-    """Entfernt die Testzeilen - Signale, Pings, Likes und den Match."""
+def zustand_sichern() -> dict:
+    """Merkt sich, was VOR dem Test da war.
+
+    WARUM: Am 07.11.2026 hat ein Aufraeum-Skript die Testdaten des
+    Betreibers mitgeloescht: es hat pauschal alle Likes und Matches
+    zwischen den beiden Testkonten im Zeitfenster geloescht. Der
+    Betreiber sah seinen Funken und dann war er weg - nicht, weil die
+    App etwas falsch gemacht haette, sondern weil das Skript seine
+    Daten entfernt hatte.
+
+    Deshalb wird jetzt der Zustand VORHER gemerkt und danach NUR
+    geloescht, was der Test selbst angelegt hat. Fremde Daten (auch
+    solche, die zur selben Zeit entstehen) bleiben unangetastet.
+    """
+    zeilen = sql(
+        """
+SELECT (SELECT count(*) FROM public.matches) AS matches,
+       (SELECT count(*) FROM public.likes) AS likes,
+       (SELECT count(*) FROM public.transit_soft_pings) AS pings,
+       (SELECT count(*) FROM public.transit_signals) AS signale,
+       (SELECT coalesce(max(id), 0) FROM public.matches) AS max_match_id,
+       -- Zaehler fuer das Paar der Testkonten: ist da schon etwas,
+       -- testet der Betreiber GERADE - dann legt sich das Werkzeug
+       -- nicht dazwischen.
+       (SELECT count(*) FROM public.likes
+         WHERE (user_id = '{ua}' AND liked_user_id = '{ub}')
+            OR (user_id = '{ub}' AND liked_user_id = '{ua}')) AS paar_likes,
+       (SELECT count(*) FROM public.matches
+         WHERE (user_one_id = '{ua}' AND user_two_id = '{ub}')
+            OR (user_one_id = '{ub}' AND user_two_id = '{ua}')) AS paar_matches;
+""".format(ua=NUTZER_A, ub=NUTZER_B)
+    )
+    if not zeilen:
+        return {}
+    z = zeilen[0]
+    return {
+        "matches": int(z["matches"]),
+        "likes": int(z["likes"]),
+        "pings": int(z["pings"]),
+        "signale": int(z["signale"]),
+        "max_match_id": int(z["max_match_id"]),
+        "paar_likes": int(z["paar_likes"]),
+        "paar_matches": int(z["paar_matches"]),
+    }
+
+
+def aufraeumen(vorher: dict | None = None) -> None:
+    """Entfernt NUR die Zeilen, die der Test selbst angelegt hat.
+
+    Ohne den Zustand vorher (z. B. bei einem Abbruch mitten im Lauf)
+    werden nur die Zeilen mit den TEST-TOKEN entfernt - die kann es
+    ohne den Test nicht geben.
+    """
+    if not vorher:
+        sql(
+            """
+DELETE FROM public.transit_signals
+ WHERE self_token IN ('{a}', '{b}');
+DELETE FROM public.transit_soft_pings
+ WHERE encounter_token IN ('{a}', '{b}');
+""".format(a=TOKEN_A, b=TOKEN_B)
+        )
+        return
+
+    # Alles, was mehr ist als vorher, stammt aus dem Test. Die Matches
+    # werden ueber die ID abgegrenzt (die ist fortlaufend), die Likes
+    # und Pings ueber ihre Anzahl UND ueber das Paar.
     sql(
         """
 DELETE FROM public.transit_signals
@@ -161,14 +227,21 @@ DELETE FROM public.transit_signals
 DELETE FROM public.transit_soft_pings
  WHERE encounter_token IN ('{a}', '{b}');
 DELETE FROM public.matches
- WHERE ((user_one_id = '{ua}' AND user_two_id = '{ub}')
-     OR (user_one_id = '{ub}' AND user_two_id = '{ua}'))
-   AND created_at > now() - interval '30 minutes';
+ WHERE id > {max_id}
+   AND ((user_one_id = '{ua}' AND user_two_id = '{ub}')
+     OR (user_one_id = '{ub}' AND user_two_id = '{ua}'));
 DELETE FROM public.likes
  WHERE ((user_id = '{ua}' AND liked_user_id = '{ub}')
      OR (user_id = '{ub}' AND liked_user_id = '{ua}'))
-   AND created_at > now() - interval '30 minutes';
-""".format(a=TOKEN_A, b=TOKEN_B, ua=NUTZER_A, ub=NUTZER_B)
+   AND created_at >= timestamptz '{seit}';
+""".format(
+                a=TOKEN_A,
+                b=TOKEN_B,
+                ua=NUTZER_A,
+                ub=NUTZER_B,
+                max_id=vorher.get("max_match_id", 0),
+                seit=vorher.get("seit", "2020-01-01"),
+            )
     )
 
 
@@ -200,7 +273,30 @@ def main() -> int:
 
     fehler = 0
     try:
-        # Vorher aufraeumen (ein voriger Lauf kann unterbrochen worden sein).
+        # Der Zustand VOR dem Test wird gemerkt: danach wird nur
+        # geloescht, was der Test selbst angelegt hat. Ohne das hat ein
+        # frueherer Aufraeumlauf die Testdaten des Betreibers mit
+        # geloescht - sein Funke war dadurch "weg", ohne dass die App
+        # etwas falsch gemacht haette.
+        vorher = zustand_sichern()
+        vorher["seit"] = datetime.now(timezone.utc).strftime(
+            "%Y-%m-%d %H:%M:%S+00"
+        )
+        if vorher.get("paar_likes") or vorher.get("paar_matches"):
+            # Der Betreiber testet GERADE. Das Werkzeug legt sich nicht
+            # dazwischen: es wuerde beim Aufraeumen genau die Daten
+            # loeschen, die er sehen will (das ist am 07.11.2026
+            # passiert).
+            print()
+            print("  ! Zwischen den Testkonten liegt bereits ein Like"
+                  " oder ein Match.")
+            print("    Der Betreiber testet vermutlich gerade - das"
+                  " Werkzeug laeuft")
+            print("    nicht, damit es seine Daten nicht wegraeumt.")
+            print("    Später erneut versuchen.")
+            return 1
+        # Ein alter, unterbrochener Lauf kann Testzeilen hinterlassen
+        # haben: die werden vorab entfernt (nur die mit den Test-Tokens).
         aufraeumen()
 
         # 1) B funkt.
@@ -276,8 +372,29 @@ def main() -> int:
                 print("  4) B nimmt an: HTTP %s %s"
                       % (st, roh[:200].decode("utf-8", "replace")))
                 fehler += 1
+
+        # 5) DER EIGENTLICHE NACHWEIS: Es gibt jetzt eine Zeile in
+        #    public.matches. Ohne sie bleibt der Funke fuer beide
+        #    unsichtbar - die Chatliste liest aus matches, nicht aus
+        #    likes. Genau das war der Befund vom 07.11.2026.
+        zeilen = sql(
+            """
+SELECT count(*) AS matches,
+       (SELECT count(*) FROM public.matches
+         WHERE (user_one_id = '{ua}' AND user_two_id = '{ub}')
+            OR (user_one_id = '{ub}' AND user_two_id = '{ua}')) AS paar
+  FROM public.matches;
+""".format(ua=NUTZER_A, ub=NUTZER_B)
+        )
+        if zeilen and int(zeilen[0]["paar"]) > 0:
+            print("  5) Es gibt eine MATCH-Zeile fuer die Testkonten"
+                  " (id %s) -> der Funke ist in der Chatliste sichtbar"
+                  % zeilen[0]["paar"])
+        else:
+            print("  5) KEINE MATCH-Zeile - der Funke bleibt unsichtbar")
+            fehler += 1
     finally:
-        aufraeumen()
+        aufraeumen(vorher)
 
     # Die Kontrolle: es darf nichts mehr da sein.
     rest = sql(

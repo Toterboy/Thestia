@@ -15,8 +15,26 @@ files = sorted(MIG.glob('*.sql'),
                key=lambda p: int(re.match(r'(\d+)', p.name).group(1)))
 
 syntax_fail = 0
+bom_fail = 0
 for f in files:
-    sql = f.read_text(encoding='utf-8', errors='replace')
+    roh = f.read_bytes()
+    # BEFUND (07.11.2026): Eine Migrationsdatei hatte einen BOM
+    # (Byte Order Mark) am Dateianfang - geschrieben von PowerShell
+    # `Set-Content -Encoding UTF8`. Der echte PostgreSQL-Parser
+    # (pglast) bricht daran ab ("syntax error at or near BOM"), ohne
+    # zu sagen, was es ist. Der Parse-Check daneben entfernt das BOM
+    # beim Lesen und sah die Datei als in Ordnung - der Fehler fiel
+    # deshalb erst im CI auf.
+    #
+    # Deshalb wird das BOM hier ausdruecklich gemeldet (und die Datei
+    # trotzdem geparst, damit alle weiteren Pruefungen laufen).
+    if roh.startswith(b'\xef\xbb\xbf'):
+        bom_fail += 1
+        print(f'BOM-FEHLER {f.name}: die Datei beginnt mit einem BOM.')
+        print('    PowerShells "Set-Content -Encoding UTF8" schreibt das.')
+        print('    Der PostgreSQL-Parser kann die Datei nicht lesen.')
+        print('    Beheben mit: python tool/fix_migration_bom.py')
+    sql = roh.decode('utf-8-sig', errors='replace')
     try:
         pglast.parse_sql(sql)
     except Exception as e:
@@ -27,6 +45,8 @@ for f in files:
             print('   ', line)
 
 print(f'\nSyntax: {len(files) - syntax_fail}/{len(files)} Migrationen OK')
+if bom_fail:
+    print(f'BOM: {bom_fail} Datei(en) mit BOM - der CI wird daran scheitern')
 
 # --- Endstand je Funktion bestimmen -----------------------------------------
 defs = {}
