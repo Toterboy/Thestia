@@ -1571,6 +1571,9 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
 
   final Set<String> _selected = <String>{};
   final Map<String, String?> _colors = <String, String?>{};
+  // Die gewaehlten Werte der Merkmale mit Werteliste (v0.10.0,
+  // Migration 187): Slug -> Wert (z. B. hair_style -> lockig).
+  final Map<String, String> _values = <String, String>{};
   final TextEditingController _searchCtrl = TextEditingController();
   final TextEditingController _customCtrl = TextEditingController(text: '');
   String _query = '';
@@ -1622,6 +1625,10 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
           final t = TransitTag.bySlug(slug);
           return t != null && t.category == tag.category;
         });
+        _values.removeWhere((slug, _) {
+          final t = TransitTag.bySlug(slug);
+          return t != null && t.category == tag.category;
+        });
         if (_selected.length < maxMerkmale) {
           _selected.add(tag.slug);
           if (tag.colorizable) _colors[tag.slug] = null;
@@ -1629,7 +1636,26 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
       } else {
         _selected.remove(tag.slug);
         _colors.remove(tag.slug);
+        _values.remove(tag.slug);
       }
+    });
+  }
+
+  /// Ein Wert eines Merkmals mit Werteliste waehlen (z. B. "lockig").
+  ///
+  /// BEFUND (07.11.2026, Betreiber): "also Hairstyle und so" - als
+  /// blosse Merkmale waren Haarlaenge und Frisur wertlos. Migration 187
+  /// hat die Wertelisten eingefuehrt; hier werden sie gesetzt.
+  ///
+  /// Das Merkmal bleibt gewaehlt, nur der Wert aendert sich. Und es
+  /// gilt wie bei den Farben: ein Wert je Kategorie.
+  void _wertWaehlen(TransitTag tag, String wert) {
+    setState(() {
+      _values.removeWhere((slug, _) {
+        final t = TransitTag.bySlug(slug);
+        return t != null && t.category == tag.category;
+      });
+      _values[tag.slug] = wert;
     });
   }
 
@@ -1681,36 +1707,69 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
               ),
             ),
             const SizedBox(height: 10),
-            // ---- Kategoriefilter
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: FilterChip(
-                      label: Text(L10n.t(context, 'transit.categoryAll')),
-                      selected: _kategorie.isEmpty,
-                      onSelected: (_) => setState(() => _kategorie = ''),
+            // ---- Kategoriefilter: EIN Chip statt einem Band.
+            //
+            // BEFUND (07.11.2026, Betreiber): "es so schon echt voll,
+            // braucht es schon fast ein Redesign vom wie siehst du aus
+            // screen."
+            //
+            // Vorher standen hier acht Filter-Chips in einer Reihe
+            // (alle + sieben Kategorien) - ein ganzes Band, das die
+            // halbe Bildschirmhoehe brauchte und trotzdem nur wiederholte,
+            // was die Gruppierung der Merkmale unten schon zeigt. Jetzt
+            // ist es ein Chip, der ein Menue aufmacht.
+            PopupMenuButton<String>(
+              initialValue: _kategorie,
+              onSelected: (wert) => setState(() => _kategorie = wert),
+              itemBuilder: (context) => [
+                PopupMenuItem<String>(
+                  value: '',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check, size: 16),
+                      const SizedBox(width: 8),
+                      Text(L10n.t(context, 'transit.categoryAll')),
+                    ],
+                  ),
+                ),
+                for (final k in kategorien)
+                  PopupMenuItem<String>(
+                    value: k.slug,
+                    child: Row(
+                      children: [
+                        Icon(k.icon, size: 16),
+                        const SizedBox(width: 8),
+                        Text(L10n.t(context, k.labelKey)),
+                      ],
                     ),
                   ),
-                  for (final k in kategorien)
-                    Padding(
-                      padding: const EdgeInsets.only(right: 6),
-                      child: FilterChip(
-                        avatar: Icon(k.icon, size: 16),
-                        label: Text(L10n.t(context, k.labelKey)),
-                        selected: _kategorie == k.slug,
-                        onSelected: (_) => setState(
-                          () => _kategorie = _kategorie == k.slug ? '' : k.slug,
+              ],
+              child: Chip(
+                avatar: Icon(
+                  _kategorie.isEmpty
+                      ? Icons.tune
+                      : TransitTagCategory.bySlug(_kategorie)?.icon ??
+                            Icons.tune,
+                  size: 16,
+                ),
+                label: Text(
+                  _kategorie.isEmpty
+                      ? L10n.t(context, 'transit.categoryAll')
+                      : L10n.t(
+                          context,
+                          TransitTagCategory.bySlug(_kategorie)?.labelKey ??
+                              'transit.categoryAll',
                         ),
-                      ),
-                    ),
-                ],
+                ),
               ),
             ),
             const SizedBox(height: 8),
-            // ---- Zaehler
+            // ---- Fortschritt: Zaehler und Balken.
+            //
+            // BEFUND (07.11.2026, Betreiber): "es so schon echt voll".
+            // Die Zahl allein sagt nicht, ob man fertig ist - der Balken
+            // zeigt es. Und er zeigt auch, wie viele Merkmale ueberhaupt
+            // noetig sind (mindestens zwei, hoechstens acht).
             Row(
               children: [
                 Expanded(
@@ -1730,6 +1789,15 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
                   ),
               ],
             ),
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: (_selected.length / maxMerkmale).clamp(0.0, 1.0),
+                minHeight: 4,
+                backgroundColor: theming.colorScheme.surfaceContainerHighest,
+              ),
+            ),
             const SizedBox(height: 10),
             if (treffer.isEmpty)
               Padding(
@@ -1747,25 +1815,38 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
               // ---- Merkmale, gruppiert nach Kategorie
               for (final kategorie in kategorien) ...[
                 if (treffer.any((t) => t.category == kategorie.slug)) ...[
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Icon(
-                        kategorie.icon,
-                        size: 16,
-                        color: theming.colorScheme.primary,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        L10n.t(context, kategorie.labelKey),
-                        style: theming.textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
+                  // Die Ueberschrift entfaellt bei einer Kategorie mit
+                  // nur EINEM Merkmal: sie wuerde dasselbe sagen wie der
+                  // Chip darunter ("Frisur" als Kategorie und "Frisur" als
+                  // Merkmal - zweimal dasselbe Wort auf dem Bildschirm).
+                  //
+                  // BEFUND (07.11.2026, Betreiber): "es so schon echt
+                  // voll" - eine Zeile weniger pro Einzelgruppe hilft
+                  // mehr als ein weiterer Filter.
+                  if (treffer
+                          .where((t) => t.category == kategorie.slug)
+                          .length >
+                      1) ...[
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(
+                          kategorie.icon,
+                          size: 16,
                           color: theming.colorScheme.primary,
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
+                        const SizedBox(width: 6),
+                        Text(
+                          L10n.t(context, kategorie.labelKey),
+                          style: theming.textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theming.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                  ],
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -1781,6 +1862,40 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
                         ),
                     ],
                   ),
+                  // ---- WERT-AUSWAHL: direkt unter dem Merkmal, das
+                  // einen Wert braucht (Haarlaenge, Frisur).
+                  //
+                  // BEFUND (07.11.2026, Betreiber): "also Hairstyle und
+                  // so." Die Werte stehen nicht in einer eigenen
+                  // Liste weiter unten - sie stehen da, wo man das
+                  // Merkmal auswaehlt. Wer "Haarlaenge" waehlt, sieht
+                  // direkt danach "kurz / mittellang / lang ...".
+                  for (final tag in treffer.where(
+                    (t) => t.category == kategorie.slug && t.hasValues,
+                  )) ...[
+                    if (_selected.contains(tag.slug)) ...[
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 4),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final wert in tag.availableValues)
+                              ChoiceChip(
+                                label: Text(
+                                  L10n.t(context, 'transit.value.$wert'),
+                                ),
+                                selected: _values[tag.slug] == wert,
+                                onSelected: (sel) => sel
+                                    ? _wertWaehlen(tag, wert)
+                                    : setState(() => _values.remove(tag.slug)),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
                 ],
               ],
             // ---- Farbschritt: nur fuer gewaehlte farbige Merkmale
@@ -1897,10 +2012,19 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
                     : () {
                         final out = <String>[];
                         for (final slug in _selected) {
+                          // Drei Arten von Angaben (Migration 187):
+                          //   'hemd'              - Ja/Nein-Merkmal
+                          //   'hemd:weiss'        - Merkmal mit Farbe
+                          //   'hair_style:lockig' - Merkmal mit Wert
                           final c = _colors[slug];
-                          out.add(
-                            (c != null && c.isNotEmpty) ? '$slug:$c' : slug,
-                          );
+                          final w = _values[slug];
+                          if (w != null && w.isNotEmpty) {
+                            out.add('$slug:$w');
+                          } else if (c != null && c.isNotEmpty) {
+                            out.add('$slug:$c');
+                          } else {
+                            out.add(slug);
+                          }
                         }
                         Navigator.of(
                           context,

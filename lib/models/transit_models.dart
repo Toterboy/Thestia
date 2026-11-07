@@ -82,14 +82,30 @@ class TransitTagCategory {
   String get labelKey => 'transit.cat.$slug';
 
   /// Reihenfolge der Anzeige.
+  ///
+  /// BEFUND (07.11.2026, Betreiber): "es so schon echt voll, braucht es
+  /// schon fast ein Redesign vom wie siehst du aus screen."
+  ///
+  /// Die Reihenfolge ist deshalb nach der Bedeutung sortiert, nicht nach
+  /// dem Alphabet: Was man im Gesicht sieht, steht oben. Die Haare sind
+  /// das Erste, was andere wahrnehmen - und der Bildschirm heisst
+  /// "Wie siehst du gerade aus?". Vorher standen die Haare ganz hinten
+  /// (nach Ober- und Unterteil), also genau dort, wo niemand hinschaut.
+  ///
+  /// "Haarlaenge" und "Frisur" sind eigene Kategorien (Migration 188):
+  /// je Kategorie ist nur EIN Merkmal erlaubt, und "lockig" UND "lang"
+  /// ist keine Alternative, sondern eine vollstaendige Beschreibung. In
+  /// derselben Kategorie haetten sie sich ausgeschlossen.
   static const List<TransitTagCategory> values = [
+    TransitTagCategory('hair', Icons.face_retouching_natural),
+    TransitTagCategory('hair_length', Icons.straighten),
+    TransitTagCategory('hair_style', Icons.auto_awesome),
+    TransitTagCategory('eyes', Icons.remove_red_eye_outlined),
+    TransitTagCategory('head', Icons.face),
     TransitTagCategory('top', Icons.checkroom),
     TransitTagCategory('bottom', Icons.airline_seat_legroom_reduced),
-    TransitTagCategory('head', Icons.face),
     TransitTagCategory('shoes', Icons.ice_skating),
     TransitTagCategory('accessory', Icons.watch),
-    TransitTagCategory('hair', Icons.face_retouching_natural),
-    TransitTagCategory('eyes', Icons.remove_red_eye_outlined),
   ];
 
   static TransitTagCategory? bySlug(String slug) {
@@ -127,6 +143,7 @@ class TransitTag {
     this.colorizable = false,
     this.category = 'top',
     this.allowedColors,
+    this.allowedValues,
     this.searchAliases = const <String>[],
   });
 
@@ -150,6 +167,18 @@ class TransitTag {
   /// getrennte Listen wuerde "schwarz" bei beiden dasselbe bedeuten.
   final List<String>? allowedColors;
 
+  /// Eigene Werteliste (v0.10.0, Migration 187).
+  ///
+  /// BEFUND (07.11.2026, Betreiber): "Ja kannst du auch mit aufnehmen,
+  /// also Hairstyle und so." Der Server kannte "hair_length" und
+  /// "hair_style" schon - aber als blosse Merkmale sind sie wertlos:
+  /// "hair_style" als Aussage sagt nichts aus ("hat eine Frisur"?).
+  ///
+  /// Deshalb hat der Katalog eine dritte Art von Wert bekommen:
+  /// neben "slug" (Ja/Nein) und "slug:farbe" jetzt auch "slug:wert"
+  /// ("hair_style:lockig").
+  final List<String>? allowedValues;
+
   /// Zusaetzliche Schreibweisen fuer die Suche (z. B. 't-shirt' fuer
   /// 'tshirt'). Kleinbuchstaben, ohne Umlaute.
   final List<String> searchAliases;
@@ -163,6 +192,13 @@ class TransitTag {
   /// Liste [TransitTag.colors] (die Kleidungspalette) bereits gibt.
   List<String> get availableColors =>
       allowedColors ?? (colorizable ? TransitTag.clothingColors : const []);
+
+  /// Die Werte, die fuer DIESEN Merkmal wahlbar sind (leer = keine).
+  List<String> get availableValues => allowedValues ?? const [];
+
+  /// Hat dieses Merkmal eine Werteliste? Dann wird es als
+  /// 'slug:wert' gesendet.
+  bool get hasValues => availableValues.isNotEmpty;
 
   /// Kleidungsfarben - die Standardpalette.
   static const List<String> clothingColors = [
@@ -215,6 +251,40 @@ class TransitTag {
     'pink',
     'blue',
     'green',
+  ];
+
+  /// Haarlaengen. EIGENE Werteliste, siehe [allowedValues].
+  ///
+  /// BEFUND (07.11.2026, Betreiber): "Ja kannst du auch mit aufnehmen,
+  /// also Hairstyle und so." Der Server kannte "hair_length" schon -
+  /// aber ohne Werte war das Merkmal wertlos ("hat Haarlaenge"?).
+  /// Migration 187 hat die Werteliste eingefuehrt.
+  ///
+  /// Die Reihenfolge hier ist die Reihenfolge in der Auswahl. Der Server
+  /// kennt dieselben Werte (public.transit_tag_catalog, Migration 187).
+  static const List<String> hairLengthValues = [
+    'kurz',
+    'schulterlang',
+    'mittel',
+    'lang',
+    'sehrlang',
+    'schulter',
+    'stoppeln',
+  ];
+
+  /// Frisuren. EIGENE Werteliste, siehe [allowedValues].
+  ///
+  /// BEFUND (07.11.2026, Betreiber): "also Hairstyle und so."
+  /// Migration 187 hat die Werteliste eingefuehrt.
+  static const List<String> hairStyleValues = [
+    'glatt',
+    'lockig',
+    'gewellt',
+    'kraus',
+    'flechtig',
+    'zopf',
+    'ponytail',
+    'kurz_geschnitten',
   ];
 
   /// Augenfarben. EIGENE Palette, siehe [allowedColors].
@@ -455,13 +525,22 @@ class TransitTag {
     TransitTag(
       'hair_length',
       Icons.straighten,
-      category: 'hair',
+      // EIGENE Kategorie (Migration 188): je Kategorie ist nur EIN
+      // Merkmal erlaubt. Haarlaenge und Frisur sind keine Alternative,
+      // sondern zwei Angaben - in derselben Kategorie wuerden sie sich
+      // ausschliessen.
+      category: 'hair_length',
+      // BEFUND (07.11.2026, Betreiber): "also Hairstyle und so". Als
+      // blosse Merkmale waren Haarlaenge und Frisur wertlos ("hat
+      // Haarlaenge?"). Migration 187 hat die Wertelisten eingefuehrt.
+      allowedValues: hairLengthValues,
       searchAliases: ['haarlaenge', 'hair length'],
     ),
     TransitTag(
       'hair_style',
       Icons.auto_awesome,
-      category: 'hair',
+      category: 'hair_style',
+      allowedValues: hairStyleValues,
       searchAliases: ['frisur', 'haartyp'],
     ),
     // ---- Augen

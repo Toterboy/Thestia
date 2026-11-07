@@ -40,7 +40,8 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 MODEL = ROOT / "lib" / "models" / "transit_models.dart"
 
 SQL = """
-SELECT slug, allowed_colors::text AS farben
+SELECT slug, allowed_colors::text AS farben,
+       allowed_values::text AS werte
   FROM public.transit_tag_catalog
  ORDER BY slug;
 """
@@ -56,7 +57,7 @@ def lies_db():
             capture_output=True, text=True, encoding="utf-8", errors="replace",
         )
     except FileNotFoundError:
-        return None, "supabase.cmd nicht gefunden"
+        return None, None, "supabase.cmd nicht gefunden"
     finally:
         sql.unlink(missing_ok=True)
 
@@ -65,21 +66,25 @@ def lies_db():
     if start < 0:
         start = kombi.find("{")
     if start < 0:
-        return None, "keine Antwort der Datenbank"
+        return None, None, "keine Antwort der Datenbank"
     zeile = kombi[start:]
     try:
         obj = json.loads(zeile[:zeile.rfind("}") + 1])
     except Exception as e:                                   # noqa: BLE001
-        return None, "Antwort nicht lesbar: %s" % e
+        return None, None, "Antwort nicht lesbar: %s" % e
     if obj.get("_tag") == "Error":
-        return None, json.dumps(obj)[:200]
+        return None, None, json.dumps(obj)[:200]
 
     katalog = {}
+    werte_liste = {}
     for r in obj.get("rows", []):
         roh = (r.get("farben") or "").strip("{}")
         farben = [f.strip('"') for f in roh.split(",") if f.strip()]
         katalog[r["slug"]] = farben
-    return katalog, None
+        roh2 = (r.get("werte") or "").strip("{}")
+        werte_liste[r["slug"]] = [f.strip('"') for f in roh2.split(",")
+                                  if f.strip()]
+    return katalog, werte_liste, None
 
 
 def lies_app():
@@ -109,24 +114,32 @@ def lies_app():
         "hairColors": liste("hairColors"),
         "eyeColors": liste("eyeColors"),
         "clothingColors": liste("clothingColors"),
+        # Die Wertelisten (Migration 187): Haarlaenge und Frisur.
+        "hairLengthValues": liste("hairLengthValues"),
+        "hairStyleValues": liste("hairStyleValues"),
     }
 
-    # Der Katalog-Block: TransitTag( 'slug', ... allowedColors: TransitTag.X )
+    # Der Katalog-Block: JEDER TransitTag-Eintrag zaehlt - auch die
+    # ohne Farbpalette (helm, brille, rucksack ...) und auch die, die
+    # einzeilig notiert sind (TransitTag('helm', Icons.motorcycle, ...)).
+    # Vorher wurden nur die mit "colorizable" oder "allowedColors"
+    # gezaehlt und nur die mehrzeiligen gefunden - die App sah dadurch
+    # kleiner aus als sie ist, und das Gate meldete Merkmale, die sie
+    # sehr wohl anbietet.
     merkmale = {}
-    bloecke = re.split(r"TransitTag\(\s*\n", text)
+    bloecke = re.split(r"TransitTag\(\s*", text)
     for block in bloecke[1:]:
-        # Nur der Katalog-Block (er steht nach "static const List<TransitTag> catalog")
-        if "allowedColors" not in block and "colorizable" not in block:
-            continue
         m = re.match(r"'([a-z0-9_]+)'", block.strip())
         if not m:
             continue
         slug = m.group(1)
-        # "allowedColors: eyeColors" - der Name der Liste, optional mit
-        # TransitTag.-Praefix.
         c = re.search(r"allowedColors:\s*(?:TransitTag\.)?(\w+)", block)
         werte = paletten.get(c.group(1)) if c else None
-        merkmale[slug] = werte
+        v = re.search(r"allowedValues:\s*(?:TransitTag\.)?(\w+)", block)
+        merkmale[slug] = {
+            "farben": werte,
+            "werte": paletten.get(v.group(1)) if v else None,
+        }
 
     return paletten, merkmale
 
@@ -137,14 +150,14 @@ def main() -> int:
     print("=" * 70)
 
     app_paletten, app_merkmale = lies_app()
-    katalog, fehler = lies_db()
+    katalog, server_werte_liste, fehler = lies_db()
 
     print()
     print("  Die App (lib/models/transit_models.dart):")
     for name, werte in app_paletten.items():
         print("    %-14s %d Werte" % (name, len(werte or [])))
-    print("    %d Merkmale mit eigener Palette"
-          % len([s for s, w in app_merkmale.items() if w]))
+    print("    %d Merkmale im Katalog der App"
+          % len(app_merkmale))
 
     if katalog is None:
         print()
@@ -163,7 +176,8 @@ def main() -> int:
     #    hat (Haar, Augen).
     print()
     print("  Die Paletten:")
-    for slug, app_werte in sorted(app_merkmale.items()):
+    for slug, angaben in sorted(app_merkmale.items()):
+        app_werte = angaben.get("farben")
         if not app_werte:
             continue
         server_werte = set(katalog.get(slug) or [])
@@ -189,6 +203,37 @@ def main() -> int:
                   % (slug, ", ".join(nur_server)))
         if not nur_app and not nur_server:
             print("    OK %-12s %d Farben, App und Server sind gleich"
+                  % (slug, len(app_werte)))
+
+    # 1b) Die Wertelisten vergleichen (Migration 187).
+    print()
+    print("  Die Wertelisten:")
+    for slug, angaben in sorted(app_merkmale.items()):
+        app_werte = angaben.get("werte")
+        if not app_werte:
+            continue
+        server_werte = set(server_werte_liste.get(slug) or [])
+        if not server_werte:
+            fehler_Liste.append(
+                "der Server kennt die Werte von %s nicht" % slug)
+            print("    X %-12s der Server kennt die Werte nicht" % slug)
+            continue
+        nur_app = sorted(set(app_werte) - server_werte)
+        nur_server = sorted(server_werte - set(app_werte))
+        if nur_app:
+            fehler_Liste.append(
+                "die App bietet Werte an, die der Server nicht kennt (%s): %s"
+                % (slug, ", ".join(nur_app)))
+            print("    X %-12s in der App, nicht auf dem Server: %s"
+                  % (slug, ", ".join(nur_app)))
+        if nur_server:
+            fehler_Liste.append(
+                "der Server kennt Werte, die die App nicht anbietet (%s): %s"
+                % (slug, ", ".join(nur_server)))
+            print("    X %-12s auf dem Server, nicht in der App: %s"
+                  % (slug, ", ".join(nur_server)))
+        if not nur_app and not nur_server:
+            print("    OK %-12s %d Werte, App und Server sind gleich"
                   % (slug, len(app_werte)))
 
     # 2) Die Merkmals-Slugs vergleichen.

@@ -704,6 +704,10 @@ const Map<String, Map<String, String>> _strings = {
     'transit.cat.shoes': 'Schuhe',
     'transit.cat.accessory': 'Accessoires',
     'transit.cat.hair': 'Haar',
+    // Eigene Kategorien (Migration 188): Haarlaenge und Frisur sind
+    // keine Alternative, sondern zwei Angaben.
+    'transit.cat.hair_length': 'Haarlänge',
+    'transit.cat.hair_style': 'Frisur',
     'transit.cat.eyes': 'Augen',
     'transit.tag.hemd': 'Hemd',
     'transit.tag.bluse': 'Bluse',
@@ -1010,6 +1014,26 @@ const Map<String, Map<String, String>> _strings = {
     'transit.color.brown': 'Braun',
     'transit.color.purple': 'Lila',
     'transit.color.teal': 'Türkis',
+    // Die Werte der Merkmale mit Werteliste (Migration 187).
+    //
+    // BEFUND (07.11.2026, Betreiber): "also Hairstyle und so" - als
+    // blosse Merkmale waren Haarlaenge und Frisur wertlos ("hat
+    // Haarlaenge?"). Deshalb gibt es jetzt echte Werte.
+    'transit.value.kurz': 'Kurz',
+    'transit.value.schulterlang': 'Schulterlang',
+    'transit.value.mittel': 'Mittellang',
+    'transit.value.lang': 'Lang',
+    'transit.value.sehrlang': 'Sehr lang',
+    'transit.value.schulter': 'Bis zur Schulter',
+    'transit.value.stoppeln': 'Stoppeln',
+    'transit.value.glatt': 'Glatt',
+    'transit.value.lockig': 'Lockig',
+    'transit.value.gewellt': 'Gewellt',
+    'transit.value.kraus': 'Kraus',
+    'transit.value.flechtig': 'Geflechtet',
+    'transit.value.zopf': 'Zopf',
+    'transit.value.ponytail': 'Pferdeschwanz',
+    'transit.value.kurz_geschnitten': 'Kurz geschnitten',
     'transit.self.title': 'Wie siehst du gerade aus?',
     'transit.self.hint':
         'Wähle 2-5 Merkmale zu dir selbst - nur so können dich andere '
@@ -3973,6 +3997,10 @@ const Map<String, Map<String, String>> _strings = {
     'transit.cat.shoes': 'Shoes',
     'transit.cat.accessory': 'Accessories',
     'transit.cat.hair': 'Hair',
+    // Own categories (migration 188): hair length and hairstyle are not
+    // alternatives, but two separate statements.
+    'transit.cat.hair_length': 'Hair length',
+    'transit.cat.hair_style': 'Hairstyle',
     'transit.cat.eyes': 'Eyes',
     'transit.tag.hemd': 'Shirt',
     'transit.tag.bluse': 'Blouse',
@@ -4078,6 +4106,22 @@ const Map<String, Map<String, String>> _strings = {
     'transit.color.brown': 'Brown',
     'transit.color.purple': 'Purple',
     'transit.color.teal': 'Teal',
+    // The values of the features with a value list (migration 187).
+    'transit.value.kurz': 'Short',
+    'transit.value.schulterlang': 'Shoulder-length',
+    'transit.value.mittel': 'Medium-length',
+    'transit.value.lang': 'Long',
+    'transit.value.sehrlang': 'Very long',
+    'transit.value.schulter': 'To the shoulder',
+    'transit.value.stoppeln': 'Stubble',
+    'transit.value.glatt': 'Straight',
+    'transit.value.lockig': 'Curly',
+    'transit.value.gewellt': 'Wavy',
+    'transit.value.kraus': 'Crimped',
+    'transit.value.flechtig': 'Braided',
+    'transit.value.zopf': 'Ponytail braid',
+    'transit.value.ponytail': 'Ponytail',
+    'transit.value.kurz_geschnitten': 'Cropped',
     'transit.self.title': 'How do you look right now?',
     'transit.self.hint':
         'Pick 2-5 traits describing yourself - only this way others '

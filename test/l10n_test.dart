@@ -149,6 +149,9 @@ void main() {
         'safetyOnboarding.edu\${n}Title',
         'safetyOnboarding.edu\${n}Body',
         'safetyOnboarding.edu\${n}Hint',
+        // Die Werte der Merkmale mit Werteliste (Migration 187):
+        // Haarlaenge und Frisur.
+        'transit.value.\$wert',
       };
       final unknown = dynamic
           .where(
@@ -177,6 +180,27 @@ void main() {
       // Transit-Presets aus transit_radar_screen (_presets + Fallback).
       for (final preset in ['wave', 'again', 'coffee']) {
         expect(deKeys, contains('transit.preset.$preset'));
+      }
+      // Die Werte der Merkmale mit Werteliste (Migration 187):
+      // Haarlaenge und Frisur.
+      for (final wert in const [
+        'kurz',
+        'schulterlang',
+        'mittel',
+        'lang',
+        'sehrlang',
+        'schulter',
+        'stoppeln',
+        'glatt',
+        'lockig',
+        'gewellt',
+        'kraus',
+        'flechtig',
+        'zopf',
+        'ponytail',
+        'kurz_geschnitten',
+      ]) {
+        expect(deKeys, contains('transit.value.$wert'));
       }
       // Challenge-Familien (verification_service, Codes aus
       // generateChallenge).

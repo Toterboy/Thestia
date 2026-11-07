@@ -1,4 +1,4 @@
-"""Selbsttest fuer check_push_readiness.py.
+﻿"""Selbsttest fuer check_push_readiness.py.
 
 Ein Checker, der nie ausloest, ist wertlos. Fuer jede der sechs im
 Remote-Push gefundenen Fehlerklassen wird eine Kopie der Migrationen
@@ -34,10 +34,15 @@ def m_overload_luecke(c):
     # aufrufbar.
     #
     # Der Fall, der zaehlt, ist der umgekehrte: eine Variante, die
-    # NACH dem Sweep angelegt wird. Dafuer steht Migration 185 - sie
-    # legt match_proximity_spark mit dem eigenen Token an. Ohne ihren
-    # REVOKE bleibt die Variante aufrufbar, und genau das muss der
-    # Checker melden.
+    # NACH dem Sweep angelegt wird. Dafuer steht Migration 185 - sie legt
+    # match_proximity_spark mit dem eigenen Token an. Ohne ihren REVOKE
+    # bleibt die Variante aufrufbar, und genau das muss der Checker
+    # melden.
+    #
+    # WICHTIG: Es muss die Migration sein, die den REVOKE traegt (185).
+    # Eine spaetere, die die Funktion nur erneuert (187), wuerde den
+    # REVOKE nicht wiederholen - die Rechte bleiben bei CREATE OR
+    # REPLACE erhalten. Sonst waere die Mutation wirkungslos.
     return c.replace(
         'REVOKE EXECUTE ON FUNCTION\n'
         '  public.match_proximity_spark(text[], text[], text, text[], text, text)\n'

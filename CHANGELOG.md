@@ -806,7 +806,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
   Selbsttest. Der erste Wächter fand fuenf echte Faelle, der zweite
   einen - beide gegen Negativproben geprueft.
 
-### Nachtrag: Build 34 bis 40 (06./07.11.2026) - vier Befunde vom Betreiber
+### Nachtrag: Build 34 bis 41 (06./07.11.2026) - vier Befunde vom Betreiber
 
 1. **Der Elternbereich lädt ewig lang.** Der Abruf des Aufsichtsstands
    schlug fehl (keine Sitzung beim App-Start, Netz, Server) - und der
@@ -1127,6 +1127,59 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     Und der Negativfall ist belegt: ohne den REVOKE meldet das Gate
     `match_proximity_spark wird hier angelegt, aber (text[], text[],
     text, text[], text, text) wird NICHT revokt`.
+
+28. **Warum es immer neue Probleme gab – und was dagegen kommt.**
+    BEFUND (07.11.2026, Betreiber): „wie es die ganze Zeit neue
+    Probleme geben kann, wenn du es immer prüfst. Bitte deck das mit
+    tests besser ab oder irgendwie anders sinnvoll."
+
+    Die ehrliche Antwort: **Die Tests prüfen den Code. Sie prüfen
+    nicht, ob die ausgelieferte Datei den geprüften Code enthält.**
+    Genau da sind beide Fehler passiert:
+    * Die Admin-APK im Release-Ordner war Build 33, der Quellstand
+      Build 38. Der Betreiber hat sie getestet und einen Fehler gemeldet,
+      den es nicht mehr gab.
+    * In den alten Release-Ordnern lagen 16 Admin-APKs mit der alten,
+      als kompromittiert geltenden UUID.
+
+    Beides sind **Auslieferungsfehler**, keine Codefehler – und gegen
+    die kann kein Test der App etwas tun. Neu ist deshalb
+    `tool/check_release_version.py`: Es prüft für jedes Artefakt, ob
+    die Build-Nummer zum Quellstand passt, ob es nach der letzten
+    Quellzeile gebaut wurde und ob der Text des aktuellen Quellstands
+    im kompilierten Code steht. Der Negativfall ist belegt: das Gate
+    meldet eine falsche Build-Nummer, ein zu altes Artefakt **und**
+    einen Build mit altem Code.
+
+29. **Haarlänge und Frisur – mit Werten statt als Merkmal.**
+    BEFUND (07.11.2026, Betreiber): „Ja kannst du auch mit aufnehmen,
+    also Hairstyle und so."
+
+    Der Server kannte `hair_length` und `hair_style` schon – aber als
+    blosse Merkmale waren sie wertlos („hat Haarlaenge?"). Migration
+    187 gibt dem Katalog deshalb eine **Werteliste**: neben „slug"
+    (Ja/Nein) und „slug:farbe" gibt es jetzt „slug:wert"
+    („hair_style:lockig"). Die App bietet 7 Haarlängen und 8 Frisuren
+    an, mit Texten in beiden Sprachen.
+
+30. **Zwei Fehler, die der neue Test gefunden hat – und die man beim
+    Testen auf dem Gerät nicht gesehen hätte:**
+    * **Haarlänge und Frisur schlossen sich aus.** Je Kategorie ist nur
+      *ein* Merkmal erlaubt (sonst könnte jemand „Hemd" UND „Bluse"
+      wählen). Beide lagen aber in der Kategorie `hair` – man konnte
+      also nur eines von beiden angeben. Migration 188 gibt ihnen
+      eigene Kategorien.
+    * **„Frisur" stand zweimal auf dem Bildschirm:** als Kategorie und
+      als Merkmal. Die Kategorie-Überschrift entfällt jetzt bei
+      Kategorien mit nur einem Merkmal.
+
+    Und das Redesign, um das der Betreiber gebeten hat („es so schon
+    echt voll"): Die **Haare stehen jetzt oben** (vorher ganz hinten –
+    der Bildschirm heißt „Wie siehst du gerade aus?"); der
+    Kategorie-Filter ist **ein Chip mit Menü** statt eines Bandes aus
+    acht Chips; die **Werte stehen direkt unter dem Merkmal**, das sie
+    brauchen; und ein **Fortschrittsbalken** zeigt, wie viele Merkmale
+    noch fehlen.
 
 
 ## [0.10.0] - 2026-10-24 (Build 31)

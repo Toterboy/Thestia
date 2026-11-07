@@ -409,7 +409,7 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
 
 ## Umgesetzt: 0.10.0 – Standort-Privatisierung, Transit Spark auf echten Geräten & Qualitätssicherung
 
-> Status: v0.10.0 ist in Vorbereitung (Build 40, 07.11.2026) und die
+> Status: v0.10.0 ist in Vorbereitung (Build 41, 07.11.2026) und die
 > **erste Fassung für den Play Store** – das Play-Console-Projekt wird
 > erst angelegt. Zuletzt veröffentlicht wurde v0.9.1 (Prerelease auf
 > GitHub); intern wird v0.9.2 getestet. Der Stand ist unten bei den
@@ -621,7 +621,7 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
 - [x] **Downloads und Push-Endpunkte werden geprüft** - nur HTTPS und
       nur eigene Hosts.
 
-### Nachtrag vom 06./07.11.2026 (Build 34 bis 40)
+### Nachtrag vom 06./07.11.2026 (Build 34 bis 41)
 
 Der Test auf echten Geräten hat eine Reihe von Fehlern zutage
 gefördert, die alle im Code lagen – dazu die Korrekturen an der
@@ -771,6 +771,46 @@ keine gemeinsamen Tokens.)
 > `kopfhoerer`, `rucksack`, `sandalen`, `sportlich`). Das ist kein
 > Fehler - aber `hair_length` und `hair_style` wären die logische
 > Ergänzung zu den 18 Haarfarben, wenn der Betreiber sie will.
+
+#### Build 41: Haarlänge, Frisur - und ein Redesign des Bildschirms
+
+BEFUND (07.11.2026, Betreiber): "Ja kannst du auch mit aufnehmen,
+also Hairstyle und so. Aber bitte gut umsetzen auf der Seite, da es so
+schon echt voll ist, braucht es schon fast ein Redesign vom wie siehst
+du aus screen."
+
+Der Server kannte `hair_length` und `hair_style` schon - aber als
+blosse Merkmale waren sie wertlos ("hat Haarlaenge?"). Migration 187
+gibt dem Katalog deshalb eine **Werteliste**: neben "slug" (Ja/Nein)
+und "slug:farbe" gibt es jetzt "slug:wert" ("hair_style:lockig"). Die
+App bietet **7 Haarlängen** (kurz, schulterlang, mittellang, lang,
+sehrlang, bis zur Schulter, Stoppeln) und **8 Frisuren** (glatt,
+lockig, gewellt, kraus, geflechtet, Zopf, Pferdeschwanz, kurz
+geschnitten) an.
+
+**Das Redesign:**
+
+- [x] **Die Haare stehen oben.** Vorher standen sie ganz hinten (nach
+      Ober- und Unterteil) - der Bildschirm heisst aber "Wie siehst du
+      gerade aus?", und was man im Gesicht sieht, kommt zuerst.
+- [x] **Der Kategorie-Filter ist ein Chip mit Menü** statt eines Bandes
+      aus acht Chips. Er hat eine ganze Bildschirmzeile gebraucht und
+      nur wiederholt, was die Gruppierung unten schon zeigt.
+- [x] **Die Werte stehen direkt unter dem Merkmal**, das sie brauchen -
+      nicht in einer eigenen Liste weiter unten.
+- [x] **Ein Fortschrittsbalken** zeigt, wie viele Merkmale noch
+      fehlen (mindestens zwei, höchstens acht).
+- [x] **Die Kategorie-Ueberschrift entfaellt bei einer Kategorie mit nur
+      einem Merkmal.** Vorher stand "Frisur" zweimal auf dem Bildschirm:
+      als Kategorie und als Merkmal.
+
+> **Zwei Fehler, die der neue Test gefunden hat** - und die man beim
+> Testen auf dem Geraet nicht gesehen haette:
+> * **Haarlaenge und Frisur schlossen sich aus.** Je Kategorie ist nur
+>   *ein* Merkmal erlaubt (sonst koennte jemand "Hemd" UND "Bluse"
+>   waehlen). Beide lagen aber in der Kategorie `hair` - man konnte also
+>   nur eines von beiden angeben. Migration 188 gibt ihnen eigene
+>   Kategorien.
 
 ### Elternfreigabe und Aufsicht für 16- und 17-Jährige (Teil von 0.10.0)
 
