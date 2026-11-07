@@ -534,29 +534,13 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
     String? customHintKey,
     String initialCustomText = '',
   }) {
-    // v0.10.0: Die Auswahl ist in einen eigenen Widget gezogen. Sie
-    // braucht Suchfeld, Kategoriefilter und einen Zaehler - das passt
-    // nicht mehr in einen StatefulBuilder-Block.
-    return showModalBottomSheet<({List<String> tags, String note})>(
-      context: context,
-      isScrollControlled: true,
-      // BEFUND (06.11.2026, Betreiber): "Bei Transit Spark mit 'Wie
-      // siehst du aus' hat die Ueberschrift in der Statusleiste
-      // stecken." Das Sheet ist hoeher als der Bildschirm (Suchfeld,
-      // Kategoriefilter, Merkmale, Freitextfeld) und reicht deshalb bis
-      // an den oberen Rand - ohne SafeArea liegt die Ueberschrift
-      // unter der Statusleiste des Systems.
-      //
-      // useSafeArea: true rueckt den Inhalt des Sheets unterhalb der
-      // Systemleiste ein. Ohne das ragt der Titel in die Statusleiste.
-      useSafeArea: true,
-      builder: (ctx) => _TransitTagPickerSheet(
-        titleKey: titleKey,
-        hintKey: hintKey,
-        requireSelection: requireSelection,
-        customHintKey: customHintKey,
-        initialCustomText: initialCustomText,
-      ),
+    return showTransitTagPickerSheet(
+      context,
+      titleKey: titleKey,
+      hintKey: hintKey,
+      requireSelection: requireSelection,
+      customHintKey: customHintKey,
+      initialCustomText: initialCustomText,
     );
   }
 
@@ -1502,6 +1486,54 @@ Future<bool> confirmTransitExit(
 //     waere keine Angabe, sondern Unsinn. Die Server-Regel (Migration
 //     149) sagt dasselbe, sonst lehnt die RPC ab.
 //   * eigene Farbpaletten fuer Haar und Augen
+/// Oeffnet die Merkmals-Auswahl von Transit Spark (der Tag-Picker).
+///
+/// v0.10.0: Die Auswahl ist in einen eigenen Widget gezogen. Sie
+/// braucht Suchfeld, Kategoriefilter und einen Zaehler - das passt
+/// nicht mehr in einen StatefulBuilder-Block.
+///
+/// BEFUND (06.11.2026, Betreiber): "Bei Transit Spark mit 'Wie siehst
+/// du aus' hat die Ueberschrift in der Statusleiste gesteckt." Das
+/// Sheet ist hoeher als der Bildschirm (Suchfeld, Kategoriefilter,
+/// Merkmale, Freitextfeld) und reicht deshalb bis an den oberen Rand -
+/// ohne SafeArea liegt die Ueberschrift unter der Statusleiste des
+/// Systems.
+///
+/// `useSafeArea: true` rueckt den Inhalt des Sheets unterhalb der
+/// Systemleiste ein. Ohne das ragt der Titel in die Statusleiste.
+///
+/// BEFUND (07.11.2026): Der Betreiber meldete danach erneut, die
+/// Ueberschrift liege noch immer in der Statusleiste. Die Ursache war
+/// nicht der Code, sondern die getestete Datei: die Admin-APKs waren
+/// noch Build 33 vom 06.11. 19:00 - also VOR diesem Fix (das Gate
+/// `tool/check_release_artifacts.py` meldet es heute).
+///
+/// Oeffentlich, damit der Test den WEG geht, den die App geht - mit
+/// demselben `useSafeArea`. Eine Nachbildung im Test wuerde nur pruefen,
+/// dass Flutter das kann, nicht dass die App es tut.
+@visibleForTesting
+Future<({List<String> tags, String note})?> showTransitTagPickerSheet(
+  BuildContext context, {
+  required String titleKey,
+  required String hintKey,
+  required bool requireSelection,
+  String? customHintKey,
+  String initialCustomText = '',
+}) {
+  return showModalBottomSheet<({List<String> tags, String note})>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    builder: (ctx) => _TransitTagPickerSheet(
+      titleKey: titleKey,
+      hintKey: hintKey,
+      requireSelection: requireSelection,
+      customHintKey: customHintKey,
+      initialCustomText: initialCustomText,
+    ),
+  );
+}
+
 class _TransitTagPickerSheet extends StatefulWidget {
   const _TransitTagPickerSheet({
     required this.titleKey,

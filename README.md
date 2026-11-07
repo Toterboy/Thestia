@@ -30,7 +30,7 @@ nicht vollständig funktional. Beiträge und Feedback sind willkommen.
 > Daten bleiben erhalten (Login genügt), nur Passkeys müssen einmal neu
 > registriert werden.
 >
-> **Aktuelle Version: v0.10.0** (Build 38). Die App ist **noch nicht im
+> **Aktuelle Version: v0.10.0** (Build 39). Die App ist **noch nicht im
 > Play Store** – das Play-Console-Projekt wird erst angelegt. v0.10.0 ist
 > die erste Fassung, die in den Store geht; sie geht hinein, sobald die
 > offenen Punkte geschlossen sind. Zuletzt veröffentlicht wurde v0.9.1
@@ -123,7 +123,7 @@ installiert werden. Ältere Dateien (`WispDating-v0.9.0-*.apk`) gehören zur
 Vorgänger-Version – bitte **Thestia neu installieren** (kein Update-Pfad, neue
 App-ID).
 
-**v0.10.0 (Build 38) ist in Vorbereitung** und die **erste Fassung für den
+**v0.10.0 (Build 39) ist in Vorbereitung** und die **erste Fassung für den
 Play Store** – sie geht hinein, sobald die offenen Punkte geschlossen sind
 (offen sind der BLE-Gerätetest auf zwei echten Geräten und die
 F-Droid-Einreichung).
@@ -133,7 +133,7 @@ F-Droid-Einreichung).
 | Version | Status |
 | --- | --- |
 | unter v0.10.0 (Build < 31, inkl. aller WispDating-Builds) | **End of Support** – keine Fixes mehr, bitte Thestia neu installieren |
-| v0.10.0 (Build 38) | **In Vorbereitung** – die erste Fassung für den Play Store; ab da Bug-Reports und Security-Fixes |
+| v0.10.0 (Build 39) | **In Vorbereitung** – die erste Fassung für den Play Store; ab da Bug-Reports und Security-Fixes |
 
 Ältere Builds werden über das serverseitige Mindest-Build-Gate
 (`app_config.min_app_version_build = 31`, Migration 156) markiert: Liegt der

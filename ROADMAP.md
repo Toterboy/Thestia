@@ -409,7 +409,7 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
 
 ## Umgesetzt: 0.10.0 – Standort-Privatisierung, Transit Spark auf echten Geräten & Qualitätssicherung
 
-> Status: v0.10.0 ist in Vorbereitung (Build 38, 07.11.2026) und die
+> Status: v0.10.0 ist in Vorbereitung (Build 39, 07.11.2026) und die
 > **erste Fassung für den Play Store** – das Play-Console-Projekt wird
 > erst angelegt. Zuletzt veröffentlicht wurde v0.9.1 (Prerelease auf
 > GitHub); intern wird v0.9.2 getestet. Der Stand ist unten bei den
@@ -621,7 +621,7 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
 - [x] **Downloads und Push-Endpunkte werden geprüft** - nur HTTPS und
       nur eigene Hosts.
 
-### Nachtrag vom 06./07.11.2026 (Build 34 bis 38)
+### Nachtrag vom 06./07.11.2026 (Build 34 bis 39)
 
 Der Test auf echten Geräten hat eine Reihe von Fehlern zutage
 gefördert, die alle im Code lagen – dazu die Korrekturen an der
@@ -698,6 +698,31 @@ dass drei Prüfungen nicht das prüften, was sie zu prüfen vorgaben:
 > `releases/v0.10.0/PLAY-BEREECHTIGUNGEN.md` (Berechtigungen,
 > Data Safety, Zielgruppe) - zum Kopieren in die Console. Jede
 > Angabe ist am Artefakt geprüft, nicht am Buildskript.
+
+#### Build 39: der Betreiber testete eine alte Datei
+
+Der Betreiber meldete am 07.11.2026, die Überschrift in der
+Merkmals-Auswahl stehe "noch immer" in der Statusleiste – und
+fragte: "Sind die APKs veraltet?" **Ja.** Die Admin-APKs im
+Release-Ordner waren Build 33 vom 06.11. 19:00, der Fix steckte im
+Build 38. Es war also kein offener Fehler, sondern ein alter Build.
+
+Damit das nicht wieder passiert, sind drei Dinge dazugekommen:
+
+- [x] **Die Versionsfußzeile zeigt die Build-Nummer** ("Version 0.10.0
+      (39)"). Vorher stand dort nur "Version 0.10.0" - beide Dateien
+      hießen gleich, und es gab nichts zu vergleichen.
+- [x] **Der Admin-Build hat eine eigene Build-Nummer** (Basis + 9000,
+      z. B. 9039). Er ist auf dem Gerät erkennbar und lässt sich über
+      dem öffentlichen Build installieren.
+- [x] **Das Release-Gate behandelt einen veralteten Admin-Build als
+      Fehler**, nicht als Warnung - und prüft die Build-Nummer der
+      Admin-APK gegen die des öffentlichen Builds.
+
+Und der Fehler selbst ist abgesichert: ein Test öffnet die
+Merkmals-Auswahl über den Weg, den die App geht, und misst, wo die
+Überschrift landet. Ohne den `useSafeArea` landet sie **in** der
+Statusleiste - der Test schlägt dann an.
 
 ### Elternfreigabe und Aufsicht für 16- und 17-Jährige (Teil von 0.10.0)
 

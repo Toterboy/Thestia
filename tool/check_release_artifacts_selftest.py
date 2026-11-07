@@ -98,6 +98,11 @@ def run_checker():
     einem Grundfehler drownen, den man nicht pruefen wollte. Der
     Signaturpfad wird dadurch nicht getestet; der Inhalts- und der
     Kollisionspfad schon.
+
+    Ebenso wird aapt2 durch einen Attrappen ersetzt: die Test-APKs
+    sind synthetisch, ihre Build-Nummer ist nicht lesbar. Die
+    Build-Nummer-Regel wird deshalb ueber [build_nummer] geprueft -
+    der Attrapp liefert genau diese Nummer.
     """
     buf = io.StringIO()
     err = io.StringIO()
@@ -105,9 +110,13 @@ def run_checker():
     old_root = cra.ROOT
     old_current = cra.current_version
     old_signer = cra.find_apksigner
+    old_aapt2 = cra.find_aapt2
+    old_version_code = cra.apk_version_code
     try:
         sys.argv = ['check_release_artifacts.py']
         cra.find_apksigner = lambda: None
+        cra.find_aapt2 = lambda: pathlib.Path('aapt2-attrappe')
+        cra.apk_version_code = lambda aapt2, apk: build_nummer
         # Beide Kanaele: sys.exit("text") schreibt nach stderr, und genau
         # diese Faelle (fehlender Versionsordner) sind die, die man
         # pruefen will.
@@ -129,10 +138,17 @@ def run_checker():
         cra.ROOT = old_root
         cra.current_version = old_current
         cra.find_apksigner = old_signer
+        cra.find_aapt2 = old_aapt2
+        cra.apk_version_code = old_version_code
     return code, buf.getvalue() + err.getvalue()
 
 
 CASES = []
+
+# Die Build-Nummer, die der Attrapp meldet. Standard: die, die zum
+# Test-Stand passt (oeffentlich 99 + 9000). Die Faelle, die eine
+# falsche pruefen, setzen sie selbst.
+build_nummer = 99 + cra.ADMIN_BUILD_OFFSET
 
 # Zwei moegliche-detektionswege. Der Unterschied ist Absicht: das
 # Artefakt kann ueber die UUID-Differenz auffallen (es enthaelt die
@@ -265,6 +281,39 @@ def _c7(tmp, admin):
     code, out = run_checker()
     assert code != 0, 'muss fehlschlagen - testapk/ wurde nicht gescannt'
     assert 'byte-identisch' in out, out[-400:]
+
+
+@case('Admin-Build mit falscher Build-Nummer -> FEHLER (veraltet)')
+def _c8(tmp, admin):
+    # BEFUND (07.11.2026, Betreiber): "Sind die APKs veraltet?" - ja. Der
+    # Admin-Build war Build 33, der Quellstand 38. Genau das muss das
+    # Gate melden.
+    global build_nummer
+    build_nummer = 33
+    try:
+        world = make_world(tmp, ['play.apk'], admin)
+        cra.ROOT = tmp
+        cra.RELEASES = world
+        cra.current_version = lambda: ('9.9.9', '99')
+        code, out = run_checker()
+        assert code != 0, 'muss fehlschlagen - der veraltete Admin-Build ' \
+                          'wurde nicht gemeldet'
+        assert 'veraltet' in out, out[-400:]
+        assert '9033' in out or '33' in out, out[-400:]
+    finally:
+        build_nummer = 99 + cra.ADMIN_BUILD_OFFSET
+
+
+@case('Admin-Build mit richtiger Build-Nummer -> kein Fehler')
+def _c9(tmp, admin):
+    # Das Gegenstueck: der richtige Admin-Build darf nicht beanstandet
+    # werden. Sonst waere das Gate nur streng, nicht richtig.
+    world = make_world(tmp, ['play.apk'], admin)
+    cra.ROOT = tmp
+    cra.RELEASES = world
+    cra.current_version = lambda: ('9.9.9', '99')
+    code, out = run_checker()
+    assert 'Build-Nummer' not in out or 'veraltet' not in out, out[-400:]
 
 
 def main():

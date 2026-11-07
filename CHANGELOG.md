@@ -806,7 +806,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
   Selbsttest. Der erste Wächter fand fuenf echte Faelle, der zweite
   einen - beide gegen Negativproben geprueft.
 
-### Nachtrag: Build 34 bis 38 (06./07.11.2026) - vier Befunde vom Betreiber
+### Nachtrag: Build 34 bis 39 (06./07.11.2026) - vier Befunde vom Betreiber
 
 1. **Der Elternbereich lädt ewig lang.** Der Abruf des Aufsichtsstands
    schlug fehl (keine Sitzung beim App-Start, Netz, Server) - und der
@@ -954,6 +954,52 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     erscheint beim Upload kein "Was ist neu". Das war bei jedem
     Versionssprung möglich und wurde bisher nicht gemeldet. Neues Gate:
     `tool/check_store_changelog.py`.
+
+19. **Der Admin-Build war Build 33 - und niemand konnte es sehen.**
+    BEFUND (07.11.2026, Betreiber): "Aktuell ist bei Transit Spark bei
+    der Aussehen auswahl die Schrift noch immer in der Statusleiste.
+    Sind die APKs veraltet?" **Ja.** Der Fix (Befund vom 06.11.) steckte
+    im Build 38, aber die Admin-APKs im Release-Ordner waren noch
+    Build 33 vom 06.11. 19:00 - also von *vor* dem Fix. Der Betreiber
+    hat eine alte Datei getestet.
+    Drei Dinge machten das unsichtbar:
+    * Beide heißen "v0.10.0" und sehen auf dem Bildschirm gleich aus.
+    * Die App zeigte **nirgends** eine Build-Nummer - es gab nichts, was
+      man hätte vergleichen können.
+    * Das Release-Gate meldete den alten Admin-Build nur als
+      **Warnung**, und eine Warnung wird ignoriert.
+    Behoben:
+    * Die Versionsfußzeile zeigt jetzt die Build-Nummer:
+      "Version 0.10.0 (39)".
+    * Der Admin-Build bekommt eine eigene Build-Nummer (Basis + 9000,
+      z. B. 9039). Er ist damit auf dem Gerät erkennbar und lässt sich
+      über dem öffentlichen Build installieren.
+    * Das Release-Gate prüft die Build-Nummer der Admin-APK **jetzt als
+      Fehler** - und prüft zusätzlich, ob der Admin-Build älter ist als
+      der Quellstand (vorher: nur eine Warnung).
+    Der eigentliche Fehler - die Überschrift in der Statusleiste - war
+    im Code **schon** behoben. Das hier behebt die Ursache des
+    Irrtums.
+
+20. **Der Überschrift-Fehler ist jetzt durch einen Test abgesichert.**
+    Der Test öffnet die Merkmals-Auswahl über genau den Weg, den die
+    App geht (deshalb ist die Funktion `showTransitTagPickerSheet`
+    öffentlich) und misst, wo die Überschrift landet: sie muss
+    unterhalb der Statusleiste liegen. **Gegenprobe:** ohne den
+    `useSafeArea` landet sie bei y=20, die Statusleiste endet bei
+    y=28 - genau der gemeldete Fehler. Der Test schlägt also genau
+    dann an, wenn der Fehler da ist.
+
+21. **In den Release Notes stand eine falsche Aussage zum Support.**
+    Dort stand „v0.9.2 (Build 30) bleibt unterstützt, bis v0.10.0
+    veröffentlicht ist". Das ist seit **Migration 156** falsch: das
+    serverseitige Mindest-Build-Gate steht auf 31, also bekommt auch
+    v0.9.2 bereits beim Start den Update-Hinweis. Richtig ist: ab
+    v0.10.0 (Build 31+) wird unterstützt, alles darunter ist End of
+    Support. Der Text geht in den Store - eine falsche Angabe dort
+    ist ein Versprechen, das die App nicht einlösen kann.
+    (README und SUPPORT.md waren schon korrekt; nur die Release Notes
+    waren beim Durchgehen der Dokumente noch auf dem alten Stand.)
 
 
 ## [0.10.0] - 2026-10-24 (Build 31)

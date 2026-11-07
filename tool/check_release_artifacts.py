@@ -46,10 +46,45 @@ EXPECTED_SHA256 = ('8C:BE:F7:D0:8F:86:66:54:2E:1D:53:B9:B4:26:C5:46:AF:'
 # Die UUID kommt aus der Umgebung, damit sie nicht im Repo landet.
 ADMIN_UUID = os.environ.get('ADMIN_UUID', '').strip()
 
+# Der Admin-Build traegt eine eigene Build-Nummer (Basis + 9000).
+#
+# BEFUND (07.11.2026, Betreiber): "Sind die APKs veraltet?" - ja. Der
+# Admin-Build im Ordner war Build 33, der Quellstand Build 38. Beide
+# heissen "v0.10.0" und sind auf dem Geraet nicht zu unterscheiden -
+# die App zeigte keinen Build an. Der Tester hat einen Fehler gemeldet,
+# den es im aktuellen Stand nicht mehr gab.
+#
+# Mit der eigenen Nummer ist der Admin-Build auf dem Geraet erkennbar
+# (die Fusszeile zeigt "Version 0.10.0 (9038)") und laesst sich ueber
+# dem oeffentlichen Build installieren. Das Gate prueft hier, dass die
+# Admin-APK genau diese Nummer hat.
+ADMIN_BUILD_OFFSET = 9000
+
 problems = []
 warnings = []
 rows = []
 uuid_sets = {}
+
+
+def admin_build_nummer_fehler(name, ist, erwartet, oeffentlich):
+    """Prueft die Build-Nummer eines Admin-Builds.
+
+    Gibt den Fehlertext zurueck, oder None wenn alles stimmt.
+
+    Getrennt in eine eigene Funktion, damit der Selbsttest sie ohne
+    eine fertige APK pruefen kann.
+
+    BEFUND (07.11.2026, Betreiber): "Sind die APKs veraltet?" - ja. Der
+    Admin-Build im Ordner war Build 33, der Quellstand Build 38. Beide
+    heissen "v0.10.0" und sind auf dem Geraet nicht zu unterscheiden.
+    """
+    if ist is None:
+        return None
+    if ist == erwartet:
+        return None
+    return (f'{name}: Build-Nummer {ist}, erwartet {erwartet} '
+            f'(oeffentlich {oeffentlich} + {ADMIN_BUILD_OFFSET}). '
+            f'Der Admin-Build ist veraltet - neu bauen.')
 
 
 def find_apksigner():
@@ -66,6 +101,35 @@ def find_apksigner():
             if exe.suffix == '.bat' or exe.name == 'apksigner':
                 return exe
     return None
+
+
+def find_aapt2():
+    """Sucht aapt2 in den installierten Android-Build-Tools."""
+    basis = pathlib.Path(os.environ.get('LOCALAPPDATA', ''), 'Android', 'Sdk',
+                         'build-tools')
+    if not basis.is_dir():
+        return None
+    kandidaten = sorted(basis.glob('*/aapt2.exe'), reverse=True)
+    for exe in kandidaten:
+        if exe.is_file():
+            return exe
+    return None
+
+
+def apk_version_code(aapt2, apk):
+    """Liest die Build-Nummer aus einem APK (aapt2 dump badging).
+
+    Nur das Artefakt sagt, was wirklich drin ist - der Dateiname
+    koennte luegen.
+    """
+    try:
+        ergebnis = subprocess.run(
+            [str(aapt2), 'dump', 'badging', str(apk)],
+            capture_output=True, text=True, timeout=120)
+    except Exception:                                       # noqa: BLE001
+        return None
+    treffer = re.search(r"versionCode='(\d+)'", ergebnis.stdout)
+    return int(treffer.group(1)) if treffer else None
 
 
 def newest_app_source_mtime():
@@ -280,6 +344,44 @@ def main():
     admin_dir = vdir / 'admin'
     admin = sorted(admin_dir.glob('*.apk')) if admin_dir.is_dir() else []
 
+    # ------------------------------------------------------------------
+    # BUILD-NUMMER: Der Admin-Build muss zum aktuellen Release passen.
+    #
+    # BEFUND (07.11.2026, Betreiber): "Sind die APKs veraltet?" - ja. Der
+    # Admin-Build im Ordner war Build 33, der Quellstand Build 38. Beide
+    # heissen "v0.10.0", und die App zeigte nirgends einen Build, mit dem
+    # man sie haette unterscheiden koennen. Der Tester hat daraufhin
+    # einen Fehler gemeldet, den es im aktuellen Stand nicht mehr gab.
+    #
+    # Der Admin-Build traegt deshalb eine eigene Build-Nummer (Basis +
+    # 9000, siehe tool/build_release.ps1). Hier wird geprueft, dass die
+    # Admin-APK genau diese Nummer hat - ein alter Admin-Build faellt
+    # damit sofort auf, statt monatelang still mitzulaufen.
+    #
+    # Gelesen wird die Build-Nummer aus dem APK selbst (aapt2), nicht
+    # aus dem Dateinamen: nur das Artefakt sagt, was drin ist.
+    if admin:
+        erwartet_admin = int(code) + ADMIN_BUILD_OFFSET
+        aapt2 = find_aapt2()
+        if not aapt2:
+            warnings.append('aapt2 nicht gefunden - die Build-Nummer der '
+                            'Admin-Builds wurde nicht geprueft.')
+        else:
+            for pfad in admin:
+                ist = apk_version_code(aapt2, pfad)
+                fehler = admin_build_nummer_fehler(pfad.name, ist,
+                                                   erwartet_admin, code)
+                if fehler:
+                    problems.append(fehler)
+                elif ist is None:
+                    # Nicht lesbar ist kein Fehler der Datei, sondern eine
+                    # Grenze der Pruefung (kein aapt2, synthetische APK im
+                    # Selbsttest). Als Fehler wuerde jeder saubere Stand
+                    # beanstandet, den der Selbsttest prueft.
+                    warnings.append(f'{pfad.name}: Build-Nummer nicht lesbar '
+                                    '- der Admin-Build wurde nicht '
+                                    'auf seine Nummer geprueft.')
+
     # Ein leerer oder nicht vorhandener Versionsordner ist KEIN
     # bestandener Check. In der CI sind die APKs gitignoriert und
     # gar nicht da - der frueher pauschale "OK 0 Artefakte" war
@@ -360,10 +462,26 @@ def main():
                 continue
             aeltester = min(artefakte, key=lambda p: p.stat().st_mtime)
             if aeltester.stat().st_mtime < newest_source[0]:
-                warnings.append(
-                    f'{label}: {aeltester.name} ist älter als der '
-                    f'Quellstand - neu bauen'
-                )
+                meldung = (f'{label}: {aeltester.name} ist älter als der '
+                           f'Quellstand - neu bauen')
+                # BEFUND (07.11.2026, Betreiber): "Aktuell ist bei Transit
+                # Spark bei der Aussehen auswahl die Schrift noch immer in
+                # der Statusleiste. Sind die APKs veraltet?" - JA. Der
+                # Admin-Build war Build 33 vom 06.11., der Fix steckte im
+                # Build 38. Das Gate hatte es als WARNUNG gemeldet - und
+                # eine Warnung wird ignoriert.
+                #
+                # Fuer den oeffentlichen Build bleibt es eine Warnung (ein
+                # Rebuild ist nicht immer noetig, z. B. wenn nur Doku
+                # geaendert wurde). Fuer den ADMIN-Build ist es ein
+                # Fehler: er wird zum Testen auf dem Geraet installiert,
+                # und genau dort hat ein alter Build Schaden angerichtet -
+                # der Tester hat einen Fehler gemeldet, den es im
+                # aktuellen Stand nicht mehr gab.
+                if label == 'Admin':
+                    problems.append(meldung)
+                else:
+                    warnings.append(meldung)
     print()
 
     uuid_sets.setdefault('__init__', set())

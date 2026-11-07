@@ -108,6 +108,26 @@ $VersionName = $pubspecLine.Matches[0].Groups[1].Value.Trim()
 $VersionCode = $pubspecLine.Matches[0].Groups[2].Value.Trim()
 $OutDir = Join-Path $OutRoot "v$VersionName"
 
+# Eigenes Build-Nummern-Fenster fuer den Admin-Build.
+#
+# BEFUND (07.11.2026, Betreiber): "Aktuell ist bei Transit Spark bei
+# der Aussehen auswahl die Schrift noch immer in der Statusleiste.
+# Sind die APKs veraltet?" - Ja. Getestet wurde eine Admin-APK, die
+# noch Build 33 war, waehrend der Fix im Build 38 steckte. Beide
+# heissen "v0.10.0", beide sehen gleich aus, und die App zeigte
+# nirgends einen Build, mit dem man sie haette unterscheiden koennen.
+#
+# Der Admin-Build bekommt deshalb eine eigene Build-Nummer: Basis +
+# 9000. Er ist damit auf dem Geraet erkennbar (die Fusszeile zeigt
+# "Version 0.10.0 (9038)") und laesst sich ueber dem oeffentlichen
+# Build installieren - Android verweigert ein Update, wenn die
+# Build-Nummer nicht groesser ist.
+#
+# Wichtig: Der Admin-Build geht NICHT in den Store. Die 9000 sind
+# nur ein Erkennungsmerkmal, keine Versionsplanung.
+$AdminBuildOffset = 9000
+$AdminVersionCode = ([int]$VersionCode + $AdminBuildOffset)
+
 Write-Host "==> Thestia v$VersionName (build $VersionCode)" -ForegroundColor Cyan
 Write-Host "    Ziel: $OutDir"
 
@@ -546,7 +566,7 @@ if ($SkipBuild) {
             # gegen die falschen Symbole. Gleiche Fehlerklasse wie bei
             # den APKs, nur unsichtbarer.
             $adminSymbols = "build/symbols/admin-$adminFlavor"
-            flutter build apk --release --flavor $adminFlavor @defineArgs --obfuscate --split-debug-info=$adminSymbols
+            flutter build apk --release --flavor $adminFlavor --build-number=$AdminVersionCode @defineArgs --obfuscate --split-debug-info=$adminSymbols
             if ($LASTEXITCODE -ne 0) { throw "Admin-Build ($adminFlavor) fehlgeschlagen." }
             $src = Join-Path "build\app\outputs\flutter-apk" "app-$adminFlavor-release.apk"
 
@@ -564,6 +584,7 @@ if ($SkipBuild) {
 
             Copy-Item -LiteralPath $src -Destination (Join-Path $adminDir "Thestia-v$VersionName-$adminFlavor-ADMIN.apk") -Force
             Write-Host "    OK: $(Join-Path $adminDir "Thestia-v$VersionName-$adminFlavor-ADMIN.apk")" -ForegroundColor Green
+            Write-Host "    Build-Nummer: $AdminVersionCode (oeffentlich: $VersionCode) - auf dem Geraet als 'Version $VersionName ($AdminVersionCode)' erkennbar." -ForegroundColor DarkGray
 
             # Admin-Baum restlos entfernen, NICHT nur die flutter-apk-
             # Kopie. Flutter kopiert outputs\apk\** nach

@@ -1,0 +1,29 @@
+Your location belongs to you
+
+Your city is no longer collected. Only coordinates on a 5 km grid and
+your federal state are stored - and the grid is enforced server-side.
+The distance display is off and becomes your decision: switched on,
+others see one step of 10 km, below 5 km nothing at all.
+
+Delete data without giving up your account
+
+Photos, location, profile, likes, sparks, your messages, device list,
+mood, reports, transit data and the parental consent - individually or
+all of it. Your login stays.
+
+More clarity for 16 and 17
+
+Parental consent that is voluntary: you can add a parent, they confirm
+it themselves and can undo it at any time. If no consent is given, the
+app is fully usable anyway. From 18 onwards you decide yourself. And
+for 16 and 17 the radius is now at most 25 km - or only people from
+your own federal state.
+
+Fixes
+
+- The end-to-end chat works again: every transfer was previously
+  discarded without notice
+- The parental section no longer loads forever
+- Transit Spark no longer counts other Bluetooth devices and finds
+  devices again on Android 11
+- The heading in the feature sheet is no longer in the status bar
