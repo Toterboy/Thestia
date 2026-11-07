@@ -1,9 +1,10 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'package:thestia/services/secure_location_storage.dart';
+import 'package:thestia/utils/location_privacy.dart';
 
 /// Service für die einmalige Standort-Abfrage bei der Verifizierung.
 ///
@@ -30,7 +31,7 @@ class LocationVerificationService {
     return status.isGranted;
   }
 
-  /// Holt den aktuellen Standort (ungefaehre Genauigkeit genuegt).
+  /// Holt den aktuellen Standort - auf dem 5-km-Raster der App.
   ///
   /// `LocationAccuracy.high` war falsch fuer diesen Zweck und verlangte
   /// faktisch ACCESS_FINE_LOCATION: Geolocator kann dann keine
@@ -38,11 +39,16 @@ class LocationVerificationService {
   /// auf einem Gerät ohne GPS-Signal bleibt `null`, und die
   /// Standortverifikation waere unmoeglich.
   ///
-  /// Geholt wird, was die ungefaehre Berechtigung hergibt: ein Standort
-  /// auf Kilometer genau. Fuer die Verifikation wird daraus die Stadt
-  /// abgeleitet - das ist der Zweck dieser Methode, und dafuer reicht
-  /// diese Genauigkeit. Zwei Guetesteile enger beieinander zu belegen ist
-  /// nicht die Aufgabe dieser App.
+  /// DER STANDORT WIRD GERASTET (BEFUND 06.11.2026): Die App holt die
+  /// Position auf dem 5-km-Raster ([LocationPrivacy.snapToGrid]) - auf
+  /// JEDER Systemversion. Grund: Auf Android 11 und aelter ist die genaue
+  /// Standort-Berechtigung Pflicht (fuer den BLE-Scan), und dort gibt es
+  /// keine Wahl zwischen "ungefaehr" und "genau" - die Wahl kam erst mit
+  /// Android 12. Ohne das Raster wuerde die App auf aelteren Geraeten
+  /// einen genauen Standort bekommen und lokal speichern, obwohl sie
+  /// verspricht, den genauen Standort NICHT zu speichern. Das Raster ist
+  /// genau die Genauigkeit, die die App braucht (sie leitet daraus die
+  /// Stadt ab) - und es ist dieselbe Regel, die fuer das Profil gilt.
   Future<Position?> getCurrentLocation() async {
     if (!await hasLocationPermission()) {
       final granted = await requestLocationPermission();
@@ -50,16 +56,41 @@ class LocationVerificationService {
     }
 
     try {
-      return await Geolocator.getCurrentPosition(
+      final position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.medium,
           timeLimit: Duration(seconds: 10),
         ),
       );
+      return aufRaster(position);
     } catch (e) {
       debugPrint('[LocationVerification] Fehler beim Standortabruf: $e');
       return null;
     }
+  }
+
+  /// Die Position auf das 5-km-Raster der App zurueckgeben.
+  ///
+  /// OEFFENTLICH, damit der Test pruefen kann: der gespeicherte
+  /// Verifizierungs-Standort ist ein Rasterpunkt und kein exakter
+  /// Standort (BEFUND 06.11.2026).
+  static Position aufRaster(Position position) {
+    final gerastert = LocationPrivacy.snapToGrid(
+      position.latitude,
+      position.longitude,
+    );
+    return Position(
+      latitude: gerastert.lat,
+      longitude: gerastert.lng,
+      timestamp: position.timestamp,
+      accuracy: position.accuracy,
+      altitude: position.altitude,
+      altitudeAccuracy: position.altitudeAccuracy,
+      heading: position.heading,
+      headingAccuracy: position.headingAccuracy,
+      speed: position.speed,
+      speedAccuracy: position.speedAccuracy,
+    );
   }
 
   /// Speichert den Verifizierungs-Standort (einmalig) im sicheren Speicher.

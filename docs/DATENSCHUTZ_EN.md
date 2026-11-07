@@ -227,6 +227,16 @@ millions of inhabitants cannot derive their place of residence from this
 data. The place itself is not collected, displayed or stored; only the
 federal state is visible.
 
+**The verification location lies on the same grid:** For the age check
+the app stores a location (in the device's keystore, not on the server).
+That location is also rounded to the 5 km grid before it is stored - on
+every system version. This matters because on Android 11 and older the
+precise location permission is technically required (for Bluetooth
+scanning), and the operating system does not yet offer a choice between
+"approximate" and "precise" there. The app therefore never keeps an
+exact location - and the accuracy of 5 km is sufficient for its purpose
+(the city is derived from it, nothing more precise).
+
 **The distance display requires consent:** The display is off by default
 and has to be switched on per person. Off means `null` server-side - no
 residual distance is calculated back from the federal state. Switched on

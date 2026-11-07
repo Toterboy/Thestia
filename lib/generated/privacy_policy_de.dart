@@ -360,6 +360,10 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
   ),
   PrivacyBlock(
     'p',
+    '**Auch der Verifizierungs-Standort liegt auf diesem Raster:** Die App speichert für die Altersprüfung einen Standort (im Keystore des Geräts, nicht auf dem Server). Auch dieser wird vor dem Speichern auf das 5-km- Raster gerundet – auf jeder Systemversion. Das ist wichtig, weil auf Android 11 und älter die genaue Standortberechtigung technisch erzwungen wird (für das Bluetooth-Scannen) und das Betriebssystem dort noch keine Wahl zwischen „ungefähr" und „genau" anbietet. Die App behält so nie einen exakten Standort – und die Genauigkeit von 5 km reicht für ihren Zweck (die Stadt wird abgeleitet, nichts genaueres).',
+  ),
+  PrivacyBlock(
+    'p',
     '**Entfernungsanzeige ist Zustimmungssache:** Die Anzeige ist standardmäßig aus und muss pro Person eingeschaltet werden. Aus bedeutet serverseitig `null` – es wird keine Restentfernung aus dem Bundesland zurückgerechnet. Eingeschaltet bedeutet: andere sehen eine Stufe von 10 km, keine Zahl.',
   ),
   PrivacyBlock(
