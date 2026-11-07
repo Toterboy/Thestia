@@ -51,7 +51,15 @@ import time
 import zipfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-RELEASE_DIR = os.path.join(ROOT, 'releases', 'v0.9.2')
+
+# Der Release-Ordner der AKTUELLEN Version.
+#
+# BEFUND (07.11.2026): Hier stand fest 'releases/v0.9.2'. Der Ordner
+# ist damit auf eine alte Version verklebt: die Abnahme von v0.10.0
+# pruefte die Dateien von v0.9.2 und meldete "9 Artefakte: ein Build,
+# Berechtigungen, Versionen ok" - fuer Dateien, die zwei Versionen alt
+# waren. Der Ordner folgt jetzt der Version aus pubspec.yaml; wer einen
+# anderen Ordner pruefen will, nennt ihn mit --dir.
 SHOT_DIR = os.path.join(ROOT, 'fastlane', 'metadata', 'android', 'de-DE',
                         'images', 'phoneScreenshots')
 
@@ -84,10 +92,30 @@ EXPECTED_SHOTS = ['01_willkommen', '02_aktuelles', '03_chat',
                   '04_entdecken', '05_anpassen', '06_hell_dunkel',
                   '07_eisbrecher', '08_datenschutz']
 
-FORBIDDEN_PERMISSIONS = ['android.permission.ACCESS_FINE_LOCATION']
+FORBIDDEN_PERMISSIONS = ['android.permission.ACCESS_BACKGROUND_LOCATION',
+                          'android.permission.READ_CONTACTS',
+                          'android.permission.READ_CALL_LOG',
+                          'android.permission.READ_SMS',
+                          'android.permission.QUERY_ALL_PACKAGES']
+
+# Berechtigungen, die nur mit einer Obergrenze erlaubt sind.
+#
+# BEFUND (07.11.2026): ACCESS_FINE_LOCATION stand hier auf der
+# Verbotsliste - richtig fuer v0.9.2, aber falsch fuer v0.10.0. Auf
+# Android 11 und aelter verlangt Android fuer den BLE-Scan die genaue
+# Standortberechtigung; ohne sie blockiert das System den Scan still
+# (der Befund vom 06.11.2026). Die Berechtigung ist deshalb wieder
+# da, aber begrenzt auf maxSdkVersion=30 - auf aktuellen Geraeten
+# aendert sich nichts.
+#
+# Die Regel lautet also nicht "darf nicht vorkommen", sondern
+# "wenn, dann nur mit dieser Obergrenze". Genau das prueft der Code.
 MAXSDK_PERMISSIONS = {
     'android.permission.READ_EXTERNAL_STORAGE': 32,
     'android.permission.WRITE_EXTERNAL_STORAGE': 28,
+    'android.permission.ACCESS_FINE_LOCATION': 30,
+    'android.permission.BLUETOOTH': 30,
+    'android.permission.BLUETOOTH_ADMIN': 30,
 }
 
 
@@ -219,6 +247,179 @@ def dump_badging(aapt2, apk):
     }, None
 
 
+def _proto_felder(data):
+    """Liest die Protobuff-Felder einer Nachricht (AOSP resources.proto)."""
+    pos = 0
+    n = len(data)
+    while pos < n:
+        schluessel = 0
+        schicht = 0
+        while True:
+            byte = data[pos]
+            pos += 1
+            schluessel |= (byte & 0x7F) << schicht
+            schicht += 7
+            if not byte & 0x80:
+                break
+        nummer = schluessel >> 3
+        art = schluessel & 0x07
+        if art == 0:
+            wert = 0
+            schicht = 0
+            while True:
+                byte = data[pos]
+                pos += 1
+                wert |= (byte & 0x7F) << schicht
+                schicht += 7
+                if not byte & 0x80:
+                    break
+            yield nummer, art, wert
+        elif art == 2:
+            laenge = 0
+            schicht = 0
+            while True:
+                byte = data[pos]
+                pos += 1
+                laenge |= (byte & 0x7F) << schicht
+                schicht += 7
+                if not byte & 0x80:
+                    break
+            yield nummer, art, data[pos:pos + laenge]
+            pos += laenge
+        elif art == 5:
+            yield nummer, art, int.from_bytes(data[pos:pos + 4], 'little')
+            pos += 4
+        elif art == 1:
+            yield nummer, art, int.from_bytes(data[pos:pos + 8], 'little')
+            pos += 8
+        else:
+            return
+
+
+def _proto_text(roh):
+    """Ist das lesbarer Text (und kein Protobuff-Zahlenwert)?"""
+    try:
+        s = roh.decode('utf-8')
+    except UnicodeDecodeError:
+        return None
+    if not s.strip():
+        return None
+    if not all(32 <= ord(c) < 127 or c in '\r\n\t' for c in s):
+        return None
+    return s
+
+
+def _proto_element(roh):
+    """Liefert (name, {attribut: wert}, [kinder]) eines XmlElement.
+
+    Das Manifest eines AAB ist Protobuff, kein Binaer-XML - deshalb
+    laesst sich aapt2 dafuer nicht benutzen. Das Format (AOSP
+    resources.proto):
+
+        XmlElement.name      = 3 (string)
+        XmlElement.attribute = 4 (repeated XmlAttribute)
+        XmlElement.child     = 5 (repeated XmlNode)
+        XmlNode.element      = 1 (XmlElement)
+        XmlNode.source       = 3 (Quelle: 1 = Datei, 2 = Zeile)
+        XmlAttribute.namespace_uri = 1
+        XmlAttribute.name    = 2
+        XmlAttribute.value   = 3
+
+    ACHTUNG: Der Quellbezug (XmlNode.source) steht ebenfalls im Feld 3
+    und sieht aus wie ein Name, ist aber keiner - erkennbar daran,
+    dass er kein lesbarer Text ist.
+    """
+    name = ''
+    attribute = {}
+    kinder = []
+    attribute_rohdaten = []
+    kind_rohdaten = []
+    eingebettet = []
+
+    for nummer, art, inhalt in _proto_felder(roh):
+        if nummer == 1 and art == 2:
+            eingebettet.append(inhalt)
+        elif nummer == 3 and art == 2:
+            text = _proto_text(inhalt)
+            if text is not None:
+                name = text
+        elif nummer == 4 and art == 2:
+            attribute_rohdaten.append(inhalt)
+        elif nummer == 5 and art == 2:
+            kind_rohdaten.append(inhalt)
+
+    if not name:
+        for inhalt in eingebettet:
+            t_name, t_attr, t_kind = _proto_element(inhalt)
+            if t_name:
+                name, attribute, kinder = t_name, t_attr, t_kind
+                break
+
+    for inhalt in attribute_rohdaten:
+        aname = awert = ''
+        for n2, a2, i2 in _proto_felder(inhalt):
+            if n2 == 2 and a2 == 2:
+                aname = i2.decode('utf-8', 'replace')
+            elif n2 == 3 and a2 == 2:
+                text = _proto_text(i2)
+                if text is not None:
+                    awert = text
+        if aname:
+            attribute[aname] = awert
+
+    for inhalt in kind_rohdaten:
+        kinder.append(_proto_element(inhalt))
+
+    return name, attribute, kinder
+
+
+def dump_aab_manifest(aab):
+    """Liest versionCode, versionName und die Berechtigungen aus dem AAB.
+
+    WARUM ueberhaupt: In den Play Store geht das AAB, nicht das APK.
+    Die APK-Pruefung oben sah bisher nur an den APK-Dateien vorbei -
+    die Datei, die tatsaechlich hochgeladen wird, war ungeprueft.
+    """
+    try:
+        with zipfile.ZipFile(aab) as z:
+            roh = z.read('base/manifest/AndroidManifest.xml')
+    except Exception as e:                                  # noqa: BLE001
+        return None, str(e)
+
+    for nummer, art, inhalt in _proto_felder(roh):
+        if nummer == 1 and art == 2:
+            roh = inhalt
+            break
+
+    wurzel = _proto_element(roh)
+    attribute = wurzel[1]
+
+    perms = {}
+    stack = [wurzel]
+    while stack:
+        name, attr, kinder = stack.pop()
+        if name == 'uses-permission':
+            ziel = ''
+            for k, v in attr.items():
+                if k == 'name' or k.endswith(':name'):
+                    ziel = v
+            if ziel:
+                maxsdk = None
+                for k, v in attr.items():
+                    if k.endswith('maxSdkVersion'):
+                        maxsdk = int(v)
+                perms[ziel] = maxsdk
+        stack.extend(kinder)
+
+    return {
+        'versionCode': int(attribute['versionCode'])
+        if attribute.get('versionCode') else None,
+        'versionName': attribute.get('versionName'),
+        'package': attribute.get('package'),
+        'permissions': perms,
+    }, None
+
+
 def has_env_file(apk):
     """True, wenn das Artefakt eine .env enthaelt."""
     try:
@@ -246,11 +447,61 @@ def public_artifacts():
     return out
 
 
+def berechtigungs_probleme(perms):
+    """Prueft eine Berechtigungsliste gegen die Regeln.
+
+    Gibt eine Liste von Fehlertexten zurueck (leer = alles in Ordnung).
+
+    Die Regeln:
+      * `FORBIDDEN_PERMISSIONS` duerfen gar nicht vorkommen.
+      * `MAXSDK_PERMISSIONS` duerfen vorkommen, aber nur mit genau der
+        angegebenen Obergrenze. Ohne Obergrenze waere die Berechtigung
+        auf ALLEN Geraeten aktiv - das ist beim Standort genau das,
+        was Google Play moniert.
+
+    Getrennt in eine eigene Funktion, damit der Selbsttest sie ohne
+    eine fertige APK pruefen kann.
+    """
+    probleme = []
+    for verboten in FORBIDDEN_PERMISSIONS:
+        if verboten in perms:
+            probleme.append('enthaelt %s' % verboten)
+    for perm, maxsdk in MAXSDK_PERMISSIONS.items():
+        if perm not in perms:
+            continue
+        ist = perms[perm]
+        if ist != maxsdk:
+            probleme.append('%s hat maxSdkVersion=%s, erwartet %s'
+                            % (perm, ist, maxsdk))
+    return probleme
+
+
+def release_dir_aus_pubspec():
+    """Der Release-Ordner der aktuellen Version aus pubspec.yaml."""
+    pfad = os.path.join(ROOT, 'pubspec.yaml')
+    try:
+        with open(pfad, encoding='utf-8') as f:
+            inhalt = f.read()
+    except OSError:
+        return None
+    m = re.search(r'^version:\s*([0-9]+\.[0-9]+\.[0-9]+)\+([0-9]+)',
+                  inhalt, re.M)
+    if not m:
+        return None
+    return os.path.join(ROOT, 'releases', 'v' + m.group(1))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--allow-mixed', action='store_true',
                     help='Warnung statt Fehler bei gemischtem Baustand')
+    ap.add_argument('--dir', default=None,
+                    help='Release-Ordner (Vorgabe: die aktuelle Version '
+                         'aus pubspec.yaml)')
     args = ap.parse_args()
+
+    global RELEASE_DIR
+    RELEASE_DIR = args.dir or release_dir_aus_pubspec() or RELEASE_DIR
 
     rep = Report()
 
@@ -305,17 +556,9 @@ def main():
                 rep.fail('%s: aapt2-Ausgabe nicht lesbar (%s)' % (name, err))
                 continue
 
-            for verboten in FORBIDDEN_PERMISSIONS:
-                if verboten in perms:
-                    rep.fail('%s enthaelt %s' % (name, verboten))
+            for problem in berechtigungs_probleme(perms):
+                rep.fail('%s: %s' % (name, problem))
 
-            for perm, maxsdk in MAXSDK_PERMISSIONS.items():
-                if perm not in perms:
-                    continue
-                ist = perms[perm]
-                if ist != maxsdk:
-                    rep.fail('%s: %s hat maxSdkVersion=%s, erwartet %s'
-                             % (name, perm, ist, maxsdk))
 
             env_drin = has_env_file(apk)
             if env_drin is True:
@@ -357,6 +600,55 @@ def main():
 
         if not rep.failures:
             rep.ok('Berechtigungen, .env-Freiheit und Stammdaten aller APKs ok')
+
+    # --- 4c) Das AAB - die Datei, die tatsaechlich hochgeladen wird ---
+    #
+    # BEFUND (07.11.2026): Das AAB wurde ueberhaupt nicht geprueft. Es
+    # ist aber genau die Datei, die in den Play Store geht. Ein AAB
+    # aus einem anderen Build (etwa versionCode 37, weil der Ordner
+    # noch eine alte Datei enthaelt) waere beim Upload eine
+    # Katastrophe - der Store nimmt die hoehere versionCode nicht
+    # an, und der Fehler faellt erst nach dem Upload auf.
+    aabs = [a for a in arts if a.endswith('.aab')]
+    for aab in aabs:
+        name = os.path.basename(aab)
+        daten, err = dump_aab_manifest(aab)
+        if daten is None:
+            rep.fail('%s: Manifest nicht lesbar (%s)' % (name, err))
+            continue
+
+        if daten['package'] != 'com.thestia.app':
+            rep.fail('%s: package=%s, erwartet com.thestia.app'
+                     % (name, daten['package']))
+
+        if stammdaten is None:
+            rep.fail('%s: kein APK zum Abgleich vorhanden' % name)
+            continue
+
+        # Die Split-APKs tragen per Konvention einen ABI-Zusatz
+        # (armv7=1030, arm64=2030, x86_64=4030 bei Basis 30). Das AAB
+        # traegt den nackten Basis-Wert.
+        if (daten['versionCode'] % 1000) != (stammdaten['versionCode'] % 1000):
+            rep.fail('%s: versionCode=%s, aber die APKs haben %s '
+                     '(gemischter Ordner)'
+                     % (name, daten['versionCode'],
+                        stammdaten['versionCode']))
+        if daten['versionName'] != stammdaten['versionName']:
+            rep.fail('%s: versionName=%s, aber die APKs haben %s '
+                     '(gemischter Ordner)'
+                     % (name, daten['versionName'], stammdaten['versionName']))
+
+        # Die Berechtigungen des AAB gegen dieselben Regeln pruefen
+        # wie die der APKs - im Manifest des AAB ist alles enthalten,
+        # auch das, was aus den Paketen hineingemerged wurde.
+        for problem in berechtigungs_probleme(daten['permissions']):
+            rep.fail('%s: %s' % (name, problem))
+
+        if not rep.failures:
+            rep.ok('%s: versionCode=%s, versionName=%s, %d Berechtigungen '
+                   'wie erwartet'
+                   % (name, daten['versionCode'], daten['versionName'],
+                      len(daten['permissions'])))
 
     # --- 4b) Screenshot-Freigabe ---------------------------------------
     #

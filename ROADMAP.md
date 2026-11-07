@@ -676,6 +676,29 @@ Website.
 > wenn der Test bis dahin nicht auf zwei echten Geräten
 > verschiedener Hersteller durchgelaufen ist.
 
+#### Die Auslieferungs-Hygiene beim ersten echten Store-Upload
+
+Beim Durchgehen der Abnahme vor dem ersten Store-Upload kam heraus,
+dass drei Prüfungen nicht das prüften, was sie zu prüfen vorgaben:
+
+- [x] **Die Release-Abnahme zeigte auf den falschen Ordner.** Sie
+      stand fest auf `releases/v0.9.2`. Die Abnahme von v0.10.0 hätte
+      die Dateien von v0.9.2 geprüft und "alles in Ordnung" gemeldet.
+      Der Ordner folgt jetzt der Version aus `pubspec.yaml`.
+- [x] **Das AAB wurde überhaupt nicht geprüft** - und genau das AAB
+      geht in den Play Store. Es wird jetzt gelesen (Manifest aus
+      dem Bundle) und mit den APKs verglichen: versionCode,
+      versionName und Berechtigungen.
+- [x] **Die Abnahme hätte den richtigen Build abgelehnt.**
+      `ACCESS_FINE_LOCATION` stand auf der Verbotsliste, obwohl
+      Android 11 und älter die genaue Berechtigung für den BLE-Scan
+      verlangen. Die Regel lautet jetzt: nur mit `maxSdkVersion=30`.
+
+> **Und die Begründungen für die Play-Formulare liegen fertig vor:**
+> `releases/v0.10.0/PLAY-BEREECHTIGUNGEN.md` (Berechtigungen,
+> Data Safety, Zielgruppe) - zum Kopieren in die Console. Jede
+> Angabe ist am Artefakt geprüft, nicht am Buildskript.
+
 ### Elternfreigabe und Aufsicht für 16- und 17-Jährige (Teil von 0.10.0)
 
 > **Status: umgesetzt in v0.10.0 (03.11.2026).** Aufgeschrieben am

@@ -471,7 +471,7 @@ und benutzt dabei **genau die Flags der CI**:
 | --- | --- | --- |
 | Analyzer | `flutter analyze --fatal-infos` | ohne `--fatal-infos` ist ein *Hinweis* kein Fehler – lokal grün, in der CI rot |
 | Tests | `flutter test` mit `.env` aus `.env.example` | die CI baut die `.env` genauso auf |
-| Prüfer | 44 Skripte unter `tool/` (40 Gates im Spiegel) | `python3` → `python`, weil Windows oft kein `python3` kennt |
+| Prüfer | 45 Skripte unter `tool/` (41 Gates im Spiegel) | `python3` → `python`, weil Windows oft kein `python3` kennt |
 
 Der Unterschied beim Analyzer ist der Grund, warum das Skript existiert:
 Ein Hinweis wie `unnecessary_brace_in_string_interps` lässt den

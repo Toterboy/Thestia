@@ -905,6 +905,56 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     Netlify-Upload war dem Repository hinterher. Sie sind jetzt live (und
     im Sitemap, das die Suchmaschine findet).
 
+14. **Die Release-Abnahme prüft den richtigen Ordner - und das AAB.**
+    `tool/check_release_consistency.py` hatte fest auf `releases/v0.9.2`
+    gestanden. Die Abnahme von v0.10.0 hätte damit die Dateien von
+    v0.9.2 geprüft und "9 Artefakte: ein Build, Versionen ok" gemeldet -
+    für Dateien, die zwei Versionen alt waren. Der Ordner folgt jetzt
+    der Version aus `pubspec.yaml` (`--dir` überschreibt das).
+    Und das **AAB** wird überhaupt geprüft: es ist die Datei, die in
+    den Play Store geht, und sie war bis jetzt außerhalb jeder
+    Prüfung. Ein AAB aus einem alten Build (etwa versionCode 37) wäre
+    beim Upload eine Katastrophe - der Store nimmt die niedrigere
+    versionCode nicht an, und der Fehler fällt erst nach dem Upload
+    auf. Das Gate liest das Protobuff-Manifest direkt aus dem AAB
+    und vergleicht versionCode, versionName und die Berechtigungen mit
+    den APKs.
+
+15. **Die Abnahme hätte den richtigen Build abgelehnt.** Auf der
+    Verbotsliste stand `ACCESS_FINE_LOCATION` - richtig für v0.9.2,
+    falsch für v0.10.0: auf Android 11 und älter verlangt Android für
+    den BLE-Scan die genaue Standortberechtigung (Befund vom
+    06.11.2026). Die Regel lautet jetzt nicht mehr "darf nicht
+    vorkommen", sondern "wenn, dann nur mit `maxSdkVersion=30`".
+    Zusätzlich sind jetzt die Berechtigungen verboten, die niemand
+    braucht (`ACCESS_BACKGROUND_LOCATION`, `READ_CONTACTS`,
+    `READ_CALL_LOG`, `READ_SMS`, `QUERY_ALL_PACKAGES`).
+
+16. **Ein Selbsttest für das Release-Gate.** Der baut ein synthetisches
+    AAB und prüft, dass der Leser die Werte findet und dass die
+    Regeln anschlagen - inklusive des Negativfalls
+    ("`ACCESS_FINE_LOCATION` ohne Obergrenze"). Ein Gate, das man nie
+    rot gesehen hat, ist kein Gate.
+
+17. **Die Berechtigungs-Begründungen für das Play-Formular liegen
+    fertig vor** (`releases/v0.10.0/PLAY-BEREECHTIGUNGEN.md`): zum
+    Kopieren in die Console, je Berechtigung, plus der
+    Data-Safety-Eintrag. Alle Angaben sind am Artefakt geprüft
+    (`aapt2 dump permissions`, Manifest aus dem AAB) und an der
+    Datenschutzerklärung und dem Code belegt. Dabei kam ein Irrtum
+    heraus: die **Kamera-Berechtigung ist im fertigen Artefakt
+    enthalten** - sie kommt aus dem Manifest des Kamera-Pakets
+    (`camera_android_camerax`) und steht deshalb nicht im eigenen
+    Manifest, aber Play prüft das fertige Artefakt. Sie muss also im
+    Formular mit begründet werden.
+
+18. **Der Store-Text für den aktuellen Build wird geprüft.** Der Store
+    zeigt den Änderungstext anhand der VERSION-CODE. Fehlt die Datei
+    `changelogs/<versionCode>.txt` in einer der beiden Sprachen,
+    erscheint beim Upload kein "Was ist neu". Das war bei jedem
+    Versionssprung möglich und wurde bisher nicht gemeldet. Neues Gate:
+    `tool/check_store_changelog.py`.
+
 
 ## [0.10.0] - 2026-10-24 (Build 31)
 

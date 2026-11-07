@@ -259,6 +259,7 @@ if (Soll 'static-checks') {
         (G 'Store-Text fuer den aktuellen Build' @($py, 'tool/check_store_changelog.py'))
         (G 'Keystore-Passwoerter nicht im Projektverzeichnis' @($py, 'tool/check_keystore_secrets.py'))
         (G 'Release-Checker Selbsttest' @($py, 'tool/check_release_artifacts_selftest.py'))
+        (G 'Release-Konsistenz Selbsttest' @($py, 'tool/check_release_consistency_selftest.py'))
     )
 }
 
