@@ -51,6 +51,22 @@ SELECT p.proname,
  ORDER BY p.proname, sig;
 """
 
+# Die Ausnahmen: Funktionen, die bewusst fuer "anon" offen sind.
+#
+# * check_email_ban_status - wird VOR der Anmeldung geprueft
+#   (Registrierung: ist diese E-Mail gesperrt?).
+# * distance_bucket_km, snap_location_to_grid - reine Rechnungen, sie
+#   lesen und schreiben nichts.
+#
+# Alles andere, was der Client aufruft, gehoert einem angemeldeten
+# Nutzer: sonst koennte jemand ohne Konto Likes setzen, Funken
+# erzeugen oder Nachrichten zustellen.
+ANON_ERLAUBT = {
+    "check_email_ban_status": "wird vor der Anmeldung geprueft",
+    "distance_bucket_km": "reine Rechnung, liest nichts",
+    "snap_location_to_grid": "reine Rechnung, liest nichts",
+}
+
 
 def sammle_rpc_namen() -> dict:
     """Alle RPC-Namen, die der Client aufruft - nach Aufrufort."""
@@ -149,6 +165,41 @@ def main() -> int:
                 (name, eintraege, "kein Ausfuehrungsrecht (Edge Function)")
             )
 
+    fehler = 0
+    # Und die Gegenseite: eine Funktion, die der Client aufruft, darf
+    # NICHT fuer "anon" (also ohne Anmeldung) aufrufbar sein.
+    #
+    # BEFUND (07.11.2026): Zwei Like-Funktionen waren fuer jeden
+    # aufrufbar - auch ohne Konto. Das fiel nur auf, weil eine
+    # Migration die Funktion per DROP/CREATE ersetzt hat: beim DROP
+    # gehen die Rechte verloren.
+    zu_offen = []
+    for name in sorted(aufgerufen["client"]):
+        if name in ANON_ERLAUBT:
+            continue
+        for e in nach_name.get(name, []):
+            if e["darf_anon"]:
+                zu_offen.append((name, e))
+
+    print()
+    if zu_offen:
+        print("  X %d aufgerufene Funktion(en) ist fuer die Rolle 'anon'"
+              " aufrufbar - also OHNE Anmeldung:" % len(zu_offen))
+        print("    (Jeder koennte sie benutzen - etwa Likes setzen,"
+              " Funken erzeugen")
+        print("     oder Nachrichten zustellen.)")
+        for name, e in zu_offen:
+            print()
+            print("      %s" % e["sig"])
+            print("        -> fuer anon aufrufbar")
+        print()
+        print("    Loesung: REVOKE ALL ON FUNCTION ... FROM PUBLIC, anon;")
+        print("             GRANT EXECUTE ON FUNCTION ... TO authenticated;")
+        print()
+        print("    ACHTUNG: Nach einem DROP/CREATE sind die Rechte weg -")
+        print("    die Migration muss sie ausdruecklich wieder setzen.")
+        fehler += len(zu_offen)
+
     print()
     if fehlend:
         print("  X %d aufgerufene Funktion(en) kann der Server NICHT ausfuehren:"
@@ -164,7 +215,13 @@ def main() -> int:
                           % (e["sig"], e["security_definer"]))
         return 1
 
-    print("  OK: jede aufgerufene Funktion ist aufrufbar.")
+    if zu_offen:
+        # Die Meldung ist schon gedruckt - der Exit-Code muss aber
+        # ebenfalls_signalisieren, dass ein Release gestoppt ist.
+        return 1
+
+    print("  OK: jede aufgerufene Funktion ist aufrufbar - und keine ist"
+          " fuer 'anon' offen.")
     return 0
 
 

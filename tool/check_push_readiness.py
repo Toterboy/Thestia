@@ -370,6 +370,29 @@ for f in NEW:
                  f'{name}() ruft public.{callee}(), das erst SPÄTER in der '
                  f'Migration definiert wird -> 42883 beim CREATE')
 
+def _droppt_davor(sql: str, name: str, args) -> bool:
+    """Steht in dieser Datei ein DROP FUNCTION mit genau dieser Signatur?
+
+    Nur dann ist eine Signaturaenderung zulaessig: CREATE OR REPLACE
+    kann den Rueckgabetyp nicht aendern (42P13/42804), ein
+    vorausgehendes DROP dagegen schon.
+
+    Wichtig fuer den Fall, dass die Argumente umbenannt werden: der
+    DROP nennt die ALTEN Namen - deshalb wird nur der Typ verglichen.
+    """
+    for m in re.finditer(
+            r'DROP\s+FUNCTION\s+(?:IF\s+EXISTS\s+)?(?:public\.)?'
+            r'([a-z_0-9]+)\s*\(([^)]*)\)',
+            sql, re.I):
+        if m.group(1).lower() != name.lower():
+            continue
+        drop_typen = [x.strip().lower() for x in m.group(2).split(",") if x.strip()]
+        eigene = [a[1].lower() for a in args]
+        if drop_typen == eigene:
+            return True
+    return False
+
+
 # ---------------------------------------------------------------- 5
 alldefs = []
 for f in ALL:
@@ -392,6 +415,22 @@ for f in NEW:
         if key not in prev:
             continue
         _pn, pret, pargs = prev[key]
+        # WICHTIG (07.11.2026): Eine Signatur darf sich nur mit einem
+        # DROP davor aendern - "CREATE OR REPLACE" kann den
+        # Rueckgabetyp nicht aendern (42P13/42804). Der legitime Weg
+        # ist also: DROP FUNCTION ...; CREATE FUNCTION ...
+        #
+        # Deshalb wird hier NICHT gemeldet, wenn die Migration die
+        # Funktion vorher mit derselben Signatur droppt. Sonst wuerde
+        # der Checker jede echte, korrekte Signaturaenderung als
+        # Fehler melden.
+        #
+        # ACHTUNG: Nach dem DROP sind die RECHTE der Funktion weg (sie
+        # haengen am Objekt, nicht an der Definition). Die MIGRATION
+        # muss sie wieder setzen - sonst ist die Funktion fuer "anon"
+        # offen. Das prueft tool/check_function_grants.py.
+        if _droppt_davor(c, name, args):
+            continue
         if pret != ret:
             flag('5 Signatur', f, f'{name}: RETURNS {pret} -> {ret} (42P13)')
         if [a[0] for a in pargs] != [a[0] for a in args]:

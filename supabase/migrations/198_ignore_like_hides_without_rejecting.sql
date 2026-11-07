@@ -99,4 +99,16 @@ BEGIN
 END;
 $$;
 
+-- Likes ausblenden - nur fuer angemeldete Nutzer.
+
+-- Die Rechte ausdruecklich setzen.
+--
+-- WICHTIG: Eine Migration, die eine Funktion per DROP/CREATE
+-- ersetzt, holt die Rechte NICHT automatisch zurueck - beim DROP
+-- gehen sie weg. Wer sie nicht wieder setzt, laesst die Funktion fuer
+-- jeden (auch ohne Anmeldung) offen.
+REVOKE ALL ON FUNCTION public.ignore_like(bigint) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.ignore_like(bigint) FROM anon;
+GRANT EXECUTE ON FUNCTION public.ignore_like(bigint) TO authenticated;
+
 COMMIT;

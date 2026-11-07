@@ -143,4 +143,16 @@ BEGIN
 END;
 $$;
 
+-- Das Relay nimmt Nachrichten entgegen - nur fuer angemeldete Nutzer.
+
+-- Die Rechte ausdruecklich setzen.
+--
+-- WICHTIG: Eine Migration, die eine Funktion per DROP/CREATE
+-- ersetzt, holt die Rechte NICHT automatisch zurueck - beim DROP
+-- gehen sie weg. Wer sie nicht wieder setzt, laesst die Funktion fuer
+-- jeden (auch ohne Anmeldung) offen.
+REVOKE ALL ON FUNCTION public.relay_store(uuid,text,integer,text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.relay_store(uuid,text,integer,text) FROM anon;
+GRANT EXECUTE ON FUNCTION public.relay_store(uuid,text,integer,text) TO authenticated;
+
 COMMIT;

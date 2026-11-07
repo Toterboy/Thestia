@@ -1,4 +1,4 @@
--- 197: public.like_user erzeugt beim beidseitigen Like einen Funke
+﻿-- 197: public.like_user erzeugt beim beidseitigen Like einen Funke
 --      und schluckt keinen Like mehr still
 --
 -- ZWEI BEFUNDE (07.11.2026, Betreiber):
@@ -182,5 +182,17 @@ BEGIN
   END IF;
 END;
 $$;
+
+-- Likes setzen - nur fuer angemeldete Nutzer.
+
+-- Die Rechte ausdruecklich setzen.
+--
+-- WICHTIG: Eine Migration, die eine Funktion per DROP/CREATE
+-- ersetzt, holt die Rechte NICHT automatisch zurueck - beim DROP
+-- gehen sie weg. Wer sie nicht wieder setzt, laesst die Funktion fuer
+-- jeden (auch ohne Anmeldung) offen.
+REVOKE ALL ON FUNCTION public.like_user(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.like_user(uuid) FROM anon;
+GRANT EXECUTE ON FUNCTION public.like_user(uuid) TO authenticated;
 
 COMMIT;
