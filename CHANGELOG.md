@@ -1268,6 +1268,12 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     Sekunden sichtbar. *Nachgewiesen live:* Match, dann Ping in der
     Liste, dann „Annehmen", dann steht der Match.
 
+    *Und derselbe Fehler noch an einer zweiten Stelle:* Es gibt **zwei**
+    Überladungen der Paarungsfunktion - die aktuelle (mit dem eigenen
+    Token) und der Legacy-Stand für ältere Clients. Nur die aktuelle
+    legte einen Ping an. Jetzt verhalten sich beide gleich (Migration
+    193).
+
 37. **Zwei Funktionen, die der Server nicht ausführen durfte.**
     * **„Entblockieren" ging nie.** Der Aufruf antwortete mit
       `403 permission denied for function unblock_user`: Die Funktion
