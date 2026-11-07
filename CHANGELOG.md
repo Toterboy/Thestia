@@ -1414,7 +1414,88 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     *Und die Regel daraus: Bevor gepusht wird, laufen Analyzer und
     Tests. Der CI ist die letzte Instanz, keine erste.*
 
-43. **Ein Werkzeug, das die stummen Fehler findet.**
+43. **Das Relay hat nie funktioniert - Nachrichten kamen nicht an.**
+    BEFUND (07.11.2026, Betreiber): „Nachrichten kommen noch immer
+    nicht an."
+
+    **Die Ursache (live gemessen):** Der Aufruf von `relay_store`
+    antwortete mit `HTTP 400 - query has no destination for result
+    data`. Die Funktion endete mit:
+
+        INSERT INTO public.direct_message_relay ...
+        RETURNING id;
+      END;
+
+    In PL/pgSQL ist ein blosses `RETURNING id;` **kein RETURN** - es ist
+    nur ein SQL-Befehl, dessen Ergebnis verworfen wird. Die Funktion
+    lief ins Ende, ohne einen Wert zu liefern.
+
+    **Das heisst: das Relay hat nie funktioniert.** Jede Nachricht,
+    die über den Relay-Weg ging - also genau dann, wenn der Direktkanal
+    nicht steht (im Mobilfunk, hinter einem Router oder ohne TURN) -
+    wurde verworfen. Der Empfänger sah nichts. (Migration 196.)
+
+44. **Wenn beide sich liken, entsteht jetzt ein Funke.**
+    BEFUND (07.11.2026, Betreiber): „Wenn beide sich liken entsteht kein
+    Funke."
+
+    `like_user` legte nur einen **offenen** Like an. Der Match entstand
+    nur, wenn die Gegenseite den Like von Hand annahm - ein
+    beidseitiger Like hatte aber nichts zu entscheiden. Der Weg, der
+    auf dem Server schon bereitliegt (`create_match_if_mutual`), wird
+    von der App nirgends benutzt. (Migration 197.)
+
+    Und: **„Man kann nicht von einer Person einen Like haben, mit der
+    man schon einen Funken hat."** Bei einem bestehenden Funke tat
+    `like_user` nichts - der Like wurde **stillschweigend geschluckt**.
+    Jetzt gibt die Funktion das Ergebnis zurück, und die App sagt es.
+
+45. **Das Auge mit dem Strich blendet jetzt aus, statt abzulehnen.**
+    BEFUND (07.11.2026, Betreiber): „Das Auge mit dem Strich ist like
+    abgelehnt, aber man würde eher sowas wie ausblenden oder ignorieren
+    darunter verstehen."
+
+    Die Schaltfläche war mit „Ignorieren" beschriftet, rief aber das
+    **Ablehnen** auf - die andere Person sah die Ablehnung. Jetzt
+    blendet sie nur aus (`ignore_like`, Migration 198): der Like
+    verschwindet aus der Liste, die Gegenseite erfährt nichts.
+
+46. **Der Chat-Hintergrund verschwindet nicht mehr.**
+    BEFUND (07.11.2026, Betreiber): „Der Hintergrund, den man auswählt,
+    wird nicht gespeichert."
+
+    Das Schreiben in den Keystore kann scheitern (bei gleichzeitigem
+    Zugriff). Der Fehler wurde nur protokolliert: die Oberfläche zeigte
+    den neuen Hintergrund trotzdem an - beim nächsten Start war er weg.
+    Jetzt wird dreimal versucht (mit kurzer Pause) und, wenn es nicht
+    klappt, **gemeldet** statt still zu scheitern.
+
+47. **Die Markierung der gewählten Farbe wird nicht mehr abgeschnitten.**
+    BEFUND (07.11.2026, Betreiber): „Wenn man eine Farbe auswählt, welche
+    am Rand ist, ist die Markierung, dass man diese Farbe ausgewählt
+    hat, etwas abgeschnitten."
+
+    Die Markierung war ein Schatten, der **nach außen** über die Kachel
+    ragte - am Rand des Rasters wurde er abgeschnitten. Jetzt ist sie
+    ein Rahmen **innerhalb** der Kachel.
+
+48. **Beim Wechsel vom Transit Spark in den Chat wird gefragt.**
+    BEFUND (07.11.2026, Betreiber): „Wenn man von Transit Spark in
+    einen Chat geht, soll auch wenn Transit Spark noch an ist gefragt
+    werden, ob es an bleiben soll."
+
+    Dieselbe Frage wie beim Verlassen des Radar-Bildschirms: weiterlaufen
+    lassen oder stoppen? Das Radar sendet sonst im Hintergrund weiter,
+    ohne dass der Nutzer das entschieden hat.
+
+49. **Ein Werkzeug gegen die stille Relay-Klasse.**
+    `tool/check_function_returns.py` findet Funktionen, die einen Wert
+    zurückgeben **sollten**, aber kein `RETURN` haben - der Aufruf
+    scheitert dann mit „query has no destination for result data", ohne
+    dass irgendwo ein Fehler sichtbar wird. Der Selbsttest (eine
+    absichtlich kaputte Funktion) beweist, dass der Prüfer sie findet.
+
+50. **Ein Werkzeug, das die stummen Fehler findet.**
     `tool/check_on_conflict.py` fragt die Produktivdatenbank ab und
     vergleicht **jedes** `ON CONFLICT`-Ziel mit den tatsächlichen
     Indizes. Es hat beide Fehler gefunden (Befunde 31 und 32) – und

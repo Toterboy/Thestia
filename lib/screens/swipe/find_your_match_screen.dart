@@ -88,18 +88,25 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
   Future<void> _like(UserProfile profile) async {
     if (_liking) return;
     setState(() => _liking = true);
-    final ok = await ref.read(findYourMatchProvider.notifier).like();
+    final ergebnis = await ref.read(findYourMatchProvider.notifier).like();
     if (!mounted) return;
     setState(() => _liking = false);
+    // BEFUND (07.11.2026, Betreiber): "Wenn beide sich liken entsteht
+    // kein Funke." Das stimmt jetzt auf dem Server - und die App SAGT
+    // es auch, statt nur "geliked" anzuzeigen. Ebenso bei einem
+    // bereits bestehenden Funke ("Ihr habt schon einen Funken").
+    final text = !ergebnis.ok
+        ? L10n.t(context, 'match.likeFailed')
+        : ergebnis.isMatch
+        ? L10n.tf(context, 'match.likeMutual', {'name': profile.name})
+        : ergebnis.alreadyMatched
+        ? L10n.tf(context, 'match.likeAlreadyMatched', {'name': profile.name})
+        : L10n.tf(context, 'match.liked', {'name': profile.name});
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          ok
-              ? 'Du hast ${profile.name} geliked! 💚 '
-                    'Bei gegenseitigem Interesse entsteht ein Funke.'
-              : 'Like konnte nicht gespeichert werden.',
-        ),
+        content: Text(text),
         behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
       ),
     );
   }

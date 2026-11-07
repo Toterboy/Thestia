@@ -387,6 +387,8 @@ const Map<String, Map<String, String>> _strings = {
     'settings.chatBgSub':
         'Muster oder eigenes Bild für deine Chats. Gilt für alle Chats.',
     'chatbg.none': 'Keiner',
+    'settings.saveFailed':
+        'Die Einstellung konnte nicht gespeichert werden. Bitte einmal neu versuchen.',
     'chatbg.dots': 'Punkte',
     'chatbg.lines': 'Linien',
     'chatbg.hearts': 'Herzen',
@@ -903,6 +905,7 @@ const Map<String, Map<String, String>> _strings = {
     'interests.archiveSparkDone': 'Funke archiviert.',
     'interests.unarchiveSpark': 'Wieder aktivieren',
     'interests.decline': 'Ignorieren',
+    'interests.likeIgnored': '{name} ist ausgeblendet.',
     'interests.sparkAccepted':
         'Ein Funke mit {name} ist entstanden! Ihr könnt direkt chatten.',
     'interests.likeDeclined': 'Like von {name} abgelehnt.',
@@ -3025,6 +3028,11 @@ const Map<String, Map<String, String>> _strings = {
     'home.randomChat': 'Zufallschat starten',
     // Find your Match
     'match.required': 'Text UND Audio sind Pflicht.',
+    'match.liked':
+        'Du hast {name} geliked. Bei gegenseitigem Interesse entsteht ein Funke.',
+    'match.likeMutual': 'Funke! {name} hat dich auch geliked.',
+    'match.likeAlreadyMatched': 'Mit {name} habt ihr schon einen Funken.',
+    'match.likeFailed': 'Like konnte nicht gespeichert werden.',
     'match.title': 'Find your Spark',
     'match.editIntro': 'Meine Vorstellung bearbeiten',
     'match.createFirst': 'Erstelle zuerst deine eigene Vorstellung',
@@ -3708,6 +3716,7 @@ const Map<String, Map<String, String>> _strings = {
     'settings.chatBgSub':
         'Pattern or own picture for your chats. Applies to all chats.',
     'chatbg.none': 'None',
+    'settings.saveFailed': 'The setting could not be saved. Please try again.',
     'chatbg.dots': 'Dots',
     'chatbg.lines': 'Lines',
     'chatbg.hearts': 'Hearts',
@@ -5368,6 +5377,7 @@ const Map<String, Map<String, String>> _strings = {
     'interests.archiveSparkDone': 'Spark archived.',
     'interests.unarchiveSpark': 'Make active again',
     'interests.decline': 'Ignore',
+    'interests.likeIgnored': '{name} is hidden.',
     'interests.sparkAccepted':
         'A spark with {name} was created! You can chat right away.',
     'interests.likeDeclined': 'Like from {name} declined.',
@@ -6217,6 +6227,11 @@ const Map<String, Map<String, String>> _strings = {
     'home.randomChat': 'Start random chat',
     // Find your Match
     'match.required': 'Text AND audio are required.',
+    'match.liked':
+        'You liked {name}. A spark appears when the interest is mutual.',
+    'match.likeMutual': 'Spark! {name} liked you too.',
+    'match.likeAlreadyMatched': 'You already have a spark with {name}.',
+    'match.likeFailed': 'The like could not be saved.',
     'match.title': 'Find your Spark',
     'match.editIntro': 'Edit my intro',
     'match.createFirst': 'First create your own intro',

@@ -772,6 +772,53 @@ keine gemeinsamen Tokens.)
 > Fehler - aber `hair_length` und `hair_style` wären die logische
 > Ergänzung zu den 18 Haarfarben, wenn der Betreiber sie will.
 
+#### Build 46: Transit Spark und Chatten - der zweite Durchgang
+
+BEFUND (07.11.2026, Betreiber, nach dem Test auf zwei echten
+Smartphones): sieben Punkte, alle rund um Transit Spark und den Chat.
+
+**1. Nachrichten kamen nicht an - das Relay hat NIE funktioniert.**
+Der Aufruf von `relay_store` antwortete mit `HTTP 400 - query has no
+destination for result data`. Die Funktion endete mit `RETURNING id;` -
+in PL/pgSQL ist das **kein RETURN**. Die Funktion lieferte also keinen
+Wert und jeder Aufruf scheiterte. Das heisst: Jede Nachricht, die
+ueber den Relay-Weg ging (also immer dann, wenn der Direktkanal nicht
+steht), wurde verworfen. (Migration 196.)
+
+**2. Beidseitige Likes erzeugten keinen Funke.** `like_user` legte nur
+einen offenen Like an; der Match entstand erst, wenn die Gegenseite
+ihn von Hand annahm. (Migration 197.)
+
+**3. „Man kann nicht von einer Person einen Like haben, mit der man
+schon einen Funken hat."** Bei einem bestehenden Funke tat `like_user`
+nichts - der Like wurde stillschweigend geschluckt. Jetzt gibt die
+Funktion das Ergebnis zurueck und die App sagt es.
+
+**4. Das Auge mit dem Strich lehnte ab, statt auszublenden.** Es war
+mit „Ignorieren" beschriftet, rief aber das Ablehnen auf - die andere
+Person sah die Ablehnung. Jetzt blendet es nur aus (Migration 198).
+
+**5. Der gewaehlte Chat-Hintergrund verschwand.** Das Schreiben in den
+Keystore kann scheitern; der Fehler wurde nur protokolliert. Die
+Oberflaeche zeigte den Hintergrund trotzdem an - beim naechsten Start
+war er weg. Jetzt: dreimal versuchen, und wenn es nicht klappt, wird
+es gemeldet.
+
+**6. Die Markierung der gewaehlten Farbe war am Rand abgeschnitten**
+(der Schatten ragte nach aussen). Jetzt ist sie ein Rahmen innerhalb
+der Kachel.
+
+**7. Beim Wechsel vom Transit Spark in den Chat wird jetzt gefragt**,
+ob das Radar anbleiben soll - wie beim Verlassen des
+Radar-Bildschirms.
+
+> **Und das Werkzeug gegen diese Klasse:**
+> `tool/check_function_returns.py` findet Funktionen, die einen Wert
+> zurueckgeben **sollten**, aber kein `RETURN` haben. Der Aufruf
+> scheitert dann mit „query has no destination for result data" -
+> ohne dass irgendwo ein Fehler sichtbar wird. Der Selbsttest (eine
+> absichtlich kaputte Funktion) beweist, dass der Pruefer sie findet.
+
 #### Build 44: der Funke erzeugt jetzt einen echten Funke
 
 BEFUND (07.11.2026, Betreiber, nach dem Test auf zwei echten

@@ -28,9 +28,39 @@ class FindYourMatchService {
         .toList();
   }
 
-  /// Eigenen Like setzen (kein Auto-Match).
-  Future<void> likeUser(String targetUserId) async {
-    await _client.rpc('like_user', params: {'p_target': targetUserId});
+  /// Eigenen Like setzen.
+  ///
+  /// Liefert das Ergebnis des Servers (Migration 197):
+  ///   * `is_match` - es ist ein Funke entstanden (der Like war
+  ///     beidseitig).
+  ///   * `already_matched` - es gab schon einen Funke. Vorher wurde
+  ///     der Like in dem Fall stillschweigend geschluckt (BEFUND
+  ///     07.11.2026: "Man kann nicht von einer Person einen Like
+  ///     haben, mit der man schon einen Funken hat."). Jetzt weiss die
+  ///     App es und kann es sagen.
+  Future<Map<String, dynamic>?> likeUser(String targetUserId) async {
+    final res = await _client.rpc(
+      'like_user',
+      params: {'p_target': targetUserId},
+    );
+    if (res is Map) return Map<String, dynamic>.from(res);
+    if (res is Map) return res.cast<String, dynamic>();
+    return null;
+  }
+
+  /// Erhaltenen Like AUSBLENDEN - ohne die andere Person zu
+  /// benachrichtigen.
+  ///
+  /// BEFUND (07.11.2026, Betreiber): "Das Auge mit dem Strich ist like
+  /// abgelehnt, aber man wuerde eher sowas wie ausblenden oder ignorieren
+  /// darunter verstehen." Das Auge war mit "Ignorieren" beschriftet,
+  /// rief aber das ABLEHNEN auf - die andere Person sah die Ablehnung.
+  ///
+  /// Jetzt gibt es dafuer einen eigenen Weg (ignore_like, Migration
+  /// 198): der Like verschwindet aus der Liste, die Gegenseite
+  /// bekommt nichts davon zu sehen.
+  Future<void> ignoreLike(int likeId) async {
+    await _client.rpc('ignore_like', params: {'p_like_id': likeId});
   }
 
   /// Erhaltenen Like annehmen (=> Match) oder ablehnen.

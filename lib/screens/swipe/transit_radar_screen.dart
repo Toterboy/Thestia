@@ -1312,13 +1312,25 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
             duration: const Duration(seconds: 6),
             action: SnackBarAction(
               label: L10n.t(context, 'transit.toChat'),
-              onPressed: () {
+              onPressed: () async {
                 if (!mounted) return;
                 // Die Annahme liefert die match_id (Migration 194) - damit
                 // geht es direkt in den Chat des neuen Funkens. Ohne sie
                 // (aelterer Server) geht es zu den Funken, wo er steht.
                 final matchId = res['match_id'];
                 if (matchId is num && matchId > 0) {
+                  // BEFUND (07.11.2026, Betreiber): "Wenn man von
+                  // Transit Spark in einen Chat geht, soll auch wenn
+                  // Transit Spark noch an ist gefragt werden, ob es
+                  // an bleiben soll."
+                  //
+                  // Dieselbe Frage wie beim Verlassen des Radar-
+                  // Bildschirms: laeuft der Radar weiter, oder soll
+                  // er gestoppt werden? Ohne diese Frage bleibt der
+                  // Radar im Hintergrund senden - der Nutzer hat das
+                  // aber nicht entschieden.
+                  final darfWeiter = await confirmTransitExit(context, ref);
+                  if (!darfWeiter || !mounted) return;
                   context.push(AppRoutes.chatDetailPath(matchId.toString()));
                 } else {
                   context.push(AppRoutes.interessen);
@@ -2007,21 +2019,26 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
                           color: TransitTag.swatchOf(color),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: color == 'white'
-                                ? theming.colorScheme.outline
-                                : Colors.transparent,
-                            width: 1,
+                            // BEFUND (07.11.2026, Betreiber): "Wenn man
+                            // eine Farbe auswaehlt, welche am Rand ist, ist
+                            // die Markierung ... abgeschnitten."
+                            //
+                            // Die Markierung war ein Schatten mit
+                            // spreadRadius: 3 - der ragt NACH AUSSEN
+                            // ueber die Kachel hinaus und wurde am
+                            // Rand des Rasters abgeschnitten.
+                            //
+                            // Ein Rahmen wird INNERHALB der Kachel
+                            // gezeichnet: er ist nie abgeschnitten.
+                            // Die weisse Farbe braucht zusaetzlich einen
+                            // dunklen Rand, sonst sieht man sie nicht.
+                            color: gewaehlt
+                                ? theming.colorScheme.primary
+                                : (color == 'white'
+                                      ? theming.colorScheme.outline
+                                      : Colors.transparent),
+                            width: gewaehlt ? 3 : 1,
                           ),
-                          boxShadow: gewaehlt
-                              ? [
-                                  BoxShadow(
-                                    color: theming.colorScheme.primary
-                                        .withValues(alpha: 0.9),
-                                    blurRadius: 0,
-                                    spreadRadius: 3,
-                                  ),
-                                ]
-                              : null,
                         ),
                         child: gewaehlt
                             ? const Icon(

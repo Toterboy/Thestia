@@ -43,16 +43,27 @@ class FindYourMatchNotifier extends StateNotifier<List<UserProfile>> {
   }
 
   /// Liked den aktuellen Kandidaten und entfernt ihn aus dem Deck.
-  Future<bool> like() async {
+  ///
+  /// Das Ergebnis des Servers wird durchgereicht (Migration 197):
+  /// `isMatch` (es ist ein Funke entstanden) und `alreadyMatched`
+  /// (es gab schon einen Funke - der Like waere sonst still
+  /// verschwunden).
+  Future<({bool ok, bool isMatch, bool alreadyMatched})> like() async {
     final candidate = current;
-    if (candidate == null) return false;
+    if (candidate == null) {
+      return (ok: false, isMatch: false, alreadyMatched: false);
+    }
     try {
-      await _service.likeUser(candidate.id);
+      final res = await _service.likeUser(candidate.id);
       state = List.of(state)..removeAt(0);
-      return true;
+      return (
+        ok: true,
+        isMatch: res?['is_match'] == true,
+        alreadyMatched: res?['already_matched'] == true,
+      );
     } catch (e) {
       debugPrint('[FindYourMatch] Like fehlgeschlagen: $e');
-      return false;
+      return (ok: false, isMatch: false, alreadyMatched: false);
     }
   }
 

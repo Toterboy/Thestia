@@ -173,12 +173,22 @@ class ChatBackgroundPicker extends ConsumerWidget {
         return _Tile(
           selected: selected,
           label: L10n.t(context, ChatBackgrounds.labelKey(id)),
-          onTap: () {
+          onTap: () async {
             if (id == ChatBackgrounds.custom &&
                 settings.chatBackgroundPath == null) {
-              _pickCustom(context, ref);
+              await _pickCustom(context, ref);
             } else {
-              ref.read(settingsProvider.notifier).setChatBackground(id);
+              // BEFUND (07.11.2026, Betreiber): "Der Hintergrund, den
+              // man auswaehlt, wird nicht gespeichert." Das Schreiben
+              // in den Keystore kann scheitern - dann zeigt die App
+              // zwar sofort den neuen Hintergrund, beim naechsten Start
+              // ist er aber weg. Deshalb wird der Fehler hier
+              // GEMELDET, statt ihn zu schlucken.
+              final notifier = ref.read(settingsProvider.notifier);
+              await notifier.setChatBackground(id);
+              if (notifier.persistFehlgeschlagen != null && context.mounted) {
+                _toast(context, notifier.persistFehlgeschlagen!);
+              }
             }
           },
           onDelete:

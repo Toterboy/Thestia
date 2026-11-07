@@ -65,22 +65,59 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   }
 
   Future<void> _persist() async {
-    try {
-      final json = jsonEncode(state.toJson());
-      // Doppelte Schreibvorgauge vermeiden: der Chat-Hintergrund-Picker ruft
-      // ansonsten zweimal hintereinander (Pfad + Auswahl) und schreibt
-      // zweimal den kompletten Stand in den Keystore.
-      if (json == _lastPersisted) return;
-      await _storage.saveString(AppConstants.prefsSettingsKey, json);
-      _lastPersisted = json;
-    } catch (e) {
-      // Die UI zeigt den neuen Stand bereits optimistisch an. Ein
-      // Keystore-Fehler (z. B. PlatformException bei gleichzeitigem Zugriff)
-      // darf aber nicht als unbehandelter Async-Fehler nach oben schlagen.
-      if (kDebugMode) debugPrint('[Settings] Persist fehlgeschlagen: $e');
-      _lastPersisted = null;
+    // BEFUND (07.11.2026, Betreiber): "Der Hintergrund, den man
+    // auswaehlt, wird nicht gespeichert."
+    //
+    // DIE URSACHE: Das Schreiben in den Keystore kann fehlschlagen (bei
+    // gleichzeitigem Zugriff - der Picker schrieb zweimal hintereinander:
+    // Pfad und Auswahl). Der Fehler wurde nur protokolliert: die
+    // Oberflaeche zeigte die neue Einstellung trotzdem an (der Zustand
+    // ist optimistisch gesetzt), aber beim naechsten Start war sie weg.
+    // Der Nutzer sah keine Meldung - fuer ihn hat die App die Auswahl
+    // einfach verworfen.
+    //
+    // DESHALB: Drei Versuche mit kurzer Pause (der Keystore ist nach
+    // einem anderen Zugriff wieder frei) - und wenn es dann immer noch
+    // nicht klappt, wird es GEMELDET statt still zu scheitern.
+    final json = jsonEncode(state.toJson());
+    // Doppelte Schreibvorgaenge vermeiden: der Chat-Hintergrund-Picker ruft
+    // ansonsten zweimal hintereinander (Pfad + Auswahl) und schreibt
+    // zweimal den kompletten Stand in den Keystore.
+    if (json == _lastPersisted) return;
+
+    for (var versuch = 0; versuch < 3; versuch++) {
+      try {
+        await _storage.saveString(AppConstants.prefsSettingsKey, json);
+        _lastPersisted = json;
+        persistFehlgeschlagen = null;
+        return;
+      } catch (e) {
+        if (versuch < 2) {
+          // Kurze Pause: der Keystore ist nach einem anderen Zugriff
+          // wieder frei.
+          await Future<void>.delayed(
+            Duration(milliseconds: 120 * (versuch + 1)),
+          );
+          continue;
+        }
+        if (kDebugMode) {
+          debugPrint('[Settings] Persist fehlgeschlagen: $e');
+        }
+        // Der Merker wird zurueckgesetzt, damit der naechste Versuch
+        // wieder schreibt - und der Nutzer bekommt eine Meldung.
+        _lastPersisted = null;
+        persistFehlgeschlagen = 'settings.saveFailed';
+      }
     }
   }
+
+  /// Der Text-Schluessel des letzten Schreibfehlers (null = alles
+  /// gespeichert).
+  ///
+  /// Die Oberflaeche liest das nach einem Setzen und zeigt eine Meldung:
+  /// eine Einstellung, die nicht gespeichert wurde, muss der Nutzer
+  /// erfahren - sonst denkt er, sie waere uebernommen worden.
+  String? persistFehlgeschlagen;
 
   /// Zuletzt erfolgreich geschriebener JSON-Stand (Deduplizierung).
   String? _lastPersisted;

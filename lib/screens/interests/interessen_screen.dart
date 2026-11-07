@@ -929,6 +929,48 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
     }
   }
 
+  /// Blendet einen erhaltenen Like aus - ohne ihn abzulehnen.
+  ///
+  /// BEFUND (07.11.2026, Betreiber): Das Auge mit dem Strich soll
+  /// "ausblenden" bedeuten, nicht "ablehnen". Die Gegenseite bekommt
+  /// bei einem Ausblenden nichts zu sehen - ein Ablehnen waere eine
+  /// Zurueckweisung, und genau das war die Missdeutung des Symbols.
+  Future<void> _ignoreLike(ReceivedLike like) async {
+    if (_busyLikeId != null) return;
+    setState(() => _busyLikeId = like.likeId);
+    try {
+      final service = ref.read(findYourMatchServiceProvider);
+      await service.ignoreLike(like.likeId);
+      if (!mounted) return;
+      setState(() => _likes.removeWhere((l) => l.likeId == like.likeId));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            L10n.tf(context, 'interests.likeIgnored', {
+              'name': like.profile.name,
+            }),
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      debugPrint('[Interessen] Like ausblenden fehlgeschlagen: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              L10n.tf(context, 'common.errorWith', {'error': '$e'}),
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _busyLikeId = null);
+    }
+  }
+
   Future<void> _respond(ReceivedLike like, {required bool accept}) async {
     if (_busyLikeId != null) return;
     setState(() => _busyLikeId = like.likeId);
@@ -1113,17 +1155,20 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    // IGNORIEREN (NUTZERWUNSCH, 28.10.2026: "auch den
-                    // like ignorieren kann"). Bewusst ein Icon-Button
-                    // und kein Text-Button: es ist die LEISE Variante
-                    // - sie nimmt den Like aus der Liste, ohne dass
-                    // daraus etwas wird.
+                    // AUSBLENDEN (BEFUND 07.11.2026: "Das Auge mit dem
+                    // Strich ist like abgelehnt, aber man wuerde eher
+                    // sowas wie ausblenden oder ignorieren darunter
+                    // verstehen.").
+                    //
+                    // Das Auge hat IMMER "ausblenden" bedeutet - es rief
+                    // aber das ABLEHNEN auf: die andere Person sah die
+                    // Ablehnung. Jetzt blendet es nur aus (ignore_like,
+                    // Migration 198) und laesst die andere Person in
+                    // Ruhe.
                     IconButton(
                       icon: const Icon(Icons.visibility_off_outlined),
                       tooltip: L10n.t(context, 'interests.decline'),
-                      onPressed: busy
-                          ? null
-                          : () => _respond(like, accept: false),
+                      onPressed: busy ? null : () => _ignoreLike(like),
                     ),
                     const SizedBox(width: 8),
                     // ZURÜCK LIKEN (NUTZERWUNSCH, 28.10.2026: "also
