@@ -2602,6 +2602,11 @@ const Map<String, Map<String, String>> _strings = {
     'dh.event.loadError': 'Fehler beim Laden',
     'dh.event.searchingPartner': 'Wir suchen gerade einen Partner...',
     'dh.event.toChat': 'Zum Chat',
+    'dh.event.pairedTitle': 'Du wurdest gepaart',
+    'dh.event.pairedBody':
+        'Dein Gegenueber wartet im Chat. Moechtest du jetzt reinschauen?',
+    'dh.event.chatNow': 'Jetzt chatten',
+    'dh.event.chatLater': 'Spaeter',
     'dh.event.nonePlanned': 'Aktuell ist kein Dating Hour Event geplant.',
     'dh.event.remaining': 'Noch {d}',
     'dh.event.startIn': 'Start in {d}',
@@ -5800,6 +5805,11 @@ const Map<String, Map<String, String>> _strings = {
     'dh.event.loadError': 'Loading error',
     'dh.event.searchingPartner': 'Looking for a partner for you...',
     'dh.event.toChat': 'To chat',
+    'dh.event.pairedTitle': 'You have been paired',
+    'dh.event.pairedBody':
+        'Your partner is waiting in the chat. Do you want to look in now?',
+    'dh.event.chatNow': 'Chat now',
+    'dh.event.chatLater': 'Later',
     'dh.event.nonePlanned': 'Currently no Dating Hour event is planned.',
     'dh.event.remaining': '{d} left',
     'dh.event.startIn': 'Starts in {d}',

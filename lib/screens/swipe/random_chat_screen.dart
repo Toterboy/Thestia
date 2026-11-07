@@ -527,14 +527,7 @@ class _RandomChatScreenState extends ConsumerState<RandomChatScreen>
         // dass eine Nachricht wartet (serverseitig generierter Text, nur
         // Metadaten; Beziehung = aktive Zufallschat-Session, Migration im
         // notify-user-Update).
-        unawaited(() async {
-          await bestEffort('invoke', () async {
-            await SupabaseService.client.functions.invoke(
-              'notify-user',
-              body: {'kind': 'messages', 'target_user_id': _partnerId},
-            );
-          });
-        }());
+        unawaited(_notifyPeerAboutMessage());
       } catch (e) {
         debugPrint('[RandomChat] Relay-Send fehlgeschlagen: $e');
         if (mounted) {
@@ -549,21 +542,85 @@ class _RandomChatScreenState extends ConsumerState<RandomChatScreen>
       return;
     }
 
-    try {
-      await _p2p?.sendText(text);
-    } catch (e) {
-      debugPrint('[RandomChat] Sende-Fehler: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(L10n.t(context, 'random.sendFailed')),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+    // BEFUND (07.11.2026, Betreiber): Im Zufallschat kam keine
+    // Nachricht an ("Zufallschat ohne Nachrichten").
+    //
+    // DER GRUND: Der Zufallschat sendete AUSSCHLIESSLICH ueber den
+    // P2P-DataChannel. Der Relay-Fallback gab es nur, wenn der Bildschirm
+    // schon im Relay-Modus war - der wird aber erst eingeschaltet, wenn
+    // ICE DEFINITIV gescheitert ist. In der Zeit davor (der Handshake
+    // dauert, und ohne TURN-Server kommt er oft nicht zustande) landete
+    // die Nachricht in der Outbox: der Absender sah sein Echo, der
+    // Partner nichts.
+    //
+    // Jetzt derselbe Dreistufen-Weg wie im normalen Chat:
+    //   1. P2P-DataChannel (wenn offen),
+    //   2. E2E-verschluesselter Server-Relay,
+    //   3. lokale Outbox als letzte Reserve.
+    final p2p = _p2p;
+    if (p2p != null) {
+      final ueberP2p = await bestEffortOr(
+        'p2p.trySendText',
+        () async => await p2p.trySendText(text),
+        false,
+      );
+      if (ueberP2p) {
+        unawaited(_notifyPeerAboutMessage());
+        return;
       }
+    }
+
+    // Kanal zu: ueber den E2E-Relay zustellen.
+    final ueberRelay = await bestEffortOr(
+      'relayServiceProvider.storeText',
+      () async {
+        await ref
+            .read(relayServiceProvider)
+            .storeText(peerId: _partnerId!, text: text);
+        // Dual-Delivery-Schutz: trySendText hat die Nachricht bei
+        // geschlossenem Kanal bereits eingereiht - nach erfolgreichem
+        // Relay-Store muss der Eintrag raus, sonst kommt sie bei einer
+        // spaeteren Kanaloeffnung doppelt.
+        p2p?.dequeueText(text);
+        unawaited(p2p?.sendRelayPing());
+        unawaited(_notifyPeerAboutMessage());
+        return true;
+      },
+      false,
+    );
+    if (ueberRelay) return;
+
+    // Letzte Reserve: die Outbox. Die Nachricht geht raus, sobald der
+    // Kanal steht.
+    await bestEffort('sendText', () async {
+      await p2p?.sendText(text);
+    });
+    unawaited(_notifyPeerAboutMessage());
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.t(context, 'chat.queuedHint')),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+        ),
+      );
     }
   }
 
+  /// Push an die Gegenseite: es wartet eine Nachricht.
+  ///
+  /// Der Text wird serverseitig erzeugt - uebertragen wird nur, dass
+  /// etwas wartet (keine Inhalte).
+  Future<void> _notifyPeerAboutMessage() async {
+    final partnerId = _partnerId;
+    if (partnerId == null) return;
+    await bestEffort('invoke', () async {
+      await SupabaseService.client.functions.invoke(
+        'notify-user',
+        body: {'kind': 'messages', 'target_user_id': partnerId},
+      );
+    });
+  }
   // ------------------------------------------------------------- Relay --
 
   /// Relay-Polling im Relay-Modus als Einmal-Timer mit variablem Intervall.

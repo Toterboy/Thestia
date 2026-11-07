@@ -24,6 +24,7 @@ import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/services/supabase_storage_service.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/widgets/birthday_style.dart';
+import 'package:thestia/widgets/profile_avatar_box.dart';
 import 'package:thestia/widgets/centered_name_with_badges.dart';
 import 'package:thestia/widgets/donate_button.dart';
 import 'package:thestia/widgets/new_account_badge.dart';
@@ -608,49 +609,41 @@ class ProfileScreen extends ConsumerWidget {
                   // Der Avatar reagiert auf den Umschalter: im Geburtstags-Modus
                   // bekommt er den Stil-Rahmen (Verlauf) wie im echten Profil.
                   // Die ganze Fläche darüber tönt [BirthdayStyleSurface].
+                  //
+                  // BEFUND (07.11.2026, Betreiber): "Die Profilvorschau soll
+                  // dem entsprechen, was auch andere wirklich sehen
+                  // koennen." Hier stand ein KREIS (112 px) - das echte
+                  // Profil zeigt ein abgerundetes Rechteck. Beide benutzen
+                  // jetzt denselben Baustein (ProfileAvatarBox), damit die
+                  // Vorschau gar nicht abweichen kann.
                   Center(
                     child: ValueListenableBuilder<bool>(
                       valueListenable: geburtstag,
                       builder: (context, istGeburtstag, _) {
-                        final avatar = CircleAvatar(
-                          radius: 56,
-                          backgroundColor: isPhotosVisible
-                              ? Theme.of(context).colorScheme.primaryContainer
-                              : Colors.grey.shade300,
-                          child: !isPhotosVisible
-                              ? const Icon(
+                        return FutureBuilder<Uint8List?>(
+                          future: avatarFuture,
+                          builder: (context, snap) {
+                            final bytes = snap.data;
+                            if (!isPhotosVisible) {
+                              return Container(
+                                width: 118,
+                                height: 152,
+                                color: Colors.grey.shade300,
+                                alignment: Alignment.center,
+                                child: const Icon(
                                   Icons.visibility_off,
                                   size: 48,
                                   color: Colors.white,
-                                )
-                              : FutureBuilder<Uint8List?>(
-                                  future: avatarFuture,
-                                  builder: (context, snap) {
-                                    final bytes = snap.data;
-                                    if (bytes != null) {
-                                      return ClipOval(
-                                        child: Image.memory(
-                                          bytes,
-                                          width: 112,
-                                          height: 112,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      );
-                                    }
-                                    return const Icon(
-                                      Icons.person,
-                                      size: 56,
-                                      color: Colors.white,
-                                    );
-                                  },
                                 ),
-                        );
-                        if (!istGeburtstag) return avatar;
-                        return BirthdayStyleFrame(
-                          style: profile.birthdayStyle,
-                          active: true,
-                          borderRadius: 56,
-                          child: avatar,
+                              );
+                            }
+                            return ProfileAvatarBox(
+                              bytes: bytes,
+                              birthdayStyle: profile.birthdayStyle,
+                              isBirthday: istGeburtstag,
+                              placeholderIcon: Icons.person,
+                            );
+                          },
                         );
                       },
                     ),
@@ -985,14 +978,22 @@ class _OwnIntroAudioPlayerState extends ConsumerState<_OwnIntroAudioPlayer> {
         return;
       }
       await _player.setUrl(url);
-      await _player.play();
-      if (mounted) setState(() => _playing = true);
+      // Der Zustands-Listener kommt VOR dem Abspielen: sonst kann das
+      // Ende der Aufstellung verpasst werden und der Button bleibt auf
+      // "Stopp" stehen.
       await _stateSub?.cancel();
       _stateSub = _player.playerStateStream.listen((state) {
         if (state.processingState == ProcessingState.completed && mounted) {
           setState(() => _playing = false);
         }
       });
+      // WICHTIG: `play()` NICHT abwarten. just_audio liefert das
+      // Future erst fertig, wenn die Aufnahme ZU ENDE ist - während
+      // der ganzen Abspielzeit stand hier der Lade-Spinner. Genau das
+      // war die Meldung "die Vorstellung laedt nicht oder braucht
+      // seeeeeeehr lange".
+      unawaited(_player.play());
+      if (mounted) setState(() => _playing = true);
     } catch (e) {
       debugPrint('[OwnIntro] Fehler: $e');
       if (mounted) {
@@ -1059,48 +1060,27 @@ class _OwnAvatar extends ConsumerWidget {
         ? null
         : ref.watch(_ownAvatarBytesProvider(photoRef)).valueOrNull;
 
-    final placeholder = Icon(
-      Icons.person,
-      size: 56,
-      color: Theme.of(context).colorScheme.onSurfaceVariant,
-    );
-
-    // v0.9.0: abgerundet-RECHTECKIG statt komplett rund.
-    // Geburtstag: Stil-Rahmen am Ehrentag (Nutzerwunsch, dezent).
+    // v0.9.0: abgerundet-RECHTECKIG statt komplett rund.    // Geburtstag: Stil-Rahmen am Ehrentag (Nutzerwunsch, dezent).
+    //
+    // BEFUND (07.11.2026, Betreiber): "Die Profilvorschau soll dem
+    // entsprechen, was auch andere wirklich sehen koennen." Die
+    // Vorschau zeichnete einen Kreis, das echte Profil ein Rechteck.
+    // Beide benutzen jetzt DENSELBEN Baustein - sie koennen nicht mehr
+    // auseinanderlaufen.
     final isBirthday = UserProfile.isBirthdayToday(
       ref.watch(profileProvider).birthDate,
     );
     final birthdayStyle = ref.watch(profileProvider).birthdayStyle;
-    final avatarBox = ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: 118,
-        height: 152,
-        color: Theme.of(context).colorScheme.primaryContainer,
-        alignment: Alignment.center,
-        child: bytes != null
-            ? Image.memory(
-                bytes,
-                fit: BoxFit.cover,
-                // LOAD-FIX: In Displaygröße dekodieren (2x DPR) statt das
-                // Multi-MB-Original voll aufzulösen - deutlich schneller
-                // sichtbar + weniger RAM.
-                cacheWidth: 118 * 3,
-                width: 118,
-                height: 152,
-              )
-            : placeholder,
-      ),
+    final avatarBox = ProfileAvatarBox(
+      bytes: bytes,
+      birthdayStyle: birthdayStyle,
+      isBirthday: isBirthday,
+      placeholderIcon: Icons.person,
     );
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        BirthdayStyleFrame(
-          style: birthdayStyle,
-          active: isBirthday,
-          borderRadius: 20,
-          child: avatarBox,
-        ),
+        avatarBox,
         if (isBirthday) ...[const SizedBox(height: 8), const BirthdayChip()],
       ],
     );

@@ -74,10 +74,29 @@ class DatingHourService {
     if (event == null) throw DatingHourException('Kein Event verfügbar');
     if (!event.canJoin) throw DatingHourException('Event ist nicht beitretbar');
 
-    return _safeCall('joinEvent', () async {
+    await _safeCall('joinEvent', () async {
       await SupabaseService.client.rpc(
         'join_dating_hour',
         params: {'p_event_id': event.id, 'p_preferences': preferences.toJson()},
+      );
+
+      // BEFUND (07.11.2026, Betreiber): "Bei Dating Hour finden sich die
+      // Partner nicht ... Es steht, dass die sich suchen, aber finden
+      // niemanden."
+      //
+      // Die Paarung lief nur ueber den Cron (alle 30 Minuten), das
+      // Event dauert aber nur 60. Wer in der ersten halben Stunde
+      // beitritt, bekam keine Paarungsrunde mehr - der naechste Cron
+      // kam erst beim Ende des Events. Die beiden Teilnehmer blieben
+      // also ewig "auf der Suche".
+      //
+      // Deshalb laeuft die Runde jetzt direkt nach dem Beitritt. Die
+      // Funktion ist SECURITY DEFINER und fuer angemeldete Nutzer
+      // freigegeben (Migration 176); sie macht nichts, wenn es noch
+      // nicht genug Teilnehmer oder keine passende Paarung gibt.
+      await SupabaseService.client.rpc(
+        'match_dating_hour_round',
+        params: {'p_event_id': event.id},
       );
     });
   }

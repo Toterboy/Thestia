@@ -596,44 +596,106 @@ class _ParticipantProgress extends ConsumerWidget {
 }
 
 /// Button, der die aktive Session des Users während eines Events anzeigt.
-class _ActiveSessionButton extends ConsumerWidget {
+class _ActiveSessionButton extends ConsumerStatefulWidget {
   const _ActiveSessionButton({required this.eventId});
   final String eventId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final sessionAsync = ref.watch(myActiveDatingHourSessionProvider(eventId));
+  ConsumerState<_ActiveSessionButton> createState() =>
+      _ActiveSessionButtonState();
+}
+
+class _ActiveSessionButtonState extends ConsumerState<_ActiveSessionButton> {
+  /// Die zuletzt gesehene Session. Damit wird erkannt, WENN eine neue
+  /// Session entsteht (nicht nur, dass eine da ist).
+  String? _letzteSessionId;
+
+  /// Die Rueckfrage wurde fuer diese Session schon gestellt.
+  bool _gefragt = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final sessionAsync = ref.watch(
+      myActiveDatingHourSessionProvider(widget.eventId),
+    );
 
     return sessionAsync.when(
       loading: () => _PrimaryActionButton(
         icon: Icons.hourglass_top,
         label: L10n.t(context, 'dh.searching'),
         onPressed: null,
-        color: Colors.grey,
+        // Die Theme-Farbe (siehe _PrimaryActionButton): im Wartezustand
+        // kein festes Grau, sondern die Farbe des gewaehlten Themes.
+        color: Theme.of(context).colorScheme.primary,
       ),
       error: (err, _) => _PrimaryActionButton(
         icon: Icons.error_outline,
         label: L10n.t(context, 'dh.event.loadError'),
         onPressed: null,
-        color: Colors.red,
+        color: Theme.of(context).colorScheme.error,
       ),
       data: (session) {
+        // BEFUND (07.11.2026, Betreiber): "kein Chat-Erzwang (mit
+        // Abfrage)". Wenn die Paarung stand, wurde der Nutzer in den
+        // Chat gedrueckt - ohne zu fragen. Jetzt kommt eine Rueckfrage:
+        // reinschauen oder spaeter?
+        if (session != null) {
+          final neu = session.id != _letzteSessionId;
+          _letzteSessionId = session.id;
+          if (neu && !_gefragt) {
+            _gefragt = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _fragePartner(context, session.id);
+            });
+          }
+        }
         if (session == null) {
           return _PrimaryActionButton(
             icon: Icons.search,
             label: L10n.t(context, 'dh.event.searchingPartner'),
             onPressed: null,
-            color: Colors.grey,
+            color: Theme.of(context).colorScheme.primary,
           );
         }
         return _PrimaryActionButton(
           icon: Icons.chat_bubble,
           label: L10n.t(context, 'dh.event.toChat'),
           onPressed: () => context.go(AppRoutes.datingHourChatPath(session.id)),
-          color: Colors.pink,
+          color: Theme.of(context).colorScheme.primary,
         );
       },
     );
+  }
+
+  /// Die Rueckfrage nach der Paarung.
+  ///
+  /// Sie erscheint EINMAL pro Session. Wer "Spaeter" waehlt, bleibt auf
+  /// dem Bildschirm - der "Zum Chat"-Button bleibt ohnehin da.
+  Future<void> _fragePartner(BuildContext context, String sessionId) async {
+    final jetzt = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: Icon(
+          Icons.auto_awesome,
+          color: Theme.of(ctx).colorScheme.primary,
+        ),
+        title: Text(L10n.t(ctx, 'dh.event.pairedTitle')),
+        content: Text(L10n.t(ctx, 'dh.event.pairedBody')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(L10n.t(ctx, 'dh.event.chatLater')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(L10n.t(ctx, 'dh.event.chatNow')),
+          ),
+        ],
+      ),
+    );
+    if (jetzt != true) return;
+    if (!context.mounted) return;
+    context.go(AppRoutes.datingHourChatPath(sessionId));
   }
 }
 
@@ -934,6 +996,8 @@ class _PrimaryActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final aktiv = onPressed != null;
     return SizedBox(
       width: double.infinity,
       child: FilledButton.icon(
@@ -941,7 +1005,19 @@ class _PrimaryActionButton extends StatelessWidget {
         label: Text(label),
         onPressed: onPressed,
         style: FilledButton.styleFrom(
-          backgroundColor: onPressed != null ? color : Colors.grey,
+          // BEFUND (07.11.2026, Betreiber): "Dating-Hour-Wartebereich
+          // mit Theme-Farbe." Der Wartezustand war fest grau - in einem
+          // App-Bild, in dem die Farbe das Thema traegt, sah das
+          // abgeschnitten aus. Jetzt kommt die Wartefarbe aus dem
+          // Theme (primaryContainer), der Text aus dem Theme
+          // (onPrimaryContainer) - und die Farbe folgt dem gewaehlten
+          // Theme mit.
+          backgroundColor: aktiv ? color : scheme.primaryContainer,
+          foregroundColor: aktiv
+              ? (ThemeData.estimateBrightnessForColor(color) == Brightness.dark
+                    ? Colors.white
+                    : scheme.onSurface)
+              : scheme.onPrimaryContainer,
           padding: const EdgeInsets.symmetric(vertical: 16),
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),

@@ -384,20 +384,17 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
                 ),
               ],
               const SizedBox(height: 16),
-              if (isPhotosVisible)
-                Container(
-                  height: 160,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    gradient: const LinearGradient(
-                      colors: [Colors.deepPurple, Colors.blue],
-                    ),
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.person, color: Colors.white, size: 48),
-                  ),
-                ),
-              const SizedBox(height: 16),
+              // BEFUND (07.11.2026, Betreiber): "doppeltes Profilbild".
+              //
+              // Hier stand ein Verlaufsblock mit Personen-Icon - direkt
+              // unter dem echten Profilbild. Das las sich wie ein ZWEITES
+              // Profilbild, das nicht geladen werden kann. Die Bilder
+              // selbst zeigt _PublicProfileAvatar: das Hauptbild plus die
+              // Thumbnails der weiteren Fotos (max. 3).
+              //
+              // Der Block ist deshalb weg. Bei gesperrten Fotos steht
+              // stattdessen der Grund (photosLockedHint) - der wird
+              // bereits im Avatar angezeigt.
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),

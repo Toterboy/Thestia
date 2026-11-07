@@ -130,7 +130,10 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
 
       final res = await SupabaseService.client
           .from('profiles')
-          .select('is_verified, verification_status')
+          .select(
+            'is_verified, verification_status, intro_text, intro_audio_path, '
+            'favorite_song, favorite_band, birthday_style, mood',
+          )
           .eq('user_id', userId)
           .maybeSingle();
       if (res == null) return;
@@ -141,8 +144,70 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
         serverStatus,
         isVerified: serverVerified,
       );
+
+      // BEFUND (07.11.2026, Betreiber): "Meine Vorstellung stimmt auch
+      // nicht, da beide Nutzer eine Vorstellung gemacht haben aber hier
+      // steht, dass keine hinterlegt wurde (also bei Profil und dann
+      // meine Vorstellung)."
+      //
+      // DER GRUND: Das eigene Profil kam ausschliesslich aus dem
+      // Secure-Store. Vom Server holte die App nur den
+      // Verifikationsstatus. Die Vorstellung wurde also nur angezeigt,
+      // wenn sie IM CACHE stand - auf dem zweiten Geraet war sie weg,
+      // und nach einem Neustart war sie es auch (siehe
+      // user_profile.dart: der Cache-Parser las eine andere
+      // Schreibweise).
+      //
+      // Jetzt kommt die Vorstellung (und der Lieblingssong, das
+      // Lieblingsband, der Geburtstagsstil, die Stimmung) vom Server.
+      // Das ist genau das, was ANDERE sehen - damit stimmt die
+      // Profilvorschau.
+      //
+      // Wichtig: Ein leerer Serverwert UEBERSCHREIBT den lokalen Wert
+      // nicht. Sonst wuerde ein fehlgeschlagener Server-Schreibvorgang
+      // (z. B. kein Netz beim Speichern) die Vorstellung loeschen, die
+      // lokal noch da ist. Der Server darf nur vorhandene Werte
+      // liefern.
+      final serverIntroText = (res['intro_text'] as String?)?.trim();
+      final serverIntroAudio = (res['intro_audio_path'] as String?)?.trim();
+      final serverSong = (res['favorite_song'] as String?)?.trim();
+      final serverBand = (res['favorite_band'] as String?)?.trim();
+      final serverGeburtstag = (res['birthday_style'] as String?)?.trim();
+      final serverMood = (res['mood'] as String?)?.trim();
+
+      final hatNeueVorstellung =
+          (serverIntroText != null && serverIntroText.isNotEmpty) ||
+          (serverIntroAudio != null && serverIntroAudio.isNotEmpty);
+      final aenderung = state.copyWith(
+        isVerified: serverVerified,
+        verificationState: serverState,
+        introText: (serverIntroText != null && serverIntroText.isNotEmpty)
+            ? serverIntroText
+            : null,
+        introAudioPath:
+            (serverIntroAudio != null && serverIntroAudio.isNotEmpty)
+            ? serverIntroAudio
+            : null,
+        favoriteSong: (serverSong != null && serverSong.isNotEmpty)
+            ? serverSong
+            : null,
+        favoriteBand: (serverBand != null && serverBand.isNotEmpty)
+            ? serverBand
+            : null,
+        birthdayStyle: (serverGeburtstag != null && serverGeburtstag.isNotEmpty)
+            ? serverGeburtstag
+            : null,
+        mood: (serverMood != null && serverMood.isNotEmpty) ? serverMood : null,
+      );
+
       if (serverVerified == state.isVerified &&
-          serverState == state.verificationState) {
+          serverState == state.verificationState &&
+          aenderung.introText == state.introText &&
+          aenderung.introAudioPath == state.introAudioPath &&
+          aenderung.favoriteSong == state.favoriteSong &&
+          aenderung.favoriteBand == state.favoriteBand &&
+          aenderung.birthdayStyle == state.birthdayStyle &&
+          aenderung.mood == state.mood) {
         return;
       }
 
@@ -151,11 +216,15 @@ class ProfileNotifier extends StateNotifier<UserProfile> {
         'is_verified ${state.isVerified} -> $serverVerified, '
         'status ${state.verificationState.name} -> ${serverState.name}',
       );
+      if (hatNeueVorstellung) {
+        debugPrint(
+          '[ProfileNotifier] Vorstellung vom Server uebernommen '
+          '(Text: ${serverIntroText?.isNotEmpty == true}, '
+          'Audio: ${serverIntroAudio?.isNotEmpty == true}).',
+        );
+      }
       final warVerifiziert = state.isVerified;
-      state = state.copyWith(
-        isVerified: serverVerified,
-        verificationState: serverState,
-      );
+      state = aenderung;
       await _persist();
 
       // Benachrichtigung ueber die Freigabe (v0.10.0).

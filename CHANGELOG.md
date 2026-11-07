@@ -1181,6 +1181,158 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     brauchen; und ein **Fortschrittsbalken** zeigt, wie viele Merkmale
     noch fehlen.
 
+31. **Dating Hour: die Partner konnten sich nie finden.**
+    BEFUND (07.11.2026, Betreiber): „Bei Dating Hour finden sich die
+    Partner nicht (zwei user drin (meine geräte)) und es passiert
+    nichts. Es steht, dass die sich suchen, aber finden niemanden."
+
+    **Die Ursache:** Die Paarungsrunde sagte
+    `ON CONFLICT (event_id, user_a, user_b) DO NOTHING` – der
+    Unique-Index lautet aber `… WHERE (ended_at IS NULL)`. Ein
+    **partieller** Index trägt ein `ON CONFLICT`-Ziel nur, wenn die
+    Bedingung **genau dieselbe** ist; sonst antwortet der Server mit
+    `42P10`. **Die Paarungsrunde konnte also nie eine Sitzung
+    anlegen.** Im Cron-Log fällt so etwas nicht auf – der Cron läuft
+    alle 30 Minuten, und in der App sieht man nur „sie suchen sich" und
+    wartet. (Migration 190.)
+
+    Dazu kam, dass der Cron alle **30** Minuten lief, das Event aber nur
+    **60** Minuten dauert: wer in der ersten halben Stunde beitritt,
+    bekam keine Runde mehr. Jetzt läuft der Cron alle **5** Minuten,
+    und die App löst die Runde **sofort nach dem Beitritt** aus.
+
+    **Nachgewiesen:** Vorher 2 Teilnahmen und 0 Sitzungen, nach der
+    Reparatur erzeugt derselbe Aufruf eine Sitzung.
+
+32. **Der Bild-Missbrauchsschutz hat nie gearbeitet.**
+    `register_chat_image_hash` schreibt in `public.chat_image_hashes` –
+    **die Tabelle gibt es nicht.** Migration 068 hat sie angelegt, ist
+    aber beim Anwenden gescheitert; die Historie wurde trotzdem
+    fortgeschrieben, und Migration 108 legte die Funktion neu an und
+    verwies auf die Tabelle. Damit sah alles fertig aus, aber jede
+    Meldung eines Chat-Bildes schlug mit „relation does not exist"
+    fehl. Der Bild-Prüfhash aus der Datenschutzerklärung war also
+    wirkungslos. (Migration 190 legt die Tabelle nach.)
+
+34. **Die Vorstellung war in der Datenbank - aber nicht in der App.**
+    BEFUND (07.11.2026, Betreiber): „Meine Vorstellung stimmt auch nicht,
+    da beide Nutzer eine Vorstellung gemacht haben aber hier steht, dass
+    keine hinterlegt wurde (also bei Profil und dann meine Vorstellung)."
+
+    **Die Daten waren da:** beide Testkonten hatten einen Vorstellungstext
+    und eine Audio-Datei im Speicher (live geprüft). Der Fehler lag im
+    Client: `UserProfile.fromJson` wird aus **drei** Quellen gelesen
+    (Server-Antwort, von Hand gebaute Maps, lokaler Cache) - und die
+    benutzten **drei** Schreibweisen. Der Parser kannte nur eine.
+    Die Vorstellung kam deshalb **nie** an: im Cache nach jedem
+    Neustart, beim Serverabruf sofort.
+
+    Beide Parser lesen jetzt **alle** Schreibweisen eines Feldes. Dazu
+    kommt der Abgleich mit dem Server beim Start (damit die Vorschau
+    zeigt, was andere wirklich sehen) und ein Test mit neun Fällen.
+
+    *Und das Werkzeug, das so etwas findet:*
+    `tool/check_profile_cache_keys.py` vergleicht, was `toJson()`
+    schreibt, was `fromJson()` liest und was die Server-Zuordnung
+    kennt - und meldet jedes Feld, das verloren geht.
+
+35. **Die Vorstellung ließ sich nicht abhören.**
+    BEFUND (07.11.2026, Betreiber): „Vorstellung von anderen nicht
+    abhörbar. Sie lädt nicht oder braucht seeeeeeehr lange."
+
+    **Die Server-Kette war in Ordnung** (live geprüft: signierte URL,
+    HTTP 200, `audio/mp4`, 95 KB, gültige MP4-Datei). Der Fehler lag
+    im Abspiel-Widget: `await _player.play()` - just_audio liefert das
+    Future **erst fertig, wenn die Aufnahme zu Ende ist**. Die ganze
+    Abspielzeit blieb der Lade-Spinner stehen: „lädt nicht oder
+    braucht seeeeeeehr lange".
+
+    `play()` wird nicht mehr abgewartet, und das Laden hat ein
+    Zeitlimit mit einer verständlichen Meldung statt eines
+    endlosen Spinners. Dieselbe Falle gab es an **drei** Stellen
+    (Intro-Player, eigene Vorstellung, Sprachnachricht im Chat) - sie
+    sind alle behoben.
+
+36. **Der Funke war für die Gegenseite unsichtbar.**
+    BEFUND (07.11.2026, Betreiber): „Der Funke entsteht, aber es ist
+    nichts sichtbar."
+
+    Die Paarung meldete den Treffer **nur dem Absender**. Für die
+    Gegenseite entstand kein sichtbarer Eintrag: kein Soft-Ping, keine
+    Meldung. Der Match lag zwar in der Datenbank (die Likes), aber
+    ohne Realtime blieb ihre Chatliste alt.
+
+    Die Paarung legt jetzt für die Gegenseite einen **Soft-Ping**
+    an - wie bei einem ausdrücklichen „Zuzwinken". Der Eingang des
+    Transit-Radars pollt alle 15 Sekunden: der Funke ist damit binnen
+    Sekunden sichtbar. *Nachgewiesen live:* Match, dann Ping in der
+    Liste, dann „Annehmen", dann steht der Match.
+
+37. **Zwei Funktionen, die der Server nicht ausführen durfte.**
+    * **„Entblockieren" ging nie.** Der Aufruf antwortete mit
+      `403 permission denied for function unblock_user`: Die Funktion
+      existiert, aber die Rolle `authenticated` hatte **kein**
+      Ausführungsrecht. Bei der Rechte-Widerruf-Migration (123) war
+      sie vergessen worden - ihre Schwester `block_user` hatte das
+      Recht, `unblock_user` nicht. Die Liste war da, das Entblockieren
+      nicht.
+    * **„Annehmen" ging nie.** Dieselbe Lücke bei `accept_soft_ping`:
+      Der Empfänger sah den Funken und beim Tippen auf „Annehmen"
+      passierte nichts.
+
+    *Beide Rechte sind nachgezogen (Migration 192), live geprüft.*
+
+    *Und das Werkzeug, das beides findet:*
+    `tool/check_function_grants.py` sammelt **alle** RPC-Aufrufe des
+    Clients (Dart und Edge Functions) und fragt die Produktivdatenbank,
+    welche Rechte die Rollen wirklich haben. Es meldet jede aufgerufene
+    Funktion, die der Server nicht ausführen kann.
+
+38. **Der Zufallschat verlor Nachrichten.**
+    BEFUND (07.11.2026, Betreiber): Zufallschat ohne Nachrichten.
+
+    The Zufallschat sendete **ausschließlich** über den P2P-Kanal.
+    Der Relay-Fallback gab es nur, wenn der Bildschirm schon im
+    Relay-Modus war - der wird aber erst eingeschaltet, wenn ICE
+    **definitiv** gescheitert ist. In der Zeit davor (der Handshake
+    dauert, und ohne TURN kommt er oft nicht zustande) landete die
+    Nachricht in der Outbox: der Absender sah sein Echo, der Partner
+    nichts.
+
+    Der Zufallschat hat jetzt denselben Dreistufen-Weg wie der normale
+    Chat: P2P, dann E2E-Relay, dann Outbox.
+
+39. **Bedienung: Profilbild, Geburtstag, Wartebereich, Bestätigung.**
+    * **Doppeltes Profilbild** (Fremdprofil): Unter dem echten Bild
+      stand ein Verlaufsblock mit Personen-Icon - der las sich wie ein
+      zweites, kaputtes Bild. Der Block ist weg; die Bilder (Hauptbild
+      plus die weiteren Fotos) zeigt der Avatar-Baustein.
+    * **Profilvorschau = was andere sehen:** Die Vorschau zeichnete
+      einen Kreis, das echte Profil ein abgerundetes Rechteck. Beide
+      benutzen jetzt **denselben** Baustein (`ProfileAvatarBox`) - sie
+      können nicht mehr auseinanderlaufen.
+    * **Dating-Hour-Wartebereich mit Theme-Farbe:** Der Wartezustand
+      war fest grau. Jetzt kommt die Farbe aus dem gewählten Theme.
+    * **Kein Chat-Erzwang (mit Abfrage):** Nach der Paarung im
+      Dating Hour kommt jetzt eine Rückfrage (reinschauen oder später),
+      statt den Chat aufzudrängen.
+    * **Heart-Bestätigung schneller:** Die Funke-Animation blockierte
+      den Bildschirm 1,9 Sekunden und war nicht abbrechbar. Jetzt 1,1
+      Sekunden - und ein Tippen schließt sie sofort.
+    * **Dauer der Sprachnachricht:** Kam keine Dauer mit, stand dort
+      „0:00", obwohl die Datei eine echte Länge hat. Die Länge wird
+      jetzt beim Laden aus der Datei gelesen.
+
+33. **Ein Werkzeug, das die stummen Fehler findet.**
+    `tool/check_on_conflict.py` fragt die Produktivdatenbank ab und
+    vergleicht **jedes** `ON CONFLICT`-Ziel mit den tatsächlichen
+    Indizes. Es hat beide Fehler gefunden (Befunde 31 und 32) – und
+    es findet alle 26 Funktionen mit `ON CONFLICT` auf einmal.
+    Dazu `tool/check_migration_history.py` (jede Migration aus dem
+    Repository ist auch angewandt) und
+    `tool/check_release_version.py` (die ausgelieferten Artefakte
+    tragen den aktuellen Code).
+
 
 ## [0.10.0] - 2026-10-24 (Build 31)
 

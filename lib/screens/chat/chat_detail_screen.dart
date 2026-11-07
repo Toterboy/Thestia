@@ -3609,7 +3609,11 @@ class _VoiceMessageState extends State<_VoiceMessage> {
   bool _playing = false;
   bool _sourceLoaded = false;
   Duration _position = Duration.zero;
-  final Duration _length = Duration.zero;
+
+  /// Die Laenge der Aufnahme. Sie kommt aus den Metadaten der Nachricht
+  /// - fehlen die, wird sie beim Laden aus der Datei gelesen (damit
+  /// immer eine Dauer angezeigt wird).
+  Duration _length = Duration.zero;
   bool _consumed = false; // Datei nach Wiedergabe gelöscht (M-17).
   StreamSubscription<Duration>? _posSub;
   StreamSubscription<PlayerState>? _stateSub;
@@ -3658,6 +3662,17 @@ class _VoiceMessageState extends State<_VoiceMessage> {
       if (!_sourceLoaded) {
         await player.setFilePath(widget.path);
         _sourceLoaded = true;
+        // Die Dauer aus der Datei, wenn die Nachricht keine mitbringt.
+        //
+        // BEFUND (07.11.2026, Betreiber): "Dauer der Sprachnachricht
+        // anzeigen." Die Dauer kam nur aus den Metadaten der Nachricht.
+        // Kamen die nicht an (aeltere Geraete, ein Weg ohne Metadaten),
+        // stand da "0:00" - obwohl die Datei eine echte Laenge hat.
+        // Der Player kennt sie: nach dem Laden auslesen.
+        final laenge = player.duration;
+        if (laenge != null && laenge > Duration.zero) {
+          _length = laenge;
+        }
         await _posSub?.cancel();
         _posSub = player.positionStream.listen((p) {
           if (mounted) setState(() => _position = p);
@@ -3677,7 +3692,12 @@ class _VoiceMessageState extends State<_VoiceMessage> {
           }
         });
       }
-      await player.play();
+      // WICHTIG: `play()` NICHT abwarten. just_audio liefert das Future
+      // erst fertig, wenn die Aufnahme ZU ENDE ist - waehrend der
+      // ganzen Abspielzeit war der Zustand "nicht playing", der
+      // Pause-Knopf kam nicht und die Oberflaeche tat, als sei nichts
+      // passiert.
+      unawaited(player.play());
       if (mounted) setState(() => _playing = true);
     } catch (e) {
       debugPrint('[VoiceMessage] Wiedergabe fehlgeschlagen: $e');

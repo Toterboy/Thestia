@@ -313,51 +313,73 @@ class UserProfile {
       isVerified: publicVerified,
     );
 
+    // Der Geburtstagsstil: ein leerer Serverwert bedeutet "keiner
+    // gewaehlt" - dann gilt der Standard. (Vorher stand hier ein
+    // `as bool?`-Cast auf dem Wert, der bei einem Textfeld auch
+    // fehlschlagen konnte.)
+    final geburtstagsStil =
+        (_leseText(json, ['birthday_style', 'birthdayStyle']) ?? '').trim();
+    final geburtstagHeute =
+        _leseBool(json, ['birthday_today', 'birthdayToday']) ?? false;
+
     return UserProfile(
-      id: json['user_id'] as String,
-      name: json['name'] as String,
-      bio: json['bio'] as String? ?? '',
+      id: _leseText(json, ['user_id', 'id']) ?? '',
+      name: _leseText(json, ['name']) ?? '',
+      bio: _leseText(json, ['bio']) ?? '',
       // Profilbilder (v0.9.0, max. 3): verschlüsselte Refs - Lesen via
       // loadAvatarBytes (Client entschlüsselt lokal).
-      photos: (json['photos'] as List<dynamic>? ?? <dynamic>[])
-          .whereType<String>()
-          .toList(),
-      interests: (json['interests'] as List<dynamic>? ?? <dynamic>[])
-          .map((e) => e as String)
-          .toList(),
-      gender: json['gender'] as String?,
-      personalityType: json['personality_type'] as String?,
+      photos: (_leseListe(json, ['photos'])).map((e) => e as String).toList(),
+      interests: (_leseListe(json, [
+        'interests',
+      ])).map((e) => e as String).toList(),
+      gender: _leseText(json, ['gender']),
+      personalityType: _leseText(json, ['personality_type', 'personalityType']),
       birthDate: birthDate,
-      mood: json['mood'] as String?,
+      mood: _leseText(json, ['mood']),
       favoriteSong:
-          (json['favorite_song'] as String?)?.trim().isNotEmpty == true
-          ? (json['favorite_song'] as String).trim()
+          (_leseText(json, ['favorite_song', 'favoriteSong']) ?? '')
+                  .trim()
+                  .isNotEmpty ==
+              true
+          ? (_leseText(json, ['favorite_song', 'favoriteSong']) ?? '').trim()
           : null,
       favoriteBand:
-          (json['favorite_band'] as String?)?.trim().isNotEmpty == true
-          ? (json['favorite_band'] as String).trim()
+          (_leseText(json, ['favorite_band', 'favoriteBand']) ?? '')
+                  .trim()
+                  .isNotEmpty ==
+              true
+          ? (_leseText(json, ['favorite_band', 'favoriteBand']) ?? '').trim()
           : null,
-      introText: json['intro_text'] as String? ?? '',
-      introAudioPath: json['intro_audio_path'] as String?,
-      smoking: HabitudeLevel.fromServer(json['smoking'] as String?),
-      alcohol: HabitudeLevel.fromServer(json['alcohol'] as String?),
-      drugs: HabitudeLevel.fromServer(json['drugs'] as String?),
-      musicLiked: (json['music_liked'] as List<dynamic>? ?? <dynamic>[])
-          .whereType<String>()
-          .toList(),
-      musicDisliked: (json['music_disliked'] as List<dynamic>? ?? <dynamic>[])
-          .whereType<String>()
-          .toList(),
-      birthdayStyle: (json['birthday_style'] as String?)?.isNotEmpty == true
-          ? (json['birthday_style'] as String)
-          : 'classic',
-      birthdayToday: json['birthday_today'] as bool? ?? false,
+      // Die Vorstellung des ANDEREN. BEFUND (07.11.2026, Betreiber):
+      // "Vorstellung von anderen nicht abhoerbar. Sie laedt nicht oder
+      // braucht seeeeeeehr lange."
+      //
+      // Hier standen nur die snake_case-Namen. Die RPC get_public_profile
+      // liefert die Vorstellung zwar - aber diese Fabrik wird auch mit
+      // Maps aus dem Cache gefuellt (dort camelCase). Dann war die
+      // Vorstellung leer und der Abspiel-Button gar nicht da.
+      //
+      // Siehe die Lese-Helfer weiter unten in dieser Datei.
+      introText: _leseText(json, ['intro_text', 'introText']) ?? '',
+      introAudioPath: _leseText(json, ['intro_audio_path', 'introAudioPath']),
+      smoking: HabitudeLevel.fromServer(_leseText(json, ['smoking'])),
+      alcohol: HabitudeLevel.fromServer(_leseText(json, ['alcohol'])),
+      drugs: HabitudeLevel.fromServer(_leseText(json, ['drugs'])),
+      musicLiked: (_leseListe(json, [
+        'music_liked',
+      ])).whereType<String>().toList(),
+      musicDisliked: (_leseListe(json, [
+        'music_disliked',
+      ])).whereType<String>().toList(),
+      birthdayStyle: geburtstagsStil.isNotEmpty ? geburtstagsStil : 'classic',
+      birthdayToday: geburtstagHeute,
       // Abgerundete Distanz in km (5-km-Schritte, serverseitig berechnet).
-      distanceKm: (json['distance_km'] as num?)?.toDouble() ?? 0,
-      matchScore: (json['match_score'] as num?)?.toInt(),
+      distanceKm: (_leseZahl(json, ['distance_km', 'distanceKm']) ?? 0)
+          .toDouble(),
+      matchScore: _leseZahl(json, ['match_score', 'matchScore'])?.toInt(),
       // Die RPC liefert created_at mit (profile_to_jsonb), es wurde nur
       // nie gelesen. Wird fuer den Hinweis "neuer Account" gebraucht.
-      createdAt: _parseCreatedAt(json['created_at']),
+      createdAt: _parseCreatedAt(_leseText(json, ['created_at', 'createdAt'])),
       isVerified: publicVerified,
       verificationState: publicState,
     );
@@ -389,56 +411,69 @@ class UserProfile {
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      bio: json['bio'] as String,
-      interests: (json['interests'] as List<dynamic>? ?? <dynamic>[])
-          .map((e) => e as String)
-          .toList(),
-      photos: (json['photos'] as List<dynamic>? ?? <dynamic>[])
-          .map((e) => e as String)
-          .toList(),
-      state: json['state'] as String?,
-      country: json['country'] as String? ?? 'Deutschland',
-      distanceKm: (json['distanceKm'] as num? ?? 0).toDouble(),
-      gender: json['gender'] as String?,
-      genderPreference: json['genderPreference'] as String? ?? 'all',
-      birthDate: json['birthDate'] == null
-          ? null
-          : DateTime.tryParse(json['birthDate'] as String),
-      personalityResult: json['personalityResult'] as String?,
-      personalityType: json['personalityType'] as String?,
-      videoUrl: json['videoUrl'] as String?,
-      audioUrl: json['audioUrl'] as String?,
-      favoriteSong: json['favoriteSong'] as String?,
-      favoriteBand: json['favoriteBand'] as String?,
-      locationLat: json['location_lat'] == null
-          ? null
-          : (json['location_lat'] as num).toDouble(),
-      locationLng: json['location_lng'] == null
-          ? null
-          : (json['location_lng'] as num).toDouble(),
-      isVerified: json['is_verified'] as bool? ?? false,
+      id: _leseText(json, ['id', 'user_id']) ?? '',
+      name: _leseText(json, ['name']) ?? '',
+      bio: _leseText(json, ['bio']) ?? '',
+      interests: (_leseListe(json, [
+        'interests',
+      ])).map((e) => e as String).toList(),
+      photos: (_leseListe(json, ['photos'])).map((e) => e as String).toList(),
+      state: _leseText(json, ['state']),
+      country: _leseText(json, ['country']) ?? 'Deutschland',
+      distanceKm: (_leseZahl(json, ['distanceKm', 'distance_km']) ?? 0)
+          .toDouble(),
+      gender: _leseText(json, ['gender']),
+      genderPreference:
+          _leseText(json, ['genderPreference', 'gender_preference']) ?? 'all',
+      birthDate: _leseDatum(json, ['birthDate', 'birth_date']),
+      personalityResult: _leseText(json, [
+        'personalityResult',
+        'personality_result',
+      ]),
+      personalityType: _leseText(json, ['personalityType', 'personality_type']),
+      videoUrl: _leseText(json, ['videoUrl', 'video_url']),
+      audioUrl: _leseText(json, ['audioUrl', 'audio_url']),
+      favoriteSong: _leseText(json, ['favoriteSong', 'favorite_song']),
+      favoriteBand: _leseText(json, ['favoriteBand', 'favorite_band']),
+      locationLat: _leseZahl(json, ['location_lat', 'locationLat'])?.toDouble(),
+      locationLng: _leseZahl(json, ['location_lng', 'locationLng'])?.toDouble(),
+      isVerified: _leseBool(json, ['is_verified']) ?? false,
       verificationState: _stateFromStorage(
-        json['verification_state'],
-        json['is_verified'] as bool? ?? false,
+        _leseText(json, ['verification_state']),
+        _leseBool(json, ['is_verified']) ?? false,
       ),
-      isLocationSuspicious: json['is_location_suspicious'] as bool? ?? false,
-      mood: json['mood'] as String?,
-      introText: json['intro_text'] as String? ?? '',
-      introAudioPath: json['intro_audio_path'] as String?,
-      smoking: HabitudeLevel.fromServer(json['smoking'] as String?),
-      alcohol: HabitudeLevel.fromServer(json['alcohol'] as String?),
-      drugs: HabitudeLevel.fromServer(json['drugs'] as String?),
-      musicLiked: (json['music_liked'] as List<dynamic>? ?? <dynamic>[])
-          .whereType<String>()
-          .toList(),
-      musicDisliked: (json['music_disliked'] as List<dynamic>? ?? <dynamic>[])
-          .whereType<String>()
-          .toList(),
-      birthdayStyle: json['birthdayStyle'] as String? ?? 'classic',
-      birthdayToday: json['birthdayToday'] as bool? ?? false,
-      createdAt: _parseCreatedAt(json['createdAt'] ?? json['created_at']),
+      isLocationSuspicious:
+          _leseBool(json, ['is_location_suspicious']) ?? false,
+      mood: _leseText(json, ['mood']),
+      // BEFUND (07.11.2026, Betreiber): "Meine Vorstellung stimmt auch
+      // nicht, da beide Nutzer eine Vorstellung gemacht haben aber hier
+      // steht, dass keine hinterlegt wurde."
+      //
+      // DER GRUND: fromJson bedient drei Quellen mit drei Schreibweisen:
+      // Server-Antworten (snake_case), handgebaute Maps (camelCase) und
+      // der lokale Cache (camelCase). Der Parser kannte nur snake_case -
+      // die Vorstellung kam deshalb weder aus dem Cache noch aus dem
+      // Serverabruf an. Die Daten waren in der Datenbank vorhanden.
+      //
+      // Deshalb werden hier BEIDE Schreibweisen gelesen. Das Werkzeug
+      // tool/check_profile_cache_keys.py sucht nach jedem weiteren
+      // solchen Mismatch.
+      introText: _leseText(json, ['intro_text', 'introText']) ?? '',
+      introAudioPath: _leseText(json, ['intro_audio_path', 'introAudioPath']),
+      smoking: HabitudeLevel.fromServer(_leseText(json, ['smoking'])),
+      alcohol: HabitudeLevel.fromServer(_leseText(json, ['alcohol'])),
+      drugs: HabitudeLevel.fromServer(_leseText(json, ['drugs'])),
+      musicLiked: (_leseListe(json, [
+        'music_liked',
+      ])).whereType<String>().toList(),
+      musicDisliked: (_leseListe(json, [
+        'music_disliked',
+      ])).whereType<String>().toList(),
+      birthdayStyle:
+          _leseText(json, ['birthdayStyle', 'birthday_style']) ?? 'classic',
+      birthdayToday:
+          _leseBool(json, ['birthdayToday', 'birthday_today']) ?? false,
+      createdAt: _parseCreatedAt(_leseText(json, ['createdAt', 'created_at'])),
     );
   }
 
@@ -492,6 +527,95 @@ class UserProfile {
     if (raw == null) return null;
     if (raw is DateTime) return raw;
     if (raw is String) return DateTime.tryParse(raw);
+    return null;
+  }
+
+  // =========================================================================
+  // Die Lese-Helfer.
+  //
+  // BEFUND (07.11.2026, Betreiber): "Meine Vorstellung stimmt auch nicht,
+  // da beide Nutzer eine Vorstellung gemacht haben aber hier steht, dass
+  // keine hinterlegt wurde."
+  //
+  // DER GRUND: Es gibt drei Quellen fuer ein UserProfile, und sie
+  // benutzen unterschiedliche Schreibweisen:
+  //
+  //   * Server-Antworten (REST, RPC, View) -> snake_case
+  //     (intro_text, favorite_song, birthday_style, user_id)
+  //   * von Hand gebaute Maps im Code     -> camelCase
+  //     (introText, favoriteSong, birthdayStyle, id)
+  //   * der lokale Cache (toJson)         -> camelCase
+  //
+  // Vor dieser Aenderung lasen die Parser NUR eine davon. Ein Feld, das
+  // der Produzent anders schrieb, kam nicht an - ohne Fehlermeldung. Bei
+  // der Vorstellung hiess das: Die Daten lagen in der Datenbank, das
+  // Profil zeigte trotzdem "keine hinterlegt".
+  //
+  // Deshalb liest jedes Feld jetzt unter ALLEN seinen Schreibweisen.
+  // Der erste Treffer gewinnt; null zaehlt nicht als Treffer.
+  //
+  // Das Werkzeug tool/check_profile_cache_keys.py sucht nach jedem
+  // weiteren solchen Mismatch - es prueft toJson(), fromJson() und die
+  // Server-Zuordnung gegeneinander.
+  // =========================================================================
+
+  /// Der erste vorhandene Wert unter einer der angegebenen Schreibweisen.
+  static dynamic _lese(Map<String, dynamic> json, List<String> keys) {
+    for (final key in keys) {
+      final wert = json[key];
+      if (wert != null) return wert;
+    }
+    return null;
+  }
+
+  /// Wie [_lese], aber als Text.
+  static String? _leseText(Map<String, dynamic> json, List<String> keys) {
+    final wert = _lese(json, keys);
+    if (wert == null) return null;
+    if (wert is String) return wert;
+    return wert.toString();
+  }
+
+  /// Wie [_lese], aber als Zahl.
+  static num? _leseZahl(Map<String, dynamic> json, List<String> keys) {
+    final wert = _lese(json, keys);
+    if (wert is num) return wert;
+    if (wert is String) return num.tryParse(wert);
+    return null;
+  }
+
+  /// Wie [_lese], aber als Wahrheitswert.
+  ///
+  /// Achtung: der Wert wird NICHT per `as bool?` gelesen - ein
+  /// PostgREST liefert `true`/`false`, ein Cache koennte aber auch
+  /// "true" (Text) enthalten. Das wird hier sauber gelesen, statt die
+  /// ganze Profil-Erzeugung zu sprengen.
+  static bool? _leseBool(Map<String, dynamic> json, List<String> keys) {
+    final wert = _lese(json, keys);
+    if (wert is bool) return wert;
+    if (wert is String) {
+      if (wert.toLowerCase() == 'true') return true;
+      if (wert.toLowerCase() == 'false') return false;
+    }
+    return null;
+  }
+
+  /// Wie [_lese], aber als Liste.
+  static List<dynamic> _leseListe(
+    Map<String, dynamic> json,
+    List<String> keys,
+  ) {
+    final wert = _lese(json, keys);
+    if (wert is List<dynamic>) return wert;
+    return <dynamic>[];
+  }
+
+  /// Wie [_lese], aber als Datum.
+  static DateTime? _leseDatum(Map<String, dynamic> json, List<String> keys) {
+    final wert = _lese(json, keys);
+    if (wert == null) return null;
+    if (wert is DateTime) return wert;
+    if (wert is String) return DateTime.tryParse(wert);
     return null;
   }
 

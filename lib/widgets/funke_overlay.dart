@@ -15,11 +15,19 @@ class FunkeOverlay extends StatefulWidget {
   /// v0.9.1-Fix (Android 16): barrierLabel für Accessibility, SafeArea
   /// gegen edge-to-edge-Insets und robustes Schließen (auch wenn canPop
   /// auf neuen Android-Versionen mit Predictive Back anders meldet).
+  /// BEFUND (07.11.2026, Betreiber): "Heart-Bestaetigung schneller."
+  /// Die Animation blockierte den Bildschirm 1,9 Sekunden lang und
+  /// konnte nicht abgebrochen werden - man musste warten, obwohl die
+  /// Information (der Funke) schon da war.
+  ///
+  /// Deshalb: 1,1 Sekunden statt 1,8 - und ein Tippen schliesst sie
+  /// sofort. Der Spielflug des Herzens bleibt, die Wartezeit nicht.
   static Future<void> show(BuildContext context) {
     try {
       return showGeneralDialog(
         context: context,
-        barrierDismissible: false,
+        // Abbrechbar: ein Tippen schliesst die Animation sofort.
+        barrierDismissible: true,
         barrierLabel: 'Funke-Animation',
         barrierColor: Colors.black54,
         transitionDuration: const Duration(milliseconds: 180),
@@ -47,7 +55,7 @@ class _FunkeOverlayState extends State<FunkeOverlay>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1800),
+      duration: const Duration(milliseconds: 1100),
     );
 
     // Partikel auf einem Ring um das Zentrum verteilen.
@@ -64,7 +72,8 @@ class _FunkeOverlayState extends State<FunkeOverlay>
     });
 
     _ctrl.forward();
-    Future.delayed(const Duration(milliseconds: 1900), () {
+    // 1,2 s: der Animationstakt endet bei 1,1 s, danach wird geschlossen.
+    Future.delayed(const Duration(milliseconds: 1200), () {
       if (!mounted) return;
       // Best-effort: Overlay darf nie hängen bleiben.
       bestEffortSync('maybePop', () {

@@ -409,7 +409,7 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
 
 ## Umgesetzt: 0.10.0 – Standort-Privatisierung, Transit Spark auf echten Geräten & Qualitätssicherung
 
-> Status: v0.10.0 ist in Vorbereitung (Build 41, 07.11.2026) und die
+> Status: v0.10.0 ist in Vorbereitung (Build 43, 07.11.2026) und die
 > **erste Fassung für den Play Store** – das Play-Console-Projekt wird
 > erst angelegt. Zuletzt veröffentlicht wurde v0.9.1 (Prerelease auf
 > GitHub); intern wird v0.9.2 getestet. Der Stand ist unten bei den
@@ -771,6 +771,107 @@ keine gemeinsamen Tokens.)
 > `kopfhoerer`, `rucksack`, `sandalen`, `sportlich`). Das ist kein
 > Fehler - aber `hair_length` und `hair_style` wären die logische
 > Ergänzung zu den 18 Haarfarben, wenn der Betreiber sie will.
+
+#### Build 43: die Vorstellung, der Funke und die Rechte
+
+BEFUND (07.11.2026, Betreiber): 13 Meldungen auf zwei echten Geräten.
+Diese Runde hat **fünf** davon behoben - und vor allem die Fehler
+gefunden, die man auf dem Gerät **nicht** sehen kann.
+
+**1. Die Vorstellung war in der Datenbank, aber nicht in der App.**
+„Meine Vorstellung stimmt auch nicht, da beide Nutzer eine Vorstellung
+gemacht haben aber hier steht, dass keine hinterlegt wurde."
+
+Live geprüft: Text und Audio-Datei waren vorhanden. Der Fehler lag im
+Client: `UserProfile.fromJson` bedient drei Quellen mit drei
+Schreibweisen und kannte nur eine. Beide Parser lesen jetzt alle.
+
+**2. Die Vorstellung ließ sich nicht abhören.** `await _player.play()`
+wartet bei just_audio, bis die Aufnahme **zu Ende** ist - die ganze
+Abspielzeit blieb der Lade-Spinner stehen. Dieselbe Falle an drei
+Stellen; alle behoben, plus ein Zeitlimit statt eines endlosen
+Spinners.
+
+**3. Der Funke war für die Gegenseite unsichtbar.** Die Paarung
+meldete den Treffer nur dem Absender. Jetzt legt sie für die Gegenseite
+einen Soft-Ping an - der Eingang pollt alle 15 Sekunden.
+
+**4. Zwei Funktionen, die der Server nicht ausführen durfte.**
+„Entblockieren" und „Annehmen" antworteten mit `403 permission denied`:
+beim Rechte-Widerruf (Migration 123) war das Ausführungsrecht für
+`authenticated` vergessen worden. Zwei Minuten Testen auf dem Gerät
+hätten das nie gezeigt - der Server sagt es nur, wenn man ihn fragt.
+
+**5. Der Zufallschat verlor Nachrichten**, weil er ausschließlich über
+den P2P-Kanal sendete. Jetzt: P2P, dann E2E-Relay, dann Outbox.
+
+> **Die Werkzeuge, die diese Klasse fangen:**
+> * `tool/check_function_grants.py` - sammelt alle RPC-Aufrufe des
+>   Clients und fragt die Produktivdatenbank nach den Rechten. Hat
+>   `unblock_user` und `accept_soft_ping` gefunden.
+> * `tool/check_profile_cache_keys.py` - vergleicht, was der Cache
+>   schreibt, was die Parser lesen und was die Server-Zuordnung kennt.
+>   Hat die Vorstellung gefunden.
+> * `tool/check_on_conflict.py` - findet Konflikt-Ziele, die kein Index
+>   trägt (der Dating-Hour-Bug).
+> * `tool/check_migration_history.py` - findet Migrationen, die als
+>   „angewandt" markiert sind, aber nicht vollständig gelaufen sind.
+> * `tool/check_release_version.py` - findet die alte APK im
+>   Release-Ordner.
+
+> **Die Lehre daraus (und die Antwort auf die Frage des Betreibers,
+> warum es immer neue Probleme gab):** Die Fehler der letzten Wochen
+> waren fast alle **stille** - kein Absturz, keine Fehlermeldung, nur
+> ein leeres Feld oder eine alte Datei. Sie fielen nur auf, wenn man
+> genau hinsah. Ein Test prüft den Quelltext; er prüft nicht, was der
+> **Server** daraus macht und nicht, was in der **Release-Datei**
+> steckt. Deshalb prüfen diese Werkzeuge beides: gegen die
+> Produktivdatenbank und gegen das ausgelieferte Artefakt.
+
+#### Build 42: Dating Hour - die Partner konnten sich nie finden
+
+BEFUND (07.11.2026, Betreiber): „Bei Dating Hour finden sich die
+Partner nicht (zwei user drin (meine geräte)) und es passiert nichts.
+Es steht, dass die sich suchen, aber finden niemanden."
+
+**Die Ursache** (live geprüft, nicht vermutet): Die Paarungsrunde
+sagte `ON CONFLICT (event_id, user_a, user_b) DO NOTHING` - der
+Unique-Index lautet aber `… WHERE (ended_at IS NULL)`. Ein
+**partieller** Index trägt ein `ON CONFLICT`-Ziel nur, wenn die
+Bedingung **genau dieselbe** ist; sonst antwortet der Server mit
+`42P10`. **Die Paarungsrunde konnte also nie eine Sitzung anlegen.**
+Im Cron-Log fällt so etwas nicht auf - der Cron lief alle 30 Minuten,
+und in der App sieht man nur „sie suchen sich" und wartet.
+
+Dazu kam, dass der Cron alle **30** Minuten lief, das Event aber nur
+**60** Minuten dauert: wer in der ersten halben Stunde beitritt,
+bekam keine Runde mehr.
+
+- [x] **Das `ON CONFLICT`-Ziel trägt die Bedingung des partiellen
+      Index** (Migration 190). *Nachgewiesen:* Vorher 2 Teilnahmen und
+      0 Sitzungen, nach der Reparatur erzeugt derselbe Aufruf eine
+      Sitzung.
+- [x] **Der Cron läuft alle 5 Minuten** statt alle 30 (Migration 189).
+- [x] **Die App löst die Paarungsrunde nach dem Beitritt selbst aus** -
+      damit entsteht die Sitzung sofort, ohne auf den Cron zu warten.
+
+> **Und derselbe Fehlertyp steckte noch an einer zweiten Stelle:**
+> `register_chat_image_hash` schrieb in `public.chat_image_hashes` -
+> **die Tabelle gab es nicht**. Migration 068 hatte sie angelegt, war
+> aber beim Anwenden gescheitert; die Historie wurde trotzdem
+> fortgeschrieben, und Migration 108 legte die Funktion neu an und
+> verwies auf die Tabelle. Damit sah alles fertig aus, aber der
+> **Bild-Missbrauchsschutz** aus der Datenschutzerklärung hat nie
+> gearbeitet: jede Meldung eines Chat-Bildes schlug mit „relation
+> does not exist" fehl. Migration 190 legt die Tabelle nach.
+
+> **Das Werkzeug, das beides gefunden hat:**
+> `tool/check_on_conflict.py` fragt die Produktivdatenbank ab und
+> vergleicht **jedes** `ON CONFLICT`-Ziel mit den tatsächlichen
+> Indizes - es sieht alle 26 Funktionen auf einmal. Dazu
+> `tool/check_migration_history.py` (jede Migration aus dem
+> Repository ist auch angewandt) und `tool/check_release_version.py`
+> (die ausgelieferten Artefakte tragen den aktuellen Code).
 
 #### Build 41: Haarlänge, Frisur - und ein Redesign des Bildschirms
 

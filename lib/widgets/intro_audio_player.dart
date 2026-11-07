@@ -27,6 +27,39 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
   String? _errorKey;
   StreamSubscription<PlayerState>? _stateSub;
 
+  /// Wie lange darf das Laden der Vorstellung dauern?
+  ///
+  /// BEFUND (07.11.2026, Betreiber): "Vorstellung von anderen nicht
+  /// abhoerbar. Sie laedt nicht oder braucht seeeeeeehr lange."
+  ///
+  /// DER GRUND (zwei Fehler in diesem Widget):
+  ///
+  ///  1) `await _player.play()` wartet, BIS DIE AUFNAHME ZUENDE IST.
+  ///     just_audio liefert das Future von `play()` erst fertig, wenn
+  ///     die Wiedergabe durchgelaufen ist. Die ganze Abspielzeit blieb
+  ///     der Lade-Spinner stehen - die App sah aus, als laede sie noch.
+  ///
+  ///  2) Es gab keinen Zeitlimit. Haengt das Netz (oder die
+  ///     Edge-Function), blieb der Spinner fuer immer stehen - ohne
+  ///     jede Meldung.
+  ///
+  /// Beides ist behoben: `play()` wird nicht mehr abgewartet, und das
+  /// Laden hat ein Zeitlimit mit einer verstaendlichen Meldung.
+  static const Duration _ladeTimeout = Duration(seconds: 25);
+
+  @override
+  void initState() {
+    super.initState();
+    // Der Zustands-Listener wird VOR dem Abspielen gesetzt, damit das
+    // Ende der Aufnahme zuverlaessig zurueckgemeldet wird.
+    _stateSub = _player.playerStateStream.listen((state) {
+      if (!mounted) return;
+      if (state.processingState == ProcessingState.completed) {
+        setState(() => _playing = false);
+      }
+    });
+  }
+
   @override
   void dispose() {
     _stateSub?.cancel();
@@ -49,7 +82,12 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
     });
     try {
       final service = ref.read(findYourMatchServiceProvider);
-      final url = await service.getIntroAudioUrl(widget.targetUserId);
+      // Das Laden hat ein Zeitlimit - sonst bleibt der Spinner bei
+      // einem Netzproblem fuer immer stehen.
+      final url = await service
+          .getIntroAudioUrl(widget.targetUserId)
+          .timeout(_ladeTimeout);
+      if (!mounted) return;
       if (url == null) {
         setState(() {
           _loading = false;
@@ -57,17 +95,27 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
         });
         return;
       }
-      await _player.setUrl(url);
-      await _player.play();
-      if (mounted) setState(() => _playing = true);
-      // Nur EINE Subscription, sonst wächst die Listener-Liste bei jedem
-      // Abspielen (Memory-Leak + Mehrfach-setState).
-      await _stateSub?.cancel();
-      _stateSub = _player.playerStateStream.listen((state) {
-        if (state.processingState == ProcessingState.completed && mounted) {
-          setState(() => _playing = false);
-        }
-      });
+      await _player.setUrl(url).timeout(_ladeTimeout);
+      if (!mounted) return;
+
+      // WICHTIG: `play()` NICHT abwarten. Das Future endet erst, wenn
+      // die Aufnahme zu Ende ist - das war der Grund fuer den
+      // endlosen Lade-Spinner.
+      unawaited(_player.play());
+      if (mounted) {
+        setState(() {
+          _playing = true;
+          _loading = false;
+        });
+      }
+    } on TimeoutException {
+      debugPrint('[IntroAudioPlayer] Zeitueberschreitung beim Laden.');
+      if (mounted) {
+        setState(() {
+          _loading = false;
+          _errorKey = 'intro.unplayable';
+        });
+      }
     } catch (e) {
       debugPrint('[IntroAudioPlayer] Fehler: $e');
       if (mounted) {
