@@ -605,19 +605,41 @@ void main() {
       );
     });
 
-    test('Die unterste der sieben Kacheln steht mittig', () {
+    test('Die untersten Kacheln stehen mittig', () {
       // NUTZERWUNSCH (31.10.2026): "Unten bei den 5 Kacheln soll die
       // untere mittig sein und nicht linksbuendig."
       //
-      // Seit dem 03.11.2026 sind es sieben Kacheln (neu: Daten loeschen
-      // und Eltern & Jugendliche). Bei ungerader Kachelzahl und zwei
-      // Spalten bleibt eine Kachel allein in der letzten Zeile. Sie
-      // soll dort mittig stehen.
+      // Am 03.11.2026 waren es sieben Kacheln (neu: Daten loeschen und
+      // Eltern & Jugendliche); bei ungerader Zahl blieb eine Kachel
+      // allein in der letzten Zeile.
+      //
+      // Am 08.11.2026 kam die achte Kachel dazu: die Nutzungsbedingungen
+      // (BEFUND: "Ich sehe die Nutzungsbedingungen immer noch nicht auf
+      // thestia.de" - die Startseite verlinkt sie nicht). Damit bleiben in
+      // der letzten Zeile ZWEI Kacheln, und die stehen mittig
+      // nebeneinander (justify-content: center des Flex-Containers
+      // zentriert jede Zeile einzeln).
+      //
+      // Die grid-Regel (grid-column: 1 / -1 + justify-self: center)
+      // bleibt im CSS fuer den Fall, dass eine Kachel ALLEIN in der
+      // letzten Zeile bleibt - etwa wenn eine Kachel wegfällt oder bei
+      // sehr schmalen Fenstern. Sie wird bei gerader Kachelzahl nicht
+      // ausgeloest (nth-child(odd)).
       final h = html();
       expect(
         RegExp(r'class="held-link"').allMatches(h).length,
-        7,
-        reason: 'Es sind sieben Kacheln - die letzte steht allein.',
+        8,
+        reason:
+            'Es sind acht Kacheln - die letzten zwei stehen mittig '
+            'nebeneinander.',
+      );
+      expect(
+        h,
+        contains('href="/nutzungsbedingungen"'),
+        reason:
+            'Die Startseite muss die Nutzungsbedingungen verlinken - sie '
+            'sind Pflicht (DSA Art. 16) und von der Startseite aus war '
+            'sonst nichts zu finden.',
       );
       expect(
         h,
