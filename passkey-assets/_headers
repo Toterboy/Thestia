@@ -75,6 +75,29 @@
 /index.html
   Content-Type: text/html; charset=utf-8
 
+# --- Der Auth-Host darf nicht indexiert werden -----------------------
+#
+# BEFUND 08.11.2026 (Hosterwechsel-Vorbereitung): Beide Domains
+# zeigen auf denselben Inhalt - es gibt also fuer auth.thestia.de
+# keine eigene robots.txt. Bei Netlify loest das eine Regel in
+# _redirects (Domain-Rewrite auf /robots-auth.txt). Cloudflare Pages
+# kann KEINE domain-bezogenen Redirects - dort waere der Auth-Host
+# indexierbar, und in der Google-Suche stuende wieder die
+# Fehlermeldung des Sicherheitschecks statt der Seite (das war der
+# Fehler vom 04.11.2026).
+#
+# DER HEADER LOEST BEIDES: "X-Robots-Tag: noindex" ist die
+# standardsmaessige Form, Google und Bing folgen ihr. Er gilt fuer
+# auth.thestia.de und fuer thestia.de nicht - die oeffentliche Seite
+# bleibt indexierbar. Bei Netlify ist die robots.txt-Sperre zusaetzlich
+# da (dort greift die _redirects-Regel), der Header stoert dort nicht.
+#
+# _headers unterstuetzt absolute URLs mit Host (belegt in der
+# Cloudflare-Doku: "https://myproject.pages.dev/*"), Netlify kann das
+# ebenfalls - der Block ist also bei beiden Hostern gueltig.
+https://auth.thestia.de/*
+  X-Robots-Tag: noindex
+
 # BEFUND 04.11.2026: Die Regel fuer "/index.html" galt nicht fuer die
 # Startseite "/" - Netlify wendet die Regeln auf den aufgerufenen
 # Pfad an. Live gemessen lieferte "/" deshalb "Cache-Control:
