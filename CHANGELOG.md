@@ -1581,6 +1581,22 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      **Der Formatter hat sich mit Dart 3.13 minimal geaendert** (zwei
      Dateien wurden angepasst) - kein Grund, den Sprung zu verschieben.
 
+     **Eine Ueberraschung, die das Update mitgebracht hat:** Mit dem
+     neuen SDK hat sich `path_provider_android` auf 2.3.1 aufgeloest,
+     das ueber `jni_flutter` an das Paket `jni` haengt. Der
+     Release-Build brach daraufhin ab: „Missing class
+     org.jni_zero.JniZeroJni" - R8 findet die zur Build-Zeit erzeugten
+     Java-Klassen des JNI-Pakets nicht im Klassenpfad. Der Dart-Code
+     nutzt `jni` gar nicht, es ist rein transitiv. Behoben mit der vom
+     Android-Gradle-Plugin selbst erzeugten Regel
+     (`-dontwarn org.jni_zero.JniZeroJni`) in
+     `android/app/proguard-rules.pro`.
+
+     **Die Lehre daraus:** Ein SDK-Update aendert nicht nur die
+     Formatierung, sondern loest die Abhaengigkeiten neu auf. Das ist
+     der Grund, warum ein Update nie „nur ein Update" ist - es gehoert
+     immer mit einem vollstaendigen Release-Durchlauf zusammen.
+
 57. **Sicherheitspruefung gegen bekannte Schwachstellen (08.11.2026).**
      BEFUND (Betreiber): „Check im Internet einmal, ob es bestimmte
      Sicherheitsluecken gibt, die Thestia haben koennte und pruef die App
