@@ -1934,6 +1934,42 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      die RP-ID, und die laeuft ueber die `assetlinks.json` (Schritt 6
      der Anleitung).
 
+61. **Ein altes Vercel-Projekt lief noch - und die alte Domain mit.**
+     BEFUND (Betreiber, 08.11.2026): "Außerdem ist bei Vercel
+     irgendwas von dir hochgeladen. Der deployment storage ist bei
+     7,77/10 GB."
+
+     **Was es ist:** ein Vercel-Projekt `blind-date-app`, am 24.07.2026
+     mit dem CLI angelegt (die Verknuepfung liegt in `.vercel/`, das
+     nicht im Repository ist). Es liefert unter
+     `https://blind-date-app.vercel.app` eine **alte Landingpage**
+     ("Blind Date | Real Conversations") - ein React-Build von vor der
+     Umbenennung.
+
+     **Und die alte Domain zeigt ebenfalls darauf:** `theblinddate.in`
+     hat Nameserver von Vercel (`ns1/ns2.vercel-dns.com`) und leitet
+     auf `www.theblinddate.in` weiter (307). Die Seite traegt
+     `<meta name="robots" content="index, follow">` - sie ist also
+     **indexierbar**, waehrend die echte Seite inzwischen "Thestia"
+     heisst. Zwei offene Punkte also: eine alte, indexierbare
+     Dating-Seite unter der alten Marke und der Deployment-Speicher
+     von 7,77 GB (Hobby: 10 GB inklusive).
+
+     **Geprueft, nicht vermutet:** Live gemessen liefert das Projekt
+     ausser `index.html`, `manifest.json` und den Icons die index.html
+     als Ersatz (SPA-Fallback). Die **APKs, der Datenbank-Backup-Dump
+     und der `releases/`-Ordner sind NICHT oeffentlich abrufbar** - das
+     wurde an jedem einzelnen Pfad nachgemessen. Es gab also keinen
+     Datenabfluss; weg sind nur Speicher und eine veraltete Seite.
+
+     **Das Aufraeumen** steht in `docs/WEBSITE-HOSTING.md`. Wichtig
+     ist die Reihenfolge: alte Deployments loeschen UND die
+     Git-Verknuepfung trennen - sonst legt jeder Push wieder ein
+     Deployment an und der Speicher fuellt sich von selbst. Fuer die
+     alte Domain gibt es zwei Wege: loeschen oder per **301** auf
+     `thestia.de` weiterleiten (302 waere wirkungslos fuer die
+     Suchmaschinen).
+
 ## [0.10.0] - 2026-10-24 (Build 31)
 
 ### Sicherheit

@@ -62,6 +62,24 @@ Der wahrscheinlichste Engpass ist also der **Deploy** (20 im Monat),
 nicht die Bandbreite. Wer haeufiger deployed, laeuft in die
 Deploy-Grenze - unabhaengig davon, wie viele Besucher die Seite hat.
 
+### Was es in der EU gibt (Preise live geprueft am 08.11.2026)
+
+| Anbieter | Land | Preis | Was man dafuer in Kauf nimmt |
+|---|---|---|---|
+| **netcup Webhosting** | DE (Hetzner-Gruppe, Nuernberg/Falkenstein) | ab **2,69 EUR/Monat** (inkl. 19 % MwSt) | Klassisches Webhosting mit Plesk: zwei vhosts (einer je Domain, der Auth-Host bekommt damit eine eigene `robots.txt` ohne Sonderregel), Let's Encrypt. **Die DNS bleibt bei Spaceship - kein Nameserver-Wechsel, die Mail ruehrt sich nicht.** Die `_redirects`/`_headers` werden in eine `.htaccess` uebersetzt (das ist generierbar). |
+| **Hetzner Cloud (VPS + Caddy)** | DE | ca. **4,49-5,99 EUR/Monat** (CX22/CX23) | Volle Kontrolle, Daten in Deutschland, Zertifikat automatisch. Dafuer: Server pflegen (Updates, Firewall), Regeln in einer Caddyfile statt in `_headers`. |
+| **all-inkl, Contabo, IONOS, Infomaniak (CH)** | DE / CH | 1-5 EUR/Monat | dieselbe Klasse wie netcup |
+| **KeyCDN (dogado, Dortmund)** | DE | ab **4 USD/Monat** Mindestumsatz, EU-Traffic 0,03 USD/GB, TLS gratis, Mindestzahlung 49 USD | **Kein Hoster, sondern ein CDN** - es braucht eine Quelle, also wieder einen Hoster. Als reine CDN-Stufe vor einem Hoster sinnvoll, als Ersatz nicht. |
+| **Cloudflare Pages** | US-Firma, EU-Knoten (Frankfurt) | 0 EUR | Der einzige mit Drag&Drop ohne Build. Fuer **diese** Website datenschutzrechtlich unkritisch: sie verarbeitet keine personenbezogenen Daten (statische Dateien, keine Formulare, keine Nutzer-Logs). Die DSGVO-Frage stellt die App (Supabase), nicht die Website. |
+| **Vercel Hobby** | US | 0 EUR | Laut eigener FAQ nur "persoenlich, nicht kommerziell" - fuer eine Dating-App mit Nutzern nicht erlaubt; Pro 20 USD/Monat. |
+
+**Die ehrliche Abwaegung:** Wenn die EU-Rechenschaft das Hauptargument
+ist, ist **netcup** die beste Wahl (2,69 EUR, deutsche Firma, DNS und
+Mail bleiben unangetastet). Wenn der Deploy-Aufwand das Hauptargument
+ist, ist **Cloudflare Pages** die beste Wahl (0 EUR, kein Build, kein
+Server). Beides geht - und der Publish-Ordner ist fuer beide Wege
+vorbereitet.
+
 ## Die sieben Schritte
 
 ### 1. Konto und Zone anlegen
@@ -230,6 +248,63 @@ umgestellt, **nachdem** Schritt 3 gruen war.
   Wechsel des Zertifikats (das kann auch eine Erneuerung sein) die
   Kette neu lesen und die Datei neu schreiben.
 
+## Nebenbei: das alte Vercel-Projekt (7,77 von 10 GB belegt)
+
+BEFUND (08.11.2026, bei der Suche nach dem Credit-Problem): Es gibt
+ein Vercel-Projekt `blind-date-app` (verknuepft am 24.07.2026, die
+Verknuepfung liegt in `.vercel/project.json`, das ist nicht im
+Repository). Es liefert unter `https://blind-date-app.vercel.app` eine
+**alte Landingpage** ("Blind Date | Real Conversations") aus - ein
+React-Build aus der Zeit vor der Umbenennung.
+
+**Die alte Domain zeigt ebenfalls darauf:** `theblinddate.in` hat
+Nameserver von Vercel (`ns1/ns2.vercel-dns.com`) und leitet auf
+`www.theblinddate.in` weiter (307). Die Seite hat
+`<meta name="robots" content="index, follow">` - sie ist also
+**indexierbar**. Zwei Dinge sind damit offen:
+
+1. Eine alte, indexierbare Dating-Seite unter der alten Marke.
+2. Der **Deployment-Speicher** von 7,77 GB (Hobby: 10 GB inklusive).
+   Jedes Deployment eines verbundenen Repositories zaehlt mit - wird
+   die Grenze erreicht, bricht der Deploy ab.
+
+**Was geprueft wurde und was nicht:** Live gemessen liefert das
+Projekt ausser `index.html`, `manifest.json` und den Icons die
+index.html als Ersatz (SPA-Fallback) - **die APKs, der
+Datenbank-Backup-Dump und der `releases/`-Ordner sind NICHT oeffentlich
+abrufbar**. Das ist geprueft, nicht vermutet.
+
+**Aufraeumen (zwei Wege):**
+
+*Alles loeschen* (empfohlen, wenn die alte Marke nichts mehr bedeutet):
+
+```powershell
+vercel login                      # einmalig, Device-Flow im Browser
+vercel project remove blind-date-app
+Remove-Item .vercel -Recurse -Force   # die lokale Verknuepfung
+```
+
+*Aufraeumen, die alte Domain aber behalten*:
+
+```powershell
+vercel login
+vercel ls blind-date-app          # die Deployments ansehen
+vercel remove <deploymentId>      # die alten Deployments einzeln loeschen
+```
+
+Danach im Dashboard unter `Settings -> Git` pruefen, ob das GitHub-
+Repository verbunden ist: **das Verbindung trennen**, sonst legt jeder
+Push ein neues Deployment an und der Speicher fuellt sich wieder.
+
+**Die alte Domain weiterleiten statt loeschen:** Wenn
+`theblinddate.in` auf `thestia.de` zeigen soll, braucht es eine
+Domain-Weiterleitung. Bei Vercel geht das ueber `Settings -> Domains
+-> Redirects` (301 auf `https://thestia.de`) - das setzt voraus, dass
+das Projekt bleibt. Alternativ beim Registrar eine Weiterleitung
+einrichten. **Wichtig:** Die Weiterleitung muss mit **301** erfolgen
+(keine 302), sonst bleibt die alte Adresse in den Suchergebnissen
+stehen.
+
 ## Was NICHT noetig ist
 
 - **Kein Build-Skript, kein Node, kein CI-Deploy.** Der Ordner wird
@@ -237,7 +312,10 @@ umgestellt, **nachdem** Schritt 3 gruen war.
 - **Kein Hosting-Paket kaufen.** Spaceship Webhosting (ab 25,90 EUR/2
   Jahre) und Netcup braeuchten eine eigene `.htaccess`/`vhost`-Pflege
   und ein Zertifikat je Domain - Aufwand ohne Gegenwert fuer eine
-  Website dieser Groesse.
+  Website dieser Groesse. (Wer es trotzdem will: die `.htaccess` laesst
+  sich aus `_redirects` und `_headers` GENERIEREN - das ist eine
+  Sache von einer Stunde Arbeit, kein Grund, einen Hoster zu
+  wechseln.)
 - **Keine Aenderung an der App.** Die App laedt die CAPTCHA-Seite von
   `https://auth.thestia.de/` - dieselbe Adresse wie heute. Das
   Zertifikat der Website ist **nicht** gepinnt: `lib/utils/
