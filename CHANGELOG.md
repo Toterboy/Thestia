@@ -1613,6 +1613,14 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      darum seit dem 06.11.2026 **keine** Meldung mehr erzeugt. Beides
      ist mit repariert.
 
+     **Die Formulierung der Like-Meldung hat sich vereinheitlicht:**
+     Der Trigger schickte bisher „Du hast ein neues Like! / Jemand hat
+     dein Profil geliked.", der Client-Pfad „Jemand hat deine
+     Vorstellung entdeckt.". Welcher Weg der Push genommen hat, war
+     damit am Text erkennbar - und die App rief den Client-Pfad
+     zusaetzlich auf. Jetzt gilt fuer jeden Profil-Like derselbe Text:
+     „Jemand hat deine Vorstellung entdeckt."
+
 53. **Was damit nicht belegt ist - und was aufgeraeumt wird.**
      Die Live-Tests legen echte Zeilen an (zwei Likes, ein Match).
      `tool/cleanup_transit_testdata.sql` nimmt sie wieder weg und
