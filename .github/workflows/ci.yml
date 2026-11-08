@@ -54,10 +54,22 @@ jobs:
       # (exakt die Version, die das Plugin erwartet). Ohne diesen Schritt
       # schlaegt der Test auf dem Runner mit "cannot open shared object
       # file" fehl.
+      #
+      # DER RETRY IST NICHT KOSMETIK (08.11.2026): In einem CI-Lauf hat
+      # GitHub mit "504 Gateway Time-out" geantwortet. Ohne "-f" schrieb
+      # curl die 92 Byte Fehlerseite in die Datei - tar meldete daraufhin
+      # "Error is not recoverable", und der Fehler sah nach einem kaputten
+      # Archiv aus statt nach einem Netzwerkproblem. Genau diese
+      # Fehlertaeuschung hat in einem Lauf drei Jobs gekillt.
+      #   * "-f" bricht bei jedem HTTP-Fehler ab (kein Muell im Archiv),
+      #   * "--retry" uebersteht einen kurzen CDN-Ausfall,
+      #   * die Meldung sagt, WEM die Bibliothek fehlt.
       - name: onnxruntime native library (fuer NSFW-Inferenz-Test)
         run: |
-          curl -sSL -o /tmp/ort.tgz \
-            https://github.com/microsoft/onnxruntime/releases/download/v1.15.1/onnxruntime-linux-x64-1.15.1.tgz
+          curl -fL --retry 5 --retry-all-errors --retry-delay 5 \
+            -o /tmp/ort.tgz \
+            https://github.com/microsoft/onnxruntime/releases/download/v1.15.1/onnxruntime-linux-x64-1.15.1.tgz \
+            || { echo "::error::onnxruntime 1.15.1 liess sich nicht laden (Netzwerk oder GitHub-Ausfall). Ohne die Bibliothek schlaegt der NSFW-Inferenz-Test fehl."; exit 1; }
           mkdir -p /tmp/ort
           tar -xzf /tmp/ort.tgz -C /tmp/ort
           sudo cp /tmp/ort/onnxruntime-linux-x64-1.15.1/lib/libonnxruntime.so* /usr/local/lib/
@@ -205,10 +217,35 @@ jobs:
         run: flutter pub get
 
       # Hält die Google-freie Variante dauerhaft kompilierbar
+      #
+      # DER WIEDERHOLUNSLAUF (08.11.2026): Der Kotlin-Compiler kommt über
+      # den Gradle-Plugin-Portal, das auf GitHub-Release-Assets
+      # weiterleitet. Waren die nicht erreichbar ("504 Gateway
+      # Time-out"), scheiterte der Build an
+      # ":audio_session:compileDebugKotlin" - der Fehler sah aus wie ein
+      # Kompilierfehler, war aber ein Downloadfehler.
+      #
+      # Deshalb wird NUR bei einem Netzwerkfehler erneut versucht. Ein
+      # echter Compilerfehler bricht sofort ab (sonst würde ein
+      # Programmierfehler dreimal so lange dauern und danach immer noch
+      # als "Timeout" dastehen). Der Test bleibt streng: der Build muss
+      # am Ende erfolgreich sein.
       - name: F-Droid Debug-Build (ohne Firebase)
-        run: >
-          flutter build apk --debug
-          --flavor fdroid --dart-define=FDROID=true
+        run: |
+          for versuch in 1 2 3; do
+            if flutter build apk --debug --flavor fdroid --dart-define=FDROID=true 2>&1 | tee /tmp/build.log; then
+              exit 0
+            fi
+            if grep -qE "Could not (download|GET|resolve)|504 Gateway|Connection reset|Connection timed out|timed out|UnknownHost" /tmp/build.log; then
+              echo "::warning::Netzwerkfehler beim Abhaengen-Abruf (Versuch $versuch von 3). Es wird erneut versucht."
+              sleep 20
+            else
+              echo "::error::Der Build ist an einem echten Fehler gescheitert (kein Netzwerkproblem) - kein weiterer Versuch."
+              exit 1
+            fi
+          done
+          echo "::error::Der Build ist nach drei Versuchen an einem Netzwerkproblem gescheitert."
+          exit 1
 
   play-build:
     runs-on: ubuntu-latest
@@ -243,10 +280,27 @@ jobs:
 
       # Hält die Play-Variante dauerhaft kompilierbar (Pendant zu
       # fdroid-build; kompiliert MIT Google-Services-Plugin).
+      #
+      # Der Wiederholungslauf ist das Pendant zur Begruendung dort: Ein
+      # Downloadfehler beim Kotlin-Compiler sah aus wie ein
+      # Kompilierfehler und hat den Job gekillt. Nur Netzwerkfehler
+      # werden wiederholt, ein echter Compilerfehler bricht sofort ab.
       - name: Play Debug-Build (mit Firebase-Plugin)
-        run: >
-          flutter build apk --debug
-          --flavor play
+        run: |
+          for versuch in 1 2 3; do
+            if flutter build apk --debug --flavor play 2>&1 | tee /tmp/build.log; then
+              exit 0
+            fi
+            if grep -qE "Could not (download|GET|resolve)|504 Gateway|Connection reset|Connection timed out|timed out|UnknownHost" /tmp/build.log; then
+              echo "::warning::Netzwerkfehler beim Abhaengen-Abruf (Versuch $versuch von 3). Es wird erneut versucht."
+              sleep 20
+            else
+              echo "::error::Der Build ist an einem echten Fehler gescheitert (kein Netzwerkproblem) - kein weiterer Versuch."
+              exit 1
+            fi
+          done
+          echo "::error::Der Build ist nach drei Versuchen an einem Netzwerkproblem gescheitert."
+          exit 1
 
   # Ohne diesen Job konnte assetlinks.json woertlich duplizierte
   # Fingerprints und eine unausgefuellte AASA-Vorlage enthalten, ohne dass

@@ -819,6 +819,56 @@ Radar-Bildschirms.
 > ohne dass irgendwo ein Fehler sichtbar wird. Der Selbsttest (eine
 > absichtlich kaputte Funktion) beweist, dass der Pruefer sie findet.
 
+#### Build 46, Nachpruefung: der Nachrichtenweg bis zum Ende belegt
+
+FRAGE DES BETREIBERS (08.11.2026): „Bist du dir jetzt sicher, dass der
+Chat und alle Modi reibungslos laufen?"
+
+Die ehrliche Antwort war: **nein**. Zwei Dinge waren zu dem Zeitpunkt
+unbelegt - und eines davon war ein Fehler in meiner eigenen Pruefung:
+Der erste Live-Nachweis hat eine **Nutzlast abgelegt, die keine war**
+(base64 von „Hallo"). Damit war die Server-Kette belegt, aber **nicht
+die Verschluesselung**. Wenn die Krypto kaputt waere, kaemen die
+Nachrichten weiterhin nicht an - und genau das war die gemeldete
+Symptom.
+
+**Was jetzt belegt ist (live geprueft, nicht vermutet):**
+
+- `test/signal_first_message_test.dart` beweist an den echten
+  Bausteinen der Bibliothek: die **erste** Nachricht traegt den PreKey
+  und laesst sich **ohne vorhandene Sitzung** entschluesseln. Eine
+  unbekannte Person kann die erste Nachricht also ueberhaupt lesen.
+- `test/live_prekey_bundle_test.dart` holt das **echte** Bundle eines
+  echten Kontos vom Server und prueft die Signatur des Signed Pre
+  Keys gegen die Identity-Key. Passt die nicht, kann die App keine
+  Sitzung aufbauen und damit **keine** Nachricht verschluesseln -
+  ohne dass irgendwo ein Fehler sichtbar wird.
+- `test/live_message_flow_test.dart` macht den ganzen Weg in einem
+  Lauf: beidseitiger Like -> **Funke** -> PreKey-Bundle holen ->
+  Sitzung bauen -> Nachricht verschluesseln -> Relay ablegen ->
+  abholen. Die Nutzlast im Relay enthaelt den Klartext nicht.
+
+> **Die wichtigste Lehre:** Mein Verdacht, die Krypto sei kaputt, war
+> **falsch**. Der Test hat es widerlegt, **bevor** die App angefasst
+> wurde. Genau dafuer ist der Test da: ein Verdacht, der aus einem Test
+> kommt, ist eine Vermutung - ein Verdacht, der durch einen Test
+> widerlegt ist, ist eine Tatsache.
+
+> **Und die Grenzen, ehrlich benannt:** Der P2P-Direktkanal (Offer ->
+> Answer -> ICE) ist auf zwei echten Geraeten **nie** durchgelaufen.
+> Ohne TURN kein P2P hinter CGNAT (der Serverweg funktioniert, ist
+> aber langsamer). Bild- und Sprachnachrichten sind nicht
+> Ende-zu-Ende geprueft. Der Login auf dem Emulator scheitert am
+> CAPTCHA, deshalb sind die Bildschirmablaeufe ueber Widget-Tests
+> belegt statt ueber eine Sitzung auf einem Geraet. Ausfuehrlich in
+> `releases/v0.10.0/TESTANLEITUNG.md`, Abschnitt 7.
+
+> **Das Werkzeug gegen diese Klasse:** `tool/cleanup_transit_testdata.sql`
+> raeumt die Testdaten der Live-Nachweise weg (zwei Likes, ein Match)
+> und prueft danach, dass nichts mehr da ist. Ohne das bliebe beim
+> Betreiber ein Phantom-Funke zurueck - ein Funke, den er nicht
+> ausgeloest hat.
+
 #### Build 44: der Funke erzeugt jetzt einen echten Funke
 
 BEFUND (07.11.2026, Betreiber, nach dem Test auf zwei echten

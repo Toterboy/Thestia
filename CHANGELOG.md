@@ -1414,6 +1414,8 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     *Und die Regel daraus: Bevor gepusht wird, laufen Analyzer und
     Tests. Der CI ist die letzte Instanz, keine erste.*
 
+### Nachtrag: Build 42 bis 46 (07./08.11.2026) - die zweite Befundrunde und die Verifikation
+
 43. **Das Relay hat nie funktioniert - Nachrichten kamen nicht an.**
     BEFUND (07.11.2026, Betreiber): „Nachrichten kommen noch immer
     nicht an."
@@ -1504,6 +1506,83 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     Repository ist auch angewandt) und
     `tool/check_release_version.py` (die ausgelieferten Artefakte
     tragen den aktuellen Code).
+
+51. **Die Verschluesselung ist belegt - und mein Verdacht war falsch.**
+     FRAGE DES BETREIBERS (08.11.2026): „Bist du dir jetzt sicher, dass
+     der Chat und alle Modi reibungslos laufen?"
+
+     Die ehrliche Antwort war: **nein**. Zwei Dinge waren unbelegt -
+     und das eine davon war ein echter Fehler in meiner Pruefung: Der
+     erste Live-Nachweis hat eine **Nutzlast abgelegt, die keine war**
+     (base64 von „Hallo"). Damit war die Server-Kette belegt, aber
+     **nicht die Krypto**. Wenn die Krypto kaputt waere, kaemen die
+     Nachrichten weiterhin nicht an - und genau das war die gemeldete
+     Symptom.
+
+     Drei Nachweise schliessen die Luecke jetzt:
+
+     - `test/signal_first_message_test.dart` beweist an den echten
+       Bausteinen der Bibliothek: die **erste** Nachricht traegt den
+       PreKey und laesst sich **ohne vorhandene Sitzung**
+       entschluesseln. Damit ist belegt, dass eine unbekannte Person
+       die erste Nachricht ueberhaupt lesen kann.
+     - `test/live_prekey_bundle_test.dart` holt das **echte** Bundle
+       eines echten Kontos vom Server und prueft die Signatur des
+       Signed Pre Keys gegen die Identity-Key. Passt die nicht, kann
+       die App keine Sitzung aufbauen und damit **keine** Nachricht
+       verschluesseln - ohne dass irgendwo ein Fehler sichtbar wird.
+     - Beide Tests sind live gelaufen und gruen.
+
+     **Die wichtigste Lehre daraus:** Mein Verdacht, die Krypto sei
+     kaputt, war **falsch**. Der Test hat es widerlegt, **bevor** die
+     App angefasst wurde. Genau dafuer ist der Test da - ein
+     Verdacht, der aus einem Test kommt, ist eine Vermutung; ein
+     Verdacht, der durch einen Test widerlegt ist, ist eine Tatsache.
+
+52. **Der komplette Weg laeuft jetzt in einem einzigen Test.**
+     `test/live_message_flow_test.dart` macht den ganzen Weg in einem
+     Lauf: beide Konten liken sich -> es entsteht ein **Funke**
+     (bzw. ein Match) -> das PreKey-Bundle wird geholt -> die Sitzung
+     wird gebaut -> die Nachricht wird **verschluesselt** -> im Relay
+     abgelegt -> vom Empfaenger abgeholt.
+
+     Live geprueft: alles gruen. Und die Nutzlast, die im Relay
+     landet, enthaelt den Klartext **nicht** - sie ist verschluesselt.
+
+     Das entschluesseln selbst passiert dort bewusst **nicht**: es
+     braucht den privaten PreKey des Empfaengers, und der liegt nur auf
+     dem Geraet, das ihn erzeugt hat (der Server kennt nur den
+     oeffentlichen Teil). Die Krypto ist stattdessen in den beiden
+     Tests oben belegt - zusammen ergibt das die vollstaendige Kette.
+
+     Der PreKey-Endpunkt gibt das Bundle eines Partners nur heraus,
+     wenn zwischen beiden eine **Beziehung** besteht (Match oder
+     Transit-Signal); sonst antwortet er mit 404 „nicht verfuegbar".
+     Das ist richtig so - ohne Beziehung bekommt niemand die
+     Schluessel eines Fremden. Die Live-Tests bauen die Beziehung
+     deshalb vorher auf und pruefen dabei gleich, ob der beidseitige
+     Like wirklich einen Match ergibt (Befund 44).
+
+53. **Was damit nicht belegt ist - und was aufgeraeumt wird.**
+     Die Live-Tests legen echte Zeilen an (zwei Likes, ein Match).
+     `tool/cleanup_transit_testdata.sql` nimmt sie wieder weg und
+     prueft danach, dass nichts mehr da ist; die Konten selbst bleiben
+     unberuehrt.
+
+     **Ehrlich benannt** (ausfuehrlich in `releases/v0.10.0/
+     TESTANLEITUNG.md`, Abschnitt 7):
+
+     - Der **P2P-Direktkanal** (Offer -> Answer -> ICE) ist auf zwei
+       echten Geraeten **nie** durchgelaufen. Er braucht die beiden
+       Handys nebeneinander.
+     - **Ohne TURN** kein P2P hinter CGNAT. Der Weg ueber den Server
+       funktioniert, ist aber langsamer.
+     - **Bild- und Sprachnachrichten** sind nicht Ende-zu-Ende
+       geprueft (sie nehmen einen anderen Weg als der Nachrichtentext).
+     - Der **Login auf dem Emulator** scheitert am CAPTCHA. Die
+       Bildschirmablaeufe (Radar-Dialoge, Dating-Hour, Audio-Player,
+       Profilvorschau) sind deshalb ueber **Widget-Tests** belegt, nicht
+       ueber eine Sitzung auf einem Geraet.
 
 
 ## [0.10.0] - 2026-10-24 (Build 31)
