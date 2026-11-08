@@ -1,0 +1,21 @@
+Sicherere Verbindungen
+
+Die App prueft ihre verschluesselten Verbindungen jetzt strenger als
+vorher. Dazu kommt ein aktuelleres WebRTC - damit sind auch die
+Verbindungen zwischen zwei Geraeten auf einem sicheren Stand.
+
+Der Chat laeuft stabiler
+
+Nachrichten kommen zuverlaessiger an, der Hintergrund des Chats
+verschwindet nicht mehr, und ein "Zuzwinken" im Radar meldet sich
+wieder.
+
+Fehlerbehebungen
+
+- Der Ende-zu-Ende-Chat funktioniert wieder: jede Uebertragung wurde
+  zuvor stillschweigend verworfen
+- Ein gegenseitiges Like erzeugt jetzt sofort einen Funke
+- Der Chat-Hintergrund verschwindet nicht mehr
+- Beim Wechsel vom Transit Spark in den Chat wird gefragt, ob das Radar
+  weiterlaufen soll
+- Ein "Auge mit Strich" blendet jetzt aus, statt abzulehnen

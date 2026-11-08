@@ -26,6 +26,7 @@ dieselbe SDK-Version fahren.
 Aufruf:
     python tool/check_sdk_security.py
 """
+import os
 import pathlib
 import re
 import subprocess
@@ -71,7 +72,20 @@ def flutter_version_aus_der_ci():
 
 
 def lokale_sdk_version():
-    for befehl in (["flutter", "--version"], ["dart", "--version"]):
+    """Die lokal installierte Flutter-/Dart-Version.
+
+    Flutter liegt nicht immer im PATH (z. B. bei einer manuellen
+    Installation). Dann hilft die Umgebungsvariable FLUTTER_BIN:
+
+        $env:FLUTTER_BIN = "C:\\Users\\...\\flutter\\bin\\flutter.bat"
+    """
+    kandidaten = []
+    aus_umgebung = os.environ.get("FLUTTER_BIN", "").strip()
+    if aus_umgebung:
+        kandidaten.append([aus_umgebung, "--version"])
+    kandidaten.append(["flutter", "--version"])
+    kandidaten.append(["dart", "--version"])
+    for befehl in kandidaten:
         try:
             ergebnis = subprocess.run(
                 befehl, capture_output=True, text=True,
@@ -80,7 +94,7 @@ def lokale_sdk_version():
         except (FileNotFoundError, OSError, subprocess.TimeoutExpired):
             continue
         ausgabe = (ergebnis.stdout or "") + (ergebnis.stderr or "")
-        if befehl[0] == "flutter":
+        if "flutter" in befehl[0].lower():
             treffer = re.search(r"Flutter\s+([0-9]+\.[0-9]+\.[0-9]+)", ausgabe)
         else:
             treffer = re.search(r"Dart SDK version:\s*([0-9]+\.[0-9]+\.[0-9]+)",

@@ -410,6 +410,15 @@ jobs:
           # aufrufen, und die Edge Function muss solche Aufrufe
           # ablehnen.
           python3 tool/check_push_duplicates.py
+          # BEFUND (08.11.2026): Der Dart-/Flutter-SDK war VOR 3.47.8 und
+          # damit vom Advisory GHSA-frr6-h895-5pxp (High) betroffen:
+          # `dart:io` vertraute auf Android die kompromittierten
+          # Zwischenzertifikate der CA eMudhra weiterhin an. Das Gate
+          # haelt die Sicherheitsuntergrenzen fest (SDK in der CI, lokal
+          # installierte Version, WebRTC-SDK) - ein Rueckfall auf eine
+          # alte Version wird damit rot, statt stillschweigend zu
+          # passieren.
+          python3 tool/check_sdk_security.py
           python3 tool/check_passkey_assetlinks.py
           python3 tool/check_dashes.py
           python3 tool/check_texts.py

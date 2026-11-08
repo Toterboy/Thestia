@@ -1563,7 +1563,25 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      deshalb vorher auf und pruefen dabei gleich, ob der beidseitige
      Like wirklich einen Match ergibt (Befund 44).
 
-55. **Sicherheitspruefung gegen bekannte Schwachstellen (08.11.2026).**
+56. **Build 48: das SDK ist aktualisiert - die letzte Luecke ist zu.**
+     Das Dart-/Flutter-SDK stand auf **3.44.6 / Dart 3.12.2** und war
+     damit vom Advisory GHSA-frr6-h895-5pxp (High) betroffen. Jetzt laeuft
+     der Build auf **Flutter 3.47.9 / Dart 3.13.7** (das aktuelle Stable
+     mit dem Fix). Die CI pinnt die Version jetzt fest, und
+     `tool/check_sdk_security.py` ist **blockierend** im CI: ein
+     Rueckfall auf eine alte Version wird rot, statt stillschweigend zu
+     passieren.
+
+     **Warum das erst jetzt wirkt:** Der Fix steckt in der Binary - ein
+     SDK-Update allein genuegt nicht. Erst der neue Build traegt ihn auf
+     die Geraete. Wer noch Build 47 (oder aelter) installiert hat,
+     benutzt weiterhin den alten Trust-Store; die App weist ihn im
+     Startbildschirm darauf hin (Mindestversions-Gate).
+
+     **Der Formatter hat sich mit Dart 3.13 minimal geaendert** (zwei
+     Dateien wurden angepasst) - kein Grund, den Sprung zu verschieben.
+
+57. **Sicherheitspruefung gegen bekannte Schwachstellen (08.11.2026).**
      BEFUND (Betreiber): „Check im Internet einmal, ob es bestimmte
      Sicherheitsluecken gibt, die Thestia haben koennte und pruef die App
      dann darauf."
@@ -1637,6 +1655,21 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      und `jose` (nicht verwendet), der Pub-Entpack-CVE (Dart zu neu),
      `libwebrtc` (Video-Leak - Thestia nutzt WebRTC nur fuer Text) und
      `onnxruntime` (Modell kommt aus dem Asset und ist SHA-256-geprueft).
+     **Und der Server:** Das Produktivsystem laeuft auf **PostgreSQL
+     17.6**; die 17er-Linie ist bei **17.11**. Dazwischen liegen 39
+     CVEs, 25 davon mit CVSS ab 7.0. Geprueft wurde jede einzelne gegen
+     die App: `pgcrypto` ist installiert, aber die CVE liegt in der
+     PGP-**Entschluesselung** (die App nutzt `crypt()` fuer die PIN, und
+     das `extensions`-Schema ist fuer den Client nicht exponiert);
+     `regexp` ist ueber den Transit-Notiztext erreichbar, aber der Text
+     wird auf 140 Zeichen gekuerzt; `intarray`, `spi` und `pg_trgm` sind
+     nicht installiert; `oidvector` liegt in `pg_catalog` und nicht im
+     exponierten `public`-Schema. **Kein betroffener Pfad ist von der
+     App aus erreichbar.** Die PostgreSQL-Version gehoert trotzdem zur
+     Supabase-Plattform und laesst sich aus dem Repository heraus nicht
+     aendern - das Update muss der Betreiber im Supabase-Dashboard
+     anstossen.
+
      Das vollstaendige Audit mit Quellen liegt in
      `docs/SICHERHEITSPRUEFUNG-2026-11-08.md`.
 

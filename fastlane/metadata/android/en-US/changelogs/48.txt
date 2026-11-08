@@ -1,0 +1,20 @@
+Safer connections
+
+The app now checks its encrypted connections more strictly than
+before. On top of that it ships a more current WebRTC, so the
+connections between two devices are on a secure footing as well.
+
+A more stable chat
+
+Messages arrive more reliably, the chat background no longer
+disappears, and a "wink" in the radar reports itself again.
+
+Fixes
+
+- The end-to-end chat works again: every transfer was previously
+  discarded without notice
+- A mutual like now creates a spark right away
+- The chat background no longer disappears
+- When you switch from Transit Spark to a chat, you are now asked
+  whether the radar should keep running
+- An "eye with a slash" now hides the like instead of rejecting it

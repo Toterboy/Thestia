@@ -308,8 +308,9 @@ class SupabaseStorageService {
       // SICHERHEIT (08.11.2026): strikter Pinning-Client statt des
       // System-Root-Stores - sonst umging ein vom System akzeptiertes
       // Zertifikat das Pinning (Advisory GHSA-frr6-h895-5pxp).
-      final res = await IOClient(CertPinning.pinnedHttpClient())
-          .get(Uri.parse(url));
+      final res = await IOClient(
+        CertPinning.pinnedHttpClient(),
+      ).get(Uri.parse(url));
       if (res.statusCode != 200) {
         if (kDebugMode) {
           log(

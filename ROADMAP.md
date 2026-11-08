@@ -869,6 +869,56 @@ Symptom.
 > Betreiber ein Phantom-Funke zurueck - ein Funke, den er nicht
 > ausgeloest hat.
 
+#### Build 48: die Sicherheitspruefung gegen bekannte Luecken
+
+FRAGE DES BETREIBERS (08.11.2026): „Check im Internet einmal, ob es
+bestimmte Sicherheitsluecken gibt, die Thestia haben koennte und pruef
+die App dann darauf."
+
+**Die Methode:** Alle 274 Pakete aus `pubspec.lock` wurden gegen die
+OSV-Datenbank (Google) und die GitHub Advisory Database abgefragt, dazu
+der WebRTC-SDK, die Flutter-Engine (Skia, libpng), der Dart-SDK, die
+GitHub Actions und die Maven-Abhaengigkeiten des Android-Builds. Jede
+gefundene Luecke wurde gegen den eigenen Code geprueft.
+
+**Das Ergebnis:** Kein einziges der 274 Pakete ist von einer bekannten
+Advisory betroffen. Zwei Luecken waren es - der **Flutter-/Dart-SDK**
+und der **WebRTC-SDK im lokalen Fork**.
+
+**Luecke 1 (High, GHSA-frr6-h895-5pxp): der Dart-/Flutter-SDK war zu
+alt.** Im Oktober 2026 wurden die privaten Schluessel von acht
+Zwischenzertifikaten der CA eMudhra oeffentlich als kompromittiert
+gemeldet. Wer sie hat, kann gueltige TLS-Zertifikate fuer beliebige
+Domains FAELSCHEN. `dart:io` prueft auf Android mit einem eingebauten
+BoringSSL und liest die Sperrliste des Betriebssystems NICHT - ein
+Angreifer im Netzpfad kann also ein gefaelschtes Zertifikat fuer
+`*.supabase.co` vortaeuschen. Betroffen: Flutter < 3.47.8, Dart <
+3.13.7. Thestia hatte 3.44.6 / 3.12.2.
+
+**Die App-Pruefung:** Drei Datenpfade liefen ungeschuetzt - Supabase
+**Realtime** (WebSocket), die Passkey-Registrierung und der
+Storage-URL-Download. Sie gingen ueber den System-Root-Store, und Dart
+ruft den Pin-Callback nur auf, wenn die System-Validierung
+**fehlgeschlagen** ist: ein vom System akzeptiertes Zertifikat umging
+das Pinning also vollstaendig. Behoben: alle drei laufen jetzt ueber
+den **gepinnten** Client mit leerem Root-Store (fail-closed). Supabase
+REST und das WebRTC-Signaling waren bereits gepinnt; Play Integrity
+und FCM laufen nativ und nutzen den Trust-Store des Betriebssystems.
+
+**Luecke 2 (Medium): der WebRTC-SDK im lokalen Fork.** `flutter_webrtc`
+ist in Thestia kein Pub-Paket, sondern ein Fork. Er zog den nativen
+WebRTC-SDK aus Maven: `144.7559.09` - mit der kompromittierten
+eMudhra-CA noch in der eigenen CA-Liste. Behoben: jetzt `150.7871.04`,
+exakt die Version des Upstream-1.6.3 („drop compromised eMudhra CA
+root").
+
+> **Das Werkzeug, das die Klasse fängt:**
+> `tool/check_sdk_security.py` haelt die Sicherheitsuntergrenzen fest
+> (SDK-Version der CI, lokal installierte Version, WebRTC-SDK) und ist
+> blockierend im CI. Ein Rueckfall auf eine alte SDK-Version wird rot,
+> statt stillschweigend zu passieren. Das vollstaendige Audit mit allen
+> Quellen liegt in `docs/SICHERHEITSPRUEFUNG-2026-11-08.md`.
+
 #### Build 46, Nachpruefung II: eine Benachrichtigung pro Ereignis
 
 BEFUND (08.11.2026, Betreiber): „Keine doppelten Benachrichtigungen fuer
