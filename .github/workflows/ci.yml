@@ -419,6 +419,14 @@ jobs:
           # alte Version wird damit rot, statt stillschweigend zu
           # passieren.
           python3 tool/check_sdk_security.py
+          # BEFUND (08.11.2026): Zwei Sicherheitsmechanismen waren
+          # STUMM, weil die Policy "No direct app_config access"
+          # (USING false) den direkten PostgREST-Zugriff der App
+          # blockierte: der Update-Hinweis fuer zu alte Clients erschien
+          # nie und die Notbremse fuer Transit Spark griff nicht. Das
+          # Gate fragt genau so ab, wie es die App tut (mit einem echten
+          # Benutzer-Token) - ohne die Schluessel im CI sagt es SKIP.
+          python3 tool/check_app_config_readable.py
           python3 tool/check_passkey_assetlinks.py
           python3 tool/check_dashes.py
           python3 tool/check_texts.py

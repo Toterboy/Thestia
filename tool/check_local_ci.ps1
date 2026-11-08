@@ -239,6 +239,7 @@ if (Soll 'static-checks') {
         (G 'Uebrige statische Pruefer (Push-Reife)' @($py, 'tool/check_push_readiness.py'))
         (G 'Uebrige statische Pruefer (Push-Duplikate)' @($py, 'tool/check_push_duplicates.py'))
         (G 'Uebrige statische Pruefer (SDK-Sicherheit)' @($py, 'tool/check_sdk_security.py'))
+        (G 'Uebrige statische Pruefer (app_config lesbar)' @($py, 'tool/check_app_config_readable.py'))
         (G 'Uebrige statische Pruefer (Passkey)' @($py, 'tool/check_passkey_assetlinks.py'))
         (G 'Uebrige statische Pruefer (Gedankenstriche)' @($py, 'tool/check_dashes.py'))
         (G 'Uebrige statische Pruefer (Texte)' @($py, 'tool/check_texts.py'))

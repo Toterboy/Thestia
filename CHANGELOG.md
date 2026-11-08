@@ -1597,6 +1597,56 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      der Grund, warum ein Update nie „nur ein Update" ist - es gehoert
      immer mit einem vollstaendigen Release-Durchlauf zusammen.
 
+58. **Zwei Sicherheitsmechanismen waren stumm - jetzt sind sie an.**
+     BEFUND (08.11.2026, Betreiber): „kannst du das update machen?"
+     (das Mindestversions-Gate). Beim Setzen des Gates fand sich:
+     **Das Gate hat noch nie funktioniert.**
+
+     Die App liest `app_config` direkt ueber PostgREST
+     (`lib/services/app_config_service.dart`). Die Policy aus Migration
+     034 („No direct app_config access") hat aber `USING (false)` fuer
+     die Rolle `authenticated` - der Client bekam also IMMER eine
+     leere Liste. Live geprueft: HTTP 200 mit `[]`.
+
+     **Damit waren zwei Mechanismen stumm:**
+     - `min_app_version_build`: der Update-Hinweis beim Start fuer zu
+       alte Clients erschien **nie**. Der Wert wurde gesetzt (9, 29, 30
+       - jetzt 48), war aber unerreichbar. Alte Builds liefen weiter -
+       und deren Zertifikatspruefung akzeptiert die gesperrten
+       Zwischenzertifikate noch (Advisory GHSA-frr6-h895-5pxp, High).
+     - `transit_spark_enabled`: die **Notbremse** fuer Transit Spark -
+       der Schalter, mit dem der Betreiber das Feature abschalten
+       kann, wenn der BLE-Geraetetest nicht besteht - war ebenfalls
+       stumm. Der Code behandelt den Wert als „fail-open" (Feature
+       an), also hat der Schalter nichts bewirkt.
+
+     **Behoben (Migration 202):** Genau die zwei Werte, die die App
+     ausdruecklich abfragt, sind jetzt fuer angemeldete Clients lesbar.
+     Die interne Konfiguration (AAL2-Pflicht,
+     E-Mail-Bestaetigungspflicht, Aufbewahrungsfristen, Quiz-Abklingzeit)
+     bleibt gesperrt.
+
+     **Warum der Entwurf trotzdem richtig war:** Der Entwurf war
+     richtig - `app_config` ist eine interne Konfiguration und soll
+     nicht wholesale lesbar sein. Aber die beiden Werte, die die App
+     braucht, muessen es sein.
+
+     **Und warum es nicht auffiel:** Beide Aufrufe behandeln einen
+     fehlenden Wert als „fail-open" - kein Update-Hinweis, Feature an.
+     Weder am Bildschirm noch im Log war zu sehen, dass die Schalter
+     nicht ankommen. Genau die Fehlerklasse, die sich in den letzten
+     Wochen wiederholt hat.
+
+     **Das Werkzeug dagegen:** `tool/check_app_config_readable.py`
+     fragt live genau so ab, wie es die App tut (mit einem echten
+     Benutzer-Token) und schlaegt an, wenn ein benoetigter Wert fehlt
+     ODER ein interner Wert lesbar ist. Ohne die Schluessel sagt es
+     SKIP, damit der CI nicht rot wird.
+
+     **Und das Mindestversions-Gate selbst (Migration 201) steht jetzt
+     auf 48** - mit dem Fail-Fast-Beweis, dass der Wert wirklich
+     gesetzt ist.
+
 57. **Sicherheitspruefung gegen bekannte Schwachstellen (08.11.2026).**
      BEFUND (Betreiber): „Check im Internet einmal, ob es bestimmte
      Sicherheitsluecken gibt, die Thestia haben koennte und pruef die App
