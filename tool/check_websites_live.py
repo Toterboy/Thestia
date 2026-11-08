@@ -22,7 +22,15 @@ ZWEI FEHLALARME, DIE DIESES SKRIPT NICHT MEHR MACHT (08.11.2026):
 
 Aufruf:
     python tool/check_websites_live.py
+    python tool/check_websites_live.py --host https://beispiel.pages.dev
+
+WAS DER AUFZUG-PRUEFER KANN (08.11.2026): Mit "--host" laesst sich
+  jeder weitere Host pruefen - etwa das Cloudflare-Pages-Projekt, auf
+  das der Publish-Ordner vor dem DNS-Umstellen hochgeladen wird. So
+laesst sich der Wechsel pruefen, BEVOR thestia.de auf den neuen
+Hoster zeigt (der alte Stand bleibt dann unangetastet).
 """
+import argparse
 import json
 import os
 import pathlib
@@ -78,6 +86,14 @@ def lade_urls():
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Prueft die LIVE-Websites (beide Domains).")
+    parser.add_argument(
+        "--host", action="append", default=[], metavar="URL",
+        help="Ein weiterer Host, der geprueft werden soll (z. B. das "
+             "Cloudflare-Pages-Projekt vor dem DNS-Umstellen).")
+    args = parser.parse_args()
+
     print("=" * 74)
     print("LIVE-PRUEFUNG DER WEBSITES")
     print("=" * 74)
@@ -167,7 +183,11 @@ def main() -> int:
             fehler += 1
 
     print()
+    fehler = pruefe_header("https://thestia.de", fehler)
+
+    print()
     print("  ===== Die Passkey-Datei (Android-App-Links) =====")
+    fehler = pruefe_assetlinks_identisch("https://thestia.de", fehler)
     code, koerper, _ = hole("https://thestia.de/.well-known/assetlinks.json")
     if code != 200:
         print("    X  /.well-known/assetlinks.json -> HTTP %s" % code)
@@ -218,12 +238,149 @@ def main() -> int:
                 fehler += 1
 
     print()
+    fehler += pruefe_zusatzhosts(args.host)
+    print()
+    print("  ===== Der Auth-Host: X-Robots-Tag (noindex) =====")
+    #
+    # BEFUND (08.11.2026): Bei Netlify sperrt eine domain-bezogene
+    # Regel in _redirects die robots.txt des Auth-Hosts. Cloudflare
+    # Pages kann solche Regeln nicht - dort muss der Header
+    # "X-Robots-Tag: noindex" die Sperre uebernehmen (die Datei
+    # _headers setzt ihn fuer https://auth.thestia.de/*).
+    code, _, kopf = hole("https://auth.thestia.de/")
+    tag = {k.lower(): v for k, v in kopf.items()}.get("x-robots-tag", "")
+    if "noindex" in tag.lower():
+        print("    OK  https://auth.thestia.de liefert X-Robots-Tag: %s"
+              % tag)
+    else:
+        print("    X  https://auth.thestia.de liefert keinen "
+              "X-Robots-Tag: noindex - der Sicherheitscheck waere "
+              "indexierbar (der Deploy ist aelter als das Repository)")
+        fehler += 1
+
+    print()
     if fehler:
         print("FEHLER: %d Punkt(e) - die Websites sind NICHT fehlerfrei."
               % fehler)
         return 1
     print("OK: die Websites sind fehlerfrei.")
     return 0
+
+
+SICHERHEITS_HEADER = {
+    "x-content-type-options": "nosniff",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "x-frame-options": "DENY",
+    "permissions-policy": "geolocation=()",
+    "strict-transport-security": "max-age=",
+    "content-security-policy": "frame-ancestors",
+}
+
+
+def pruefe_header(domain: str, fehler: int) -> int:
+    """Die Sicherheits-Header, die der Host tatsaechlich liefert.
+
+    BEFUND (08.11.2026): Die Datei _headers wird beim Hochladen
+    ausgewertet - aber OB sie ausgewertet wird, sieht man erst am
+    Live-Host. Wird ein Hoster gewechselt, ist das die erste Frage
+    (Cloudflare Pages akzeptiert _headers, aber mit eigenen Regeln
+    zur Einrueckung).
+
+    Deshalb wird hier nicht die Datei geprueft, sondern die ANTWORT
+    des Servers.
+    """
+    print("  ===== Die Sicherheits-Header (live) =====")
+    code, _, kopf = hole(domain + "/")
+    if code != 200:
+        print("    X  %-28s nicht erreichbar (HTTP %s)" % (domain, code))
+        return fehler + 1
+    klein = {k.lower(): v for k, v in kopf.items()}
+    for name, muss_in in SICHERHEITS_HEADER.items():
+        wert = klein.get(name)
+        if wert is None:
+            print("    X  %-28s %s fehlt" % (domain, name))
+            fehler += 1
+        elif muss_in.lower() not in wert.lower():
+            print("    X  %-28s %s = %s (erwartet: %s)"
+                  % (domain, name, wert[:60], muss_in))
+            fehler += 1
+        else:
+            print("    OK  %-28s %s" % (domain, name))
+    return fehler
+
+
+def pruefe_assetlinks_identisch(domain: str, fehler: int) -> int:
+    """Die live ausgelieferte Datei muss der im Ordner entsprechen.
+
+    BEFUND (08.11.2026): Die Datei assetlinks.json im Publish-Ordner
+    nennt die Fingerabdruecke, gegen die Android die Zertifikatskette
+    des Webservers prueft. Ein veralteter Deploy liefert die alte
+    Fassung - die Passkey-Anmeldung auf Android scheitert dann, ohne
+    dass irgendwo ein Fehler zu sehen ist.
+
+    Deshalb wird hier der Inhalt verglichen, nicht nur die Syntax.
+    """
+    lokal = (PUBLISH / "assetlinks.json").read_bytes()
+    code, koerper, _ = hole(domain + "/.well-known/assetlinks.json")
+    if code != 200:
+        print("    X  %-28s /.well-known/assetlinks.json -> HTTP %s"
+              % (domain, code))
+        return fehler + 1
+    if koerper.strip() != lokal.strip():
+        print("    X  %-28s die live Datei weicht vom Publish-Ordner ab - "
+              "der Deploy ist aelter als das Repository" % domain)
+        return fehler + 1
+    print("    OK  %-28s /.well-known/assetlinks.json ist identisch mit "
+          "dem Publish-Ordner" % domain)
+    return fehler
+
+
+def pruefe_zusatzhosts(hosts: list) -> int:
+    """Prueft weitere Hosts (z. B. ein Cloudflare-Pages-Projekt).
+
+    Der Aufruf dient dem Hosterwechsel: Der Publish-Ordner wird auf
+    das neue Projekt hochgeladen und DIESES wird geprueft - solange
+    thestia.de noch auf den alten Hoster zeigt. Erst wenn hier
+    alles gruen ist, wird der DNS-Record umgestellt.
+    """
+    if not hosts:
+        return 0
+    fehler = 0
+    for raw in hosts:
+        domain = raw.strip().rstrip("/")
+        if not domain.startswith("http"):
+            domain = "https://" + domain
+        print()
+        print("  ===== %s (Zusatzhost) =====" % domain)
+        status, _, _ = hole(domain + "/")
+        print("    Startseite: HTTP %s%s" % (status, "" if status == 200
+                                            else "   <-- FEHLER"))
+        if status != 200:
+            fehler += 1
+        for pfad in lade_urls():
+            code, _, kopf = hole(domain + pfad)
+            if code == 200:
+                continue
+            if code in (301, 302, 308):
+                # Eine Umleitung ist in Ordnung, wenn das ZIEL existiert.
+                # Netlify macht aus "/datenschutz/" eine 301 auf
+                # "/datenschutz" (die kanonische Form).
+                ziel = kopf.get("Location", "")
+                if ziel:
+                    if ziel.startswith("/"):
+                        ziel = domain + ziel
+                    ziel_code, _, _ = hole(ziel)
+                    if ziel_code == 200:
+                        continue
+                print("    X  %-42s HTTP %s -> %s (Ziel: %s)"
+                      % (pfad, code, ziel, ziel_code))
+                fehler += 1
+                continue
+            print("    X  %-42s HTTP %s" % (pfad, code))
+            fehler += 1
+        fehler = pruefe_header(domain, fehler)
+        fehler = pruefe_assetlinks_identisch(domain, fehler)
+    return fehler
 
 
 if __name__ == "__main__":

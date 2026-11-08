@@ -156,6 +156,109 @@ def main() -> int:
                 print("  FEHLER: %s zeigt auf zwei Ziele" % quelle)
 
     # -----------------------------------------------------------------
+    # 2c) Cloudflare-Tauglichkeit
+    # -----------------------------------------------------------------
+    #
+    # BEFUND (08.11.2026, Hosterwechsel-Vorbereitung): Der Betreiber
+    # sucht einen Hoster, weil die Netlify-Credits fast leer sind und
+    # er ofter deployen moechte. Der naheliegende Kandidat ist
+    # Cloudflare Pages: 0 Euro, unbegrenzte Bandbreite - und ein Deploy
+    # ist dort ein ORDNER-UPLOAD, also ein Deploy OHNE Build-Minuten.
+    #
+    # Cloudflare Pages liest dieselben zwei Dateien (_redirects,
+    # _headers), aber mit einer ENGEREN Syntax. Beide Unterschiede
+    # sind live in der Cloudflare-Doku belegt (Stand 08.11.2026):
+    #
+    #   * _redirects kennt nur "[Quelle] [Ziel] [Code]" mit einer ZAHL
+    #     als Code. Das Netlify-"!" ("erzwungen, auch wenn an der
+    #     Quelladresse eine Datei liegt") wird nicht verstanden - die
+    #     Regel wird ignoriert.
+    #   * _redirects kennt KEINE domain-bezogenen Regeln ("Domain-level
+    #     redirects: nicht unterstuetzt"). Die Regel fuer die eigene
+    #     robots.txt des Auth-Hosts funktioniert dort also nicht.
+    #
+    # Deshalb wird hier beides geprueft:
+    #   1) Regeln, die Cloudflare braucht, duerfen keine Netlify-
+    #      Syntax tragen.
+    #   2) Fuer die eine Regel, die nur Netlify kann, muss der Ersatz
+    #      vorhanden sein: der X-Robots-Tag-Header in _headers.
+    #
+    # Ohne diese Pruefung faellt der Unterschied erst auf dem
+    # Live-Host auf - bei der Datei, die am wichtigsten ist: ohne
+    # /.well-known/assetlinks.json funktionieren die Passkeys auf
+    # Android nicht mehr.
+    print("\n2c) Cloudflare-Tauglichkeit:")
+    NETLIFY_ONLY = "https://auth.thestia.de/robots.txt"
+    regeln = []
+    for z in (A / "_redirects").read_text(encoding="utf-8").split("\n"):
+        s = z.strip()
+        if not s or s.startswith("#"):
+            continue
+        teile = s.split()
+        quelle, ziel = teile[0], teile[1]
+        code = teile[2] if len(teile) > 2 else ""
+        regeln.append((quelle, ziel, code))
+
+    ausrufezeichen = []
+    domains = []
+    for quelle, _ziel, code in regeln:
+        if code.endswith("!"):
+            ausrufezeichen.append((quelle, code))
+        if quelle.startswith("http"):
+            domains.append(quelle)
+
+    # (1) Das Ausrufezeichen: nur bei der einen Regel erlaubt, fuer die
+    #     es noetig ist (dort liegt /robots.txt als Datei im Ordner).
+    erlaubt = {NETLIFY_ONLY}
+    for quelle, code in ausrufezeichen:
+        if quelle in erlaubt:
+            print("  OK  %s: Ausrufezeichen noetig (Netlify-only)" % quelle)
+            continue
+        fehler.append(
+            "_redirects: die Regel '%s' traegt ein Ausrufezeichen (%s) - "
+            "Cloudflare Pages versteht nur eine Zahl als Code und wuerde "
+            "die ganze Regel ignorieren. Das Ausrufezeichen ist nur bei "
+            "'%s' erlaubt." % (quelle, code, NETLIFY_ONLY))
+        print("  FEHLER %s: Ausrufezeichen (%s)" % (quelle, code))
+    if not ausrufezeichen:
+        print("  OK  keine Regel mit Netlify-Ausrufezeichen")
+
+    # (2) Domain-bezogene Regeln: nur die eine, und dafuer muss der
+    #     Ersatz in _headers stehen.
+    headers_inhalt = (A / "_headers").read_text(encoding="utf-8")
+    for quelle in domains:
+        if quelle != NETLIFY_ONLY:
+            fehler.append(
+                "_redirects: die domain-bezogene Regel '%s' kann nur "
+                "Netlify (nicht Cloudflare Pages)." % quelle)
+            print("  FEHLER %s: domain-bezogene Regel" % quelle)
+            continue
+        print("  OK  %s: domain-bezogen (nur Netlify - bei Cloudflare "
+              "greift der Ersatz unten)" % quelle)
+        ersatz = False
+        block = []
+        for zeile in headers_inhalt.split("\n"):
+            if zeile.strip() and not zeile.startswith((" ", "\t")) \
+                    and not zeile.startswith("#"):
+                if block and any("X-Robots-Tag" in b and "noindex" in b
+                                 for b in block):
+                    ersatz = True
+                block = []
+            block.append(zeile)
+        if block and any("X-Robots-Tag" in b and "noindex" in b
+                         for b in block):
+            ersatz = True
+        host = quelle.split("/")[2]
+        if not ersatz:
+            fehler.append(
+                "_headers: es fehlt ein 'X-Robots-Tag: noindex' fuer %s - "
+                "Cloudflare Pages kann die domain-bezogene Regel nicht "
+                "abbilden, dann waere der Auth-Host indexierbar." % host)
+            print("  FEHLER %s: kein X-Robots-Tag-Ersatz in _headers" % host)
+        else:
+            print("  OK  %s: X-Robots-Tag: noindex ist gesetzt" % host)
+
+    # -----------------------------------------------------------------
     # 3) _headers
     # -----------------------------------------------------------------
     print("\n3) _headers:")

@@ -201,9 +201,18 @@ android-log*.txt
 # Die englische Fassung (03.11.2026) ist die zweite Quelle: sie
 # erzeugt privacy_policy_en.dart und passkey-assets/en/datenschutz.html
 # und muss aus demselben Grund mit im Schritt bleiben.
+#
+# Dritte Ausnahme (08.11.2026): die Hosting-Anleitung. Sie gehoert
+# mit ins Repo, weil sie die Schritte des Hosterwechsels beschreibt
+# und dabei auf Dateien verweist, die es nur im Repository gibt
+# (passkey-assets/, tool/). Eine Anleitung, die nur auf der eigenen
+# Platte liegt, waere beim naechsten Rechner weg - und der
+# Hosterwechsel ist genau die Sorte Aufgabe, die in drei Monaten
+# wieder vorkommt.
 docs/*
 !docs/DATENSCHUTZ.md
 !docs/DATENSCHUTZ_EN.md
+!docs/WEBSITE-HOSTING.md
 
 # Der komplette releases-Ordner gehoert NIE ins Repository: er
 # enthaelt die gebauten APKs und AABs (mehrere hundert MB pro Datei)

@@ -38,14 +38,44 @@
 
 # /.well-known/-Pfade auf die Dateien im Root (Netlify Drop ignoriert
 # Ordner mit fuehrendem Punkt).
-/.well-known/assetlinks.json               /assetlinks.json               200!
+#
+# WICHTIG (08.11.2026, Hosterwechsel-Vorbereitung): Hier steht KEIN
+# Ausrufezeichen hinter dem Status. Das "!" ist Netlify-Syntax und
+# bedeutet "diese Regel auch anwenden, wenn an der Quelladresse eine
+# Datei liegt". Cloudflare Pages kennt nur die Form
+# "[Quelle] [Ziel] [Code]" mit einer ZAHL als Code - eine Regel mit "!"
+# wuerde dort ignoriert, und /.well-known/assetlinks.json gaebe 404.
+#
+# Das waere kein Schoenheitsfehler: Android laedt genau diese Datei, um
+# die App mit der Webseite zu verknuepfen (Digital Asset Links). Ohne
+# sie funktionieren die Passkeys auf Android nicht mehr.
+#
+# Fuer Netlify aendert sich NICHTS: dort gibt es keine Datei an der
+# Quelladresse (der Ordner .well-known existiert im Publish-Ordner
+# nicht) - das "!" war dort ohne Wirkung. Dasselbe gilt fuer die
+# 301-Regel unten. Beweis: alle Adressen ohne ".html" (Datenschutz,
+# Impressum, Kinderschutz ...) werden seit dem 03.11.2026 ueber genau
+# solche Regeln OHNE "!" ausgeliefert und sind live erreichbar.
+/.well-known/assetlinks.json               /assetlinks.json               200
 
 # Die eigene robots.txt fuer den Auth-Host. Der Host-Rewrite wirkt NUR
 # auf diesen Host und kann keinen anderen Host freigeben.
+#
+# HIER ist das "!" noetig: /robots.txt gibt es im Publish-Ordner
+# (die oeffentliche Fassung). Ohne "!" wuerde Netlify diese Datei
+# ausliefern und der Auth-Host waere frei indexierbar - die
+# CAPTCHA-Seite waere wieder crawlbar.
+#
+# Cloudflare Pages kann KEINE domain-bezogenen Regeln ("Domain-level
+# redirects: nicht unterstuetzt", Doku vom 08.11.2026). Diese Regel
+# wird dort also ignoriert. Der Ersatz dafuer steht in _headers:
+# "X-Robots-Tag: noindex" fuer https://auth.thestia.de/* - das ist die
+# standardsmaessige Form, der Google und Bing folgen, und sie gilt fuer
+# thestia.de NICHT (die oeffentliche Seite bleibt indexierbar).
 https://auth.thestia.de/robots.txt          /robots-auth.txt               200!
 
 # Die interne Betriebsnotiz gehoert nicht oeffentlich.
-/ASSETLINKS_ROOTDOMAIN.md                  /threat-model.md               301!
+/ASSETLINKS_ROOTDOMAIN.md                  /threat-model.md               301
 
 /datenschutz    /datenschutz.html  200
 /datenschutz/   /datenschutz.html  200

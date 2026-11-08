@@ -1835,6 +1835,105 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
        ueber eine Sitzung auf einem Geraet.
 
 
+59. **Die Passkey-Verknuepfung war kaputt - und niemand konnte es sehen.**
+     BEFUND (08.11.2026, bei der Vorbereitung des Hosterwechsels):
+     Die Datei `assetlinks.json` nennt die Fingerabdruecke, gegen die
+     Android die **Zertifikatskette des Webservers** prueft. Live
+     gemessen: die Kette von `thestia.de` hat fuenf Zertifikate, und
+     **keiner** der drei eingetragenen Fingerabdruecke stand darin.
+
+     Das alte Gate hat das nicht gesehen: `check_passkey_assetlinks.py`
+     verglich die LIVE-Datei nur mit der LOKALEN Datei ("3 Zertifikate
+     identisch") - die echte TLS-Kette pruefte niemand. Ein
+     veralteter Deploy fiel damit nicht auf, obwohl die
+     Passkey-Anmeldung auf Android daran haengt.
+
+     **Dazu kam ein zweiter Grund, warum die Datei nicht altern konnte:**
+     Das Leaf-Zertifikat wird alle 90 Tage erneuert (Let's Encrypt).
+     Steht nur das Leaf in der Liste, ist sie danach ungueltig. Die
+     Datei enthaelt deshalb jetzt die **stabilen** Glieder der Kette
+     (Root und Zwischenzertifikate) - plus die beiden App-Keys (Debug
+     und Release, `CN=Thestia`), denn die gehoeren zur App und nie zum
+     Webserver.
+
+     **Das Gate prueft jetzt die Kette** und meldet, wenn ein stabiles
+     Glied in der Datei fehlt. Das Werkzeug `tool/update_assetlinks.py`
+     liest die Kette live, schreibt die Datei und macht die Gegenprobe -
+     nach einem Hosterwechsel einmal laufen lassen, dann passt es
+     wieder.
+
+60. **Der Hosterwechsel ist vorbereitet - die Website kann auf
+     Cloudflare Pages.**
+     BEFUND (Betreiber): "Meine Credits bei Netlify sind fast leer und
+     ich brauche mehr, damit ich oefter deployen kann." Netlify Free hat
+     300 Credits pro Monat, und nach der aktuellen Preisliste kostet
+     ein **Production-Deploy 15 Credits** - das sind 20 Deploys im
+     Monat, egal ob mit oder ohne Build. Genau daran stoesst er.
+
+     **Die Loesung ist ein Hoster, der gar keinen Build braucht:**
+     Cloudflare Pages. Ein Deploy ist dort ein **Ordner-Upload**
+     (Drag & Drop), also kein Build und keine Credits. 0 EUR, keine
+     Bandbreitengrenze (Fair Use), 100 Domains und 20.000 Dateien je
+     Projekt (hier: 2 und 49). Die Website selbst ist 2,04 MB
+     statisches HTML - die Auslieferung ist ueberall gleich schnell,
+     es gibt keinen Leistungsunterschied.
+
+     **Der Publish-Ordner ist jetzt bei beiden Hostern einsatzbereit.**
+     Zwei Syntax-Unterschiede wurden live in der Cloudflare-Doku
+     belegt und im Ordner ausgeraeumt:
+
+     - `_redirects` kennt bei Cloudflare nur `[Quelle] [Ziel] [Code]`
+       mit einer **Zahl** als Code. Das Netlify-Ausrufezeichen ("!"
+       = erzwungen) haette die ganze Regel ignoriert - und das betraf
+       genau die Datei `/.well-known/assetlinks.json`, ohne die die
+       Passkeys auf Android ausfallen. Fuer Netlify aendert sich
+       nichts, weil an diesen Quelladressen keine Datei liegt.
+     - Cloudflare kann **keine** domain-bezogenen Regeln. Die Regel, die
+       `auth.thestia.de` eine gesperrte `robots.txt` gibt, wird dort
+       ignoriert. Der Ersatz steht jetzt in `_headers`:
+       `X-Robots-Tag: noindex` fuer `https://auth.thestia.de/*` - die
+       standardsmaessige Form, die Google und Bing folgen. `thestia.de`
+       bleibt indexierbar.
+
+     **Der Auth-Host ist damit an beiden Hostern gesperrt** - nur auf
+     zwei Wegen, weil die Hoster unterschiedliche Moeglichkeiten haben.
+
+     **Das Pruefen ist schaerfer geworden:**
+     `tool/check_publish_folder.py` prueft jetzt, dass der Ordner
+     keine Netlify-Syntax mehr traegt, die Cloudflare nicht kennt -
+     und dass der Ersatz fuer die domain-bezogene Regel wirklich
+     vorhanden ist. `tool/check_websites_live.py` kann mit `--host`
+     jeden weiteren Host pruefen (etwa das Pages-Projekt, BEVOR der
+     DNS umgestellt wird), prueft die Sicherheits-Header an der
+     **Antwort des Servers** statt an der Datei - und vergleicht die
+     live ausgelieferte `assetlinks.json` mit dem Publish-Ordner. Der
+     Deploy wird damit sichtbar, auch wenn er zurueckliegt.
+
+     **Die Anleitung liegt in `docs/WEBSITE-HOSTING.md`** (mit den
+     gemessenen DNS-Werten fuer die Mail und die Domain). Wichtig:
+     die **Apex-Domain** `thestia.de` geht bei Cloudflare Pages nur
+     ueber Cloudflare-DNS, die Subdomain `auth.thestia.de` per CNAME.
+     Die Nameserver werden erst umgestellt, **nachdem** der neue Host
+     geprueft ist - dann ist der Rollback eine Zeile.
+
+     **Ein Detail, das beim Umstellen leicht verloren geht:** die
+     DNS-Aufliste enthaelt die **DMARC-Record**
+     (`_dmarc.thestia.de`: `v=DMARC1; p=none; rua=mailto:rua@dmarc.
+     brevo.com`) neben den beiden MX-Eintraege fuer die Mail. Wird die
+     Domain zu Cloudflare gezogen, wandern alle Eintraege - wer nur
+     die MX-Records uebernimmt, verliert die DMARC-Policy im
+     Hintergrund. Ein DKIM-Eintrag wurde bei den ueblichen Selektoren
+     nicht gefunden (in der SPF-Liste steht ohnehin nur Spaceships
+     Weiterleitung).
+
+     **An der App aendert sich nichts:** die App laedt die
+     CAPTCHA-Seite von `https://auth.thestia.de/` - dieselbe Adresse
+     wie heute - und das Zertifikat der Website ist nicht gepinnt
+     (`cert_pinning.dart` pinnt nur Supabase und den Hugging-Face-
+     Router). Die einzige Kopplung ist die Passkey-Verknuepfung ueber
+     die RP-ID, und die laeuft ueber die `assetlinks.json` (Schritt 6
+     der Anleitung).
+
 ## [0.10.0] - 2026-10-24 (Build 31)
 
 ### Sicherheit
