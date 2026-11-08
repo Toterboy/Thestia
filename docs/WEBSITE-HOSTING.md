@@ -248,6 +248,87 @@ umgestellt, **nachdem** Schritt 3 gruen war.
   Wechsel des Zertifikats (das kann auch eine Erneuerung sein) die
   Kette neu lesen und die Datei neu schreiben.
 
+## Die Web-Version der App (v0.12.0) - was sie beim Hosting kostet
+
+Die Roadmap (v0.12.0, "Web-Bridge, Transit-Reachability & Zero-Install
+Gast-Verbindungen") nennt **Flutter Web auf Codeberg Pages**. Das ist
+richtig - aber die Web-App stellt andere Anforderungen als die
+2-MB-Website, und die sind deutlich schaerfer:
+
+| | Die Website heute | Die Flutter-Web-App |
+|---|---|---|
+| Groesse | 49 Dateien, 2,04 MB | `main.dart.js` (2-6 MB) + CanvasKit/WASM (rund 8 MB) + Fonts |
+| Erster Aufruf | 0,8 MB | **10-20 MB** (danach cached) |
+| Bandbreite | 15 GB/Monat bei Netlify = 19.000 Aufrufe | dieselbe Grenze = **etwa 1.000 Aufrufe** |
+| Tiefe Links | 40 Rewrite-Regeln | **SPA-Fallback** (unbekannte URL -> index.html) |
+
+**Damit faellt Netlify Free fuer die Web-App weg:** 20 Credits je GB
+bedeuten 300 Credits = 15 GB = rund 1.000 Erstaufrufe im Monat. Fuer
+die Web-App ist Netlify also keine Option - dort muss ein Hoster her,
+der Traffic nicht einzeln abrechnet (Hetzner-VPS: 20 TB inklusive,
+netcup/Infomaniak: flache Tarife) oder gar keine Grenze kennt
+(Cloudflare, Codeberg).
+
+**Ein sinnvoller Split:** Die **Rechtsseiten** (49 Dateien, 2 MB) bleiben
+auf Netlify - die kosten fast keine Credits. Die **Web-App** kommt auf
+den EU-Hoster unter `web.thestia.de` (eine CNAME-Zeile bei Spaceship,
+kein Nameserver-Wechsel, keine Mail-Risiken). Damit bleibt die
+Domain `thestia.de` unangetastet und die Passkey-Verknuepfung
+(`assetlinks.json` auf `auth.thestia.de`) zeigt weiter auf die
+Netlify-Kette.
+
+### Die Kandidaten fuer die Web-App
+
+| | Codeberg Pages | netcup Cloud Web Hosting | Hetzner Cloud + Caddy | Cloudflare Pages |
+|---|---|---|---|---|
+| Land | DE (Codeberg e.V., Berlin; eigener Text: "Hosted in Europe") | DE (Hetzner-Gruppe) | DE | US-Firma, EU-Knoten (Frankfurt) |
+| Preis | 0 EUR | ab **2,17 EUR/Monat** (SSH, Let's Encrypt) | **4,49-5,99 EUR/Monat**, 20 TB Traffic inklusive | 0 EUR |
+| Deploy | Forgejo Actions: die CI baut den Flutter-Web-Build | rsync aus der bestehenden GitHub-CI | rsync aus der bestehenden GitHub-CI | Drag & Drop |
+| Eigene Domain mit HTTPS | ja (CNAME/ALIAS, Zertifikat automatisch) | ja | ja | ja (die Apex-Domain braucht Cloudflare-DNS) |
+| SPA-Fallback | ja (eigene 404-Seite) | `.htaccess` | Caddyfile | `_redirects` |
+| Nacharbeit | Flutter-SDK in der CI (grosser Download); das Repository muss oeffentlich sein | `.htaccess` + zwei vhosts | Server pflegen (Updates, Firewall) | keine |
+
+**Details zu Codeberg Pages** (Doku vom 08.11.2026): eigene Domains
+gehen (Schritt 1 CNAME/ALIAS, Schritt 2 Autorisierung, Schritt 3
+Deploy-Ziel), Zertifikate werden automatisch bezogen, und es gibt
+"custom 404 pages, redirects, and rewrites" - damit laesst sich der
+SPA-Fallback bauen. Zwei Stolpersteine: die alte Pages-v2 ist fuer
+Neuzugaenge gesperrt (nur git-pages), und **wenn die DNS spaeter bei
+Cloudflare liegt, muessen die Codeberg-Records auf "DNS only"
+(graue Wolke) stehen** - sonst kann Codeberg die Zertifikate und
+Umleitungen nicht bedienen.
+
+### Studenten-Rabatte (alle Angaben live geprueft am 08.11.2026)
+
+**Infomaniak (Schweiz) hat ein echtes Studentenprogramm:** **1
+Webhosting (250 GB, 20 Websites) + 1 Mail-Service kostenlos** fuer die
+Dauer des Studiums - maximal vier Jahre, danach jaehrlich mit den
+gleichen Unterlagen zu verlaengern. Die Produkte sind identisch mit
+den bezahlten, nur die Rechnung entfaellt.
+
+Bedingungen: Studentenausweis oder Schulbescheinigung (aktuell, mit
+Schule, laufendem Schuljahr und Namen), Personalausweis (vor und
+beidseitig) und die **offizielle Schueler-E-Mail-Adresse** der
+Schule. Die Pruefung dauert laut Infomaniak hoechstens 24 Stunden.
+Die Domain ist **nicht** enthalten - man darf aber die **eigene**
+(also `thestia.de`) fuer die freien Produkte verwenden. Let's Encrypt
+ist bei jedem Hosting enthalten.
+
+| Anbieter | Studentenrabatt |
+|---|---|
+| **Infomaniak (CH)** | **Webhosting + Mail kostenlos** (bis 4 Jahre, jaehrlich erneuern) |
+| **netcup (DE)** | kein Studentenprogramm, aber dauerhafte Gutscheine (6 EUR Gutschein -> 30 % auf die Webhosting-Tarife, 1 Monat gratis auf einen vServer) |
+| **Hetzner (DE)** | kein Studentenprogramm; 20 EUR Startguthaben bei Aktionscodes; Einstieg 4,49-5,99 EUR/Monat |
+| **IONOS (DE)** | Studentenrabatt ueber **UNiDAYS** (Partnerprogramm) plus Aktionsgutscheine (in den Coupon-Listen bis 94 % im ersten Jahr) |
+| **all-inkl (DE)** | kein Studentenrabatt gefunden; 10 Domains, 250 GB, SSH-Zugang |
+| **Codeberg (DE)** | 0 EUR fuer alle - dafuer braucht es keinen Rabatt |
+
+**Wichtig:** Ob die Programme greifen, haengt daran, ob noch ein
+Schul-/Studentenausweis vorgelegt werden kann. UNiDAYS
+(myunidays.com) ist die Sammelstelle fuer die meisten Studentenrabatte;
+der GitHub Student Developer Pack bringt bei studentischer Mail-Adresse
+zusaetzlich Copilot/Codespaces - fuer das Hosting aber nichts.
+
 ## Nebenbei: das alte Vercel-Projekt (7,77 von 10 GB belegt)
 
 BEFUND (08.11.2026, bei der Suche nach dem Credit-Problem): Es gibt

@@ -1970,6 +1970,46 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      `thestia.de` weiterleiten (302 waere wirkungslos fuer die
      Suchmaschinen).
 
+62. **Die Web-Version braucht einen anderen Hoster als die Website.**
+     BEFUND (Betreiber, 08.11.2026): "Ich moechte ja wie auch in der
+     Roadmap steht, spaeter auch ne web version der App anbieten. Mir
+     ist EU sehr wichtig (ideal DE oder CH)."
+
+     Die Roadmap (v0.12.0, "Web-Bridge, Transit-Reachability &
+     Zero-Install") nennt **Flutter Web auf Codeberg Pages** - das ist
+     moeglich: Codeberg Pages kann eigene Domains mit Zertifikat
+     ("Hosted in Europe", Codeberg e.V., Berlin) und kennt eigene
+     404-Seiten fuer den SPA-Fallback. **ABER:** die Web-App stellt
+     andere Anforderungen als die 2-MB-Website. `main.dart.js`
+     (2-6 MB) plus CanvasKit/WASM (rund 8 MB) bedeuten **10-20 MB pro
+     Erstaufruf** - bei Netlify sind das 20 Credits je GB, also rund
+     **1.000 Aufrufe im Monat** (die Website schafft 19.000). Netlify
+     Free faellt fuer die Web-App damit weg.
+
+     **Der sinnvolle Split:** die Rechtsseiten bleiben auf Netlify (sie
+     kosten fast keine Credits), die Web-App kommt unter
+     `web.thestia.de` auf einen EU-Hoster - eine CNAME-Zeile bei
+     Spaceship, **kein Nameserver-Wechsel, keine Mail-Risiken**, und
+     `auth.thestia.de` (Passkey-Verknuepfung) bleibt unangetastet.
+
+     **Die EU-Kandidaten** (Preise live geprueft am 08.11.2026):
+     netcup Cloud Web Hosting ab **2,17 EUR/Monat** (SSH, Let's
+     Encrypt), Hetzner Cloud + Caddy **4,49-5,99 EUR/Monat** mit 20 TB
+     Traffic inklusive, Codeberg Pages 0 EUR, Cloudflare Pages 0 EUR
+     (US-Firma, aber EU-Knoten - und fuer eine Website ohne
+     personenbezogene Daten datenschutzrechtlich unkritisch).
+
+     **UND: es gibt Studentenrabatte.** **Infomaniak (Schweiz)** gibt
+     **1 Webhosting (250 GB, 20 Websites) + 1 Mail-Service kostenlos**
+     fuer die Dauer des Studiums (bis vier Jahre, jaehrlich mit den
+     gleichen Unterlagen erneuern) - Bedingungen: Studentenausweis
+     oder Schulbescheinigung, Personalausweis und die offizielle
+     Schueler-Mail-Adresse der Schule; die Domain muss man nicht
+     kaufen, die eigene (`thestia.de`) darf verwendet werden.
+     netcup hat dauerhafte Gutscheine (30 % auf die Webhosting-Tarife),
+     IONOS einen UNiDAYS-Rabatt, Hetzner 20 EUR Startguthaben. Die
+     Angebote im Detail: `docs/WEBSITE-HOSTING.md`.
+
 ## [0.10.0] - 2026-10-24 (Build 31)
 
 ### Sicherheit
