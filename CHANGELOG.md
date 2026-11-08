@@ -1686,6 +1686,22 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      aendern - das Update muss der Betreiber im Supabase-Dashboard
      anstossen.
 
+     **Das Update wurde am 08.11.2026 durchgefuehrt.** Die Plattform
+     hatte es freigegeben (17.6.1.147 -> 17.11.0.018, ohne
+     Validierungsfehler und ohne Warnungen). Der Wechsel dauerte rund
+     fuenf Minuten.
+
+     **Das Backup, das davor lag** (fuer diesen Plan gab es weder einen
+     PITR-Restore-Punkt noch ein Plattform-Backup - beides ist ein
+     Pro-Feature):
+     `releases/backup-db-2026-11-08/pg-dump-data.sql` (275 Zeilen in 41
+     Tabellen, mit Header und `COMMIT`) und dieselben Daten als JSON.
+     **Die Wiederherstellung wurde getestet**, nicht nur behauptet: Der
+     Import lief in einer Transaktion, die Zeilenzahlen stimmten exakt,
+     und nach dem Rollback war der Datenbestand unveraendert. Das
+     Schema steht weiterhin in den Migrationen des Repositorys - die
+     Datei enthaelt nur die Daten.
+
      Das vollstaendige Audit mit Quellen liegt in
      `docs/SICHERHEITSPRUEFUNG-2026-11-08.md`.
 
