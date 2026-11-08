@@ -24,6 +24,7 @@ Aufruf:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import pathlib
@@ -262,6 +263,55 @@ def check_live(local_android: set[str]) -> None:
             if only_local:
                 fail.append(f'{host} fehlen lokal vorhandene Zertifikate: '
                             f'{len(only_local)} - Live-Datei ist veraltet')
+
+        # BEFUND (08.11.2026): Der Vergleich oben prueft die LIVE-DATEI
+        # gegen die LOKALE DATEI - nicht gegen die echte
+        # TLS-Zertifikatskette. Eine veraltete Datei faellt damit NICHT
+        # auf: Am 08.11.2026 standen in assetlinks.json drei
+        # Fingerabdruecke, von denen KEINER in der live ausgelieferten
+        # Kette stand - die Passkey-Anmeldung auf Android waere gescheitert
+        # (oder haette zumindest nicht mehr verifiziert werden koennen).
+        #
+        # Android prueft die Kette des Servers gegen die Liste. Deshalb
+        # wird hier die Kette gelesen und geprueft, ob die eingetragenen
+        # Fingerabdruecke IN ihr stehen.
+        #
+        # Das Leaf wird bewusst NICHT verlangt: es wird alle 90 Tage
+        # erneuert (Let's Encrypt) und waere dann ungueltig. Die stabilen
+        # Glieder (Root und Zwischenzertifikate) muessen drin sein.
+        try:
+            import socket
+            with socket.create_connection((host, 443), timeout=25) as s:
+                with ctx.wrap_socket(s, server_hostname=host) as ss:
+                    glieder = ss.get_verified_chain()
+            kette = []
+            for der in glieder:
+                h = hashlib.sha256(der).hexdigest().upper()
+                kette.append(norm(':'.join(h[i:i + 2] for i in range(0, len(h), 2))))
+            kette_set = set(kette)
+            # Die Datei muss alle STABILEN Glieder der Kette enthalten.
+            # Das Leaf (Index 0) ist ausgenommen: es wird alle 90 Tage
+            # erneuert (Let's Encrypt) und waere dann ungueltig.
+            #
+            # ZUSAETZLICHE Eintraege sind erlaubt: der Fingerabdruck des
+            # Debug-Keystores gehoert zur APP, nicht zum Webserver - er
+            # steht nie in der TLS-Kette, ist aber fuer den Debug-Build
+            # noetig (sonst verifiziert der Debug-Build die Passkeys
+            # nicht). Deshalb wird hier nur die Gegenrichtung geprueft:
+            # fehlt ein stabiles Kettenglied in der Datei, ist die
+            # Verknuepfung kaputt.
+            fehlend = [f for f in kette[1:] if f not in local_android]
+            print(f'  {host:22s} Kette: {len(glieder)} Zertifikate  '
+                  f'{"alle stabilen dabei" if not fehlend else "FEHLT: %d" % len(fehlend)}')
+            if fehlend:
+                fail.append(
+                    f'{host}: {len(fehlend)} stabile Glieder der TLS-Kette '
+                    f'stehen nicht in assetlinks.json - die Passkey-'
+                    f'Verknuepfung ist kaputt. Reparieren: '
+                    f'python tool/update_assetlinks.py')
+        except Exception as e:  # noqa: BLE001
+            warn.append(f'{host}: die Zertifikatskette liess sich nicht lesen '
+                        f'({e}) - der Ketten-Abgleich ist damit nicht gelaufen')
     if not AASA.exists():
         # Kein iOS-Release -> die Datei wird nicht mehr erwartet und
         # nicht mehr geprueft (siehe check_aasa oben).
