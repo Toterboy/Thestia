@@ -427,14 +427,6 @@ jobs:
           # Gate fragt genau so ab, wie es die App tut (mit einem echten
           # Benutzer-Token) - ohne die Schluessel im CI sagt es SKIP.
           python3 tool/check_app_config_readable.py
-      # Die tatsaechlich geschalteten Websites (BEFUND 08.11.2026).
-      # Nur informativ: der Stand haengt an einem Netlify-Deploy, den
-      # man nicht aus dem Repository erzwingen kann. Das Gate prueft BEIDE
-      # Domains - das Projekt-Gate daneben vergleicht nur auth.thestia.de
-      # mit dem Publish-Ordner und sieht die oeffentliche Seite gar nicht.
-      - name: "Live: die Websites (nur informativ, haengt am Netlify-Deploy)"
-        continue-on-error: true
-        run: python3 tool/check_websites_live.py
           python3 tool/check_passkey_assetlinks.py
           python3 tool/check_dashes.py
           python3 tool/check_texts.py
@@ -469,6 +461,15 @@ jobs:
       # Fehlzeichen ABSICHTLICH (der eine sucht danach, der andere zeigt
       # sie in der Doku) und sind deshalb ausgenommen - sonst wuerde die
       # Reparatur das Pruefmittel zerstoeren.
+
+      # Die tatsaechlich geschalteten Websites (BEFUND 08.11.2026).
+      # Nur informativ: der Stand haengt an einem Netlify-Deploy, den
+      # man nicht aus dem Repository erzwingen kann. Das Gate prueft BEIDE
+      # Domains - das Projekt-Gate daneben vergleicht nur auth.thestia.de
+      # mit dem Publish-Ordner und sieht die oeffentliche Seite gar nicht.
+      - name: "Live: die Websites (nur informativ, haengt am Netlify-Deploy)"
+        continue-on-error: true
+        run: python3 tool/check_websites_live.py
       - name: Mojibake (Doppelkodierung) pruefen
         run: python3 tool/check_mojibake.py --skip-known
 
