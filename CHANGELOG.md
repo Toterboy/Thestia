@@ -1563,6 +1563,83 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      deshalb vorher auf und pruefen dabei gleich, ob der beidseitige
      Like wirklich einen Match ergibt (Befund 44).
 
+55. **Sicherheitspruefung gegen bekannte Schwachstellen (08.11.2026).**
+     BEFUND (Betreiber): „Check im Internet einmal, ob es bestimmte
+     Sicherheitsluecken gibt, die Thestia haben koennte und pruef die App
+     dann darauf."
+
+     **Die Methode:** Alle 274 Pakete aus `pubspec.lock` wurden gegen die
+     OSV-Datenbank (Google) und die GitHub Advisory Database abgefragt,
+     dazu der WebRTC-SDK, die Flutter-Engine (Skia, libpng), der
+     Dart-SDK, die GitHub Actions und die Maven-Abhaengigkeiten des
+     Android-Builds. Jede gefundene Luecke wurde gegen den eigenen Code
+     geprueft.
+
+     **Das Ergebnis:** Kein einziges der 274 Pakete ist von einer
+     bekannten Advisory betroffen. Zwei Luecken waren es - der
+     **Flutter-/Dart-SDK** und der **WebRTC-SDK im lokalen Fork**.
+
+     **Luecke 1 (High): der Dart-/Flutter-SDK ist zu alt.**
+     Advisory GHSA-frr6-h895-5pxp (23.10.2026): Im Oktober 2026 wurden
+     die privaten Schluessel von acht Zwischenzertifikaten der CA
+     *eMudhra* oeffentlich als kompromittiert gemeldet. Wer sie hat,
+     kann gueltige TLS-Zertifikate fuer beliebige Domains FAELSCHEN.
+     `dart:io` prueft auf Android mit einem EINGEBAUTEN BoringSSL und
+     liest die Sperrliste des Betriebssystems NICHT - ein Angreifer im
+     Netzpfad kann also ein gefaelschtes Zertifikat fuer `*.supabase.co`
+     vortaeuschen. Betroffen: Flutter < 3.47.8 / Dart < 3.13.7.
+     Thestia hatte **3.44.6 / 3.12.2** - also **betroffen**.
+     (iOS, macOS und Web sind nicht betroffen.)
+
+     **Die App-Pruefung:** Drei Datenpfade liefen ungeschuetzt:
+     Supabase **Realtime** (WebSocket), die Passkey-Registrierung und
+     der Storage-URL-Download. Sie gingen ueber den System-Root-Store -
+     und Dart ruft den Pin-Callback nur auf, wenn die System-Validierung
+     FEHLGESCHLAGEN ist. Ein vom System akzeptiertes Zertifikat
+     umging das Pinning also vollstaendig.
+
+     **Behoben (wirkt sofort, ohne SDK-Update):**
+     - Der Realtime-WebSocket bekommt einen eigenen Transport mit dem
+       **gepinnten** Client (`lib/utils/pinned_realtime_transport.dart`).
+       Ueber diesen Kanal laufen Chat-Events, Transit-Signaling und
+       die Soft-Pings.
+     - Passkey und Storage nutzen den `IOClient` mit dem strikten
+       Pinning-Client (leerer Root-Store, fail-closed).
+     - Supabase REST und das WebRTC-Signaling waren bereits ueber den
+       strikten Client gepinnt. Play Integrity und FCM laufen nativ
+       und nutzen den Trust-Store des Betriebssystems (geschuetzt).
+
+     **Luecke 2 (Medium): der WebRTC-SDK im lokalen Fork.**
+     `flutter_webrtc` ist in Thestia kein Pub-Paket, sondern ein Fork
+     (`third_party/flutter_webrtc`). Er zog den nativen WebRTC-SDK aus
+     Maven: `io.github.webrtc-sdk:android:144.7559.09` - und der
+     enthaelt die kompromittierte eMudhra-CA noch in seiner eigenen
+     CA-Liste. **Behoben:** Die Version ist jetzt `150.7871.04` - exakt
+     die Version, die der Upstream-1.6.3 verwendet („drop compromised
+     eMudhra CA root"). Der Build laeuft durch.
+
+     **Luecke 3 (Mittel): die Flutter-Engine (Skia, libpng).** Beides
+     hatte 2026 Luecken, die nur ein SDK-Update behebt. Das Risiko ist
+     gering, weil die App keine fremden Webseiten rendert - aber es ist
+     nicht null.
+
+     **Noch offen: das SDK-Update** auf Flutter 3.47.9 / Dart 3.13.7
+     (das aktuelle Stable mit dem Fix). Es ist die Ursachenbehebung und
+     behebt auch die Engine-Luecken - aber es steckt erst in der
+     Binary, also sind danach ein Neubau und eine erneute Verteilung
+     noetig. `tool/check_sdk_security.py` prueft die Untergrenzen (SDK
+     in der CI, lokal installierte Version, WebRTC-SDK) und macht den
+     offenen Punkt sichtbar, statt ihn zu uebergehen.
+
+     **Geprueft und NICHT betroffen:** Guava (Build-Abhaengigkeit, nicht
+     im APK), die Firebase-Plugins (kein Firestore, FCM laeuft nativ),
+     `actions/download-artifact` (wird nicht verwendet), `dio_http2_adapter`
+     und `jose` (nicht verwendet), der Pub-Entpack-CVE (Dart zu neu),
+     `libwebrtc` (Video-Leak - Thestia nutzt WebRTC nur fuer Text) und
+     `onnxruntime` (Modell kommt aus dem Asset und ist SHA-256-geprueft).
+     Das vollstaendige Audit mit Quellen liegt in
+     `docs/SICHERHEITSPRUEFUNG-2026-11-08.md`.
+
 54. **Keine doppelten Benachrichtigungen fuer das Selbe.**
      BEFUND (08.11.2026, Betreiber): „Keine doppelten Benachrichtigungen
      fuer das Selbe."

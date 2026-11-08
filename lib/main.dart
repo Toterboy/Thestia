@@ -41,6 +41,7 @@ import 'package:thestia/utils/chat_backgrounds.dart';
 import 'package:thestia/utils/cert_pinning.dart';
 import 'package:thestia/utils/constants.dart';
 import 'package:thestia/utils/pinned_http_overrides.dart';
+import 'package:thestia/utils/pinned_realtime_transport.dart';
 import 'package:thestia/utils/best_effort.dart';
 
 /// Einstiegspunkt der App.
@@ -545,6 +546,15 @@ Future<void> _initializeSupabase() async {
       // `http` (IOClient) verpackt den dart:io-Client fuer den
       // PostgREST/Storage/Realtime-Stack von supabase_flutter.
       httpClient: IOClient(CertPinning.pinnedHttpClient(supabaseHost)),
+      // DER REALTIME-WEBSOCKET braucht einen eigenen Transport:
+      // realtime_client erzeugt ihn sonst mit `IOWebSocketChannel.connect`
+      // OHNE Client - also mit System-Root-Store und damit ausserhalb
+      // des Pinnings. Ueber diesen Kanal laufen Chat-Events, das
+      // Transit-Signaling und die Soft-Pings. (Sicherheitspruefung
+      // 08.11.2026, Advisory GHSA-frr6-h895-5pxp.)
+      realtimeClientOptions: const RealtimeClientOptions(
+        transport: gepinnterRealtimeTransport,
+      ),
     ).timeout(const Duration(seconds: 4));
   } on TimeoutException {
     debugPrint('[MAIN] Supabase.initialize Timeout (> 4s), Limit-Modus.');

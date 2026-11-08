@@ -76,6 +76,13 @@ dependencies:
   # HTTP-Client für REST-API (mit Zertifikat-Pinning)
   http: 1.6.0
 
+  # WebSocket-Kanal für Supabase Realtime. Wird DIREKT importiert, weil
+  # der Realtime-Verbindung ein eigener, gepinnter Client übergeben
+  # werden muss (der Standard-WebSocket umgeht das Pinning - siehe
+  # lib/utils/pinned_realtime_transport.dart). Exakt gepinnt auf die
+  # Version, die realtime_client 2.13.2 mitzieht.
+  web_socket_channel: 3.0.3
+
   # Kryptographische Hash-Funktionen (für Zertifikat-Pinning)
   crypto: 3.0.7
 

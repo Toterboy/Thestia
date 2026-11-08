@@ -56,7 +56,15 @@ if (kotlinExt?.hasProperty('compilerOptions')) {
 }
 
 dependencies {
-    implementation 'io.github.webrtc-sdk:android:144.7559.09'
+    // SICHERHEIT (08.11.2026): 144.7559.09 enthielt den WebRTC-SDK mit
+    // dem kompromittierten eMudhra-CA-Root (Intermediate-CA-Schluessel
+    // wurden im Oktober 2026 oeffentlich als kompromittiert gemeldet -
+    // Advisory GHSA-frr6-h895-5pxp, Severity High). Der Fix ist ab
+    // WebRTC-SDK 150.7871.04 (flutter_webrtc 1.6.3, 26.10.2026:
+    // "drop compromised eMudhra CA root"). Deshalb hier die Version
+    // aus 144 auf 150 angehoben - der reine Versionswechsel, ohne den
+    // lokalen Fork zu ersetzen.
+    implementation 'io.github.webrtc-sdk:android:150.7871.04'
     implementation 'com.github.davidliu:audioswitch:039a35aefab7747c557242fa216c9ea11743b604'
     implementation 'androidx.annotation:annotation:1.1.0'
     testImplementation 'junit:junit:4.13.2'

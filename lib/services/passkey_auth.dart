@@ -6,13 +6,14 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart' show IOClient;
 import 'package:passkeys_platform_interface/types/types.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:thestia/services/auth_exception.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/services/thestia_passkey_authenticator.dart';
+import 'package:thestia/utils/cert_pinning.dart';
 import 'package:thestia/utils/constants.dart';
 
 /// Kapselt die native Passkey-Anmeldung/-Registrierung.
@@ -133,7 +134,15 @@ class PasskeyAuth {
 
     final url =
         '${AppConstants.supabaseUrlBase}/auth/v1/passkeys/registration/options';
-    final antwort = await http.post(
+    // SICHERHEIT (08.11.2026): Der globale `http` nutzt den System-
+    // Root-Store; Dart ruft den Pin-Callback nur auf, wenn die
+    // System-Validierung fehlschlaegt. Ein Zertifikat, das das System
+    // akzeptiert, umging das Pinning also. Der strikte Client (leerer
+    // Root-Store) laesst den Callback IMMER laufen und lehnt ohne
+    // passenden Pin ab (fail-closed).
+    // Advisory: GHSA-frr6-h895-5pxp (eMudhra, High).
+    final client = IOClient(CertPinning.pinnedHttpClient());
+    final antwort = await client.post(
       Uri.parse(url),
       headers: {
         'apikey': AppConstants.supabasePublishableKey,

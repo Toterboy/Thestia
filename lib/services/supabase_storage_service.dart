@@ -3,11 +3,12 @@ import 'dart:developer';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart' show IOClient;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:thestia/services/auth_exception.dart';
 import 'package:thestia/services/avatar_crypto.dart';
 import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/cert_pinning.dart';
 import 'package:thestia/utils/constants.dart';
 
 /// Service für private Avatar-Speicherung in Supabase Storage.
@@ -304,7 +305,11 @@ class SupabaseStorageService {
         debugPrint('[Storage] Download-URL nicht erlaubt: $url');
         return null;
       }
-      final res = await http.get(Uri.parse(url));
+      // SICHERHEIT (08.11.2026): strikter Pinning-Client statt des
+      // System-Root-Stores - sonst umging ein vom System akzeptiertes
+      // Zertifikat das Pinning (Advisory GHSA-frr6-h895-5pxp).
+      final res = await IOClient(CertPinning.pinnedHttpClient())
+          .get(Uri.parse(url));
       if (res.statusCode != 200) {
         if (kDebugMode) {
           log(
