@@ -869,6 +869,45 @@ Symptom.
 > Betreiber ein Phantom-Funke zurueck - ein Funke, den er nicht
 > ausgeloest hat.
 
+#### Build 46, Nachpruefung II: eine Benachrichtigung pro Ereignis
+
+BEFUND (08.11.2026, Betreiber): „Keine doppelten Benachrichtigungen fuer
+das Selbe."
+
+**Die Ursache (live gemessen, nicht vermutet):** Der Like-Versand lief
+**zweimal** - einmal ueber den DB-Trigger (`notify_push_trigger`) und
+einmal ueber einen Aufruf der App (`notify-user` mit `kind='likes'`).
+Dazu kam der Transit-Weg: der legt fuer EINEN Funke drei Zeilen an
+(zwei technische Likes, ein Match, ein Soft-Ping) und erzeugte damit
+**vier** Push-Aufrufe. Beide Seiten bekamen je **zwei** Meldungen fuer
+ein Ereignis - und die Like-Meldung war inhaltlich falsch, denn im
+Radar wird kein Profil geliked, sondern gefunkt.
+
+**Das Werkzeug, das diese Klasse fängt:**
+`tool/measure_push_duplicates.sql` zaehlt die Push-Aufrufe, ohne dass
+eine einzige Nachricht rausgeht: die Zaehlung laeuft in einer
+Transaktion, und der pg_net-Worker sieht uncommittete Zeilen einer
+anderen Sitzung nicht. `tool/check_push_duplicates.py` macht daraus ein
+Gate (statisch: kein Client darf `notify-user` mit `kind='likes'` rufen;
+live: die vier Szenarien mit der Soll-Zahl), mit einem Selbsttest, der
+alle vier Fehlerquellen nachbaut.
+
+**Die Regel ab jetzt: ein Ereignis, eine Meldung.**
+
+- Ein technischer Transit-Like erzeugt keine Meldung
+  (`likes.source = 'transit'`).
+- Ein Like, aus dem ein Funke wird, erzeugt nur die Funke-Meldung -
+  der Match entsteht darum vor dem Like-Insert.
+- Ein Soft-Ping zu einem bestehenden Funke erzeugt keine Meldung (der
+  Ping bleibt fuer den Radar sichtbar).
+- `notify-user` lehnt Like-Pushes von Clients ab (HTTP 400,
+  `kind_server_only`) - der Like-Versand ist Sache des Servers.
+
+**Live gemessen:** Transit-Funke 4 -> 2 (je einer pro Seite),
+einseitiger Profil-Like 2 -> 1, gegenseitiger Like 4 -> 2, manueller
+„Zuzwinken" 0 -> 1 (der Trigger war seit der Secret-Umbenennung in
+Migration 146 tot).
+
 #### Build 44: der Funke erzeugt jetzt einen echten Funke
 
 BEFUND (07.11.2026, Betreiber, nach dem Test auf zwei echten

@@ -382,6 +382,22 @@ serve(async (req) => {
     title = String(body.title ?? "Thestia").slice(0, 100);
     text = String(body.body ?? "").slice(0, 200);
   } else {
+    // BEFUND (08.11.2026, Betreiber): "Keine doppelten Benachrichtigungen
+    // fuer das Selbe." Live gemessen (tool/measure_push_duplicates.sql):
+    // der Like-Versand lief ZWEIMAL - einmal ueber den DB-Trigger
+    // (notify_push_trigger) und einmal ueber einen Aufruf der App.
+    //
+    // Der Like-Versand ist jetzt ausschliesslich Sache des Servers: der
+    // Trigger weiss, ob aus dem Like ein Funke wird, und schickt dann
+    // nur EINE Meldung. Ein Client-Aufruf koennte das nicht wissen -
+    // er wuerde immer die zweite Meldung erzeugen. Deshalb wird er
+    // abgelehnt.
+    if (kind === "likes") {
+      return new Response(
+        JSON.stringify({ ok: false, reason: "kind_server_only" }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
     const fixed = clientTextsByKind[kind];
     if (!fixed) {
       // Client darf nur die unterstützten kinds auslösen.

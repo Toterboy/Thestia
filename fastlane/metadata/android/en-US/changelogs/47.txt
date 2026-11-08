@@ -1,0 +1,22 @@
+No more duplicate notifications
+
+One event, one notification. Some notifications used to arrive twice: a
+spark in the radar triggered two messages, and a like added an extra
+one even though the first had already said everything. Now every
+action results in exactly one notification.
+
+The "wink" reports itself again
+
+When you wink at someone in the radar, that person gets a notification
+again. It had gone missing for a while because a renamed key was being
+looked for in the background.
+
+Fixes
+
+- The end-to-end chat works again: every transfer was previously
+  discarded without notice
+- A mutual like now creates a spark right away
+- The chat background no longer disappears
+- When you switch from Transit Spark to a chat, you are now asked
+  whether the radar should keep running
+- An "eye with a slash" now hides the like instead of rejecting it

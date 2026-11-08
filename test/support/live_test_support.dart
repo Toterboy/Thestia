@@ -69,6 +69,14 @@ String? adminKey(Map<String, String> env) =>
     env['SUPABASE_SERVICE_ROLE_KEY'];
 
 /// Eine echte Sitzung fuer ein Konto (ueber den Admin-Magic-Link).
+///
+/// WARUM DER WIEDERHOLUNSLAUF: `flutter test` startet die Testdateien
+/// parallel. Jede Live-Test-Datei erzeugt fuer DIESELBEN beiden Konten
+/// einen Magic-Link - und ein zweiter Link fuer dieselbe Adresse
+/// entwertet den ersten. Ohne Wiederholung schlug deshalb ab und zu
+/// einer der beiden Live-Tests mit "Keine Sitzung fuer A/B" fehl
+/// (gemessen am 08.11.2026). Der Link wird deshalb bei einem
+/// fehlgeschlagenen verify neu erzeugt.
 Future<String?> sitzung(
   Map<String, String> env,
   String kontoId,
@@ -95,21 +103,26 @@ Future<String?> sitzung(
   final email = nutzer['email'] as String?;
   if (email == null) return null;
 
-  final link = await client.post(
-    Uri.parse('$url/auth/v1/admin/generate_link'),
-    headers: kopf,
-    body: jsonEncode({'type': 'magiclink', 'email': email}),
-  );
-  if (link.statusCode != 200) return null;
-  final hash = (jsonDecode(link.body) as Map)['hashed_token'] as String?;
+  for (var versuch = 0; versuch < 3; versuch++) {
+    final link = await client.post(
+      Uri.parse('$url/auth/v1/admin/generate_link'),
+      headers: kopf,
+      body: jsonEncode({'type': 'magiclink', 'email': email}),
+    );
+    if (link.statusCode != 200) continue;
+    final hash = (jsonDecode(link.body) as Map)['hashed_token'] as String?;
+    if (hash == null) continue;
 
-  final verify = await client.post(
-    Uri.parse('$url/auth/v1/verify'),
-    headers: {'apikey': publicKey},
-    body: jsonEncode({'type': 'magiclink', 'token_hash': hash}),
-  );
-  if (verify.statusCode != 200) return null;
-  return (jsonDecode(verify.body) as Map)['access_token'] as String?;
+    final verify = await client.post(
+      Uri.parse('$url/auth/v1/verify'),
+      headers: {'apikey': publicKey},
+      body: jsonEncode({'type': 'magiclink', 'token_hash': hash}),
+    );
+    if (verify.statusCode != 200) continue;
+    final token = (jsonDecode(verify.body) as Map)['access_token'] as String?;
+    if (token != null) return token;
+  }
+  return null;
 }
 
 /// Ein Aufruf einer Datenbank-Funktion (so wie die App sie ruft).

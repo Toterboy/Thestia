@@ -712,13 +712,10 @@ class _RandomChatScreenState extends ConsumerState<RandomChatScreen>
       } catch (e) {
         debugPrint('[RandomChat] Server-Like fehlgeschlagen: $e');
       }
-      // Push an die Person (sie sieht den Like in "Erhalten").
-      await bestEffort('invoke', () async {
-        await SupabaseService.client.functions.invoke(
-          'notify-user',
-          body: {'kind': 'likes', 'target_user_id': partner.id},
-        );
-      });
+      // BEFUND (08.11.2026, Betreiber): "Keine doppelten Benachrichtigungen
+      // fuer das Selbe." Der Push an die Person kommt vom DB-Trigger
+      // (notify_push_trigger) - der Server-Like oben loest ihn aus. Ein
+      // eigener Aufruf von notify-user erzeugte die ZWEITE Meldung.
     }
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

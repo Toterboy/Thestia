@@ -726,11 +726,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     if (match == null || !match.isQrContact) return;
     if (!SupabaseService.isInitialized) return;
     try {
+      // BEFUND (08.11.2026, Betreiber): "Keine doppelten Benachrichtigungen
+      // fuer das Selbe." Der Push kommt vom DB-Trigger
+      // (notify_push_trigger) - der Like-Insert loest ihn aus. Ein eigener
+      // Aufruf von notify-user erzeugte die ZWEITE Meldung.
       await ref.read(findYourMatchServiceProvider).likeUser(match.partner.id);
-      await SupabaseService.client.functions.invoke(
-        'notify-user',
-        body: {'kind': 'likes', 'target_user_id': match.partner.id},
-      );
     } catch (e) {
       debugPrint('[ChatDetail] Nachträgliches Like fehlgeschlagen: $e');
     }

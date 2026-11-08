@@ -1,4 +1,4 @@
-﻿-- 197: public.like_user erzeugt beim beidseitigen Like einen Funke
+-- 197: public.like_user erzeugt beim beidseitigen Like einen Funke
 --      und schluckt keinen Like mehr still
 --
 -- ZWEI BEFUNDE (07.11.2026, Betreiber):

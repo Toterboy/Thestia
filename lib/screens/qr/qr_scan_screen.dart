@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -104,19 +103,13 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
         return;
       }
 
-      // Push an die gescannte Person - sie sieht den Like sofort in
-      // "Erhalten". Nur Metadaten, serverseitig generierter Text
-      // (notify-user prüft Like-Beziehung + Einzel-Schalter).
-      try {
-        await SupabaseService.client.functions.invoke(
-          'notify-user',
-          body: {'kind': 'likes', 'target_user_id': peerId},
-        );
-      } catch (e) {
-        if (kDebugMode) {
-          debugPrint('[QR] Like-Push fehlgeschlagen: $e');
-        }
-      }
+      // BEFUND (08.11.2026, Betreiber): "Keine doppelten Benachrichtigungen
+      // fuer das Selbe." Der Push an die gescannte Person kommt vom
+      // DB-Trigger (notify_push_trigger) - der Like-Insert in Zeile 93
+      // loest ihn aus. Ein eigener Aufruf von notify-user hier erzeugte
+      // die ZWEITE, gleichlautende Meldung.
+      // Live gemessen (tool/measure_push_duplicates.sql): vorher 2
+      // Meldungen pro Like, jetzt 1.
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

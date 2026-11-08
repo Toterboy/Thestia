@@ -1563,6 +1563,56 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      deshalb vorher auf und pruefen dabei gleich, ob der beidseitige
      Like wirklich einen Match ergibt (Befund 44).
 
+54. **Keine doppelten Benachrichtigungen fuer das Selbe.**
+     BEFUND (08.11.2026, Betreiber): „Keine doppelten Benachrichtigungen
+     fuer das Selbe."
+
+     **Die Ursache (live gemessen, nicht vermutet):** Der Like-Versand
+     lief **zweimal**. Einmal ueber den DB-Trigger
+     (`notify_push_trigger`) und einmal ueber einen Aufruf der App
+     (`notify-user` mit `kind='likes'`). Dazu kam der Transit-Weg: der
+     legt fuer EINEN Funke drei Zeilen an - zwei technische Likes, ein
+     Match und einen Soft-Ping - und erzeugte damit **vier** Push-
+     Aufrufe. Beide Seiten bekamen je **zwei** Meldungen fuer ein
+     Ereignis, und die Like-Meldung war inhaltlich falsch: im Radar
+     wird kein Profil geliked, sondern gefunkt.
+
+     **Das Werkzeug, das zaehlt:** `tool/measure_push_duplicates.sql`
+     zaehlt die Push-Aufrufe, ohne dass eine einzige Nachricht rausgeht
+     (Transaktion plus ROLLBACK - der pg_net-Worker sieht uncommittete
+     Zeilen einer anderen Sitzung nicht). `tool/check_push_duplicates.py`
+     macht daraus ein Gate: statisch (kein Client darf `notify-user` mit
+     `kind='likes'` aufrufen, und die Edge Function muss solche Aufrufe
+     ablehnen) und live (die vier Szenarien).
+
+     **Die Regel ab jetzt: ein Ereignis, eine Meldung.**
+
+     - Ein technischer Transit-Like (kein Profil-Like) erzeugt **keine**
+       Meldung. Er ist ueber `likes.source = 'transit'` markiert.
+     - Ein Like, aus dem ein Funke wird, erzeugt **nur** die
+       Funke-Meldung. Der Match entsteht darum **vor** dem Like-Insert
+       (`like_user`, `create_match_if_mutual`).
+     - Ein Soft-Ping, zu dem es schon einen Funke gibt, erzeugt **keine**
+       Meldung. Der Ping bleibt - er macht den Funke im Radar sichtbar.
+     - `notify-user` lehnt Like-Pushes von **Clients** ab (HTTP 400,
+       `kind_server_only`). Der Like-Versand ist Sache des Servers.
+
+     **Live gemessen nach der Reparatur:**
+
+     | Ereignis | vorher | jetzt |
+     |---|---|---|
+     | Transit-Funke (beide Seiten) | 4 (je 2 pro Seite) | **2** (je 1 pro Seite) |
+     | einseitiger Profil-Like | 2 | **1** |
+     | gegenseitiger Like | 4 | **2** (der Match) + 0 (der zweite Like) |
+     | manueller „Zuzwinken" | 0 | **1** |
+
+     **Ein Fund, der dabei auffiel:** `notify_soft_ping_trigger` war
+     seit der Secret-Umbenennung (Migration 146) **tot** - es suchte
+     `wisp_internal_secret` (gibt es nicht mehr) und schickte den
+     alten Header `x-wisp-internal`. Der manuelle „Zuzwinken" hat
+     darum seit dem 06.11.2026 **keine** Meldung mehr erzeugt. Beides
+     ist mit repariert.
+
 53. **Was damit nicht belegt ist - und was aufgeraeumt wird.**
      Die Live-Tests legen echte Zeilen an (zwei Likes, ein Match).
      `tool/cleanup_transit_testdata.sql` nimmt sie wieder weg und
