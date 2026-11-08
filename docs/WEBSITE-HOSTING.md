@@ -229,6 +229,86 @@ Spaceship wieder `launch1/launch2.spaceship.net` eintragen und die
 alten A-Eintraege zuruecksetzen. Deshalb werden die Nameserver erst
 umgestellt, **nachdem** Schritt 3 gruen war.
 
+## Der Infomaniak-Weg (Schweiz, im Studentenprogramm kostenlos)
+
+Das ist der Weg, wenn der Betreiber noch einen Schulausweis vorlegen
+kann: **1 Webhosting (250 GB, 20 Websites) + 1 Mail-Service kostenlos**
+fuer die Dauer des Studiums (maximal vier Jahre, jaehrlich mit den
+gleichen Unterlagen zu verlaengern). Die Produkte sind identisch mit
+den bezahlten, nur die Rechnung entfaellt.
+
+**Und der entscheidende Vorteil gegenueber Cloudflare: die DNS bleibt
+bei Spaceship.** Kein Nameserver-Wechsel, keine Mail-Records neu, kein
+Risiko fuer `datenschutz@thestia.de` - es aendert sich nur ein
+A-Record und ein CNAME.
+
+### 1. Konto und Studentenprogramm
+
+Bei Infomaniak (Schweiz) kostenlos anmelden, dann im Konto das
+**Education programme** beitreten. Unterlagen:
+
+* Studentenausweis oder Schulbescheinigung (aktuell, mit Schule, dem
+  laufenden Schuljahr und dem Namen)
+* Personalausweis (vor und beidseitig)
+* die **offizielle Schueler-Mail-Adresse** der Schule
+
+Die Pruefung dauert laut Infomaniak hoechstens 24 Stunden. Danach sind
+das Webhosting (250 GB, 20 Websites) und der Mail-Service kostenlos.
+Die Domain ist nicht dabei - **die eigene (`thestia.de`) darf verwendet
+werden**. Let's Encrypt ist bei jedem Hosting enthalten.
+
+### 2. Die Website anlegen
+
+Im Infomaniak-Panel (`Site Creator`) eine Website fuer `thestia.de`
+anlegen. `auth.thestia.de` als **zweite Domain derselben Website**
+eintragen - dann teilen sich beide Adressen das Wurzelverzeichnis,
+und die `.htaccess` unterscheidet die Hosts von selbst.
+
+### 3. Das Zertifikat
+
+Pro Website ein Let's-Encrypt-Zertifikat im Panel aktivieren. Das
+Zertifikat ist **anders** als das von Netlify - die Fingerabdruecke in
+`assetlinks.json` muessen danach neu geschrieben werden (Schritt 6).
+
+### 4. Hochladen
+
+Der Inhalt ist der Ordner `passkey-assets/` (49 Dateien, 2,04 MB) plus
+die `.htaccess` aus `webhosting/`. Die genauen Befehle (SFTP und
+rsync) stehen in `webhosting/README.md`.
+
+### 5. DNS bei Spaceship
+
+Nur zwei Eintraege aendern sich - **die MX- und TXT-Records bleiben,
+wie sie sind**:
+
+| Typ | Name | Inhalt |
+|---|---|---|
+| A | `@` | die IP-Adresse der Infomaniak-Website (steht im Panel) |
+| CNAME | `auth` | der Hostname der Infomaniak-Website (steht im Panel) |
+
+Die alten Netlify-Eintraege (`75.2.60.5`, `99.83.231.61` und der
+CNAME auf `chic-tapioca-1e7c68.netlify.app`) werden dadurch ersetzt.
+Die Mail laeuft unberuehrt weiter ueber `mx1.efwd.spaceship.net`.
+
+### 6. Passkeys nachziehen und pruefen
+
+```powershell
+python tool/update_assetlinks.py                  # Kette lesen, Datei schreiben
+python tool/check_websites_live.py --host https://thestia.de
+python tool/check_passkey_assetlinks.py --live
+```
+
+### Infomaniak oder Cloudflare Pages?
+
+| | Infomaniak (CH) | Cloudflare Pages |
+|---|---|---|
+| Preis | 0 EUR (Student) | 0 EUR |
+| Daten | eigene Rechenzentren in Genf und Zuerich | US-Firma, EU-Knoten |
+| DNS | **bleibt bei Spaceship** | Nameserver-Umstellung noetig (Apex-Domain) |
+| Mail | unberuehrt | Records wandern mit (MX, SPF, DMARC) |
+| Deploy | SFTP/rsync | Drag & Drop |
+| Server | einer, den man selbst pflegt | keiner |
+
 ## Nacharbeiten nach dem Wechsel
 
 - **Die `robots.txt` im Publish-Ordner beschreibt noch Netlify.** Die

@@ -259,6 +259,45 @@ def main() -> int:
             print("  OK  %s: X-Robots-Tag: noindex ist gesetzt" % host)
 
     # -----------------------------------------------------------------
+    # 2d) Die .htaccess fuer das Webhosting
+    # -----------------------------------------------------------------
+    #
+    # BEFUND (08.11.2026): Der Betreiber hostet auf Infomaniak (CH) -
+    # im Studentenprogramm ist das Webhosting kostenlos. Dort laeuft
+    # Apache; die 40 Rewrite-Regeln und die 41 Header-Bloecke aus
+    # _redirects und _headers muessen als .htaccess dastehen.
+    #
+    # Die Datei wird von tool/make_htaccess.py ERZEUGT. Ohne diese
+    # Pruefung koennte sie veralten: eine Aenderung an _headers (etwa
+    # ein neuer Sicherheits-Header) waere auf dem Server nicht
+    # angekommen - und niemand merkt es, weil die Seite trotzdem
+    # laeuft (nur ohne den Schutz).
+    print("\n2d) Die .htaccess (Webhosting):")
+    htaccess = pathlib.Path(A.parent / "webhosting" / ".htaccess")
+    if not htaccess.exists():
+        fehler.append("webhosting/.htaccess fehlt - erzeugen mit: "
+                      "python tool/make_htaccess.py")
+        print("  FEHLER: die Datei fehlt")
+    else:
+        try:
+            sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+            import make_htaccess  # noqa: PLC0415
+            erzeugt = make_htaccess.baue_htaccess()
+        except Exception as e:  # noqa: BLE001
+            fehler.append("die .htaccess konnte nicht erzeugt werden: %s" % e)
+            print("  FEHLER: Generator nicht ausfuehrbar (%s)" % e)
+        else:
+            if erzeugt == htaccess.read_text(encoding="utf-8"):
+                print("  OK: sie passt zu _redirects und _headers")
+            else:
+                fehler.append(
+                    "webhosting/.htaccess ist veraltet - die Regeln in "
+                    "_redirects oder _headers wurden geaendert. "
+                    "Reparieren: python tool/make_htaccess.py")
+                print("  FEHLER: sie passt nicht mehr zu _redirects "
+                      "und _headers")
+
+    # -----------------------------------------------------------------
     # 3) _headers
     # -----------------------------------------------------------------
     print("\n3) _headers:")

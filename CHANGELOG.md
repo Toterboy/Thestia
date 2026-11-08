@@ -2010,6 +2010,52 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      IONOS einen UNiDAYS-Rabatt, Hetzner 20 EUR Startguthaben. Die
      Angebote im Detail: `docs/WEBSITE-HOSTING.md`.
 
+63. **Die Apache-Konfiguration fuer Infomaniak ist erzeugt - und
+     kann nicht veralten.**
+     BEFUND (Betreiber): "Infomaniak vorbereiten." Infomaniak (CH)
+     hostet im Studentenprogramm kostenlos, faehrt Apache und laesst
+     mod_rewrite und .htaccess zu ("enabled by default on all
+     Infomaniak infrastructures", Doku vom 08.11.2026).
+
+     **Das Problem:** die Website hat zwei Konfigurationsdateien, die
+     nur Netlify und Cloudflare Pages lesen - `_redirects` (38
+     Rewrite-Regeln) und `_headers` (41 Header-Bloecke mit CSP, HSTS,
+     Cache-Regeln). Bei Apache muesste beides von Hand in eine
+     `.htaccess` uebersetzt werden: 40 Zeilen, die bei jeder Aenderung
+     nachgezogen werden mussten - und stillschweigend veralten
+     koennen (die Seite laeuft dann weiter, nur ohne den Schutz).
+
+     **Die Loesung:** `tool/make_htaccess.py` erzeugt die Datei aus
+     beiden Quellen. Die Uebersetzung sitzt damit an genau einer
+     Stelle. Zwei Fehler, die beim ersten Versuch passiert sind und
+     jetzt im Selbsttest feststeckt:
+
+     - **Die Punkte in den Mustern mussten escaped werden.** Ohne
+       Escape passte `^auth.thestia.de$` auch auf `authXthestiaYde`,
+       und `^.well-known/assetlinks.json$` auf jede Datei.
+     - **Der Auth-Host war doppelt abgedeckt** (einmal ueber den
+       `_headers`-Block, einmal als eigener Block). Jetzt steht jede
+       Regel genau einmal da.
+
+     **Und ein Gate verhindert das Veralten:** `check_publish_folder.py`
+     erzeugt die `.htaccess` neu und vergleicht sie mit der Datei auf
+     der Platte. Wer `_headers` oder `_redirects` aendert, bekommt
+     rot: "webhosting/.htaccess ist veraltet - Reparieren: python
+     tool/make_htaccess.py". Die Drift-Pruefung ist getestet (sie
+     schlaegt bei einer absichtlichen Abweichung an).
+
+     **Die Datei liegt bewusst AUSSERHALB des Publish-Ordners**
+     (`webhosting/`): Netlify und Cloudflare Pages wuerden sie als
+     statische Datei ausliefern. `webhosting/README.md` enthaelt den
+     Upload (SFTP und rsync), die Zwei-Website-Frage und die
+     Nacharbeiten nach dem Zertifikatswechsel.
+
+     **Die Anleitung fuer Infomaniak** steht in
+     `docs/WEBSITE-HOSTING.md`: Studentenprogramm, Website anlegen,
+     Zertifikat, hochladen, DNS (nur ein A-Record und ein CNAME - die
+     Mail-Records bleiben unangetastet, weil die DNS bei Spaceship
+     bleibt) und die Pruefkommandos.
+
 ## [0.10.0] - 2026-10-24 (Build 31)
 
 ### Sicherheit

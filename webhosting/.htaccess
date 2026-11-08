@@ -1,0 +1,191 @@
+# ============================================================
+# THESTIA - Apache-Konfiguration
+#
+# ERZEUGT von tool/make_htaccess.py aus passkey-assets/_redirects
+# und passkey-assets/_headers. NICHT von Hand aendern - das naechste
+# Erzeugen ueberschreibt die Datei.
+#
+# Vor der Aenderung an _redirects oder _headers:
+#     python tool/make_htaccess.py
+# und dann:
+#     python tool/check_publish_folder.py
+#
+# Diese Datei gehoert in das WURZELVERZEICHNIS der Website (dort, wo
+# index.html liegt). Sie wird nur fuer das klassische Webhosting
+# gebraucht - Netlify und Cloudflare Pages lesen stattdessen
+# _redirects und _headers.
+# ============================================================
+
+# Keine Verzeichnisliste, und KEIN "MultiViews": Apache soll die
+# Adressen nur ueber die Regeln unten erreichen, nicht zufaellig
+# ueber die Dateinamen.
+Options -Indexes -MultiViews
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+# --- 1) HTTPS erzwingen -------------------------------------------
+# Das Zertifikat liefert der Hoster (Let's Encrypt). Der HSTS-Header
+# steht weiter unten in den Headern aus _headers.
+RewriteCond %{HTTPS} !=on
+RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+# --- 2) Die Adressen (aus _redirects) --------------------
+# Der Auth-Host bekommt die gesperrte robots.txt (bei Netlify
+# ist das eine domain-bezogene Regel in _redirects).
+RewriteCond %{HTTP_HOST} ^auth\.thestia\.de$ [NC]
+RewriteRule ^robots\.txt$ robots-auth.txt [L]
+
+RewriteRule ^\.well-known/assetlinks\.json$ assetlinks.json [L]
+RewriteRule ^ASSETLINKS_ROOTDOMAIN\.md$ threat-model.md [R=301,L]
+RewriteRule ^datenschutz$ datenschutz.html [L]
+RewriteRule ^datenschutz/$ datenschutz.html [L]
+RewriteRule ^konto-loeschen$ konto-loeschen.html [L]
+RewriteRule ^konto-loeschen/$ konto-loeschen.html [L]
+RewriteRule ^eltern$ eltern.html [L]
+RewriteRule ^eltern/$ eltern.html [L]
+RewriteRule ^eltern/einstellungen$ eltern-einstellungen.html [L]
+RewriteRule ^eltern/einstellungen/$ eltern-einstellungen.html [L]
+RewriteRule ^en/$ en/index.html [L]
+RewriteRule ^en/impressum$ en/impressum.html [L]
+RewriteRule ^en/kinderschutz$ en/kinderschutz.html [L]
+RewriteRule ^en/dating-sicherheit$ en/dating-sicherheit.html [L]
+RewriteRule ^en/konto-loeschen$ en/konto-loeschen.html [L]
+RewriteRule ^en/daten-loeschen$ en/daten-loeschen.html [L]
+RewriteRule ^en/datenschutz$ en/datenschutz.html [L]
+RewriteRule ^en/eltern$ en/eltern.html [L]
+RewriteRule ^en/eltern/einstellungen$ en/eltern/einstellungen.html [L]
+RewriteRule ^nutzungsbedingungen$ nutzungsbedingungen.html [L]
+RewriteRule ^nutzungsbedingungen/$ nutzungsbedingungen.html [L]
+RewriteRule ^en/nutzungsbedingungen$ en/nutzungsbedingungen.html [L]
+RewriteRule ^en/nutzungsbedingungen/$ en/nutzungsbedingungen.html [L]
+RewriteRule ^daten-loeschen$ daten-loeschen.html [L]
+RewriteRule ^daten-loeschen/$ daten-loeschen.html [L]
+RewriteRule ^kinderschutz$ kinderschutz.html [L]
+RewriteRule ^kinderschutz/$ kinderschutz.html [L]
+RewriteRule ^dating-sicherheit$ dating-sicherheit.html [L]
+RewriteRule ^dating-sicherheit/$ dating-sicherheit.html [L]
+RewriteRule ^impressum$ impressum.html [L]
+RewriteRule ^impressum/$ impressum.html [L]
+RewriteRule ^bestaetigt$ bestaetigt.html [L]
+RewriteRule ^bestaetigt/$ bestaetigt.html [L]
+RewriteRule ^en/bestaetigt$ en/bestaetigt.html [L]
+RewriteRule ^en/bestaetigt/$ en/bestaetigt.html [L]
+</IfModule>
+
+# --- 3) Die Bedingungen (aus _headers) ------------------
+<IfModule mod_setenvif.c>
+SetEnvIf Request_URI "^/\.well-known/" thestia_pfad_0
+SetEnvIf Request_URI "^/assetlinks\.json(/)?(\?|$)" thestia_pfad_1
+SetEnvIf Request_URI "^/index\.html(/)?(\?|$)" thestia_pfad_2
+SetEnvIf Host "^auth\.thestia\.de$" thestia_host_3
+SetEnvIf Request_URI "^/(\?|$)" thestia_pfad_4
+SetEnvIf Request_URI "^/datenschutz(/)?(\?|$)" thestia_pfad_5
+SetEnvIf Request_URI "^/datenschutz\.html(/)?(\?|$)" thestia_pfad_6
+SetEnvIf Request_URI "^/impressum(/)?(\?|$)" thestia_pfad_7
+SetEnvIf Request_URI "^/impressum\.html(/)?(\?|$)" thestia_pfad_8
+SetEnvIf Request_URI "^/kinderschutz(/)?(\?|$)" thestia_pfad_9
+SetEnvIf Request_URI "^/kinderschutz\.html(/)?(\?|$)" thestia_pfad_10
+SetEnvIf Request_URI "^/konto-loeschen(/)?(\?|$)" thestia_pfad_11
+SetEnvIf Request_URI "^/konto-loeschen\.html(/)?(\?|$)" thestia_pfad_12
+SetEnvIf Request_URI "^/en/(\?|$)" thestia_pfad_13
+SetEnvIf Request_URI "^/en/index\.html(/)?(\?|$)" thestia_pfad_14
+SetEnvIf Request_URI "^/en/impressum(/)?(\?|$)" thestia_pfad_15
+SetEnvIf Request_URI "^/en/impressum\.html(/)?(\?|$)" thestia_pfad_16
+SetEnvIf Request_URI "^/en/kinderschutz(/)?(\?|$)" thestia_pfad_17
+SetEnvIf Request_URI "^/en/kinderschutz\.html(/)?(\?|$)" thestia_pfad_18
+SetEnvIf Request_URI "^/en/dating-sicherheit(/)?(\?|$)" thestia_pfad_19
+SetEnvIf Request_URI "^/en/dating-sicherheit\.html(/)?(\?|$)" thestia_pfad_20
+SetEnvIf Request_URI "^/en/konto-loeschen(/)?(\?|$)" thestia_pfad_21
+SetEnvIf Request_URI "^/en/konto-loeschen\.html(/)?(\?|$)" thestia_pfad_22
+SetEnvIf Request_URI "^/en/daten-loeschen(/)?(\?|$)" thestia_pfad_23
+SetEnvIf Request_URI "^/en/daten-loeschen\.html(/)?(\?|$)" thestia_pfad_24
+SetEnvIf Request_URI "^/en/datenschutz(/)?(\?|$)" thestia_pfad_25
+SetEnvIf Request_URI "^/en/datenschutz\.html(/)?(\?|$)" thestia_pfad_26
+SetEnvIf Request_URI "^/en/eltern(/)?(\?|$)" thestia_pfad_27
+SetEnvIf Request_URI "^/en/eltern\.html(/)?(\?|$)" thestia_pfad_28
+SetEnvIf Request_URI "^/en/eltern/einstellungen(/)?(\?|$)" thestia_pfad_29
+SetEnvIf Request_URI "^/en/eltern/einstellungen\.html(/)?(\?|$)" thestia_pfad_30
+SetEnvIf Request_URI "^/daten-loeschen(/)?(\?|$)" thestia_pfad_31
+SetEnvIf Request_URI "^/daten-loeschen\.html(/)?(\?|$)" thestia_pfad_32
+SetEnvIf Request_URI "^/eltern(/)?(\?|$)" thestia_pfad_33
+SetEnvIf Request_URI "^/eltern\.html(/)?(\?|$)" thestia_pfad_34
+SetEnvIf Request_URI "^/eltern/einstellungen(/)?(\?|$)" thestia_pfad_35
+SetEnvIf Request_URI "^/eltern-einstellungen\.html(/)?(\?|$)" thestia_pfad_36
+SetEnvIf Request_URI "^/threat-model\.md(/)?(\?|$)" thestia_pfad_37
+SetEnvIf Request_URI "^/screenshots/" thestia_pfad_38
+SetEnvIf Request_URI "^/en/screenshots/" thestia_pfad_39
+</IfModule>
+
+# --- 4) Die Header (aus _headers) ----------------------
+<IfModule mod_headers.c>
+Header always set X-Content-Type-Options "nosniff"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+Header always set X-Frame-Options "DENY"
+Header always set Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=(), usb=(), interest-cohort=()"
+Header always set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+Header always set Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; frame-src https://challenges.cloudflare.com; child-src https://challenges.cloudflare.com; worker-src 'self' blob:; connect-src 'self' https://challenges.cloudflare.com https://jftuigjbmmuvrckbchqo.supabase.co; img-src 'self' data: https://challenges.cloudflare.com; font-src 'self' https://challenges.cloudflare.com"
+Header always set Content-Type "application/json" env=thestia_pfad_0
+Header always set Cache-Control "public, max-age=86400" env=thestia_pfad_0
+Header always set Content-Type "application/json" env=thestia_pfad_1
+Header always set Cache-Control "public, max-age=86400" env=thestia_pfad_1
+Header always set Content-Type "text/html; charset=utf-8" env=thestia_pfad_2
+Header always set X-Robots-Tag "noindex" env=thestia_host_3
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_4
+Header always set Content-Type "text/html; charset=utf-8" env=thestia_pfad_4
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_5
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_6
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_7
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_8
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_9
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_10
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_11
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_12
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_13
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_14
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_15
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_16
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_17
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_18
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_19
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_20
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_21
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_22
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_23
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_24
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_25
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_26
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_27
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_28
+Header always set Cache-Control "no-store" env=thestia_pfad_29
+Header always set Referrer-Policy "no-referrer" env=thestia_pfad_29
+Header always set Cache-Control "no-store" env=thestia_pfad_30
+Header always set Referrer-Policy "no-referrer" env=thestia_pfad_30
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_31
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_32
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_33
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_34
+Header always set Cache-Control "no-store" env=thestia_pfad_35
+Header always set Referrer-Policy "no-referrer" env=thestia_pfad_35
+Header always set Cache-Control "no-store" env=thestia_pfad_36
+Header always set Referrer-Policy "no-referrer" env=thestia_pfad_36
+Header always set Cache-Control "public, max-age=86400" env=thestia_pfad_37
+Header always set Cache-Control "public, max-age=86400" env=thestia_pfad_38
+Header always set Cache-Control "public, max-age=86400" env=thestia_pfad_39
+</IfModule>
+
+# --- 5) Der Auth-Host und die spaetere Web-Version --------------
+
+# Der Auth-Host (auth.thestia.de) bekommt die gesperrte robots.txt
+# (siehe Abschnitt 2) und den Header "X-Robots-Tag: noindex". Beides
+# steht schon oben - der Header aus dem Block
+# "https://auth.thestia.de/*" in _headers, die robots.txt aus dem
+# Host-Rewrite in _redirects. Hier steht nichts mehr, damit es nicht
+# auseinanderlaufen kann.
+
+# Fuer die Web-Version der App (v0.12.0) kommt hier der
+# SPA-Fallback hin: unbekannte Adressen liefern dann index.html.
+# RewriteCond %%{REQUEST_FILENAME} !-f
+# RewriteCond %%{REQUEST_FILENAME} !-d
+# RewriteRule . /index.html [L]
