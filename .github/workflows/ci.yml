@@ -14,7 +14,16 @@ env:
   # (analyze-and-test, fdroid-build, play-build) und konnte driften.
   # Hinweis: docs/BUILD.md nennt 3.35.x - das ist der SDK-Minimum aus
   # pubspec.yaml, nicht die getestete Version.
-  FLUTTER_VERSION: "3.44.6"
+  #
+  # SICHERHEIT (08.11.2026): 3.44.6 ist VOR 3.47.8 und damit vom
+  # Advisory GHSA-frr6-h895-5pxp (High) betroffen: `dart:io` vertraut auf
+  # Android die kompromittierten Zwischenzertifikate der CA eMudhra
+  # weiterhin an, weil der eingebaute BoringSSL die Sperrliste des
+  # Betriebssystems nicht liest. Ein Angreifer im Netzpfad kann damit
+  # ein gefaelschtes TLS-Zertifikat vortaeuschen.
+  # 3.47.9 ist das aktuelle Stable (Dart 3.13.7) und enthaelt den Fix.
+  # (Pruefung: tool/check_sdk_security.py)
+  FLUTTER_VERSION: "3.47.9"
   JAVA_VERSION: "17"
 
 jobs:
