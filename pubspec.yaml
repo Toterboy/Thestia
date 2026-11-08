@@ -60,6 +60,14 @@ dependencies:
   # E2E-Verschlüsselung (Signal Protocol)
   libsignal_protocol_dart: 0.8.2
 
+  # Int64 (64-Bit-Ganzzahl) - der Zeitstempel eines Signed PreKeys ist
+  # ein Int64, nicht ein int. libsignal_protocol_dart benutzt fixnum
+  # transitiv, aber die Tests bauen SignedPreKeyRecords selbst - und
+  # der Analyzer verlangt fuer einen direkten Import eine direkte
+  # Dependency (depend_on_referenced_packages). Gepinnt auf genau die
+  # Version, die libsignal_protocol_dart 0.8.2 mitzieht.
+  fixnum: 1.1.1
+
   # WebRTC für P2P-Kommunikation
   flutter_webrtc: ^1.6.0
 
