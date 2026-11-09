@@ -2171,9 +2171,16 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      18+-Bereich geht bis 99 (`maxFilterAge`), im 16/17-Bereich endet er
      bei 17; die Vorstellung wird **verschluesselt auf dem Server**
      gehalten und erst auf dem Geraet entschluesselt (E2E wie bei den
-     Profilbildern). Was zu entscheiden ist (ob Minderjaehrige ohne
-     eigene Vorstellung in die Kategorie-Sicht duerfen), steht dort
-     offen.
+     Profilbildern).
+
+     **Vom Betreiber entschieden (09.11.2026):** Die Vorstellung
+     bleibt Pflicht - auch in der Erweiterung und auch fuer
+     16-/17-Jaehrige. **Sie darf rein TEXTLICH sein**: das Audio ist
+     optional und wird erst bei einem Funke gehoert (dort, wo die
+     Vorstellung heute ohnehin ueber `match-media` freigegeben wird);
+     die Kategorie-Sicht zeigt Text und Interessen, nicht die
+     Aufnahme. Und: **16- und 17-Jaehrige sehen KEINE 18+-Personen** -
+     die Trennung ist serverseitig und gilt fuer jeden Abrufweg.
 
      **Gruppen und Foren** (Abschnitt 0.12.0, Punkt 10) sind als
      SPÄTERER Schritt eingetragen - mit derselben Alterstrennung

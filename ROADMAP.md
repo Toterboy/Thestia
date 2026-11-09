@@ -1746,7 +1746,8 @@ Vorgesehene Bausteine (noch nicht umgesetzt):
    schon eine existiert** (sonst wird ein zweites Mal aufgefordert,
    obwohl längst eine da ist). Der bestehende Weg
    (`lib/widgets/intro_editor.dart`) wird dafür geprüft, nicht
-   dupliziert.
+   dupliziert. **Eine Textvorstellung genügt** – das Audio ist
+   optional (und wird erst bei einem Funke gehört).
 2. **Zwei Wege**: *Zufallsvorstellung* (ein Kandidat nach dem anderen,
    wie heute) oder *Nach Kategorien stöbern*.
 
@@ -1754,8 +1755,15 @@ Vorgesehene Bausteine (noch nicht umgesetzt):
 
 | Bereich | Alter | Vorstellung | Altersregler |
 |---|---|---|---|
-| **18+** | 18 bis 99+ | ja (Audio) | 18…99, per Regler filterbar |
-| **16/17** | 16 und 17 | **nein** | Obergrenze 17 |
+| **18+** | 18 bis 99+ | Pflicht | 18…99, per Regler filterbar |
+| **16/17** | 16 und 17 | Pflicht | Obergrenze 17 |
+
+**Die Vorstellung bleibt Pflicht - auch in der Erweiterung** (und auch
+für 16-/17-Jährige). **Sie darf aber rein TEXTLICH sein:** wer sich
+vorstellt, schreibt seinen Text; **das Audio ist optional** und wird
+erst bei einem Funke gehört (dort, wo die Vorstellung heute ohnehin
+über `match-media` freigegeben wird). Die Kategorie-Sicht zeigt den
+**Text** und die Interessen - nicht die Aufnahme.
 
 - Die Grenzen sind **keine UI-Kosmetik**: sie stehen serverseitig in
   `age_compatible_bidirectional` (Migration 154/155) und werden von
@@ -1799,12 +1807,19 @@ browse_by_category(
   passend**: Wer 16/17 ist, bekommt ausschließlich 16/17 – auch dann,
   wenn die Kategorie passt.
 
-**Noch zu entscheiden (Betreiber):**
+**Vom Betreiber entschieden (09.11.2026):**
 
-- Ob der 16/17-Bereich ganz ohne Vorstellung auskommt (Vorschlag:
-  ja – die Audio-Vorstellung bleibt ein 18+-Feature) **und** ob
-  Minderjährige ohne eigene Vorstellung in die Kategorie-Sicht
-  dürfen (Vorschlag: ja, sonst ist der Bereich für sie leer).
+- **Die Vorstellung bleibt Pflicht** – auch in der Erweiterung und
+  auch für 16-/17-Jährige.
+- **Sie darf rein textlich sein.** Das Audio ist optional und wird
+  **bei einem Funke** gehört (der bestehende `match-media`-Weg gibt
+  es ohnehin erst nach dem Match frei).
+- **16- und 17-Jährige sehen KEINE 18+-Personen.** Die Trennung ist
+  serverseitig (`age_compatible_bidirectional`) und gilt für jeden
+  Abrufweg – auch für die Kategorie-Sicht.
+
+**Noch zu entscheiden:**
+
 - Wie viele Kandidaten eine Kategorie liefert (Vorschlag: 20 pro
   Seite, mit „weitere laden").
 
