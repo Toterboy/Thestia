@@ -225,7 +225,9 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
       das letzte Wort; und nach dem dritten Schritt bleibt der dritte
       stehen, weil die Aufnahme bis 5 Minuten laufen darf und der
       Leitfaden nur drei Winkel hat. Der Leitfaden ist eine Stütze, kein
-      Fragebogen: Pflicht ist weiterhin nur Text UND Audio.
+      Fragebogen. **Seit 0.11.0 ist die Aufnahme optional** (Befund vom
+09.11.2026): Pflicht ist der **Text**; die Aufnahme bleibt
+verschluesselt gespeichert und wird erst beim Funke gehoert.
 
 ## 0.8.0 – Geschmack & Matching (umgesetzt, inkl. Nachträge 1–2)
 
