@@ -28,6 +28,68 @@ class FindYourMatchService {
         .toList();
   }
 
+  /// Kandidaten einer INTERESSENS-KATEGORIE (Migration 203).
+  ///
+  /// Das ist die zweite Art, jemanden kennenzulernen: nicht per
+  /// Zufall, sondern gezielt nach einem Interesse. Die Kategorie ist
+  /// einer der Interessen (["Musik","Gaming",...]).
+  ///
+  /// Die Altersgrenze wird **serverseitig** erzwungen (die RPC liest
+  /// aus `public_profiles`, und die Sicht filtert ueber
+  /// `profile_discovery_visible_full`): Minderjaehrige sehen
+  /// ausschliesslich Minderjaehrige. Die Altersspanne [ageMin]/[ageMax]
+  /// ist die **Zusatz**-Spanne des Browsers - der Server begrenzt sie
+  /// zusaetzlich auf das, was der Betrachter ueberhaupt sehen darf.
+  Future<List<UserProfile>> getCandidatesByCategory(
+    String category, {
+    required int ageMin,
+    required int ageMax,
+    int limit = 20,
+  }) async {
+    final response = await _client.rpc(
+      'get_find_match_by_category',
+      params: {
+        'p_category': category,
+        'p_age_min': ageMin,
+        'p_age_max': ageMax,
+        'p_limit': limit,
+      },
+    );
+    final rows = (response as List<dynamic>? ?? <dynamic>[]);
+    return rows
+        .map(
+          (row) =>
+              UserProfile.fromPublicView(Map<String, dynamic>.from(row as Map)),
+        )
+        .toList();
+  }
+
+  /// Die Kategorien, in denen es fuer mich gerade jemanden gibt - mit
+  /// der Zahl der Kandidaten (Migration 204).
+  ///
+  /// Ohne diese Zahlen waere das Stoebern blind: man tippt auf
+  /// "Sport" und sieht niemanden und weiss nicht, ob die Funktion
+  /// kaputt ist oder es in dem Bereich schlicht niemanden gibt.
+  ///
+  /// Die Zahlen respects dieselben Altersregeln wie die Kandidaten
+  /// selbst (serverseitig, aus derselben Sicht).
+  Future<List<CategoryCount>> getCategoryCounts({
+    required int ageMin,
+    required int ageMax,
+  }) async {
+    final response = await _client.rpc(
+      'get_find_match_categories',
+      params: {'p_age_min': ageMin, 'p_age_max': ageMax},
+    );
+    final rows = (response as List<dynamic>? ?? <dynamic>[]);
+    return rows
+        .map(
+          (row) =>
+              CategoryCount.fromJson(Map<String, dynamic>.from(row as Map)),
+        )
+        .toList();
+  }
+
   /// Eigenen Like setzen.
   ///
   /// Liefert das Ergebnis des Servers (Migration 197):

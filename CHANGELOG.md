@@ -2249,6 +2249,60 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      Weg, kein altes Login noetig) oder im alten Vercel-Team
      `vercel domains rm theblinddate.in` ausfuehren.
 
+69. **„Find your Spark" kann jetzt nach Interessen - und die Vorstellung
+     darf rein textlich sein.**
+     BEFUND (Betreiber): "Der Modus Find your Spark soll erweitert
+     werden. Wenn man auf ihn drauf drückt, kommt wie gehabt erst, dass
+     man seine Vorstellung machen muss (Muss geprüft werden, ob man
+     schon gemacht hat oder nicht, damit nicht doppelt), dann entweder
+     Zufallsvorstellung oder Vorstellungen anderer nach Kategorien
+     ansehen. Also Kategorien sind die Interessens-Kategorien. Auf
+     diesen neuen Teil mit den Kategorien soll ein Bereich mit 18+ sein,
+     wo von 18 bis 99+ alle gesehen werden (Aber man kann nach Alter
+     filtern mit Regler) und ein 16-17 Bereich ohne Vorstellung mit
+     Alter darüber. Wichtig ist, dass diese Grenze wirklich klappt, wie
+     auch überall anders auch, damit die Kinder/Jugend geschützt sind.
+     Natürlich da dann E2E immer. Verschlüsselt auf Server speichern."
+
+     **DER ABLAUF:** "Find your Spark" fragt zuerst die eigene
+     Vorstellung ab - aber **nur, wenn es noch keine gibt** (vorher
+     stand die Abfrage da, auch wenn die Vorstellung schon da war).
+     Danach kommt die Wahl: *Zufallsvorstellung* (wie bisher) oder
+     *Nach Kategorie*.
+
+     **DIE KATEGORIE-SICHT:** Die Kategorien sind die Interessen
+     (Musik, Sport, Gaming, Reisen, ...). Jede Kategorie zeigt ihre
+     Zahl - sonst wäre das Stöbern blind (man tippt auf "Sport" und
+     sieht niemanden und weiss nicht, ob die Funktion kaputt ist). Der
+     Altersregler (18 bis 99+, bei 16/17 bis 17) ist derselbe wie
+     sonst in der App.
+
+     **DIE ALTERSSGRENZE - server-seitig, nicht im Client:** Die
+     Abfrage liest aus `public_profiles`, und die Sicht filtert über
+     `profile_discovery_visible_full` (Migration 203/204). Ein
+     16-Jähriger sieht damit ausschließlich 16- und 17-Jährige, ein
+     Erwachsener ausschließlich Erwachsene - auch dann, wenn jemand die
+     App manipuliert. Die gewünschte Altersspanne wird zusätzlich
+     serverseitig begrenzt (`max_age_range_min`, Obergrenze 17 bzw.
+     99). **Zwei Fail-Fast-Beweise in den Migrationen** prüfen, dass
+     die Sicht die Schutzabfrage noch enthält: ohne sie würde die
+     Kategorie-Sicht still zur Lücke.
+
+     **E2E bleibt:** Die Kategorie-Sicht zeigt den **Text** der
+     Vorstellung und die Interessen. Die **Aufnahme** ist optional
+     (vorher Pflicht) und wird - wie bisher - erst beim Funke
+     freigegeben (match-media, serverseitig geprüft).
+
+     **DER VERSIONS-BUMP:** Das ist eine neue Nutzerfunktion, also
+     ein MINOR: **0.11.0** (bisher 0.10.0). Der Roadmap-Plan für
+     den Ausbau (Abschnitt 0.11.0) ist damit umgesetzt; die Gruppen
+     und Foren stehen als späterer Schritt darin.
+
+     **Die Datenschutzerklärung** hat einen eigenen Eintrag
+     bekommen: Die Kategorie-Sicht ist eine neue Sichtbarkeit (andere
+     finden dich über deine Interessen) - mit derselben Altersgrenze
+     und ohne Audio.
+
 ## [0.10.0] - 2026-10-24 (Build 31)
 
 ### Sicherheit

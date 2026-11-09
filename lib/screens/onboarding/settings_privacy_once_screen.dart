@@ -238,6 +238,12 @@ class _SettingsPrivacyOnceScreenState
       //
       // Jetzt: Text allein wird gespeichert, Audio allein auch, beides
       // natuerlich auch. Nur ein vollstaendig leerer Schritt loescht.
+      //
+      // (09.11.2026): `isValid` verlangt inzwischen nur noch den TEXT -
+      // die Aufnahme ist ueberall freiwillig. Der Betreiber: "Es kann
+      // jedoch, wenn man sich vorstellt nur eine textliche Vorstellung
+      // sein und die Audio kann man dann bei einem Funken hoeren. Das
+      // bleibt freigestellt.")
       if (_introText.trim().isNotEmpty || _introAudioPath != null) {
         _saveIntro();
       } else {

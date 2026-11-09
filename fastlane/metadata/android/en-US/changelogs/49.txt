@@ -1,3 +1,17 @@
+Meeting people by their interests
+
+"Find your Spark" now has two ways: the random introduction as before -
+or you browse through your interests. You see who is into "music",
+"sports" or "gaming", read their introduction and can like them. The
+age limit applies just as strictly as everywhere else: 16- and
+17-year-olds only ever see 16- and 17-year-olds.
+
+Your introduction works as text
+
+Until now the recording was mandatory. Your text is enough now - the
+recording is optional. If you have one, it stays encrypted and is only
+heard once there is a spark.
+
 Images in the chat are visible again
 
 Images you sent in the chat were only shown as a placeholder. Now the

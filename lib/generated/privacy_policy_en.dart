@@ -101,8 +101,18 @@ const List<PrivacyBlock> kPrivacyPolicyEn = <PrivacyBlock>[
     '',
     cells: <String>[
       'Profile details',
-      'Bio, interests, audio introduction, habits (smoking/alcohol/drugs), mood, music taste, **profile picture** (see section 3a)',
+      'Bio, interests, **introduction (text required, audio optional)**, habits (smoking/alcohol/drugs), mood, music taste, **profile picture** (see section 3a)',
       'Matching suitable contacts ("sparks")',
+      'With account deletion',
+    ],
+  ),
+  PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
+      'Category search ("Find your Spark by category")',
+      'Your interests as a category, your introduction text, your age',
+      'Others can find you in an interest category and read your introduction **as text**. The age limit is **enforced on the server**: 16- and 17-year-olds only ever see 16- and 17-year-olds, adults only adults - a manipulated device does not get past it either. Your **audio** introduction is not transferred here: it stays encrypted on the server and is only released once there is a spark',
       'With account deletion',
     ],
   ),

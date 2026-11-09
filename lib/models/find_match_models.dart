@@ -305,3 +305,29 @@ class QuizAnswerResult {
     );
   }
 }
+
+/// Eine Interessens-Kategorie mit der Zahl der Kandidaten, die der
+/// Betreiber dort gerade findet (Migration 204).
+///
+/// Die Zahl ist **serverseitig** berechnet und respects dieselben
+/// Altersregeln wie die Kandidaten selbst: Wer 16 oder 17 ist, sieht
+/// auch in den Zahlen nur Minderjaehrige.
+class CategoryCount {
+  const CategoryCount({required this.category, required this.count});
+
+  /// Die Kategorie (ein Interesse, z. B. "Musik").
+  final String category;
+
+  /// Wie viele Personen mit Vorstellung es in der Kategorie gibt.
+  final int count;
+
+  factory CategoryCount.fromJson(Map<String, dynamic> json) {
+    return CategoryCount(
+      category: (json['category'] as String?) ?? '',
+      count: (json['cnt'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  @override
+  String toString() => 'CategoryCount($category: $count)';
+}

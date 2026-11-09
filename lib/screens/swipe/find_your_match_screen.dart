@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/models/user_profile.dart';
@@ -7,6 +8,7 @@ import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/widgets/intro_audio_player.dart';
+import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/widgets/intro_editor.dart';
 import 'package:thestia/l10n/app_strings.dart';
 
@@ -29,6 +31,17 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
   bool _liking = false;
   bool _showIntroSetup = false;
 
+  /// Die Auswahl: Zufallsvorstellung oder nach Kategorie.
+  ///
+  /// BEFUND (09.11.2026, Betreiber): "dann entweder Zufallsvorstellung
+  /// oder Vorstellungen anderer nach Kategorien ansehen."
+  ///
+  /// Die Auswahl kommt **nach** der Vorstellungs-Pruefung: erst die
+  /// eigene Vorstellung, dann die Wahl, wie es weitergeht. Und die
+  /// Vorstellungs-Pruefung darf nicht doppelt fragen: `_showIntroSetup`
+  /// ist genau dann true, wenn es noch keine gibt.
+  bool _showChoice = false;
+
   String _introText = '';
   String? _introAudioPath;
 
@@ -42,6 +55,10 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
       text: _introText,
       audioPath: _introAudioPath,
     );
+    // Die Wahl kommt erst NACH der Vorstellung. Wer schon eine hat,
+    // sieht sie nicht noch einmal - wer keine hat, wird zuerst
+    // hingehalten.
+    _showChoice = !_showIntroSetup;
     if (!_showIntroSetup) {
       Future.microtask(() => ref.read(findYourMatchProvider.notifier).load());
     }
@@ -75,7 +92,10 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
       debugPrint('[FindYourMatch] Intro-Server-Sync fehlgeschlagen: $e');
     }
     if (!mounted) return;
-    setState(() => _showIntroSetup = false);
+    setState(() {
+      _showIntroSetup = false;
+      _showChoice = true;
+    });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(L10n.t(context, 'fym.introSaved')),
@@ -111,6 +131,37 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
     );
   }
 
+  /// Die Wahl: Zufallsvorstellung oder nach Kategorie stoebern.
+  Widget _wahl(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            L10n.t(context, 'fymb.choiceTitle'),
+            style: Theme.of(context).textTheme.titleLarge,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          _WahlKarte(
+            icon: Icons.shuffle,
+            titel: L10n.t(context, 'fymb.choiceRandom'),
+            text: L10n.t(context, 'fymb.choiceRandomDesc'),
+            onTap: () => setState(() => _showChoice = false),
+          ),
+          const SizedBox(height: 12),
+          _WahlKarte(
+            icon: Icons.category_outlined,
+            titel: L10n.t(context, 'fymb.choiceCategory'),
+            text: L10n.t(context, 'fymb.choiceCategoryDesc'),
+            onTap: () => context.push(AppRoutes.findYourMatchCategory),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final candidates = ref.watch(findYourMatchProvider);
@@ -126,6 +177,12 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
               icon: const Icon(Icons.record_voice_over),
               tooltip: L10n.t(context, 'match.editIntro'),
               onPressed: () => setState(() => _showIntroSetup = true),
+            ),
+          if (!_showIntroSetup)
+            IconButton(
+              icon: const Icon(Icons.swap_horiz),
+              tooltip: L10n.t(context, 'fymb.switchMode'),
+              onPressed: () => setState(() => _showChoice = true),
             ),
         ],
       ),
@@ -166,6 +223,8 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
                 ],
               ),
             )
+          : _showChoice
+          ? _wahl(context)
           : current == null
           ? Center(
               child: Padding(
@@ -392,6 +451,61 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
                 ],
               ),
             ),
+    );
+  }
+}
+
+/// Eine Auswahl-Karte (Zufall oder Kategorie).
+class _WahlKarte extends StatelessWidget {
+  const _WahlKarte({
+    required this.icon,
+    required this.titel,
+    required this.text,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String titel;
+  final String text;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: scheme.primaryContainer,
+                child: Icon(icon, color: scheme.onPrimaryContainer),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      titel,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(text, style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

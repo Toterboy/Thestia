@@ -3036,6 +3036,24 @@ const Map<String, Map<String, String>> _strings = {
     'match.likeAlreadyMatched': 'Mit {name} habt ihr schon einen Funken.',
     'match.likeFailed': 'Like konnte nicht gespeichert werden.',
     'match.title': 'Find your Spark',
+    'fymb.title': 'Nach Kategorien',
+    'fymb.categories': 'Interessen',
+    'fymb.noCategories': 'Zur Zeit gibt es niemanden zum Stöbern.',
+    'fymb.empty':
+        'In dieser Kategorie ist gerade niemand. Vielleicht eine andere '
+        'Altersspanne?',
+    'fymb.like': 'Gefällt mir',
+    'fymb.reload': 'Neu laden',
+    'fymb.choiceTitle': 'Wie willst du jemanden kennenlernen?',
+    'fymb.choiceRandom': 'Zufallsvorstellung',
+    'fymb.choiceRandomDesc':
+        'Eine Person nach der anderen - ohne Filter, aber nur mit '
+        'Vorstellung.',
+    'fymb.choiceCategory': 'Nach Kategorie',
+    'fymb.choiceCategoryDesc':
+        'Stöbern in den Interessen: Musik, Sport, Gaming, Reisen und '
+        'mehr.',
+    'fymb.switchMode': 'Andere Art wählen',
     'match.editIntro': 'Meine Vorstellung bearbeiten',
     'match.createFirst': 'Erstelle zuerst deine eigene Vorstellung',
     'match.createSub':
@@ -6237,6 +6255,23 @@ const Map<String, Map<String, String>> _strings = {
     'match.likeAlreadyMatched': 'You already have a spark with {name}.',
     'match.likeFailed': 'The like could not be saved.',
     'match.title': 'Find your Spark',
+    'fymb.title': 'Browse by category',
+    'fymb.categories': 'Interests',
+    'fymb.noCategories': 'Nobody to browse right now.',
+    'fymb.empty':
+        'Nobody in this category right now. Maybe a different age '
+        'range?',
+    'fymb.like': 'Like',
+    'fymb.reload': 'Reload',
+    'fymb.choiceTitle': 'How do you want to meet someone?',
+    'fymb.choiceRandom': 'Random introduction',
+    'fymb.choiceRandomDesc':
+        'One person after another - no filter, but only people with an '
+        'introduction.',
+    'fymb.choiceCategory': 'By category',
+    'fymb.choiceCategoryDesc':
+        'Browse the interests: music, sports, gaming, travel and more.',
+    'fymb.switchMode': 'Choose another way',
     'match.editIntro': 'Edit my intro',
     'match.createFirst': 'First create your own intro',
     'match.createSub':

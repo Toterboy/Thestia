@@ -46,6 +46,7 @@ import 'package:thestia/screens/profile/profile_screen.dart';
 import 'package:thestia/screens/settings/settings_screen.dart';
 import 'package:thestia/screens/admin/admin_screen.dart';
 import 'package:thestia/screens/swipe/swipe_mode_selection_screen.dart';
+import 'package:thestia/screens/swipe/find_your_match_category_screen.dart';
 import 'package:thestia/screens/swipe/find_your_match_screen.dart';
 import 'package:thestia/screens/quiz/quiz_screen.dart';
 import 'package:thestia/screens/spice/spice_questions_screen.dart';
@@ -97,6 +98,8 @@ class AppRoutes {
   static const String unbanRequest = '/unban-request';
   static const String home = '/';
   static const String findYourMatch = '/find-your-match';
+  // Das Stoebern nach Interessens-Kategorien (v0.11.0).
+  static const String findYourMatchCategory = '/find-your-match/kategorie';
   static const String interessen = '/interessen';
   static const String quiz = '/quiz/:matchId';
   // Spice Questions (Eisbrecher-Fragen, Feature A)
@@ -850,6 +853,10 @@ GoRouter createRouter(Ref ref) {
           GoRoute(
             path: AppRoutes.home,
             builder: (context, state) => const HomeScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.findYourMatchCategory,
+            builder: (context, state) => const FindYourMatchCategoryScreen(),
           ),
           GoRoute(
             path: AppRoutes.findYourMatch,

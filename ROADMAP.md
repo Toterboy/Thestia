@@ -18,14 +18,17 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
   und in Stufen), Transit Spark auf echten Geräten, Auslieferungs-
   Hygiene. MINOR-Bump **nach Regel** – eine Änderung der
   Datenverarbeitung für Nutzende ist eine Kern-Funktion
-- **0.11.0** – Emotionaler Rückzugsort (Sanctuary) & lokaler
-  KI-Reflexions-Chat (rein on-device)
+- **0.11.0** – **in Arbeit:** Ausbau von „Find your Spark":
+  Zufallsvorstellung **oder** Vorstellungen nach Interessens-Kategorien,
+  getrennt in einen 18+-Bereich mit Altersregler bis 99+ und einen
+  16/17-Bereich. Die Altersgrenze ist serverseitig erzwungen, die
+  Vorstellung darf rein textlich sein, die Aufnahme bleibt E2E und wird
+  erst beim Funke hörbar
 - **0.12.0** – Web-Bridge, Transit-Reachability & Zero-Install
-  Gast-Verbindungen (Flutter Web, Codeberg Pages) sowie der Ausbau von
-  „Find your Spark" (Zufallsvorstellung **oder** Vorstellungen nach
-  Interessens-Kategorien, getrennt in einen 18+-Bereich mit
-  Altersregler bis 99+ und einen 16/17-Bereich ohne Vorstellung).
-  Gruppen und Foren kommen **danach** (eigener Abschnitt unten)
+  Gast-Verbindungen (Flutter Web, Codeberg Pages) sowie der Emotionale
+  Rückzugsort (Sanctuary) & lokaler KI-Reflexions-Chat (rein
+  on-device). Gruppen und Foren kommen **danach** (eigener Abschnitt
+  unten)
 - Neue Nutzerfunktionen sind immer MINOR-Bumps; nur Fixes gehen in PATCH.
 - **Regel „neue Nutzerfunktion = MINOR" ist zweimal gebrochen worden**,
   nachträglich gekennzeichnet: 0.7.2 (Mood öffentlich, Altersdifferenz-
@@ -1397,7 +1400,111 @@ Vorgesehene Bausteine (noch nicht umgesetzt):
       weil die Roadmap an zwei Stellen sonst verschiedene Zeiten für
       dasselbe Vorhaben nennt
 
-## Geplant für 0.11.0 – Emotionaler Rückzugsort (Sanctuary) & Lokaler KI-Reflexions-Chat
+## Geplant für 0.12.0 – Emotionaler Rückzugsort (Sanctuary) & Lokaler KI-Reflexions-Chat
+
+## In Arbeit für 0.11.0 – Ausbau von „Find your Spark“: Zufall oder Kategorie
+
+> Der Ausbau ist **gebaut** (Migration 203/204, Bildschirm „Nach Kategorie“, Version 0.11.0). Die Gruppen und Foren kommen danach - sie stehen weiter unten.
+
+### 9. Find your Spark – Ausbau: Zufallsvorstellung und Kategorien
+
+> BEFUND (Betreiber, 09.11.2026): „Der Modus Find your Spark soll
+> erweitert werden. Wenn man auf ihn drauf drückt, kommt wie gehabt
+> erst, dass man seine Vorstellung machen muss (Muss geprüft werden, ob
+> man schon gemacht hat oder nicht, damit nicht doppelt), dann
+> entweder Zufallsvorstellung oder Vorstellungen anderer nach Kategorien
+> ansehen. Also Kategorien sind die Interessens-Kategorien. Auf
+> diesen neuen Teil mit den Kategorien soll ein Bereich mit 18+ sein,
+> wo von 18 bis 99+ alle gesehen werden (Aber man kann nach Alter
+> filtern mit Regler) und ein 16-17 Bereich ohne Vorstellung mit Alter
+> darüber. Wichtig ist, dass diese Grenze wirklich klappt, wie auch
+> überall anders auch, damit die Kinder/Jugend geschützt sind.
+> Natürlich da dann E2E immer. Verschlüsselt auf Server speichern."
+
+**Einstieg (in dieser Reihenfolge):**
+
+1. **Vorstellungs-Check**: Fehlt die eigene Vorstellung, kommt zuerst
+   der Hinweis „Mach erst deine Vorstellung" – **mit Prüfung, ob
+   schon eine existiert** (sonst wird ein zweites Mal aufgefordert,
+   obwohl längst eine da ist). Der bestehende Weg
+   (`lib/widgets/intro_editor.dart`) wird dafür geprüft, nicht
+   dupliziert. **Eine Textvorstellung genügt** – das Audio ist
+   optional (und wird erst bei einem Funke gehört).
+2. **Zwei Wege**: *Zufallsvorstellung* (ein Kandidat nach dem anderen,
+   wie heute) oder *Nach Kategorien stöbern*.
+
+**Die zwei Bereiche (Altersgrenze):**
+
+| Bereich | Alter | Vorstellung | Altersregler |
+|---|---|---|---|
+| **18+** | 18 bis 99+ | Pflicht | 18…99, per Regler filterbar |
+| **16/17** | 16 und 17 | Pflicht | Obergrenze 17 |
+
+**Die Vorstellung bleibt Pflicht - auch in der Erweiterung** (und auch
+für 16-/17-Jährige). **Sie darf aber rein TEXTLICH sein:** wer sich
+vorstellt, schreibt seinen Text; **das Audio ist optional** und wird
+erst bei einem Funke gehört (dort, wo die Vorstellung heute ohnehin
+über `match-media` freigegeben wird). Die Kategorie-Sicht zeigt den
+**Text** und die Interessen - nicht die Aufnahme.
+
+- Die Grenzen sind **keine UI-Kosmetik**: sie stehen serverseitig in
+  `age_compatible_bidirectional` (Migration 154/155) und werden von
+  `lib/utils/age_safety_rules.dart` nur noch gespiegelt. **Minderjährige
+  sehen ausschließlich Minderjährige, Erwachsene ausschließlich
+  Erwachsene.** Ein 18-Jähriger bekommt nie einen 16-Jährigen zu
+  sehen – auch nicht über die neue Kategorie-Sicht.
+- Der Altersregler im 18+-Bereich geht bis **99** (`maxFilterAge` gibt
+  für Erwachsene 99 zurück, für Minderjährige 17) – der Wunsch „18 bis
+  99+" ist damit schon abgedeckt.
+- **Die neue Sicht darf die Altersregel nicht umgehen.** Die
+  Kategorie-Abfrage läuft serverseitig und filtert mit derselben
+  Funktion; ein manipulierter Client bekommt dieselbe Grenze.
+
+**Was neu serverseitig gebraucht wird (RPC, Migration):**
+
+```
+browse_by_category(
+  p_category text,       -- die Interessens-Kategorie
+  p_age_min  int,       -- 18 (Erwachsene) bzw. 16 (Minderjährige)
+  p_age_max  int,       -- 99 bzw. 17
+  p_limit    int        -- Seitengrösse
+) returns table (...)
+```
+
+- Die Funktion wendet **`age_compatible_bidirectional`** auf den
+  Betrachter an – **fail-closed**: ohne gültiges Alter (oder mit
+  manipuliertem Geburtsdatum) kommt nichts zurück.
+- Sie liefert **keine** Vorstellungs-Audios. Das Audio wird pro
+  Kandidat über den bestehenden Weg geholt (`match-media`, serverseitige
+  Berechtigungsprüfung) – **verschlüsselt auf dem Server, Entschlüsselung
+  erst auf dem Gerät** (E2E wie bei Profilbildern und -Vorstellungen).
+- **Interessen stehen im Klartext** auf dem Server (das steht so in der
+  Datenschutzerklärung: „Features in plaintext: the selected features
+  (category, value, colour)"). Eine Kategorie-Sicht ändert daran
+  nichts – sie macht nur sichtbar, **wer** zu einer Kategorie gehört.
+  Das ist eine neue Verknüpfbarkeit und damit **ein eigener
+  Eintrag in der Datenschutzerklärung** (welche Interessen anderer
+  sieht man, und in welcher Menge).
+- Der Server nennt die Kategorie-Mitglieder **nur dem Alter nach
+  passend**: Wer 16/17 ist, bekommt ausschließlich 16/17 – auch dann,
+  wenn die Kategorie passt.
+
+**Vom Betreiber entschieden (09.11.2026):**
+
+- **Die Vorstellung bleibt Pflicht** – auch in der Erweiterung und
+  auch für 16-/17-Jährige.
+- **Sie darf rein textlich sein.** Das Audio ist optional und wird
+  **bei einem Funke** gehört (der bestehende `match-media`-Weg gibt
+  es ohnehin erst nach dem Match frei).
+- **16- und 17-Jährige sehen KEINE 18+-Personen.** Die Trennung ist
+  serverseitig (`age_compatible_bidirectional`) und gilt für jeden
+  Abrufweg – auch für die Kategorie-Sicht.
+
+**Noch zu entscheiden:**
+
+- Wie viele Kandidaten eine Kategorie liefert (Vorschlag: 20 pro
+  Seite, mit „weitere laden").
+
 
 > Vision: Ein vollständig offlinefähiger, geschützter Raum zur
 > Selbstreflexion bei Frust, Zurückweisung oder emotionalen Tiefs –
@@ -1723,105 +1830,6 @@ Vorgesehene Bausteine (noch nicht umgesetzt):
       Datenschutz: nur gerundete Koordinaten, Vorschläge auf Stadt-Ebene;
       beide Standorte werden nie genauer behandelt als die ohnehin
       bestehende 5-km-Rundung.
-
-### 9. Find your Spark – Ausbau: Zufallsvorstellung und Kategorien
-
-> BEFUND (Betreiber, 09.11.2026): „Der Modus Find your Spark soll
-> erweitert werden. Wenn man auf ihn drauf drückt, kommt wie gehabt
-> erst, dass man seine Vorstellung machen muss (Muss geprüft werden, ob
-> man schon gemacht hat oder nicht, damit nicht doppelt), dann
-> entweder Zufallsvorstellung oder Vorstellungen anderer nach Kategorien
-> ansehen. Also Kategorien sind die Interessens-Kategorien. Auf
-> diesen neuen Teil mit den Kategorien soll ein Bereich mit 18+ sein,
-> wo von 18 bis 99+ alle gesehen werden (Aber man kann nach Alter
-> filtern mit Regler) und ein 16-17 Bereich ohne Vorstellung mit Alter
-> darüber. Wichtig ist, dass diese Grenze wirklich klappt, wie auch
-> überall anders auch, damit die Kinder/Jugend geschützt sind.
-> Natürlich da dann E2E immer. Verschlüsselt auf Server speichern."
-
-**Einstieg (in dieser Reihenfolge):**
-
-1. **Vorstellungs-Check**: Fehlt die eigene Vorstellung, kommt zuerst
-   der Hinweis „Mach erst deine Vorstellung" – **mit Prüfung, ob
-   schon eine existiert** (sonst wird ein zweites Mal aufgefordert,
-   obwohl längst eine da ist). Der bestehende Weg
-   (`lib/widgets/intro_editor.dart`) wird dafür geprüft, nicht
-   dupliziert. **Eine Textvorstellung genügt** – das Audio ist
-   optional (und wird erst bei einem Funke gehört).
-2. **Zwei Wege**: *Zufallsvorstellung* (ein Kandidat nach dem anderen,
-   wie heute) oder *Nach Kategorien stöbern*.
-
-**Die zwei Bereiche (Altersgrenze):**
-
-| Bereich | Alter | Vorstellung | Altersregler |
-|---|---|---|---|
-| **18+** | 18 bis 99+ | Pflicht | 18…99, per Regler filterbar |
-| **16/17** | 16 und 17 | Pflicht | Obergrenze 17 |
-
-**Die Vorstellung bleibt Pflicht - auch in der Erweiterung** (und auch
-für 16-/17-Jährige). **Sie darf aber rein TEXTLICH sein:** wer sich
-vorstellt, schreibt seinen Text; **das Audio ist optional** und wird
-erst bei einem Funke gehört (dort, wo die Vorstellung heute ohnehin
-über `match-media` freigegeben wird). Die Kategorie-Sicht zeigt den
-**Text** und die Interessen - nicht die Aufnahme.
-
-- Die Grenzen sind **keine UI-Kosmetik**: sie stehen serverseitig in
-  `age_compatible_bidirectional` (Migration 154/155) und werden von
-  `lib/utils/age_safety_rules.dart` nur noch gespiegelt. **Minderjährige
-  sehen ausschließlich Minderjährige, Erwachsene ausschließlich
-  Erwachsene.** Ein 18-Jähriger bekommt nie einen 16-Jährigen zu
-  sehen – auch nicht über die neue Kategorie-Sicht.
-- Der Altersregler im 18+-Bereich geht bis **99** (`maxFilterAge` gibt
-  für Erwachsene 99 zurück, für Minderjährige 17) – der Wunsch „18 bis
-  99+" ist damit schon abgedeckt.
-- **Die neue Sicht darf die Altersregel nicht umgehen.** Die
-  Kategorie-Abfrage läuft serverseitig und filtert mit derselben
-  Funktion; ein manipulierter Client bekommt dieselbe Grenze.
-
-**Was neu serverseitig gebraucht wird (RPC, Migration):**
-
-```
-browse_by_category(
-  p_category text,       -- die Interessens-Kategorie
-  p_age_min  int,       -- 18 (Erwachsene) bzw. 16 (Minderjährige)
-  p_age_max  int,       -- 99 bzw. 17
-  p_limit    int        -- Seitengrösse
-) returns table (...)
-```
-
-- Die Funktion wendet **`age_compatible_bidirectional`** auf den
-  Betrachter an – **fail-closed**: ohne gültiges Alter (oder mit
-  manipuliertem Geburtsdatum) kommt nichts zurück.
-- Sie liefert **keine** Vorstellungs-Audios. Das Audio wird pro
-  Kandidat über den bestehenden Weg geholt (`match-media`, serverseitige
-  Berechtigungsprüfung) – **verschlüsselt auf dem Server, Entschlüsselung
-  erst auf dem Gerät** (E2E wie bei Profilbildern und -Vorstellungen).
-- **Interessen stehen im Klartext** auf dem Server (das steht so in der
-  Datenschutzerklärung: „Features in plaintext: the selected features
-  (category, value, colour)"). Eine Kategorie-Sicht ändert daran
-  nichts – sie macht nur sichtbar, **wer** zu einer Kategorie gehört.
-  Das ist eine neue Verknüpfbarkeit und damit **ein eigener
-  Eintrag in der Datenschutzerklärung** (welche Interessen anderer
-  sieht man, und in welcher Menge).
-- Der Server nennt die Kategorie-Mitglieder **nur dem Alter nach
-  passend**: Wer 16/17 ist, bekommt ausschließlich 16/17 – auch dann,
-  wenn die Kategorie passt.
-
-**Vom Betreiber entschieden (09.11.2026):**
-
-- **Die Vorstellung bleibt Pflicht** – auch in der Erweiterung und
-  auch für 16-/17-Jährige.
-- **Sie darf rein textlich sein.** Das Audio ist optional und wird
-  **bei einem Funke** gehört (der bestehende `match-media`-Weg gibt
-  es ohnehin erst nach dem Match frei).
-- **16- und 17-Jährige sehen KEINE 18+-Personen.** Die Trennung ist
-  serverseitig (`age_compatible_bidirectional`) und gilt für jeden
-  Abrufweg – auch für die Kategorie-Sicht.
-
-**Noch zu entscheiden:**
-
-- Wie viele Kandidaten eine Kategorie liefert (Vorschlag: 20 pro
-  Seite, mit „weitere laden").
 
 ### 10. Gruppen und Foren (später, nach 0.12.0)
 

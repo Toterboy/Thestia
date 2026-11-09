@@ -17,12 +17,30 @@ Aufruf::
 
 import hashlib
 import pathlib
+import re
 import sys
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-RELEASE = ROOT / "releases" / "v0.10.0"
+
+
+def _release_ordner() -> pathlib.Path:
+    """Der Release-Ordner gehoert zur Version aus pubspec.yaml.
+
+    BEFUND (09.11.2026): Hier stand fest 'v0.10.0'. Mit dem
+    Versionswechsel (0.11.0) waere der Ordner falsch gewesen - und
+    die Pruefsummen waeren stillschweigend im alten Ordner gelandet.
+    Der Ordner gehoert jetzt zur Version, die gebaut wird.
+    """
+    text = (ROOT / "pubspec.yaml").read_text(encoding="utf-8")
+    m = re.search(r"^version:\s*([0-9.]+)\+[0-9]+", text, re.M)
+    if not m:
+        return ROOT / "releases" / "v0.10.0"
+    return ROOT / "releases" / ("v" + m.group(1))
+
+
+RELEASE = _release_ordner()
 ANLEITUNG = RELEASE / "TESTANLEITUNG.md"
 
 KOPF = "## 5) Pruefsummen (SHA-256)"

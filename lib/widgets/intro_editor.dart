@@ -45,9 +45,19 @@ class IntroEditor extends ConsumerStatefulWidget {
   @override
   ConsumerState<IntroEditor> createState() => _IntroEditorState();
 
-  /// True, wenn beide Pflichtangaben vorhanden sind.
+  /// True, wenn die Pflichtangabe vorhanden ist: der TEXT.
+  ///
+  /// BEFUND (09.11.2026, Betreiber): "Es kann jedoch, wenn man sich
+  /// vorstellt nur eine textliche Vorstellung sein und die Audio kann
+  /// man dann bei einem Funken hoeren. Das bleibt freigestellt."
+  ///
+  /// Vorher verlangte `isValid` Text UND Audio - die Aufnahme war
+  /// Pflicht. Jetzt ist der TEXT die Pflicht, die Aufnahme die
+  /// Option. Das Audio wird ohnehin erst beim Funke freigegeben
+  /// (match-media, serverseitig geprueft) - es zu erzwingen, bevor
+  /// ueberhaupt jemand die Vorstellung sieht, war widersinnig.
   static bool isValid({required String text, String? audioPath}) =>
-      text.trim().isNotEmpty && audioPath != null;
+      text.trim().isNotEmpty;
 
   /// Mindestlänge der Audio-Vorstellung in Sekunden.
   static const int minAudioSeconds = 10;
