@@ -6,6 +6,7 @@ class TransitSparkResult {
     required this.matched,
     this.partnerId,
     this.partnerNote,
+    this.alreadySpark = false,
   });
 
   /// true = die andere Person hatte ebenfalls signalisiert - der Funke
@@ -18,12 +19,25 @@ class TransitSparkResult {
   /// Freie Ergänzung der Gegenseite bei Match (sonst null, v0.9.1).
   final String? partnerNote;
 
+  /// True, wenn mit der gefundenen Person BEREITS ein Funke bestand.
+  ///
+  /// BEFUND (09.11.2026, Betreiber): "Wenn man bei Transit Spark schon
+  /// die Person als Funken hat, soll darauf hingewiesen werden."
+  ///
+  /// Der Server legt bei jedem Transit-Treffer Likes in beide
+  /// Richtungen an; ein bestehender Match bleibt dabei bestehen
+  /// (ON CONFLICT DO NOTHING). Ohne dieses Flag wuerde der Nutzer
+  /// jedes Mal den Erfolgs-Dialog sehen - auch wenn es der gleiche
+  /// Funke wie vorher war.
+  final bool alreadySpark;
+
   factory TransitSparkResult.fromJson(Map<String, dynamic> json) {
     final note = json['partnerNote'] as String?;
     return TransitSparkResult(
       matched: json['matched'] == true,
       partnerId: json['partner'] as String?,
       partnerNote: (note == null || note.trim().isEmpty) ? null : note,
+      alreadySpark: json['alreadySpark'] == true,
     );
   }
 }

@@ -36,7 +36,7 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
   Duration? _duration;
 
   /// Wie breit der Balken wird (px).
-  static const double _balkenBreite = 116;
+  static const double _balkenBreite = 150;
 
   /// Die Zeit als m:ss (die Vorstellungen sind kurz, aber eine
   /// Vorstellung darf auch eine Minute dauern).
@@ -180,8 +180,23 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
         ? 0.0
         : (_position.inMilliseconds / dauer.inMilliseconds).clamp(0.0, 1.0);
 
-    return Row(
+    // BEFUND (09.11.2026, Betreiber): "Bei Vorstellung anhoeren ist der
+    // Balken rechts vom Button und geht ueber den Bereich hinaus (Also ein
+    // overflow). Bitte fixen. Also bei Interessen. Wenn der drunter ist
+    // und nur angezeigt wird, wenn man auf Vorstellung anhoeren drueckt,
+    // waere das besser so."
+    //
+    // DER GRUND: Der Knopf, der Balken und die Zeit standen in EINER
+    // Zeile. In der schmalen Kachel im Interessen-Screen war die
+    // Zeile breiter als der Platz - und die Zeile lief ueber (Overflow).
+    //
+    // JETZT: Der Knopf steht allein, der Balken DARUNTER - und er ist
+    // nur sichtbar, wenn tatsaechlich etwas laeuft. Vorher standen
+    // "--:--" und ein leerer Balken dauerhaft da.
+    final laeuft = _playing || _position > Duration.zero;
+    return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         FilledButton.tonalIcon(
           onPressed: _toggle,
@@ -200,37 +215,37 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
                 : L10n.t(context, 'intro.listen'),
           ),
         ),
-        const SizedBox(width: 10),
-        // Der Balken: er ist erst sichtbar, wenn die Dauer bekannt ist
-        // (vorher waere er sinnlos - jede Aufnahme ist anders lang).
-        SizedBox(
-          width: _balkenBreite,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(3),
-                child: LinearProgressIndicator(
-                  value: dauer == null ? null : anteil,
-                  minHeight: 4,
-                  backgroundColor: scheme.surfaceContainerHighest,
+        if (laeuft) ...[
+          const SizedBox(height: 8),
+          SizedBox(
+            width: _balkenBreite,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(3),
+                  child: LinearProgressIndicator(
+                    value: dauer == null ? null : anteil,
+                    minHeight: 4,
+                    backgroundColor: scheme.surfaceContainerHighest,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                dauer == null
-                    ? '--:--'
-                    : '${_zeit(_position)} / ${_zeit(dauer)}',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: scheme.onSurfaceVariant,
-                  fontFeatures: const [FontFeature.tabularFigures()],
+                const SizedBox(height: 3),
+                Text(
+                  dauer == null
+                      ? '--:--'
+                      : '${_zeit(_position)} / ${_zeit(dauer)}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: scheme.onSurfaceVariant,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ],
     );
   }

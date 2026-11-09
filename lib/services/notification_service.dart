@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter/material.dart' show Color;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -33,6 +35,15 @@ class NotificationService {
 
   /// Initialisiert den Dienst, legt die Standard-Kanäle an und holt die
   /// Benachrichtigungs-Berechtigung (Android 13+).
+  /// Der Tap-Handler fuer lokale Benachrichtigungen (BEFUND 09.11.2026).
+  ///
+  /// Statisch, weil `initialize` eine statische Funktion braucht.
+  static void onNotificationTap(NotificationResponse response) {
+    final payload = response.payload;
+    if (payload == null || payload.isEmpty) return;
+    unawaited(_deliverTapPayload(payload));
+  }
+
   Future<void> initialize() async {
     if (_initialized) return;
 
@@ -59,7 +70,34 @@ class NotificationService {
       iOS: iosSettings,
     );
 
-    await _plugin.initialize(settings: initSettings);
+    // DER TAP (BEFUND 09.11.2026, Betreiber): "Wenn man auf die
+    // Benachrichtigung drueckt, dass man eine neue Nachricht erhalten
+    // hat, soll man zum Interessen Screen kommen."
+    //
+    // DER GRUND (live geprueft): Der Payload wurde gesetzt
+    // (payload: '/interessen'), aber es gab KEINEN Handler dafuer - der
+    // Tap oeffnete die App und sonst nichts.
+    //
+    // `onDidReceiveNotificationResponse` feuert bei einem Tap auf eine
+    // LOKALE Benachrichtigung (im Vordergrund oder aus dem Hintergrund).
+    // `getNotificationAppLaunchDetails` liefert den Payload, mit dem die
+    // App per Tap auf die Benachrichtigung GESTARTET wurde (App war
+    // beendet) - das wird hier einmalig ausgewertet.
+    await _plugin.initialize(
+      settings: initSettings,
+      onDidReceiveNotificationResponse: onNotificationTap,
+    );
+
+    // App per Tap auf die Benachrichtigung gestartet (App war zu)?
+    final startDetails = await _plugin.getNotificationAppLaunchDetails();
+    if (startDetails?.didNotificationLaunchApp == true) {
+      final payload = startDetails?.notificationResponse?.payload;
+      if (payload != null && payload.isNotEmpty) {
+        // Der Hook wird evtl. erst spaeter verdrahtet (App-Root) - dann
+        // wartet die Navigation kurz.
+        await _deliverTapPayload(payload);
+      }
+    }
 
     // Berechtigung für Android 13+ (POST_NOTIFICATIONS).
     if (Platform.isAndroid) {
@@ -122,6 +160,30 @@ class NotificationService {
   }
 
   /// Prüft Master-Schalter + Einzel-Schalter für [type].
+  /// Wird aufgerufen, wenn der Nutzer auf eine lokale Benachrichtigung
+  /// tippt.
+  ///
+  /// BEFUND (09.11.2026): Ohne diesen Handler passierte beim Tippen
+  /// NICHTS - die App ging auf, aber nicht zum Chat. Der Payload
+  /// (z. B. '/interessen') wird jetzt ausgewertet.
+  static void Function(String payload)? tapHandler;
+
+  /// Liefert den Tap an den Handler - mit kurzem Warten, falls die App
+  /// den Hook noch nicht verdrahtet hat (Start aus der Benachrichtigung).
+  static Future<void> _deliverTapPayload(String payload) async {
+    for (var i = 0; i < 20; i++) {
+      final handler = tapHandler;
+      if (handler != null) {
+        handler(payload);
+        return;
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    }
+    debugPrint(
+      '[Notification] Kein Tap-Handler verdrahtet - Ziel $payload verwaessert.',
+    );
+  }
+
   bool _isEnabledFor(WidgetRef ref, NotificationType type) {
     final settings = ref.read(settingsProvider);
     if (!settings.notificationsEnabled) return false;
@@ -290,7 +352,17 @@ class NotificationService {
       title: title,
       body: body,
       channelId: 'messages',
-      payload: '/chat/$id',
+      // BEFUND (09.11.2026, Betreiber): "Wenn man auf die Benachrichtigung
+      // drueckt, dass man eine neue Nachricht erhalten hat, soll man zum
+      // Interessen Screen kommen."
+      //
+      // DER GRUND: Der Chat braucht den Eintrag in der Partnerliste
+      // (der Relay-Abruf laeuft ueber `getMatchById`). Oeffnet man den
+      // Chat direkt aus der Benachrichtigung, ist der Partner dort
+      // manchmal noch nicht geladen - der Chat bleibt dann leer, obwohl
+      // die Nachricht zugestellt wurde. Ueber den Interessen-Screen ist
+      // der Partner sicher bekannt.
+      payload: '/interessen',
       ref: ref,
       type: NotificationType.messages,
     );

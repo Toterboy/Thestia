@@ -1062,6 +1062,11 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
         final like = _likes[i];
         final profile = like.profile;
         final busy = _busyLikeId == like.likeId;
+        // Gibt es mit dieser Person schon einen Funke? Dann gibt es
+        // nichts zu bestaetigen (BEFUND 09.11.2026).
+        final serverFunken =
+            ref.watch(serverMatchesProvider).valueOrNull ?? const [];
+        final hatFunke = serverFunken.any((m) => m.partner.id == profile.id);
         return Card(
           child: Padding(
             padding: const EdgeInsets.all(12),
@@ -1155,29 +1160,50 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
                     // Der Knopf ist deshalb weg. Zwei Knöpfe, die dasselbe
                     // tun, sind schlimmer als einer: der Nutzer muss
                     // raten, welcher der richtige ist.
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: busy
-                            ? null
-                            : () => _respond(like, accept: true),
-                        // Kein Ladekreis im Knopf (NUTZERWUNSCH,
-                        // 31.10.2026): der Ring war 16 px breit
-                        // statt 24 px - die Knopfbreite sprang
-                        // damit hin und her, und bei einem kurzen
-                        // Vorgang war der Ring nur ein Blitzer.
-                        //
-                        // Das Symbol bleibt an seiner Stelle und
-                        // atmet nur leiser. Die Breite bleibt
-                        // konstant.
-                        icon: _BusyIcon(
-                          busy: busy,
-                          child: const Icon(Icons.favorite),
+                    // BEFUND (09.11.2026, Betreiber): "Man kann nicht bei
+                    // der selben Person einen Funken haben und ihn dann
+                    // noch bestaetigen koennen."
+                    //
+                    // Wenn es den Funke schon gibt, gibt es nichts zu
+                    // bestaetigen - der Knopf wuerde den Server nur
+                    // erneut das Gleiche tun lassen. Stattdessen steht
+                    // der Hinweis da.
+                    if (hatFunke)
+                      Expanded(
+                        child: Container(
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text(
+                            L10n.t(context, 'interests.alreadySpark'),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 12),
+                          ),
                         ),
-                        label: Text(
-                          L10n.t(context, 'interests.sparkConfirmBtn'),
+                      )
+                    else
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: busy
+                              ? null
+                              : () => _respond(like, accept: true),
+                          // Kein Ladekreis im Knopf (NUTZERWUNSCH,
+                          // 31.10.2026): der Ring war 16 px breit
+                          // statt 24 px - die Knopfbreite sprang
+                          // damit hin und her, und bei einem kurzen
+                          // Vorgang war der Ring nur ein Blitzer.
+                          //
+                          // Das Symbol bleibt an seiner Stelle und
+                          // atmet nur leiser. Die Breite bleibt
+                          // konstant.
+                          icon: _BusyIcon(
+                            busy: busy,
+                            child: const Icon(Icons.favorite),
+                          ),
+                          label: Text(
+                            L10n.t(context, 'interests.sparkConfirmBtn'),
+                          ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ],
@@ -1873,6 +1899,33 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     final uebrigeFunken = activeMatches
         .where((m) => !gepinnt.contains(m.matchId))
         .toList();
+    // BEFUND (09.11.2026, Betreiber): "Zudem sollen Chats mit
+    // ungelesenen Nachrichten hervorgehoben und oben in der Liste sein."
+    //
+    // Die ungelesenen Nachrichten stehen in der Chatliste (Match), nicht
+    // in der Serverliste der Funken (MatchWithState) - der Abgleich
+    // laeuft deshalb ueber die Partner-ID.
+    final chatListe = ref.watch(chatProvider);
+    int ungelesenVon(String partnerId) {
+      for (final c in chatListe) {
+        if (c.partner.id == partnerId) return c.unreadCount;
+      }
+      return 0;
+    }
+
+    // Die Fixierten stehen ohnehin in ihrem eigenen Abschnitt ganz oben
+    // (NUTZERWUNSCH 28.10.2026). Innerhalb des uebrigen Abschnitts
+    // kommen jetzt die Chats mit ungelesenen Nachrichten nach oben -
+    // bei gleichem Stand der neueste zuerst.
+    uebrigeFunken.sort((a, b) {
+      final ua = ungelesenVon(a.partner.id);
+      final ub = ungelesenVon(b.partner.id);
+      if (ua != ub) return ub.compareTo(ua);
+      final da = a.createdAt;
+      final db = b.createdAt;
+      if (da == null || db == null) return 0;
+      return db.compareTo(da);
+    });
 
     // Nur beim ersten Laden: ein ruhiger Platzhalter statt eines
     // kreisenden Rings. Beim Nachladen bleibt der Inhalt stehen -
@@ -2039,6 +2092,9 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
             return _MatchTile(
               match: m,
               pinned: gepinnt.contains(m.matchId),
+              // BEFUND (09.11.2026): Chats mit ungelesenen Nachrichten
+              // sollen hervorgehoben sein.
+              unreadCount: ungelesenVon(m.partner.id),
               // v0.9.0-Feedback: "Auf die Person klicken -> kommt direkt
               // das Kennenlern-Quiz" - jetzt öffnet die Kachel IMMER den
               // Chat; das Quiz ist als Button im Chat erreichbar (es
@@ -2503,7 +2559,14 @@ class _MatchTile extends ConsumerWidget {
     required this.onPin,
     required this.onDelete,
     this.pinned = false,
+    this.unreadCount = 0,
   });
+
+  /// Wie viele Nachrichten von dieser Person ungelesen sind.
+  ///
+  /// BEFUND (09.11.2026): "Zudem sollen Chats mit ungelesenen
+  /// Nachrichten hervorgehoben ... sein."
+  final int unreadCount;
 
   final MatchWithState match;
   final VoidCallback onTap;
@@ -2550,8 +2613,20 @@ class _MatchTile extends ConsumerWidget {
         !match.quizPassed &&
         match.createdVia == 'find_match' &&
         msgCount >= threshold;
+    final scheme = Theme.of(context).colorScheme;
+    final ungelesen = unreadCount > 0;
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      // BEFUND (09.11.2026, Betreiber): "Zudem sollen Chats mit
+      // ungelesenen Nachrichten hervorgehoben ... sein." Der Rand und
+      // die Flaeche faellen auf, solange ungelesene Nachrichten da sind.
+      color: ungelesen ? scheme.primaryContainer.withValues(alpha: 0.35) : null,
+      shape: ungelesen
+          ? RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(color: scheme.primary, width: 1.5),
+            )
+          : null,
       child: ListTile(
         onTap: onTap,
         leading: GestureDetector(
@@ -2574,6 +2649,28 @@ class _MatchTile extends ConsumerWidget {
                 ].join(' · '),
               ),
             ),
+            // Die kleine Zahl der Nachrichten dieser Person.
+            //
+            // BEFUND (09.11.2026, Betreiber): "Außerdem soll mit einer
+            // kleinen Zahl gekennzeichnet werden, wie viele Nachrichten
+            // die Person geschrieben hat."
+            if (msgCount > 0) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: scheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$msgCount',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontFeatures: [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ),
+            ],
             // Der automatische Funke (Migration 177): er kam nicht von
             // beiden Seiten zustande. Das Sternchen weist darauf hin -
             // die Rueckfrage kommt beim Antippen.

@@ -751,20 +751,6 @@ GoRouter createRouter(Ref ref) {
         path: AppRoutes.bugReport,
         builder: (context, state) => const BugReportScreen(),
       ),
-      // QR-Code (Profil teilen + Scannen)
-      GoRoute(
-        path: AppRoutes.qrProfile,
-        builder: (context, state) => const QrProfileScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.qrScan,
-        builder: (context, state) => const QrScanScreen(),
-      ),
-      // "Connect to others": Telefon & Social Media (nur lokal gespeichert)
-      GoRoute(
-        path: AppRoutes.qrContacts,
-        builder: (context, state) => const ContactShareScreen(),
-      ),
       // Mood of the Day
       GoRoute(
         path: AppRoutes.moodPicker,
@@ -915,6 +901,34 @@ GoRouter createRouter(Ref ref) {
           GoRoute(
             path: AppRoutes.transitRadar,
             builder: (context, state) => const TransitRadarScreen(),
+          ),
+          // "Mit anderen verbinden" (QR-Code + Kontaktdaten).
+          //
+          // BEFUND (09.11.2026, Betreiber): "Bei dem Modi Screen Mit
+          // anderen verbinden soll unten die Reiterleiste noch sichtbar
+          // sein."
+          //
+          // DER GRUND: Diese Routen lagen VOR der ShellRoute - also
+          // ausserhalb des Haupt-Navigators, in dem `MainNavigation`
+          // (mit der Reiter-Leiste) sitzt. Sie waren dadurch
+          // Vollbild-Screens ohne Leiste.
+          //
+          // JETZT: Sie sind Teil der ShellRoute - die Leiste ist da.
+          // Der Reiter "/qr/" ist in `_subRoutePrefixes` bereits dem
+          // Entdecken-Reiter zugeordnet, damit der richtige Reiter
+          // hervorgehoben bleibt.
+          GoRoute(
+            path: AppRoutes.qrProfile,
+            builder: (context, state) => const QrProfileScreen(),
+          ),
+          GoRoute(
+            path: AppRoutes.qrScan,
+            builder: (context, state) => const QrScanScreen(),
+          ),
+          // "Connect to others": Telefon & Social Media (nur lokal gespeichert)
+          GoRoute(
+            path: AppRoutes.qrContacts,
+            builder: (context, state) => const ContactShareScreen(),
           ),
           // T: Entdeckungs-Modus-Auswahl MUSS Teil des Bottom-Navigation-Shells
           // sein (nicht eigenständiger Vollbild-Screen), damit die untere

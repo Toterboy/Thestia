@@ -24,7 +24,26 @@ def m_anon_ohne_public(c):
         "'REVOKE EXECUTE ON FUNCTION %s FROM anon'", 1)
 
 
-def m_overload_luecke(c):
+# Die Variante, um die es geht: match_proximity_spark mit dem eigenen
+# Token (Migration 185). Sie ist die einzige, die NACH dem Sweep aus
+# Migration 123 angelegt wurde - davor angelegte Varianten hat der Sweep
+# (er arbeitet ueber pg_proc) ohnehin erfasst.
+UEBERLAST_SIG_6 = ('text[], text[], text, text[], text, text')
+
+# Die REVOKE-Formen, die im Repo fuer diese Variante vorkommen (alle
+# Schreibweisen, die der Checker liest).
+_UEBERLAST_REVOKES = (
+    # Migration 185 / 207 (zweizeilig):
+    'REVOKE EXECUTE ON FUNCTION\n'
+    '  public.match_proximity_spark(text[], text[], text, text[], text, text)\n'
+    'FROM PUBLIC, anon;',
+    # Migration 207 (einzeilig):
+    'revoke all on function public.match_proximity_spark(text[], text[], '
+    'text, text[], text, text) from public, anon;',
+)
+
+
+def m_overload_luecke(c, datei=''):
     # BEFUND (07.11.2026, Migration 185): Der alte Negativfall zielte auf
     # Migration 126 - dort fehlte nach der Mutation der REVOKE der
     # Variante profile_discovery_visible(uuid, uuid). Der Fall ist aber
@@ -39,14 +58,19 @@ def m_overload_luecke(c):
     # bleibt die Variante aufrufbar, und genau das muss der Checker
     # melden.
     #
-    # WICHTIG: Es muss die Migration sein, die den REVOKE traegt (185).
-    # Eine spaetere, die die Funktion nur erneuert (187), wuerde den
-    # REVOKE nicht wiederholen - die Rechte bleiben bei CREATE OR
-    # REPLACE erhalten. Sonst waere die Mutation wirkungslos.
-    return c.replace(
-        'REVOKE EXECUTE ON FUNCTION\n'
-        '  public.match_proximity_spark(text[], text[], text, text[], text, text)\n'
-        'FROM PUBLIC, anon;', '', 1)
+    # BEFUND (09.11.2026): Die Sperren werden im Checker REPO-WEIT
+    # gesammelt (siehe dessen Kommentar). Die Variante wird in
+    # Migration 185 UND in Migration 207 gesperrt. Entfernt man das
+    # REVOKE nur aus EINER Datei, ist sie ueber die andere weiterhin
+    # gesperrt - der Checker meldet zu Recht nichts, und der Selbsttest
+    # waere wirkungslos.
+    #
+    # DESHALB: Die Mutation entfernt das REVOKE aus JEDER Datei, die
+    # diese Variante sperrt. Die Datei-Liste wird unten ausgewertet.
+    for muster in _UEBERLAST_REVOKES:
+        if muster in c:
+            return c.replace(muster, '', 1)
+    return c
 
 
 def m_prosrc_kommentar(c):
@@ -87,7 +111,7 @@ MUTATIONS = [
     ('1 PUBLIC-Revoke', 'REVOKE ... FROM anon ohne FROM PUBLIC',
      '123_revoke_public_execute.sql', m_anon_ohne_public),
     ('2 Overloads', 'eine Variante einer ueberladenen Function bleibt offen',
-     '185_transit_match_own_token.sql', m_overload_luecke),
+     '207_transit_already_spark_and_single_match.sql', m_overload_luecke),
     ('3 prossrc-Check', 'Fail-Fast-Muster steht nur im Kommentar',
      '127_remaining_db_hardening.sql', m_prosrc_kommentar),
     ('4 LANGUAGE sql', 'spricht eine spaeter definierte Function an',
@@ -109,27 +133,55 @@ for cls, desc, target, mutate in MUTATIONS:
         (root / 'tool').mkdir()
         shutil.copy(CHECKER, root / 'tool' / 'check_push_readiness.py')
 
-        f = root / 'supabase' / 'migrations' / target
-        original = f.read_text(encoding='utf-8', errors='replace')
-        mutated = mutate(original)
-        if mutated == original:
-            fails.append((cls, 'Mutation wirkungslos - Test ungueltig'))
-            print(f'  UNGUELTIG     {cls:16} Mutation hat nichts geaendert')
-            continue
-        f.write_text(mutated, encoding='utf-8', newline='\n')
+        # BEFUND (09.11.2026): Die Fehlerklasse "2 Overloads" muss ALLE
+        # Migrationen treffen, die die Variante sperren - der Checker
+        # sammelt die Sperren repo-weit. Deshalb laeuft diese Mutation
+        # ueber jede Migrationsdatei; die Dateien, die nichts zu tun
+        # haben, bleiben unveraendert.
+        #
+        # Die uebrigen Fehlerklassen beziehen sich auf EINE Datei - fuer
+        # sie bleibt der alte Ablauf (nur die Zieldatei wird mutiert).
+        if cls == '2 Overloads':
+            ziel_gefunden = False
+            for f in sorted((root / 'supabase' / 'migrations').glob('*.sql')):
+                original = f.read_text(encoding='utf-8', errors='replace')
+                mutated = mutate(original, f.name)
+                if mutated == original:
+                    continue
+                f.write_text(mutated, encoding='utf-8', newline='\n')
+                ziel_gefunden = True
+            if not ziel_gefunden:
+                fails.append((cls, 'Mutation wirkungslos - Test ungueltig'))
+                print(f'  UNGUELTIG     {cls:16} Mutation hat nichts geaendert')
+                continue
+        else:
+            f = root / 'supabase' / 'migrations' / target
+            original = f.read_text(encoding='utf-8', errors='replace')
+            mutated = mutate(original)
+            if mutated == original:
+                fails.append((cls, 'Mutation wirkungslos - Test ungueltig'))
+                print(f'  UNGUELTIG     {cls:16} Mutation hat nichts geaendert')
+                continue
+            f.write_text(mutated, encoding='utf-8', newline='\n')
 
+        # BYTES statt Text: die Ausgabe wird selbst dekodiert. Mit
+        # `text=True` benutzt subprocess die lokale Codepage (cp1252 auf
+        # Windows) - die Umlaute im Checker-Ausgabetext sprengen dann
+        # die Dekodierung und `r.stdout` ist None (BEFUND 09.11.2026:
+        # der Selbsttest war dadurch auf Windows komplett rot).
         r = subprocess.run(
             [sys.executable, str(root / 'tool' / 'check_push_readiness.py')],
-            capture_output=True, text=True)
-        detected = r.returncode != 0 and cls in r.stdout
+            capture_output=True)
+        stdout = (r.stdout or b'').decode('utf-8', errors='replace')
+        detected = r.returncode != 0 and cls in stdout
         print(f'  {"OK          " if detected else "NICHT ERKANNT"} {cls:16} {desc}')
         if detected:
-            detail = next((l.strip() for l in r.stdout.splitlines()
+            detail = next((l.strip() for l in stdout.splitlines()
                            if l.strip().startswith('[')), '')
             print(f'                -> {detail[:92]}')
         else:
             fails.append((cls, 'Checker erkennt den eingebauten Fehler nicht'))
-            for l in [x for x in r.stdout.splitlines() if x.strip()][:5]:
+            for l in [x for x in stdout.splitlines() if x.strip()][:5]:
                 print(f'                {l.strip()[:92]}')
 
 print('=' * 74)

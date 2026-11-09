@@ -10,6 +10,50 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 ## [0.10.0] – Elternfreigabe, Aufsicht und Admin-Posteingang (Build 31, 2026-10-30 bis 2026-11-03)
 
 
+### Behoben
+
+- **Nachrichten kommen jetzt an** (09.11.2026): Eine Benachrichtigung kam
+  an, aber die Nachricht selbst war unsichtbar. Der Grund war eine
+  doppelte Buchfuehrung: Der Chat-Screen holte die verschluesselten
+  Relay-Nachrichten nur ueber das *lokale* Match - und das lokale Match
+  eines Server-Funken entsteht erst, wenn der Chat geoeffnet wird. Fehlte
+  es, brach der Abruf komplett ab und die Nachricht blieb liegen. Dasselbe
+  galt fuer den globalen Relay-Eingang, der Server-Funken nicht zuordnen
+  konnte. Beide Wege holen das Match jetzt nach, bevor sie abbrechen.
+- **Der Ungelesen-Zaehler wurde nie erhoeht** (09.11.2026): Es gab nur
+  eine Stelle, die ihn zuruecksetzte - nie eine, die ihn erhoehte. Badge,
+  Hervorhebung und die Sortierung "ungelesene Chats oben" konnten damit
+  gar nicht greifen. Der Zaehler wird jetzt beim Eintreffen einer
+  Nachricht vom Partner gefuehrt (ausser der Chat ist gerade offen).
+- **Ein Tap auf die Benachrichtigung fuehrt zum Interessen-Screen**
+  (09.11.2026): Der Zielpfad wurde gesetzt, aber es gab keinen Handler,
+  der ihn auswertete - der Tap oeffnete die App und sonst nichts. Jetzt
+  werden alle drei Wege verbunden: lokale Benachrichtigung, FCM-Push im
+  Hintergrund und FCM-Push bei beendeter App.
+- **Der Vorstellungs-Player laeuft nicht mehr ueber** (09.11.2026): Der
+  Fortschrittsbalken stand neben dem Knopf und lief in der schmalen
+  Kachel aus dem Bereich. Er sitzt jetzt darunter und erscheint nur,
+  waehrend tatsaechlich etwas laeuft.
+- **Die Bilder im Chat sind kleiner** (09.11.2026): Sie fuellten die ganze
+  Zeile der Blase aus. Jetzt sind sie auf eine 160-Pixel-Kachel
+  begrenzt - ein Vorschaubild statt des Vollbilds.
+- **"Funke bestaetigen" bei vorhandenem Funke** (09.11.2026): Wer mit
+  dieser Person schon einen Funke hat, bekommt jetzt den Hinweis statt
+  eines Knopfes, der nichts Neues bewirkt.
+- **Die Reiterleiste bleibt bei "Mit anderen verbinden" sichtbar**
+  (09.11.2026): Die QR-Screens lagen ausserhalb des Haupt-Navigators und
+  waren dadurch Vollbild-Screens ohne Leiste.
+- **Der Zufallschat findet keine bekannten Personen** (09.11.2026): Wer
+  mit jemandem schon einen Funke hat, ist dort jetzt ausgeschlossen -
+  ebenso blockierte Personen (in beide Richtungen). Die Regel gilt auch
+  beim Reconnect in eine laufende Session.
+- **Transit Spark vergibt genau eine Person** (09.11.2026): Zwei
+  gleichzeitige Aufrufe konnten dieselbe Person beanspruchen - sie bekam
+  dann zwei Funken. Die Auswahl ist jetzt gesperrt und eindeutig. Wer
+  bei Transit Spark schon einen Funke hat, wird darauf hingewiesen
+  ("Ihr habt schon einen Funken") statt auf einen neuen Funke zu
+  glauben.
+
 ### Hinzugefügt
 
 - **Eigener Screen für die Elterneinstellungen:** Der Bereich „Kinderschutz &

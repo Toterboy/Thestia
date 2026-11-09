@@ -170,12 +170,39 @@ class ChatNotifier extends StateNotifier<List<Match>> {
 
   /// Hängt eine (echte P2P-)Nachricht an, ohne Mock-Auto-Reply auszulösen.
   /// Wird für gesendete UND empfangene Nachrichten des E2E-Chats genutzt.
+  ///
+  /// BEFUND (09.11.2026, Betreiber): "Zudem sollen Chats mit
+  /// ungelesenen Nachrichten hervorgehoben und oben in der Liste sein."
+  /// Dafür muss der Zähler geführt werden - er wurde vorher NIE erhöht
+  /// (nur auf 0 zurückgesetzt), damit konnte nichts angezeigt werden.
+  ///
+  /// Gezählt wird nur, wenn
+  ///  - die Nachricht vom PARTNER kommt (nicht von mir selbst), und
+  ///  - der Chat gerade NICHT offen ist (sonst ist die Nachricht
+  ///    sichtbar - ein Zählerstand wäre eine Falschmeldung).
   void addMessage(String matchId, Message msg, {WidgetRef? ref}) {
     _chat.addMessage(matchId, msg);
+    _countUnread(matchId, msg, ref);
     state = _chat.getMatches();
     if (ref != null) {
       _maybeNotifyMessage(matchId, msg, ref);
     }
+  }
+
+  /// Zählt eine eingehende Nachricht als ungelesen (BEFUND 09.11.2026).
+  void _countUnread(String matchId, Message msg, WidgetRef? ref) {
+    // BEFUND (09.11.2026, Testlauf): `SupabaseService.currentUser` wirft
+    // eine Assertion, wenn Supabase NICHT initialisiert ist (Limit-Modus
+    // oder Test). Der Zaehler darf daran nicht scheitern - deshalb wird
+    // die ID ueber einen sicheren Zugriff geholt.
+    final myId = _eigeneUserId();
+    if (myId.isEmpty) return;
+    // Eigene Nachricht: nie zählen.
+    if (msg.isFrom(myId)) return;
+    // Offener Chat: die Nachricht ist sichtbar - nicht zählen.
+    final open = ref?.read(activeChatIdProvider);
+    if (open != null && open == matchId) return;
+    _chat.incrementUnread(matchId);
   }
 
   /// Liefert ein einzelnes Match anhand seiner ID.
@@ -190,6 +217,22 @@ class ChatNotifier extends StateNotifier<List<Match>> {
   /// Löst ein Match auf (entfernt Match und zugehörige Nachrichten).
   ///
   /// Gibt `true` zurück, wenn das Match erfolgreich gelöst wurde.
+  /// Die eigene User-ID - ohne zu werfen.
+  ///
+  /// BEFUND (09.11.2026): `SupabaseService.currentUser` wirft, wenn
+  /// Supabase nicht initialisiert ist (Limit-Modus, Tests). Fuer den
+  /// Ungelesen-Zaehler darf das nicht zu einem Absturz fuehren.
+  String _eigeneUserId() {
+    try {
+      if (!SupabaseService.isInitialized) return '';
+      return SupabaseService.currentUser?.id ?? '';
+    } on Object {
+      // Absichtlich verschluckt: ohne eigene ID laesst sich nicht
+      // unterscheiden, ob eine Nachricht von mir oder vom Partner kommt.
+      return '';
+    }
+  }
+
   bool dissolveMatch(String matchId) {
     final success = _chat.dissolveMatch(matchId);
     if (success) {

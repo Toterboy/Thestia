@@ -417,6 +417,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     // und dem Relay-Fetch, der Chat blieb entsprechend lange leer.
     await ref.read(chatProvider.notifier).hydrateHistory(widget.matchId);
     await _ensureLocalMatch();
+    // BEFUND (09.11.2026): Der Ungelesen-Zähler wird jetzt geführt
+    // (vorher NIE erhöht). Beim Öffnen des Chats wird er zurückgesetzt
+    // - die Nachrichten im Chat sind ja gelesen.
+    ref.read(chatProvider.notifier).markRead(widget.matchId);
     await _initP2P();
     await _loadPartnerProfileIfNeeded();
     await _ensureLikeForSavedContact();
@@ -589,20 +593,47 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   /// Holt E2E-verschlüsselte Relay-Nachrichten des Partners ab (Fallback,
   /// wenn P2P nicht zustande kam) und hängt sie in den Verlauf.
   Future<void> _fetchRelay() async {
-    final match =
+    var match =
         _match ?? ref.read(chatProvider.notifier).getMatchById(widget.matchId);
-    if (match == null || !mounted) return;
+
+    // BEFUND (09.11.2026): "Nachrichten kommen nicht richtig an. Eine
+    // Benachrichtigung gab es aber ich sehe die Nachricht nicht."
+    //
+    // DER GRUND: `match` kommt aus dem LOKALEN Chat-Speicher. Fuer
+    // einen Server-Funke (Interessen-Screen) gibt es dieses lokale
+    // Match erst, wenn `_ensureLocalMatch()` es angelegt hat. Fehlt es
+    // (Chat direkt aus einer Benachrichtigung geoeffnet, Server-RPC
+    // noch nicht durch), brach der Abruf hier komplett ab
+    // (`if (match == null) return;`) - und die Nachricht blieb im Relay
+    // liegen: fuer den Nutzer unsichtbar, obwohl die Benachrichtigung
+    // ankam.
+    //
+    // JETZT: Fehlt das lokale Match, wird es einmalig vom Server
+    // geholt (derselbe Pfad, den der Chat-Screen ohnehin nutzt).
+    if (match == null) {
+      await _ensureLocalMatch();
+      if (!mounted) return;
+      match = ref.read(chatProvider.notifier).getMatchById(widget.matchId);
+    }
+    if (!mounted) return;
     if (!SupabaseService.isInitialized) return;
+    // Ohne Partner koennen wir die Zeile nicht zuordnen. Wir holen
+    // sie dann NICHT - fremde Zeilen bleiben fuer ihren eigenen Chat
+    // liegen (kein Datenverlust, und nichts wird faelschlich
+    // bestaetigt).
+    final partnerId = match?.partner.id;
+    if (partnerId == null) return;
+
     try {
       // Nur Zeilen DIESES Partners abholen/bestätigen - fremde warten
       // unangetastet auf ihren eigenen Chat (RelayService.fetchPending).
       final pending = await ref
           .read(relayServiceProvider)
-          .fetchPending(from: match.partner.id);
+          .fetchPending(from: partnerId);
       if (!mounted) return;
       var added = false;
       for (final r in pending) {
-        if (r.senderId != match.partner.id) continue;
+        if (r.senderId != partnerId) continue;
         final msgId = 'relay_${r.id}';
         if (_seenMessageIds.contains(msgId)) continue;
         _seenMessageIds.add(msgId);
@@ -616,7 +647,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
               ? MessageType.icebreaker
               : MessageType.text,
         );
-        ref.read(chatProvider.notifier).addMessage(match.id, msg, ref: ref);
+        ref
+            .read(chatProvider.notifier)
+            .addMessage(match?.id ?? widget.matchId, msg, ref: ref);
         added = true;
       }
       if (added) {
@@ -4112,6 +4145,11 @@ class _ChatImage extends StatelessWidget {
   final double? width;
   final double? height;
 
+  /// Die groesste Kante eines Bildes in der Blase (px).
+  ///
+  /// BEFUND (09.11.2026): Die Bilder waren viel zu gross im Chat.
+  static const double _maxKachel = 160;
+
   /// Die dekodierten Bytes - mit Cache.
   ///
   /// Der Cache ist wichtig: Ohne ihn wuerde die Blase bei JEDEM
@@ -4143,10 +4181,14 @@ class _ChatImage extends StatelessWidget {
     if (bytes == null) {
       return const _ImageBubblePlaceholder();
     }
+    // BEFUND (09.11.2026, Betreiber): "Die Bild anzeige von Bildern,
+    // die man schickt, ist viel zu gross im Chat." Das Bild fuellte die
+    // ganze Zeile der Blase aus. Es ist jetzt auf eine Feste Kachel
+    // begrenzt (160 px) - ein Vorschaubild, kein Vollbild.
     Widget bild = Image.memory(
       bytes,
       fit: fit,
-      width: width,
+      width: width ?? _maxKachel,
       height: height,
       // In der Blase reichen 600 px - ohne das waeren es mehrere MB
       // dekodierte Bitmap pro Bild.

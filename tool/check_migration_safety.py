@@ -91,11 +91,31 @@ def effektiver_koerper(name: str) -> str:
     Invariante, dass die Huelle das Gate auch wirklich aufruft.
     """
     body = defs.get(name.lower(), '')
+
+    # (a) PERFORM-Huelle (Migration 176): die Huelle ruft das Original
+    #     per PERFORM auf.
     treffer = re.search(r'PERFORM\s+public\.([a-z0-9_]+)\s*\(', body, re.I)
     if treffer:
         innen = defs.get(treffer.group(1).lower())
         if innen:
-            return body + '\n' + innen
+            body = body + '\n' + innen
+
+    # (b) DIREKTER Aufruf einer Hilfsfunktion (Migration 205).
+    #
+    #     WARUM (09.11.2026): Die Blockier- und Funke-Ausschlussregeln
+    #     fuer den Zufallschat liegen jetzt in EINER Hilfsfunktion
+    #     (random_chat_pair_allowed) - join_random_chat() ruft sie an
+    #     allen drei Wegen auf. Ohne diese Aufloesung wuerde der
+    #     Pruefer nur den Aufruf sehen und die Regel als "fehlend"
+    #     melden, obwohl sie durchgesetzt wird.
+    #
+    #     Es werden nur Hilfsfunktionen verfolgt, die in den Migrationen
+    #     selbst definiert sind - Tabellen (public.profiles o. Ae.)
+    #     stehen nicht in `defs` und werden ignoriert.
+    for aufruf in re.finditer(r'public\.([a-z0-9_]+)\s*\(', body, re.I):
+        innen = defs.get(aufruf.group(1).lower())
+        if innen and innen not in body:
+            body = body + '\n' + innen
     return body
 
 # --- Sicherheits-Invarianten -------------------------------------------------

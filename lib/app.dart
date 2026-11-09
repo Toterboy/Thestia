@@ -66,6 +66,7 @@ class _AppState extends ConsumerState<App> {
   void initState() {
     super.initState();
     _setupFcmForegroundListener();
+    _setupNotificationNavigation();
     // NUTZERWUNSCH: UnifiedPush-Path mit derselben Chat-offen-
     // Unterdrückung verdrahten (F-Droid-Variante).
     UnifiedPushService.suppressCheck = (peerId) =>
@@ -92,6 +93,79 @@ class _AppState extends ConsumerState<App> {
     });
     inbox.start();
     _checkMinBuildInBackground();
+  }
+
+  /// Verdrahtet die Navigation aus Benachrichtigungen.
+  ///
+  /// BEFUND (09.11.2026, Betreiber): "Wenn man auf die Benachrichtigung
+  /// drueckt, dass man eine neue Nachricht erhalten hat, soll man zum
+  /// Interessen Screen kommen."
+  ///
+  /// DER GRUND (live geprueft): Es gab keinen Tap-Handler - weder fuer
+  /// lokale Benachrichtigungen noch fuer den FCM-Push. Der Tap auf die
+  /// Benachrichtigung oeffnete die App, mehr nicht.
+  ///
+  /// Drei Wege werden hier verbunden:
+  ///  1) Lokale Benachrichtigung, App im Vordergrund -> Tap-Payload.
+  ///  2) FCM-Push, App im Hintergrund -> `onMessageOpenedApp`.
+  ///  3) FCM-Push, App war beendet -> `getInitialMessage`.
+  ///
+  /// Bei (2) und (3) kommt die Meldung vom SERVER (notify-user). Deren
+  /// Metadaten tragen die Art ('messages', 'likes', 'matches'). Alle
+  /// drei Arten fuehren zum Interessen-Screen - dort stehen die Chats und
+  /// die Funken. Der Server kann keinen genaueren Zielpfad nennen: die
+  /// Match-ID des Empfaengers kennt nur dieser selbst.
+  void _setupNotificationNavigation() {
+    NotificationService.tapHandler = (payload) {
+      unawaited(_navigateFromNotification(payload));
+    };
+
+    // (2) FCM: App im Hintergrund, der Nutzer tippt auf die Meldung.
+    try {
+      FirebaseMessaging.onMessageOpenedApp.listen((message) {
+        unawaited(_navigateFromNotification(_routeForPush(message.data)));
+      });
+    } catch (e) {
+      debugPrint('[App] FCM-Tap-Handler nicht verfuegbar: $e');
+    }
+
+    // (3) FCM: App war beendet, der Nutzer tippt auf die Meldung.
+    unawaited(() async {
+      try {
+        final message = await FirebaseMessaging.instance.getInitialMessage();
+        if (message == null) return;
+        // Ein Moment Pause: der Router steht dann sicher.
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+        await _navigateFromNotification(_routeForPush(message.data));
+      } catch (e) {
+        debugPrint('[App] Start-Nachricht nicht auswertbar: $e');
+      }
+    }());
+  }
+
+  /// Der Zielpfad einer Server-Benachrichtigung.
+  ///
+  /// Alle Server-Arten (Nachricht, Like, Funke) fuehren zum
+  /// Interessen-Screen: dort stehen die Chats UND die Funken. Der
+  /// Server kennt die Match-ID des Empfaengers nicht - deshalb kann er
+  /// keinen genaueren Pfad nennen.
+  static String _routeForPush(Map<String, dynamic> data) {
+    final kind = data['kind'] as String?;
+    if (kind == 'dating_hour') return '/dating-hour';
+    return '/interessen';
+  }
+
+  /// Navigiert zum Ziel einer Benachrichtigung.
+  Future<void> _navigateFromNotification(String route) async {
+    if (!mounted) return;
+    try {
+      final router = ref.read(routerProvider);
+      // Der Router ist erst bereit, wenn Auth + Einstellungen geladen
+      // sind - der Redirect bringt die App dann automatisch zum Ziel.
+      router.go(route);
+    } catch (e) {
+      debugPrint('[App] Navigation aus Benachrichtigung fehlgeschlagen: $e');
+    }
   }
 
   /// Prueft den serverseitigen Mindest-Build im Hintergrund.

@@ -423,6 +423,46 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
       return;
     }
     if (result.matched && result.partnerId != null) {
+      // BEFUND (09.11.2026, Betreiber): "Wenn man bei Transit Spark schon
+      // die Person als Funken hat, soll darauf hingewiesen werden."
+      //
+      // DER GRUND: Der Server legt bei jedem Transit-Treffer Likes in
+      // beide Richtungen an. Existiert mit der Person SCHON ein Funke,
+      // bleibt es bei diesem einen (ON CONFLICT DO NOTHING) - der
+      // Nutzer sah aber trotzdem den Erfolgs-Dialog. Das war
+      // irrefuehrend.
+      //
+      // JETZT: Der Server teilt mit, ob der Match NEU war. Wenn nicht,
+      // wird das gesagt (mit Weg in den bestehenden Chat) statt des
+      // Freude-Dialogs.
+      if (result.alreadySpark) {
+        await showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            icon: Icon(
+              Icons.favorite,
+              color: Theme.of(ctx).colorScheme.primary,
+              size: 40,
+            ),
+            title: Text(L10n.t(ctx, 'transit.alreadySparkTitle')),
+            content: Text(L10n.t(ctx, 'transit.alreadySparkBody')),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text(L10n.t(ctx, 'transit.later')),
+              ),
+              FilledButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  context.push(AppRoutes.interessen);
+                },
+                child: Text(L10n.t(ctx, 'transit.openSparks')),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(

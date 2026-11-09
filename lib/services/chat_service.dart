@@ -448,6 +448,25 @@ class ChatService {
     unawaited(_persistHistory(matchId));
   }
 
+  /// Erhöht den ungelesen-Zähler eines Matches um 1.
+  ///
+  /// BEFUND (09.11.2026, Betreiber): "Zudem sollen Chats mit
+  /// ungelesenen Nachrichten hervorgehoben und oben in der Liste sein."
+  ///
+  /// DER GRUND (live geprueft): Der Zähler wurde NIE erhöht - die
+  /// einzige Fundstelle war [markRead] (das Zurücksetzen auf 0). Damit
+  /// konnten Badge, Hervorhebung und Sortierung nie greifen.
+  ///
+  /// Der Aufrufer entscheidet, OB gezählt wird (offener Chat zählt
+  /// nicht - dort ist die Nachricht ja sichtbar).
+  void incrementUnread(String matchId) {
+    final idx = _matches.indexWhere((m) => m.id == matchId);
+    if (idx == -1) return;
+    _matches[idx] = _matches[idx].copyWith(
+      unreadCount: _matches[idx].unreadCount + 1,
+    );
+  }
+
   /// Setzt den ungelesen-Zähler eines Matches zurück.
   void markRead(String matchId) {
     final idx = _matches.indexWhere((m) => m.id == matchId);

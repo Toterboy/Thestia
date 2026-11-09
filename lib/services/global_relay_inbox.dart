@@ -6,6 +6,8 @@ import 'package:flutter/widgets.dart'
 
 import 'package:thestia/models/message.dart';
 import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/services/find_your_match_service.dart'
+    show findYourMatchServiceProvider;
 import 'package:thestia/services/random_chat_service.dart';
 import 'package:thestia/services/relay_poll_backoff.dart';
 import 'package:thestia/services/relay_service.dart';
@@ -57,6 +59,17 @@ class GlobalRelayInbox with WidgetsBindingObserver {
   /// Gecachte aktive Zufallschat-Session (Session-Lookup nicht pro Tick).
   ({String sessionId, String partnerId})? _activeRandomChat;
   DateTime? _activeRandomChatAt;
+
+  /// Gecachte Server-Funken: Partner-ID -> lokale Match-ID.
+  ///
+  /// BEFUND (09.11.2026): Nur fuer die Zuordnung fremder Relay-Zeilen
+  /// (siehe [_route]). Der Cache verhindert, dass der RPC bei jedem
+  /// Poll-Takt erneut laeuft.
+  Map<String, String>? _serverMatchLookup;
+  DateTime? _serverMatchLookupAt;
+
+  /// Wie lange der Server-Funken-Cache gilt (30 s - wie die Session).
+  static const Duration _serverMatchLookupTtl = Duration(seconds: 30);
 
   /// Poll-Takt: Leerfall UND Fehlerfall strecken das Intervall bis 45 s,
   /// erfolgreiche Zustellung geht sofort auf 6 s zurueck. Die Logik
@@ -216,6 +229,23 @@ class GlobalRelayInbox with WidgetsBindingObserver {
         return m.id;
       }
     }
+
+    // 1b) Server-Funke, dessen lokales Match noch fehlt.
+    //
+    // BEFUND (09.11.2026, Betreiber): "Nachrichten kommen nicht richtig
+    // an. Eine Benachrichtigung gab es aber ich sehe die Nachricht
+    // nicht."
+    //
+    // DER GRUND: Der lokale chatProvider kennt einen Server-Funke erst,
+    // wenn sein Chat geoeffnet wurde. Vorher fand die Zuordnung hier
+    // nichts -> die Zeile blieb im Relay liegen und der Nutzer sah
+    // NICHTS (die Benachrichtigung kam trotzdem, weil sie der Server
+    // schickt).
+    //
+    // JETZT: Der Funke wird einmalig vom Server geholt und lokal
+    // wiederhergestellt. Danach ist die Zuordnung moeglich.
+    final restored = await _restoreServerMatchFor(r.senderId);
+    if (restored != null) return restored;
     // 2) Aktive Zufallschat-Session (Partner == Absender).
     final randomChat = await _resolveActiveRandomChat();
     if (randomChat != null && randomChat.partnerId == r.senderId) {
@@ -224,6 +254,53 @@ class GlobalRelayInbox with WidgetsBindingObserver {
     // Unbekannter Absender (z. B. Dating-Hour-Chats): NICHT acken - der
     // zuständige Screen (mit bekannter Session-ID) holt sie ab.
     return null;
+  }
+
+  /// Stellt einen Server-Funke lokal wieder her, damit eine Relay-
+  /// Nachricht ihm zugeordnet werden kann.
+  ///
+  /// BEFUND (09.11.2026): Ohne das blieb die Nachricht unsichtbar (siehe
+  /// [_route]). Der Server-Funke wird hier einmalig geholt
+  /// (`list_my_matches_with_state`) und mit derselben Match-ID lokal
+  /// angelegt - genau so, wie der Chat-Screen es tut. Damit stimmen
+  /// Match-ID und Chat-Route zusammen.
+  ///
+  /// Best-Effort: Scheitert der RPC, bleibt null - die Zeile bleibt
+  /// liegen (kein Datenverlust) und wird beim naechsten Poll erneut
+  /// versucht.
+  Future<String?> _restoreServerMatchFor(String partnerId) async {
+    if (!SupabaseService.isInitialized) return null;
+    // Nicht bei jedem Poll neu laden: der Server-Funkensatz aendert
+    // sich selten, und der RPC ist der teuerste Schritt hier.
+    final now = DateTime.now();
+    if (_serverMatchLookupAt != null &&
+        now.difference(_serverMatchLookupAt!) < _serverMatchLookupTtl) {
+      return _serverMatchLookup?[partnerId];
+    }
+    try {
+      final service = _ref.read(findYourMatchServiceProvider);
+      final matches = await service.listMatchesWithState();
+      final map = <String, String>{};
+      for (final m in matches) {
+        map[m.partner.id] = m.matchId.toString();
+      }
+      _serverMatchLookup = map;
+      _serverMatchLookupAt = DateTime.now();
+      final matchId = map[partnerId];
+      if (matchId == null) return null;
+      // Lokal anlegen (gleiche ID wie die Chat-Route) - sonst findet
+      // der Chat-Screen das Match nicht.
+      final partner = matches
+          .firstWhere((m) => m.partner.id == partnerId)
+          .partner;
+      _ref
+          .read(chatProvider.notifier)
+          .restoreServerMatch(matchId, partner, DateTime.now());
+      return matchId;
+    } catch (e) {
+      debugPrint('[RelayInbox] Server-Funke nicht ladbar: $e');
+      return null;
+    }
   }
 
   /// Lokale Benachrichtigung für eine zugestellte Nachricht (der Chat

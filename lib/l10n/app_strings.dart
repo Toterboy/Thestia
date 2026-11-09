@@ -1096,6 +1096,10 @@ const Map<String, Map<String, String>> _strings = {
         'Die Person hat denselben Moment gespürt. Schaut in eure Funken - '
         'ihr könnt jetzt chatten.',
     'transit.later': 'Später',
+    'transit.alreadySparkTitle': 'Ihr habt schon einen Funken',
+    'transit.alreadySparkBody':
+        'Diese Person hast du schon einmal getroffen. '
+        'Der Funke ist noch da - schau in deine Chats.',
     'transit.openSparks': 'Zu den Funken',
     'transit.startFailed':
         'Radar konnte nicht gestartet werden. Bluetooth an und Berechtigung '
@@ -1447,6 +1451,7 @@ const Map<String, Map<String, String>> _strings = {
     'interests.likeWithdrawn': 'Like zurückgezogen.',
     'interests.likeWithdrawTooltip': 'Like zurückziehen',
     'interests.sparkConfirmBtn': 'Funke bestätigen',
+    'interests.alreadySpark': 'Ihr habt schon einen Funken',
     'interests.resparkDone': 'Funke mit {name} ist wieder aktiv.',
     'interests.matchesSub': 'Bestätigte gegenseitige Likes',
     // Gespeicherte Profile (lokal, max. 5, zum Nachschreiben)
@@ -4220,6 +4225,10 @@ const Map<String, Map<String, String>> _strings = {
         'The other person felt the same moment. Check your sparks - you '
         'can chat now.',
     'transit.later': 'Later',
+    'transit.alreadySparkTitle': 'You already have a spark',
+    'transit.alreadySparkBody':
+        'You have met this person before. '
+        'The spark is still there - check your chats.',
     'transit.openSparks': 'To the sparks',
     'transit.startFailed':
         'Radar could not start. Turn on Bluetooth and grant permission.',
@@ -4561,6 +4570,7 @@ const Map<String, Map<String, String>> _strings = {
     'interests.likeWithdrawn': 'Like withdrawn.',
     'interests.likeWithdrawTooltip': 'Withdraw like',
     'interests.sparkConfirmBtn': 'Confirm spark',
+    'interests.alreadySpark': 'You already have a spark',
     'interests.resparkDone': 'Spark with {name} is active again.',
     'interests.matchesSub': 'Confirmed mutual likes',
     // Saved profiles (local, max. 5, for writing later)
