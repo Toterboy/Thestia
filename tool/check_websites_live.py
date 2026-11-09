@@ -240,22 +240,46 @@ def main() -> int:
     print()
     fehler += pruefe_zusatzhosts(args.host)
     print()
-    print("  ===== Der Auth-Host: X-Robots-Tag (noindex) =====")
+    print("  ===== Der Auth-Host: nicht indexierbar =====")
     #
     # BEFUND (08.11.2026): Bei Netlify sperrt eine domain-bezogene
     # Regel in _redirects die robots.txt des Auth-Hosts. Cloudflare
     # Pages kann solche Regeln nicht - dort muss der Header
     # "X-Robots-Tag: noindex" die Sperre uebernehmen (die Datei
     # _headers setzt ihn fuer https://auth.thestia.de/*).
+    #
+    # BEFUND (09.11.2026): Netlify wertet in `_headers` NUR PFADE aus
+    # - eine regel mit einer absoluten URL (`https://auth.thestia.de/*`)
+    # wird ignoriert. (Die Cloudflare-Doku sagt das Gegenteil, und
+    # dort stimmt es auch.) Der Header kam deshalb bei Netlify nie an -
+    # was als "Deploy zu alt" aussah, war ein Mechanics-Unterschied.
+    #
+    # DER PRUEFUNG: Der Auth-Host muss NICHT INDEXIERBAR sein. Das
+    # kann auf zwei Wegen erreicht werden, und welcher gilt, haengt
+    # vom Hoster ab. Deshalb wird beides geprueft:
+    #   * der Header X-Robots-Tag: noindex (der Cloudflare-Weg), ODER
+    #   * eine gesperrte robots.txt (der Netlify-Weg).
+    # Nur wenn WEDER das eine NOCH das andere zutrifft, ist es ein
+    # Fehler.
     code, _, kopf = hole("https://auth.thestia.de/")
     tag = {k.lower(): v for k, v in kopf.items()}.get("x-robots-tag", "")
-    if "noindex" in tag.lower():
+    header_ok = "noindex" in tag.lower()
+
+    robots_code, robots_body, _ = hole("https://auth.thestia.de/robots.txt")
+    robots_text = robots_body.decode("utf-8", "replace")
+    gueltig = [z.strip() for z in robots_text.splitlines()
+               if z.strip() and not z.strip().startswith("#")]
+    gesperrt = any(z.startswith("Disallow:") for z in gueltig)
+
+    if header_ok:
         print("    OK  https://auth.thestia.de liefert X-Robots-Tag: %s"
               % tag)
+    elif gesperrt and robots_code == 200:
+        print("    OK  https://auth.thestia.de/robots.txt sperrt "
+              "(Disallow) - der Sicherheitscheck ist nicht indexierbar")
     else:
-        print("    X  https://auth.thestia.de liefert keinen "
-              "X-Robots-Tag: noindex - der Sicherheitscheck waere "
-              "indexierbar (der Deploy ist aelter als das Repository)")
+        print("    X  https://auth.thestia.de ist indexierbar: weder "
+              "X-Robots-Tag: noindex noch eine gesperrte robots.txt")
         fehler += 1
 
     print()
