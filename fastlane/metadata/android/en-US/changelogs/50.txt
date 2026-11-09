@@ -1,0 +1,36 @@
+Messages now arrive
+
+If you got a notification before but the message itself stayed
+invisible: that is fixed. The connection works, and the message now
+arrives even if you had not opened the chat beforehand.
+
+Tapping the notification takes you to the interests screen
+
+Before, tapping only opened the app. Now you go straight to your
+chats.
+
+Unread chats are at the top
+
+Chats with unread messages are now at the top and highlighted. Next to
+the name there is a small number showing how many messages that person
+has written.
+
+Your introduction no longer overflows
+
+The progress bar now sits below the button and only appears while
+something is actually playing.
+
+Images in the chat are smaller
+
+Images are now limited to a small preview - before they filled the
+whole row.
+
+In random chat you will not meet anyone you know
+
+Anyone you already have a spark with is no longer found there - and
+neither are blocked people.
+
+Transit Spark: one person, and a hint
+
+Transit Spark now hands out exactly one person. And if you already
+have a spark with the person it found, the app tells you.
