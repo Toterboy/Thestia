@@ -2187,6 +2187,68 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      (serverseitig erzwungen), einem Moderationsweg und einem eigenen
      Eintrag in der Datenschutzerklaerung.
 
+68. **Das Logo in der Suche war nur ein Herz - jetzt ist es das
+     ThestiaIcon, und es ist rund.**
+     BEFUND (Betreiber, 09.11.2026): „Jedoch ist das Logo nur ein Herz
+     und nicht das ThestiaIcon Logo. Das Runde sollte dabei auch die
+     Farben von dem Abgerundeten haben (Hier muss das Bild Rund sein)."
+
+     **Zwei Fehler, einer davon in jeder Datei sichtbar:**
+
+     **(a) `favicon.svg` war die MARKE - ein Herz.** Und weil das SVG im
+     HTML als Icon deklariert war, zeigte der Browser-Tab genau das.
+     Der Browser nimmt das LETZTE passende Icon - das SVG gewinnt also
+     gegen die PNG. Die PNG enthielt zwar schon das ganze ThestiaIcon,
+     sie wurde aber nie benutzt. Jetzt enthalten alle drei Dateien
+     dasselbe Bild: das **runde** ThestiaIcon aus der einzigen
+     Logo-Quelle (`assets/images/thestia_icon_base.png`). Das SVG
+     bettet das PNG ein - das Artwork ist eine Rastergrafik, und eine
+     „vektorisierte" Marke waere eine ANDERE Marke (genau der Fehler,
+     den der Betreiber gemeldet hat).
+
+     **(b) Das runde Launcher-Icon war blass.** Zwei Ursachen, beide
+     gefunden: Der Hintergrund-Kreis (Radius = halbe Leinwand) wurde in
+     eine kleinere Maske gelegt (Radius = 72/108) - sichtbar blieb nur
+     die **Mitte** des Verlaufs, die satten Randbereiche (pink oben
+     links, violett unten rechts) lagen ausserhalb. Und das Herz war
+     **halbtransparent**: Die Alpha des Vordergrunds wurde aus der
+     Farbe berechnet (`min(r,g,b)` zwischen 88 und 168) - das betraf
+     auch die magentafarbene Lippe des Herzens (min = 104-169): Sie
+     bekam nur 20-100 % Deckkraft und wurde ueber dem Verlauf zu rosa
+     Milchglas. Gemessen: 81 % der opaken Pixel lagen unter 0,95
+     Deckkraft. Die Schwelle ist jetzt 88-104: das Artwork ist voll
+     deckend, nur der Verlauf faellt weg.
+
+     **DER RUNDE SCHNITT** steht jetzt in `tool/logo_round.py` (Python,
+     weil die Favicons mit Pillow erzeugt werden) - dieselbe Rechnung
+     wie in `tool/generate_round_logo.dart`. Beide Wege wurden
+     gegeneinander geprueft: mittlere Abweichung 0,81 je Kanal
+     (nur die Anti-Aliasing-Pixel am Kreisrand unterscheiden sich).
+
+     **DIE DOMAIN-FRAGE (gleiche Runde, live geprueft):** `thestia.de`
+     ist **nicht** blockiert. Die ausgelieferte `robots.txt` sagt
+     `User-agent: * / Allow: /` - auch fuer einen Googlebot (mit
+     dessen User-Agent nachgemessen). Gesperrt ist **nur**
+     `auth.thestia.de` (das ist der Sicherheitscheck der App, das
+     ist Absicht). Die HTTP->HTTPS-Umleitung und die Sitemap stimmen
+     auch. Wenn die Search Console fuer eine Adresse „blocked by
+     robots.txt" anzeigt, ist es entweder eine Adresse unter
+     `auth.thestia.de` (korrekt) oder der Stand von Google ist noch
+     der alte (der Cache der robots.txt wird erst bei einem neuen
+     Abruf erneuert - die „URL-Inspektion" mit „Neuer Abruf
+     anfordern" erledigt das).
+
+     **UND DIE VERCEL-DOMAIN:** Die alte Domain `theblinddate.in` ist
+     **bei GoDaddy registriert** (RDAP-Abfrage), ihre Nameserver
+     zeigen aber auf Vercel. Das Projekt und die Domain liegen in
+     einem **anderen Vercel-Team** (`team_0UCJ…` aus der lokalen
+     Verknuepfung), das die aktuelle Anmeldung nicht sieht - deshalb
+     war das `vercel project remove` wirkungslos, und die Seite
+     liefert weiter die alte Landingpage. Abschalten laesst sich auf
+     zwei Wegen: die Nameserver bei GoDaddy umstellen (schnellster
+     Weg, kein altes Login noetig) oder im alten Vercel-Team
+     `vercel domains rm theblinddate.in` ausfuehren.
+
 ## [0.10.0] - 2026-10-24 (Build 31)
 
 ### Sicherheit

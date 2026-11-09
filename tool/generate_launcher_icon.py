@@ -45,6 +45,9 @@ from PIL import Image, ImageDraw, ImageFilter
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = ROOT / 'assets' / 'images' / 'thestia_icon_base.png'
 
+# Das runde Logo (tool/logo_round.py) liegt neben diesem Skript.
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+
 # --- Adaptive-Icon-Geometrie (Android-Richtlinie) --------------------------
 # 108 dp Leinwand, 72 dp Sichtkreis, 66 dp garantiert sichtbarer Bereich.
 CANVAS_DP = 108.0
@@ -65,8 +68,25 @@ RES = ROOT / 'android' / 'app' / 'src' / 'main' / 'res'
 # Das Artwork (Herz, Kopf-Silhouetten, Funken, Schriftzug) ist weiss bis
 # hellrosa, der Verlauf ist satt (min(r,g,b) <= ~60). `min(r,g,b)` trennt
 # die beiden sauber: HIGH = volle Deckkraft, LOW = kein Artwork.
+#
+# BEFUND (09.11.2026, Betreiber): "Das Runde sollte dabei auch die Farben
+# von dem Abgerundeten haben (Hier muss das Bild Rund sein)." - das runde
+# Launcher-Icon war AUSGEWASCHEN, das adaptive auch.
+#
+# DER GRUND: HI war 168. Alles zwischen min=88 und min=168 bekam einen
+# TEIL-ALPHA. Das betraf auch die magentafarbene Lippe des Herzens (sie
+# liegt bei min=104-169) - sie wurde halbtransparent und damit blass:
+# Ueber dem Verlauf eingeblendet sieht sie nach rosa Milchglas aus statt
+# nach Magenta. Gemessen: 81 % der opaken Pixel lagen unterhalb 0,95
+# Deckkraft.
+#
+# JETZT: HI = 104. Das Artwork (weiss und hellrosa, min >= 104) ist
+# VOLL deckend; nur der Verlauf (min <= 88) faellt weg, und der schmale
+# Uebergang dazwischen (88-104) bleibt die Anti-Aliasing-Kante. Die
+# weiche Kante der Herzkanten kommt ohnehin aus dem Alpha-Kanal des
+# Quellbilds - die Farb-Schwelle muss sie nicht noch einmal weichzeichnen.
 ARTWORK_LO = 88.0
-ARTWORK_HI = 168.0
+ARTWORK_HI = 104.0
 
 GRID = 24  # Aufloesung der Hintergrund-Rekonstruktion
 
@@ -238,23 +258,26 @@ def build_monochrome(fg: Image.Image, size: int) -> Image.Image:
 
 
 def build_legacy(fg: Image.Image, bg: Image.Image, size: int) -> Image.Image:
-    """Rundes Icon fuer Launcher ohne Adaptive-Icon-Support."""
-    out = bg.resize((size, size), Image.LANCZOS)
-    r = 0.5 * MASK_DP / CANVAS_DP * size
-    ss = 4
-    mask = Image.new('L', (size * ss, size * ss), 0)
-    ImageDraw.Draw(mask).ellipse(
-        [size * ss / 2 - r * ss, size * ss / 2 - r * ss,
-         size * ss / 2 + r * ss, size * ss / 2 + r * ss], fill=255)
-    mask = mask.resize((size, size), Image.LANCZOS)
+    """Rundes Icon fuer Launcher ohne Adaptive-Icon-Support.
 
-    art = fg.resize((size, size), Image.LANCZOS)
-    composed = Image.new('RGBA', (size, size), (0, 0, 0, 0))
-    composed.paste(out, (0, 0), mask)
-    composed.alpha_composite(art)
-    canvas = Image.new('RGBA', (size, size), (0, 0, 0, 0))
-    canvas.paste(composed, (0, 0), mask)
-    return canvas
+    BEFUND (09.11.2026, Betreiber): "Das Runde sollte dabei auch die
+    Farben von dem Abgerundeten haben (Hier muss das Bild Rund sein)."
+
+    DER GRUND DER BLASSEN FARBEN: Das Icon legte den Hintergrund-Kreis
+    (Radius = halbe Leinwand) in eine kleinere Maske (Radius = 72/108
+    der Leinwand). Sichtbar blieb damit nur die **Mitte** des
+    Verlaufs - die satten Randbereiche (pink oben links, violett
+    unten rechts) lagen ausserhalb. Dazu kam das halbtransparente
+    Herz (die Alpha-Schwelle, siehe ARTWORK_HI).
+
+    JETZT: Das Icon ist das runde ThestiaIcon aus derselben Quelle
+    (`tool/logo_round.py`): der vollstaendige Verlauf im Kreis und das
+    deckende Artwork. Damit hat es genau die Farben des abgerundeten
+    Originals.
+    """
+    from logo_round import rundes_logo  # noqa: PLC0415
+
+    return rundes_logo(size)
 
 
 def write_png(img: Image.Image, path: pathlib.Path) -> None:
