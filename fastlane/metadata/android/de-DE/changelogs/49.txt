@@ -1,0 +1,21 @@
+Bilder im Chat sind wieder sichtbar
+
+Bilder, die im Chat geschickt wurden, wurden nur noch als Platzhalter
+angezeigt. Jetzt ist das Bild zu sehen - und bleibt beim Verpixeln
+geschuetzt, bis du es selbst freigibst.
+
+Deine Vorstellung hat jetzt eine Zeitanzeige
+
+Beim Anhoeren der Vorstellung siehst du jetzt, wie lang sie ist und
+wie weit du schon bist - mit einem Balken und der Zeit.
+
+Deine Profilbilder bleiben
+
+Nach dem Speichern waren die Bilder in den Kacheln zwei und drei
+wieder verschwunden. Das ist behoben.
+
+Kleinigkeiten im Menue
+
+Das Drei-Punkte-Menue ist jetzt geordnet: jede Gruppe hat eine
+Ueberschrift, und der Bildschirm laesst sich mit einer Wischgeste
+schliessen, ohne dass im Hintergrund weitergescrollt wird.

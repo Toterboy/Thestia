@@ -1,0 +1,20 @@
+Images in the chat are visible again
+
+Images you sent in the chat were only shown as a placeholder. Now the
+image is visible - and it stays pixelated until you release it
+yourself.
+
+Your introduction has a time display
+
+While listening to an introduction you can now see how long it is and
+how far you are - with a progress bar and the time.
+
+Your profile photos stay
+
+After saving, the photos in tiles two and three disappeared again.
+That is fixed.
+
+Small things in the menu
+
+The three-dot menu is now tidier: every group has a heading, and a
+swipe closes the screen without scrolling on in the background.
