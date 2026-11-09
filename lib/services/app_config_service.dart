@@ -3,6 +3,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/constants.dart';
 
 /// Liest Betriebs-Parameter aus der app_config-Tabelle (Migration 034/076).
 ///
@@ -100,6 +101,34 @@ class AppConfigService {
   /// [PackageInfo.fromPlatform] ist ein Plattform-Aufruf.
   static int? _buildNumberCache;
 
+  /// Der Aufschlag des Admin-Builds (siehe `build_release.ps1` und
+  /// `tool/check_release_artifacts.py`): Der Admin-Build traegt die
+  /// Build-Nummer der BASIS + 9000, damit er auf dem Geraet erkennbar
+  /// ist. Er geht nicht in den Store.
+  static const int adminBuildOffset = 9000;
+
+  /// Die Build-Nummer OHNE den Admin-Aufschlag.
+  ///
+  /// BEFUND (09.11.2026, Betreiber): "Die App Version ist wahrscheinlich
+  /// veraltet. Ich habe aber keinen update erforderlich screen beim admin
+  /// apk." **Der Grund:** Das Gate verglich die rohe Build-Nummer. Der
+  /// Admin-Build traegt 9048 (48 + 9000) - und 9048 ist immer groesser
+  /// als jedes Mindest-Build. **Der Admin-Build war damit vom
+  /// Versions-Gate ausgenommen** - egal, wie streng der Serverwert
+  /// gesetzt wurde. Genau das darf nicht sein: der Admin-Build ist
+  /// genauso alt wie die Basis und muss bei einem neuen Mindest-Build
+  /// genauso gesperrt werden.
+  ///
+  /// Deshalb wird hier die BASIS verglichen. Fuer normale Builds ist
+  /// [rawBuild] unveraendert; nur der Admin-Build (erkennbar an
+  /// [isAdminBuild] UND dem Aufschlag) wird zurueckgerechnet.
+  static int baseBuildNumber(int rawBuild, {required bool isAdminBuild}) {
+    if (isAdminBuild && rawBuild >= adminBuildOffset) {
+      return rawBuild - adminBuildOffset;
+    }
+    return rawBuild;
+  }
+
   static Future<int> currentBuildNumber() async {
     final cached = _buildNumberCache;
     if (cached != null) return cached;
@@ -110,6 +139,12 @@ class AppConfigService {
     } catch (_) {
       build = 0;
     }
+    build = baseBuildNumber(
+      build,
+      // Der Admin-Build ist am gesetzten ADMIN_UUID erkennbar (nur er
+      // wird mit --dart-define=ADMIN_UUID gebaut).
+      isAdminBuild: AppConstants.adminUserId.isNotEmpty,
+    );
     _buildNumberCache = build;
     return build;
   }

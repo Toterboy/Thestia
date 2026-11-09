@@ -2056,6 +2056,130 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      Mail-Records bleiben unangetastet, weil die DNS bei Spaceship
      bleibt) und die Pruefkommandos.
 
+64. **Fünf Fehler aus der Betreiber-Runde vom 09.11.2026 - alle gefunden,
+     alle behoben.**
+     BEFUND (Betreiber): „Wenn Bild geöffnet und zurück swipe, dann im
+     Hintergrund zurück, aber Bild noch offen. Bei 3 Punkte Menü ist über
+     Eisbrecher Fragen ein Strich einfach so aber keine Überschrift oder
+     so. Die Bilder sind nicht sichtbar, wenn hochgeladen. Die App
+     Version ist wahrscheinlich veraltet. Ich habe aber keinen update
+     erforderlich screen beim admin apk. Bei Vorstellung anhören im Chat
+     soll eine Zeitanzeige mit Balken sein, falls noch nicht vorhanden."
+
+     **(a) DER ADMIN-BUILD WAR VOM VERSIONS-GATE AUSGENOMMEN.** Das
+     Gate verglich die rohe Build-Nummer. Der Admin-Build trägt die
+     Basis + 9000 (`build_release.ps1`) - 9048 ist aber IMMER grösser
+     als jedes Mindest-Build. **Der Admin-Build wurde deshalb nie
+     gesperrt**, egal wie streng der Serverwert war. Jetzt wird die
+     BASIS verglichen (`baseBuildNumber`), mit Tests für 9048 → 48 und
+     für normale Builds.
+
+     **(b) DIE CHAT-BILDER WAREN EINE ATTRAPPE.** Die Nachricht kam
+     korrekt an (E2E-entschlüsselt, als Daten-URL in `mediaUrl`) - die
+     Blase zeichnete aber einen Farbverlauf mit Bild-Symbol. Jetzt wird
+     das Bild angezeigt (mit Verpixel-Schutz, Base64-Cache gegen
+     Mehrfach-Dekodieren). Dasselbe galt für das Vollbild und das
+     View-Once-Bild.
+
+     **(c) DIE PROFILBILDER VERSCHWANDEN NACH DEM SPEICHERN.** Nach
+     dem Speichern wurden die Future der Kacheln 1 und 2 verworfen - die
+     Kacheln fielen auf das Platzhalter-Symbol zurück, bis die App neu
+     gestartet wurde (das erste Bild wurde neu geladen, die beiden
+     weiteren nicht). Und: eine ERSETZTE Datei blieb als Wrack im
+     Speicher liegen, weil die Liste eine lückenlose Galerie ist, der
+     Pfad aber den Kachel-Index nennt. Beides ist behoben.
+
+     **(d) DAS 3-PUNKTE-MENÜ HATTE EINEN TRENNER OHNE ÜBERSCHRIFT.** Der
+     erste Strich stand ganz oben im Menü (er trennte nichts), und nur
+     die Gruppe „Sicherheit" hatte eine Überschrift. Jetzt: kein
+     führender Strich, und jede Gruppe hat ihre Überschrift
+     (Gespräch / Sicherheit / Verbindung).
+
+     **(e) DIE VORSTELLUNG HATTE KEINE ZEITANZEIGE.** Der Abspiel-Knopf
+     allein sagte nichts über Länge und Fortschritt. Jetzt gibt es
+     Balken und Zeitanzeige (0:04 / 0:32) - im Chat wie im Profil.
+
+     **Dazu der Wisch im Hintergrund:** Das Bild lag auf dem Navigator
+     der Shell, und der Reiter-Wechsel sitzt darüber. Die Sperrfläche
+     eines Dialogs schluckt Tipps, aber KEINE waagerechte Wischgeste -
+     die landete im Reiter-Wechsel: der Hintergrund wechselte, das Bild
+     blieb offen. Und das View-Once-Fenster verbot mit `canPop: false`
+     jeden Pop - **auch den Zurück-Wisch des Systems**. Jetzt schliesst
+     die Wischgeste das Bild (und der Pop ist erlaubt).
+
+65. **„Zurück liken" und „Funke bestätigen" waren dasselbe.**
+     BEFUND (Betreiber): „Zurück liken und Funke bestätigen läuft doch
+     aufs selbe hinaus. Like und Funke einer Person nicht gleichzeitig
+     möglich oder?"
+
+     **Die Antwort aus dem Server (Migration 197, live):** Beide
+     Knöpfe riefen den Weg, bei dem sofort ein Funke entsteht. „Zurück
+     liken" rief `like_user` - und diese Funktion legt bei einem
+     BEIDSEITIGEN Like sofort einen Funke an (Zeile 127-136). Auf der
+     Karte mit den erhaltenen Likes hat die andere Seite aber IMMER
+     schon geliked - „Zurück liken" erzeugte dort also immer genau
+     denselben Funke wie der Knopf daneben. Der Kommentar am Knopf
+     behauptete das Gegenteil („ohne sofort einen Funken daraus zu
+     machen") - das konnte der Server gar nicht.
+
+     **Der Knopf ist deshalb weg.** Zwei Knöpfe, die dasselbe tun, sind
+     schlimmer als einer.
+
+     **Und zur zweiten Frage:** Like und Funke GIBT es gleichzeitig. Ein
+     angenommener Like bleibt in der Tabelle stehen, während der Funke
+     existiert. Dass ein NEUER Like zu einer Person mit schon
+     bestehendem Funke verschwindet, ist eine bewusste Entscheidung
+     (Migration 197): der Server meldet `already_matched`, und die App
+     sagt „Mit {name} habt ihr schon einen Funken." - das war die
+     Antwort auf genau diese Frage vom 07.11.2026.
+
+66. **Ein gescheiterter Server-Sync ging verloren - jetzt wird er
+     nachgeholt.**
+     BEFUND (Betreiber): „Server Sync ist fehlgeschlagen. Wenn Daten
+     aktuell nicht synchronisiert werden können, soll dies Nachträglich
+     gehen."
+
+     DER GRUND: Der Praeferenz-Sync (Suchradius, Altersspanne,
+     Geschlechterfilter, Filtermodus) scheiterte - und dann war die
+     Aenderung weg. Der Server behielt den alten Wert, die Altersspanne
+     (die es NUR auf dem Server gibt) war ueberhaupt nirgends mehr, und
+     der Fehler stand nur im Log - fuer den Nutzer unsichtbar.
+
+     JETZT: Die Aenderung wird **vorgemerkt** (im sicheren
+     Speicher, zusammen mit der Altersspanne) und beim naechsten Start
+     **nachgeholt**. Der Marker loescht sich, sobald der Server sie
+     angenommen hat. Der bestehende Drei-Versuche-Wiederholversuch
+     bleibt.
+
+67. **Find your Spark wird ausgebaut - und Gruppen/Foren kommen danach.**
+     BEFUND (Betreiber): „Der Modus Find your Spark soll erweitert
+     werden... dann entweder Zufallsvorstellung oder Vorstellungen
+     anderer nach Kategorien ansehen. Also Kategorien sind die
+     Interessens-Kategorien. Auf diesen neuen Teil mit den Kategorien
+     soll ein Bereich mit 18+ sein, wo von 18 bis 99+ alle gesehen
+     werden (Aber man kann nach Alter filtern mit Regler) und ein 16-17
+     Bereich ohne Vorstellung mit Alter darüber. Wichtig ist, dass diese
+     Grenze wirklich klappt... Natürlich da dann E2E immer. Verschlüsselt
+     auf Server speichern."
+
+     Der Ausbau steht jetzt in der ROADMAP (Abschnitt 0.12.0, Punkt 9)
+     mit der Architektur: Einstieg mit Vorstellungs-Check (ohne
+     Doppelaufforderung), dann Zufall oder Kategorie; die Kategorie-Abfrage
+     laeuft **serverseitig** und wendet dieselbe
+     `age_compatible_bidirectional`-Regel an (Minderjaehrige nur
+     Minderjaehrige, Erwachsene nur Erwachsene); der Altersregler im
+     18+-Bereich geht bis 99 (`maxFilterAge`), im 16/17-Bereich endet er
+     bei 17; die Vorstellung wird **verschluesselt auf dem Server**
+     gehalten und erst auf dem Geraet entschluesselt (E2E wie bei den
+     Profilbildern). Was zu entscheiden ist (ob Minderjaehrige ohne
+     eigene Vorstellung in die Kategorie-Sicht duerfen), steht dort
+     offen.
+
+     **Gruppen und Foren** (Abschnitt 0.12.0, Punkt 10) sind als
+     SPÄTERER Schritt eingetragen - mit derselben Alterstrennung
+     (serverseitig erzwungen), einem Moderationsweg und einem eigenen
+     Eintrag in der Datenschutzerklaerung.
+
 ## [0.10.0] - 2026-10-24 (Build 31)
 
 ### Sicherheit

@@ -1025,11 +1025,40 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         final finalPhotos = slots.whereType<String>().toList(growable: false);
 
         // Storage-Aufräumen für entfernte Slots (best effort).
+        //
+        // BEFUND (09.11.2026, Betreiber): "Die Bilder sind nicht sichtbar,
+        // wenn hochgeladen." Zwei Ursachen, beide hier:
+        //
+        // 1) DIE ALTEN DATEIEN LAGEN ALS WRACK IM SPEICHER. Wird ein
+        //    Bild ersetzt (nicht nur entfernt), blieb die alte Datei
+        //    liegen. Das passiert, weil die Liste in profiles.photos
+        //    eine GALERIE ist: sie ist lueckenlos. Wird die mittlere
+        //    Kachel entfernt, ruecken die hinteren eine Position nach
+        //    vorn - und der Pfad der Datei passt dann nicht mehr zum
+        //    Kachel-Index. Genau dann trifft der Pfad des neuen Uploads
+        //    nicht mehr den der ersetzten Datei.
+        //
+        //    Deshalb wird die alte Datei jetzt GELOESCHT, wenn ihr Pfad
+        //    nicht der des neuen Uploads ist. Ist er derselbe, wurde
+        //    die Datei gerade ueberschrieben - dann waere ein Loeschen
+        //    ein Datenverlust.
+        final zuLoeschen = <String>{};
         for (final i in _removedPhotoSlots) {
           final oldRef = i < current.length ? current[i] : null;
           if (oldRef != null && oldRef.isNotEmpty) {
-            await storageService.deleteOwnObject(oldRef.split('|').first);
+            zuLoeschen.add(oldRef.split('|').first);
           }
+        }
+        for (final slot in const [1, 2]) {
+          if (_pendingExtraBytes[slot] == null) continue;
+          if (slot >= current.length) continue;
+          final altPfad = current[slot].split('|').first;
+          final neuPfad = slots[slot]?.split('|').first ?? '';
+          if (altPfad.isEmpty || neuPfad.isEmpty) continue;
+          if (altPfad != neuPfad) zuLoeschen.add(altPfad);
+        }
+        for (final pfad in zuLoeschen) {
+          await storageService.deleteOwnObject(pfad);
         }
 
         if (!mounted) return false;
@@ -1051,6 +1080,25 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           _avatarBytesFuture = finalPhotos.isNotEmpty
               ? storageService.loadAvatarBytes(finalPhotos.first)
               : null;
+          // UND DIE WEITEREN BILDER NEU LADEN (BEFUND 09.11.2026:
+          // "Die Bilder sind nicht sichtbar, wenn hochgeladen.").
+          //
+          // DER GRUND: `_extraBytesFutures.clear()` loeschte die Future
+          // der Kacheln 1 und 2. Die Kachel zeichnet aber genau diesen
+          // Future - ohne ihn fiel sie auf das Platzhalter-Symbol
+          // zurueck. Das erste Bild (Slot 0) wurde oben neu geladen,
+          // die beiden weiteren wurden es nicht: sie waren nach dem
+          // Speichern unsichtbar, bis die App neu gestartet wurde.
+          for (
+            var slot = 1;
+            slot < finalPhotos.length &&
+                slot < SupabaseStorageService.maxPhotos;
+            slot++
+          ) {
+            _extraBytesFutures[slot] = storageService.loadAvatarBytes(
+              finalPhotos[slot],
+            );
+          }
         });
       } catch (e) {
         if (mounted) {

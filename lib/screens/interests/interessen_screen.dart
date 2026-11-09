@@ -1013,47 +1013,6 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
     }
   }
 
-  /// Mag die Person zurueck - ohne daraus sofort einen Funke zu machen.
-  ///
-  /// NUTZERWUNSCH (28.10.2026): "also zurück liken ... kann".
-  ///
-  /// Der Unterschied zu "Funke bestätigen": dort entsteht der Funke
-  /// SOFORT (die Gegenseite hat ja schon geliked). Hier schicke ich
-  /// mein Like zurueck - sie bekommt eine Benachrichtigung, und wenn
-  /// sie meinen Like annimmt, steht der Funke.
-  ///
-  /// Das Like bleibt in der Liste: ihr Like ist noch unbeantwortet,
-  /// und ich kann es weiterhin zum Funken machen.
-  Future<void> _likeBack(ReceivedLike like) async {
-    setState(() => _busyLikeId = like.likeId);
-    try {
-      await ref.read(findYourMatchServiceProvider).likeUser(like.profile.id);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            L10n.tf(context, 'interests.likeBackDone', {
-              'name': like.profile.name,
-            }),
-          ),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      await _load();
-    } catch (e) {
-      debugPrint('[Interessen] Zurueck-Liken fehlgeschlagen: $e');
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(L10n.tf(context, 'common.errorWith', {'error': '$e'})),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _busyLikeId = null);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     // Nur beim ersten Laden: ein ruhiger Platzhalter statt eines
@@ -1171,18 +1130,31 @@ class _ReceivedLikesTabState extends ConsumerState<_ReceivedLikesTab>
                       onPressed: busy ? null : () => _ignoreLike(like),
                     ),
                     const SizedBox(width: 8),
-                    // ZURÜCK LIKEN (NUTZERWUNSCH, 28.10.2026: "also
-                    // zurück liken ... kann"). Ich mag sie auch - aber
-                    // ohne sofort einen Funken daraus zu machen. Der
-                    // Funke entsteht, wenn sie meinen Like annimmt.
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: busy ? null : () => _likeBack(like),
-                        icon: const Icon(Icons.favorite_border, size: 18),
-                        label: Text(L10n.t(context, 'interests.likeBack')),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
+                    // FUNKE BESTAETIGEN.
+                    //
+                    // BEFUND (09.11.2026, Betreiber): "Zurueck liken und
+                    // Funke bestaetigen laeuft doch aufs selbe hinaus."
+                    // **Das stimmt - und die Reihenfolge war es, die den
+                    // Fehler verstaendlich machte.** Es gab hier zwei
+                    // Knöpfe fuer dieselbe Person: "Zurueck liken" und
+                    // "Funke bestaetigen".
+                    //
+                    // "Zurueck liken" rief `like_user` auf. Und diese
+                    // Serverfunktion macht bei einem BEIDSEITIGEN Like
+                    // SOFORT einen Funke (Migration 197, Zeile 127-136:
+                    // "BEIDSEITIGER LIKE: jetzt entsteht der Funke"). Auf
+                    // dieser Karte hat die andere Seite aber IMMER schon
+                    // geliked - ein "Zurueck liken" erzeugte hier also
+                    // immer genau denselben Funke wie der Knopf daneben.
+                    //
+                    // Der Kommentar an dem Knopf behauptete das Gegenteil
+                    // ("ohne sofort einen Funken daraus zu machen") - der
+                    // Server kann das gar nicht: bei einem beidseitigen
+                    // Like gibt es nichts zu entscheiden.
+                    //
+                    // Der Knopf ist deshalb weg. Zwei Knöpfe, die dasselbe
+                    // tun, sind schlimmer als einer: der Nutzer muss
+                    // raten, welcher der richtige ist.
                     Expanded(
                       child: FilledButton.icon(
                         onPressed: busy

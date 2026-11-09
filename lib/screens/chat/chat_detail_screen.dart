@@ -2415,11 +2415,35 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
             },
             itemBuilder: (ctx) => [
               // NUTZERWUNSCH "Menü besser geordnet": Die Punkte laufen in
-              // sinngemäßen Gruppen - ZUSAMMEN (Eisbrecher, Erinnerungs-
-              // liste) -> SICHERHEIT (Sicherheitsnummer, Melden,
-              // Blockieren, Funke beenden) -> EINSTELLUNGEN (Kontext-
-              // Eisbrecher an/aus). Optisch getrennt durch Divider.
-              const PopupMenuDivider(),
+              // sinngemaessen Gruppen - GESPRAECH (Eisbrecher,
+              // Erinnerungsliste) -> SICHERHEIT (Sicherheitsnummer, Melden,
+              // Blockieren) -> VERBINDUNG (Kontext-Eisbrecher an/aus,
+              // Funke beenden). Jede Gruppe hat eine UEBERSCHRIFT und ist
+              // durch einen Divider getrennt.
+              //
+              // BEFUND (09.11.2026, Betreiber): "Bei 3 Punkte Menue ist
+              // ueber Eisbrecher Fragen ein Strich einfach so aber keine
+              // ueberschrift oder so." Der Strich war der ERSTE Eintrag
+              // des Menues - er trennte nichts, er stand einfach da. Und
+              // die Gruppe "Sicherheit" hatte eine Ueberschrift, die
+              // beiden anderen nicht.
+              //
+              // Also: Der fuehrende Divider ist weg, und JEDE Gruppe
+              // bekommt ihre Ueberschrift - so wie es die
+              // Sicherheits-Gruppe schon hatte.
+              PopupMenuItem(
+                enabled: false,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 16, top: 4, bottom: 4),
+                  child: Text(
+                    L10n.t(context, 'chat.conversationHeader'),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
               PopupMenuItem(
                 value: 'icebreaker',
                 child: ListTile(
@@ -2478,6 +2502,19 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                 ),
               ),
               const PopupMenuDivider(),
+              PopupMenuItem(
+                enabled: false,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 16, top: 4, bottom: 4),
+                  child: Text(
+                    L10n.t(context, 'chat.connectionHeader'),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
               PopupMenuItem(
                 value: 'toggleIcebreaker',
                 child: ListTile(
@@ -3259,16 +3296,10 @@ class _MessageBubbleState extends State<_MessageBubble> {
                                 // Nur wenn wirklich unscharf: ein ImageFiltered mit
                                 // sigma 0 erzeugt trotzdem einen Offscreen-Layer und
                                 // einen Filter-Pass - pro Bild-Bubble beim Scrollen.
-                                if (blurred)
-                                  ImageFiltered(
-                                    imageFilter: ImageFilter.blur(
-                                      sigmaX: 16,
-                                      sigmaY: 16,
-                                    ),
-                                    child: const _ImageBubblePlaceholder(),
-                                  )
-                                else
-                                  const _ImageBubblePlaceholder(),
+                                _ChatImage(
+                                  mediaUrl: msg.mediaUrl ?? '',
+                                  blurred: blurred,
+                                ),
                                 if (blurred)
                                   Positioned(
                                     bottom: 6,
@@ -3470,10 +3501,22 @@ class _MessageBubbleState extends State<_MessageBubble> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => PopScope(
-        canPop: false,
+        // BEFUND (09.11.2026, Betreiber): "Wenn Bild geöffnet und zurück
+        // swipe, dann im Hintergrund zurück, aber Bild noch offen (Swipe
+        // soll Bild schließen und nicht im Hintergrund weiter machen)."
+        //
+        // DER GRUND: `canPop: false` hat jeden Pop VERBOTEN - auch den
+        // Zurück-Wisch des Systems. Das Bild blieb stehen, während der
+        // Hintergrund schon zurückging. Und der eigene `Navigator.pop()`
+        // im Handler wurde von demselben Verbot wieder blockiert (er
+        // loeste nur wieder den Handler aus).
+        //
+        // JETZT: Der Pop ist erlaubt. Das Bild wird beim Schließen als
+        // gesehen markiert - es kann danach nicht wieder geöffnet
+        // werden (das war der Zweck des Verbots).
+        canPop: true,
         onPopInvokedWithResult: (didPop, _) {
-          if (!didPop) _markViewed();
-          Navigator.of(ctx).pop();
+          if (didPop) _markViewed();
         },
         child: Dialog(
           backgroundColor: Colors.black,
@@ -3489,8 +3532,11 @@ class _MessageBubbleState extends State<_MessageBubble> {
                       colors: [Colors.purple, Colors.blue],
                     ),
                   ),
-                  child: const Center(
-                    child: Icon(Icons.image, color: Colors.white, size: 80),
+                  child: _ChatImage(
+                    mediaUrl: msg.mediaUrl ?? '',
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                    height: 320,
                   ),
                 ),
               ),
@@ -3545,34 +3591,39 @@ class _MessageBubbleState extends State<_MessageBubble> {
   void _showFullscreenImage(BuildContext context, Message msg) {
     showDialog<void>(
       context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.black,
-        insetPadding: const EdgeInsets.all(16),
-        child: Stack(
-          children: [
-            Center(
-              child: Container(
-                width: double.infinity,
-                height: 320,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.purple, Colors.blue],
+      builder: (ctx) => _SwipeToClose(
+        child: Dialog(
+          backgroundColor: Colors.black,
+          insetPadding: const EdgeInsets.all(16),
+          child: Stack(
+            children: [
+              Center(
+                child: Container(
+                  width: double.infinity,
+                  height: 320,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Colors.purple, Colors.blue],
+                    ),
+                  ),
+                  child: _ChatImage(
+                    mediaUrl: msg.mediaUrl ?? '',
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                    height: 320,
                   ),
                 ),
-                child: const Center(
-                  child: Icon(Icons.image, color: Colors.white, size: 80),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.of(ctx).pop(),
                 ),
               ),
-            ),
-            Positioned(
-              top: 8,
-              right: 8,
-              child: IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
-                onPressed: () => Navigator.of(ctx).pop(),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -3976,6 +4027,141 @@ class _MeetIdeaWheelDialogState extends State<_MeetIdeaWheelDialog> {
 /// Platzhalter-Box einer Bild-Bubble (wird erst durch das echte Bild
 /// ersetzt). Eigene Klasse, damit der Unschärf-Filter nur im verpixelten
 /// Zustand um das Bild gelegt wird und nicht um die Deko-Box.
+/// Faengt eine waagerechte Wischgeste ab und schliesst das Fenster.
+///
+/// BEFUND (09.11.2026, Betreiber): "Wenn Bild geoeffnet und zurueck
+/// swipe, dann im Hintergrund zurueck, aber Bild noch offen (Swipe soll
+/// Bild schliessen und nicht im Hintergrund weiter machen)."
+///
+/// DER GRUND: Der Bild-Dialog liegt auf dem Navigator der Shell - und
+/// der Reiter-Wechsel sitzt DARUEBER (`HitTestBehavior.translucent`).
+/// Die Sperrflaeche eines Dialogs schluckt Tipps, aber KEINE
+/// waagerechte Wischgeste: die landete im Reiter-Wechsel. Das Bild blieb
+/// offen, der Hintergrund wechselte - genau umgekehrt zu gewuenscht.
+///
+/// Deshalb faengt das Bild die Geste selbst ab. Weil der INNERSTE
+/// Gesture-Recognizer den Wettbewarf gewinnt, wird der Reiter-Wechsel
+/// dabei nicht ausgeloest: die Wischgeste schliesst das Bild und sonst
+/// nichts.
+class _SwipeToClose extends StatefulWidget {
+  const _SwipeToClose({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_SwipeToClose> createState() => _SwipeToCloseState();
+}
+
+class _SwipeToCloseState extends State<_SwipeToClose> {
+  /// Der zurueckgelegte Weg (negativ = nach links).
+  double _weg = 0.0;
+
+  /// Wie weit gewischt werden muss, damit das Fenster schliesst.
+  static const double _schwelle = 70;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onHorizontalDragUpdate: (details) {
+        _weg += details.delta.dx;
+      },
+      onHorizontalDragEnd: (details) {
+        final weg = _weg;
+        _weg = 0;
+        if (weg.abs() < _schwelle) return;
+        final nav = Navigator.of(context);
+        if (nav.canPop()) nav.pop();
+      },
+      child: widget.child,
+    );
+  }
+}
+
+/// Das Bild einer Bildnachricht.
+///
+/// BEFUND (09.11.2026, Betreiber): "Die Bilder sind nicht sichtbar, wenn
+/// hochgeladen." DER GRUND: Die Bildnachricht war eine Attrappe - die
+/// Blase zeichnete einen Farbverlauf mit einem Bild-Symbol, egal was
+/// angezeigt werden sollte.
+///
+/// Die Bytes sind aber da: Das Bild kommt E2E-verschluesselt ueber den
+/// DataChannel an (als Daten-URL in `mediaUrl`, Chat-Screen Zeile 910)
+/// und wird auch lokal so abgelegt (Zeile 1271). Es fehlte nur die
+/// Anzeige.
+///
+/// Der Verpixel-Schutz bleibt: Ist [blurred] true, wird das echte Bild
+/// verpixelt - erst nach der ausdruecklichen Bestaetigung wird es
+/// scharf (Datenschutz-Einstellung "blurChatImages", Default an).
+class _ChatImage extends StatelessWidget {
+  const _ChatImage({
+    required this.mediaUrl,
+    this.blurred = false,
+    this.fit = BoxFit.cover,
+    this.width,
+    this.height,
+  });
+
+  /// Die Daten-URL des Bildes ("data:image/jpeg;base64,...").
+  final String mediaUrl;
+
+  /// Ob das Bild verpixelt gezeigt wird (Datenschutz).
+  final bool blurred;
+
+  final BoxFit fit;
+  final double? width;
+  final double? height;
+
+  /// Die dekodierten Bytes - mit Cache.
+  ///
+  /// Der Cache ist wichtig: Ohne ihn wuerde die Blase bei JEDEM
+  /// Neuaufbau das Base64 dekodieren (die Bilder sind einige hundert
+  /// Kilobyte gross). Der Cache ist begrenzt, damit er nicht wächst.
+  static final Map<String, Uint8List> _cache = {};
+
+  static Uint8List? _bytesOf(String url) {
+    if (url.isEmpty) return null;
+    final imCache = _cache[url];
+    if (imCache != null) return imCache;
+    if (!url.startsWith('data:')) return null;
+    final komma = url.indexOf(',');
+    if (komma < 0) return null;
+    try {
+      final bytes = base64Decode(url.substring(komma + 1));
+      if (_cache.length > 24) _cache.clear();
+      _cache[url] = bytes;
+      return bytes;
+    } catch (_) {
+      // Kein gueltiges Base64 - dann bleibt der Platzhalter.
+      return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bytes = _bytesOf(mediaUrl);
+    if (bytes == null) {
+      return const _ImageBubblePlaceholder();
+    }
+    Widget bild = Image.memory(
+      bytes,
+      fit: fit,
+      width: width,
+      height: height,
+      // In der Blase reichen 600 px - ohne das waeren es mehrere MB
+      // dekodierte Bitmap pro Bild.
+      cacheWidth: fit == BoxFit.contain ? null : 600,
+    );
+    if (blurred) {
+      bild = ImageFiltered(
+        imageFilter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: bild,
+      );
+    }
+    return bild;
+  }
+}
+
 class _ImageBubblePlaceholder extends StatelessWidget {
   const _ImageBubblePlaceholder();
 

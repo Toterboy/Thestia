@@ -26,6 +26,24 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
   bool _loading = false;
   String? _errorKey;
   StreamSubscription<PlayerState>? _stateSub;
+  StreamSubscription<Duration>? _positionSub;
+  StreamSubscription<Duration?>? _durationSub;
+
+  /// Die Position in der Aufnahme (der Balken).
+  Duration _position = Duration.zero;
+
+  /// Die Gesamtdauer der Aufnahme.
+  Duration? _duration;
+
+  /// Wie breit der Balken wird (px).
+  static const double _balkenBreite = 116;
+
+  /// Die Zeit als m:ss (die Vorstellungen sind kurz, aber eine
+  /// Vorstellung darf auch eine Minute dauern).
+  static String _zeit(Duration d) {
+    final s = d.inSeconds.clamp(0, 3599);
+    return '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}';
+  }
 
   /// Wie lange darf das Laden der Vorstellung dauern?
   ///
@@ -55,14 +73,32 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
     _stateSub = _player.playerStateStream.listen((state) {
       if (!mounted) return;
       if (state.processingState == ProcessingState.completed) {
-        setState(() => _playing = false);
+        setState(() {
+          _playing = false;
+          _position = Duration.zero;
+        });
       }
+    });
+
+    // BEFUND (09.11.2026, Betreiber): "Bei Vorstellung anhoeren im Chat
+    // soll eine Zeitanzeige mit Balken sein, falls noch nicht vorhanden."
+    // Der Knopf allein sagt nichts: man hoert nicht, wie lang die
+    // Aufnahme noch ist und wie weit man gekommen ist.
+    _positionSub = _player.positionStream.listen((pos) {
+      if (!mounted) return;
+      setState(() => _position = pos);
+    });
+    _durationSub = _player.durationStream.listen((dauer) {
+      if (!mounted) return;
+      setState(() => _duration = dauer);
     });
   }
 
   @override
   void dispose() {
     _stateSub?.cancel();
+    _positionSub?.cancel();
+    _durationSub?.cancel();
     _player.dispose();
     super.dispose();
   }
@@ -97,6 +133,13 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
       }
       await _player.setUrl(url).timeout(_ladeTimeout);
       if (!mounted) return;
+      // Der Balken beginnt bei null - die neue Aufnahme ist eine andere.
+      if (mounted) {
+        setState(() {
+          _position = Duration.zero;
+          _duration = null;
+        });
+      }
 
       // WICHTIG: `play()` NICHT abwarten. Das Future endet erst, wenn
       // die Aufnahme zu Ende ist - das war der Grund fuer den
@@ -131,22 +174,64 @@ class _IntroAudioPlayerState extends ConsumerState<IntroAudioPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    return FilledButton.tonalIcon(
-      onPressed: _toggle,
-      icon: _loading
-          ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : Icon(_playing ? Icons.stop : Icons.play_arrow),
-      label: Text(
-        _playing
-            ? L10n.t(context, 'intro.stop')
-            : _errorKey != null
-            ? L10n.t(context, _errorKey!)
-            : L10n.t(context, 'intro.listen'),
-      ),
+    final scheme = Theme.of(context).colorScheme;
+    final dauer = _duration;
+    final anteil = (dauer == null || dauer.inMilliseconds <= 0)
+        ? 0.0
+        : (_position.inMilliseconds / dauer.inMilliseconds).clamp(0.0, 1.0);
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FilledButton.tonalIcon(
+          onPressed: _toggle,
+          icon: _loading
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Icon(_playing ? Icons.stop : Icons.play_arrow),
+          label: Text(
+            _playing
+                ? L10n.t(context, 'intro.stop')
+                : _errorKey != null
+                ? L10n.t(context, _errorKey!)
+                : L10n.t(context, 'intro.listen'),
+          ),
+        ),
+        const SizedBox(width: 10),
+        // Der Balken: er ist erst sichtbar, wenn die Dauer bekannt ist
+        // (vorher waere er sinnlos - jede Aufnahme ist anders lang).
+        SizedBox(
+          width: _balkenBreite,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(3),
+                child: LinearProgressIndicator(
+                  value: dauer == null ? null : anteil,
+                  minHeight: 4,
+                  backgroundColor: scheme.surfaceContainerHighest,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                dauer == null
+                    ? '--:--'
+                    : '${_zeit(_position)} / ${_zeit(dauer)}',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: scheme.onSurfaceVariant,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

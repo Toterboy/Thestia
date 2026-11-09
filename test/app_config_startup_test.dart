@@ -45,6 +45,44 @@ void main() {
     });
   });
 
+  group('Der Admin-Build und das Versions-Gate', () {
+    // BEFUND (09.11.2026, Betreiber): "Die App Version ist wahrscheinlich
+    // veraltet. Ich habe aber keinen update erforderlich screen beim admin
+    // apk."
+    //
+    // DER GRUND: Der Admin-Build traegt die Build-Nummer der BASIS + 9000
+    // (9048 = 48 + 9000). Das Gate verglich aber die rohe Nummer - und
+    // 9048 ist immer groesser als jedes Mindest-Build. Der Admin-Build
+    // war damit VOM GATE AUSGENOMMEN.
+    //
+    // Jetzt wird die BASIS verglichen: 9048 -> 48, also wird der
+    // Admin-Build bei einem Mindest-Build von 49 genauso gesperrt wie
+    // der normale Build 48.
+
+    test('der Admin-Build wird auf die Basis zurueckgerechnet', () {
+      expect(AppConfigService.baseBuildNumber(9048, isAdminBuild: true), 48);
+      expect(AppConfigService.baseBuildNumber(9047, isAdminBuild: true), 47);
+    });
+
+    test('ein normaler Build bleibt unveraendert', () {
+      expect(AppConfigService.baseBuildNumber(48, isAdminBuild: false), 48);
+      expect(AppConfigService.baseBuildNumber(49, isAdminBuild: false), 49);
+    });
+
+    test('ohne Admin-Kennzeichen bleibt die Nummer unangetastet', () {
+      // Ein normaler Build, dessen Nummer zufaellig ueber 9000 liegt,
+      // wird NICHT zurueckgerechnet - dafuer gibt es den Admin-Build
+      // gar nicht.
+      expect(AppConfigService.baseBuildNumber(9048, isAdminBuild: false), 9048);
+    });
+
+    test('der Admin-Build wird bei einem neuen Mindest-Build gesperrt', () {
+      final basis = AppConfigService.baseBuildNumber(9048, isAdminBuild: true);
+      expect(AppConfigService.isBuildBelowMinBuild(basis, 49), isTrue);
+      expect(AppConfigService.isBuildBelowMinBuild(basis, 48), isFalse);
+    });
+  });
+
   group('Cache des Mindest-Builds', () {
     setUp(() async {
       SharedPreferences.setMockInitialValues(<String, Object>{});

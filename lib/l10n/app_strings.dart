@@ -1280,6 +1280,8 @@ const Map<String, Map<String, String>> _strings = {
     'chathist.modeWord': 'Modus:',
     'chat.safetyNumber': 'Sicherheitsnummer',
     'chat.securityHeader': 'Sicherheit',
+    'chat.conversationHeader': 'Gespräch',
+    'chat.connectionHeader': 'Verbindung',
     'chat.safetyNumberTooltip': 'Sicherheitsnummer (E2E-Verifikation)',
     'chat.safetyChangedTitle': 'Sicherheitsnummer hat sich geändert',
     'chat.safetyChangedBody':
@@ -4432,6 +4434,8 @@ const Map<String, Map<String, String>> _strings = {
     'chathist.modeWord': 'Mode:',
     'chat.safetyNumber': 'Safety number',
     'chat.securityHeader': 'Security',
+    'chat.conversationHeader': 'Conversation',
+    'chat.connectionHeader': 'Connection',
     'chat.safetyNumberTooltip': 'Safety number (E2E verification)',
     'chat.safetyChangedTitle': 'Safety number has changed',
     'chat.safetyChangedBody':

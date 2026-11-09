@@ -146,6 +146,73 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
 
   static const _prefsKey = 'user_preferences';
 
+  /// Der Schluessel fuer die Aenderung, die noch auf den Server muss.
+  static const _pendingSyncKey = 'user_preferences_pending_sync';
+
+  /// MERKT eine Aenderung vor, die noch nicht auf dem Server ist.
+  ///
+  /// BEFUND (09.11.2026, Betreiber): "Server Sync ist fehlgeschlagen.
+  /// Wenn Daten aktuell nicht synchronisiert werden koennen, soll dies
+  /// Nachtraeglich gehen."
+  ///
+  /// DER GRUND: Der Sync scheiterte (kein Netz, Server gerade nicht
+  /// erreichbar) - und dann war die Aenderung weg. Der Server behielt
+  /// den alten Wert, die Altersspanne (die es nur auf dem Server gibt)
+  /// war ueberhaupt nirgends mehr, und der Fehler stand nur im Log -
+  /// fuer den Nutzer unsichtbar. Beim naechsten Start wurde der
+  /// Serverwert geholt: die Aenderung war weg.
+  ///
+  /// JETZT: Die Aenderung wird VORGEMERKT und beim naechsten Start
+  /// nachgeholt. Der Marker loescht sich, sobald der Server sie
+  /// angenommen hat.
+  Future<void> _markPendingSync(Map<String, dynamic> felder) async {
+    await bestEffort('saveString', () async {
+      await _storage.saveString(_pendingSyncKey, jsonEncode(felder));
+    });
+  }
+
+  /// Die vorgemerkte Aenderung (null = nichts wartet).
+  Future<Map<String, dynamic>?> _readPendingSync() async {
+    final raw = await _storage.getString(_pendingSyncKey);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      final map = jsonDecode(raw);
+      if (map is Map<String, dynamic>) return map;
+      return null;
+    } catch (_) {
+      // Kaputter Eintrag: nicht blockieren, nur loeschen.
+      await _clearPendingSync();
+      return null;
+    }
+  }
+
+  /// Der Marker ist erledigt (der Server hat die Aenderung).
+  Future<void> _clearPendingSync() async {
+    await bestEffort('remove', () async {
+      await _storage.remove(_pendingSyncKey);
+    });
+  }
+
+  /// Holt eine wartende Aenderung nach - einmal beim Start.
+  ///
+  /// Wichtig: Es wird der VORGEMERKTE Stand geschrieben, nicht der
+  /// aktuelle Zustand. Die Altersspanne steckt nur im Marker (sie
+  /// existiert lokal gar nicht) - sie ginge sonst verloren.
+  Future<void> _retryPendingSync() async {
+    if (!SupabaseService.isInitialized) return;
+    final pending = await _readPendingSync();
+    if (pending == null || pending.isEmpty) return;
+    try {
+      final db = SupabaseDatabaseService(SupabaseService.client);
+      final ok = await db.updateSetupFlagsAndVerify(pending);
+      if (!ok) return; // Bleibt vorgemerkt - der naechste Versuch kommt.
+      await _clearPendingSync();
+      debugPrint('[UserPreferences] Die wartende Aenderung wurde nachgeholt.');
+    } catch (e) {
+      debugPrint('[UserPreferences] Nachholen fehlgeschlagen: $e');
+    }
+  }
+
   /// Debounce-Timer für den automatischen Präferenz-Sync: Regler feuern
   /// beim Ziehen kontinuierlich - erst wenn 1,5 s Ruhe ist, geht EIN
   /// Schreibvorgang an den Server ("Suchradius gespeichert wie der Name",
@@ -168,6 +235,12 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
   }
 
   Future<void> _load() async {
+    // Eine zuvor gescheiterte Server-Aenderung wird nachgeholt
+    // (BEFUND 09.11.2026, Betreiber: "Server Sync ist fehlgeschlagen.
+    // Wenn Daten aktuell nicht synchronisiert werden koennen, soll dies
+    // Nachtraeglich gehen.").
+    unawaited(_retryPendingSync());
+
     // Migration: alten Klartext-Eintrag in den sicheren Speicher übernehmen.
     final storage = _storage;
     final legacyPrefs = _legacyRawPrefs;
@@ -381,6 +454,12 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
           'betroffen: max_distance_km, age_range, gender_preferences, '
           'distance_filter_mode',
         );
+        // VORMERKEN: Die Aenderung geht nicht verloren, sie wird beim
+        // naechsten Start nachgeholt (BEFUND 09.11.2026, Betreiber).
+        await _markPendingSync(body);
+      } else {
+        // Der Server hat den Stand - es wartet nichts mehr.
+        await _clearPendingSync();
       }
 
       // Der Sonderfall separat. Ein Fehler hier darf das Haupt-Update
