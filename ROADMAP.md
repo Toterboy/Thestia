@@ -16,19 +16,16 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
 - **0.10.0** – **in Arbeit:** Standort-Privatisierung (Ort entfällt,
   5-km-Raster serverseitig erzwungen, Entfernung nur zustimmungspflichtig
   und in Stufen), Transit Spark auf echten Geräten, Auslieferungs-
-  Hygiene. MINOR-Bump **nach Regel** – eine Änderung der
-  Datenverarbeitung für Nutzende ist eine Kern-Funktion
-- **0.11.0** – **in Arbeit:** Ausbau von „Find your Spark":
-  Zufallsvorstellung **oder** Vorstellungen nach Interessens-Kategorien,
-  getrennt in einen 18+-Bereich mit Altersregler bis 99+ und einen
-  16/17-Bereich. Die Altersgrenze ist serverseitig erzwungen, die
-  Vorstellung darf rein textlich sein, die Aufnahme bleibt E2E und wird
-  erst beim Funke hörbar
+  Hygiene, dazu der Ausbau von „Find your Spark“ (Zufallsvorstellung
+  **oder** Vorstellungen nach Interessens-Kategorien, mit serverseitig
+  erzwungener Altersgrenze und text-only-Vorstellung). MINOR-Bump
+  **nach Regel** – eine Änderung der Datenverarbeitung für Nutzende ist
+  eine Kern-Funktion
+- **0.11.0** – Emotionaler Rückzugsort (Sanctuary) & lokaler
+  KI-Reflexions-Chat (rein on-device)
 - **0.12.0** – Web-Bridge, Transit-Reachability & Zero-Install
-  Gast-Verbindungen (Flutter Web, Codeberg Pages) sowie der Emotionale
-  Rückzugsort (Sanctuary) & lokaler KI-Reflexions-Chat (rein
-  on-device). Gruppen und Foren kommen **danach** (eigener Abschnitt
-  unten)
+  Gast-Verbindungen (Flutter Web, Codeberg Pages). Gruppen und Foren
+  kommen **danach** (eigener Abschnitt unten)
 - Neue Nutzerfunktionen sind immer MINOR-Bumps; nur Fixes gehen in PATCH.
 - **Regel „neue Nutzerfunktion = MINOR" ist zweimal gebrochen worden**,
   nachträglich gekennzeichnet: 0.7.2 (Mood öffentlich, Altersdifferenz-
@@ -225,7 +222,7 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
       das letzte Wort; und nach dem dritten Schritt bleibt der dritte
       stehen, weil die Aufnahme bis 5 Minuten laufen darf und der
       Leitfaden nur drei Winkel hat. Der Leitfaden ist eine Stütze, kein
-      Fragebogen. **Seit 0.11.0 ist die Aufnahme optional** (Befund vom
+      Fragebogen. **Seit 0.10.0 (Build 49) ist die Aufnahme optional** (Befund vom
 09.11.2026): Pflicht ist der **Text**; die Aufnahme bleibt
 verschluesselt gespeichert und wird erst beim Funke gehoert.
 
@@ -1402,11 +1399,11 @@ Vorgesehene Bausteine (noch nicht umgesetzt):
       weil die Roadmap an zwei Stellen sonst verschiedene Zeiten für
       dasselbe Vorhaben nennt
 
-## Geplant für 0.12.0 – Emotionaler Rückzugsort (Sanctuary) & Lokaler KI-Reflexions-Chat
+## Geplant für 0.11.0 – Emotionaler Rückzugsort (Sanctuary) & Lokaler KI-Reflexions-Chat
 
-## In Arbeit für 0.11.0 – Ausbau von „Find your Spark“: Zufall oder Kategorie
+## Umgesetzt in 0.10.0 – Ausbau von „Find your Spark“: Zufall oder Kategorie
 
-> Der Ausbau ist **gebaut** (Migration 203/204, Bildschirm „Nach Kategorie“, Version 0.11.0). Die Gruppen und Foren kommen danach - sie stehen weiter unten.
+> Der Ausbau ist **gebaut** (Migration 203/204, Bildschirm „Nach Kategorie“, Build 49 der Linie 0.10.0). Die Gruppen und Foren kommen danach - sie stehen weiter unten.
 
 ### 9. Find your Spark – Ausbau: Zufallsvorstellung und Kategorien
 

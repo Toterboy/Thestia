@@ -2293,10 +2293,13 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      (vorher Pflicht) und wird - wie bisher - erst beim Funke
      freigegeben (match-media, serverseitig geprüft).
 
-     **DER VERSIONS-BUMP:** Das ist eine neue Nutzerfunktion, also
-     ein MINOR: **0.11.0** (bisher 0.10.0). Der Roadmap-Plan für
-     den Ausbau (Abschnitt 0.11.0) ist damit umgesetzt; die Gruppen
-     und Foren stehen als späterer Schritt darin.
+     **KEIN NEUER MINOR-BUMP:** Die Linie **0.10.0** ist offen (nie
+     im Store veröffentlicht) und traegt die neuen Funktionen bereits -
+     sie ist ohnehin schon ein MINOR (die Standort-Privatisierung ist
+     eine Änderung der Datenverarbeitung). Der Ausbau gehoert deshalb
+     zu 0.10.0, Build 49. Der Roadmap-Plan fuer den Ausbau ist damit
+     umgesetzt; die Gruppen und Foren stehen als spaeterer Schritt in
+     der Roadmap (0.12.0).
 
      **Die Datenschutzerklärung** hat einen eigenen Eintrag
      bekommen: Die Kategorie-Sicht ist eine neue Sichtbarkeit (andere
