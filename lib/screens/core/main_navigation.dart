@@ -268,10 +268,24 @@ class MainNavigation extends ConsumerWidget {
       onSelected: (i) => _goToTab(context, ref, i),
     );
 
-    // Wischen zwischen den Haupt-Reitern (NUTZERWUNSCH 28.10.2026).
+    // Wischen zwischen den HAUPT-Reitern (NUTZERWUNSCH 28.10.2026).
     // Nur wenn die Leiste sichtbar ist - im Chat wuerde ein Wischen
     // sonst unerwartet den Reiter wechseln.
-    final swipeAktiv = !hideNav && !useRail;
+    //
+    // BEFUND (09.11.2026, Betreiber): "Das Swipen zwischen den Reitern
+    // soll bei Entdecken aber nicht in den Unterscreens davon
+    // funktionieren (selbes gilt auch fuer die anderen Reiter)."
+    //
+    // Das Wischen ist damit ein REITER-Wechsel und kein Screen-Wechsel:
+    // In jedem Unterscreen (Find your Spark, Profil bearbeiten,
+    // Einstellungen, die Kategorie-Sicht, ...) wuerde es den Reiter
+    // wechseln, waehrend man gerade in etwas anderem ist - und der
+    // Bildschirm, aus dem man wegwischt, kaeme nicht zurueck.
+    //
+    // Deshalb: das Wischen gibt es NUR auf den vier Haupt-Reitern
+    // (_routes). In allen Unterscreens ist es aus.
+    final swipeAktiv =
+        !hideNav && !useRail && _routes.contains(routerState.uri.path);
 
     return Scaffold(
       // STATUSLEISTE (Nutzerwunsch, 27.10.2026).

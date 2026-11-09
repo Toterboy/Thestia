@@ -178,7 +178,10 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
               tooltip: L10n.t(context, 'match.editIntro'),
               onPressed: () => setState(() => _showIntroSetup = true),
             ),
-          if (!_showIntroSetup)
+          // Der Knopf steht nur dort, wo er etwas bewirkt: in der
+          // WAHL gibt es nichts zu wechseln (BEFUND 09.11.2026:
+          // "Der Pfeile Button bei Find your Spark macht nichts").
+          if (!_showIntroSetup && !_showChoice)
             IconButton(
               icon: const Icon(Icons.swap_horiz),
               tooltip: L10n.t(context, 'fymb.switchMode'),
@@ -186,271 +189,294 @@ class _FindYourMatchScreenState extends ConsumerState<FindYourMatchScreen> {
             ),
         ],
       ),
-      body: _showIntroSetup
-          ? SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Icon(Icons.headphones, size: 64, color: Colors.grey),
-                  const SizedBox(height: 12),
-                  Text(
-                    L10n.t(context, 'match.createFirst'),
-                    style: Theme.of(context).textTheme.titleLarge,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    L10n.t(context, 'match.createSub'),
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  IntroEditor(
-                    initialText: _introText,
-                    initialAudioPath: _introAudioPath,
-                    onChanged: (text, audioPath) {
-                      _introText = text;
-                      _introAudioPath = audioPath;
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  FilledButton.icon(
-                    onPressed: _saveIntro,
-                    icon: const Icon(Icons.check),
-                    label: Text(L10n.t(context, 'match.saveContinue')),
-                  ),
-                ],
-              ),
-            )
-          : _showChoice
-          ? _wahl(context)
-          : current == null
-          ? Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
+      // DER ZURUECK-WEG (BEFUND 09.11.2026, Betreiber): "Der
+      // Vorstellungsbutton daneben geht, aber wenn ich dort zurueck
+      // druecke komme ich nicht auf Find your Spark sondern auf
+      // Entdecken."
+      //
+      // DER GRUND: Der Vorstellungs-Editor ist kein eigener Screen,
+      // sondern ein Zustand dieses Screens. Ein Pop lief deshalb durch
+      // den ganzen Screen hindurch - bis "Entdecken".
+      //
+      // JETZT: Solange der Editor offen ist, faengt der Screen den
+      // Pop ab und schliesst nur den Editor. Der Screen selbst bleibt
+      // stehen; erst der naechste Zurück geht eine Ebene weiter.
+      body: PopScope(
+        canPop: !_showIntroSetup,
+        onPopInvokedWithResult: (didPop, _) {
+          if (didPop) return;
+          setState(() => _showIntroSetup = false);
+        },
+        child: _showIntroSetup
+            ? SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Icon(Icons.headphones, size: 64, color: Colors.grey),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     Text(
-                      L10n.t(context, 'match.empty'),
+                      L10n.t(context, 'match.createFirst'),
+                      style: Theme.of(context).textTheme.titleLarge,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      L10n.t(context, 'match.emptyTip'),
-                      style: const TextStyle(color: Colors.grey),
+                      L10n.t(context, 'match.createSub'),
+                      style: Theme.of(context).textTheme.bodyMedium,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
-                    OutlinedButton.icon(
-                      onPressed: notifier.loading ? null : notifier.load,
-                      icon: const Icon(Icons.refresh),
-                      label: Text(L10n.t(context, 'match.reload')),
+                    IntroEditor(
+                      initialText: _introText,
+                      initialAudioPath: _introAudioPath,
+                      onChanged: (text, audioPath) {
+                        _introText = text;
+                        _introAudioPath = audioPath;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    FilledButton.icon(
+                      onPressed: _saveIntro,
+                      icon: const Icon(Icons.check),
+                      label: Text(L10n.t(context, 'match.saveContinue')),
                     ),
                   ],
                 ),
-              ),
-            )
-          : Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: Card(
-                      clipBehavior: Clip.antiAlias,
-                      elevation: 8,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 28,
-                                  backgroundColor: Theme.of(
-                                    context,
-                                  ).colorScheme.primaryContainer,
-                                  child: const Icon(
-                                    Icons.visibility_off,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        '${current.name}${current.age != null ? ', ${current.age}' : ''}',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleLarge
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                      ),
-                                      // Verbindungs-Score (0-100):
-                                      // Distanz + gemeinsame Interessen +
-                                      // Musik (serverseitig berechnet).
-                                      if (current.matchScore != null)
-                                        Text(
-                                          'Match: ${current.matchScore} %',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .labelLarge
-                                              ?.copyWith(
-                                                color: Theme.of(
-                                                  context,
-                                                ).colorScheme.primary,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                        ),
-                                      // v0.10.0: Der Ortsname ist
-                                      // entfallen. Stattdessen das
-                                      // Bundesland - die grobe
-                                      // Angabe, die ohnehin fuer
-                                      // andere sichtbar ist.
-                                      if ((current.state ?? '').isNotEmpty)
-                                        Text(
-                                          current.state!,
-                                          style: const TextStyle(
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                      // Distanz als 10-km-Stufe (v0.10.0),
-                                      // serverseitig berechnet. Ohne
-                                      // Freigabe der anderen Person
-                                      // kommt der Wert nicht an.
-                                      if (current.distanceKm > 0)
-                                        Text(
-                                          current.distanceLabel(
-                                            (key) => L10n.t(context, key),
-                                          ),
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodySmall
-                                              ?.copyWith(
-                                                color: Theme.of(
-                                                  context,
-                                                ).colorScheme.primary,
-                                              ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                                const Icon(
-                                  Icons.photo_size_select_small,
-                                  color: Colors.grey,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Ohne Foto: Diese Person stellt sich mit '
-                              'Worten vor. Hör rein oder lies ihre '
-                              'Vorstellung.',
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: Colors.grey),
-                            ),
-                            const SizedBox(height: 16),
-                            if (current.introAudioPath != null) ...[
-                              IntroAudioPlayer(targetUserId: current.id),
-                              const SizedBox(height: 12),
-                            ],
-                            if (current.introText.isNotEmpty) ...[
-                              Text(
-                                L10n.t(context, 'match.introTitle'),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                current.introText,
-                                style: Theme.of(context).textTheme.bodyLarge,
-                              ),
-                            ],
-                            if (current.introAudioPath == null &&
-                                current.introText.isEmpty)
-                              Text(
-                                L10n.t(context, 'match.noIntro'),
-                                style: const TextStyle(color: Colors.grey),
-                              ),
-                            const SizedBox(height: 16),
-                            if (current.interests.isNotEmpty) ...[
-                              Text(
-                                L10n.t(context, 'match.interestsTitle'),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 6,
-                                runSpacing: 6,
-                                children: current.interests
-                                    .map(
-                                      (i) => Chip(
-                                        label: Text(i),
-                                        visualDensity: VisualDensity.compact,
-                                      ),
-                                    )
-                                    .toList(),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
+              )
+            : _showChoice
+            ? _wahl(context)
+            : current == null
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      IconButton.filledTonal(
-                        iconSize: 32,
-                        onPressed: _liking ? null : notifier.skip,
-                        icon: const Icon(Icons.close),
-                        style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFFEF5350),
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size(72, 72),
-                        ),
+                      const Icon(
+                        Icons.headphones,
+                        size: 64,
+                        color: Colors.grey,
                       ),
-                      const SizedBox(width: 32),
-                      IconButton.filled(
-                        iconSize: 32,
-                        onPressed: _liking ? null : () => _like(current),
-                        icon: _liking
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(Icons.favorite),
-                        style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFF4CAF82),
-                          foregroundColor: Colors.white,
-                          minimumSize: const Size(72, 72),
-                        ),
+                      const SizedBox(height: 16),
+                      Text(
+                        L10n.t(context, 'match.empty'),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        L10n.t(context, 'match.emptyTip'),
+                        style: const TextStyle(color: Colors.grey),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      OutlinedButton.icon(
+                        onPressed: notifier.loading ? null : notifier.load,
+                        icon: const Icon(Icons.refresh),
+                        label: Text(L10n.t(context, 'match.reload')),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                ],
+                ),
+              )
+            : Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Card(
+                        clipBehavior: Clip.antiAlias,
+                        elevation: 8,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 28,
+                                    backgroundColor: Theme.of(
+                                      context,
+                                    ).colorScheme.primaryContainer,
+                                    child: const Icon(
+                                      Icons.visibility_off,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          '${current.name}${current.age != null ? ', ${current.age}' : ''}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleLarge
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                        // Verbindungs-Score (0-100):
+                                        // Distanz + gemeinsame Interessen +
+                                        // Musik (serverseitig berechnet).
+                                        if (current.matchScore != null)
+                                          Text(
+                                            'Match: ${current.matchScore} %',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .labelLarge
+                                                ?.copyWith(
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.primary,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                          ),
+                                        // v0.10.0: Der Ortsname ist
+                                        // entfallen. Stattdessen das
+                                        // Bundesland - die grobe
+                                        // Angabe, die ohnehin fuer
+                                        // andere sichtbar ist.
+                                        if ((current.state ?? '').isNotEmpty)
+                                          Text(
+                                            current.state!,
+                                            style: const TextStyle(
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        // Distanz als 10-km-Stufe (v0.10.0),
+                                        // serverseitig berechnet. Ohne
+                                        // Freigabe der anderen Person
+                                        // kommt der Wert nicht an.
+                                        if (current.distanceKm > 0)
+                                          Text(
+                                            current.distanceLabel(
+                                              (key) => L10n.t(context, key),
+                                            ),
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  color: Theme.of(
+                                                    context,
+                                                  ).colorScheme.primary,
+                                                ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.photo_size_select_small,
+                                    color: Colors.grey,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Ohne Foto: Diese Person stellt sich mit '
+                                'Worten vor. Hör rein oder lies ihre '
+                                'Vorstellung.',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: Colors.grey),
+                              ),
+                              const SizedBox(height: 16),
+                              if (current.introAudioPath != null) ...[
+                                IntroAudioPlayer(targetUserId: current.id),
+                                const SizedBox(height: 12),
+                              ],
+                              if (current.introText.isNotEmpty) ...[
+                                Text(
+                                  L10n.t(context, 'match.introTitle'),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  current.introText,
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                              ],
+                              if (current.introAudioPath == null &&
+                                  current.introText.isEmpty)
+                                Text(
+                                  L10n.t(context, 'match.noIntro'),
+                                  style: const TextStyle(color: Colors.grey),
+                                ),
+                              const SizedBox(height: 16),
+                              if (current.interests.isNotEmpty) ...[
+                                Text(
+                                  L10n.t(context, 'match.interestsTitle'),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 6,
+                                  children: current.interests
+                                      .map(
+                                        (i) => Chip(
+                                          label: Text(i),
+                                          visualDensity: VisualDensity.compact,
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        IconButton.filledTonal(
+                          iconSize: 32,
+                          onPressed: _liking ? null : notifier.skip,
+                          icon: const Icon(Icons.close),
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFFEF5350),
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(72, 72),
+                          ),
+                        ),
+                        const SizedBox(width: 32),
+                        IconButton.filled(
+                          iconSize: 32,
+                          onPressed: _liking ? null : () => _like(current),
+                          icon: _liking
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.favorite),
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0xFF4CAF82),
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(72, 72),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                ),
               ),
-            ),
+      ),
     );
   }
 }
