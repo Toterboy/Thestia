@@ -1076,6 +1076,18 @@ const Map<String, Map<String, String>> _strings = {
     'transit.preset.again': 'Vielleicht kreuzen sich unsere Wege ja nochmal?',
     'transit.preset.coffee': 'Falls du magst: ein Kaffee in der Nähe?',
     'transit.inboxTitle': 'Grüße für dich',
+    'transit.showNameTitle': 'Namen beim Zuwinken zeigen',
+    'transit.showNameSub':
+        'Wenn du jemandem bei Transit Spark zuwinkst, sieht die Person '
+        'deinen Namen. Aus: Es steht nur "Jemand winkt dir zu".',
+    'transit.showNameSubOff':
+        'Dein Name wird nicht angezeigt - die Person sieht nur "Jemand '
+        'winkt dir zu".',
+    'transit.showNameBoundary':
+        'Wichtig: Das schützt nur deinen Namen. Wer neben dir steht, '
+        'erkennt dich trotzdem.',
+    'transit.waveFrom': '%s winkt dir zu',
+    'transit.waveFromAnonymous': 'Jemand winkt dir zu',
     'transit.ignore': 'Ausblenden',
     'transit.accept': 'Funke annehmen',
     'transit.ignoreConfirmTitle': 'Diesen Funke ausblenden?',
@@ -4205,6 +4217,18 @@ const Map<String, Map<String, String>> _strings = {
     'transit.preset.again': 'Maybe our paths will cross again?',
     'transit.preset.coffee': 'If you like: a coffee nearby?',
     'transit.inboxTitle': 'Greetings for you',
+    'transit.showNameTitle': 'Show my name when I wave',
+    'transit.showNameSub':
+        'When you wave to someone via Transit Spark, they see your name. '
+        'Off: it only says "someone is waving at you".',
+    'transit.showNameSubOff':
+        'Your name is not shown - the person only sees "someone is waving '
+        'at you".',
+    'transit.showNameBoundary':
+        'Important: this only protects your name. Someone standing next to '
+        'you can still recognise you.',
+    'transit.waveFrom': '%s is waving at you',
+    'transit.waveFromAnonymous': 'Someone is waving at you',
     'transit.ignore': 'Hide',
     'transit.accept': 'Accept spark',
     'transit.ignoreConfirmTitle': 'Hide this spark?',

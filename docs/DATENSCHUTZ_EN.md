@@ -151,6 +151,25 @@ addition, before every upload a **purely local NSFW pre-check** runs
 exclusively on the device; if it does not pass, the image never leaves
 your device (an objection with a manual review by the team is possible).
 
+### 3b-1. Your name when you wave (v0.10.1)
+
+When you wave to someone via Transit Spark, that person sees your name -
+if you allow it. You can switch that off on the Transit radar ("Show my
+name when I wave"). With the switch off, the person only sees "someone is
+waving at you" and cannot tell who it was.
+
+| Data | Recipient | Purpose | Storage |
+|---|---|---|---|
+| Your display name | the person you wave to | to attribute the wave | not stored - the name is resolved when the waves are read and never written into the row |
+
+**What the switch does not protect against:** Someone standing right next
+to you can still recognise you. The switch only concerns your name inside
+the app - it is no protection against the encounter itself.
+
+The nearby list always stays anonymous: whoever is close by sees no names
+(only "seen 3 minutes ago").
+
+
 ## 3b. Near-field radio (BLE, "Transit Spark")
 
 Transit Spark uses Bluetooth Low Energy so that two people can meet

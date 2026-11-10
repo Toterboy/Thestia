@@ -632,6 +632,32 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     unawaited(_syncShowDistanceServer(value));
   }
 
+  /// Zeigt meinen Namen bei Transit Spark? (v0.10.1)
+  ///
+  /// BEFUND (Betreiber, 10.11.2026): Der Name beim Zuwinken soll
+  /// abschaltbar sein. Ueber den Server gespiegelt, weil die ANDERE
+  /// Person entscheidet: sie sieht den Namen nur, wenn der Server ihn
+  /// freigibt (Migration 208).
+  Future<void> setTransitShowName(bool value) async {
+    if (state.transitShowName == value) return;
+    state = state.copyWith(transitShowName: value);
+    await _persist();
+    unawaited(_syncTransitShowNameServer(value));
+  }
+
+  Future<void> _syncTransitShowNameServer(bool value) async {
+    try {
+      if (!SupabaseService.isInitialized) return;
+      await SupabaseDatabaseService(
+        SupabaseService.client,
+      ).updateOwnProfile({'transit_show_name': value});
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Settings] transit_show_name-Sync fehlgeschlagen: $e');
+      }
+    }
+  }
+
   Future<void> _syncShowDistanceServer(bool value) async {
     try {
       if (!SupabaseService.isInitialized) return;
@@ -669,6 +695,17 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     final showDistance = read<bool>('show_distance');
     if (showDistance != null && showDistance != next.showDistance) {
       next = next.copyWith(showDistance: showDistance);
+      changed = true;
+    }
+
+    // BEFUND (10.11.2026): Der Name beim Transit-Zuwinken muss auch auf
+    // einem zweiten Geraet gelten - der SERVER entscheidet, ob der Name
+    // ankommt. Ohne dieses Lesen wuerde der Schalter lokal "aus" sein,
+    // waehrend der Server weiter true hat: der Nutzer glaubt, sein Name
+    // bleibe verborgen, und er wird trotzdem angezeigt.
+    final transitShowName = read<bool>('transit_show_name');
+    if (transitShowName != null && transitShowName != next.transitShowName) {
+      next = next.copyWith(transitShowName: transitShowName);
       changed = true;
     }
 

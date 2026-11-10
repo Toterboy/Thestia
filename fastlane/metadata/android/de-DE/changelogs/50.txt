@@ -2,13 +2,13 @@ Nachrichten kommen jetzt an
 
 Wenn vorher eine Benachrichtigung ankam, die Nachricht selbst aber
 unsichtbar blieb: Das ist behoben. Die Verbindung klappt, und die
-Nachricht kommt jetzt auch dann an, wenn der Chat vorher nicht
-geoeffnet war.
+Nachricht kommt jetzt auch dann an, wenn der Chat vorher nicht geöffnet
+war.
 
-Ein Tipp auf die Benachrichtigung fuehrt zum Interessen-Screen
+Ein Tipp auf die Benachrichtigung führt zum Interessen-Screen
 
-Vorher hat der Tipp nur die App geoeffnet. Jetzt kommst du direkt
-zu deinen Chats.
+Vorher hat der Tipp nur die App geöffnet. Jetzt kommst du direkt zu
+deinen Chats.
 
 Ungelesene Chats stehen oben
 
@@ -16,15 +16,15 @@ Chats mit ungelesenen Nachrichten stehen jetzt oben und sind
 hervorgehoben. Neben dem Namen steht die kleine Zahl, wie viele
 Nachrichten die Person geschrieben hat.
 
-Deine Vorstellung laeuft nicht mehr ueber
+Deine Vorstellung läuft nicht mehr über
 
 Der Fortschrittsbalken sitzt jetzt unter dem Knopf und erscheint nur,
-wenn tatsaechlich etwas laeuft.
+wenn tatsächlich etwas läuft.
 
 Bilder im Chat sind kleiner
 
-Die Bilder sind jetzt auf eine kleine Vorschau begrenzt - vorher
-fuellten sie die ganze Zeile aus.
+Die Bilder sind jetzt auf eine kleine Vorschau begrenzt - vorher füllten
+sie die ganze Zeile aus.
 
 Im Zufallschat findest du niemanden, den du schon kennst
 

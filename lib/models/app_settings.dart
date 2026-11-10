@@ -170,6 +170,22 @@ class AppSettings {
   /// Serverseitig gespiegelt, weil die Anzeegeraete fremd entscheiden.
   final bool showDistance;
 
+  /// Zeigt meinen Namen, wenn jemand bei Transit Spark zuwinkt?
+  ///
+  /// BEFUND (Betreiber, 10.11.2026): "Ich finde aber, dass man bei Transit
+  /// Spark einstellen können soll, ob der Name für andere sichtbar sein
+  /// soll oder nicht."
+  ///
+  /// Der Server entscheidet: Er liefert den Namen nur, wenn dieser Schalter
+  /// an ist (Migration 208). Ein Schalter, der nur im Gerät stünde, wäre
+  /// wertlos - die andere Person sieht den Namen über den Server.
+  ///
+  /// Die Grenze (sie steht auch im Text der Einstellung): Der Schalter
+  /// schützt davor, dass jemand deinen NAMEN sieht, der dir zugewinkt hat.
+  /// Er schützt NICHT davor, dass dich jemand erkennt, der neben dir
+  /// steht.
+  final bool transitShowName;
+
   const AppSettings({
     this.blindModeEnabled = true,
     this.revealPhotosAfterMatch = true,
@@ -215,6 +231,7 @@ class AppSettings {
     // v0.10.0: Datenschutz-Vorgabe. Nichts veroeffentlichen, was der
     // Nutzer nicht ausdruecklich erlaubt hat.
     this.showDistance = false,
+    this.transitShowName = true,
   });
 
   /// Standard-Einstellungen für einen neuen Nutzer.
@@ -276,6 +293,7 @@ class AppSettings {
       // Fehlende Schluessel (alte Installation) gelten als "aus" -
       // das ist die datenschutzfreundliche Richtung.
       showDistance: json['showDistance'] as bool? ?? false,
+      transitShowName: json['transitShowName'] as bool? ?? true,
     );
   }
 
@@ -316,6 +334,7 @@ class AppSettings {
     'datingSafetyEducationCompleted': datingSafetyEducationCompleted,
     'chatBackgroundSeen': chatBackgroundSeen,
     'showDistance': showDistance,
+    'transitShowName': transitShowName,
   };
 
   /// Immutabele Kopie mit veränderten Werten.
@@ -368,6 +387,7 @@ class AppSettings {
     bool? datingSafetyEducationCompleted,
     bool? chatBackgroundSeen,
     bool? showDistance,
+    bool? transitShowName,
   }) {
     return AppSettings(
       // Blind Mode ist fest AN - der uebergebene Wert wird
@@ -421,6 +441,7 @@ class AppSettings {
           datingSafetyEducationCompleted ?? this.datingSafetyEducationCompleted,
       chatBackgroundSeen: chatBackgroundSeen ?? this.chatBackgroundSeen,
       showDistance: showDistance ?? this.showDistance,
+      transitShowName: transitShowName ?? this.transitShowName,
     );
   }
 }

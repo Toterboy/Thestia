@@ -155,6 +155,25 @@ Ergebnis verarbeiten sich ausschließlich auf dem Gerät; bei Nicht-
 bestehen verlässt das Bild dein Gerät nicht (Einspruch mit manueller
 Team-Prüfung ist möglich).
 
+### 3b-1. Der Name beim Zuwinken (v0.10.1)
+
+Wenn du bei Transit Spark jemandem zuwinkst, sieht diese Person deinen
+Namen - sofern du das erlaubt hast. Du kannst das im Transit-Radar
+ausschalten ("Namen beim Zuwinken zeigen"). Ist der Schalter aus, sieht
+die Person nur "Jemand winkt dir zu" und kann deinen Namen nicht zuordnen.
+
+| Angabe | Empfänger | Zweck | Speicherung |
+|---|---|---|---|
+| Dein Anzeigename | die Person, der du zuwinkst | Zuordnung des Zuwinkens | nicht gespeichert - der Name wird beim Lesen der Zuwinke aufgelöst und nie in die Zeile geschrieben |
+
+**Was der Schalter nicht schützt:** Wer unmittelbar neben dir steht,
+erkennt dich trotzdem. Der Schalter betrifft ausschließlich deinen
+Namen in der App - er ist kein Schutz vor der Begegnung selbst.
+
+Die Nahbereichs-Liste selbst bleibt immer anonym: wer in der Nähe ist,
+sieht keine Namen (nur "vor 3 Minuten gesehen").
+
+
 ## 3b. Nahbereichsfunk (BLE, „Transit Spark")
 
 Transit Spark nutzt Bluetooth Low Energy, damit zwei Personen sich in der

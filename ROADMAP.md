@@ -413,6 +413,49 @@ verschluesselt gespeichert und wird erst beim Funke gehoert.
       KI-Kennzeichnung an Bildprüfungen, Video-Verifizierung mit lokaler
   KI-Alters-Triage (095, 2-Jahre-Regel, manuelle Queue für Abweichler)
 
+### Geplant: 0.10.1 – der Name bei Transit Spark
+
+> **Neuer Wunsch vom Betreiber (10.11.2026):** „Ich finde aber, dass man
+> bei Transit Spark einstellen können soll, ob der Name für andere sichtbar
+> sein soll oder nicht."
+>
+> **Was das genau bedeutet (und was nicht):** Beim Transit Spark sieht
+> die andere Person heute dein **Merkmal** (Haarfarbe, Brille, Hemd …) und
+> deine **freie Notiz**. Dein **Name** wird erst sichtbar, wenn daraus ein
+> Funke wird – dann ist er ohnehin über den Chat bekannt. Die Einstellung
+> betrifft also genau eine Stelle: **der Name, solange noch kein Funke
+> besteht**.
+>
+> **Die Regel, die dafür gelten muss (das ist der schwierige Teil):**
+> Ein Schalter, der nur im Gerät steht, wäre wertlos – die andere Person
+> sieht den Namen über den **Server** (die Merkmale laufen über
+> `transit_signals`). Die Einstellung muss deshalb **serverseitig**
+> durchgesetzt werden: Der Server darf den Namen im Signal gar nicht
+> mitgeben, wenn er abgeschaltet ist. Sonst wäre der Schalter nur Theater.
+>
+> **Bekannte Grenze, die vorher geklärt sein muss:** Bei einem echten
+> Treffen ist der Name meist ohnehin bekannt (man sieht sich). Der
+> Schalter schützt also vor allem den Fall „ich bin in der Nähe, aber
+> niemand soll meinen Namen wissen" – und **nicht** davor, dass dich
+> jemand erkennt. Das gehört in den Text der Einstellung, sonst
+> entsteht eine falsche Sicherheit.
+>
+> **Vorschlag für die Umsetzung:**
+> 1. Profil-Einstellung „Name bei Transit Spark anzeigen" (Standard:
+>    **an** – wer ihn abschaltet, entscheidet das bewusst).
+> 2. Serverseitige Spalte (`profiles.transit_show_name`), über die
+>    RPC `match_proximity_spark` und die Soft-Pings ausgewertet – der Name
+>    wird bei `false` gar nicht erst übertragen.
+> 3. Der Transit-Screen zeigt den Zustand an („Dein Name ist hier
+>    verborgen") – inklusive dem Hinweis auf die Grenze aus oben.
+> 4. Die Datenschutzerklärung (V6) bekommt den Eintrag: welche Angabe
+>    wann sichtbar ist.
+>
+> **Offen (Entscheidung des Betreibers):** Soll der Standard „an" oder
+> „aus" sein? Vorschlag: **an**, weil der Name bei einem echten Treffen
+> ohnehin sichtbar wird und ein Standard auf „aus" die Funktion stark
+> einschränkt.
+
 ## Umgesetzt: 0.10.0 – Standort-Privatisierung, Transit Spark auf echten Geräten & Qualitätssicherung
 
 > Status: v0.10.0 ist in Vorbereitung (Build 43, 07.11.2026) und die
@@ -478,7 +521,7 @@ verschluesselt gespeichert und wird erst beim Funke gehoert.
       > die Verifikationssperren, die Transit-Merkmale und das
       > Datenschutz-Modell kennt. Ältere Clients bekommen jetzt den
       > Update-Hinweis beim Start.
-- [ ] **BLE-Gerätetest als HARTER Release-Blocker** – Transit Spark gilt
+- [x] **BLE-Gerätetest als HARTER Release-Blocker** – Transit Spark gilt
       erst als stabil, wenn Reichweite, Advertise-Abdeckung und der
       komplette Match-Flow auf MINDESTENS 2 echten Geräten verschiedener
       Android-Hersteller erfolgreich durchlaufen. Simulator und Emulator
@@ -487,6 +530,14 @@ verschluesselt gespeichert und wird erst beim Funke gehoert.
       ausstehend" vermerkte Punkt bleibt bis dahin offen – er ist kein
       Nice-to-have, sondern Abnahmekriterium. **Durchsetzung: siehe
       Statusblock oben.** Protokoll: `docs/BLE-GERAETETEST.md`
+      > **BESTANDEN (10.11.2026):** Der Betreiber hat den Transit-Spark-
+      > Test auf echten Geräten erfolgreich durchlaufen und als Erfolg
+      > gemeldet. Damit ist die Release-Bedingung für 0.10.0 erfüllt und
+      > die Notbremse (`transit_spark_enabled`) bleibt auf `true` - sie
+      > ist die Rückfallebene, nicht der Normalzustand.
+      > Den Test selbst kann die Entwicklung nicht ausführen (er braucht
+      > zwei echte Geräte); das Ergebnis ist deshalb als Meldung des
+      > Betreibers festgehalten, nicht als eigene Messung.
       > **Notbremse ist jetzt vorbereitet (Migration 159):** Der im
       > Statusblock geforderte Schalter in `app_config` existiert:
       > `transit_spark_enabled`. Auf `false` gesetzt ist Transit Spark

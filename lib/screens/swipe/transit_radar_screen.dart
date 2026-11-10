@@ -11,6 +11,7 @@ import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/transit_models.dart';
 import 'package:thestia/providers/transit_provider.dart';
 import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/providers/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/services/find_your_match_service.dart';
 import 'package:thestia/services/local_storage.dart';
@@ -737,6 +738,16 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
                 ),
               ],
               const SizedBox(height: 24),
+              // Der Name beim Zuwinken (v0.10.1).
+              //
+              // BEFUND (10.11.2026, Betreiber): "Ich finde aber, dass man bei
+              // Transit Spark einstellen können soll, ob der Name für andere
+              // sichtbar sein soll oder nicht."
+              //
+              // Der Schalter steht hier, weil er nur für Transit Spark gilt
+              // - wer ihn braucht, ist gerade dort.
+              _showNameSwitch(context),
+              const SizedBox(height: 16),
               // Modus-Auswahl (v0.9.0): Bahn/Café vs. Messe/Event - der
               // Messe-Modus nimmt nur starke BLE-Signale auf (echter
               // Sichtkontakt in dichten Umgebungen). Nur inaktiv umschaltbar.
@@ -984,6 +995,54 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
       const _PulseCircle(size: 180, opacity: 0.10),
       const _PulseCircle(size: 140, opacity: 0.16),
     ];
+  }
+
+  /// Der Schalter „Namen beim Zuwinken zeigen" (v0.10.1).
+  ///
+  /// BEFUND (10.11.2026, Betreiber): Der Name beim Zuwinken soll
+  /// abschaltbar sein. Der Server entscheidet (transit_show_name,
+  /// Migration 208) - ein Schalter nur im Gerät wäre wertlos.
+  ///
+  /// Der Hinweis darunter nennt die GRENZE: Wer neben einem steht,
+  /// erkennt einen trotzdem. Das steht hier, weil ein Schalter ohne
+  /// diese Erklärung eine falsche Sicherheit erzeugt.
+  Widget _showNameSwitch(BuildContext context) {
+    final settings = ref.watch(settingsProvider);
+    final notifier = ref.read(settingsProvider.notifier);
+    final an = settings.transitShowName;
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SwitchListTile(
+          value: an,
+          onChanged: (v) => notifier.setTransitShowName(v),
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            L10n.t(context, 'transit.showNameTitle'),
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          subtitle: Text(
+            an
+                ? L10n.t(context, 'transit.showNameSub')
+                : L10n.t(context, 'transit.showNameSubOff'),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: 16, bottom: 4),
+          child: Text(
+            L10n.t(context, 'transit.showNameBoundary'),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -1398,6 +1457,33 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
     }
   }
 
+  /// Der Kopf der Ping-Karte: der Name des Absenders - oder die anonyme
+  /// Meldung.
+  ///
+  /// BEFUND (10.11.2026, Betreiber): "Ich finde aber, dass man bei Transit
+  /// Spark einstellen können soll, ob der Name für andere sichtbar sein
+  /// soll oder nicht."
+  ///
+  /// DER GRUND: Der Server liefert den Namen nur, wenn der Absender ihn
+  /// mit `transit_show_name` freigegeben hat (Migration 208). Fehlt der
+  /// Name, bleibt die Meldung anonym - die Anonymität ist der
+  /// Normalzustand, nicht die Ausnahme.
+  Widget _pingHeadline(BuildContext context, Map<String, dynamic> ping) {
+    final absender = (ping['senderName'] as String?)?.trim();
+    final text = (absender != null && absender.isNotEmpty)
+        ? L10n.tf(context, 'transit.waveFrom', {'name': absender})
+        : L10n.t(context, 'transit.waveFromAnonymous');
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 2),
+      child: Text(
+        text,
+        style: Theme.of(
+          context,
+        ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
   Future<void> _dismiss(Map<String, dynamic> ping) async {
     // BEFUND (07.11.2026, Betreiber): "Funke wurde angezeigt, ist dann
     // aber wieder verschwunden."
@@ -1456,6 +1542,11 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // BEFUND (10.11.2026): Der Name des Absenders steht
+                  // hier - aber NUR, wenn er ihn freigegeben hat. Der
+                  // Server entscheidet das (transit_show_name); fehlt der
+                  // Name, bleibt die Meldung anonym.
+                  _pingHeadline(context, ping),
                   Text(
                     L10n.t(
                       context,

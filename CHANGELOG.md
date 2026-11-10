@@ -14,34 +14,34 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 - **Nachrichten kommen jetzt an** (09.11.2026): Eine Benachrichtigung kam
   an, aber die Nachricht selbst war unsichtbar. Der Grund war eine
-  doppelte Buchfuehrung: Der Chat-Screen holte die verschluesselten
-  Relay-Nachrichten nur ueber das *lokale* Match - und das lokale Match
-  eines Server-Funken entsteht erst, wenn der Chat geoeffnet wird. Fehlte
+  doppelte Buchführung: Der Chat-Screen holte die verschlüsselten
+  Relay-Nachrichten nur über das *lokale* Match - und das lokale Match
+  eines Server-Funken entsteht erst, wenn der Chat geöffnet wird. Fehlte
   es, brach der Abruf komplett ab und die Nachricht blieb liegen. Dasselbe
-  galt fuer den globalen Relay-Eingang, der Server-Funken nicht zuordnen
+  galt für den globalen Relay-Eingang, der Server-Funken nicht zuordnen
   konnte. Beide Wege holen das Match jetzt nach, bevor sie abbrechen.
-- **Der Ungelesen-Zaehler wurde nie erhoeht** (09.11.2026): Es gab nur
-  eine Stelle, die ihn zuruecksetzte - nie eine, die ihn erhoehte. Badge,
+- **Der Ungelesen-Zähler wurde nie erhöht** (09.11.2026): Es gab nur
+  eine Stelle, die ihn zurücksetzte - nie eine, die ihn erhöhte. Badge,
   Hervorhebung und die Sortierung "ungelesene Chats oben" konnten damit
-  gar nicht greifen. Der Zaehler wird jetzt beim Eintreffen einer
-  Nachricht vom Partner gefuehrt (ausser der Chat ist gerade offen).
-- **Ein Tap auf die Benachrichtigung fuehrt zum Interessen-Screen**
+  gar nicht greifen. Der Zähler wird jetzt beim Eintreffen einer
+  Nachricht vom Partner geführt (außer der Chat ist gerade offen).
+- **Ein Tap auf die Benachrichtigung führt zum Interessen-Screen**
   (09.11.2026): Der Zielpfad wurde gesetzt, aber es gab keinen Handler,
-  der ihn auswertete - der Tap oeffnete die App und sonst nichts. Jetzt
+  der ihn auswertete - der Tap öffnete die App und sonst nichts. Jetzt
   werden alle drei Wege verbunden: lokale Benachrichtigung, FCM-Push im
   Hintergrund und FCM-Push bei beendeter App.
-- **Der Vorstellungs-Player laeuft nicht mehr ueber** (09.11.2026): Der
+- **Der Vorstellungs-Player läuft nicht mehr über** (09.11.2026): Der
   Fortschrittsbalken stand neben dem Knopf und lief in der schmalen
   Kachel aus dem Bereich. Er sitzt jetzt darunter und erscheint nur,
-  waehrend tatsaechlich etwas laeuft.
-- **Die Bilder im Chat sind kleiner** (09.11.2026): Sie fuellten die ganze
+  während tatsächlich etwas läuft.
+- **Die Bilder im Chat sind kleiner** (09.11.2026): Sie füllten die ganze
   Zeile der Blase aus. Jetzt sind sie auf eine 160-Pixel-Kachel
   begrenzt - ein Vorschaubild statt des Vollbilds.
-- **"Funke bestaetigen" bei vorhandenem Funke** (09.11.2026): Wer mit
+- **"Funke bestätigen" bei vorhandenem Funke** (09.11.2026): Wer mit
   dieser Person schon einen Funke hat, bekommt jetzt den Hinweis statt
   eines Knopfes, der nichts Neues bewirkt.
 - **Die Reiterleiste bleibt bei "Mit anderen verbinden" sichtbar**
-  (09.11.2026): Die QR-Screens lagen ausserhalb des Haupt-Navigators und
+  (09.11.2026): Die QR-Screens lagen außerhalb des Haupt-Navigators und
   waren dadurch Vollbild-Screens ohne Leiste.
 - **Der Zufallschat findet keine bekannten Personen** (09.11.2026): Wer
   mit jemandem schon einen Funke hat, ist dort jetzt ausgeschlossen -
@@ -314,13 +314,13 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   den *aufgerufenen* Pfad an - die Regel für `/index.html` galt also
   nicht für `/`. Die wichtigste Seite des Projekts lieferte deshalb
   `max-age=0` statt der 5-Minuten-Regel, und genau die Datei, die
-  Android bei jeder App-Link-Pruefung neu abruft, ebenfalls.
+  Android bei jeder App-Link-Prüfung neu abruft, ebenfalls.
 - **Die `_redirects` spiegeln jetzt die Regeln aus `netlify.toml`**
   (04.11.2026): Ob die Konfigurationsdatei bei einem Drag-&-Drop-Upload
-  ausgewertet wird, laesst sich aus dem Repo nicht belegen. Im
+  ausgewertet wird, lässt sich aus dem Repo nicht belegen. Im
   Live-Stand vom 04.11.2026 war `robots.txt` auf *beiden* Hosts die
   gesperrte Fassung und `sitemap.xml` gab es gar nicht - die
-  oeffentliche Seite war also fuer Suchmaschinen gesperrt. Die Regeln
+  oeffentliche Seite war also für Suchmaschinen gesperrt. Die Regeln
   zeigen auf dieselben Ziele wie in der TOML, deshalb ist die
   Spiegelung unschaedlich.
 
@@ -413,15 +413,15 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   meldet, suchte die Freigabe mit `status IN
   ('pending','active','expired')` - "revoked" fehlte. Bei einer
   widerrufenen Freigabe fand sie keine Zeile und meldete "keine
-  Freigabe" zurueck. Die neue Anzeige ("Die Freigabe ist beendet")
-  waere also **nie** erschienen.
+  Freigabe" zurück. Die neue Anzeige ("Die Freigabe ist beendet")
+  wäre also **nie** erschienen.
   *Warum der Widget-Test das nicht gefunden hat:* Er fuettert das
   Modell direkt mit dem Status. Nur der Weg App -> Server -> App findet
   einen Fehler in der RPC. Genau deshalb wurde die App auf einem
   echten Android-Emulator durchgetippt - Registrierung, Login,
   Onboarding, Einstellungen, Elternbereich - und der Zustand in der
   Datenbank von Hand gesetzt. Beide Faelle wurden danach am echten
-  Geraet nachgewiesen: aktive Freigabe (zeigt die Eltern-Adresse und
+  Gerät nachgewiesen: aktive Freigabe (zeigt die Eltern-Adresse und
   die Einstellungen) und beendete Freigabe (zeigt "Die Freigabe ist
   beendet" und dass die Adresse geloescht wurde).
 - **Die Tabellen der Website sind abgerundet** (04.11.2026): Das pinke
@@ -770,7 +770,7 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 Der Build 33 enthaelt dieselbe Version (0.10.0) mit einer neuen
 Build-Nummer, weil Android ein Update nur installiert, wenn die
-Build-Nummer hoeher ist. Build 32 wurde fuer den zurueckgenommenen
+Build-Nummer höher ist. Build 32 wurde für den zurueckgenommenen
 Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 
 #### Behoben
@@ -789,24 +789,24 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 - **Der Neuversuch des Handshakes konnte die Verbindung nicht mehr
   reparieren:** Zwischen Offer und Answer lag kein Generationszaehler -
   eine Antwort zu einem alten Angebot kam an und wurde verworfen,
-  waehrend der neue Aufbau schon lief. Der Zaehler trennt die
+  während der neue Aufbau schon lief. Der Zähler trennt die
   Versuche jetzt sauber.
-- **Ein verbrauchter Einmal-Schluessel wurde wiederbelebt:** Wurde ein
+- **Ein verbrauchter Einmal-Schlüssel wurde wiederbelebt:** Wurde ein
   PreKey zweimal angeboten, uebernahm der zweite Peer ihn erneut.
-  Jetzt wird ein verbrauchter Schluessel wirklich entfernt.
+  Jetzt wird ein verbrauchter Schlüssel wirklich entfernt.
 - **Ein fehlendes PreKey-Bundle brach den ganzen Aufbau ab:** Kam vom
   Partner kein Bundle (404), wurde nicht weiter versucht - die anderen
-  Schluessel des Partners wurden nicht mehr probiert.
+  Schlüssel des Partners wurden nicht mehr probiert.
 - **Nach dem Login blieb der Login-Screen mit einer Fehlermeldung
   stehen** (06.11.2026, live im Emulator gefunden): Die Anmeldung war
   erfolgreich (`[AuthNotifier] login erfolgreich`), danach warf die App
   einen `CircularDependencyError`. Ursache: `login()` und
   `loginWithPasskey()` riefen `_ref.invalidate(emailConfirmedProvider)`.
   Der Erzeuger dieses Providers hoert im Konstruktor auf den
-  `authProvider` - die Invalidierung laeuft also im `authProvider`
+  `authProvider` - die Invalidierung läuft also im `authProvider`
   selbst, Riverpod erkennt den Kreis und wirft. Die Invalidierung
-  entfaellt; ihre Absicht (sofort pruefen statt auf den 3-s-Poller zu
-  warten) erreicht der Notifier selbst ueber seinen eigenen Listener.
+  entfällt; ihre Absicht (sofort prüfen statt auf den 3-s-Poller zu
+  warten) erreicht der Notifier selbst über seinen eigenen Listener.
 - **Die App konnte beim Start in einen Fehlerzustand geraten**
   (06.11.2026, live im Emulator gefunden - Android zeigte "Thestia
   isn't responding"): `app.dart` setzte in `initState` den
@@ -821,12 +821,12 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
   (`GridView`/`ListView`) kann die nicht liefern - Flutter wirft "Render
   Viewport does not support returning intrinsic dimensions". Der Picker
   bekommt jetzt eine feste Breite; die Liste scrollt intern. **Wichtig
-  fuer den Test:** Dieser Dialog erscheint beim *ersten* Chat-Besuch -
+  für den Test:** Dieser Dialog erscheint beim *ersten* Chat-Besuch -
   wer den Chat nicht aufbekommt, testet das P2P nie.
-- **Fuenf Stellen mit `setState` nach `dispose`** (06.11.2026,
+- **Fünf Stellen mit `setState` nach `dispose`** (06.11.2026,
   systematischer Audit aller 227 Dateien unter `lib/`): Nach einem
   `await` (Serveraufruf, Bildauswahl) wurde `setState` gerufen, ohne den
-  `mounted` zu pruefen. Navigiert der Nutzer in dieser Zeit weg, ist das
+  `mounted` zu prüfen. Navigiert der Nutzer in dieser Zeit weg, ist das
   im Debug-Build ein Absturz ("setState() called after dispose()"). Der
   Analyzer sieht das nicht - er prueft den BuildContext, nicht den State.
 
@@ -847,8 +847,8 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
   `setState` nach einem `await` ohne `mounted`-Check), `check_provider_
   in_lifecycle.py` (findet Provider-Schreibzugriffe in `initState` und
   `build`), `check_no_empty_catches.py` und `check_web_pages.py` mit
-  Selbsttest. Der erste Wächter fand fuenf echte Faelle, der zweite
-  einen - beide gegen Negativproben geprueft.
+  Selbsttest. Der erste Wächter fand fünf echte Faelle, der zweite
+  einen - beide gegen Negativproben geprüft.
 
 ### Nachtrag: Build 34 bis 41 (06./07.11.2026) - vier Befunde vom Betreiber
 
@@ -1258,7 +1258,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     fehl. Der Bild-Prüfhash aus der Datenschutzerklärung war also
     wirkungslos. (Migration 190 legt die Tabelle nach.)
 
-33. **Der Geburtstag war in der Nacht falsch - fuer die andere Person.**
+33. **Der Geburtstag war in der Nacht falsch - für die andere Person.**
     BEFUND (07.11.2026, Betreiber): „Geburtstagsvorschau."
 
     **Die Ursache (live gemessen):** Der Server rechnet in **UTC**, die
@@ -1551,15 +1551,15 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     `tool/check_release_version.py` (die ausgelieferten Artefakte
     tragen den aktuellen Code).
 
-51. **Die Verschluesselung ist belegt - und mein Verdacht war falsch.**
+51. **Die Verschlüsselung ist belegt - und mein Verdacht war falsch.**
      FRAGE DES BETREIBERS (08.11.2026): „Bist du dir jetzt sicher, dass
      der Chat und alle Modi reibungslos laufen?"
 
      Die ehrliche Antwort war: **nein**. Zwei Dinge waren unbelegt -
-     und das eine davon war ein echter Fehler in meiner Pruefung: Der
+     und das eine davon war ein echter Fehler in meiner Prüfung: Der
      erste Live-Nachweis hat eine **Nutzlast abgelegt, die keine war**
      (base64 von „Hallo"). Damit war die Server-Kette belegt, aber
-     **nicht die Krypto**. Wenn die Krypto kaputt waere, kaemen die
+     **nicht die Krypto**. Wenn die Krypto kaputt wäre, kaemen die
      Nachrichten weiterhin nicht an - und genau das war die gemeldete
      Symptom.
 
@@ -1567,9 +1567,9 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 
      - `test/signal_first_message_test.dart` beweist an den echten
        Bausteinen der Bibliothek: die **erste** Nachricht traegt den
-       PreKey und laesst sich **ohne vorhandene Sitzung**
+       PreKey und lässt sich **ohne vorhandene Sitzung**
        entschluesseln. Damit ist belegt, dass eine unbekannte Person
-       die erste Nachricht ueberhaupt lesen kann.
+       die erste Nachricht überhaupt lesen kann.
      - `test/live_prekey_bundle_test.dart` holt das **echte** Bundle
        eines echten Kontos vom Server und prueft die Signatur des
        Signed Pre Keys gegen die Identity-Key. Passt die nicht, kann
@@ -1579,23 +1579,23 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 
      **Die wichtigste Lehre daraus:** Mein Verdacht, die Krypto sei
      kaputt, war **falsch**. Der Test hat es widerlegt, **bevor** die
-     App angefasst wurde. Genau dafuer ist der Test da - ein
+     App angefasst wurde. Genau dafür ist der Test da - ein
      Verdacht, der aus einem Test kommt, ist eine Vermutung; ein
      Verdacht, der durch einen Test widerlegt ist, ist eine Tatsache.
 
-52. **Der komplette Weg laeuft jetzt in einem einzigen Test.**
+52. **Der komplette Weg läuft jetzt in einem einzigen Test.**
      `test/live_message_flow_test.dart` macht den ganzen Weg in einem
      Lauf: beide Konten liken sich -> es entsteht ein **Funke**
      (bzw. ein Match) -> das PreKey-Bundle wird geholt -> die Sitzung
-     wird gebaut -> die Nachricht wird **verschluesselt** -> im Relay
-     abgelegt -> vom Empfaenger abgeholt.
+     wird gebaut -> die Nachricht wird **verschlüsselt** -> im Relay
+     abgelegt -> vom Empfänger abgeholt.
 
-     Live geprueft: alles gruen. Und die Nutzlast, die im Relay
-     landet, enthaelt den Klartext **nicht** - sie ist verschluesselt.
+     Live geprüft: alles gruen. Und die Nutzlast, die im Relay
+     landet, enthaelt den Klartext **nicht** - sie ist verschlüsselt.
 
      Das entschluesseln selbst passiert dort bewusst **nicht**: es
      braucht den privaten PreKey des Empfaengers, und der liegt nur auf
-     dem Geraet, das ihn erzeugt hat (der Server kennt nur den
+     dem Gerät, das ihn erzeugt hat (der Server kennt nur den
      oeffentlichen Teil). Die Krypto ist stattdessen in den beiden
      Tests oben belegt - zusammen ergibt das die vollstaendige Kette.
 
@@ -1603,13 +1603,13 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      wenn zwischen beiden eine **Beziehung** besteht (Match oder
      Transit-Signal); sonst antwortet er mit 404 „nicht verfuegbar".
      Das ist richtig so - ohne Beziehung bekommt niemand die
-     Schluessel eines Fremden. Die Live-Tests bauen die Beziehung
-     deshalb vorher auf und pruefen dabei gleich, ob der beidseitige
+     Schlüssel eines Fremden. Die Live-Tests bauen die Beziehung
+     deshalb vorher auf und prüfen dabei gleich, ob der beidseitige
      Like wirklich einen Match ergibt (Befund 44).
 
 56. **Build 48: das SDK ist aktualisiert - die letzte Luecke ist zu.**
      Das Dart-/Flutter-SDK stand auf **3.44.6 / Dart 3.12.2** und war
-     damit vom Advisory GHSA-frr6-h895-5pxp (High) betroffen. Jetzt laeuft
+     damit vom Advisory GHSA-frr6-h895-5pxp (High) betroffen. Jetzt läuft
      der Build auf **Flutter 3.47.9 / Dart 3.13.7** (das aktuelle Stable
      mit dem Fix). Die CI pinnt die Version jetzt fest, und
      `tool/check_sdk_security.py` ist **blockierend** im CI: ein
@@ -1618,7 +1618,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 
      **Warum das erst jetzt wirkt:** Der Fix steckt in der Binary - ein
      SDK-Update allein genuegt nicht. Erst der neue Build traegt ihn auf
-     die Geraete. Wer noch Build 47 (oder aelter) installiert hat,
+     die Geräte. Wer noch Build 47 (oder aelter) installiert hat,
      benutzt weiterhin den alten Trust-Store; die App weist ihn im
      Startbildschirm darauf hin (Mindestversions-Gate).
 
@@ -1627,7 +1627,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 
      **Eine Ueberraschung, die das Update mitgebracht hat:** Mit dem
      neuen SDK hat sich `path_provider_android` auf 2.3.1 aufgeloest,
-     das ueber `jni_flutter` an das Paket `jni` haengt. Der
+     das über `jni_flutter` an das Paket `jni` haengt. Der
      Release-Build brach daraufhin ab: „Missing class
      org.jni_zero.JniZeroJni" - R8 findet die zur Build-Zeit erzeugten
      Java-Klassen des JNI-Pakets nicht im Klassenpfad. Der Dart-Code
@@ -1636,8 +1636,8 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      (`-dontwarn org.jni_zero.JniZeroJni`) in
      `android/app/proguard-rules.pro`.
 
-     **Die Lehre daraus:** Ein SDK-Update aendert nicht nur die
-     Formatierung, sondern loest die Abhaengigkeiten neu auf. Das ist
+     **Die Lehre daraus:** Ein SDK-Update ändert nicht nur die
+     Formatierung, sondern löst die Abhaengigkeiten neu auf. Das ist
      der Grund, warum ein Update nie „nur ein Update" ist - es gehoert
      immer mit einem vollstaendigen Release-Durchlauf zusammen.
 
@@ -1646,26 +1646,26 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      (das Mindestversions-Gate). Beim Setzen des Gates fand sich:
      **Das Gate hat noch nie funktioniert.**
 
-     Die App liest `app_config` direkt ueber PostgREST
+     Die App liest `app_config` direkt über PostgREST
      (`lib/services/app_config_service.dart`). Die Policy aus Migration
-     034 („No direct app_config access") hat aber `USING (false)` fuer
+     034 („No direct app_config access") hat aber `USING (false)` für
      die Rolle `authenticated` - der Client bekam also IMMER eine
-     leere Liste. Live geprueft: HTTP 200 mit `[]`.
+     leere Liste. Live geprüft: HTTP 200 mit `[]`.
 
      **Damit waren zwei Mechanismen stumm:**
-     - `min_app_version_build`: der Update-Hinweis beim Start fuer zu
+     - `min_app_version_build`: der Update-Hinweis beim Start für zu
        alte Clients erschien **nie**. Der Wert wurde gesetzt (9, 29, 30
        - jetzt 48), war aber unerreichbar. Alte Builds liefen weiter -
        und deren Zertifikatspruefung akzeptiert die gesperrten
        Zwischenzertifikate noch (Advisory GHSA-frr6-h895-5pxp, High).
-     - `transit_spark_enabled`: die **Notbremse** fuer Transit Spark -
+     - `transit_spark_enabled`: die **Notbremse** für Transit Spark -
        der Schalter, mit dem der Betreiber das Feature abschalten
        kann, wenn der BLE-Geraetetest nicht besteht - war ebenfalls
        stumm. Der Code behandelt den Wert als „fail-open" (Feature
        an), also hat der Schalter nichts bewirkt.
 
      **Behoben (Migration 202):** Genau die zwei Werte, die die App
-     ausdruecklich abfragt, sind jetzt fuer angemeldete Clients lesbar.
+     ausdruecklich abfragt, sind jetzt für angemeldete Clients lesbar.
      Die interne Konfiguration (AAL2-Pflicht,
      E-Mail-Bestaetigungspflicht, Aufbewahrungsfristen, Quiz-Abklingzeit)
      bleibt gesperrt.
@@ -1673,7 +1673,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      **Warum der Entwurf trotzdem richtig war:** Der Entwurf war
      richtig - `app_config` ist eine interne Konfiguration und soll
      nicht wholesale lesbar sein. Aber die beiden Werte, die die App
-     braucht, muessen es sein.
+     braucht, müssen es sein.
 
      **Und warum es nicht auffiel:** Beide Aufrufe behandeln einen
      fehlenden Wert als „fail-open" - kein Update-Hinweis, Feature an.
@@ -1684,7 +1684,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      **Das Werkzeug dagegen:** `tool/check_app_config_readable.py`
      fragt live genau so ab, wie es die App tut (mit einem echten
      Benutzer-Token) und schlaegt an, wenn ein benoetigter Wert fehlt
-     ODER ein interner Wert lesbar ist. Ohne die Schluessel sagt es
+     ODER ein interner Wert lesbar ist. Ohne die Schlüssel sagt es
      SKIP, damit der CI nicht rot wird.
 
      **Und das Mindestversions-Gate selbst (Migration 201) steht jetzt
@@ -1693,7 +1693,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 
 57. **Sicherheitspruefung gegen bekannte Schwachstellen (08.11.2026).**
      BEFUND (Betreiber): „Check im Internet einmal, ob es bestimmte
-     Sicherheitsluecken gibt, die Thestia haben koennte und pruef die App
+     Sicherheitsluecken gibt, die Thestia haben könnte und pruef die App
      dann darauf."
 
      **Die Methode:** Alle 274 Pakete aus `pubspec.lock` wurden gegen die
@@ -1701,7 +1701,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      dazu der WebRTC-SDK, die Flutter-Engine (Skia, libpng), der
      Dart-SDK, die GitHub Actions und die Maven-Abhaengigkeiten des
      Android-Builds. Jede gefundene Luecke wurde gegen den eigenen Code
-     geprueft.
+     geprüft.
 
      **Das Ergebnis:** Kein einziges der 274 Pakete ist von einer
      bekannten Advisory betroffen. Zwei Luecken waren es - der
@@ -1709,19 +1709,19 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 
      **Luecke 1 (High): der Dart-/Flutter-SDK ist zu alt.**
      Advisory GHSA-frr6-h895-5pxp (23.10.2026): Im Oktober 2026 wurden
-     die privaten Schluessel von acht Zwischenzertifikaten der CA
+     die privaten Schlüssel von acht Zwischenzertifikaten der CA
      *eMudhra* oeffentlich als kompromittiert gemeldet. Wer sie hat,
-     kann gueltige TLS-Zertifikate fuer beliebige Domains FAELSCHEN.
+     kann gueltige TLS-Zertifikate für beliebige Domains FAELSCHEN.
      `dart:io` prueft auf Android mit einem EINGEBAUTEN BoringSSL und
      liest die Sperrliste des Betriebssystems NICHT - ein Angreifer im
-     Netzpfad kann also ein gefaelschtes Zertifikat fuer `*.supabase.co`
+     Netzpfad kann also ein gefaelschtes Zertifikat für `*.supabase.co`
      vortaeuschen. Betroffen: Flutter < 3.47.8 / Dart < 3.13.7.
      Thestia hatte **3.44.6 / 3.12.2** - also **betroffen**.
      (iOS, macOS und Web sind nicht betroffen.)
 
-     **Die App-Pruefung:** Drei Datenpfade liefen ungeschuetzt:
+     **Die App-Prüfung:** Drei Datenpfade liefen ungeschuetzt:
      Supabase **Realtime** (WebSocket), die Passkey-Registrierung und
-     der Storage-URL-Download. Sie gingen ueber den System-Root-Store -
+     der Storage-URL-Download. Sie gingen über den System-Root-Store -
      und Dart ruft den Pin-Callback nur auf, wenn die System-Validierung
      FEHLGESCHLAGEN ist. Ein vom System akzeptiertes Zertifikat
      umging das Pinning also vollstaendig.
@@ -1729,11 +1729,11 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      **Behoben (wirkt sofort, ohne SDK-Update):**
      - Der Realtime-WebSocket bekommt einen eigenen Transport mit dem
        **gepinnten** Client (`lib/utils/pinned_realtime_transport.dart`).
-       Ueber diesen Kanal laufen Chat-Events, Transit-Signaling und
+       Über diesen Kanal laufen Chat-Events, Transit-Signaling und
        die Soft-Pings.
      - Passkey und Storage nutzen den `IOClient` mit dem strikten
        Pinning-Client (leerer Root-Store, fail-closed).
-     - Supabase REST und das WebRTC-Signaling waren bereits ueber den
+     - Supabase REST und das WebRTC-Signaling waren bereits über den
        strikten Client gepinnt. Play Integrity und FCM laufen nativ
        und nutzen den Trust-Store des Betriebssystems (geschuetzt).
 
@@ -1744,7 +1744,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      enthaelt die kompromittierte eMudhra-CA noch in seiner eigenen
      CA-Liste. **Behoben:** Die Version ist jetzt `150.7871.04` - exakt
      die Version, die der Upstream-1.6.3 verwendet („drop compromised
-     eMudhra CA root"). Der Build laeuft durch.
+     eMudhra CA root"). Der Build läuft durch.
 
      **Luecke 3 (Mittel): die Flutter-Engine (Skia, libpng).** Beides
      hatte 2026 Luecken, die nur ein SDK-Update behebt. Das Risiko ist
@@ -1759,33 +1759,33 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      in der CI, lokal installierte Version, WebRTC-SDK) und macht den
      offenen Punkt sichtbar, statt ihn zu uebergehen.
 
-     **Geprueft und NICHT betroffen:** Guava (Build-Abhaengigkeit, nicht
-     im APK), die Firebase-Plugins (kein Firestore, FCM laeuft nativ),
+     **Geprüft und NICHT betroffen:** Guava (Build-Abhaengigkeit, nicht
+     im APK), die Firebase-Plugins (kein Firestore, FCM läuft nativ),
      `actions/download-artifact` (wird nicht verwendet), `dio_http2_adapter`
      und `jose` (nicht verwendet), der Pub-Entpack-CVE (Dart zu neu),
-     `libwebrtc` (Video-Leak - Thestia nutzt WebRTC nur fuer Text) und
-     `onnxruntime` (Modell kommt aus dem Asset und ist SHA-256-geprueft).
-     **Und der Server:** Das Produktivsystem laeuft auf **PostgreSQL
+     `libwebrtc` (Video-Leak - Thestia nutzt WebRTC nur für Text) und
+     `onnxruntime` (Modell kommt aus dem Asset und ist SHA-256-geprüft).
+     **Und der Server:** Das Produktivsystem läuft auf **PostgreSQL
      17.6**; die 17er-Linie ist bei **17.11**. Dazwischen liegen 39
-     CVEs, 25 davon mit CVSS ab 7.0. Geprueft wurde jede einzelne gegen
+     CVEs, 25 davon mit CVSS ab 7.0. Geprüft wurde jede einzelne gegen
      die App: `pgcrypto` ist installiert, aber die CVE liegt in der
-     PGP-**Entschluesselung** (die App nutzt `crypt()` fuer die PIN, und
-     das `extensions`-Schema ist fuer den Client nicht exponiert);
-     `regexp` ist ueber den Transit-Notiztext erreichbar, aber der Text
+     PGP-**Entschlüsselung** (die App nutzt `crypt()` für die PIN, und
+     das `extensions`-Schema ist für den Client nicht exponiert);
+     `regexp` ist über den Transit-Notiztext erreichbar, aber der Text
      wird auf 140 Zeichen gekuerzt; `intarray`, `spi` und `pg_trgm` sind
      nicht installiert; `oidvector` liegt in `pg_catalog` und nicht im
      exponierten `public`-Schema. **Kein betroffener Pfad ist von der
      App aus erreichbar.** Die PostgreSQL-Version gehoert trotzdem zur
-     Supabase-Plattform und laesst sich aus dem Repository heraus nicht
-     aendern - das Update muss der Betreiber im Supabase-Dashboard
+     Supabase-Plattform und lässt sich aus dem Repository heraus nicht
+     ändern - das Update muss der Betreiber im Supabase-Dashboard
      anstossen.
 
      **Das Update wurde am 08.11.2026 durchgefuehrt.** Die Plattform
      hatte es freigegeben (17.6.1.147 -> 17.11.0.018, ohne
      Validierungsfehler und ohne Warnungen). Der Wechsel dauerte rund
-     fuenf Minuten.
+     fünf Minuten.
 
-     **Das Backup, das davor lag** (fuer diesen Plan gab es weder einen
+     **Das Backup, das davor lag** (für diesen Plan gab es weder einen
      PITR-Restore-Punkt noch ein Plattform-Backup - beides ist ein
      Pro-Feature):
      `releases/backup-db-2026-11-08/pg-dump-data.sql` (275 Zeilen in 41
@@ -1799,22 +1799,22 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      Das vollstaendige Audit mit Quellen liegt in
      `docs/SICHERHEITSPRUEFUNG-2026-11-08.md`.
 
-54. **Keine doppelten Benachrichtigungen fuer das Selbe.**
+54. **Keine doppelten Benachrichtigungen für das Selbe.**
      BEFUND (08.11.2026, Betreiber): „Keine doppelten Benachrichtigungen
-     fuer das Selbe."
+     für das Selbe."
 
      **Die Ursache (live gemessen, nicht vermutet):** Der Like-Versand
-     lief **zweimal**. Einmal ueber den DB-Trigger
-     (`notify_push_trigger`) und einmal ueber einen Aufruf der App
+     lief **zweimal**. Einmal über den DB-Trigger
+     (`notify_push_trigger`) und einmal über einen Aufruf der App
      (`notify-user` mit `kind='likes'`). Dazu kam der Transit-Weg: der
-     legt fuer EINEN Funke drei Zeilen an - zwei technische Likes, ein
+     legt für EINEN Funke drei Zeilen an - zwei technische Likes, ein
      Match und einen Soft-Ping - und erzeugte damit **vier** Push-
-     Aufrufe. Beide Seiten bekamen je **zwei** Meldungen fuer ein
+     Aufrufe. Beide Seiten bekamen je **zwei** Meldungen für ein
      Ereignis, und die Like-Meldung war inhaltlich falsch: im Radar
      wird kein Profil geliked, sondern gefunkt.
 
-     **Das Werkzeug, das zaehlt:** `tool/measure_push_duplicates.sql`
-     zaehlt die Push-Aufrufe, ohne dass eine einzige Nachricht rausgeht
+     **Das Werkzeug, das zählt:** `tool/measure_push_duplicates.sql`
+     zählt die Push-Aufrufe, ohne dass eine einzige Nachricht rausgeht
      (Transaktion plus ROLLBACK - der pg_net-Worker sieht uncommittete
      Zeilen einer anderen Sitzung nicht). `tool/check_push_duplicates.py`
      macht daraus ein Gate: statisch (kein Client darf `notify-user` mit
@@ -1824,7 +1824,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      **Die Regel ab jetzt: ein Ereignis, eine Meldung.**
 
      - Ein technischer Transit-Like (kein Profil-Like) erzeugt **keine**
-       Meldung. Er ist ueber `likes.source = 'transit'` markiert.
+       Meldung. Er ist über `likes.source = 'transit'` markiert.
      - Ein Like, aus dem ein Funke wird, erzeugt **nur** die
        Funke-Meldung. Der Match entsteht darum **vor** dem Like-Insert
        (`like_user`, `create_match_if_mutual`).
@@ -1854,7 +1854,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      dein Profil geliked.", der Client-Pfad „Jemand hat deine
      Vorstellung entdeckt.". Welcher Weg der Push genommen hat, war
      damit am Text erkennbar - und die App rief den Client-Pfad
-     zusaetzlich auf. Jetzt gilt fuer jeden Profil-Like derselbe Text:
+     zusätzlich auf. Jetzt gilt für jeden Profil-Like derselbe Text:
      „Jemand hat deine Vorstellung entdeckt."
 
 53. **Was damit nicht belegt ist - und was aufgeraeumt wird.**
@@ -1863,27 +1863,27 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      prueft danach, dass nichts mehr da ist; die Konten selbst bleiben
      unberuehrt.
 
-     **Ehrlich benannt** (ausfuehrlich in `releases/v0.10.0/
+     **Ehrlich benannt** (ausführlich in `releases/v0.10.0/
      TESTANLEITUNG.md`, Abschnitt 7):
 
      - Der **P2P-Direktkanal** (Offer -> Answer -> ICE) ist auf zwei
-       echten Geraeten **nie** durchgelaufen. Er braucht die beiden
+       echten Geräten **nie** durchgelaufen. Er braucht die beiden
        Handys nebeneinander.
-     - **Ohne TURN** kein P2P hinter CGNAT. Der Weg ueber den Server
+     - **Ohne TURN** kein P2P hinter CGNAT. Der Weg über den Server
        funktioniert, ist aber langsamer.
      - **Bild- und Sprachnachrichten** sind nicht Ende-zu-Ende
-       geprueft (sie nehmen einen anderen Weg als der Nachrichtentext).
+       geprüft (sie nehmen einen anderen Weg als der Nachrichtentext).
      - Der **Login auf dem Emulator** scheitert am CAPTCHA. Die
        Bildschirmablaeufe (Radar-Dialoge, Dating-Hour, Audio-Player,
-       Profilvorschau) sind deshalb ueber **Widget-Tests** belegt, nicht
-       ueber eine Sitzung auf einem Geraet.
+       Profilvorschau) sind deshalb über **Widget-Tests** belegt, nicht
+       über eine Sitzung auf einem Gerät.
 
 
 59. **Die Passkey-Verknuepfung war kaputt - und niemand konnte es sehen.**
      BEFUND (08.11.2026, bei der Vorbereitung des Hosterwechsels):
      Die Datei `assetlinks.json` nennt die Fingerabdruecke, gegen die
      Android die **Zertifikatskette des Webservers** prueft. Live
-     gemessen: die Kette von `thestia.de` hat fuenf Zertifikate, und
+     gemessen: die Kette von `thestia.de` hat fünf Zertifikate, und
      **keiner** der drei eingetragenen Fingerabdruecke stand darin.
 
      Das alte Gate hat das nicht gesehen: `check_passkey_assetlinks.py`
@@ -1914,12 +1914,12 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      ein **Production-Deploy 15 Credits** - das sind 20 Deploys im
      Monat, egal ob mit oder ohne Build. Genau daran stoesst er.
 
-     **Die Loesung ist ein Hoster, der gar keinen Build braucht:**
+     **Die Lösung ist ein Hoster, der gar keinen Build braucht:**
      Cloudflare Pages. Ein Deploy ist dort ein **Ordner-Upload**
      (Drag & Drop), also kein Build und keine Credits. 0 EUR, keine
      Bandbreitengrenze (Fair Use), 100 Domains und 20.000 Dateien je
      Projekt (hier: 2 und 49). Die Website selbst ist 2,04 MB
-     statisches HTML - die Auslieferung ist ueberall gleich schnell,
+     statisches HTML - die Auslieferung ist überall gleich schnell,
      es gibt keinen Leistungsunterschied.
 
      **Der Publish-Ordner ist jetzt bei beiden Hostern einsatzbereit.**
@@ -1928,54 +1928,54 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 
      - `_redirects` kennt bei Cloudflare nur `[Quelle] [Ziel] [Code]`
        mit einer **Zahl** als Code. Das Netlify-Ausrufezeichen ("!"
-       = erzwungen) haette die ganze Regel ignoriert - und das betraf
+       = erzwungen) hätte die ganze Regel ignoriert - und das betraf
        genau die Datei `/.well-known/assetlinks.json`, ohne die die
-       Passkeys auf Android ausfallen. Fuer Netlify aendert sich
+       Passkeys auf Android ausfallen. Für Netlify ändert sich
        nichts, weil an diesen Quelladressen keine Datei liegt.
      - Cloudflare kann **keine** domain-bezogenen Regeln. Die Regel, die
        `auth.thestia.de` eine gesperrte `robots.txt` gibt, wird dort
        ignoriert. Der Ersatz steht jetzt in `_headers`:
-       `X-Robots-Tag: noindex` fuer `https://auth.thestia.de/*` - die
+       `X-Robots-Tag: noindex` für `https://auth.thestia.de/*` - die
        standardsmaessige Form, die Google und Bing folgen. `thestia.de`
        bleibt indexierbar.
 
      **Der Auth-Host ist damit an beiden Hostern gesperrt** - nur auf
      zwei Wegen, weil die Hoster unterschiedliche Moeglichkeiten haben.
 
-     **Das Pruefen ist schaerfer geworden:**
+     **Das Prüfen ist schaerfer geworden:**
      `tool/check_publish_folder.py` prueft jetzt, dass der Ordner
      keine Netlify-Syntax mehr traegt, die Cloudflare nicht kennt -
-     und dass der Ersatz fuer die domain-bezogene Regel wirklich
+     und dass der Ersatz für die domain-bezogene Regel wirklich
      vorhanden ist. `tool/check_websites_live.py` kann mit `--host`
-     jeden weiteren Host pruefen (etwa das Pages-Projekt, BEVOR der
+     jeden weiteren Host prüfen (etwa das Pages-Projekt, BEVOR der
      DNS umgestellt wird), prueft die Sicherheits-Header an der
      **Antwort des Servers** statt an der Datei - und vergleicht die
      live ausgelieferte `assetlinks.json` mit dem Publish-Ordner. Der
      Deploy wird damit sichtbar, auch wenn er zurueckliegt.
 
      **Die Anleitung liegt in `docs/WEBSITE-HOSTING.md`** (mit den
-     gemessenen DNS-Werten fuer die Mail und die Domain). Wichtig:
+     gemessenen DNS-Werten für die Mail und die Domain). Wichtig:
      die **Apex-Domain** `thestia.de` geht bei Cloudflare Pages nur
-     ueber Cloudflare-DNS, die Subdomain `auth.thestia.de` per CNAME.
+     über Cloudflare-DNS, die Subdomain `auth.thestia.de` per CNAME.
      Die Nameserver werden erst umgestellt, **nachdem** der neue Host
-     geprueft ist - dann ist der Rollback eine Zeile.
+     geprüft ist - dann ist der Rollback eine Zeile.
 
      **Ein Detail, das beim Umstellen leicht verloren geht:** die
      DNS-Aufliste enthaelt die **DMARC-Record**
      (`_dmarc.thestia.de`: `v=DMARC1; p=none; rua=mailto:rua@dmarc.
-     brevo.com`) neben den beiden MX-Eintraege fuer die Mail. Wird die
+     brevo.com`) neben den beiden MX-Eintraege für die Mail. Wird die
      Domain zu Cloudflare gezogen, wandern alle Eintraege - wer nur
      die MX-Records uebernimmt, verliert die DMARC-Policy im
      Hintergrund. Ein DKIM-Eintrag wurde bei den ueblichen Selektoren
      nicht gefunden (in der SPF-Liste steht ohnehin nur Spaceships
      Weiterleitung).
 
-     **An der App aendert sich nichts:** die App laedt die
+     **An der App ändert sich nichts:** die App laedt die
      CAPTCHA-Seite von `https://auth.thestia.de/` - dieselbe Adresse
      wie heute - und das Zertifikat der Website ist nicht gepinnt
      (`cert_pinning.dart` pinnt nur Supabase und den Hugging-Face-
-     Router). Die einzige Kopplung ist die Passkey-Verknuepfung ueber
-     die RP-ID, und die laeuft ueber die `assetlinks.json` (Schritt 6
+     Router). Die einzige Kopplung ist die Passkey-Verknuepfung über
+     die RP-ID, und die läuft über die `assetlinks.json` (Schritt 6
      der Anleitung).
 
 61. **Ein altes Vercel-Projekt lief noch - und die alte Domain mit.**
@@ -1994,13 +1994,13 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      hat Nameserver von Vercel (`ns1/ns2.vercel-dns.com`) und leitet
      auf `www.theblinddate.in` weiter (307). Die Seite traegt
      `<meta name="robots" content="index, follow">` - sie ist also
-     **indexierbar**, waehrend die echte Seite inzwischen "Thestia"
+     **indexierbar**, während die echte Seite inzwischen "Thestia"
      heisst. Zwei offene Punkte also: eine alte, indexierbare
      Dating-Seite unter der alten Marke und der Deployment-Speicher
      von 7,77 GB (Hobby: 10 GB inklusive).
 
-     **Geprueft, nicht vermutet:** Live gemessen liefert das Projekt
-     ausser `index.html`, `manifest.json` und den Icons die index.html
+     **Geprüft, nicht vermutet:** Live gemessen liefert das Projekt
+     außer `index.html`, `manifest.json` und den Icons die index.html
      als Ersatz (SPA-Fallback). Die **APKs, der Datenbank-Backup-Dump
      und der `releases/`-Ordner sind NICHT oeffentlich abrufbar** - das
      wurde an jedem einzelnen Pfad nachgemessen. Es gab also keinen
@@ -2009,26 +2009,26 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      **Das Aufraeumen** steht in `docs/WEBSITE-HOSTING.md`. Wichtig
      ist die Reihenfolge: alte Deployments loeschen UND die
      Git-Verknuepfung trennen - sonst legt jeder Push wieder ein
-     Deployment an und der Speicher fuellt sich von selbst. Fuer die
+     Deployment an und der Speicher fuellt sich von selbst. Für die
      alte Domain gibt es zwei Wege: loeschen oder per **301** auf
-     `thestia.de` weiterleiten (302 waere wirkungslos fuer die
+     `thestia.de` weiterleiten (302 wäre wirkungslos für die
      Suchmaschinen).
 
 62. **Die Web-Version braucht einen anderen Hoster als die Website.**
-     BEFUND (Betreiber, 08.11.2026): "Ich moechte ja wie auch in der
+     BEFUND (Betreiber, 08.11.2026): "Ich möchte ja wie auch in der
      Roadmap steht, spaeter auch ne web version der App anbieten. Mir
      ist EU sehr wichtig (ideal DE oder CH)."
 
      Die Roadmap (v0.12.0, "Web-Bridge, Transit-Reachability &
      Zero-Install") nennt **Flutter Web auf Codeberg Pages** - das ist
-     moeglich: Codeberg Pages kann eigene Domains mit Zertifikat
+     möglich: Codeberg Pages kann eigene Domains mit Zertifikat
      ("Hosted in Europe", Codeberg e.V., Berlin) und kennt eigene
-     404-Seiten fuer den SPA-Fallback. **ABER:** die Web-App stellt
+     404-Seiten für den SPA-Fallback. **ABER:** die Web-App stellt
      andere Anforderungen als die 2-MB-Website. `main.dart.js`
      (2-6 MB) plus CanvasKit/WASM (rund 8 MB) bedeuten **10-20 MB pro
      Erstaufruf** - bei Netlify sind das 20 Credits je GB, also rund
      **1.000 Aufrufe im Monat** (die Website schafft 19.000). Netlify
-     Free faellt fuer die Web-App damit weg.
+     Free fällt für die Web-App damit weg.
 
      **Der sinnvolle Split:** die Rechtsseiten bleiben auf Netlify (sie
      kosten fast keine Credits), die Web-App kommt unter
@@ -2036,16 +2036,16 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      Spaceship, **kein Nameserver-Wechsel, keine Mail-Risiken**, und
      `auth.thestia.de` (Passkey-Verknuepfung) bleibt unangetastet.
 
-     **Die EU-Kandidaten** (Preise live geprueft am 08.11.2026):
+     **Die EU-Kandidaten** (Preise live geprüft am 08.11.2026):
      netcup Cloud Web Hosting ab **2,17 EUR/Monat** (SSH, Let's
      Encrypt), Hetzner Cloud + Caddy **4,49-5,99 EUR/Monat** mit 20 TB
      Traffic inklusive, Codeberg Pages 0 EUR, Cloudflare Pages 0 EUR
-     (US-Firma, aber EU-Knoten - und fuer eine Website ohne
+     (US-Firma, aber EU-Knoten - und für eine Website ohne
      personenbezogene Daten datenschutzrechtlich unkritisch).
 
      **UND: es gibt Studentenrabatte.** **Infomaniak (Schweiz)** gibt
      **1 Webhosting (250 GB, 20 Websites) + 1 Mail-Service kostenlos**
-     fuer die Dauer des Studiums (bis vier Jahre, jaehrlich mit den
+     für die Dauer des Studiums (bis vier Jahre, jaehrlich mit den
      gleichen Unterlagen erneuern) - Bedingungen: Studentenausweis
      oder Schulbescheinigung, Personalausweis und die offizielle
      Schueler-Mail-Adresse der Schule; die Domain muss man nicht
@@ -2054,10 +2054,10 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      IONOS einen UNiDAYS-Rabatt, Hetzner 20 EUR Startguthaben. Die
      Angebote im Detail: `docs/WEBSITE-HOSTING.md`.
 
-63. **Die Apache-Konfiguration fuer Infomaniak ist erzeugt - und
+63. **Die Apache-Konfiguration für Infomaniak ist erzeugt - und
      kann nicht veralten.**
      BEFUND (Betreiber): "Infomaniak vorbereiten." Infomaniak (CH)
-     hostet im Studentenprogramm kostenlos, faehrt Apache und laesst
+     hostet im Studentenprogramm kostenlos, fährt Apache und lässt
      mod_rewrite und .htaccess zu ("enabled by default on all
      Infomaniak infrastructures", Doku vom 08.11.2026).
 
@@ -2065,11 +2065,11 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      nur Netlify und Cloudflare Pages lesen - `_redirects` (38
      Rewrite-Regeln) und `_headers` (41 Header-Bloecke mit CSP, HSTS,
      Cache-Regeln). Bei Apache muesste beides von Hand in eine
-     `.htaccess` uebersetzt werden: 40 Zeilen, die bei jeder Aenderung
+     `.htaccess` uebersetzt werden: 40 Zeilen, die bei jeder Änderung
      nachgezogen werden mussten - und stillschweigend veralten
-     koennen (die Seite laeuft dann weiter, nur ohne den Schutz).
+     können (die Seite läuft dann weiter, nur ohne den Schutz).
 
-     **Die Loesung:** `tool/make_htaccess.py` erzeugt die Datei aus
+     **Die Lösung:** `tool/make_htaccess.py` erzeugt die Datei aus
      beiden Quellen. Die Uebersetzung sitzt damit an genau einer
      Stelle. Zwei Fehler, die beim ersten Versuch passiert sind und
      jetzt im Selbsttest feststeckt:
@@ -2077,15 +2077,15 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      - **Die Punkte in den Mustern mussten escaped werden.** Ohne
        Escape passte `^auth.thestia.de$` auch auf `authXthestiaYde`,
        und `^.well-known/assetlinks.json$` auf jede Datei.
-     - **Der Auth-Host war doppelt abgedeckt** (einmal ueber den
+     - **Der Auth-Host war doppelt abgedeckt** (einmal über den
        `_headers`-Block, einmal als eigener Block). Jetzt steht jede
        Regel genau einmal da.
 
      **Und ein Gate verhindert das Veralten:** `check_publish_folder.py`
      erzeugt die `.htaccess` neu und vergleicht sie mit der Datei auf
-     der Platte. Wer `_headers` oder `_redirects` aendert, bekommt
+     der Platte. Wer `_headers` oder `_redirects` ändert, bekommt
      rot: "webhosting/.htaccess ist veraltet - Reparieren: python
-     tool/make_htaccess.py". Die Drift-Pruefung ist getestet (sie
+     tool/make_htaccess.py". Die Drift-Prüfung ist getestet (sie
      schlaegt bei einer absichtlichen Abweichung an).
 
      **Die Datei liegt bewusst AUSSERHALB des Publish-Ordners**
@@ -2094,7 +2094,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      Upload (SFTP und rsync), die Zwei-Website-Frage und die
      Nacharbeiten nach dem Zertifikatswechsel.
 
-     **Die Anleitung fuer Infomaniak** steht in
+     **Die Anleitung für Infomaniak** steht in
      `docs/WEBSITE-HOSTING.md`: Studentenprogramm, Website anlegen,
      Zertifikat, hochladen, DNS (nur ein A-Record und ein CNAME - die
      Mail-Records bleiben unangetastet, weil die DNS bei Spaceship
@@ -2148,7 +2148,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      eines Dialogs schluckt Tipps, aber KEINE waagerechte Wischgeste -
      die landete im Reiter-Wechsel: der Hintergrund wechselte, das Bild
      blieb offen. Und das View-Once-Fenster verbot mit `canPop: false`
-     jeden Pop - **auch den Zurück-Wisch des Systems**. Jetzt schliesst
+     jeden Pop - **auch den Zurück-Wisch des Systems**. Jetzt schließt
      die Wischgeste das Bild (und der Pop ist erlaubt).
 
 65. **„Zurück liken" und „Funke bestätigen" waren dasselbe.**
@@ -2185,12 +2185,12 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 
      DER GRUND: Der Praeferenz-Sync (Suchradius, Altersspanne,
      Geschlechterfilter, Filtermodus) scheiterte - und dann war die
-     Aenderung weg. Der Server behielt den alten Wert, die Altersspanne
-     (die es NUR auf dem Server gibt) war ueberhaupt nirgends mehr, und
-     der Fehler stand nur im Log - fuer den Nutzer unsichtbar.
+     Änderung weg. Der Server behielt den alten Wert, die Altersspanne
+     (die es NUR auf dem Server gibt) war überhaupt nirgends mehr, und
+     der Fehler stand nur im Log - für den Nutzer unsichtbar.
 
-     JETZT: Die Aenderung wird **vorgemerkt** (im sicheren
-     Speicher, zusammen mit der Altersspanne) und beim naechsten Start
+     JETZT: Die Änderung wird **vorgemerkt** (im sicheren
+     Speicher, zusammen mit der Altersspanne) und beim nächsten Start
      **nachgeholt**. Der Marker loescht sich, sobald der Server sie
      angenommen hat. Der bestehende Drei-Versuche-Wiederholversuch
      bleibt.
@@ -2209,22 +2209,22 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      Der Ausbau steht jetzt in der ROADMAP (Abschnitt 0.12.0, Punkt 9)
      mit der Architektur: Einstieg mit Vorstellungs-Check (ohne
      Doppelaufforderung), dann Zufall oder Kategorie; die Kategorie-Abfrage
-     laeuft **serverseitig** und wendet dieselbe
+     läuft **serverseitig** und wendet dieselbe
      `age_compatible_bidirectional`-Regel an (Minderjaehrige nur
      Minderjaehrige, Erwachsene nur Erwachsene); der Altersregler im
      18+-Bereich geht bis 99 (`maxFilterAge`), im 16/17-Bereich endet er
-     bei 17; die Vorstellung wird **verschluesselt auf dem Server**
-     gehalten und erst auf dem Geraet entschluesselt (E2E wie bei den
+     bei 17; die Vorstellung wird **verschlüsselt auf dem Server**
+     gehalten und erst auf dem Gerät entschluesselt (E2E wie bei den
      Profilbildern).
 
      **Vom Betreiber entschieden (09.11.2026):** Die Vorstellung
-     bleibt Pflicht - auch in der Erweiterung und auch fuer
+     bleibt Pflicht - auch in der Erweiterung und auch für
      16-/17-Jaehrige. **Sie darf rein TEXTLICH sein**: das Audio ist
      optional und wird erst bei einem Funke gehoert (dort, wo die
-     Vorstellung heute ohnehin ueber `match-media` freigegeben wird);
+     Vorstellung heute ohnehin über `match-media` freigegeben wird);
      die Kategorie-Sicht zeigt Text und Interessen, nicht die
      Aufnahme. Und: **16- und 17-Jaehrige sehen KEINE 18+-Personen** -
-     die Trennung ist serverseitig und gilt fuer jeden Abrufweg.
+     die Trennung ist serverseitig und gilt für jeden Abrufweg.
 
      **Gruppen und Foren** (Abschnitt 0.12.0, Punkt 10) sind als
      SPÄTERER Schritt eingetragen - mit derselben Alterstrennung
@@ -2247,35 +2247,35 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      dasselbe Bild: das **runde** ThestiaIcon aus der einzigen
      Logo-Quelle (`assets/images/thestia_icon_base.png`). Das SVG
      bettet das PNG ein - das Artwork ist eine Rastergrafik, und eine
-     „vektorisierte" Marke waere eine ANDERE Marke (genau der Fehler,
+     „vektorisierte" Marke wäre eine ANDERE Marke (genau der Fehler,
      den der Betreiber gemeldet hat).
 
      **(b) Das runde Launcher-Icon war blass.** Zwei Ursachen, beide
      gefunden: Der Hintergrund-Kreis (Radius = halbe Leinwand) wurde in
      eine kleinere Maske gelegt (Radius = 72/108) - sichtbar blieb nur
      die **Mitte** des Verlaufs, die satten Randbereiche (pink oben
-     links, violett unten rechts) lagen ausserhalb. Und das Herz war
+     links, violett unten rechts) lagen außerhalb. Und das Herz war
      **halbtransparent**: Die Alpha des Vordergrunds wurde aus der
      Farbe berechnet (`min(r,g,b)` zwischen 88 und 168) - das betraf
      auch die magentafarbene Lippe des Herzens (min = 104-169): Sie
-     bekam nur 20-100 % Deckkraft und wurde ueber dem Verlauf zu rosa
+     bekam nur 20-100 % Deckkraft und wurde über dem Verlauf zu rosa
      Milchglas. Gemessen: 81 % der opaken Pixel lagen unter 0,95
      Deckkraft. Die Schwelle ist jetzt 88-104: das Artwork ist voll
-     deckend, nur der Verlauf faellt weg.
+     deckend, nur der Verlauf fällt weg.
 
      **DER RUNDE SCHNITT** steht jetzt in `tool/logo_round.py` (Python,
      weil die Favicons mit Pillow erzeugt werden) - dieselbe Rechnung
      wie in `tool/generate_round_logo.dart`. Beide Wege wurden
-     gegeneinander geprueft: mittlere Abweichung 0,81 je Kanal
+     gegeneinander geprüft: mittlere Abweichung 0,81 je Kanal
      (nur die Anti-Aliasing-Pixel am Kreisrand unterscheiden sich).
 
-     **DIE DOMAIN-FRAGE (gleiche Runde, live geprueft):** `thestia.de`
+     **DIE DOMAIN-FRAGE (gleiche Runde, live geprüft):** `thestia.de`
      ist **nicht** blockiert. Die ausgelieferte `robots.txt` sagt
-     `User-agent: * / Allow: /` - auch fuer einen Googlebot (mit
+     `User-agent: * / Allow: /` - auch für einen Googlebot (mit
      dessen User-Agent nachgemessen). Gesperrt ist **nur**
      `auth.thestia.de` (das ist der Sicherheitscheck der App, das
      ist Absicht). Die HTTP->HTTPS-Umleitung und die Sitemap stimmen
-     auch. Wenn die Search Console fuer eine Adresse „blocked by
+     auch. Wenn die Search Console für eine Adresse „blocked by
      robots.txt" anzeigt, ist es entweder eine Adresse unter
      `auth.thestia.de` (korrekt) oder der Stand von Google ist noch
      der alte (der Cache der robots.txt wird erst bei einem neuen
@@ -2288,7 +2288,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      einem **anderen Vercel-Team** (`team_0UCJ…` aus der lokalen
      Verknuepfung), das die aktuelle Anmeldung nicht sieht - deshalb
      war das `vercel project remove` wirkungslos, und die Seite
-     liefert weiter die alte Landingpage. Abschalten laesst sich auf
+     liefert weiter die alte Landingpage. Abschalten lässt sich auf
      zwei Wegen: die Nameserver bei GoDaddy umstellen (schnellster
      Weg, kein altes Login noetig) oder im alten Vercel-Team
      `vercel domains rm theblinddate.in` ausfuehren.
@@ -2317,7 +2317,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      **DIE KATEGORIE-SICHT:** Die Kategorien sind die Interessen
      (Musik, Sport, Gaming, Reisen, ...). Jede Kategorie zeigt ihre
      Zahl - sonst wäre das Stöbern blind (man tippt auf "Sport" und
-     sieht niemanden und weiss nicht, ob die Funktion kaputt ist). Der
+     sieht niemanden und weiß nicht, ob die Funktion kaputt ist). Der
      Altersregler (18 bis 99+, bei 16/17 bis 17) ist derselbe wie
      sonst in der App.
 
@@ -2341,7 +2341,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      im Store veröffentlicht) und traegt die neuen Funktionen bereits -
      sie ist ohnehin schon ein MINOR (die Standort-Privatisierung ist
      eine Änderung der Datenverarbeitung). Der Ausbau gehoert deshalb
-     zu 0.10.0, Build 49. Der Roadmap-Plan fuer den Ausbau ist damit
+     zu 0.10.0, Build 49. Der Roadmap-Plan für den Ausbau ist damit
      umgesetzt; die Gruppen und Foren stehen als spaeterer Schritt in
      der Roadmap (0.12.0).
 
@@ -2354,7 +2354,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 
 ### Sicherheit
 
-- **Client-Schreibschutz fuer Verifikationsfelder repariert** (Migration 156):
+- **Client-Schreibschutz für Verifikationsfelder repariert** (Migration 156):
   Migration 155 hatte die Trigger-Funktion mit `pg_has_role(current_user, …)`
   neu definiert. Im `SECURITY DEFINER`-Kontext ist `current_user` der
   Owner der Funktion, nicht die aufrufende Rolle – die Prüfung war damit
@@ -2477,35 +2477,35 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 
 ### Sicherheit
 
-- **Serverseitig erzwungene E-Mail-Bestaetigung** (Migration 128): ohne
+- **Serverseitig erzwungene E-Mail-Bestätigung** (Migration 128): ohne
   bestaetigte Adresse sind Matches, Likes und das Nachrichten-Relay nicht
-  mehr moeglich. Vorher pruefte **keine** der 122 Migrationen den Status
+  mehr möglich. Vorher pruefte **keine** der 122 Migrationen den Status
 - **Optionale AAL2-Pflicht** pro Konto (`profiles.mfa_required`), mit
   Kill-Switch in `app_config`, damit sie im Notfall ohne Deploy
   abzuschalten ist
 - **Antwortschluessel-Exploit geschlossen**: `quiz_shuffle_for_match` war
-  eine reine Permutationsfunktion und fuer die Rolle `anon` aufrufbar.
-  Ueber 24 Permutationen liess sich der korrekte Antwortindex ermitteln -
-  damit war der AES-Schluessel scharfer Profilfotos erreichbar, ohne eine
+  eine reine Permutationsfunktion und für die Rolle `anon` aufrufbar.
+  Über 24 Permutationen liess sich der korrekte Antwortindex ermitteln -
+  damit war der AES-Schlüssel scharfer Profilfotos erreichbar, ohne eine
   einzige richtige Antwort. Ursache war nicht eine fehlende, sondern eine
   unvollstaendige Berechtigung: `REVOKE ... FROM anon` greift nicht, weil
-  Rechte ueber die Pseudo-Rolle `PUBLIC` vererbt werden (Migration 123)
-- **Erzwungener Jugendschutz und Blockier-Pruefung** fuer Zufallschat und
+  Rechte über die Pseudo-Rolle `PUBLIC` vererbt werden (Migration 123)
+- **Erzwungener Jugendschutz und Blockier-Prüfung** für Zufallschat und
   Dating Hour wiederhergestellt - Migrationen 102/096 hatten die Regeln
-  aus 056/058 ueberschrieben. Zusaetzlich als Tabellen-Trigger, damit ein
+  aus 056/058 überschrieben. Zusätzlich als Tabellen-Trigger, damit ein
   spaeteres `CREATE OR REPLACE` die Function nicht mehr aushebeln kann
 - **Safety-Number erzwingbar**: Chat-Versand erst nach Vergleich der
   Sicherheitsnummern
 - **Certifikat-Pinning strikt**: bisher entschied der Callback, ob
-  ueberhaupt geprueft wurde - eine nachinstallierte Fremd-CA kam durch
+  überhaupt geprüft wurde - eine nachinstallierte Fremd-CA kam durch
 - **Kein Rate-Limit-Bypass mehr** in `verify-account`,
   `cancel-registration` und `report-image` (fail-open bei DB-Fehlern) sowie
-  in `delete-account` (MFA-Pruefung war fail-open). `x-forwarded-for` wird
+  in `delete-account` (MFA-Prüfung war fail-open). `x-forwarded-for` wird
   jetzt geparst - Header-Rotation umging jedes IP-Limit
 - **`prekeys` prueft die Beziehung** (kein Bundle-Harvesting) und gibt bei
   404 keine Existenz-Auskunft
 - **`.env` ist kein App-Asset mehr** (im gebauten APK verifiziert nicht
-  enthalten); Konfiguration laeuft ueber `--dart-define`
+  enthalten); Konfiguration läuft über `--dart-define`
 - **Keystore-Namespaces mit Migration**: ohne sie waeren nach dem Update
   alle Nutzer abgemeldet gewesen und Signal-Keys unlesbar geworden
 
@@ -2516,9 +2516,9 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 - **Mindest-Build-Gate auf 30** gesetzt (Migration 132) – Support **ab
   v0.9.2**, alle aelteren Builds (v0.8.x, v0.9.0, v0.9.1) sind ohne
   Security-Fixes. Grund ist nicht Versionspolitik, sondern die
-  Alterssperre fuer Transit Spark: aeltere Clients enthalten sie
-  nicht und wuerden sie umgehen. Migration 130 (Gate 29) galt fuer
-  v0.9.1 und wurde hiermit ueberschrieben
+  Alterssperre für Transit Spark: aeltere Clients enthalten sie
+  nicht und wuerden sie umgehen. Migration 130 (Gate 29) galt für
+  v0.9.1 und wurde hiermit überschrieben
 - **Naehefunk (Transit Spark) gehaertet**: Advertising mit
   unregelmaessigen Abstaenden statt starrem ~100-ms-Takt, Token-Rotation
   ohne festes Raster, Scan-Filter auf die eigene Hersteller-ID, gepulstes
@@ -2532,9 +2532,9 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 - **Zertifikats-Pins und Konfiguration** kommen nicht mehr aus
   gebuendelten Dateien im APK
 - **iOS**: `NSPhotoLibraryUsageDescription` ergaenzt - ohne den Eintrag
-  waere die App beim Oeffnen der Fotomediathek abgestuerzt
+  wäre die App beim Oeffnen der Fotomediathek abgestuerzt
 - **Discovery**: Distanz-, Alters-, Pausen- und Reziprozitaetsfilter
-  werden jetzt serverseitig in einer zentralen Regel geprueft
+  werden jetzt serverseitig in einer zentralen Regel geprüft
 - **Quiz-Cooldown** greift bei jedem Versuch (vorher gar nicht)
 
 ### Behoben
@@ -2546,7 +2546,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 - **`check_email_ban_status`** gibt keinen internen Moderations-Freitext
   mehr nach aussen
 - **Bilder**: Groessen-, Pixel- und Dimensionsbudget werden vor dem Decode
-  geprueft (`image` 4.10.1), damit eine Decompression-Bomb nicht mehr den
+  geprüft (`image` 4.10.1), damit eine Decompression-Bomb nicht mehr den
   Speicher des Geraets frisst
 - **WispDating-Reste** in Gradle, PWA-Manifest und Log-Tag entfernt
 - **Speicher-Namespaces mit abwartbarer Migration**, damit die app-weite
@@ -2716,14 +2716,14 @@ Server: Migrationen **086, 087 + 088** einspielen + Edge Functions
   Neuinstallation noetig, **Konto und Daten bleiben erhalten**. Passkeys
   sind an die alte Domain gebunden und mussten neu angelegt werden
 - **Chat-Hintergruende**: Muster (Punkte, Linien, Herzen, Sterne, Wellen)
-- **Willkommens-Screen** nach der E-Mail-Bestaetigung
+- **Willkommens-Screen** nach der E-Mail-Bestätigung
 - **Pausiert-Hinweis**: bei pausiertem Profil zeigt "Aktuelles" einen
   Hinweis
 - **Benachrichtigungs-Herz** in der Statusleiste
 - **Neue Kontaktwege**: Bug-Reports und Bild-Meldungen
 - **Neue Adressen**: `thestia.de` (App-Links, Bestaetigungs-Mails)
-- **Betrieb**: FCM laeuft ueber ein neues Firebase-Projekt
-- **Offen geblieben**: das Mindest-Build-Gate war fuer 29 vorgesehen,
+- **Betrieb**: FCM läuft über ein neues Firebase-Projekt
+- **Offen geblieben**: das Mindest-Build-Gate war für 29 vorgesehen,
   wurde aber nicht gesetzt (Migration 076 legte 9 fest). In v0.9.2
   nachgeholt (Migration 130)
 
