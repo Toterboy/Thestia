@@ -687,7 +687,8 @@
 <h2>3a. Encrypted profile pictures (new as of v0.8.x)</h2>
 <p>Profile pictures are <strong>already encrypted on your device</strong> with AES-256-GCM before they are uploaded. The server (Supabase Storage, private bucket) stores nothing but the ciphertext - even in the event of a storage incident the images are unreadable. The decryption key is generated randomly per image and carried along in your own profile entry; only people who are allowed to see your profile (visibility setting + age protection) download and decrypt the image locally. In addition, before every upload a <strong>purely local NSFW pre-check</strong> runs (ONNX model on-device): image bytes, scores and result are processed exclusively on the device; if it does not pass, the image never leaves your device (an objection with a manual review by the team is possible).</p>
 <h3>3b-1. Your name when you wave (v0.10.1)</h3>
-<p>When you wave to someone via Transit Spark, that person sees your name - if you allow it. You can switch that off on the Transit radar ("Show my name when I wave"). With the switch off, the person only sees "someone is waving at you" and cannot tell who it was.</p>
+<p>When you wave to someone via Transit Spark, that person sees your name - if you allow it.</p>
+<p>The <strong>first time</strong> you open the Transit radar, the app asks you once: should your name be visible? You decide this yourself - there is no default. "No, I want to stay anonymous" is a decision just as much as "Yes" is. After that the dialog is gone, and you can change it on the Transit radar at any time ("Show my name when I wave"). With the switch off, the person only sees "someone is waving at you" and cannot tell who it was.</p>
 <div class="tabellen-huelle">
 <table>
 <thead><tr><th>Data</th><th>Recipient</th><th>Purpose</th><th>Storage</th></tr></thead>

@@ -326,7 +326,11 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
   PrivacyBlock('h3', '3b-1. Der Name beim Zuwinken (v0.10.1)'),
   PrivacyBlock(
     'p',
-    'Wenn du bei Transit Spark jemandem zuwinkst, sieht diese Person deinen Namen - sofern du das erlaubt hast. Du kannst das im Transit-Radar ausschalten ("Namen beim Zuwinken zeigen"). Ist der Schalter aus, sieht die Person nur "Jemand winkt dir zu" und kann deinen Namen nicht zuordnen.',
+    'Wenn du bei Transit Spark jemandem zuwinkst, sieht diese Person deinen Namen - sofern du das erlaubt hast.',
+  ),
+  PrivacyBlock(
+    'p',
+    'Beim **ersten Öffnen** des Transit-Radars fragt die App dich einmal: soll dein Name sichtbar sein? Du entscheidest das selbst - es gibt keine Voreinstellung. "Nein, bleib anonym" ist genauso eine Entscheidung wie "Ja". Danach ist der Dialog weg, und du kannst es im Transit-Radar jederzeit ändern ("Namen beim Zuwinken zeigen"). Ist der Schalter aus, sieht die Person nur "Jemand winkt dir zu" und kann deinen Namen nicht zuordnen.',
   ),
   PrivacyBlock(
     'table_head',

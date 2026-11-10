@@ -639,8 +639,14 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   /// Person entscheidet: sie sieht den Namen nur, wenn der Server ihn
   /// freigibt (Migration 208).
   Future<void> setTransitShowName(bool value) async {
-    if (state.transitShowName == value) return;
-    state = state.copyWith(transitShowName: value);
+    // BEFUND (10.11.2026): Jede Aenderung am Schalter ist eine bewusste
+    // Entscheidung - also wird das Flag mitgesetzt. Danach kommt der
+    // Dialog beim Oeffnen des Transit-Radars nicht mehr.
+    //
+    // (Und: ist der Wert gleich, wird trotzdem gespeichert - sonst
+    // wuerde das Flag nie gesetzt, wenn der Wert schon passend steht.)
+    if (state.transitShowName == value && state.transitShowNameSet) return;
+    state = state.copyWith(transitShowName: value, transitShowNameSet: true);
     await _persist();
     unawaited(_syncTransitShowNameServer(value));
   }
@@ -648,9 +654,10 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   Future<void> _syncTransitShowNameServer(bool value) async {
     try {
       if (!SupabaseService.isInitialized) return;
-      await SupabaseDatabaseService(
-        SupabaseService.client,
-      ).updateOwnProfile({'transit_show_name': value});
+      await SupabaseDatabaseService(SupabaseService.client).updateOwnProfile({
+        'transit_show_name': value,
+        'transit_show_name_set': true,
+      });
     } catch (e) {
       if (kDebugMode) {
         debugPrint('[Settings] transit_show_name-Sync fehlgeschlagen: $e');
@@ -706,6 +713,16 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     final transitShowName = read<bool>('transit_show_name');
     if (transitShowName != null && transitShowName != next.transitShowName) {
       next = next.copyWith(transitShowName: transitShowName);
+      changed = true;
+    }
+
+    // BEFUND (10.11.2026): Das Flag "hat der Nutzer entschieden" kommt
+    // vom Server - sonst fragt der Dialog auf dem zweiten Geraet nochmal,
+    // obwohl die Entscheidung schon gefallen ist.
+    final transitShowNameSet = read<bool>('transit_show_name_set');
+    if (transitShowNameSet != null &&
+        transitShowNameSet != next.transitShowNameSet) {
+      next = next.copyWith(transitShowNameSet: transitShowNameSet);
       changed = true;
     }
 

@@ -186,6 +186,20 @@ class AppSettings {
   /// steht.
   final bool transitShowName;
 
+  /// Hat der Nutzer bewusst entschieden, ob sein Name beim Transit-Zuwinken
+  /// gezeigt wird?
+  ///
+  /// BEFUND (Betreiber, 10.11.2026): "Die Abfrage über die Entscheidung
+  /// Name an oder aus soll beim ersten öffnen des Transit Spark screens
+  /// kommen und dann nachträglich noch änderbar sein. So ist die
+  /// Entscheidung beim User und er kann bewusst entscheiden."
+  ///
+  /// Deshalb steht hier etwas anderes als der Wert selbst: der Wert
+  /// ([transitShowName]) ist der aktuelle Stand, dieses Flag sagt, ob der
+  /// Nutzer ihn selbst gewählt hat. Solange es false ist, fragt der
+  /// Transit-Radar beim Öffnen nach.
+  final bool transitShowNameSet;
+
   const AppSettings({
     this.blindModeEnabled = true,
     this.revealPhotosAfterMatch = true,
@@ -232,6 +246,7 @@ class AppSettings {
     // Nutzer nicht ausdruecklich erlaubt hat.
     this.showDistance = false,
     this.transitShowName = true,
+    this.transitShowNameSet = false,
   });
 
   /// Standard-Einstellungen für einen neuen Nutzer.
@@ -294,6 +309,7 @@ class AppSettings {
       // das ist die datenschutzfreundliche Richtung.
       showDistance: json['showDistance'] as bool? ?? false,
       transitShowName: json['transitShowName'] as bool? ?? true,
+      transitShowNameSet: json['transitShowNameSet'] as bool? ?? false,
     );
   }
 
@@ -335,6 +351,7 @@ class AppSettings {
     'chatBackgroundSeen': chatBackgroundSeen,
     'showDistance': showDistance,
     'transitShowName': transitShowName,
+    'transitShowNameSet': transitShowNameSet,
   };
 
   /// Immutabele Kopie mit veränderten Werten.
@@ -388,6 +405,7 @@ class AppSettings {
     bool? chatBackgroundSeen,
     bool? showDistance,
     bool? transitShowName,
+    bool? transitShowNameSet,
   }) {
     return AppSettings(
       // Blind Mode ist fest AN - der uebergebene Wert wird
@@ -442,6 +460,7 @@ class AppSettings {
       chatBackgroundSeen: chatBackgroundSeen ?? this.chatBackgroundSeen,
       showDistance: showDistance ?? this.showDistance,
       transitShowName: transitShowName ?? this.transitShowName,
+      transitShowNameSet: transitShowNameSet ?? this.transitShowNameSet,
     );
   }
 }

@@ -326,7 +326,11 @@ const List<PrivacyBlock> kPrivacyPolicyEn = <PrivacyBlock>[
   PrivacyBlock('h3', '3b-1. Your name when you wave (v0.10.1)'),
   PrivacyBlock(
     'p',
-    'When you wave to someone via Transit Spark, that person sees your name - if you allow it. You can switch that off on the Transit radar ("Show my name when I wave"). With the switch off, the person only sees "someone is waving at you" and cannot tell who it was.',
+    'When you wave to someone via Transit Spark, that person sees your name - if you allow it.',
+  ),
+  PrivacyBlock(
+    'p',
+    'The **first time** you open the Transit radar, the app asks you once: should your name be visible? You decide this yourself - there is no default. "No, I want to stay anonymous" is a decision just as much as "Yes" is. After that the dialog is gone, and you can change it on the Transit radar at any time ("Show my name when I wave"). With the switch off, the person only sees "someone is waving at you" and cannot tell who it was.',
   ),
   PrivacyBlock(
     'table_head',

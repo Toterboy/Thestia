@@ -1077,6 +1077,16 @@ const Map<String, Map<String, String>> _strings = {
     'transit.preset.coffee': 'Falls du magst: ein Kaffee in der Nähe?',
     'transit.inboxTitle': 'Grüße für dich',
     'transit.showNameTitle': 'Namen beim Zuwinken zeigen',
+    'transit.nameDecisionTitle': 'Soll dein Name sichtbar sein?',
+    'transit.nameDecisionBody':
+        'Wenn du bei Transit Spark jemandem zuwinkst, kann die Person '
+        'deinen Namen sehen. Du kannst das hier entscheiden und es '
+        'später ändern.',
+    'transit.nameDecisionShow': 'Ja, mein Name darf sichtbar sein',
+    'transit.nameDecisionHide': 'Nein, bleib anonym',
+    'transit.nameDecisionBoundary':
+        'Wichtig: Das schützt nur deinen Namen. Wer neben dir steht, '
+        'erkennt dich trotzdem.',
     'transit.showNameSub':
         'Wenn du jemandem bei Transit Spark zuwinkst, sieht die Person '
         'deinen Namen. Aus: Es steht nur "Jemand winkt dir zu".',
@@ -4218,6 +4228,15 @@ const Map<String, Map<String, String>> _strings = {
     'transit.preset.coffee': 'If you like: a coffee nearby?',
     'transit.inboxTitle': 'Greetings for you',
     'transit.showNameTitle': 'Show my name when I wave',
+    'transit.nameDecisionTitle': 'Should your name be visible?',
+    'transit.nameDecisionBody':
+        'When you wave to someone via Transit Spark, that person can '
+        'see your name. You can decide here and change it later.',
+    'transit.nameDecisionShow': 'Yes, my name may be visible',
+    'transit.nameDecisionHide': 'No, I want to stay anonymous',
+    'transit.nameDecisionBoundary':
+        'Important: this only protects your name. Someone standing next '
+        'to you can still recognise you.',
     'transit.showNameSub':
         'When you wave to someone via Transit Spark, they see your name. '
         'Off: it only says "someone is waving at you".',

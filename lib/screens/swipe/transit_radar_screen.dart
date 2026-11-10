@@ -56,10 +56,83 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
   /// [_watchForLateSpark]).
   Timer? _lateSparkTimer;
 
+  /// Läuft der Namens-Dialog gerade? (verhindert ein zweites Fenster)
+  bool _nameDecisionOpen = false;
+
   @override
   void initState() {
     super.initState();
     _loadRadioCleanup();
+    // Die Namens-Entscheidung (BEFUND 10.11.2026): Beim ersten Oeffnen
+    // des Transit-Radars fragen, ob der Name sichtbar sein soll. Der
+    // Dialog kommt erst, wenn der Bildschirm steht (showDialog braucht
+    // einen Kontext im Baum).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_askNameDecisionOnce());
+    });
+  }
+
+  /// Die Namens-Entscheidung - genau einmal, solange der Nutzer nicht
+  /// selbst entschieden hat.
+  ///
+  /// BEFUND (10.11.2026, Betreiber): "Die Abfrage über die Entscheidung
+  /// Name an oder aus soll beim ersten öffnen des Transit Spark screens
+  /// kommen und dann nachträglich noch änderbar sein. So ist die
+  /// Entscheidung beim User und er kann bewusst entscheiden."
+  Future<void> _askNameDecisionOnce() async {
+    if (!mounted) return;
+    // Nur Volljaehrige - fuer sie ist Transit Spark ueberhaupt frei.
+    final myAge = ref.read(profileProvider).age;
+    if (myAge == null || myAge < 18) return;
+    // Schon entschieden? Dann kein Dialog.
+    if (ref.read(settingsProvider).transitShowNameSet) return;
+    // Ein zweiter Aufruf, waehrend der Dialog offen ist, soll ihn nicht
+    // verdoppeln.
+    if (_nameDecisionOpen) return;
+    _nameDecisionOpen = true;
+    try {
+      final choice = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          title: Text(L10n.t(ctx, 'transit.nameDecisionTitle')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(L10n.t(ctx, 'transit.nameDecisionBody')),
+              const SizedBox(height: 12),
+              Text(
+                L10n.t(ctx, 'transit.nameDecisionBoundary'),
+                style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                  fontStyle: FontStyle.italic,
+                  color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(L10n.t(ctx, 'transit.nameDecisionHide')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(L10n.t(ctx, 'transit.nameDecisionShow')),
+            ),
+          ],
+        ),
+      );
+      if (!mounted) return;
+      // Egal, was gewaehlt wurde: die Entscheidung ist damit gefallen.
+      // `setTransitShowName` setzt das Flag mit - der Dialog kommt nicht
+      // wieder.
+      await ref
+          .read(settingsProvider.notifier)
+          .setTransitShowName(choice ?? false);
+    } finally {
+      _nameDecisionOpen = false;
+    }
   }
 
   Future<void> _loadRadioCleanup() async {

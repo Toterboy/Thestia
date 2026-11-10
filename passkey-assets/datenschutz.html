@@ -687,7 +687,8 @@
 <h2>3a. Verschlüsselte Profilbilder (neu ab v0.8.x)</h2>
 <p>Profilbilder werden <strong>bereits auf deinem Gerät</strong> per AES-256-GCM verschlüsselt, bevor sie hochgeladen werden. Der Server (Supabase Storage, privater Bucket) speichert ausschließlich den Ciphertext – auch bei einem Storage-Zwischenfall sind die Bilder unlesbar. Der Ent- schlüsselungs-Schlüssel wird zufällig pro Bild erzeugt und im eigenen Profil-Eintrag mitgeführt; nur Personen, die dein Profil sehen dürfen (Sichtbarkeits-Einstellung + Altersschutz), laden und entschlüsseln das Bild lokal. Zusätzlich läuft vor jedem Upload eine <strong>rein lokale NSFW-Vorprüfung</strong> (ONNX-Modell on-device): Bilde-Bytes, Scores und Ergebnis verarbeiten sich ausschließlich auf dem Gerät; bei Nicht- bestehen verlässt das Bild dein Gerät nicht (Einspruch mit manueller Team-Prüfung ist möglich).</p>
 <h3>3b-1. Der Name beim Zuwinken (v0.10.1)</h3>
-<p>Wenn du bei Transit Spark jemandem zuwinkst, sieht diese Person deinen Namen - sofern du das erlaubt hast. Du kannst das im Transit-Radar ausschalten ("Namen beim Zuwinken zeigen"). Ist der Schalter aus, sieht die Person nur "Jemand winkt dir zu" und kann deinen Namen nicht zuordnen.</p>
+<p>Wenn du bei Transit Spark jemandem zuwinkst, sieht diese Person deinen Namen - sofern du das erlaubt hast.</p>
+<p>Beim <strong>ersten Öffnen</strong> des Transit-Radars fragt die App dich einmal: soll dein Name sichtbar sein? Du entscheidest das selbst - es gibt keine Voreinstellung. "Nein, bleib anonym" ist genauso eine Entscheidung wie "Ja". Danach ist der Dialog weg, und du kannst es im Transit-Radar jederzeit ändern ("Namen beim Zuwinken zeigen"). Ist der Schalter aus, sieht die Person nur "Jemand winkt dir zu" und kann deinen Namen nicht zuordnen.</p>
 <div class="tabellen-huelle">
 <table>
 <thead><tr><th>Angabe</th><th>Empfänger</th><th>Zweck</th><th>Speicherung</th></tr></thead>

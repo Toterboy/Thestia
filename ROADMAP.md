@@ -441,20 +441,29 @@ verschluesselt gespeichert und wird erst beim Funke gehoert.
 > entsteht eine falsche Sicherheit.
 >
 > **Vorschlag für die Umsetzung:**
-> 1. Profil-Einstellung „Name bei Transit Spark anzeigen" (Standard:
->    **an** – wer ihn abschaltet, entscheidet das bewusst).
-> 2. Serverseitige Spalte (`profiles.transit_show_name`), über die
->    RPC `match_proximity_spark` und die Soft-Pings ausgewertet – der Name
->    wird bei `false` gar nicht erst übertragen.
-> 3. Der Transit-Screen zeigt den Zustand an („Dein Name ist hier
->    verborgen") – inklusive dem Hinweis auf die Grenze aus oben.
+> 1. **Beim ersten Öffnen** des Transit-Radars fragt ein Dialog: Name
+>    sichtbar ja oder nein? (umgesetzt, Migration 208/209)
+> 2. Serverseitig: `profiles.transit_show_name` (der Wert) und
+>    `profiles.transit_show_name_set` (hat entschieden). Der Name wird
+>    beim Lesen der Soft-Pings aufgelöst – nie gespeichert – und nur
+>    übertragen, wenn der Nutzer ihn freigegeben hat (umgesetzt).
+> 3. Der Transit-Screen zeigt den Schalter an – mit dem Hinweis auf die
+>    Grenze aus oben. Jede Änderung am Schalter zählt als Entscheidung
+>    (umgesetzt).
 > 4. Die Datenschutzerklärung (V6) bekommt den Eintrag: welche Angabe
->    wann sichtbar ist.
+>    wann sichtbar ist (umgesetzt, Abschnitt 3b-1).
+> **ENTSCHIEDEN (Betreiber, 10.11.2026):** Es gibt **keinen
+> Default** – der Nutzer entscheidet selbst. Beim **ersten Öffnen** des
+> Transit-Radars fragt ein Dialog: Name sichtbar ja oder nein? Danach
+> kommt der Dialog nicht mehr, und der Schalter in der Ansicht bleibt
+> **jederzeit änderbar** (jede Änderung am Schalter zählt ebenfalls als
+> bewusste Entscheidung).
 >
-> **Offen (Entscheidung des Betreibers):** Soll der Standard „an" oder
-> „aus" sein? Vorschlag: **an**, weil der Name bei einem echten Treffen
-> ohnehin sichtbar wird und ein Standard auf „aus" die Funktion stark
-> einschränkt.
+> **Umsetzung:** Migration 208 (der Wert) + Migration 209 (das Flag „hat
+> entschieden"). Der Dialog lässt sich nicht wegklicken – die Entscheidung
+> soll bewusst sein; „nein, bleib anonym" ist ja auch eine Entscheidung.
+> Die Antwort liegt auf dem **Server**, damit das zweite Gerät nicht
+> nochmal fragt.
 
 ## Umgesetzt: 0.10.0 – Standort-Privatisierung, Transit Spark auf echten Geräten & Qualitätssicherung
 
