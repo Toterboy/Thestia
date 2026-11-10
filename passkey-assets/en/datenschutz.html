@@ -686,6 +686,18 @@
 <ul><li><strong>Transmission path:</strong> A direct peer-to-peer connection (WebRTC) is attempted; if it does not succeed, the server takes over <strong>solely the transport of the encrypted ciphertext</strong> (relay fallback). The encryption is end-to-end and identical in both cases - the server never sees or processes any plaintext. This has no effect on the connection quality, and none on privacy either.</li><li>Identity and session keys are kept in the encrypted device keystore (Android Keystore / iOS Keychain).</li><li>An optional, <strong>password-encrypted key backup</strong> (PBKDF2 + AES-256-GCM) allows you to switch devices; the key is held exclusively by the user. Losing both the backup <strong>and</strong> the password is irreversible - no data recovery by the team is possible from it.</li></ul>
 <h2>3a. Encrypted profile pictures (new as of v0.8.x)</h2>
 <p>Profile pictures are <strong>already encrypted on your device</strong> with AES-256-GCM before they are uploaded. The server (Supabase Storage, private bucket) stores nothing but the ciphertext - even in the event of a storage incident the images are unreadable. The decryption key is generated randomly per image and carried along in your own profile entry; only people who are allowed to see your profile (visibility setting + age protection) download and decrypt the image locally. In addition, before every upload a <strong>purely local NSFW pre-check</strong> runs (ONNX model on-device): image bytes, scores and result are processed exclusively on the device; if it does not pass, the image never leaves your device (an objection with a manual review by the team is possible).</p>
+<h3>3b-1. Your name when you wave (v0.10.1)</h3>
+<p>When you wave to someone via Transit Spark, that person sees your name - if you allow it. You can switch that off on the Transit radar ("Show my name when I wave"). With the switch off, the person only sees "someone is waving at you" and cannot tell who it was.</p>
+<div class="tabellen-huelle">
+<table>
+<thead><tr><th>Data</th><th>Recipient</th><th>Purpose</th><th>Storage</th></tr></thead>
+<tbody>
+<tr><td>Your display name</td><td>the person you wave to</td><td>to attribute the wave</td><td>not stored - the name is resolved when the waves are read and never written into the row</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>What the switch does not protect against:</strong> Someone standing right next to you can still recognise you. The switch only concerns your name inside the app - it is no protection against the encounter itself.</p>
+<p>The nearby list always stays anonymous: whoever is close by sees no names (only "seen 3 minutes ago").</p>
 <h2>3b. Near-field radio (BLE, "Transit Spark")</h2>
 <p>Transit Spark uses Bluetooth Low Energy so that two people can meet nearby without having to talk to each other. Radio metadata is processed in the process.</p>
 <p><strong>What is sent:</strong> an ephemeral, random token (no device ID, no name, no MAC address of the device). The operating system's stack assigns a resolvable private address for the advertising; the app does not set a fixed address.</p>

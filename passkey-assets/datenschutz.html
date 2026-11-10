@@ -686,6 +686,18 @@
 <ul><li><strong>Übertragungsweg:</strong> Direkte Peer-to-Peer-Verbindung (WebRTC) wird versucht; gelingt sie nicht, übernimmt der Server <strong>ausschließlich den Transport des verschlüsselten Chiffrats</strong> (Relay-Fallback). Die Verschlüsselung ist in beiden Fällen Ende-zu-Ende und identisch – der Server sieht und verarbeitet in keinem Fall Klartext. Auf die Verbindungsqualität hat das keinen Einfluss, auf die Privatsphäre ebenso wenig.</li><li>Identitäts- und Sitzungsschlüssel werden im verschlüsselten Geräte-Keystore (Android Keystore / iOS Keychain) gehalten.</li><li>Ein optionales, <strong>passwortverschlüsseltes Key-Backup</strong> (PBKDF2 + AES-256-GCM) erlaubt den Gerätewechsel; der Schlüssel liegt ausschließlich beim Nutzer. Verlust von Backup <strong>und</strong> Passwort ist unwiederbringlich – daraus kann keine Datenwiederherstellung durch das Team erfolgen.</li></ul>
 <h2>3a. Verschlüsselte Profilbilder (neu ab v0.8.x)</h2>
 <p>Profilbilder werden <strong>bereits auf deinem Gerät</strong> per AES-256-GCM verschlüsselt, bevor sie hochgeladen werden. Der Server (Supabase Storage, privater Bucket) speichert ausschließlich den Ciphertext – auch bei einem Storage-Zwischenfall sind die Bilder unlesbar. Der Ent- schlüsselungs-Schlüssel wird zufällig pro Bild erzeugt und im eigenen Profil-Eintrag mitgeführt; nur Personen, die dein Profil sehen dürfen (Sichtbarkeits-Einstellung + Altersschutz), laden und entschlüsseln das Bild lokal. Zusätzlich läuft vor jedem Upload eine <strong>rein lokale NSFW-Vorprüfung</strong> (ONNX-Modell on-device): Bilde-Bytes, Scores und Ergebnis verarbeiten sich ausschließlich auf dem Gerät; bei Nicht- bestehen verlässt das Bild dein Gerät nicht (Einspruch mit manueller Team-Prüfung ist möglich).</p>
+<h3>3b-1. Der Name beim Zuwinken (v0.10.1)</h3>
+<p>Wenn du bei Transit Spark jemandem zuwinkst, sieht diese Person deinen Namen - sofern du das erlaubt hast. Du kannst das im Transit-Radar ausschalten ("Namen beim Zuwinken zeigen"). Ist der Schalter aus, sieht die Person nur "Jemand winkt dir zu" und kann deinen Namen nicht zuordnen.</p>
+<div class="tabellen-huelle">
+<table>
+<thead><tr><th>Angabe</th><th>Empfänger</th><th>Zweck</th><th>Speicherung</th></tr></thead>
+<tbody>
+<tr><td>Dein Anzeigename</td><td>die Person, der du zuwinkst</td><td>Zuordnung des Zuwinkens</td><td>nicht gespeichert - der Name wird beim Lesen der Zuwinke aufgelöst und nie in die Zeile geschrieben</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Was der Schalter nicht schützt:</strong> Wer unmittelbar neben dir steht, erkennt dich trotzdem. Der Schalter betrifft ausschließlich deinen Namen in der App - er ist kein Schutz vor der Begegnung selbst.</p>
+<p>Die Nahbereichs-Liste selbst bleibt immer anonym: wer in der Nähe ist, sieht keine Namen (nur "vor 3 Minuten gesehen").</p>
 <h2>3b. Nahbereichsfunk (BLE, „Transit Spark")</h2>
 <p>Transit Spark nutzt Bluetooth Low Energy, damit zwei Personen sich in der Nähe begegnen können, ohne sich ansprechen zu müssen. Dabei werden Funk-Metadaten verarbeitet.</p>
 <p><strong>Was gesendet wird:</strong> ein ephemerer, zufälliger Token (keine Geräte-ID, kein Name, keine MAC-Adresse des Geräts). Der Stack des Betriebssystems vergibt für das Advertising eine auflösbare Privatadresse; die App setzt keine feste Adresse.</p>

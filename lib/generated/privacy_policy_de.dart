@@ -323,6 +323,34 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
     'p',
     'Profilbilder werden **bereits auf deinem Gerät** per AES-256-GCM verschlüsselt, bevor sie hochgeladen werden. Der Server (Supabase Storage, privater Bucket) speichert ausschließlich den Ciphertext – auch bei einem Storage-Zwischenfall sind die Bilder unlesbar. Der Ent- schlüsselungs-Schlüssel wird zufällig pro Bild erzeugt und im eigenen Profil-Eintrag mitgeführt; nur Personen, die dein Profil sehen dürfen (Sichtbarkeits-Einstellung + Altersschutz), laden und entschlüsseln das Bild lokal. Zusätzlich läuft vor jedem Upload eine **rein lokale NSFW-Vorprüfung** (ONNX-Modell on-device): Bilde-Bytes, Scores und Ergebnis verarbeiten sich ausschließlich auf dem Gerät; bei Nicht- bestehen verlässt das Bild dein Gerät nicht (Einspruch mit manueller Team-Prüfung ist möglich).',
   ),
+  PrivacyBlock('h3', '3b-1. Der Name beim Zuwinken (v0.10.1)'),
+  PrivacyBlock(
+    'p',
+    'Wenn du bei Transit Spark jemandem zuwinkst, sieht diese Person deinen Namen - sofern du das erlaubt hast. Du kannst das im Transit-Radar ausschalten ("Namen beim Zuwinken zeigen"). Ist der Schalter aus, sieht die Person nur "Jemand winkt dir zu" und kann deinen Namen nicht zuordnen.',
+  ),
+  PrivacyBlock(
+    'table_head',
+    '',
+    cells: <String>['Angabe', 'Empfänger', 'Zweck', 'Speicherung'],
+  ),
+  PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
+      'Dein Anzeigename',
+      'die Person, der du zuwinkst',
+      'Zuordnung des Zuwinkens',
+      'nicht gespeichert - der Name wird beim Lesen der Zuwinke aufgelöst und nie in die Zeile geschrieben',
+    ],
+  ),
+  PrivacyBlock(
+    'p',
+    '**Was der Schalter nicht schützt:** Wer unmittelbar neben dir steht, erkennt dich trotzdem. Der Schalter betrifft ausschließlich deinen Namen in der App - er ist kein Schutz vor der Begegnung selbst.',
+  ),
+  PrivacyBlock(
+    'p',
+    'Die Nahbereichs-Liste selbst bleibt immer anonym: wer in der Nähe ist, sieht keine Namen (nur "vor 3 Minuten gesehen").',
+  ),
   PrivacyBlock('h2', '3b. Nahbereichsfunk (BLE, „Transit Spark")'),
   PrivacyBlock(
     'p',

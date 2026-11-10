@@ -323,6 +323,34 @@ const List<PrivacyBlock> kPrivacyPolicyEn = <PrivacyBlock>[
     'p',
     'Profile pictures are **already encrypted on your device** with AES-256-GCM before they are uploaded. The server (Supabase Storage, private bucket) stores nothing but the ciphertext - even in the event of a storage incident the images are unreadable. The decryption key is generated randomly per image and carried along in your own profile entry; only people who are allowed to see your profile (visibility setting + age protection) download and decrypt the image locally. In addition, before every upload a **purely local NSFW pre-check** runs (ONNX model on-device): image bytes, scores and result are processed exclusively on the device; if it does not pass, the image never leaves your device (an objection with a manual review by the team is possible).',
   ),
+  PrivacyBlock('h3', '3b-1. Your name when you wave (v0.10.1)'),
+  PrivacyBlock(
+    'p',
+    'When you wave to someone via Transit Spark, that person sees your name - if you allow it. You can switch that off on the Transit radar ("Show my name when I wave"). With the switch off, the person only sees "someone is waving at you" and cannot tell who it was.',
+  ),
+  PrivacyBlock(
+    'table_head',
+    '',
+    cells: <String>['Data', 'Recipient', 'Purpose', 'Storage'],
+  ),
+  PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
+      'Your display name',
+      'the person you wave to',
+      'to attribute the wave',
+      'not stored - the name is resolved when the waves are read and never written into the row',
+    ],
+  ),
+  PrivacyBlock(
+    'p',
+    '**What the switch does not protect against:** Someone standing right next to you can still recognise you. The switch only concerns your name inside the app - it is no protection against the encounter itself.',
+  ),
+  PrivacyBlock(
+    'p',
+    'The nearby list always stays anonymous: whoever is close by sees no names (only "seen 3 minutes ago").',
+  ),
   PrivacyBlock('h2', '3b. Near-field radio (BLE, "Transit Spark")'),
   PrivacyBlock(
     'p',
