@@ -43,7 +43,13 @@ def _release_ordner() -> pathlib.Path:
 RELEASE = _release_ordner()
 ANLEITUNG = RELEASE / "TESTANLEITUNG.md"
 
+# BEFUND (10.11.2026): Das Skript suchte exakt "## 5) Pruefsummen
+# (SHA-256)" - die Testanleitung schreibt aber "## 5) Prüfsummen (SHA-256)"
+# (mit Umlaut). Dadurch wurde der Abschnitt nicht gefunden und die
+# Pruefsummen blieben auf dem alten Stand. Die Suche ist jetzt tolerant:
+# beide Schreibweisen werden erkannt.
 KOPF = "## 5) Pruefsummen (SHA-256)"
+KOPF_UMLAUT = "## 5) Prüfsummen (SHA-256)"
 ENDE = "## 6) Wenn etwas nicht geht"
 
 
@@ -95,6 +101,8 @@ def main() -> int:
 
     text = ANLEITUNG.read_text(encoding="utf-8")
     i = text.find(KOPF)
+    if i == -1:
+        i = text.find(KOPF_UMLAUT)
     j = text.find(ENDE)
     if i < 0 or j < 0 or j < i:
         print("  ! Der Abschnitt mit den Pruefsummen wurde nicht gefunden.")
