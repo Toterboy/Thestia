@@ -13,7 +13,7 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
   neue Kern-Feature
 - **0.9.1** – veröffentlicht: E-Mail-Bestätigungspflicht, Safety Number,
   Nähfunk-Jitter, Standort-TTL, rotierende Vorstellungs-Prompts
-- **0.10.0** – **in Arbeit:** Standort-Privatisierung (Ort entfällt,
+- **0.10.0** – **gebaut** (Build 50, Prerelease auf GitHub; der Store-Upload steht noch aus – das Play-Console-Projekt fehlt): Standort-Privatisierung (Ort entfällt,
   5-km-Raster serverseitig erzwungen, Entfernung nur zustimmungspflichtig
   und in Stufen), Transit Spark auf echten Geräten, Auslieferungs-
   Hygiene, dazu der Ausbau von „Find your Spark“ (Zufallsvorstellung
@@ -21,6 +21,12 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
   erzwungener Altersgrenze und text-only-Vorstellung). MINOR-Bump
   **nach Regel** – eine Änderung der Datenverarbeitung für Nutzende ist
   eine Kern-Funktion
+- **0.10.1** – **umgesetzt** (Build 51/52): Die Namens-Entscheidung beim
+  Transit Spark (der Dialog fragt beim ersten Öffnen, danach bleibt der
+  Schalter änderbar), der serverseitige Nachrichtenzähler, „Nachricht für
+  alle löschen“ (der Server speichert nur die Tatsache, keinen Inhalt), die
+  Transit-Kandidatenliste (mehrere mit derselben Beschreibung, mehrere
+  anschreiben) und die ungefaehre Ortsangabe (Selbstauskunft, kein Standort).
 - **0.11.0** – Emotionaler Rückzugsort (Sanctuary) & lokaler
   KI-Reflexions-Chat (rein on-device)
 - **0.12.0** – Web-Bridge, Transit-Reachability & Zero-Install
@@ -464,6 +470,30 @@ verschluesselt gespeichert und wird erst beim Funke gehoert.
 > soll bewusst sein; „nein, bleib anonym" ist ja auch eine Entscheidung.
 > Die Antwort liegt auf dem **Server**, damit das zweite Gerät nicht
 > nochmal fragt.
+
+### Stand 11.11.2026: 0.10.1 ist umgesetzt (Build 51/52)
+
+Der Wunsch des Betreibers („der Name beim Zuwinken soll abschaltbar
+sein") ist umgesetzt – und die Entscheidung liegt beim **Nutzer**:
+Beim ersten Öffnen des Transit-Radars fragt ein Dialog, danach bleibt
+der Schalter jederzeit änderbar.
+
+Dazu kamen die drei Verbesserungsideen und die Frage nach dem
+Nachrichtenlöschen:
+
+| Punkt | Stand |
+|---|---|
+| Die kleine Zahl in der Kachel (serverseitig) | umgesetzt (Migration 210) |
+| Die Kategorie-Sicht ohne Sackgasse | umgesetzt |
+| Die Nah-Liste zeigt die Gesamtzahl | umgesetzt |
+| „Nachricht für alle löschen" (wie WhatsApp) | umgesetzt – der Server speichert **nur die Tatsache**, keinen Inhalt (Migration 210/214) |
+| Transit Spark: mehrere mit derselben Beschreibung | umgesetzt (Migration 213) |
+| Transit Spark: der ungefähre Ort (Selbstauskunft) | umgesetzt (Migration 213) |
+
+**Datenschutz-Bewertung zum Löschen:** Der Server merkt sich nur, *dass*
+eine Nachricht gelöscht wurde – kein Text, keine Chiffre. Das ist mit
+dem E2E-Modell vereinbar. Ehrlich gesagt werden muss: die bereits
+zugestellte Kopie beim Gegenüber kann nicht zurückgerufen werden.
 
 ## Umgesetzt: 0.10.0 – Standort-Privatisierung, Transit Spark auf echten Geräten & Qualitätssicherung
 

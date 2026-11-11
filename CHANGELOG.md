@@ -10,6 +10,41 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 ## [0.10.0] – Elternfreigabe, Aufsicht und Admin-Posteingang (Build 31, 2026-10-30 bis 2026-11-03)
 
 
+### Neu (11.11.2026)
+
+- **Die kleine Zahl in der Kachel stimmt jetzt überall** (Idee des
+  Betreibers): Bis jetzt zählte die App die Nachrichten im **lokalen**
+  Verlauf – und der entsteht erst, wenn der Chat auf diesem Gerät geöffnet
+  wurde. Bei einem nie geöffneten Funke stand deshalb **überhaupt keine**
+  Zahl, und auf zwei Geräten standen verschiedene. Der Zähler sitzt jetzt
+  **serverseitig**: er zählt jede Nachricht genau einmal und stimmt damit
+  auf allen Geräten.
+- **Nachricht löschen für alle – wie bei WhatsApp:** Ein langer Druck auf
+  eine eigene Textnachricht bietet „Für alle löschen" an. Beim Gegenüber
+  steht dann „Diese Nachricht wurde gelöscht".
+  *Zur Datenschutz-Frage des Betreibers: Das ist mit dem bestehenden
+  E2E-Modell vereinbar.* Der Server speichert **nur die Tatsache**, dass
+  eine Nachricht gelöscht wurde – **keinen Text, keine Chiffre, keinen
+  Inhalt**. Er weiß damit nichts über den Inhalt, das er nicht schon beim
+  Zustellen sieht. Ehrlich gesagt werden muss: die bereits zugestellte
+  Kopie beim Gegenüber kann nicht zurückgerufen werden – dort ist die
+  Nachricht schon gelesen. Bei WhatsApp ist das genauso.
+- **Transit Spark: mehrere mit derselben Beschreibung** (Wunsch des
+  Betreibers): Bisher bekam man **eine** Person zu sehen. Jetzt zeigt die
+  App **alle** Personen in der Nähe, deren Beschreibung passt – und man
+  kann **mehreren** zuwinken (bis zu fünf Zuwinke in 30 Minuten). Der
+  Server prüft die Nähe immer selbst: ein Zuwinken an eine beliebige
+  Person ist nicht möglich.
+- **Transit Spark: den ungefähren Ort angeben** (Wunsch des Betreibers):
+  „Zug, Wagen 3" oder „Messe, Halle 2 bei den Toiletten". Der Ort ist eine
+  **Selbstauskunft** – die App ermittelt nichts, es wird kein Standort
+  gespeichert. Wer in der Nähe ist, sieht deinen Ort nur, wenn er selbst
+  einen nennt.
+- **Die Nah-Liste verschweigt ihre Größe nicht mehr**: Wer 25 Menschen in
+  der Nähe hatte, sah 10 – ohne Hinweis. Jetzt steht die Gesamtzahl da.
+- **Die Kategorie-Sicht ist keine Sackgasse mehr**: Ist eine Kategorie
+  leer, sagt die App jetzt, in welchen Kategorien Menschen sind.
+
 ### Behoben
 
 - **Nachrichten kommen jetzt an** (09.11.2026): Eine Benachrichtigung kam

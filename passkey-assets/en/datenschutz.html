@@ -699,6 +699,39 @@
 </div>
 <p><strong>What the switch does not protect against:</strong> Someone standing right next to you can still recognise you. The switch only concerns your name inside the app - it is no protection against the encounter itself.</p>
 <p>The nearby list always stays anonymous: whoever is close by sees no names (only "seen 3 minutes ago").</p>
+<h3>3b-2. The approximate place at Transit Spark (v0.10.1)</h3>
+<p>At Transit Spark you can say where you roughly are: "Train, coach 3" or "Trade fair, hall 2 by the toilets". This goes with your signal to the server and is shown to the people who can find you.</p>
+<p><strong>This is a self-report - not a location.</strong> The app does not detect your place, no coordinates are transmitted and nothing is calculated. You write yourself what you want to say; empty stays empty.</p>
+<div class="tabellen-huelle">
+<table>
+<thead><tr><th>Data</th><th>Recipient</th><th>Purpose</th><th>Storage</th></tr></thead>
+<tbody>
+<tr><td>Your place (kind + text, max. 60 characters)</td><td>the people nearby whose description matches</td><td>so they know where to look for you</td><td>with the signal, 45 minutes (like the signal itself)</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Visibility:</strong> Only people who have chosen a description themselves see your place - and only while your signal is valid (45 minutes). The receiver has to "look" at the descriptions (at Transit Spark: "Exchange looks") for the list to be filled.</p>
+<h3>3b-3. The number of sent messages (v0.10.1)</h3>
+<p>Next to your chat in the spark list there is a small number: how many messages that person has written.</p>
+<div class="tabellen-huelle">
+<table>
+<thead><tr><th>Data</th><th>Recipient</th><th>Purpose</th><th>Storage</th></tr></thead>
+<tbody>
+<tr><td>Number of sent messages per spark</td><td>only you</td><td>an overview of the conversation</td><td>on the server, attached to the spark, until the spark is deleted</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>No content is stored</strong> - just a number. The number belongs to the respective spark and is only visible to its participants.</p>
+<h3>3b-4. "Deleted for everyone" (v0.10.1)</h3>
+<p>When you delete one of your own messages for everyone, the server only memorises <strong>the fact</strong> that this message was deleted. No text, no ciphertext, no content - the server therefore knows nothing about the content that it does not already know from delivering it.</p>
+<div class="tabellen-huelle">
+<table>
+<thead><tr><th>Data</th><th>Recipient</th><th>Purpose</th><th>Storage</th></tr></thead>
+<tbody>
+<tr><td>"This message was deleted" (message ID, time)</td><td>only the participants of the spark</td><td>show the deleted message as a notice on the other side</td><td>on the server, attached to the spark, 180 days, then removed automatically</td></tr>
+</tbody>
+</table>
+</div>
 <h2>3b. Near-field radio (BLE, "Transit Spark")</h2>
 <p>Transit Spark uses Bluetooth Low Energy so that two people can meet nearby without having to talk to each other. Radio metadata is processed in the process.</p>
 <p><strong>What is sent:</strong> an ephemeral, random token (no device ID, no name, no MAC address of the device). The operating system's stack assigns a resolvable private address for the advertising; the app does not set a fixed address.</p>

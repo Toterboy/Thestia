@@ -355,6 +355,78 @@ const List<PrivacyBlock> kPrivacyPolicyEn = <PrivacyBlock>[
     'p',
     'The nearby list always stays anonymous: whoever is close by sees no names (only "seen 3 minutes ago").',
   ),
+  PrivacyBlock('h3', '3b-2. The approximate place at Transit Spark (v0.10.1)'),
+  PrivacyBlock(
+    'p',
+    'At Transit Spark you can say where you roughly are: "Train, coach 3" or "Trade fair, hall 2 by the toilets". This goes with your signal to the server and is shown to the people who can find you.',
+  ),
+  PrivacyBlock(
+    'p',
+    '**This is a self-report - not a location.** The app does not detect your place, no coordinates are transmitted and nothing is calculated. You write yourself what you want to say; empty stays empty.',
+  ),
+  PrivacyBlock(
+    'table_head',
+    '',
+    cells: <String>['Data', 'Recipient', 'Purpose', 'Storage'],
+  ),
+  PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
+      'Your place (kind + text, max. 60 characters)',
+      'the people nearby whose description matches',
+      'so they know where to look for you',
+      'with the signal, 45 minutes (like the signal itself)',
+    ],
+  ),
+  PrivacyBlock(
+    'p',
+    '**Visibility:** Only people who have chosen a description themselves see your place - and only while your signal is valid (45 minutes). The receiver has to "look" at the descriptions (at Transit Spark: "Exchange looks") for the list to be filled.',
+  ),
+  PrivacyBlock('h3', '3b-3. The number of sent messages (v0.10.1)'),
+  PrivacyBlock(
+    'p',
+    'Next to your chat in the spark list there is a small number: how many messages that person has written.',
+  ),
+  PrivacyBlock(
+    'table_head',
+    '',
+    cells: <String>['Data', 'Recipient', 'Purpose', 'Storage'],
+  ),
+  PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
+      'Number of sent messages per spark',
+      'only you',
+      'an overview of the conversation',
+      'on the server, attached to the spark, until the spark is deleted',
+    ],
+  ),
+  PrivacyBlock(
+    'p',
+    '**No content is stored** - just a number. The number belongs to the respective spark and is only visible to its participants.',
+  ),
+  PrivacyBlock('h3', '3b-4. "Deleted for everyone" (v0.10.1)'),
+  PrivacyBlock(
+    'p',
+    'When you delete one of your own messages for everyone, the server only memorises **the fact** that this message was deleted. No text, no ciphertext, no content - the server therefore knows nothing about the content that it does not already know from delivering it.',
+  ),
+  PrivacyBlock(
+    'table_head',
+    '',
+    cells: <String>['Data', 'Recipient', 'Purpose', 'Storage'],
+  ),
+  PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
+      '"This message was deleted" (message ID, time)',
+      'only the participants of the spark',
+      'show the deleted message as a notice on the other side',
+      'on the server, attached to the spark, 180 days, then removed automatically',
+    ],
+  ),
   PrivacyBlock('h2', '3b. Near-field radio (BLE, "Transit Spark")'),
   PrivacyBlock(
     'p',

@@ -699,6 +699,39 @@
 </div>
 <p><strong>Was der Schalter nicht schützt:</strong> Wer unmittelbar neben dir steht, erkennt dich trotzdem. Der Schalter betrifft ausschließlich deinen Namen in der App - er ist kein Schutz vor der Begegnung selbst.</p>
 <p>Die Nahbereichs-Liste selbst bleibt immer anonym: wer in der Nähe ist, sieht keine Namen (nur "vor 3 Minuten gesehen").</p>
+<h3>3b-2. Der ungefähre Ort beim Transit Spark (v0.10.1)</h3>
+<p>Beim Transit Spark kannst du angeben, wo du ungefähr bist: „Zug, Wagen 3" oder „Messe, Halle 2 bei den Toiletten". Diese Angabe geht mit deinem Signal zum Server und steht bei den Personen, die dich finden können.</p>
+<p><strong>Das ist eine Selbstauskunft – kein Standort.</strong> Die App ermittelt deinen Ort nicht, es werden keine Koordinaten übertragen und nichts berechnet. Du schreibst selbst, was du nennen willst; leer bleibt leer.</p>
+<div class="tabellen-huelle">
+<table>
+<thead><tr><th>Angabe</th><th>Empfänger</th><th>Zweck</th><th>Speicherung</th></tr></thead>
+<tbody>
+<tr><td>Deine Ortsangabe (Art + Text, max. 60 Zeichen)</td><td>die Personen in der Nähe, deren Beschreibung passt</td><td>sie sollen wissen, wo sie dich suchen sollen</td><td>mit dem Signal, 45 Minuten (wie das Signal selbst)</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Sichtbarkeit:</strong> Nur Menschen, die selbst eine Beschreibung gewählt haben, sehen deine Ortsangabe – und nur, solange dein Signal gültig ist (45 Minuten). Der Empfänger muss die Beschreibung „ansehen" (unter Transit Spark: „Blicke getauscht"), damit die Liste gefüllt wird.</p>
+<h3>3b-3. Die Anzahl der gesendeten Nachrichten (v0.10.1)</h3>
+<p>In der Funkenliste steht neben deinem Chat eine kleine Zahl: die Anzahl der Nachrichten, die die andere Person geschrieben hat.</p>
+<div class="tabellen-huelle">
+<table>
+<thead><tr><th>Angabe</th><th>Empfänger</th><th>Zweck</th><th>Speicherung</th></tr></thead>
+<tbody>
+<tr><td>Anzahl der gesendeten Nachrichten je Funke</td><td>nur du</td><td>Übersicht über den Verlauf</td><td>serverseitig am Funke, dauerhaft (bis zum Löschen des Funkes)</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Es wird kein Inhalt gespeichert</strong> – nur eine Zahl. Die Zahl gehört zum jeweiligen Funke und ist nur für dessen Teilnehmer sichtbar.</p>
+<h3>3b-4. „Für alle gelöscht" (v0.10.1)</h3>
+<p>Wenn du eine eigene Nachricht für alle löschst, merkt sich der Server <strong>nur die Tatsache</strong>, dass diese Nachricht gelöscht wurde. Kein Text, keine Chiffre, kein Inhalt – der Server weiß damit nichts über den Inhalt, das er nicht schon beim Zustellen sieht.</p>
+<div class="tabellen-huelle">
+<table>
+<thead><tr><th>Angabe</th><th>Empfänger</th><th>Zweck</th><th>Speicherung</th></tr></thead>
+<tbody>
+<tr><td>„Diese Nachricht wurde gelöscht" (Nachrichten-ID, Zeitpunkt)</td><td>nur die Teilnehmer des Funkes</td><td>die gelöschte Nachricht beim Gegenüber als Hinweis anzeigen</td><td>serverseitig am Funke, 180 Tage, danach automatisch entfernt</td></tr>
+</tbody>
+</table>
+</div>
 <h2>3b. Nahbereichsfunk (BLE, „Transit Spark")</h2>
 <p>Transit Spark nutzt Bluetooth Low Energy, damit zwei Personen sich in der Nähe begegnen können, ohne sich ansprechen zu müssen. Dabei werden Funk-Metadaten verarbeitet.</p>
 <p><strong>Was gesendet wird:</strong> ein ephemerer, zufälliger Token (keine Geräte-ID, kein Name, keine MAC-Adresse des Geräts). Der Stack des Betriebssystems vergibt für das Advertising eine auflösbare Privatadresse; die App setzt keine feste Adresse.</p>

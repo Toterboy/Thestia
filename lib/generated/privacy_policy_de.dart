@@ -355,6 +355,78 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
     'p',
     'Die Nahbereichs-Liste selbst bleibt immer anonym: wer in der Nähe ist, sieht keine Namen (nur "vor 3 Minuten gesehen").',
   ),
+  PrivacyBlock('h3', '3b-2. Der ungefähre Ort beim Transit Spark (v0.10.1)'),
+  PrivacyBlock(
+    'p',
+    'Beim Transit Spark kannst du angeben, wo du ungefähr bist: „Zug, Wagen 3" oder „Messe, Halle 2 bei den Toiletten". Diese Angabe geht mit deinem Signal zum Server und steht bei den Personen, die dich finden können.',
+  ),
+  PrivacyBlock(
+    'p',
+    '**Das ist eine Selbstauskunft – kein Standort.** Die App ermittelt deinen Ort nicht, es werden keine Koordinaten übertragen und nichts berechnet. Du schreibst selbst, was du nennen willst; leer bleibt leer.',
+  ),
+  PrivacyBlock(
+    'table_head',
+    '',
+    cells: <String>['Angabe', 'Empfänger', 'Zweck', 'Speicherung'],
+  ),
+  PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
+      'Deine Ortsangabe (Art + Text, max. 60 Zeichen)',
+      'die Personen in der Nähe, deren Beschreibung passt',
+      'sie sollen wissen, wo sie dich suchen sollen',
+      'mit dem Signal, 45 Minuten (wie das Signal selbst)',
+    ],
+  ),
+  PrivacyBlock(
+    'p',
+    '**Sichtbarkeit:** Nur Menschen, die selbst eine Beschreibung gewählt haben, sehen deine Ortsangabe – und nur, solange dein Signal gültig ist (45 Minuten). Der Empfänger muss die Beschreibung „ansehen" (unter Transit Spark: „Blicke getauscht"), damit die Liste gefüllt wird.',
+  ),
+  PrivacyBlock('h3', '3b-3. Die Anzahl der gesendeten Nachrichten (v0.10.1)'),
+  PrivacyBlock(
+    'p',
+    'In der Funkenliste steht neben deinem Chat eine kleine Zahl: die Anzahl der Nachrichten, die die andere Person geschrieben hat.',
+  ),
+  PrivacyBlock(
+    'table_head',
+    '',
+    cells: <String>['Angabe', 'Empfänger', 'Zweck', 'Speicherung'],
+  ),
+  PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
+      'Anzahl der gesendeten Nachrichten je Funke',
+      'nur du',
+      'Übersicht über den Verlauf',
+      'serverseitig am Funke, dauerhaft (bis zum Löschen des Funkes)',
+    ],
+  ),
+  PrivacyBlock(
+    'p',
+    '**Es wird kein Inhalt gespeichert** – nur eine Zahl. Die Zahl gehört zum jeweiligen Funke und ist nur für dessen Teilnehmer sichtbar.',
+  ),
+  PrivacyBlock('h3', '3b-4. „Für alle gelöscht" (v0.10.1)'),
+  PrivacyBlock(
+    'p',
+    'Wenn du eine eigene Nachricht für alle löschst, merkt sich der Server **nur die Tatsache**, dass diese Nachricht gelöscht wurde. Kein Text, keine Chiffre, kein Inhalt – der Server weiß damit nichts über den Inhalt, das er nicht schon beim Zustellen sieht.',
+  ),
+  PrivacyBlock(
+    'table_head',
+    '',
+    cells: <String>['Angabe', 'Empfänger', 'Zweck', 'Speicherung'],
+  ),
+  PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
+      '„Diese Nachricht wurde gelöscht" (Nachrichten-ID, Zeitpunkt)',
+      'nur die Teilnehmer des Funkes',
+      'die gelöschte Nachricht beim Gegenüber als Hinweis anzeigen',
+      'serverseitig am Funke, 180 Tage, danach automatisch entfernt',
+    ],
+  ),
   PrivacyBlock('h2', '3b. Nahbereichsfunk (BLE, „Transit Spark")'),
   PrivacyBlock(
     'p',
