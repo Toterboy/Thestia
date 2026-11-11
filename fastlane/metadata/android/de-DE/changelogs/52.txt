@@ -1,0 +1,33 @@
+Deine Zahl stimmt jetzt überall
+
+Die kleine Zahl in der Kachel zählt jetzt die Nachrichten der Person -
+und zwar auf allen Geräten. Vorher zählte die App nur, was auf diesem
+Gerät schon zu sehen war.
+
+Nachricht löschen für alle
+
+Ein langer Druck auf eine eigene Nachricht bietet „Für alle löschen" an.
+Beim Gegenüber steht dann „Diese Nachricht wurde gelöscht". Der Server
+speichert dabei nur, DASS gelöscht wurde - niemals den Inhalt.
+
+Transit Spark: alle mit deiner Beschreibung
+
+Bekommst du mehrere Menschen in der Nähe gezeigt, deren Merkmale zu
+deinen passen - und du kannst mehreren zuwinken.
+
+Transit Spark: sag, wo du bist
+
+Neu im Radar: "Wo bist du gerade?" - Zug, Messe, Veranstaltung, Bar oder
+etwas anderes, dazu dein eigener Text ("Wagen 3"). Das ist eine
+Selbstauskunft - die App ermittelt nichts.
+
+Transit Spark: dein Name, deine Entscheidung
+
+Beim ersten Öffnen des Radars fragt die App, ob dein Name sichtbar sein
+soll, wenn du jemandem zuwinkst. Du entscheidest das - und kannst es
+später jederzeit ändern.
+
+Die Nah-Liste verschweigt ihre Größe nicht mehr
+
+Und: Eine Kategorie ohne Menschen sagt dir jetzt, in welchen Kategorien
+es welche gibt.

@@ -1,0 +1,33 @@
+Your number is right everywhere now
+
+The small number in the tile counts that person's messages - and it is
+the same on every device. Before, the app only counted what this device
+had already seen.
+
+Delete a message for everyone
+
+Press and hold your own message to get "Delete for everyone". On the
+other side it then says "This message was deleted". The server only
+stores THAT it was deleted - never the content.
+
+Transit Spark: everyone with your description
+
+You now see everyone nearby whose features match yours - and you can wave
+at several of them.
+
+Transit Spark: say where you are
+
+New on the radar: "Where are you right now?" - train, trade fair, event,
+bar or somewhere else, plus your own words ("coach 3"). It is a
+self-report - the app does not detect anything.
+
+Transit Spark: your name, your decision
+
+The first time you open the radar, the app asks whether your name may be
+visible when you wave at someone. You decide that - and you can change it
+at any time.
+
+The nearby list no longer hides its size
+
+And: A category without people now tells you which categories do have
+people.
