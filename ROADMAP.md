@@ -419,7 +419,7 @@ verschluesselt gespeichert und wird erst beim Funke gehoert.
       KI-Kennzeichnung an Bildprüfungen, Video-Verifizierung mit lokaler
   KI-Alters-Triage (095, 2-Jahre-Regel, manuelle Queue für Abweichler)
 
-### Geplant: 0.10.1 – der Name bei Transit Spark
+### Umgesetzt: 0.10.1 – der Name bei Transit Spark
 
 > **Neuer Wunsch vom Betreiber (10.11.2026):** „Ich finde aber, dass man
 > bei Transit Spark einstellen können soll, ob der Name für andere sichtbar
