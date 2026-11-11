@@ -33,11 +33,17 @@ UEBERLAST_SIG_6 = ('text[], text[], text, text[], text, text')
 # Die REVOKE-Formen, die im Repo fuer diese Variante vorkommen (alle
 # Schreibweisen, die der Checker liest).
 _UEBERLAST_REVOKES = (
-    # Migration 185 / 207 (zweizeilig):
-    'REVOKE EXECUTE ON FUNCTION\n'
-    '  public.match_proximity_spark(text[], text[], text, text[], text, text)\n'
-    'FROM PUBLIC, anon;',
-    # Migration 207 (einzeilig):
+    # BEFUND (11.11.2026): Die Signatur von match_proximity_spark hat
+    # sich geaendert - Migration 213 hat die Ortsangabe ergaenzt (8
+    # Parameter). Der Selbsttest muss die AKTUELLE Signatur mutieren:
+    # eine alte Signatur zu pruefen waere sinnlos (die gibt es nicht
+    # mehr, und der waere auch weiterhin gesperrt).
+    #
+    # Migration 213 (einzeilig, die aktuelle Signatur):
+    'revoke all on function public.match_proximity_spark(text[], text[], '
+    'text, text[], text, text, text, text) from public, anon;',
+    # Frueher (Migration 185/207) - bleibt als Muster erhalten, damit der
+    # Test auch nach einem Rueckbau greift:
     'revoke all on function public.match_proximity_spark(text[], text[], '
     'text, text[], text, text) from public, anon;',
 )
@@ -111,7 +117,7 @@ MUTATIONS = [
     ('1 PUBLIC-Revoke', 'REVOKE ... FROM anon ohne FROM PUBLIC',
      '123_revoke_public_execute.sql', m_anon_ohne_public),
     ('2 Overloads', 'eine Variante einer ueberladenen Function bleibt offen',
-     '207_transit_already_spark_and_single_match.sql', m_overload_luecke),
+     '213_transit_candidates_and_place.sql', m_overload_luecke),
     ('3 prossrc-Check', 'Fail-Fast-Muster steht nur im Kommentar',
      '127_remaining_db_hardening.sql', m_prosrc_kommentar),
     ('4 LANGUAGE sql', 'spricht eine spaeter definierte Function an',
