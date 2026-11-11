@@ -2605,16 +2605,20 @@ class _MatchTile extends ConsumerWidget {
     // Quiz-Hinweis erst nach 50-70 Nachrichten (pro Chat deterministisch,
     // gleiche Schwelle wie im Chat-Screen).
     final threshold = 50 + (match.matchId.toString().hashCode.abs() % 21);
-    // BEFUND (11.11.2026): Die Zahl kommt vom SERVER (Migration 210).
-    // Vorher las die Kachel den lokalen Verlauf - und der entsteht erst,
-    // wenn der Chat auf diesem Geraet geoeffnet wurde. Bei einem nie
-    // geoeffneten Funke stand ueberhaupt keine Zahl, und auf zwei
-    // Geraeten standen verschiedene.
-    final msgCount = match.messageCount;
+    // Der QUIZ-HINWEIS bleibt unveraendert: er zaehlt die Nachrichten
+    // in DIESEM Chat (lokaler Verlauf) - so wie es seit jeher war.
+    //
+    // BEFUND (11.11.2026, Betreiber): "Also nur fuer v0.10.1 nicht
+    // drueber." Das Verhalten der bestehenden Funktionen bleibt, was es
+    // ist; neu ist nur die kleine ZAHL in der Kachel.
+    final lokaleNachrichten = ref
+        .watch(chatProvider.notifier)
+        .messagesFor(match.matchId.toString())
+        .length;
     final showQuizHint =
         !match.quizPassed &&
         match.createdVia == 'find_match' &&
-        msgCount >= threshold;
+        lokaleNachrichten >= threshold;
     final scheme = Theme.of(context).colorScheme;
     final ungelesen = unreadCount > 0;
     return Card(
@@ -2656,7 +2660,13 @@ class _MatchTile extends ConsumerWidget {
             // BEFUND (09.11.2026, Betreiber): "Außerdem soll mit einer
             // kleinen Zahl gekennzeichnet werden, wie viele Nachrichten
             // die Person geschrieben hat."
-            if (msgCount > 0) ...[
+            //
+            // BEFUND (11.11.2026): Die Zahl kommt vom SERVER
+            // (Migration 210) - sie stimmt damit auf allen Geraeten und
+            // steht auch da, wenn der Chat hier nie geoeffnet wurde.
+            // Neu in v0.10.1; das Verhalten der uebrigen Kachel
+            // (Quiz-Hinweis u. Ae.) bleibt unveraendert.
+            if (match.messageCount > 0) ...[
               const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -2665,7 +2675,7 @@ class _MatchTile extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  '$msgCount',
+                  '${match.messageCount}',
                   style: const TextStyle(
                     fontSize: 11,
                     fontFeatures: [FontFeature.tabularFigures()],

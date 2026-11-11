@@ -60,7 +60,6 @@ import 'package:thestia/utils/best_effort.dart';
 
 /// Präfix für geteilte Eisbrecher-Fragen im Textkanal (v0.9.1): Beide Seiten
 /// stellen solche Nachrichten als gemeinsame mittige Bubble dar.
-const String icebreakerPrefix = '__ICEBREAKER__:';
 
 /// 1:1-Chat-Detailansicht mit Nachrichtenverlauf und Eingabefeld.
 ///

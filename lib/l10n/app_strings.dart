@@ -1083,7 +1083,6 @@ const Map<String, Map<String, String>> _strings = {
     'transit.candidateWave': 'Zuwinken',
     'transit.candidateWaved': 'Zugewinkt',
     'transit.candidateWaveFailed': 'Das hat nicht geklappt',
-    'transit.waveFromPlace': '%s winkt dir zu - %s',
     'transit.pingSheetTitle': 'Einen Gruß senden',
     'transit.pingSheetHint':
         'Einmal pro Begegnung möglich. Die Person entscheidet still, '
@@ -4269,7 +4268,6 @@ const Map<String, Map<String, String>> _strings = {
     'transit.candidateWave': 'Wave',
     'transit.candidateWaved': 'Waved',
     'transit.candidateWaveFailed': 'That did not work',
-    'transit.waveFromPlace': '%s is waving at you - %s',
     'transit.pingSheetTitle': 'Send a greeting',
     'transit.pingSheetHint':
         'Possible once per encounter. The person decides quietly '
