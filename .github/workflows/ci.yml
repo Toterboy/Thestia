@@ -545,6 +545,18 @@ jobs:
       - name: Store-Text fuer den aktuellen Build vorhanden
         run: python3 tool/check_store_changelog.py
 
+      # BEFUND (11.11.2026): Die Release-Notes hatten einen eigenen
+      # Pruefsummen-Block, der beim Build nicht mitgepflegt wurde - auf
+      # GitHub standen dadurch falsche Summen. Dieses Gate vergleicht
+      # die Summen in ALLEN Release-Dokumenten mit den Dateien.
+      #
+      # Der Ordner `releases/` steht nicht im Repository - deshalb
+      # laeuft die Pruefung nur, wenn der Ordner da ist (im CI ist er
+      # es nicht). Das Skript gibt sich dann zufrieden, OHNE dass
+      # das Gate entschaerft wird ("|| true" waere wirkungslos).
+      - name: Release-Pruefsummen stimmen
+        run: python3 tool/check_release_checksums.py
+
       # Die Signier-Passwoerter duerfen NICHT im Projektverzeichnis liegen.
       #
       # Sie lagen bis 04.11.2026 im Klartext in android/key.properties -

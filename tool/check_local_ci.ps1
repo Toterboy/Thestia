@@ -264,6 +264,12 @@ if (Soll 'static-checks') {
         (G 'Keystore-Passwoerter nicht im Projektverzeichnis' @($py, 'tool/check_keystore_secrets.py'))
         (G 'Release-Checker Selbsttest' @($py, 'tool/check_release_artifacts_selftest.py'))
         (G 'Release-Konsistenz Selbsttest' @($py, 'tool/check_release_consistency_selftest.py'))
+        # BEFUND (11.11.2026): Die Release-Notes hatten einen eigenen
+        # Pruefsummen-Block, der beim Build nicht mitgepflegt wurde -
+        # auf GitHub standen dadurch falsche Summen. Dieses Gate
+        # vergleicht die Summen in ALLEN Release-Dokumenten mit den
+        # Dateien.
+        (G 'Release-Pruefsummen stimmen' @($py, 'tool/check_release_checksums.py'))
     )
 }
 
