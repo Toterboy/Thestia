@@ -467,6 +467,38 @@ class ChatService {
     );
   }
 
+  /// Ersetzt eine Nachricht durch einen Hinweis („Diese Nachricht wurde
+  /// gelöscht").
+  ///
+  /// BEFUND (11.11.2026): "Nachricht fuer alle loeschen, aber ein Hinweis
+  /// steht dann da" - wie bei Whatsapp. Der Server speichert nur die
+  /// Tatsache; hier wird die NACHRICHT im lokalen Verlauf ersetzt.
+  ///
+  /// Gibt true zurueck, wenn sich etwas geaendert hat.
+  bool applyDeletion(
+    String matchId,
+    String messageId, {
+    required String noticeText,
+    required DateTime timestamp,
+  }) {
+    final liste = _messages[matchId];
+    if (liste == null) return false;
+    final idx = liste.indexWhere((m) => m.id == messageId);
+    if (idx == -1) return false;
+    // Schon ersetzt? Dann nichts tun (der Hinweis ist idempotent).
+    if (liste[idx].type == MessageType.notice) return false;
+    liste[idx] = Message(
+      id: messageId,
+      senderId: liste[idx].senderId,
+      receiverId: liste[idx].receiverId,
+      text: noticeText,
+      timestamp: timestamp,
+      type: MessageType.notice,
+    );
+    unawaited(_persistHistory(matchId));
+    return true;
+  }
+
   /// Setzt den ungelesen-Zähler eines Matches zurück.
   void markRead(String matchId) {
     final idx = _matches.indexWhere((m) => m.id == matchId);

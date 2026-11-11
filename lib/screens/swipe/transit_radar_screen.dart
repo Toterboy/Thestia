@@ -597,7 +597,56 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
       // auf einen NEU entstehenden Funken lauschen (der 2-Minuten-Rate-
       // Limit des erneuten Drückens wartet sonst vergeblich).
       _watchForLateSpark();
+      // BEFUND (11.11.2026): Die Kandidatenliste - alle Personen in der
+      // Naehe, deren Beschreibung passt. Wer mehrere sind, bekommt sie
+      // alle vorgeschlagen und kann mehreren zuwinken.
+      unawaited(_showCandidates(picked.tags));
     }
+  }
+
+  /// Zeigt die Personen in der Naehe, deren Beschreibung passt.
+  ///
+  /// BEFUND (11.11.2026, Betreiber): "wenn es bei Transit Spark mehrere mit
+  /// der selben Beschreibung geben sollte, dass man dann alle dafuer
+  /// vorgeschlagen bekommt und die Moeglichkeit hat auch mehrere
+  /// anzuschreiben."
+  Future<void> _showCandidates(List<String> tags) async {
+    final notifier = ref.read(transitProvider.notifier);
+    final kandidaten = await notifier.listCandidates(
+      tags: tags,
+      selfTags: ref.read(transitProvider).selfTags,
+    );
+    if (!mounted) return;
+    if (kandidaten.isEmpty) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => _CandidateSheet(
+        kandidaten: kandidaten,
+        onWave: (kandidat) async {
+          final ok = await notifier.sendSoftPing(
+            token: '',
+            messageKey: 'wave',
+            recipientId: kandidat.id,
+            placeKind: ref.read(transitProvider).placeKind,
+            placeText: ref.read(transitProvider).placeText,
+            tags: tags,
+            selfTags: ref.read(transitProvider).selfTags,
+          );
+          if (!ctx.mounted) return;
+          ScaffoldMessenger.of(ctx).showSnackBar(
+            SnackBar(
+              content: Text(
+                ok
+                    ? L10n.t(ctx, 'transit.candidateWaved')
+                    : L10n.t(ctx, 'transit.candidateWaveFailed'),
+              ),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        },
+      ),
+    );
   }
 
   /// Lauscht nach einem "Signal gespeichert" (45 s) auf einen Funken, der
@@ -820,6 +869,9 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
               // Der Schalter steht hier, weil er nur für Transit Spark gilt
               // - wer ihn braucht, ist gerade dort.
               _showNameSwitch(context),
+              const SizedBox(height: 16),
+              // Der ungefaehre Ort (v0.10.1, Betreiber).
+              _placePicker(context),
               const SizedBox(height: 16),
               // Modus-Auswahl (v0.9.0): Bahn/Café vs. Messe/Event - der
               // Messe-Modus nimmt nur starke BLE-Signale auf (echter
@@ -1070,6 +1122,77 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
     ];
   }
 
+  /// Die Ortsangabe: wo bin ich gerade (ungefaehr)?
+  ///
+  /// BEFUND (11.11.2026, Betreiber): "Man soll auch seinen ungefaehren
+  /// Standort angeben koennen, also wenn man im Zug ist z.B. Wagen 3 oder
+  /// so oder wenn man auf ner Messe ist z.B. Halle 2 und da dann vielleicht
+  /// bei den Toiletten oder Stand xy und so."
+  ///
+  /// DER PRIVATHEITSAUFLAS: Der Ort wird NICHT ermittelt - der Nutzer
+  /// nennt ihn selbst. Die App weiss danach nur, was er freiwillig
+  /// geschrieben hat. Das steht auch im Text, damit niemand etwas anderes
+  /// vermutet.
+  Widget _placePicker(BuildContext context) {
+    final transit = ref.watch(transitProvider);
+    final notifier = ref.read(transitProvider.notifier);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          L10n.t(context, 'transit.placeLabel'),
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          children: [
+            for (final art in _placeArten)
+              ChoiceChip(
+                selected: transit.placeKind == art,
+                label: Text(L10n.t(context, 'transit.place.$art')),
+                onSelected: (v) => notifier.setPlace(
+                  kind: v ? art : '',
+                  text: transit.placeText,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          key: const Key('transit.placeText'),
+          maxLength: 60,
+          maxLines: 1,
+          decoration: InputDecoration(
+            hintText: L10n.t(context, 'transit.placeHint'),
+            border: const OutlineInputBorder(),
+            isDense: true,
+          ),
+          onChanged: (v) => notifier.setPlace(kind: transit.placeKind, text: v),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            L10n.t(context, 'transit.placePrivacy'),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Die Orte, die man nennen kann (frei gewaehlt - kein Standort).
+  static const List<String> _placeArten = [
+    'zug',
+    'messe',
+    'veranstaltung',
+    'bar',
+    'sonstiges',
+  ];
+
   /// Der Schalter „Namen beim Zuwinken zeigen" (v0.10.1).
   ///
   /// BEFUND (10.11.2026, Betreiber): Der Name beim Zuwinken soll
@@ -1232,7 +1355,7 @@ class _EncounterGreetListState extends ConsumerState<_EncounterGreetList> {
     // ohne Watch liefen neue Encounters/Grüß-Buttons nie nach - der
     // encounterCount im State ist der Rebuild-Trigger, die Liste selbst
     // kommt aus dem Encounter-Cache.
-    ref.watch(transitProvider);
+    final transit = ref.watch(transitProvider);
     final encounters = ref.read(transitProvider.notifier).softEncounters();
     if (encounters.isEmpty) {
       return Text(
@@ -1242,9 +1365,27 @@ class _EncounterGreetListState extends ConsumerState<_EncounterGreetList> {
         ),
       );
     }
+    // BEFUND (11.11.2026, Idee 4): Die Liste zeigte hoechstens 10
+    // Personen, ohne dass man es merkte - wer 25 Menschen in der Naehe
+    // hatte, sah 10. Die Gesamtzahl steht jetzt ueber der Liste.
+    final alle = transit.encounterCount;
+    final gezeigt = encounters.take(10).toList();
     return Column(
       children: [
-        for (final e in encounters.take(10))
+        if (alle > gezeigt.length)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text(
+              L10n.tf(context, 'transit.nearbyCount', {
+                'count': '$alle',
+                'shown': '${gezeigt.length}',
+              }),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        for (final e in gezeigt)
           ListTile(
             contentPadding: EdgeInsets.zero,
             dense: true,
@@ -1261,6 +1402,80 @@ class _EncounterGreetListState extends ConsumerState<_EncounterGreetList> {
                   ),
           ),
       ],
+    );
+  }
+}
+
+/// Die Kandidatenliste: wer in der Naehe ist und zur Beschreibung passt.
+///
+/// BEFUND (11.11.2026, Betreiber): "wenn es bei Transit Spark mehrere mit
+/// der selben Beschreibung geben sollte, dass man dann alle dafuer
+/// vorgeschlagen bekommt".
+///
+/// Der Name erscheint nur, wenn die Person ihn freigegeben hat. Der Ort
+/// ist ihre eigene Angabe ("Wagen 3") - er hilft, sie zu finden.
+class _CandidateSheet extends StatelessWidget {
+  const _CandidateSheet({required this.kandidaten, required this.onWave});
+
+  final List<TransitCandidate> kandidaten;
+  final Future<void> Function(TransitCandidate kandidat) onWave;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              L10n.t(context, 'transit.candidatesTitle'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              L10n.t(context, 'transit.candidatesHint'),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: kandidaten.length,
+                separatorBuilder: (_, _) => const Divider(height: 16),
+                itemBuilder: (context, i) {
+                  final k = kandidaten[i];
+                  final ort = k.place;
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.person_outline),
+                    title: Text(
+                      // Der Name NUR, wenn die Person ihn freigegeben hat.
+                      k.name?.isNotEmpty == true
+                          ? k.name!
+                          : L10n.t(context, 'transit.candidateAnonymous'),
+                    ),
+                    subtitle: Text(
+                      [
+                        if (k.tags.isNotEmpty) k.tags.join(', '),
+                        ?ort,
+                      ].join(' - '),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    trailing: FilledButton.tonal(
+                      onPressed: () => onWave(k),
+                      child: Text(L10n.t(context, 'transit.candidateWave')),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -1620,6 +1835,19 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
                   // Server entscheidet das (transit_show_name); fehlt der
                   // Name, bleibt die Meldung anonym.
                   _pingHeadline(context, ping),
+                  // BEFUND (11.11.2026): Der Ort des Absenders steht bei
+                  // der Meldung - er weiss sonst nicht, wo er suchen
+                  // soll ("Wagen 3").
+                  if ((ping['placeText'] as String?)?.trim().isNotEmpty == true)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2, bottom: 2),
+                      child: Text(
+                        (ping['placeText'] as String).trim(),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
                   Text(
                     L10n.t(
                       context,

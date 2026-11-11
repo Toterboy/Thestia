@@ -45,6 +45,8 @@ class MatchWithState {
     this.lastAttemptAt,
     this.kind = 'spark',
     this.autoMatch = false,
+    this.messageCount = 0,
+    this.messageCountMine = 0,
   });
 
   final int matchId;
@@ -75,6 +77,16 @@ class MatchWithState {
   ///
   /// Die Spalte heisst in der Datenbank `matches.auto_match`.
   final bool autoMatch;
+
+  /// Wie viele Nachrichten die PERSON (der Partner) geschrieben hat.
+  ///
+  /// BEFUND (11.11.2026): Die Zahl ist serverseitig (Migration 210) -
+  /// damit stimmt sie auf allen Geraeten und sie steht auch dann da, wenn
+  /// der Chat auf diesem Geraet nie geoeffnet wurde.
+  final int messageCount;
+
+  /// Wie viele Nachrichten ICH in diesem Funke geschrieben habe.
+  final int messageCountMine;
 
   bool get isFriends => kind == 'friends';
 
@@ -121,6 +133,8 @@ class MatchWithState {
           : DateTime.tryParse(json['lastAttemptAt'] as String),
       kind: json['kind'] as String? ?? 'spark',
       autoMatch: autoFlag is bool ? autoFlag : false,
+      messageCount: (json['messageCount'] as num?)?.toInt() ?? 0,
+      messageCountMine: (json['messageCountMine'] as num?)?.toInt() ?? 0,
     );
   }
 }

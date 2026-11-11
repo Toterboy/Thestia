@@ -42,6 +42,79 @@ class TransitSparkResult {
   }
 }
 
+/// Ein Kandidat bei Transit Spark: eine Person in der Nähe, deren
+/// Beschreibung zu meiner passt.
+///
+/// BEFUND (11.11.2026, Betreiber): "wenn es bei Transit Spark mehrere mit
+/// der selben Beschreibung geben sollte, dass man dann alle dafuer
+/// vorgeschlagen bekommt".
+///
+/// **Der Name ist optional:** Er erscheint nur, wenn die Person ihn
+/// freigegeben hat (`transit_show_name`). Wer ihn nicht freigibt, ist
+/// trotzdem auffindbar - nur eben ohne Namen. Der Ort ist eine
+/// Selbstauskunft ("Wagen 3"), keine Ortung.
+class TransitCandidate {
+  const TransitCandidate({
+    required this.id,
+    required this.tags,
+    required this.selfTags,
+    this.note,
+    this.placeKind,
+    this.placeText,
+    this.name,
+    this.showName = false,
+  });
+
+  /// Die User-ID (pseudonym - die App zeigt sie nicht an).
+  final String id;
+
+  /// Die Merkmale der Person.
+  final List<String> tags;
+
+  /// Die Selbstbeschreibung der Person.
+  final List<String> selfTags;
+
+  /// Die freie Notiz der Person.
+  final String? note;
+
+  /// Die Art des genannten Ortes (z. B. "zug", "messe").
+  final String? placeKind;
+
+  /// Der genannte Ort in den Worten der Person (z. B. "Wagen 3").
+  final String? placeText;
+
+  /// Der Name - nur wenn die Person ihn freigegeben hat.
+  final String? name;
+
+  /// Hat die Person den Namen freigegeben?
+  final bool showName;
+
+  /// Der Ort als Text (für die Anzeige).
+  String? get place {
+    final t = placeText?.trim();
+    if (t == null || t.isEmpty) return null;
+    return t;
+  }
+
+  factory TransitCandidate.fromJson(Map<String, dynamic> json) {
+    return TransitCandidate(
+      id: (json['id'] as String?) ?? '',
+      tags: _liste(json['tags']),
+      selfTags: _liste(json['selfTags']),
+      note: (json['note'] as String?)?.trim(),
+      placeKind: (json['placeKind'] as String?)?.trim(),
+      placeText: (json['placeText'] as String?)?.trim(),
+      name: (json['name'] as String?)?.trim(),
+      showName: json['showName'] == true,
+    );
+  }
+
+  static List<String> _liste(Object? wert) {
+    if (wert is! List) return const [];
+    return wert.map((e) => '$e').toList();
+  }
+}
+
 /// Ein lokal gecachter Encounter (anderes Gerät in BLE-Nähe).
 class TransitEncounter {
   const TransitEncounter({required this.token, required this.seenAt});

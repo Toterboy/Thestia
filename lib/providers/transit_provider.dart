@@ -27,6 +27,8 @@ class TransitState {
     this.lastResult,
     this.selfTags = const [],
     this.selfNote = '',
+    this.placeKind = '',
+    this.placeText = '',
     this.lastError,
     this.featureDisabled = false,
   });
@@ -37,6 +39,17 @@ class TransitState {
 
   /// Freie Ergänzung zur Selbstbeschreibung (v0.9.1, max. 140 Zeichen).
   final String selfNote;
+
+  /// Die Art des ungefaehren Ortes (v0.10.1, Betreiber: "wenn man im Zug
+  /// ist z.B. Wagen 3").
+  ///
+  /// FREI GEWAEHLT und KEIN Standort: der Nutzer nennt selbst, was er
+  /// nennen will. Leer = kein Ort.
+  final String placeKind;
+
+  /// Der ungefaehre Ort in den eigenen Worten (z. B. "Wagen 3",
+  /// "Halle 2 bei den Toiletten"). Max. 60 Zeichen.
+  final String placeText;
 
   final bool active;
 
@@ -73,6 +86,8 @@ class TransitState {
     bool clearResult = false,
     List<String>? selfTags,
     String? selfNote,
+    String? placeKind,
+    String? placeText,
     String? lastError,
     bool? featureDisabled,
   }) {
@@ -85,6 +100,8 @@ class TransitState {
       lastResult: clearResult ? null : (lastResult ?? this.lastResult),
       selfTags: selfTags ?? this.selfTags,
       selfNote: selfNote ?? this.selfNote,
+      placeKind: placeKind ?? this.placeKind,
+      placeText: placeText ?? this.placeText,
       lastError: lastError,
       featureDisabled: featureDisabled ?? this.featureDisabled,
     );
@@ -204,6 +221,19 @@ class TransitNotifier extends StateNotifier<TransitState>
   /// Freie Ergänzung zur Selbstbeschreibung setzen (v0.9.1).
   void setSelfNote(String note) {
     state = state.copyWith(selfNote: note.trim());
+  }
+
+  /// Setzt den ungefaehren Ort (v0.10.1, Betreiber: "wenn man im Zug ist
+  /// z.B. Wagen 3 oder so oder wenn man auf ner Messe ist z.B. Halle 2").
+  ///
+  /// Der Ort ist eine SELBSTAUSKUNFT - kein Standort, keine Koordinaten.
+  /// Er geht mit dem Signal zum Server und steht bei den Kandidaten
+  /// dabei, damit sie wissen, wo sie dich suchen sollen.
+  void setPlace({String? kind, String? text}) {
+    state = state.copyWith(
+      placeKind: (kind ?? '').trim(),
+      placeText: (text ?? '').trim(),
+    );
   }
 
   /// Aktiviert das Radar (BLE + Cache). Gibt false zurück, wenn BLE
@@ -354,11 +384,22 @@ class TransitNotifier extends StateNotifier<TransitState>
     return latest.add(TransitEncounter.softRetention);
   }
 
-  /// Soft-Ping an ein Encounter-Token senden (1x pro Token, 48 h).
+  /// Soft-Ping senden (1x pro Token, 48 h).
+  ///
+  /// BEFUND (11.11.2026, Betreiber): "die Moeglichkeit hat auch mehrere
+  /// anzuschreiben". Darum kann der Empfaenger auch direkt benannt werden
+  /// (die Kandidatenliste liefert die Person). Der Server prueft die
+  /// Naehe in BEIDEN Faellen selbst - ein Ping an eine beliebige Person
+  /// ist damit nicht moeglich.
   Future<bool> sendSoftPing({
     required String token,
     required String messageKey,
     String? customLine,
+    String? recipientId,
+    String? placeKind,
+    String? placeText,
+    List<String> tags = const [],
+    List<String> selfTags = const [],
   }) async {
     try {
       if (!SupabaseService.isInitialized) return false;
@@ -366,11 +407,37 @@ class TransitNotifier extends StateNotifier<TransitState>
         token: token,
         messageKey: messageKey,
         customLine: customLine,
+        recipientId: recipientId,
+        placeKind: placeKind,
+        placeText: placeText,
+        tags: tags,
+        selfTags: selfTags,
       );
       return true;
     } catch (e) {
-      debugPrint('[Transit] sendSoftPing fehlgeschlagen: ');
+      debugPrint('[Transit] sendSoftPing fehlgeschlagen: $e');
       return false;
+    }
+  }
+
+  /// Die Personen in der Naehe, deren Beschreibung passt.
+  ///
+  /// BEFUND (11.11.2026, Betreiber): "wenn es bei Transit Spark mehrere mit
+  /// der selben Beschreibung geben sollte, dass man dann alle dafuer
+  /// vorgeschlagen bekommt".
+  Future<List<TransitCandidate>> listCandidates({
+    required List<String> tags,
+    List<String> selfTags = const [],
+  }) async {
+    try {
+      if (!SupabaseService.isInitialized) return const [];
+      final rows = await SupabaseDatabaseService(
+        SupabaseService.client,
+      ).listTransitCandidates(tags: tags, selfTags: selfTags);
+      return rows.map(TransitCandidate.fromJson).toList();
+    } catch (e) {
+      debugPrint('[Transit] Kandidaten nicht abrufbar: $e');
+      return const [];
     }
   }
 
@@ -426,6 +493,10 @@ class TransitNotifier extends StateNotifier<TransitState>
             selfTags: state.selfTags,
             selfNote: state.selfNote.isEmpty ? null : state.selfNote,
             selfToken: eigenerToken,
+            // BEFUND (11.11.2026): Der ungefaehre Ort geht mit dem Signal
+            // zum Server - damit steht er bei den Kandidaten dabei.
+            placeKind: state.placeKind.isEmpty ? null : state.placeKind,
+            placeText: state.placeText.isEmpty ? null : state.placeText,
           );
       final result = TransitSparkResult.fromJson(res);
       state = state.copyWith(busy: false, lastResult: result, lastError: null);

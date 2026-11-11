@@ -37,6 +37,7 @@ import 'package:thestia/services/image_report_service.dart';
 import 'package:thestia/services/report_service.dart';
 import 'package:thestia/services/encryption_service.dart';
 import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/message_envelope.dart';
 import 'package:thestia/services/p2p_chat_service.dart';
 import 'package:thestia/services/prekey_service.dart';
 import 'package:thestia/screens/chat/bucket_list_sheet.dart'
@@ -427,6 +428,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     // Relay-Nachrichten sofort abholen (Partner hat ggf. bei fehlendem
     // P2P-Kanal zwischengespeichert).
     await _fetchRelay();
+    // Die "fuer alle geloescht"-Hinweise holen (BEFUND 11.11.2026).
+    await _applyMessageDeletions(widget.matchId);
     // Herzensstärken: Server-Match-Daten (Freundschafts-Badge,
     // Erinnerungs-Momente) im Hintergrund laden.
     unawaited(_loadHeartState());
@@ -634,24 +637,36 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
       var added = false;
       for (final r in pending) {
         if (r.senderId != partnerId) continue;
-        final msgId = 'relay_${r.id}';
+        // DIE HULLE auspacken (BEFUND 11.11.2026): Die Nachrichten-ID
+        // kommt vom SENDER - damit ist sie auf beiden Seiten gleich
+        // (Grundlage fuer "fuer alle loeschen"). Eine Nachricht ohne
+        // Huelle (alte App) bekommt wie bisher eine lokale ID.
+        final draht = parseEnvelope(r.text);
+        final msgId = draht.fromNewFormat ? draht.id : 'relay_${r.id}';
         if (_seenMessageIds.contains(msgId)) continue;
         _seenMessageIds.add(msgId);
         final msg = Message(
           id: msgId,
           senderId: r.senderId,
           receiverId: _myUserId ?? AppConstants.currentUserId,
-          text: r.text,
+          text: draht.text,
           timestamp: r.createdAt,
-          type: r.kind == 'icebreaker'
-              ? MessageType.icebreaker
-              : MessageType.text,
+          type: draht.fromNewFormat
+              ? (draht.kind == WireKind.icebreaker
+                    ? MessageType.icebreaker
+                    : MessageType.text)
+              : (r.kind == 'icebreaker'
+                    ? MessageType.icebreaker
+                    : MessageType.text),
         );
         ref
             .read(chatProvider.notifier)
             .addMessage(match?.id ?? widget.matchId, msg, ref: ref);
         added = true;
       }
+      // Die "fuer alle geloescht"-Hinweise (BEFUND 11.11.2026) - auch
+      // zwischendurch, damit sie im laufenden Gespraech ankommen.
+      await _applyMessageDeletions(widget.matchId);
       if (added) {
         // Zustellung lief -> Intervall wieder auf Ausgangswert.
         _relayBackoffStep = 0;
@@ -660,6 +675,116 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     } catch (e) {
       debugPrint('[ChatDetail] Relay-Abruf fehlgeschlagen: $e');
     }
+  }
+
+  /// Darf diese Nachricht geloescht werden?
+  ///
+  /// BEFUND (11.11.2026): Nur EIGENE Textnachrichten. Der Server prueft
+  /// das auch - aber die Oberflaeche soll es gar nicht erst anbieten.
+  bool _canDeleteMessage(Message msg) {
+    if (msg.type != MessageType.text) return false;
+    final myId = _myUserId ?? AppConstants.currentUserId;
+    if (myId.isEmpty) return false;
+    return msg.senderId == myId;
+  }
+
+  /// Loescht eine Nachricht fuer alle (BEFUND 11.11.2026).
+  ///
+  /// ABLAUF:
+  /// 1. Der Server markiert die Nachricht (er speichert NUR die Tatsache -
+  ///    keinen Inhalt).
+  /// 2. Lokal wird die Nachricht durch den Hinweis ersetzt.
+  /// 3. Beim Empfaenger erscheint derselbe Hinweis, sobald er die
+  ///    Loeschungen des Funkes abfragt.
+  Future<void> _deleteMessageForAll(Message msg) async {
+    final match = _match;
+    if (match == null) return;
+    final serverId = int.tryParse(match.id);
+    if (serverId == null) {
+      // QR-Kontakte haben keinen Server-Funke - dort gibt es kein
+      // "fuer alle".
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.t(context, 'chat.deleteForAllNotPossible')),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    // Der Text wird VOR dem await gelesen: nach dem await darf der
+    // Context nicht mehr benutzt werden.
+    final hinweis = L10n.t(context, 'chat.deletedNotice');
+    try {
+      await ref
+          .read(findYourMatchServiceProvider)
+          .deleteMessageForAll(matchId: serverId, messageId: msg.id);
+      ref
+          .read(chatProvider.notifier)
+          .applyDeletion(match.id, msg.id, noticeText: hinweis);
+      if (mounted) setState(() {});
+    } catch (e) {
+      debugPrint('[ChatDetail] Loeschen fehlgeschlagen: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.t(context, 'chat.deleteForAllFailed')),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  /// Holt die "fuer alle geloescht"-Hinweise des Funkes und wendet sie an.
+  ///
+  /// BEFUND (11.11.2026): Der Empfaenger ersetzt die geloeschte Nachricht
+  /// durch den Hinweis. Das passiert beim Oeffnen des Chats und bei jeder
+  /// Relay-Abfrage (damit es auch im laufenden Gespraech ankommt).
+  Future<void> _applyMessageDeletions(String matchId) async {
+    final serverId = int.tryParse(matchId);
+    if (serverId == null) return;
+    if (!SupabaseService.isInitialized) return;
+    // Der Hinweis-Text wird VOR dem await gelesen (nach dem await darf
+    // der Context nicht mehr benutzt werden).
+    final hinweis = L10n.t(context, 'chat.deletedNotice');
+    try {
+      final loeschungen = await ref
+          .read(findYourMatchServiceProvider)
+          .listMessageDeletions(serverId);
+      if (loeschungen.isEmpty) return;
+      var geaendert = false;
+      for (final l in loeschungen) {
+        final ok = ref
+            .read(chatProvider.notifier)
+            .applyDeletion(
+              matchId,
+              l.messageId,
+              noticeText: hinweis,
+              timestamp: l.deletedAt,
+            );
+        geaendert = geaendert || ok;
+      }
+      if (geaendert && mounted) setState(() {});
+    } catch (e) {
+      debugPrint('[ChatDetail] Loeschungen nicht abrufbar: $e');
+    }
+  }
+
+  /// Zaehlt die gesendete Nachricht serverseitig (BEFUND 11.11.2026).
+  ///
+  /// Damit die kleine Zahl in der Kachel auf ALLEN Geraeten stimmt und
+  /// auch dann da ist, wenn der Chat hier nie geoeffnet wurde.
+  ///
+  /// Best-Effort: ein Fehler darf das Senden nie stoeren.
+  Future<void> _bumpMessageCounter(Match match, String messageId) async {
+    final serverId = int.tryParse(match.id);
+    if (serverId == null) return;
+    if (!SupabaseService.isInitialized) return;
+    await bestEffort('findYourMatchService.bumpMessageCount', () async {
+      await ref
+          .read(findYourMatchServiceProvider)
+          .bumpMessageCount(matchId: serverId, messageId: messageId);
+    });
   }
 
   /// Sendet Text über drei Stufen (v0.9.1):
@@ -672,8 +797,20 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     Match match,
     String text, {
     String kind = 'text',
+    String? messageId,
   }) async {
-    final wireText = kind == 'icebreaker' ? '$icebreakerPrefix$text' : text;
+    // DIE HULLE (BEFUND 11.11.2026): Die Nachrichten-ID des Senders
+    // reist mit - damit kennen beide Seiten dieselbe Nachricht (Grundlage
+    // fuer "fuer alle loeschen" und dafuer, dass dieselbe Nachricht
+    // ueber P2P und Relay nicht doppelt erscheint).
+    //
+    // Die Huelle ersetzt den Eisbreker-Praefix: die Art steht jetzt im
+    // Feld `art` der Huelle.
+    final wireText = buildEnvelope(
+      id: messageId ?? Message.newId('m'),
+      kind: kind == 'icebreaker' ? WireKind.icebreaker : WireKind.text,
+      text: text,
+    );
     final p2p = _p2p;
     if (p2p != null) {
       final ueberP2p = await bestEffortOr(
@@ -690,9 +827,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     final ueberRelay = await bestEffortOr(
       'relayServiceProvider.storeText',
       () async {
+        // BEFUND (11.11.2026): Ueber das Relay muss DIE HULLE laufen,
+        // nicht der blanke Text - sonst verliert der Relay-Weg die
+        // Nachrichten-ID des Senders (und damit das "fuer alle
+        // loeschen" und die Doppel-Erkennung zwischen P2P und Relay).
         await ref
             .read(relayServiceProvider)
-            .storeText(peerId: match.partner.id, text: text, kind: kind);
+            .storeText(peerId: match.partner.id, text: wireText, kind: kind);
         // Dual-Delivery-Schutz: trySendText oben hat bei geschlossenem Kanal
         // bereits in die Outbox eingereiht (mit icebreaker-Präfix!) - nach
         // erfolgreichem Relay-Store muss der Eintrag raus, sonst kommt die
@@ -896,17 +1037,23 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     // als gemeinsame mittige Bubble dargestellt (v0.9.1, beide Seiten).
     _msgSub = _p2p!.incomingMessages.listen((text) {
       if (!mounted) return;
-      final msgId = Message.newId('p2p');
+      // DIE HULLE auspacken (BEFUND 11.11.2026): Die ID kommt vom
+      // SENDER. Damit ist dieselbe Nachricht ueber P2P und Relay erkennbar
+      // (kein Doppel-Eintrag) und "fuer alle loeschen" erreicht auch die
+      // andere Seite.
+      final draht = parseEnvelope(text);
+      final msgId = draht.fromNewFormat ? draht.id : Message.newId('p2p');
       if (_seenMessageIds.contains(msgId)) return;
       _seenMessageIds.add(msgId);
-      final isIcebreaker = text.startsWith(icebreakerPrefix);
       final msg = Message(
         id: msgId,
         senderId: match.partner.id,
         receiverId: _myUserId ?? AppConstants.currentUserId,
-        text: isIcebreaker ? text.substring(icebreakerPrefix.length) : text,
+        text: draht.text,
         timestamp: DateTime.now(),
-        type: isIcebreaker ? MessageType.icebreaker : MessageType.text,
+        type: draht.kind == WireKind.icebreaker
+            ? MessageType.icebreaker
+            : MessageType.text,
       );
       ref.read(chatProvider.notifier).addMessage(match.id, msg, ref: ref);
     });
@@ -1150,9 +1297,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     final myId = _myUserId ?? AppConstants.currentUserId;
     _ctrl.clear();
 
-    // Lokal für die Anzeige ablegen (ohne Mock-Auto-Reply) …
+    // Die ID kommt vom SENDER - damit kennen beide Seiten dieselbe
+    // Nachricht (BEFUND 11.11.2026: "Nachricht fuer alle loeschen" geht
+    // nur, wenn die ID auf beiden Seiten gleich ist).
+    final msgId = Message.newId('m');
     final localMsg = Message(
-      id: Message.newId('local'),
+      id: msgId,
       senderId: myId,
       receiverId: match.partner.id,
       text: text,
@@ -1162,7 +1312,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
 
     // … und ECHT E2E-verschlüsselt zustellen: direkt per P2P, sonst über
     // das Server-Relay (Partner holt beim Öffnen ab), sonst Outbox.
-    await _transmitText(match, text);
+    await _transmitText(match, text, messageId: msgId);
+    // Der Zaehler: die Zahl der gesendeten Nachrichten soll auf ALLEN
+    // Geraeten stimmen (BEFUND 11.11.2026). Dazu zaehlt der Server -
+    // genau einmal je Nachrichten-ID.
+    unawaited(_bumpMessageCounter(match, msgId));
     if (mounted) setState(() {});
   }
 
@@ -3035,6 +3189,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
                               msg: msg,
                               mine: mine,
                               blurEnabled: _blurChatImages,
+                              onDelete: _canDeleteMessage(msg)
+                                  ? _deleteMessageForAll
+                                  : null,
                               onReportImage: _reportImage,
                               showName: group.showName,
                               senderName: mine
@@ -3196,6 +3353,7 @@ class _MessageBubble extends StatefulWidget {
     required this.onReportImage,
     this.showName = false,
     this.senderName = '',
+    this.onDelete,
   });
 
   final Message msg;
@@ -3212,6 +3370,12 @@ class _MessageBubble extends StatefulWidget {
 
   /// Anzuzeigender Absendername (z. B. "Du" oder Partnername).
   final String senderName;
+
+  /// "Fuer alle loeschen" (nur eigene Textnachrichten).
+  ///
+  /// BEFUND (11.11.2026): Wie bei Whatsapp - die Nachricht wird fuer
+  /// beide Seiten ungelesbar, mit einem Hinweis im Verlauf.
+  final void Function(Message msg)? onDelete;
 
   /// Uhrzeit (HH:mm) der Nachricht, lokal formatiert.
   ///
@@ -3285,147 +3449,156 @@ class _MessageBubbleState extends State<_MessageBubble> {
               ),
             ),
           ),
-        Container(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: switch (msg.type) {
-            MessageType.image =>
-              _isViewOnceViewed && !widget.mine
-                  ? _buildViewedOncePlaceholder(textColor)
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Schutz vor unangemessenen Inhalten: Bilder der
-                        // Gegenseite sind standardmäßig verpixelt (Einstellung
-                        // "blurChatImages", Default an). Freigabe nur nach
-                        // ausdrücklicher Bestätigung.
-                        GestureDetector(
-                          onTap: () {
-                            if (blurred) {
-                              _confirmRevealImage();
-                              return;
-                            }
-                            if (widget.mine) {
-                              _showFullscreenImage(context, msg);
-                            } else if (msg.viewOnce) {
-                              _showViewOnceImage(context, msg);
-                            } else {
-                              _showFullscreenImage(context, msg);
-                            }
-                          },
-                          onLongPress: () =>
-                              _showImageActions(context, blurred),
-                          child: Semantics(
-                            label: blurred
-                                ? L10n.t(context, 'chat.imageBlurredHint')
-                                : L10n.t(context, 'chat.imageHint'),
-                            button: true,
-                            child: Stack(
-                              children: [
-                                // Nur wenn wirklich unscharf: ein ImageFiltered mit
-                                // sigma 0 erzeugt trotzdem einen Offscreen-Layer und
-                                // einen Filter-Pass - pro Bild-Bubble beim Scrollen.
-                                _ChatImage(
-                                  mediaUrl: msg.mediaUrl ?? '',
-                                  blurred: blurred,
-                                ),
-                                if (blurred)
-                                  Positioned(
-                                    bottom: 6,
-                                    left: 6,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 2,
-                                      ),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.black54,
-                                        borderRadius: BorderRadius.all(
-                                          Radius.circular(6),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Icon(
-                                            Icons.visibility_off,
-                                            size: 12,
-                                            color: Colors.white,
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            L10n.t(context, 'chat.blurred'),
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 10,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                if (msg.viewOnce)
-                                  Positioned(
-                                    top: 6,
-                                    left: 6,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 2,
-                                      ),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.black54,
-                                        borderRadius: BorderRadius.all(
-                                          Radius.circular(6),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Icon(
-                                            Icons.lock,
-                                            size: 12,
-                                            color: Colors.white,
-                                          ),
-                                          const SizedBox(width: 2),
-                                          Text(
-                                            L10n.t(context, 'chat.viewOnce'),
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 10,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        if (msg.text.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 6),
-                            child: Text(
-                              msg.text,
-                              style: TextStyle(color: textColor),
-                            ),
-                          ),
-                      ],
-                    ),
-            MessageType.voice => _VoiceMessage(
-              msgId: msg.id,
-              path: msg.mediaUrl ?? '',
-              durationSeconds: msg.durationSeconds,
-              textColor: textColor,
-              mine: mine,
+        GestureDetector(
+          // BEFUND (11.11.2026): Long-Press auf eine eigene Textnachricht
+          // bietet "Fuer alle loeschen" an (wie bei Whatsapp). Fremde
+          // Nachrichten lassen sich nicht loeschen - das waere eine
+          // Rechteausweitung.
+          onLongPress: widget.onDelete == null
+              ? null
+              : () => _confirmDelete(context),
+          child: Container(
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(18),
             ),
-            _ => Text(msg.text, style: TextStyle(color: textColor)),
-          },
+            child: switch (msg.type) {
+              MessageType.image =>
+                _isViewOnceViewed && !widget.mine
+                    ? _buildViewedOncePlaceholder(textColor)
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Schutz vor unangemessenen Inhalten: Bilder der
+                          // Gegenseite sind standardmäßig verpixelt (Einstellung
+                          // "blurChatImages", Default an). Freigabe nur nach
+                          // ausdrücklicher Bestätigung.
+                          GestureDetector(
+                            onTap: () {
+                              if (blurred) {
+                                _confirmRevealImage();
+                                return;
+                              }
+                              if (widget.mine) {
+                                _showFullscreenImage(context, msg);
+                              } else if (msg.viewOnce) {
+                                _showViewOnceImage(context, msg);
+                              } else {
+                                _showFullscreenImage(context, msg);
+                              }
+                            },
+                            onLongPress: () =>
+                                _showImageActions(context, blurred),
+                            child: Semantics(
+                              label: blurred
+                                  ? L10n.t(context, 'chat.imageBlurredHint')
+                                  : L10n.t(context, 'chat.imageHint'),
+                              button: true,
+                              child: Stack(
+                                children: [
+                                  // Nur wenn wirklich unscharf: ein ImageFiltered mit
+                                  // sigma 0 erzeugt trotzdem einen Offscreen-Layer und
+                                  // einen Filter-Pass - pro Bild-Bubble beim Scrollen.
+                                  _ChatImage(
+                                    mediaUrl: msg.mediaUrl ?? '',
+                                    blurred: blurred,
+                                  ),
+                                  if (blurred)
+                                    Positioned(
+                                      bottom: 6,
+                                      left: 6,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.black54,
+                                          borderRadius: BorderRadius.all(
+                                            Radius.circular(6),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(
+                                              Icons.visibility_off,
+                                              size: 12,
+                                              color: Colors.white,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              L10n.t(context, 'chat.blurred'),
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 10,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  if (msg.viewOnce)
+                                    Positioned(
+                                      top: 6,
+                                      left: 6,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.black54,
+                                          borderRadius: BorderRadius.all(
+                                            Radius.circular(6),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(
+                                              Icons.lock,
+                                              size: 12,
+                                              color: Colors.white,
+                                            ),
+                                            const SizedBox(width: 2),
+                                            Text(
+                                              L10n.t(context, 'chat.viewOnce'),
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 10,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          if (msg.text.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text(
+                                msg.text,
+                                style: TextStyle(color: textColor),
+                              ),
+                            ),
+                        ],
+                      ),
+              MessageType.voice => _VoiceMessage(
+                msgId: msg.id,
+                path: msg.mediaUrl ?? '',
+                durationSeconds: msg.durationSeconds,
+                textColor: textColor,
+                mine: mine,
+              ),
+              _ => Text(msg.text, style: TextStyle(color: textColor)),
+            },
+          ),
         ),
         // Zeitanzeige unter der Bubble (Nutzerwunsch, dezent).
         if (widget._timeLabel.isNotEmpty)
@@ -3443,6 +3616,34 @@ class _MessageBubbleState extends State<_MessageBubble> {
           ),
       ],
     );
+  }
+
+  /// Fragt nach, ob die Nachricht fuer alle geloescht werden soll.
+  ///
+  /// BEFUND (11.11.2026): "Wie bei Whatsapp - die Nachricht kann man
+  /// irgendwie fuer alle loeschen, aber ein Hinweis steht dann da."
+  Future<void> _confirmDelete(BuildContext context) async {
+    final onDelete = widget.onDelete;
+    if (onDelete == null) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(L10n.t(ctx, 'chat.deleteForAllTitle')),
+        content: Text(L10n.t(ctx, 'chat.deleteForAllBody')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(L10n.t(ctx, 'common.cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(L10n.t(ctx, 'chat.deleteForAllAction')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    onDelete(widget.msg);
   }
 
   /// Bestätigt das Entzerren eines verpixelten Bildes mit Warnhinweis.

@@ -208,6 +208,27 @@ class ChatNotifier extends StateNotifier<List<Match>> {
   /// Liefert ein einzelnes Match anhand seiner ID.
   Match? getMatchById(String matchId) => _chat.getMatchById(matchId);
 
+  /// Ersetzt eine geloeschte Nachricht durch einen Hinweis.
+  ///
+  /// BEFUND (11.11.2026): "Nachricht fuer alle loeschen" - der Empfaenger
+  /// ersetzt die Nachricht durch den Hinweis "Diese Nachricht wurde
+  /// geloescht".
+  bool applyDeletion(
+    String matchId,
+    String messageId, {
+    required String noticeText,
+    DateTime? timestamp,
+  }) {
+    final geaendert = _chat.applyDeletion(
+      matchId,
+      messageId,
+      noticeText: noticeText,
+      timestamp: timestamp ?? DateTime.now(),
+    );
+    if (geaendert) state = _chat.getMatches();
+    return geaendert;
+  }
+
   /// Markiert Nachrichten eines Matches als gelesen.
   void markRead(String matchId) {
     _chat.markRead(matchId);

@@ -152,6 +152,72 @@ class FindYourMatchService {
   }
 
   /// Matches inklusive Quiz-Freischaltungsstand.
+  /// Zaehlt eine gesendete Nachricht je Funke - serverseitig.
+  ///
+  /// BEFUND (11.11.2026): Die kleine Zahl in der Kachel las den LOKALEN
+  /// Verlauf. Der entsteht aber erst, wenn der Chat auf diesem Geraet
+  /// geoeffnet wurde - bei einem nie geoeffneten Funke stand ueberhaupt
+  /// keine Zahl, und auf zwei Geraeten standen verschiedene. Der Server
+  /// zaehlt deshalb jetzt mit: auf allen Geraeten dieselbe Zahl.
+  ///
+  /// [messageId] muss die ID der gesendeten Nachricht sein - der Server
+  /// zaehlt jede ID genau einmal (idempotent).
+  ///
+  /// Best-Effort: ein Fehler darf das Senden nie stoeren.
+  Future<void> bumpMessageCount({
+    required int matchId,
+    required String messageId,
+  }) async {
+    try {
+      await _client.rpc(
+        'bump_match_message_count',
+        params: {'p_match_id': matchId, 'p_message_id': messageId},
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[FindYourMatch] Nachrichtenzaehler: $e');
+      }
+    }
+  }
+
+  /// Loescht eine EIGENE Nachricht fuer alle.
+  ///
+  /// BEFUND (11.11.2026): "Wie bei Whatsapp - die Nachricht kann man
+  /// irgendwie fuer alle loeschen, aber ein Hinweis steht dann da."
+  ///
+  /// Der Server speichert NUR die Tatsache (keinen Inhalt). Der
+  /// Empfaenger ersetzt die Nachricht durch einen Hinweis.
+  ///
+  /// Wirft, wenn die Nachricht nicht dem Aufrufer gehoert.
+  Future<void> deleteMessageForAll({
+    required int matchId,
+    required String messageId,
+  }) async {
+    await _client.rpc(
+      'delete_message_for_all',
+      params: {'p_match_id': matchId, 'p_message_id': messageId},
+    );
+  }
+
+  /// Die "fuer alle geloescht"-Hinweise eines Funkes.
+  Future<List<({String messageId, DateTime? deletedAt})>> listMessageDeletions(
+    int matchId,
+  ) async {
+    final response = await _client.rpc(
+      'list_message_deletions',
+      params: {'p_match_id': matchId},
+    );
+    final rows = (response as List<dynamic>? ?? <dynamic>[]);
+    return rows
+        .map(
+          (row) => (
+            messageId: (row as Map)['messageId'] as String,
+            deletedAt: DateTime.tryParse((row['deletedAt'] as String?) ?? ''),
+          ),
+        )
+        .toList();
+  }
+
   Future<List<MatchWithState>> listMatchesWithState() async {
     final response = await _client.rpc('list_my_matches_with_state');
     final rows = (response as List<dynamic>? ?? <dynamic>[]);

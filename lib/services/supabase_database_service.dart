@@ -365,6 +365,8 @@ class SupabaseDatabaseService {
     List<String> selfTags = const [],
     String? selfNote,
     String? selfToken,
+    String? placeKind,
+    String? placeText,
   }) {
     final eigener = selfToken?.trim() ?? '';
     if (eigener.isEmpty) {
@@ -377,6 +379,10 @@ class SupabaseDatabaseService {
       'p_self_tags': selfTags,
       'p_self_note': selfNote?.trim() ?? '',
       'p_self_token': eigener,
+      // BEFUND (11.11.2026): Der ungefaehre Ort, den der Nutzer selbst
+      // nennt ("Zug, Wagen 3"). Frei eingegeben - das ist kein Standort.
+      'p_place_kind': placeKind?.trim() ?? '',
+      'p_place_text': placeText?.trim() ?? '',
     };
   }
 
@@ -403,6 +409,8 @@ class SupabaseDatabaseService {
     List<String> selfTags = const [],
     String? selfNote,
     String? selfToken,
+    String? placeKind,
+    String? placeText,
   }) async {
     final params = buildTransitSparkParams(
       tokens: tokens,
@@ -411,6 +419,8 @@ class SupabaseDatabaseService {
       selfTags: selfTags,
       selfNote: selfNote,
       selfToken: selfToken,
+      placeKind: placeKind,
+      placeText: placeText,
     );
     // Fallback-Kette (v0.9.0/091/097): Der Server kann je nach
     // Migrationsstand die 6-Parameter- (185, +self_token), 5-Parameter-
@@ -503,6 +513,11 @@ class SupabaseDatabaseService {
     required String token,
     required String messageKey,
     String? customLine,
+    String? recipientId,
+    String? placeKind,
+    String? placeText,
+    List<String> tags = const [],
+    List<String> selfTags = const [],
   }) async {
     await _client.rpc(
       'send_soft_ping',
@@ -510,8 +525,36 @@ class SupabaseDatabaseService {
         'p_token': token,
         'p_message_key': messageKey,
         'p_custom_line': customLine,
+        // BEFUND (11.11.2026): Der Empfaenger kann direkt benannt werden
+        // (die Kandidatenliste liefert die Person). Der Server prueft dann
+        // die Naehe selbst - ein Ping an eine beliebige Person ist damit
+        // nicht moeglich.
+        'p_recipient': recipientId,
+        'p_place_kind': placeKind,
+        'p_place_text': placeText,
+        'p_tags': tags,
+        'p_self_tags': selfTags,
       },
     );
+  }
+
+  /// Die Personen in der Naehe, deren Beschreibung passt.
+  ///
+  /// BEFUND (11.11.2026, Betreiber): "wenn es bei Transit Spark mehrere
+  /// mit der selben Beschreibung geben sollte, dass man dann alle dafuer
+  /// vorgeschlagen bekommt".
+  ///
+  /// Die Liste ist pseudonym: Der Name erscheint nur, wenn die Person ihn
+  /// freigegeben hat (`transit_show_name`).
+  Future<List<Map<String, dynamic>>> listTransitCandidates({
+    required List<String> tags,
+    List<String> selfTags = const [],
+  }) async {
+    final res = await _client.rpc(
+      'list_transit_candidates',
+      params: {'p_tags': tags, 'p_self_tags': selfTags},
+    );
+    return List<Map<String, dynamic>>.from(res as List<dynamic>);
   }
 
   /// Eigene offene Soft-Pings (Empfaenger-Sicht).

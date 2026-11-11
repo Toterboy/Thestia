@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/models/find_match_models.dart';
 import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/providers/find_your_match_browse_provider.dart';
 import 'package:thestia/providers/profile_provider.dart';
@@ -155,14 +156,9 @@ class _FindYourMatchCategoryScreenState
             child: state.laedt
                 ? const Center(child: CircularProgressIndicator())
                 : state.kandidaten.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        L10n.t(context, 'fymb.empty'),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
+                ? _EmptyHint(
+                    kategorie: state.kategorie,
+                    kategorien: state.kategorien,
                   )
                 : ListView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -177,6 +173,59 @@ class _FindYourMatchCategoryScreenState
                   ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Der Leerzustand der Kategorie-Sicht: KEINE Sackgasse.
+///
+/// BEFUND (11.11.2026): Bei einer leeren Kategorie stand nur ein nackter
+/// Text - der Nutzer stand da. Die App kennt aber die Zahl je Kategorie
+/// (`get_find_match_categories`). Also sagt sie, wo es Menschen gibt.
+///
+/// Ist ueberhaupt niemand da, wird das ehrlich gesagt - mit dem Hinweis,
+/// spaeter wiederzukommen.
+class _EmptyHint extends StatelessWidget {
+  const _EmptyHint({required this.kategorie, required this.kategorien});
+
+  /// Die gewaehlte Kategorie (der Name im Text).
+  final String? kategorie;
+
+  /// Alle Kategorien mit ihren Zahlen.
+  final List<CategoryCount> kategorien;
+
+  @override
+  Widget build(BuildContext context) {
+    // Die Kategorien mit Menschen - die gewaehlte faellt weg.
+    final mitMenschen =
+        kategorien.where((k) => k.count > 0 && k.category != kategorie).toList()
+          ..sort((a, b) => b.count.compareTo(a.count));
+    final gezeigt = mitMenschen.take(3).toList();
+
+    if (gezeigt.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            L10n.t(context, 'fymb.emptyNoOne'),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    final liste = gezeigt.map((k) => '${k.category} (${k.count})').join(', ');
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(
+          L10n.tf(context, 'fymb.emptyOther', {
+            'kategorie': kategorie ?? '',
+            'liste': liste,
+          }),
+          textAlign: TextAlign.center,
+        ),
       ),
     );
   }

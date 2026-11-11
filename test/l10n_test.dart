@@ -152,6 +152,9 @@ void main() {
         // Die Werte der Merkmale mit Werteliste (Migration 187):
         // Haarlaenge und Frisur.
         'transit.value.\$wert',
+        // BEFUND (11.11.2026): Die Ortsarten (Zug, Messe, ...) sind
+        // dynamisch - der Screen waehlt sie aus einer Liste.
+        'transit.place.\$art',
       };
       final unknown = dynamic
           .where(

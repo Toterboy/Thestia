@@ -1063,6 +1063,27 @@ const Map<String, Map<String, String>> _strings = {
     'transit.minutesAgo': 'vor {count} Min.',
     'transit.hoursAgo': 'vor {count} Std.',
     'transit.noEncounters': 'Noch keine Geräte in Reichweite gewesen.',
+    'transit.nearbyCount':
+        '%count Personen in der Nähe - du siehst %shown davon.',
+    'transit.placeLabel': 'Wo bist du gerade?',
+    'transit.placeHint': 'z. B. Wagen 3, Halle 2 bei den Toiletten',
+    'transit.placePrivacy':
+        'Du nennst den Ort selbst - die App ermittelt nichts. Wer in der '
+        'Nähe ist, sieht ihn nur, wenn er ihn selbst auch nennt.',
+    'transit.place.zug': 'Zug',
+    'transit.place.messe': 'Messe',
+    'transit.place.veranstaltung': 'Veranstaltung',
+    'transit.place.bar': 'Bar / Café',
+    'transit.place.sonstiges': 'Sonstiges',
+    'transit.candidatesTitle': 'Menschen mit deiner Beschreibung',
+    'transit.candidatesHint':
+        'Sie sind in der Nähe und haben ähnliche Merkmale. Du kannst '
+        'mehreren zuwinken.',
+    'transit.candidateAnonymous': 'Jemand in der Nähe',
+    'transit.candidateWave': 'Zuwinken',
+    'transit.candidateWaved': 'Zugewinkt',
+    'transit.candidateWaveFailed': 'Das hat nicht geklappt',
+    'transit.waveFromPlace': '%s winkt dir zu - %s',
     'transit.pingSheetTitle': 'Einen Gruß senden',
     'transit.pingSheetHint':
         'Einmal pro Begegnung möglich. Die Person entscheidet still, '
@@ -2446,6 +2467,14 @@ const Map<String, Map<String, String>> _strings = {
     'chat.reportImage': 'Bild melden',
     'chat.blurred': 'Verpixelt',
     'chat.viewOnce': 'Einmalig',
+    'chat.deleteForAllTitle': 'Nachricht löschen?',
+    'chat.deleteForAllBody':
+        'Die Nachricht wird für alle gelöscht. Bei deinem Gegenüber '
+        'erscheint an ihrer Stelle ein Hinweis.',
+    'chat.deleteForAllAction': 'Für alle löschen',
+    'chat.deleteForAllFailed': 'Die Nachricht konnte nicht gelöscht werden.',
+    'chat.deleteForAllNotPossible': 'Das geht nur bei Chats mit einem Funke.',
+    'chat.deletedNotice': 'Diese Nachricht wurde gelöscht.',
     'chat.viewedOnce': 'Bereits angesehen',
     'chat.photosAfterSpark': 'Fotos nach Funke sichtbar',
     'chat.safetyNotConnected':
@@ -3069,6 +3098,10 @@ const Map<String, Map<String, String>> _strings = {
     'fymb.empty':
         'In dieser Kategorie ist gerade niemand. Vielleicht eine andere '
         'Altersspanne?',
+    'fymb.emptyOther':
+        'In der Kategorie „%s" ist gerade niemand. In diesen Kategorien '
+        'sind Menschen: %s.',
+    'fymb.emptyNoOne': 'Gerade ist niemand da - schau später nochmal vorbei.',
     'fymb.like': 'Gefällt mir',
     'fymb.reload': 'Neu laden',
     'fymb.choiceTitle': 'Wie willst du jemanden kennenlernen?',
@@ -4216,6 +4249,27 @@ const Map<String, Map<String, String>> _strings = {
     'transit.minutesAgo': '{count} min ago',
     'transit.hoursAgo': '{count} h ago',
     'transit.noEncounters': 'No devices in range yet.',
+    'transit.nearbyCount':
+        '%count people nearby - you are seeing %shown of them.',
+    'transit.placeLabel': 'Where are you right now?',
+    'transit.placeHint': 'e.g. coach 3, hall 2 by the toilets',
+    'transit.placePrivacy':
+        'You name the place yourself - the app does not detect anything. '
+        'People nearby only see it if they name their own place too.',
+    'transit.place.zug': 'Train',
+    'transit.place.messe': 'Trade fair',
+    'transit.place.veranstaltung': 'Event',
+    'transit.place.bar': 'Bar / cafe',
+    'transit.place.sonstiges': 'Elsewhere',
+    'transit.candidatesTitle': 'People with your description',
+    'transit.candidatesHint':
+        'They are nearby and have similar features. You can wave at '
+        'several of them.',
+    'transit.candidateAnonymous': 'Someone nearby',
+    'transit.candidateWave': 'Wave',
+    'transit.candidateWaved': 'Waved',
+    'transit.candidateWaveFailed': 'That did not work',
+    'transit.waveFromPlace': '%s is waving at you - %s',
     'transit.pingSheetTitle': 'Send a greeting',
     'transit.pingSheetHint':
         'Possible once per encounter. The person decides quietly '
@@ -5716,6 +5770,14 @@ const Map<String, Map<String, String>> _strings = {
     'chat.reportImage': 'Report image',
     'chat.blurred': 'Blurred',
     'chat.viewOnce': 'Once',
+    'chat.deleteForAllTitle': 'Delete message?',
+    'chat.deleteForAllBody':
+        'The message will be deleted for everyone. On the other side '
+        'a notice takes its place.',
+    'chat.deleteForAllAction': 'Delete for everyone',
+    'chat.deleteForAllFailed': 'The message could not be deleted.',
+    'chat.deleteForAllNotPossible': 'This only works in chats with a spark.',
+    'chat.deletedNotice': 'This message was deleted.',
     'chat.viewedOnce': 'Already viewed',
     'chat.photosAfterSpark': 'Photos visible after spark',
     'chat.safetyNotConnected':
@@ -6312,8 +6374,12 @@ const Map<String, Map<String, String>> _strings = {
     'fymb.categories': 'Interests',
     'fymb.noCategories': 'Nobody to browse right now.',
     'fymb.empty':
-        'Nobody in this category right now. Maybe a different age '
-        'range?',
+        'Nobody is around in this category right now. Maybe try a '
+        'different age range?',
+    'fymb.emptyOther':
+        'Right now there is nobody in the category \u201e%s\u201c. There are '
+        'people in these categories: %s.',
+    'fymb.emptyNoOne': 'Nobody is around right now - check back later.',
     'fymb.like': 'Like',
     'fymb.reload': 'Reload',
     'fymb.choiceTitle': 'How do you want to meet someone?',

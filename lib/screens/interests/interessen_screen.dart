@@ -2605,10 +2605,12 @@ class _MatchTile extends ConsumerWidget {
     // Quiz-Hinweis erst nach 50-70 Nachrichten (pro Chat deterministisch,
     // gleiche Schwelle wie im Chat-Screen).
     final threshold = 50 + (match.matchId.toString().hashCode.abs() % 21);
-    final msgCount = ref
-        .watch(chatProvider.notifier)
-        .messagesFor(match.matchId.toString())
-        .length;
+    // BEFUND (11.11.2026): Die Zahl kommt vom SERVER (Migration 210).
+    // Vorher las die Kachel den lokalen Verlauf - und der entsteht erst,
+    // wenn der Chat auf diesem Geraet geoeffnet wurde. Bei einem nie
+    // geoeffneten Funke stand ueberhaupt keine Zahl, und auf zwei
+    // Geraeten standen verschiedene.
+    final msgCount = match.messageCount;
     final showQuizHint =
         !match.quizPassed &&
         match.createdVia == 'find_match' &&
