@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:thestia/models/habitude_level.dart';
+import 'package:thestia/widgets/stable_chip.dart';
 
 /// Drei-Button-Auswahl (Täglich / Gelegentlich / Nie) für eine
 /// Konsum-Präferenz (Rauchen, Alkohol, andere Drogen).
@@ -39,7 +40,7 @@ class HabitudeSelector extends StatelessWidget {
           runSpacing: 8,
           children: levels.map((level) {
             final selected = value == level;
-            return ChoiceChip(
+            return StableChip.choice(
               label: Text(level.label),
               selected: selected,
               onSelected: (_) => onChanged(selected ? null : level),

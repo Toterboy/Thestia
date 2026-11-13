@@ -34,6 +34,7 @@ import 'package:thestia/widgets/location_disclosure.dart';
 import 'package:thestia/widgets/music_taste_widgets.dart';
 import 'package:thestia/widgets/habitude_selector.dart';
 import 'package:thestia/widgets/intro_editor.dart';
+import 'package:thestia/widgets/stable_chip.dart';
 import 'package:thestia/utils/best_effort.dart';
 
 /// Unterstützte Wohnsitzländer (Auswahl für die Profilangabe).
@@ -2084,7 +2085,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                   runSpacing: 8,
                   children: AppConstants.presetInterests
                       .map(
-                        (i) => FilterChip(
+                        (i) => StableChip.filter(
                           label: Text(i),
                           selected: profile.interests.contains(i),
                           onSelected: (_) => ref

@@ -8,6 +8,7 @@ import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/providers/user_preferences_provider.dart';
 import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/widgets/stable_chip.dart';
 
 /// Mehrfachauswahl der Geschlechts-Präferenz ("Ich suche").
 ///
@@ -52,7 +53,7 @@ class GenderPreferenceSelector extends ConsumerWidget {
       spacing: 8,
       runSpacing: 8,
       children: [
-        FilterChip(
+        StableChip.filter(
           label: Text(L10n.t(context, 'genderpref.all')),
           selected: allSelected,
           // "Alle" ist abwählbar: erneuter Tipp auf eine aktive
@@ -69,7 +70,7 @@ class GenderPreferenceSelector extends ConsumerWidget {
           },
         ),
         for (final gender in Gender.values)
-          FilterChip(
+          StableChip.filter(
             label: Text(L10n.t(context, gender.labelKey)),
             selected: selected.contains(gender.value),
             onSelected: (_) {

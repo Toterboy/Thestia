@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/widgets/stable_chip.dart';
 
 /// Musik-Genre-Katalog für "Geschmack & Matching" (v0.8.0, Migration 074).
 ///
@@ -122,7 +123,7 @@ class MusicTasteEditor extends StatelessWidget {
           runSpacing: 8,
           children: [
             for (final genre in kMusicGenres)
-              FilterChip(
+              StableChip.filter(
                 label: Text(musicGenreLabelOf(context, genre.slug)),
                 selected: liked.contains(genre.slug),
                 onSelected: (_) => _toggle(genre.slug),
@@ -141,7 +142,7 @@ class MusicTasteEditor extends StatelessWidget {
           children: [
             for (final genre in kMusicGenres)
               if (disliked.contains(genre.slug))
-                FilterChip(
+                StableChip.filter(
                   label: Text(musicGenreLabelOf(context, genre.slug)),
                   selected: true,
                   checkmarkColor: Theme.of(context).colorScheme.error,
