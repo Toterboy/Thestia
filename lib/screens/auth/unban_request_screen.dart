@@ -123,6 +123,7 @@ class _UnbanRequestScreenState extends ConsumerState<UnbanRequestScreen> {
                       ),
                       const SizedBox(height: 24),
                       TextFormField(
+                        enableIMEPersonalizedLearning: false,
                         controller: _emailCtrl,
                         keyboardType: TextInputType.emailAddress,
                         autocorrect: false,
@@ -145,6 +146,7 @@ class _UnbanRequestScreenState extends ConsumerState<UnbanRequestScreen> {
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
+                        enableIMEPersonalizedLearning: false,
                         controller: _reasonCtrl,
                         maxLines: 5,
                         maxLength: 2000,

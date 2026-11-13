@@ -393,6 +393,7 @@ class _EmailVerificationScreenState
             Text(L10n.t(ctx, 'email.changeAddressBody')),
             const SizedBox(height: 16),
             TextField(
+              enableIMEPersonalizedLearning: false,
               controller: controller,
               keyboardType: TextInputType.emailAddress,
               autofocus: true,

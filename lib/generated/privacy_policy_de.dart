@@ -8,7 +8,7 @@ import 'package:thestia/generated/privacy_policy_blocks.dart';
 /// Reihenfolge der Quelle.
 const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
   PrivacyBlock('h1', 'Datenschutzerklärung für Thestia'),
-  PrivacyBlock('p', '**Stand: Oktober 2026** · Version 17 (v0.10.0)'),
+  PrivacyBlock('p', '**Stand: November 2026** · Version 18 (v0.10.1)'),
   PrivacyBlock(
     'p',
     'Thestia ist ein datenschutzorientiertes Open-Source-Projekt (AGPLv3). Der Schutz deiner persönlichen Sphäre steht an erster Stelle: Es werden keine Werbetracker eingesetzt, keine Verhaltensprofile erstellt und keine Nutzerdaten an Dritte verkauft.',
@@ -426,6 +426,44 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
       'die gelöschte Nachricht beim Gegenüber als Hinweis anzeigen',
       'serverseitig am Funke, 180 Tage, danach automatisch entfernt',
     ],
+  ),
+  PrivacyBlock('h3', '3b-5. Die eigene Tastatur (v0.10.1)'),
+  PrivacyBlock(
+    'p',
+    'Beim Schreiben im Chat (1:1-Chat, Zufallschat, Dating Hour) zeigt die App **ihre eigene Tastatur**. Die Tastatur deines Geräts wird dabei **nicht geöffnet**: Das Eingabefeld steht auf `readOnly`, und auf Android und iOS entsteht bei einem solchen Feld überhaupt keine Eingabeverbindung. Die Tastatur deines Handys sieht deshalb **keinen einzigen Buchstaben** deiner Nachricht - und kann aus ihr auch nichts lernen.',
+  ),
+  PrivacyBlock(
+    'p',
+    'In allen anderen Eingabefeldern (Profil, Notizen, Meldungen) läuft weiterhin die Systemtastatur. Dort sorgt die App dafür, dass die Tastatur **nicht aus deinen Angaben lernt** (`enableIMEPersonalizedLearning: false`, Android), und in den Feldern mit persönlichem Text sind zusätzlich Autokorrektur und Vorschläge abgeschaltet.',
+  ),
+  PrivacyBlock(
+    'table_head',
+    '',
+    cells: <String>['Angabe', 'Empfänger', 'Zweck', 'Speicherung'],
+  ),
+  PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
+      'Der von dir getippte Text (im Chat)',
+      'niemand außer der Person, an die die Nachricht geht - sie wird Ende-zu-Ende verschlüsselt übertragen',
+      'die Nachricht',
+      'wie jede Nachricht: verschlüsselt im Chatverlauf',
+    ],
+  ),
+  PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
+      'Die Tastenereignisse der eigenen Tastatur',
+      'niemand - sie laufen im Gerät direkt in das Eingabefeld',
+      'die Eingabe',
+      'keine',
+    ],
+  ),
+  PrivacyBlock(
+    'p',
+    '**Was das nicht ist:** Der Android-Schalter gegen das Lernen hat auf iOS keine Entsprechung - dort wirkt nur die eigene Tastatur. Und in den Feldern mit Systemtastatur sieht die Tastatur deinen Text weiterhin; sie darf ihn nur nicht lernen. Sichtbarer Text kann außerdem immer über den Bildschirm abgefangen werden - dagegen steht die Screenshot-Sperre der App.',
   ),
   PrivacyBlock('h2', '3b. Nahbereichsfunk (BLE, „Transit Spark")'),
   PrivacyBlock(

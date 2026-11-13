@@ -107,6 +107,7 @@ class _MfaChallengeScreenState extends ConsumerState<MfaChallengeScreen> {
               ),
               const SizedBox(height: 24),
               TextField(
+                enableIMEPersonalizedLearning: false,
                 controller: _codeCtrl,
                 autofocus: true,
                 keyboardType: TextInputType.number,

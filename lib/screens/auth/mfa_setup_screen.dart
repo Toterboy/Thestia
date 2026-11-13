@@ -428,6 +428,7 @@ class _MfaSetupScreenState extends ConsumerState<MfaSetupScreen> {
         Text(L10n.t(context, 'mfa.confirmBody')),
         const SizedBox(height: 16),
         TextField(
+          enableIMEPersonalizedLearning: false,
           controller: _codeCtrl,
           keyboardType: TextInputType.number,
           maxLength: 6,

@@ -110,6 +110,7 @@ class _GuardianConsentScreenState extends ConsumerState<GuardianConsentScreen> {
                       ),
                       const SizedBox(height: 28),
                       TextFormField(
+                        enableIMEPersonalizedLearning: false,
                         controller: _emailCtrl,
                         keyboardType: TextInputType.emailAddress,
                         autocorrect: false,

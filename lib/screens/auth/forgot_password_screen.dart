@@ -95,6 +95,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   const SizedBox(height: 24),
                   if (!_sent)
                     TextFormField(
+                      enableIMEPersonalizedLearning: false,
                       controller: _emailCtrl,
                       keyboardType: TextInputType.text,
                       decoration: InputDecoration(

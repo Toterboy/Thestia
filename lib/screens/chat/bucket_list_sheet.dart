@@ -148,6 +148,9 @@ class _BucketListSheetState extends ConsumerState<BucketListSheet> {
                 children: [
                   Expanded(
                     child: TextField(
+                      enableIMEPersonalizedLearning: false,
+                      autocorrect: false,
+                      enableSuggestions: false,
                       controller: _addCtrl,
                       maxLength: 200,
                       decoration: InputDecoration(

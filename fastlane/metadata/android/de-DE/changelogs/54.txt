@@ -1,0 +1,11 @@
+Die Tastatur sieht nichts
+
+Beim Schreiben hat die App jetzt ihre eigene Tastatur. Die Tastatur
+deines Handys wird gar nicht erst geöffnet - sie sieht keinen einzigen
+Buchstaben und kann aus deinem Text nichts lernen.
+
+Einfügen geht trotzdem: Es gibt eine eigene Taste dafür, und eine
+Tastatur am Tablet funktioniert weiterhin.
+
+Und überall sonst in der App: Die Tastatur darf aus deinen Angaben
+nichts lernen.

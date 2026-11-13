@@ -1301,6 +1301,7 @@ class _SettingsPrivacyOnceScreenState
                           const SizedBox(height: 20),
                           // ---- Bio ----
                           TextFormField(
+                            enableIMEPersonalizedLearning: false,
                             controller: _bioCtrl,
                             maxLines: 3,
                             maxLength: 300,
@@ -1450,6 +1451,7 @@ class _SettingsPrivacyOnceScreenState
                             ),
                             const SizedBox(height: 16),
                             TextFormField(
+                              enableIMEPersonalizedLearning: false,
                               controller: _songCtrl,
                               maxLength: 120,
                               scrollPadding: const EdgeInsets.only(bottom: 180),
@@ -1463,6 +1465,7 @@ class _SettingsPrivacyOnceScreenState
                             ),
                             const SizedBox(height: 12),
                             TextFormField(
+                              enableIMEPersonalizedLearning: false,
                               controller: _bandCtrl,
                               maxLength: 120,
                               scrollPadding: const EdgeInsets.only(bottom: 180),

@@ -19,6 +19,7 @@ import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/utils/chat_backgrounds.dart';
 import 'package:thestia/widgets/chat_bubbles.dart';
 import 'package:thestia/widgets/funke_overlay.dart';
+import 'package:thestia/widgets/secure_composer.dart';
 import 'package:thestia/services/dating_hour_service.dart';
 import 'package:thestia/services/find_your_match_service.dart';
 import 'package:thestia/services/supabase_database_service.dart';
@@ -1474,6 +1475,9 @@ class _ShyQuestionChips extends StatelessWidget {
 }
 
 /// Chat-Eingabebereich.
+///
+/// Nutzt die eigene Tastatur der App (v0.10.1): die Systemtastatur des
+/// Geraets sieht keinen einzelnen Buchstaben.
 class _ChatInput extends StatelessWidget {
   const _ChatInput({required this.controller, required this.onSend});
   final TextEditingController controller;
@@ -1481,37 +1485,13 @@ class _ChatInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: controller,
-                decoration: InputDecoration(
-                  hintText: L10n.t(context, 'dh.chat.hint'),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                ),
-                onSubmitted: (_) => onSend(),
-                maxLines: null,
-              ),
-            ),
-            const SizedBox(width: 8),
-            IconButton.filled(
-              onPressed: onSend,
-              icon: const Icon(Icons.send),
-              style: IconButton.styleFrom(padding: const EdgeInsets.all(12)),
-            ),
-          ],
-        ),
-      ),
+    return SecureComposer(
+      controller: controller,
+      hintText: L10n.t(context, 'dh.chat.hint'),
+      onSend: onSend,
+      // Im Dating Hour ist der Chat eine Zeile - Enter sendet.
+      enterSends: true,
+      maxLines: 3,
     );
   }
 }

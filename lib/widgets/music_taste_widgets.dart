@@ -212,6 +212,7 @@ class MusicTasteEditor extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
                         child: TextField(
+                          enableIMEPersonalizedLearning: false,
                           autofocus: true,
                           decoration: InputDecoration(
                             prefixIcon: const Icon(Icons.search, size: 20),

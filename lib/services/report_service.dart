@@ -401,6 +401,9 @@ Future<void> showReportUserDialog({
                 ),
                 const SizedBox(height: 16),
                 TextField(
+                  enableIMEPersonalizedLearning: false,
+                  autocorrect: false,
+                  enableSuggestions: false,
                   controller: descriptionController,
                   maxLines: 3,
                   decoration: InputDecoration(

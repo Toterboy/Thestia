@@ -1,6 +1,6 @@
 # Datenschutzerklärung für Thestia
 
-**Stand: Oktober 2026** · Version 17 (v0.10.0)
+**Stand: November 2026** · Version 18 (v0.10.1)
 
 Thestia ist ein datenschutzorientiertes Open-Source-Projekt (AGPLv3).
 Der Schutz deiner persönlichen Sphäre steht an erster Stelle: Es werden
@@ -220,6 +220,34 @@ das er nicht schon beim Zustellen sieht.
 | Angabe | Empfänger | Zweck | Speicherung |
 |---|---|---|---|
 | „Diese Nachricht wurde gelöscht" (Nachrichten-ID, Zeitpunkt) | nur die Teilnehmer des Funkes | die gelöschte Nachricht beim Gegenüber als Hinweis anzeigen | serverseitig am Funke, 180 Tage, danach automatisch entfernt |
+
+### 3b-5. Die eigene Tastatur (v0.10.1)
+
+Beim Schreiben im Chat (1:1-Chat, Zufallschat, Dating Hour) zeigt die App
+**ihre eigene Tastatur**. Die Tastatur deines Geräts wird dabei **nicht
+geöffnet**: Das Eingabefeld steht auf `readOnly`, und auf Android und iOS
+entsteht bei einem solchen Feld überhaupt keine Eingabeverbindung. Die
+Tastatur deines Handys sieht deshalb **keinen einzigen Buchstaben**
+deiner Nachricht - und kann aus ihr auch nichts lernen.
+
+In allen anderen Eingabefeldern (Profil, Notizen, Meldungen) läuft
+weiterhin die Systemtastatur. Dort sorgt die App dafür, dass die
+Tastatur **nicht aus deinen Angaben lernt**
+(`enableIMEPersonalizedLearning: false`, Android), und in den Feldern mit
+persönlichem Text sind zusätzlich Autokorrektur und Vorschläge
+abgeschaltet.
+
+| Angabe | Empfänger | Zweck | Speicherung |
+|---|---|---|---|
+| Der von dir getippte Text (im Chat) | niemand außer der Person, an die die Nachricht geht - sie wird Ende-zu-Ende verschlüsselt übertragen | die Nachricht | wie jede Nachricht: verschlüsselt im Chatverlauf |
+| Die Tastenereignisse der eigenen Tastatur | niemand - sie laufen im Gerät direkt in das Eingabefeld | die Eingabe | keine |
+
+**Was das nicht ist:** Der Android-Schalter gegen das Lernen hat auf iOS
+keine Entsprechung - dort wirkt nur die eigene Tastatur. Und in den
+Feldern mit Systemtastatur sieht die Tastatur deinen Text weiterhin; sie
+darf ihn nur nicht lernen. Sichtbarer Text kann außerdem immer über den
+Bildschirm abgefangen werden - dagegen steht die Screenshot-Sperre der
+App.
 
 ## 3b. Nahbereichsfunk (BLE, „Transit Spark")
 

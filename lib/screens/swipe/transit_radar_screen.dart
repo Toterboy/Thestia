@@ -1160,6 +1160,9 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
         ),
         const SizedBox(height: 8),
         TextField(
+          enableIMEPersonalizedLearning: false,
+          autocorrect: false,
+          enableSuggestions: false,
           key: const Key('transit.placeText'),
           maxLength: 60,
           maxLines: 1,
@@ -1546,6 +1549,9 @@ class _SoftPingSheetState extends ConsumerState<_SoftPingSheet> {
           ),
           const SizedBox(height: 8),
           TextField(
+            enableIMEPersonalizedLearning: false,
+            autocorrect: false,
+            enableSuggestions: false,
             controller: _customCtrl,
             maxLength: 140,
             maxLines: 2,
@@ -2189,6 +2195,7 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
             const SizedBox(height: 12),
             // ---- Suche
             TextField(
+              enableIMEPersonalizedLearning: false,
               controller: _searchCtrl,
               onChanged: (v) => setState(() => _query = v),
               decoration: InputDecoration(
@@ -2489,6 +2496,9 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
             if (widget.customHintKey != null) ...[
               const SizedBox(height: 16),
               TextField(
+                enableIMEPersonalizedLearning: false,
+                autocorrect: false,
+                enableSuggestions: false,
                 controller: _customCtrl,
                 maxLength: 140,
                 maxLines: 2,

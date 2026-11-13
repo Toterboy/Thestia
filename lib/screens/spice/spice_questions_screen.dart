@@ -137,6 +137,7 @@ class _SpiceQuestionsScreenState extends ConsumerState<SpiceQuestionsScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: TextField(
+              enableIMEPersonalizedLearning: false,
               controller: _searchCtrl,
               onChanged: (v) => setState(() => _query = v),
               decoration: InputDecoration(

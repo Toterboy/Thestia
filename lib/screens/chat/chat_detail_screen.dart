@@ -56,6 +56,7 @@ import 'package:thestia/widgets/end_spark_dialog.dart';
 import 'package:thestia/widgets/intro_audio_player.dart';
 import 'package:thestia/widgets/meet_intent_card.dart';
 import 'package:thestia/widgets/profile_widgets.dart';
+import 'package:thestia/widgets/secure_composer.dart';
 import 'package:thestia/utils/best_effort.dart';
 
 /// Präfix für geteilte Eisbrecher-Fragen im Textkanal (v0.9.1): Beide Seiten
@@ -3250,84 +3251,43 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
               // in einer Karte OBERHALB der Eingabezeile - statt nur Mic/X und
               // Sekunden im Hint-Text (altes Design).
               if (_recording) _buildVoiceRecordingPanel(context),
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.image),
-                        tooltip: L10n.t(context, 'chat.imageSend'),
-                        // E: Während eines Uploads deaktivieren.
-                        onPressed: _uploadingImage ? null : _pickImage,
-                      ),
-                      IconButton(
-                        icon: Icon(_recording ? Icons.stop : Icons.mic),
-                        tooltip: _recording
-                            ? L10n.t(context, 'chat.voiceStopSend')
-                            : L10n.t(context, 'chat.voiceTooltip'),
-                        color: _recording ? Colors.red : null,
-                        onPressed: _toggleRecord,
-                      ),
-                      // D: Separater "X"-Abbrechen-Button während der Aufnahme.
-                      if (_recording)
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          tooltip: L10n.t(context, 'chat.voiceCancel'),
-                          color: Colors.red,
-                          onPressed: _cancelRecording,
-                        ),
-                      Expanded(
-                        child: TextField(
-                          controller: _ctrl,
-                          // A/B: Mehrzeilig wachsend (wie WhatsApp/Telegram), Text
-                          // bricht um statt horizontal zu scrollen. Umlaute (ö, ä,
-                          // ü) werden durch Dart/Flutter standardmäßig als UTF-16
-                          // verarbeitet und korrekt angezeigt - ein horizontaler
-                          // Scrolleffekt (alte Einzeilen-Darstellung) hätte sie am
-                          // rechten Rand "unsichtbar" gemacht.
-                          keyboardType: TextInputType.multiline,
-                          textInputAction: TextInputAction.newline,
-                          maxLines: 5,
-                          minLines: 1,
-                          decoration: InputDecoration(
-                            hintText: _recording
-                                ? L10n.tf(context, 'chat.recordingHint', {
-                                    's': '$_recordSeconds',
-                                  })
-                                : L10n.t(context, 'chat.hint'),
-                            border: const OutlineInputBorder(
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(24),
-                              ),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 10,
-                            ),
-                          ),
-                          onSubmitted: (_) => _send(),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // E: Während des Bild-Uploads Ladeindikator statt Senden.
-                      if (_uploadingImage)
-                        const Padding(
-                          padding: EdgeInsets.all(8),
-                          child: SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        )
-                      else
-                        IconButton.filled(
-                          onPressed: _send,
-                          icon: const Icon(Icons.send),
-                        ),
-                    ],
+              // Die Eingabeleiste bringt ihre eigene Tastatur mit
+              // (v0.10.1): die Systemtastatur des Geraets sieht dabei
+              // keinen einzelnen Buchstaben.
+              SecureComposer(
+                controller: _ctrl,
+                hintText: _recording
+                    ? L10n.tf(context, 'chat.recordingHint', {
+                        's': '$_recordSeconds',
+                      })
+                    : L10n.t(context, 'chat.hint'),
+                onSend: _send,
+                leading: <Widget>[
+                  IconButton(
+                    icon: const Icon(Icons.image),
+                    tooltip: L10n.t(context, 'chat.imageSend'),
+                    // E: Während eines Uploads deaktivieren.
+                    onPressed: _uploadingImage ? null : _pickImage,
                   ),
-                ),
+                  IconButton(
+                    icon: Icon(_recording ? Icons.stop : Icons.mic),
+                    tooltip: _recording
+                        ? L10n.t(context, 'chat.voiceStopSend')
+                        : L10n.t(context, 'chat.voiceTooltip'),
+                    color: _recording ? Colors.red : null,
+                    onPressed: _toggleRecord,
+                  ),
+                  // D: Separater "X"-Abbrechen-Button während der Aufnahme.
+                  if (_recording)
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      tooltip: L10n.t(context, 'chat.voiceCancel'),
+                      color: Colors.red,
+                      onPressed: _cancelRecording,
+                    ),
+                ],
+                // E: Während des Bild-Uploads Ladeindikator statt Senden.
+                showSendSpinner: _uploadingImage,
               ),
             ],
           ),

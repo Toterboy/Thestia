@@ -434,6 +434,9 @@ class _ContactShareFormState extends ConsumerState<_ContactShareForm> {
           ),
           const SizedBox(height: 8),
           TextField(
+            enableIMEPersonalizedLearning: false,
+            autocorrect: false,
+            enableSuggestions: false,
             controller: _phone,
             keyboardType: TextInputType.phone,
             textInputAction: TextInputAction.next,
@@ -651,6 +654,9 @@ class _PresetTile extends StatelessWidget {
             ),
             if (controllers.enabled)
               TextField(
+                enableIMEPersonalizedLearning: false,
+                autocorrect: false,
+                enableSuggestions: false,
                 controller: controllers.handle,
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
@@ -699,6 +705,9 @@ class _CustomTile extends StatelessWidget {
               ],
             ),
             TextField(
+              enableIMEPersonalizedLearning: false,
+              autocorrect: false,
+              enableSuggestions: false,
               controller: controllers.app,
               textInputAction: TextInputAction.next,
               decoration: InputDecoration(
@@ -712,6 +721,9 @@ class _CustomTile extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             TextField(
+              enableIMEPersonalizedLearning: false,
+              autocorrect: false,
+              enableSuggestions: false,
               controller: controllers.handle,
               textInputAction: TextInputAction.next,
               decoration: InputDecoration(

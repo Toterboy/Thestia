@@ -625,7 +625,7 @@
 </header>
 <main class="inhalt">
 <h1>Datenschutzerklärung für Thestia</h1>
-<p><strong>Stand: Oktober 2026</strong> · Version 17 (v0.10.0)</p>
+<p><strong>Stand: November 2026</strong> · Version 18 (v0.10.1)</p>
 <p>Thestia ist ein datenschutzorientiertes Open-Source-Projekt (AGPLv3). Der Schutz deiner persönlichen Sphäre steht an erster Stelle: Es werden keine Werbetracker eingesetzt, keine Verhaltensprofile erstellt und keine Nutzerdaten an Dritte verkauft.</p>
 <h2>1. Grundsatz und Verantwortliche Stelle</h2>
 <p><strong>Kontakt:</strong> Fragen zur Verarbeitung deiner Daten, Auskunft, Berichtigung oder Löschung erreichst du über das In-App-Bug-Report-Formular (<em>Einstellungen → Datenschutz → Bug melden</em>) oder über die <strong>Kontaktadresse `datenschutz@thestia.de`</strong>. Für eine Löschung auf Anfrage nenne deine User-ID - dann werden auch die nach dem obigen aufgeführten Restdaten entfernt.</p>
@@ -732,6 +732,19 @@
 </tbody>
 </table>
 </div>
+<h3>3b-5. Die eigene Tastatur (v0.10.1)</h3>
+<p>Beim Schreiben im Chat (1:1-Chat, Zufallschat, Dating Hour) zeigt die App <strong>ihre eigene Tastatur</strong>. Die Tastatur deines Geräts wird dabei <strong>nicht geöffnet</strong>: Das Eingabefeld steht auf `readOnly`, und auf Android und iOS entsteht bei einem solchen Feld überhaupt keine Eingabeverbindung. Die Tastatur deines Handys sieht deshalb <strong>keinen einzigen Buchstaben</strong> deiner Nachricht - und kann aus ihr auch nichts lernen.</p>
+<p>In allen anderen Eingabefeldern (Profil, Notizen, Meldungen) läuft weiterhin die Systemtastatur. Dort sorgt die App dafür, dass die Tastatur <strong>nicht aus deinen Angaben lernt</strong> (`enableIMEPersonalizedLearning: false`, Android), und in den Feldern mit persönlichem Text sind zusätzlich Autokorrektur und Vorschläge abgeschaltet.</p>
+<div class="tabellen-huelle">
+<table>
+<thead><tr><th>Angabe</th><th>Empfänger</th><th>Zweck</th><th>Speicherung</th></tr></thead>
+<tbody>
+<tr><td>Der von dir getippte Text (im Chat)</td><td>niemand außer der Person, an die die Nachricht geht - sie wird Ende-zu-Ende verschlüsselt übertragen</td><td>die Nachricht</td><td>wie jede Nachricht: verschlüsselt im Chatverlauf</td></tr>
+<tr><td>Die Tastenereignisse der eigenen Tastatur</td><td>niemand - sie laufen im Gerät direkt in das Eingabefeld</td><td>die Eingabe</td><td>keine</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Was das nicht ist:</strong> Der Android-Schalter gegen das Lernen hat auf iOS keine Entsprechung - dort wirkt nur die eigene Tastatur. Und in den Feldern mit Systemtastatur sieht die Tastatur deinen Text weiterhin; sie darf ihn nur nicht lernen. Sichtbarer Text kann außerdem immer über den Bildschirm abgefangen werden - dagegen steht die Screenshot-Sperre der App.</p>
 <h2>3b. Nahbereichsfunk (BLE, „Transit Spark")</h2>
 <p>Transit Spark nutzt Bluetooth Low Energy, damit zwei Personen sich in der Nähe begegnen können, ohne sich ansprechen zu müssen. Dabei werden Funk-Metadaten verarbeitet.</p>
 <p><strong>Was gesendet wird:</strong> ein ephemerer, zufälliger Token (keine Geräte-ID, kein Name, keine MAC-Adresse des Geräts). Der Stack des Betriebssystems vergibt für das Advertising eine auflösbare Privatadresse; die App setzt keine feste Adresse.</p>

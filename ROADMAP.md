@@ -21,12 +21,14 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
   erzwungener Altersgrenze und text-only-Vorstellung). MINOR-Bump
   **nach Regel** – eine Änderung der Datenverarbeitung für Nutzende ist
   eine Kern-Funktion
-- **0.10.1** – **umgesetzt** (Build 51/52): Die Namens-Entscheidung beim
+- **0.10.1** – **umgesetzt** (Build 51/52/54): Die Namens-Entscheidung beim
   Transit Spark (der Dialog fragt beim ersten Öffnen, danach bleibt der
   Schalter änderbar), der serverseitige Nachrichtenzähler, „Nachricht für
   alle löschen“ (der Server speichert nur die Tatsache, keinen Inhalt), die
   Transit-Kandidatenliste (mehrere mit derselben Beschreibung, mehrere
-  anschreiben) und die ungefaehre Ortsangabe (Selbstauskunft, kein Standort).
+  anschreiben), die ungefaehre Ortsangabe (Selbstauskunft, kein Standort)
+  und die **eigene Tastatur** (Build 54: die Systemtastatur des Geräts
+  sieht im Chat keinen einzigen Buchstaben).
 - **0.11.0** – Emotionaler Rückzugsort (Sanctuary) & lokaler
   KI-Reflexions-Chat (rein on-device)
 - **0.12.0** – Web-Bridge, Transit-Reachability & Zero-Install
@@ -40,6 +42,15 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
   Sicherheitsaudit desselben Releases gekoppelt. Das ist ein vertretbarer
   Grund, aber es bleibt eine Ausnahme – künftige Abweichungen brauchen
   denselben dokumentierten Anlass.
+- **Anlage 0.10.1 – eine neue Funktion trotz PATCH-Version:** Die eigene
+  Tastatur (Build 54) ist eine echte neue Nutzerfunktion und wäre nach
+  der Regel ein MINOR-Bump. Sie bleibt trotzdem in 0.10.1, weil der
+  Betreiber sie ausdrücklich für diese Version verlangt hat **und**
+  0.10.1 noch nirgends veröffentlicht ist (nur ein GitHub-Prerelease, kein
+  Store-Build) – es gibt also niemanden, dessen Zusage durch die
+  zusätzliche Funktion gebrochen würde. Die Ausnahme ist hiermit
+  dokumentiert und nicht stillschweigend. **Für die nächste Version gilt
+  die Regel wieder ohne Ausnahme.**
 - „Kern-Funktion" im Sinne dieser Regel: eine Änderung des
   Funktionsumfangs **oder** der Datenverarbeitung für Nutzende. Vorlagen,
   Polish und Sprachausbau sind es nicht. Diese Abgrenzung war vorher
@@ -471,7 +482,7 @@ verschluesselt gespeichert und wird erst beim Funke gehoert.
 > Die Antwort liegt auf dem **Server**, damit das zweite Gerät nicht
 > nochmal fragt.
 
-### Stand 11.11.2026: 0.10.1 ist umgesetzt (Build 51/52)
+### Stand 13.11.2026: 0.10.1 ist umgesetzt (Build 51/52/54)
 
 Der Wunsch des Betreibers („der Name beim Zuwinken soll abschaltbar
 sein") ist umgesetzt – und die Entscheidung liegt beim **Nutzer**:
@@ -489,11 +500,59 @@ Nachrichtenlöschen:
 | „Nachricht für alle löschen" (wie WhatsApp) | umgesetzt – der Server speichert **nur die Tatsache**, keinen Inhalt (Migration 210/214) |
 | Transit Spark: mehrere mit derselben Beschreibung | umgesetzt (Migration 213) |
 | Transit Spark: der ungefähre Ort (Selbstauskunft) | umgesetzt (Migration 213) |
+| **Die eigene Tastatur** (Build 54) | umgesetzt – die Systemtastatur sieht im Chat keinen einzigen Buchstaben |
 
 **Datenschutz-Bewertung zum Löschen:** Der Server merkt sich nur, *dass*
 eine Nachricht gelöscht wurde – kein Text, keine Chiffre. Das ist mit
 dem E2E-Modell vereinbar. Ehrlich gesagt werden muss: die bereits
 zugestellte Kopie beim Gegenüber kann nicht zurückgerufen werden.
+
+### Build 54: die eigene Tastatur (13.11.2026)
+
+> **Wunsch des Betreibers:** „Baue in die Version bitte noch ein, dass
+> die Handytastatur nicht tracken kann was man schreibt. Das soll ja
+> irgendwie gehen können anscheinend."
+>
+> **Das Problem, ehrlich benannt:** Die Systemtastatur (Gboard,
+> SwiftKey, ...) ist ein eigenes Programm auf dem Gerät. Sie sieht
+> jeden Buchstaben und darf daraus lernen – Wörterbuch, Autokorrektur,
+> personalisierte Vorschläge. Auf einem Gerät, das man nicht besitzt
+> (Fremdgerät, Secondhand, manipulierte ROM) ist das nicht aufhaltbar.
+>
+> **Zwei Stufen, weil „nicht lernen" und „nicht sehen" verschiedene
+> Dinge sind:**
+>
+> 1. **Nicht lernen** – in **jedem** Eingabefeld der App steht jetzt
+>    `enableIMEPersonalizedLearning: false` (Android:
+>    `IME_FLAG_NO_PERSONALIZED_LEARNING`). In den Feldern mit
+>    persönlichem Text kommen `autocorrect: false` und
+>    `enableSuggestions: false` dazu.
+> 2. **Nicht sehen** – im Chat (1:1, Zufallschat, Dating Hour) hat die
+>    App **ihre eigene Tastatur** (`lib/widgets/secure_keyboard.dart`).
+>    Das Eingabefeld steht auf `readOnly`: auf Android und iOS entsteht
+>    bei einem solchen Feld **keine Eingabeverbindung**, die
+>    Systemtastatur bekommt also nichts zu sehen – keinen Buchstaben,
+>    keinen Cursor, nichts zum Lernen.
+>
+> **Was die eigene Tastatur kann:** Groß/Klein, Umlaute (ä ö ü ß), Zahlen
+> und Zeichen, Emoji, Löschen, Enter, Einfügen aus der Zwischenablage. Eine
+> **Hardwaretastatur** funktioniert weiterhin – die Tastenereignisse
+> werden abgefangen und direkt eingefügt, also auch dort ohne die
+> Systemtastatur.
+>
+> **Die Grenzen, die nicht wegformuliert werden:**
+> * `enableIMEPersonalizedLearning` wirkt **nur auf Android** – für iOS
+>   gibt es keine Entsprechung. Der Weg über die eigene Tastatur ist
+>   deshalb der einzige, der auf beiden Plattformen dasselbe verspricht.
+> * In den Feldern, in denen weiterhin die Systemtastatur läuft
+>   (Profil, Notizen, Meldungen), **sieht** die Tastatur den Text
+>   weiterhin – sie darf ihn nur nicht lernen. Wer auch das nicht will,
+>   muss die eigene Tastatur auch dort nutzen; das ist der nächste
+>   Schritt, nicht dieser.
+> * Sichtbarer Text kann immer über den Bildschirm abgefangen werden –
+>   dagegen steht `FLAG_SECURE` (Screenshot-Sperre), die die App bereits
+>   überall setzt.
+> * Ein gerootetes Gerät ist pauschal nicht mehr zu retten.
 
 ## Umgesetzt: 0.10.0 – Standort-Privatisierung, Transit Spark auf echten Geräten & Qualitätssicherung
 

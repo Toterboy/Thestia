@@ -314,6 +314,9 @@ class _DatingHourPreferencesScreenState
             ),
             const SizedBox(height: 12),
             TextField(
+              enableIMEPersonalizedLearning: false,
+              autocorrect: false,
+              enableSuggestions: false,
               controller: _traitController,
               decoration: InputDecoration(
                 labelText: L10n.t(context, 'dh.prefs.traitOwn'),

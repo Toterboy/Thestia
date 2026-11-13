@@ -604,6 +604,7 @@ Future<void> _createIdentityBackup(BuildContext context, WidgetRef ref) async {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextFormField(
+              enableIMEPersonalizedLearning: false,
               controller: pwCtrl,
               obscureText: true,
               autofocus: true,
@@ -616,6 +617,7 @@ Future<void> _createIdentityBackup(BuildContext context, WidgetRef ref) async {
             ),
             const SizedBox(height: 12),
             TextFormField(
+              enableIMEPersonalizedLearning: false,
               controller: pw2Ctrl,
               obscureText: true,
               decoration: InputDecoration(
@@ -730,6 +732,7 @@ Future<void> _restoreIdentityBackup(BuildContext context, WidgetRef ref) async {
         mainAxisSize: MainAxisSize.min,
         children: [
           TextField(
+            enableIMEPersonalizedLearning: false,
             controller: blobCtrl,
             maxLines: 5,
             decoration: InputDecoration(
@@ -738,6 +741,7 @@ Future<void> _restoreIdentityBackup(BuildContext context, WidgetRef ref) async {
           ),
           const SizedBox(height: 12),
           TextField(
+            enableIMEPersonalizedLearning: false,
             controller: pwCtrl,
             obscureText: true,
             decoration: InputDecoration(
@@ -1003,6 +1007,7 @@ class _PasskeyManagerCardState extends ConsumerState<_PasskeyManagerCard> {
       builder: (ctx) => AlertDialog(
         title: Text(L10n.t(ctx, 'passkey.renameTitle')),
         content: TextField(
+          enableIMEPersonalizedLearning: false,
           controller: ctrl,
           autofocus: true,
           decoration: InputDecoration(

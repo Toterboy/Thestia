@@ -100,6 +100,7 @@ Future<String?> promptTotpCode(BuildContext context) {
     builder: (ctx) => AlertDialog(
       title: Text(L10n.t(ctx, 'privacy.totpTitle')),
       content: TextField(
+        enableIMEPersonalizedLearning: false,
         controller: controller,
         autofocus: true,
         keyboardType: TextInputType.number,

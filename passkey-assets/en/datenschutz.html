@@ -625,7 +625,7 @@
 </header>
 <main class="inhalt">
 <h1>Privacy Policy for Thestia</h1>
-<p><strong>As of: October 2026</strong> · Version 17 (v0.10.0)</p>
+<p><strong>As of: November 2026</strong> · Version 18 (v0.10.1)</p>
 <p>Thestia is a privacy-conscious open-source project (AGPLv3). Protecting your personal sphere comes first: no advertising trackers are used, no behavioural profiles are created, and no user data is sold to third parties.</p>
 <h2>1. Principles and data controller</h2>
 <p><strong>Contact:</strong> Questions about the processing of your data, access, rectification or erasure can be directed to the in-app bug report form (<em>Settings → Privacy → Report a bug</em>) or to the <strong>contact address `datenschutz@thestia.de`</strong>. To request erasure, state your user ID - then the residual data listed above is removed as well.</p>
@@ -732,6 +732,19 @@
 </tbody>
 </table>
 </div>
+<h3>3b-5. The app's own keyboard (v0.10.1)</h3>
+<p>While you write in a chat (one-to-one chat, random chat, Dating Hour), the app shows <strong>its own keyboard</strong>. Your device's keyboard is <strong>not opened</strong> in the process: the input field is read-only, and on Android and iOS a read-only field does not create an input connection at all. Your phone's keyboard therefore does not see <strong>a single letter</strong> of your message - and cannot learn anything from it either.</p>
+<p>In all other input fields (profile, notes, reports) the system keyboard is still used. There the app makes sure that the keyboard <strong>does not learn from what you enter</strong> (`enableIMEPersonalizedLearning: false` on Android), and in the fields with personal text autocorrection and suggestions are switched off as well.</p>
+<div class="tabellen-huelle">
+<table>
+<thead><tr><th>Data</th><th>Recipient</th><th>Purpose</th><th>Storage</th></tr></thead>
+<tbody>
+<tr><td>The text you type (in chats)</td><td>nobody except the person the message goes to - it is transmitted end-to-end encrypted</td><td>the message</td><td>like every message: encrypted in the chat history</td></tr>
+<tr><td>The key events of the app's own keyboard</td><td>nobody - they go straight into the input field on the device</td><td>the input</td><td>none</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>What this is not:</strong> The Android switch against learning has no equivalent on iOS - there only the app's own keyboard helps. And in the fields that still use the system keyboard, that keyboard does see your text; it is only not allowed to learn from it. Visible text can also always be captured from the screen - the app's screenshot protection is what stands against that.</p>
 <h2>3b. Near-field radio (BLE, "Transit Spark")</h2>
 <p>Transit Spark uses Bluetooth Low Energy so that two people can meet nearby without having to talk to each other. Radio metadata is processed in the process.</p>
 <p><strong>What is sent:</strong> an ephemeral, random token (no device ID, no name, no MAC address of the device). The operating system's stack assigns a resolvable private address for the advertising; the app does not set a fixed address.</p>

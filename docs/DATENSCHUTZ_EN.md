@@ -1,6 +1,6 @@
 # Privacy Policy for Thestia
 
-**As of: October 2026** · Version 17 (v0.10.0)
+**As of: November 2026** · Version 18 (v0.10.1)
 
 Thestia is a privacy-conscious open-source project (AGPLv3). Protecting
 your personal sphere comes first: no advertising trackers are used, no
@@ -216,6 +216,33 @@ content that it does not already know from delivering it.
 | Data | Recipient | Purpose | Storage |
 |---|---|---|---|
 | "This message was deleted" (message ID, time) | only the participants of the spark | show the deleted message as a notice on the other side | on the server, attached to the spark, 180 days, then removed automatically |
+
+### 3b-5. The app's own keyboard (v0.10.1)
+
+While you write in a chat (one-to-one chat, random chat, Dating Hour),
+the app shows **its own keyboard**. Your device's keyboard is **not
+opened** in the process: the input field is read-only, and on Android and
+iOS a read-only field does not create an input connection at all. Your
+phone's keyboard therefore does not see **a single letter** of your
+message - and cannot learn anything from it either.
+
+In all other input fields (profile, notes, reports) the system keyboard
+is still used. There the app makes sure that the keyboard **does not
+learn from what you enter** (`enableIMEPersonalizedLearning: false` on
+Android), and in the fields with personal text autocorrection and
+suggestions are switched off as well.
+
+| Data | Recipient | Purpose | Storage |
+|---|---|---|---|
+| The text you type (in chats) | nobody except the person the message goes to - it is transmitted end-to-end encrypted | the message | like every message: encrypted in the chat history |
+| The key events of the app's own keyboard | nobody - they go straight into the input field on the device | the input | none |
+
+**What this is not:** The Android switch against learning has no
+equivalent on iOS - there only the app's own keyboard helps. And in the
+fields that still use the system keyboard, that keyboard does see your
+text; it is only not allowed to learn from it. Visible text can also
+always be captured from the screen - the app's screenshot protection is
+what stands against that.
 
 ## 3b. Near-field radio (BLE, "Transit Spark")
 

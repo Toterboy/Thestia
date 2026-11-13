@@ -158,6 +158,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                       ),
                       const SizedBox(height: 24),
                       TextFormField(
+                        enableIMEPersonalizedLearning: false,
                         controller: _passwordCtrl,
                         obscureText: _obscure,
                         autocorrect: false,
@@ -179,6 +180,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
+                        enableIMEPersonalizedLearning: false,
                         controller: _confirmCtrl,
                         obscureText: _obscure,
                         autocorrect: false,

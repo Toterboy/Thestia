@@ -19,6 +19,7 @@ import 'package:thestia/services/relay_service.dart';
 import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/widgets/chat_bubbles.dart';
+import 'package:thestia/widgets/secure_composer.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/utils/best_effort.dart';
 
@@ -1018,39 +1019,12 @@ class _RandomChatScreenState extends ConsumerState<RandomChatScreen>
                       },
                     ),
             ),
-            SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _ctrl,
-                        keyboardType: TextInputType.multiline,
-                        textInputAction: TextInputAction.newline,
-                        maxLines: 5,
-                        minLines: 1,
-                        decoration: InputDecoration(
-                          hintText: L10n.t(context, 'random.hint'),
-                          border: const OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(24)),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
-                        ),
-                        onSubmitted: (_) => _send(),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton.filled(
-                      onPressed: _send,
-                      icon: const Icon(Icons.send),
-                    ),
-                  ],
-                ),
-              ),
+            // Die eigene Tastatur (v0.10.1): die Systemtastatur sieht
+            // keinen einzelnen Buchstaben.
+            SecureComposer(
+              controller: _ctrl,
+              hintText: L10n.t(context, 'random.hint'),
+              onSend: _send,
             ),
           ],
         ),

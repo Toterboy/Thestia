@@ -450,6 +450,7 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
                 ),
                 const SizedBox(height: 24),
                 TextField(
+                  enableIMEPersonalizedLearning: false,
                   controller: _codeCtrl,
                   textAlign: TextAlign.center,
                   maxLength: 8,

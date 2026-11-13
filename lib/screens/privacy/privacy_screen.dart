@@ -152,6 +152,9 @@ class PrivacyScreen extends ConsumerWidget {
             Text(L10n.t(context, 'privacy.importBody')),
             const SizedBox(height: 12),
             TextField(
+              enableIMEPersonalizedLearning: false,
+              autocorrect: false,
+              enableSuggestions: false,
               controller: ctrl,
               maxLines: 8,
               decoration: InputDecoration(
@@ -317,6 +320,7 @@ class PrivacyScreen extends ConsumerWidget {
               Text(L10n.t(context, 'privacy.changeEmailInfo')),
               const SizedBox(height: 12),
               TextFormField(
+                enableIMEPersonalizedLearning: false,
                 controller: emailCtrl,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
@@ -329,6 +333,7 @@ class PrivacyScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               TextFormField(
+                enableIMEPersonalizedLearning: false,
                 controller: passwordCtrl,
                 obscureText: true,
                 decoration: InputDecoration(
@@ -405,6 +410,7 @@ class PrivacyScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextFormField(
+                enableIMEPersonalizedLearning: false,
                 controller: currentCtrl,
                 obscureText: true,
                 decoration: InputDecoration(
@@ -416,6 +422,7 @@ class PrivacyScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               TextFormField(
+                enableIMEPersonalizedLearning: false,
                 controller: newCtrl,
                 obscureText: true,
                 decoration: InputDecoration(
@@ -427,6 +434,7 @@ class PrivacyScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               TextFormField(
+                enableIMEPersonalizedLearning: false,
                 controller: confirmCtrl,
                 obscureText: true,
                 decoration: InputDecoration(

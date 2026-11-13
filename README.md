@@ -30,11 +30,13 @@ nicht vollständig funktional. Beiträge und Feedback sind willkommen.
 > Daten bleiben erhalten (Login genügt), nur Passkeys müssen einmal neu
 > registriert werden.
 >
-> **Aktuelle Version: v0.10.1** (Build 53). Die App ist **noch nicht im
+> **Aktuelle Version: v0.10.1** (Build 54). Die App ist **noch nicht im
 > Play Store** – das Play-Console-Projekt wird erst angelegt. v0.10.1 ist
 > die erste Fassung, die in den Store geht; sie geht hinein, sobald die
 > offenen Punkte geschlossen sind. Veröffentlicht ist v0.10.1 als
-> Prerelease auf GitHub (dort auch die SHA-256-Prüfsummen).
+> Prerelease auf GitHub (dort auch die SHA-256-Prüfsummen) – **der
+> Prerelease ist Build 53 und enthält die eigene Tastatur noch nicht**
+> (die kam mit Build 54 dazu; vor dem Store-Upload wird neu gebaut).
 
 **Dokumentation:** [Beitragen](CONTRIBUTING.md) · [Verhaltenskodex](CODE_OF_CONDUCT.md) ·
 [Sicherheitslücken melden](SECURITY.md) · [Support](SUPPORT.md) ·
@@ -62,6 +64,10 @@ ohne Abo-Falle, ohne Aufmerksamkeits-Casino, ohne Daten-Hammer:
 - **On-Device-KI statt Auslagern.** Die NSFW-Prüfung deines Profilbilds läuft
   **komplett auf deinem Handy** – das Bild verlässt bei Nichtbestehen das
   Gerät nicht.
+- **Die Tastatur deines Handys liest nicht mit.** Im Chat hat Thestia eine
+  **eigene Tastatur**: Die Systemtastatur wird gar nicht erst geöffnet und
+  sieht keinen einzigen Buchstaben deiner Nachricht. Und überall sonst
+  darf sie aus deinen Angaben nichts lernen.
 - **Präsenz-frei.** Kein „online"-Badge, kein „schreibt gerade…", keine
   Lesebestätigungen. Dating soll zurück ins echte Leben führen – der
   App-Status ist kein Beziehungs-Tracker.
@@ -123,7 +129,7 @@ installiert werden. Ältere Dateien (`WispDating-v0.9.0-*.apk`) gehören zur
 Vorgänger-Version – bitte **Thestia neu installieren** (kein Update-Pfad, neue
 App-ID).
 
-**v0.10.1 (Build 53) ist in Vorbereitung** und die **erste Fassung für den
+**v0.10.1 (Build 54) ist in Vorbereitung** und die **erste Fassung für den
 Play Store** – sie geht hinein, sobald die offenen Punkte geschlossen sind
 (offen sind der BLE-Gerätetest auf zwei echten Geräten und die
 F-Droid-Einreichung).
@@ -133,7 +139,7 @@ F-Droid-Einreichung).
 | Version | Status |
 | --- | --- |
 | unter v0.10.1 (Build < 48, inkl. aller WispDating-Builds) | **End of Support** – keine Fixes mehr, bitte Thestia neu installieren |
-| v0.10.1 (Build 53) | **In Vorbereitung** – die erste Fassung für den Play Store; ab da Bug-Reports und Security-Fixes |
+| v0.10.1 (Build 54) | **In Vorbereitung** – die erste Fassung für den Play Store; ab da Bug-Reports und Security-Fixes |
 
 Ältere Builds werden über das serverseitige Mindest-Build-Gate
 (`app_config.min_app_version_build = 48`, Migration 201) markiert: Liegt der

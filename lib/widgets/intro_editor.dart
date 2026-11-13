@@ -448,6 +448,9 @@ class _IntroEditorState extends ConsumerState<IntroEditor> {
         ),
         const SizedBox(height: 12),
         TextFormField(
+          enableIMEPersonalizedLearning: false,
+          autocorrect: false,
+          enableSuggestions: false,
           controller: _textCtrl,
           maxLines: 4,
           maxLength: 500,

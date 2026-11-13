@@ -2242,6 +2242,16 @@ const Map<String, Map<String, String>> _strings = {
     'onb.next': 'Weiter',
     'chat.hint': 'Nachricht...',
     'chat.empty': 'Schreib die erste Nachricht! 😊',
+    // Die eigene Tastatur (v0.10.1): die Systemtastatur sieht nichts.
+    'keyboard.letters': 'Buchstaben',
+    'keyboard.symbols': 'Zahlen und Zeichen',
+    'keyboard.emoji': 'Emoji',
+    'keyboard.shift': 'Groß- und Kleinschreibung',
+    'keyboard.space': 'Leertaste',
+    'keyboard.backspace': 'Löschen',
+    'keyboard.enter': 'Enter',
+    'keyboard.hide': 'Tastatur ausblenden',
+    'keyboard.paste': 'Einfügen',
 
     'chat.block': 'Nutzer blockieren',
     'chat.blockSub':
@@ -5558,6 +5568,16 @@ const Map<String, Map<String, String>> _strings = {
     'onb.next': 'Next',
     'chat.hint': 'Message...',
     'chat.empty': 'Write the first message! 😊',
+    // The app's own keyboard (v0.10.1): the system keyboard sees nothing.
+    'keyboard.letters': 'Letters',
+    'keyboard.symbols': 'Numbers and symbols',
+    'keyboard.emoji': 'Emoji',
+    'keyboard.shift': 'Upper and lower case',
+    'keyboard.space': 'Space',
+    'keyboard.backspace': 'Delete',
+    'keyboard.enter': 'Enter',
+    'keyboard.hide': 'Hide keyboard',
+    'keyboard.paste': 'Paste',
 
     'chat.block': 'Block user',
     'chat.blockSub': 'No messages, likes or sparks from this person anymore.',

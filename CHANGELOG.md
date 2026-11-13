@@ -9,6 +9,37 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 ## [0.10.0] – Elternfreigabe, Aufsicht und Admin-Posteingang (Build 31, 2026-10-30 bis 2026-11-03)
 
+### Die eigene Tastatur (13.11.2026, Build 54)
+
+- **Die Handytastatur kann nicht mehr mitlesen** (Wunsch des Betreibers:
+  "dass die Handytastatur nicht tracken kann was man schreibt"). Beim
+  Chat hat die App jetzt **ihre eigene Tastatur**. Die Systemtastatur
+  wird gar nicht erst geöffnet: Das Eingabefeld steht auf `readOnly`, und
+  auf Android und iOS entsteht bei einem solchen Feld keine
+  Eingabeverbindung - es gibt also nichts, was die Tastatur des Geräts
+  sehen könnte. Kein Buchstabe, kein Cursor, kein Lernvorgang.
+  * Bedienung wie gewohnt: Tippen auf das Feld öffnet die App-Tastatur,
+    Groß/Klein, Umlaute, Zahlen, Emoji, Löschen und Enter sind da. Eine
+    **Hardwaretastatur** (Tablet mit Tastaturhülle) funktioniert
+    weiterhin - auch dort läuft nichts über die Systemtastatur.
+  * **Einfügen** aus der Zwischenablage gibt es als eigene Taste (mit
+    `readOnly` wäre es sonst deaktiviert).
+  * Betroffen sind alle drei Chats: der 1:1-Chat, der Zufallschat und
+    der Dating-Hour-Chat.
+- **Und überall sonst lernt die Tastatur nicht aus deinen Angaben**:
+  In jedem Eingabefeld der App steht jetzt
+  `enableIMEPersonalizedLearning: false`. Auf Android heißt das: die
+  Tastatur darf aus dem, was du eintippst, nichts in ihr Wörterbuch
+  übernehmen und keine personalisierten Vorschläge daraus machen. In den
+  Feldern mit persönlichem Text (Vorstellung, Meldungen, Notizen,
+  Kontaktdaten) sind zusätzlich Autokorrektur und Vorschläge
+  abgeschaltet.
+  * **Ehrlich zur Grenze:** Der Schalter gilt nur auf Android - für iOS
+    gibt es keine Entsprechung. Deshalb ist der Weg über die eigene
+    Tastatur der einzige, der auf **beiden** Plattformen dasselbe
+    verspricht. Und: In den Feldern, in denen weiterhin die
+    Systemtastatur läuft (Profil, Notizen), sieht die Tastatur den Text
+    weiterhin - sie darf ihn nur nicht **lernen**.
 
 ### Neu (11.11.2026)
 

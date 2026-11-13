@@ -68,6 +68,7 @@ class _GuardianSectionState extends ConsumerState<GuardianSection> {
             Text(L10n.t(ctx, 'guardian.pinText')),
             const SizedBox(height: 14),
             TextField(
+              enableIMEPersonalizedLearning: false,
               controller: controller,
               keyboardType: TextInputType.number,
               obscureText: true,

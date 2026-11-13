@@ -1,0 +1,11 @@
+The keyboard sees nothing
+
+While you write, the app now uses its own keyboard. Your phone's
+keyboard is not even opened - it does not see a single letter and cannot
+learn anything from your text.
+
+Pasting still works: there is a key for it, and a keyboard on a tablet
+keeps working as before.
+
+And everywhere else in the app: the keyboard may not learn anything
+from what you enter.

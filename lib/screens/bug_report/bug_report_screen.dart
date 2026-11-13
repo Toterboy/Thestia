@@ -244,6 +244,9 @@ class _BugReportScreenState extends ConsumerState<BugReportScreen> {
               ),
               const SizedBox(height: 16),
               TextFormField(
+                enableIMEPersonalizedLearning: false,
+                autocorrect: false,
+                enableSuggestions: false,
                 controller: _descriptionCtrl,
                 keyboardType: TextInputType.multiline,
                 maxLength: BugReportLimits.maxDescriptionLength,

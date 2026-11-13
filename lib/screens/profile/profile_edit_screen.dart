@@ -1445,6 +1445,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 const SizedBox(height: 16),
                 _field(
                   child: TextFormField(
+                    enableIMEPersonalizedLearning: false,
                     controller: _nameCtrl,
                     keyboardType: TextInputType.text,
                     textCapitalization: TextCapitalization.words,
@@ -1884,6 +1885,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 const SizedBox(height: 12),
                 _field(
                   child: TextFormField(
+                    enableIMEPersonalizedLearning: false,
+                    autocorrect: false,
+                    enableSuggestions: false,
                     controller: _bioCtrl,
                     maxLines: 4,
                     maxLength: 300,
@@ -2000,6 +2004,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                         const SizedBox(height: 12),
                         // NUTZERWUNSCH: Song und Band getrennt erfasst.
                         TextField(
+                          enableIMEPersonalizedLearning: false,
                           controller: _songCtrl,
                           maxLength: 120,
                           decoration: InputDecoration(
@@ -2019,6 +2024,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                         ),
                         const SizedBox(height: 12),
                         TextField(
+                          enableIMEPersonalizedLearning: false,
                           controller: _bandCtrl,
                           maxLength: 120,
                           decoration: InputDecoration(

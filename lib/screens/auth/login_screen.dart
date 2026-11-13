@@ -598,6 +598,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     _field(
                       showError: _submitAttempted,
                       child: TextFormField(
+                        enableIMEPersonalizedLearning: false,
                         controller: _nameCtrl,
                         keyboardType: TextInputType.text,
                         textCapitalization: TextCapitalization.words,
@@ -632,6 +633,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     _field(
                       showError: _submitAttempted,
                       child: TextFormField(
+                        enableIMEPersonalizedLearning: false,
                         controller: _emailCtrl,
                         keyboardType: TextInputType.text,
                         decoration: InputDecoration(
@@ -643,6 +645,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     _field(
                       showError: _submitAttempted,
                       child: TextFormField(
+                        enableIMEPersonalizedLearning: false,
                         controller: _passwordCtrl,
                         keyboardType: TextInputType.text,
                         obscureText: _obscurePassword,
@@ -808,6 +811,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     _field(
                       showError: _submitAttempted,
                       child: TextFormField(
+                        enableIMEPersonalizedLearning: false,
                         controller: _emailCtrl,
                         keyboardType: TextInputType.text,
                         decoration: InputDecoration(
@@ -819,6 +823,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     _field(
                       showError: _submitAttempted,
                       child: TextFormField(
+                        enableIMEPersonalizedLearning: false,
                         controller: _passwordCtrl,
                         keyboardType: TextInputType.text,
                         obscureText: _obscurePassword,

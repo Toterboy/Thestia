@@ -1211,6 +1211,7 @@ class _BansTabState extends ConsumerState<_BansTab> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   TextFormField(
+                    enableIMEPersonalizedLearning: false,
                     controller: targetCtrl,
                     decoration: InputDecoration(
                       labelText: L10n.t(ctx, 'admin.banTarget'),
@@ -1223,6 +1224,7 @@ class _BansTabState extends ConsumerState<_BansTab> {
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
+                    enableIMEPersonalizedLearning: false,
                     controller: reasonCtrl,
                     maxLines: 3,
                     decoration: InputDecoration(
@@ -1367,6 +1369,7 @@ class _BansTabState extends ConsumerState<_BansTab> {
             children: [
               Expanded(
                 child: TextField(
+                  enableIMEPersonalizedLearning: false,
                   controller: _searchCtrl,
                   onChanged: (v) => setState(() => _query = v),
                   textInputAction: TextInputAction.search,

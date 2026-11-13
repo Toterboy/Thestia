@@ -156,6 +156,9 @@ class _MeetIntentCardState extends ConsumerState<MeetIntentCard> {
             ),
             const SizedBox(height: 12),
             TextField(
+              enableIMEPersonalizedLearning: false,
+              autocorrect: false,
+              enableSuggestions: false,
               controller: _noteCtrl,
               maxLines: 2,
               decoration: InputDecoration(
