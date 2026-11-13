@@ -163,7 +163,7 @@ void main() {
           'p_ids': [meine.first['id']],
         }, tokenB);
       },
-      skip: hatSchluessel(env)
+      skip: liveTestsLaufen(env)
           ? null
           : 'Ohne .env gibt es keinen Server und keine Schluessel.',
     );

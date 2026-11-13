@@ -122,7 +122,7 @@ void main() {
         ),
       );
     },
-    skip: hatSchluessel(env)
+    skip: liveTestsLaufen(env)
         ? null
         : 'Ohne .env gibt es keinen Server und keine Schluessel.',
   );

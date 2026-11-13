@@ -185,13 +185,20 @@ if (Soll 'analyze-and-test') {
                      '--set-exit-if-changed', 'lib', 'test', 'tool')
 
     if (-not $Schnell) {
-        # Die CI baut die .env aus .env.example auf. Der echte lokale
-        # .env kann andere Werte haben - dann laeuft der Test lokal
-        # gegen einen anderen Zustand als in der CI.
-        $envBak = Join-Path $env:TEMP ('thestia-env-' + [guid]::NewGuid().ToString('N'))
-        $hatEnv = Test-Path '.env'
-        if ($hatEnv) { Copy-Item '.env' $envBak -Force }
-        Copy-Item '.env.example' '.env' -Force
+        # DIE LIVE-TESTS UEBERSPRINGEN - OHNE DIE .env ANZUFASSEN.
+        #
+        # BEFUND (13.11.2026): Dieser Spiegel hat frueher die .env des
+        # Entwicklers durch die .env.example ersetzt (damit die Live-Tests
+        # nicht gegen das Produktivsystem laufen) und sie danach **nicht**
+        # zurueckgespielt - die echten Werte waren damit weg und mussten
+        # aus dem Release-Build und der Supabase-API wiederhergestellt
+        # werden.
+        #
+        # Jetzt wird nichts ueberschrieben: nur die Live-Tests werden
+        # ueber die Umgebungsvariable THESTIA_SKIP_LIVE_TESTS abgeschaltet
+        # (test/support/live_test_support.dart). Die .env bleibt, wie sie
+        # ist - und die Tests laufen damit gegen den echten Stand.
+        $env:THESTIA_SKIP_LIVE_TESTS = '1'
         try {
             # MIT COVERAGE (13.11.2026): Die CI misst die Abdeckung - der
             # Spiegel muss dasselbe tun, sonst waere die Zahl lokal nicht
@@ -201,12 +208,7 @@ if (Soll 'analyze-and-test') {
             Gate -Name 'analyze-and-test: Coverage (Mindestwert)' `
                 -Argumente @($py, 'tool/check_coverage.py')
         } finally {
-            if ($hatEnv) {
-                Copy-Item $envBak '.env' -Force
-                Remove-Item $envBak -Force -ErrorAction SilentlyContinue
-            } else {
-                Remove-Item '.env' -Force -ErrorAction SilentlyContinue
-            }
+            Remove-Item Env:\THESTIA_SKIP_LIVE_TESTS -ErrorAction SilentlyContinue
         }
     } else {
         Write-Host ''

@@ -58,6 +58,26 @@ bool hatSchluessel(Map<String, String> env) =>
         env.containsKey('SUPABASE_SECRET_KEY') ||
         env.containsKey('SUPABASE_SERVICE_ROLE_KEY'));
 
+/// Duerfen die Live-Tests ueberhaupt laufen?
+///
+/// ZWEI Bedingungen:
+///   1. Die .env muss die Schluessel enthalten (die CI hat keine).
+///   2. `THESTIA_SKIP_LIVE_TESTS=1` schaltet sie ab.
+///
+/// **WARUM (13.11.2026):** Der lokale CI-Spiegel
+/// (tool/check_local_ci.ps1) hat frueher die .env des Entwicklers
+/// durch die .env.example ersetzt - damit die Live-Tests nicht gegen
+/// das Produktivsystem laufen - und sie danach **nicht** zurueckgespielt.
+/// Die echten Werte waren damit weg (sie mussten aus dem Release-Build
+/// und der Supabase-API wiederhergestellt werden).
+///
+/// Jetzt wird nichts mehr ueberschrieben: der Spiegel setzt nur diese
+/// Umgebungsvariable, und die Live-Tests springen sich selbst ueber.
+/// Die .env des Entwicklers bleibt unangetastet.
+bool liveTestsLaufen(Map<String, String> env) =>
+    hatSchluessel(env) &&
+    Platform.environment['THESTIA_SKIP_LIVE_TESTS'] != '1';
+
 /// Der Schluessel, mit dem die App den Server anspricht.
 String? publishableKey(Map<String, String> env) =>
     env['SUPABASE_PUBLISHABLE_KEY'];
