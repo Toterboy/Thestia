@@ -193,7 +193,13 @@ if (Soll 'analyze-and-test') {
         if ($hatEnv) { Copy-Item '.env' $envBak -Force }
         Copy-Item '.env.example' '.env' -Force
         try {
-            Gate -Name 'analyze-and-test: flutter test' -Argumente @('flutter', 'test', '--reporter', 'compact')
+            # MIT COVERAGE (13.11.2026): Die CI misst die Abdeckung - der
+            # Spiegel muss dasselbe tun, sonst waere die Zahl lokal nicht
+            # nachvollziehbar.
+            Gate -Name 'analyze-and-test: flutter test (mit Coverage)' `
+                -Argumente @('flutter', 'test', '--reporter', 'compact', '--coverage')
+            Gate -Name 'analyze-and-test: Coverage (Mindestwert)' `
+                -Argumente @($py, 'tool/check_coverage.py')
         } finally {
             if ($hatEnv) {
                 Copy-Item $envBak '.env' -Force

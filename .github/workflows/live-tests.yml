@@ -1,0 +1,134 @@
+# Die Live-Tests: nachts gegen den echten Server.
+#
+# WARUM (13.11.2026): Drei Tests sprechen mit dem PRODUKTIVSYSTEM:
+# eine Nachricht kommt wirklich an (mit echter Signal-Verschluesselung),
+# das echte PreKey-Bundle eines echten Kontos ergibt eine Sitzung, und
+# das P2P-Signaling laeuft ueber zwei echte Geraete. Sie sind bisher nur
+# auf der Platte des Betreibers gelaufen - in der CI gibt es keine
+# Schluessel, also hat die CI diese drei Tests nie gesehen. Das ist
+# genau die Luecke, die niemand bemerkt: "die Tests sind gruen" und
+# "die Kette funktioniert" waren zwei verschiedene Behauptungen.
+#
+# DIESER LAUF:
+# * laeuft NACHTS (Cron) und kann per Hand gestartet werden,
+# * nutzt die Repository-Secrets (nicht die .env des Betreibers),
+# * laeuft OHNE die Secrets einfach nicht durch - kein Fehler, kein
+#   roter Lauf. Wer die Secrets nicht gesetzt hat, bekommt eine
+#   klare Meldung statt eines Geheimnisses im Log.
+#
+# DIE SECRETS (im Repository unter Settings -> Secrets and variables ->
+# Actions, "Repository secrets"):
+#
+#   SUPABASE_URL              z. B. https://xyz.supabase.co
+#   SUPABASE_PUBLISHABLE_KEY der Schluessel der App (oeffentlich)
+#   SUPABASE_SECRET_KEY_NEW   der neue sb_secret_...-Schluessel
+#   SUPABASE_DB_URL           OPTIONAL: die DB-Verbindung fuer das
+#                             Aufraeumen der Testdaten
+#                             (postgresql://postgres:PASSWORT@db.xyz.supabase.co:5432/postgres)
+#
+# Ohne SUPABASE_DB_URL laeuft der Aufraeum-Schritt nicht - dann bleibt
+# ein Match zwischen den Testkonten stehen, den der Betreiber mit
+#   psql "$SUPABASE_DB_URL" -f tool/cleanup_transit_testdata.sql
+# wegraeumen kann. Das Skript ist im Repository und loescht NUR die
+# Testdaten der beiden Testkonten.
+name: Live-Tests
+
+on:
+  schedule:
+    # 03:23 UTC - mitten in der Nacht, wenn der Betrieb ruhig ist.
+    - cron: "23 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: live-tests
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: "3.47.9"
+  JAVA_VERSION: "17"
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Die Secrets kommen aus den Repository-Secrets. HAS_SECRETS
+      # entscheidet, ob der Lauf ueberhaupt stattfindet - so bleibt der
+      # Lauf gruen, wenn die Secrets (noch) fehlen.
+      HAS_SECRETS: ${{ secrets.SUPABASE_URL != '' }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+      SUPABASE_SECRET_KEY_NEW: ${{ secrets.SUPABASE_SECRET_KEY_NEW }}
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Java ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Flutter installieren
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Dependencies laden
+        run: flutter pub get
+
+      # Die .env wird aus den Secrets erzeugt - sie ist fuer die
+      # Live-Tests der einzige Weg zum Server (die Tests lesen sie ueber
+      # test/support/live_test_support.dart).
+      - name: .env aus den Repository-Secrets erzeugen
+        if: env.HAS_SECRETS == 'true'
+        run: |
+          {
+            printf 'SUPABASE_URL=%s\n' "$SUPABASE_URL"
+            printf 'SUPABASE_PUBLISHABLE_KEY=%s\n' "$SUPABASE_PUBLISHABLE_KEY"
+            printf 'SUPABASE_SECRET_KEY_NEW=%s\n' "$SUPABASE_SECRET_KEY_NEW"
+          } > .env
+          echo " .env erzeugt (Schluessel sind nicht im Log)."
+
+      # OHNE Secrets: das ist kein Fehler, sondern eine nicht
+      # eingerichtete Umgebung. Der Lauf sagt es laut und ist gruen.
+      - name: Ohne Secrets (uebersprungen)
+        if: env.HAS_SECRETS != 'true'
+        run: |
+          echo "::notice::Die Live-Tests laufen ohne die Repository-Secrets"
+          echo "::notice::nicht. Gesetzt werden muessen: SUPABASE_URL,"
+          echo "::notice::SUPABASE_PUBLISHABLE_KEY, SUPABASE_SECRET_KEY_NEW."
+          echo "::notice::Der Lauf ist damit gruen - es wurde nichts geprueft."
+
+      - name: Live-Tests gegen den echten Server
+        if: env.HAS_SECRETS == 'true'
+        run: |
+          flutter test \
+            test/live_message_flow_test.dart \
+            test/live_prekey_bundle_test.dart \
+            --reporter expanded
+
+      # Die Testdaten wegraeumen. Der Schritt ist best effort: fehlt die
+      # DB-Verbindung, bleibt der Match zwischen den Testkonten stehen -
+      # das Skript dafuer liegt im Repository.
+      - name: Testdaten wegraeumen
+        if: always() && env.HAS_SECRETS == 'true'
+        continue-on-error: true
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "::warning::SUPABASE_DB_URL ist nicht gesetzt - die"
+            echo "::warning::Testdaten (Likes/Match der Testkonten) bleiben"
+            echo "::warning::stehen. Aufraeumen:"
+            echo "::warning::psql \"\$SUPABASE_DB_URL\" -f tool/cleanup_transit_testdata.sql"
+            exit 0
+          fi
+          if command -v psql >/dev/null 2>&1; then
+            psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 \
+              -f tool/cleanup_transit_testdata.sql
+          else
+            echo "::warning::psql ist in diesem Runner nicht vorhanden -"
+            echo "::warning::das Skript muss von Hand laufen."
+          fi

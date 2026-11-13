@@ -1310,6 +1310,18 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     );
     ref.read(chatProvider.notifier).addMessage(match.id, localMsg, ref: ref);
 
+    // BEFUND (13.11.2026, Test am Chat-Bildschirm): Der Bildschrim baute
+    // erst NACH dem Senden neu - die eigene Nachricht war also erst zu
+    // sehen, wenn der Netz-Roundtrip durch war. Bei langsamer Verbindung
+    // (oder wenn das Relay haengt) sah der Nutzer seine eigene Nachricht
+    // nicht: er dachte, es sei nichts angekommen, und schrieb sie
+    // noch einmal.
+    //
+    // Der Neuaufbau gehoert deshalb direkt hinter das Hinzufuegen - die
+    // Nachricht ist lokal da, also gehoert sie auch sofort auf den
+    // Bildschirm. Der Versand laeuft danach weiter.
+    if (mounted) setState(() {});
+
     // … und ECHT E2E-verschlüsselt zustellen: direkt per P2P, sonst über
     // das Server-Relay (Partner holt beim Öffnen ab), sonst Outbox.
     await _transmitText(match, text, messageId: msgId);
@@ -1317,7 +1329,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     // Geraeten stimmen (BEFUND 11.11.2026). Dazu zaehlt der Server -
     // genau einmal je Nachrichten-ID.
     unawaited(_bumpMessageCounter(match, msgId));
-    if (mounted) setState(() {});
   }
 
   /// Ruft die notify-user-Edge-Function für den Chat-Partner auf

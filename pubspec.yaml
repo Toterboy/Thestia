@@ -186,6 +186,16 @@ dev_dependencies:
   # camera vorhanden; hier explizit, damit der Test es importieren darf.
   camera_platform_interface: 2.13.1
 
+  # Nur fuer die Tests: UnifiedPush laeuft ueber eine Plattform-Schnittstelle
+  # (`UnifiedPushPlatform.instance`). Ohne sie kann der Test den Connector
+  # (Distributor) nicht nachstellen - der UnifiedPush-Connector bringt
+  # exportierte Komponenten mit, die jede App ansprechen kann. Das Paket ist
+  # bereits als Transitivum von `unifiedpush` vorhanden (4.0.0 ist in
+  # pubspec.lock gepinnt); hier explizit, damit der Test es importieren
+  # darf - genau wie `camera_platform_interface` oben. Es kommt kein neues
+  # Paket dazu, es wird nur das vorhandene direkt importierbar.
+  unifiedpush_platform_interface: 4.0.0
+
   # Lint-Regeln für sauberen, modernen Code
   flutter_lints: ^6.0.0
 

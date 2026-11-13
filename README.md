@@ -476,7 +476,8 @@ und benutzt dabei **genau die Flags der CI**:
 | Gate | Aufruf | Unterschied zur CI |
 | --- | --- | --- |
 | Analyzer | `flutter analyze --fatal-infos` | ohne `--fatal-infos` ist ein *Hinweis* kein Fehler – lokal grün, in der CI rot |
-| Tests | `flutter test` mit `.env` aus `.env.example` | die CI baut die `.env` genauso auf |
+| Tests | `flutter test --coverage` mit `.env` aus `.env.example` | die CI baut die `.env` genauso auf |
+| Coverage | `python tool/check_coverage.py` | die CI lädt die `lcov.info` zusätzlich als Artefakt hoch |
 | Prüfer | 45 Skripte unter `tool/` (41 Gates im Spiegel) | `python3` → `python`, weil Windows oft kein `python3` kennt |
 
 Der Unterschied beim Analyzer ist der Grund, warum das Skript existiert:
@@ -491,6 +492,37 @@ sei grün.
 # ohne Tests, aber mit dem CI-Flag des Analyzers
 .\tool\check_local_ci.ps1 -Schnell
 ```
+
+### Testabdeckung
+
+Die Abdeckung wird bei jedem Testlauf gemessen und in der CI als Zahl
+ausgegeben – mit einem **Mindestwert** als Gate. Fällt sie darunter,
+wird der Lauf rot: dann fehlt ein Modul, und nicht nur eine Zeile.
+
+```powershell
+flutter test --coverage
+python tool/check_coverage.py
+```
+
+Der Bericht nennt die Zahl je Bereich (Screens, Services, Widgets …)
+und die Dateien mit den meisten offenen Zeilen – das ist die Liste für
+den nächsten Testdurchgang.
+
+### Die Live-Tests (nachts)
+
+Drei Tests sprechen mit dem **Produktivsystem**: eine Nachricht kommt
+wirklich an (mit echter Signal-Verschlüsselung), das echte
+PreKey-Bundle ergibt eine Sitzung, und das P2P-Signaling läuft über zwei
+echte Geräte. Sie laufen **nachts** in einem eigenen Workflow
+([`.github/workflows/live-tests.yml`](.github/workflows/live-tests.yml))
+und können per Hand gestartet werden.
+
+Sie brauchen die Repository-Secrets (`SUPABASE_URL`,
+`SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY_NEW`, optional
+`SUPABASE_DB_URL` für das Aufräumen). **Ohne diese Secrets läuft der
+Job nicht durch, aber er wird auch nicht rot** – er meldet nur, dass
+er nichts geprüft hat. Dieselben Tests laufen lokal mit der `.env`
+des Projekts.
 
 ---
 

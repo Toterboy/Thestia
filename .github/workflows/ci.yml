@@ -97,8 +97,27 @@ jobs:
       - name: Formatierung (Dart 3.12)
         run: dart format --output=none --set-exit-if-changed lib test tool
 
-      - name: Tests
-        run: flutter test
+      # MIT COVERAGE (13.11.2026): Die Frage "gibt es fuer jeden Teil der
+      # App Tests?" war ohne Messung nicht zu beantworten - es gab 1000+
+      # Tests, aber keine Zahl. `flutter test --coverage` schreibt
+      # coverage/lcov.info; das Gate darunter prueft einen Mindestwert.
+      - name: Tests (mit Coverage)
+        run: flutter test --coverage
+
+      # Der Boden: faellt die Abdeckung darunter, schlaegt der Lauf rot -
+      # dann fehlt ein Modul (und nicht nur eine Zeile).
+      - name: Coverage (Mindestwert)
+        run: python tool/check_coverage.py
+
+      # Die Coverage selbst als Artefakt: sie liegt dann bei jedem Lauf
+      # vor und laesst sich im Vergleich zweier Laeufe sehen.
+      - name: Coverage als Artefakt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-lcov
+          path: coverage/lcov.info
+          retention-days: 30
 
   # ---------------------------------------------------------------
   # v0.9.2: Dependency-Hygiene. Getrennt vom Build, damit ein

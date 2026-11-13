@@ -115,6 +115,43 @@ Ein vollständiger Durchgang über Funktion, Sicherheit und Datenschutz hat
 - **Die Kategorie-Sicht ist keine Sackgasse mehr**: Ist eine Kategorie
   leer, sagt die App jetzt, in welchen Kategorien Menschen sind.
 
+### Behoben (13.11.2026) – Drei Fehler, die die neuen Tests gefunden haben
+
+- **Die eigene Nachricht war erst nach dem Netz-Roundtrip sichtbar:**
+  Nach dem Senden wurde der Bildschirm erst neu aufgebaut, **nachdem**
+  der Versand fertig war. Die Nachricht stand aber schon sofort lokal im
+  Chat – nur sichtbar war sie erst, wenn der Server geantwortet hatte. Bei
+  langsamer Verbindung (oder wenn das Relay hängt) sah der Nutzer seine
+  eigene Nachricht **nicht** und schrieb sie noch einmal. Der Neuaufbau
+  gehört jetzt direkt hinter das Hinzufügen; der Versand läuft danach
+  weiter.
+- **„Aktualisieren" auf dem Geräte-Bildschirm ging nicht** (im Debug):
+  `setState(() => _future = _load())` gab das Future zurück, und genau
+  das verbietet Flutter in `setState` (Debug-Assert). Im Debug warf der
+  Tastendruck, der Bildschirm zeichnete sich nicht neu, und im
+  Fehlerfall blieb der Fehlerzustand stehen.
+- **Leer- und Fehlerzustand liefen bei 3,2-facher Schrift über** (die
+  Android-Maximalstufe). Die App verspricht, bis 3,2× benutzbar zu
+  bleiben – beide Zustände haben jetzt einen eigenen Scrollbereich.
+
+### Testabdeckung (13.11.2026)
+
+- **Die Abdeckung wird jetzt gemessen** (`flutter test --coverage`) und
+  in jedem CI-Lauf als Zahl ausgegeben – mit einem **Mindestwert** als
+  Gate: fällt sie darunter, wird der Lauf rot. Vorher gab es 1000+
+  Tests, aber keine Zahl – die Frage „gibt es für jeden Teil Tests?“
+  war nicht zu beantworten. **Stand: 24,3 %** (vor den neuen Tests
+  20,8 %) – der Boden liegt bei 24,0 %.
+- **Die Live-Tests laufen nachts** gegen den echten Server (eigener
+  Workflow). Bisher liefen sie nur auf der Platte des Betreibers – in
+  der CI gab es keine Schlüssel, also hat die CI diese drei Tests nie
+  gesehen. Der Lauf funktioniert **ohne** die Secrets: sind sie nicht
+  gesetzt, wird er übersprungen (mit einem Hinweis), statt rot zu
+  werden.
+- **Neue Tests**: der 1:1-Chat (mit Mocks, ohne Server), der
+  MFA-Service, der Benachrichtigungs-Service und der UnifiedPush-Service
+  sowie die bisher ungetesteten Bildschirme und Widgets.
+
 ### Behoben
 
 - **Nachrichten kommen jetzt an** (09.11.2026): Eine Benachrichtigung kam
