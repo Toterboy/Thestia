@@ -1195,11 +1195,21 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             // nur max_distance_km geschrieben - Modus (Km/Bundesland/Land)
             // und Bundesland gingen serverseitig verloren.
             'max_distance_km': ref.read(userPreferencesProvider).maxDistanceKm,
+            // BEFUND (13.11.2026): Hier stand `distanceFilterMode.name` -
+            // der Dart-Enum-Name 'distanceKm'. Die Spalte akzeptiert nur
+            // 'distance_km', 'state' oder 'germany' (CHECK-Constraint).
+            // Ein PostgREST-UPDATE ist atomar: EIN verletztes Feld hat das
+            // GANZE Update gekippt - der Betreiber sah "Server-Sync
+            // fehlgeschlagen" und KEINE seiner Profilaenderungen wurde
+            // gespeichert. Die Abbildung liegt jetzt an EINER Stelle:
+            // [DistanceFilterModeLabel.dbValue].
             'distance_filter_mode': ref
                 .read(userPreferencesProvider)
                 .distanceFilterMode
-                .name,
-            'preferred_state': ref.read(userPreferencesProvider).preferredState,
+                .dbValue,
+            'preferred_state': dbPreferredState(
+              ref.read(userPreferencesProvider).preferredState,
+            ),
           });
           // Dealbreaker-Schalter in die Settings spiegeln (Restore-Pfad).
           await ref

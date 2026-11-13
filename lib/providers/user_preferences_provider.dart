@@ -34,6 +34,34 @@ extension DistanceFilterModeLabel on DistanceFilterMode {
         return 'Ganz Deutschland';
     }
   }
+
+  /// Der Wert, den die DATENBANK kennt (Migration 127).
+  ///
+  /// **WICHTIG (BEFUND 13.11.2026, Betreiber: "Server Sync schlaegt fehl,
+  /// wenn ich mein Profil anpasse"):** `distanceFilterMode.name` ist der
+  /// Dart-Enum-Name `distanceKm` - die Spalte `distance_filter_mode`
+  /// akzeptiert aber NUR `distance_km`, `state` oder `germany`
+  /// (CHECK-Constraint `profiles_distance_filter_mode_check`).
+  ///
+  /// Ein PostgREST-UPDATE ist **atomar**: EIN verletztes Feld macht das
+  /// GANZE Update unmoeglich. Wer `.name` schickt, verliert damit ALLE
+  /// Profilaenderungen (Name, Bio, Interessen, Vorstellung ...) - und
+  /// sieht nur "Server-Sync fehlgeschlagen".
+  ///
+  /// Der Fehler war im Praeferenz-Provider schon behoben (dort stand
+  /// ein eigenes `switch`), aber im Profil-Editor stand weiterhin
+  /// `.name` - deshalb schlug der Sync NUR dort fehl. Diese
+  /// Abbildung ist jetzt der EINZIGE Ort, an dem der DB-Wert entsteht.
+  String get dbValue {
+    switch (this) {
+      case DistanceFilterMode.distanceKm:
+        return 'distance_km';
+      case DistanceFilterMode.state:
+        return 'state';
+      case DistanceFilterMode.germany:
+        return 'germany';
+    }
+  }
 }
 
 /// Nutzer-Präferenzen für Filter und Suche.
@@ -403,11 +431,11 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
       // 'distanceKm'. Die Spalte akzeptiert aber nur 'distance_km',
       // 'state' oder 'germany' (CHECK-Constraint in Migration 127).
       // Der Schreibvorgang schlug deshalb IMMER fehl.
-      final dbMode = switch (state.distanceFilterMode) {
-        DistanceFilterMode.distanceKm => 'distance_km',
-        DistanceFilterMode.state => 'state',
-        DistanceFilterMode.germany => 'germany',
-      };
+      //
+      // BEFUND (13.11.2026): Derselbe Fehler stand auch im Profil-Editor
+      // - dort ist er jetzt behoben, und die Abbildung liegt an EINER
+      // Stelle: [DistanceFilterModeLabel.dbValue].
+      final dbMode = state.distanceFilterMode.dbValue;
 
       final body = <String, dynamic>{
         'max_distance_km': state.maxDistanceKm,
@@ -439,7 +467,7 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
       final sonderBody = <String, dynamic>{
         if (state.relationshipType?.value != null)
           'relationship_type': _dbRelationshipType(state.relationshipType),
-        'preferred_state': _dbPreferredState(state.preferredState),
+        'preferred_state': dbPreferredState(state.preferredState),
       };
       if (ageRangeMin != null) body['age_range_min'] = ageRangeMin;
       if (ageRangeMax != null) body['age_range_max'] = ageRangeMax;
@@ -506,11 +534,29 @@ class UserPreferencesNotifier extends StateNotifier<UserPreferences> {
   /// Deshalb wird hier nichts geschrieben, wenn es ein Bundesland ist
   /// - der Radiusfilter laeuft ueber `state` und
   /// `distance_filter_mode`, die beide funktionieren.
-  static Object? _dbPreferredState(String? state) {
-    if (state == null || state.trim().isEmpty) return null;
-    const erlaubt = {'single', 'polyamory', 'open', 'unspecified'};
-    return erlaubt.contains(state) ? state : null;
-  }
+  ///
+  /// BEFUND (13.11.2026): Der Profil-Editor schickte den Rohwert
+  /// ("Bremen") - das war ein CHECK-Verstoss und hat das GESAMTE
+  /// Profil-Update gekippt. Jetzt nutzen beide Stellen dieselbe
+  /// Abbildung: [dbPreferredState].
+}
+
+/// Der Wert, den die Spalte `preferred_state` akzeptiert - oder `null`,
+/// wenn der Wert nicht in die Domäne des CHECK-Constraints passt.
+///
+/// **WICHTIG (BEFUND 13.11.2026):** Die Spalte wird für zwei Dinge
+/// benutzt: historisch für die Beziehungsform (CHECK aus Migration 127:
+/// `single`, `polyamory`, `open`, `unspecified`) und heute für das
+/// gewünschte Bundesland. Ein Bundesland kommt durch den CHECK **nicht**
+/// durch - wer ihn ungeprüft schickt, kippt das komplette
+/// Profil-Update (ein PostgREST-UPDATE ist atomar).
+///
+/// Der Radiusfilter läuft über `state` und `distance_filter_mode` -
+/// die funktionieren beide.
+Object? dbPreferredState(String? wert) {
+  if (wert == null || wert.trim().isEmpty) return null;
+  const erlaubt = {'single', 'polyamory', 'open', 'unspecified'};
+  return erlaubt.contains(wert) ? wert : null;
 }
 
 /// Provider für die Nutzerpräferenzen (Audit M-16: sicher gespeichert).

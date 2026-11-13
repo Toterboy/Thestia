@@ -115,7 +115,48 @@ Ein vollständiger Durchgang über Funktion, Sicherheit und Datenschutz hat
 - **Die Kategorie-Sicht ist keine Sackgasse mehr**: Ist eine Kategorie
   leer, sagt die App jetzt, in welchen Kategorien Menschen sind.
 
-### Behoben (13.11.2026) – Drei Fehler, die die neuen Tests gefunden haben
+### Behoben (13.11.2026) – Fuenf Fehler, die die neuen Tests und der Betreiber gefunden haben
+
+- **Der Server-Sync beim Profiländeren ist repariert** (Befund des
+  Betreibers: „Server Sync schlägt fehl, wenn ich mein Profil anpasse").
+  **Die Ursache:** Der Profil-Editor schickte `distance_filter_mode` mit
+  dem Dart-Enum-Namen `distanceKm` – die Spalte akzeptiert aber nur
+  `distance_km`, `state` oder `germany` (CHECK-Constraint). Ein
+  PostgREST-UPDATE ist **atomar**: EIN abgelehntes Feld hat das **ganze**
+  Update gekippt – es wurde also nicht nur der Radius-Modus nicht
+  gespeichert, sondern **keine** Profiländerung (Name, Bio,
+  Vorstellung, Interessen). Dasselbe galt für `preferred_state`: die
+  Spalte kennt nur Beziehungswerte, das gewünschte Bundesland fiel
+  durch. Die Abbildung liegt jetzt an **einer** Stelle
+  (`DistanceFilterModeLabel.dbValue` und `dbPreferredState`), und ein
+  Test liest die CHECK-Constraints aus den Migrationen und prüft, dass
+  jeder geschickte Wert in der Datenbank-Domäne liegt. Ein Werkzeug
+  (`tool/check_profile_write_allowed.py`) macht den Schreibvorgang der
+  App gegen die echte Datenbank nach – in einer Transaktion, die
+  zurückgerollt wird.
+- **Die eigene Nachricht war erst nach dem Netz-Roundtrip sichtbar:**
+  Nach dem Senden wurde der Bildschirm erst neu aufgebaut, **nachdem**
+  der Versand fertig war. Die Nachricht stand aber schon sofort lokal im
+  Chat – nur sichtbar war sie erst, wenn der Server geantwortet hatte. Bei
+  langsamer Verbindung (oder wenn das Relay hängt) sah der Nutzer seine
+  eigene Nachricht **nicht** und schrieb sie noch einmal. Der Neuaufbau
+  gehört jetzt direkt hinter das Hinzufügen; der Versand läuft danach
+  weiter.
+- **„Aktualisieren" auf dem Geräte-Bildschirm ging nicht** (im Debug):
+  `setState(() => _future = _load())` gibt das Future zurück, und
+  genau das verbietet Flutter. Der Bildschirm zeichnete nicht neu und
+  blieb im Fehlerzustand stehen.
+- **Leer- und Fehlerzustand liefen bei 3,2-facher Schrift über** (die
+  Android-Maximalstufe). Die App verspricht, bis 3,2× benutzbar zu
+  bleiben – beide Zustände haben jetzt einen Scrollbereich.
+- **Ein fehlgeschlagener Abruf der Funken sah aus wie „du hast keine
+  Funken"** (Befund des Betreibers: „mein Funke ist verschwunden").
+  Der Fehler wurde geschluckt und die Liste blieb leer – der Nutzer
+  dachte, sein Funke sei weg (im Release-Build stand der Fehler nur im
+  Log). Jetzt wird der Fehler **gezeigt** (mit dem Knopf zum
+  Wiederholen), und die vorhandene Liste bleibt stehen.
+
+
 
 - **Die eigene Nachricht war erst nach dem Netz-Roundtrip sichtbar:**
   Nach dem Senden wurde der Bildschirm erst neu aufgebaut, **nachdem**

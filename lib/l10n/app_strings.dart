@@ -875,6 +875,8 @@ const Map<String, Map<String, String>> _strings = {
         'Sobald dich jemand über seine Vorstellung mag, erscheint er hier '
         'und du entscheidest über Funke oder Ablehnung.',
     'interests.emptySparksTitle': 'Noch keine Funken',
+    'interests.sparksLoadFailed':
+        'Die Funken konnten nicht geladen werden. Bitte Netz pruefen und neu laden.',
     'interests.emptySparksBody':
         'Bestätige erhaltene Likes, um Funken zu bekommen. Danach kannst du '
         'direkt chatten und optional das Kennenlern-Quiz für das Foto '
@@ -5485,6 +5487,8 @@ const Map<String, Map<String, String>> _strings = {
         'As soon as someone likes your intro, they appear here and you '
         'decide on spark or decline.',
     'interests.emptySparksTitle': 'No sparks yet',
+    'interests.sparksLoadFailed':
+        'The sparks could not be loaded. Please check your connection and try again.',
     'interests.emptySparksBody':
         'Confirm received likes to get sparks. Afterwards you can chat '
         'right away and optionally play the quiz for the photo.',

@@ -107,12 +107,23 @@ final receivedLikesProvider = FutureProvider<List<ReceivedLike>>((ref) async {
 
 /// Server-Funken mit Zustand (v0.9.1): für "Neue Funken"-Badge mit
 /// Seen-Abgleich (unabhängig vom lokalen Chat-Cache).
+///
+/// BEFUND (13.11.2026, Betreiber: "Außerdem ist mein Funke
+/// verschwunden"): Der Fehler wurde hier geschluckt und als LEERE Liste
+/// zurückgegeben. Ein einziger fehlgeschlagener Abruf sah damit genau
+/// aus wie "du hast keine Funken" - der Nutzer dachte, sein Funke sei
+/// weg, und im Release-Build stand der Fehler nur im Log (das
+/// `debugPrint` ist dort stumm).
+///
+/// Der Fehler wird jetzt durchgereicht: `valueOrNull` ist dann `null`
+/// (der Aufrufer rechnet mit dem lokalen Stand weiter), und der
+/// Zustand ist als Fehler sichtbar (`hasError`).
 final serverMatchesProvider = FutureProvider<List<MatchWithState>>((ref) async {
   if (!SupabaseService.isInitialized) return const [];
   try {
     return await ref.watch(findYourMatchServiceProvider).listMatchesWithState();
   } catch (e) {
     debugPrint('[ServerMatches] Laden fehlgeschlagen: $e');
-    return const [];
+    rethrow;
   }
 });

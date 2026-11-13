@@ -1,0 +1,13 @@
+Dein Profil lässt sich wieder speichern
+
+In der letzten Version ist das Speichern im Profil immer fehlgeschlagen - und es wurde gar nichts gespeichert: kein Name, keine Bio, keine Vorstellung. Zwei Werte waren falsch an den Server übergeben. Das ist behoben.
+
+Die Handytastatur sieht nichts
+
+Beim Schreiben hat die App jetzt ihre eigene Tastatur. Die Tastatur deines Handys wird gar nicht erst geöffnet - sie sieht keinen einzigen Buchstaben und kann aus deinem Text nichts lernen.
+
+Deine Funken verschwinden nicht mehr
+
+Wenn der Server beim Laden der Funkenliste nicht erreichbar war, zeigte die App "keine Funken". Jetzt steht ein Hinweis mit "Erneut versuchen" da, und deine vorhandenen Funken bleiben stehen.
+
+Und: Deine eigene Nachricht ist sofort da, "Aktualisieren" auf dem Geräte-Screen geht wieder, und Transit Spark zeigt nur noch die Menschen, die wirklich zu deiner Beschreibung passen.

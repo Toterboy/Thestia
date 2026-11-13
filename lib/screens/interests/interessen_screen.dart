@@ -1240,6 +1240,13 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
   List<MatchWithState> _serverMatches = [];
   bool _loading = true;
 
+  /// Der Fehler des LETZTEN Ladevorgangs (null = alles in Ordnung).
+  ///
+  /// BEFUND (13.11.2026): Ohne diesen Zustand sah ein fehlgeschlagener
+  /// Abruf aus wie "du hast keine Funken" - der Nutzer dachte, sein
+  /// Funke sei verschwunden. Siehe [_load].
+  Object? _loadError;
+
   /// Wurde die Liste mindestens einmal geladen?
   ///
   /// NUTZERWUNSCH (31.10.2026): "der kurze Ladekreis ist stoerend fuer
@@ -1287,6 +1294,8 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     try {
       final service = ref.read(findYourMatchServiceProvider);
       _serverMatches = await service.listMatchesWithState();
+      // Der Abruf war erfolgreich - ein alter Fehler darf nicht stehen bleiben.
+      _loadError = null;
       // 72-Stunden-Regel (Betreiber-Entscheidung): Aktive Funken, in denen
       // 72 h niemand geschrieben hat, wandern RUHIG unter "Erschlossene
       // Funken" - die App räumt auf, gibt die Verbindung aber nie ganz auf
@@ -1304,7 +1313,18 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
       );
       ref.invalidate(serverMatchesProvider);
     } catch (e) {
+      // BEFUND (13.11.2026, Betreiber: "Außerdem ist mein Funke
+      // verschwunden"): Der Fehler wurde geschluckt, die Liste blieb
+      // leer - und die App zeigte den LEERZUSTAND ("Noch keine
+      // Funken"). Ein fehlgeschlagener Abruf sah damit genau aus wie
+      // "dein Funke ist weg". Im Release-Build stand der Fehler nur im
+      // Log (das debugPrint ist dort stumm).
+      //
+      // JETZT: Der Fehler wird sichtbar. Die Liste bleibt, wie sie war
+      // (sie wird nicht geleert), und der Nutzer bekommt einen Hinweis
+      // mit dem Knopf zum Wiederholen.
       debugPrint('[Interessen] Matches laden fehlgeschlagen: $e');
+      _loadError = e;
     } finally {
       if (mounted) {
         setState(() {
@@ -1934,6 +1954,25 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
     if (_loading && !_everLoaded) {
       return const CalmLoading();
     }
+    // BEFUND (13.11.2026): Ein fehlgeschlagener Abruf sah aus wie
+    // "du hast keine Funken" - der Nutzer dachte, sein Funke sei weg.
+    // Der Fehler wird jetzt gezeigt (mit dem Knopf zum Wiederholen),
+    // statt die Leere zu behaupten.
+    if (_loadError != null && _serverMatches.isEmpty && qrContacts.isEmpty) {
+      return RefreshIndicator(
+        onRefresh: _load,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.sizeOf(context).height * 0.6,
+            child: ErrorState(
+              message: L10n.t(context, 'interests.sparksLoadFailed'),
+              onRetry: _load,
+            ),
+          ),
+        ),
+      );
+    }
     if (_serverMatches.isEmpty && qrContacts.isEmpty) {
       if (widget.embedded) {
         return Padding(
@@ -1970,6 +2009,42 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
           : const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(vertical: 12),
       children: [
+        // BEFUND (13.11.2026): Der Fehler bleibt auch sichtbar, wenn die
+        // Liste noch Inhalt hat - der Nutzer soll wissen, dass der Stand
+        // veraltet ist (und nicht nur, dass etwas fehlt).
+        if (_loadError != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: Material(
+              color: Theme.of(context).colorScheme.errorContainer,
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.cloud_off,
+                      size: 18,
+                      color: Theme.of(context).colorScheme.onErrorContainer,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        L10n.t(context, 'interests.sparksLoadFailed'),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onErrorContainer,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: _load,
+                      child: Text(L10n.t(context, 'common.retry')),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         if (_serverMatches.isNotEmpty) ...[
           // NUTZERWUNSCH: Der "Verwalten"-Textbutton nahm zu viel Platz
           // ein. Er lebt jetzt als Icon-Button in der AppBar (aktiver
