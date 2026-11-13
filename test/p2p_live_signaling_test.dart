@@ -6,6 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:thestia/services/webrtc_service.dart';
 
+import 'support/live_test_support.dart' show liveTestsLaufen;
+
 /// LIVE-TEST gegen das echte Supabase-Realtime.
 ///
 /// WARUM (06.11.2026): Der P2P-Bug war, dass das realtime_client die
@@ -41,8 +43,17 @@ import 'package:thestia/services/webrtc_service.dart';
 /// p2p-test-a@thestia.de / p2p-test-b@thestia.de benutzt.
 void main() {
   final env = _ladeEnv();
-  final uebersprung = env == null
-      ? 'keine .env - der Live-Test laeuft nur lokal mit Projektzugang'
+  // BEFUND (13.11.2026): Der Test sprang nur ueber, wenn es gar keine
+  // .env gab. Nach der Wiederherstellung der .env (mit Werten, aber ohne
+  // den Secret-Key) lief er und scheiterte. Er braucht echte Schluessel
+  // UND darf sich abschalten lassen (THESTIA_SKIP_LIVE_TESTS) - wie die
+  // beiden anderen Live-Tests.
+  final uebersprung =
+      (env == null ||
+          !liveTestsLaufen(env) ||
+          (env['SUPABASE_SECRET_KEY_NEW'] ?? '').trim().isEmpty)
+      ? 'keine Schluessel (oder THESTIA_SKIP_LIVE_TESTS) - der Live-Test '
+            'laeuft nur lokal mit Projektzugang'
       : null;
 
   test('die Broadcast-Nachricht kommt beim Peer in der Huelle an', () async {
