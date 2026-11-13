@@ -51,12 +51,20 @@ Map<String, String> envLesen() {
 
 /// Sind alle Schluessel da? Ohne sie ueberspringen die Live-Tests
 /// (der CI hat keine Schluessel).
-bool hatSchluessel(Map<String, String> env) =>
-    env.containsKey('SUPABASE_URL') &&
-    env.containsKey('SUPABASE_PUBLISHABLE_KEY') &&
-    (env.containsKey('SUPABASE_SECRET_KEY_NEW') ||
-        env.containsKey('SUPABASE_SECRET_KEY') ||
-        env.containsKey('SUPABASE_SERVICE_ROLE_KEY'));
+///
+/// **ACHTUNG, LEERER WERT:** Ein Schluessel, der in der .env zwar
+/// NOTIERT, aber leer ist, gilt als **nicht vorhanden** (BEFUND
+/// 13.11.2026: die .env hatte nach der Wiederherstellung die Zeile
+/// `SUPABASE_SECRET_KEY_NEW =` - leer. Die Live-Tests liefen trotzdem
+/// und scheiterten mit 401, statt sich ueberzuppringen).
+bool hatSchluessel(Map<String, String> env) {
+  bool hat(String schluessel) => (env[schluessel] ?? '').trim().isNotEmpty;
+  return hat('SUPABASE_URL') &&
+      hat('SUPABASE_PUBLISHABLE_KEY') &&
+      (hat('SUPABASE_SECRET_KEY_NEW') ||
+          hat('SUPABASE_SECRET_KEY') ||
+          hat('SUPABASE_SERVICE_ROLE_KEY'));
+}
 
 /// Duerfen die Live-Tests ueberhaupt laufen?
 ///
