@@ -5,7 +5,14 @@ deines Handys wird gar nicht erst geöffnet - sie sieht keinen einzigen
 Buchstaben und kann aus deinem Text nichts lernen.
 
 Einfügen geht trotzdem: Es gibt eine eigene Taste dafür, und eine
-Tastatur am Tablet funktioniert weiterhin.
+Tastatur am Tablet funktioniert weiterhin. Die Tastatur folgt der
+Sprache der App (deutsch mit Umlauten, englisch mit QWERTY).
 
 Und überall sonst in der App: Die Tastatur darf aus deinen Angaben
 nichts lernen.
+
+Transit Spark zeigt nur noch die Menschen, die wirklich passen
+
+Die Liste der Personen in der Nähe ließ sich vorher auslesen, ohne
+dass es ein Gegenüber gab. Jetzt zählt nur noch deine eigene
+Beschreibung - und die prüft der Server.

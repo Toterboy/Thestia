@@ -1,6 +1,6 @@
 # Datenschutzerklärung für Thestia
 
-**Stand: November 2026** · Version 18 (v0.10.1)
+**Stand: November 2026** · Version 23 (v0.10.1)
 
 Thestia ist ein datenschutzorientiertes Open-Source-Projekt (AGPLv3).
 Der Schutz deiner persönlichen Sphäre steht an erster Stelle: Es werden
@@ -47,13 +47,15 @@ Tracking-Pixel und **keine** nutzerübergreifende Verhaltensanalyse.
 | Ortsangabe | Wird nicht erhoben | Seit v0.10.0 wird kein Ort, keine Stadt und kein Postleitzahl-Bereich gespeichert oder angezeigt – nur das Bundesland | – |
 | **Angaben zur sexuellen Orientierung** (abgeleitet, nicht erhoben): zu wem du suchst, was du suchst, deine Interessen, dein Geschlecht | Voraussetzung für das Matching; Art. 9 Abs. 2 lit. a DSGVO – Verarbeitung nur mit deiner ausdrücklichen Einwilligung (siehe Abschnitt 2b) | mit der Kontolöschung; jederzeit einzeln löschbar |
 | Profilangaben | Bio, Interessen, **Vorstellung (Text pflicht, Audio optional)**, Gewohnheiten (Rauchen/Alkohol/Drogen), Mood, Musik-Geschmack, **Profilbild** (siehe Abschnitt 3a) | Vermittlung passender Kontakte („Funken") | Mit Account-Löschung |
-| Kategorie-Suche ("Find your Spark nach Kategorie") | Deine Interessen als Kategorie, dein Vorstellungstext, dein Alter | Andere können dich in einer Interessens-Kategorie finden und deine Vorstellung **als Text** lesen. Die Altersgrenze ist **serverseitig erzwungen**: 16- und 17-Jährige sehen ausschließlich 16- und 17-Jährige, Erwachsene ausschließlich Erwachsene - auch ein manipuliertes Gerät kommt nicht daran vorbei. Deine **Audio**-Vorstellung wird dabei nicht übertragen: sie bleibt verschlüsselt auf dem Server und wird erst bei einem Funke freigegeben | Mit Account-Löschung |
+| Kategorie-Suche ("Find your Spark nach Kategorie") | Deine Interessen als Kategorie, dein Vorstellungstext, dein Alter | Andere können dich in einer Interessens-Kategorie finden und deine Vorstellung **als Text** lesen. Die Altersgrenze ist **serverseitig erzwungen**: 16- und 17-Jährige sehen ausschließlich 16- und 17-Jährige, Erwachsene ausschließlich Erwachsene - auch ein manipuliertes Gerät kommt nicht daran vorbei. Deine **Audio**-Vorstellung wird in der Kategorie-Suche **nicht** übertragen - dort wird nur dein Vorstellungstext gezeigt | Mit Account-Löschung |
+| Vorstellungs-Audio | Deine Audio-Aufnahme (max. 5 Minuten, nur Text und Ton, keine Metadaten) | Sie ist das **Aushängeschild** von „Find your Match": Im Kandidaten-Deck wird sie abgespielt, **bevor** es ein Like gibt. Der Server gibt sie nur an eingeloggte, alterskompatible, nicht blockierte Nutzer heraus - über eine signierte URL, die eine Stunde gültig ist. Die Datei liegt im privaten Bucket (nur der eigene Ordner ist über die RLS lesbar); sie ist **nicht** clientseitig verschlüsselt | Mit Account-Löschung |
+| Zeitzone | Die Zeitzone deines Geräts als IANA-Namen (z. B. „Europe/Berlin") | Der Server rechnet deinen Geburtstag in **deiner** Zeitzone - so sieht jeder seinen Geburtstag am selben Tag. Ein unbekannter Name wird vom Server stillschweigend verworfen | Mit Account-Löschung |
 | Geräte-Liste | Gerätemodell (Hersteller + Modellkennung, z. B. „Samsung SM-S921B"), Plattform, App-Version, Zeitstempel der letzten Anmeldung; bei einer Anmeldung von einem **neuen** Gerät zusätzlich eine Benachrichtigungs-Mail mit Gerätename, App-Version und Zeitpunkt | Anzeige „Wo bin ich eingeloggt?" + „Überall abmelden" (Migration 071/078); kein Standort, keine Seriennummer, keine Werbe-ID | Automatisch beim Abmelden; mit Account-Löschung |
 | Präferenzen | Suchradius, Altersspanne, Geschlechts-Filter, „Ich suche", Farbwelt, UI-Schalter (Blind Mode, Sichtbarkeit, Benachrichtigungen) | Wiederherstellung nach Neuinstallation (Migration 066/071/074/076) | Mit Account-Löschung |
 | Push-Tokens | FCM-Token (nur Play) bzw. UnifiedPush-Endpunkt (F-Droid) | Zustellung von Push-Signalen **ohne Nachrichteninhalt** | Mit Account-Löschung / Abmelden |
 | Aussehen-Merkmale (Transit Spark) | Kategorie und Wert eines Merkmals (Kleidung je Kategorie, Kopfbedeckung, Schuhe, Accessoires, Haarfarbe/-länge/-frisur, Augenfarbe) sowie die zugehörige Farbangabe, jeweils als Liste von bis zu acht Werten | Merkmals-Abgleich in Transit Spark: "was ich an dir bemerkt habe" gegen "was du über dich sagst". Nur die Auswahl wird übertragen, nicht der Zweck | Nach 24 Stunden (Cron `cleanup-transit-signals`) |
 | Land | Wohnsitzland (DE, AT, CH und weitere) | Anzeige des Landes im Profil und bei Match-Partnern | Mit Account-Löschung |
-| Gerätekennung | Zufällige Kennung des Geräts (UUID, keine MAC-Adresse, keine Werbe-ID) | Anmeldung deiner eigenen Geräte für die Ende-zu-Ende-Verschlüsselung | Automatisch beim Abmelden; mit Account-Löschung |
+| Gerätekennung | Zufällige Kennung des Geräts (vom App erzeugt, z. B. „dev-1737000000000-a1b2"; **keine** MAC-Adresse, **keine** Werbe-ID, **keine** Android-ID, **keine** UUID des Geräts) | Anmeldung deiner eigenen Geräte für die Ende-zu-Ende-Verschlüsselung | Automatisch beim Abmelden; mit Account-Löschung |
 | Bild-Prüfhash | SHA-256-Hash eines von dir gesendeten Chatbildes, zusammen mit der Kennung des Empfängers | Nachweis, dass ein gemeldetes Bild tatsächlich in einem Chat geflossen ist (Missbrauchsschutz gegen willkürliche Meldungen) | Mit Account-Löschung |
 | Standort-Zeitstempel | Zeitpunkt der letzten Standortprüfung | Plausibilitätsprüfung (unplausible Ortswechsel) | Mit Account-Löschung |
 | Merkzeichen des Kontos | MD5-Hash der Kontokennung | Verhinderung, dass ein gelöschtes Konto erneut registriert wird | Bleibt dauerhaft bestehen, ohne Klarnamen |
@@ -241,6 +243,7 @@ abgeschaltet.
 |---|---|---|---|
 | Der von dir getippte Text (im Chat) | niemand außer der Person, an die die Nachricht geht - sie wird Ende-zu-Ende verschlüsselt übertragen | die Nachricht | wie jede Nachricht: verschlüsselt im Chatverlauf |
 | Die Tastenereignisse der eigenen Tastatur | niemand - sie laufen im Gerät direkt in das Eingabefeld | die Eingabe | keine |
+| Der Inhalt der Zwischenablage (nur wenn du selbst auf "Einfügen" tippst) | niemand - er wird lokal in das Eingabefeld geschrieben | das Einfügen von Text | keine - der Text wird Teil deiner Nachricht und verschlüsselt übertragen |
 
 **Was das nicht ist:** Der Android-Schalter gegen das Lernen hat auf iOS
 keine Entsprechung - dort wirkt nur die eigene Tastatur. Und in den
@@ -287,13 +290,17 @@ ausschließlich auf dem Gerät gespeichert, mit einer Vorhaltezeit von
 übertragen.
 
 **Was der Server sieht:** sobald eine Person den Radarscan startet, wird deren
-eigenes anonymes Token auf dem Server hinterlegt – ohne das könnte gar
-keine Begegnung zustande kommen. Erst wenn beide Personen ausdrücklich
+eigenes Token auf dem Server hinterlegt – ohne das könnte gar
+keine Begegnung zustande kommen. **Das Token ist nicht anonym im Sinne von
+„der Server weiß nichts, wer es ist":** Der Server kennt dein Konto und
+dein Token – er ist also deinem Konto zugeordnet. Es trägt aber **keine
+Geräte-Identität** (keine MAC-Adresse, keine Android-ID, keine
+Seriennummer) und ist nicht von einer anderen Person zu unterscheiden.
+Erst wenn beide Personen ausdrücklich
 bestätigen ("Blicke getauscht"), werden die zuletzt beobachteten Tokens,
 die gewählten Merkmale und die von der Person angegebene
 Selbstbeschreibung zur Prüfung übermittelt. Der Server
-prüft Alter und Blockierstatus. Aus einem Token lässt sich keine
-Geräte-Identität ableiten.
+prüft Alter und Blockierstatus.
 
 **Merkmale im Klartext:** Die gewählten Merkmale (Kategorie, Wert, Farbe)
 und die freitextliche Selbstbeschreibung liegen als Klartext in
@@ -432,6 +439,7 @@ Gerät und werden zu keinem Zeitpunkt an externe Server übertragen.
 | Anbieter | Daten | Zweck | Region |
 |---|---|---|---|
 | Supabase (EU-Region) | Kontodaten, verschlüsselte Authentifizierungs-Token, Profildaten | Hosting von Accounts, DB, Auth | EU (Verarbeitungsvertrag über Supabase Europe B.V.) |
+| Supabase Realtime (gleiche Supabase-Instanz) | Beim Aufbau einer Sprach- oder Videoverbindung: das SDP-Angebot und die ICE-Kandidaten - darin deine **lokale IP-Adresse** | Verbindungsaufbau (Signalisierung) zwischen genau den beiden Beteiligten. Der Kanal ist privat: nur die beiden Parteien können ihn lesen. Der eigentliche Audio- und Bildinhalt läuft **nicht** hierüber, sondern direkt zwischen den Geräten (WebRTC) | EU |
 | Firebase Cloud Messaging (nur Play-Store-Version) | Push-Token, „stumme" Push-Signale | Zustellsignal; Inhalte werden danach lokal per WebRTC/E2E geladen | Google-Infrastruktur (verarbeitet nur das Token) |
 | UnifiedPush (F-Droid-Version, z. B. ntfy) | Push-Endpunkt | Google-freie Push-Zustellung | Selbst wählbar (kann vollständig selbst gehostet sein) |
 | Spaceship (Domain- und Mail-Hosting) | Empfängeradresse, bei eingehenden Mails der Absender, bei ausgehenden Mails der Inhalt der Transaktions-Mail; beim Weiterleiten der Kinderschutz-Meldung der vollständige Meldungsinhalt | Weiterleitung eingehender Mails an das Postfach der Kontaktperson; Versand der Transaktions-Mails über den Mail-Relay des Providers | EU (Niederlande/USA, je nach Relay) |
@@ -502,6 +510,10 @@ Die Löschung erfolgt unmittelbar auf dem Server.
   serverseitig nach 24–48 Stunden rückstandslos.
 - Transit-Spark-Signale (Tokens, Merkmale, Selbstbeschreibung) werden nach
   24 Stunden automatisch gelöscht (Cron `cleanup-transit-signals`).
+- Die **Transit-Zuwinke** (Soft-Pings: die Nachricht, die beim Zuwinken
+  mitgeht) werden nach **48 Stunden** ungültig und danach automatisch
+  entfernt. Die Begegnungs-Token, auf denen sie beruhen, werden mit dem
+  Signal nach 45 Minuten ungültig.
 - Das Verifikations-Video wird verschlüsselt gespeichert (nur der Chiffrat
   liegt dauerhaft im Speicher). Bei der Sichtung durch die Administration
   entsteht kurzzeitig eine entschlüsselte Kopie, die nach 20 Minuten
@@ -700,6 +712,7 @@ Git-Historie nachvollziehbar.
 
 | Version | Datum | Änderung |
 |---|---|---|
+| 23 | 2026-11 | **Falschaussagen korrigiert (Sicherheits-Review vom 13.11.2026):** Vier Angaben in dieser Erklärung stimmten nicht mit dem Code überein - sie sind jetzt richtiggestellt. (a) Das **Vorstellungs-Audio** liegt nicht clientseitig verschlüsselt auf dem Server, und es wird nicht erst bei einem Funke freigegeben: Im Kandidaten-Deck von „Find your Match" wird es schon vor dem Like abgespielt (das ist der Zweck des Modus). Neu aufgenommen als eigene Datenkategorie. (b) Die **Zeitzone** des Geräts wird bei jedem Start gemeldet (der Server rechnet damit den Geburtstag) - sie stand bisher nicht im Datenkatalog. (c) Beim **WebRTC-Verbindungsaufbau** (Sprach- und Videoanrufe) gehen SDP-Angebot und ICE-Kandidaten - mit der lokalen IP-Adresse - über Supabase Realtime; das stand bisher nicht in der Liste der Anbieter. (d) Das **Transit-Token** ist nicht „anonym" im Sinne von „der Server kennt die Person nicht" - es ist dem Konto zugeordnet, trägt aber keine Geräte-Identität. Außerdem präzisiert: die Gerätekennung ist eine app-erzeugte Kennung (keine Geräte-UUID), die Transit-Zuwinke verfallen nach 48 Stunden, und die eigene Tastatur liest nichts mit (Abschnitt 3b-5). |
 | 22 | 2026-11 | **Aufbewahrung des Verifikationsvideos auf die Freigabe umgestellt:** Die Frist lief bisher ab dem Upload - ein Video, das Wochen auf die Sichtung wartete, wurde am Tag der Freigabe schon gelöscht. Jetzt bleiben die Videos **30 Tage nach der Freigabe der Verifizierung**; bei einer Ablehnung 30 Tage ab der Einreichung, und als Sicherheitsnetz 90 Tage ohne Entscheidung (Migration 171). |
 | 21 | 2026-11 | **Angaben zur sexuellen Orientierung ausdrücklich offengelegt:** Die Einwilligung in die Verarbeitung dieser besonderen Kategorie (Art. 9 Abs. 2 lit. a DSGVO) wird mit der Registrierung erteilt; der Hinweis dazu steht im Registrierungsformular, der Widerruf in Abschnitt 8. |
 | 20 | 2026-11 | **Elternfreigabe für 16- und 17-Jährige:** Die Zustimmung der Sorgeberechtigten wird angefragt (E-Mail-Adresse eines Elternteils, muss von der eigenen Kontoadresse abweichen) und vom Elternteil per Link bestätigt. Der Elternteil ist Genehmiger, nicht Nutzer - er hat kein Konto und sieht keine Profile. Er kann die Benachrichtigung über neue Funken im Rhythmus täglich/wöchentlich/monatlich/gar nicht einstellen (ohne Namen, Profile oder Inhalte), eine Nutzungszeit per PIN-geschütztem Zeitfenster setzen und die Freigabe jederzeit widerrufen. Mit 18 entscheidet der Jugendliche selbst. Jede Anfrage, Bestätigung und jeder Widerruf wird protokolliert. |

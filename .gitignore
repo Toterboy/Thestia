@@ -99,6 +99,20 @@ desktop.ini
 *.aab
 *.ipa
 
+# KEINE Binaerdateien im Quellstand (BEFUND 13.11.2026).
+#
+# Im Repository lag Probe.exe - ein .NET-Werkzeug zur Audio-Latenzmessung
+# (WASAPI), versehentlich mit eingecheckt. Kein Geheimnis, aber: ein
+# Windows-Binary im Quellstand einer veroeffentlichten App ist
+# Lieferketten-Rauschen - wer das nicht pruefen kann, kann es nicht
+# vertrauen. Eigenes Werkzeug gehoert in tool/ (mit Quelltext) oder in
+# die Ablage ausserhalb des Repositories.
+*.exe
+*.dll
+*.so
+*.dylib
+*.jar
+
 # Admin-APKs (mit einkompilierter ADMIN_UUID) bleiben privat - niemals
 # ins oeffentliche Repository / Release hochladen.
 # (Der ganze releases/-Ordner ist weiter unten ausgeschlossen.)

@@ -5,7 +5,13 @@ keyboard is not even opened - it does not see a single letter and cannot
 learn anything from your text.
 
 Pasting still works: there is a key for it, and a keyboard on a tablet
-keeps working as before.
+keeps working as before. The keyboard follows the language of the app
+(German with umlauts, English with QWERTY).
 
 And everywhere else in the app: the keyboard may not learn anything
 from what you enter.
+
+Transit Spark only shows the people who really match
+
+The list of people nearby could be read out before there was a match at
+all. Now only your own description counts - and the server checks it.

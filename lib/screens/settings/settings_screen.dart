@@ -1239,9 +1239,15 @@ class _UnifiedPushTileState extends ConsumerState<_UnifiedPushTile> {
   }
 }
 
-/// Opt-in-Tile für den verschlüsselten lokalen Chat-Verlauf (v0.8.0):
-/// Standard AUS. Aktiviert die AES-256-verschlüsselte SecureHive-Ablage
-/// der letzten 200 Nachrichten pro Chat (Key bleibt im Keystore).
+/// Tile für den verschlüsselten lokalen Chat-Verlauf (v0.8.0):
+/// Standard AN (kompletter Verlauf). Der Verlauf wird AES-256-verschlüsselt
+/// in der SecureHive abgelegt (Key im Keystore) und verlässt das Gerät
+/// nicht; ausgeschaltet wird nichts gespeichert.
+///
+/// BEFUND (13.11.2026): Dieser Kommentar behauptete "Standard AUS" - der
+/// Code stellte aber auf "an" um (`?? true`). Der Kommentar wurde an den
+/// Code angepasst, nicht umgekehrt: die Datenschutzerklärung sagt
+/// ebenfalls "Kompletter Verlauf (Standard)".
 enum _HistoryMode { off, cap200, all }
 
 class _ChatHistoryTile extends ConsumerStatefulWidget {

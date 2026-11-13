@@ -308,11 +308,16 @@ class ChatNotifier extends StateNotifier<List<Match>> {
 
 /// Provider für den Chat-Service.
 ///
-/// WICHTIG: Chat-Nachrichten werden standardmäßig NICHT persistiert
-/// (Chats sind E2E + P2P). Der Nutzer kann im Settings-Screen den
-/// VERSCHLÜSSELTEN lokalen Verlauf aktivieren (Opt-in, SecureHive) -
-/// dann sichert [ChatService] die letzten 200 Nachrichten AES-256
-/// verschlüsselt auf dem Gerät.
+/// WICHTIG: Der lokale Chatverlauf ist **standardmäßig AN** (und dann
+/// voll, "Kompletter Verlauf"). Er wird **lokal verschlüsselt** (SecureHive,
+/// AES-256) gespeichert und verlässt das Gerät nicht; im
+/// Einstellungs-Screen kann der Nutzer ihn auf "Aus" oder "200 Nachrichten
+/// pro Chat" stellen.
+///
+/// BEFUND (13.11.2026): Dieser Kommentar behauptete vorher "standardmäßig
+/// NICHT persistiert ... Opt-in" - der Code stellte aber auf "an" um
+/// (`?? true`). Ein Kommentar, der dem Code widerspricht, ist der
+/// Beginn der nächsten falschen Entscheidung.
 final chatServiceProvider = Provider<ChatService>((ref) {
   return ChatService();
 });

@@ -8,7 +8,7 @@ import 'package:thestia/generated/privacy_policy_blocks.dart';
 /// Reihenfolge der Quelle.
 const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
   PrivacyBlock('h1', 'Datenschutzerklärung für Thestia'),
-  PrivacyBlock('p', '**Stand: November 2026** · Version 18 (v0.10.1)'),
+  PrivacyBlock('p', '**Stand: November 2026** · Version 23 (v0.10.1)'),
   PrivacyBlock(
     'p',
     'Thestia ist ein datenschutzorientiertes Open-Source-Projekt (AGPLv3). Der Schutz deiner persönlichen Sphäre steht an erster Stelle: Es werden keine Werbetracker eingesetzt, keine Verhaltensprofile erstellt und keine Nutzerdaten an Dritte verkauft.',
@@ -112,7 +112,27 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
     cells: <String>[
       'Kategorie-Suche ("Find your Spark nach Kategorie")',
       'Deine Interessen als Kategorie, dein Vorstellungstext, dein Alter',
-      'Andere können dich in einer Interessens-Kategorie finden und deine Vorstellung **als Text** lesen. Die Altersgrenze ist **serverseitig erzwungen**: 16- und 17-Jährige sehen ausschließlich 16- und 17-Jährige, Erwachsene ausschließlich Erwachsene - auch ein manipuliertes Gerät kommt nicht daran vorbei. Deine **Audio**-Vorstellung wird dabei nicht übertragen: sie bleibt verschlüsselt auf dem Server und wird erst bei einem Funke freigegeben',
+      'Andere können dich in einer Interessens-Kategorie finden und deine Vorstellung **als Text** lesen. Die Altersgrenze ist **serverseitig erzwungen**: 16- und 17-Jährige sehen ausschließlich 16- und 17-Jährige, Erwachsene ausschließlich Erwachsene - auch ein manipuliertes Gerät kommt nicht daran vorbei. Deine **Audio**-Vorstellung wird in der Kategorie-Suche **nicht** übertragen - dort wird nur dein Vorstellungstext gezeigt',
+      'Mit Account-Löschung',
+    ],
+  ),
+  PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
+      'Vorstellungs-Audio',
+      'Deine Audio-Aufnahme (max. 5 Minuten, nur Text und Ton, keine Metadaten)',
+      'Sie ist das **Aushängeschild** von „Find your Match": Im Kandidaten-Deck wird sie abgespielt, **bevor** es ein Like gibt. Der Server gibt sie nur an eingeloggte, alterskompatible, nicht blockierte Nutzer heraus - über eine signierte URL, die eine Stunde gültig ist. Die Datei liegt im privaten Bucket (nur der eigene Ordner ist über die RLS lesbar); sie ist **nicht** clientseitig verschlüsselt',
+      'Mit Account-Löschung',
+    ],
+  ),
+  PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
+      'Zeitzone',
+      'Die Zeitzone deines Geräts als IANA-Namen (z. B. „Europe/Berlin")',
+      'Der Server rechnet deinen Geburtstag in **deiner** Zeitzone - so sieht jeder seinen Geburtstag am selben Tag. Ein unbekannter Name wird vom Server stillschweigend verworfen',
       'Mit Account-Löschung',
     ],
   ),
@@ -171,7 +191,7 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
     '',
     cells: <String>[
       'Gerätekennung',
-      'Zufällige Kennung des Geräts (UUID, keine MAC-Adresse, keine Werbe-ID)',
+      'Zufällige Kennung des Geräts (vom App erzeugt, z. B. „dev-1737000000000-a1b2"; **keine** MAC-Adresse, **keine** Werbe-ID, **keine** Android-ID, **keine** UUID des Geräts)',
       'Anmeldung deiner eigenen Geräte für die Ende-zu-Ende-Verschlüsselung',
       'Automatisch beim Abmelden; mit Account-Löschung',
     ],
@@ -462,6 +482,16 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
     ],
   ),
   PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
+      'Der Inhalt der Zwischenablage (nur wenn du selbst auf "Einfügen" tippst)',
+      'niemand - er wird lokal in das Eingabefeld geschrieben',
+      'das Einfügen von Text',
+      'keine - der Text wird Teil deiner Nachricht und verschlüsselt übertragen',
+    ],
+  ),
+  PrivacyBlock(
     'p',
     '**Was das nicht ist:** Der Android-Schalter gegen das Lernen hat auf iOS keine Entsprechung - dort wirkt nur die eigene Tastatur. Und in den Feldern mit Systemtastatur sieht die Tastatur deinen Text weiterhin; sie darf ihn nur nicht lernen. Sichtbarer Text kann außerdem immer über den Bildschirm abgefangen werden - dagegen steht die Screenshot-Sperre der App.',
   ),
@@ -488,7 +518,7 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
   ),
   PrivacyBlock(
     'p',
-    '**Was der Server sieht:** sobald eine Person den Radarscan startet, wird deren eigenes anonymes Token auf dem Server hinterlegt – ohne das könnte gar keine Begegnung zustande kommen. Erst wenn beide Personen ausdrücklich bestätigen ("Blicke getauscht"), werden die zuletzt beobachteten Tokens, die gewählten Merkmale und die von der Person angegebene Selbstbeschreibung zur Prüfung übermittelt. Der Server prüft Alter und Blockierstatus. Aus einem Token lässt sich keine Geräte-Identität ableiten.',
+    '**Was der Server sieht:** sobald eine Person den Radarscan startet, wird deren eigenes Token auf dem Server hinterlegt – ohne das könnte gar keine Begegnung zustande kommen. **Das Token ist nicht anonym im Sinne von „der Server weiß nichts, wer es ist":** Der Server kennt dein Konto und dein Token – er ist also deinem Konto zugeordnet. Es trägt aber **keine Geräte-Identität** (keine MAC-Adresse, keine Android-ID, keine Seriennummer) und ist nicht von einer anderen Person zu unterscheiden. Erst wenn beide Personen ausdrücklich bestätigen ("Blicke getauscht"), werden die zuletzt beobachteten Tokens, die gewählten Merkmale und die von der Person angegebene Selbstbeschreibung zur Prüfung übermittelt. Der Server prüft Alter und Blockierstatus.',
   ),
   PrivacyBlock(
     'p',
@@ -597,6 +627,16 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
       'Kontodaten, verschlüsselte Authentifizierungs-Token, Profildaten',
       'Hosting von Accounts, DB, Auth',
       'EU (Verarbeitungsvertrag über Supabase Europe B.V.)',
+    ],
+  ),
+  PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
+      'Supabase Realtime (gleiche Supabase-Instanz)',
+      'Beim Aufbau einer Sprach- oder Videoverbindung: das SDP-Angebot und die ICE-Kandidaten - darin deine **lokale IP-Adresse**',
+      'Verbindungsaufbau (Signalisierung) zwischen genau den beiden Beteiligten. Der Kanal ist privat: nur die beiden Parteien können ihn lesen. Der eigentliche Audio- und Bildinhalt läuft **nicht** hierüber, sondern direkt zwischen den Geräten (WebRTC)',
+      'EU',
     ],
   ),
   PrivacyBlock(
@@ -754,6 +794,10 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
   PrivacyBlock(
     'li',
     'Transit-Spark-Signale (Tokens, Merkmale, Selbstbeschreibung) werden nach 24 Stunden automatisch gelöscht (Cron `cleanup-transit-signals`).',
+  ),
+  PrivacyBlock(
+    'li',
+    'Die **Transit-Zuwinke** (Soft-Pings: die Nachricht, die beim Zuwinken mitgeht) werden nach **48 Stunden** ungültig und danach automatisch entfernt. Die Begegnungs-Token, auf denen sie beruhen, werden mit dem Signal nach 45 Minuten ungültig.',
   ),
   PrivacyBlock(
     'li',
@@ -915,6 +959,15 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
     'table_head',
     '',
     cells: <String>['Version', 'Datum', 'Änderung'],
+  ),
+  PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
+      '23',
+      '2026-11',
+      '**Falschaussagen korrigiert (Sicherheits-Review vom 13.11.2026):** Vier Angaben in dieser Erklärung stimmten nicht mit dem Code überein - sie sind jetzt richtiggestellt. (a) Das **Vorstellungs-Audio** liegt nicht clientseitig verschlüsselt auf dem Server, und es wird nicht erst bei einem Funke freigegeben: Im Kandidaten-Deck von „Find your Match" wird es schon vor dem Like abgespielt (das ist der Zweck des Modus). Neu aufgenommen als eigene Datenkategorie. (b) Die **Zeitzone** des Geräts wird bei jedem Start gemeldet (der Server rechnet damit den Geburtstag) - sie stand bisher nicht im Datenkatalog. (c) Beim **WebRTC-Verbindungsaufbau** (Sprach- und Videoanrufe) gehen SDP-Angebot und ICE-Kandidaten - mit der lokalen IP-Adresse - über Supabase Realtime; das stand bisher nicht in der Liste der Anbieter. (d) Das **Transit-Token** ist nicht „anonym" im Sinne von „der Server kennt die Person nicht" - es ist dem Konto zugeordnet, trägt aber keine Geräte-Identität. Außerdem präzisiert: die Gerätekennung ist eine app-erzeugte Kennung (keine Geräte-UUID), die Transit-Zuwinke verfallen nach 48 Stunden, und die eigene Tastatur liest nichts mit (Abschnitt 3b-5).',
+    ],
   ),
   PrivacyBlock(
     'table',

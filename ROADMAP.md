@@ -509,6 +509,57 @@ zugestellte Kopie beim Gegenüber kann nicht zurückgerufen werden.
 
 ### Build 54: die eigene Tastatur (13.11.2026)
 
+> **Sicherheits-Review (13.11.2026):** Ein vollständiger Durchgang über
+> Funktion, Sicherheit und Datenschutz hat vier echte Lücken gefunden -
+> alle sind in diesem Build behoben:
+>
+> 1. **Transit Spark: die Kandidatenliste preisgegeben** (Migration 215,
+>    live). Die Beschreibung kam ungeprueft vom Client; der Merkmals-
+>    Katalog ist aber lesbar, also traf der ganze Katalog jedes Signal:
+>    die Liste lieferte alle Personen im 45-Minuten-Fenster mit echter
+>    User-ID, freier Notiz und selbst genanntem Ort, und der Zuwink war
+>    an beliebige nahe Erwachsene moeglich. Jetzt kommt die Beschreibung
+>    **serverseitig aus dem eigenen Signal** des Aufrufers. Nebenbei war
+>    das "hoechstens 20 Kandidaten" wirkungslos (Limit hinter dem
+>    Aggregat) - jetzt stimmt es.
+> 2. **Die Datenschutzerklaerung hat vier Dinge falsch gesagt** (jetzt
+>    V23): Vorstellungs-Audio (nicht clientseitig verschluesselt, und
+>    es wird im Kandidaten-Deck schon vor dem Like abgespielt), Zeitzone
+>    (wird bei jedem Start gemeldet, stand nicht im Datenkatalog),
+>    WebRTC-Signalisierung (SDP/ICE mit lokaler IP ueber Supabase
+>    Realtime) und das Transit-Token ("anonym" war zu stark formuliert).
+>    Das Data-Safety-Blatt antwortete auf zwei Console-Fragen falsch.
+> 3. **Fehlertexte im Systemprotokoll des Release-Builds**
+>    (`dumpErrorToConsole` lief unbedingt) - jetzt nur noch das
+>    redigierte Crash-Journal.
+> 4. **Probe.exe** im Repository (ein .NET-Audiomesswerkzeug) -
+>    entfernt, Binaries stehen jetzt generell in der `.gitignore`.
+>
+> **Was daraus NICHT folgt:** Die inhaltliche Entscheidung, ob das
+> Vorstellungs-Audio vor dem Like abgespielt werden darf, ist eine
+> Produktentscheidung und keine technische. Aktuell gilt: ja (es ist der
+> Zweck von "Find your Match"), aber **ohne** clientseitige
+> Verschluesselung. Wenn das nicht gewollt ist, muss der Bucket
+> umgestellt werden - das ist eine eigene Aufgabe.
+>
+> **Die drei kleinen Befunde aus dem Review, die bewusst offen bleiben
+> (mit Grund - sie sind nicht schnell genug wegzuzaubern, ohne eine
+> eigene Entscheidung zu treffen):**
+> * `photo_moderation.reviewed_by` kommt aus dem Client (Audit-Spoofing
+>   bei einem Admin). Der Pfad ist ruhend (die NSFW-Moderation ist
+>   standardmaessig aus). Richtig waere ein BEFORE-Trigger auf
+>   `auth.uid()` - eine eigene Migration, wenn die Moderation
+>   eingeschaltet wird.
+> * Der Demo-Credential-Vergleich (offline, nur der Demo-Modus) ist
+>   nicht constant-time. Der praktische Gewinn ist minimal (PBKDF2 mit
+>   600k Iterationen, Ablage im Keystore) - `timingSafeEqual` ist aber
+>   schnell gemacht und wird mitgezogen.
+> * **iOS hat keinen Screenshot-Schutz.** Android setzt FLAG_SECURE
+>   global (auch auf fremden Activities). iOS ist kein Lieferziel
+>   ("iOS/Web/Desktop folgen") - fuer den iOS-Start muss der
+>   Screenrecording-Erkennung (`UIScreen.isCaptured`) aber gearbeitet
+>   werden.
+
 > **Wunsch des Betreibers:** „Baue in die Version bitte noch ein, dass
 > die Handytastatur nicht tracken kann was man schreibt. Das soll ja
 > irgendwie gehen können anscheinend."
@@ -538,7 +589,10 @@ zugestellte Kopie beim Gegenüber kann nicht zurückgerufen werden.
 > und Zeichen, Emoji, Löschen, Enter, Einfügen aus der Zwischenablage. Eine
 > **Hardwaretastatur** funktioniert weiterhin – die Tastenereignisse
 > werden abgefangen und direkt eingefügt, also auch dort ohne die
-> Systemtastatur.
+> Systemtastatur. Die **Belegung folgt der Sprache der App** (Deutsch:
+> QWERTZ mit Umlauten, Englisch: QWERTY) – die App ist zweisprachig, und
+> eine englische Tastatur in einer englischen App wäre eine halbe
+> Lösung.
 >
 > **Die Grenzen, die nicht wegformuliert werden:**
 > * `enableIMEPersonalizedLearning` wirkt **nur auf Android** – für iOS

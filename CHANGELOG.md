@@ -9,6 +9,43 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 ## [0.10.0] – Elternfreigabe, Aufsicht und Admin-Posteingang (Build 31, 2026-10-30 bis 2026-11-03)
 
+### Sicherheits-Review (13.11.2026) – Fundstellen geschlossen
+
+Ein vollständiger Durchgang über Funktion, Sicherheit und Datenschutz hat
+**vier echte Lücken** gefunden. Alle sind behoben:
+
+- **Transit Spark: die Kandidatenliste hat alle Personen in der Nähe
+  preisgegeben** (Migration 215). Die Beschreibung, nach der gefiltert
+  wurde, kam ungeprüft vom Client. Der Merkmals-Katalog ist aber für
+  jeden angemeldeten Nutzer lesbar – wer ihn vollständig übergibt, traf
+  damit **jedes** aktive Signal: Die Liste lieferte alle Personen im
+  45-Minuten-Fenster, mit echter User-ID, freier Notiz und selbst
+  genanntem Ort. Und der Zuwink an eine benannte Person war an
+  **beliebige** nahe Erwachsene möglich (5 je 30 Minuten). Jetzt kommt
+  die Beschreibung **serverseitig aus dem eigenen Signal** des Aufrufers
+  – der Server prüft sie selbst. Nebenbei war das „höchstens 20
+  Kandidaten" wirkungslos (das Limit stand hinter dem Aggregat).
+- **Die Datenschutzerklärung hat vier Dinge falsch gesagt** (jetzt
+  Version 23): Das Vorstellungs-Audio liegt nicht clientseitig
+  verschlüsselt auf dem Server und wird nicht erst bei einem Funke
+  freigegeben (im Kandidaten-Deck wird es schon vor dem Like
+  abgespielt – das ist der Zweck des Modus); die Zeitzone wird bei jedem
+  Start gemeldet und stand nicht im Datenkatalog; beim WebRTC-Aufbau
+  gehen SDP und ICE-Kandidaten (mit der lokalen IP-Adresse) über
+  Supabase Realtime; und das Transit-Token ist nicht „anonym" im Sinne
+  von „der Server kennt die Person nicht". Das Data-Safety-Blatt
+  antwortete außerdem auf zwei Console-Fragen falsch („Dritte: nein" –
+  es gibt acht Dienstleister; „Einreichung zur Prüfung: nein" – es gibt
+  „Daten löschen" und die Auskunft).
+- **Fehlertexte landeten im Systemprotokoll des Release-Builds**
+  (`dumpErrorToConsole` lief unbedingt). Exception-Texte können
+  personenbezogene Daten enthalten; das Crash-Journal redigiert, dieser
+  Weg nicht. Im Release bleibt jetzt nur das redigierte Journal.
+- **Probe.exe** (ein .NET-Audiomesswerkzeug) lag im Repository. Kein
+  Geheimnis, aber ein Windows-Binary im Quellstand einer
+  veröffentlichten App ist Lieferketten-Rauschen. Entfernt, und
+  `*.exe`/`*.dll`/`*.so`/`*.jar` stehen jetzt in der `.gitignore`.
+
 ### Die eigene Tastatur (13.11.2026, Build 54)
 
 - **Die Handytastatur kann nicht mehr mitlesen** (Wunsch des Betreibers:
@@ -19,7 +56,9 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Eingabeverbindung - es gibt also nichts, was die Tastatur des Geräts
   sehen könnte. Kein Buchstabe, kein Cursor, kein Lernvorgang.
   * Bedienung wie gewohnt: Tippen auf das Feld öffnet die App-Tastatur,
-    Groß/Klein, Umlaute, Zahlen, Emoji, Löschen und Enter sind da. Eine
+    Groß/Klein, Umlaute, Zahlen, Emoji, Löschen und Enter sind da. Die
+    **Belegung folgt der Sprache der App**: Deutsch gibt QWERTZ mit den
+    Umlaut-Tasten, Englisch die englische QWERTY-Belegung. Eine
     **Hardwaretastatur** (Tablet mit Tastaturhülle) funktioniert
     weiterhin - auch dort läuft nichts über die Systemtastatur.
   * **Einfügen** aus der Zwischenablage gibt es als eigene Taste (mit

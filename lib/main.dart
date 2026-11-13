@@ -153,7 +153,16 @@ Future<void> main() async {
   StartupWatchdog.reached(2);
 
   FlutterError.onError = (details) {
-    FlutterError.dumpErrorToConsole(details);
+    // BEFUND (13.11.2026, Sicherheits-Review): Der Aufruf war unbedingt -
+    // also auch im Release-Build. Exception-Texte koennen personenbezogene
+    // Daten enthalten (Supabase-Fehler mit E-Mail-Adresse), und das
+    // Systemprotokoll (logcat) ist fuer jeden mit adb oder auf einem
+    // fremden Geraet lesbar. Das Crash-Journal redigiert seine Texte
+    // (crash_journal.dart), dieser Weg nicht. Im Release bleibt deshalb
+    // nur das redigierte Journal - genau das wollte der Projektstand.
+    if (kDebugMode) {
+      FlutterError.dumpErrorToConsole(details);
+    }
     // Crash-Journal (v0.8.0): letzten Absturz lokal speichern. Beim
     // nächsten Start fragt die App, ob ein Report gesendet werden soll.
     unawaited(CrashJournal.capture(details.exception, details.stack));

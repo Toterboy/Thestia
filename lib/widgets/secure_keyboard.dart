@@ -48,6 +48,21 @@ class SecureKeyboard extends StatefulWidget {
     super.key,
   });
 
+  /// Die Belegung, die zur Sprache der App passt.
+  ///
+  /// Deutsch hat **QWERTZ** (das "y" und das "z" sind gegenueber der
+  /// englischen Belegung vertauscht) und vier Umlaut-Tasten. Englisch
+  /// hat **QWERTY**. Wer die App auf Englisch stellt, bekommt also die
+  /// englische Tastatur - und umgekehrt.
+  ///
+  /// Alles ausser Deutsch bekommt QWERTY: das ist die weltweit
+  /// uebliche Belegung, und die App spricht ohnehin nur Deutsch und
+  /// Englisch.
+  static SecureKeyboardLayout layoutFuerSprache(String sprache) =>
+      sprache == 'de'
+      ? SecureKeyboardLayout.qwertz
+      : SecureKeyboardLayout.qwerty;
+
   /// Ein einzelnes Zeichen (Buchstabe, Ziffer, Satzzeichen, Leerzeichen).
   final void Function(String character) onCharacter;
 
@@ -72,6 +87,39 @@ class SecureKeyboard extends StatefulWidget {
   State<SecureKeyboard> createState() => _SecureKeyboardState();
 }
 
+/// Die Belegung der eigenen Tastatur.
+///
+/// Deutsch hat QWERTZ (das "y" und das "z" sind vertauscht) und vier
+/// Umlaut-Tasten; Englisch hat QWERTY. Die Belegung folgt der Sprache
+/// der App - wer die App auf Englisch stellt, bekommt die englische
+/// Tastatur.
+enum SecureKeyboardLayout {
+  /// Deutsch: QWERTZ mit ae, oe, ue, ss auf eigenen Tasten.
+  qwertz,
+
+  /// Englisch: QWERTY.
+  qwerty,
+}
+
+/// Die Tasten einer Belegung.
+class _Belegung {
+  const _Belegung({
+    required this.buchstaben,
+    required this.extra,
+    required this.zeichen,
+  });
+
+  /// Die drei Buchstabenreihen.
+  final List<List<String>> buchstaben;
+
+  /// Die Tasten neben den Buchstaben: bei QWERTZ die Umlaute, bei
+  /// QWERTY die Satzzeichen.
+  final List<String> extra;
+
+  /// Die Zahlen- und Zeichenebene.
+  final List<List<String>> zeichen;
+}
+
 class _SecureKeyboardState extends State<SecureKeyboard> {
   /// Gross-/Kleinschreibung (nur in der Buchstabenebene).
   bool _upperCase = false;
@@ -82,38 +130,49 @@ class _SecureKeyboardState extends State<SecureKeyboard> {
   /// Emoji-Auswahl.
   bool _emoji = false;
 
-  /// Deutsche QWERTZ-Belegung.
-  static const List<List<String>> _letterRows = <List<String>>[
-    <String>['q', 'w', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p'],
-    <String>['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
-    <String>['y', 'x', 'c', 'v', 'b', 'n', 'm'],
-  ];
-
-  static const List<List<String>> _symbolRows = <List<String>>[
-    <String>['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
-    <String>['!', '"', '§', r'$', '%', '&', '/', '(', ')', '='],
-    <String>['?', '@', '€', '+', '-', '*', '_', ',', '.'],
-  ];
-
+  /// Deutsche QWERTZ-Belegung: das "y" steht unten, das "z" oben.
+  ///
   /// Die Umlaute liegen bei der deutschen Tastatur auf eigenen Tasten -
   /// deshalb sind sie hier auch eigene Tasten und nicht irgendein
   /// Sonderzeichen-Menue.
-  static const List<String> _umlauts = <String>['ä', 'ö', 'ü', 'ß'];
+  static const _Belegung _qwertz = _Belegung(
+    buchstaben: <List<String>>[
+      <String>['q', 'w', 'e', 'r', 't', 'z', 'u', 'i', 'o', 'p'],
+      <String>['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
+      <String>['y', 'x', 'c', 'v', 'b', 'n', 'm'],
+    ],
+    extra: <String>['ä', 'ö', 'ü', 'ß'],
+    zeichen: <List<String>>[
+      <String>['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
+      <String>['!', '"', '§', r'$', '%', '&', '/', '(', ')', '='],
+      <String>['?', '@', '€', '+', '-', '*', '_', ',', '.'],
+    ],
+  );
 
-  List<List<String>> get _charRows {
-    if (_symbols) return _symbolRows;
-    if (!_upperCase) return _letterRows;
-    return _letterRows
-        .map((row) => row.map((c) => c.toUpperCase()).toList())
-        .toList();
-  }
+  /// Englische QWERTY-Belegung: das "z" steht unten, das "y" oben.
+  static const _Belegung _qwerty = _Belegung(
+    buchstaben: <List<String>>[
+      <String>['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+      <String>['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
+      <String>['z', 'x', 'c', 'v', 'b', 'n', 'm'],
+    ],
+    extra: <String>[',', '.', "'", '-'],
+    zeichen: <List<String>>[
+      <String>['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
+      <String>['!', '"', '#', r'$', '%', '&', "'", '(', ')', '*'],
+      <String>['+', '_', ':', ';', '=', '?', '@', '\\', '|', '~'],
+    ],
+  );
 
-  List<String> get _umlautKeys {
-    if (!_upperCase) return _umlauts;
-    // Das grosse Eszett gibt es nicht - "SS" waere zwei Zeichen und
-    // wuerde den Text unlesbar machen. Der Buchstabe bleibt "ß".
-    return <String>['Ä', 'Ö', 'Ü', 'ß'];
-  }
+  /// Das grosse Eszett gibt es nicht - "SS" waere zwei Zeichen und
+  /// wuerde den Text unlesbar machen. Der Buchstabe bleibt "ß".
+  static String _gross(String zeichen) =>
+      zeichen == 'ß' ? 'ß' : zeichen.toUpperCase();
+
+  List<List<String>> _grossZeilen(List<List<String>> zeilen) =>
+      zeilen.map((zeile) => zeile.map(_gross).toList()).toList();
+
+  List<String> _grossKeys(List<String> tasten) => tasten.map(_gross).toList();
 
   /// Die haeufigsten Emoji fuer den Chat.
   ///
@@ -240,16 +299,31 @@ class _SecureKeyboardState extends State<SecureKeyboard> {
   Widget build(BuildContext context) {
     final rows = <Widget>[];
 
+    // Die Belegung folgt der Sprache der App: Deutsch -> QWERTZ mit
+    // Umlauten, Englisch -> QWERTY.
+    final belegung =
+        SecureKeyboard.layoutFuerSprache(L10n.localeOf(context).languageCode) ==
+            SecureKeyboardLayout.qwertz
+        ? _qwertz
+        : _qwerty;
+
     if (_emoji) {
       // Die Emoji-Auswahl ersetzt die Buchstaben - unten bleibt die
       // Leiste mit Leertaste, Löschen und der Umschaltung zurück.
       rows.add(_emojiPanel(context));
     } else {
-      for (final row in _charRows) {
-        rows.add(_row(<Widget>[for (final c in row) _charCap(c)]));
+      final buchstaben = _upperCase
+          ? _grossZeilen(belegung.buchstaben)
+          : belegung.buchstaben;
+
+      for (final zeile in buchstaben) {
+        rows.add(_row(<Widget>[for (final z in zeile) _charCap(z)]));
       }
 
       if (_symbols) {
+        for (final zeile in belegung.zeichen) {
+          rows.add(_row(<Widget>[for (final z in zeile) _charCap(z)]));
+        }
         rows.add(
           _row(<Widget>[
             _actionCap(
@@ -289,7 +363,9 @@ class _SecureKeyboardState extends State<SecureKeyboard> {
               label: L10n.t(context, 'keyboard.symbols'),
               onTap: () => setState(() => _symbols = true),
             ),
-            for (final c in _umlautKeys) _charCap(c),
+            for (final z
+                in _upperCase ? _grossKeys(belegung.extra) : belegung.extra)
+              _charCap(z),
             _actionCap(
               icon: Icons.backspace_outlined,
               label: L10n.t(context, 'keyboard.backspace'),

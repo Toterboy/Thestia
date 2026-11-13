@@ -52,42 +52,6 @@ class SupabaseStorageService {
     return eigener != null && eigener.isNotEmpty && h == eigener.toLowerCase();
   }
 
-  /// Lädt eine Chat-Media-Datei (Bild, Sprache) in den Storage hoch.
-  ///
-  /// Speichert unter `{userId}/chat/{timestamp}.{ext}`.
-  /// Gibt die signierte URL zurück, die direkt im Chat angezeigt werden kann.
-  Future<String> uploadChatMedia(List<int> data, String fileExtension) async {
-    final userId = _currentUser?.id;
-    if (userId == null) {
-      throw AppException('Nicht eingeloggt.');
-    }
-
-    // Pfad-Traversal/Injektion verhindern (Audit N1): Nur harmlose
-    // Datei-Endungen erlauben, alles andere neutralisieren.
-    final safeExtension = RegExp(r'^[A-Za-z0-9]{1,8}$').hasMatch(fileExtension)
-        ? fileExtension.toLowerCase()
-        : 'bin';
-
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final path = '$userId/chat/$timestamp.$safeExtension';
-    if (kDebugMode) {
-      log(
-        '[SupabaseStorageService] Upload chat media: '
-        'bucket=$_bucket size=${data.length}',
-      );
-    }
-
-    await _client.storage
-        .from(_bucket)
-        .uploadBinary(path, Uint8List.fromList(data));
-
-    final signedUrl = await _client.storage
-        .from(_bucket)
-        .createSignedUrl(path, _signedUrlExpirySeconds);
-
-    return signedUrl;
-  }
-
   /// Pfad für den aktuellen Nutzer: `{userId}/avatar.jpg`.
   String _avatarPathForUser(String userId) => '$userId/$_fileName';
 

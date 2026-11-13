@@ -14,7 +14,9 @@
 //  4. Eine Hardwaretastatur funktioniert weiterhin.
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/widgets/secure_composer.dart';
 import 'package:thestia/widgets/secure_keyboard.dart';
 
@@ -263,6 +265,91 @@ void main() {
       await tester.pump();
 
       expect(controller.text, '😀');
+      controller.dispose();
+    });
+  });
+
+  group('Die Belegung folgt der Sprache', () {
+    Widget host(TextEditingController controller, Locale locale) =>
+        ProviderScope(
+          overrides: [localeProvider.overrideWith((ref) => locale)],
+          child: MaterialApp(
+            home: Scaffold(
+              body: L10nScope(
+                child: SecureComposer(controller: controller, onSend: () {}),
+              ),
+            ),
+          ),
+        );
+
+    testWidgets('Deutsch hat QWERTZ (y unten, z oben)', (tester) async {
+      final controller = TextEditingController();
+      await tester.pumpWidget(host(controller, const Locale('de')));
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+
+      final y = tester.getTopLeft(find.text('y')).dy;
+      final z = tester.getTopLeft(find.text('z')).dy;
+      // Im deutschen QWERTZ steht das "z" in der ersten Reihe und das
+      // "y" in der dritten - also ist "y" weiter unten.
+      expect(y, greaterThan(z));
+
+      // Und die Umlaute sind eigene Tasten.
+      expect(find.text('ä'), findsOneWidget);
+      expect(find.text('ß'), findsOneWidget);
+      controller.dispose();
+    });
+
+    testWidgets('Englisch hat QWERTY (y oben, z unten)', (tester) async {
+      final controller = TextEditingController();
+      await tester.pumpWidget(host(controller, const Locale('en')));
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+
+      final y = tester.getTopLeft(find.text('y')).dy;
+      final z = tester.getTopLeft(find.text('z')).dy;
+      expect(y, lessThan(z));
+
+      // Und keine Umlaute - dafuer die Satzzeichen.
+      expect(find.text('ä'), findsNothing);
+      expect(find.text('ß'), findsNothing);
+      expect(find.text(','), findsOneWidget);
+      controller.dispose();
+    });
+
+    testWidgets('auf der englischen Belegung wird richtig getippt', (
+      tester,
+    ) async {
+      final controller = TextEditingController();
+      await tester.pumpWidget(host(controller, const Locale('en')));
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+
+      for (final zeichen in <String>['z', 'y', 'x']) {
+        await tester.tap(find.text(zeichen));
+        await tester.pump();
+      }
+
+      expect(controller.text, 'zyx');
+      controller.dispose();
+    });
+
+    testWidgets('die Belegung wechselt mit der Sprache', (tester) async {
+      final controller = TextEditingController();
+      await tester.pumpWidget(host(controller, const Locale('de')));
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+      expect(find.text('ä'), findsOneWidget);
+
+      // Die App-Sprache umstellen (das ist der Sprachumschalter).
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(SecureComposer)),
+      );
+      container.read(localeProvider.notifier).state = const Locale('en');
+      await tester.pumpAndSettle();
+
+      expect(find.text('ä'), findsNothing);
+      expect(find.text('y'), findsOneWidget);
       controller.dispose();
     });
   });
