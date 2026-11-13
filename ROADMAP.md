@@ -30,7 +30,11 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
   und die **eigene Tastatur** (Build 54: die Systemtastatur des Geräts
   sieht im Chat keinen einzigen Buchstaben).
 - **0.11.0** – Emotionaler Rückzugsort (Sanctuary) & lokaler
-  KI-Reflexions-Chat (rein on-device)
+  KI-Reflexions-Chat (rein on-device). Dazu: die **eigene Tastatur wird
+  einstellbar** – der Hintergrund (wie die App / in der Farbe der App /
+  eigene Farbe) und die **Belegung unabhängig von der App-Sprache**
+  (QWERTZ oder QWERTY). Beides kommt in `ui_prefs` – ohne Migration
+  und ohne neue Daten.
 - **0.12.0** – Web-Bridge, Transit-Reachability & Zero-Install
   Gast-Verbindungen (Flutter Web, Codeberg Pages). Gruppen und Foren
   kommen **danach** (eigener Abschnitt unten)
@@ -1841,6 +1845,75 @@ browse_by_category(
       Texte"); sobald der Meet-Intent terminiert ist, zeigt der
       Chat-Header die Vorfreude („Treffen am Samstag!") statt
       Chat-Metriken.
+
+### Begleitend in 0.11.0 – Die eigene Tastatur wird einstellbar
+
+> Die eigene Tastatur (Build 54, v0.10.1) ist bisher an zwei Stellen
+> fest verdrahtet: die **Belegung** folgt der Sprache der App
+> (`L10n.localeOf(context)`), und die **Farben** kommen aus dem
+> App-Thema (`surfaceContainer` / `surfaceContainerHighest`). Beides wird
+> jetzt einstellbar.
+>
+> **Wichtig für die Umsetzung: beides ist rein App-seitig.** Die
+> Einstellungen kommen in `profiles.ui_prefs` (jsonb, Migration 074) – es
+> kommen zwei Schlüssel dazu, keine neue Spalte.
+> **Keine Migration, keine neue Spalte, keine neuen Daten** – die
+> Datenschutzerklärung ändert sich dadurch nicht.
+
+- [ ] **Der Tastaturhintergrund wird anpassbar**: In den Einstellungen
+      (Abschnitt *Darstellung*, neben der Farbwelt) kommt ein
+      **Tastaturstil**:
+      * **Wie die App** (Voreinstellung) – das heutige Verhalten: die
+        Tasten nehmen die Flächenfarben des App-Themas.
+      * **In der Farbe der App** – die Tasten und die Aktions-Tasten
+        (Umschaltung, Zahlen, Emoji, Löschen, Enter) bekommen die
+        Akzentfarbe der gewählten Farbwelt. Der Text darauf muss in
+        beiden Helligkeiten lesbar bleiben (Kontrast!).
+      * **Eigene Farbe** – ein einzelner, selbst gewählter Farbton
+        (eigener Schlüssel `keyboardColor`).
+      * **Umsetzung:** `lib/widgets/secure_keyboard.dart` holt die
+        Farben heute hart aus `Theme.of(context).colorScheme`. Der
+        Umbau ist: die Farben kommen aus der Einstellung, die Tastatur
+        bekommt sie als Parameter (kein globales Theme-Umhängen - die
+        Tastatur soll sich nicht in den anderen Bildschirmen
+        ausbreiten).
+      * **Auswahl im Chat sichtbar:** Der Stil wird in der
+        **Einstellungs-Vorschau** gezeigt (ein kleines Tastatur-Motiv),
+        damit man die Wahl ohne Chat ausprobieren kann.
+- [ ] **Die Tastatursprache wird unabhängig von der App-Sprache**:
+      Zwei Wege sind ausdrücklich **nicht dasselbe** – bisher war die
+      Belegung ein Nebenprodukt des Sprachumschalters, und wer die App
+      auf Englisch stellte, bekam automatisch QWERTY. Abgeholfen wird
+      das durch einen eigenen Schalter:
+      * **Wie die App** (Voreinstellung) – die Belegung folgt der
+        Sprache der App (deutsch → QWERTZ mit ä ö ü ß, englisch →
+        QWERTY). Das ist der heutige Stand.
+      * **Deutsch (QWERTZ)** – immer deutsche Belegung, auch wenn die
+        App englisch ist.
+      * **Englisch (QWERTY)** – immer englische Belegung, auch wenn die
+        App deutsch ist.
+      * **Warum das eine eigene Einstellung sein muss:** Wer auf
+        Deutsch schreibt, aber in einer englischen Umgebung arbeitet
+        (Schule, Arbeit, Partner), will die App-Sprache ändern, ohne
+        dass sich die Tasten verschieben. Und umgekehrt. Die
+        App-Sprache ist ein **Inhaltsthema**, die Tastatur ein
+        **Werkzeug** – sie gehören nicht zusammen.
+      * **Umsetzung:** Der Schalter liegt in `AppSettings`
+        (`keyboardLayout`) und wird über `ui_prefs` gespiegelt; die
+        Tastatur liest ihn statt der Locale.
+      * **Was NICHT betroffen ist:** Die Emoji-Auswahl und die
+        Zahlen-/Zeichenebene sind sprachneutral. Eine **Hardwaretastatur**
+        ist ohnehin unabhängig (die Tastenereignisse laufen direkt in
+        den Text).
+- [ ] **Beide Schalter überstehen eine Neuinstallation** und sind auf
+      dem zweiten Gerät da (das ist der Punkt von `ui_prefs`). Ein Test
+      prüft das wie bei den anderen Einstellungen
+      (`test/settings_persistence_test.dart`).
+
+> **Ehrlich zur Grenze:** Das ist Komfort, kein Sicherheitsgewinn. Die
+> Tastatur liest weiterhin nichts – die Belegung ändert daran nichts,
+> und der Hintergrund ist eine Farbe. Wer die App-Sprache ändert, um die
+> Tastatur zu ändern, bekommt in 0.11.0 beides getrennt.
 
 ## Geplant für 0.12.0 – Web-Bridge, Transit-Reachability & Zero-Install Gast-Verbindungen
 
