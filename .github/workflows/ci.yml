@@ -151,6 +151,15 @@ jobs:
           # DER ROHTEXT: je nach Fehlerart schreibt der Reporter etwas
           # anderes - Assertion, Timeout oder Absturz.
           echo "::error::Testausgabe: $(wc -l < /tmp/test-output.txt) Zeilen"
+          # DER ERSTE FEHLER MIT SEINEN FOLGEZEILEN: da steht die
+          # eigentliche Meldung (erwartet vs. tatsaechlich, oder die
+          # Exception). Ohne sie weiss man nur, DASS etwas kaputt ist.
+          erste=$(grep -n -m1 "\[E\]" /tmp/test-output.txt | cut -d: -f1 || true)
+          if [ -n "$erste" ]; then
+            sed -n "${erste},$((erste+14))p" /tmp/test-output.txt | while IFS= read -r zeile; do
+              echo "::error::DETAIL: ${zeile}"
+            done
+          fi
           # DIE ZUSAMMENFASSUNG: sie sagt, wie viele Tests gescheitert
           # sind (und ob der Lauf ueberhaupt zu Ende kam).
           grep -E "tests? passed|Some tests failed|All tests passed" /tmp/test-output.txt | tail -3 | while IFS= read -r zeile; do
@@ -161,15 +170,6 @@ jobs:
             kurz=$(printf '%s' "$zeile" | sed -E 's/^.*(test\/[^:]+): /\1 | /')
             echo "::error::FEHLER: ${kurz}"
           done || true
-          # DER ERSTE FEHLER MIT SEINEN FOLGEZEILEN: da steht die
-          # eigentliche Meldung (erwartet vs. tatsaechlich, oder die
-          # Exception). Ohne sie weiss man nur, DASS etwas kaputt ist.
-          erste=$(grep -n -m1 "\[E\]" /tmp/test-output.txt | cut -d: -f1 || true)
-          if [ -n "$erste" ]; then
-            sed -n "${erste},$((erste+14))p" /tmp/test-output.txt | while IFS= read -r zeile; do
-              echo "::error::DETAIL: ${zeile}"
-            done
-          fi
           # Die letzten Zeilen (kurz gehalten: eine Anmerkung, nicht
           # die ganze Ausgabe).
           tail -8 /tmp/test-output.txt | while IFS= read -r zeile; do
