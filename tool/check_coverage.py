@@ -50,8 +50,13 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 # Stand 13.11.2026: 24,3 % (vor den neuen Tests: 20,8 %) - der Boden
 # lag bei 24,0 %.
 # Stand 14.11.2026: 31,0 % (vor den neuen Tests: 30,0 %) - der Boden
-# liegt jetzt bei 30,5 %.
-MINDEST = 30.5
+# liegt jetzt bei 30,0 %.
+#
+# DER BODEN LIEGT ETWAS NIEDRIGER ALS DIE MESSUNG: Auf Linux laeuft
+# eine Gruppe nicht (das UnifiedPush-Plugin kennt dort kein DBus) - die
+# Abdeckung ist dort also etwas kleiner als lokal. Der Boden soll den
+# Stand sichern, nicht an der Plattform haengen.
+MINDEST = 30.0
 
 # Die Bereiche, in die die lib-Dateien einsortiert werden.
 BEREICHE = [
