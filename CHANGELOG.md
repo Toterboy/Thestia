@@ -167,13 +167,27 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   stehen in der PR-Ansicht direkt am Fundort.
 - **Die Tests laufen jetzt überall gleich** (14.11.2026): Neun Tests
   waren auf dem Entwicklerrechner grün und in der CI rot – ohne dass
-  der Test falsch war. Der Grund: `Supabase.initialize` holt sich den
-  Speicher-Ordner vom path_provider-Plugin. Im Test läuft die
-  Desktop-Variante des Plugins – auf dem CI-Runner gibt es weder ein
-  XDG-Verzeichnis noch eine libsecret-Sitzung. Die Plugin-Kanäle werden
-  jetzt in den Tests beantwortet
-  (`test/support/plugin_mocks.dart`): damit ruft der Test nie das
-  Plugin und ist auf jeder Plattform gleich.
+  der Test falsch war. Der Grund war nicht die App, sondern der
+  **Unterschied zwischen den Plattformen**: Auf Linux gibt es die
+  Desktop-Plugins, auf Windows nicht. `Supabase.initialize` holt sich
+  den Speicher-Ordner (path_provider) und startet den Deeplink-Observer
+  (app_links) – auf dem CI-Runner scheitern beide Aufrufe. Dazu kommen
+  der Keystore (flutter_secure_storage) und die Zeitzone
+  (flutter_timezone): auf Linux gibt es dafür eine Implementierung, die
+  auf dem Runner ins Leere läuft.
+  * Die Plugin-Kanäle werden jetzt in den Tests beantwortet
+    (`test/support/plugin_mocks.dart`), der Supabase-Aufbau ohne
+    Speicher und ohne Deeplink-Observer (`persistSession: false`,
+    `detectSessionInUri: false`) – damit ruft der Test nie ein Plugin.
+  * Die beiden UnifiedPush-Gruppen laufen auf Linux nicht: Das Plugin
+    initialisiert dort ohne DBus-Namen gar nicht. Der Weg, den der
+    Dienst auf dem Telefon geht, wird auf Windows und in der CI getestet.
+  * **Und die CI sagt jetzt, WAS kaputt ist:** Vorher stand im Lauf nur
+    „1281 tests passed, 9 failed" – welche Tests gescheitert waren,
+    blieb im Log versteckt. Der Lauf meldet die fehlgeschlagenen Tests,
+    die Analyzer-Meldungen und den Namen des roten Prüfers jetzt als
+    **Anmerkungen** an die betroffene Datei: sie stehen in der
+    PR-Ansicht direkt am Fundort.
 
 ## [0.10.1] – Elternfreigabe, Aufsicht und Admin-Posteingang (Build 51/52/54/55, 2026-11-03 bis 2026-11-13)
 
