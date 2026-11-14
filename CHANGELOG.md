@@ -225,8 +225,8 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Frage, viele Nachrichten) – er war mit 1446 offenen Zeilen die
   größte Lücke der App.
 - **Auch das eigene Profil, der Datenschutz-Screen, die
-  Einstellungen, die Anmeldung, der Anruf-Screen, die Ersteinrichtung
-  und der Dating-Hour-Chat** haben jetzt Tests (Name,
+  Einstellungen, die Anmeldung, der Anruf-Screen, die Ersteinrichtung,
+  der Dating-Hour-Chat und der Startbildschirm** haben jetzt Tests (Name,
   Verifiziert-Abzeichen, Knöpfe der Kopfzeile; Datenexport,
   Auftragsverarbeiter, Verweis auf die Nutzungsbedingungen; die Abschnitte
   der Einstellungen und der Schalter für unscharfe Bilder; Anmelde- und
@@ -235,11 +235,13 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   ohne Bio und ohne Interesse nicht weitergeblättert wird, und der
   Rückfrage beim Zurückgehen; im Dating-Hour-Chat der Leerzustand, der
   ein- und ausblendbare Timer, das Beenden mit Rückfrage und die
-  Meldung, wenn eine Nachricht nicht ankommt).
+  Meldung, wenn eine Nachricht nicht ankommt; auf dem Startbildschirm
+  die Begrüßung, die drei Abschnitte mit ihren Leerzuständen, der
+  Verifikations- und der Pausiert-Hinweis).
 - **Die Abdeckung wird gemessen, nicht behauptet**
-  (`tool/check_coverage.py`, Gate in der CI). **Stand: 35,1 %** der
+  (`tool/check_coverage.py`, Gate in der CI). **Stand: 35,8 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
-  im Gate liegt jetzt bei 30,0 %. 1346 Tests, 0 Fehler.
+  im Gate liegt jetzt bei 30,0 %. 1353 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
     steckt nicht in den kleinen Dateien, sondern in den großen
     Bildschirmen (der 1:1-Chat allein hat 1446 offene Zeilen). Das
