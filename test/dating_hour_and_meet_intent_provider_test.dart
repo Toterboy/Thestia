@@ -28,7 +28,6 @@ import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:thestia/models/meet_intent.dart';
 import 'package:thestia/providers/dating_hour_provider.dart';
 import 'package:thestia/providers/meet_intent_provider.dart';
-import 'package:thestia/services/dating_hour_service.dart';
 import 'package:thestia/services/meet_intent_service.dart';
 
 import 'support/fake_supabase_server.dart';
