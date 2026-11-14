@@ -45,7 +45,19 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
     Interessen im Profil-Editor, die Geschlechts-Auswahl, die
     Gesundheitsstufen und der Musik-Geschmack.
 
-### Behoben (14.11.2026) – Der Anruf-Screen war kaputt
+### Behoben (14.11.2026) – Zwei Auswahlfelder liefen aus der Karte
+
+- **In der Ersteinrichtung liefen zwei Auswahlfelder rechts aus der
+  Karte** ("RenderFlex overflowed by 25 pixels"): die Beziehungsart
+  ("Lockere Bekanntschaft") und das Bundesland
+  ("Nordrhein-Westfalen"). Ein `DropdownButtonFormField` misst sich
+  normalerweise am breitesten Eintrag - bei grosser Schrift (oder auf
+  einem schmalen Geraet) passt der Text nicht mehr in die Karte und
+  wird abgeschnitten. Beide Felder nehmen jetzt die volle Breite ein
+  (`isExpanded`), der Text wird gekuerzt statt abgeschnitten. Gefunden
+  hat das ein Test, der die Einrichtung einfach mal aufbaut.
+
+### Behoben (14.11.2026) - Der Anruf-Screen war kaputt
 
 - **Der Anruf-Screen ist beim Öffnen abgestürzt.** Riverpod verbietet,
   einen Provider **während des Aufbaus** zu ändern („Tried to modify a
@@ -168,16 +180,19 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Frage, viele Nachrichten) – er war mit 1446 offenen Zeilen die
   größte Lücke der App.
 - **Auch das eigene Profil, der Datenschutz-Screen, die
-  Einstellungen, die Anmeldung und der Anruf-Screen** haben jetzt
-  Tests (Name,
+  Einstellungen, die Anmeldung, der Anruf-Screen und die Ersteinrichtung**
+  haben jetzt Tests (Name,
   Verifiziert-Abzeichen, Knöpfe der Kopfzeile; Datenexport,
   Auftragsverarbeiter, Verweis auf die Nutzungsbedingungen; die Abschnitte
   der Einstellungen und der Schalter für unscharfe Bilder; Anmelde- und
-  Registrierungsmodus, das Auge am Passwort, die Alters-Bestätigung).
+  Registrierungsmodus, das Auge am Passwort, die Alters-Bestätigung;
+  die zehn Schritte der Ersteinrichtung - inklusive der Prüfung, dass
+  ohne Bio und ohne Interesse nicht weitergeblättert wird, und der
+  Rückfrage beim Zurückgehen).
 - **Die Abdeckung wird gemessen, nicht behauptet**
-  (`tool/check_coverage.py`, Gate in der CI). **Stand: 31,0 %** der
+  (`tool/check_coverage.py`, Gate in der CI). **Stand: 34,1 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
-  im Gate liegt jetzt bei 30,0 %. 1330 Tests, 0 Fehler.
+  im Gate liegt jetzt bei 30,0 %. 1338 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
     steckt nicht in den kleinen Dateien, sondern in den großen
     Bildschirmen (der 1:1-Chat allein hat 1446 offene Zeilen). Das

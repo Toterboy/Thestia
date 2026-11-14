@@ -977,6 +977,15 @@ class _SettingsPrivacyOnceScreenState
                           // der Bubble oben (setupq.filter).
                           DropdownButtonFormField<RelationshipType>(
                             initialValue: userPrefs.relationshipType,
+                            // BREITES FELD (14.11.2026, gefunden von einem
+                            // Test): Ohne `isExpanded` misst das Feld das
+                            // breiteste Label ("Lockere Bekanntschaft") -
+                            // bei grosser Schrift (oder schmalem Geraet)
+                            // laeuft der Text rechts aus der Karte
+                            // ("RenderFlex overflowed by 25 pixels").
+                            // Mit `isExpanded` nimmt das Feld die volle
+                            // Breite und der Text wird gekuerzt.
+                            isExpanded: true,
                             borderRadius: BorderRadius.circular(16),
                             decoration: InputDecoration(
                               labelText: L10n.t(context, 'setupp.relType'),
@@ -1345,6 +1354,13 @@ class _SettingsPrivacyOnceScreenState
                                     _selectedState!.isEmpty)
                                 ? null
                                 : _selectedState,
+                            // BREITES FELD (14.11.2026, gefunden von einem
+                            // Test): Ohne `isExpanded` misst das Feld das
+                            // breiteste Bundesland ("Nordrhein-Westfalen")
+                            // - bei grosser Schrift laeuft der Text rechts
+                            // aus der Karte. Mit `isExpanded` nimmt das
+                            // Feld die volle Breite.
+                            isExpanded: true,
                             borderRadius: BorderRadius.circular(16),
                             decoration: InputDecoration(
                               labelText: L10n.t(
