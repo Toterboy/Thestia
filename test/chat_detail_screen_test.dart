@@ -128,14 +128,19 @@ late supabase.SupabaseClient _moodClient;
 }
 
 /// Die Overrides: Storage, Profil, Chat und der Mood-Client.
-List<Override> _overrides(ChatNotifier notifier) {
+///
+/// [hinweisGesehen] steuert den Hinweis auf den Chat-Hintergrund (v0.10.0):
+/// beim ersten Chat kommt er, sonst nicht.
+List<Override> _overrides(ChatNotifier notifier, {bool hinweisGesehen = true}) {
   final storage = _FakeLocalStorage();
   // Der Hinweis auf den Chat-Hintergrund (v0.10.0) kommt beim ersten
   // Chat - im Test stoert er nur, also ist er als "gesehen" markiert.
-  storage.saveString(
-    AppConstants.prefsSettingsKey,
-    jsonEncode(<String, dynamic>{'chatBackgroundSeen': true}),
-  );
+  if (hinweisGesehen) {
+    storage.saveString(
+      AppConstants.prefsSettingsKey,
+      jsonEncode(<String, dynamic>{'chatBackgroundSeen': true}),
+    );
+  }
   return [
     localStorageProvider.overrideWithValue(storage),
     secureProfileStoreProvider.overrideWithValue(_FakeSecureProfileStore()),
@@ -152,13 +157,14 @@ List<Override> _overrides(ChatNotifier notifier) {
 Future<void> _pump(
   WidgetTester tester,
   Widget kind,
-  ChatNotifier notifier,
-) async {
+  ChatNotifier notifier, {
+  bool hinweisGesehen = true,
+}) async {
   SharedPreferences.setMockInitialValues(<String, Object>{});
   await SharedPreferences.getInstance();
   await tester.pumpWidget(
     ProviderScope(
-      overrides: _overrides(notifier),
+      overrides: _overrides(notifier, hinweisGesehen: hinweisGesehen),
       child: MaterialApp(theme: ThemeData(useMaterial3: true), home: kind),
     ),
   );
@@ -428,6 +434,69 @@ void main() {
       expect(notifier.messagesFor(match.id).length, 30);
       // Und die Liste laesst sich scrollen.
       expect(find.byType(Scrollable), findsWidgets);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+  });
+
+  // Das Drei-Punkte-Menue und der Hinweis auf den Chat-Hintergrund.
+  group('Der 1:1-Chat (Menue und Hinweise)', () {
+    testWidgets('das Menue zeigt die Gruppenueberschriften', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final chat = _chatMitNachricht();
+      await _pump(
+        tester,
+        ChatDetailScreen(matchId: chat.match.id),
+        chat.notifier,
+      );
+
+      // Das Menue oeffnen.
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(tester.takeException(), isNull);
+      // BEFUND (09.11.2026, Betreiber: "Bei 3 Punkte Menue ist ueber
+      // Eisbrecher Fragen ein Strich einfach so aber keine ueberschrift
+      // oder so"): JEDE Gruppe hat eine Ueberschrift - kein nackter
+      // Trennstrich.
+      expect(find.text('Gespräch'), findsOneWidget);
+      expect(find.text('Sicherheit'), findsOneWidget);
+      // Und die wichtigen Eingaenge stehen drin.
+      expect(find.text('Nutzer melden'), findsOneWidget);
+      expect(find.text('Nutzer blockieren'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('der Hinweis auf den Chat-Hintergrund kommt einmal', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final chat = _chatMitNachricht();
+      // Der Hinweis ist noch nicht gesehen - er muss kommen.
+      await _pump(
+        tester,
+        ChatDetailScreen(matchId: chat.match.id),
+        chat.notifier,
+        hinweisGesehen: false,
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.text('Chat-Hintergrund'), findsOneWidget);
+
+      // "Spaeter" schliesst ihn - und er kommt nicht wieder.
+      await tester.tap(find.text('Später'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byType(AlertDialog), findsNothing);
 
       await tester.pumpWidget(const SizedBox());
     });

@@ -243,11 +243,13 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   die Fehlermeldung; bei der Verifizierung der Info-Screen mit dem
   KI-Hinweis, der Erfolgs-Screen und das Angebot, die Berechtigungen
   wieder abzudrehen; im Interessen-Screen das Annehmen und das
-  Ausblenden eines Likes).
+  Ausblenden eines Likes; im 1:1-Chat das Drei-Punkte-Menü mit
+  seinen Gruppenüberschriften und der einmalige Hinweis auf den
+  Chat-Hintergrund).
 - **Die Abdeckung wird gemessen, nicht behauptet**
-  (`tool/check_coverage.py`, Gate in der CI). **Stand: 38,4 %** der
+  (`tool/check_coverage.py`, Gate in der CI). **Stand: 38,6 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
-  im Gate liegt jetzt bei 30,0 %. 1368 Tests, 0 Fehler.
+  im Gate liegt jetzt bei 30,0 %. 1370 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
     steckt nicht in den kleinen Dateien, sondern in den großen
     Bildschirmen (der 1:1-Chat allein hat 1446 offene Zeilen). Das
