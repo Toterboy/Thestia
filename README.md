@@ -70,14 +70,18 @@ ohne Abo-Falle, ohne Aufmerksamkeits-Casino, ohne Daten-Hammer:
   sieht keinen einzigen Buchstaben deiner Nachricht. Und überall sonst
   darf sie aus deinen Angaben nichts lernen.
 - **Präsenz-frei.** Kein „online"-Badge, kein „schreibt gerade…", keine
-  Lesebestätigungen. Dating soll zurück ins echte Leben führen – der
-  App-Status ist kein Beziehungs-Tracker.
+  Lesebestätigungen. **Dating, das dich ins echte Leben zurückführt** –
+  der App-Status ist kein Beziehungs-Tracker.
 - **Inaktivität ist okay.** Abgekühlte Funken verfallen nicht nach 24 Stunden
   in den Ordnner des Vergessens: Inaktive Funken ruhen unter „Erschlossene
   Funken" und sind per Re-Funke jederzeit ohne Frist wieder belebbar.
 - **Dating Hour: das echte Speed-Dating-Ereignis.** Samstags 20–21 Uhr:
   5-Minuten-Chats mit Entscheidungsphase, serverzeitsynchron und
   Anti-Cheat-gesichert – als Event, nicht als zusätzliches Abo-Feature.
+  Gepaart wird **über die Geschlechter hinweg**: Das Event ist für alle
+  Heterosexuellen, also besteht es aus Männern *und* Frauen. Wer im
+  Profil ausdrücklich nur das eigene Geschlecht wählt, wird mit diesem
+  zusammengebracht.
 - **Transit Spark: Begegnungen, ohne anzusprechen.** Im Zug, im Café oder auf
   einer Messe registrieren sich Geräte in der Nähe mit anonymen, flüchtigen
   Tokens. Erst wenn beide „Blicke getauscht" antippen und Merkmale wählen
@@ -94,7 +98,7 @@ ohne Abo-Falle, ohne Aufmerksamkeits-Casino, ohne Daten-Hammer:
 - **Deine Daten werden niemals verkauft** oder für Werbung weitergegeben – es
   gibt schlicht kein Geschäftsmodell, das das bräuchte.
 - **Präsenz-frei:** kein Online-Status, kein „schreibt gerade…", keine
-  Lesebestätigungen. Dating soll zurück ins echte Leben.
+  Lesebestätigungen. **Dating, das dich ins echte Leben zurückführt.**
 - **Ehrliche Transparenz:** Der einzige externe Dienst, der theoretisch
   Verbindungs-Metadaten sehen könnte, ist Google Firebase (nur als
   Push-Transport, ohne Nachrichteninhalte – und nur in der Play-Variante; die

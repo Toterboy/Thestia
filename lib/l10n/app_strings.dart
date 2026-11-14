@@ -1182,11 +1182,17 @@ const Map<String, Map<String, String>> _strings = {
         'Für Transit Spark brauchen wir dein Geburtsdatum. Hinterlege es '
         'in deinen Profildaten, dann prüfen wir dein Alter - solange das '
         'nicht belegt ist, bleibt die Funktion gesperrt.',
-    'welcome.t1': 'Willkommen bei Thestia',
+    // DER SLOGAN (14.11.2026, Betreiber): "Dating, das dich ins echte
+    // Leben zurückführt." Er steht als Überschrift des ersten
+    // Willkommens-Bildschirms - das ist der erste Satz, den ein
+    // Nutzer von der App liest.
+    'welcome.t1': 'Dating, das dich ins echte Leben zurückführt.',
     'welcome.b1':
         'Hier lernst du Menschen wirklich kennen, bevor du ihr Foto '
-        'siehst. Denn am Anfang zählt die Persönlichkeit, nicht das '
-        'Aussehen.',
+        'siehst: am Anfang zählt die Persönlichkeit, nicht das Aussehen. '
+        'Und weil wir dich zurück ins echte Leben bringen wollen, gibt es '
+        'hier Begegnungen, die wirklich stattfinden - die Dating Hour am '
+        'Samstag, Transit Spark im Zug oder im Café, das Zufallschat.',
     'welcome.t2': 'Blind Chat und Match',
     'welcome.b2':
         'Chatte zuerst blind und lerne die Person hinter dem Profil '
@@ -2555,6 +2561,14 @@ const Map<String, Map<String, String>> _strings = {
     'dh.rules.5.body':
         'Sende keine intimen Bilder oder unerwünschten Content. Verstöße '
         'führen zur sofortigen Sperrung.',
+    'dh.rules.7.title': 'Wer mit wem zusammenkommt',
+    'dh.rules.7.body':
+        'Im Event kommen Menschen des jeweils anderen Geschlechts '
+        'zusammen: Das Event ist für alle Heterosexuellen. Hast du im '
+        'Profil ausdrücklich nur dein eigenes Geschlecht gewählt, '
+        'kommst du mit Menschen dieses Geschlechts zusammen. Findet sich '
+        'niemand Passendes, wartest du - lieber warten als jemanden '
+        'gegen deinen Wunsch.',
     'dh.rules.6.title': 'Minderjährigenschutz',
     'dh.rules.6.body':
         'Die Dating Hour ist erst ab 16 Jahren freigegeben. Jüngere '
@@ -2678,6 +2692,10 @@ const Map<String, Map<String, String>> _strings = {
     'dh.event.leave': 'Raus',
     'dh.event.loadError': 'Fehler beim Laden',
     'dh.event.searchingPartner': 'Wir suchen gerade einen Partner...',
+    'dh.event.genderMixHint':
+        'Gesucht wird jemand des anderen Geschlechts - das Event ist für '
+        'alle Heterosexuellen. Hast du im Profil ausdrücklich nur dein '
+        'eigenes Geschlecht gewählt, suchen wir in dieser Gruppe.',
     'dh.event.toChat': 'Zum Chat',
     'dh.event.pairedTitle': 'Du wurdest gepaart',
     'dh.event.pairedBody':
@@ -4427,10 +4445,13 @@ const Map<String, Map<String, String>> _strings = {
         'Transit Spark needs your date of birth. Add it to your profile '
         'so we can check your age - until that is confirmed, the feature '
         'stays locked.',
-    'welcome.t1': 'Welcome to Thestia',
+    'welcome.t1': 'Dating that brings you back into real life.',
     'welcome.b1':
-        'Here you really get to know people before you see their photo. '
-        'Because at first, personality counts, not looks.',
+        'Here you really get to know people before you see their photo: at '
+        'the beginning, personality counts, not looks. And because we want '
+        'to bring you back into real life, there are encounters here that '
+        'really happen - the Dating Hour on Saturday, Transit Spark on a '
+        'train or in a cafe, the random chat.',
     'welcome.t2': 'Blind Chat and Match',
     'welcome.b2':
         'First chat blind and get to know the person behind the profile. '
@@ -5861,6 +5882,14 @@ const Map<String, Map<String, String>> _strings = {
     'dh.rules.5.body':
         'Do not send intimate pictures or unwanted content. Violations '
         'lead to an immediate ban.',
+    'dh.rules.7.title': 'Who gets paired with whom',
+    'dh.rules.7.body':
+        'In the event, people of the respective other gender are brought '
+        'together: the event is for heterosexual people. If you have '
+        'explicitly chosen only your own gender in the profile, you are '
+        'brought together with people of that gender. If there is nobody '
+        'matching, you wait - rather than sitting opposite someone you '
+        'did not choose.',
     'dh.rules.6.title': 'Minor protection',
     'dh.rules.6.body':
         'The Dating Hour is only available from age 16. Younger users '
@@ -5982,6 +6011,10 @@ const Map<String, Map<String, String>> _strings = {
     'dh.event.leave': 'Leave',
     'dh.event.loadError': 'Loading error',
     'dh.event.searchingPartner': 'Looking for a partner for you...',
+    'dh.event.genderMixHint':
+        'We are looking for someone of the other gender - the event is '
+        'for heterosexual people. If you have explicitly chosen only your '
+        'own gender in the profile, we look in that group.',
     'dh.event.toChat': 'To chat',
     'dh.event.pairedTitle': 'You have been paired',
     'dh.event.pairedBody':

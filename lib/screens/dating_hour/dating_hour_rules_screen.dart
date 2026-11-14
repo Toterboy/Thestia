@@ -39,6 +39,14 @@ class DatingHourRulesScreen extends ConsumerWidget {
       L10n.t(context, 'dh.rules.6.title'),
       L10n.t(context, 'dh.rules.6.body'),
     ),
+    // BEFUND (14.11.2026, Betreiber): "Bei Dating Hour irgendwie
+    // umsetzen, dass von beiden Geschlechtern welche in dem Event sind,
+    // wenn alle Hetero." Die Regel steht jetzt auch hier - wer wartet,
+    // soll wissen, worauf.
+    _RuleItem(
+      L10n.t(context, 'dh.rules.7.title'),
+      L10n.t(context, 'dh.rules.7.body'),
+    ),
   ];
 
   @override

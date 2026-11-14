@@ -101,6 +101,35 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Eintrag steht jetzt, was wirklich gilt: Firebase (Google) läuft nur
   in der Play-Store-Fassung, der F-Droid-Build nutzt UnifiedPush.
 
+### Neu (14.11.2026) – Der Slogan und die Dating Hour
+
+- **Der Slogan der App: „Dating, das dich ins echte Leben zurückführt."**
+  Er steht jetzt dort, wo man ihn zuerst liest: als Überschrift des
+  Willkommens-Screens (deutsch und englisch). Außerdem im Kopf der
+  Website, in der kurzen Beschreibung des Store-Eintrags und als erster
+  Satz der langen Beschreibung – App und Store sagen jetzt dasselbe.
+
+- **Die Dating Hour paart jetzt über die Geschlechter hinweg.**
+  Wunsch des Betreibers: „Bei Dating Hour irgendwie umsetzen, dass von
+  beiden Geschlechtern welche in dem Event sind, wenn alle Hetero."
+  * **Das war auch ein Fehler:** Die Paarung hat die Geschlechtswahl
+    **nie** beachtet – wer im Profil ausdrücklich nur Frauen suchte,
+    konnte mit einem Mann gepaart werden. Das widersprach der
+    Datenschutzerklärung („Die Match-Berechnung nutzt deine Angaben, um
+    dir passende Menschen zu zeigen").
+  * **Jetzt gilt:** Ausdrücklich nur das eigene Geschlecht gewählt →
+    nur damit. Ausdrücklich nur das andere → nur damit (das ist der
+    Hetero-Fall: sind alle hetero, besteht das Event aus Männern **und**
+    Frauen). „Alle" gewählt → offen. Nichts gewählt → das Event ist ein
+    Hetero-Event, es wird über die Geschlechter hinweg gepaart.
+    Die Prüfung ist **beidseitig**: niemand bekommt jemanden gegen den
+    eigenen Wunsch.
+  * **Findet sich niemand Passendes, wird nicht gepaart, sondern
+    gewartet** – und die App sagt, worauf man wartet (im Event-Screen
+    und in den Regeln).
+  * Die Regel ist am lebenden Server geprüft und jederzeit nachprüfbar:
+    `python tool\check_dating_hour_gender_mix.py`.
+
 ### Tests (14.11.2026)
 
 - **Der Ausbau der Tests** (Bedarf des Betreibers: „Erstelle weitere
@@ -116,9 +145,9 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   bestätigen"). Damit kann ein Test beide Fälle stellen: der Server
   antwortet, oder der Server schweigt.
 - **Die Abdeckung wird gemessen, nicht behauptet**
-  (`tool/check_coverage.py`, Gate in der CI). **Stand: 29,8 %** der
+  (`tool/check_coverage.py`, Gate in der CI). **Stand: 30,0 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
-  im Gate liegt jetzt bei 29,0 %. 1280 Tests, 0 Fehler.
+  im Gate liegt jetzt bei 29,5 %. 1290 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
     steckt nicht in den kleinen Dateien, sondern in den großen
     Bildschirmen (der 1:1-Chat allein hat 1446 offene Zeilen). Das

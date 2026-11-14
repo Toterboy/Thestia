@@ -311,6 +311,10 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
   ),
   PrivacyBlock(
     'li',
+    'In der **Dating Hour** wird nach dieser Wahl gepaart: Das Event ist ein Hetero-Event, es besteht also aus Männern **und** Frauen. Wer im Profil ausdrücklich nur das eigene Geschlecht wählt, wird mit Menschen dieses Geschlechts zusammengebracht. Die Paarung ist **beidseitig** – niemand bekommt jemanden gegen seinen eigenen Wunsch. Findet sich niemand Passendes, wird nicht gepaart, sondern gewartet.',
+  ),
+  PrivacyBlock(
+    'li',
     'Wir zeigen deine Angaben auch nicht anderen in der Form „sucht Männer". Andere sehen dein Profil, deine Interessen und (nach Freigabe) deine Fotos – aber nicht deine Suchpräferenzen.',
   ),
   PrivacyBlock(

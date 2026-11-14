@@ -650,11 +650,33 @@ class _ActiveSessionButtonState extends ConsumerState<_ActiveSessionButton> {
           }
         }
         if (session == null) {
-          return _PrimaryActionButton(
-            icon: Icons.search,
-            label: L10n.t(context, 'dh.event.searchingPartner'),
-            onPressed: null,
-            color: Theme.of(context).colorScheme.primary,
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _PrimaryActionButton(
+                icon: Icons.search,
+                label: L10n.t(context, 'dh.event.searchingPartner'),
+                onPressed: null,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(height: 10),
+              // BEFUND (14.11.2026, Betreiber): "Bei Dating Hour
+              // irgendwie umsetzen, dass von beiden Geschlechtern
+              // welche in dem Event sind, wenn alle Hetero."
+              //
+              // Der Server paart jetzt nur noch ueber die Geschlechter
+              // hinweg (Migration 216 + 217). Wer nicht gepaart wird,
+              // wartet auf Menschen des anderen Geschlechts - das steht
+              // hier, damit das Warten einen Grund hat und nicht wie
+              // ein Fehler wirkt.
+              Text(
+                L10n.t(context, 'dh.event.genderMixHint'),
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           );
         }
         return _PrimaryActionButton(

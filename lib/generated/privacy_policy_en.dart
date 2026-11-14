@@ -311,6 +311,10 @@ const List<PrivacyBlock> kPrivacyPolicyEn = <PrivacyBlock>[
   ),
   PrivacyBlock(
     'li',
+    'In the **Dating Hour** the pairing follows this choice: the event is a heterosexual event, so it consists of men **and** women. If you have explicitly chosen only your own gender in the profile, you are brought together with people of that gender. The pairing works **in both directions** - nobody is put opposite someone against their own wish. If there is nobody matching, no pairing is made - you wait instead.',
+  ),
+  PrivacyBlock(
+    'li',
     'We do not show other people your details in the form "is looking for men". They see your profile, your interests and (once you have consented) your photos - but not your search preferences.',
   ),
   PrivacyBlock(
