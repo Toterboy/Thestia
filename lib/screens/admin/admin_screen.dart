@@ -27,12 +27,23 @@ import 'package:thestia/widgets/states.dart';
 bool isCurrentUserAdmin() {
   final adminId = AppConstants.adminUserId;
   // Fail-safe: Wenn die Admin-UUID nicht konfiguriert ist, kann NIEMAND
-  // Admin sein — auch nicht versehentlich durch leere User-ID.
+  // Admin sein - auch nicht versehentlich durch leere User-ID.
   if (adminId.isEmpty) return false;
   final userId = SupabaseService.currentUser?.id;
   if (userId == null) return false;
   return userId == adminId;
 }
+
+/// Ob der aktuell eingeloggte Nutzer Admin ist - als Provider.
+///
+/// DER WEG (14.11.2026): Ueber einen Provider ist der Admin-Bereich im
+/// Test erreichbar, ohne die echte Admin-UUID im Test zu braeren.
+///
+/// DIE REGEL BLEIBT: Ohne konfigurierte Admin-UUID (Build-Parameter) ist
+/// NIE jemand Admin, und der Bildschirm prueft zusaetzlich serverseitig
+/// (fail-closed). Nur der TEST ueberschreibt diesen Provider - die
+/// Produktion nicht.
+final adminAccessProvider = Provider<bool>((ref) => isCurrentUserAdmin());
 
 /// Geschuetzter Admin-Screen.
 ///
@@ -71,7 +82,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
   }
 
   void _enforceAdmin() {
-    if (!isCurrentUserAdmin() && mounted) {
+    if (!ref.read(adminAccessProvider) && mounted) {
       // Fail-closed bleibt (Audit H6), aber der Grund gehoert ins Log.
       // Ohne das ist die häufigste Ursache - die FALSCHE APK - nur daran
       // zu erkennen, dass der Screen sofort wieder zugeht, und das sieht
@@ -88,7 +99,16 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
           'absichtlich nicht.',
         );
       }
-      context.go(AppRoutes.home);
+      // NACH dem Aufbau navigieren (BEFUND 14.11.2026, gefunden von einem
+      // Test): Ein `context.go()` waehrend des Aufbaus wirft "setState()
+      // or markNeedsBuild() called during build" - der Aufruf kommt hier
+      // aus dem initState/didChangeDependencies, also genau waehrend des
+      // Aufbaus. Der Bereich ist trotzdem zu: der Aufbau selbst zeigt
+      // den Hinweis ("admin.denied"), erst danach geht es zur Startseite.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.go(AppRoutes.home);
+      });
     }
   }
 
@@ -118,7 +138,7 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!isCurrentUserAdmin()) {
+    if (!ref.watch(adminAccessProvider)) {
       return Scaffold(
         appBar: AppBar(title: Text(L10n.t(context, 'admin.deniedTitle'))),
         body: Center(child: Text(L10n.t(context, 'admin.deniedBody'))),
@@ -130,7 +150,13 @@ class _AdminScreenState extends ConsumerState<AdminScreen> {
     }
 
     return DefaultTabController(
-      length: 7,
+      // ACHTUNG (14.11.2026, gefunden von einem Test): Hier stand 7 -
+      // aber es gibt ACHT Tabs (Pillen) und ACHT Seiten (TabBarView).
+      // Der letzte (Posteingang) war dadurch nicht erreichbar: ein
+      // Klick darauf rief controller.animateTo(7) auf einem Controller
+      // mit 7 Eintraegen auf - das ist ein Assertion-Fehler.
+      // Die Zahl muss zur Zahl der Pillen passen.
+      length: 8,
       child: Builder(
         builder: (context) {
           final counts = ref.watch(adminCountsProvider).valueOrNull;

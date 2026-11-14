@@ -45,6 +45,22 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
     Interessen im Profil-Editor, die Geschlechts-Auswahl, die
     Gesundheitsstufen und der Musik-Geschmack.
 
+### Behoben (14.11.2026) – Im Admin-Bereich war der letzte Reiter tot
+
+- **Der Reiter „Posteingang" im Admin-Bereich war nicht erreichbar.**
+  Der Bildschirm hat **acht** Reiter (Meldungen, Fehlerberichte,
+  Verifizierungen, Moderation, Einsprüche, Sperren, Standort-Prüfungen,
+  Posteingang) – der Tab-Controller stand aber auf **sieben**. Ein Klick
+  auf den letzten Reiter rief damit `animateTo(7)` auf einem Controller
+  mit sieben Einträgen auf: ein Assertion-Fehler, der Reiter ließ sich
+  nicht öffnen. Gefunden hat das ein Test, der den Admin-Bereich öffnet.
+- **Der Admin-Bereich war beim Verweigern abgestürzt.** Der Bildschirm
+  navigiert zur Startseite, wenn der Admin-Check scheitert – bisher
+  direkt aus `initState`. Eine Navigation **während des Aufbaus** wirft
+  aber „setState() or markNeedsBuild() called during build". Die
+  Weiterleitung läuft jetzt einen Frame später (der Bereich bleibt
+  trotzdem zu: der Aufbau selbst zeigt den Hinweis).
+
 ### Behoben (14.11.2026) – Der Chat hat beim Verlassen „kracht"
 
 - **Beim Verlassen des Dating-Hour-Chats kam jedes Mal ein Fehler.**
@@ -245,11 +261,12 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   wieder abzudrehen; im Interessen-Screen das Annehmen und das
   Ausblenden eines Likes; im 1:1-Chat das Drei-Punkte-Menü mit
   seinen Gruppenüberschriften und der einmalige Hinweis auf den
-  Chat-Hintergrund).
+  Chat-Hintergrund; im Admin-Bereich alle acht Reiter und das
+  Verweigern des Zugangs).
 - **Die Abdeckung wird gemessen, nicht behauptet**
-  (`tool/check_coverage.py`, Gate in der CI). **Stand: 38,6 %** der
+  (`tool/check_coverage.py`, Gate in der CI). **Stand: 38,9 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
-  im Gate liegt jetzt bei 30,0 %. 1370 Tests, 0 Fehler.
+  im Gate liegt jetzt bei 30,0 %. 1374 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
     steckt nicht in den kleinen Dateien, sondern in den großen
     Bildschirmen (der 1:1-Chat allein hat 1446 offene Zeilen). Das
