@@ -271,6 +271,19 @@ def seite(sprache, daten, pfad):
              '  <title>%s - Thestia</title>' % daten['titel'],
              '  <meta name="description" content="%s">'
              % beschreibung('nutzungsbedingungen.html', sprache),
+             # Die Favicon-Links.
+             #
+             # BEFUND (14.11.2026): Die Seiten werden HIER erzeugt und
+             # stehen auch in der SEITEN-Liste von apply_web_theme.py.
+             # Ohne diese Links fehlten sie nach jedem Erzeugen wieder -
+             # und der Idempotenz-Gate der CI ("Web-Theme wiederholbar")
+             # meldete: ein Durchlauf aendert die Datei. Sie stehen
+             # deshalb hier (wie in tool/make_privacy_policy.py).
+             '  <link rel="icon" href="/favicon.ico" sizes="any">',
+             '  <link rel="icon" type="image/png" sizes="192x192" '
+             'href="/favicon.png">',
+             '  <link rel="icon" type="image/svg+xml" href="/favicon.svg">',
+             '  <link rel="apple-touch-icon" href="/favicon.png">',
              '  <style>',
              # Eigenes CSS VOR dem gemeinsamen (siehe Kommentar oben:
              # sonst ist strip_theme/apply_theme nicht wiederholbar).
@@ -305,6 +318,18 @@ def seite(sprache, daten, pfad):
     print('  %-34s %d Bloecke' % (str(pfad.relative_to(ROOT)), len(daten['bloecke'])))
 
 
-seite('de', DE, A / 'nutzungsbedingungen.html')
-seite('en', EN, A / 'en' / 'nutzungsbedingungen.html')
-print('fertig')
+def main():
+    seite('de', DE, A / 'nutzungsbedingungen.html')
+    seite('en', EN, A / 'en' / 'nutzungsbedingungen.html')
+    print('fertig')
+
+
+# BEFUND (14.11.2026): Das Schreiben passiert NUR, wenn das Skript
+# selbst laeuft. Vorher standen die zwei Aufrufe ohne Guard hier - und
+# tool/make_terms_app.py importiert dieses Modul (es braucht die
+# Inhalte fuer die App-Dateien). Dadurch schrieb der Import die
+# Webseiten neu - und die Favicon-Links (die apply_web_theme.py
+# eingesetzt hatte) waren weg. Der Idempotenz-Gate der CI meldete
+# daraufhin: "ein Durchlauf aendert die Datei".
+if __name__ == '__main__':
+    main()
