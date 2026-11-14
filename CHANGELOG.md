@@ -226,7 +226,8 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   größte Lücke der App.
 - **Auch das eigene Profil, der Datenschutz-Screen, die
   Einstellungen, die Anmeldung, der Anruf-Screen, die Ersteinrichtung,
-  der Dating-Hour-Chat und der Startbildschirm** haben jetzt Tests (Name,
+  der Dating-Hour-Chat, der Startbildschirm und der Event-Bildschirm der
+  Dating Hour** haben jetzt Tests (Name,
   Verifiziert-Abzeichen, Knöpfe der Kopfzeile; Datenexport,
   Auftragsverarbeiter, Verweis auf die Nutzungsbedingungen; die Abschnitte
   der Einstellungen und der Schalter für unscharfe Bilder; Anmelde- und
