@@ -20,6 +20,10 @@ If the server could not be reached while loading the list of sparks, the app sho
 
 And: your own message is there right away, "Update" on the devices screen works again, and Transit Spark only shows the people who really match your description.
 
+And more bugs fixed
+
+Calling did not work at all before - the app crashed as soon as the call screen opened. After a call or a chat, the messages from your partner arrive again, the profile no longer loses your name, and you can leave the Dating Hour without the app crashing.
+
 Dating that brings you back into real life
 
 The app's slogan now greets you on the first screen. And the Dating Hour now pairs across genders: the event is for heterosexual people, so it consists of men and women. If you explicitly choose only your own gender in the profile, you are brought together with someone of that gender.

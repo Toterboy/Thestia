@@ -27,3 +27,7 @@ Deine Funken verschwinden nicht mehr
 Wenn der Server beim Laden der Funkenliste nicht erreichbar war, zeigte die App "keine Funken". Jetzt steht ein Hinweis mit "Erneut versuchen" da, und deine vorhandenen Funken bleiben stehen.
 
 Und: Deine eigene Nachricht ist sofort da, "Aktualisieren" auf dem Geräte-Screen geht wieder, und Transit Spark zeigt nur noch die Menschen, die wirklich zu deiner Beschreibung passen.
+
+Und noch mehr Fehler behoben
+
+Anrufen ging vorher gar nicht - die App stürzte ab, sobald der Anrufbildschirm aufging. Nach einem Anruf oder einem Chat kommen die Meldungen deines Gegenübers wieder an, im Profil geht dein Name nicht mehr verloren, und die Dating Hour lässt sich verlassen, ohne dass die App abstürzt.
