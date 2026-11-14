@@ -262,11 +262,12 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Ausblenden eines Likes; im 1:1-Chat das Drei-Punkte-Menü mit
   seinen Gruppenüberschriften und der einmalige Hinweis auf den
   Chat-Hintergrund; im Admin-Bereich alle acht Reiter und das
-  Verweigern des Zugangs).
+  Verweigern des Zugangs; im Zufallschat der Suchzustand und die
+  Meldung, wenn es offline ist oder niemand da ist).
 - **Die Abdeckung wird gemessen, nicht behauptet**
-  (`tool/check_coverage.py`, Gate in der CI). **Stand: 38,9 %** der
+  (`tool/check_coverage.py`, Gate in der CI). **Stand: 39,0 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
-  im Gate liegt jetzt bei 30,0 %. 1374 Tests, 0 Fehler.
+  im Gate liegt jetzt bei 30,0 %. 1378 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
     steckt nicht in den kleinen Dateien, sondern in den großen
     Bildschirmen (der 1:1-Chat allein hat 1446 offene Zeilen). Das
