@@ -85,7 +85,20 @@ jobs:
           sudo ldconfig
 
       - name: Analyze (muss fehlerfrei sein)
-        run: flutter analyze --fatal-infos
+        run: |
+          set -o pipefail
+          flutter analyze --fatal-infos 2>&1 | tee /tmp/analyze.txt
+
+      # Die Meldungen des Analysers als Anmerkungen (14.11.2026): Vorher
+      # stand im Lauf nur "Process completed with exit code 1" - WAS
+      # fehlerhaft war, blieb im Log versteckt. Die Anmerkungen stehen
+      # an der Datei, die betroffen ist.
+      - name: Die Analyzer-Meldungen melden
+        if: failure()
+        run: |
+          grep -E "^ *(error|warning|info) - " /tmp/analyze.txt | head -30 | while IFS= read -r zeile; do
+            echo "::error::${zeile}"
+          done || true
 
       # Die Formatierung wird seit dem 06.11.2026 geprueft. Vorher
       # konnte der Code still auseinanderlaufen: Dart 3.12 (Tall-Style)
@@ -443,56 +456,69 @@ jobs:
 
       - name: Uebrige statische Pruefer
         run: |
-          python3 tool/check_security_invariants.py
-          python3 tool/check_dependency_pins.py
-          python3 tool/check_push_readiness.py
-          # BEFUND (08.11.2026): "Keine doppelten Benachrichtigungen
-          # fuer das Selbe." Der Like-Versand lief zweimal (DB-Trigger
-          # UND App-Aufruf). Dieses Gate verhindert, dass das zurueck-
-          # kommt: kein Client darf notify-user mit kind='likes'
-          # aufrufen, und die Edge Function muss solche Aufrufe
-          # ablehnen.
-          python3 tool/check_push_duplicates.py
-          # BEFUND (08.11.2026): Der Dart-/Flutter-SDK war VOR 3.47.8 und
-          # damit vom Advisory GHSA-frr6-h895-5pxp (High) betroffen:
-          # `dart:io` vertraute auf Android die kompromittierten
-          # Zwischenzertifikate der CA eMudhra weiterhin an. Das Gate
-          # haelt die Sicherheitsuntergrenzen fest (SDK in der CI, lokal
-          # installierte Version, WebRTC-SDK) - ein Rueckfall auf eine
-          # alte Version wird damit rot, statt stillschweigend zu
-          # passieren.
-          python3 tool/check_sdk_security.py
-          # BEFUND (08.11.2026): Zwei Sicherheitsmechanismen waren
-          # STUMM, weil die Policy "No direct app_config access"
-          # (USING false) den direkten PostgREST-Zugriff der App
-          # blockierte: der Update-Hinweis fuer zu alte Clients erschien
-          # nie und die Notbremse fuer Transit Spark griff nicht. Das
-          # Gate fragt genau so ab, wie es die App tut (mit einem echten
-          # Benutzer-Token) - ohne die Schluessel im CI sagt es SKIP.
-          python3 tool/check_app_config_readable.py
-          python3 tool/check_passkey_assetlinks.py
-          python3 tool/check_dashes.py
-          python3 tool/check_texts.py
-          python3 tool/check_keys.py
-          python3 tool/check_local_ci_sync.py
-          # BEFUND 04.11.2026: Eine Edge Function war zerlegt und kam
-          # trotzdem ins Repository - die bis dahin genutzte
-          # Syntaxpruefung ("node --experimental-strip-types --check")
-          # MELDET SICH NICHT. Der Deploy hat den Fehler gefangen,
-          # aber zu spaet. Dieser Check parst TypeScript wirklich.
-          python3 tool/check_edge_syntax.py
-          # Der Publish-Ordner wird per Drag-and-Drop hochgeladen - es
-          # gibt keinen Build-Schritt, der einen Fehler meldet. Was
-          # nicht geprueft wird, landet live: eine Regel auf eine
-          # fehlende Datei, eine durch noindex gesperrte Pflichtseite,
-          # ein toter Link.
-          python3 tool/check_publish_folder.py
-          python3 tool/check_terms_claims.py
-          python3 tool/check_web_pages.py
-          python3 tool/check_web_pages_selftest.py
-          python3 tool/check_no_empty_catches.py
-          python3 tool/check_async_setstate.py
-          python3 tool/check_provider_in_lifecycle.py
+          set -o pipefail
+          {
+            python3 tool/check_security_invariants.py
+            python3 tool/check_dependency_pins.py
+            python3 tool/check_push_readiness.py
+            # BEFUND (08.11.2026): "Keine doppelten Benachrichtigungen
+            # fuer das Selbe." Der Like-Versand lief zweimal (DB-Trigger
+            # UND App-Aufruf). Dieses Gate verhindert, dass das zurueck-
+            # kommt: kein Client darf notify-user mit kind='likes'
+            # aufrufen, und die Edge Function muss solche Aufrufe
+            # ablehnen.
+            python3 tool/check_push_duplicates.py
+            # BEFUND (08.11.2026): Der Dart-/Flutter-SDK war VOR 3.47.8 und
+            # damit vom Advisory GHSA-frr6-h895-5pxp (High) betroffen:
+            # `dart:io` vertraute auf Android die kompromittierten
+            # Zwischenzertifikate der CA eMudhra weiterhin an. Das Gate
+            # haelt die Sicherheitsuntergrenzen fest (SDK in der CI, lokal
+            # installierte Version, WebRTC-SDK) - ein Rueckfall auf eine
+            # alte Version wird damit rot, statt stillschweigend zu
+            # passieren.
+            python3 tool/check_sdk_security.py
+            # BEFUND (08.11.2026): Zwei Sicherheitsmechanismen waren
+            # STUMM, weil die Policy "No direct app_config access"
+            # (USING false) den direkten PostgREST-Zugriff der App
+            # blockierte: der Update-Hinweis fuer zu alte Clients erschien
+            # nie und die Notbremse fuer Transit Spark griff nicht. Das
+            # Gate fragt genau so ab, wie es die App tut (mit einem echten
+            # Benutzer-Token) - ohne die Schluessel im CI sagt es SKIP.
+            python3 tool/check_app_config_readable.py
+            python3 tool/check_passkey_assetlinks.py
+            python3 tool/check_dashes.py
+            python3 tool/check_texts.py
+            python3 tool/check_keys.py
+            python3 tool/check_local_ci_sync.py
+            # BEFUND 04.11.2026: Eine Edge Function war zerlegt und kam
+            # trotzdem ins Repository - die bis dahin genutzte
+            # Syntaxpruefung ("node --experimental-strip-types --check")
+            # MELDET SICH NICHT. Der Deploy hat den Fehler gefangen,
+            # aber zu spaet. Dieser Check parst TypeScript wirklich.
+            python3 tool/check_edge_syntax.py
+            # Der Publish-Ordner wird per Drag-and-Drop hochgeladen - es
+            # gibt keinen Build-Schritt, der einen Fehler meldet. Was
+            # nicht geprueft wird, landet live: eine Regel auf eine
+            # fehlende Datei, eine durch noindex gesperrte Pflichtseite,
+            # ein toter Link.
+            python3 tool/check_publish_folder.py
+            python3 tool/check_terms_claims.py
+            python3 tool/check_web_pages.py
+            python3 tool/check_web_pages_selftest.py
+            python3 tool/check_no_empty_catches.py
+            python3 tool/check_async_setstate.py
+            python3 tool/check_provider_in_lifecycle.py
+          } 2>&1 | tee /tmp/static-checks.txt
+
+      # Welcher Pruefer ist rot? (14.11.2026) Ohne diese Zeilen stand im
+      # Lauf nur "Process completed with exit code 1" - der Name des
+      # verantwortlichen Werkzeugs blieb im Log versteckt.
+      - name: Die fehlgeschlagenen Pruefer melden
+        if: failure()
+        run: |
+          grep -E "FEHLER|Traceback|Error|error:" /tmp/static-checks.txt | tail -20 | while IFS= read -r zeile; do
+            echo "::error::${zeile}"
+          done || true
 
       # Doppelkodierte Umlaute sind gueltiges UTF-8, deshalb findet sie
       # weder der Analyzer noch ein Test. Sie fielen nur auf, als eine

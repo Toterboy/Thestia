@@ -55,11 +55,18 @@ class FakeSupabaseServer extends http.BaseClient {
   /// Wie viele Anfragen sind angekommen?
   int anfragen = 0;
 
+  /// Die Pfade der angefragten URLs (in der Reihenfolge).
+  ///
+  /// DAMIT KANN EIN TEST PRUEFEN, WELCHE Funktion aufgerufen wurde -
+  /// der Zaehler allein sagt das nicht.
+  final List<String> pfade = <String>[];
+
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     anfragen++;
     final url = request.url;
     final pfad = url.path;
+    pfade.add(pfad);
 
     if (antwortetMitFehler) {
       return _antwort(
