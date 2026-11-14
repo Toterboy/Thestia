@@ -238,11 +238,13 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   ein- und ausblendbare Timer, das Beenden mit Rückfrage und die
   Meldung, wenn eine Nachricht nicht ankommt; auf dem Startbildschirm
   die Begrüßung, die drei Abschnitte mit ihren Leerzuständen, der
-  Verifikations- und der Pausiert-Hinweis).
+  Verifikations- und der Pausiert-Hinweis; auf dem Event-Bildschirm der
+  Beitritt mit Rückfrage, das Verlassen, der Leerzustand ohne Event und
+  die Fehlermeldung).
 - **Die Abdeckung wird gemessen, nicht behauptet**
-  (`tool/check_coverage.py`, Gate in der CI). **Stand: 35,8 %** der
+  (`tool/check_coverage.py`, Gate in der CI). **Stand: 37,2 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
-  im Gate liegt jetzt bei 30,0 %. 1353 Tests, 0 Fehler.
+  im Gate liegt jetzt bei 30,0 %. 1360 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
     steckt nicht in den kleinen Dateien, sondern in den großen
     Bildschirmen (der 1:1-Chat allein hat 1446 offene Zeilen). Das
