@@ -181,6 +181,15 @@ void main() {
     // das echte Plugin (das findet dort kein XDG-Verzeichnis).
     await mockPfadProvider();
     await supabase.Supabase.initialize(
+      // DIE DREI OPTIONEN (siehe der Kommentar unten): kein
+      // Timer, kein Speicher, kein Deeplink-Observer - sonst
+      // scheitert der Aufbau auf dem CI-Runner.
+      authOptions: const supabase.FlutterAuthClientOptions(
+        autoRefreshToken: false,
+        persistSession: false,
+        detectSessionInUri: false,
+      ),
+
       url: 'https://example.supabase.co',
       publishableKey: 'test-key',
     );

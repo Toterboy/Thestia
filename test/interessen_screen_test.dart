@@ -245,16 +245,7 @@ void main() {
       url: 'https://example.supabase.co',
       publishableKey: 'test-key',
       authOptions: const supabase.FlutterAuthClientOptions(
-        autoRefreshToken: false,
-        // DER SPEICHER: Mit persistSession (der Vorgabe) will der
-        // Auth-Client die Sitzung auf der Platte ablegen und holt sich
-        // dafuer den Speicher-Ordner vom path_provider-Plugin. Auf Linux
-        // ist das eine reine Dart-Implementierung - sie greift ins
-        // XDG-Verzeichnis des Rechners, und auf dem CI-Runner gibt es
-        // keines: der Aufbau schlaegt fehl und die ganze Testdatei ist
-        // rot. Ohne persistSession braucht der Client keinen Speicher -
-        // die Sitzung steht ohnehin im Fake-Server.
-        persistSession: false,
+        detectSessionInUri: false,
       ),
     );
   });

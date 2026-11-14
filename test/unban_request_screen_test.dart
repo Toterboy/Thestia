@@ -55,8 +55,7 @@ void main() {
       publishableKey: 'test-key',
       httpClient: server,
       authOptions: const supabase.FlutterAuthClientOptions(
-        autoRefreshToken: false,
-        persistSession: false,
+        detectSessionInUri: false,
       ),
     );
   });
