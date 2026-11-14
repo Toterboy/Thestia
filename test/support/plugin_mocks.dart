@@ -25,6 +25,20 @@ const MethodChannel keystoreKanal = MethodChannel(
   'plugins.it_nomads.com/flutter_secure_storage',
 );
 
+/// Der Kanal von flutter_timezone (die Zeitzone des Geraets).
+const MethodChannel zeitzoneKanal = MethodChannel('flutter_timezone');
+
+/// Liefert eine feste Zeitzone.
+///
+/// WARUM: Der Benachrichtigungs-Dienst braucht die Zeitzone des Geraets
+/// (fuer die Zeitangabe in der Meldung). Das Plugin gibt es auf Linux
+/// (dem CI-Runner), auf Windows nicht - dort bleibt die Antwort einfach
+/// aus, hier schlaegt der Aufruf fehl und der Dienst startet nicht.
+void mockZeitzone([String zone = 'Europe/Berlin']) {
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMethodCallHandler(zeitzoneKanal, (anfrage) async => zone);
+}
+
 /// Der In-Memory-Keystore fuer die Tests.
 final Map<String, String> keystoreInhalt = <String, String>{};
 

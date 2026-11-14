@@ -259,6 +259,11 @@ void main() {
     // DER KEYSTORE: dasselbe Spiel - auf dem Linux-Runner
     // gibt es keine libsecret-Sitzung.
     mockKeystore();
+    // DIE ZEITZONE: der Benachrichtigungs-Dienst braucht sie fuer die
+    // Zeitangabe. Das Plugin gibt es auf dem CI-Runner (Linux), auf
+    // Windows nicht - dort bleibt die Antwort einfach aus, hier
+    // scheitert der Aufruf und der Dienst startet nicht.
+    mockZeitzone();
     await Supabase.initialize(
       url: 'https://test.supabase.co',
       publishableKey: 'test-key',
