@@ -117,12 +117,14 @@ jobs:
         run: |
           echo "### Die fehlgeschlagenen Tests" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          grep -E "\[E\]$" /tmp/test-output.txt | tail -40 >> $GITHUB_STEP_SUMMARY || true
+          # ACHTUNG: Der Compact-Reporter polstert die Zeile auf die
+          # Terminalbreite - das "[E]" steht also NICHT am Zeilenende.
+          grep -E "\[E\]" /tmp/test-output.txt | tail -40 >> $GITHUB_STEP_SUMMARY || true
           echo '```' >> $GITHUB_STEP_SUMMARY
           # Und als Anmerkung: die erscheinen an der Datei im PR.
-          grep -E "\[E\]$" /tmp/test-output.txt | tail -40 | while IFS= read -r zeile; do
+          grep -E "\[E\]" /tmp/test-output.txt | tail -40 | while IFS= read -r zeile; do
             datei=$(printf '%s' "$zeile" | sed -E 's/^.*: (test\/[^:]+): .*/\1/')
-            name=$(printf '%s' "$zeile" | sed -E 's/^.*: (test\/[^:]+): (.*) \[E\]$/\2/')
+            name=$(printf '%s' "$zeile" | sed -E 's/^.*: (test\/[^:]+): (.*) \[E\].*$/\2/')
             echo "::error file=${datei}::${name}"
           done || true
 
