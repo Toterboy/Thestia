@@ -147,8 +147,13 @@ jobs:
           # Und als Anmerkung. OHNE Dateipfad: GitHub verwirft eine
           # Anmerkung, deren Datei nicht existiert - und die
           # Compact-Ausgabe nennt den Pfad ohnehin.
-          echo "::error::Die fehlgeschlagenen Tests:"
-          grep -E "\[E\]" /tmp/test-output.txt | tail -40 | sed -E 's/^ +//' | while IFS= read -r zeile; do
+          #
+          # DER ROHTEXT (nicht nur die "[E]"-Zeilen): je nach
+          # Fehlerart schreibt der Reporter etwas anderes - Assertion,
+          # Timeout oder Absturz. Die letzten Zeilen zeigen, was
+          # wirklich passiert ist.
+          echo "::error::Testausgabe: $(wc -l < /tmp/test-output.txt) Zeilen"
+          tail -25 /tmp/test-output.txt | while IFS= read -r zeile; do
             echo "::error::  ${zeile}"
           done || true
 
