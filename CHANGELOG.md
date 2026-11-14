@@ -151,7 +151,7 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   gemeinsame Supabase-Ersatz schreibt jetzt die angefragten Pfade mit –
   so kann ein Test prüfen, **welche** Funktion aufgerufen wurde.
 - **Die Abdeckung wird gemessen, nicht behauptet**
-  (`tool/check_coverage.py`, Gate in der CI). **Stand: 30,7 %** der
+  (`tool/check_coverage.py`, Gate in der CI). **Stand: 30,8 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
   im Gate liegt jetzt bei 30,5 %. 1309 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
@@ -165,6 +165,15 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   fehlgeschlagenen Tests, die Analyzer-Meldungen und den Namen des
   roten Prüfers jetzt als **Anmerkungen** an die betroffene Datei: sie
   stehen in der PR-Ansicht direkt am Fundort.
+- **Die Tests laufen jetzt überall gleich** (14.11.2026): Neun Tests
+  waren auf dem Entwicklerrechner grün und in der CI rot – ohne dass
+  der Test falsch war. Der Grund: `Supabase.initialize` holt sich den
+  Speicher-Ordner vom path_provider-Plugin. Im Test läuft die
+  Desktop-Variante des Plugins – auf dem CI-Runner gibt es weder ein
+  XDG-Verzeichnis noch eine libsecret-Sitzung. Die Plugin-Kanäle werden
+  jetzt in den Tests beantwortet
+  (`test/support/plugin_mocks.dart`): damit ruft der Test nie das
+  Plugin und ist auf jeder Plattform gleich.
 
 ## [0.10.1] – Elternfreigabe, Aufsicht und Admin-Posteingang (Build 51/52/54/55, 2026-11-03 bis 2026-11-13)
 
