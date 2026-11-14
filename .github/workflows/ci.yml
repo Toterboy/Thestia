@@ -96,10 +96,18 @@ jobs:
       - name: Die Analyzer-Meldungen melden
         if: failure()
         run: |
-          # Die letzten Zeilen des Laufs - unabhaengig davon, wie der
-          # Analyzer seine Meldungen formatiert.
-          tail -30 /tmp/analyze.txt | while IFS= read -r zeile; do
+          # BEIDE FORMEN: Der Analyzer schreibt heute
+          # "info - Meldung - code - datei:zeile" ODER
+          # "info - Meldung - code - datei:zeile" mit dem Trenner "•".
+          # Nur eine Form zu suchen hat den Fehler schon einmal
+          # versteckt.
+          grep -E "(error|warning|info) *(-|•) " /tmp/analyze.txt | head -30 | while IFS= read -r zeile; do
             echo "::error::${zeile}"
+          done || true
+          # Und fuer den Fall, dass der Analyzer gar nicht bis zur
+          # Analyse kommt (Absturz, Speicher):
+          tail -15 /tmp/analyze.txt | while IFS= read -r zeile; do
+            echo "::notice::${zeile}"
           done || true
 
       # Die Formatierung wird seit dem 06.11.2026 geprueft. Vorher

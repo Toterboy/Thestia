@@ -49,9 +49,9 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 #
 # Stand 13.11.2026: 24,3 % (vor den neuen Tests: 20,8 %) - der Boden
 # lag bei 24,0 %.
-# Stand 14.11.2026: 30,0 % (vor den neuen Tests: 29,8 %) - der Boden
-# liegt jetzt bei 29,5 %.
-MINDEST = 29.5
+# Stand 14.11.2026: 30,7 % (vor den neuen Tests: 30,0 %) - der Boden
+# liegt jetzt bei 30,5 %.
+MINDEST = 30.5
 
 # Die Bereiche, in die die lib-Dateien einsortiert werden.
 BEREICHE = [

@@ -145,9 +145,9 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   bestätigen"). Damit kann ein Test beide Fälle stellen: der Server
   antwortet, oder der Server schweigt.
 - **Die Abdeckung wird gemessen, nicht behauptet**
-  (`tool/check_coverage.py`, Gate in der CI). **Stand: 30,0 %** der
+  (`tool/check_coverage.py`, Gate in der CI). **Stand: 30,7 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
-  im Gate liegt jetzt bei 29,5 %. 1290 Tests, 0 Fehler.
+  im Gate liegt jetzt bei 30,5 %. 1309 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
     steckt nicht in den kleinen Dateien, sondern in den großen
     Bildschirmen (der 1:1-Chat allein hat 1446 offene Zeilen). Das
