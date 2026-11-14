@@ -151,13 +151,16 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Datenschutz-Screen. Der gemeinsame Supabase-Ersatz schreibt jetzt die
   angefragten Pfade mit – so kann ein Test prüfen, **welche** Funktion
   aufgerufen wurde.
-- **Der 1:1-Chat bekommt die Nachrichtenarten** (Bild, Eisbrecker-
+- **Der 1:1-Chat bekommt die Nachrichtenarten** (Bild, Eisbrecher-
   Frage, viele Nachrichten) – er war mit 1446 offenen Zeilen die
   größte Lücke der App.
+- **Auch das eigene Profil und der Datenschutz-Screen** haben jetzt
+  Tests (Name, Verifiziert-Abzeichen, Knöpfe der Kopfzeile; Datenexport,
+  Auftragsverarbeiter, Verweis auf die Nutzungsbedingungen).
 - **Die Abdeckung wird gemessen, nicht behauptet**
   (`tool/check_coverage.py`, Gate in der CI). **Stand: 31,0 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
-  im Gate liegt jetzt bei 30,5 %. 1316 Tests, 0 Fehler.
+  im Gate liegt jetzt bei 30,0 %. 1320 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
     steckt nicht in den kleinen Dateien, sondern in den großen
     Bildschirmen (der 1:1-Chat allein hat 1446 offene Zeilen). Das
