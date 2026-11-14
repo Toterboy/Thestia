@@ -148,13 +148,17 @@ jobs:
           # Anmerkung, deren Datei nicht existiert - und die
           # Compact-Ausgabe nennt den Pfad ohnehin.
           #
-          # DER ROHTEXT (nicht nur die "[E]"-Zeilen): je nach
-          # Fehlerart schreibt der Reporter etwas anderes - Assertion,
-          # Timeout oder Absturz. Die letzten Zeilen zeigen, was
-          # wirklich passiert ist.
+          # DER ROHTEXT: je nach Fehlerart schreibt der Reporter etwas
+          # anderes - Assertion, Timeout oder Absturz.
           echo "::error::Testausgabe: $(wc -l < /tmp/test-output.txt) Zeilen"
           tail -25 /tmp/test-output.txt | while IFS= read -r zeile; do
             echo "::error::  ${zeile}"
+          done || true
+          # UND die FehlermELDUNGEN (sie stehen ein paar Zeilen ueber
+          # dem Stapel und nennen den Provider, der nicht aufgebaut
+          # werden konnte).
+          grep -E "Bad state|MissingPluginException|PlatformException|Failed assertion|TimeoutException|was thrown|The following .* was thrown" /tmp/test-output.txt | tail -20 | while IFS= read -r zeile; do
+            echo "::error::MELDUNG: ${zeile}"
           done || true
 
       # Der Boden: faellt die Abdeckung darunter, schlaegt der Lauf rot -
