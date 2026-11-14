@@ -96,7 +96,9 @@ jobs:
       - name: Die Analyzer-Meldungen melden
         if: failure()
         run: |
-          grep -E "^ *(error|warning|info) - " /tmp/analyze.txt | head -30 | while IFS= read -r zeile; do
+          # Die letzten Zeilen des Laufs - unabhaengig davon, wie der
+          # Analyzer seine Meldungen formatiert.
+          tail -30 /tmp/analyze.txt | while IFS= read -r zeile; do
             echo "::error::${zeile}"
           done || true
 
@@ -458,8 +460,11 @@ jobs:
         run: |
           set -o pipefail
           {
+            echo "PRUEFER: tool/check_security_invariants.py"
             python3 tool/check_security_invariants.py
+            echo "PRUEFER: tool/check_dependency_pins.py"
             python3 tool/check_dependency_pins.py
+            echo "PRUEFER: tool/check_push_readiness.py"
             python3 tool/check_push_readiness.py
             # BEFUND (08.11.2026): "Keine doppelten Benachrichtigungen
             # fuer das Selbe." Der Like-Versand lief zweimal (DB-Trigger
@@ -467,6 +472,7 @@ jobs:
             # kommt: kein Client darf notify-user mit kind='likes'
             # aufrufen, und die Edge Function muss solche Aufrufe
             # ablehnen.
+            echo "PRUEFER: tool/check_push_duplicates.py"
             python3 tool/check_push_duplicates.py
             # BEFUND (08.11.2026): Der Dart-/Flutter-SDK war VOR 3.47.8 und
             # damit vom Advisory GHSA-frr6-h895-5pxp (High) betroffen:
@@ -476,6 +482,7 @@ jobs:
             # installierte Version, WebRTC-SDK) - ein Rueckfall auf eine
             # alte Version wird damit rot, statt stillschweigend zu
             # passieren.
+            echo "PRUEFER: tool/check_sdk_security.py"
             python3 tool/check_sdk_security.py
             # BEFUND (08.11.2026): Zwei Sicherheitsmechanismen waren
             # STUMM, weil die Policy "No direct app_config access"
@@ -484,29 +491,43 @@ jobs:
             # nie und die Notbremse fuer Transit Spark griff nicht. Das
             # Gate fragt genau so ab, wie es die App tut (mit einem echten
             # Benutzer-Token) - ohne die Schluessel im CI sagt es SKIP.
+            echo "PRUEFER: tool/check_app_config_readable.py"
             python3 tool/check_app_config_readable.py
+            echo "PRUEFER: tool/check_passkey_assetlinks.py"
             python3 tool/check_passkey_assetlinks.py
+            echo "PRUEFER: tool/check_dashes.py"
             python3 tool/check_dashes.py
+            echo "PRUEFER: tool/check_texts.py"
             python3 tool/check_texts.py
+            echo "PRUEFER: tool/check_keys.py"
             python3 tool/check_keys.py
+            echo "PRUEFER: tool/check_local_ci_sync.py"
             python3 tool/check_local_ci_sync.py
             # BEFUND 04.11.2026: Eine Edge Function war zerlegt und kam
             # trotzdem ins Repository - die bis dahin genutzte
             # Syntaxpruefung ("node --experimental-strip-types --check")
             # MELDET SICH NICHT. Der Deploy hat den Fehler gefangen,
             # aber zu spaet. Dieser Check parst TypeScript wirklich.
+            echo "PRUEFER: tool/check_edge_syntax.py"
             python3 tool/check_edge_syntax.py
             # Der Publish-Ordner wird per Drag-and-Drop hochgeladen - es
             # gibt keinen Build-Schritt, der einen Fehler meldet. Was
             # nicht geprueft wird, landet live: eine Regel auf eine
             # fehlende Datei, eine durch noindex gesperrte Pflichtseite,
             # ein toter Link.
+            echo "PRUEFER: tool/check_publish_folder.py"
             python3 tool/check_publish_folder.py
+            echo "PRUEFER: tool/check_terms_claims.py"
             python3 tool/check_terms_claims.py
+            echo "PRUEFER: tool/check_web_pages.py"
             python3 tool/check_web_pages.py
+            echo "PRUEFER: tool/check_web_pages_selftest.py"
             python3 tool/check_web_pages_selftest.py
+            echo "PRUEFER: tool/check_no_empty_catches.py"
             python3 tool/check_no_empty_catches.py
+            echo "PRUEFER: tool/check_async_setstate.py"
             python3 tool/check_async_setstate.py
+            echo "PRUEFER: tool/check_provider_in_lifecycle.py"
             python3 tool/check_provider_in_lifecycle.py
           } 2>&1 | tee /tmp/static-checks.txt
 
@@ -516,7 +537,7 @@ jobs:
       - name: Die fehlgeschlagenen Pruefer melden
         if: failure()
         run: |
-          grep -E "FEHLER|Traceback|Error|error:" /tmp/static-checks.txt | tail -20 | while IFS= read -r zeile; do
+          tail -30 /tmp/static-checks.txt | while IFS= read -r zeile; do
             echo "::error::${zeile}"
           done || true
 

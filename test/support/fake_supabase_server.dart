@@ -21,6 +21,7 @@
 // und keine offenen Timer.
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
@@ -145,6 +146,14 @@ class FakeSupabaseServer extends http.BaseClient {
       if (decoded is Map<String, dynamic>) return decoded;
     } catch (_) {
       // Kein JSON-Body - der Fake versteht nur Objekte.
+      //
+      // DIE SPUR: Der Leer-Check des Projekts (tool/
+      // check_no_empty_catches.py) verlangt in jedem catch eine
+      // sichtbare Handlung - ein leerer Block verschluckt jeden Fehler
+      // spurlos. Hier ist die Meldung die Handlung: sie sagt, dass der
+      // Body kein JSON war (das ist kein Fehler, sondern eine
+      // Tatsache).
+      debugPrint('[FakeSupabaseServer] kein JSON-Body empfangen.');
     }
     return <String, dynamic>{};
   }
