@@ -321,7 +321,7 @@ Alterssperre für Transit Spark (Migration 131) umgehen. Details:
 - **Privacy-Screen**: echte JSON-Exportfunktion (Profil, Einstellungen,
   Präferenzen, Mood) zum Teilen/Speichern, Daten-Import (JSON wieder
   einspielbar) sowie Auflistung der Auftragsverarbeiter (Supabase,
-  Google/Firebase, Brevo, Cloudflare, Netlify, Apple)
+  Google/Firebase, Brevo, Cloudflare, Netlify)
 - **Zweisprachig (DE/EN)**: Die App ist komplett zweisprachig – inklusive
   Farbschemata, Stimmungs-Chips und Entdecken-Modi; auf Deutsch heißt es
   konsequent „Funke(n)", auf Englisch „Spark(s)"

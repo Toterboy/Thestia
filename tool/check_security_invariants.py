@@ -1604,9 +1604,17 @@ for _name, _liste in (('de-DE', _liste_de), ('en-US', _liste_en)):
 
 # Die Nutzungsbedingungen muessen in der App verlinkt sein: Play
 # verlangt fuer jede App eine erreichbare Adresse.
+#
+# BEFUND (14.11.2026): Vorher lag die Adresse im Datenschutz-Screen
+# (der auf die Webseite verlinkte). Jetzt zeigt die App den Text selbst
+# (BEFUND des Betreibers: "Die Nutzungsbedingungen funktionieren in der
+# App nicht") - die Adresse steht deshalb im Bedingungs-Screen, und
+# der Datenschutz-Screen fuehrt dorthin. Beides wird geprueft.
 check(has('lib/screens/privacy/privacy_screen.dart',
           "'privacy.termsTitle'",
-          'https://thestia.de/nutzungsbedingungen'),
+          'AppRoutes.privacyTerms')
+      and has('lib/screens/privacy/terms_text_screen.dart',
+              'https://thestia.de/nutzungsbedingungen'),
       'APP: Die Nutzungsbedingungen sind in den '
       'Datenschutz-Einstellungen verlinkt (Play verlangt eine erreichbare '
       'Adresse)')

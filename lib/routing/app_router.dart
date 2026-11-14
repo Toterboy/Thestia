@@ -40,6 +40,7 @@ import 'package:thestia/services/whats_new_service.dart';
 import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/screens/privacy/privacy_screen.dart';
 import 'package:thestia/screens/privacy/privacy_policy_text_screen.dart';
+import 'package:thestia/screens/privacy/terms_text_screen.dart';
 import 'package:thestia/screens/settings/devices_screen.dart';
 import 'package:thestia/screens/profile/profile_edit_screen.dart';
 import 'package:thestia/screens/profile/profile_screen.dart';
@@ -134,6 +135,9 @@ class AppRoutes {
   /// Privacy-Screen nicht 250 Zeilen Fließtext in einer ListView
   /// versteckt und der Text trotzdem vollständig erreichbar bleibt.
   static const String privacyPolicy = '/privacy/policy';
+
+  /// Die Nutzungsbedingungen als Text IN der App (nicht nur als Link).
+  static const String privacyTerms = '/privacy/terms';
   static const String safetyCenter = '/safety-center';
   // Geräte & Sitzungen ("Wo bin ich eingeloggt?")
   static const String devices = '/devices';
@@ -771,6 +775,13 @@ GoRouter createRouter(Ref ref) {
       GoRoute(
         path: AppRoutes.privacyPolicy,
         builder: (context, state) => const PrivacyPolicyTextScreen(),
+      ),
+      // Volltext der Nutzungsbedingungen (BEFUND 14.11.2026: "Die
+      // Nutzungsbedingungen funktionieren in der App nicht" - sie waren
+      // nur ein Link auf die Webseite).
+      GoRoute(
+        path: AppRoutes.privacyTerms,
+        builder: (context, state) => const TermsTextScreen(),
       ),
       // Safety Center: Hilfe bei Belästigung/Stalking + In-App-Maßnahmen
       GoRoute(

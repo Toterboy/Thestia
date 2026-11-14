@@ -860,16 +860,6 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
                 ),
               ],
               const SizedBox(height: 24),
-              // Der Name beim Zuwinken (v0.10.1).
-              //
-              // BEFUND (10.11.2026, Betreiber): "Ich finde aber, dass man bei
-              // Transit Spark einstellen können soll, ob der Name für andere
-              // sichtbar sein soll oder nicht."
-              //
-              // Der Schalter steht hier, weil er nur für Transit Spark gilt
-              // - wer ihn braucht, ist gerade dort.
-              _showNameSwitch(context),
-              const SizedBox(height: 16),
               // Der ungefaehre Ort (v0.10.1, Betreiber).
               _placePicker(context),
               const SizedBox(height: 16),
@@ -913,21 +903,61 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
                 label: Text(L10n.t(context, 'transit.exchanged')),
               ),
               const SizedBox(height: 12),
-              // Opt-in (v0.9.1, Standard AUS): Nach Radar-Ende an das
-              // manuelle Ausschalten von Bluetooth/Standort erinnern.
-              SwitchListTile(
-                value: _radioCleanupEnabled,
-                onChanged: _setRadioCleanup,
-                title: Text(L10n.t(context, 'transit.cleanupToggle')),
-                subtitle: Text(
-                  L10n.t(context, 'transit.cleanupToggleSub'),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+              // ---- Die beiden Optionen des Radars: Erinnerung und
+              // Namensfreigabe. Zusammen in einer Karte.
+              //
+              // BEFUND (14.11.2026, Betreiber): "Transit Spark Screen sieht
+              // überfüllt und durcheinander aus. Bitte anders anordnen
+              // z.B. Name anzeigen zu nach Radar erinnern hinpacken."
+              //
+              // Die beiden Schalter sagen beide, wie sich der Radar
+              // verhält - sie gehören zusammen. Vorher stand der
+              // Namens-Schalter weit oben zwischen Ort und Start, der
+              // Erinnerungs-Schalter weit unten: die Seite sah dadurch
+              // ungeordnet aus. Jetzt stehen beide in einer Karte unter
+              // den Knöpfen.
+              Card(
+                margin: EdgeInsets.zero,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Opt-in (v0.9.1, Standard AUS): Nach Radar-Ende an
+                      // das manuelle Ausschalten von Bluetooth/Standort
+                      // erinnern.
+                      SwitchListTile(
+                        value: _radioCleanupEnabled,
+                        onChanged: _setRadioCleanup,
+                        title: Text(L10n.t(context, 'transit.cleanupToggle')),
+                        subtitle: Text(
+                          L10n.t(context, 'transit.cleanupToggleSub'),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                        secondary: const Icon(
+                          Icons.signal_cellular_off_outlined,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
+                        dense: true,
+                      ),
+                      const Divider(height: 1),
+                      // Der Name beim Zuwinken (v0.10.1).
+                      //
+                      // BEFUND (10.11.2026, Betreiber): "Ich finde aber,
+                      // dass man bei Transit Spark einstellen können
+                      // soll, ob der Name für andere sichtbar sein soll
+                      // oder nicht."
+                      _showNameSwitch(context),
+                    ],
                   ),
                 ),
-                secondary: const Icon(Icons.signal_cellular_off_outlined),
-                contentPadding: EdgeInsets.zero,
-                dense: true,
               ),
               // Eigene Ergänzung zur Selbstbeschreibung (v0.9.1).
               if (transit.selfNote.isNotEmpty) ...[

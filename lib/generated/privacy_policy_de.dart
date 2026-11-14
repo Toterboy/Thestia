@@ -8,7 +8,7 @@ import 'package:thestia/generated/privacy_policy_blocks.dart';
 /// Reihenfolge der Quelle.
 const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
   PrivacyBlock('h1', 'Datenschutzerklärung für Thestia'),
-  PrivacyBlock('p', '**Stand: November 2026** · Version 23 (v0.10.1)'),
+  PrivacyBlock('p', '**Stand: November 2026** · Version 23 (v0.10.2)'),
   PrivacyBlock(
     'p',
     'Thestia ist ein datenschutzorientiertes Open-Source-Projekt (AGPLv3). Der Schutz deiner persönlichen Sphäre steht an erster Stelle: Es werden keine Werbetracker eingesetzt, keine Verhaltensprofile erstellt und keine Nutzerdaten an Dritte verkauft.',

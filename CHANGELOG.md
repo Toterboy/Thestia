@@ -74,6 +74,33 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Zähler und lief dabei rechts aus der Fläche. Steht jetzt in einer
   Zeile, die umbrechen darf.
 
+### Geändert (14.11.2026) – Fünf Wünsche des Betreibers
+
+- **Der Transit-Radar war überfüllt und durcheinander.** Der Schalter
+  „Namen beim Zuwinken zeigen" stand weit oben zwischen Ortsangabe und
+  Start, der Schalter „Nach Radar erinnern" weit unten – zwei Optionen
+  an zwei Enden einer langen Seite. Beide stehen jetzt **unten
+  zusammen in einer Karte** unter den Knöpfen: sie sagen beide, wie
+  sich der Radar verhält, und gehören deshalb zueinander.
+- **„Meine Daten exportieren" stand doppelt.** Einmal im Safety Center
+  und einmal unter Datenschutz & Account. Der Weg im Safety Center ist
+  weg – dort geht es um Sofortmaßnahmen bei Belästigung, nicht um
+  Datenauskunft. Der Export bleibt unter Datenschutz & Account.
+- **Die Webseiten haben jetzt rechts einen Scrollstrich.**
+  Nutzungsbedingungen, Datenschutzerklärung und Impressum (je deutsch
+  und englisch) zeigen einen Strich, an dem man sieht, wie weit die
+  Seite noch geht – und mit dem man scrollen kann. Vorher war er auf
+  dem Telefon unsichtbar, bis man scrollte.
+- **Die Nutzungsbedingungen stehen jetzt in der App.** Vorher waren sie
+  nur ein Link auf die Webseite: das brauchte einen installierten
+  Browser und eine erreichbare Seite. Jetzt steht der Volltext im
+  Programm (deutsch und englisch, je nach App-Sprache) – wie die
+  Datenschutzerklärung. Die Webfassung bleibt als Link erreichbar.
+- **Die Auftragsverarbeiter stimmen wieder.** „Apple Inc. – App-Store-
+  Verteilung" ist raus: Es gibt keine App-Store-Verteilung. Beim Google-
+  Eintrag steht jetzt, was wirklich gilt: Firebase (Google) läuft nur
+  in der Play-Store-Fassung, der F-Droid-Build nutzt UnifiedPush.
+
 ### Tests (14.11.2026)
 
 - **Der Ausbau der Tests** (Bedarf des Betreibers: „Erstelle weitere

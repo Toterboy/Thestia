@@ -1578,8 +1578,6 @@ const Map<String, Map<String, String>> _strings = {
         'können Accounts dauerhaft sperren. 4. Passwörter ändern und 2FA '
         'aktivieren (Einstellungen). 5. Bei Bedrohung oder Angst: Polizei '
         '(110) bzw. 116 006 kontaktieren.',
-    'safety.exportData': 'Meine Daten exportieren',
-    'safety.exportDataSub': 'JSON-Export aller gespeicherten Daten',
     'spice.title': 'Eisbrecher-Fragen',
     'spice.searchHint': 'In Kategorien suchen …',
     'spice.copied': 'Kopiert - füge die Frage im Chat ein.',
@@ -2867,9 +2865,7 @@ const Map<String, Map<String, String>> _strings = {
         'Anbieterkennzeichnung nach § 5 DDG - Anschrift und Kontakt',
     'privacy.termsTitle': 'Nutzungsbedingungen',
     'privacy.termsSub': 'Was beim Benutzen der App erlaubt ist und was nicht',
-    'privacy.termsFailed':
-        'Die Nutzungsbedingungen konnten nicht geöffnet werden. Bitte öffne '
-        'https://thestia.de/nutzungsbedingungen im Browser.',
+    'privacy.termsWeb': 'Die Webfassung im Browser oeffnen',
     'privacy.imprintFailed':
         'Das Impressum konnte nicht geöffnet werden. Bitte öffne '
         'https://thestia.de/impressum im Browser.',
@@ -2921,11 +2917,12 @@ const Map<String, Map<String, String>> _strings = {
         'Auftrag. Chat-Inhalte sind Ende-zu-Ende-verschlüsselt und werden '
         'von keinem Dienstleister verarbeitet.',
     'privacy.processorSupabase': 'Hosting, Datenbank, Authentifizierung (EU)',
-    'privacy.processorGoogle': 'Push-Benachrichtigungen',
+    'privacy.processorGoogle':
+        'Push-Benachrichtigungen - nur in der Play-Store-Fassung '
+        '(Firebase); im F-Droid-Build laeuft UnifiedPush',
     'privacy.processorBrevo': 'Transaktions-E-Mails (Bestätigung, Reset)',
     'privacy.processorCloudflare': 'CAPTCHA (Turnstile) und TURN-Relay',
     'privacy.processorNetlify': 'Hosting der Anmelde-/CAPTCHA-Seite',
-    'privacy.processorApple': 'App-Store-Verteilung',
     'privacy.consent': 'Einwilligungen',
     'privacy.location': 'Standortfreigabe',
     'privacy.locationSub':
@@ -4754,8 +4751,6 @@ const Map<String, Map<String, String>> _strings = {
         'us via the report function. We can permanently suspend accounts. '
         '4. Change passwords and enable 2FA (settings). 5. If threatened or '
         'afraid: contact the police (110) or 116 006.',
-    'safety.exportData': 'Export my data',
-    'safety.exportDataSub': 'JSON export of all stored data',
     'spice.title': 'Icebreaker questions',
     'spice.searchHint': 'Search categories …',
     'spice.copied': 'Copied - paste the question into the chat.',
@@ -6168,9 +6163,7 @@ const Map<String, Map<String, String>> _strings = {
         'Provider identification pursuant to Sec. 5 DDG - address and contact',
     'privacy.termsTitle': 'Terms of use',
     'privacy.termsSub': 'What is allowed when using the app, and what is not',
-    'privacy.termsFailed':
-        'The terms of use could not be opened. Please open '
-        'https://thestia.de/en/nutzungsbedingungen in your browser.',
+    'privacy.termsWeb': 'Open the web version in the browser',
     'privacy.imprintFailed':
         'The imprint could not be opened. Please open '
         'https://thestia.de/impressum in your browser.',
@@ -6220,11 +6213,12 @@ const Map<String, Map<String, String>> _strings = {
         'our behalf. Chat content is end-to-end encrypted and is not '
         'processed by any provider.',
     'privacy.processorSupabase': 'Hosting, database, authentication (EU)',
-    'privacy.processorGoogle': 'Push notifications',
+    'privacy.processorGoogle':
+        'Push notifications - Play Store build only (Firebase); the '
+        'F-Droid build uses UnifiedPush',
     'privacy.processorBrevo': 'Transactional emails (confirmation, reset)',
     'privacy.processorCloudflare': 'CAPTCHA (Turnstile) and TURN relay',
     'privacy.processorNetlify': 'Hosting of the auth/CAPTCHA page',
-    'privacy.processorApple': 'App Store distribution',
     'privacy.consent': 'Consents',
     'privacy.location': 'Location sharing',
     'privacy.locationSub':

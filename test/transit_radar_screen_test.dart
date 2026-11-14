@@ -680,6 +680,12 @@ void main() {
       );
       expect(schalter, findsOneWidget);
 
+      // Der Schalter steht jetzt in der Karte mit der Erinnerung
+      // (BEFUND 14.11.2026: "Transit Spark Screen sieht ueberfuellt und
+      // durcheinander aus") - er liegt damit weiter unten auf der
+      // Seite. Ohne Scrollen geht der Tipp ins Leere.
+      await tester.ensureVisible(schalter);
+      await tester.pump();
       await tester.tap(schalter);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));

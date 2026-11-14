@@ -137,7 +137,52 @@ body {
 
     *, *::before, *::after { box-sizing: border-box; }
 
-    html { -webkit-text-size-adjust: 100%; }
+    html {
+      -webkit-text-size-adjust: 100%;
+      /* --- Der Scrollstrich rechts ---------------------------------
+         BEFUND (14.11.2026, Betreiber): "Nutzungsbedingungen,
+         Datenschutzerklaerung und Impressum sollen rechts diesen
+         Scrollstrich haben, woran man erkennen kann wie weit die Seite
+         noch geht und man soll damit auch scrollen koennen mit dem
+         Strich."
+
+         Drei Stuecke, die zusammenspielen:
+           * `overflow-y: scroll` - die Leiste ist IMMER da. Ohne das
+             blendet der Browser sie auf dem Telefon aus, bis man
+             scrollt; man sieht dann nicht, wie lang die Seite noch ist.
+           * `::-webkit-scrollbar` - macht die Leiste sichtbar und dick
+             genug, um sie mit dem Finger zu ziehen (Chrome, Safari).
+           * `scrollbar-width` / `scrollbar-color` - dasselbe fuer
+             Firefox, das keine ::-webkit-Regeln kennt.
+         `scrollbar-gutter: stable` haelt den Platz frei, damit die
+         Seite beim Scrollen nicht springt. */
+      overflow-y: scroll;
+      scrollbar-gutter: stable;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent) transparent;
+    }
+
+    ::-webkit-scrollbar {
+      width: 14px;
+      height: 14px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      /* Der Rand innen (3px) macht den Griff schmaler, ohne die
+         Leiste selbst schmaler zu machen - so bleibt er gut treffbar. */
+      background: var(--accent);
+      border-radius: 8px;
+      border: 3px solid transparent;
+      background-clip: content-box;
+    }
+
+    ::-webkit-scrollbar-corner {
+      background: transparent;
+    }
 
     body {
       margin: 0;

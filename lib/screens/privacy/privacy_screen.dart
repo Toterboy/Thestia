@@ -567,12 +567,18 @@ class PrivacyScreen extends ConsumerWidget {
           // der Nutzungsbedingungen, und in der App selbst gehoeren die
           // Bedingungen neben der Datenschutzerklaerung und dem
           // Impressum zu finden.
+          //
+          // BEFUND (14.11.2026, Betreiber): "Die Nutzungsbedingungen
+          // funktionieren in der App nicht." Sie waren nur ein Link auf
+          // die Webseite - das braucht einen installierten Browser und
+          // eine erreichbare Seite. Der Text steht jetzt IN der App
+          // (wie die Datenschutzerklaerung).
           ListTile(
             leading: const Icon(Icons.description),
             title: Text(L10n.t(context, 'privacy.termsTitle')),
             subtitle: Text(L10n.t(context, 'privacy.termsSub')),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => _openTerms(context),
+            onTap: () => context.push(AppRoutes.privacyTerms),
           ),
           const Divider(height: 32),
           _SectionTitle(L10n.t(context, 'privacy.processors')),
@@ -603,11 +609,12 @@ class PrivacyScreen extends ConsumerWidget {
             title: const Text('Netlify Inc.'),
             subtitle: Text(L10n.t(context, 'privacy.processorNetlify')),
           ),
-          ListTile(
-            leading: const Icon(Icons.storefront_outlined),
-            title: const Text('Apple Inc.'),
-            subtitle: Text(L10n.t(context, 'privacy.processorApple')),
-          ),
+          // BEFUND (14.11.2026, Betreiber): "apple bei auftragsverarbeiter
+          // ist aktuell falsch, da ich es dort nicht anbiete aktuell."
+          // Es gibt keine App-Store-Verteilung - also steht Apple hier
+          // nicht mehr. Wer die App im Play Store laedt, hat mit Google
+          // (Firebase) den Push-Dienst genannt; die F-Droid-Fassung
+          // nutzt UnifiedPush.
           const Divider(height: 32),
           _SectionTitle(L10n.t(context, 'privacy.consent')),
           // Standortfreigabe: Direkter Sprung in die System-Standort-
@@ -679,33 +686,6 @@ Future<void> _openImprint(BuildContext context) async {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(L10n.t(context, 'privacy.imprintFailed')),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-}
-
-/// Oeffnet die Nutzungsbedingungen auf thestia.de.
-///
-/// Wie das Impressum liegen die Bedingungen auf der Website: sie sind
-/// ein fester Text, und ihn an zwei Stellen zu pflegen (App und Web)
-/// waere eine Fehlerquelle. Die App verlinkt drauf - das genuegt
-/// Google Play und dem Nutzer.
-Future<void> _openTerms(BuildContext context) async {
-  const url = 'https://thestia.de/nutzungsbedingungen';
-  var ok = false;
-  try {
-    ok = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-  } catch (e) {
-    debugPrint(
-      '[Privacy] Nutzungsbedingungen konnten nicht geoeffnet '
-      'werden: $e',
-    );
-  }
-  if (!ok && context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(L10n.t(context, 'privacy.termsFailed')),
         behavior: SnackBarBehavior.floating,
       ),
     );

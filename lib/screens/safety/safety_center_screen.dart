@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/services/supabase_service.dart';
 import 'package:thestia/services/report_service.dart';
 import 'package:thestia/l10n/app_strings.dart';
@@ -131,14 +129,15 @@ class _SafetyCenterScreenState extends ConsumerState<SafetyCenterScreen> {
           const _BlockedUsersSection(),
           const SizedBox(height: 8),
           const _MyReportsSection(),
-          const SizedBox(height: 8),
-          ListTile(
-            leading: const Icon(Icons.download_outlined),
-            title: Text(L10n.t(context, 'safety.exportData')),
-            subtitle: Text(L10n.t(context, 'safety.exportDataSub')),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => context.push(AppRoutes.privacy),
-          ),
+          // BEFUND (14.11.2026, Betreiber): "Meine Daten exportieren bei
+          // Safety Center obwohl schon bei Datenschutz und Account."
+          //
+          // Der Export stand hier ZWEIMAL: im Safety Center und unter
+          // Datenschutz & Account. Zwei Wege fuer dieselben Knopf sind
+          // einer zu viel - und der hier war der schlechtere (das
+          // Safety Center ist die Seite fuer Sofortmassnahmen bei
+          // Belaestigung, nicht fuer Datenauskunft). Der Weg bleibt:
+          // Datenschutz & Account.
           const Divider(height: 32),
           Text(
             L10n.t(context, 'safety.stalkingGuide'),

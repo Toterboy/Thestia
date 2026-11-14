@@ -49,6 +49,55 @@ void main() {
       }
     });
 
+    test('Die langen Seiten haben rechts einen Scrollstrich', () {
+      // BEFUND (14.11.2026, Betreiber): "Nutzungsbedingungen,
+      // Datenschutzerklaerung und Impressum sollen rechts diesen
+      // Scrollstrich haben, woran man erkennen kann wie weit die Seite
+      // noch geht und man soll damit auch scrollen koennen mit dem
+      // Strich."
+      //
+      // Drei Stuecke muessen drin sein:
+      //   * overflow-y: scroll  - die Leiste ist IMMER da (auf dem
+      //     Telefon blendet der Browser sie sonst aus, bis man
+      //     scrollt),
+      //   * ::-webkit-scrollbar - sie ist sichtbar und dick genug zum
+      //     Ziehen (Chrome, Safari),
+      //   * scrollbar-width/-color - dasselbe fuer Firefox.
+      const seitenMitStrich = [
+        'datenschutz.html',
+        'impressum.html',
+        'nutzungsbedingungen.html',
+        'en/datenschutz.html',
+        'en/impressum.html',
+        'en/nutzungsbedingungen.html',
+      ];
+      for (final name in seitenMitStrich) {
+        final html = File('${assets.path}/$name').readAsStringSync();
+        expect(
+          html.contains('overflow-y: scroll'),
+          isTrue,
+          reason:
+              '$name: ohne "overflow-y: scroll" blendet der Browser die '
+              'Leiste auf dem Telefon aus - man sieht dann nicht, wie lang '
+              'die Seite noch ist.',
+        );
+        expect(
+          html.contains('::-webkit-scrollbar'),
+          isTrue,
+          reason:
+              '$name: ohne "::-webkit-scrollbar" gibt es keinen sichtbaren, '
+              'ziehbaren Strich.',
+        );
+        expect(
+          html.contains('scrollbar-width'),
+          isTrue,
+          reason:
+              '$name: Firefox kennt keine ::-webkit-Regeln - ohne '
+              '"scrollbar-width" gibt es dort keinen Strich.',
+        );
+      }
+    });
+
     test('Jede Seite hat genau einen Umschalt-Knopf', () {
       for (final name in seiten) {
         final html = File('${assets.path}/$name').readAsStringSync();
