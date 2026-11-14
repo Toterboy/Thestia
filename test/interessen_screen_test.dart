@@ -36,6 +36,7 @@ import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/interests/interessen_screen.dart';
 import 'package:thestia/services/find_your_match_service.dart';
 import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/widgets/funke_overlay.dart';
 
 import 'support/plugin_mocks.dart';
 
@@ -97,6 +98,12 @@ class _FakeFindYourMatchService extends FindYourMatchService {
   /// Die IDs der gekuehlten Funken.
   final List<int> gekuehlt = [];
 
+  /// Die beantworteten Likes (ID und ob angenommen).
+  final List<({int likeId, bool accept})> beantwortet = [];
+
+  /// Die ausgeblendeten Likes (nur ausgeblendet, nicht abgelehnt).
+  final List<int> ausgeblendeteLikes = [];
+
   @override
   Future<List<ReceivedLike>> listMyLikes() async => eigeneLikes;
 
@@ -115,6 +122,16 @@ class _FakeFindYourMatchService extends FindYourMatchService {
 
   @override
   Future<void> coolMatch(int matchId) async => gekuehlt.add(matchId);
+
+  @override
+  Future<void> respondToLike(int likeId, {required bool accept}) async {
+    beantwortet.add((likeId: likeId, accept: accept));
+  }
+
+  @override
+  Future<void> ignoreLike(int likeId) async {
+    ausgeblendeteLikes.add(likeId);
+  }
 }
 
 /// Die Partnerin als Profil.
@@ -476,6 +493,87 @@ void main() {
       await _pump(tester, service: service, scale: 3.2);
 
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('ein Like annehmen wird dem Server gemeldet', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      service.erhalteneLikes = [
+        ReceivedLike(
+          likeId: 3,
+          profile: _person(name: 'Jonas', alter: 31),
+          createdAt: DateTime.now(),
+        ),
+      ];
+      await _pump(tester, service: service);
+
+      // "Erhalten" aufklappen.
+      await tester.tap(find.text('Erhalten'));
+      await _pumpFrames(tester);
+
+      await tester.tap(find.text('Funke bestätigen'));
+      await _pumpFrames(tester);
+
+      // Der Server wurde wirklich informiert ...
+      expect(service.beantwortet, hasLength(1));
+      expect(service.beantwortet.first.likeId, 3);
+      expect(
+        service.beantwortet.first.accept,
+        isTrue,
+        reason: 'Der Knopf heisst "Funke bestätigen" - das ist ein Annehmen.',
+      );
+
+      // ... und die Gegenseite sieht die Funke-Animation.
+      expect(find.byType(FunkeOverlay), findsOneWidget);
+
+      // Die Animation laeuft von selbst ab (1,1 s) - danach kommt die
+      // Bestaetigung.
+      await tester.pump(const Duration(milliseconds: 1500));
+      await _pumpFrames(tester);
+      expect(find.byType(FunkeOverlay), findsNothing);
+
+      // Und der Nutzer bekommt die Bestaetigung.
+      expect(find.textContaining('Jonas'), findsWidgets);
+    });
+
+    testWidgets('ein Like ausblenden lehnt es nicht ab', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      service.erhalteneLikes = [
+        ReceivedLike(
+          likeId: 4,
+          profile: _person(name: 'Jonas', alter: 31),
+          createdAt: DateTime.now(),
+        ),
+      ];
+      await _pump(tester, service: service);
+
+      await tester.tap(find.text('Erhalten'));
+      await _pumpFrames(tester);
+
+      // Das Auge mit dem Strich heisst "ausblenden" - die Gegenseite
+      // darf davon NICHTS sehen (BEFUND 07.11.2026).
+      await tester.tap(find.byTooltip('Ignorieren'));
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(service.ausgeblendeteLikes, contains(4));
+      expect(
+        service.beantwortet,
+        isEmpty,
+        reason:
+            'Ausblenden ist kein Ablehnen - die Gegenseite darf nichts '
+            'davon sehen.',
+      );
+      expect(find.text('Jonas ist ausgeblendet.'), findsOneWidget);
     });
   });
 }

@@ -581,7 +581,11 @@ class _TabSwipeState extends State<_TabSwipe> with TickerProviderStateMixin {
   /// Sichtbarer Versatz durch die laufende Rueckfeder.
   double get _federWeg {
     if (!_feder.isAnimating) return _weg;
-    final t = Curves.easeOutCubic.transform(_feder.value);
+    // Geklemmt: der Wert eines Controllers kann knapp ueber 1,0 landen -
+    // und Flutter wirft dann die Assertion "parametric value is outside
+    // of [0, 1] range" (BEFUND 14.11.2026, gefunden von einem Test in
+    // der Funke-Animation).
+    final t = Curves.easeOutCubic.transform(_feder.value.clamp(0.0, 1.0));
     return _federStart * (1 - t);
   }
 
@@ -654,7 +658,7 @@ class _TabSwipeState extends State<_TabSwipe> with TickerProviderStateMixin {
       child: AnimatedBuilder(
         animation: Listenable.merge([_enter, _feder]),
         builder: (context, child) {
-          final t = Curves.easeOutCubic.transform(_enter.value);
+          final t = Curves.easeOutCubic.transform(_enter.value.clamp(0.0, 1.0));
 
           // NUTZERWUNSCH (03.11.2026): "Das Swipen ... sieht nicht nach
           // einem fluessigen Swipe aus."

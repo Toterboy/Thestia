@@ -101,16 +101,32 @@ class _FunkeOverlayState extends State<FunkeOverlay>
         child: AnimatedBuilder(
           animation: _ctrl,
           builder: (context, _) {
-            final t = _ctrl.value;
+            // BEFUND (14.11.2026, gefunden von einem Test): Der Wert des
+            // Controllers kann knapp ueber 1,0 landen (1.0000000000000002).
+            // Daraus wurde ein Parameter von 1.0000000000000013 fuer die
+            // Kurve - und Flutter wirft dann die Assertion "parametric
+            // value is outside of [0, 1] range". Die Animation lief also
+            // im Debug-Modus in einen Fehler, genau in dem Moment, in dem
+            // ein Funke entsteht.
+            //
+            // DER WEG: Alle Werte, die in eine Kurve oder in die Deckkraft
+            // gehen, werden auf [0, 1] geklemmt - auch der berechnete
+            // Bruch (sonst ist (1.0 - 0.85) / 0.15 = 1.0000000000000002).
+            final t = _ctrl.value.clamp(0.0, 1.0);
             // Herz: 0-0.35 einblenden+skalieren (overshoot), 0.8-1.0 ausblenden.
             final heartScale = t < 0.35
-                ? Curves.elasticOut.transform(t / 0.35)
+                ? Curves.elasticOut.transform((t / 0.35).clamp(0.0, 1.0))
                 : (t > 0.85
-                      ? 1.0 - Curves.easeIn.transform((t - 0.85) / 0.15)
+                      ? 1.0 -
+                            Curves.easeIn.transform(
+                              ((t - 0.85) / 0.15).clamp(0.0, 1.0),
+                            )
                       : 1.0);
-            final heartOpacity = t > 0.85
-                ? 1.0 - (t - 0.85) / 0.15
-                : (t < 0.08 ? t / 0.08 : 1.0);
+            final heartOpacity =
+                (t > 0.85
+                        ? 1.0 - (t - 0.85) / 0.15
+                        : (t < 0.08 ? t / 0.08 : 1.0))
+                    .clamp(0.0, 1.0);
             // Partikel fliegen ab 0.25 nach außen und faden aus.
             final particleT = ((t - 0.25) / 0.75).clamp(0.0, 1.0);
 
