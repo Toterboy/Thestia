@@ -45,6 +45,19 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
     Interessen im Profil-Editor, die Geschlechts-Auswahl, die
     Gesundheitsstufen und der Musik-Geschmack.
 
+### Behoben (14.11.2026) – Der Anruf-Screen war kaputt
+
+- **Der Anruf-Screen ist beim Öffnen abgestürzt.** Riverpod verbietet,
+  einen Provider **während des Aufbaus** zu ändern („Tried to modify a
+  provider while the widget tree was building") – und `initState` ist
+  Teil des Aufbaus. Der Bildschirm setzte dort die aktive
+  Anruf-ID (sie unterdrückt die Benachrichtigungen während des
+  Gesprächs). Ergebnis: der Anruf kam nie zustande – es flog nur ein
+  Fehler. Gefunden hat das ein Test, der den Bildschirm einfach mal
+  öffnet. Der Wert wird jetzt einen Frame später gesetzt (nach dem
+  Aufbau), und das Zurücksetzen beim Verlassen ist best-effort
+  abgesichert (dieselbe Lösung wie im Chat-Screen).
+
 ### Behoben (14.11.2026) – Drei Fehler, die die neuen Tests gefunden haben
 
 - **Der Profil-Editor hat Name, Bio, Bundesland und Geburtsdatum beim
@@ -155,7 +168,8 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Frage, viele Nachrichten) – er war mit 1446 offenen Zeilen die
   größte Lücke der App.
 - **Auch das eigene Profil, der Datenschutz-Screen, die
-  Einstellungen und die Anmeldung** haben jetzt Tests (Name,
+  Einstellungen, die Anmeldung und der Anruf-Screen** haben jetzt
+  Tests (Name,
   Verifiziert-Abzeichen, Knöpfe der Kopfzeile; Datenexport,
   Auftragsverarbeiter, Verweis auf die Nutzungsbedingungen; die Abschnitte
   der Einstellungen und der Schalter für unscharfe Bilder; Anmelde- und
@@ -163,7 +177,7 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 - **Die Abdeckung wird gemessen, nicht behauptet**
   (`tool/check_coverage.py`, Gate in der CI). **Stand: 31,0 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
-  im Gate liegt jetzt bei 30,0 %. 1327 Tests, 0 Fehler.
+  im Gate liegt jetzt bei 30,0 %. 1330 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
     steckt nicht in den kleinen Dateien, sondern in den großen
     Bildschirmen (der 1:1-Chat allein hat 1446 offene Zeilen). Das

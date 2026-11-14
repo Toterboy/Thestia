@@ -122,14 +122,34 @@ class _CallScreenState extends ConsumerState<CallScreen> {
     });
     _player.dispose();
     _recorder.dispose();
-    if (ref.read(activeCallIdProvider) == _callId) {
-      ref.read(activeCallIdProvider.notifier).state = null;
-    }
+    // Der Provider wird im dispose zurueckgesetzt - aber Riverpod hat
+    // den Consumer-State da schon abgeraeumt. Ein ref.read() hier wirft
+    // sonst "Cannot use ref after the widget was disposed". Deshalb
+    // best-effort (dieselbe Loesung wie im Chat-Screen).
+    bestEffortSync('activeCallId zuruecksetzen', () {
+      if (ref.read(activeCallIdProvider) == _callId) {
+        ref.read(activeCallIdProvider.notifier).state = null;
+      }
+    });
     super.dispose();
   }
 
   Future<void> _init() async {
-    ref.read(activeCallIdProvider.notifier).state = _callId;
+    // BEFUND (14.11.2026, gefunden von einem Test): Riverpod verbietet
+    // das Aendern eines Providers WAEHREND DES AUFBAUS - "Tried to
+    // modify a provider while the widget tree was building". initState
+    // ist Teil des Aufbaus: der Anruf-Screen flog also raus, BEVOR
+    // ueberhaupt ein Klingeln kam.
+    //
+    // DER WEG: Der Wert wird einen Frame spaeter gesetzt. Nach dem Frame
+    // ist der Aufbau fertig, und Riverpod erlaubt das Schreiben.
+    //
+    // (Im dispose gilt dieselbe Regel - dort hilft nur der best-effort-
+    // Weg oben.)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(activeCallIdProvider.notifier).state = _callId;
+    });
 
     final p2p = ref.read(p2pChatServiceProvider);
     _p2p = p2p;
