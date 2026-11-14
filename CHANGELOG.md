@@ -226,8 +226,8 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   größte Lücke der App.
 - **Auch das eigene Profil, der Datenschutz-Screen, die
   Einstellungen, die Anmeldung, der Anruf-Screen, die Ersteinrichtung,
-  der Dating-Hour-Chat, der Startbildschirm und der Event-Bildschirm der
-  Dating Hour** haben jetzt Tests (Name,
+  der Dating-Hour-Chat, der Startbildschirm, der Event-Bildschirm der
+  Dating Hour und die Video-Verifizierung** haben jetzt Tests (Name,
   Verifiziert-Abzeichen, Knöpfe der Kopfzeile; Datenexport,
   Auftragsverarbeiter, Verweis auf die Nutzungsbedingungen; die Abschnitte
   der Einstellungen und der Schalter für unscharfe Bilder; Anmelde- und
@@ -240,11 +240,13 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   die Begrüßung, die drei Abschnitte mit ihren Leerzuständen, der
   Verifikations- und der Pausiert-Hinweis; auf dem Event-Bildschirm der
   Beitritt mit Rückfrage, das Verlassen, der Leerzustand ohne Event und
-  die Fehlermeldung).
+  die Fehlermeldung; bei der Verifizierung der Info-Screen mit dem
+  KI-Hinweis, der Erfolgs-Screen und das Angebot, die Berechtigungen
+  wieder abzudrehen).
 - **Die Abdeckung wird gemessen, nicht behauptet**
-  (`tool/check_coverage.py`, Gate in der CI). **Stand: 37,2 %** der
+  (`tool/check_coverage.py`, Gate in der CI). **Stand: 37,8 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
-  im Gate liegt jetzt bei 30,0 %. 1360 Tests, 0 Fehler.
+  im Gate liegt jetzt bei 30,0 %. 1366 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
     steckt nicht in den kleinen Dateien, sondern in den großen
     Bildschirmen (der 1:1-Chat allein hat 1446 offene Zeilen). Das
