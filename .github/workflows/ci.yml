@@ -196,7 +196,7 @@ jobs:
       # vor und laesst sich im Vergleich zweier Laeufe sehen.
       - name: Coverage als Artefakt
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-lcov
           path: coverage/lcov.info
@@ -240,7 +240,7 @@ jobs:
 
       - name: Veraltete Pakete als Artefakt
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: pub-outdated
           path: outdated.txt
@@ -270,9 +270,32 @@ jobs:
       # kann.
       #
       # Er meldet die Abweichung trotzdem - nur nicht als Blocker.
+      #
+      # BEFUND (15.11.2026): "continue-on-error: true" allein reicht
+      # nicht: der Schritt bleibt rot und GitHub zeigt eine ROTE
+      # Anmerkung ("Process completed with exit code 1") - der Lauf sah
+      # damit kaputt aus, obwohl nur ein Zustand AUSSERHALB des Repos
+      # gemeint war (der Netlify-Upload des Betreibers).
+      #
+      # DER WEG: Das Werkzeug laeuft, sein Ergebnis wird als WARNUNG
+      # gemeldet - und der Schritt endet mit 0.
       - name: "Datenschutzerklaerung: Repo vs. live"
         continue-on-error: true
-        run: python tool/check_privacy_deployment.py
+        run: |
+          set +e
+          python tool/check_privacy_deployment.py > /tmp/privacy-deploy.txt 2>&1
+          code=$?
+          cat /tmp/privacy-deploy.txt
+          if [ "$code" -ne 0 ]; then
+            {
+              echo "### Datenschutzerklaerung: Repo vs. live - Befund"
+              echo '```'
+              tail -25 /tmp/privacy-deploy.txt
+              echo '```'
+            } >> $GITHUB_STEP_SUMMARY
+            echo "::warning::Die live ausgelieferten Dateien weichen vom Repository ab (siehe Zusammenfassung). Das ist der Netlify-Upload des Betreibers - der Lauf bleibt gruen."
+          fi
+          exit 0
 
       # Ein Namespace-Wechsel im Keystore OHNE Migrations-Eintrag bedeutet:
       # beim Update sind die Daten unerreichbar (alle Nutzer abgemeldet bzw.
@@ -296,7 +319,7 @@ jobs:
 
       - name: SBOM als Artefakt
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: sbom-cyclonedx
           path: sbom.json
@@ -468,7 +491,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
@@ -601,9 +624,33 @@ jobs:
       # man nicht aus dem Repository erzwingen kann. Das Gate prueft BEIDE
       # Domains - das Projekt-Gate daneben vergleicht nur auth.thestia.de
       # mit dem Publish-Ordner und sieht die oeffentliche Seite gar nicht.
+      #
+      # BEFUND (15.11.2026): Der Schritt hatte nur "continue-on-error:
+      # true" - der Lauf blieb gruen, aber GitHub zeigte trotzdem eine
+      # ROTE Anmerkung ("2 errors" in der Lauf-UEbersicht). Der Lauf sah
+      # damit kaputt aus, obwohl nur ein Zustand AUSSERHALB des Repos
+      # gemeint war (der Netlify-Upload des Betreibers).
+      #
+      # DER WEG: Das Werkzeug laeuft, sein Ergebnis wird als WARNUNG
+      # gemeldet - und der Schritt endet mit 0. Der Lauf ist damit
+      # "Success" mit einem gelben Hinweis, der sagt, was zu tun ist.
       - name: "Live: die Websites (nur informativ, haengt am Netlify-Deploy)"
         continue-on-error: true
-        run: python3 tool/check_websites_live.py
+        run: |
+          set +e
+          python3 tool/check_websites_live.py > /tmp/websites-live.txt 2>&1
+          code=$?
+          cat /tmp/websites-live.txt
+          if [ "$code" -ne 0 ]; then
+            {
+              echo "### Live: die Websites - Befund"
+              echo '```'
+              tail -20 /tmp/websites-live.txt
+              echo '```'
+            } >> $GITHUB_STEP_SUMMARY
+            echo "::warning::Befund auf der LIVE-Website (siehe Zusammenfassung). Er haengt am Netlify-Upload des Betreibers, nicht am Repository - der Lauf bleibt gruen."
+          fi
+          exit 0
       - name: Mojibake (Doppelkodierung) pruefen
         run: python3 tool/check_mojibake.py --skip-known
 
