@@ -71,6 +71,22 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
   /// steht deshalb nur einmal im Verlauf und wird nicht gesendet.
   bool _fiveMinuteNoticeShown = false;
 
+  /// Die Notifier der beiden "aktiver Chat"-Markierungen.
+  ///
+  /// BEFUND (14.11.2026, gefunden von einem Test): Im `dispose()` darf
+  /// nicht mehr auf `ref` zugegriffen werden - Riverpod hat den
+  /// Consumer-State da schon abgeräumt ("Cannot use ref after the widget
+  /// was disposed"). Das war bei JEDEM Verlassen des Chats ein Fehler
+  /// (im Debug ein roter Bildschirm, im Release eine Fehlermeldung).
+  ///
+  /// DER WEG: Die Notifier werden schon im `initState` geholt. Der
+  /// StateNotifier lebt laenger als der Screen - so wird die
+  /// Notification-Unterdrückung wirklich wieder aufgehoben. Sonst bliebe
+  /// sie bis zum App-Ende stehen und die Meldungen des Partners kämen
+  /// nicht mehr an.
+  late final StateController<String?> _aktiveChatId;
+  late final StateController<String?> _aktiveChatPeerId;
+
   /// Alter des Chat-Partners (aus public_profiles) - für den
   /// Altersdifferenz-Hinweis (Migration: >= 10 Jahre Differenz).
   int? _partnerAge;
@@ -86,6 +102,11 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Die Notifier der "aktiver Chat"-Markierungen jetzt holen: im
+    // dispose() ist `ref` nicht mehr benutzbar (siehe die Erklaerung
+    // beim Feld).
+    _aktiveChatId = ref.read(activeChatIdProvider.notifier);
+    _aktiveChatPeerId = ref.read(activeChatPeerIdProvider.notifier);
     // NUTZERWUNSCH: Keine Benachrichtigung, solange dieser Chat sichtbar
     // ist (Nachrichten erscheinen direkt auf dem Bildschirm).
     //
@@ -94,7 +115,7 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
     // was building"). Die Zuweisung wartet deshalb einen Frame.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.read(activeChatIdProvider.notifier).state = widget.sessionId;
+      _aktiveChatId.state = widget.sessionId;
     });
     _loadSession();
     _startTimer();
@@ -103,13 +124,16 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
   @override
   void dispose() {
     // Aktiven Chat freigeben (Notification-Unterdrückung nur solange der
-    // Chat sichtbar ist).
-    if (ref.read(activeChatIdProvider) == widget.sessionId) {
-      ref.read(activeChatIdProvider.notifier).state = null;
-    }
-    if (ref.read(activeChatPeerIdProvider) == _peerId) {
-      ref.read(activeChatPeerIdProvider.notifier).state = null;
-    }
+    // Chat sichtbar ist) - über die Notifier, weil `ref` hier nicht mehr
+    // benutzt werden darf (siehe die Erklaerung beim Feld).
+    bestEffortSync('aktiven Chat freigeben', () {
+      if (_aktiveChatId.state == widget.sessionId) {
+        _aktiveChatId.state = null;
+      }
+      if (_aktiveChatPeerId.state == _peerId) {
+        _aktiveChatPeerId.state = null;
+      }
+    });
     WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     _msgSub?.cancel();
@@ -187,7 +211,7 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
     _peerId = peerId;
     // NUTZERWUNSCH: Notification-Unterdrückung (lokal + Server-Push)
     // solange dieser Chat sichtbar ist.
-    ref.read(activeChatPeerIdProvider.notifier).state = peerId;
+    _aktiveChatPeerId.state = peerId;
 
     // Eingehende (bereits entschlüsselte) Nachrichten in den Verlauf.
     _msgSub = p2p.incomingMessages.listen((text) {
@@ -790,11 +814,21 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
                         color: Theme.of(context).colorScheme.primary,
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        L10n.t(context, 'dh.chat.e2e'),
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Theme.of(context).colorScheme.primary,
+                      // BREITER TEXT (14.11.2026, gefunden von einem Test):
+                      // "Ende zu Ende verschlüsselt" passte nicht neben
+                      // der Zeit in die Kopfzeile - auf einem schmalen
+                      // Geraet (oder bei grosser Schrift) lief der Text
+                      // rechts aus der Leiste ("RenderFlex overflowed by
+                      // 140 pixels"). `Flexible` kürzt den Text
+                      // statt ihn abzuschneiden.
+                      Flexible(
+                        child: Text(
+                          L10n.t(context, 'dh.chat.e2e'),
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),

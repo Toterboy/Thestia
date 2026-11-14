@@ -195,10 +195,28 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     if (mounted) setState(() {});
   }
 
+  /// Die Notifier der beiden "aktiver Chat"-Markierungen.
+  ///
+  /// BEFUND (14.11.2026, gefunden von einem Test): Riverpod hat den
+  /// Consumer-State im `dispose()` schon abgeraeumt - ein `ref.read()`
+  /// dort wirft ("Cannot use ref after the widget was disposed"). Damit
+  /// blieb die Notification-Unterdrueckung BIS ZUM APP-ENDE stehen: die
+  /// Meldungen des Partners kamen nicht mehr an.
+  ///
+  /// DER WEG: Die Notifier werden im `initState` geholt. Der
+  /// StateNotifier lebt laenger als der Screen - so wird die
+  /// Unterdrueckung wirklich wieder aufgehoben.
+  late final StateController<String?> _aktiveChatId;
+  late final StateController<String?> _aktiveChatPeerId;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Die Notifier jetzt holen: im dispose() ist `ref` nicht mehr
+    // benutzbar (siehe die Erklaerung beim Feld).
+    _aktiveChatId = ref.read(activeChatIdProvider.notifier);
+    _aktiveChatPeerId = ref.read(activeChatPeerIdProvider.notifier);
 
     // Alles, was Provider-State anfasst, wartet auf den ersten Frame.
     //
@@ -224,7 +242,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
       // NUTZERWUNSCH: Unterdrückt die Lokal-Benachrichtigung für
       // eingehende Nachrichten, solange dieser Chat geöffnet ist
       // (Nachricht sichtbar).
-      ref.read(activeChatIdProvider.notifier).state = widget.matchId;
+      _aktiveChatId.state = widget.matchId;
       unawaited(_bootstrap());
       unawaited(_loadQuizGate());
       unawaited(_loadIdeaWheelHidden());
@@ -989,7 +1007,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     // NUTZERWUNSCH: Notification-Unterdrückung braucht die Partner-ID
     // (Server-Push-Metadaten enthalten den Absender, nicht die Match-ID).
     _activePeerId = match.partner.id;
-    ref.read(activeChatPeerIdProvider.notifier).state = _activePeerId;
+    _aktiveChatPeerId.state = _activePeerId;
     // Eigene ID strikt aus der Supabase-Session (Fix): Stale Secure-Store-
     // Werte (alter Account, Demo-'me') erzeugen ein Signaling-Topic, das
     // die echte auth.uid() nicht enthält -> Realtime-RLS verweigert den
@@ -1241,16 +1259,16 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   /// darf. Vor super.dispose() aufgerufen ist es erlaubt.
   void _clearActiveChatFlags() {
     if (!mounted) return;
-    try {
-      if (ref.read(activeChatIdProvider) == widget.matchId) {
-        ref.read(activeChatIdProvider.notifier).state = null;
+    // Ueber die Notifier (im initState geholt): im dispose() ist `ref`
+    // nicht mehr benutzbar - der Aufruf wuerfe sonst.
+    bestEffortSync('aktiven Chat freigeben', () {
+      if (_aktiveChatId.state == widget.matchId) {
+        _aktiveChatId.state = null;
       }
-      if (ref.read(activeChatPeerIdProvider) == _activePeerId) {
-        ref.read(activeChatPeerIdProvider.notifier).state = null;
+      if (_aktiveChatPeerId.state == _activePeerId) {
+        _aktiveChatPeerId.state = null;
       }
-    } on Object {
-      // Container schon abgeräumt: dann gibt es nichts mehr freizugeben.
-    }
+    });
   }
 
   @override

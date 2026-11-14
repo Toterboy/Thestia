@@ -86,10 +86,28 @@ class _RandomChatScreenState extends ConsumerState<RandomChatScreen>
   // Fehler statt stiller "verbunden"-Optik.
   DateTime? _handshakeDeadline;
 
+  /// Die Notifier der beiden "aktiver Chat"-Markierungen.
+  ///
+  /// BEFUND (13.11.2026, gefunden von einem Test): `ref.read` im
+  /// `dispose()` wirft - Riverpod hat den Consumer-State da schon
+  /// abgeraeumt ("Cannot use ref after the widget was disposed"). Damit
+  /// blieb die Notification-Unterdrueckung fuer diesen Chat BIS ZUM
+  /// APP-ENDE stehen: die Meldungen des Partners kamen nicht an.
+  ///
+  /// DER WEG (14.11.2026): Die Notifier werden im `initState` geholt.
+  /// Der StateNotifier lebt laenger als der Screen - so wird die
+  /// Unterdrueckung wirklich wieder aufgehoben.
+  late final StateController<String?> _aktiveChatId;
+  late final StateController<String?> _aktiveChatPeerId;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Die Notifier jetzt holen: im dispose() ist `ref` nicht mehr
+    // benutzbar (siehe die Erklaerung beim Feld).
+    _aktiveChatId = ref.read(activeChatIdProvider.notifier);
+    _aktiveChatPeerId = ref.read(activeChatPeerIdProvider.notifier);
     Future.microtask(_join);
   }
 
@@ -104,16 +122,17 @@ class _RandomChatScreenState extends ConsumerState<RandomChatScreen>
     // blieb die Notification-Unterdrueckung fuer diesen Chat BIS ZUM
     // APP-ENDE stehen: die Meldungen des Partners kamen nicht an.
     // Der Chat-Screen macht es seit langem richtig (mit try/catch).
-    try {
-      if (ref.read(activeChatIdProvider) == (_sessionId ?? 'random')) {
-        ref.read(activeChatIdProvider.notifier).state = null;
+    //
+    // DER WEG (14.11.2026): Ueber die Notifier, die schon im initState
+    // geholt wurden - damit wird die Markierung WIRKLICH geloescht.
+    bestEffortSync('aktiven Chat freigeben', () {
+      if (_aktiveChatId.state == (_sessionId ?? 'random')) {
+        _aktiveChatId.state = null;
       }
-      if (ref.read(activeChatPeerIdProvider) == _partnerId) {
-        ref.read(activeChatPeerIdProvider.notifier).state = null;
+      if (_aktiveChatPeerId.state == _partnerId) {
+        _aktiveChatPeerId.state = null;
       }
-    } on Object {
-      // Container schon abgeraeumt: dann gibt es nichts mehr freizugeben.
-    }
+    });
     WidgetsBinding.instance.removeObserver(this);
     _pollTimer?.cancel();
     _statusTimer?.cancel();
@@ -284,8 +303,8 @@ class _RandomChatScreenState extends ConsumerState<RandomChatScreen>
     // ist (Nachrichten erscheinen direkt auf dem Bildschirm). Die
     // Partner-ID dient dem Server-Push-Handler (Metadaten enthalten den
     // Absender), die Session-ID dem lokalen Nachrichtenpfad.
-    ref.read(activeChatIdProvider.notifier).state = _sessionId ?? 'random';
-    ref.read(activeChatPeerIdProvider.notifier).state = _partnerId;
+    _aktiveChatId.state = _sessionId ?? 'random';
+    _aktiveChatPeerId.state = _partnerId;
   }
 
   /// Baut die E2E-P2P-Verbindung zum gematchten Partner auf.

@@ -94,9 +94,25 @@ class _CallScreenState extends ConsumerState<CallScreen> {
   final List<String> _playQueue = [];
   bool _playing = false;
 
+  /// Der Notifier der "laufender Anruf"-Markierung.
+  ///
+  /// BEFUND (14.11.2026, gefunden von einem Test): Riverpod hat den
+  /// Consumer-State im `dispose()` schon abgeraeumt - ein `ref.read()`
+  /// dort wirft ("Cannot use ref after the widget was disposed"). Damit
+  /// blieb die Markierung BIS ZUM APP-ENDE stehen, und die Folge war
+  /// konkret: nach dem ersten Anruf liess sich kein zweiter mehr
+  /// starten (der Chat-Screen lehnt ab, wenn schon ein Anruf laeuft).
+  ///
+  /// DER WEG: Der Notifier wird im `initState` geholt. Er lebt laenger
+  /// als der Screen - so wird die Markierung wirklich wieder geloescht.
+  late final StateController<String?> _aktiveAnrufId;
+
   @override
   void initState() {
     super.initState();
+    // Der Notifier wird jetzt geholt: im dispose() ist `ref` nicht mehr
+    // benutzbar (siehe die Erklaerung beim Feld).
+    _aktiveAnrufId = ref.read(activeCallIdProvider.notifier);
     _callId =
         widget.incomingCallId ??
         'call_${DateTime.now().millisecondsSinceEpoch}';
@@ -123,12 +139,11 @@ class _CallScreenState extends ConsumerState<CallScreen> {
     _player.dispose();
     _recorder.dispose();
     // Der Provider wird im dispose zurueckgesetzt - aber Riverpod hat
-    // den Consumer-State da schon abgeraeumt. Ein ref.read() hier wirft
-    // sonst "Cannot use ref after the widget was disposed". Deshalb
-    // best-effort (dieselbe Loesung wie im Chat-Screen).
+    // den Consumer-State da schon abgeraeumt. Deshalb laeuft das ueber
+    // den Notifier (im initState geholt) und nicht ueber `ref`.
     bestEffortSync('activeCallId zuruecksetzen', () {
-      if (ref.read(activeCallIdProvider) == _callId) {
-        ref.read(activeCallIdProvider.notifier).state = null;
+      if (_aktiveAnrufId.state == _callId) {
+        _aktiveAnrufId.state = null;
       }
     });
     super.dispose();
@@ -144,11 +159,11 @@ class _CallScreenState extends ConsumerState<CallScreen> {
     // DER WEG: Der Wert wird einen Frame spaeter gesetzt. Nach dem Frame
     // ist der Aufbau fertig, und Riverpod erlaubt das Schreiben.
     //
-    // (Im dispose gilt dieselbe Regel - dort hilft nur der best-effort-
-    // Weg oben.)
+    // (Im dispose gilt dieselbe Regel - dort hilft nur der Weg ueber
+    // den Notifier oben.)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.read(activeCallIdProvider.notifier).state = _callId;
+      _aktiveAnrufId.state = _callId;
     });
 
     final p2p = ref.read(p2pChatServiceProvider);

@@ -45,6 +45,26 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
     Interessen im Profil-Editor, die Geschlechts-Auswahl, die
     Gesundheitsstufen und der Musik-Geschmack.
 
+### Behoben (14.11.2026) – Der Chat hat beim Verlassen „kracht"
+
+- **Beim Verlassen des Dating-Hour-Chats kam jedes Mal ein Fehler.**
+  Riverpod hat den Consumer-State im `dispose()` schon abgeräumt – ein
+  `ref.read()` dort wirft („Cannot use ref after the widget was disposed").
+  Gefunden hat das ein Test, der den Bildschirm einfach mal öffnet und
+  wieder schließt. Dieselbe Stelle gibt es im 1:1-Chat, im Zufallschat
+  und im Anruf-Screen – dort war der Fehler mit `try/catch` nur
+  **versteckt**, nicht behoben.
+  * *Die eigentliche Folge war schlimmer als der Fehler:* Die Markierung
+    „diese Chat-ID ist gerade sichtbar" (sie unterdrückt die
+    Benachrichtigungen, solange der Chat offen ist) wurde deshalb **nie
+    wieder gelöscht** – sie blieb bis zum App-Ende stehen. Nach dem
+    ersten Anruf ließ sich deshalb **kein zweiter mehr starten** (der
+    Chat-Screen lehnt ab, wenn schon ein Anruf läuft), und die Meldungen
+    des Partners kamen nicht mehr an.
+  * Der Weg: Die Notifier werden schon beim Aufbau geholt. Der
+    StateNotifier lebt länger als der Bildschirm – so wird die Markierung
+    wirklich wieder aufgehoben.
+
 ### Behoben (14.11.2026) – Zwei Auswahlfelder liefen aus der Karte
 
 - **In der Ersteinrichtung liefen zwei Auswahlfelder rechts aus der
@@ -56,6 +76,31 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   wird abgeschnitten. Beide Felder nehmen jetzt die volle Breite ein
   (`isExpanded`), der Text wird gekuerzt statt abgeschnitten. Gefunden
   hat das ein Test, der die Einrichtung einfach mal aufbaut.
+- **In der Kopfzeile des Dating-Hour-Chats lief das E2E-Schild rechts
+  hinaus** ("RenderFlex overflowed by 140 pixels"): "Ende zu Ende
+  verschluesselt" passte neben der Zeit nicht in die Leiste. Der Text
+  wird jetzt gekuerzt statt abgeschnitten - auf einem schmalen Geraet
+  oder bei grosser Schrift bleibt so alles lesbar.
+
+### Behoben (14.11.2026) - Der Chat hat beim Verlassen "geknallt"
+
+- **Beim Verlassen des Dating-Hour-Chats kam jedes Mal ein Fehler.**
+  Riverpod hat den Consumer-State im `dispose()` schon abgeraeumt - ein
+  `ref.read()` dort wirft ("Cannot use ref after the widget was disposed").
+  Gefunden hat das ein Test, der den Bildschirm einfach mal oeffnet und
+  wieder schliesst. Dieselbe Stelle gibt es im 1:1-Chat, im Zufallschat
+  und im Anruf-Screen - dort war der Fehler mit `try/catch` nur
+  **versteckt**, nicht behoben.
+  * *Die eigentliche Folge war schlimmer als der Fehler:* Die Markierung
+    "diese Chat-ID ist gerade sichtbar" (sie unterdrueckt die
+    Benachrichtigungen, solange der Chat offen ist) wurde deshalb **nie
+    wieder geloescht** - sie blieb bis zum App-Ende stehen. Nach dem
+    ersten Anruf liess sich deshalb **kein zweiter mehr starten** (der
+    Chat-Screen lehnt ab, wenn schon ein Anruf laeuft), und die Meldungen
+    des Partners kamen nicht mehr an.
+  * Der Weg: Die Notifier werden schon beim Aufbau geholt. Der
+    StateNotifier lebt laenger als der Bildschirm - so wird die Markierung
+    wirklich wieder aufgehoben.
 
 ### Behoben (14.11.2026) - Der Anruf-Screen war kaputt
 
@@ -180,19 +225,21 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Frage, viele Nachrichten) – er war mit 1446 offenen Zeilen die
   größte Lücke der App.
 - **Auch das eigene Profil, der Datenschutz-Screen, die
-  Einstellungen, die Anmeldung, der Anruf-Screen und die Ersteinrichtung**
-  haben jetzt Tests (Name,
+  Einstellungen, die Anmeldung, der Anruf-Screen, die Ersteinrichtung
+  und der Dating-Hour-Chat** haben jetzt Tests (Name,
   Verifiziert-Abzeichen, Knöpfe der Kopfzeile; Datenexport,
   Auftragsverarbeiter, Verweis auf die Nutzungsbedingungen; die Abschnitte
   der Einstellungen und der Schalter für unscharfe Bilder; Anmelde- und
   Registrierungsmodus, das Auge am Passwort, die Alters-Bestätigung;
   die zehn Schritte der Ersteinrichtung - inklusive der Prüfung, dass
   ohne Bio und ohne Interesse nicht weitergeblättert wird, und der
-  Rückfrage beim Zurückgehen).
+  Rückfrage beim Zurückgehen; im Dating-Hour-Chat der Leerzustand, der
+  ein- und ausblendbare Timer, das Beenden mit Rückfrage und die
+  Meldung, wenn eine Nachricht nicht ankommt).
 - **Die Abdeckung wird gemessen, nicht behauptet**
-  (`tool/check_coverage.py`, Gate in der CI). **Stand: 34,1 %** der
+  (`tool/check_coverage.py`, Gate in der CI). **Stand: 35,1 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
-  im Gate liegt jetzt bei 30,0 %. 1338 Tests, 0 Fehler.
+  im Gate liegt jetzt bei 30,0 %. 1346 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
     steckt nicht in den kleinen Dateien, sondern in den großen
     Bildschirmen (der 1:1-Chat allein hat 1446 offene Zeilen). Das
