@@ -28,6 +28,8 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide LocalStorage;
 import 'package:thestia/services/device_session_service.dart';
 import 'package:thestia/services/local_storage.dart';
 
+import 'support/plugin_mocks.dart';
+
 /// Baut ein JWT (der Client braucht einen Access-Token fuer die
 /// Session).
 String _jwt({String sub = 'nutzer-1'}) {
@@ -187,6 +189,12 @@ void main() {
     await SharedPreferences.getInstance();
     // Supabase ist ein Singleton: er wird genau einmal fuer den ganzen
     // Testprozess eingerichtet. Der MockClient haengt daran.
+    // DER PFAD-KANAL: sonst ruft der Test auf dem CI-Runner
+    // das echte Plugin (das findet dort kein XDG-Verzeichnis).
+    await mockPfadProvider();
+    // DER KEYSTORE: dasselbe Spiel - auf dem Linux-Runner
+    // gibt es keine libsecret-Sitzung.
+    mockKeystore();
     await Supabase.initialize(
       url: 'https://test.supabase.co',
       publishableKey: 'test-key',

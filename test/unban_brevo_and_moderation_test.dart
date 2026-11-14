@@ -31,6 +31,8 @@ import 'package:thestia/services/unban_request_service.dart';
 
 import 'support/fake_supabase_server.dart';
 
+import 'support/plugin_mocks.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -43,6 +45,12 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await SharedPreferences.getInstance();
     server = FakeSupabaseServer(userId: 'ich');
+    // DER PFAD-KANAL: sonst ruft der Test auf dem CI-Runner
+    // das echte Plugin (das findet dort kein XDG-Verzeichnis).
+    await mockPfadProvider();
+    // DER KEYSTORE: dasselbe Spiel - auf dem Linux-Runner
+    // gibt es keine libsecret-Sitzung.
+    mockKeystore();
     await supabase.Supabase.initialize(
       url: 'https://example.supabase.co',
       publishableKey: 'test-key',

@@ -41,6 +41,8 @@ import 'package:thestia/services/secure_storage.dart';
 
 import 'support/fake_supabase_server.dart';
 
+import 'support/plugin_mocks.dart';
+
 /// In-Memory-Speicher fuer die lokalen Einstellungen.
 class _FakeLocalStorage implements LocalStorage {
   final Map<String, String> _daten = {};
@@ -277,6 +279,12 @@ void main() {
     // Anfrage raus. Der Client wird nur EINMAL initialisiert (das ist
     // eine globale Singleton-Variable) - deshalb hier und nicht im Test.
     server = FakeSupabaseServer(userId: 'ich');
+    // DER PFAD-KANAL: sonst ruft der Test auf dem CI-Runner
+    // das echte Plugin (das findet dort kein XDG-Verzeichnis).
+    await mockPfadProvider();
+    // DER KEYSTORE: dasselbe Spiel - auf dem Linux-Runner
+    // gibt es keine libsecret-Sitzung.
+    mockKeystore();
     await supabase.Supabase.initialize(
       url: 'https://example.supabase.co',
       publishableKey: 'test-key',

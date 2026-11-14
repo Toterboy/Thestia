@@ -29,6 +29,8 @@ import 'package:thestia/models/message.dart';
 import 'package:thestia/models/report_models.dart';
 import 'package:thestia/services/report_service.dart';
 
+import 'support/plugin_mocks.dart';
+
 /// Der Kanal von flutter_secure_storage ( fuer die Hive-Verschluesselung).
 const MethodChannel _keystoreKanal = MethodChannel(
   'plugins.it_nomads.com/flutter_secure_storage',
@@ -158,6 +160,12 @@ void main() {
     await SharedPreferences.getInstance();
 
     server = _FakeServer();
+    // DER PFAD-KANAL: sonst ruft der Test auf dem CI-Runner
+    // das echte Plugin (das findet dort kein XDG-Verzeichnis).
+    await mockPfadProvider();
+    // DER KEYSTORE: dasselbe Spiel - auf dem Linux-Runner
+    // gibt es keine libsecret-Sitzung.
+    mockKeystore();
     await Supabase.initialize(
       url: 'https://test.supabase.co',
       publishableKey: 'test-key',

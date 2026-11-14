@@ -39,6 +39,8 @@ import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/services/secure_storage.dart';
 import 'package:thestia/utils/constants.dart';
 
+import 'support/plugin_mocks.dart';
+
 /// In-Memory-Implementierung von [LocalStorage] fuer Tests.
 class _FakeLocalStorage implements LocalStorage {
   final Map<String, String> _data = {};
@@ -333,6 +335,11 @@ void main() {
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues(<String, Object>{});
+    // DER KEYSTORE: Der Bildschirm liest die Einstellungen (Altersspanne
+    // und Suchradius) aus dem verschluesselten Speicher. Ohne diesen
+    // Mock ruft der Test auf dem CI-Runner das echte Plugin - und das
+    // findet dort keine libsecret-Sitzung.
+    mockKeystore();
   });
 
   group('Der Transit-Radar', () {

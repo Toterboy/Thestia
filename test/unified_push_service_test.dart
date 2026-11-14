@@ -33,6 +33,8 @@ import 'package:unifiedpush_platform_interface/unifiedpush_platform_interface.da
 
 import 'package:thestia/services/unified_push_service.dart';
 
+import 'support/plugin_mocks.dart';
+
 /// Baut ein JWT fuer die Test-Session.
 ///
 /// DER GRUND: Der Supabase-Client braucht eine Session, damit der
@@ -251,6 +253,12 @@ void main() {
     // Testprozess eingerichtet. Der MockClient haengt daran - deshalb
     // arbeitet der Test mit einem gemeinsamen [_FakeServer], dessen
     // Zustand pro Test zurueckgesetzt wird.
+    // DER PFAD-KANAL: sonst ruft der Test auf dem CI-Runner
+    // das echte Plugin (das findet dort kein XDG-Verzeichnis).
+    await mockPfadProvider();
+    // DER KEYSTORE: dasselbe Spiel - auf dem Linux-Runner
+    // gibt es keine libsecret-Sitzung.
+    mockKeystore();
     await Supabase.initialize(
       url: 'https://test.supabase.co',
       publishableKey: 'test-key',

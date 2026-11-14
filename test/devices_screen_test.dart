@@ -26,6 +26,8 @@ import 'package:thestia/services/device_session_service.dart';
 import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/screens/settings/devices_screen.dart';
 
+import 'support/plugin_mocks.dart';
+
 /// In-Memory-Speicher - der Fake-Service braucht nur irgendetwas fuer
 /// den Super-Konstruktor. Er wird nie benutzt.
 class _FakeLocalStorage implements LocalStorage {
@@ -148,6 +150,12 @@ void main() {
     // an dem der Test am Ende scheitern wuerde.
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await SharedPreferences.getInstance();
+    // DER PFAD-KANAL: sonst ruft der Test auf dem CI-Runner
+    // das echte Plugin (das findet dort kein XDG-Verzeichnis).
+    await mockPfadProvider();
+    // DER KEYSTORE: dasselbe Spiel - auf dem Linux-Runner
+    // gibt es keine libsecret-Sitzung.
+    mockKeystore();
     await supabase.Supabase.initialize(
       url: 'https://example.supabase.co',
       publishableKey: 'test-key',

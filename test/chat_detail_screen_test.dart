@@ -46,6 +46,8 @@ import 'package:thestia/utils/constants.dart';
 import 'package:thestia/widgets/secure_composer.dart';
 import 'package:thestia/widgets/secure_keyboard.dart';
 
+import 'support/plugin_mocks.dart';
+
 /// In-Memory-Implementierung von [LocalStorage] fuer Tests.
 class _FakeLocalStorage implements LocalStorage {
   final Map<String, String> _data = {};
@@ -175,6 +177,9 @@ void main() {
     // existierenden Server - im Test laufen alle HTTP-Anfragen ins Leere
     // (der Test-Binding liefert 400), und der Sende-Weg ist in
     // bestEffort gekapselt.
+    // DER PFAD-KANAL: sonst ruft der Test auf dem CI-Runner
+    // das echte Plugin (das findet dort kein XDG-Verzeichnis).
+    await mockPfadProvider();
     await supabase.Supabase.initialize(
       url: 'https://example.supabase.co',
       publishableKey: 'test-key',

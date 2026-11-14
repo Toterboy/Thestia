@@ -37,6 +37,8 @@ import 'package:thestia/screens/interests/interessen_screen.dart';
 import 'package:thestia/services/find_your_match_service.dart';
 import 'package:thestia/services/local_storage.dart';
 
+import 'support/plugin_mocks.dart';
+
 /// In-Memory-Speicher - der Screen schreibt Seen-Marker und
 /// Fixierungen dorthin.
 class _FakeLocalStorage implements LocalStorage {
@@ -233,6 +235,12 @@ void main() {
     //
     // autoRefreshToken: false - sonst laeuft ein periodischer Timer,
     // an dem der Test am Ende scheitern wuerde.
+    // DER PFAD-KANAL: sonst ruft der Test auf dem CI-Runner
+    // das echte Plugin (das findet dort kein XDG-Verzeichnis).
+    await mockPfadProvider();
+    // DER KEYSTORE: dasselbe Spiel - auf dem Linux-Runner
+    // gibt es keine libsecret-Sitzung.
+    mockKeystore();
     await supabase.Supabase.initialize(
       url: 'https://example.supabase.co',
       publishableKey: 'test-key',
