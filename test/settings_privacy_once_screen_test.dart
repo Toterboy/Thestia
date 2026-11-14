@@ -1,4 +1,4 @@
-﻿// Der Einrichtungs-Bildschirm "Einstellungen & PrivatsphÃ¤re" (bisher
+// Der Einrichtungs-Bildschirm "Einstellungen & Privatsphäre" (bisher
 // ungetestet).
 //
 // ANLASS (14.11.2026): Die Coverage-Messung zeigte fuer
@@ -161,7 +161,7 @@ void main() {
     await pumpFrames(tester);
   }
 
-  group('Einrichtung (Einstellungen & PrivatsphÃ¤re)', () {
+  group('Einrichtung (Einstellungen & Privatsphäre)', () {
     testWidgets('baut sich ohne Absturz', (tester) async {
       await zeigeScreen(tester);
 
