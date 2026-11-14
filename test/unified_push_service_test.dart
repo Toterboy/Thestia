@@ -23,6 +23,8 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -387,89 +389,100 @@ void main() {
     );
   });
 
-  group('UnifiedPushService - Endpunkt', () {
-    test('ein HTTPS-Endpunkt wird gespeichert', () async {
-      await alsAndroid(() async {
-        await UnifiedPushService.enable();
-        connector.distributoren = const ['org.example.ntfy'];
+  group(
+    'UnifiedPushService - Endpunkt',
+    () {
+      test('ein HTTPS-Endpunkt wird gespeichert', () async {
+        await alsAndroid(() async {
+          await UnifiedPushService.enable();
+          connector.distributoren = const ['org.example.ntfy'];
 
-        await connector.onNeuerEndpunkt!(
-          PushEndpoint('https://ntfy.sh/up-abc', null),
-          'default',
-        );
-
-        expect(
-          server.profilUpdates.single['up_endpoint'],
-          'https://ntfy.sh/up-abc',
-          reason:
-              'Der Endpunkt muss serverseitig stehen - die Edge Function '
-              'notify-user schickt die Metadaten dorthin.',
-        );
-      });
-    });
-
-    test('ein http-Endpunkt wird verworfen (Klartext)', () async {
-      await alsAndroid(() async {
-        await UnifiedPushService.enable();
-
-        await connector.onNeuerEndpunkt!(
-          PushEndpoint('http://ntfy.sh/up-abc', null),
-          'default',
-        );
-
-        expect(
-          server.profilUpdates,
-          isEmpty,
-          reason:
-              'SICHERHEIT: Der UnifiedPush-Connector bringt exportierte '
-              'Komponenten mit, die jede App ansprechen kann. Ein Endpunkt '
-              'auf http:// wuerde die Push-Metadaten im Klartext uebertragen '
-              '- deshalb wird er verworfen.',
-        );
-      });
-    });
-
-    test('ein Endpunkt ohne Host wird verworfen', () async {
-      await alsAndroid(() async {
-        await UnifiedPushService.enable();
-
-        await connector.onNeuerEndpunkt!(
-          PushEndpoint('https://', null),
-          'default',
-        );
-
-        expect(server.profilUpdates, isEmpty);
-      });
-    });
-
-    test('ein leerer Endpunkt wird verworfen', () async {
-      await alsAndroid(() async {
-        await UnifiedPushService.enable();
-
-        await connector.onNeuerEndpunkt!(PushEndpoint('', null), 'default');
-
-        expect(server.profilUpdates, isEmpty);
-      });
-    });
-
-    test('ein Serverfehler beim Speichern bringt nichts zum Absturz', () async {
-      await alsAndroid(() async {
-        await UnifiedPushService.enable();
-        server.profilSchreibStatus = 500;
-
-        await expectLater(
-          connector.onNeuerEndpunkt!(
+          await connector.onNeuerEndpunkt!(
             PushEndpoint('https://ntfy.sh/up-abc', null),
             'default',
-          ),
-          completes,
-          reason:
-              'Der Endpunkt-Sync ist eine Nebenhandlung - ein Fehler darf die '
-              'App nicht zum Absturz bringen.',
-        );
+          );
+
+          expect(
+            server.profilUpdates.single['up_endpoint'],
+            'https://ntfy.sh/up-abc',
+            reason:
+                'Der Endpunkt muss serverseitig stehen - die Edge Function '
+                'notify-user schickt die Metadaten dorthin.',
+          );
+        });
       });
-    });
-  });
+
+      test('ein http-Endpunkt wird verworfen (Klartext)', () async {
+        await alsAndroid(() async {
+          await UnifiedPushService.enable();
+
+          await connector.onNeuerEndpunkt!(
+            PushEndpoint('http://ntfy.sh/up-abc', null),
+            'default',
+          );
+
+          expect(
+            server.profilUpdates,
+            isEmpty,
+            reason:
+                'SICHERHEIT: Der UnifiedPush-Connector bringt exportierte '
+                'Komponenten mit, die jede App ansprechen kann. Ein Endpunkt '
+                'auf http:// wuerde die Push-Metadaten im Klartext uebertragen '
+                '- deshalb wird er verworfen.',
+          );
+        });
+      });
+
+      test('ein Endpunkt ohne Host wird verworfen', () async {
+        await alsAndroid(() async {
+          await UnifiedPushService.enable();
+
+          await connector.onNeuerEndpunkt!(
+            PushEndpoint('https://', null),
+            'default',
+          );
+
+          expect(server.profilUpdates, isEmpty);
+        });
+      });
+
+      test('ein leerer Endpunkt wird verworfen', () async {
+        await alsAndroid(() async {
+          await UnifiedPushService.enable();
+
+          await connector.onNeuerEndpunkt!(PushEndpoint('', null), 'default');
+
+          expect(server.profilUpdates, isEmpty);
+        });
+      });
+
+      test('ein Serverfehler beim Speichern bringt nichts zum Absturz', () async {
+        await alsAndroid(() async {
+          await UnifiedPushService.enable();
+          server.profilSchreibStatus = 500;
+
+          await expectLater(
+            connector.onNeuerEndpunkt!(
+              PushEndpoint('https://ntfy.sh/up-abc', null),
+              'default',
+            ),
+            completes,
+            reason:
+                'Der Endpunkt-Sync ist eine Nebenhandlung - ein Fehler darf die '
+                'App nicht zum Absturz bringen.',
+          );
+        });
+      });
+    },
+    // AUF LINUX: Das UnifiedPush-Plugin initialisiert ohne DBus-Namen
+    // gar nicht (der Aufruf kehrt sofort zurueck) - die Callbacks des
+    // Dienstes bleiben dann null. Der Linux-Desktop ist kein Ziel der
+    // App (siehe pubspec.yaml) - auf dem Telefon ist der Weg derselbe.
+    skip: Platform.isLinux
+        ? 'Auf Linux initialisiert das UnifiedPush-Plugin nicht (kein '
+              'DBus-Name) - der Weg wird auf dem Telefon getestet.'
+        : null,
+  );
 
   group('UnifiedPushService.disable', () {
     test('meldet ab und loescht den Endpunkt serverseitig', () async {
@@ -518,100 +531,117 @@ void main() {
     });
   });
 
-  group('UnifiedPushService - eingehender Push', () {
-    test('der JSON-Payload wird als lokale Benachrichtigung gezeigt', () async {
-      await alsAndroid(() async {
-        await UnifiedPushService.enable();
+  group(
+    'UnifiedPushService - eingehender Push',
+    () {
+      test(
+        'der JSON-Payload wird als lokale Benachrichtigung gezeigt',
+        () async {
+          await alsAndroid(() async {
+            await UnifiedPushService.enable();
 
-        await connector.onNachricht!(
-          PushMessage(
-            Uint8List.fromList(
-              utf8.encode(
-                jsonEncode({
-                  'title': 'Neue Nachricht',
-                  'message': 'Hallo, hast du Zeit?',
-                  'kind': 'messages',
-                  'from_user_id': 'partner-1',
-                }),
+            await connector.onNachricht!(
+              PushMessage(
+                Uint8List.fromList(
+                  utf8.encode(
+                    jsonEncode({
+                      'title': 'Neue Nachricht',
+                      'message': 'Hallo, hast du Zeit?',
+                      'kind': 'messages',
+                      'from_user_id': 'partner-1',
+                    }),
+                  ),
+                ),
+                true,
               ),
-            ),
-            true,
-          ),
-          'default',
-        );
+              'default',
+            );
 
-        expect(plugin.gezeigt.length, 1);
-        expect(plugin.gezeigt.single.title, 'Neue Nachricht');
-        expect(plugin.gezeigt.single.body, 'Hallo, hast du Zeit?');
-      });
-    });
+            expect(plugin.gezeigt.length, 1);
+            expect(plugin.gezeigt.single.title, 'Neue Nachricht');
+            expect(plugin.gezeigt.single.body, 'Hallo, hast du Zeit?');
+          });
+        },
+      );
 
-    test('ein reiner Text wird als Nachrichtentext uebernommen', () async {
-      await alsAndroid(() async {
-        await UnifiedPushService.enable();
+      test('ein reiner Text wird als Nachrichtentext uebernommen', () async {
+        await alsAndroid(() async {
+          await UnifiedPushService.enable();
 
-        await connector.onNachricht!(
-          PushMessage(Uint8List.fromList(utf8.encode('Nur Text')), true),
-          'default',
-        );
-
-        expect(plugin.gezeigt.single.body, 'Nur Text');
-        expect(
-          plugin.gezeigt.single.title,
-          'Thestia',
-          reason: 'Ohne Titel in der Payload bleibt der Standardtitel',
-        );
-      });
-    });
-
-    test('ist der Chat offen, wird die Benachrichtigung unterdrueckt', () async {
-      await alsAndroid(() async {
-        await UnifiedPushService.enable();
-        UnifiedPushService.suppressCheck = (von) => von == 'partner-1';
-
-        await connector.onNachricht!(
-          PushMessage(
-            Uint8List.fromList(
-              utf8.encode(
-                jsonEncode({
-                  'title': 'Neue Nachricht',
-                  'message': 'Hallo',
-                  'kind': 'messages',
-                  'from_user_id': 'partner-1',
-                }),
-              ),
-            ),
-            true,
-          ),
-          'default',
-        );
-
-        expect(
-          plugin.gezeigt,
-          isEmpty,
-          reason:
-              'Der Chat ist gerade offen - eine zusaetzliche Benachrichtigung '
-              'waere nur stoerend.',
-        );
-      });
-    });
-
-    test('eine kaputte Nachricht fuehrt nicht zum Absturz', () async {
-      await alsAndroid(() async {
-        await UnifiedPushService.enable();
-
-        await expectLater(
-          connector.onNachricht!(
-            // Kein gueltiges JSON - der Decoder stolpert darueber.
-            PushMessage(Uint8List.fromList(utf8.encode('{kaputt')), true),
+          await connector.onNachricht!(
+            PushMessage(Uint8List.fromList(utf8.encode('Nur Text')), true),
             'default',
-          ),
-          completes,
-          reason:
-              'Eine kaputte Push-Nachricht darf die App nicht zum Absturz '
-              'bringen - der Fehler wird geloggt, nicht weitergegeben.',
-        );
+          );
+
+          expect(plugin.gezeigt.single.body, 'Nur Text');
+          expect(
+            plugin.gezeigt.single.title,
+            'Thestia',
+            reason: 'Ohne Titel in der Payload bleibt der Standardtitel',
+          );
+        });
       });
-    });
-  });
+
+      test(
+        'ist der Chat offen, wird die Benachrichtigung unterdrueckt',
+        () async {
+          await alsAndroid(() async {
+            await UnifiedPushService.enable();
+            UnifiedPushService.suppressCheck = (von) => von == 'partner-1';
+
+            await connector.onNachricht!(
+              PushMessage(
+                Uint8List.fromList(
+                  utf8.encode(
+                    jsonEncode({
+                      'title': 'Neue Nachricht',
+                      'message': 'Hallo',
+                      'kind': 'messages',
+                      'from_user_id': 'partner-1',
+                    }),
+                  ),
+                ),
+                true,
+              ),
+              'default',
+            );
+
+            expect(
+              plugin.gezeigt,
+              isEmpty,
+              reason:
+                  'Der Chat ist gerade offen - eine zusaetzliche Benachrichtigung '
+                  'waere nur stoerend.',
+            );
+          });
+        },
+      );
+
+      test('eine kaputte Nachricht fuehrt nicht zum Absturz', () async {
+        await alsAndroid(() async {
+          await UnifiedPushService.enable();
+
+          await expectLater(
+            connector.onNachricht!(
+              // Kein gueltiges JSON - der Decoder stolpert darueber.
+              PushMessage(Uint8List.fromList(utf8.encode('{kaputt')), true),
+              'default',
+            ),
+            completes,
+            reason:
+                'Eine kaputte Push-Nachricht darf die App nicht zum Absturz '
+                'bringen - der Fehler wird geloggt, nicht weitergegeben.',
+          );
+        });
+      });
+    },
+    // AUF LINUX: Das UnifiedPush-Plugin initialisiert ohne DBus-Namen
+    // gar nicht (der Aufruf kehrt sofort zurueck) - die Callbacks des
+    // Dienstes bleiben dann null. Der Linux-Desktop ist kein Ziel der
+    // App (siehe pubspec.yaml) - auf dem Telefon ist der Weg derselbe.
+    skip: Platform.isLinux
+        ? 'Auf Linux initialisiert das UnifiedPush-Plugin nicht (kein '
+              'DBus-Name) - der Weg wird auf dem Telefon getestet.'
+        : null,
+  );
 }
