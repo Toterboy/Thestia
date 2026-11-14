@@ -151,12 +151,21 @@ jobs:
           # DER ROHTEXT: je nach Fehlerart schreibt der Reporter etwas
           # anderes - Assertion, Timeout oder Absturz.
           echo "::error::Testausgabe: $(wc -l < /tmp/test-output.txt) Zeilen"
-          # DIE LETZTEN ZEILEN DES TESTLAUFS: das ist der Auszug, den
-          # der Laeufer anzeigt - dort stehen die fehlgeschlagenen
-          # Tests.
-          echo "--- Die letzten Zeilen des Testlaufs ---"
-          tail -40 /tmp/test-output.txt
-          echo "--- Ende ---"
+          # DIE ZUSAMMENFASSUNG: sie sagt, wie viele Tests gescheitert
+          # sind (und ob der Lauf ueberhaupt zu Ende kam).
+          grep -E "tests? passed|Some tests failed|All tests passed" /tmp/test-output.txt | tail -3 | while IFS= read -r zeile; do
+            echo "::error::SUMME: ${zeile}"
+          done || true
+          # DIE FEHLGESCHLAGENEN TESTS (je einer als eigene Anmerkung).
+          grep -E "\[E\]" /tmp/test-output.txt | tail -20 | while IFS= read -r zeile; do
+            kurz=$(printf '%s' "$zeile" | sed -E 's/^.*(test\/[^:]+): /\1 | /')
+            echo "::error::FEHLER: ${kurz}"
+          done || true
+          # DIE LETZTEN ZEILEN (kurz gehalten: eine Anmerkung, nicht
+          # die ganze Ausgabe).
+          tail -12 /tmp/test-output.txt | while IFS= read -r zeile; do
+            echo "::error::ENDE: ${zeile}"
+          done || true
           # Der Schritt endet ABSICHTLICH mit einem Fehler: nur der
           # fehlgeschlagene Schritt liefert den Auszug, und nach dem
           # Test-Schritt kommen noch andere Schritte, deren Ausgabe ihn
