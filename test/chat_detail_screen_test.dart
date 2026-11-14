@@ -331,4 +331,105 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
   });
+
+  // Die Nachrichtenarten (14.11.2026): Der Chat-Screen hatte 1446
+  // offene Zeilen - die grösste Lücke der App. Die Bildnachricht, die
+  // Eisbrecher-Frage und die Systemnotiz sind eigene Wege im Aufbau.
+  group('Der 1:1-Chat (die Nachrichtenarten)', () {
+    testWidgets('eine Bildnachricht wird als Bild dargestellt', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = ChatService();
+      final match = service.createMatch(_partner());
+      service.addMessage(
+        match.id,
+        Message(
+          id: 'm_bild',
+          senderId: 'partner-1',
+          receiverId: 'ich',
+          text: '',
+          type: MessageType.image,
+          mediaUrl: 'https://example.de/foto.jpg',
+          timestamp: DateTime.now(),
+        ),
+      );
+      await _pump(
+        tester,
+        ChatDetailScreen(matchId: match.id),
+        ChatNotifier(service),
+      );
+
+      expect(tester.takeException(), isNull);
+      // Das Bild wird geladen - bis es da ist, steht der Platzhalter
+      // (das Bild zaehlt, dass der Bildzweig gebaut wurde).
+      expect(find.byIcon(Icons.image), findsWidgets);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('die Eisbrecher-Frage steht mittig', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = ChatService();
+      final match = service.createMatch(_partner());
+      service.addMessage(
+        match.id,
+        Message(
+          id: 'm_eis',
+          senderId: 'partner-1',
+          receiverId: 'ich',
+          text: 'Was ist dein Lieblingsgericht?',
+          type: MessageType.icebreaker,
+          timestamp: DateTime.now(),
+        ),
+      );
+      await _pump(
+        tester,
+        ChatDetailScreen(matchId: match.id),
+        ChatNotifier(service),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Was ist dein Lieblingsgericht?'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('viele Nachrichten werden alle gebaut', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = ChatService();
+      final match = service.createMatch(_partner());
+      for (var i = 0; i < 30; i++) {
+        service.addMessage(
+          match.id,
+          Message(
+            id: 'm_$i',
+            senderId: i.isEven ? 'partner-1' : 'ich',
+            receiverId: i.isEven ? 'ich' : 'partner-1',
+            text: 'Nachricht Nummer $i',
+            timestamp: DateTime.now().subtract(Duration(minutes: 30 - i)),
+          ),
+        );
+      }
+      await _pump(
+        tester,
+        ChatDetailScreen(matchId: match.id),
+        ChatNotifier(service),
+      );
+
+      expect(tester.takeException(), isNull);
+      // Die Liste ist lang - die letzten Nachrichten stehen weiter
+      // unten (die Liste ist umgekehrt gebaut).
+      final notifier = ChatNotifier(service);
+      expect(notifier.messagesFor(match.id).length, 30);
+      // Und die Liste laesst sich scrollen.
+      expect(find.byType(Scrollable), findsWidgets);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+  });
 }

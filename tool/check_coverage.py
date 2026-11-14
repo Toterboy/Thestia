@@ -49,7 +49,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 #
 # Stand 13.11.2026: 24,3 % (vor den neuen Tests: 20,8 %) - der Boden
 # lag bei 24,0 %.
-# Stand 14.11.2026: 30,8 % (vor den neuen Tests: 30,0 %) - der Boden
+# Stand 14.11.2026: 31,0 % (vor den neuen Tests: 30,0 %) - der Boden
 # liegt jetzt bei 30,5 %.
 MINDEST = 30.5
 
