@@ -151,11 +151,17 @@ jobs:
           # DER ROHTEXT: je nach Fehlerart schreibt der Reporter etwas
           # anderes - Assertion, Timeout oder Absturz.
           echo "::error::Testausgabe: $(wc -l < /tmp/test-output.txt) Zeilen"
-          # DER GANZE BLOCK IN EINER ANMERKUNG: die Fehlermeldung steht
-          # ueber dem Stack (die inneren Frames), ein "tail" schneidet
-          # sie ab. GitHub mag keine Zeilenumbrueche in einer
-          # Anmerkung - deshalb der Trenner " ~ ".
-          echo "::error::$(tail -80 /tmp/test-output.txt | tr '\n' ' ~ ')" 
+          # DIE LETZTEN ZEILEN DES TESTLAUFS: das ist der Auszug, den
+          # der Laeufer anzeigt - dort stehen die fehlgeschlagenen
+          # Tests.
+          echo "--- Die letzten Zeilen des Testlaufs ---"
+          tail -40 /tmp/test-output.txt
+          echo "--- Ende ---"
+          # Der Schritt endet ABSICHTLICH mit einem Fehler: nur der
+          # fehlgeschlagene Schritt liefert den Auszug, und nach dem
+          # Test-Schritt kommen noch andere Schritte, deren Ausgabe ihn
+          # sonst verdeckt.
+          exit 1 
           # UND die FehlermELDUNGEN (sie stehen ein paar Zeilen ueber
           # dem Stapel und nennen den Provider, der nicht aufgebaut
           # werden konnte).
