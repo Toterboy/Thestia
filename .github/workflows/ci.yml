@@ -161,9 +161,18 @@ jobs:
             kurz=$(printf '%s' "$zeile" | sed -E 's/^.*(test\/[^:]+): /\1 | /')
             echo "::error::FEHLER: ${kurz}"
           done || true
-          # DIE LETZTEN ZEILEN (kurz gehalten: eine Anmerkung, nicht
+          # DER ERSTE FEHLER MIT SEINEN FOLGEZEILEN: da steht die
+          # eigentliche Meldung (erwartet vs. tatsaechlich, oder die
+          # Exception). Ohne sie weiss man nur, DASS etwas kaputt ist.
+          erste=$(grep -n -m1 "\[E\]" /tmp/test-output.txt | cut -d: -f1 || true)
+          if [ -n "$erste" ]; then
+            sed -n "${erste},$((erste+14))p" /tmp/test-output.txt | while IFS= read -r zeile; do
+              echo "::error::DETAIL: ${zeile}"
+            done
+          fi
+          # Die letzten Zeilen (kurz gehalten: eine Anmerkung, nicht
           # die ganze Ausgabe).
-          tail -12 /tmp/test-output.txt | while IFS= read -r zeile; do
+          tail -8 /tmp/test-output.txt | while IFS= read -r zeile; do
             echo "::error::ENDE: ${zeile}"
           done || true
           # Der Schritt endet ABSICHTLICH mit einem Fehler: nur der
