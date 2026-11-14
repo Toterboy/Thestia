@@ -30,13 +30,14 @@ nicht vollständig funktional. Beiträge und Feedback sind willkommen.
 > Daten bleiben erhalten (Login genügt), nur Passkeys müssen einmal neu
 > registriert werden.
 >
-> **Aktuelle Version: v0.10.1** (Build 54). Die App ist **noch nicht im
-> Play Store** – das Play-Console-Projekt wird erst angelegt. v0.10.1 ist
+> **Aktuelle Version: v0.10.2** (Build 56). Die App ist **noch nicht im
+> Play Store** – das Play-Console-Projekt wird erst angelegt. v0.10.2 ist
 > die erste Fassung, die in den Store geht; sie geht hinein, sobald die
-> offenen Punkte geschlossen sind. Veröffentlicht ist v0.10.1 als
-> Prerelease auf GitHub (dort auch die SHA-256-Prüfsummen) – **der
-> Prerelease ist Build 53 und enthält die eigene Tastatur noch nicht**
-> (die kam mit Build 54 dazu; vor dem Store-Upload wird neu gebaut).
+> offenen Punkte geschlossen sind. Auf GitHub liegt ein Prerelease
+> **v0.10.1** (Build 55 – mit der eigenen Tastatur). **v0.10.2 (Build 56)
+> ist noch nicht veröffentlicht**: es enthält zusätzlich die Rückfrage beim
+> Verlassen des Zufallschats und die Knöpfe, die beim Auswählen nicht mehr
+> springen.
 
 **Dokumentation:** [Beitragen](CONTRIBUTING.md) · [Verhaltenskodex](CODE_OF_CONDUCT.md) ·
 [Sicherheitslücken melden](SECURITY.md) · [Support](SUPPORT.md) ·
@@ -114,22 +115,22 @@ das Signal Protocol, die Verbindung direkt Peer-to-Peer per WebRTC.
 
 | Variante | Datei | Push |
 | --- | --- | --- |
-| Standard (empfohlen) | `Thestia-v0.10.1-play.apk` | Firebase/FCM |
-| Google-frei (F-Droid-Stil) | `Thestia-v0.10.1-fdroid.apk` | optional via UnifiedPush |
+| Standard (empfohlen) | `Thestia-v0.10.2-play.apk` | Firebase/FCM |
+| Google-frei (F-Droid-Stil) | `Thestia-v0.10.2-fdroid.apk` | optional via UnifiedPush |
 
 Für kleinere Downloads gibt es je CPU-Architektur eine eigene Datei
 (`-arm64`, `-armv7`, `-x86_64`), für den Store-Upload das Bundle
-`Thestia-v0.10.1-play.aab`.
+`Thestia-v0.10.2-play.aab`.
 
 Beide finden sich unter [Releases](https://github.com/Toterboy/Thestia/releases)
 (dort liegt v0.10.1 als Prerelease, mit den SHA-256-Prüfsummen in der
-Beschreibung; in den Store geht v0.10.1 mit dem Store-Upload).
+Beschreibung; in den Store geht v0.10.2 mit dem Store-Upload).
 Hinweis: Beide Varianten nutzen dieselbe App-ID und können nicht parallel
 installiert werden. Ältere Dateien (`WispDating-v0.9.0-*.apk`) gehören zur
 Vorgänger-Version – bitte **Thestia neu installieren** (kein Update-Pfad, neue
 App-ID).
 
-**v0.10.1 (Build 54) ist in Vorbereitung** und die **erste Fassung für den
+**v0.10.2 (Build 56) ist in Vorbereitung** und die **erste Fassung für den
 Play Store** – sie geht hinein, sobald die offenen Punkte geschlossen sind
 (offen sind der BLE-Gerätetest auf zwei echten Geräten und die
 F-Droid-Einreichung).
@@ -138,8 +139,8 @@ F-Droid-Einreichung).
 
 | Version | Status |
 | --- | --- |
-| unter v0.10.1 (Build < 48, inkl. aller WispDating-Builds) | **End of Support** – keine Fixes mehr, bitte Thestia neu installieren |
-| v0.10.1 (Build 54) | **In Vorbereitung** – die erste Fassung für den Play Store; ab da Bug-Reports und Security-Fixes |
+| unter v0.10.2 (Build < 56, inkl. aller WispDating-Builds) | **End of Support** – keine Fixes mehr, bitte Thestia neu installieren |
+| v0.10.2 (Build 56) | **In Vorbereitung** – die erste Fassung für den Play Store; ab da Bug-Reports und Security-Fixes |
 
 Ältere Builds werden über das serverseitige Mindest-Build-Gate
 (`app_config.min_app_version_build = 48`, Migration 201) markiert: Liegt der
@@ -540,7 +541,7 @@ Die nächsten Schritte stehen im [Roadmap](ROADMAP.md). Kernig sind gerade:
 
 ## Hinweis zum Entwicklungsstand
 
-Diese App befindet sich in aktiver Entwicklung (aktuelle Version 0.10.1).
+Diese App befindet sich in aktiver Entwicklung (aktuelle Version 0.10.2).
 Folgende Bereiche sind noch nicht final:
 
 - **Automatischer Gesichtsabgleich** (Profilbild vs. Verifizierungs-Video) →

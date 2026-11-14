@@ -996,6 +996,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       // kompatibel), Slot 1/2 -> {userId}/photos/2.jpg|3.jpg. Entfernte
       // Slots fallen aus profiles.photos; vorhandene Objekte werden im
       // Storage aufgeräumt (Owner-Policy).
+      // Die fertige Fotoliste. Sie wird VOR dem try festgelegt, damit das
+      // Update weiter unten (Fotos und Texte in einem Aufruf) sie
+      // benutzen kann - auch wenn der Foto-Teil scheitert (dann bleiben
+      // die bisherigen Fotos stehen).
+      var finalPhotos = List<String>.from(ref.read(profileProvider).photos);
       try {
         final storageService = ref.read(supabaseStorageServiceProvider);
         final current = List<String>.from(ref.read(profileProvider).photos);
@@ -1023,7 +1028,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           }
         }
 
-        final finalPhotos = slots.whereType<String>().toList(growable: false);
+        finalPhotos = slots.whereType<String>().toList(growable: false);
 
         // Storage-Aufräumen für entfernte Slots (best effort).
         //
@@ -1063,7 +1068,20 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         }
 
         if (!mounted) return false;
-        await ref.read(profileProvider.notifier).update(photos: finalPhotos);
+        // BEFUND (14.11.2026, gefunden von einem Test): Vorher stand hier
+        // ein Update NUR fuer die Fotos und weiter unten ein zweites fuer
+        // die Texte. Das erste Update loeste im Screen den "Profil
+        // nachziehen"-Zuhoerer aus - der setzt die Textfelder auf den
+        // Serverstand zurueck (siehe _profileSub). Der Name, den der
+        // Nutzer gerade getippt hatte, war damit weg, BEVOR er
+        // gespeichert wurde: das Speichern meldete "Profil gespeichert"
+        // und speicherte den ALTEN Namen. Das Gleiche galt fuer Bio,
+        // Bundesland und Geburtsdatum.
+        //
+        // DESHALB: Es gibt jetzt nur noch EIN Update - weiter unten -
+        // das Fotos und Texte zusammen schreibt. Der Zuhoerer sieht dann
+        // den neuen Stand und fasst die Felder nicht an.
+        //
         // Server-Write (v0.8.1-Fix): Der photos-Pfad MUSSTE vorher immer
         // nur lokal landen - der Server kannte das Bild nie. Jetzt sofort
         // + bestätigt schreiben (verifiziert per Read-Back).
@@ -1134,6 +1152,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       await ref
           .read(profileProvider.notifier)
           .update(
+            // Die Fotos gehoeren in DIESES Update (siehe den Kommentar
+            // weiter oben): zwei Updates wuerden den "Profil
+            // nachziehen"-Zuhoerer ausloesen und die Textfelder auf den
+            // alten Stand zurueckersetzen.
+            photos: finalPhotos,
             name: _nameCtrl.text.trim(),
             birthDate: _birthDate,
             bio: _bioCtrl.text.trim(),
@@ -1391,7 +1414,16 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         } else {
           // Verwerfen: Regler-Änderungen zurücksetzen, Dirty-Marker
           // lösen und trotzdem verlassen.
-          await _revertSliderChanges();
+          //
+          // BEFUND (14.11.2026, gefunden von einem Test): Das
+          // Zurücksetzen schreibt in den sicheren Speicher. Schlägt
+          // dieser Schreibvorgang fehl (verschlüsselter Speicher auf
+          // dem Gerät nicht verfügbar), blieb der Nutzer im Editor
+          // STECKEN: das `await` warf, der Rest des Zweigs lief nicht,
+          // der Dialog war schon zu - der Nutzer war festgefangen.
+          // Deshalb ist das Zurücksetzen best-effort: es darf das
+          // Verlassen niemals verhindern.
+          await bestEffort('Regler zurücksetzen', _revertSliderChanges);
           ref.read(profileEditDirtyProvider.notifier).state = false;
           if (context.mounted) {
             if (Navigator.of(context).canPop()) {
@@ -1418,7 +1450,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                   await _save();
                   return; // _saveInternal navigiert bei Erfolg selbst.
                 }
-                await _revertSliderChanges();
+                // Best-effort (siehe der Zweig im PopScope): ein
+                // fehlgeschlagener Schreibvorgang im sicheren Speicher
+                // darf den Nutzer nicht im Editor festhalten.
+                await bestEffort('Regler zurücksetzen', _revertSliderChanges);
                 ref.read(profileEditDirtyProvider.notifier).state = false;
                 if (!mounted || !context.mounted) return;
                 context.go(AppRoutes.profile);

@@ -1,0 +1,21 @@
+Dein Profil lässt sich wieder speichern
+
+In der letzten Version ist das Speichern im Profil immer fehlgeschlagen - und es wurde gar nichts gespeichert: kein Name, keine Bio, keine Vorstellung. Zwei Werte waren falsch an den Server übergeben. Das ist behoben.
+
+Die Handytastatur sieht nichts
+
+Beim Schreiben hat die App jetzt ihre eigene Tastatur. Die Tastatur deines Handys wird gar nicht erst geöffnet - sie sieht keinen einzigen Buchstaben und kann aus deinem Text nichts lernen.
+
+Zurück im Zufallschat fragt die App jetzt
+
+Wenn du im Zufallschat zurück wischst, fragt die App jetzt, ob der Chat beendet werden soll - genau wie beim Knopf oben links. Vorher bist du ohne Frage ausgestiegen, und der Chat lief weiter.
+
+Ausgewählte Knöpfe bleiben an ihrer Stelle
+
+Wenn du in den Profileinstellungen etwas auswählst, springt der Knopf nicht mehr in die nächste Zeile.
+
+Deine Funken verschwinden nicht mehr
+
+Wenn der Server beim Laden der Funkenliste nicht erreichbar war, zeigte die App "keine Funken". Jetzt steht ein Hinweis mit "Erneut versuchen" da, und deine vorhandenen Funken bleiben stehen.
+
+Und: Deine eigene Nachricht ist sofort da, "Aktualisieren" auf dem Geräte-Screen geht wieder, und Transit Spark zeigt nur noch die Menschen, die wirklich zu deiner Beschreibung passen.

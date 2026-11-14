@@ -2271,15 +2271,27 @@ class _TransitTagPickerSheetState extends State<_TransitTagPickerSheet> {
             // Die Zahl allein sagt nicht, ob man fertig ist - der Balken
             // zeigt es. Und er zeigt auch, wie viele Merkmale ueberhaupt
             // noetig sind (mindestens zwei, hoechstens acht).
-            Row(
+            //
+            // BEFUND (14.11.2026, gefunden von einem Test): Das war eine
+            // Row mit einem Expanded (Zaehler) und einem Text daneben
+            // ("Je Kategorie nur ein Merkmal."). Der zweite Text wurde
+            // unbeschraenkt gesetzt - passt er nicht mehr in die Zeile
+            // (grosse Schrift, die App verspricht bis 3,2x), laeuft er
+            // ueber und der Zaehler wird in einen 1-Spalten-Einzeiler
+            // gepresst. Ein Wrap statt einer Row: passt beides in eine
+            // Zeile, steht es nebeneinander, passt es nicht, rutscht der
+            // Hinweis in die naechste Zeile - und nichts laeuft ueber.
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 4,
               children: [
-                Expanded(
-                  child: Text(
-                    L10n.tf(context, 'transit.selectedCount', {
-                      'count': '${_selected.length}',
-                    }),
-                    style: theming.textTheme.bodySmall,
-                  ),
+                Text(
+                  L10n.tf(context, 'transit.selectedCount', {
+                    'count': '${_selected.length}',
+                  }),
+                  style: theming.textTheme.bodySmall,
                 ),
                 if (_selected.isNotEmpty)
                   Text(

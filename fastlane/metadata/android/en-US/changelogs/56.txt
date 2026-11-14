@@ -1,0 +1,21 @@
+Your profile saves again
+
+In the last version, saving in the profile always failed - and nothing was saved at all: no name, no bio, no introduction. Two values were sent to the server wrongly. That is fixed.
+
+The phone keyboard sees nothing
+
+While you write, the app now uses its own keyboard. Your phone's keyboard is not even opened - it does not see a single letter and cannot learn anything from your text.
+
+Going back in the random chat now asks
+
+If you swipe back in the random chat, the app now asks whether the chat should be ended - just like the button in the top left corner. Before, you left without a question and the chat kept running.
+
+Selected buttons stay where they are
+
+When you select something in the profile settings, the button no longer jumps into the next line.
+
+Your sparks no longer disappear
+
+If the server could not be reached while loading the list of sparks, the app showed "no sparks". Now there is a note with "Try again", and your existing sparks stay where they are.
+
+And: your own message is there right away, "Update" on the devices screen works again, and Transit Spark only shows the people who really match your description.

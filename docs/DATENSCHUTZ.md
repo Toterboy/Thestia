@@ -1,6 +1,6 @@
 # Datenschutzerklärung für Thestia
 
-**Stand: November 2026** · Version 23 (v0.10.1)
+**Stand: November 2026** · Version 23 (v0.10.2)
 
 Thestia ist ein datenschutzorientiertes Open-Source-Projekt (AGPLv3).
 Der Schutz deiner persönlichen Sphäre steht an erster Stelle: Es werden

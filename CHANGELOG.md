@@ -7,7 +7,98 @@ und folgt der [Semantic Versioning Specification (SemVer)](https://semver.org/la
 Solange die Versionsnummer mit `0.` beginnt (Initial Development Phase nach SemVer §4),
 können sich Schnittstellen und Verhalten jederzeit ändern.
 
-## [0.10.0] – Elternfreigabe, Aufsicht und Admin-Posteingang (Build 31, 2026-10-30 bis 2026-11-03)
+## [0.10.2] – Fehlerbehebungen aus dem Alltag und mehr Tests
+(Build 56, 2026-11-14)
+
+> **Warum eine neue Version?** v0.10.1 wurde als GitHub-Prerelease
+> veröffentlicht (Build 55) – ohne Freigabe des Betreibers, das war ein
+> Fehler. Die Versionsnummer ist damit verbraucht: Die Fassung, die in
+> den Play Store geht, heißt **v0.10.2**.
+
+### Behoben (13.11.2026, zweite Runde) – Zwei Fehler aus dem Alltag
+
+- **Der Zufallschat hat beim Zurück-Wischen nicht gefragt** (Befund des
+  Betreibers: „Wenn man zurück wischt bei Zufallschat, wird man nicht
+  nochmal gefragt, ob man ihn beenden möchte"). Der Knopf oben links
+  fragte schon – das **Wischen vom Rand** (und der Zurück-Knopf des
+  Systems) sprang aber ohne Rückfrage hinaus: der Partner blieb auf der
+  Plattform stehen, die Sitzung lief weiter. Der Screen hat jetzt einen
+  `PopScope`, der das System-Zurück zurückfängt und genauso fragt wie der
+  Knopf.
+  * *Dabei gefunden (derselbe Test):* `ref.read` im `dispose()` des
+    Zufallschats wirft – Riverpod hat den Consumer-State da schon
+    abgeräumt. Damit blieb die Notification-Unterdrückung **bis zum
+    App-Ende** stehen: die Meldungen des Partners kamen nicht an. Der
+    1:1-Chat macht es seit langem richtig (mit `try/catch`) – der
+    Zufallschat jetzt auch.
+- **Ausgewählte Knöpfe sprangen in die nächste Zeile** (Befund des
+  Betreibers: „Wenn man Buttons auswählt, z.B. in den Profileinstellungen,
+  sollen sie sich nicht in die nächste Zeile durch auswählen verschieben").
+  Material blendet im ausgewählten Zustand ein **Häkchen** ein – der Knopf
+  wird breiter, die Reihe packt neu, und der gerade geklickte Knopf
+  springt in die nächste Zeile. Das fühlt sich an wie ein Fehlklick: der
+  Nutzer tippt, und der Knopf wandert weg.
+  * Neu: `lib/widgets/stable_chip.dart` – ein Knopf ohne Häkchen. Die
+    Auswahl bleibt sichtbar (Material 3 füllt den Knopf in der
+    Akzentfarbe, die „mag ich nicht"-Knöpfe in der Fehlerfarbe), die
+    Größe bleibt – und damit auch die Position. Umgestellt: die
+    Interessen im Profil-Editor, die Geschlechts-Auswahl, die
+    Gesundheitsstufen und der Musik-Geschmack.
+
+### Behoben (14.11.2026) – Drei Fehler, die die neuen Tests gefunden haben
+
+- **Der Profil-Editor hat Name, Bio, Bundesland und Geburtsdatum beim
+  Speichern verloren.** Das war der schwerste Fund dieser Runde: Die App
+  meldete „Profil gespeichert", gespeichert wurde aber der **alte** Name.
+  *Die Ursache:* Der Bildschirm hört auf das Profil, um nachzuladen, was
+  der Server schickt („Falls das Profil später nachgeladen wird, die
+  Felder nachziehen"). Beim Speichern standen aber **zwei** Updates
+  hintereinander: das erste nur für die Fotos, das zweite für die Texte.
+  Das erste Update löste den Zuhörer aus – der setzte die Textfelder auf
+  den Serverstand zurück. Der gerade getippte Name war damit weg, **bevor**
+  er gespeichert wurde. Betroffen waren Name, Bio, Bundesland,
+  Geburtsdatum und die Vorstellung.
+  *Die Lösung:* Es gibt jetzt **ein** Update, das Fotos und Texte
+  gemeinsam schreibt. Der Zuhörer sieht den neuen Stand und fasst die
+  Felder nicht mehr an.
+- **„Verwerfen" konnte den Nutzer im Profil-Editor festhalten.** Der
+  Dialog-Schließer setzt die Regler zurück – und schreibt dabei in den
+  **verschlüsselten Speicher** des Geräts. Schlägt dieser Schreibvorgang
+  fehl (der Keystore ist auf manchen Geräten nicht verfügbar), brach der
+  Vorgang ab: der Dialog war schon zu, der Bildschirm blieb stehen, und
+  der Nutzer war festgefangen. Das Zurücksetzen ist jetzt „best effort" –
+  es darf das Verlassen niemals verhindern.
+- **Im Transit-Radar lief eine Zeile bei großer Schrift über** („0 gewählt"
+  neben „Je Kategorie nur ein Merkmal."). Die App verspricht, bis 3,2×
+  benutzbar zu bleiben; der Hinweis stand in einer Zeile neben dem
+  Zähler und lief dabei rechts aus der Fläche. Steht jetzt in einer
+  Zeile, die umbrechen darf.
+
+### Tests (14.11.2026)
+
+- **Der Ausbau der Tests** (Bedarf des Betreibers: „Erstelle weitere
+  Tests, erst die wichtigsten"): die bisher ungetesteten Dienste
+  (Gerätekennung, Meldungen, Standort im Keystore, Anmeldung/Registrierung
+  /Passwort-Zurücksetzen/MFA, Aufräumen der temporären Dateien, das Modell
+  der Zufallschat-Sitzung) und die bisher ungetesteten Bildschirme
+  (Interessen, Profil-Editor, Transit-Radar).
+- **Ein gemeinsamer Ersatz für den Supabase-Server**
+  (`test/support/fake_supabase_server.dart`): er hält den Stand im RAM
+  und spiegelt einen Schreibvorgang beim nächsten Lesen zurück – genau
+  so arbeitet der echte Server mit seiner Verifikation („per Zurücklesen
+  bestätigen"). Damit kann ein Test beide Fälle stellen: der Server
+  antwortet, oder der Server schweigt.
+- **Die Abdeckung wird gemessen, nicht behauptet**
+  (`tool/check_coverage.py`, Gate in der CI). **Stand: 29,8 %** der
+  Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
+  im Gate liegt jetzt bei 29,0 %. 1280 Tests, 0 Fehler.
+  * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
+    steckt nicht in den kleinen Dateien, sondern in den großen
+    Bildschirmen (der 1:1-Chat allein hat 1446 offene Zeilen). Das
+    Werkzeug listet bei jedem Lauf die zwölf größten Lücken – das ist
+    die Arbeitsliste, keine Zahl zum Behaupten.
+
+## [0.10.1] – Elternfreigabe, Aufsicht und Admin-Posteingang (Build 51/52/54/55, 2026-11-03 bis 2026-11-13)
 
 ### Sicherheits-Review (13.11.2026) – Fundstellen geschlossen
 
@@ -143,30 +234,6 @@ Ein vollständiger Durchgang über Funktion, Sicherheit und Datenschutz hat
   gehört jetzt direkt hinter das Hinzufügen; der Versand läuft danach
   weiter.
 - **„Aktualisieren" auf dem Geräte-Bildschirm ging nicht** (im Debug):
-  `setState(() => _future = _load())` gibt das Future zurück, und
-  genau das verbietet Flutter. Der Bildschirm zeichnete nicht neu und
-  blieb im Fehlerzustand stehen.
-- **Leer- und Fehlerzustand liefen bei 3,2-facher Schrift über** (die
-  Android-Maximalstufe). Die App verspricht, bis 3,2× benutzbar zu
-  bleiben – beide Zustände haben jetzt einen Scrollbereich.
-- **Ein fehlgeschlagener Abruf der Funken sah aus wie „du hast keine
-  Funken"** (Befund des Betreibers: „mein Funke ist verschwunden").
-  Der Fehler wurde geschluckt und die Liste blieb leer – der Nutzer
-  dachte, sein Funke sei weg (im Release-Build stand der Fehler nur im
-  Log). Jetzt wird der Fehler **gezeigt** (mit dem Knopf zum
-  Wiederholen), und die vorhandene Liste bleibt stehen.
-
-
-
-- **Die eigene Nachricht war erst nach dem Netz-Roundtrip sichtbar:**
-  Nach dem Senden wurde der Bildschirm erst neu aufgebaut, **nachdem**
-  der Versand fertig war. Die Nachricht stand aber schon sofort lokal im
-  Chat – nur sichtbar war sie erst, wenn der Server geantwortet hatte. Bei
-  langsamer Verbindung (oder wenn das Relay hängt) sah der Nutzer seine
-  eigene Nachricht **nicht** und schrieb sie noch einmal. Der Neuaufbau
-  gehört jetzt direkt hinter das Hinzufügen; der Versand läuft danach
-  weiter.
-- **„Aktualisieren" auf dem Geräte-Bildschirm ging nicht** (im Debug):
   `setState(() => _future = _load())` gab das Future zurück, und genau
   das verbietet Flutter in `setState` (Debug-Assert). Im Debug warf der
   Tastendruck, der Bildschirm zeichnete sich nicht neu, und im
@@ -174,6 +241,12 @@ Ein vollständiger Durchgang über Funktion, Sicherheit und Datenschutz hat
 - **Leer- und Fehlerzustand liefen bei 3,2-facher Schrift über** (die
   Android-Maximalstufe). Die App verspricht, bis 3,2× benutzbar zu
   bleiben – beide Zustände haben jetzt einen eigenen Scrollbereich.
+- **Ein fehlgeschlagener Abruf der Funken sah aus wie „du hast keine
+  Funken"** (Befund des Betreibers: „mein Funke ist verschwunden").
+  Der Fehler wurde geschluckt und die Liste blieb leer – der Nutzer
+  dachte, sein Funke sei weg (im Release-Build stand der Fehler nur im
+  Log). Jetzt wird der Fehler **gezeigt** (mit dem Knopf zum
+  Wiederholen), und die vorhandene Liste bleibt stehen.
 
 ### Testabdeckung (13.11.2026)
 

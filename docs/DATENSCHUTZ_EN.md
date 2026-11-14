@@ -1,6 +1,6 @@
 # Privacy Policy for Thestia
 
-**As of: November 2026** · Version 23 (v0.10.1)
+**As of: November 2026** · Version 23 (v0.10.2)
 
 Thestia is a privacy-conscious open-source project (AGPLv3). Protecting
 your personal sphere comes first: no advertising trackers are used, no

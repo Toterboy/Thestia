@@ -21,7 +21,11 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
   erzwungener Altersgrenze und text-only-Vorstellung). MINOR-Bump
   **nach Regel** – eine Änderung der Datenverarbeitung für Nutzende ist
   eine Kern-Funktion
-- **0.10.1** – **umgesetzt** (Build 51/52/54): Die Namens-Entscheidung beim
+- **0.10.2** – **umgesetzt** (Build 56): Die Rückfrage beim Verlassen des
+  Zufallschats (das System-Zurück fragt jetzt wie der Knopf), die Knöpfe
+  in den Profileinstellungen, die beim Auswählen nicht mehr in die nächste
+  Zeile springen, und ein deutlicher Ausbau der Tests.
+- **0.10.1** – **umgesetzt** (Build 51/52/54/55): Die Namens-Entscheidung beim
   Transit Spark (der Dialog fragt beim ersten Öffnen, danach bleibt der
   Schalter änderbar), der serverseitige Nachrichtenzähler, „Nachricht für
   alle löschen“ (der Server speichert nur die Tatsache, keinen Inhalt), die
@@ -50,11 +54,16 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
   Tastatur (Build 54) ist eine echte neue Nutzerfunktion und wäre nach
   der Regel ein MINOR-Bump. Sie bleibt trotzdem in 0.10.1, weil der
   Betreiber sie ausdrücklich für diese Version verlangt hat **und**
-  0.10.1 noch nirgends veröffentlicht ist (nur ein GitHub-Prerelease, kein
-  Store-Build) – es gibt also niemanden, dessen Zusage durch die
-  zusätzliche Funktion gebrochen würde. Die Ausnahme ist hiermit
-  dokumentiert und nicht stillschweigend. **Für die nächste Version gilt
-  die Regel wieder ohne Ausnahme.**
+  0.10.1 zum Zeitpunkt der Entscheidung noch nirgends veröffentlicht war
+  (nur ein GitHub-Prerelease, kein Store-Build) – es gab also niemanden,
+  dessen Zusage durch die zusätzliche Funktion gebrochen werden konnte.
+  Die Ausnahme ist hiermit dokumentiert und nicht stillschweigend.
+  **Stand 14.11.2026:** v0.10.1 ist als GitHub-Prerelease veröffentlicht
+  worden (Build 55) – ohne Freigabe des Betreibers, das war ein Fehler.
+  Damit ist die Versionsnummer verbraucht: die Fassung, die in den Play
+  Store geht, heißt **v0.10.2**. Der MINOR-Bump ist damit ohnehin der
+  richtige Weg. **Für die nächste Version gilt die Regel wieder ohne
+  Ausnahme.**
 - „Kern-Funktion" im Sinne dieser Regel: eine Änderung des
   Funktionsumfangs **oder** der Datenverarbeitung für Nutzende. Vorlagen,
   Polish und Sprachausbau sind es nicht. Diese Abgrenzung war vorher
@@ -485,6 +494,15 @@ verschluesselt gespeichert und wird erst beim Funke gehoert.
 > soll bewusst sein; „nein, bleib anonym" ist ja auch eine Entscheidung.
 > Die Antwort liegt auf dem **Server**, damit das zweite Gerät nicht
 > nochmal fragt.
+
+### Stand 14.11.2026: 0.10.2 ist die Fassung für den Store (Build 56)
+
+v0.10.1 wurde als GitHub-Prerelease veröffentlicht (Build 55) – ohne
+Freigabe des Betreibers, was ein Fehler war. Die Versionsnummer ist
+dadurch verbraucht: Die Fassung, die in den Play Store geht, heißt
+**v0.10.2 (Build 56)**. Sie enthält alles aus 0.10.1 plus zwei
+Fehlerbehebungen aus dem Alltag (Zufallschat-Rückfrage, springende
+Knöpfe) und einen deutlichen Ausbau der Tests.
 
 ### Stand 13.11.2026: 0.10.1 ist umgesetzt (Build 51/52/54)
 

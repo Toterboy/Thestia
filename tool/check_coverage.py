@@ -48,8 +48,10 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 # nachgezogen (siehe docs/BETRIEBSAUFGABEN.md).
 #
 # Stand 13.11.2026: 24,3 % (vor den neuen Tests: 20,8 %) - der Boden
-# liegt bei 24,0 %.
-MINDEST = 24.0
+# lag bei 24,0 %.
+# Stand 14.11.2026: 29,8 % (vor den neuen Tests: 24,3 %) - der Boden
+# liegt jetzt bei 29,0 %.
+MINDEST = 29.0
 
 # Die Bereiche, in die die lib-Dateien einsortiert werden.
 BEREICHE = [

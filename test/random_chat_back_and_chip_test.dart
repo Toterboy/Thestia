@@ -12,8 +12,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
-import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/providers/chat_provider.dart';
@@ -169,7 +167,7 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      var ausgewaehlt = <String>{};
+      final ausgewaehlt = <String>{};
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
