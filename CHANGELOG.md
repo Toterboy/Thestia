@@ -146,14 +146,18 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   antwortet, oder der Server schweigt.
 - **Weitere Module ohne Test** (14.11.2026, vorher 0 %): die Provider
   der Dating Hour und des Meet-Intents, der Entsperrungsantrag (Dienst
-  **und** Bildschirm), der Bug-Report-Versand und die Modelle der
-  Foto-Moderation (bis hin zu den erzeugten Hive-Adaptern). Der
-  gemeinsame Supabase-Ersatz schreibt jetzt die angefragten Pfade mit –
-  so kann ein Test prüfen, **welche** Funktion aufgerufen wurde.
+  **und** Bildschirm), der Bug-Report-Versand, die Modelle der
+  Foto-Moderation (bis hin zu den erzeugten Hive-Adaptern) und der
+  Datenschutz-Screen. Der gemeinsame Supabase-Ersatz schreibt jetzt die
+  angefragten Pfade mit – so kann ein Test prüfen, **welche** Funktion
+  aufgerufen wurde.
+- **Der 1:1-Chat bekommt die Nachrichtenarten** (Bild, Eisbrecker-
+  Frage, viele Nachrichten) – er war mit 1446 offenen Zeilen die
+  größte Lücke der App.
 - **Die Abdeckung wird gemessen, nicht behauptet**
   (`tool/check_coverage.py`, Gate in der CI). **Stand: 31,0 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
-  im Gate liegt jetzt bei 30,5 %. 1312 Tests, 0 Fehler.
+  im Gate liegt jetzt bei 30,5 %. 1316 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
     steckt nicht in den kleinen Dateien, sondern in den großen
     Bildschirmen (der 1:1-Chat allein hat 1446 offene Zeilen). Das
