@@ -144,6 +144,12 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   so arbeitet der echte Server mit seiner Verifikation („per Zurücklesen
   bestätigen"). Damit kann ein Test beide Fälle stellen: der Server
   antwortet, oder der Server schweigt.
+- **Weitere Module ohne Test** (14.11.2026, vorher 0 %): die Provider
+  der Dating Hour und des Meet-Intents, der Entsperrungsantrag (Dienst
+  **und** Bildschirm), der Bug-Report-Versand und die Modelle der
+  Foto-Moderation (bis hin zu den erzeugten Hive-Adaptern). Der
+  gemeinsame Supabase-Ersatz schreibt jetzt die angefragten Pfade mit –
+  so kann ein Test prüfen, **welche** Funktion aufgerufen wurde.
 - **Die Abdeckung wird gemessen, nicht behauptet**
   (`tool/check_coverage.py`, Gate in der CI). **Stand: 30,7 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
@@ -153,6 +159,12 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
     Bildschirmen (der 1:1-Chat allein hat 1446 offene Zeilen). Das
     Werkzeug listet bei jedem Lauf die zwölf größten Lücken – das ist
     die Arbeitsliste, keine Zahl zum Behaupten.
+- **Die CI sagt jetzt, WAS kaputt ist** (14.11.2026): Vorher stand im
+  GitHub-Lauf nur „1281 tests passed, 9 failed" – welche Tests
+  gescheitert waren, blieb im Log versteckt. Der Lauf schreibt die
+  fehlgeschlagenen Tests, die Analyzer-Meldungen und den Namen des
+  roten Prüfers jetzt als **Anmerkungen** an die betroffene Datei: sie
+  stehen in der PR-Ansicht direkt am Fundort.
 
 ## [0.10.1] – Elternfreigabe, Aufsicht und Admin-Posteingang (Build 51/52/54/55, 2026-11-03 bis 2026-11-13)
 
