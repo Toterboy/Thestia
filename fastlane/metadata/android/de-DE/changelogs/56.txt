@@ -14,6 +14,14 @@ Ausgewählte Knöpfe bleiben an ihrer Stelle
 
 Wenn du in den Profileinstellungen etwas auswählst, springt der Knopf nicht mehr in die nächste Zeile.
 
+Dating, das dich ins echte Leben zurückführt
+
+Der Slogan der App steht jetzt auf dem ersten Bildschirm. Und die Dating Hour paart jetzt über die Geschlechter hinweg: Das Event ist für alle Heterosexuellen, es besteht also aus Männern und Frauen. Wer im Profil ausdrücklich nur das eigene Geschlecht wählt, wird mit diesem zusammengebracht.
+
+Die Nutzungsbedingungen stehen jetzt in der App
+
+Du findest sie unter "Datenschutz & Account" - ohne Umweg über den Browser.
+
 Deine Funken verschwinden nicht mehr
 
 Wenn der Server beim Laden der Funkenliste nicht erreichbar war, zeigte die App "keine Funken". Jetzt steht ein Hinweis mit "Erneut versuchen" da, und deine vorhandenen Funken bleiben stehen.
