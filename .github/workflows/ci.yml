@@ -151,9 +151,11 @@ jobs:
           # DER ROHTEXT: je nach Fehlerart schreibt der Reporter etwas
           # anderes - Assertion, Timeout oder Absturz.
           echo "::error::Testausgabe: $(wc -l < /tmp/test-output.txt) Zeilen"
-          tail -25 /tmp/test-output.txt | while IFS= read -r zeile; do
-            echo "::error::  ${zeile}"
-          done || true
+          # DER GANZE BLOCK IN EINER ANMERKUNG: die Fehlermeldung steht
+          # ueber dem Stack (die inneren Frames), ein "tail" schneidet
+          # sie ab. GitHub mag keine Zeilenumbrueche in einer
+          # Anmerkung - deshalb der Trenner " ~ ".
+          echo "::error::$(tail -80 /tmp/test-output.txt | tr '\n' ' ~ ')" 
           # UND die FehlermELDUNGEN (sie stehen ein paar Zeilen ueber
           # dem Stapel und nennen den Provider, der nicht aufgebaut
           # werden konnte).
