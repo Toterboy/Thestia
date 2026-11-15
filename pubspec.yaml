@@ -20,8 +20,7 @@ dependencies:
   # Shaker erwartet dann den Font ("Expected to find fonts for ...").
   # Mit dieser Dependency ist die Font-Referenz aufgeloest; ungenutzte
   # Glyphen werden beim Release ohnehin weggeschnitten.
-  cupertino_icons: ^1.0.8
-
+  cupertino_icons: 2.0.0
   # State Management
   flutter_riverpod: ^2.6.1
 
@@ -84,8 +83,7 @@ dependencies:
   web_socket_channel: 3.0.3
 
   # Kryptographische Hash-Funktionen (für Zertifikat-Pinning)
-  crypto: 3.0.7
-
+  crypto: 3.0.8
   # Sichere, verschlüsselte lokale Speicherung von Tokens (statt SharedPreferences)
   flutter_secure_storage: 11.2.0
 
@@ -108,11 +106,9 @@ dependencies:
   geolocator: ^14.0.3
 
   # Geocoding für Ortserkennung
-  geocoding: ^4.0.0
-
+  geocoding: 4.0.0
   # Bildverarbeitung für Moderation (Placeholder für ML-Kit)
-  image: 4.12.0
-
+  image: 4.13.1
   # NSFW on-device (v0.8.0): lokale Inferenz des Bild-Sicherheits-Modells
   # (image-safety-classifier-xs, ONNX-Format) - nur bei manueller Meldung.
   onnxruntime: 1.4.1
@@ -121,8 +117,7 @@ dependencies:
   path_provider: 2.1.6
 
   # Benachrichtigungen (Nachrichten, Likes, Matches, Event-Erinnerungen)
-  flutter_local_notifications: 22.3.2
-
+  flutter_local_notifications: 23.0.2
   # EU-Push über Supabase Push (Verarbeitung in eu-central-1, Free Tier).
   # FCM dient nur als Zustell-Transport (kostenloses Firebase-Konto nötig).
   firebase_core: 4.13.0
@@ -131,8 +126,7 @@ dependencies:
   # Geplante Benachrichtigungen (Dating-Hour-Erinnerung auch bei
   # geschlossener App)
   timezone: ^0.11.1
-  flutter_timezone: ^5.1.0
-
+  flutter_timezone: ^5.1.1
   # Nativer Splash (Preserve/Remove-API wird zur Laufzeit in main.dart genutzt,
   # daher als reguläre Dependency statt dev_dependency)
   flutter_native_splash: ^2.4.8
@@ -163,16 +157,16 @@ dependencies:
   # Passkeys "nicht mehr gingen", obwohl der Server alles korrekt hatte.
   #
   # Exakt gepinnt (Sicherheitsrelevant: Authentifizierung).
-  passkeys: 2.22.3
+  passkeys: 2.24.1
   passkeys_platform_interface: ^2.10.0
 
   # QR-Code (Profil teilen + Scannen)
   qr_flutter: ^4.1.0
-  mobile_scanner: ^7.4.0
+  mobile_scanner: ^7.5.0
   record: ^7.1.1
   just_audio: ^0.10.6
   webview_flutter: ^4.14.1
-  image_cropper: ^12.2.1
+  image_cropper: 13.0.0
   unifiedpush: ^6.2.0
 
 dev_dependencies:
@@ -184,8 +178,8 @@ dev_dependencies:
   # Das geht nur ueber die Plattform-Schnittstelle, nicht ueber einen
   # MethodChannel. camera_platform_interface ist bereits indirekt ueber
   # camera vorhanden; hier explizit, damit der Test es importieren darf.
+  # (Stand: die Version, die camera 0.12.1 mitzieht.)
   camera_platform_interface: 2.13.1
-
   # Nur fuer die Tests: UnifiedPush laeuft ueber eine Plattform-Schnittstelle
   # (`UnifiedPushPlatform.instance`). Ohne sie kann der Test den Connector
   # (Distributor) nicht nachstellen - der UnifiedPush-Connector bringt
@@ -217,12 +211,8 @@ dev_dependencies:
 # `flutter pub upgrade <paket>` + Review, nicht durch bloesses Editieren.
 
 dependency_overrides:
-  flutter_timezone:
-    path: third_party/flutter_timezone
   flutter_webrtc:
     path: third_party/flutter_webrtc
-  mobile_scanner:
-    path: third_party/mobile_scanner
   # KGP-freier Fork: passkeys_android zieht upstream bedingungslos
   # kotlin-android an (trotz reinem Java-Quellcode) und loest damit die
   # Flutter-KGP-Warnung aus. Siehe third_party/passkeys_android.

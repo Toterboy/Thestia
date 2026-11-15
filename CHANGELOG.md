@@ -70,6 +70,51 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   scrollt jetzt – dieselbe Lösung wie im Chat-Hintergrund-Dialog.
   Gefunden hat das ein Test, der den Dialog einfach mal öffnet.
 
+### Aktualisiert (15.11.2026) – Plugins und zwei Forks aufgelöst
+
+- **flutter_local_notifications 22.3.2 → 23.0.2.** Der Upstream behebt
+  einen **Absturz**: eine Benachrichtigung, die die alte Version
+  eingeplant hat und nach dem App-Update zugestellt wird, konnte mit
+  einem NullPointer-Abbruch enden („A CameraController..." – nein: der
+  Fehler lag im `setSmallIcon`). Dazu kommt der ersetzte
+  `AlarmManager.setExact` und ein Fehler beim Abbrechen von
+  Benachrichtigungen mit Tags.
+- **image_cropper 12 → 13, crypto 3.0.7 → 3.0.8, passkeys 2.22 → 2.24,
+  geolocator 14.0.3 → 14.1.2, record 7.1 → 7.2, video_player, share_plus,
+  timezone, device_info_plus, package_info_plus, image_picker,
+  flutter_dotenv, image 4.12 → 4.13, cupertino_icons** – alles innerhalb
+  der bisherigen Hauptversion, damit sich das Laufzeitverhalten nicht
+  unbemerkt ändert.
+- **Zwei der sieben lokalen Forks sind weg:**
+  * **mobile_scanner**: der Fork (7.4.0) → die Pub-Version **7.5.0**.
+    Der Upstream ist inzwischen auf Kotlin-DSL umgestiegen und löst das
+    KGP-Problem damit selbst – und bringt die Android-Absturz-Fixes
+    7.4.2 bis 7.4.4 mit („Absturz, wenn der Scanner direkt nach dem
+    Start beendet wurde").
+  * **flutter_timezone**: der Fork (5.1.0) → **5.1.1**. Auch hier wendet
+    der Upstream das Kotlin-Plugin selbst an, wenn keines vorhanden ist.
+  * *Warum das wichtig ist:* Jeder Fork ist eine eigene
+    Wartungsauflast – und ein Stück Software, das keine
+    Sicherheitsupdates mehr bekommt. Zwei weniger sind zwei weniger.
+- **AGP 9.0.1 → 9.1.1 und Gradle 9.1.0 → 9.3.1.** Die aktualisierten
+  Plugins ziehen `androidx.core 1.19.0`, und dessen AAR-Metadata
+  verlangt AGP 9.1.0 oder neuer – ohne das bricht der Build ab
+  (`checkPlayReleaseAarMetadata`).
+
+**Bewusst NICHT aktualisiert (mit Begründung):**
+
+- **flutter_webrtc**: der lokale Fork ist sicherheitsgepatcht (WebRTC-SDK
+  150.7871.04 – „drop compromised eMudhra CA root"). Der Upstream 1.6.3
+  bringt wieder einen eigenen AGP-Klasspath mit; das wird erst ohne
+  Gerätetest umgestellt.
+- **passkeys_android**: die App hat eine eigene Plattform-Implementierung
+  (das Passkey-Prompt geht an Supabase) – auch das ändert sich nicht
+  ohne Gerätetest.
+- **flutter_riverpod 3, go_router 18, flutter_blue_plus 2, firebase 5/17:**
+  große Migrationen mit API-Brüchen – nicht nebenbei.
+- **camera 0.12.2**: bringt nur eine ungenutzte Funktion
+  (Zero-Shutter-Lag) – zurückgenommen, damit der AGP-Schritt klein bleibt.
+
 ### Behoben (15.11.2026) – Die CI meldete Fehler, die keine waren
 
 - **Der Lauf war grün, zeigte aber drei rote Anmerkungen** („2 errors"
@@ -293,11 +338,11 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Meldung, wenn es offline ist oder niemand da ist; im Admin-Bereich
   die Meldungen mit „Bearbeitet", dem Leerzustand und dem
   Wiederholen-Knopf; im 1:1-Chat das Löschen einer Nachricht für alle;
-  im Dialog "Funke beenden" die vier Absage-Texte und die Auswahl; in den Eisbrecher-Fragen das Suchen, das Kopieren und die Frage, ob eine Frage kopiert oder gesendet werden soll.; in der Erinnerungsliste das Abhaken, das Loeschen eigener Eintraege und der Leerzustand.; beim Entfernen der Bild-Metadaten, dass die Metadaten wirklich verschwinden und dass kein Original zurueckkommt.; bei der Bundesland-Aufloesung, dass der Ort nicht zurueckkommt (nur das Bundesland) und dass stattdessen null kommt.; in den Profil-Bausteinen, dass die gemeinsamen Interessen hervorgehoben sind und der Blind-Mode-Platzhalter seinen Grund nennt.; im Admin-Bereich die Verifizierungen mit der KI-Altersschaetzung und dem Minderjaehrigkeitsfall, die Fehlerberichte, die Sperren und die Standort-Pruefungen; im Interessen-Screen das Funken-Menue und das Archivieren; bei der Bild-Meldung, dass nur das gemeldete Bild rausgeht und die Reporter-ID pseudonymisiert wird.; in den Einstellungen, dass sich das Erscheinungsbild umstellen laesst und dass System dem Geraet folgt.
+  im Dialog "Funke beenden" die vier Absage-Texte und die Auswahl; in den Eisbrecher-Fragen das Suchen, das Kopieren und die Frage, ob eine Frage kopiert oder gesendet werden soll.; in der Erinnerungsliste das Abhaken, das Loeschen eigener Eintraege und der Leerzustand.; beim Entfernen der Bild-Metadaten, dass die Metadaten wirklich verschwinden und dass kein Original zurueckkommt.; bei der Bundesland-Aufloesung, dass der Ort nicht zurueckkommt (nur das Bundesland) und dass stattdessen null kommt.; in den Profil-Bausteinen, dass die gemeinsamen Interessen hervorgehoben sind und der Blind-Mode-Platzhalter seinen Grund nennt.; im Admin-Bereich die Verifizierungen mit der KI-Altersschaetzung und dem Minderjaehrigkeitsfall, die Fehlerberichte, die Sperren und die Standort-Pruefungen; im Interessen-Screen das Funken-Menue und das Archivieren; bei der Bild-Meldung, dass nur das gemeldete Bild rausgeht und die Reporter-ID pseudonymisiert wird.; in den Einstellungen, dass sich das Erscheinungsbild umstellen laesst und dass System dem Geraet folgt.; ausserdem der Foto-Einspruch, das Match-Quiz, der Posteingang, die Server-Konfiguration (die Notbremse fuer Transit Spark) und die Standort-Pruefung.
 - **Die Abdeckung wird gemessen, nicht behauptet**
-  (`tool/check_coverage.py`, Gate in der CI). **Stand: 42,2 %** der
+  (`tool/check_coverage.py`, Gate in der CI). **Stand: 42,9 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
-  im Gate liegt jetzt bei 30,0 %. 1444 Tests, 0 Fehler.
+  im Gate liegt jetzt bei 30,0 %. 1471 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
     steckt nicht in den kleinen Dateien, sondern in den großen
     Bildschirmen (der 1:1-Chat allein hat 1446 offene Zeilen). Das

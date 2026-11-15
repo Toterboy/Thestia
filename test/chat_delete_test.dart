@@ -273,5 +273,33 @@ void main() {
       expect(find.byType(AlertDialog), findsNothing);
       expect(find.text('Nachricht der Partnerin'), findsOneWidget);
     });
+
+    testWidgets('die Loeschung des Partners kommt beim Empfaenger an', (
+      tester,
+    ) async {
+      // Der Server meldet, dass eine Nachricht "fuer alle geloescht"
+      // wurde - der Empfaenger ersetzt sie durch den Hinweis
+      // (BEFUND 11.11.2026).
+      server.rpcAntworten['list_message_deletions'] = [
+        <String, dynamic>{
+          'messageId': 'm_fremd',
+          'deletedAt': '2026-11-14T10:00:00Z',
+        },
+      ];
+
+      final c = chat();
+      await zeigeScreen(tester, c.notifier);
+
+      expect(tester.takeException(), isNull);
+      // Die Nachricht ist durch den Hinweis ersetzt.
+      expect(find.text('Nachricht der Partnerin'), findsNothing);
+      expect(
+        find.text(L10n.tWithoutContext('chat.deletedNotice')),
+        findsOneWidget,
+        reason:
+            'Der Empfaenger muss sehen, dass die Nachricht geloescht wurde - '
+            'sonst denkt er, sie sei noch da.',
+      );
+    });
   });
 }
