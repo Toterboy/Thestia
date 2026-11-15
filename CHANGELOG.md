@@ -128,6 +128,31 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   stimmen – der Fehlerhinweis bleibt sichtbar.
   * Gefunden hat das ein Test für den Dialog.
 
+### Behoben (15.11.2026, dritte Runde) – Zwei Fehler aus dem Alltag
+
+- **Ein hängender Server-Aufruf konnte einen Bildschirm blockieren.**
+  Jeder Aufruf einer Edge Function (Admin-Freigabe, Bild-Meldung,
+  Passkey-Zertifikat, Video-URL, Datenschutz-Löschung, Profilbild,
+  Push an die Gegenseite …) wartete **ohne Zeitlimit** auf die Antwort.
+  Kam keine – Server gestört, Mobilfunk voll, Funktion hängt intern –,
+  blieb der Bildschirm stehen, bis der Nutzer ihn verließ. Im
+  Admin-Bereich war das gemeldet worden (die Freigabe einer
+  Verifizierung).
+  * **Jetzt hat jeder dieser Aufrufe eine Grenze von 20 Sekunden.**
+    Danach bricht er ab, und der Nutzer bekommt die Fehlermeldung
+    statt eines hängenden Bildschirms.
+  * Das Zeitlimit sitzt an **einer** Stelle (dem Aufruf selbst), nicht
+    in jedem Bildschirm – ein neuer Aufruf kann es nicht vergessen.
+- **Im Dating-Hour-Chat verschwand eine Nachricht ohne jede Meldung.**
+  War der direkte Kanal zu, meldete das Versenden „Erfolg" – die
+  Nachricht lag aber nur im internen Puffer und kam nie an. Ging
+  danach auch der Weg über den Server nicht, blieb es bei der
+  Meldungslosigkeit: Der Nutzer sah seine Nachricht im Chat und wusste
+  nicht, dass sie nirgends angekommen war.
+  * Jetzt gilt nur ein **wirklich offener Kanal** als „zugestellt".
+    Sonst geht der Weg über den Server – und wenn auch der scheitert,
+    sagt die App dem Nutzer, dass die Nachricht nicht rausging.
+
 ### Aktualisiert (15.11.2026) – Plugins und zwei Forks aufgelöst
 
 - **flutter_local_notifications 22.3.2 → 23.0.2.** Der Upstream behebt
@@ -398,9 +423,9 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Wiederholen-Knopf; im 1:1-Chat das Löschen einer Nachricht für alle;
   im Dialog "Funke beenden" die vier Absage-Texte und die Auswahl; in den Eisbrecher-Fragen das Suchen, das Kopieren und die Frage, ob eine Frage kopiert oder gesendet werden soll.; in der Erinnerungsliste das Abhaken, das Loeschen eigener Eintraege und der Leerzustand.; beim Entfernen der Bild-Metadaten, dass die Metadaten wirklich verschwinden und dass kein Original zurueckkommt.; bei der Bundesland-Aufloesung, dass der Ort nicht zurueckkommt (nur das Bundesland) und dass stattdessen null kommt.; in den Profil-Bausteinen, dass die gemeinsamen Interessen hervorgehoben sind und der Blind-Mode-Platzhalter seinen Grund nennt.; im Admin-Bereich die Verifizierungen mit der KI-Altersschaetzung und dem Minderjaehrigkeitsfall, die Fehlerberichte, die Sperren und die Standort-Pruefungen; im Interessen-Screen das Funken-Menue und das Archivieren; bei der Bild-Meldung, dass nur das gemeldete Bild rausgeht und die Reporter-ID pseudonymisiert wird.; in den Einstellungen, dass sich das Erscheinungsbild umstellen laesst und dass System dem Geraet folgt.; ausserdem der Foto-Einspruch, das Match-Quiz, der Posteingang, die Server-Konfiguration (die Notbremse fuer Transit Spark) und die Standort-Pruefung. Auf der Profildetail-Seite stehen die gemeinsamen Interessen hervorgehoben. In den Einstellungen steht der Stand des Kinderschutzes - und ein Lesefehler wird als Fehler gemeldet, nicht als "keine Aufsicht". Und die Angaben aus der Ersteinrichtung kommen beim Server an - nicht nur lokal. Dazu der Verifikations-Hinweis auf Aktuelles und die Meldung bei der Freigabe.
 - **Die Abdeckung wird gemessen, nicht behauptet**
-  (`tool/check_coverage.py`, Gate in der CI). **Stand: 46,6 %** der
+  (`tool/check_coverage.py`, Gate in der CI). **Stand: 46,9 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
-  im Gate liegt jetzt bei 30,0 %. 1523 Tests, 0 Fehler.
+  im Gate liegt jetzt bei 30,0 %. 1528 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
     steckt nicht in den kleinen Dateien, sondern in den großen
     Bildschirmen (der 1:1-Chat allein hat 1147 offene Zeilen). Das
