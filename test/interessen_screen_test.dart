@@ -575,5 +575,62 @@ void main() {
       );
       expect(find.text('Jonas ist ausgeblendet.'), findsOneWidget);
     });
+
+    testWidgets('das Funken-Menue bietet alle Wege', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      service.funken = [_funke()];
+      await _pump(tester, service: service);
+
+      // Das Drei-Punkte-Menue der Funke-Kachel oeffnen.
+      await tester.tap(find.byIcon(Icons.more_vert).first);
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      // Archivieren, Loeschen, Ausblenden ...
+      expect(find.text('Archivieren'), findsOneWidget);
+      expect(find.text('Funke löschen'), findsOneWidget);
+      expect(find.text('Aus Liste entfernen'), findsOneWidget);
+      // ... und die Sicherheitswege (BEFUND 01.11.2026).
+      expect(find.text('Nutzer melden'), findsOneWidget);
+      expect(find.text('Blockieren'), findsOneWidget);
+    });
+
+    testWidgets('"Archivieren" fragt nach und meldet es dem Server', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      service.funken = [_funke()];
+      await _pump(tester, service: service);
+
+      await tester.tap(find.byIcon(Icons.more_vert).first);
+      await _pumpFrames(tester);
+      await tester.tap(find.text('Archivieren'));
+      await _pumpFrames(tester);
+
+      // Der ehrliche Dialog kommt - es gibt zwei Wege (ruhig oder mit
+      // einem Absage-Text).
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.text('Ruhig enden lassen'), findsOneWidget);
+
+      // "Ruhig enden" - ohne Nachricht.
+      await tester.tap(find.text('Funke kühlen'));
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      // Der Server wurde wirklich informiert ...
+      expect(service.gekuehlt, contains(7));
+      // ... und der Nutzer bekommt die Bestaetigung.
+      expect(find.textContaining('Mira'), findsWidgets);
+    });
   });
 }

@@ -55,6 +55,18 @@ class FakeSupabaseServer extends http.BaseClient {
   /// EINER bestimmten Liste schweigt.
   final Set<String> rpcFehler = <String>{};
 
+  /// Die Antworten der Edge Functions: Name -> Antwort.
+  ///
+  /// Ohne Eintrag antwortet eine Function mit `{}`.
+  final Map<String, Object?> funktionsAntworten = <String, Object?>{};
+
+  /// Die Aufrufe der Edge Functions (Name + Body) in der Reihenfolge.
+  ///
+  /// DAMIT ist sichtbar, WAS an den Server geschickt wurde - bei der
+  /// Bild-Meldung zum Beispiel, dass die Reporter-ID pseudonymisiert
+  /// ist (kein Klartext-UUID) und das Bild erst beim Absenden rausgeht.
+  final List<Map<String, dynamic>> funktionsAufrufe = <Map<String, dynamic>>[];
+
   /// Die geschriebenen Zeilen je Tabelle.
   final Map<String, Map<String, dynamic>> zeilen =
       <String, Map<String, dynamic>>{};
@@ -121,7 +133,15 @@ class FakeSupabaseServer extends http.BaseClient {
 
     // Edge Functions (Sperren, Verifizierung, ...).
     if (pfad.contains('/functions/v1/')) {
-      return _antwort(request, 200, jsonEncode(<String, dynamic>{}));
+      const marker = '/functions/v1/';
+      final name = pfad.substring(pfad.indexOf(marker) + marker.length);
+      final body = await _leseBody(request);
+      // DER AUFRUF WIRD AUFGEZEICHNET: Damit sieht ein Test, WAS an den
+      // Server gegangen ist (bei der Bild-Meldung zum Beispiel, dass die
+      // Reporter-ID pseudonymisiert ist).
+      funktionsAufrufe.add(<String, dynamic>{'funktion': name, ...body});
+      final antwort = funktionsAntworten[name];
+      return _antwort(request, 200, jsonEncode(antwort ?? <String, dynamic>{}));
     }
 
     return _antwort(request, 200, '');
