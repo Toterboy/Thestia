@@ -780,4 +780,26 @@ jobs:
 
       - name: "Release-Artefakte (nur informativ, ohne Artefakte im CI)"
         continue-on-error: true
-        run: python3 tool/check_release_artifacts.py
+        run: |
+          # BEFUND (15.11.2026): Auch dieser Schritt lieferte eine ROTE
+          # Anmerkung, obwohl "continue-on-error: true" gesetzt war: im
+          # CI-Checkout liegen keine Artefakte (sie sind gitignoriert),
+          # also hat der Checker nichts zu pruefen und meldet einen
+          # Befund.
+          #
+          # DER WEG: Wie bei den Live-Checks - das Ergebnis wird als
+          # WARNUNG gemeldet, der Schritt endet mit 0.
+          set +e
+          python3 tool/check_release_artifacts.py > /tmp/release-artifacts.txt 2>&1
+          code=$?
+          cat /tmp/release-artifacts.txt
+          if [ "$code" -ne 0 ]; then
+            {
+              echo "### Release-Artefakte - Befund"
+              echo '```'
+              tail -20 /tmp/release-artifacts.txt
+              echo '```'
+            } >> $GITHUB_STEP_SUMMARY
+            echo "::warning::Der Artefaktcheck hat einen Befund (siehe Zusammenfassung). Im CI liegen keine Artefakte - der Lauf bleibt gruen."
+          fi
+          exit 0

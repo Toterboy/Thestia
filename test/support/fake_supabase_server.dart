@@ -46,6 +46,15 @@ class FakeSupabaseServer extends http.BaseClient {
   /// Ohne Eintrag antwortet eine RPC mit `null`.
   final Map<String, Object?> rpcAntworten = <String, Object?>{};
 
+  /// Die RPCs, die mit einem Fehler (500) antworten.
+  ///
+  /// WARUM (15.11.2026): Bei einem kompletten Serverausfall schliesst
+  /// der Admin-Bereich sofort (fail-closed - der Server-Check schlaegt
+  /// fehl). Damit laesst sich der Listen-Fehler nicht stellen: man
+  /// braucht einen Server, der den Admin-Check beantwortet, aber bei
+  /// EINER bestimmten Liste schweigt.
+  final Set<String> rpcFehler = <String>{};
+
   /// Die geschriebenen Zeilen je Tabelle.
   final Map<String, Map<String, dynamic>> zeilen =
       <String, Map<String, dynamic>>{};
@@ -86,6 +95,14 @@ class FakeSupabaseServer extends http.BaseClient {
     if (pfad.contains('/rest/v1/rpc/')) {
       const marker = '/rest/v1/rpc/';
       final name = pfad.substring(pfad.indexOf(marker) + marker.length);
+      // Nur diese eine RPC schweigt (siehe [rpcFehler]).
+      if (rpcFehler.contains(name)) {
+        return _antwort(
+          request,
+          500,
+          jsonEncode(<String, dynamic>{'message': 'Serverfehler'}),
+        );
+      }
       return _antwort(request, 200, jsonEncode(rpcAntworten[name]));
     }
 
