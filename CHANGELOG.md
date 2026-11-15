@@ -61,6 +61,15 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Weiterleitung läuft jetzt einen Frame später (der Bereich bleibt
   trotzdem zu: der Aufbau selbst zeigt den Hinweis).
 
+### Behoben (15.11.2026) – Der Dialog „Funke beenden" lief über
+
+- **Bei großer Schrift lief der Dialog „Funke beenden" unten über**
+  („RenderFlex overflowed by 124 pixels"): der Inhalt (Text + fünf
+  Auswahlzeilen) war höher als der Dialog, und ohne Scrollbereich sah
+  der Nutzer die letzten Absage-Texte und die Knöpfe nicht. Der Dialog
+  scrollt jetzt – dieselbe Lösung wie im Chat-Hintergrund-Dialog.
+  Gefunden hat das ein Test, der den Dialog einfach mal öffnet.
+
 ### Behoben (15.11.2026) – Die CI meldete Fehler, die keine waren
 
 - **Der Lauf war grün, zeigte aber drei rote Anmerkungen** („2 errors"
@@ -283,11 +292,12 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Verweigern des Zugangs; im Zufallschat der Suchzustand und die
   Meldung, wenn es offline ist oder niemand da ist; im Admin-Bereich
   die Meldungen mit „Bearbeitet", dem Leerzustand und dem
-  Wiederholen-Knopf; im 1:1-Chat das Löschen einer Nachricht für alle).
+  Wiederholen-Knopf; im 1:1-Chat das Löschen einer Nachricht für alle;
+  im Dialog "Funke beenden" die vier Absage-Texte und die Auswahl.
 - **Die Abdeckung wird gemessen, nicht behauptet**
-  (`tool/check_coverage.py`, Gate in der CI). **Stand: 39,8 %** der
+  (`tool/check_coverage.py`, Gate in der CI). **Stand: 39,9 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
-  im Gate liegt jetzt bei 30,0 %. 1387 Tests, 0 Fehler.
+  im Gate liegt jetzt bei 30,0 %. 1394 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
     steckt nicht in den kleinen Dateien, sondern in den großen
     Bildschirmen (der 1:1-Chat allein hat 1446 offene Zeilen). Das
