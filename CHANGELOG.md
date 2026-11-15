@@ -61,6 +61,24 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Weiterleitung läuft jetzt einen Frame später (der Bereich bleibt
   trotzdem zu: der Aufbau selbst zeigt den Hinweis).
 
+### Behoben (15.11.2026) – Die CI meldete Fehler, die keine waren
+
+- **Der Lauf war grün, zeigte aber drei rote Anmerkungen** („2 errors"
+  in der Lauf-Übersicht). Alle drei kamen aus Schritten, die ausdrücklich
+  nur informativ sind: dem Vergleich der **live** ausgelieferten Website
+  mit dem Repository, dem Vergleich der **live** Datenschutzerklärung und
+  dem Release-Artefaktcheck (im CI-Checkout liegen keine Artefakte).
+  * `continue-on-error: true` allein reicht nicht: der Schritt bleibt rot
+    und GitHub zeigt „Process completed with exit code 1". Der Lauf sah
+    damit kaputt aus, obwohl nur ein Zustand **außerhalb** des Repos
+    gemeint war (der Netlify-Upload des Betreibers).
+  * Der Weg: Das Werkzeug läuft, sein Ergebnis wird als **Warnung**
+    gemeldet, und der Schritt endet mit 0. Der Lauf ist jetzt „Success"
+    mit einem gelben Hinweis, der sagt, was zu tun ist.
+- **Die Aktionen liefen noch auf Node.js 20**, das GitHub abschaltet
+  (`actions/setup-python@v5`, `actions/upload-artifact@v4` → Warnung auf
+  jedem Lauf). Beide sind jetzt auf der Node-24-Version.
+
 ### Behoben (14.11.2026) – Der Chat hat beim Verlassen „kracht"
 
 - **Beim Verlassen des Dating-Hour-Chats kam jedes Mal ein Fehler.**
@@ -263,11 +281,13 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   seinen Gruppenüberschriften und der einmalige Hinweis auf den
   Chat-Hintergrund; im Admin-Bereich alle acht Reiter und das
   Verweigern des Zugangs; im Zufallschat der Suchzustand und die
-  Meldung, wenn es offline ist oder niemand da ist).
+  Meldung, wenn es offline ist oder niemand da ist; im Admin-Bereich
+  die Meldungen mit „Bearbeitet", dem Leerzustand und dem
+  Wiederholen-Knopf; im 1:1-Chat das Löschen einer Nachricht für alle).
 - **Die Abdeckung wird gemessen, nicht behauptet**
-  (`tool/check_coverage.py`, Gate in der CI). **Stand: 39,0 %** der
+  (`tool/check_coverage.py`, Gate in der CI). **Stand: 39,8 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
-  im Gate liegt jetzt bei 30,0 %. 1378 Tests, 0 Fehler.
+  im Gate liegt jetzt bei 30,0 %. 1387 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
     steckt nicht in den kleinen Dateien, sondern in den großen
     Bildschirmen (der 1:1-Chat allein hat 1446 offene Zeilen). Das
