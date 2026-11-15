@@ -20,6 +20,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/providers/settings_provider.dart';
 import 'package:thestia/screens/settings/settings_screen.dart';
 import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/services/secure_storage.dart';
@@ -145,6 +146,13 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
   }
 
+  /// Pumpt eine feste Zahl von Frames.
+  Future<void> pumpFrames(WidgetTester tester) async {
+    for (var i = 0; i < 6; i++) {
+      await tester.pump(const Duration(milliseconds: 120));
+    }
+  }
+
   /// Scrollt zu einem Text (der Bildschirm ist eine lange Liste).
   Future<void> scrolleZu(WidgetTester tester, String text) async {
     final ziel = find.text(text);
@@ -198,5 +206,51 @@ void main() {
           'Der Schalter fuer unscharfe Bilder muss erreichbar sein - er ist '
           'der Schutz, dass ein geteiltes Bild nicht unerklaerbar ist.',
     );
+  });
+
+  testWidgets('das Erscheinungsbild laesst sich umstellen', (tester) async {
+    await zeigeScreen(tester);
+
+    await scrolleZu(tester, L10n.tWithoutContext('appearance.dark'));
+
+    // "Dunkel" waehlen. ensureVisible: der Abschnitt liegt unterhalb
+    // der Falz - ohne das landet der Tipp ins Leere.
+    final dunkel = find.text(L10n.tWithoutContext('appearance.dark'));
+    await tester.ensureVisible(dunkel);
+    await pumpFrames(tester);
+    await tester.tap(dunkel);
+    await pumpFrames(tester);
+    // Der Server-Sync ist entprellt (1,5 s) - der Timer muss abgelaufen
+    // sein, sonst meldet der Test am Ende "Timer is still pending".
+    await tester.pump(const Duration(milliseconds: 2000));
+    await pumpFrames(tester);
+
+    expect(tester.takeException(), isNull);
+    expect(
+      container.read(settingsProvider).useDarkMode,
+      isTrue,
+      reason: 'Der Nutzer hat "Dunkel" gewaehlt - das muss gespeichert sein.',
+    );
+  });
+
+  testWidgets('"System" heisst: die App folgt dem Geraet', (tester) async {
+    await zeigeScreen(tester);
+
+    await scrolleZu(tester, L10n.tWithoutContext('appearance.system'));
+
+    final system = find.text(L10n.tWithoutContext('appearance.system'));
+    await tester.ensureVisible(system);
+    await pumpFrames(tester);
+    await tester.tap(system);
+    await pumpFrames(tester);
+    // Der Server-Sync ist entprellt (1,5 s) - der Timer muss abgelaufen
+    // sein, sonst meldet der Test am Ende "Timer is still pending".
+    await tester.pump(const Duration(milliseconds: 2000));
+    await pumpFrames(tester);
+
+    expect(tester.takeException(), isNull);
+    // null heisst: "es entscheidet das Geraet" - true/false waere eine
+    // feste Entscheidung und damit etwas anderes.
+    expect(container.read(settingsProvider).useDarkMode, isNull);
   });
 }
