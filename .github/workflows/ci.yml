@@ -201,6 +201,9 @@ jobs:
           name: coverage-lcov
           path: coverage/lcov.info
           retention-days: 30
+          # Bei einem abgebrochenen Lauf gibt es keine Coverage-Datei -
+          # das ist keine Fehlermeldung, sondern eine Folge des Abbruchs.
+          if-no-files-found: ignore
 
   # ---------------------------------------------------------------
   # v0.9.2: Dependency-Hygiene. Getrennt vom Build, damit ein
@@ -245,6 +248,7 @@ jobs:
           name: pub-outdated
           path: outdated.txt
           retention-days: 30
+          if-no-files-found: ignore
 
       # 2) Hart: die 16 sicherheitsrelevanten Pakete muessen exakt gepinnt
       #    sein. Verhindert, dass jemand ein "^" zurueckbaut.
@@ -324,6 +328,7 @@ jobs:
           name: sbom-cyclonedx
           path: sbom.json
           retention-days: 90
+          if-no-files-found: ignore
 
   fdroid-build:
     runs-on: ubuntu-latest
