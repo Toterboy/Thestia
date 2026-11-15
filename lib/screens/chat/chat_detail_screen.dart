@@ -1373,7 +1373,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   Future<void> _notifyPeerAboutMessage(Match match) async {
     if (!SupabaseService.isInitialized) return;
     try {
-      await SupabaseService.client.functions.invoke(
+      // MIT ZEITLIMIT (15.11.2026): ohne Grenze blieb der Aufruf
+      // stehen und das Senden wartete auf ihn.
+      await SupabaseService.rufeEdgeFunktion(
         'notify-user',
         body: {'kind': 'messages', 'target_user_id': match.partner.id},
       );

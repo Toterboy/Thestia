@@ -646,7 +646,9 @@ class _RandomChatScreenState extends ConsumerState<RandomChatScreen>
     final partnerId = _partnerId;
     if (partnerId == null) return;
     await bestEffort('invoke', () async {
-      await SupabaseService.client.functions.invoke(
+      // MIT ZEITLIMIT (15.11.2026): ohne Grenze blieb der Aufruf
+      // stehen und das Senden wartete auf ihn.
+      await SupabaseService.rufeEdgeFunktion(
         'notify-user',
         body: {'kind': 'messages', 'target_user_id': partnerId},
       );

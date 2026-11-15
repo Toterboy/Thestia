@@ -100,7 +100,14 @@ void main() {
   }
 
   /// Raeumt den Screen ab (die Timer des Quiz-Screens werden beendet).
+  /// Raeumt den Screen ab.
+  ///
+  /// Das Zeitlimit der Edge-Function-Aufrufe (20 Sekunden) laeuft hier
+  /// ab: der Avatar-Abruf ("match-media") wartet im Test auf eine
+  /// Antwort, die nicht kommt - ohne das Absaufen bleibt der Timer
+  /// stehen und der Test scheitert an "a Timer is still pending".
   Future<void> raeumeAuf(WidgetTester tester) async {
+    await tester.pump(const Duration(seconds: 21));
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
   }

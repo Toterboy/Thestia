@@ -22,7 +22,9 @@ class UnbanRequestService {
     required String reason,
   }) async {
     try {
-      final response = await SupabaseService.client.functions.invoke(
+      // MIT ZEITLIMIT (15.11.2026): ohne Grenze blieb der Aufruf
+      // stehen und der Nutzer wartete auf eine Antwort, die nicht kam.
+      final response = await SupabaseService.rufeEdgeFunktion(
         'request-unban',
         body: {'email': email.trim(), 'reason': reason.trim()},
       );

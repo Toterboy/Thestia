@@ -327,9 +327,12 @@ class FindYourMatchService {
   /// besteht (Like in beliebiger Richtung oder Match).
   Future<String?> getIntroAudioUrl(String targetUserId) async {
     try {
-      final response = await _client.functions.invoke(
+      // MIT ZEITLIMIT (15.11.2026): ohne Grenze blieb der Aufruf
+      // stehen - das Bild bzw. der Ton wurde endlos erwartet.
+      final response = await SupabaseService.rufeEdgeFunktion(
         'match-media',
         body: {'targetUserId': targetUserId, 'kind': 'intro'},
+        client: _client,
       );
       final data = response.data as Map<String, dynamic>?;
       return data?['url'] as String?;
@@ -343,9 +346,12 @@ class FindYourMatchService {
   /// Nur mit bestehendem Match erlaubt (serverseitig geprüft).
   Future<String?> getAvatarUrl(String targetUserId) async {
     try {
-      final response = await _client.functions.invoke(
+      // MIT ZEITLIMIT (15.11.2026): ohne Grenze blieb der Aufruf
+      // stehen - das Bild bzw. der Ton wurde endlos erwartet.
+      final response = await SupabaseService.rufeEdgeFunktion(
         'match-media',
         body: {'targetUserId': targetUserId, 'kind': 'avatar'},
+        client: _client,
       );
       final data = response.data as Map<String, dynamic>?;
       return data?['url'] as String?;

@@ -31,6 +31,35 @@ class SupabaseService {
       return false;
     }
   }
+
+  /// Ruft eine Edge Function auf - mit Zeitlimit.
+  ///
+  /// DER GRUND (15.11.2026, gefunden von einem Test): Ein Aufruf ohne
+  /// Zeitlimit blieb **stehen**, wenn die Function keine Antwort bekam
+  /// (Server gestört, Mobilfunk voll, Funktion hängt intern). Der
+  /// Bildschirm blieb dann mit dem Ladeindikator stehen, bis der
+  /// Nutzer ihn verließ - im Admin-Bereich (Freigabe/Ablehnung einer
+  /// Verifizierung) war das der gemeldete Fall.
+  ///
+  /// DER WEG: Der Aufruf bekommt ein Zeitlimit. Danach wirft er eine
+  /// [TimeoutException] - der Aufrufer entscheidet, was er dem Nutzer
+  /// zeigt (in der Regel eine Fehlermeldung; **nie** ein hängender
+  /// Bildschirm).
+  ///
+  /// [zeitlimit] ist absichtlich großzügig: 20 Sekunden reichen für
+  /// einen Function-Aufruf, der nur prüft und speichert.
+  ///
+  /// [client] ist für die Stellen, die mit einem eigenen Client arbeiten
+  /// (z. B. die Loeschdienste). Ohne ihn gilt der globale Client.
+  static Future<FunctionResponse> rufeEdgeFunktion(
+    String name, {
+    required Map<String, dynamic> body,
+    SupabaseClient? client,
+    Duration zeitlimit = const Duration(seconds: 20),
+  }) {
+    final ziel = client ?? SupabaseService.client;
+    return ziel.functions.invoke(name, body: body).timeout(zeitlimit);
+  }
 }
 
 /// Provider für den [SupabaseClient] (Singleton). Nutzbar für Auth und DB.

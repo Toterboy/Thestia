@@ -31,8 +31,13 @@ import 'package:thestia/models/dating_hour_models.dart';
 import 'package:thestia/screens/dating_hour/dating_hour_chat_screen.dart';
 import 'package:thestia/services/dating_hour_service.dart';
 import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/p2p_chat_service.dart';
+import 'package:thestia/services/prekey_service.dart';
+import 'package:thestia/services/relay_service.dart';
+import 'package:thestia/services/webrtc_service.dart';
 import 'package:thestia/services/supabase_database_service.dart';
 
+import 'support/fake_supabase_server.dart';
 import 'support/plugin_mocks.dart';
 
 /// Der Speicher im RAM - die Einstellungen kommen daraus.
@@ -103,7 +108,56 @@ class _FakeSupabaseDatabaseService extends SupabaseDatabaseService {
   }
 }
 
+/// Der Relay-Dienst, der ablehnt.
+///
+/// DER GRUND (15.11.2026): Der Fehlerfall muss deterministisch sein.
+/// Ueber den Server zu arbeiten (alles auf 500) haengt an der
+/// Wiederholung im PreKey-Abruf - der Test laeuft dann in die
+/// Wartezeit statt in die Aussage.
+///
+/// DER WEG: Der Fake wirft beim Ablegen sofort - so ist der Fall
+/// "das Relay nimmt die Nachricht nicht" genau der, den der Bildschirm
+/// dem Nutzer melden muss.
+class _FakeRelayService extends RelayService {
+  _FakeRelayService(super.ref);
+
+  /// Die Texte, die abgelegt werden sollten.
+  final List<String> abgelegt = <String>[];
+
+  @override
+  Future<void> storeText({
+    required String peerId,
+    required String text,
+    String kind = 'text',
+  }) async {
+    abgelegt.add(text);
+    throw StateError('Relay nicht erreichbar');
+  }
+}
+
+/// Der P2P-Service ohne WebRTC.
+///
+/// DER GRUND (15.11.2026): Die echte Direktverbindung braucht das
+/// WebRTC-Plugin - im Test gibt es kein Geraet. Ohne diesen Ersatz
+/// bleibt `connect()` im EventChannel des Plugins HANGEN, und damit
+/// auch der halbe Bildschirm-Aufbau.
+class _FakeP2PChatService extends P2PChatService {
+  _FakeP2PChatService(super.webrtc, super.prekey);
+
+  @override
+  Future<void> connect({
+    required String myUserId,
+    required String peerId,
+  }) async {}
+
+  @override
+  Future<void> dispose() async {}
+}
+
 void main() {
+  /// Der Ersatz-Server (Antworten aus dem RAM).
+  late FakeSupabaseServer server;
+
   setUpAll(() async {
     // DER SPEICHER DES GERAETS: der Auth-Client holt sich daraus die
     // Sitzung - ohne den Mock schlaegt der Aufbau fehl.
@@ -111,15 +165,22 @@ void main() {
     await SharedPreferences.getInstance();
     await mockPfadProvider();
     mockKeystore();
+    // DER SERVER: die Edge Functions (Push an die Gegenseite) gehen
+    // ueber den Client - ohne den Ersatz-Server wartet der Aufruf.
+    server = FakeSupabaseServer(userId: 'ich');
     await supabase.Supabase.initialize(
       url: 'https://example.supabase.co',
       publishableKey: 'test-key',
+      httpClient: server,
       authOptions: const supabase.FlutterAuthClientOptions(
         autoRefreshToken: false,
         persistSession: false,
         detectSessionInUri: false,
       ),
     );
+    // ANGEMELDET: ohne Sitzung bricht der P2P-Aufbau ab (der Bildschirm
+    // braucht die echte auth.uid() - kein Demo-Ersatz).
+    await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
     // HIVE: die verschluesselten Schluessel (Signal-Protokoll) liegen in
     // Hive-Boxen. Ohne initialisierten Hive schlaegt der Aufbau fehl.
     final tempDir = await Directory.systemTemp.createTemp('thesia_dh');
@@ -138,11 +199,13 @@ void main() {
   /// Restzeit), niemand hat entschieden.
   DatingHourSession session() {
     final jetzt = DateTime.now();
+    // ICH bin Teilnehmer B (der angemeldete Nutzer 'ich'): die Gegenseite
+    // ist dann Teilnehmer A - so steht der Name in der Kopfzeile.
     return DatingHourSession(
       id: 'session-1',
       eventId: 'event-1',
-      userA: 'ich',
-      userB: 'partner',
+      userA: 'partner',
+      userB: 'ich',
       startedAt: jetzt.subtract(const Duration(minutes: 1)),
       expiresAt: jetzt.add(const Duration(minutes: 4)),
     );
@@ -173,6 +236,18 @@ void main() {
           supabaseDatabaseServiceProvider.overrideWithValue(
             _FakeSupabaseDatabaseService(supabase.Supabase.instance.client),
           ),
+          p2pChatServiceProvider.overrideWith((ref) {
+            final dienst = _FakeP2PChatService(
+              ref.watch(webRTCServiceProvider),
+              ref.watch(preKeyServiceProvider),
+            );
+            ref.onDispose(dienst.dispose);
+            return dienst;
+          }),
+          // DER RELAY-FAKE: das Ablegen schlaegt fehl - so ist der
+          // Fall "die Nachricht kommt nicht raus" bestimmt (und nicht
+          // von einem Serverfehler abhaengig).
+          relayServiceProvider.overrideWith((ref) => _FakeRelayService(ref)),
         ],
         child: const MaterialApp(
           home: DatingHourChatScreen(sessionId: 'session-1'),
@@ -299,8 +374,7 @@ void main() {
       (tester) async {
         await zeigeScreen(tester);
 
-        // Der Gesprächsstarter schreibt die Nachricht und sendet sie -
-        // im Test gibt es keine Gegenstelle (keine Sitzung).
+        // Der Gesprächsstarter schreibt die Nachricht und sendet sie.
         await tester.tap(
           find.text(L10n.tWithoutContext('dh.chat.icebreakerBtn')),
         );

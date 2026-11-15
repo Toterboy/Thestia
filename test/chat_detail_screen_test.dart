@@ -47,6 +47,7 @@ import 'package:thestia/utils/constants.dart';
 import 'package:thestia/widgets/secure_composer.dart';
 import 'package:thestia/widgets/secure_keyboard.dart';
 
+import 'support/fake_supabase_server.dart';
 import 'support/plugin_mocks.dart';
 
 /// In-Memory-Implementierung von [LocalStorage] fuer Tests.
@@ -180,9 +181,20 @@ Future<void> _pump(
   );
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 300));
+  // Das Zeitlimit der Edge-Function-Aufrufe (20 Sekunden) ablaufen
+  // lassen: im Test antwortet der Server auf einen Functions-Aufruf
+  // nicht, der Timer des Zeitlimits bliebe sonst stehen und der Test
+  // scheiterte an "a Timer is still pending".
+  await tester.pump(const Duration(seconds: 21));
 }
 
 void main() {
+  /// Der Ersatz-Server (Antworten aus dem RAM).
+  ///
+  /// Als Feld (nicht `late`): so kann der Analyzer nachweisen, dass er
+  /// vor dem ersten Zugriff gesetzt ist.
+  FakeSupabaseServer server = FakeSupabaseServer(userId: 'ich');
+
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -205,6 +217,10 @@ void main() {
     // Recorder wird beim Aufbau erzeugt (sonst: MissingPluginException).
     mockAufnahme();
     mockZeitzone();
+    // DER SERVER: die Aktionen, die auf dem Server etwas aendern
+    // ("Nachricht fuer alle loeschen"), gehen ueber den Client - ohne
+    // den Ersatz-Server bekommen sie keine Antwort.
+    server = FakeSupabaseServer(userId: 'ich');
     await supabase.Supabase.initialize(
       // DIE DREI OPTIONEN (siehe der Kommentar unten): kein
       // Timer, kein Speicher, kein Deeplink-Observer - sonst
@@ -217,7 +233,14 @@ void main() {
 
       url: 'https://example.supabase.co',
       publishableKey: 'test-key',
+      // DER SERVER: die Aktionen, die auf dem Server etwas aendern
+      // ("Nachricht fuer alle loeschen"), gehen ueber den Client - ohne
+      // den Ersatz-Server bekommen sie keine Antwort.
+      httpClient: server,
     );
+    // ANGEMELDET: die eigene User-ID kommt aus der Sitzung - ohne sie
+    // weiss der Bildschirm nicht, welche Nachrichten die eigenen sind.
+    await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
   });
 
   setUp(() {
@@ -389,6 +412,140 @@ void main() {
       // Das Bild wird geladen - bis es da ist, steht der Platzhalter
       // (das Bild zaehlt, dass der Bildzweig gebaut wurde).
       expect(find.byIcon(Icons.image), findsWidgets);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('eine Sprachnachricht wird mit Play-Knopf dargestellt', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = ChatService();
+      final match = service.createMatch(_partner());
+      service.addMessage(
+        match.id,
+        Message(
+          id: 'm_voice',
+          senderId: 'partner-1',
+          receiverId: 'ich',
+          text: '',
+          type: MessageType.voice,
+          mediaUrl: '/tmp/thesei_stimme.m4a',
+          durationSeconds: 12,
+          timestamp: DateTime.now(),
+        ),
+      );
+      await _pump(
+        tester,
+        ChatDetailScreen(matchId: match.id),
+        ChatNotifier(service),
+      );
+
+      expect(tester.takeException(), isNull);
+      // Der Abspiel-Knopf und die Dauer stehen da.
+      expect(find.byIcon(Icons.play_arrow), findsWidgets);
+      expect(find.textContaining('0:12'), findsWidgets);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('eine Systemnotiz steht mittig', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = ChatService();
+      final match = service.createMatch(_partner());
+      service.addMessage(
+        match.id,
+        Message(
+          id: 'm_notiz',
+          senderId: 'ich',
+          receiverId: 'partner-1',
+          text: 'Die Runde endet in 5 Minuten',
+          type: MessageType.notice,
+          timestamp: DateTime.now(),
+        ),
+      );
+      await _pump(
+        tester,
+        ChatDetailScreen(matchId: match.id),
+        ChatNotifier(service),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.text('Die Runde endet in 5 Minuten'), findsOneWidget);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('eine eigene Nachricht laesst sich fuer alle loeschen', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // Ein SERVER-Funke: nur bei einer Match-ID aus dem Server gibt es
+      // das "fuer alle" (ein lokaler Kontakt hat keinen Funke).
+      final service = ChatService();
+      final match = service.restoreServerMatch(
+        '7',
+        _partner(),
+        DateTime.now(),
+      )!;
+      service.addMessage(
+        match.id,
+        Message(
+          id: 'm_eigen',
+          senderId: 'ich',
+          receiverId: 'partner-1',
+          text: 'Ein Satz, der weg soll',
+          timestamp: DateTime.now(),
+        ),
+      );
+      await _pump(
+        tester,
+        ChatDetailScreen(matchId: match.id),
+        ChatNotifier(service),
+      );
+
+      expect(tester.takeException(), isNull);
+      // Die eigene Nachricht steht da.
+      expect(find.text('Ein Satz, der weg soll'), findsOneWidget);
+
+      // Lange druecken -> die Rueckfrage.
+      await tester.longPress(find.text('Ein Satz, der weg soll'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        find.text(L10n.tWithoutContext('chat.deleteForAllTitle')),
+        findsOneWidget,
+      );
+
+      // Bestaetigen: der Server wird informiert und lokal steht der
+      // Hinweis statt der Nachricht.
+      await tester.tap(
+        find.text(L10n.tWithoutContext('chat.deleteForAllAction')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(tester.takeException(), isNull);
+      expect(
+        server.pfade.any((p) => p.contains('delete_message_for_all')),
+        isTrue,
+        reason: 'Der Server muss die Loeschung erfahren.',
+      );
+      expect(find.text('Ein Satz, der weg soll'), findsNothing);
+      expect(
+        find.text(L10n.tWithoutContext('chat.deletedNotice')),
+        findsOneWidget,
+        reason:
+            'Statt der Nachricht steht der Hinweis - auch bei der Gegenseite.',
+      );
 
       await tester.pumpWidget(const SizedBox());
     });

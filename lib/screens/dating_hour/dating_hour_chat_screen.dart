@@ -480,7 +480,17 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
       () async => await _p2p?.trySendText(text) == true,
       false,
     );
-    if (ueberP2p) {
+    // BEFUND (15.11.2026, gefunden von einem Test): `trySendText` meldet
+    // Erfolg, auch wenn der Kanal NICHT steht - die Nachricht liegt dann
+    // nur in der Outbox und kommt im 5-Minuten-Fenster nicht an. Der
+    // Bildschirm beendete sich hier und der Nutzer bekam nie eine
+    // Meldung: Seine Nachricht stand in der Liste, aber sie kam nicht
+    // an.
+    //
+    // DER WEG: Nur ein wirklich offener Kanal zählt als "zugestellt".
+    // Sonst geht der Weg über das Relay - und wenn auch der scheitert,
+    // erfährt der Nutzer davon.
+    if (ueberP2p && _p2p?.isConnected == true) {
       return;
     }
     try {
@@ -496,7 +506,9 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
       // Beziehung = offene Dating-Hour-Session).
       unawaited(() async {
         await bestEffort('invoke', () async {
-          await SupabaseService.client.functions.invoke(
+          // MIT ZEITLIMIT (15.11.2026): ohne Grenze blieb der
+          // Aufruf stehen.
+          await SupabaseService.rufeEdgeFunktion(
             'notify-user',
             body: {'kind': 'messages', 'target_user_id': peerId},
           );
@@ -505,11 +517,9 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
       return;
     } catch (e) {
       debugPrint('[DatingHourChat] Relay-Send fehlgeschlagen: $e');
-    }
-    try {
-      await _p2p?.sendText(text);
-    } catch (e) {
-      debugPrint('[DatingHourChat] Sende-Fehler: $e');
+      // Weder direkt noch über das Relay: der Nutzer muss erfahren,
+      // dass seine Nachricht nicht rausging - sonst schreibt er ins
+      // Leere und weiß es nicht.
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -518,6 +528,7 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
           ),
         );
       }
+      return;
     }
   }
 

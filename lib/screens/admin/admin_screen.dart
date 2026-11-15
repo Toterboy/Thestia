@@ -771,7 +771,10 @@ class _VerificationTabState extends ConsumerState<_VerificationTab> {
   Future<void> _review(String targetUserId, {required bool approve}) async {
     setState(() => _busyUserId = targetUserId);
     try {
-      await SupabaseService.client.functions.invoke(
+      // MIT ZEITLIMIT (15.11.2026): Ein Aufruf ohne Grenze blieb
+      // stehen, wenn die Function keine Antwort bekam - der
+      // Admin-Screen blieb dann mit dem Ladeindikator stehen.
+      await SupabaseService.rufeEdgeFunktion(
         'verify-account',
         body: {
           'action': 'review',
@@ -802,7 +805,7 @@ class _VerificationTabState extends ConsumerState<_VerificationTab> {
     final noUrl = L10n.t(context, 'admin.noVideoUrl');
     final browserFailed = L10n.t(context, 'admin.browserOpenFailed');
     try {
-      final response = await SupabaseService.client.functions.invoke(
+      final response = await SupabaseService.rufeEdgeFunktion(
         'verification-media',
         body: {'targetUserId': targetUserId},
       );
@@ -1193,7 +1196,9 @@ class _BansTabState extends ConsumerState<_BansTab> {
     Map<String, dynamic> body,
     String Function(int status) actionFailedMessage,
   ) async {
-    final response = await SupabaseService.client.functions.invoke(
+    // MIT ZEITLIMIT (15.11.2026): ohne Grenze blieb der Aufruf stehen,
+    // wenn die Function keine Antwort bekam.
+    final response = await SupabaseService.rufeEdgeFunktion(
       'admin-ban',
       body: body,
     );

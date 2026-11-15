@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -88,14 +90,26 @@ class PreKeyService {
       int status;
       Map<String, dynamic>? bundle;
       try {
-        final response = await Supabase.instance.client.functions.invoke(
-          'prekeys/${Uri.encodeComponent(peerId)}',
-          method: HttpMethod.get,
-        );
+        // MIT ZEITLIMIT (15.11.2026): ohne Grenze blieb der Abruf
+        // stehen - der Chat wartete dann endlos auf das Bundle.
+        final response = await Supabase.instance.client.functions
+            .invoke(
+              'prekeys/${Uri.encodeComponent(peerId)}',
+              method: HttpMethod.get,
+            )
+            .timeout(const Duration(seconds: 20));
         status = response.status;
         if (status == 200) {
           bundle = (response.data as Map).cast<String, dynamic>();
         }
+      } on TimeoutException {
+        // Keine Antwort in 20 Sekunden: transient - wie "keine
+        // Verbindung" behandelt (der naechste Versuch kommt).
+        if (kDebugMode) {
+          debugPrint('[PreKey] Bundle-Abruf: Zeitueberschreitung.');
+        }
+        lastError = 'keine Verbindung';
+        continue;
       } on FunctionException catch (e) {
         status = e.status;
         // Server-Detail (z. B. "Datenbankfehler beim Abruf") nur im

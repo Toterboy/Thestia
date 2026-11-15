@@ -52,9 +52,12 @@ class DataDeletionService {
   /// Loescht die gewaehlten Kategorien.
   Future<DataDeletionResult> deleteCategories(List<String> kategorien) async {
     try {
-      final response = await _client.functions.invoke(
+      // MIT ZEITLIMIT (15.11.2026): ohne Grenze blieb der Aufruf
+      // stehen (die Loeschung schien dann nicht zu passieren).
+      final response = await SupabaseService.rufeEdgeFunktion(
         'delete-user-data',
         body: {'kategorien': kategorien},
+        client: _client,
       );
       final data = response.data;
       if (data is Map) {

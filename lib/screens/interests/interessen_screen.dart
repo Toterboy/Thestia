@@ -1469,7 +1469,9 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
             .read(relayServiceProvider)
             .storeText(peerId: match.partner.id, text: goodbye);
         if (SupabaseService.isInitialized) {
-          await SupabaseService.client.functions.invoke(
+          // MIT ZEITLIMIT (15.11.2026): ohne Grenze blieb der Aufruf
+          // stehen - und der "Funke beenden"-Weg wartete darauf.
+          await SupabaseService.rufeEdgeFunktion(
             'notify-user',
             body: {'kind': 'messages', 'target_user_id': match.partner.id},
           );

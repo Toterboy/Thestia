@@ -33,13 +33,16 @@ class LocationCheckService {
     required double newLongitude,
   }) async {
     try {
-      final response = await _client.functions.invoke(
+      // MIT ZEITLIMIT (15.11.2026): ohne Grenze blieb der Aufruf
+      // stehen.
+      final response = await SupabaseService.rufeEdgeFunktion(
         _functionName,
         body: {
           'userId': userId,
           'newLatitude': newLatitude,
           'newLongitude': newLongitude,
         },
+        client: _client,
       );
 
       if (response.data is Map<String, dynamic>) {

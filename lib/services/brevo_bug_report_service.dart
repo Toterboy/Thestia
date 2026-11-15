@@ -55,7 +55,9 @@ class BrevoBugReportService {
         ];
       }
 
-      final response = await SupabaseService.client.functions.invoke(
+      // MIT ZEITLIMIT (15.11.2026): ohne Grenze blieb der Versand
+      // stehen, wenn die Function keine Antwort bekam.
+      final response = await SupabaseService.rufeEdgeFunktion(
         'send-bug-report',
         body: body,
       );

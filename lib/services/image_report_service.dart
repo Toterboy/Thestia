@@ -79,7 +79,9 @@ class ImageReportService {
         .convert(utf8.encode(AppConstants.currentUserId))
         .toString();
 
-    final response = await SupabaseService.client.functions.invoke(
+    // MIT ZEITLIMIT (15.11.2026): ohne Grenze blieb der Upload
+    // stehen, wenn die Function keine Antwort bekam.
+    final response = await SupabaseService.rufeEdgeFunktion(
       'report-image',
       body: {
         'imageBase64': imageBase64,

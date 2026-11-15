@@ -245,13 +245,16 @@ class SupabaseStorageService {
     final cached = _partnerAvatarMemoryCache[cacheKey];
     if (cached != null) return cached;
     try {
-      final response = await _client.functions.invoke(
+      // MIT ZEITLIMIT (15.11.2026): ohne Grenze blieb der Aufruf
+      // stehen - das Partnerbild wurde endlos erwartet.
+      final response = await SupabaseService.rufeEdgeFunktion(
         'match-media',
         body: {
           'targetUserId': targetUserId,
           'kind': 'avatar',
           if (path != null && path.isNotEmpty) 'path': path,
         },
+        client: _client,
       );
       final data = response.data as Map<String, dynamic>?;
       final url = data?['url'] as String?;
