@@ -41,3 +41,11 @@ The chat stays usable even when the direct connection fails
 If the direct connection between two phones does not come up, the chat keeps going - the messages arrive by a detour, and the screen stays usable. Before, a hanging connection setup could block the whole chat.
 
 And: in the intro editor the text is now enough (a recording is optional), and the dialog for backing up your key stays open when the password does not fit yet.
+
+No screen gets stuck any more
+
+When the server does not answer, the app no longer waits forever: every server request is aborted after 20 seconds, and you get a message instead of a frozen screen.
+
+And in the Dating Hour you now see when a message did not arrive
+
+Until now your message could simply vanish without you noticing. Now the app tells you when it did not get out.
