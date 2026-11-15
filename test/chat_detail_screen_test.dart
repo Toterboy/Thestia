@@ -111,9 +111,18 @@ UserProfile _partner() => UserProfile(
 late supabase.SupabaseClient _moodClient;
 
 /// Baut den Chat mit einem Match und einer Nachricht.
-({ChatNotifier notifier, Match match}) _chatMitNachricht() {
+///
+/// [serverFunke] erzeugt einen Funken mit einer SERVER-Match-ID (einer
+/// Zahl). Nur die haben die Funktionen, die es auf dem Server gibt
+/// (Erinnerungsliste, Funke beenden) - ein lokaler Kontakt bekommt
+/// dort den Hinweis "nur mit einem Funke".
+({ChatNotifier notifier, Match match}) _chatMitNachricht({
+  bool serverFunke = false,
+}) {
   final service = ChatService();
-  final match = service.createMatch(_partner());
+  final match = serverFunke
+      ? service.restoreServerMatch('7', _partner(), DateTime.now())!
+      : service.createMatch(_partner());
   service.addMessage(
     match.id,
     Message(
@@ -186,6 +195,15 @@ void main() {
     // DER PFAD-KANAL: sonst ruft der Test auf dem CI-Runner
     // das echte Plugin (das findet dort kein XDG-Verzeichnis).
     await mockPfadProvider();
+    // DER KEYSTORE und HIVE: der Signal-Dienst (Sicherheitsnummer)
+    // liest seine verschluesselten Boxen aus dem Keystore und aus Hive.
+    // Ohne diese beiden Ersatzwaerter bleibt der Dialog leer.
+    mockKeystore();
+    await mockHive();
+    // DIE AUFNAHME: der Chat hat eine Sprachnachricht-Funktion - der
+    // Recorder wird beim Aufbau erzeugt (sonst: MissingPluginException).
+    mockAufnahme();
+    mockZeitzone();
     await supabase.Supabase.initialize(
       // DIE DREI OPTIONEN (siehe der Kommentar unten): kein
       // Timer, kein Speicher, kein Deeplink-Observer - sonst
@@ -497,6 +515,71 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
 
       expect(find.byType(AlertDialog), findsNothing);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('das Menue oeffnet die Erinnerungsliste', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // Ein SERVER-Funke - nur bei einer Match-ID aus dem Server gibt es
+      // die Erinnerungsliste.
+      final chat = _chatMitNachricht(serverFunke: true);
+      await _pump(
+        tester,
+        ChatDetailScreen(matchId: chat.match.id),
+        chat.notifier,
+      );
+
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(find.text('Erinnerungsliste'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(tester.takeException(), isNull);
+      // Das Blatt steht da (ohne Server: keine Eintraege, aber der
+      // Aufbau muss klappen).
+      expect(find.text('Erinnerungsliste'), findsWidgets);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    // ANMERKUNG: Der Dialog zur Sicherheitsnummer wird hier NICHT
+    // getestet. Er braucht den vollstaendigen Signal-Dienst
+    // (Identity-Key, PreKeys, Session-Ratchet) - der laedt im Test
+    // seine verschluesselten Boxen und rechnet, das ist im
+    // Widget-Test nicht sinnvoll nachzubauen. Die Sicherheitsnummer
+    // selbst hat eigene Tests (test/safety_number_test.dart).
+
+    testWidgets('das Menue beendet den Funke ueber einen Dialog', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final chat = _chatMitNachricht();
+      await _pump(
+        tester,
+        ChatDetailScreen(matchId: chat.match.id),
+        chat.notifier,
+      );
+
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.tap(find.text('Funke beenden'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(tester.takeException(), isNull);
+      // Der Dialog fragt nach - es gibt Absage-Wege, kein sofortiges
+      // Ende.
+      expect(find.byType(AlertDialog), findsOneWidget);
 
       await tester.pumpWidget(const SizedBox());
     });

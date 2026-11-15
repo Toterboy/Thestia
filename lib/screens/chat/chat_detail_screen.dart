@@ -440,7 +440,23 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     // (vorher NIE erhöht). Beim Öffnen des Chats wird er zurückgesetzt
     // - die Nachrichten im Chat sind ja gelesen.
     ref.read(chatProvider.notifier).markRead(widget.matchId);
-    await _initP2P();
+    // BEFUND (15.11.2026, gefunden von einem Test): Der P2P-Aufbau darf
+    // die RUHE-Schritte nicht blockieren. Ein haengender Connect (z. B.
+    // ein HTTP-Aufruf ohne Antwort im Mobilfunk) liess den ganzen
+    // Bootstrap stehen - damit kamen die RELAY-Nachrichten nicht an,
+    // das Partnerprofil wurde nicht nachgeladen und der
+    // Eisbrecher-Vorschlag startete nie.
+    //
+    // DER WEG: Der P2P-Aufbau bekommt eine Grenze. Nach 20 Sekunden
+    // geht es ohne Direktverbindung weiter - der Chat laeuft dann ueber
+    // das Relay, und der Handshake wird spaeter nachgezogen
+    // (_retryHandshakeThrottled).
+    await _initP2P().timeout(
+      const Duration(seconds: 20),
+      onTimeout: () => debugPrint(
+        '[ChatDetail] P2P-Aufbau hat nicht geantwortet - weiter ueber Relay.',
+      ),
+    );
     await _loadPartnerProfileIfNeeded();
     await _ensureLikeForSavedContact();
     // Relay-Nachrichten sofort abholen (Partner hat ggf. bei fehlendem

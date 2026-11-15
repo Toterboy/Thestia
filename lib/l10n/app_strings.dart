@@ -1768,7 +1768,7 @@ const Map<String, Map<String, String>> _strings = {
     'intro.title': 'Meine Vorstellung',
     'intro.hintRequired':
         'So lernst du andere kennen, bevor ein Foto zu sehen ist. '
-        'Text UND Audio sind Pflicht.',
+        'Der Text ist Pflicht - eine Aufnahme ist optional.',
     'intro.hintOptional':
         'So lernst du andere kennen, bevor ein Foto zu sehen ist. Du '
         'kannst diesen Schritt auch überspringen und alles später '
@@ -3125,7 +3125,7 @@ const Map<String, Map<String, String>> _strings = {
     'home.discover': 'Leute entdecken',
     'home.randomChat': 'Zufallschat starten',
     // Find your Match
-    'match.required': 'Text UND Audio sind Pflicht.',
+    'match.required': 'Bitte schreibe einen Text für deine Vorstellung.',
     'match.liked':
         'Du hast {name} geliked. Bei gegenseitigem Interesse entsteht ein Funke.',
     'match.likeMutual': 'Funke! {name} hat dich auch geliked.',
@@ -4959,7 +4959,7 @@ const Map<String, Map<String, String>> _strings = {
     'intro.title': 'My intro',
     'intro.hintRequired':
         'This is how you get to know others before a photo is shown. '
-        'Text AND audio are required.',
+        'The text is required - a recording is optional.',
     'intro.hintOptional':
         'This is how you get to know others before a photo is shown. '
         'You can skip this step and add everything later.',
@@ -6438,7 +6438,7 @@ const Map<String, Map<String, String>> _strings = {
     'home.discover': 'Discover people',
     'home.randomChat': 'Start random chat',
     // Find your Match
-    'match.required': 'Text AND audio are required.',
+    'match.required': 'Please write a text for your intro.',
     'match.liked':
         'You liked {name}. A spark appears when the interest is mutual.',
     'match.likeMutual': 'Spark! {name} liked you too.',

@@ -14,6 +14,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive/hive.dart';
 
 /// Der Kanal von path_provider.
 const MethodChannel pfadKanal = MethodChannel(
@@ -27,6 +28,50 @@ const MethodChannel keystoreKanal = MethodChannel(
 
 /// Der Kanal von flutter_timezone (die Zeitzone des Geraets).
 const MethodChannel zeitzoneKanal = MethodChannel('flutter_timezone');
+
+/// Der Kanal des Aufnahme-Plugins (`record`).
+///
+/// DER GRUND (15.11.2026): Der Vorstellungs-Editor (IntroEditor) nimmt
+/// Audio auf. Das Plugin spricht die Plattform ueber einen
+/// MethodChannel an - ohne Mock kommt im Test keine Antwort und der
+/// Aufruf wartet endlos.
+const MethodChannel aufnahmeKanal = MethodChannel(
+  'com.llfbandit.record/messages',
+);
+
+/// Beantwortet die Aufrufe des Aufnahme-Plugins.
+///
+/// [erlaubt]=false simuliert "keine Mikrofonberechtigung" - dann zeigt
+/// der Editor den Hinweis statt aufzunehmen.
+void mockAufnahme({bool erlaubt = true}) {
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMethodCallHandler(aufnahmeKanal, (anfrage) async {
+        switch (anfrage.method) {
+          case 'hasPermission':
+            return erlaubt;
+          case 'create':
+            return null;
+          case 'isRecording':
+          case 'isPaused':
+            return false;
+          case 'isEncoderSupported':
+            return true;
+          case 'getAmplitude':
+            return <String, dynamic>{'current': -20.0, 'max': -10.0};
+          case 'start':
+          case 'resume':
+          case 'pause':
+          case 'cancel':
+          case 'dispose':
+            return null;
+          case 'stop':
+            // Der Pfad der Aufnahme - im Test gibt es keine Datei,
+            // deshalb wird er nur als Zeichenkette geliefert.
+            return '${Directory.systemTemp.path}/thestia_test_aufnahme.m4a';
+        }
+        return null;
+      });
+}
 
 /// Liefert eine feste Zeitzone.
 ///
@@ -95,10 +140,23 @@ void mockKeystore({Map<String, String> inhalt = const {}}) {
       });
 }
 
+/// Legt Hive in einem Temp-Ordner ab.
+///
+/// DER GRUND (15.11.2026): Der Chat- und der Signal-Dienst speichern
+/// ihre Daten in verschluesselten Hive-Boxen. Ohne initialisiertes
+/// Hive wirft das Box-Oeffnen ("You need to initialize Hive") - der
+/// Fehler landet sonst als unbehandelter Testfehler auf dem Bildschirm.
+Future<void> mockHive() async {
+  final temp = await Directory.systemTemp.createTemp('thesia_test_hive');
+  Hive.init(temp.path);
+}
+
 /// Nimmt die Kanaele wieder aus dem Spiel (am Ende des Tests).
 void unmockPlugins() {
   TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
       .setMockMethodCallHandler(pfadKanal, null);
   TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
       .setMockMethodCallHandler(keystoreKanal, null);
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMethodCallHandler(aufnahmeKanal, null);
 }

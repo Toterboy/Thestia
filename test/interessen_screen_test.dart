@@ -104,6 +104,12 @@ class _FakeFindYourMatchService extends FindYourMatchService {
   /// Die ausgeblendeten Likes (nur ausgeblendet, nicht abgelehnt).
   final List<int> ausgeblendeteLikes = [];
 
+  /// Die endgueltig beendeten Funken.
+  final List<int> beendet = [];
+
+  /// Die wieder entzuendeten Funken.
+  final List<int> wiederEntzuend = [];
+
   @override
   Future<List<ReceivedLike>> listMyLikes() async => eigeneLikes;
 
@@ -122,6 +128,12 @@ class _FakeFindYourMatchService extends FindYourMatchService {
 
   @override
   Future<void> coolMatch(int matchId) async => gekuehlt.add(matchId);
+
+  @override
+  Future<void> endMatch(int matchId) async => beendet.add(matchId);
+
+  @override
+  Future<void> resparkMatch(int matchId) async => wiederEntzuend.add(matchId);
 
   @override
   Future<void> respondToLike(int likeId, {required bool accept}) async {
@@ -630,6 +642,85 @@ void main() {
       // Der Server wurde wirklich informiert ...
       expect(service.gekuehlt, contains(7));
       // ... und der Nutzer bekommt die Bestaetigung.
+      expect(find.textContaining('Mira'), findsWidgets);
+    });
+
+    testWidgets('"Funke loeschen" fragt nach und beendet ihn', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      service.funken = [_funke()];
+      await _pump(tester, service: service);
+
+      await tester.tap(find.byIcon(Icons.more_vert).first);
+      await _pumpFrames(tester);
+      await tester.tap(find.text('Funke löschen'));
+      await _pumpFrames(tester);
+
+      // Die Rueckfrage kommt (zwei Knöpfe: abbrechen und loeschen).
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.text('Funke löschen?'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(FilledButton, 'Funke löschen'));
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      // Der Server wurde wirklich informiert ...
+      expect(service.beendet, contains(7));
+      // ... und der Nutzer bekommt die Bestaetigung.
+      expect(find.text('Funke gelöscht.'), findsOneWidget);
+    });
+
+    testWidgets('"Aus Liste entfernen" meldet es dem Server', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      service.funken = [_funke()];
+      await _pump(tester, service: service);
+
+      await tester.tap(find.byIcon(Icons.more_vert).first);
+      await _pumpFrames(tester);
+      await tester.tap(find.text('Aus Liste entfernen'));
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(service.ausgeblendet, contains(7));
+      expect(find.textContaining('Mira'), findsWidgets);
+    });
+
+    testWidgets('"Re-Funke ohne Druck" entzuendet einen gekuehlten Funke', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      // Ein gekuehlter (archivierter) Funke.
+      service.funken = [_funke(status: 'cooled')];
+      await _pump(tester, service: service);
+
+      // Der Abschnitt "Archivierte Funken" steht da.
+      expect(find.text('Archivierte Funken'), findsOneWidget);
+
+      // Der Re-Funke-Knopf (er liegt unterhalb des Bildschirms - erst
+      // sichtbar machen).
+      final knopf = find.widgetWithText(FilledButton, 'Re-Funke');
+      expect(knopf, findsOneWidget);
+      await tester.ensureVisible(knopf);
+      await tester.pump();
+      await tester.tap(knopf);
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(service.wiederEntzuend, contains(7));
       expect(find.textContaining('Mira'), findsWidgets);
     });
   });
