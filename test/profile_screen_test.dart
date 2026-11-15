@@ -14,6 +14,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
+import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/screens/profile/profile_screen.dart';
@@ -175,5 +176,55 @@ void main() {
 
     expect(find.byIcon(Icons.qr_code_2), findsOneWidget);
     expect(find.byIcon(Icons.settings), findsOneWidget);
+  });
+
+  group('Das Profil-Menue', () {
+    /// Oeffnet das Profil-Menue (der Knopf mit dem Personensymbol).
+    Future<void> oeffneMenue(WidgetTester tester) async {
+      await zeigeScreen(tester);
+
+      final knopf = find.widgetWithText(
+        FilledButton,
+        L10n.tWithoutContext('profile.profileBtn'),
+      );
+      await tester.ensureVisible(knopf);
+      await tester.pump();
+      await tester.tap(knopf);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+
+    testWidgets('das Menue bietet alle Wege', (tester) async {
+      await oeffneMenue(tester);
+
+      expect(tester.takeException(), isNull);
+      // Bearbeiten, Vorschau und die Vorstellung.
+      expect(
+        find.text(L10n.tWithoutContext('profile.menu.edit')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(L10n.tWithoutContext('profile.menu.preview')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(L10n.tWithoutContext('profile.menu.introPreview')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('die Vorstellungs-Vorschau zeigt den Text', (tester) async {
+      await oeffneMenue(tester);
+
+      await tester.tap(
+        find.text(L10n.tWithoutContext('profile.menu.introPreview')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(tester.takeException(), isNull);
+      // Das eigene Profil mit der Vorstellung steht in der Vorschau.
+      expect(find.text('Lena'), findsWidgets);
+    });
   });
 }
