@@ -70,6 +70,31 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   scrollt jetzt – dieselbe Lösung wie im Chat-Hintergrund-Dialog.
   Gefunden hat das ein Test, der den Dialog einfach mal öffnet.
 
+### Erledigt (15.11.2026) – Die zwei offenen Verifikations-Aufgaben
+
+- **Auf „Aktuelles" (Startbildschirm) steht jetzt ein eigener Hinweis,
+  wenn die Altersprüfung fehlt** – mit einem Knopf „Jetzt verifizieren",
+  der direkt zur Verifizierung führt. Vorher stand dort ein Text, der
+  für den Modus-Sperr-Dialog geschrieben war („Für diesen Modus musst
+  du …") – auf dem Startbildschirm geht es aber nicht um einen Modus,
+  sondern um den Vollzugang. Und ein Pfeil allein sagt dem Nutzer
+  nicht, was er tun soll.
+  * Zustand „Wird geprüft": der Wartetext steht da – und **kein** Knopf
+    (es gibt nichts zu tun). Bei einem verifizierten Profil steht gar
+    kein Hinweis da.
+- **Die Freigabe der Verifizierung meldet sich jetzt per Push**
+  (Migration 218): ein Trigger auf `profiles` feuert beim **Übergang**
+  in den freigegebenen Zustand und ruft die Edge Function `notify-user`
+  (intern, mit dem Vault-Secret) – dasselbe Muster wie die übrigen
+  Push-Trigger. Vorher gab es nur eine lokale Meldung, wenn der
+  Nutzer zufällig mit der App gearbeitet hat.
+  * Der Push landet im eigenen Kanal „Verifizierung" und folgt dem
+    Master-Schalter (kein eigener Einzel-Schalter – die Freigabe
+    betrifft den Vollzugang).
+  * Ein Tipp auf die Meldung führt auf die Verifikations-Info.
+  * Fehlt das Vault-Secret, geht **kein** Push raus (fail-closed) –
+    der Trigger darf den Review nie verhindern.
+
 ### Aktualisiert (15.11.2026) – Plugins und zwei Forks aufgelöst
 
 - **flutter_local_notifications 22.3.2 → 23.0.2.** Der Upstream behebt
@@ -338,11 +363,11 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Meldung, wenn es offline ist oder niemand da ist; im Admin-Bereich
   die Meldungen mit „Bearbeitet", dem Leerzustand und dem
   Wiederholen-Knopf; im 1:1-Chat das Löschen einer Nachricht für alle;
-  im Dialog "Funke beenden" die vier Absage-Texte und die Auswahl; in den Eisbrecher-Fragen das Suchen, das Kopieren und die Frage, ob eine Frage kopiert oder gesendet werden soll.; in der Erinnerungsliste das Abhaken, das Loeschen eigener Eintraege und der Leerzustand.; beim Entfernen der Bild-Metadaten, dass die Metadaten wirklich verschwinden und dass kein Original zurueckkommt.; bei der Bundesland-Aufloesung, dass der Ort nicht zurueckkommt (nur das Bundesland) und dass stattdessen null kommt.; in den Profil-Bausteinen, dass die gemeinsamen Interessen hervorgehoben sind und der Blind-Mode-Platzhalter seinen Grund nennt.; im Admin-Bereich die Verifizierungen mit der KI-Altersschaetzung und dem Minderjaehrigkeitsfall, die Fehlerberichte, die Sperren und die Standort-Pruefungen; im Interessen-Screen das Funken-Menue und das Archivieren; bei der Bild-Meldung, dass nur das gemeldete Bild rausgeht und die Reporter-ID pseudonymisiert wird.; in den Einstellungen, dass sich das Erscheinungsbild umstellen laesst und dass System dem Geraet folgt.; ausserdem der Foto-Einspruch, das Match-Quiz, der Posteingang, die Server-Konfiguration (die Notbremse fuer Transit Spark) und die Standort-Pruefung. Auf der Profildetail-Seite stehen die gemeinsamen Interessen hervorgehoben. In den Einstellungen steht der Stand des Kinderschutzes - und ein Lesefehler wird als Fehler gemeldet, nicht als "keine Aufsicht". Und die Angaben aus der Ersteinrichtung kommen beim Server an - nicht nur lokal.
+  im Dialog "Funke beenden" die vier Absage-Texte und die Auswahl; in den Eisbrecher-Fragen das Suchen, das Kopieren und die Frage, ob eine Frage kopiert oder gesendet werden soll.; in der Erinnerungsliste das Abhaken, das Loeschen eigener Eintraege und der Leerzustand.; beim Entfernen der Bild-Metadaten, dass die Metadaten wirklich verschwinden und dass kein Original zurueckkommt.; bei der Bundesland-Aufloesung, dass der Ort nicht zurueckkommt (nur das Bundesland) und dass stattdessen null kommt.; in den Profil-Bausteinen, dass die gemeinsamen Interessen hervorgehoben sind und der Blind-Mode-Platzhalter seinen Grund nennt.; im Admin-Bereich die Verifizierungen mit der KI-Altersschaetzung und dem Minderjaehrigkeitsfall, die Fehlerberichte, die Sperren und die Standort-Pruefungen; im Interessen-Screen das Funken-Menue und das Archivieren; bei der Bild-Meldung, dass nur das gemeldete Bild rausgeht und die Reporter-ID pseudonymisiert wird.; in den Einstellungen, dass sich das Erscheinungsbild umstellen laesst und dass System dem Geraet folgt.; ausserdem der Foto-Einspruch, das Match-Quiz, der Posteingang, die Server-Konfiguration (die Notbremse fuer Transit Spark) und die Standort-Pruefung. Auf der Profildetail-Seite stehen die gemeinsamen Interessen hervorgehoben. In den Einstellungen steht der Stand des Kinderschutzes - und ein Lesefehler wird als Fehler gemeldet, nicht als "keine Aufsicht". Und die Angaben aus der Ersteinrichtung kommen beim Server an - nicht nur lokal. Dazu der Verifikations-Hinweis auf Aktuelles und die Meldung bei der Freigabe.
 - **Die Abdeckung wird gemessen, nicht behauptet**
   (`tool/check_coverage.py`, Gate in der CI). **Stand: 43,2 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
-  im Gate liegt jetzt bei 30,0 %. 1480 Tests, 0 Fehler.
+  im Gate liegt jetzt bei 30,0 %. 1486 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
     steckt nicht in den kleinen Dateien, sondern in den großen
     Bildschirmen (der 1:1-Chat allein hat 1446 offene Zeilen). Das

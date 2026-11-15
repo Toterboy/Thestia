@@ -14,7 +14,11 @@ import 'package:thestia/utils/best_effort.dart';
 
 /// Kategorie einer Benachrichtigung – für die Einzel-Schalter in den
 /// Einstellungen (Matches, Likes, Chatnachrichten, Dating Hour).
-enum NotificationType { matches, likes, messages, datingHour }
+///
+/// [verification] hat keinen eigenen Schalter: die Freigabe der
+/// Alterspruefung betrifft den Vollzugang - dafuer reicht der
+/// Master-Schalter ("Benachrichtigungen").
+enum NotificationType { matches, likes, messages, datingHour, verification }
 
 /// Zentraler Benachrichtigungs-Dienst.
 ///
@@ -154,6 +158,21 @@ class NotificationService {
               importance: Importance.defaultImportance,
             ),
           );
+      // Der Kanal fuer die Freigabe der Alterspruefung. Wichtig, damit
+      // die Meldung nicht stumm bleibt (Importance.defaultImportance
+      // reicht, aber sie soll als eigener Kanal einstellbar sein).
+      await _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >()
+          ?.createNotificationChannel(
+            const AndroidNotificationChannel(
+              'verification',
+              'Verifizierung',
+              description: 'Freigabe deiner Alterspruefung',
+              importance: Importance.high,
+            ),
+          );
     }
 
     _initialized = true;
@@ -196,6 +215,11 @@ class NotificationService {
         return settings.notifyMessages;
       case NotificationType.datingHour:
         return settings.notifyDatingHour;
+      case NotificationType.verification:
+        // Kein eigener Schalter - der Master-Schalter reicht (die
+        // Freigabe der Alterspruefung ist keine "Sonderwunsch"-Meldung,
+        // sondern betrifft den Vollzugang).
+        return true;
     }
   }
 
@@ -266,6 +290,8 @@ class NotificationService {
           ? 'Jemand hat dein Profil geliked'
           : channelId == 'matches'
           ? 'Neue Matches'
+          : channelId == 'verification'
+          ? 'Freigabe deiner Alterspruefung'
           : 'Event Erinnerungen',
       icon: 'notification_icon',
       color: const Color(0xFFFF6B9D),

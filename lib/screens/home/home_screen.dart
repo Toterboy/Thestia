@@ -302,52 +302,95 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                   child: Card(
                     color: Theme.of(context).colorScheme.primaryContainer,
-                    child: ListTile(
-                      leading: Icon(
-                        verificationState == VerificationState.underReview
-                            ? Icons.hourglass_top
-                            : Icons.verified_user_outlined,
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
-                      ),
-                      title: Text(
-                        L10n.t(
-                          context,
-                          verificationState == VerificationState.underReview
-                              ? 'verify.stateUnderReview'
-                              : 'verify.stateUnverified',
-                        ),
-                        style: TextStyle(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onPrimaryContainer,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: Text(
-                        L10n.t(
-                          context,
-                          verificationState == VerificationState.underReview
-                              ? 'dm.lockedBodyReview'
-                              : 'dm.lockedBody',
-                        ),
-                        style: TextStyle(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onPrimaryContainer,
-                        ),
-                      ),
-                      trailing:
-                          verificationState == VerificationState.underReview
-                          ? null
-                          : Icon(
-                              Icons.chevron_right,
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(
+                              verificationState == VerificationState.underReview
+                                  ? Icons.hourglass_top
+                                  : Icons.verified_user_outlined,
                               color: Theme.of(
                                 context,
                               ).colorScheme.onPrimaryContainer,
                             ),
-                      onTap: verificationState == VerificationState.underReview
-                          ? null
-                          : () => context.push(AppRoutes.verificationInfo),
+                            title: Text(
+                              L10n.t(
+                                context,
+                                verificationState ==
+                                        VerificationState.underReview
+                                    ? 'home.verifyHintReviewTitle'
+                                    : 'home.verifyHintUnverifiedTitle',
+                              ),
+                              style: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimaryContainer,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              L10n.t(
+                                context,
+                                verificationState ==
+                                        VerificationState.underReview
+                                    ? 'home.verifyHintReviewBody'
+                                    : 'home.verifyHintUnverifiedBody',
+                              ),
+                              style: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onPrimaryContainer,
+                              ),
+                            ),
+                            trailing:
+                                verificationState ==
+                                    VerificationState.underReview
+                                ? null
+                                : Icon(
+                                    Icons.chevron_right,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimaryContainer,
+                                  ),
+                            onTap:
+                                verificationState ==
+                                    VerificationState.underReview
+                                ? null
+                                : () =>
+                                      context.push(AppRoutes.verificationInfo),
+                          ),
+                          // DER KNOPF (15.11.2026): Ein Pfeil allein
+                          // sagt dem Nutzer nicht, was er tun soll. Der
+                          // Klick auf die Kachel war der einzige Weg zur
+                          // Verifizierung - der jetzt sichtbare Knopf
+                          // nennt das Ziel und ist ein Treffer fuer
+                          // Screenreader.
+                          if (verificationState !=
+                              VerificationState.underReview) ...[
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: FilledButton.icon(
+                                icon: const Icon(
+                                  Icons.verified_user_outlined,
+                                  size: 18,
+                                ),
+                                label: Text(
+                                  L10n.t(context, 'home.verifyHintAction'),
+                                ),
+                                onPressed: () =>
+                                    context.push(AppRoutes.verificationInfo),
+                                style: FilledButton.styleFrom(
+                                  minimumSize: const Size(0, 40),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ),
                 ),

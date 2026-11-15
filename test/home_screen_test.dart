@@ -23,6 +23,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/providers/settings_provider.dart';
@@ -235,8 +236,13 @@ void main() {
       tester,
     ) async {
       // Noch nicht verifiziert: der Hinweis muss den Nutzer einladen.
+      // (Eigene Texte seit 15.11.2026 - die alten waren fuer den
+      // Modus-Sperr-Dialog geschrieben.)
       await zeigeScreen(tester);
-      expect(find.text('Nicht verifiziert'), findsOneWidget);
+      expect(
+        find.text(L10n.tWithoutContext('home.verifyHintUnverifiedTitle')),
+        findsOneWidget,
+      );
 
       // Verifiziert: der Hinweis hat nichts mehr zu sagen.
       await zeigeScreen(
@@ -248,7 +254,10 @@ void main() {
           verificationState: VerificationState.verified,
         ),
       );
-      expect(find.text('Nicht verifiziert'), findsNothing);
+      expect(
+        find.text(L10n.tWithoutContext('home.verifyHintUnverifiedTitle')),
+        findsNothing,
+      );
     });
 
     testWidgets('der Pausiert-Hinweis erscheint beim pausierten Profil', (

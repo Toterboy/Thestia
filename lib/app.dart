@@ -152,6 +152,9 @@ class _AppState extends ConsumerState<App> {
   static String _routeForPush(Map<String, dynamic> data) {
     final kind = data['kind'] as String?;
     if (kind == 'dating_hour') return '/dating-hour';
+    // Die Freigabe der Alterspruefung (Migration 218) fuehrt auf die
+    // Verifikations-Info - dort steht, was die Freigabe bedeutet.
+    if (kind == 'verification') return AppRoutes.verificationInfo;
     return '/interessen';
   }
 
@@ -261,6 +264,9 @@ class _AppState extends ConsumerState<App> {
       'likes' => 1,
       'matches' => 2,
       'dating_hour' => 3,
+      // Die Freigabe der Alterspruefung (Migration 218). Sie geht auf
+      // den Profil-Bildschirm - dort sieht der Nutzer das Abzeichen.
+      'verification' => 4,
       _ => 0,
     };
     const fallbacks = [
@@ -268,6 +274,7 @@ class _AppState extends ConsumerState<App> {
       ('Jemand hat deine Vorstellung entdeckt.', 'likes'),
       ('Neuer Funke!', 'matches'),
       ('Dating Hour Erinnerung.', 'events'),
+      ('Deine Alterspruefung wurde freigegeben.', 'verification'),
     ];
     // Serverseitig generierte Titel (notify-user) stehen in der
     // notification-Sektion; Fallback: feste Servertexte.
@@ -284,7 +291,8 @@ class _AppState extends ConsumerState<App> {
             0 => NotificationType.messages,
             1 => NotificationType.likes,
             2 => NotificationType.matches,
-            _ => NotificationType.datingHour,
+            3 => NotificationType.datingHour,
+            _ => NotificationType.verification,
           },
         );
   }

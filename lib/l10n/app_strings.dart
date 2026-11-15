@@ -1461,6 +1461,20 @@ const Map<String, Map<String, String>> _strings = {
     'verify.badge': 'Verifiziert',
     'verify.stateUnverified': 'Nicht verifiziert',
     'verify.stateUnderReview': 'Wird geprüft',
+    // Der Hinweis auf "Aktuelles" (Startbildschirm). Eigene Texte, weil
+    // die fuer den Modus-Sperr-Dialog geschrieben sind ("Fuer diesen
+    // Modus musst du ...") - auf dem Startbildschirm geht es nicht um
+    // einen Modus, sondern um den Vollzugang.
+    'home.verifyHintUnverifiedTitle': 'Dein Profil ist noch nicht verifiziert',
+    'home.verifyHintUnverifiedBody':
+        'Mit einem kurzen Video bestaetigst du dein Alter - danach sind '
+        'alle Modi freigeschaltet. Die Pruefung dauert meist nur einen '
+        'Moment.',
+    'home.verifyHintReviewTitle': 'Deine Pruefung laeuft noch',
+    'home.verifyHintReviewBody':
+        'Du wartest auf das Ergebnis. Bis dahin kannst du Zufallschat '
+        'und QR-Code-Scannen nutzen.',
+    'home.verifyHintAction': 'Jetzt verifizieren',
     'verify.otherUnderReview': 'Verifizierung läuft',
     'verify.infoAiLimits':
         'Die Altersschätzung ist eine KI-Schätzung und kann '
@@ -4657,6 +4671,18 @@ const Map<String, Map<String, String>> _strings = {
     'verify.badge': 'Verified',
     'verify.stateUnverified': 'Not verified',
     'verify.stateUnderReview': 'Under review',
+    // The hint on the home screen ("Aktuelles"). Own texts, because the
+    // ones for the mode-lock dialog ("For this mode you have to ...") do
+    // not fit here - this is about full access, not about one mode.
+    'home.verifyHintUnverifiedTitle': 'Your profile is not verified yet',
+    'home.verifyHintUnverifiedBody':
+        'Confirm your age with a short video - afterwards every mode is '
+        'unlocked. The review usually takes only a moment.',
+    'home.verifyHintReviewTitle': 'Your review is still running',
+    'home.verifyHintReviewBody':
+        'You are waiting for the result. Until then you can use the random '
+        'chat and scan QR codes.',
+    'home.verifyHintAction': 'Verify now',
     'verify.otherUnderReview': 'Verification in progress',
     'verify.infoAiLimits':
         'The age estimate is an AI estimate and can be inaccurate. It '
