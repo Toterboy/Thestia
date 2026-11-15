@@ -636,8 +636,21 @@ Future<void> _createIdentityBackup(BuildContext context, WidgetRef ref) async {
           child: Text(L10n.t(ctx, 'common.cancel')),
         ),
         FilledButton(
-          onPressed: () =>
-              Navigator.of(ctx).pop(formKey.currentState!.validate()),
+          // BEFUND (15.11.2026, gefunden von einem Test): Vorher
+          // schloss der Dialog IMMER - auch bei einem zu kurzen oder
+          // verschiedenen Passwort (`pop(validate())` schliesst, auch
+          // wenn `validate()` false ergibt). Der Nutzer tippte auf
+          // "Backup erstellen", der Dialog war weg, der Fehlerhinweis
+          // (den die Pruefung zwar zeigt) verschwand mit ihm - und es
+          // passierte gar nichts.
+          //
+          // JETZT: Der Dialog bleibt offen, solange die Angaben nicht
+          // stimmen. Der Fehlerhinweis bleibt sichtbar.
+          onPressed: () {
+            if (formKey.currentState!.validate()) {
+              Navigator.of(ctx).pop(true);
+            }
+          },
           child: Text(L10n.t(ctx, 'settings.backupCreateBtn')),
         ),
       ],

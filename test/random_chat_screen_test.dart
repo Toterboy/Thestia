@@ -22,11 +22,16 @@ import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/random_chat_session.dart';
+import 'package:thestia/providers/chat_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/swipe/random_chat_screen.dart';
 import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/p2p_chat_service.dart';
+import 'package:thestia/services/prekey_service.dart';
 import 'package:thestia/services/random_chat_service.dart';
+import 'package:thestia/services/webrtc_service.dart';
 
+import 'support/fake_supabase_server.dart';
 import 'support/plugin_mocks.dart';
 
 /// Der Speicher im RAM.
@@ -58,6 +63,20 @@ class _FakeLocalStorage implements LocalStorage {
   @override
   Future<int?> getInt(String key) async =>
       _daten[key] == null ? null : int.tryParse(_daten[key]!);
+}
+
+/// Der P2P-Service ohne WebRTC (siehe der Chat-Test).
+class _FakeP2PChatService extends P2PChatService {
+  _FakeP2PChatService(super.webrtc, super.prekey);
+
+  @override
+  Future<void> connect({
+    required String myUserId,
+    required String peerId,
+  }) async {}
+
+  @override
+  Future<void> dispose() async {}
 }
 
 /// Hand-Fake des Zufallschat-Dienstes.
@@ -100,19 +119,42 @@ void main() {
   /// ("A Timer is still pending").
   late supabase.SupabaseClient client;
 
+  /// Der Ersatz-Server (Antworten aus dem RAM).
+  late FakeSupabaseServer server;
+
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await SharedPreferences.getInstance();
+    // DER KEYSTORE und HIVE: der Chat holt sich den Verlauf und die
+    // Schluessel aus dem Speicher - ohne diese Ersatzwaerter bleibt
+    // der Aufbau haengen.
+    mockKeystore();
+    await mockHive();
+    // DER CLIENT: der Bildschirm liest `Supabase.instance` (den
+    // globalen Client) - ein eigener Client waere dort nicht sichtbar
+    // (und die Edge-Funktionen brauchen eine Sitzung).
+    // DER SERVER: die Anmeldung geht ueber den Client - ohne den
+    // Ersatz-Server antwortet der Test-Client mit 400.
+    server = FakeSupabaseServer(userId: 'ich');
+    await supabase.Supabase.initialize(
+      url: 'https://example.supabase.co',
+      publishableKey: 'test-key',
+      httpClient: server,
+      authOptions: const supabase.FlutterAuthClientOptions(
+        autoRefreshToken: false,
+        persistSession: false,
+        detectSessionInUri: false,
+      ),
+    );
+    await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
+  });
+
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues(<String, Object>{});
     mockKeystore();
-    client = supabase.SupabaseClient(
-      'https://example.supabase.co',
-      'test-key',
-      authOptions: const supabase.AuthClientOptions(autoRefreshToken: false),
-    );
-  });
-
-  tearDown(() async {
-    await client.dispose();
+    client = supabase.Supabase.instance.client;
   });
 
   /// Pumpt eine feste Zahl von Frames.
@@ -122,12 +164,23 @@ void main() {
     }
   }
 
+  /// Der Container des zuletzt gebauten Bildschirms.
+  ///
+  /// EIGENER Container (nicht das ProviderScope): der Container lebt
+  /// weiter, wenn der Bildschirm abgebaut wird - so kann der Test
+  /// danach noch sehen, ob die "aktiver Chat"-Markierung wirklich
+  /// geloescht wurde (beim Wegwerfen des Containers wuerde sie
+  /// automatisch auf null zurueckspringen - das waere ein
+  /// Scheintest).
+  ProviderContainer? screenContainer;
+
   /// Baut den Zufallschat.
   ///
   /// [dienst] ist null, wenn es keinen Dienst gibt (offline).
   Future<void> zeigeScreen(
     WidgetTester tester, {
     RandomChatService? dienst,
+    bool ohneDienst = false,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -148,13 +201,32 @@ void main() {
     );
     addTearDown(router.dispose);
 
+    final container = ProviderContainer(
+      overrides: [
+        localStorageProvider.overrideWithValue(_FakeLocalStorage()),
+        if (dienst != null)
+          randomChatServiceProvider.overrideWithValue(dienst)
+        else if (ohneDienst)
+          randomChatServiceProvider.overrideWithValue(null),
+        // DER P2P-Fake: die echte Direktverbindung braucht das
+        // WebRTC-Plugin - ohne sie bleibt `connect()` haengen und der
+        // Bildschirm kommt ueber die Markierung nie hinaus.
+        p2pChatServiceProvider.overrideWith((ref) {
+          final dienst = _FakeP2PChatService(
+            ref.watch(webRTCServiceProvider),
+            ref.watch(preKeyServiceProvider),
+          );
+          ref.onDispose(dienst.dispose);
+          return dienst;
+        }),
+      ],
+    );
+    screenContainer = container;
+    addTearDown(container.dispose);
+
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          localStorageProvider.overrideWithValue(_FakeLocalStorage()),
-          if (dienst != null)
-            randomChatServiceProvider.overrideWithValue(dienst),
-        ],
+      UncontrolledProviderScope(
+        container: container,
         child: MaterialApp.router(
           theme: ThemeData(useMaterial3: true),
           routerConfig: router,
@@ -176,7 +248,7 @@ void main() {
 
     testWidgets('ohne Dienst kommt der Hinweis statt Warten', (tester) async {
       // Kein Dienst (die App ist offline) - der Screen sagt das.
-      await zeigeScreen(tester);
+      await zeigeScreen(tester, ohneDienst: true);
 
       expect(tester.takeException(), isNull);
       expect(
@@ -218,6 +290,79 @@ void main() {
       expect(
         find.text(L10n.tWithoutContext('random.errorNoPartner')),
         findsOneWidget,
+      );
+    });
+
+    testWidgets('der Partner kommt waehrend der Suche dazu', (tester) async {
+      final dienst = _FakeRandomChatService(client);
+      // Zuerst wartet die Sitzung (noch kein Partner).
+      dienst.session = const RandomChatSession(sessionId: 's-1');
+      await zeigeScreen(tester, dienst: dienst);
+
+      expect(
+        find.text(L10n.tWithoutContext('random.searching')),
+        findsOneWidget,
+      );
+
+      // Jetzt kommt der Partner: der Poll holt die gematchte Sitzung.
+      dienst.befragteSession = const RandomChatSession(
+        sessionId: 's-1',
+        partnerId: 'partner-1',
+        status: RandomChatStatus.active,
+      );
+      await tester.pump(const Duration(seconds: 2));
+      await pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      // Der Suchhinweis ist weg - der Chat steht.
+      expect(
+        find.text(L10n.tWithoutContext('random.searching')),
+        findsNothing,
+        reason: 'Mit dem Partner muss der Suchhinweis verschwinden.',
+      );
+    });
+
+    testWidgets('der aktive Chat wird beim Verlassen wieder freigegeben', (
+      tester,
+    ) async {
+      final dienst = _FakeRandomChatService(client);
+      dienst.session = const RandomChatSession(
+        sessionId: 's-1',
+        partnerId: 'partner-1',
+        status: RandomChatStatus.active,
+      );
+      await zeigeScreen(tester, dienst: dienst);
+      await pumpFrames(tester);
+
+      final container = screenContainer!;
+
+      // Das Match braucht echte Zeit (der Partner-Aufruf geht ueber den
+      // Server) - also warten, bis die Markierung steht.
+      for (var i = 0; i < 20; i++) {
+        await tester.runAsync(() async {
+          await Future<void>.delayed(const Duration(milliseconds: 200));
+        });
+        await tester.pump(const Duration(milliseconds: 100));
+        if (container.read(activeChatIdProvider) != null) break;
+      }
+      expect(
+        container.read(activeChatIdProvider),
+        isNotNull,
+        reason:
+            'Waehrend des Chats muss der aktive Chat markiert sein - sonst '
+            'kommen die Meldungen des Partners als Push an.',
+      );
+
+      // Beim Verlassen des Bildschirms muss die Markierung wieder weg.
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+      expect(
+        container.read(activeChatIdProvider),
+        isNull,
+        reason:
+            'Nach dem Verlassen darf die Markierung nicht stehen bleiben - '
+            'sonst kommen die Meldungen des Partners bis zum App-Ende '
+            'nicht an.',
       );
     });
   });

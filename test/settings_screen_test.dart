@@ -117,8 +117,8 @@ void main() {
     container.dispose();
   });
 
-  Future<void> zeigeScreen(WidgetTester tester) async {
-    await tester.binding.setSurfaceSize(const Size(390, 844));
+  Future<void> zeigeScreen(WidgetTester tester, {double hoehe = 844}) async {
+    await tester.binding.setSurfaceSize(Size(390, hoehe));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     final secure = _FakeSecureProfileStore();
@@ -252,5 +252,103 @@ void main() {
     // null heisst: "es entscheidet das Geraet" - true/false waere eine
     // feste Entscheidung und damit etwas anderes.
     expect(container.read(settingsProvider).useDarkMode, isNull);
+  });
+
+  group('Das Backup der Ende-zu-Ende-Identitaet', () {
+    /// Oeffnet den Dialog fuer das Backup-Passwort.
+    Future<void> oeffneBackupDialog(WidgetTester tester) async {
+      // GROSSER Bildschirm: der Abschnitt "Ende-zu-Ende-Verschluesselung"
+      // liegt weit unten. Mit einem hohen Bildschirm baut die Liste
+      // mehr Eintraege auf einmal - das Scrollen durch die lange Liste
+      // waere im Test zaeh und fehleranfaellig.
+      await zeigeScreen(tester, hoehe: 3000);
+
+      // Der Abschnitt liegt weit unten - die Liste baut nur die
+      // sichtbaren Eintraege, also wird bis zum Knopf gescrollt.
+      // Ueber das Symbol gesucht: der Text "Backup erstellen" steht
+      // auch als Knopf im Dialog.
+      final knopf = find.byIcon(Icons.download_outlined);
+      for (var i = 0; i < 60 && knopf.evaluate().isEmpty; i++) {
+        await tester.drag(find.byType(Scrollable).first, const Offset(0, -400));
+        await tester.pump(const Duration(milliseconds: 120));
+      }
+      expect(knopf, findsOneWidget, reason: 'Der Backup-Knopf muss da sein.');
+      await tester.tap(knopf);
+      await pumpFrames(tester);
+    }
+
+    testWidgets('der Dialog fragt nach dem Passwort', (tester) async {
+      await oeffneBackupDialog(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        find.text(L10n.tWithoutContext('settings.backupChoosePw')),
+        findsOneWidget,
+      );
+      // Zwei Felder: Passwort und Wiederholung.
+      expect(find.byType(TextFormField), findsNWidgets(2));
+    });
+
+    testWidgets('ein zu kurzes Passwort wird abgewiesen', (tester) async {
+      await oeffneBackupDialog(tester);
+
+      await tester.enterText(find.byType(TextFormField).first, 'kurz');
+      await tester.enterText(find.byType(TextFormField).last, 'kurz');
+      await pumpFrames(tester);
+      // Der Dialog-Knopf (der Text steht auch auf der Kachel dahinter -
+      // darum der FilledButton).
+      await tester.tap(
+        find.widgetWithText(
+          FilledButton,
+          L10n.tWithoutContext('settings.backupCreateBtn'),
+        ),
+      );
+      await pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      // Der Dialog bleibt offen und sagt, was fehlt.
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        find.text(L10n.tWithoutContext('settings.backupPwShort')),
+        findsOneWidget,
+        reason:
+            'Ein zu kurzes Passwort waere unbrauchbar - der Nutzer muss es '
+            'wissen.',
+      );
+    });
+
+    testWidgets('zwei verschiedene Passwoerter werden abgewiesen', (
+      tester,
+    ) async {
+      await oeffneBackupDialog(tester);
+
+      await tester.enterText(
+        find.byType(TextFormField).first,
+        'ein-sehr-langes-passwort',
+      );
+      await tester.enterText(
+        find.byType(TextFormField).last,
+        'ein-anderes-passwort',
+      );
+      await pumpFrames(tester);
+      await tester.tap(
+        find.widgetWithText(
+          FilledButton,
+          L10n.tWithoutContext('settings.backupCreateBtn'),
+        ),
+      );
+      await pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        find.text(L10n.tWithoutContext('settings.backupPwMismatch')),
+        findsOneWidget,
+        reason:
+            'Ein Tippfehler beim Wiederholen darf nicht still zu einem '
+            'unbrauchbaren Backup fuehren.',
+      );
+    });
   });
 }

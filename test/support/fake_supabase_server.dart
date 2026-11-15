@@ -103,6 +103,30 @@ class FakeSupabaseServer extends http.BaseClient {
       return _antwort(request, 200, jsonEncode(_benutzer()));
     }
 
+    // Die Session (Anmeldung, Token-Aktualisierung).
+    //
+    // DER GRUND (15.11.2026): Die Edge Functions gehen ueber den
+    // Auth-Weg - vor dem Senden holt der Client das Access-Token
+    // (`getSession()`). Fehlt eine gueltige Session, wartet er auf
+    // eine Token-Aktualisierung - und ohne Antwort darauf bleibt der
+    // Aufruf stehen (der Test lief in den Zehn-Minuten-Timeout).
+    //
+    // Die Antwort traegt deshalb ein JWT mit Ablaufdatum - der Client
+    // rechnet mit `expires_in`, nicht mit dem JWT selbst.
+    if (pfad.contains('/auth/v1/token')) {
+      return _antwort(
+        request,
+        200,
+        jsonEncode(<String, dynamic>{
+          'access_token': _jwt(userId),
+          'token_type': 'bearer',
+          'expires_in': 3600,
+          'refresh_token': 'refresh-token-im-test',
+          'user': _benutzer(),
+        }),
+      );
+    }
+
     // RPCs (PostgREST): die Admin-Listen und der Admin-Check.
     if (pfad.contains('/rest/v1/rpc/')) {
       const marker = '/rest/v1/rpc/';

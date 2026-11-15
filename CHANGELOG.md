@@ -118,6 +118,16 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   * Der Hinweis und die Meldung sagen jetzt: der Text ist Pflicht, die
     Aufnahme ist optional (deutsch und englisch).
 
+- **Der Dialog für das Backup der Ende-zu-Ende-Identität hat sich
+  geschlossen, obwohl das Passwort nicht passte.** Der Knopf „Backup
+  erstellen" schloss den Dialog immer – auch bei einem zu kurzen oder
+  einem abweichenden Passwort. Der Hinweis „Zu kurz" war zwar da,
+  verschwand aber mit dem Dialog: Der Nutzer tippte auf „Backup
+  erstellen", es passierte nichts, und das eingegebene Passwort war
+  weg. Jetzt bleibt der Dialog offen, solange die Angaben nicht
+  stimmen – der Fehlerhinweis bleibt sichtbar.
+  * Gefunden hat das ein Test für den Dialog.
+
 ### Aktualisiert (15.11.2026) – Plugins und zwei Forks aufgelöst
 
 - **flutter_local_notifications 22.3.2 → 23.0.2.** Der Upstream behebt
@@ -388,9 +398,9 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Wiederholen-Knopf; im 1:1-Chat das Löschen einer Nachricht für alle;
   im Dialog "Funke beenden" die vier Absage-Texte und die Auswahl; in den Eisbrecher-Fragen das Suchen, das Kopieren und die Frage, ob eine Frage kopiert oder gesendet werden soll.; in der Erinnerungsliste das Abhaken, das Loeschen eigener Eintraege und der Leerzustand.; beim Entfernen der Bild-Metadaten, dass die Metadaten wirklich verschwinden und dass kein Original zurueckkommt.; bei der Bundesland-Aufloesung, dass der Ort nicht zurueckkommt (nur das Bundesland) und dass stattdessen null kommt.; in den Profil-Bausteinen, dass die gemeinsamen Interessen hervorgehoben sind und der Blind-Mode-Platzhalter seinen Grund nennt.; im Admin-Bereich die Verifizierungen mit der KI-Altersschaetzung und dem Minderjaehrigkeitsfall, die Fehlerberichte, die Sperren und die Standort-Pruefungen; im Interessen-Screen das Funken-Menue und das Archivieren; bei der Bild-Meldung, dass nur das gemeldete Bild rausgeht und die Reporter-ID pseudonymisiert wird.; in den Einstellungen, dass sich das Erscheinungsbild umstellen laesst und dass System dem Geraet folgt.; ausserdem der Foto-Einspruch, das Match-Quiz, der Posteingang, die Server-Konfiguration (die Notbremse fuer Transit Spark) und die Standort-Pruefung. Auf der Profildetail-Seite stehen die gemeinsamen Interessen hervorgehoben. In den Einstellungen steht der Stand des Kinderschutzes - und ein Lesefehler wird als Fehler gemeldet, nicht als "keine Aufsicht". Und die Angaben aus der Ersteinrichtung kommen beim Server an - nicht nur lokal. Dazu der Verifikations-Hinweis auf Aktuelles und die Meldung bei der Freigabe.
 - **Die Abdeckung wird gemessen, nicht behauptet**
-  (`tool/check_coverage.py`, Gate in der CI). **Stand: 45,7 %** der
+  (`tool/check_coverage.py`, Gate in der CI). **Stand: 46,2 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
-  im Gate liegt jetzt bei 30,0 %. 1512 Tests, 0 Fehler.
+  im Gate liegt jetzt bei 30,0 %. 1519 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
     steckt nicht in den kleinen Dateien, sondern in den großen
     Bildschirmen (der 1:1-Chat allein hat 1446 offene Zeilen). Das

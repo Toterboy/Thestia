@@ -164,6 +164,7 @@ MatchWithState _funke({
   String name = 'Mira',
   int? alter = 30,
   String status = 'active',
+  DateTime? erstellt,
 }) {
   return MatchWithState(
     matchId: id,
@@ -173,7 +174,7 @@ MatchWithState _funke({
     createdVia: 'swipe',
     status: status,
     // FRISCH: ein alter Funke wuerde von der Auto-Kuehlung (72 h) erfasst.
-    createdAt: DateTime.now(),
+    createdAt: erstellt ?? DateTime.now(),
   );
 }
 
@@ -722,6 +723,53 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(service.wiederEntzuend, contains(7));
       expect(find.textContaining('Mira'), findsWidgets);
+    });
+
+    testWidgets('ein Funke ohne Aktivitaet wird automatisch gekuehlt', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      // Acht Tage alt und ohne Nachricht: nach 72 Stunden ohne
+      // Aktivitaet wird er gekuehlt (der Nutzer soll nicht wochenlang
+      // einen Funken sehen, der niemanden bewegt).
+      service.funken = [
+        _funke(erstellt: DateTime.now().subtract(const Duration(days: 8))),
+      ];
+      await _pump(tester, service: service);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        service.gekuehlt,
+        contains(7),
+        reason:
+            'Ein Funke ohne Aktivitaet wird nach 72 Stunden gekuehlt - '
+            'das muss der Server erfahren.',
+      );
+    });
+
+    testWidgets('ein frischer Funke wird NICHT gekuehlt', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      service.funken = [_funke()];
+      await _pump(tester, service: service);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        service.gekuehlt,
+        isEmpty,
+        reason:
+            'Ein frischer Funke darf nicht gekuehlt werden - der Nutzer '
+            'hat ihn gerade erst bekommen.',
+      );
     });
   });
 }

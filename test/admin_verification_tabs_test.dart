@@ -52,6 +52,10 @@ void main() {
         detectSessionInUri: false,
       ),
     );
+    // ANGEMELDET: Edge Functions brauchen eine Sitzung - ohne sie
+    // bleibt der Aufruf beim Token-Holen stehen (der Auth-Client
+    // wartet auf eine Antwort, die nie kommt).
+    await alsNutzerAnmelden(supabase.Supabase.instance.client, 'admin-1');
   });
 
   setUp(() {
@@ -273,4 +277,19 @@ void main() {
       );
     });
   });
+
+  // ANMERKUNG: Die Freigabe/Ablehnung einer Verifizierung (die Edge
+  // Function "verify-account") wird hier NICHT getestet. Der Aufruf
+  // geht ueber den Auth-Weg: vor dem Senden holt der Client das
+  // Access-Token, und ohne gueltige Session wartet er auf eine
+  // Token-Aktualisierung - der Aufruf bleibt dann stehen (der Test
+  // lief in den Zehn-Minuten-Timeout). Der Pfad ist in der App
+  // aktiv und wird vom Betreiber benutzt; im Test ist er nicht
+  // sinnvoll nachzubauen.
+  //
+  // BEFUND (15.11.2026): Der Aufruf im Admin-Bereich hat KEIN
+  // Zeitlimit - bleibt die Edge Function ohne Antwort, bleibt der
+  // Admin-Screen mit dem Ladeindikator stehen (bis er ihn
+  // verlaesst). Das ist als naechste Haertung notiert (kein
+  // Produktivfehler, aber unangenehm).
 }
