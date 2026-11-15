@@ -589,6 +589,42 @@ void main() {
       expect(find.text('Jonas ist ausgeblendet.'), findsOneWidget);
     });
 
+    testWidgets('das Blockieren fragt erst nach', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      service.erhalteneLikes = [
+        ReceivedLike(
+          likeId: 9,
+          profile: _person(name: 'Jonas', alter: 31),
+          createdAt: DateTime.now(),
+        ),
+      ];
+      await _pump(tester, service: service);
+
+      await tester.tap(find.text('Erhalten'));
+      await _pumpFrames(tester);
+
+      // Das Menue der Like-Kachel.
+      await tester.tap(find.byIcon(Icons.more_vert).last);
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.text('Blockieren'));
+      await _pumpFrames(tester);
+
+      // Es fragt nach - blockiert wird nicht ohne Rueckfrage.
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        find.textContaining('Jonas'),
+        findsWidgets,
+        reason: 'Der Dialog nennt die Person, die blockiert werden soll.',
+      );
+    });
+
     testWidgets('das Funken-Menue bietet alle Wege', (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));

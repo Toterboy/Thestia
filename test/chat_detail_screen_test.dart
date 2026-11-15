@@ -31,6 +31,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 // Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
+import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/match.dart';
 import 'package:thestia/models/message.dart';
 import 'package:thestia/models/user_profile.dart';
@@ -388,6 +389,44 @@ void main() {
       // Das Bild wird geladen - bis es da ist, steht der Platzhalter
       // (das Bild zaehlt, dass der Bildzweig gebaut wurde).
       expect(find.byIcon(Icons.image), findsWidgets);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('das lange Druecken auf ein Bild zeigt die Aktionen', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = ChatService();
+      final match = service.createMatch(_partner());
+      service.addMessage(
+        match.id,
+        Message(
+          id: 'm_bild',
+          senderId: 'partner-1',
+          receiverId: 'ich',
+          text: '',
+          type: MessageType.image,
+          mediaUrl: 'https://example.de/foto.jpg',
+          timestamp: DateTime.now(),
+        ),
+      );
+      await _pump(
+        tester,
+        ChatDetailScreen(matchId: match.id),
+        ChatNotifier(service),
+      );
+
+      // Das lange Druecken auf das Bild zeigt das Aktionsmenue.
+      await tester.longPress(find.byIcon(Icons.image).first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(tester.takeException(), isNull);
+      // Melden und (bei einem unscharfen Bild) Freigeben.
+      expect(find.text(L10n.tWithoutContext('chat.reportImage')), findsWidgets);
 
       await tester.pumpWidget(const SizedBox());
     });
