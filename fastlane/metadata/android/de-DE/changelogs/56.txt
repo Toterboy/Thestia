@@ -49,3 +49,9 @@ Wenn der Server nicht antwortet, wartet die App nicht mehr endlos: Jede Server-A
 Und im Dating Hour siehst du jetzt, wenn eine Nachricht nicht angekommen ist
 
 Bisher konnte deine Nachricht einfach verschwinden, ohne dass du etwas gemerkt haettest. Jetzt sagt die App dir, wenn sie nicht rausgegang ist.
+
+Und: Der Alters-Hinweis im Dating Hour erscheint jetzt
+
+Wenn ihr zehn Jahre oder mehr auseinanderliegt, steht der Hinweis jetzt wirklich im Chat - vorher wurde er nie angezeigt.
+
+Und: Der PIN-Dialog im Kinderschutz macht den Bildschirm nicht mehr kaputt, und dein Datenexport nennt nur die Anbieter, die es wirklich gibt (kein "Apple Inc." - die App gibt es nicht im App Store).

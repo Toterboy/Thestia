@@ -49,3 +49,9 @@ When the server does not answer, the app no longer waits forever: every server r
 And in the Dating Hour you now see when a message did not arrive
 
 Until now your message could simply vanish without you noticing. Now the app tells you when it did not get out.
+
+And: The age hint in the Dating Hour now really shows up
+
+When you are ten years or more apart, the hint now actually appears in the chat - before, it was never shown.
+
+And: The PIN dialog in the parental supervision no longer breaks the screen, and your data export only names the providers that really exist (no "Apple Inc." - the app is not in the App Store).
