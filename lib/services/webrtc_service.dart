@@ -193,7 +193,7 @@ class WebRTCService {
         throw StateError('ice-config Status ${res.statusCode}');
       }
       final servers = parseIceConfig(res.body);
-      final ttl = _extractTtl(res.body);
+      final ttl = effectiveTtl(res.body, servers);
       _cachedIceServers = servers;
       _cacheExpiry = now.add(Duration(seconds: ttl));
       if (kDebugMode) {
@@ -233,6 +233,39 @@ class WebRTCService {
     } catch (_) {
       return 3600;
     }
+  }
+
+  /// Die tatsaechliche Cache-Frist: die kuerzere aus der Antwort-TTL und
+  /// der Restlaufzeit der TURN-Credentials.
+  ///
+  /// DER GRUND (Audit 16.11.2026): TURN-Credentials sind kurzlebig
+  /// (coturn-REST: "Ablaufzeit:Id" als Benutzername). Liegt die
+  /// Cache-Frist darueber, haelt der Client abgelaufene Credentials -
+  /// der Relay-Server weist sie zurueck und der Anruf scheitert
+  /// (obwohl eine neue Konfiguration abrufbar waere). Deshalb wird die
+  /// Frist auf die kuerzere der beiden gesetzt (mit 60 s Reserve).
+  ///
+  /// Oeffentlich, damit der Test sie pruefen kann (reine Funktion).
+  static int effectiveTtl(
+    String body,
+    List<Map<String, dynamic>> servers, {
+    DateTime? now,
+  }) {
+    final ttl = _extractTtl(body);
+    final zeitpunkt = now ?? DateTime.now();
+    var rest = ttl;
+    for (final server in servers) {
+      final username = server['username'];
+      if (username is! String) continue;
+      // Format des coturn-REST-Verfahrens: "<Ablaufzeit>:<Kennung>"
+      final teile = username.split(':');
+      if (teile.length < 2) continue;
+      final ablauf = int.tryParse(teile.first);
+      if (ablauf == null) continue;
+      final sekunden = ablauf - zeitpunkt.millisecondsSinceEpoch ~/ 1000 - 60;
+      if (sekunden < rest) rest = sekunden;
+    }
+    return rest < 60 ? 60 : rest;
   }
 
   /// Test-Hook: [resolveIceServers] ohne echte Edge Function prüfen.

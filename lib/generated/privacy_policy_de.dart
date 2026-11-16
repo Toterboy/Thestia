@@ -140,6 +140,16 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
     'table',
     '',
     cells: <String>[
+      'Geburtstags-Hinweis',
+      'Ob **heute** der Geburtstag der Person ist',
+      'Der Hinweis (Rahmen und „Geburtstag"-Chip) erscheint **nur** bei deinem eigenen Profil und bei Personen, mit denen du bereits ein **Match** hast. Für Fremde in der Suche wird er nicht geliefert - sonst ergäben das sichtbare Alter und der Hinweis zusammen das genaue Geburtsdatum (Migration 219)',
+      '–',
+    ],
+  ),
+  PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
       'Geräte-Liste',
       'Gerätemodell (Hersteller + Modellkennung, z. B. „Samsung SM-S921B"), Plattform, App-Version, Zeitstempel der letzten Anmeldung; bei einer Anmeldung von einem **neuen** Gerät zusätzlich eine Benachrichtigungs-Mail mit Gerätename, App-Version und Zeitpunkt',
       'Anzeige „Wo bin ich eingeloggt?" + „Überall abmelden" (Migration 071/078); kein Standort, keine Seriennummer, keine Werbe-ID',

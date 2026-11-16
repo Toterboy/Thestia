@@ -97,11 +97,20 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="false"
-        android:allowBackup="false">
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules">
         <!-- allowBackup=false (Audit): Das App-Verzeichnis enthaelt
              profilbezogene PII und lokale Caches; es darf weder in das
              Google-Cloud-Backup noch in Device-to-Device-Umzuege
-             (d2d) gelangen. Tokens liegen zusaetzlich im Keystore. -->
+             (d2d) gelangen. Tokens liegen zusaetzlich im Keystore.
+
+             AUDIT (16.11.2026): allowBackup=false allein reicht auf
+             Android 12+ und bei Some OEMs nicht - der Geraetewechsel
+             kann trotzdem greifen. Deshalb zusaetzlich:
+             * data_extraction_rules.xml (API 31+, cloud + d2d)
+             * backup_rules.xml (bis API 30)
+             Beide schliessen ALLE Pfade aus. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"

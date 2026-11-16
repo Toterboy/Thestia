@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Backup-Regeln fuer Android 11 und aelter (Pre-API-31).
+
+  AUDIT (16.11.2026): Zweite Stufe neben `dataExtraction_rules.xml`.
+  `allowBackup="false"` ist bereits gesetzt - diese Datei schliesst
+  zusaetzlich jeden Pfad aus, damit auch Hersteller-Implementierungen,
+  die das Attribut ignorieren, nichts mitnehmen.
+
+  Ausgeschlossen ist ALLES: Chatverlauf, Signal-Schluessel (E2EE),
+  Standortdaten, Berichte und Einstellungen liegen lokal im
+  App-Verzeichnis.
+-->
+<full-backup-content>
+    <exclude domain="root" path="." />
+    <exclude domain="file" path="." />
+    <exclude domain="database" path="." />
+    <exclude domain="sharedpref" path="." />
+    <exclude domain="external" path="." />
+</full-backup-content>

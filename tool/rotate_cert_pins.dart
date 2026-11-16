@@ -1,38 +1,34 @@
 // Pin-Rotations-Werkzeug für CertPinning (Audit B7).
 //
 // Ermittelt die aktuellen DER-SHA256-Hashes (Leaf) der gepinnten Hosts und
-// vergleicht sie mit den in lib/utils/cert_pinning.dart konfigurierten Pins.
+// vergleicht sie mit den in lib/utils/cert_pins.dart konfigurierten Pins.
+//
+// DIE EINE QUELLE (Audit 16.11.2026): Frueher hatte dieses Werkzeug eine
+// eigene Kopie der Pin-Tabelle. Die beiden Tabellen liefen auseinander -
+// das Werkzeug meldete dauerhaft "Rotation noetig", obwohl der Pin in
+// der App voellig in Ordnung war. Und umgekehrt: der in der App
+// gepinnte Leaf-Pin war am 16.11.2026 seit dem 24.10.2026 veraltet,
+// ohne dass jemand es bemerkt hat. Jetzt liest das Werkzeug DIESELBE
+// Tabelle wie die App (lib/utils/cert_pins.dart).
 //
 // Aufruf:
 //   dart run tool/rotate_cert_pins.dart
 //
 // Vorgehen bei Rotation (z. B. nach Let's-Encrypt-/GTS-Erneuerung ~90 Tage):
-//   1. Script ausführen – es zeigt fehlende/abweichende Pins.
-//   2. Neuen Hash aus der Ausgabe in _pinnedByHost eintragen (alten PIN
-//      zunächst KEEPEN, App releasen, ~7 Tage warten, dann alten entfernen –
-//      siehe Doc-Comment in cert_pinning.dart).
-//   3. flutter test test/cert_pinning_test.dart zur Kontrolle ausführen.
+//   1. Script ausfuehren - es zeigt fehlende/abweichende Pins.
+//   2. Neuen Hash in lib/utils/cert_pins.dart eintragen (kPinnedHosts),
+//      die Gueltigkeit (leafNotBeforeEpoch/leafNotAfterEpoch) anpassen.
+//      Alten PIN zunaechst BEHALTEN (Backup-Pin), App releasen,
+//      ~7 Tage warten, dann den alten entfernen.
+//   3. flutter test test/cert_pinning_test.dart zur Kontrolle ausfuehren.
 //
-// Bewusst reines Dart (keine Flutter-Abhängigkeit): läuft überall.
+// Bewusst reines Dart (keine Flutter-Abhaengigkeit): laeuft ueberall.
 
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-/// Muss mit CertPinning._defaultHost / _pinnedByHost in
-/// lib/utils/cert_pinning.dart synchron gehalten werden.
-const Map<String, List<String>> pinnedHosts = {
-  'jftuigjbmmuvrckbchqo.supabase.co': [
-    '5IkHI2A4x/6wXNhi5BzX/Fco8o2mG5Xmdh2cKVxbMpg=', // Leaf
-    'HfwWBfutNY2LyET3bRUgP6ycpcGnn9SFf/ryhk++v5Y=', // Intermediate (WE1)
-    'drJ7gKWAJ9w88dpo2sFwEO2TmX0LYD4vrb6FASSTtac=', // Root (GTS Root R4)
-  ],
-  'router.huggingface.co': [
-    'DspFS0ajYXzS6MI03Lnp4hXHHD4WFCTK5QXIdiUMOPE=', // Leaf
-    'Uzjr7I+yrGCZYSbT52qjT9DzMYrHjrt6yPbxNh9ISzM=', // Intermediate (Amazon RSA 2048 M01)
-    'h9zU3HRkCjIs0gVVJQbRvmTxJZYlgJZUSYa0hQvHJwY=', // Root (Amazon Root CA 1)
-  ],
-};
+import 'package:thestia/utils/cert_pins.dart';
 
 Future<X509Certificate?> _fetchLeafCertificate(String host) async {
   try {
@@ -56,7 +52,7 @@ String _sha256Base64(Uint8List der) {
   return base64Encode(digest);
 }
 
-// Minimaler SHA-256 (keine externen Abhängigkeiten im Tool).
+// Minimaler SHA-256 (keine externen Abhaengigkeiten im Tool).
 const _k = [
   0x428a2f98,
   0x71374491,
@@ -163,6 +159,12 @@ List<int> _sha256(List<int> data) {
     for (var i = 16; i < 64; i++) {
       final s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >> 3);
       final s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >> 10);
+      // BUGFIX (16.11.2026): Es fehlte das w[i - 7]! Der Standard ist
+      //   W[i] = W[i-16] + s0 + W[i-7] + s1
+      // Mit der Lücke lieferte diese eigene SHA-256 FALSCHE Hashes - und
+      // damit passte der in der App gepinnte Leaf nie. Die App lief
+      // dadurch nur noch ueber den Aussteller-Fallback. Gefangen durch
+      // den Selbsttest (--selftest, Testvektor "abc").
       w[i] = (w[i - 16] + s0 + w[i - 7] + s1) & 0xffffffff;
     }
 
@@ -209,53 +211,104 @@ List<int> _sha256(List<int> data) {
 }
 
 Future<void> main(List<String> args) async {
-  var mismatch = false;
+  // DER SELBSTTEST (Audit 16.11.2026): Das Werkzeug hat seinen eigenen
+  // SHA-256 (ohne Paket-Abhaengigkeit). Genau der lieferte am
+  // 16.11.2026 einen ANDEREN Hash als Python und OpenSSL - der Pin
+  // in der App passte also NIE, und die App lief nur noch ueber den
+  // Aussteller-Fallback. Der Selftest faengt genau das ab.
+  if (args.contains('--selftest')) {
+    // Testvektor "abc" (SHA-256), base64-kodiert.
+    final erwartet = 'ungWv48Bz+pBQUDeXa4iI7ADYaOWF3qctBD/YfIAFa0=';
+    final ist = _sha256Base64(Uint8List.fromList(utf8.encode('abc')));
+    if (ist != erwartet) {
+      stdout.writeln('FEHLER: Die eigene SHA-256 ist falsch!');
+      stdout.writeln('  erwartet: $erwartet');
+      stdout.writeln('  bekommen: $ist');
+      exit(1);
+    }
+    stdout.writeln('OK: Die eigene SHA-256 ist korrekt (Testvektor "abc").');
+    exit(0);
+  }
 
-  for (final entry in pinnedHosts.entries) {
+  var mismatch = false;
+  final jetzt = DateTime.now();
+
+  stdout.writeln(
+    'Pin-Pruefung (Quelle: lib/utils/cert_pins.dart, Stand ${jetzt.toIso8601String().substring(0, 10)})',
+  );
+
+  for (final entry in kPinnedHosts.entries) {
     final host = entry.key;
-    stdout.writeln('Prüfe $host ...');
+    final gepinnt = entry.value;
+    stdout.writeln('Pruefe $host ...');
     final cert = await _fetchLeafCertificate(host);
     if (cert == null) {
-      stdout.writeln('  !! Host nicht erreichbar – übersprungen.');
+      stdout.writeln('  !! Host nicht erreichbar - uebersprungen.');
       mismatch = true;
       continue;
     }
 
     final leafHash = _sha256Base64(cert.der);
-    final matches = entry.value.contains(leafHash);
-    final issuerOk = _issuerKnown(host, cert.issuer);
+    final matches = gepinnt.pins.contains(leafHash);
+    final issuerOk = _issuerKnown(gepinnt, cert.issuer);
+
+    // Das Rotationsfenster: nur dort darf der Aussteller-Fallback den
+    // Leaf-Pin-Mismatch auffangen (Audit 16.11.2026).
+    final fensterOffen = gepinnt.rotationWindowOpen(jetzt);
+    final tageBisAblauf = gepinnt.leafNotAfter.difference(jetzt).inDays;
 
     if (matches) {
       stdout.writeln(
         '  OK: Leaf-Pin stimmt '
-        '($leafHash, gültig bis ${cert.endValidity.toLocal()}).',
+        '($leafHash, gueltig bis ${cert.endValidity.toLocal()}).',
       );
     } else {
       mismatch = true;
-      stdout.writeln('  !! Leaf-Pin STIMMT NICHT (Rotation nötig).');
+      stdout.writeln('  !! Leaf-Pin STIMMT NICHT (Rotation noetig).');
       stdout.writeln('     Aktueller Leaf-Hash : $leafHash');
       stdout.writeln('     Issuer              : ${cert.issuer}');
       stdout.writeln(
-        '     Gültigkeit          : '
-        '${cert.startValidity.toLocal()} – ${cert.endValidity.toLocal()}',
+        '     Gueltigkeit          : '
+        '${cert.startValidity.toLocal()} - ${cert.endValidity.toLocal()}',
       );
       stdout.writeln(
-        '     => Neuen Hash in lib/utils/cert_pinning.dart '
-        '(_pinnedByHost["$host"]) aufnehmen (alten zunächst behalten, '
+        '     => Neuen Hash in lib/utils/cert_pins.dart '
+        '(kPinnedHosts["$host"]) aufnehmen (alten zunaechst behalten, '
         'siehe Pin-Rotation-Doku).',
       );
       if (issuerOk) {
         stdout.writeln(
-          '     Hinweis: Issuer ist die erwartete CA – vermutlich '
-          'reguläre Rotation, kein Angriff.',
+          '     Hinweis: Issuer ist die erwartete CA - vermutlich '
+          'regulaere Rotation, kein Angriff.',
         );
       } else {
         stdout.writeln(
-          '     WARNUNG: Issuer ist NICHT die erwartete CA – '
-          'manuelle Prüfung empfohlen!',
+          '     WARNUNG: Issuer ist NICHT die erwartete CA - '
+          'manuelle Pruefung empfohlen!',
+        );
+      }
+      if (!fensterOffen) {
+        stdout.writeln(
+          '     ACHTUNG: Das Rotationsfenster ist ZU - der Fallback greift '
+          'nicht. Die App verliert in diesem Zustand die Verbindung.',
         );
       }
     }
+
+    // Der Pin darf nicht bald ablaufen: sonst steht die App beim
+    // Rotieren ohne Kontakt da.
+    if (tageBisAblauf < 30) {
+      mismatch = true;
+      stdout.writeln(
+        '  !! Der gepinnte Leaf laeuft in nur $tageBisAblauf Tagen ab - '
+        'jetzt erneuern (sonst bricht die App beim Rotieren ab).',
+      );
+    }
+    stdout.writeln(
+      '     Rotationsfenster: '
+      '${gepinnt.rotationWindowOpen(jetzt) ? "offen" : "zu"} '
+      '(Leaf laeuft am ${gepinnt.leafNotAfter.toIso8601String().substring(0, 10)} ab)',
+    );
   }
 
   stdout.writeln(
@@ -266,14 +319,7 @@ Future<void> main(List<String> args) async {
   exit(mismatch ? 1 : 0);
 }
 
-bool _issuerKnown(String host, String issuer) {
+bool _issuerKnown(PinnedHost gepinnt, String issuer) {
   final i = issuer.toLowerCase();
-  switch (host) {
-    case 'jftuigjbmmuvrckbchqo.supabase.co':
-      return i.contains('google trust services');
-    case 'router.huggingface.co':
-      return i.contains('amazon');
-    default:
-      return false;
-  }
+  return gepinnt.issuer.every(i.contains);
 }

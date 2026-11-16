@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Regeln fuer die Geraete-Datenuebertragung (Android 12+, API 31).
+
+  AUDIT (16.11.2026): `android:allowBackup="false"` allein reicht auf
+  Android 12+ und bei Some OEMs (insbesondere Samsung) NICHT - der
+  Umzug auf ein neues Geraet ("Device-to-Device") kann trotzdem greifen.
+  Industriestandard ist deshalb zusaetzlich `dataExtractionRules` mit
+  ausgeschlossenen Pfaden.
+
+  Ausgeschlossen ist ALLES: die App legt Chatverlauf, Signal-Schluessel
+  (E2EE), Standortdaten, Berichte und Einstellungen lokal ab. Ein
+  Umzug wuerde diese Daten auf ein anderes Geraet bringen - ohne
+  Zustimmung des Nutzers und ohne die Schluessel im Keystore des neuen
+  Geraets.
+
+  (Fuer aeltere Android-Versionen bis API 30 gilt weiterhin
+  `allowBackup="false"` plus `backup_rules.xml`.)
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </device-transfer>
+</data-extraction-rules>

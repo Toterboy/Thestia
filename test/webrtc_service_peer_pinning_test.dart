@@ -27,6 +27,50 @@ void main() {
       );
     });
 
+    // Die Cache-Frist (Audit 16.11.2026): TURN-Credentials sind
+    // kurzlebig. Liegt der Cache darueber, haelt der Client abgelaufene
+    // Credentials - der Relay-Server weist sie zurueck und der Anruf
+    // scheitert.
+    test('die Cache-Frist endet mit den TURN-Credentials', () {
+      final jetzt = DateTime.now();
+      final ablauf = jetzt.millisecondsSinceEpoch ~/ 1000 + 1800; // in 30 min
+      final servers = WebRTCService.parseIceConfig(
+        '{"iceServers":[{"urls":"turn:turn.example.com",'
+        '"username":"$ablauf:ich","credential":"p"}],'
+        '"ttlSeconds":3600}',
+      );
+      final ttl = WebRTCService.effectiveTtl(
+        '{"iceServers":[{"urls":"turn:turn.example.com",'
+        '"username":"$ablauf:ich","credential":"p"}],'
+        '"ttlSeconds":3600}',
+        servers,
+        now: jetzt,
+      );
+      expect(
+        ttl,
+        lessThan(3600),
+        reason:
+            'Der Cache darf nicht laenger gelten als das Credential - '
+            'sonst nutzt der Client abgelaufene Credentials.',
+      );
+      expect(ttl, greaterThan(1500));
+    });
+
+    test('ohne Credentials gilt die Antwort-TTL', () {
+      final servers = WebRTCService.parseIceConfig(
+        '{"iceServers":[{"urls":"stun:stun.example.com:3478"}],'
+        '"ttlSeconds":1800}',
+      );
+      expect(
+        WebRTCService.effectiveTtl(
+          '{"iceServers":[{"urls":"stun:stun.example.com:3478"}],'
+          '"ttlSeconds":1800}',
+          servers,
+        ),
+        1800,
+      );
+    });
+
     test('wirft StateError bei leerer Liste', () {
       expect(
         () => WebRTCService.parseIceConfig('{"iceServers":[]}'),
