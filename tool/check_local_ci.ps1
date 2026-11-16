@@ -272,6 +272,13 @@ if (Soll 'static-checks') {
         (G 'Keystore-Passwoerter nicht im Projektverzeichnis' @($py, 'tool/check_keystore_secrets.py'))
         (G 'Release-Checker Selbsttest' @($py, 'tool/check_release_artifacts_selftest.py'))
         (G 'Release-Konsistenz Selbsttest' @($py, 'tool/check_release_consistency_selftest.py'))
+        # AUDIT 16.11.2026: Die Zertifikat-Pins werden gegen die
+        # Live-Zertifikate geprueft (der gepinnte Leaf war am
+        # 24.10.2026 veraltet - ohne diesen Schritt faellt das nicht
+        # auf). Ebenso die SHA-Pins der GitHub-Actions (ein Tag ist
+        # veraenderlich).
+        (G 'Zertifikat-Pins pruefen' @($py, 'tool/check_cert_pins.py'))
+        (G 'GitHub-Actions auf SHAs gepinnt' @($py, 'tool/pin_github_actions.py', '--check'))
         # BEFUND (11.11.2026): Die Release-Notes hatten einen eigenen
         # Pruefsummen-Block, der beim Build nicht mitgepflegt wurde -
         # auf GitHub standen dadurch falsche Summen. Dieses Gate
