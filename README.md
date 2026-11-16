@@ -24,14 +24,12 @@ nicht vollständig funktional. Beiträge und Feedback sind willkommen.
 > willkommen.
 
 > **Du möchtest Thestia unterstützen?**
+> Du kannst unter folgendem Link spenden: <https://liberapay.com/Thestia/>
 > Die App bleibt kostenlos – für immer, ohne Abos, ohne Premium und ohne
-> Werbung. Wenn dir das Projekt gefällt und du die Weiterentwicklung fördern
-> möchtest, kannst du freiwillig einen kleinen Betrag spenden:
-> <https://liberapay.com/Thestia>
-> Das deckt Server, Backups und die Domain ab. **Spenden sind freiwillig und
-> geben keine Gegenleistung**: keine Belohnungen, keine Zusatzfunktionen,
-> keine Vorteile für Geberinnen und Geber – der Quellcode bleibt AGPLv3 und
-> offen.
+> Werbung. Eine Spende deckt Server, Backups und die Domain ab.
+> **Spenden sind freiwillig und geben keine Gegenleistung**: keine
+> Belohnungen, keine Zusatzfunktionen, keine Vorteile für Geberinnen und
+> Geber – der Quellcode bleibt AGPLv3 und offen.
 
 > **Mit Liebe entwickelt – und mit Unterstützung künstlicher Intelligenz.**
 > Thestia wurde von einem Menschen mit Hilfe von KI-Modellen entwickelt:
