@@ -20,19 +20,25 @@ import 'package:flutter/foundation.dart';
 ///     sich ebenso wie DER → kein praktischer Vorteil für Leaf-Zertifikate
 ///   - Intermediate + Root DER-Hashes sind für Jahre stabil
 ///
-/// Pinning-Strategie (Stand 2026-08, Audit K5/H9): Der Leaf-Pin ist die
-/// stärkste Stufe. Da Dart im Callback nur das Leaf sieht und Let's-Encrypt/
-/// GTS-Zertifikate ~90 Tage rotieren, gibt es einen eng begrenzten
-/// Rotation-Fallback: Stimmt der Leaf-Pin nicht, wird der Issuer (erwartete
-/// CA), der Host und der Gültigkeitszeitraum geprüft. Das verhindert
-/// App-weiten DoS bei Zertifikats-Rotation und blockiert gleichzeitig
-/// Self-Signed-/Fremd-CA-MITM. Leaf-Pins sollten dennoch bei Rotation
-/// aktualisiert werden: `dart run tool/rotate_cert_pins.dart` prüft die
-/// Pins gegen die Live-Zertifikate und liefert die aktuellen Hashes.
+/// Pinning-Strategie (Audit 16.11.2026, überarbeitet):
+///
+/// DER BISHERIGE ZUSTAND (befund im Sicherheits-Audit vom 16.11.2026):
+/// Der Rotations-Fallback war **dauerhaft** aktiv. Stimmt der Leaf-Pin
+/// nicht, wurde auf CA-Ebene degradiert (Aussteller + Host + Gültigkeit).
+/// Damit war der Leaf-Pin faktisch OPTIONAL: ein Kompromitt der CA
+/// (Google Trust Services) wäre sofort MITM-fähig gewesen - genau das
+/// Szenario, das die eMudhra-Lücke ausgelöst hat. Der Live-Test am
+/// 16.11.2026 zeigte es deutlich: die App lief nur noch über diesen
+/// Fallback, weil der gepinnte Leaf-Pin am 24.10.2026 veraltet war.
+///
+/// JETZT: Der Fallback gilt **nur im Rotationsfenster** um das Ablaufdatum
+/// des gepinnten Leaf-Zertifikats (siehe [_PinnedHost.rotationWindow]).
+/// Außerhalb dieses Fensters gilt: Leaf-Pin passt nicht → Verbindung
+/// wird abgebrochen. Wer die App nicht aktualisiert, verliert nach dem
+/// Ablauf den Zugang - das ist der gewollte Druck, die Pins zu pflegen.
 ///
 /// Extraktion der DER-Hashes (unabhängig verifiziert via openssl + Node.js):
 ///
-/// Extraktion der DER-Hashes (unabhängig verifiziert via openssl + Node.js):
 ///   # 1. Zertifikatskette abrufen:
 ///   openssl s_client -connect jftuigjbmmuvrckbchqo.supabase.co:443 \
 ///     -showcerts 2>/dev/null > cert_chain.pem
@@ -58,36 +64,61 @@ class CertPinning {
   /// Standard-Host (Supabase), wenn kein Host explizit übergeben wird.
   static const String _defaultHost = 'jftuigjbmmuvrckbchqo.supabase.co';
 
-  /// Host → DER-Hashes (SHA-256, Base64).
+  /// Vorlauf des Rotationsfensters vor dem Ablaufdatum (Tage).
   ///
-  /// Jeder Host besitzt drei Pins: Leaf (Server-Zertifikat), Intermediate,
-  /// Root. Der Leaf-Pin muss bei Zertifikats-Rotation (~90 Tage bei
-  /// Let's Encrypt) aktualisiert werden; Intermediate/Root sind für Jahre
-  /// stabil und dienen als Backup. Mindestens EIN Pin muss passen.
-  static const Map<String, List<String>> _pinnedByHost = {
+  /// Let's Encrypt stellt das neue Zertifikat rund einen Monat vor dem
+  /// Ablauf des alten aus. Der Fallback muss in diesem Überlappungs-
+  /// Zeitraum offen sein, sonst bricht die App beim Rotieren ab.
+  static const int _rotationLeadDays = 45;
+
+  /// Nachlauf des Rotationsfensters nach dem Ablaufdatum (Tage).
+  ///
+  /// Deckt Zertifikate ab, die etwas später rotieren als erwartet.
+  static const int _rotationGraceDays = 14;
+
+  /// Die gepinnten Hosts mit ihren Pins und dem Rotationsfenster.
+  static const Map<String, _PinnedHost> _pinnedByHost = {
     // Supabase (jftuigjbmmuvrckbchqo.supabase.co).
-    // 1) Leaf (Let's Encrypt, CN=supabase.co) — rotiert am 2026-08-26,
-    //    gültig bis 2026-11-24. Bei nächster Rotation aktualisieren.
+    //
+    // 1) Leaf (Let's Encrypt, CN=supabase.co) — ausgelesen am 16.11.2026,
+    //    gültig 24.10.2026 bis 22.01.2027 (DER-Hash, base64).
     // 2) Intermediate (Google Trust Services, CN=WE1) — Jahre stabil.
     // 3) Root (Google Trust Services, CN=GTS Root R4) — Jahrzehnte stabil.
-    // Ausgelesen & cross-verifiziert (openssl-Kette via Python ssl,
-    // Intermediate + Root unverändert): 2026-09-21
-    _defaultHost: <String>[
-      'vhe/M2GnaRvd4pPZIwPKNZjmwNFCb4+5LkOKGdr44xs=', // Leaf (Let's Encrypt)
-      'HfwWBfutNY2LyET3bRUgP6ycpcGnn9SFf/ryhk++v5Y=', // Intermediate (WE1)
-      'drJ7gKWAJ9w88dpo2sFwEO2TmX0LYD4vrb6FASSTtac=', // Root (GTS Root R4)
-    ],
+    //
+    // WICHTIG (Audit 16.11.2026): Das Leaf wurde am 24.10.2026 erneuert.
+    // Der bis dahin gepinnte Hash war ab dem 24.10.2026 veraltet - die
+    // App lief dadurch ausschließlich über den (damit dauerhaft offenen)
+    // CA-Fallback. Der Hash unten ist der des aktuell ausgelieferten
+    // Zertifikats.
+    _defaultHost: _PinnedHost(
+      pins: <String>[
+        '6v9Fmtu620ZUy7m7Ps+XC68FFGxXMqy8cLMqf009Yq4=', // Leaf (Let's Encrypt)
+        'HfwWBfutNY2LyET3bRUgP6ycpcGnn9SFf/ryhk++v5Y=', // Intermediate (WE1)
+        'drJ7gKWAJ9w88dpo2sFwEO2TmX0LYD4vrb6FASSTtac=', // Root (GTS Root R4)
+      ],
+      // Gültigkeitszeitraum des LEAF-Zertifikats (Grundlage des
+      // Rotationsfensters, siehe [_PinnedHost.rotationWindow]).
+      leafNotBefore: _Datum(2026, 10, 24),
+      leafNotAfter: _Datum(2027, 1, 22),
+      // Leaf-Issuer: CN=WE1 / O=Google Trust Services (beides muss passen).
+      issuer: <String>['cn=we1', 'o=google trust services'],
+    ),
     // Hugging Face Inference Router (router.huggingface.co), H-09.
-    // 1) Leaf (CN=huggingface.co, AWS/CloudFront) — muss bei Rotation
-    //    aktualisiert werden.
+    // 1) Leaf (CN=huggingface.co, AWS/CloudFront) — ausgelesen am
+    //    16.11.2026, gültig 14.08.2026 bis 27.02.2027.
     // 2) Intermediate (Amazon RSA 2048 M01) — stabil.
     // 3) Root (Amazon Root CA 1) — Jahrzehnte stabil.
-    // Ausgelesen & verifiziert (Node.js tls.connect): 2026-08-16
-    'router.huggingface.co': <String>[
-      'DspFS0ajYXzS6MI03Lnp4hXHHD4WFCTK5QXIdiUMOPE=', // Leaf (huggingface.co)
-      'Uzjr7I+yrGCZYSbT52qjT9DzMYrHjrt6yPbxNh9ISzM=', // Intermediate (Amazon RSA 2048 M01)
-      'h9zU3HRkCjIs0gVVJQbRvmTxJZYlgJZUSYa0hQvHJwY=', // Root (Amazon Root CA 1)
-    ],
+    'router.huggingface.co': _PinnedHost(
+      pins: <String>[
+        'DspFS0ajYXzS6MI03Lnp4hXHHD4WFCTK5QXIdiUMOPE=', // Leaf (huggingface.co)
+        'Uzjr7I+yrGCZYSbT52qjT9DzMYrHjrt6yPbxNh9ISzM=', // Intermediate (Amazon RSA 2048 M01)
+        'h9zU3HRkCjIs0gVVJQbRvmTxJZYlgJZUSYa0hQvHJwY=', // Root (Amazon Root CA 1)
+      ],
+      leafNotBefore: _Datum(2026, 8, 14),
+      leafNotAfter: _Datum(2027, 2, 27),
+      // Leaf-Issuer: CN=Amazon RSA 2048 M01 / O=Amazon.
+      issuer: <String>['cn=amazon rsa 2048 m01', 'o=amazon'],
+    ),
   };
 
   /// Ob [host] ein gepinnter Host ist (exakter Vergleich, v0.9.0).
@@ -97,72 +128,99 @@ class CertPinning {
   }
 
   /// Prüft ein Zertifikat für [expectedHost] (reine Logik, v0.9.0):
-  /// exakter Pin ODER eng begrenzter Rotation-Fallback (Issuer + Host
-  /// + Gültigkeit). Wird vom strikten [pinnedHttpClient] UND von den
-  /// globalen [ThestiaHttpOverrides] genutzt.
+  /// exakter Pin ODER – **nur im Rotationsfenster** – eng begrenzter
+  /// Rotation-Fallback (Issuer + Host + Gültigkeit).
   static bool verifyCertificate({
     required String expectedHost,
     required X509Certificate cert,
     required String certHost,
+    DateTime? now,
   }) {
-    final pins = _pinnedByHost[expectedHost] ?? const <String>[];
-    if (pins.isEmpty) return false;
+    final pinned = _pinnedByHost[expectedHost];
+    if (pinned == null) return false;
     final hash = base64Encode(sha256.convert(cert.der).bytes);
-    if (pins.contains(hash)) return true;
-    return _issuerFallbackMatches(expectedHost, cert, certHost);
+    if (pinned.pins.contains(hash)) return true;
+    // DER FALLBACK NUR IM ROTATIONSFENSTER (Audit 16.11.2026).
+    if (!pinMismatchAllowed(host: expectedHost, now: now)) return false;
+    return pinned.issuerFallbackMatches(
+      targetHost: expectedHost,
+      cert: cert,
+      certHost: certHost,
+    );
   }
 
-  /// Host → erwartete Issuer-Bestandteile (Rotation-Fallback).
+  /// Darf ein Leaf-Pin-Mismatch durch den Rotation-Fallback aufgefangen
+  /// werden?
   ///
-  /// Dart's badCertificateCallback liefert nur das Leaf-Zertifikat –
-  /// Intermediate-/Root-Pins sind daher praktisch nie prüfbar. Der
-  /// Rotation-Fallback akzeptiert bei Leaf-Pin-Mismatch nur Zertifikate,
-  /// die vom gepinnten INTERMEDIATE (exakter CN!) für den korrekten Host
-  /// im Gültigkeitszeitraum ausgestellt wurden.
+  /// DER GRUND (Audit 16.11.2026): Der Fallback war dauerhaft offen und
+  /// hat den Leaf-Pin damit entwertet (ein Kompromitt der CA wäre sofort
+  /// MITM-fähig). Jetzt gilt er nur im Rotationsfenster um das Ablaufdatum
+  /// des gepinnten Leaf-Zertifikats.
   ///
-  /// Audit M-9: Bisher genügte ein Substring-Match auf die CA-ORGANISATION
-  /// ("google trust services" / "amazon") - das re-widmete praktisch jede
-  /// von dieser CA ausgestellte Zertifikat. Jetzt müssen CN des konkreten
-  /// Intermediates UND Organisation übereinstimmen; ein anderes Zertifikat
-  /// derselben CA-Org mit anderem Intermediate wird abgelehnt.
-  static const Map<String, List<String>> _pinnedIssuerByHost = {
-    // Leaf-Issuer: CN=WE1 / O=Google Trust Services (beides muss passen).
-    _defaultHost: <String>['cn=we1', 'o=google trust services'],
-    // Leaf-Issuer: CN=Amazon RSA 2048 M01 / O=Amazon.
-    'router.huggingface.co': <String>['cn=amazon rsa 2048 m01', 'o=amazon'],
-  };
+  /// REINE LOGIK (ohne Zertifikat) - damit im Test pruefbar.
+  @visibleForTesting
+  static bool pinMismatchAllowed({required String host, DateTime? now}) {
+    final pinned = _pinnedByHost[host];
+    if (pinned == null) return false;
+    return pinned.rotationWindowOpen(now ?? DateTime.now());
+  }
 
   /// Für Tests: die aktuell konfigurierten DER-Hashes des Standard-Hosts.
   @visibleForTesting
   static List<String> get pinnedCertHashes =>
-      _pinnedByHost[_defaultHost] ?? const <String>[];
+      _pinnedByHost[_defaultHost]?.pins ?? const <String>[];
 
   /// Für Tests: die DER-Hashes eines konkreten Hosts (leer = unbekannt).
   @visibleForTesting
   static List<String> pinnedCertHashesFor(String host) =>
-      _pinnedByHost[host] ?? const <String>[];
+      _pinnedByHost[host]?.pins ?? const <String>[];
+
+  /// Für Tests/Werkzeuge: das Ablaufdatum des gepinnten Leaf-Zertifikats.
+  @visibleForTesting
+  static DateTime? pinnedLeafValidUntil(String host) =>
+      _pinnedByHost[host]?.leafNotAfter.toDateTime();
+
+  /// Für Tests/Werkzeuge: das Rotationsfenster des Hosts.
+  @visibleForTesting
+  static ({DateTime from, DateTime to})? rotationWindowFor(String host) {
+    final pinned = _pinnedByHost[host];
+    if (pinned == null) return null;
+    return (
+      from: pinned.leafNotAfter.toDateTime().subtract(
+        const Duration(days: _rotationLeadDays),
+      ),
+      to: pinned.leafNotAfter.toDateTime().add(
+        const Duration(days: _rotationGraceDays),
+      ),
+    );
+  }
 
   /// Erzeugt einen [HttpClient] mit DER-Pinning für [host].
   ///
-  /// - Gepinnte Hosts: exakter Leaf-Pin; bei Mismatch wird ein eng
-  ///   begrenzter Rotation-Fallback geprüft (Issuer + Host + Gültigkeit).
-  /// - Ungepinnte Hosts: normaler System-Trust-Store (fail-closed) –
-  ///   ungültige/self-signed Zertifikate werden ABGELEHNT. Früher wurden
-  ///   hier alle Zertifikate akzeptiert (fail-open, Audit K5).
+  /// - Gepinnte Hosts: exakter Leaf-Pin; bei Mismatch wird der
+  ///   Rotation-Fallback **nur im Rotationsfenster** geprüft (Issuer +
+  ///   Host + Gültigkeit).
+  /// - Ungepinnte Hosts: **fail-closed** – leerer Root-Store, jeder
+  ///   Zertifikatversuch wird abgelehnt. Vorher liefen diese Hosts über
+  ///   den System-Trust-Store; damit hätte eine nachinstallierte
+  ///   Fremd-CA (MDM, Stalkerware) das Pinning umgangen (Befund im
+  ///   Audit vom 16.11.2026). Wer einen eigenen Supabase-Host
+  ///   betreibt, MUSS dessen Pins eintragen (siehe
+  ///   `tool/rotate_cert_pins.dart`).
   static HttpClient pinnedHttpClient([String? host]) {
     final targetHost = host ?? _defaultHost;
-    final pins = _pinnedByHost[targetHost] ?? const <String>[];
+    final pinned = _pinnedByHost[targetHost];
 
-    if (pins.isEmpty) {
-      // Kein Pin konfiguriert: Standard-HttpClient MIT System-Roots.
-      // Der Callback wird nur bei bereits fehlgeschlagener Normal-
-      // Validierung aufgerufen → immer ablehnen (fail-closed).
-      final client = HttpClient();
+    if (pinned == null) {
+      // FAIL-CLOSED: kein Pin -> kein System-Trust.
+      final client = HttpClient(
+        context: SecurityContext(withTrustedRoots: false),
+      );
       client.badCertificateCallback = (cert, certHost, port) {
         if (kDebugMode) {
           debugPrint(
-            '[CERT_PINNING] Keine Pins für $certHost:$port konfiguriert, '
-            'System-Validierung fehlgeschlagen, Verbindung abgelehnt.',
+            '[CERT_PINNING] Keine Pins für $certHost:$port konfiguriert - '
+            'Verbindung abgelehnt (fail-closed).',
           );
         }
         return false;
@@ -194,19 +252,54 @@ class CertPinning {
     };
     return client;
   }
+}
+
+/// Ein gepinnter Host: Pins, Leaf-Gültigkeit und erwarteter Aussteller.
+class _PinnedHost {
+  const _PinnedHost({
+    required this.pins,
+    required this.leafNotBefore,
+    required this.leafNotAfter,
+    required this.issuer,
+  });
+
+  /// Die DER-Hashes (SHA-256, base64). Mindestens EIN Pin muss passen.
+  final List<String> pins;
+
+  /// Beginn der Gültigkeit des gepinnten Leaf-Zertifikats.
+  final _Datum leafNotBefore;
+
+  /// Ende der Gültigkeit des gepinnten Leaf-Zertifikats.
+  final _Datum leafNotAfter;
+
+  /// Erwartete Bestandteile des Leaf-Ausstellers (CN + Organisation).
+  final List<String> issuer;
+
+  /// Ist das Rotationsfenster geöffnet?
+  ///
+  /// DER GRUND (Audit 16.11.2026): Der Fallback war dauerhaft offen und
+  /// hat den Leaf-Pin damit entwertet. Jetzt ist er nur um das
+  /// Ablaufdatum des gepinnten Leafs geöffnet - dort rotieren die
+  /// Zertifikate. Außerhalb gilt der Leaf-Pin ohne Ausnahme.
+  bool rotationWindowOpen(DateTime now) {
+    final from = leafNotAfter.toDateTime().subtract(
+      const Duration(days: CertPinning._rotationLeadDays),
+    );
+    final to = leafNotAfter.toDateTime().add(
+      const Duration(days: CertPinning._rotationGraceDays),
+    );
+    return !now.isBefore(from) && !now.isAfter(to);
+  }
 
   /// Prüft den Rotation-Fallback: Zertifikat muss
   /// 1. vom erwarteten Intermediate (exakter CN + Organisation, Audit M-9),
   /// 2. für den Ziel-Host und
   /// 3. innerhalb seines Gültigkeitszeitraums ausgestellt sein.
-  static bool _issuerFallbackMatches(
-    String targetHost,
-    X509Certificate cert,
-    String certHost,
-  ) {
-    final expectedComponents = _pinnedIssuerByHost[targetHost];
-    if (expectedComponents == null) return false;
-
+  bool issuerFallbackMatches({
+    required String targetHost,
+    required X509Certificate cert,
+    required String certHost,
+  }) {
     final hostOk = certHost.toLowerCase() == targetHost.toLowerCase();
     // Whitespace normalisieren, Kleinbuchstaben; ALLE Komponenten müssen
     // enthalten sein (CN des konkreten Intermediates + Organisation).
@@ -214,11 +307,22 @@ class CertPinning {
       RegExp(r'\s+'),
       ' ',
     );
-    final issuerOk = expectedComponents.every(issuerNormalized.contains);
+    final issuerOk = issuer.every(issuerNormalized.contains);
     final now = DateTime.now();
     final validityOk =
         cert.startValidity.isBefore(now) && cert.endValidity.isAfter(now);
 
     return hostOk && issuerOk && validityOk;
   }
+}
+
+/// Ein Datum ohne Uhrzeit (UTC) – für Zertifikats-Gültigkeiten.
+class _Datum {
+  const _Datum(this.year, this.month, this.day);
+
+  final int year;
+  final int month;
+  final int day;
+
+  DateTime toDateTime() => DateTime.utc(year, month, day);
 }

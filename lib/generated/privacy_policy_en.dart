@@ -776,12 +776,16 @@ const List<PrivacyBlock> kPrivacyPolicyEn = <PrivacyBlock>[
   ),
   PrivacyBlock(
     'p',
-    'The erasure is **irreversible** - there is no restore. Where the other party is affected as well, this is stated for the respective category: deleting a spark also ends the chat for the other person; received messages are data of the other person and disappear there.',
+    'The erasure is **irreversible** - there is no restore in the app. Where the other party is affected as well, this is stated for the respective category: deleting a spark also ends the chat for the other person; received messages are data of the other person and disappear there.',
+  ),
+  PrivacyBlock(
+    'p',
+    '**Note on backups of the hosting provider:** Our hosting provider (Supabase) creates automatic backups of the database for its own recovery and can restore data within a short, contractually defined window (point-in-time recovery). These backups are overwritten for good once that window has passed. We therefore delete your data there as well - but the deletion does not happen instantly, it happens within that technically required window.',
   ),
   PrivacyBlock('p', 'The erasure takes place on the server immediately.'),
   PrivacyBlock(
     'li',
-    'When the in-app function **"Delete account"** is executed (under Privacy & account, with 2FA confirmation), all personal data on the servers is removed promptly and irreversibly: profile, message metadata, likes/matches, report references, device list, push token, Signal prekeys and storage files (avatar/audio).',
+    'When the in-app function **"Delete account"** is executed (under Privacy & account, with 2FA confirmation), all personal data on the servers is removed promptly: profile, message metadata, likes/matches, report references, device list, push token, Signal prekeys and storage files (avatar/audio).',
   ),
   PrivacyBlock(
     'li',

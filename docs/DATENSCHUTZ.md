@@ -492,17 +492,25 @@ Meldungen und Fehlerberichte, Transit-Spark-Daten sowie die elterliche
 Freigabe. „Alle Daten löschen" entfernt sämtliche Daten zum Konto und
 lässt das Konto selbst bestehen.
 
-Die Löschung ist **unwiderruflich** – es gibt kein Wiederherstellen.
+Die Löschung ist **unwiderruflich** – es gibt in der App kein Wiederherstellen.
 Was auch die Gegenseite betrifft, steht bei der jeweiligen Kategorie:
 Funken zu löschen beendet den Chat auch für die andere Person;
 empfangene Nachrichten sind Daten der anderen Person und verschwinden
 dort.
 
+**Hinweis zu Backups des Hosting-Anbieters:** Unser Hosting-Anbieter
+(Supabase) fertigt zur eigenen Wiederherstellung automatische Sicherungen
+der Datenbank an und kann Daten innerhalb eines kurzen, vertraglich
+geregelten Zeitfensters (Point-in-Time-Recovery) wiederherstellen. Diese
+Sicherungen werden nach Ablauf dieses Fensters endgültig überschrieben. Wir
+löschen deine Daten also auch dort – der Widerruf geschieht jedoch nicht
+augenblicklich, sondern innerhalb dieses technisch bedingten Fensters.
+
 Die Löschung erfolgt unmittelbar auf dem Server.
 
 - Bei Ausführung der In-App-Funktion **„Account löschen"** (unter
   Datenschutz & Account, mit 2FA-Bestätigung) werden alle
-  personenbezogenen Daten auf den Servern unverzüglich und unwiderruflich
+  personenbezogenen Daten auf den Servern unverzüglich
   entfernt: Profil, Nachrichten-Metadaten, Likes/Matches, Reports-Bezug,
   Geräte-Liste, Push-Token, Signal-PreKeys und Storage-Dateien
   (Avatar/Audio).

@@ -482,6 +482,19 @@ Future<void> _initializeSupabase() async {
       .split('/')
       .first;
 
+  // SICHERHEIT (Audit 16.11.2026): Ist der konfigurierte Host NICHT
+  // gepinnt, arbeitet die App ab hier mit einem fail-closed-Client
+  // (jede TLS-Verbindung wird abgelehnt - das ist die gewollte Haltung:
+  // ein unbekannter Host darf nicht ueber den System-Trust laufen).
+  // Damit das nicht still passiert, wird es hier laut.
+  if (!CertPinning.isPinnedHost(supabaseHost)) {
+    debugPrint(
+      '[MAIN] ACHTUNG: $supabaseHost ist NICHT gepinnt - alle '
+      'Serververbindungen werden abgebrochen (fail-closed). Pins eintragen: '
+      'dart run tool/rotate_cert_pins.dart',
+    );
+  }
+
   try {
     await Supabase.initialize(
       url: supabaseUrl,
