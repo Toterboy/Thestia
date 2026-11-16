@@ -71,6 +71,25 @@ void main() {
       );
     });
 
+    // Der ICE-Rueckfall (Audit 16.11.2026): Die oeffentlichen
+    // STUN-Server sind ueber den Build-Wert ICE_FALLBACK_URLS
+    // abschaltbar. Leer = keine fremden STUN-Server - das ist der
+    // Zustand, wenn Thestia einen eigenen TURN-Server betreibt.
+    test('die ICE-Ersatzliste kommt aus dem Build-Wert', () {
+      expect(
+        WebRTCService.parseIceFallbackUrls(
+          'stun:a.example.de:3478, stun:b.example.de:3478',
+        ),
+        [
+          {'urls': 'stun:a.example.de:3478'},
+          {'urls': 'stun:b.example.de:3478'},
+        ],
+      );
+      // Leer heisst: KEINE oeffentlichen STUN-Server.
+      expect(WebRTCService.parseIceFallbackUrls(''), isEmpty);
+      expect(WebRTCService.parseIceFallbackUrls('   '), isEmpty);
+    });
+
     test('wirft StateError bei leerer Liste', () {
       expect(
         () => WebRTCService.parseIceConfig('{"iceServers":[]}'),

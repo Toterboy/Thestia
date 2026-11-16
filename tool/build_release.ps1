@@ -151,9 +151,17 @@ if (Test-Path -LiteralPath $EnvFile) {
             $key = $Matches[1]
             $val = $Matches[2].Trim('"').Trim("'")
             # Nur die vier oeffentlichen Konfigurationswerte - KEINE Secrets.
+            #
+            # ICE_FALLBACK_URLS: die oeffentlichen STUN-Server als
+            # Rueckfall fuer den Verbindungsaufbau (siehe
+            # docs/TURN-SERVER.md). LEER = keine oeffentlichen STUN-
+            # Server - der Zustand, wenn Thestia einen eigenen TURN-
+            # Server betreibt (dann soll die IP-Adresse niemand fremdes
+            # sehen). Der Wert darf deshalb auch leer sein; dann wird
+            # das Define mit einem leeren Wert durchgereicht.
 if ($key -in @("SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY",
                            "CAPTCHA_PROVIDER", "CAPTCHA_SITEKEY",
-                           "LIBERAPAY_URL")) {
+                           "LIBERAPAY_URL", "ICE_FALLBACK_URLS")) {
                 $ConfigDefines += "--dart-define=$key=$val"
             }
         }

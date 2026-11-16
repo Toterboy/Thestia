@@ -346,6 +346,10 @@ const List<PrivacyBlock> kPrivacyPolicyEn = <PrivacyBlock>[
   ),
   PrivacyBlock(
     'li',
+    '**There is currently no TURN relay server.** To set up the direct connection, the app asks public STUN servers for your public IP address (nextcloud/Hetzner, miwifi/OVH, voipgate, voipstunt - see section 6). A TURN relay would only be needed if two devices behind very restrictive networks cannot establish a direct connection - then the operator\'s relay fallback takes over. **What this means for you:** if the direct connection does not come up, the operator sees **who is chatting with whom** (time, duration, direction) - but **never** the content. During the STUN lookup, the respective STUN operator sees your public IP address and nothing else.',
+  ),
+  PrivacyBlock(
+    'li',
     'Identity and session keys are kept in the encrypted device keystore (Android Keystore / iOS Keychain).',
   ),
   PrivacyBlock(

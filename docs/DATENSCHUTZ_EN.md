@@ -139,6 +139,16 @@ nor any intermediary servers can view the message contents.
   encryption is end-to-end and identical in both cases - the server
   never sees or processes any plaintext. This has no effect on the
   connection quality, and none on privacy either.
+- **There is currently no TURN relay server.** To set up the direct
+  connection, the app asks public STUN servers for your public IP
+  address (nextcloud/Hetzner, miwifi/OVH, voipgate, voipstunt - see
+  section 6). A TURN relay would only be needed if two devices behind
+  very restrictive networks cannot establish a direct connection - then
+  the operator's relay fallback takes over. **What this means for you:**
+  if the direct connection does not come up, the operator sees **who is
+  chatting with whom** (time, duration, direction) - but **never** the
+  content. During the STUN lookup, the respective STUN operator sees
+  your public IP address and nothing else.
 - Identity and session keys are kept in the encrypted device keystore
   (Android Keystore / iOS Keychain).
 - An optional, **password-encrypted key backup** (PBKDF2 + AES-256-GCM)

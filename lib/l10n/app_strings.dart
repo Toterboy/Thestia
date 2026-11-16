@@ -2964,7 +2964,16 @@ const Map<String, Map<String, String>> _strings = {
         'Push-Benachrichtigungen - nur in der Play-Store-Fassung '
         '(Firebase); im F-Droid-Build läuft UnifiedPush',
     'privacy.processorBrevo': 'Transaktions-E-Mails (Bestätigung, Reset)',
-    'privacy.processorCloudflare': 'CAPTCHA (Turnstile) und TURN-Relay',
+    'privacy.processorCloudflare': 'CAPTCHA (Turnstile)',
+    'privacy.processorStun':
+        'Ermittlung der öffentlichen IP-Adresse für die Direktverbindung '
+        '(STUN) - keine Chat-Inhalte',
+    'privacy.noTurnTitle': 'Kein TURN-Relay-Server',
+    'privacy.noTurnSub':
+        'Die Verbindung zwischen zwei Geräten entsteht direkt. Kommt sie '
+        'nicht zustande, läuft der Chat verschlüsselt über den Server '
+        'des Betreibers - der sieht dann, wer mit wem schreibt, aber '
+        'nicht den Inhalt.',
     'privacy.processorNetlify': 'Hosting der Anmelde-/CAPTCHA-Seite',
     'privacy.consent': 'Einwilligungen',
     'privacy.location': 'Standortfreigabe',
@@ -6296,7 +6305,17 @@ const Map<String, Map<String, String>> _strings = {
         'Push notifications - Play Store build only (Firebase); the '
         'F-Droid build uses UnifiedPush',
     'privacy.processorBrevo': 'Transactional emails (confirmation, reset)',
-    'privacy.processorCloudflare': 'CAPTCHA (Turnstile) and TURN relay',
+    'privacy.processorCloudflare': 'CAPTCHA (Turnstile)',
+    'privacy.processorStun':
+        'Determination of your public IP address for the direct connection '
+        '(STUN) - no chat contents',
+    'privacy.noTurnTitle': 'No TURN relay server',
+    'privacy.noTurnSub':
+        'The connection between two devices is established directly. If it '
+        'does not come up, the chat runs encrypted through the '
+        'operator'
+        's server - which then sees who is chatting with '
+        'whom, but not the contents.',
     'privacy.processorNetlify': 'Hosting of the auth/CAPTCHA page',
     'privacy.consent': 'Consents',
     'privacy.location': 'Location sharing',

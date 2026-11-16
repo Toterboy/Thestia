@@ -227,6 +227,7 @@ docs/*
 !docs/DATENSCHUTZ.md
 !docs/DATENSCHUTZ_EN.md
 !docs/WEBSITE-HOSTING.md
+!docs/TURN-SERVER.md
 
 # Der komplette releases-Ordner gehoert NIE ins Repository: er
 # enthaelt die gebauten APKs und AABs (mehrere hundert MB pro Datei)

@@ -244,7 +244,12 @@ Alterssperre für Transit Spark (Migration 131) umgehen. Details:
   (PreKeys, Sessions)
 - **Peer-to-Peer-Verbindung** (WebRTC) mit Peer-Pinning im Signaling-Routing;
   ICE-Server werden dynamisch über die Supabase-Edge-Function `ice-config`
-  geladen (EU-Fallback ohne Google)
+  geladen (EU-Fallback ohne Google). **Es gibt derzeit keinen
+  TURN-Relay-Server:** Für den Aufbau der Direktverbindung fragt die App die
+  öffentliche IP-Adresse bei öffentlichen STUN-Servern ab (die sehen diese
+  IP-Adresse, nie einen Nachrichtentext). Kommt die Direktverbindung nicht
+  zustande, läuft der Chat Ende-zu-Ende-verschlüsselt über den Server des
+  Betreibers - der sieht dann, wer mit wem schreibt, nicht den Inhalt.
 - **Zustell-Reserve**: Kommt kein direkter Kanal zustande (Mobilfunk/CGNAT),
   läuft der Chat E2E-verschlüsselt über das Supabase-Relay weiter (Wake-up-Ping
   + Polling); P2P im selben WLAN nutzt Klartext-Host-Kandidaten
@@ -341,7 +346,8 @@ Alterssperre für Transit Spark (Migration 131) umgehen. Details:
 - **Privacy-Screen**: echte JSON-Exportfunktion (Profil, Einstellungen,
   Präferenzen, Mood) zum Teilen/Speichern, Daten-Import (JSON wieder
   einspielbar) sowie Auflistung der Auftragsverarbeiter (Supabase,
-  Google/Firebase, Brevo, Cloudflare, Netlify)
+  Google/Firebase, Brevo, Cloudflare, Netlify, die STUN-Server für den
+  Verbindungsaufbau)
 - **Zweisprachig (DE/EN)**: Die App ist komplett zweisprachig – inklusive
   Farbschemata, Stimmungs-Chips und Entdecken-Modi; auf Deutsch heißt es
   konsequent „Funke(n)", auf Englisch „Spark(s)"
@@ -425,8 +431,9 @@ Alterssperre für Transit Spark (Migration 131) umgehen. Details:
 ### Betrieb
 
 - **Cert Pinning** für Supabase- und Hugging-Face-Endpunkte (per-Host-Map,
-  unbekannte Hosts fail-open mit Warnung); auch Signaling-/ICE-Aufrufe nutzen
-  den gepinnten Client.
+  **unbekannte Hosts werden abgewiesen** - fail-closed, kein System-Trust);
+  auch Signaling-/ICE-Aufrufe nutzen den gepinnten Client. Der Pin wird
+  von einem CI-Schritt gegen das Live-Zertifikat geprüft.
 - **PreKey-Bundles** sind nur mit gültigem Nutzer-JWT abrufbar (keine
   User-Enumeration per Anon-Key).
 - **Härtete SQL-Schicht**: RLS auf allen Tabellen, SECURITY DEFINER-Funktionen

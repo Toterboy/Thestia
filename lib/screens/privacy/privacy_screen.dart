@@ -77,9 +77,29 @@ class PrivacyScreen extends ConsumerWidget {
         {'name': 'Supabase Inc.', 'purpose': 'Hosting, Datenbank, Auth'},
         {'name': 'Google LLC (Firebase)', 'purpose': 'Push-Benachrichtigungen'},
         {'name': 'Brevo', 'purpose': 'Transaktions-E-Mails'},
-        {'name': 'Cloudflare Inc.', 'purpose': 'CAPTCHA (Turnstile), TURN'},
+        {'name': 'Cloudflare Inc.', 'purpose': 'CAPTCHA (Turnstile)'},
         {'name': 'Netlify Inc.', 'purpose': 'Hosting Auth-/CAPTCHA-Seite'},
-        // BEFUND (16.11.2026, gefunden von einem Test): Hier stand
+        // BEFUND (16.11.2026, Audit): Die vier oeffentlichen STUN-Server
+        // sehen beim Aufbau der Direktverbindung die oeffentliche
+        // IP-Adresse des Nutzers - das ist eine Verarbeitung im Auftrag
+        // und gehoert in den Export. Ebenso der Hinweis, dass es derzeit
+        // KEINEN TURN-Relay gibt (die Liste behauptete vorher, Cloudflare
+        // betreibe TURN - das war falsch).
+        {
+          'name': 'Nextcloud, OVH, VoIPGate, VoIPStunt',
+          'purpose':
+              'STUN: Ermittlung der oeffentlichen IP-Adresse fuer '
+              'die Direktverbindung (keine Inhalte)',
+        },
+        {
+          'name': 'Hinweis zum TURN-Relay',
+          'purpose':
+              'Es gibt derzeit keinen TURN-Relay-Server. Kommt die '
+              'Direktverbindung nicht zustande, laeuft der Chat ueber den '
+              'Server des Betreibers - der sieht dann, wer mit wem '
+              'schreibt, nicht aber den Inhalt.',
+        },
+        // BEFUND (14.11.2026, Betreiber): Hier stand
         // "Apple Inc. (App-Store-Verteilung)" - der Datenschutz-Screen
         // sagt aber (seit 14.11.2026, auf Wunsch des Betreibers), dass
         // es KEINE App-Store-Verteilung gibt. Der Export widersprach
@@ -615,6 +635,26 @@ class PrivacyScreen extends ConsumerWidget {
             leading: const Icon(Icons.language_outlined),
             title: const Text('Netlify Inc.'),
             subtitle: Text(L10n.t(context, 'privacy.processorNetlify')),
+          ),
+          // BEFUND (16.11.2026, Audit): Hier stand kein STUN-Dienst -
+          // obwohl vier oeffentliche STUN-Server beim Direktverbindungs-
+          // Aufbau die oeffentliche IP-Adresse des Nutzers sehen. Das
+          // ist eine Verarbeitung im Auftrag (Art. 28 DSGVO) und
+          // gehoert in die Liste.
+          ListTile(
+            leading: const Icon(Icons.router_outlined),
+            title: const Text('Nextcloud, OVH, VoIPGate, VoIPStunt'),
+            subtitle: Text(L10n.t(context, 'privacy.processorStun')),
+          ),
+          // Der Hinweis auf den fehlenden TURN-Relay: Die Direkt-
+          // verbindung kommt ohne fremden Relay-Server aus. Kommt sie
+          // nicht zustande, laeuft der Chat ueber den Server des
+          // Betreibers - der sieht dann, wer mit wem schreibt (nicht
+          // den Inhalt).
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: Text(L10n.t(context, 'privacy.noTurnTitle')),
+            subtitle: Text(L10n.t(context, 'privacy.noTurnSub')),
           ),
           // BEFUND (14.11.2026, Betreiber): "apple bei auftragsverarbeiter
           // ist aktuell falsch, da ich es dort nicht anbiete aktuell."

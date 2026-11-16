@@ -142,6 +142,16 @@ Nachrichteninhalte einsehen.
   Server sieht und verarbeitet in keinem Fall Klartext. Auf die
   Verbindungsqualität hat das keinen Einfluss, auf die Privatsphäre
   ebenso wenig.
+- **Es gibt derzeit keinen TURN-Relay-Server.** Für den Aufbau der
+  Direktverbindung fragt die App die öffentliche IP-Adresse bei
+  öffentlichen STUN-Servern ab (nextcloud/Hetzner, miwifi/OVH, voipgate,
+  voipstunt – Abschnitt 6). Ein TURN-Relay wäre nur nötig, wenn zwei
+  Geräte hinter sehr restriktiven Netzen keine direkte Verbindung
+  zustande bringen – dann greift der Relay-Fallback des Betreibers.
+  **Was das für dich heißt:** Kommt die Direktverbindung nicht zustande,
+  sieht der Betreiber, **wer mit wem** schreibt (Uhrzeit, Dauer, Richtung)
+  – **nicht** den Inhalt. Beim STUN-Aufruf sieht der jeweilige
+  STUN-Betreiber deine öffentliche IP-Adresse; mehr nicht.
 - Identitäts- und Sitzungsschlüssel werden im verschlüsselten
   Geräte-Keystore (Android Keystore / iOS Keychain) gehalten.
 - Ein optionales, **passwortverschlüsseltes Key-Backup** (PBKDF2 +

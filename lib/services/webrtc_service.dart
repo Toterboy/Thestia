@@ -40,12 +40,36 @@ class WebRTCService {
   /// Nutzer-Hinweis: random.errorConnectTimeout. Falls später TURN
   /// gewünscht ist: ice-config Edge Function um kurzlebige TURN-REST-
   /// Credentials erweitern (siehe Git-Historie).
-  static final List<Map<String, dynamic>> _fallbackIceServers = [
-    {'urls': 'stun:stun.nextcloud.com:443'}, // Hetzner, DE
-    {'urls': 'stun:stun.miwifi.com:3478'}, // OVH, FR
-    {'urls': 'stun:stun.voipgate.com:3478'}, // DE
-    {'urls': 'stun:stun.voipstunt.com:3478'}, // NL
-  ];
+  ///
+  /// DER WEG (16.11.2026): Die Liste kommt aus dem **Build**
+  /// (`ICE_FALLBACK_URLS`). Ist der Wert leer, werden **keine**
+  /// oeffentlichen STUN-Server angefragt - das ist der Zustand, wenn
+  /// Thestia einen eigenen TURN-Server betreibt: dann soll die
+  /// oeffentliche IP-Adresse niemand fremdes sehen. Anleitung:
+  /// `docs/TURN-SERVER.md`.
+  static final List<Map<String, dynamic>> _fallbackIceServers =
+      parseIceFallbackUrls(
+        const String.fromEnvironment(
+          'ICE_FALLBACK_URLS',
+          defaultValue:
+              'stun:stun.nextcloud.com:443,stun:stun.miwifi.com:3478,'
+              'stun:stun.voipgate.com:3478,stun:stun.voipstunt.com:3478',
+        ),
+      );
+
+  /// Zerlegt die Build-Liste der ICE-Ersatzserver.
+  ///
+  /// Leer (oder nur Leerzeichen) -> **keine** Ersatzserver: der Aufbau
+  /// nutzt dann ausschliesslich die Konfiguration der Edge Function.
+  @visibleForTesting
+  static List<Map<String, dynamic>> parseIceFallbackUrls(String raw) {
+    return raw
+        .split(',')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .map((e) => <String, dynamic>{'urls': e})
+        .toList();
+  }
 
   /// Cache für die dynamisch geladene ICE-Konfiguration (H-03).
   List<Map<String, dynamic>>? _cachedIceServers;

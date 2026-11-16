@@ -152,38 +152,60 @@ void main() {
   // BEVOR das Teilen (share_plus) kommt; im Test scheitert das Teilen
   // (kein Plugin), die Datei muss trotzdem da sein.
 
+  /// Tippt den Export-Knopf und liefert die geparste Datei.
+  ///
+  /// Das Schreiben der Datei braucht echte Zeit - und die Datei kann
+  /// noch leer sein, wenn sie gerade geschrieben wird.
+  Future<Map<String, dynamic>> holeExport(WidgetTester tester) async {
+    // DER ORDNER BLEIBT UEBER DIE TESTS HINWEG: Der Pfad-Mock legt bei
+    // jedem Testlauf einen neuen Temp-Ordner an, aber der Export sucht
+    // in ALLEN nach der Datei. Eine alte Datei (mit dem Inhalt des
+    // vorherigen Laufs) wuerde sonst gelesen - der Test pruefte dann
+    // uralte Daten. Deshalb wird sie vorher geloescht.
+    for (final ordner
+        in Directory.systemTemp.listSync().whereType<Directory>()) {
+      if (!ordner.path.contains('thesia_test_pfad')) continue;
+      try {
+        for (final datei in ordner.listSync().whereType<File>()) {
+          if (datei.path.endsWith('thestia_data_export.json')) {
+            datei.deleteSync();
+          }
+        }
+      } catch (e) {
+        // Der Ordner ist nicht lesbar - dann gibt es hier nichts.
+        debugPrint('[Test] Der Temp-Ordner ist nicht lesbar: $e');
+      }
+    }
+
+    await scrolleZu(tester, L10n.tWithoutContext('privacy.export'));
+    final knopf = find.text(L10n.tWithoutContext('privacy.export'));
+    await tester.ensureVisible(knopf);
+    await tester.pump();
+    await tester.tap(knopf);
+    await tester.pump();
+    File? export;
+    for (var i = 0; i < 10; i++) {
+      await tester.runAsync(() async {
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      });
+      await tester.pump(const Duration(milliseconds: 120));
+      export = _exportDatei();
+      if (export != null && export.lengthSync() > 0) break;
+    }
+    expect(export, isNotNull, reason: 'Der Export muss eine Datei anlegen.');
+    return jsonDecode(export!.readAsStringSync()) as Map<String, dynamic>;
+  }
+
   group('Der Datenexport', () {
     testWidgets('die Exportdatei enthaelt die Daten und keine Chats', (
       tester,
     ) async {
       await zeigeScreen(tester);
 
-      await scrolleZu(tester, L10n.tWithoutContext('privacy.export'));
-      final knopf = find.text(L10n.tWithoutContext('privacy.export'));
-      await tester.ensureVisible(knopf);
-      await tester.pump();
-      await tester.tap(knopf);
-      await tester.pump();
-      // Das Schreiben der Datei braucht echte Zeit - und die Datei kann
-      // noch leer sein, wenn sie gerade geschrieben wird.
-      File? export;
-      for (var i = 0; i < 10; i++) {
-        await tester.runAsync(() async {
-          await Future<void>.delayed(const Duration(milliseconds: 100));
-        });
-        await tester.pump(const Duration(milliseconds: 120));
-        export = _exportDatei();
-        if (export != null && export.lengthSync() > 0) break;
-      }
+      final inhalt = await holeExport(tester);
 
       expect(tester.takeException(), isNull);
 
-      // Die Datei liegt im gemockten Temp-Ordner (der Pfad-Kanal
-      // antwortet mit einem eigenen Ordner).
-      expect(export, isNotNull, reason: 'Der Export muss eine Datei anlegen.');
-
-      final inhalt =
-          jsonDecode(export!.readAsStringSync()) as Map<String, dynamic>;
       // Die eigenen Daten sind drin.
       expect(inhalt['app'], 'Thestia');
       expect(inhalt.containsKey('profile'), isTrue);
@@ -203,6 +225,37 @@ void main() {
       // Und der Hinweis, dass die Chats NICHT exportiert werden.
       expect(inhalt['note'], isNotNull);
       expect(inhalt.containsKey('chats'), isFalse);
+    });
+
+    // BEFUND (16.11.2026, Audit): Die Liste nannte weder die
+    // STUN-Server noch den fehlenden TURN-Relay. Die vier oeffentlichen
+    // STUN-Server sehen beim Verbindungsaufbau die oeffentliche
+    // IP-Adresse des Nutzers - das ist eine Verarbeitung im Auftrag und
+    // gehoert in die Liste.
+    testWidgets('der Export nennt die STUN-Server und das fehlende TURN', (
+      tester,
+    ) async {
+      await zeigeScreen(tester);
+      final inhalt = await holeExport(tester);
+
+      final namen = (inhalt['processors'] as List<dynamic>)
+          .cast<Map<String, dynamic>>()
+          .map((p) => p['name'] as String)
+          .toList();
+      expect(
+        namen.any((n) => n.contains('Nextcloud') && n.contains('OVH')),
+        isTrue,
+        reason:
+            'Die STUN-Server sehen die oeffentliche IP-Adresse des Nutzers - '
+            'sie gehoeren als Auftragsverarbeiter in die Liste.',
+      );
+      expect(
+        namen.any((n) => n.contains('TURN')),
+        isTrue,
+        reason:
+            'Es gibt keinen TURN-Relay - das muss im Export stehen, damit '
+            'der Nutzer weiss, dass es keinen gibt.',
+      );
     });
   });
 
