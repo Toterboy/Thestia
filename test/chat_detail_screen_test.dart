@@ -142,7 +142,11 @@ late supabase.SupabaseClient _moodClient;
 ///
 /// [hinweisGesehen] steuert den Hinweis auf den Chat-Hintergrund (v0.10.0):
 /// beim ersten Chat kommt er, sonst nicht.
-List<Override> _overrides(ChatNotifier notifier, {bool hinweisGesehen = true}) {
+List<Override> _overrides(
+  ChatNotifier notifier, {
+  bool hinweisGesehen = true,
+  bool unscharfeBilder = false,
+}) {
   final storage = _FakeLocalStorage();
   // Der Hinweis auf den Chat-Hintergrund (v0.10.0) kommt beim ersten
   // Chat - im Test stoert er nur, also ist er als "gesehen" markiert.
@@ -150,6 +154,17 @@ List<Override> _overrides(ChatNotifier notifier, {bool hinweisGesehen = true}) {
     storage.saveString(
       AppConstants.prefsSettingsKey,
       jsonEncode(<String, dynamic>{'chatBackgroundSeen': true}),
+    );
+  }
+  // Die Bilder der Gegenseite zuerst unscharf (Schutz vor
+  // unangemessenen Inhalten) - das kommt aus den Einstellungen.
+  if (unscharfeBilder) {
+    storage.saveString(
+      AppConstants.prefsSettingsKey,
+      jsonEncode(<String, dynamic>{
+        'chatBackgroundSeen': true,
+        'blurChatImages': true,
+      }),
     );
   }
   return [
@@ -170,12 +185,17 @@ Future<void> _pump(
   Widget kind,
   ChatNotifier notifier, {
   bool hinweisGesehen = true,
+  bool unscharfeBilder = false,
 }) async {
   SharedPreferences.setMockInitialValues(<String, Object>{});
   await SharedPreferences.getInstance();
   await tester.pumpWidget(
     ProviderScope(
-      overrides: _overrides(notifier, hinweisGesehen: hinweisGesehen),
+      overrides: _overrides(
+        notifier,
+        hinweisGesehen: hinweisGesehen,
+        unscharfeBilder: unscharfeBilder,
+      ),
       child: MaterialApp(theme: ThemeData(useMaterial3: true), home: kind),
     ),
   );
@@ -549,6 +569,131 @@ void main() {
 
       await tester.pumpWidget(const SizedBox());
     });
+
+    testWidgets('ein unscharfes Bild laesst sich freigeben', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // Die Bilder der Gegenseite sind zuerst unscharf (Schutz vor
+      // unangemessenen Inhalten) - das kommt aus den Einstellungen.
+      final service = ChatService();
+      final match = service.createMatch(_partner());
+      service.addMessage(
+        match.id,
+        Message(
+          id: 'm_bild',
+          senderId: 'partner-1',
+          receiverId: 'ich',
+          text: '',
+          type: MessageType.image,
+          mediaUrl: 'https://example.de/foto.jpg',
+          timestamp: DateTime.now(),
+        ),
+      );
+      await _pump(
+        tester,
+        ChatDetailScreen(matchId: match.id),
+        ChatNotifier(service),
+        unscharfeBilder: true,
+      );
+
+      expect(tester.takeException(), isNull);
+      // DIE SEMANTICS: Im Widget-Test sind sie aus - ohne
+      // `ensureSemantics()` findet der Test kein Label. Der Handle wird
+      // am Ende des Testkoerpers freigegeben (der tearDown laeuft zu
+      // spaet - das Test-Framework prueft vorher auf offene Handles).
+      final semantics = tester.ensureSemantics();
+
+      // Solange das Bild nicht freigegeben ist, ist es unscharf.
+      // (Der Text ist mehrzeilig - darum der RegExp statt des exakten
+      // Labels.)
+      expect(
+        find.bySemanticsLabel(RegExp('Verpixelte')),
+        findsWidgets,
+        reason:
+            'Das Bild der Gegenseite ist zuerst unscharf - der Nutzer '
+            'soll es bewusst freigeben.',
+      );
+
+      // Lange druecken -> das Aktionsmenue mit "Anzeigen".
+      await tester.longPress(find.byIcon(Icons.image).first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        find.text(L10n.tWithoutContext('chat.revealAction')),
+        findsWidgets,
+        reason: 'Ein unscharfes Bild laesst sich freigeben.',
+      );
+
+      // Und die Freigabe wird noch einmal bestaetigt (der Nutzer soll
+      // nicht aus Versehen fremde Bilder sehen).
+      await tester.tap(find.text(L10n.tWithoutContext('chat.revealAction')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.byType(AlertDialog), findsOneWidget);
+
+      await tester.tap(
+        find.widgetWithText(
+          FilledButton,
+          L10n.tWithoutContext('chat.revealAction'),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(tester.takeException(), isNull);
+      // Jetzt ist es scharf - das Bild ist freigegeben.
+      expect(find.bySemanticsLabel(RegExp('Bildnachricht')), findsWidgets);
+      expect(
+        find.bySemanticsLabel(RegExp('Verpixelte')),
+        findsNothing,
+        reason: 'Nach der Freigabe ist das Bild nicht mehr verpixelt.',
+      );
+
+      semantics.dispose();
+    });
+
+    testWidgets(
+      'ein bereits angesehenes View-Once-Bild zeigt den Platzhalter',
+      (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final service = ChatService();
+        final match = service.createMatch(_partner());
+        service.addMessage(
+          match.id,
+          Message(
+            id: 'm_once',
+            senderId: 'partner-1',
+            receiverId: 'ich',
+            text: '',
+            type: MessageType.image,
+            mediaUrl: 'https://example.de/einmal.jpg',
+            viewOnce: true,
+            viewed: true,
+            timestamp: DateTime.now(),
+          ),
+        );
+        await _pump(
+          tester,
+          ChatDetailScreen(matchId: match.id),
+          ChatNotifier(service),
+        );
+
+        expect(tester.takeException(), isNull);
+        // Das Bild ist weg - da steht der Platzhalter.
+        expect(
+          find.text(L10n.tWithoutContext('chat.viewedOnce')),
+          findsWidgets,
+          reason:
+              'Ein einmaliges Bild wird nach dem Ansehen nicht wieder '
+              'angezeigt.',
+        );
+      },
+    );
 
     testWidgets('das lange Druecken auf ein Bild zeigt die Aktionen', (
       tester,
