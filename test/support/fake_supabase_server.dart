@@ -193,6 +193,14 @@ class FakeSupabaseServer extends http.BaseClient {
     final gewaehlt = <String, dynamic>{};
     for (final spalte in select.split(',')) {
       final name = spalte.trim();
+      // DER STERN: "select=*" heisst "alle Spalten" - so liefert es
+      // der echte Server auch. Ohne das bekam der Admin-Bereich (der
+      // die Foto-Moderation mit "select=*, user:profiles(name)" holt)
+      // eine leere Liste und die Warteschlange sah immer leer aus.
+      if (name == '*') {
+        gewaehlt.addAll(zeile);
+        continue;
+      }
       if (zeile.containsKey(name)) gewaehlt[name] = zeile[name];
     }
     return <dynamic>[gewaehlt];

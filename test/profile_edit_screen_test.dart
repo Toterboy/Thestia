@@ -31,6 +31,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 // Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
+import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/providers/user_preferences_provider.dart';
@@ -305,6 +306,75 @@ void main() {
     server.rpcAntworten.clear();
     server.zeilen.clear();
     server.schreibvorgaenge.clear();
+  });
+
+  // Der Einspruch: Wenn der Admin ein beanstandetes Foto freigibt oder
+  // ablehnt, muss der Nutzer das erfahren - der Profil-Editor holt den
+  // Stand beim Oeffnen.
+  group('Der Einspruch gegen ein Foto', () {
+    testWidgets('eine Freigabe fragt nach, ob das Bild uebernommen wird', (
+      tester,
+    ) async {
+      server.rpcAntworten['get_my_photo_appeal'] = <String, dynamic>{
+        'id': 'appeal-1',
+        'status': 'approved',
+        'storagePath': 'einspruch/foto.jpg',
+      };
+
+      await _pump(tester, _profil);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text(L10n.tWithoutContext('profile.appeal.approvedTitle')),
+        findsOneWidget,
+        reason:
+            'Nach der Freigabe muss der Nutzer entscheiden, ob das Bild '
+            'sein Profilfoto wird.',
+      );
+    });
+
+    testWidgets('eine Ablehnung wird erklaert und quittiert', (tester) async {
+      server.rpcAntworten['get_my_photo_appeal'] = <String, dynamic>{
+        'id': 'appeal-2',
+        'status': 'rejected',
+        'storagePath': 'einspruch/foto.jpg',
+      };
+
+      await _pump(tester, _profil);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text(L10n.tWithoutContext('profile.appeal.rejectedTitle')),
+        findsOneWidget,
+        reason:
+            'Eine Ablehnung muss der Nutzer kennen - sonst wartet er '
+            'unendlich auf eine Entscheidung.',
+      );
+
+      // Der Dialog wartet, bis der Nutzer ihn wegklickt - erst DANACH
+      // wird die Entscheidung quittiert.
+      final ok = find.widgetWithText(
+        FilledButton,
+        L10n.tWithoutContext('profile.appeal.okBtn'),
+      );
+      expect(ok, findsOneWidget);
+      await tester.tap(ok);
+      await _pumpFrames(tester);
+      for (var i = 0; i < 5; i++) {
+        await tester.runAsync(() async {
+          await Future<void>.delayed(const Duration(milliseconds: 80));
+        });
+        await tester.pump(const Duration(milliseconds: 120));
+      }
+
+      // Und die Entscheidung wird quittiert - sonst kommt der Dialog
+      // bei jedem Oeffnen wieder.
+      expect(
+        server.pfade.any((p) => p.contains('acknowledge_photo_appeal')),
+        isTrue,
+        reason: 'Die Entscheidung muss dem Server gemeldet werden.',
+      );
+    });
   });
 
   group('Profil bearbeiten', () {

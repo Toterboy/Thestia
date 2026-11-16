@@ -61,6 +61,9 @@ void main() {
         detectSessionInUri: false,
       ),
     );
+    // ANGEMELDET: Die Freigabe eines Fotos braucht die eigene
+    // User-ID - ohne Sitzung passiert gar nichts.
+    await alsNutzerAnmelden(supabase.Supabase.instance.client, 'admin-1');
   });
 
   setUp(() {
@@ -165,6 +168,83 @@ void main() {
           reason: 'Der Reiter $etikett muss erreichbar sein.',
         );
       }
+    });
+
+    // Die Foto-Moderation: der Reiter zeigt die wartenden Fotos, und
+    // die Entscheidung geht an den Server.
+    group('Die Foto-Moderation', () {
+      /// Fuellt die Queue mit einer wartenden Meldung.
+      void queueVorbereiten() {
+        server.zeilen['photo_moderation'] = <String, dynamic>{
+          'id': 5,
+          'user_id': 'user-9',
+          'status': 'pending_review',
+          'photo_hash': 'abcdef0123456789',
+          'created_at': '2026-11-16T09:00:00Z',
+          'user': <String, dynamic>{'name': 'Jonas'},
+        };
+      }
+
+      /// Oeffnet den Reiter der Foto-Moderation.
+      Future<void> oeffneReiter(WidgetTester tester) async {
+        final etikett = L10n.tWithoutContext('admin.tabModeration');
+        await scrolleZuReiter(tester, etikett);
+        final pille = find.byKey(ValueKey('pill_tab_$etikett'));
+        expect(pille, findsOneWidget);
+        await tester.ensureVisible(pille);
+        await tester.pump();
+        await tester.tap(pille);
+        for (var i = 0; i < 12; i++) {
+          await tester.pump(const Duration(milliseconds: 150));
+        }
+        // Der Abruf der Queue braucht echte Zeit.
+        for (var i = 0; i < 5; i++) {
+          await tester.runAsync(() async {
+            await Future<void>.delayed(const Duration(milliseconds: 80));
+          });
+          await tester.pump(const Duration(milliseconds: 120));
+        }
+      }
+
+      testWidgets('die wartenden Fotos stehen da', (tester) async {
+        // DIE QUEUE VOR DEM AUFBAU: der Reiter laedt, sobald er
+        // geoeffnet wird - die Daten muessen dann schon da sein.
+        queueVorbereiten();
+        await zeigeScreen(tester);
+        await oeffneReiter(tester);
+
+        expect(tester.takeException(), isNull);
+        expect(
+          find.textContaining('Jonas'),
+          findsWidgets,
+          reason: 'Ein wartendes Foto muss im Reiter stehen.',
+        );
+      });
+
+      testWidgets('das Freigeben geht an den Server', (tester) async {
+        queueVorbereiten();
+        await zeigeScreen(tester);
+        await oeffneReiter(tester);
+
+        // Der Freigabe-Knopf (der gruene Haken).
+        final knopf = find.byIcon(Icons.check);
+        expect(knopf, findsWidgets);
+        await tester.tap(knopf.first);
+        for (var i = 0; i < 8; i++) {
+          await tester.pump(const Duration(milliseconds: 150));
+        }
+
+        expect(tester.takeException(), isNull);
+        // Der Server hat die Entscheidung bekommen.
+        expect(
+          server.schreibvorgaenge.any(
+            (v) =>
+                v['tabelle'] == 'photo_moderation' && v['status'] == 'approved',
+          ),
+          isTrue,
+          reason: 'Die Freigabe muss auf dem Server landen.',
+        );
+      });
     });
 
     testWidgets('jeder Reiter laesst sich oeffnen', (tester) async {

@@ -79,7 +79,14 @@ class PrivacyScreen extends ConsumerWidget {
         {'name': 'Brevo', 'purpose': 'Transaktions-E-Mails'},
         {'name': 'Cloudflare Inc.', 'purpose': 'CAPTCHA (Turnstile), TURN'},
         {'name': 'Netlify Inc.', 'purpose': 'Hosting Auth-/CAPTCHA-Seite'},
-        {'name': 'Apple Inc.', 'purpose': 'App-Store-Verteilung'},
+        // BEFUND (16.11.2026, gefunden von einem Test): Hier stand
+        // "Apple Inc. (App-Store-Verteilung)" - der Datenschutz-Screen
+        // sagt aber (seit 14.11.2026, auf Wunsch des Betreibers), dass
+        // es KEINE App-Store-Verteilung gibt. Der Export widersprach
+        // also dem Bildschirm und der veroeffentlichten Erklaerung.
+        //
+        // DER WEG: Die Liste nennt dieselben Auftragsverarbeiter wie
+        // der Bildschirm - ohne Apple.
       ],
     };
     final json = const JsonEncoder.withIndent('  ').convert(exportData);

@@ -54,9 +54,24 @@ class _GuardianSectionState extends ConsumerState<GuardianSection> {
     }
   }
 
+  /// Der Controller fuer die PIN-Eingabe.
+  ///
+  /// BEFUND (16.11.2026, gefunden von einem Test): Der Controller wurde
+  /// direkt nach dem Dialog freigegeben - der Dialog baut aber noch
+  /// weiter und benutzt ihn dabei ("A TextEditingController was used
+  /// after being disposed"). Deshalb lebt er jetzt als Feld und wird
+  /// erst beim Abbau des Abschnitts freigegeben.
+  final TextEditingController _pinCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _pinCtrl.dispose();
+    super.dispose();
+  }
+
   /// Fragt die PIN ab und schaltet die Bearbeitung frei.
   Future<void> _entsperren() async {
-    final controller = TextEditingController();
+    _pinCtrl.clear();
     final pin = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -69,7 +84,7 @@ class _GuardianSectionState extends ConsumerState<GuardianSection> {
             const SizedBox(height: 14),
             TextField(
               enableIMEPersonalizedLearning: false,
-              controller: controller,
+              controller: _pinCtrl,
               keyboardType: TextInputType.number,
               obscureText: true,
               maxLength: 4,
@@ -86,13 +101,12 @@ class _GuardianSectionState extends ConsumerState<GuardianSection> {
             child: Text(L10n.t(ctx, 'common.cancel')),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
+            onPressed: () => Navigator.of(ctx).pop(_pinCtrl.text.trim()),
             child: Text(L10n.t(ctx, 'common.ok')),
           ),
         ],
       ),
     );
-    controller.dispose();
     if (pin == null || !mounted) return;
     if (pin.length != 4) {
       _meldung(L10n.t(context, 'guardian.pinWrong'));
