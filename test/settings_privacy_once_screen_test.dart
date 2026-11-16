@@ -289,6 +289,58 @@ void main() {
       );
     });
 
+    testWidgets('der Weg durch alle zehn Schritte laeuft', (tester) async {
+      await zeigeScreen(tester);
+
+      // Schritt 1 (Filter) -> Schritt 2 (Profil).
+      await weiter(tester);
+
+      // Schritt 2: Bio und Interesse sind Pflicht.
+      await tester.enterText(
+        find.byType(TextFormField).first,
+        'Ich mag lange Spaziergaenge am Fluss.',
+      );
+      await pumpFrames(tester);
+      final chip = find.widgetWithText(FilterChip, 'Sport');
+      await tester.ensureVisible(chip);
+      await pumpFrames(tester);
+      await tester.tap(chip);
+      await pumpFrames(tester);
+      await weiter(tester);
+
+      // Schritt 3: Die Vorstellung (Text ist Pflicht, die Aufnahme nicht).
+      await tester.enterText(
+        find.byType(TextFormField).first,
+        'Ich bin gern draussen unterwegs.',
+      );
+      await pumpFrames(tester);
+      await weiter(tester);
+      expect(find.text('Schritt 4 von 10'), findsOneWidget);
+
+      // Schritt 4: Der Geburtstagsstil.
+      await weiter(tester);
+      expect(find.text('Schritt 5 von 10'), findsOneWidget);
+
+      // Schritt 5: Der Musik-Geschmack.
+      await weiter(tester);
+      expect(find.text('Schritt 6 von 10'), findsOneWidget);
+
+      // Schritt 6: Die Gewohnheiten.
+      await weiter(tester);
+      expect(find.text('Schritt 7 von 10'), findsOneWidget);
+
+      // Die letzten drei Schritte sind die Freigaben (Ort, Reichweite,
+      // Datenschutz) - sie kommen ohne weitere Pflichtangabe.
+      await weiter(tester);
+      expect(find.text('Schritt 8 von 10'), findsOneWidget);
+      await weiter(tester);
+      expect(find.text('Schritt 9 von 10'), findsOneWidget);
+      await weiter(tester);
+      expect(find.text('Schritt 10 von 10'), findsOneWidget);
+
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('das Zurueckgehen fragt nach', (tester) async {
       await zeigeScreen(tester);
 
