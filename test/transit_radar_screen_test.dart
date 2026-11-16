@@ -28,6 +28,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/transit_models.dart';
 import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/providers/profile_provider.dart';
@@ -36,6 +37,7 @@ import 'package:thestia/providers/transit_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/swipe/transit_radar_screen.dart';
 import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/transit_ble_service.dart';
 import 'package:thestia/services/secure_storage.dart';
 import 'package:thestia/utils/constants.dart';
 
@@ -119,9 +121,16 @@ class _FakeTransit extends TransitNotifier {
   int starts = 0;
   int stops = 0;
 
+  /// Wenn gesetzt: das Starten schlaegt fehl (mit diesem Grund).
+  String? startFehler;
+
   @override
   Future<bool> activate() async {
     starts++;
+    if (startFehler != null) {
+      state = state.copyWith(active: false, endsAt: null, busy: false);
+      return false;
+    }
     state = state.copyWith(
       active: true,
       endsAt: DateTime.now().add(const Duration(minutes: 45)),
@@ -343,6 +352,94 @@ void main() {
   });
 
   group('Der Transit-Radar', () {
+    // Die Fehlerpfade beim Start (15.11.2026): Der Bildschirm
+    // unterscheidet die Gruende (Standortdienst, fehlende
+    // Bluetooth-Berechtigung, Bluetooth aus) und zeigt fuer jeden einen
+    // eigenen Dialog - der Nutzer soll nicht raten muessen, was fehlt.
+    group('Die Fehler beim Start', () {
+      /// Startet den Radar mit einem Start, der scheitert.
+      ///
+      /// [grund] ist der Fehlergrund, den der echte Dienst liefert
+      /// ([TransitBleService.lastError]) - der Bildschirm liest ihn
+      /// von dort, um die passende Erklaerung zu zeigen.
+      Future<_FakeTransit> starteFehlgeschlagen(
+        WidgetTester tester, {
+        required String grund,
+      }) async {
+        final transit = _FakeTransit()..startFehler = grund;
+        TransitBleService.instance.lastError = grund;
+        addTearDown(() => TransitBleService.instance.lastError = null);
+
+        final container = _container(transit: transit);
+        addTearDown(container.dispose);
+        final router = _router();
+        addTearDown(router.dispose);
+
+        await _aufbauen(tester, container, router);
+        await _startTippen(tester);
+        // Der Start fragt zuerst nach der eigenen Beschreibung.
+        // Wichtig: es muessen MINDESTENS ZWEI Merkmale sein (Migration
+        // 149) - mit einem einzigen bleibt der Senden-Knopf gesperrt und
+        // der Start kommt nie zustande.
+        await _merkmaleWaehlen(tester, ['Haarfarbe', 'Haarlänge']);
+        await _sendenTippen(tester);
+        return transit;
+      }
+
+      testWidgets('ohne den Standortdienst sagt die App, was fehlt', (
+        tester,
+      ) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final transit = await starteFehlgeschlagen(
+          tester,
+          grund: 'location_service',
+        );
+
+        expect(transit.starts, greaterThan(0));
+        expect(tester.takeException(), isNull);
+        // Der Dialog nennt den Standortdienst - sonst sucht der Nutzer
+        // vergebens nach Bluetooth.
+        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(
+          find.text(L10n.tWithoutContext('transit.locationTitle')),
+          findsOneWidget,
+        );
+      });
+
+      testWidgets('ohne Bluetooth-Berechtigung kommt der Hinweis', (
+        tester,
+      ) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final transit = await starteFehlgeschlagen(
+          tester,
+          grund: 'bluetooth_scan',
+        );
+
+        expect(transit.starts, greaterThan(0));
+        expect(tester.takeException(), isNull);
+        expect(find.byType(AlertDialog), findsOneWidget);
+      });
+
+      testWidgets('ist Bluetooth aus, steht das auch da', (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final transit = await starteFehlgeschlagen(
+          tester,
+          grund: 'bluetooth_off',
+        );
+
+        expect(transit.starts, greaterThan(0));
+        expect(tester.takeException(), isNull);
+        // Auch fuer "Bluetooth ist aus" gibt es eine eigene Erklaerung.
+        expect(find.byType(AlertDialog), findsOneWidget);
+      });
+    });
+
     testWidgets('rendert ohne Absturz und zeigt die Bedienung', (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));

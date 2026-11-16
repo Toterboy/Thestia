@@ -189,6 +189,16 @@ dev_dependencies:
   # darf - genau wie `camera_platform_interface` oben. Es kommt kein neues
   # Paket dazu, es wird nur das vorhandene direkt importierbar.
   unifiedpush_platform_interface: 4.0.0
+  # Nur fuer die Tests: das Bluetooth-Advertising von Transit Spark laeuft
+  # ueber eine Plattform-Schnittstelle (`FlutterBluePlusPlatform.instance`).
+  # Ohne sie kann der Test den Adapter-Zustand nicht nachstellen - der
+  # Dienst wuerde beim Start endlos auf den Zustand warten. Das Paket ist
+  # bereits als Transitivum von `flutter_blue_plus` vorhanden (7.0.0 ist in
+  # pubspec.lock gepinnt); hier explizit, damit der Test es importieren
+  # darf - genau wie `camera_platform_interface` und
+  # `unifiedpush_platform_interface` oben. Es kommt kein neues Paket dazu,
+  # es wird nur das vorhandene direkt importierbar.
+  flutter_blue_plus_platform_interface: 7.0.0
 
   # Lint-Regeln für sauberen, modernen Code
   flutter_lints: ^6.0.0
