@@ -23,6 +23,7 @@
 // geprueft, was der Bildschirm ohne Server macht, nicht was er mit
 // Server macht (das macht test/live_message_flow_test.dart).
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -269,6 +270,10 @@ void main() {
       'https://example.supabase.co',
       'test-key',
     );
+    // Die Aufnahme: zurueck auf den Standard (kein eigener Pfad).
+    mockAufnahme();
+    // Der Audio-Player (das Blatt zum Anhoeren legt einen an).
+    mockAudioPlayer();
   });
 
   tearDown(() async {
@@ -925,4 +930,265 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
   });
+
+  // Die Sprachnachricht: aufnehmen, anhoeren, senden.
+  //
+  // DER GRUND (16.11.2026): Die Aufnahme war der groesste ungetestete
+  // Bereich im Chat (Anlage, Pause, Verwerfen, Anhoeren, Senden).
+  group('Die Sprachnachricht', () {
+    testWidgets('das Mikrofon fragt zuerst nach der Offenlegung', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final chat = _chatMitNachricht();
+      await _pump(
+        tester,
+        ChatDetailScreen(matchId: chat.match.id),
+        chat.notifier,
+      );
+
+      await tester.tap(find.byIcon(Icons.mic));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(tester.takeException(), isNull);
+      // DIE OFFENLEGUNG: Google Play verlangt sie VOR der Berechtigung.
+      expect(
+        find.text(L10n.tWithoutContext('chat.micDisclosureTitle')),
+        findsOneWidget,
+        reason:
+            'Ohne Offenlegung fragt die App das Mikrofon im Hintergrund ab '
+            '- das verlangt Google Play nicht.',
+      );
+
+      // "Abbrechen" - es wird nichts aufgenommen.
+      await tester.tap(find.text(L10n.tWithoutContext('common.cancel')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        find.text(L10n.tWithoutContext('intro.recordingState')),
+        findsNothing,
+        reason:
+            'Ohne Offenlegung wird nicht aufgenommen - sonst nimmt die App '
+            'ohne Zutun des Nutzers auf.',
+      );
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('nach der Offenlegung laeuft die Aufnahme', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final chat = _chatMitNachricht();
+      await _pump(
+        tester,
+        ChatDetailScreen(matchId: chat.match.id),
+        chat.notifier,
+      );
+
+      await tester.tap(find.byIcon(Icons.mic));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(
+        find.text(L10n.tWithoutContext('chat.micDisclosureAccept')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(tester.takeException(), isNull);
+      // Die Aufnahme laeuft (das Panel steht da).
+      expect(
+        find.text(L10n.tWithoutContext('intro.recordingState')),
+        findsOneWidget,
+      );
+
+      // PAUSE: die Aufnahme haelt an.
+      await tester.tap(find.text(L10n.tWithoutContext('intro.pause')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(
+        find.text(L10n.tWithoutContext('intro.pausedState')),
+        findsOneWidget,
+        reason:
+            'Die Pause muss am Panel stehen - sonst merkt der Nutzer '
+            'nicht, dass es weitergeht.',
+      );
+
+      // UND WEITER: sie laeuft wieder.
+      await tester.tap(find.text(L10n.tWithoutContext('intro.resume')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(
+        find.text(L10n.tWithoutContext('intro.recordingState')),
+        findsOneWidget,
+      );
+
+      // VERWERFEN: es wird nichts gesendet, der Nutzer bekommt es gesagt.
+      await tester.tap(find.byIcon(Icons.delete_outline));
+      await _echteZeit(tester);
+      expect(
+        find.text(L10n.tWithoutContext('chat.voiceCancelled')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(L10n.tWithoutContext('intro.recordingState')),
+        findsNothing,
+      );
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('eine zu kurze Aufnahme wird verworfen', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // Eine ECHTE Datei - das Plugin meldet sie beim Stoppen. Ohne Datei
+      // waere der Aufnahme-Pfad ein anderer (das prueft der Test nicht).
+      final datei = (await tester.runAsync(_aufnahmeDatei))!;
+      mockAufnahme(dateiBeimStoppen: datei);
+
+      final chat = _chatMitNachricht();
+      await _pump(
+        tester,
+        ChatDetailScreen(matchId: chat.match.id),
+        chat.notifier,
+      );
+
+      await tester.tap(find.byIcon(Icons.mic));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(
+        find.text(L10n.tWithoutContext('chat.micDisclosureAccept')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // Sofort stoppen - das sind weniger als eine Sekunde.
+      await tester.tap(find.text(L10n.tWithoutContext('intro.stopListen')));
+      await _echteZeit(tester);
+
+      expect(tester.takeException(), isNull);
+      // Der Nutzer bekommt die Meldung ...
+      expect(
+        find.text(L10n.tWithoutContext('chat.voiceTooShort')),
+        findsOneWidget,
+        reason:
+            'Eine zu kurze Aufnahme ist fuer die Gegenseite unbrauchbar - '
+            'der Nutzer muss es wissen.',
+      );
+      // ... und die Datei liegt nicht mehr im Speicher.
+      final existiert = await tester.runAsync(() => File(datei).exists());
+      expect(
+        existiert,
+        isFalse,
+        reason: 'Die verworfene Aufnahme darf nicht liegen bleiben.',
+      );
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('die Aufnahme wird erst nach dem Anhoeren gesendet', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final datei = (await tester.runAsync(_aufnahmeDatei))!;
+      mockAufnahme(dateiBeimStoppen: datei);
+
+      final chat = _chatMitNachricht();
+      await _pump(
+        tester,
+        ChatDetailScreen(matchId: chat.match.id),
+        chat.notifier,
+      );
+
+      await tester.tap(find.byIcon(Icons.mic));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(
+        find.text(L10n.tWithoutContext('chat.micDisclosureAccept')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // Zwei Sekunden aufnehmen (unter einer Sekunde wird verworfen).
+      await tester.pump(const Duration(seconds: 2));
+
+      await tester.tap(find.text(L10n.tWithoutContext('intro.stopListen')));
+      await _echteZeit(tester);
+
+      expect(tester.takeException(), isNull);
+      // Das Blatt zum Anhoeren steht da - gesendet wird erst danach.
+      expect(
+        find.text(L10n.tWithoutContext('intro.review.title')),
+        findsOneWidget,
+        reason:
+            'Der Nutzer soll die Aufnahme anhoeren koennen, bevor sie '
+            'rausgeht.',
+      );
+      // Und noch ist keine Sprachnachricht im Chat.
+      expect(
+        chat.notifier
+            .messagesFor(chat.match.id)
+            .where((m) => m.type == MessageType.voice),
+        isEmpty,
+      );
+
+      // Senden.
+      await tester.tap(find.text(L10n.tWithoutContext('intro.review.send')));
+      await _echteZeit(tester);
+
+      expect(tester.takeException(), isNull);
+      // Jetzt steht sie im Chat (mit ihrer Dauer).
+      final stimmen = chat.notifier
+          .messagesFor(chat.match.id)
+          .where((m) => m.type == MessageType.voice)
+          .toList();
+      expect(stimmen, hasLength(1));
+      expect(stimmen.first.durationSeconds, 2);
+      expect(find.textContaining('0:02'), findsWidgets);
+
+      await tester.pumpWidget(const SizedBox());
+    });
+  });
+}
+
+/// Legt eine kleine Aufnahmedatei an (der Pfad kommt vom Plugin).
+///
+/// DER GRUND: Das Aufnahme-Plugin meldet beim Stoppen einen Pfad. Ohne
+/// Datei prueft der Bildschirm gar nicht weiter - die Datei muss also
+/// wirklich da sein.
+///
+/// ACHTUNG: Das ist echte Datei-Arbeit - sie muss ueber
+/// [WidgetTester.runAsync] laufen, sonst wartet der Test ewig.
+Future<String> _aufnahmeDatei() async {
+  final ordner = await Directory.systemTemp.createTemp('thesia_voice_test');
+  final pfad = '${ordner.path}/aufnahme.m4a';
+  await File(pfad).writeAsBytes(<int>[1, 2, 3, 4]);
+  return pfad;
+}
+
+/// Laesst die echten Datei-Zugriffe durch und baut danach neu.
+///
+/// DER GRUND: Das Lesen und Loeschen der Aufnahme-Datei ist echte
+/// Arbeit - sie laeuft ausserhalb der Test-Uhr. Ohne dieses Warten
+/// bleibt der Bildschirm bei "Aufnahme laeuft" stehen und die Meldung
+/// kommt nicht.
+///
+/// Es sind mehrere Runden: jeder `await` in der Kette (Abo beenden,
+/// Plugin stoppen, Datei loeschen) braucht seine eigene Runde durch
+/// die echte Ereignisschleife.
+Future<void> _echteZeit(WidgetTester tester) async {
+  for (var i = 0; i < 4; i++) {
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+  }
 }

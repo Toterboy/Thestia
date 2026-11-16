@@ -1690,6 +1690,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
         ref
             .read(chatProvider.notifier)
             .addMessage(match.id, localMsg, ref: ref);
+        // BEFUND (16.11.2026, gefunden von einem Test): Hier stand kein
+        // Neuaufbau - die aufgenommene Nachricht war erst zu sehen,
+        // wenn der Bildschirm aus einem anderen Grund neu gebaut wurde
+        // (Relay-Timer, Verbindungsstatus). Der Nutzer dachte, seine
+        // Sprachnachricht sei nicht angekommen, und hat sie noch einmal
+        // aufgenommen. Beim Text ist es seit dem 13.11.2026 genauso
+        // (siehe _send) - jetzt auch hier.
+        if (mounted) setState(() {});
         if (mounted && !_p2pConnected) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

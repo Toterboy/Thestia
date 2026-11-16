@@ -15,6 +15,10 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+// Das Plattform-Interface wird von just_audio exportiert, aber nicht
+// weitergereicht - der Test setzt die Attrappe darueber.
+// ignore: depend_on_referenced_packages
+import 'package:just_audio_platform_interface/just_audio_platform_interface.dart';
 
 /// Der Kanal von path_provider.
 const MethodChannel pfadKanal = MethodChannel(
@@ -55,6 +59,12 @@ void mockAufnahme({bool erlaubt = true, String? dateiBeimStoppen}) {
           case 'hasPermission':
             return erlaubt;
           case 'create':
+            // DER EREIGNIS-KANAL: Das Plugin meldet den Zustand der
+            // Aufnahme ueber einen eigenen Kanal (pro Aufnahme eine ID).
+            // Ohne Antwort kommt dort ein "MissingPluginException" an -
+            // der Test wuerde an einer Stelle scheitern, an der der
+            // Bildschirm gar nichts getan hat.
+            _mockeAufnahmeEreignisse(anfrage.arguments);
             return null;
           case 'isRecording':
           case 'isPaused':
@@ -78,6 +88,50 @@ void mockAufnahme({bool erlaubt = true, String? dateiBeimStoppen}) {
         }
         return null;
       });
+}
+
+/// Beantwortet den Ereignis-Kanal des Aufnahme-Plugins.
+///
+/// DER GRUND (16.11.2026): Der Zustand der Aufnahme (Start, Pause,
+/// Stopp) kommt ueber einen EventChannel - einer je Aufnahme. Ohne
+/// diesen Ersatz meldet das Plugin im Test einen fehlenden Kanal.
+void _mockeAufnahmeEreignisse(Object? argumente) {
+  if (argumente is! Map) return;
+  final id = argumente['recorderId'];
+  if (id is! String || id.isEmpty) return;
+
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMessageHandler('com.llfbandit.record/events/$id', (
+        nachricht,
+      ) async {
+        final aufruf = const StandardMethodCodec().decodeMethodCall(nachricht);
+        if (aufruf.method == 'listen' || aufruf.method == 'cancel') {
+          return const StandardMethodCodec().encodeSuccessEnvelope(null);
+        }
+        return null;
+      });
+}
+
+/// Der Audio-Player im Test.
+///
+/// DER GRUND (16.11.2026): Beim Anlegen eines Players raeumt das
+/// Plugin alle Spieler der Engine weg. Dieser Aufruf geht ohne "await"
+/// an den Server - im Test landet er als ungefangener Fehler auf dem
+/// Bildschirm ("MissingPluginException"), obwohl die App ihn abfängt.
+///
+/// Das Abspielen selbst ist im Test nicht moeglich (dafuer gibt es
+/// eigene Tests) - das Blatt zum Anhoeren zeigt deshalb den Fehler
+/// "nicht abspielbar" an, was genau das Verhalten ohne Player ist.
+class _FakeAudioPlattform extends JustAudioPlatform {
+  @override
+  Future<DisposeAllPlayersResponse> disposeAllPlayers(
+    DisposeAllPlayersRequest request,
+  ) async => DisposeAllPlayersResponse();
+}
+
+/// Beantwortet die Aufrufe des Audio-Players (just_audio).
+void mockAudioPlayer() {
+  JustAudioPlatform.instance = _FakeAudioPlattform();
 }
 
 /// Liefert eine feste Zeitzone.
