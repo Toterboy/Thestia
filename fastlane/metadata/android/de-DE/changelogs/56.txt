@@ -55,3 +55,7 @@ Und: Der Alters-Hinweis im Dating Hour erscheint jetzt
 Wenn ihr zehn Jahre oder mehr auseinanderliegt, steht der Hinweis jetzt wirklich im Chat - vorher wurde er nie angezeigt.
 
 Und: Der PIN-Dialog im Kinderschutz macht den Bildschirm nicht mehr kaputt, und dein Datenexport nennt nur die Anbieter, die es wirklich gibt (kein "Apple Inc." - die App gibt es nicht im App Store).
+
+Und: Deine Sprachnachricht erscheint sofort im Chat
+
+Nach dem Aufnehmen war die Nachricht erst zu sehen, wenn der Bildschirm aus einem anderen Grund neu aufgebaut wurde. Jetzt steht sie sofort da - wie deine getippte Nachricht.
