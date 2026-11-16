@@ -38,6 +38,7 @@ import 'package:thestia/services/find_your_match_service.dart';
 import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/widgets/funke_overlay.dart';
 
+import 'support/fake_supabase_server.dart';
 import 'support/plugin_mocks.dart';
 
 /// In-Memory-Speicher - der Screen schreibt Seen-Marker und
@@ -254,6 +255,9 @@ Future<void> _pumpFrames(WidgetTester tester) async {
 }
 
 void main() {
+  /// Der Ersatz-Server (Antworten aus dem RAM).
+  late FakeSupabaseServer server;
+
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -271,13 +275,21 @@ void main() {
     // DER KEYSTORE: dasselbe Spiel - auf dem Linux-Runner
     // gibt es keine libsecret-Sitzung.
     mockKeystore();
+    // DER SERVER: das Zuruecknehmen eines Likes geht ueber die
+    // REST-Schnittstelle (DELETE auf 'likes') - ohne den Ersatz-Server
+    // gaengt der Aufruf ins Leere.
+    server = FakeSupabaseServer(userId: 'ich');
     await supabase.Supabase.initialize(
       url: 'https://example.supabase.co',
       publishableKey: 'test-key',
+      httpClient: server,
       authOptions: const supabase.FlutterAuthClientOptions(
         detectSessionInUri: false,
       ),
     );
+    // ANGEMELDET: ohne Sitzung weiss der Bildschirm nicht, wessen Like
+    // das ist - das Zuruecknehmen ginge dann gar nicht.
+    await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
   });
 
   setUp(() {
@@ -587,6 +599,48 @@ void main() {
             'davon sehen.',
       );
       expect(find.text('Jonas ist ausgeblendet.'), findsOneWidget);
+    });
+
+    testWidgets('ein gesendeter Like laesst sich zuruecknehmen', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      service.eigeneLikes = [
+        ReceivedLike(
+          likeId: 11,
+          profile: _person(name: 'Jonas', alter: 31),
+          createdAt: DateTime.now(),
+        ),
+      ];
+      await _pump(tester, service: service);
+
+      // Der Reiter "Gesendet" mit den eigenen Likes.
+      await tester.tap(find.text('Gesendet'));
+      await _pumpFrames(tester);
+
+      expect(find.text('Jonas'), findsWidgets);
+
+      // Das Menue der Person -> "Like zurueckziehen".
+      await tester.tap(find.byIcon(Icons.more_vert).last);
+      await _pumpFrames(tester);
+      await tester.tap(find.text('Like zurückziehen'));
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      // Der Server hat die Loeschung bekommen ...
+      expect(
+        server.schreibvorgaenge.any((v) => v['tabelle'] == 'likes'),
+        isTrue,
+        reason: 'Das Zuruecknehmen muss auf dem Server ankommen.',
+      );
+      // ... und die Like ist aus der Liste verschwunden.
+      expect(find.text('Jonas'), findsNothing);
+      expect(find.text('Like zurückgezogen.'), findsOneWidget);
     });
 
     testWidgets('das Blockieren fragt erst nach', (tester) async {
