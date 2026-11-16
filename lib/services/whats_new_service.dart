@@ -42,6 +42,11 @@ class WhatsNewService {
   /// 0.9.2 - fehlte vollstaendig. Zusaetzlich war der Text nicht
   /// uebersetzt; englische Nutzer sahen Deutsch.
   static const Map<int, List<String>> contentByBuild = {
+    // v0.10.2 (Build 56): Sicherheits-Audit. Zwei Punkte, die der
+    // Nutzer unmittelbar sieht - der Rest des Audits (Pinning,
+    // Backup-Regeln, Push-Texte) ist fuer ihn unsichtbar.
+    56: ['whatsnew.v1020.safetyOffer', 'whatsnew.v1020.birthdayPrivacy'],
+
     // v0.10.0 (Build 31): Standort-Privatisierung. Die drei Punkte sind
     // bewusst ueber die Waechter-Begrenzung gesetzt - es sind die
     // einzigen Aenderungen, bei denen jemand in einer alten App

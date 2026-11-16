@@ -59,3 +59,11 @@ Und: Der PIN-Dialog im Kinderschutz macht den Bildschirm nicht mehr kaputt, und 
 Und: Deine Sprachnachricht erscheint sofort im Chat
 
 Nach dem Aufnehmen war die Nachricht erst zu sehen, wenn der Bildschirm aus einem anderen Grund neu aufgebaut wurde. Jetzt steht sie sofort da - wie deine getippte Nachricht.
+
+Und: Der Geburtstag verrät dein Profil nicht mehr
+
+Der Geburtstag ist jetzt nur noch für Menschen sichtbar, mit denen du ein Match hast. Vorher ergaben Alter und Geburtstag zusammen dein genaues Geburtsdatum - das stand in jedem fremden Profil.
+
+Neu: Im Chat erscheint ein Hinweis auf die Sicherheitsnummer
+
+Vergleicht die Sicherheitsnummer in einem zweiten Kanal - damit stellt ihr sicher, dass niemand dazwischenfunkt.

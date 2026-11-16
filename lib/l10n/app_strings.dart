@@ -2354,6 +2354,14 @@ const Map<String, Map<String, String>> _strings = {
     'whatsnew.v092.safetyNumber':
         'Neu: Du kannst festlegen, dass ein Chat erst nach dem Vergleich '
         'der Sicherheitsnummern beginnt.',
+    'whatsnew.v1020.safetyOffer':
+        'Neu: Im Chat erscheint ein Hinweis, die Sicherheitsnummer mit deinem '
+        'Gegenüber zu vergleichen - so stellt ihr sicher, dass niemand '
+        'dazwischenfunkt.',
+    'whatsnew.v1020.birthdayPrivacy':
+        'Der Geburtstag ist jetzt nur noch für Menschen sichtbar, mit denen du '
+        'ein Match hast. So verrät dein Profil nicht mehr dein genaues '
+        'Geburtsdatum.',
     'whatsnew.v092.proximityJitter':
         'Nähefunk sendet jetzt unregelmäßig statt im festen Takt und '
         'hört nur noch Signale von Thestia.',
@@ -5703,6 +5711,13 @@ const Map<String, Map<String, String>> _strings = {
     'whatsnew.v092.safetyNumber':
         'New: you can require a chat to start only after comparing '
         'safety numbers.',
+    'whatsnew.v1020.safetyOffer':
+        'New: the chat now shows a hint to compare the safety number with '
+        'your partner - that way you both make sure nobody is '
+        'intercepting your conversation.',
+    'whatsnew.v1020.birthdayPrivacy':
+        'The birthday is now only visible to people you have matched with. '
+        'That way your profile no longer reveals your exact date of birth.',
     'whatsnew.v092.proximityJitter':
         'Proximity now sends at irregular intervals instead of a fixed '
         'rhythm, and listens only for Thestia signals.',

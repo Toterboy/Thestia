@@ -59,3 +59,11 @@ And: The PIN dialog in the parental supervision no longer breaks the screen, and
 And: your voice message now appears in the chat right away
 
 After recording, the message only showed up when the screen was rebuilt for some other reason. Now it is there immediately - just like your typed message.
+
+And: your birthday no longer gives away your profile
+
+The birthday is now only visible to people you have matched with. Before, age and birthday together revealed your exact date of birth - it was in every stranger's profile.
+
+New: the chat now shows a hint about the safety number
+
+Compare the safety number over a second channel - that way you both make sure nobody is intercepting your conversation.
