@@ -28,6 +28,8 @@ import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/dating_hour_models.dart';
+import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/screens/dating_hour/dating_hour_chat_screen.dart';
 import 'package:thestia/services/dating_hour_service.dart';
 import 'package:thestia/services/local_storage.dart';
@@ -36,6 +38,7 @@ import 'package:thestia/services/prekey_service.dart';
 import 'package:thestia/services/relay_service.dart';
 import 'package:thestia/services/webrtc_service.dart';
 import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/secure_storage.dart';
 
 import 'support/fake_supabase_server.dart';
 import 'support/plugin_mocks.dart';
@@ -93,6 +96,18 @@ class _FakeDatingHourService extends DatingHourService {
     beendet.add(sessionId);
     return true;
   }
+}
+
+/// Der Keystore ohne Plugin (das Profil liegt nur im RAM).
+class _FakeSecureProfileStore extends SecureProfileStore {
+  @override
+  Future<String?> read() async => null;
+
+  @override
+  Future<void> write(String value) async {}
+
+  @override
+  Future<void> delete() async {}
 }
 
 /// Hand-Fake des Datenbank-Dienstes.
@@ -222,7 +237,14 @@ void main() {
   }
 
   /// Baut den Screen mit den Fakes.
-  Future<_FakeDatingHourService> zeigeScreen(WidgetTester tester) async {
+  ///
+  /// [geburtsdatum] setzt das eigene Profil - ohne Geburtsdatum kennt
+  /// der Bildschirm das eigene Alter nicht und kann den Alters-Hinweis
+  /// fuer die Gegenseite nicht zeigen.
+  Future<_FakeDatingHourService> zeigeScreen(
+    WidgetTester tester, {
+    DateTime? geburtsdatum,
+  }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -248,6 +270,22 @@ void main() {
           // Fall "die Nachricht kommt nicht raus" bestimmt (und nicht
           // von einem Serverfehler abhaengig).
           relayServiceProvider.overrideWith((ref) => _FakeRelayService(ref)),
+          if (geburtsdatum != null)
+            profileProvider.overrideWith((ref) {
+              final notifier = ProfileNotifier(
+                _FakeLocalStorage(),
+                _FakeSecureProfileStore(),
+              );
+              notifier.setProfile(
+                UserProfile(
+                  id: 'ich',
+                  name: 'Lena',
+                  bio: '',
+                  birthDate: geburtsdatum,
+                ),
+              );
+              return notifier;
+            }),
         ],
         child: const MaterialApp(
           home: DatingHourChatScreen(sessionId: 'session-1'),
@@ -390,6 +428,36 @@ void main() {
         );
       },
     );
+
+    testWidgets('bei grosser Altersdifferenz steht ein Hinweis da', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // ICH bin 30, die Gegenseite 60 - zehn Jahre Unterschied.
+      server.rpcAntworten['get_public_profile'] = <String, dynamic>{'age': 60};
+      await zeigeScreen(
+        tester,
+        geburtsdatum: DateTime.now().subtract(const Duration(days: 365 * 30)),
+      );
+      await pumpFrames(tester);
+      // Der RPC-Abruf braucht echte Zeit (die Antwort kommt aus der
+      // echten Event-Loop) - ohne das steht der Hinweis noch nicht da.
+      await tester.runAsync(() async {
+        await Future<void>.delayed(const Duration(milliseconds: 300));
+      });
+      await pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.textContaining('mindestens 10 Jahre'),
+        findsOneWidget,
+        reason:
+            'Bei zehn Jahren Unterschied oder mehr muss der Chat darauf '
+            'hinweisen - das ist der Schutz vor einem Altersmissverstaendnis.',
+      );
+    });
 
     testWidgets('das Verlassen fragt nach', (tester) async {
       await zeigeScreen(tester);

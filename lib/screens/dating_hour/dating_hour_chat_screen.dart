@@ -248,6 +248,14 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
       if (mounted) {
         setState(() => _session = session);
       }
+      // BEFUND (16.11.2026, gefunden von einem Test): Die eigene
+      // User-ID wurde erst in `_initP2P` gesetzt - aber der Alters-
+      // hinweis braucht sie VORHER. Er brach deshalb immer ab
+      // (`myId == null`) und der RPC wurde nie aufgerufen: Der Hinweis
+      // (bei zehn Jahren Unterschied oder mehr) kam **nie**.
+      //
+      // DER WEG: Die eigene ID wird hier geholt - vor beiden Wegen.
+      _currentUserId ??= SupabaseService.currentUser?.id;
       // Partner-Alter laden (für den Altersdifferenz-Hinweis).
       if (session != null) {
         _loadPartnerAge(session);
