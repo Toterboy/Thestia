@@ -1337,6 +1337,9 @@ const Map<String, Map<String, String>> _strings = {
     'chat.conversationHeader': 'Gespräch',
     'chat.connectionHeader': 'Verbindung',
     'chat.safetyNumberTooltip': 'Sicherheitsnummer (E2E-Verifikation)',
+    'chat.safetyNumberHint':
+        'Prüfe die Sicherheitsnummer mit {name} - damit stellen wir sicher, '
+        'dass niemand dazwischenfunkt.',
     'chat.safetyChangedTitle': 'Sicherheitsnummer hat sich geändert',
     'chat.safetyChangedBody':
         'Der Verschlüsselungsschlüssel deines Kontakts hat sich geändert. '
@@ -4603,6 +4606,9 @@ const Map<String, Map<String, String>> _strings = {
     'chat.conversationHeader': 'Conversation',
     'chat.connectionHeader': 'Connection',
     'chat.safetyNumberTooltip': 'Safety number (E2E verification)',
+    'chat.safetyNumberHint':
+        'Check the safety number with {name} - that way we make sure '
+        'nobody is intercepting your conversation.',
     'chat.safetyChangedTitle': 'Safety number has changed',
     'chat.safetyChangedBody':
         'The encryption key of your contact has changed. This can happen '

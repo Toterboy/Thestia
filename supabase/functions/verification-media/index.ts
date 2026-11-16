@@ -134,6 +134,30 @@ serve(async (req) => {
       );
     }
 
+    // Das Zugriffsprotokoll (Audit 16.11.2026): Jede Entschluesselung
+    // eines Ausweisdokuments wird festgehalten - vorher war NICHT
+    // auffindbar, wer ein Dokument angesehen hat. Der Eintrag entsteht
+    // VOR der Entschluesselung: auch ein Absturz dazwischen bleibt
+    // sichtbar.
+    //
+    // Best-Effort: Wenn das Protokoll nicht schreibbar ist (z. B. weil
+    // die Migration noch nicht angewandt wurde), blockiert das die
+    // Sichtung NICHT - die Sichtung ist der Zweck. Der Fehler geht
+    // ins Log.
+    const { error: logError } = await supabaseAdmin
+      .from("verification_media_access_log")
+      .insert({
+        admin_id: user.id,
+        target_id: targetUserId,
+        action: "decrypt",
+      });
+    if (logError) {
+      console.error(
+        "verification-media: Zugriff konnte nicht protokolliert werden:",
+        logError,
+      );
+    }
+
     const keyBytes = atobSafe(keyRow.key_b64);
     const ivBytes = atobSafe(keyRow.iv_b64);
     if (!keyBytes || !ivBytes) {

@@ -255,6 +255,51 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     _startRelayTimer();
   }
 
+  /// Bietet den Vergleich der Sicherheitsnummer aktiv an.
+  ///
+  /// DER GRUND (Audit 16.11.2026): Die Safety-Number-Pruefung gab es,
+  /// sie war aber nur im Menue "Sicherheit" versteckt. Beim ersten
+  /// Kontakt vertraut die App dem Identity-Key, den der Server
+  /// ausliefert (TOFU) - ein kompromittierter Server kann ihn
+  /// einschleusen, und ohne Hinweis faellt das niemandem auf. Der
+  /// Hinweis bietet den Vergleich an (einmal je Kontakt).
+  Future<void> _maybeOfferSafetyNumber() async {
+    if (!mounted) return;
+    // Der Partner kommt aus dem Provider (der Match wird beim Bauen
+    // gesetzt - hier nicht ueber _match, das erst im Build gefuellt wird).
+    final match = ref.read(chatProvider.notifier).getMatchById(widget.matchId);
+    final partnerId = match?.partner.id;
+    if (partnerId == null || partnerId.isEmpty) return;
+
+    final encryption = ref.read(encryptionServiceProvider);
+    // Ohne Schluessel (z. B. weil der Keystore nicht offen ist) gibt es
+    // keine Sicherheitsnummer - dann gibt es auch keinen Hinweis.
+    if (!encryption.bereit) return;
+    if (!mounted) return;
+    // Nur wenn es eine Sicherheitsnummer gibt (die Session steht) und
+    // der Kontakt noch nicht bestaetigt ist.
+    if (encryption.safetyNumberFor(partnerId) == null) return;
+    if (encryption.isPeerIdentityVerified(partnerId)) return;
+    if (encryption.safetyHintShown(partnerId)) return;
+    await encryption.markSafetyHintShown(partnerId);
+    if (!mounted) return;
+
+    final name = match?.partner.name ?? '';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          L10n.tf(context, 'chat.safetyNumberHint', {'name': name}),
+        ),
+        action: SnackBarAction(
+          label: L10n.t(context, 'chat.safetyNumberTooltip'),
+          onPressed: () => _showSafetyNumberDialog(partnerId, name),
+        ),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 8),
+      ),
+    );
+  }
+
   /// Zeigt beim ersten Chat einmalig den Hinweis auf den Hintergrund.
   ///
   /// v0.10.0: Der Hintergrund liess sich bisher nur ueber die Einstellungen
@@ -470,6 +515,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     // 5-Minuten-Stille-Vorschlag starten (nur frischer Chat ohne eigene
     // Nachricht, siehe _maybeSuggestIcebreaker).
     unawaited(_maybeSuggestIcebreaker());
+    // Der Hinweis auf die Sicherheitsnummer (Audit 16.11.2026) - erst
+    // jetzt: der Partner ist bekannt.
+    unawaited(_maybeOfferSafetyNumber());
   }
 
   /// Eisbrecher-Sammlung im Chat (vom "mehr"-Menü, NUTZERWUNSCH): Frage

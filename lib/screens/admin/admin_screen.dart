@@ -17,6 +17,7 @@ import 'package:thestia/utils/constants.dart';
 import 'package:thestia/widgets/admin_metric_row.dart';
 import 'package:thestia/widgets/ai_badge.dart';
 import 'package:thestia/widgets/pill_tab_bar.dart';
+import 'package:thestia/widgets/pinned_network_image.dart';
 import 'package:thestia/widgets/states.dart';
 
 /// Hilfsfunktion: Prueft, ob der aktuell eingeloggte Nutzer der Admin ist.
@@ -1773,7 +1774,18 @@ class _SignedAppealImageState extends ConsumerState<_SignedAppealImage> {
       builder: (context, snap) {
         final url = snap.data;
         if (url != null) {
-          return Image.network(url, fit: BoxFit.cover, cacheWidth: 96 * 3);
+          // SICHERHEIT (Audit 16.11.2026): Das Moderationsbild laedt ueber
+          // den gepinnten Client - `Image.network` haengt am
+          // System-Trust-Store.
+          return PinnedNetworkImage(
+            url: url,
+            fit: BoxFit.cover,
+            cacheWidth: 96 * 3,
+            errorBuilder: (context, _, _) => const ColoredBox(
+              color: Color(0x22000000),
+              child: Icon(Icons.image_not_supported),
+            ),
+          );
         }
         return const ColoredBox(
           color: Color(0x22000000),

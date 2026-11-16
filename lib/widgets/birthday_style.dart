@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/widgets/pinned_network_image.dart';
 
 /// Geburtstags-Stile (Nutzerwunsch: schick, nicht kitschig): 5 wählbare
 /// Designs für das Profil am Geburtstag. Der Stil wirkt NUR am Geburtstag
@@ -217,8 +218,11 @@ class BirthdayStylePreview extends StatelessWidget {
     if (path.contains('|')) {
       return _placeholder(fg);
     }
-    return Image.network(
-      path,
+    // SICHERHEIT (Audit 16.11.2026): Das Bild laedt ueber den gepinnten
+    // Client - `Image.network` haengt am System-Trust-Store und wuerde
+    // eine nachinstallierte Fremd-CA durchlassen.
+    return PinnedNetworkImage(
+      url: path,
       fit: BoxFit.cover,
       // Das Bild ist hier Andeutung, nicht Inhalt: wenige Pixel reichen
       // und der Decode kostet auf schwachen Geraeten nichts.

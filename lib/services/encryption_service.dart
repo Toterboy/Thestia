@@ -84,6 +84,21 @@ class EncryptionService {
   Future<void> get initialized => _initCompleter.future;
   final _initCompleter = Completer<void>();
 
+  /// Sind die Boxen offen (also der Dienst benutzbar)?
+  ///
+  /// DER GRUND (Audit 16.11.2026): Der Aufrufer soll nicht auf
+  /// [initialized] warten - ein Warte-Timer laeuft im Test als "pending
+  /// timer" auf und wuerde dort auffallen. Stattdessen: einmal fragen.
+  bool get bereit {
+    try {
+      // Der Zugriff auf die Box wirft, solange sie nicht offen ist.
+      _peerTrustBox.isEmpty;
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   static const int _firstPreKeyId = 1;
   static const int _preKeyCount = 100;
 
@@ -607,6 +622,33 @@ class EncryptionService {
   /// True, wenn die Peer-Identity per Out-of-Band-Vergleich bestätigt wurde.
   bool isPeerIdentityVerified(String peerId) =>
       _decodeTrustEntry(peerId)?['verified'] == true;
+
+  /// Wurde der Hinweis auf die Sicherheitsnummer fuer diesen Kontakt
+  /// schon gezeigt?
+  ///
+  /// DER GRUND (Audit 16.11.2026): Die Safety-Number-Pruefung gibt es
+  /// zwar, sie war aber nur im Menue "Sicherheit" versteckt - ein
+  /// Kontakt, dessen Identity-Key ein kompromittierter Server
+  /// eingeschleust hat, faellt damit nie auf. Der Hinweis im Chat
+  /// bietet den Vergleich aktiv an; gezeigt wird er je Kontakt EINMAL
+  /// (der Nutzer soll nicht genervt werden).
+  bool safetyHintShown(String peerId) =>
+      _decodeTrustEntry(peerId)?['safetyHintShown'] == true;
+
+  /// Merkt sich, dass der Hinweis fuer diesen Kontakt gezeigt wurde.
+  Future<void> markSafetyHintShown(String peerId) async {
+    final entry = _decodeTrustEntry(peerId);
+    if (entry == null) return;
+    await _peerTrustBox.put(
+      peerId,
+      jsonEncode({
+        'identityKeyPublic': entry['identityKeyPublic'],
+        'verified': entry['verified'] == true,
+        'requireVerification': entry['requireVerification'] == true,
+        'safetyHintShown': true,
+      }),
+    );
+  }
 
   /// SECURITY (Audit 2026-09-26): Erzwingt die Out-of-Band-Bestaetigung fuer
   /// diesen Kontakt.

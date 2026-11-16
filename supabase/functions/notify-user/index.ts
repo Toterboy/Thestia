@@ -177,6 +177,87 @@ const clientTextsByKind: Record<string, { title: string; body: string }> = {
 };
 
 /**
+ * DIE ERLAUBNISLISTE DER INTERNEN TEXTE (Audit 16.11.2026).
+ *
+ * BEFUND: Nur der Client-Zweig benutzte feste Texte. Der interne Zweig
+ * (DB-Trigger) durfte Titel und Text FREI wählen - eine Änderung an
+ * einem Trigger (oder ein kompromittierter Trigger) wäre damit sofort
+ * ein Push-Phishing-Kanal: beliebiger Text im App-Look auf dem Gerät
+ * des Nutzers.
+ *
+ * JETZT: Auch der interne Zweig darf nur Texte senden, die hier
+ * EXAKT stehen. Alles andere wird durch den neutralen Ersatztext
+ * ersetzt. Die Liste entspricht den Texten der DB-Trigger
+ * (Migrationen 029/040/079/083/113/146/200/218).
+ */
+const internalTextsByKind: Record<string, { title: string; body: string }> = {
+  matches: {
+    title: "Neuer Funke!",
+    body: "Du hast einen neuen Funken - schau in deine Funken!",
+  },
+  likes: {
+    title: "Thestia",
+    body: "Jemand hat deine Vorstellung entdeckt.",
+  },
+  soft_ping: {
+    title: "Transit Spark",
+    body: "Jemand hat dir nach einer Begegnung gegrüßt. Schau in dein Radar.",
+  },
+  verification: {
+    title: "Alles geprüft!",
+    body: "Deine Altersprüfung wurde freigegeben - alle Modi sind jetzt offen.",
+  },
+  // Der Einspruch hat zwei Varianten (freigegeben / abgelehnt) - beide
+  // stehen hier fest.
+  photo_appeal_approved: {
+    title: "Profilbild-Prüfung",
+    body: "Dein Einspruch wurde geprüft: Das Bild ist freigegeben.",
+  },
+  photo_appeal_rejected: {
+    title: "Profilbild-Prüfung",
+    body: "Dein Einspruch wurde geprüft: Das Bild wurde abgelehnt.",
+  },
+};
+
+/** Der neutrale Ersatztext fuer alles, was nicht auf der Liste steht. */
+const internalFallbackText = {
+  title: "Thestia",
+  body: "Du hast eine neue Benachrichtigung.",
+};
+
+/**
+ * Liefert den Text fuer einen internen Aufruf - oder den Ersatztext,
+ * wenn der mitgeschickte Text nicht auf der Liste steht.
+ *
+ * @param kind     Der Aufruf-Art (matches, likes, soft_ping, ...)
+ * @param title    Der mitgeschickte Titel (nur zur Pruefung)
+ * @param body     Der mitgeschickte Text (nur zur Pruefung)
+ */
+function internalText(
+  kind: string,
+  title: unknown,
+  body: unknown,
+): { title: string; body: string } {
+  const kandidaten = [internalTextsByKind[kind]];
+  if (kind === "photo_appeal") {
+    // Der Einspruch: der Text unterscheidet sich nach der Entscheidung.
+    const text = String(body ?? "");
+    if (text.includes("freigegeben")) {
+      kandidaten.push(internalTextsByKind["photo_appeal_approved"]);
+    } else if (text.includes("abgelehnt")) {
+      kandidaten.push(internalTextsByKind["photo_appeal_rejected"]);
+    }
+  }
+  for (const kandidat of kandidaten) {
+    if (!kandidat) continue;
+    if (String(title ?? "") === kandidat.title && String(body ?? "") === kandidat.body) {
+      return kandidat;
+    }
+  }
+  return internalFallbackText;
+}
+
+/**
  * Audit E1: Clients dürfen nur Nutzer benachrichtigen, mit denen eine
  * reale Beziehung besteht (Match zwischen beiden ODER eigener Like an
  * das Ziel ODER aktive Zufallschat-Session ODER offene Dating-Hour-
@@ -381,6 +462,14 @@ serve(async (req) => {
     }
     title = String(body.title ?? "Thestia").slice(0, 100);
     text = String(body.body ?? "").slice(0, 200);
+    // AUDIT (16.11.2026): Auch der interne Zweig darf NUR die
+    // vordefinierten Texte senden. Alles andere (z. B. ein
+    // veraenderter oder kompromittierter Trigger) wird auf den
+    // neutralen Ersatztext zurueckgefallen - damit kann kein
+    // Push-Phishing ueber die App laufen.
+    const erlaubt = internalText(kind, title, text);
+    title = erlaubt.title;
+    text = erlaubt.body;
   } else {
     // BEFUND (08.11.2026, Betreiber): "Keine doppelten Benachrichtigungen
     // fuer das Selbe." Live gemessen (tool/measure_push_duplicates.sql):
