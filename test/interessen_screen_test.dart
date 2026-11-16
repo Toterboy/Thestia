@@ -30,6 +30,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 // Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
+import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/find_match_models.dart';
 import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/routing/app_router.dart';
@@ -641,6 +642,85 @@ void main() {
       // ... und die Like ist aus der Liste verschwunden.
       expect(find.text('Jonas'), findsNothing);
       expect(find.text('Like zurückgezogen.'), findsOneWidget);
+    });
+
+    // Das Datum des gesendeten Likes (NUTZERWUNSCH 28.10.2026: "kann
+    // auch sehen, an welchem Tag man den Like gesendet hat").
+    group('Das Datum des gesendeten Likes', () {
+      /// Baut den Screen mit einem Like, der [vorher] gesendet wurde.
+      Future<void> zeigeLike(
+        WidgetTester tester, {
+        required Duration vorher,
+      }) async {
+        final service = _FakeFindYourMatchService(
+          supabase.Supabase.instance.client,
+        );
+        service.eigeneLikes = [
+          ReceivedLike(
+            likeId: 21,
+            profile: _person(name: 'Jonas'),
+            createdAt: DateTime.now().subtract(vorher),
+          ),
+        ];
+        await _pump(tester, service: service);
+
+        // "Gesendet" aufklappen (wie der Test, der schon gruen ist).
+        await tester.tap(find.text('Gesendet'));
+        await _pumpFrames(tester);
+      }
+
+      testWidgets('ein heute gesendeter Like steht als "Heute" da', (
+        tester,
+      ) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await zeigeLike(tester, vorher: const Duration(hours: 2));
+
+        expect(tester.takeException(), isNull);
+        expect(
+          find.textContaining(L10n.tWithoutContext('interests.likeToday')),
+          findsWidgets,
+          reason:
+              'Der Nutzer soll sehen, WANN der Like rausging - das steht '
+              'in der Zeile unter dem Namen.',
+        );
+      });
+
+      testWidgets('ein gestern gesendeter Like steht als "Gestern" da', (
+        tester,
+      ) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await zeigeLike(tester, vorher: const Duration(days: 1, hours: 2));
+
+        expect(tester.takeException(), isNull);
+        expect(
+          find.textContaining(L10n.tWithoutContext('interests.likeYesterday')),
+          findsWidgets,
+        );
+      });
+
+      testWidgets('ein aelterer Like steht mit seinem Datum da', (
+        tester,
+      ) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await zeigeLike(tester, vorher: const Duration(days: 20));
+
+        expect(tester.takeException(), isNull);
+        // Nach einer Woche steht das konkrete Datum da (kein "vor X
+        // Tagen" mehr - das waere beim Scrollen unlesbar).
+        // Das Kalenderdatum des Likes (20 Tage zurueck).
+        final damals = DateTime.now().subtract(const Duration(days: 20));
+        expect(
+          find.textContaining('${damals.day}.${damals.month}.${damals.year}'),
+          findsWidgets,
+          reason: 'Ein alterer Like muss sein Kalenderdatum zeigen.',
+        );
+      });
     });
 
     testWidgets('das Blockieren fragt erst nach', (tester) async {

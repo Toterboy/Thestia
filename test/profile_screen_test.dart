@@ -178,6 +178,79 @@ void main() {
     expect(find.byIcon(Icons.settings), findsOneWidget);
   });
 
+  // Der Umschalter der Profil-Vorschau (NUTZERWUNSCH 28.10.2026):
+  // Zwei Pillen statt eines Schalters - der Geburtstags-Zustand ist ein
+  // ZWEITER Zustand, kein An-Aus.
+  group('Der Umschalter der Profil-Vorschau', () {
+    testWidgets('die beiden Pillen stehen da', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final geburtstag = ValueNotifier<bool>(false);
+      addTearDown(geburtstag.dispose);
+      var aufruf = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ProfilVorschauUmschalter(
+              geburtstag: geburtstag,
+              onChanged: (wert) => aufruf = wert,
+            ),
+          ),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text(L10n.tWithoutContext('profile.preview.modeNormal')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(L10n.tWithoutContext('profile.preview.modeBirthday')),
+        findsOneWidget,
+      );
+      expect(aufruf, isFalse);
+    });
+
+    testWidgets('der Wechsel wird gemeldet', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final geburtstag = ValueNotifier<bool>(false);
+      addTearDown(geburtstag.dispose);
+      bool? aufruf;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ProfilVorschauUmschalter(
+              geburtstag: geburtstag,
+              onChanged: (wert) {
+                aufruf = wert;
+                geburtstag.value = wert;
+              },
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(
+        find.text(L10n.tWithoutContext('profile.preview.modeBirthday')),
+      );
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      expect(
+        aufruf,
+        isTrue,
+        reason:
+            'Der Wechsel auf die Geburtstags-Vorschau muss gemeldet werden - '
+            'sonst aendert sich nichts.',
+      );
+      expect(geburtstag.value, isTrue);
+    });
+  });
   group('Das Profil-Menue', () {
     /// Oeffnet das Profil-Menue (der Knopf mit dem Personensymbol).
     Future<void> oeffneMenue(WidgetTester tester) async {

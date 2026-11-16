@@ -73,8 +73,10 @@ File? _exportDatei() {
           .where((f) => f.path.endsWith('thestia_data_export.json'))
           .toList();
       if (treffer.isNotEmpty) return treffer.last;
-    } catch (_) {
+    } catch (e) {
       // Der Ordner ist nicht lesbar - dann gibt es hier nichts.
+      // Die Spur bleibt: sonst waere ein Fehler still.
+      debugPrint('[Test] Der Temp-Ordner ist nicht lesbar: $e');
     }
   }
   return null;

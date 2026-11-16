@@ -43,7 +43,12 @@ const MethodChannel aufnahmeKanal = MethodChannel(
 ///
 /// [erlaubt]=false simuliert "keine Mikrofonberechtigung" - dann zeigt
 /// der Editor den Hinweis statt aufzunehmen.
-void mockAufnahme({bool erlaubt = true}) {
+///
+/// [dateiBeimStoppen] ist der Pfad, den das Plugin beim Stoppen
+/// zurueckgibt. Standard: ein Name im Temp-Ordner (die Datei existiert
+/// dann nicht - so verhaelt sich ein Geraet ohne echte Aufnahme).
+/// Fuellt man eine echte Datei hinein, kann der Screen sie lesen.
+void mockAufnahme({bool erlaubt = true, String? dateiBeimStoppen}) {
   TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
       .setMockMethodCallHandler(aufnahmeKanal, (anfrage) async {
         switch (anfrage.method) {
@@ -65,9 +70,11 @@ void mockAufnahme({bool erlaubt = true}) {
           case 'dispose':
             return null;
           case 'stop':
-            // Der Pfad der Aufnahme - im Test gibt es keine Datei,
-            // deshalb wird er nur als Zeichenkette geliefert.
-            return '${Directory.systemTemp.path}/thestia_test_aufnahme.m4a';
+            // Der Pfad der Aufnahme. Ohne Angabe: ein Name im
+            // Temp-Ordner (die Datei existiert dann nicht - so
+            // verhaelt sich ein Geraet ohne echte Aufnahme).
+            return dateiBeimStoppen ??
+                '${Directory.systemTemp.path}/thestia_test_aufnahme.m4a';
         }
         return null;
       });

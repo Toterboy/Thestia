@@ -182,6 +182,51 @@ void main() {
         server.pfade.any((p) => p.contains('verify_guardian_pin')),
         isTrue,
       );
+
+      // UND: Der Bereich bleibt gesperrt - die Nutzungszeit des
+      // Jugendlichen darf nur der Elternteil aendern.
+      expect(
+        find.text(L10n.tWithoutContext('guardian.pinLocked')),
+        findsOneWidget,
+        reason:
+            'Nach einer falschen PIN muss der Bereich gesperrt bleiben - '
+            'sonst koennte der Jugendliche seine Nutzungszeit selbst '
+            'aendern.',
+      );
+    });
+
+    testWidgets('die richtige PIN schaltet die Aenderungen frei', (
+      tester,
+    ) async {
+      await zeigeAbschnitt(tester);
+      // Der Server bestaetigt die PIN.
+      server.rpcAntworten['verify_guardian_pin'] = true;
+
+      final knopf = find.text(L10n.tWithoutContext('guardian.pinLocked'));
+      await tester.tap(knopf);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.enterText(find.byType(TextField).first, '1234');
+      await tester.pump();
+      await tester.tap(find.text(L10n.tWithoutContext('common.ok')));
+      await tester.pump();
+      for (var i = 0; i < 6; i++) {
+        await tester.runAsync(() async {
+          await Future<void>.delayed(const Duration(milliseconds: 80));
+        });
+        await tester.pump(const Duration(milliseconds: 120));
+      }
+
+      expect(tester.takeException(), isNull);
+      // Der Sperr-Knopf ist weg - jetzt kann bearbeitet werden.
+      expect(
+        find.text(L10n.tWithoutContext('guardian.pinLocked')),
+        findsNothing,
+        reason:
+            'Mit der richtigen PIN muss die Bearbeitung moeglich sein - '
+            'sonst kann der Elternteil gar nichts aendern.',
+      );
     });
   });
 }
