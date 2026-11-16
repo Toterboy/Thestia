@@ -313,8 +313,8 @@ const Map<String, Map<String, String>> _strings = {
         'anzumelden.',
 
     'captcha.err.domainNotAuthorized':
-        'Diese Adresse ist fuer den Sicherheitscheck nicht freigegeben. '
-        'Der Sicherheitscheck laeuft unter auth.thestia.de.',
+        'Diese Adresse ist für den Sicherheitscheck nicht freigegeben. '
+        'Der Sicherheitscheck läuft unter auth.thestia.de.',
     'captcha.err.badSitekey':
         'Der Sicherheitscheck ist serverseitig nicht korrekt konfiguriert. '
         'Bitte melde es dem Support.',
@@ -876,7 +876,7 @@ const Map<String, Map<String, String>> _strings = {
         'und du entscheidest über Funke oder Ablehnung.',
     'interests.emptySparksTitle': 'Noch keine Funken',
     'interests.sparksLoadFailed':
-        'Die Funken konnten nicht geladen werden. Bitte Netz pruefen und neu laden.',
+        'Die Funken konnten nicht geladen werden. Bitte Netz prüfen und neu laden.',
     'interests.emptySparksBody':
         'Bestätige erhaltene Likes, um Funken zu bekommen. Danach kannst du '
         'direkt chatten und optional das Kennenlern-Quiz für das Foto '
@@ -1471,9 +1471,9 @@ const Map<String, Map<String, String>> _strings = {
     'home.verifyHintUnverifiedTitle': 'Dein Profil ist noch nicht verifiziert',
     'home.verifyHintUnverifiedBody':
         'Mit einem kurzen Video bestaetigst du dein Alter - danach sind '
-        'alle Modi freigeschaltet. Die Pruefung dauert meist nur einen '
+        'alle Modi freigeschaltet. Die Prüfung dauert meist nur einen '
         'Moment.',
-    'home.verifyHintReviewTitle': 'Deine Pruefung laeuft noch',
+    'home.verifyHintReviewTitle': 'Deine Prüfung läuft noch',
     'home.verifyHintReviewBody':
         'Du wartest auf das Ergebnis. Bis dahin kannst du Zufallschat '
         'und QR-Code-Scannen nutzen.',
@@ -2239,19 +2239,19 @@ const Map<String, Map<String, String>> _strings = {
     'cg.6.body':
         'Die Nennung, das Androhen oder das Verbreiten von Kindesmissbrauch '
         'und sexueller Ausbeutung von Kindern (CSAE/CSAM) ist in Thestia '
-        'verboten - ohne Ausnahme und unabhaengig davon, ob es in einem '
+        'verboten - ohne Ausnahme und unabhängig davon, ob es in einem '
         'Chat, in einem Profil, in einem Bild oder in einer Beschreibung '
         'vorkommt. Solche Inhalte werden entfernt, das Konto gesperrt und '
-        'der Vorgang an die zustaendigen Stellen gemeldet. Wir dulden '
-        'keinerlei Kontakte oder Vermittlungen zu Minderjaehrigen. Wenn du '
-        'Hinweise auf Kindesmissbrauch hast, melde sie ueber die '
-        'Meldung-Funktion in der App (Grund: Kindesmissbrauch) oder ueber '
+        'der Vorgang an die zuständigen Stellen gemeldet. Wir dulden '
+        'keinerlei Kontakte oder Vermittlungen zu Minderjährigen. Wenn du '
+        'Hinweise auf Kindesmissbrauch hast, melde sie über die '
+        'Meldung-Funktion in der App (Grund: Kindesmissbrauch) oder über '
         'die Kontaktadresse auf der Kinderschutz-Seite.',
     'cg.childSafetyLink.title': 'Kinderschutz und Meldestelle',
     'cg.childSafetyLink.body':
         'Hinweise auf Kindesmissbrauch und Minderjaehrige in Kontakt zu '
-        'bringen: Dafuer gibt es eine eigene oeffentliche Seite mit einer '
-        'benannten Kontaktperson und dem Meldeweg an die zustaendigen '
+        'bringen: Dafür gibt es eine eigene öffentliche Seite mit einer '
+        'benannten Kontaktperson und dem Meldeweg an die zuständigen '
         'Stellen.',
     'cg.childSafetyLink.open': 'Kinderschutz-Seite öffnen',
     'report.type.childSafety': 'Hinweis auf Kindesmissbrauch (CSAE/CSAM)',
@@ -2526,9 +2526,9 @@ const Map<String, Map<String, String>> _strings = {
     'chat.identityVerifiedHint':
         'Nur aktivieren, wenn die Nummern übereinstimmen.',
     'chat.more': 'Weitere Optionen',
-    'chat.requireVerifiedTitle': 'Schluessel immer pruefen',
+    'chat.requireVerifiedTitle': 'Schlüssel immer prüfen',
     'chat.requireVerifiedHint':
-        'Senden erst erlauben, wenn ihr die Safety-Nummern verglichen habt. Das schuetzt davor, dass jemand die Schluessel eurer Chats ersetzt und mitliest.',
+        'Senden erst erlauben, wenn ihr die Safety-Nummern verglichen habt. Das schützt davor, dass jemand die Schlüssel eurer Chats ersetzt und mitliest.',
     'dh.event.startingSoon': 'Dating Hour startet gleich',
     'dh.event.cancelledToday':
         'Heute fällt die Dating Hour aus: Es haben sich nicht genug '
@@ -2726,7 +2726,7 @@ const Map<String, Map<String, String>> _strings = {
     'dh.event.pairedBody':
         'Dein Gegenueber wartet im Chat. Moechtest du jetzt reinschauen?',
     'dh.event.chatNow': 'Jetzt chatten',
-    'dh.event.chatLater': 'Spaeter',
+    'dh.event.chatLater': 'Später',
     'dh.event.nonePlanned': 'Aktuell ist kein Dating Hour Event geplant.',
     'dh.event.remaining': 'Noch {d}',
     'dh.event.startIn': 'Start in {d}',
@@ -2908,7 +2908,7 @@ const Map<String, Map<String, String>> _strings = {
         'Anbieterkennzeichnung nach § 5 DDG - Anschrift und Kontakt',
     'privacy.termsTitle': 'Nutzungsbedingungen',
     'privacy.termsSub': 'Was beim Benutzen der App erlaubt ist und was nicht',
-    'privacy.termsWeb': 'Die Webfassung im Browser oeffnen',
+    'privacy.termsWeb': 'Die Webfassung im Browser öffnen',
     'privacy.imprintFailed':
         'Das Impressum konnte nicht geöffnet werden. Bitte öffne '
         'https://thestia.de/impressum im Browser.',
@@ -2962,7 +2962,7 @@ const Map<String, Map<String, String>> _strings = {
     'privacy.processorSupabase': 'Hosting, Datenbank, Authentifizierung (EU)',
     'privacy.processorGoogle':
         'Push-Benachrichtigungen - nur in der Play-Store-Fassung '
-        '(Firebase); im F-Droid-Build laeuft UnifiedPush',
+        '(Firebase); im F-Droid-Build läuft UnifiedPush',
     'privacy.processorBrevo': 'Transaktions-E-Mails (Bestätigung, Reset)',
     'privacy.processorCloudflare': 'CAPTCHA (Turnstile) und TURN-Relay',
     'privacy.processorNetlify': 'Hosting der Anmelde-/CAPTCHA-Seite',
@@ -3242,9 +3242,8 @@ const Map<String, Map<String, String>> _strings = {
     // enableAudio: true. Wer nur die Kamera ankündigt, haelt RECORD_AUDIO
     // fuer mitgeteilt - das waere eine unvollstaendige Offenlegung.
     'verify.cameraDeclined':
-        'Ohne Kamera koennen wir dein Alter nicht einschaetzen. Du kannst sie jederzeit in den Einstellungen erlauben.',
-    'verify.cameraDisclosureTitle':
-        'Kamera und Mikrofon fuer die Alterspruefung',
+        'Ohne Kamera können wir dein Alter nicht einschätzen. Du kannst sie jederzeit in den Einstellungen erlauben.',
+    'verify.cameraDisclosureTitle': 'Kamera und Mikrofon für die Altersprüfung',
     'verify.cameraDisclosureBody':
         'Um dein Alter zu schaetzen, braucht die App Zugriff auf Kamera und Mikrofon. Die Aufnahme startet erst, wenn du unten bestaetigst. Das Bild wird ausgewertet und danach nicht gespeichert.',
     'verify.cameraDisclosureAccept': 'Kamera freigeben',
@@ -3361,7 +3360,7 @@ const Map<String, Map<String, String>> _strings = {
     'admin.auditTitle': 'Stichproben: Auto-Freigaben',
     'admin.auditEmpty': 'Keine Auto-Freigaben zur Stichprobe.',
     'admin.minorCase':
-        'Minderjaehrigenfall - bitte von Hand pruefen. Personen bis 21 '
+        'Minderjährigenfall - bitte von Hand prüfen. Personen bis 21 '
         'Jahre werden nie automatisch freigegeben.',
     'admin.ageNoAi': 'Alter: Angabe {stated} (keine KI-Schätzung)',
     'admin.ageAi': 'Alter: Angabe {stated}, KI {est} (Abweichung {dev})',

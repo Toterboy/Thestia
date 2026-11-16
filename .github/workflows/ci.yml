@@ -546,6 +546,10 @@ jobs:
           python3 tool/check_gitignore_selftest.py
           python3 tool/check_local_ci_sync_selftest.py
           python3 tool/check_web_theme_idempotenz.py
+          # Der Umlaut-Pruefer (16.11.2026): "fuer" statt "fuer" in
+          # nutzersichtbaren Texten. Der Selbsttest beweist, dass er
+          # Fehler findet und keine Fehlalarme produziert.
+          python3 tool/check_umlauts_selftest.py
           # Der Release-Ordner folgt jetzt der Version aus pubspec.yaml,
           # und das AAB (die Datei, die in den Play Store geht) wird
           # mitgeprueft - beides prueft der Selbsttest nach.
@@ -620,6 +624,12 @@ jobs:
             python3 tool/check_web_pages_selftest.py
             echo "PRUEFER: tool/check_no_empty_catches.py"
             python3 tool/check_no_empty_catches.py
+            # Umlaute in nutzersichtbaren Texten (16.11.2026): "ae/oe/ue/ss"
+            # statt "ae/oe/ue/ss" - in einem deutschen Text faellt das
+            # sofort auf. Die Kommentare im Quelltext bleiben bewusst
+            # ASCII; geprueft werden nur die Texte, die der Nutzer liest.
+            echo "PRUEFER: tool/check_umlauts.py"
+            python3 tool/check_umlauts.py
             echo "PRUEFER: tool/check_async_setstate.py"
             python3 tool/check_async_setstate.py
             echo "PRUEFER: tool/check_provider_in_lifecycle.py"

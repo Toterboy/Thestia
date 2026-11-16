@@ -259,6 +259,9 @@ if (Soll 'static-checks') {
         (G 'Website-Seiten pruefen' @($py, 'tool/check_web_pages.py'))
         (G 'Website-Pruefer Selbsttest' @($py, 'tool/check_web_pages_selftest.py'))
         (G 'Keine leeren catch-Bloecke' @($py, 'tool/check_no_empty_catches.py'))
+        # Umlaute in nutzersichtbaren Texten (16.11.2026).
+        (G 'Umlaute in Nutzertexten' @($py, 'tool/check_umlauts.py'))
+        (G 'Umlaut-Pruefer Selbsttest' @($py, 'tool/check_umlauts_selftest.py'))
         (G 'mounted nach await' @($py, 'tool/check_async_setstate.py'))
         (G 'Provider nur nach dem Frame' @($py, 'tool/check_provider_in_lifecycle.py'))
         (G 'Mojibake' @($py, 'tool/check_mojibake.py', '--skip-known'))

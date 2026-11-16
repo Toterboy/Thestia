@@ -931,7 +931,7 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
   ),
   PrivacyBlock(
     'p',
-    '**Massgebliches Alter (v0.10.0):** Fuer den Jugendschutz zählt das Alter, das per Video **verifiziert** wurde - nicht die Angabe im Profil. Ein Konto ohne Verifizierung erscheint in keiner Begegnungsliste; die Angabe im Profil wirkt erst nach der Verifizierung. Wer sich mit einem falschen Geburtsdatum anmeldet, wird deshalb nicht als erwachsen behandelt, sondern gar nicht erst vorgeschlagen.',
+    '**Maßgebliches Alter (v0.10.0):** Für den Jugendschutz zählt das Alter, das per Video **verifiziert** wurde - nicht die Angabe im Profil. Ein Konto ohne Verifizierung erscheint in keiner Begegnungsliste; die Angabe im Profil wirkt erst nach der Verifizierung. Wer sich mit einem falschen Geburtsdatum anmeldet, wird deshalb nicht als erwachsen behandelt, sondern gar nicht erst vorgeschlagen.',
   ),
   PrivacyBlock(
     'p',
@@ -1065,7 +1065,7 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
     cells: <String>[
       '14',
       '2026-10',
-      '**Kinderschutz-Standards:** Verbot von Kindesmissbrauch (CSAE/CSAM) in den Community-Standards, eigene Meldeart in der App, oeffentliche Kinderschutz-Seite mit benannter Kontaktperson und Meldeweg an die zustaendigen Stellen. Von Google Play fuer Dating-Apps unabhaengig von einer Altersbeschraenkung verlangt',
+      '**Kinderschutz-Standards:** Verbot von Kindesmissbrauch (CSAE/CSAM) in den Community-Standards, eigene Meldeart in der App, öffentliche Kinderschutz-Seite mit benannter Kontaktperson und Meldeweg an die zuständigen Stellen. Von Google Play für Dating-Apps unabhängig von einer Altersbeschränkung verlangt',
     ],
   ),
   PrivacyBlock(
@@ -1083,7 +1083,7 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
     cells: <String>[
       '12',
       '2026-10',
-      '**Kein TURN-Relay:** Fuer Video- und Sprachanrufe wird weiterhin ausschliesslich STUN verwendet - es gibt aktuell keinen Relay-Anbieter, der ohne Kreditkarte und ohne Eigenbetrieb nutzbar waere. Der TURN-Support ist als Aufgabe auf der Roadmap hinterlegt und wird erst mit Anbieter und Datenschutz-Eintrag umgesetzt',
+      '**Kein TURN-Relay:** Für Video- und Sprachanrufe wird weiterhin ausschließlich STUN verwendet - es gibt aktuell keinen Relay-Anbieter, der ohne Kreditkarte und ohne Eigenbetrieb nutzbar wäre. Der TURN-Support ist als Aufgabe auf der Roadmap hinterlegt und wird erst mit Anbieter und Datenschutz-Eintrag umgesetzt',
     ],
   ),
   PrivacyBlock(
@@ -1101,7 +1101,7 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
     cells: <String>[
       '10',
       '2026-10',
-      '**Verifiziertes Alter ist massgeblich:** Der Jugendschutz-Filter rechnet jetzt mit dem per Video bestätigten Alter statt mit der Angabe im Profil, und Konten ohne Verifizierung erscheinen in keiner Begegnungsliste. Vorher konnte jede Altersangabe ungeprüft durchgesetzt werden',
+      '**Verifiziertes Alter ist maßgeblich:** Der Jugendschutz-Filter rechnet jetzt mit dem per Video bestätigten Alter statt mit der Angabe im Profil, und Konten ohne Verifizierung erscheinen in keiner Begegnungsliste. Vorher konnte jede Altersangabe ungeprüft durchgesetzt werden',
     ],
   ),
   PrivacyBlock(

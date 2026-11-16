@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/screens/verification/verification_flow.dart';
 import 'package:thestia/services/local_storage.dart';
 
@@ -55,7 +56,10 @@ void main() {
     await tester.pump();
 
     expect(
-      find.text('Kamera und Mikrofon fuer die Alterspruefung'),
+      // Der Text kommt aus dem L10n-Katalog - ein fixer Literal-Text
+      // hier waere bei jeder Formulierungsaenderung rot (und wurde es
+      // auch, als der Text auf echte Umlaute umgestellt wurde).
+      find.text(L10n.tWithoutContext('verify.cameraDisclosureTitle')),
       findsOneWidget,
       reason: 'Die Offenlegung muss VOR der Berechtigungsanfrage stehen.',
     );
