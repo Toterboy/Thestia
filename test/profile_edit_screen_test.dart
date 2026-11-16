@@ -26,7 +26,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+// Das Plattform-Interface wird von permission_handler exportiert, aber
+// nicht weitergereicht - der Test setzt die Attrappe darueber.
+// ignore: depend_on_referenced_packages
+import 'package:permission_handler_platform_interface/permission_handler_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
@@ -38,7 +43,11 @@ import 'package:thestia/providers/user_preferences_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/profile/profile_edit_screen.dart';
 import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/location_check_service.dart';
+import 'package:thestia/services/location_verification_service.dart';
 import 'package:thestia/services/secure_storage.dart';
+import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/utils/location_privacy.dart';
 
 import 'support/fake_supabase_server.dart';
 
@@ -113,6 +122,99 @@ class _FakeSecurePrefs extends SecurePreferencesStorage {
       _daten[key] == null ? null : int.tryParse(_daten[key]!);
 }
 
+/// Die Berechtigungen im Test.
+///
+/// DER GRUND: Ohne diesen Ersatz ruft `Permission.location.status` das
+/// echte Plugin - im Test gibt es das nicht (und der Aufruf wuerde
+/// einen Fehler werfen). Mit ihm kann der Test beide Faelle stellen:
+/// die Berechtigung ist da (kein Dialog) oder sie fehlt (der Dialog
+/// der Offenlegung erscheint).
+class _Berechtigungen extends PermissionHandlerPlatform {
+  /// Ist die Standort-Berechtigung erteilt?
+  bool erteilt = false;
+
+  @override
+  Future<PermissionStatus> checkPermissionStatus(Permission permission) async =>
+      erteilt ? PermissionStatus.granted : PermissionStatus.denied;
+
+  @override
+  Future<Map<Permission, PermissionStatus>> requestPermissions(
+    List<Permission> permissions,
+  ) async {
+    erteilt = true;
+    return {for (final p in permissions) p: PermissionStatus.granted};
+  }
+}
+
+/// Der Ort-Dienst im Test: liefert eine feste Position.
+///
+/// DER GRUND: Das GPS gibt es im Test nicht. Der Dienst liefert hier
+/// die Position, die der Bildschirm dann auf das 5-km-Raster legt.
+class _FakeOrtService extends LocationVerificationService {
+  _FakeOrtService({this.position});
+
+  /// Die Position, die der Dienst meldet (null = kein Standort).
+  final Position? position;
+
+  /// Wie oft wurde der Standort abgefragt?
+  int abfragen = 0;
+
+  @override
+  Future<Position?> getCurrentLocation() async {
+    abfragen++;
+    return position;
+  }
+
+  @override
+  Future<bool> isLocationSuspicious(
+    Position newPosition, {
+    double thresholdMeters = 100,
+  }) async => false;
+}
+
+/// Die Standort-Pruefung im Test.
+///
+/// DER GRUND: Der echte Dienst ruft eine Edge Function. Dafuer holt der
+/// Client vorher sein Token - und im Test kommt diese
+/// Token-Aktualisierung nicht durch (der Aufruf bliebe haengen, der
+/// Timer stuende bis zum Testende). Der Ersatz merkt sich stattdessen,
+/// DASS und MIT WELCHEN Koordinaten geprueft wurde - genau das will
+/// der Bildschirm testen.
+class _FakeStandortPruefung extends LocationCheckService {
+  _FakeStandortPruefung(super.client);
+
+  /// Die Koordinaten, die zur Pruefung gemeldet wurden.
+  final List<Map<String, dynamic>> aufrufe = <Map<String, dynamic>>[];
+
+  @override
+  Future<Map<String, dynamic>?> processLocationCheck({
+    required String userId,
+    required double newLatitude,
+    required double newLongitude,
+  }) async {
+    aufrufe.add(<String, dynamic>{
+      'userId': userId,
+      'newLatitude': newLatitude,
+      'newLongitude': newLongitude,
+    });
+    return <String, dynamic>{'ok': true};
+  }
+}
+
+/// Eine Position fuer den Test (Hamburg).
+Position _position() => Position(
+  latitude: 53.5511,
+  longitude: 9.9937,
+  timestamp: DateTime(2026, 11, 16),
+  accuracy: 5,
+  altitude: 0,
+  altitudeAccuracy: 0,
+  heading: 0,
+  headingAccuracy: 0,
+  speed: 0,
+  speedAccuracy: 0,
+);
+
 /// Keystore ohne Plugin: liefert kein gespeichertes Profil.
 class _FakeSecureProfileStore extends SecureProfileStore {
   @override
@@ -137,6 +239,20 @@ final UserProfile _profil = UserProfile(
   bio: 'Hallo aus Hamburg',
   birthDate: DateTime(1998, 6, 15),
   interests: <String>['Musik'],
+);
+
+/// Dasselbe Profil, aber mit drei Bildern.
+///
+/// DER GRUND: Ohne Bilder gibt es im Editor keine Kacheln - und damit
+/// auch keinen Weg, ein Bild zu entfernen. Genau das wird hier
+/// geprueft: das entfernte Bild muss beim Server verschwinden.
+final UserProfile _profilMitBildern = UserProfile(
+  id: 'ich',
+  name: 'Lena',
+  bio: 'Hallo aus Hamburg',
+  birthDate: DateTime(1998, 6, 15),
+  interests: <String>['Musik'],
+  photos: <String>['ich/avatar.jpg', 'ich/photos/2.jpg', 'ich/photos/3.jpg'],
 );
 
 /// Der Router, den der Screen braucht (Profil- und Test-Route).
@@ -169,7 +285,11 @@ Finder _imDialog(String text) =>
     find.descendant(of: find.byType(AlertDialog), matching: find.text(text));
 
 /// Alles, was der Screen zum Bauen braucht.
-Future<ProviderContainer> _pump(WidgetTester tester, UserProfile profil) async {
+Future<ProviderContainer> _pump(
+  WidgetTester tester,
+  UserProfile profil, {
+  _FakeOrtService? ortService,
+}) async {
   SharedPreferences.setMockInitialValues(<String, Object>{});
   final prefs = await SharedPreferences.getInstance();
   // Der IntroEditor erzeugt im initState einen AudioRecorder -> Kanal
@@ -190,6 +310,14 @@ Future<ProviderContainer> _pump(WidgetTester tester, UserProfile profil) async {
       // haengt jedes Schreiben in den Keystore (siehe _FakeSecurePrefs).
       securePrefsProvider.overrideWithValue(_FakeSecurePrefs()),
       sharedPrefsProvider.overrideWithValue(prefs),
+      // Der Ort-Dienst: im Test gibt es kein GPS.
+      if (ortService != null)
+        locationVerificationServiceProvider.overrideWithValue(ortService),
+      // Die Standort-Pruefung (Edge Function) - der Ersatz merkt sich
+      // die Aufrufe (siehe _FakeStandortPruefung).
+      locationCheckServiceProvider.overrideWith(
+        (ref) => _FakeStandortPruefung(SupabaseService.client),
+      ),
       profileProvider.overrideWith((ref) {
         final notifier = ProfileNotifier(storage, secure);
         // setProfile ist async, setzt den State aber sofort.
@@ -306,6 +434,9 @@ void main() {
     server.rpcAntworten.clear();
     server.zeilen.clear();
     server.schreibvorgaenge.clear();
+    // Die Berechtigungen: ohne diesen Ersatz ruft der Bildschirm das
+    // echte Plugin (im Test gibt es das nicht).
+    PermissionHandlerPlatform.instance = _Berechtigungen();
   });
 
   // Der Einspruch: Wenn der Admin ein beanstandetes Foto freigibt oder
@@ -621,6 +752,229 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(tester.getRect(chip), vorher);
       expect(tester.widget<FilterChip>(chip).selected, isTrue);
+
+      await _aufraeumen(tester);
+    });
+  });
+
+  // Die Bilder im Profil: der Nutzer entfernt ein Bild - und es muss
+  // wirklich beim Server verschwinden.
+  group('Die Bilder im Profil', () {
+    testWidgets('ein entferntes Bild kommt beim Server nicht mehr an', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final container = await _pump(tester, _profilMitBildern);
+
+      expect(tester.takeException(), isNull);
+      // Drei Bilder = drei Entfernen-Knoepfe (einer je Kachel).
+      final knoepfe = find.byIcon(Icons.close);
+      expect(
+        knoepfe,
+        findsNWidgets(3),
+        reason:
+            'Zu jedem Bild gehoert ein Entfernen-Knopf - sonst kann der '
+            'Nutzer sein Bild nie wieder loswerden.',
+      );
+
+      // Die mittlere Kachel (Slot 1) leeren.
+      await tester.tap(knoepfe.at(1));
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      // Der Bildschirm weiss jetzt, dass sich etwas geaendert hat.
+      expect(
+        container.read(profileEditDirtyProvider),
+        isTrue,
+        reason:
+            'Nach dem Entfernen eines Bildes muss der Bildschirm als '
+            '"geaendert" gelten - sonst ginge der Aenderung beim '
+            'Zurueckgehen verloren.',
+      );
+
+      await _scrolleZumSpeichern(tester);
+      await tester.tap(find.text('Speichern').last);
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+
+      // DER SERVER-CHECK: Der Schreibvorgang mit den Fotos.
+      final mitFotos = server.schreibvorgaenge
+          .where((v) => v['tabelle'] == 'profiles' && v['photos'] != null)
+          .toList();
+      expect(
+        mitFotos,
+        isNotEmpty,
+        reason:
+            'Die Fotos muessen zum Server gehen - sonst sieht der '
+            'Nutzer sein Bild zwar entfernt, auf anderen Geraeten aber '
+            'weiterhin.',
+      );
+      final gesendet = (mitFotos.last['photos'] as List<dynamic>)
+          .map((e) => e.toString())
+          .toList();
+
+      expect(
+        gesendet,
+        isNot(contains('ich/photos/2.jpg')),
+        reason:
+            'Das entfernte Bild darf NICHT mehr beim Server stehen - '
+            'sonst ist es nach dem Neustart wieder da.',
+      );
+      expect(
+        gesendet,
+        contains('ich/photos/3.jpg'),
+        reason:
+            'Die Galerie rueckt nach: das dritte Bild nimmt den Platz '
+            'des entfernten ein - sonst waere eine Luecke in der '
+            'Galerie.',
+      );
+
+      // Und auch lokal ist es weg.
+      expect(
+        container.read(profileProvider).photos,
+        isNot(contains('ich/photos/2.jpg')),
+      );
+
+      await _aufraeumen(tester);
+    });
+  });
+
+  // Die Standortermittlung: der GPS-Knopf im Bundesland-Feld.
+  group('Die Standortermittlung', () {
+    testWidgets('der Standort wird erkannt, gerastert und gespeichert', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final ortService = _FakeOrtService(position: _position());
+
+      final container = await _pump(tester, _profil, ortService: ortService);
+
+      expect(tester.takeException(), isNull);
+
+      // Der GPS-Knopf sitzt am Bundesland-Feld (das steht weit unten im
+      // Formular - erst dorthin scrollen).
+      final gps = find.byIcon(Icons.my_location);
+      expect(gps, findsOneWidget);
+      await tester.scrollUntilVisible(
+        gps,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await _pumpFrames(tester);
+      await tester.tap(gps);
+      await _pumpFrames(tester);
+
+      // Die Offenlegung kommt VOR der Berechtigung (das verlangt
+      // Google Play) - der Nutzer muss sie bestaetigen.
+      expect(
+        find.text(L10n.tWithoutContext('location.disclosureTitle')),
+        findsOneWidget,
+        reason:
+            'Ohne Offenlegung fragt die App die Berechtigung im Hintergrund '
+            'ab - das verlangt Google Play nicht.',
+      );
+      await tester.tap(
+        find.text(L10n.tWithoutContext('location.disclosureAccept')),
+      );
+      await _pumpFrames(tester);
+
+      // Der Standort wurde abgefragt ...
+      expect(
+        ortService.abfragen,
+        greaterThan(0),
+        reason: 'Der Knopf muss den Standort wirklich abfragen.',
+      );
+
+      // ... und auf dem 5-km-Raster gespeichert (nicht der exakte Punkt).
+      final erwartet = LocationPrivacy.snapToGrid(53.5511, 9.9937);
+      final profil = container.read(profileProvider);
+      expect(
+        profil.locationLat,
+        erwartet.lat,
+        reason:
+            'Der Standort muss auf dem Raster liegen - sonst speichert die '
+            'App genauer, als sie verspricht.',
+      );
+      expect(profil.locationLng, erwartet.lng);
+
+      // Und der Standort geht zum Server (in der Tabelle, die nur der
+      // Eigentuemer lesen darf - nicht in profiles).
+      final orte = server.schreibvorgaenge
+          .where((v) => v['tabelle'] == 'profile_locations')
+          .toList();
+      expect(
+        orte,
+        isNotEmpty,
+        reason:
+            'Der Standort muss zum Server - sonst sieht niemand, in der '
+            'Naehe der Nutzer ist.',
+      );
+      expect(orte.last['lat'], erwartet.lat);
+
+      // Und der Nutzer bekommt die Bestaetigung.
+      expect(
+        find.text(L10n.tWithoutContext('profile.edit.locationDetected')),
+        findsOneWidget,
+      );
+
+      // Der Standort wird auch serverseitig geprueft (Massen-Fake-
+      // Konten) - das muss raus.
+      final pruefung =
+          container.read(locationCheckServiceProvider) as _FakeStandortPruefung;
+      expect(
+        pruefung.aufrufe,
+        isNotEmpty,
+        reason:
+            'Der Standort muss auch serverseitig geprueft werden - sonst '
+            'faellt eine Massen-Anmeldung mit demselben Standort nicht '
+            'auf.',
+      );
+      expect(pruefung.aufrufe.last['newLatitude'], erwartet.lat);
+
+      await _aufraeumen(tester);
+    });
+
+    testWidgets('ohne Berechtigung wird kein Standort gespeichert', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // Die Berechtigung wird verweigert (der Nutzer sagt Nein zur
+      // Offenlegung) - dann darf kein Standort im Profil landen.
+      final ortService = _FakeOrtService(position: _position());
+
+      final container = await _pump(tester, _profil, ortService: ortService);
+
+      expect(tester.takeException(), isNull);
+
+      // Der GPS-Knopf sitzt am Bundesland-Feld (das steht weit unten im
+      // Formular - erst dorthin scrollen).
+      final gps = find.byIcon(Icons.my_location);
+      await tester.scrollUntilVisible(
+        gps,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await _pumpFrames(tester);
+      await tester.tap(gps);
+      await _pumpFrames(tester);
+
+      // Die Offenlegung abbrechen.
+      final abbrechen = find.text(L10n.tWithoutContext('common.cancel'));
+      expect(abbrechen, findsOneWidget);
+      await tester.tap(abbrechen);
+      await _pumpFrames(tester);
+
+      // Der Standort wurde NICHT abgefragt ...
+      expect(ortService.abfragen, 0);
+      // ... und nichts steht im Profil.
+      expect(container.read(profileProvider).locationLat, isNull);
 
       await _aufraeumen(tester);
     });

@@ -155,6 +155,20 @@ class FakeSupabaseServer extends http.BaseClient {
       return _antwort(request, 200, '');
     }
 
+    // Der Speicher (die Profilbilder).
+    //
+    // DER GRUND: Ein Download liefert ein echtes, winziges PNG. Ohne
+    // Bild-Daten (leerer Body) wuerde `Image.memory` beim Anzeigen
+    // abstuerzen ("Unable to decode image data") - der Test scheitert
+    // dann an einem Fehler, den der Bildschirm gar nicht verursacht hat.
+    if (pfad.contains('/storage/v1/')) {
+      if (request.method == 'GET') {
+        return _antwortBytes(request, 200, _kleinesPng, 'image/png');
+      }
+      // Das Loeschen (der Speicher-Aufraeum) - der Server meldet Erfolg.
+      return _antwort(request, 200, '');
+    }
+
     // Edge Functions (Sperren, Verifizierung, ...).
     if (pfad.contains('/functions/v1/')) {
       const marker = '/functions/v1/';
@@ -261,7 +275,37 @@ class FakeSupabaseServer extends http.BaseClient {
       request: request,
     );
   }
+
+  /// Eine Antwort mit echten Bytes (Bilder).
+  http.StreamedResponse _antwortBytes(
+    http.BaseRequest request,
+    int status,
+    List<int> bytes,
+    String contentType,
+  ) {
+    return http.StreamedResponse(
+      Stream<List<int>>.value(bytes),
+      status,
+      headers: <String, String>{'content-type': contentType},
+      request: request,
+    );
+  }
 }
+
+/// Ein 1x1-Pixel-Bild (transparent) - der Platzhalter fuer Downloads.
+///
+/// Es ist ein echtes PNG: ein Bild-Decoder kann es fehlerfrei lesen.
+final List<int> _kleinesPng = <int>[
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, //
+  0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52,
+  0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+  0x08, 0x06, 0x00, 0x00, 0x00, 0x1f, 0x15, 0xc4,
+  0x89, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x44, 0x41,
+  0x54, 0x78, 0x9c, 0x63, 0xf8, 0xcf, 0xc0, 0xf0,
+  0x1f, 0x00, 0x05, 0x00, 0x01, 0xff, 0x89, 0x99,
+  0x3d, 0x1d, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45,
+  0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
+];
 
 /// Meldet ein Konto an - ohne echten Server.
 ///
