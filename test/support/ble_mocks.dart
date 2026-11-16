@@ -29,6 +29,11 @@ const MethodChannel transitBleKanal = MethodChannel('thestia/transit_ble');
 /// NICHT nachgebaut - ein Aufruf waere im Test ein Fehler (und kein
 /// stilles "geht schon").
 base class _FakeBluePlus extends FlutterBluePlusPlatform {
+  _FakeBluePlus({this.adapterAn = true});
+
+  /// Steht der Adapter (also das Bluetooth) auf dem Geraet an?
+  final bool adapterAn;
+
   @override
   dynamic noSuchMethod(Invocation invocation) {
     throw UnsupportedError('Im Test nicht gebraucht: ${invocation.memberName}');
@@ -40,7 +45,25 @@ base class _FakeBluePlus extends FlutterBluePlusPlatform {
   @override
   Future<BmBluetoothAdapterState> getAdapterState(
     BmBluetoothAdapterStateRequest request,
-  ) async => BmBluetoothAdapterState(adapterState: BmAdapterStateEnum.on);
+  ) async => BmBluetoothAdapterState(
+    adapterState: adapterAn ? BmAdapterStateEnum.on : BmAdapterStateEnum.off,
+  );
+
+  /// Der Adapter-Zustand als Strom.
+  ///
+  /// WICHTIG: Der Dienst liest den Zustand ueber
+  /// `FlutterBluePlus.adapterState` - das ist dieser Strom. Ohne ihn
+  /// wirft der Aufruf, der Dienst faengt das ab ("nicht blockieren")
+  /// und der Radar startet auch bei ausgeschaltetem Bluetooth.
+  @override
+  Stream<BmBluetoothAdapterState> get onAdapterStateChanged =>
+      Stream<BmBluetoothAdapterState>.value(
+        BmBluetoothAdapterState(
+          adapterState: adapterAn
+              ? BmAdapterStateEnum.on
+              : BmAdapterStateEnum.off,
+        ),
+      );
 
   @override
   Future<bool> startScan(BmScanSettings request) async => true;
@@ -49,17 +72,33 @@ base class _FakeBluePlus extends FlutterBluePlusPlatform {
   Future<bool> stopScan(BmStopScanRequest request) async => true;
 }
 
+/// Wie oft das Advertising gestartet wurde.
+///
+/// DER GRUND: Damit laesst sich pruefen, ob der Bildschirm den Dienst
+/// wirklich anspricht - nicht nur, ob irgendwo eine Meldung steht.
+int advertisingStarts = 0;
+
+/// Setzt den Zaehler zurueck (vor jedem Test).
+void resetAdvertisingZaehler() {
+  advertisingStarts = 0;
+}
+
 /// Beantwortet die Bluetooth-Aufrufe.
 ///
 /// [advertisingMoeglich]=false simuliert ein Geraet, auf dem das
 /// Advertising abgelehnt wird (der Dienst meldet dann
 /// 'advertise_failed').
-void mockBluetooth({bool advertisingMoeglich = true}) {
-  FlutterBluePlusPlatform.instance = _FakeBluePlus();
+///
+/// [adapterAn]=false simuliert ein Geraet, auf dem das Bluetooth AUS ist
+/// (der Dienst meldet dann 'bluetooth_off' - und der Bildschirm zeigt
+/// den passenden Hinweis).
+void mockBluetooth({bool advertisingMoeglich = true, bool adapterAn = true}) {
+  FlutterBluePlusPlatform.instance = _FakeBluePlus(adapterAn: adapterAn);
   TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
       .setMockMethodCallHandler(transitBleKanal, (anfrage) async {
         switch (anfrage.method) {
           case 'startAdvertise':
+            advertisingStarts++;
             return advertisingMoeglich;
           case 'stopAdvertise':
             return null;

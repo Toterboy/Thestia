@@ -40,6 +40,13 @@ void main() {
   });
 
   group('Der Transit-Bluetooth-Dienst', () {
+    // ANMERKUNG: Der Fall "Bluetooth ist aus" wird hier NICHT getestet.
+    // Das Plugin (flutter_blue_plus) haelt den Adapter-Zustand in einem
+    // statischen Zwischenspeicher - einmal gelesen, gilt er fuer die
+    // ganze Testdatei. Im Test laesst sich der Zustand also nicht mehr
+    // umstellen. Der Bildschirm-Pfad dazu ist an anderer Stelle
+    // getestet (der Bildschirm bekommt den Fehlergrund vom Dienst).
+
     test('der Start klappt, wenn das Advertising erlaubt wird', () async {
       mockBluetooth();
 

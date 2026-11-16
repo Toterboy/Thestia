@@ -41,6 +41,7 @@ import 'package:thestia/services/transit_ble_service.dart';
 import 'package:thestia/services/secure_storage.dart';
 import 'package:thestia/utils/constants.dart';
 
+import 'support/ble_mocks.dart';
 import 'support/plugin_mocks.dart';
 
 /// In-Memory-Implementierung von [LocalStorage] fuer Tests.
@@ -203,7 +204,7 @@ UserProfile _ohneGeburtsdatum() =>
 /// Bildschirm immer den Vorgabewert sehen und die Namensfrage immer
 /// stellen, egal was gespeichert ist.
 ProviderContainer _container({
-  required _FakeTransit transit,
+  _FakeTransit? transit,
   UserProfile? profil,
   bool namensfrageErledigt = true,
 }) {
@@ -224,7 +225,7 @@ ProviderContainer _container({
       localStorageProvider.overrideWithValue(storage),
       secureProfileStoreProvider.overrideWithValue(_FakeSecureProfileStore()),
       profileProvider.overrideWith((ref) => profilNotifier),
-      transitProvider.overrideWith((ref) => transit),
+      if (transit != null) transitProvider.overrideWith((ref) => transit),
     ],
   );
 }
@@ -816,6 +817,51 @@ void main() {
       );
 
       await tester.pumpWidget(const SizedBox());
+    });
+
+    // Der echte Startweg: der Bildschirm ruft den Transit-Notifier, der
+    // den Bluetooth-Dienst, der das Advertising einschaltet. Mit dem
+    // Bluetooth-Ersatz (test/support/ble_mocks.dart) laeuft die Kette
+    // wirklich - nur das Funkgeraet fehlt.
+    testWidgets('der Start schaltet das Advertising ein', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      mockBluetooth();
+      resetAdvertisingZaehler();
+
+      // OHNE den Fake-Notifier: hier laeuft der echte Transit-Notifier
+      // (er spricht den Bluetooth-Dienst an).
+      final container = _container();
+      final router = _router();
+      addTearDown(router.dispose);
+
+      await _aufbauen(tester, container, router);
+
+      // Der Start fragt zuerst nach der eigenen Beschreibung (zwei
+      // Merkmale sind Pflicht).
+      await _startTippen(tester);
+      await _merkmaleWaehlen(tester, ['Haarfarbe', 'Haarlänge']);
+      await _sendenTippen(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        advertisingStarts,
+        greaterThan(0),
+        reason:
+            'Der Start muss das Advertising wirklich einschalten - sonst '
+            'sendet der Radar nichts.',
+      );
+
+      // Der Container schliesst den Transit-Notifier - und damit die
+      // Timer (der 45-Minuten-Countdown und der Scan-Puls). Das muss
+      // VOR dem Testende passieren: die Pruefung auf offene Timer laeuft
+      // noch vor den tearDowns.
+      container.dispose();
+
+      // Der Scan-Aufruf des Plugins hat einen eigenen Timer (12 s) - der
+      // laeuft hier einfach ab.
+      await tester.pump(const Duration(seconds: 13));
     });
   });
 }
