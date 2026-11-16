@@ -1,4 +1,4 @@
-﻿# Changelog – Thestia
+# Changelog – Thestia
 
 Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
 
@@ -481,6 +481,59 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
     die Analyzer-Meldungen und den Namen des roten Prüfers jetzt als
     **Anmerkungen** an die betroffene Datei: sie stehen in der
     PR-Ansicht direkt am Fundort.
+
+### Behoben (16.11.2026) - Sicherheits-Audit, echte Umlaute, sofortige Sprachnachricht
+
+Ein vollstaendiges Sicherheits- und Datenschutz-Audit (Quellcode,
+API-Kommunikation, Datenbank-Konfiguration, Architektur) hat **sechs echte
+Luecken** gefunden. Die beiden wichtigsten betrafen den laufenden Betrieb:
+
+- **Das Zertifikat-Pinning hat nie gegriffen.** Das Rotations-Werkzeug hatte
+  eine **eigene, fehlerhafte SHA-256** (es fehlte der Summand `w[i-7]` in der
+  Nachrichtenplanung). Damit lieferte es **falsche** Hashes - und kein Pin,
+  den es erzeugt hatte, passte jemals. Der gepinnte Leaf war zusaetzlich seit
+  dem 24.10.2026 veraltet. Die App lief dadurch nur noch ueber den
+  Aussteller-Fallback: **jedes** Zertifikat derselben CA fuer die Domain
+  wurde akzeptiert.
+  * **Jetzt:** Die SHA-256 ist repariert und hat einen Selbsttest (Testvektor
+    "abc"), der in der CI laeuft. Der Leaf-Pin stimmt wieder mit dem
+    Live-Zertifikat ueberein - ein neues CI-Gate (`tool/check_cert_pins.py`)
+    prueft das bei **jedem** Commit.
+  * Der Rotations-Fallback ist **zeitlich begrenzt** (nur noch im
+    Rotationsfenster um das Ablaufdatum des Leafs). Ausserhalb gilt der
+    Leaf-Pin ohne Ausnahme.
+  * **Ungepinnte Hosts werden abgewiesen** (fail-closed) statt ueber den
+    System-Trust-Store zu laufen - eine nachinstallierte Fremd-CA auf dem
+    Geraet konnte das Pinning bisher umgehen.
+- **Der Geburtstag verriet das genaue Geburtsdatum.** Das Flag "heute ist
+  Geburtstag" stand im oeffentlichen Profilvertrag - zusammen mit dem
+  sichtbaren Alter ergab sich daraus Jahr + Monat + Tag. Jetzt erscheint der
+  Hinweis nur noch beim **eigenen** Profil und bei Personen, mit denen ein
+  **Match** besteht (Migration 219). Fuer Fremde in der Suche faellt er weg.
+- **Die Sprachnachricht erschien nicht sofort.** Nach dem Aufnehmen war sie
+  erst zu sehen, wenn der Bildschirm aus einem anderen Grund neu gebaut
+  wurde - der Nutzer hat seine Aufnahme fuer verloren gehalten und sie
+  womoeglich noch einmal aufgenommen. Jetzt steht sie sofort da, wie die
+  getippte Nachricht.
+- **Die Texte sprechen jetzt Deutsch.** Ein neues Gate prueft, dass in allen
+  **nutzersichtbaren** Texten echte Umlaute stehen ("fuer" statt "fuer",
+  "pruefen" statt "pruefen", "Spaeter" statt "Spaeter"). Zwoelf Stellen in
+  den App-Texten, in der Datenschutzerklaerung und auf der Website wurden
+  korrigiert. Die Kommentare im Quelltext bleiben bewusst ASCII.
+- **Weitere Haertungen:** Push-Texte duerfen nur noch aus einer festen
+  Liste kommen (auch die internen Datenbank-Trigger - damit kann kein
+  Push-Phishing im App-Look entstehen); jede Entschluesselung eines
+  Ausweisdokuments wird protokolliert (Migration 220, 90 Tage Aufbewahrung);
+  die Sicherheitsnummer wird im Chat aktiv angeboten; Bilder laufen ueber
+  den gepinnten Client; die Android-Backup-Regeln schliessen jetzt auch den
+  Geraetewechsel aus; die GitHub-Actions der CI sind auf Commit-SHAs
+  gepinnt (ein Tag ist veraenderlich).
+- **Betrieb (kein App-Umfang):** Die alte Vercel-Verknuepfung im
+  Projektordner (`.vercel/`) ist entfernt - Thestia laeuft auf **Netlify**
+  (bzw. Cloudflare Pages), Vercel wird nicht gebraucht. Die alte Domain
+  `theblinddate.in` zeigt per DNS weiterhin auf Vercel; das laesst sich nur
+  mit Zugang zum Registrar bzw. zum alten Vercel-Team aufloesen (siehe
+  `docs/BETRIEBSAUFGABEN.md`).
 
 ## [0.10.1] – Elternfreigabe, Aufsicht und Admin-Posteingang (Build 51/52/54/55, 2026-11-03 bis 2026-11-13)
 
