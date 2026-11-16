@@ -2965,6 +2965,7 @@ const Map<String, Map<String, String>> _strings = {
         '(Firebase); im F-Droid-Build läuft UnifiedPush',
     'privacy.processorBrevo': 'Transaktions-E-Mails (Bestätigung, Reset)',
     'privacy.processorCloudflare': 'CAPTCHA (Turnstile)',
+    'privacy.processorStunNames': 'Nextcloud, OVH, VoIPGate, VoIPStunt',
     'privacy.processorStun':
         'Ermittlung der öffentlichen IP-Adresse für die Direktverbindung '
         '(STUN) - keine Chat-Inhalte',
@@ -6306,6 +6307,7 @@ const Map<String, Map<String, String>> _strings = {
         'F-Droid build uses UnifiedPush',
     'privacy.processorBrevo': 'Transactional emails (confirmation, reset)',
     'privacy.processorCloudflare': 'CAPTCHA (Turnstile)',
+    'privacy.processorStunNames': 'Nextcloud, OVH, VoIPGate, VoIPStunt',
     'privacy.processorStun':
         'Determination of your public IP address for the direct connection '
         '(STUN) - no chat contents',

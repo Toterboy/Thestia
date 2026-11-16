@@ -643,7 +643,7 @@ class PrivacyScreen extends ConsumerWidget {
           // gehoert in die Liste.
           ListTile(
             leading: const Icon(Icons.router_outlined),
-            title: const Text('Nextcloud, OVH, VoIPGate, VoIPStunt'),
+            title: Text(L10n.t(context, 'privacy.processorStunNames')),
             subtitle: Text(L10n.t(context, 'privacy.processorStun')),
           ),
           // Der Hinweis auf den fehlenden TURN-Relay: Die Direkt-
