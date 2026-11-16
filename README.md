@@ -15,6 +15,24 @@ Das Projekt ist vollständig kostenlos nutzbar und soll eine echte Alternative z
 Tinder & Co. darstellen. Es befindet sich in aktiver Entwicklung und ist noch
 nicht vollständig funktional. Beiträge und Feedback sind willkommen.
 
+> **Mitmachen: Thestia wird auf Google Play getestet.**
+> Sobald der Testlauf freigeschaltet ist, kommst du über die
+> [Testspur im Play Store](https://play.google.com/apps/testing) in die App –
+> kostenlos, ohne Abo, ohne Werbung. Wer mitmacht, probiert die App vor allen
+> anderen aus und kann Abstürze, Fehler und Wünsche direkt melden. Feedback
+> ist hier ausdrücklich erwünscht – [Issues](CONTRIBUTING.md) sind genauso
+> willkommen.
+
+> **Du möchtest Thestia unterstützen?**
+> Die App bleibt kostenlos – für immer, ohne Abos, ohne Premium und ohne
+> Werbung. Wenn dir das Projekt gefällt und du die Weiterentwicklung fördern
+> möchtest, kannst du freiwillig einen kleinen Betrag spenden:
+> <https://liberapay.com/Thestia>
+> Das deckt Server, Backups und die Domain ab. **Spenden sind freiwillig und
+> geben keine Gegenleistung**: keine Belohnungen, keine Zusatzfunktionen,
+> keine Vorteile für Geberinnen und Geber – der Quellcode bleibt AGPLv3 und
+> offen.
+
 > **Mit Liebe entwickelt – und mit Unterstützung künstlicher Intelligenz.**
 > Thestia wurde von einem Menschen mit Hilfe von KI-Modellen entwickelt:
 > vom ersten Architektur-Entwurf über Code, Tests und Bildschirmfotos bis zu
