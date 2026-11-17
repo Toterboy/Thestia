@@ -154,14 +154,27 @@ void main() {
   }
 
   /// Scrollt zu einem Text (der Bildschirm ist eine lange Liste).
+  ///
+  /// DER HINWEIS: Die Liste baut nur die sichtbaren Eintraege - der Text
+  /// muss also erst herangescrollt werden. Es wird NICHT danach noch
+  /// "sichtbar gemacht": Das wuerde die Liste weiter verschieben und die
+  /// Tests stoeren, die mehrere Abschnitte gleichzeitig sehen wollen.
   Future<void> scrolleZu(WidgetTester tester, String text) async {
     final ziel = find.text(text);
-    if (ziel.evaluate().isNotEmpty) return;
     // Der Bildschirm ist sehr lang (die Liste baut nur die sichtbaren
     // Eintraege) - also wird in kleinen Schritten gescrollt, bis der
     // Text da ist.
-    for (var i = 0; i < 40 && ziel.evaluate().isEmpty; i++) {
-      await tester.drag(find.byType(Scrollable).first, const Offset(0, -300));
+    //
+    // DER WEG: "timedDrag" statt "drag". Ein einfacher Zug kommt
+    // erstaunlich wenig weiter (rund ein Drittel der Strecke) - bei
+    // ueber 7000 Pixel Liste waere der Eintrag am Ende nie erreicht
+    // worden. Der langsame Zug folgt dem Finger genau.
+    for (var i = 0; i < 60 && ziel.evaluate().isEmpty; i++) {
+      await tester.timedDrag(
+        find.byType(Scrollable).first,
+        const Offset(0, -300),
+        const Duration(milliseconds: 300),
+      );
       await tester.pump(const Duration(milliseconds: 120));
     }
   }
@@ -252,6 +265,124 @@ void main() {
     // null heisst: "es entscheidet das Geraet" - true/false waere eine
     // feste Entscheidung und damit etwas anderes.
     expect(container.read(settingsProvider).useDarkMode, isNull);
+  });
+
+  group('Das Wiederherstellen der Identitaet', () {
+    testWidgets('es fragt erst nach', (tester) async {
+      await zeigeScreen(tester);
+
+      await scrolleZu(tester, L10n.tWithoutContext('settings.backupRestore'));
+      // Der Eintrag liegt unterhalb der Falz - ohne das landet der Tipp
+      // ins Leere.
+      await tester.ensureVisible(
+        find.text(L10n.tWithoutContext('settings.backupRestore')),
+      );
+      await tester.pump(const Duration(milliseconds: 120));
+      await tester.tap(
+        find.text(L10n.tWithoutContext('settings.backupRestore')),
+      );
+      await pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      // Ohne Rueckfrage wuerde die Identitaet ueberschrieben - das muss
+      // der Nutzer bestaetigen.
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        find.text(L10n.tWithoutContext('settings.restoreConfirmTitle')),
+        findsOneWidget,
+      );
+
+      // "Abbrechen" - es passiert nichts.
+      await tester.tap(
+        find.widgetWithText(TextButton, L10n.tWithoutContext('common.cancel')),
+      );
+      await pumpFrames(tester);
+
+      expect(find.byType(AlertDialog), findsNothing);
+    });
+  });
+
+  group('Der lokal gespeicherte Chat-Verlauf', () {
+    testWidgets('die Auswahl steht da und wird gespeichert', (tester) async {
+      // GROSSER Bildschirm: der Dialog mit den drei Auswahlmoeglichkeiten
+      // braucht Platz (sonst liegt die dritte Auswahl ausserhalb des
+      // Fensters - und der Tipp ginge ins Leere).
+      await zeigeScreen(tester, hoehe: 3000);
+
+      // Der Eintrag steht weit unten in der Liste.
+      await scrolleZu(tester, L10n.tWithoutContext('chathist.tileTitle'));
+      await tester.ensureVisible(
+        find.text(L10n.tWithoutContext('chathist.tileTitle')),
+      );
+      await tester.pump(const Duration(milliseconds: 120));
+      await tester.tap(find.text(L10n.tWithoutContext('chathist.tileTitle')));
+      await pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      // Die drei Moeglichkeiten stehen da.
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        find.text(L10n.tWithoutContext('chathist.off.title')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(L10n.tWithoutContext('chathist.cap200.title')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(L10n.tWithoutContext('chathist.all.title')),
+        findsOneWidget,
+      );
+
+      // "Gar nichts" waehlen - der Verlauf soll nicht mehr gespeichert
+      // werden.
+      await tester.ensureVisible(
+        find.text(L10n.tWithoutContext('chathist.off.title')),
+      );
+      await tester.pump(const Duration(milliseconds: 120));
+      await tester.tap(find.text(L10n.tWithoutContext('chathist.off.title')));
+      await pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      // Der Entscheid ist gespeichert - sonst waere er nach dem
+      // Neustart wieder weg.
+      expect(await storage.getBool('chat_history_local'), isFalse);
+      expect(await storage.getBool('chat_history_all'), isFalse);
+    });
+
+    testWidgets('"200 Nachrichten pro Chat" speichert begrenzt', (
+      tester,
+    ) async {
+      await zeigeScreen(tester, hoehe: 3000);
+
+      await scrolleZu(tester, L10n.tWithoutContext('chathist.tileTitle'));
+      await tester.ensureVisible(
+        find.text(L10n.tWithoutContext('chathist.tileTitle')),
+      );
+      await tester.pump(const Duration(milliseconds: 120));
+      await tester.tap(find.text(L10n.tWithoutContext('chathist.tileTitle')));
+      await pumpFrames(tester);
+
+      // Die Auswahl kann tiefer im Dialog liegen - erst dorthin scrollen,
+      // sonst trifft der Tipp ins Leere.
+      //
+      // DER HINWEIS: "Kompletter Verlauf" ist die VORGABE - da waere
+      // nichts geaendert worden (und nichts gespeichert). Der Test
+      // nimmt deshalb die begrenzte Variante.
+      await tester.ensureVisible(
+        find.text(L10n.tWithoutContext('chathist.cap200.title')),
+      );
+      await tester.pump(const Duration(milliseconds: 120));
+      await tester.tap(
+        find.text(L10n.tWithoutContext('chathist.cap200.title')),
+      );
+      await pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      // Der Verlauf wird gespeichert - aber nicht komplett.
+      expect(await storage.getBool('chat_history_local'), isTrue);
+      expect(await storage.getBool('chat_history_all'), isFalse);
+    });
   });
 
   group('Das Backup der Ende-zu-Ende-Identitaet', () {
