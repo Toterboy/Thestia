@@ -71,9 +71,17 @@ class _EmailVerificationScreenState
     // E-Mail aus der Registrierung (pendingVerificationEmailProvider) bzw.
     // dem Auth-State erfassen. Nach signUp mit aktivierter Bestätigung gibt
     // es KEINE Session (currentUser == null) – deshalb primär der Provider.
+    //
+    // BEFUND (17.11.2026, gefunden von einem Test): Der Zugriff auf den
+    // Client war ungeschützt. Ohne Supabase (Demo-/Limit-Modus) wirft
+    // `Supabase.instance` eine Assertion - und der Screen ist damit beim
+    // Öffnen abgestürzt, BEVOR der Demo-Zweig unten (Zeile 97) überhaupt
+    // erreicht wurde. Der Zweig war also unerreichbar.
     _capturedEmail =
         ref.read(pendingVerificationEmailProvider) ??
-        SupabaseService.client.auth.currentUser?.email;
+        (SupabaseService.isInitialized
+            ? SupabaseService.client.auth.currentUser?.email
+            : null);
     // Sobald die E-Mail bestätigt ist, automatisch zur Hauptapp weiterleiten.
     // v0.9.0-Fix: Nach FRISCHER Registrierung direkt die Einrichtung
     // erzwingen (Onboarding-Interview) - vorher kam sie erst beim 2.
@@ -335,6 +343,14 @@ class _EmailVerificationScreenState
     String email,
     String passwort,
   ) async {
+    // Ohne Supabase gibt es keinen Server zum Löschen (Demo-/Limit-Modus).
+    // DER WEG: Ein lesbarer Fehler statt einer Assertion - der Aufrufer
+    // zeigt ihn dem Nutzer an.
+    if (!SupabaseService.isInitialized) {
+      throw StateError(
+        'Ohne Serververbindung kann das Konto nicht gelöscht werden.',
+      );
+    }
     final captchaHinweis = L10n.t(context, 'email.captchaNeeded');
     final captcha = await _holeCaptcha();
     if (captcha == null) {
