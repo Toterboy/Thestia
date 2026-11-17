@@ -140,7 +140,15 @@ class _TransitRadarScreenState extends ConsumerState<TransitRadarScreen> {
       final v = await ref
           .read(localStorageProvider)
           .getBool(kTransitRadioCleanupKey);
-      if (mounted) setState(() => _radioCleanupEnabled = v ?? false);
+      // DER VORGABE-WERT (BEFUND 18.11.2026, gefunden von einem Test):
+      // "Nach Radar erinnern" ist AN - so wollte es der Nutzerwunsch
+      // ("Standard AN statt AUS (opt-out) - der Toggle war standardmaessig
+      // deaktiviert und die Erinnerung kam deshalb nie").
+      //
+      // DER FEHLER: Hier stand "v ?? false" - ohne gespeicherten Wert
+      // war der Schalter also AUS und die Erinnerung kam nie. Genau das
+      // hatte der Nutzer gemeldet.
+      if (mounted) setState(() => _radioCleanupEnabled = v ?? true);
     });
   }
 

@@ -1187,6 +1187,35 @@ void main() {
     // Der Posteingang der Grueesse: jemand hat in der Naehe gewinkt. Der
     // Nutzer kann den Gruss annehmen (daraus wird ein Funke) oder
     // ausblenden (der Absender sieht nichts davon).
+    group('Die Erinnerung nach dem Radar', () {
+      testWidgets('sie kommt, wenn der Radar gestoppt wird', (tester) async {
+        final transit = _FakeTransit();
+        final container = _container(transit: transit);
+        addTearDown(container.dispose);
+        final router = _router();
+        addTearDown(router.dispose);
+
+        await _aufbauen(tester, container, router);
+        await _radarStarten(tester);
+
+        // Der Radar laeuft - jetzt stoppen. Danach fragt die App, ob
+        // Bluetooth/Standort ausgeschaltet werden sollen.
+        await _knopfTippen(tester, L10n.tWithoutContext('transit.stop'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(
+          find.text(L10n.tWithoutContext('transit.cleanupTitle')),
+          findsOneWidget,
+          reason:
+              'Nach dem Radar soll die App ans Ausschalten erinnern - der '
+              'Nutzerwunsch war genau das ("Erinnerung fehlt").',
+        );
+
+        await tester.pumpWidget(const SizedBox());
+      });
+    });
+
     group('Der Posteingang der Grueesse', () {
       /// Stellt einen Gruss in den Posteingang.
       void stelleGruess({String? name = 'Mira'}) {
