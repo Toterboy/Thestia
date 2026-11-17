@@ -1899,14 +1899,23 @@ class _SoftPingInboxState extends ConsumerState<_SoftPingInbox>
                       ),
                     ),
                   const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                  // DER UMBRUCH (18.11.2026, gefunden von einem Test): Die
+                  // beiden Knopfe standen in einer festen Reihe - bei
+                  // grosser Schrift (oder einer System-Schriftgroesse
+                  // ueber 100 %) lief die Reihe ueber den Rand
+                  // ("RenderFlex overflowed").
+                  //
+                  // DER WEG: Ein "Wrap" bricht die Reihe um, statt zu
+                  // ueberlaufen. Bei normaler Schrift steht alles
+                  // weiterhin nebeneinander.
+                  Wrap(
+                    alignment: WrapAlignment.end,
+                    spacing: 8,
                     children: [
                       TextButton(
                         onPressed: () => _dismiss(ping),
                         child: Text(L10n.t(context, 'transit.ignore')),
                       ),
-                      const SizedBox(width: 8),
                       FilledButton(
                         onPressed: () => _accept(ping),
                         child: Text(L10n.t(context, 'transit.accept')),

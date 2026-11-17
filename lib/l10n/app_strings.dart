@@ -1066,7 +1066,7 @@ const Map<String, Map<String, String>> _strings = {
     'transit.hoursAgo': 'vor {count} Std.',
     'transit.noEncounters': 'Noch keine Geräte in Reichweite gewesen.',
     'transit.nearbyCount':
-        '%count Personen in der Nähe - du siehst %shown davon.',
+        '{count} Personen in der Nähe - du siehst {shown} davon.',
     'transit.placeLabel': 'Wo bist du gerade?',
     'transit.placeHint': 'z. B. Wagen 3, Halle 2 bei den Toiletten',
     'transit.placePrivacy':
@@ -1118,7 +1118,7 @@ const Map<String, Map<String, String>> _strings = {
     'transit.showNameBoundary':
         'Wichtig: Das schützt nur deinen Namen. Wer neben dir steht, '
         'erkennt dich trotzdem.',
-    'transit.waveFrom': '%s winkt dir zu',
+    'transit.waveFrom': '{name} winkt dir zu',
     'transit.waveFromAnonymous': 'Jemand winkt dir zu',
     'transit.ignore': 'Ausblenden',
     'transit.accept': 'Funke annehmen',
@@ -3160,8 +3160,8 @@ const Map<String, Map<String, String>> _strings = {
         'In dieser Kategorie ist gerade niemand. Vielleicht eine andere '
         'Altersspanne?',
     'fymb.emptyOther':
-        'In der Kategorie „%s" ist gerade niemand. In diesen Kategorien '
-        'sind Menschen: %s.',
+        'In der Kategorie „{kategorie}" ist gerade niemand. In diesen '
+        'Kategorien sind Menschen: {liste}.',
     'fymb.emptyNoOne': 'Gerade ist niemand da - schau später nochmal vorbei.',
     'fymb.like': 'Gefällt mir',
     'fymb.reload': 'Neu laden',
@@ -4310,7 +4310,7 @@ const Map<String, Map<String, String>> _strings = {
     'transit.hoursAgo': '{count} h ago',
     'transit.noEncounters': 'No devices in range yet.',
     'transit.nearbyCount':
-        '%count people nearby - you are seeing %shown of them.',
+        '{count} people nearby - you are seeing {shown} of them.',
     'transit.placeLabel': 'Where are you right now?',
     'transit.placeHint': 'e.g. coach 3, hall 2 by the toilets',
     'transit.placePrivacy':
@@ -4359,7 +4359,7 @@ const Map<String, Map<String, String>> _strings = {
     'transit.showNameBoundary':
         'Important: this only protects your name. Someone standing next to '
         'you can still recognise you.',
-    'transit.waveFrom': '%s is waving at you',
+    'transit.waveFrom': '{name} is waving at you',
     'transit.waveFromAnonymous': 'Someone is waving at you',
     'transit.ignore': 'Hide',
     'transit.accept': 'Accept spark',
@@ -6493,8 +6493,8 @@ const Map<String, Map<String, String>> _strings = {
         'Nobody is around in this category right now. Maybe try a '
         'different age range?',
     'fymb.emptyOther':
-        'Right now there is nobody in the category \u201e%s\u201c. There are '
-        'people in these categories: %s.',
+        'Right now there is nobody in the category \u201e{kategorie}\u201c. '
+        'There are people in these categories: {liste}.',
     'fymb.emptyNoOne': 'Nobody is around right now - check back later.',
     'fymb.like': 'Like',
     'fymb.reload': 'Reload',

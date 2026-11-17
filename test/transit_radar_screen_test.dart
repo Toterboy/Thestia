@@ -27,6 +27,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/transit_models.dart';
@@ -42,6 +44,7 @@ import 'package:thestia/services/secure_storage.dart';
 import 'package:thestia/utils/constants.dart';
 
 import 'support/ble_mocks.dart';
+import 'support/fake_supabase_server.dart';
 import 'support/plugin_mocks.dart';
 
 /// In-Memory-Implementierung von [LocalStorage] fuer Tests.
@@ -356,6 +359,19 @@ Future<void> _startTippen(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 400));
 }
 
+/// Laesst die echte Ereignisschleife laufen.
+///
+/// DER GRUND: Die HTTP-Antworten des Servers kommen nur in der echten
+/// Ereignisschleife an - mit blossem "pump" bleibt der Posteingang leer.
+Future<void> _serverAntwortAbwarten(WidgetTester tester) async {
+  for (var i = 0; i < 12; i++) {
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+    });
+    await tester.pump(const Duration(milliseconds: 60));
+  }
+}
+
 /// Startet den Radar (mit der Selbstbeschreibung).
 ///
 /// DER GRUND: Die Begegnungsliste steht nur im LAUFENDEN Radar - vorher
@@ -367,9 +383,39 @@ Future<void> _radarStarten(WidgetTester tester) async {
 }
 
 void main() {
+  /// Der Ersatz-Server (die Grueesse kommen von dort).
+  late FakeSupabaseServer server;
+
+  setUpAll(() async {
+    // DER SPEICHER: Supabase braucht ihn (der Auth-Client legt den
+    // Sitzungs-Token dort ab) - ohne den Ersatz sucht das Plugin auf dem
+    // CI-Runner das echte und findet nichts.
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await SharedPreferences.getInstance();
+    // DER SERVER: Der Posteingang der Grueesse laeuft ueber die Datenbank
+    // (list_my_soft_pings). Ohne Server bleibt der Posteingang leer -
+    // und genau den Bereich prueft kein Test.
+    server = FakeSupabaseServer(userId: 'ich');
+    await supabase.Supabase.initialize(
+      url: 'https://example.supabase.co',
+      publishableKey: 'test-key',
+      httpClient: server,
+      authOptions: const supabase.FlutterAuthClientOptions(
+        detectSessionInUri: false,
+        persistSession: false,
+        autoRefreshToken: false,
+      ),
+    );
+    await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
+  });
+
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues(<String, Object>{});
+    // Der Server beginnt ohne Gruesse - jeder Test stellt seine eigenen.
+    server.rpcAntworten['list_my_soft_pings'] = <dynamic>[];
+    server.rpcAntworten.remove('accept_soft_ping');
+    server.schreibvorgaenge.clear();
     // DER KEYSTORE: Der Bildschirm liest die Einstellungen (Altersspanne
     // und Suchradius) aus dem verschluesselten Speicher. Ohne diesen
     // Mock ruft der Test auf dem CI-Runner das echte Plugin - und das
@@ -927,6 +973,44 @@ void main() {
         await tester.pumpWidget(const SizedBox());
       });
 
+      testWidgets('bei vielen Geraeten steht die Zahl da', (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final transit = _FakeTransit();
+        transit.begegnungen = List<TransitEncounter>.generate(
+          12,
+          (i) => TransitEncounter(token: 'token-$i', seenAt: DateTime.now()),
+        );
+        transit.setzeBegegnungszahl(12);
+        final container = _container(transit: transit);
+        addTearDown(container.dispose);
+        final router = _router();
+        addTearDown(router.dispose);
+
+        await _aufbauen(tester, container, router);
+        await _radarStarten(tester);
+
+        expect(tester.takeException(), isNull);
+        // BEFUND (18.11.2026, gefunden von einem Test): Der Text benutzte
+        // "%count"/"%shown" - die App ersetzt aber "{count}"/"{shown}".
+        // Der Nutzer sah deshalb literally "%count Personen in der
+        // Naehe - du siehst %shown davon.".
+        expect(
+          find.textContaining('%count'),
+          findsNothing,
+          reason:
+              'Der Platzhalter muss ersetzt sein - sonst steht der '
+              'Nutzer vor einem Text mit "%count".',
+        );
+        expect(find.textContaining('%shown'), findsNothing);
+        // Und die Zahlen stehen da.
+        expect(find.textContaining('12'), findsWidgets);
+        expect(find.textContaining('10'), findsWidgets);
+
+        await tester.pumpWidget(const SizedBox());
+      });
+
       testWidgets('ohne Geraete steht der Leerzustand da', (tester) async {
         await tester.binding.setSurfaceSize(const Size(390, 844));
         addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -1095,6 +1179,236 @@ void main() {
         );
         // Und die Begegnung steht drin.
         expect(find.text('vor 50 Min.'), findsOneWidget);
+
+        await tester.pumpWidget(const SizedBox());
+      });
+    });
+
+    // Der Posteingang der Grueesse: jemand hat in der Naehe gewinkt. Der
+    // Nutzer kann den Gruss annehmen (daraus wird ein Funke) oder
+    // ausblenden (der Absender sieht nichts davon).
+    group('Der Posteingang der Grueesse', () {
+      /// Stellt einen Gruss in den Posteingang.
+      void stelleGruess({String? name = 'Mira'}) {
+        server.rpcAntworten['list_my_soft_pings'] = <dynamic>[
+          <String, dynamic>{
+            'id': 'ping-1',
+            'messageKey': 'wave',
+            'customLine': '',
+            'createdAt': DateTime.now().toIso8601String(),
+            'expiresAt': DateTime.now()
+                .add(const Duration(hours: 48))
+                .toIso8601String(),
+            'senderName': name,
+            'placeKind': 'train',
+            'placeText': 'Wagen 3',
+          },
+        ];
+      }
+
+      testWidgets('der Gruss steht da', (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        stelleGruess();
+
+        final transit = _FakeTransit();
+        final container = _container(transit: transit);
+        addTearDown(container.dispose);
+        final router = _router();
+        addTearDown(router.dispose);
+
+        await _aufbauen(tester, container, router);
+        await _serverAntwortAbwarten(tester);
+
+        expect(tester.takeException(), isNull);
+        // Der Gruss steht da - mit dem Namen des Absenders (er hat ihn
+        // freigegeben) und mit dem Ort, damit der Nutzer weiss, wo er
+        // suchen soll.
+        expect(find.textContaining('Mira'), findsWidgets);
+        expect(find.text('Wagen 3'), findsOneWidget);
+        // Und der Vorschlagstext.
+        expect(
+          find.text(L10n.tWithoutContext('transit.preset.wave')),
+          findsOneWidget,
+        );
+        // Die beiden Wege stehen bereit.
+        expect(
+          find.text(L10n.tWithoutContext('transit.accept')),
+          findsOneWidget,
+        );
+        expect(
+          find.text(L10n.tWithoutContext('transit.ignore')),
+          findsOneWidget,
+        );
+
+        await tester.pumpWidget(const SizedBox());
+      });
+
+      testWidgets('ohne freigegebenen Namen bleibt der Gruss anonym', (
+        tester,
+      ) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        // Der Absender hat seinen Namen NICHT freigegeben.
+        stelleGruess(name: null);
+
+        final transit = _FakeTransit();
+        final container = _container(transit: transit);
+        addTearDown(container.dispose);
+        final router = _router();
+        addTearDown(router.dispose);
+
+        await _aufbauen(tester, container, router);
+        await _serverAntwortAbwarten(tester);
+
+        expect(tester.takeException(), isNull);
+        expect(
+          find.text(L10n.tWithoutContext('transit.waveFromAnonymous')),
+          findsOneWidget,
+          reason:
+              'Ohne freigegebenen Namen bleibt der Absender anonym - '
+              'das ist der Normalzustand.',
+        );
+
+        await tester.pumpWidget(const SizedBox());
+      });
+
+      testWidgets('ein Gruss laesst sich annehmen', (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        stelleGruess();
+        // Die Annahme liefert den neuen Funken (ohne Chat-ID).
+        server.rpcAntworten['accept_soft_ping'] = <String, dynamic>{
+          'matched': true,
+          'match_id': 0,
+        };
+
+        final transit = _FakeTransit();
+        final container = _container(transit: transit);
+        addTearDown(container.dispose);
+        final router = _router();
+        addTearDown(router.dispose);
+
+        await _aufbauen(tester, container, router);
+        await _serverAntwortAbwarten(tester);
+
+        await _knopfTippen(tester, L10n.tWithoutContext('transit.accept'));
+        await _serverAntwortAbwarten(tester);
+
+        expect(tester.takeException(), isNull);
+        // Die Funktion wurde wirklich aufgerufen.
+        expect(
+          server.rpcAufrufe.any((c) => c['funktion'] == 'accept_soft_ping'),
+          isTrue,
+          reason:
+              'Ohne die Annahme beim Server entsteht kein Funke - der '
+              'Nutzer bleibt ohne Antwort.',
+        );
+        // Und der Nutzer erfaehrt, was passiert ist.
+        expect(
+          find.textContaining(L10n.tWithoutContext('transit.acceptDone')),
+          findsWidgets,
+        );
+
+        await tester.pumpWidget(const SizedBox());
+      });
+
+      testWidgets('ein Gruss laesst sich ausblenden - erst nach Rueckfrage', (
+        tester,
+      ) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        stelleGruess();
+
+        final transit = _FakeTransit();
+        final container = _container(transit: transit);
+        addTearDown(container.dispose);
+        final router = _router();
+        addTearDown(router.dispose);
+
+        await _aufbauen(tester, container, router);
+        await _serverAntwortAbwarten(tester);
+
+        // BEFUND (07.11.2026, Betreiber): "Funke wurde angezeigt, ist dann
+        // aber wieder verschwunden." Das Ausblenden LOESCHT die Zeile -
+        // und der Knopf sitzt genau dort, wo der Finger schon liegt.
+        // Deshalb fragt die App vorher nach.
+        await _knopfTippen(tester, L10n.tWithoutContext('transit.ignore'));
+
+        expect(
+          find.byType(AlertDialog),
+          findsOneWidget,
+          reason:
+              'Ohne Rueckfrage waere der Gruss weg - und der Nutzer '
+              'haette es nicht gewollt.',
+        );
+        expect(
+          find.text(L10n.tWithoutContext('transit.ignoreConfirmTitle')),
+          findsOneWidget,
+        );
+
+        // Bestaetigen: dann loescht die App wirklich.
+        await tester.tap(
+          find.widgetWithText(
+            FilledButton,
+            L10n.tWithoutContext('transit.ignoreConfirmOk'),
+          ),
+        );
+        await tester.pump();
+        await _serverAntwortAbwarten(tester);
+
+        expect(tester.takeException(), isNull);
+        expect(
+          server.schreibvorgaenge.any(
+            (v) => v['tabelle'] == 'transit_soft_pings',
+          ),
+          isTrue,
+          reason: 'Das Ausblenden muss die Zeile beim Server loeschen.',
+        );
+
+        await tester.pumpWidget(const SizedBox());
+      });
+
+      testWidgets('ohne Rueckfrage wird nichts geloescht', (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        stelleGruess();
+
+        final transit = _FakeTransit();
+        final container = _container(transit: transit);
+        addTearDown(container.dispose);
+        final router = _router();
+        addTearDown(router.dispose);
+
+        await _aufbauen(tester, container, router);
+        await _serverAntwortAbwarten(tester);
+
+        await _knopfTippen(tester, L10n.tWithoutContext('transit.ignore'));
+        // "Abbrechen" - der Gruss bleibt.
+        await tester.tap(
+          find.widgetWithText(
+            TextButton,
+            L10n.tWithoutContext('common.cancel'),
+          ),
+        );
+        await tester.pump();
+        await _serverAntwortAbwarten(tester);
+
+        expect(tester.takeException(), isNull);
+        expect(
+          server.schreibvorgaenge.any(
+            (v) => v['tabelle'] == 'transit_soft_pings',
+          ),
+          isFalse,
+          reason: 'Ohne Bestaetigung wird nichts geloescht.',
+        );
+        // Und der Gruss steht noch da.
+        expect(find.textContaining('Mira'), findsWidgets);
 
         await tester.pumpWidget(const SizedBox());
       });
