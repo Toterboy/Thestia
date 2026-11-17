@@ -33,8 +33,11 @@ import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/find_match_models.dart';
 import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/providers/pinned_matches_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/interests/interessen_screen.dart';
+import 'package:thestia/services/chat_service.dart';
 import 'package:thestia/services/find_your_match_service.dart';
 import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/widgets/funke_overlay.dart';
@@ -82,6 +85,16 @@ class _FakeLocalStorage implements LocalStorage {
 class _FakeFindYourMatchService extends FindYourMatchService {
   _FakeFindYourMatchService(super.client);
 
+  /// Der Ersatz-Server - der Fake liest daraus, was der Server bekommen
+  /// hat.
+  ///
+  /// DER GRUND: Ein automatisch entstandener Funke wird ueber die RPC
+  /// "resolve_dating_hour_auto_match" geloescht. Der Server ist die
+  /// Wahrheit - also filtert der Fake den Funke weg, sobald die RPC mit
+  /// "Person entfernen" angekommen ist. Sonst wuerde der Funke nach dem
+  /// Neuladen wieder dastehen, obwohl er beim Server geloescht wurde.
+  FakeSupabaseServer? server;
+
   /// Eigene (gesendete) Likes.
   List<ReceivedLike> eigeneLikes = const [];
 
@@ -122,7 +135,18 @@ class _FakeFindYourMatchService extends FindYourMatchService {
   Future<List<MatchWithState>> listMatchesWithState() async {
     final fehler = ladeFehler;
     if (fehler != null) throw fehler;
-    return funken;
+    // Der automatische Funke, der beim Server geloescht wurde, ist auch
+    // hier weg (der Server ist die Wahrheit).
+    final geloeschte = server?.rpcAufrufe
+        .where(
+          (c) =>
+              c['funktion'] == 'resolve_dating_hour_auto_match' &&
+              c['p_keep'] == false,
+        )
+        .map((c) => c['p_partner_id'])
+        .toSet();
+    if (geloeschte == null || geloeschte.isEmpty) return funken;
+    return funken.where((m) => !geloeschte.contains(m.partner.id)).toList();
   }
 
   @override
@@ -167,6 +191,7 @@ MatchWithState _funke({
   int? alter = 30,
   String status = 'active',
   DateTime? erstellt,
+  bool autoMatch = false,
 }) {
   return MatchWithState(
     matchId: id,
@@ -177,6 +202,9 @@ MatchWithState _funke({
     status: status,
     // FRISCH: ein alter Funke wuerde von der Auto-Kuehlung (72 h) erfasst.
     createdAt: erstellt ?? DateTime.now(),
+    // AUTOMATISCH: der Funke kam nach 10 Minuten Dating Hour zustande und
+    // wurde NICHT von beiden Seiten bestaetigt (Migration 177).
+    autoMatch: autoMatch,
   );
 }
 
@@ -215,10 +243,14 @@ const String _startRoute = '/interessen';
 /// [pumpAndSettle] waere hier falsch: der Ladeplatzhalter ([CalmLoading])
 /// atmet endlos - pumpAndSettle wuerde nie fertig. Deshalb werden
 /// feste Frames gepumpt.
+///
+/// [overrides] erlaubt zusaetzliche Provider zu ersetzen (z. B. die
+/// Chatliste fuer die gespeicherten Profile).
 Future<_FakeFindYourMatchService> _pump(
   WidgetTester tester, {
   required _FakeFindYourMatchService service,
   double scale = 1.0,
+  List<Override> overrides = const <Override>[],
 }) async {
   final router = _router();
   addTearDown(router.dispose);
@@ -228,6 +260,7 @@ Future<_FakeFindYourMatchService> _pump(
       overrides: [
         localStorageProvider.overrideWithValue(_FakeLocalStorage()),
         findYourMatchServiceProvider.overrideWithValue(service),
+        ...overrides,
       ],
       child: MaterialApp.router(
         theme: ThemeData(useMaterial3: true),
@@ -255,6 +288,29 @@ Future<void> _pumpFrames(WidgetTester tester) async {
   }
 }
 
+/// Laesst die ECHTE Ereignisschleife laufen, damit HTTP-Anfragen
+/// durchgehen.
+///
+/// DER GRUND: Im Widget-Test laeuft alles in einer Fake-Zone - eine
+/// echte Netz-Anfrage (z. B. die RPC zum Aufloesen des automatischen
+/// Funken) kommt dort nie voran. `runAsync` schaltet kurz auf die
+/// echte Schleife um.
+///
+/// [fertig]: Was erreicht sein muss - sobald das da ist, wird nicht
+/// weiter gewartet.
+Future<void> lassServerArbeiten(
+  WidgetTester tester, {
+  bool Function()? fertig,
+}) async {
+  for (var i = 0; i < 25; i++) {
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 40));
+    });
+    await tester.pump(const Duration(milliseconds: 60));
+    if (fertig != null && fertig()) return;
+  }
+}
+
 void main() {
   /// Der Ersatz-Server (Antworten aus dem RAM).
   late FakeSupabaseServer server;
@@ -276,6 +332,10 @@ void main() {
     // DER KEYSTORE: dasselbe Spiel - auf dem Linux-Runner
     // gibt es keine libsecret-Sitzung.
     mockKeystore();
+    // HIVE: Die gespeicherten Profile (QR-Kontakte) liegen in einer
+    // Hive-Box - ohne initialisiertes Hive wirft der Chat-Dienst
+    // ("You need to initialize Hive").
+    await mockHive();
     // DER SERVER: das Zuruecknehmen eines Likes geht ueber die
     // REST-Schnittstelle (DELETE auf 'likes') - ohne den Ersatz-Server
     // gaengt der Aufruf ins Leere.
@@ -295,6 +355,12 @@ void main() {
 
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
+    // Der Server merkt sich die Anfragen - fuer jeden Test beginnt er
+    // neu. Sonst wuerde ein Test den Aufruf eines anderen sehen (und
+    // der "schweigt"-Test wuerde alle folgenden stoeren).
+    server.pfade.clear();
+    server.rpcAufrufe.clear();
+    server.rpcFehler.clear();
   });
 
   group('Interessen-Screen', () {
@@ -940,6 +1006,331 @@ void main() {
             'Ein frischer Funke darf nicht gekuehlt werden - der Nutzer '
             'hat ihn gerade erst bekommen.',
       );
+    });
+  });
+
+  // Der automatische Funke (Migration 177): nach 10 Minuten Dating Hour
+  // entsteht ein Funke, den BEIDE Seiten nicht bestaetigt haben. Der
+  // Nutzer soll deshalb EINMAL entscheiden: behalten oder Person
+  // entfernen. Ohne diese Nachfrage steht ein Funke da, den niemand
+  // wollte - der Betreiber hat das im November 2026 so gemeldet.
+  group('Der automatische Funke (Migration 177)', () {
+    /// Die RPC, die den automatischen Funke aufloest.
+    const String rpc = 'resolve_dating_hour_auto_match';
+
+    /// Baut den Screen mit einem automatischen Funken.
+    Future<_FakeFindYourMatchService> mitAutoFunke(WidgetTester tester) async {
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      service.server = server;
+      service.funken = [_funke(autoMatch: true)];
+      await _pump(tester, service: service);
+      return service;
+    }
+
+    /// Tippt auf den Funken und beantwortet die Nachfrage.
+    ///
+    /// [behalten]: true = "Behalten", false = "Person entfernen".
+    Future<void> frageBeantworten(
+      WidgetTester tester, {
+      required bool behalten,
+    }) async {
+      await tester.tap(find.text('Mira, 30'));
+      await _pumpFrames(tester);
+      // Der Dialog braucht einen ruhigen Frame - sonst geht der Klick
+      // ins Leere.
+      await tester.pump(const Duration(milliseconds: 400));
+      if (behalten) {
+        await tester.tap(find.widgetWithText(FilledButton, 'Behalten'));
+      } else {
+        await tester.tap(find.widgetWithText(TextButton, 'Person entfernen'));
+      }
+      await _pumpFrames(tester);
+    }
+
+    testWidgets('der automatische Funke fragt erst nach', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await mitAutoFunke(tester);
+
+      expect(tester.takeException(), isNull);
+      // Das Sternchen weist auf den automatischen Funke hin.
+      expect(find.byTooltip('Automatisch'), findsOneWidget);
+
+      // Der Tap auf die Kachel fragt nach - der Chat geht NICHT sofort auf.
+      await tester.tap(find.text('Mira, 30'));
+      await _pumpFrames(tester);
+
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.text('Automatischer Funke'), findsOneWidget);
+      expect(find.text('Behalten'), findsOneWidget);
+      expect(find.text('Person entfernen'), findsOneWidget);
+      // Und es ist noch nichts beim Server passiert.
+      expect(
+        server.rpcAufrufe.where((c) => c['funktion'] == rpc),
+        isEmpty,
+        reason:
+            'Vor der Antwort des Nutzers darf nichts beim Server passieren '
+            '- die Nachfrage ist eine echte Entscheidung.',
+      );
+    });
+
+    testWidgets('"Behalten" loest den Funke auf und oeffnet den Chat', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await mitAutoFunke(tester);
+      await frageBeantworten(tester, behalten: true);
+
+      // Die RPC braucht die echte Ereignisschleife.
+      await lassServerArbeiten(
+        tester,
+        fertig: () => server.rpcAufrufe.any((c) => c['funktion'] == rpc),
+      );
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      // Die RPC bekommt die Adresse der ANDEREN Person (nicht die eigene)
+      // und den Entschluss "behalten".
+      final aufruf = server.rpcAufrufe.firstWhere((c) => c['funktion'] == rpc);
+      expect(aufruf['p_partner_id'], 'p1');
+      expect(
+        aufruf['p_keep'],
+        isTrue,
+        reason: '"Behalten" heisst p_keep = true.',
+      );
+      // Der Hinweis verschwindet ...
+      expect(find.text('Alles klar, der Hinweis ist weg.'), findsOneWidget);
+      // ... und der Chat geht auf (die Frage soll nicht blockieren).
+      expect(find.text('Chat'), findsOneWidget);
+    });
+
+    testWidgets('"Person entfernen" loescht den Funke', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await mitAutoFunke(tester);
+      await frageBeantworten(tester, behalten: false);
+
+      await lassServerArbeiten(
+        tester,
+        fertig: () => server.rpcAufrufe.any((c) => c['funktion'] == rpc),
+      );
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      final aufruf = server.rpcAufrufe.firstWhere((c) => c['funktion'] == rpc);
+      expect(aufruf['p_partner_id'], 'p1');
+      expect(
+        aufruf['p_keep'],
+        isFalse,
+        reason: '"Person entfernen" heisst p_keep = false.',
+      );
+      // Der Funke ist weg - und kommt beim naechsten Laden nicht wieder.
+      expect(
+        find.text('Mira, 30'),
+        findsNothing,
+        reason:
+            'Ein entfernter Funke darf nicht wiederkommen - der Server '
+            'hat ihn geloescht.',
+      );
+    });
+
+    testWidgets('ein abgebrochener Dialog aendert nichts', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await mitAutoFunke(tester);
+
+      await tester.tap(find.text('Mira, 30'));
+      await _pumpFrames(tester);
+      expect(find.byType(AlertDialog), findsOneWidget);
+
+      // Der Dialog wird weggetippt (der Rahmen neben dem Dialog).
+      await tester.tapAt(const Offset(10, 10));
+      await _pumpFrames(tester);
+      await lassServerArbeiten(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(AlertDialog), findsNothing);
+      // Nichts passiert beim Server ...
+      expect(server.rpcAufrufe.where((c) => c['funktion'] == rpc), isEmpty);
+      // ... und der Funke steht noch da.
+      expect(find.text('Mira, 30'), findsOneWidget);
+    });
+
+    testWidgets('der Server schweigt: der Nutzer sieht es', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // Der Server schweigt bei genau dieser RPC.
+      server.rpcFehler.add(rpc);
+
+      await mitAutoFunke(tester);
+      await frageBeantworten(tester, behalten: true);
+
+      await lassServerArbeiten(
+        tester,
+        fertig: () => server.rpcAufrufe.any((c) => c['funktion'] == rpc),
+      );
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      // Der Nutzer wird NICHT im Glauben gelassen, es hat geklappt.
+      expect(
+        find.text('Der Hinweis konnte nicht entfernt werden.'),
+        findsOneWidget,
+        reason:
+            'Ein fehlgeschlagener Aufruf muss sichtbar sein - sonst '
+            'glaubt der Nutzer, der Hinweis sei weg.',
+      );
+      // Der Sternchen-Hinweis steht noch da (die Datenbank hat ihn nicht
+      // angenommen).
+      //
+      // DER HINWEIS: skipOffstage - der Chat liegt jetzt ueber dem
+      // Bildschirm, der Bildschirm selbst ist also "offstage". Der
+      // Hinweis muss aber trotzdem noch dastehen.
+      expect(
+        find.byTooltip('Automatisch', skipOffstage: false),
+        findsOneWidget,
+      );
+    });
+  });
+
+  group('Fixieren', () {
+    testWidgets('"Fixieren" stellt den Funke in den eigenen Abschnitt', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      service.funken = [_funke()];
+      await _pump(tester, service: service);
+
+      // Das Menue der Kachel oeffnen.
+      await tester.tap(find.byIcon(Icons.more_vert).first);
+      await _pumpFrames(tester);
+      await tester.tap(find.text('Fixieren'));
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      // Die Fixierung ist gesetzt ...
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(InteressenScreen)),
+      );
+      expect(container.read(pinnedMatchesProvider), contains(7));
+      // ... der eigene Abschnitt steht da ...
+      expect(find.text('Fixiert'), findsOneWidget);
+      // ... die Nadel ist zu sehen ...
+      expect(find.byIcon(Icons.push_pin), findsWidgets);
+      // ... und der Nutzer bekommt die Bestaetigung.
+      expect(find.text('Funke fixiert'), findsOneWidget);
+    });
+
+    testWidgets('"Fixieren" laesst sich wieder aufheben', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      service.funken = [_funke()];
+      await _pump(tester, service: service);
+
+      // Erste Mal fixieren.
+      await tester.tap(find.byIcon(Icons.more_vert).first);
+      await _pumpFrames(tester);
+      await tester.tap(find.text('Fixieren'));
+      await _pumpFrames(tester);
+      expect(find.text('Fixiert'), findsOneWidget);
+
+      // Die erste Meldung muss erst verschwinden - sonst wartet die
+      // zweite in der Schlange hinter ihr (SnackBars stehen hinter-
+      // einander an).
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      // Zweites Mal: die Fixierung geht wieder weg.
+      await tester.tap(find.byIcon(Icons.more_vert).first);
+      await _pumpFrames(tester);
+      await tester.tap(find.text('Fixieren'));
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(InteressenScreen)),
+      );
+      expect(container.read(pinnedMatchesProvider), isEmpty);
+      expect(find.text('Fixiert'), findsNothing);
+      expect(find.text('Fixierung aufgehoben'), findsOneWidget);
+    });
+  });
+
+  group('Das gespeicherte Profil (QR-Kontakt)', () {
+    testWidgets('"Entfernen" loescht den gespeicherten Kontakt', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // Der Chat-Dienst mit einem gespeicherten Profil.
+      final chatService = ChatService();
+      chatService.createQrContact(_person());
+
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      await _pump(
+        tester,
+        service: service,
+        overrides: [
+          chatProvider.overrideWith((ref) => ChatNotifier(chatService)),
+        ],
+      );
+
+      expect(tester.takeException(), isNull);
+      // Der Abschnitt "Gespeicherte Profile" steht da.
+      expect(find.text('Gespeicherte Profile'), findsOneWidget);
+      expect(find.text('Mira, 30'), findsOneWidget);
+
+      // Der Mülleimer fragt erst nach (der Chat-Verlauf geht mit).
+      // Der Knoepfchen liegt weit unten (unter den Reitern) - erst
+      // dorthin scrollen, sonst trifft der Tap ins Leere.
+      final loeschen = find.byTooltip('Gespeichertes Profil entfernen');
+      await tester.ensureVisible(loeschen);
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.tap(loeschen);
+      await _pumpFrames(tester);
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.text('Gespeichertes Profil entfernen?'), findsOneWidget);
+
+      // "Behalten" loescht nichts.
+      await tester.tap(find.widgetWithText(TextButton, 'Behalten'));
+      await _pumpFrames(tester);
+      expect(find.text('Mira, 30'), findsOneWidget);
+
+      // Und jetzt "Entfernen".
+      await tester.ensureVisible(loeschen);
+      await tester.pump(const Duration(milliseconds: 200));
+      await tester.tap(loeschen);
+      await _pumpFrames(tester);
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.tap(find.widgetWithText(FilledButton, 'Entfernen'));
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      // Der Kontakt ist weg ...
+      expect(find.text('Mira, 30'), findsNothing);
+      expect(find.text('Gespeicherte Profile'), findsNothing);
+      // ... und der Nutzer bekommt die Bestaetigung.
+      expect(find.text('Mira wurde entfernt.'), findsOneWidget);
     });
   });
 }

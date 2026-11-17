@@ -46,6 +46,14 @@ class FakeSupabaseServer extends http.BaseClient {
   /// Ohne Eintrag antwortet eine RPC mit `null`.
   final Map<String, Object?> rpcAntworten = <String, Object?>{};
 
+  /// Die RPC-Aufrufe (Name + Koerper) in der Reihenfolge.
+  ///
+  /// DAMIT KANN EIN TEST PRUEFEN, WAS AN DEN SERVER GESCHICKT WURDE -
+  /// beim automatischen Funke zum Beispiel, dass die RPC die Adresse der
+  /// ANDEREN Person bekommt (nicht die eigene) und ob "behalten" oder
+  /// "Person entfernen" gewaehlt wurde.
+  final List<Map<String, dynamic>> rpcAufrufe = <Map<String, dynamic>>[];
+
   /// Die RPCs, die mit einem Fehler (500) antworten.
   ///
   /// WARUM (15.11.2026): Bei einem kompletten Serverausfall schliesst
@@ -131,6 +139,10 @@ class FakeSupabaseServer extends http.BaseClient {
     if (pfad.contains('/rest/v1/rpc/')) {
       const marker = '/rest/v1/rpc/';
       final name = pfad.substring(pfad.indexOf(marker) + marker.length);
+      // DER AUFZEICHNER: Der Koerper wird gemerkt - so sieht ein Test,
+      // was an den Server geschickt wurde.
+      final koerper = await _leseBody(request);
+      rpcAufrufe.add(<String, dynamic>{'funktion': name, ...koerper});
       // Nur diese eine RPC schweigt (siehe [rpcFehler]).
       if (rpcFehler.contains(name)) {
         return _antwort(
