@@ -1322,16 +1322,26 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   /// Getrennt von [dispose], weil dort `ref` nicht mehr benutzt werden
   /// darf. Vor super.dispose() aufgerufen ist es erlaubt.
   void _clearActiveChatFlags() {
-    if (!mounted) return;
     // Ueber die Notifier (im initState geholt): im dispose() ist `ref`
     // nicht mehr benutzbar - der Aufruf wuerfe sonst.
-    bestEffortSync('aktiven Chat freigeben', () {
-      if (_aktiveChatId.state == widget.matchId) {
-        _aktiveChatId.state = null;
-      }
-      if (_aktiveChatPeerId.state == _activePeerId) {
-        _aktiveChatPeerId.state = null;
-      }
+    //
+    // DER WEG (18.11.2026, gefunden von einem Test): Das Ruecksetzen muss
+    // einen Frame warten. Wird der Bildschirm waehrend eines
+    // Routenwechsels abgeraeumt (der Nutzer geht in den Chat eines
+    // anderen), passiert das dispose() MITTEN IM AUFBAU - und Riverpod
+    // verbietet das Aendern eines Providers waehrend des Aufbaus ("Tried
+    // to modify a provider while the widget tree was building"). Die
+    // Markierung blieb dann stehen: die Meldungen des Partners kamen
+    // nicht an.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      bestEffortSync('aktiven Chat freigeben', () {
+        if (_aktiveChatId.state == widget.matchId) {
+          _aktiveChatId.state = null;
+        }
+        if (_aktiveChatPeerId.state == _activePeerId) {
+          _aktiveChatPeerId.state = null;
+        }
+      });
     });
   }
 

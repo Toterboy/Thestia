@@ -107,8 +107,13 @@ class _FakeRandomChatService extends RandomChatService {
     return befragteSession;
   }
 
+  /// Wie oft [leave] aufgerufen wurde.
+  int leaveAufrufe = 0;
+
   @override
-  Future<void> leave(String sessionId) async {}
+  Future<void> leave(String sessionId) async {
+    leaveAufrufe++;
+  }
 }
 
 void main() {
@@ -319,6 +324,138 @@ void main() {
         find.text(L10n.tWithoutContext('random.searching')),
         findsNothing,
         reason: 'Mit dem Partner muss der Suchhinweis verschwinden.',
+      );
+    });
+
+    /// Bringt den Screen in den Chat-Zustand (Partner da).
+    Future<_FakeRandomChatService> imChat(
+      WidgetTester tester, {
+      RandomChatSession? session,
+    }) async {
+      final dienst = _FakeRandomChatService(client);
+      dienst.session =
+          session ??
+          const RandomChatSession(
+            sessionId: 's-1',
+            partnerId: 'partner-1',
+            status: RandomChatStatus.active,
+          );
+      await zeigeScreen(tester, dienst: dienst);
+      await pumpFrames(tester);
+      // Der Partner-Aufruf geht ueber den Server - also warten, bis der
+      // Chat steht.
+      for (var i = 0; i < 20; i++) {
+        await tester.runAsync(() async {
+          await Future<void>.delayed(const Duration(milliseconds: 150));
+        });
+        await tester.pump(const Duration(milliseconds: 100));
+        if (find.byIcon(Icons.favorite).evaluate().isNotEmpty) break;
+      }
+      return dienst;
+    }
+
+    testWidgets('das Like an die Person geht an den Server', (tester) async {
+      await imChat(tester);
+
+      expect(tester.takeException(), isNull);
+      // Der Like-Knopf (das Herz) steht da.
+      final knopf = find.byIcon(Icons.favorite);
+      expect(knopf, findsOneWidget);
+      await tester.tap(knopf);
+      await pumpFrames(tester);
+      for (var i = 0; i < 8; i++) {
+        await tester.runAsync(() async {
+          await Future<void>.delayed(const Duration(milliseconds: 150));
+        });
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      expect(tester.takeException(), isNull);
+      // Der Server hat den Like bekommen - sonst weiss die Person nicht,
+      // dass jemand interestant ist.
+      expect(
+        server.rpcAufrufe.any((c) => c['funktion'] == 'like_user'),
+        isTrue,
+        reason: 'Der Like muss beim Server ankommen.',
+      );
+      // Und der Nutzer bekommt die Bestaetigung.
+      expect(
+        find.textContaining(
+          L10n.tWithoutContext('random.likeSentWaiting').split(' ').first,
+        ),
+        findsWidgets,
+      );
+    });
+
+    testWidgets('das Beenden fragt erst nach', (tester) async {
+      final dienst = await imChat(tester);
+
+      // Der Block-Knopf (das Beenden).
+      await tester.tap(find.byIcon(Icons.block));
+      await pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      // Ohne Rueckfrage waere der Chat weg - und der Nutzer weiss nicht,
+      // ob das Beenden durchging.
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        find.text(L10n.tWithoutContext('random.leaveTitle')),
+        findsOneWidget,
+      );
+      // Und es ist noch nichts passiert.
+      expect(dienst.leaveAufrufe, 0);
+    });
+
+    testWidgets('das Beenden geht an den Dienst', (tester) async {
+      final dienst = await imChat(tester);
+
+      await tester.tap(find.byIcon(Icons.block));
+      await pumpFrames(tester);
+      // Bestaetigen.
+      await tester.tap(
+        find.widgetWithText(
+          FilledButton,
+          L10n.tWithoutContext('random.leaveConfirm'),
+        ),
+      );
+      await pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        dienst.leaveAufrufe,
+        greaterThan(0),
+        reason: 'Der Dienst muss wissen, dass die Sitzung vorbei ist.',
+      );
+    });
+
+    testWidgets('der Partner ist gegangen: die App sagt es', (tester) async {
+      final dienst = _FakeRandomChatService(client);
+      dienst.session = const RandomChatSession(
+        sessionId: 's-1',
+        partnerId: 'partner-1',
+        status: RandomChatStatus.active,
+      );
+      await zeigeScreen(tester, dienst: dienst);
+      await pumpFrames(tester);
+
+      // Der Partner ist weg: die Sitzung ist beendet.
+      dienst.befragteSession = const RandomChatSession(
+        sessionId: 's-1',
+        partnerId: 'partner-1',
+        status: RandomChatStatus.ended,
+      );
+
+      // Der Status-Poll tickt alle fuenf Sekunden.
+      await tester.pump(const Duration(seconds: 6));
+      await pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text(L10n.tWithoutContext('random.partnerLeft')),
+        findsOneWidget,
+        reason:
+            'Der Nutzer muss erfahren, dass der Partner weg ist - sonst '
+            'schreibt er ins Leere.',
       );
     });
 

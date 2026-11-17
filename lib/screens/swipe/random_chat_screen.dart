@@ -125,13 +125,23 @@ class _RandomChatScreenState extends ConsumerState<RandomChatScreen>
     //
     // DER WEG (14.11.2026): Ueber die Notifier, die schon im initState
     // geholt wurden - damit wird die Markierung WIRKLICH geloescht.
-    bestEffortSync('aktiven Chat freigeben', () {
-      if (_aktiveChatId.state == (_sessionId ?? 'random')) {
-        _aktiveChatId.state = null;
-      }
-      if (_aktiveChatPeerId.state == _partnerId) {
-        _aktiveChatPeerId.state = null;
-      }
+    //
+    // DER WEG (18.11.2026, gefunden von einem Test): Das Ruecksetzen
+    // muss einen Frame warten. Wird der Bildschirm waehrend eines
+    // Routenwechsels abgeraeumt (der Nutzer beendet den Chat), passiert
+    // das dispose() MITTEN IM AUFBAU - und Riverpod verbietet das
+    // Aendern eines Providers waehrend des Aufbaus ("Tried to modify a
+    // provider while the widget tree was building"). Die Markierung
+    // blieb dann stehen: die Meldungen des Partners kamen nicht an.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      bestEffortSync('aktiven Chat freigeben', () {
+        if (_aktiveChatId.state == (_sessionId ?? 'random')) {
+          _aktiveChatId.state = null;
+        }
+        if (_aktiveChatPeerId.state == _partnerId) {
+          _aktiveChatPeerId.state = null;
+        }
+      });
     });
     WidgetsBinding.instance.removeObserver(this);
     _pollTimer?.cancel();
