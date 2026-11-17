@@ -366,11 +366,6 @@ void main() {
     // DER PFAD-KANAL: sonst ruft der Test auf dem CI-Runner
     // das echte Plugin (das findet dort kein XDG-Verzeichnis).
     await mockPfadProvider();
-    // DIE ECHTE SCHRIFT: Ohne sie benutzt der Test die Test-Schrift,
-    // bei der jedes Zeichen so breit ist wie die Schrift gross - jede
-    // Zeile laeuft dann ueber den Rand. Der Test meldet damit Fehler,
-    // die es in der App gar nicht gibt.
-    await ladeEchteSchrift();
     // DER KEYSTORE: dasselbe Spiel - auf dem Linux-Runner
     // gibt es keine libsecret-Sitzung.
     mockKeystore();

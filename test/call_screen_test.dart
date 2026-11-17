@@ -101,10 +101,6 @@ void main() {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await SharedPreferences.getInstance();
     await mockPfadProvider();
-    // DIE ECHTE SCHRIFT: Ohne sie benutzt der Test die Test-Schrift,
-    // bei der jedes Zeichen so breit ist wie die Schrift gross - jede
-    // Zeile laeuft dann ueber den Rand.
-    await ladeEchteSchrift();
     // DIE AUFNAHME: Das Mikrofon (Push-to-Talk) wird ueber das Plugin
     // bedient - ohne den Ersatz wartet der Aufruf endlos.
     mockAufnahme();

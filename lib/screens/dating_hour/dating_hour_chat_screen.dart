@@ -758,7 +758,14 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
               color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(width: 8),
-            Text(L10n.t(context, 'dh.chat.noSpark')),
+            // DER UMBRUCH (18.11.2026, gefunden von einem Test): Die
+            // Ueberschrift stand neben dem Symbol in einer festen Reihe -
+            // bei grosser Schrift (oder der breiten Test-Schrift im Test)
+            // lief sie ueber den Rand.
+            //
+            // DER WEG: "Flexible" laesst die Ueberschrift umbrechen,
+            // statt zu ueberlaufen.
+            Flexible(child: Text(L10n.t(context, 'dh.chat.noSpark'))),
           ],
         ),
         content: Text(message),
@@ -1595,36 +1602,34 @@ class _DecisionButtons extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            // DIE KNOEPFE: "Annehmen" und "Ablehnen" mit den Symbolen.
+            // DIE KNOEPFE (BEFUND 18.11.2026, gefunden von einem Test):
+            // Mit Symbol brauchte der Knopf mehr Platz, als er hat - bei
+            // grosser Schrift (oder der breiten Test-Schrift im Test)
+            // lief die Beschriftung ueber den Rand.
             //
-            // DER HINWEIS (18.11.2026, gefunden von einem Test): Mit der
-            // echten Schrift passen die Symbole und die Beschriftung
-            // nebeneinander. Mit der Test-Schrift (jedes Zeichen so breit
-            // wie die Schrift gross) nicht - der Test laedt deshalb die
-            // echte Schrift.
+            // DER WEG: Die Symbole sind weg. "Annehmen" und "Ablehnen"
+            // sagen alles - und so passt die Beschriftung immer.
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
-                    icon: const Icon(Icons.close),
+                  child: OutlinedButton(
                     onPressed: onReject,
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       foregroundColor: Colors.red,
                       side: const BorderSide(color: Colors.red),
                     ),
-                    label: Text(L10n.t(context, 'dh.chat.decline')),
+                    child: Text(L10n.t(context, 'dh.chat.decline')),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: FilledButton.icon(
-                    icon: const Icon(Icons.favorite),
+                  child: FilledButton(
                     onPressed: onAccept,
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    label: Text(L10n.t(context, 'dh.chat.accept')),
+                    child: Text(L10n.t(context, 'dh.chat.accept')),
                   ),
                 ),
               ],
