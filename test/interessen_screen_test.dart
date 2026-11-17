@@ -125,14 +125,39 @@ class _FakeFindYourMatchService extends FindYourMatchService {
   /// Die wieder entzuendeten Funken.
   final List<int> wiederEntzuend = [];
 
+  /// Wenn gesetzt, wirft [coolMatch] diesen Fehler.
+  Object? coolFehler;
+
+  /// Wenn gesetzt, wirft [hideMatch] diesen Fehler.
+  Object? hideFehler;
+
+  /// Wenn gesetzt, wirft [ignoreLike] diesen Fehler.
+  Object? ignoreFehler;
+
+  /// Wenn gesetzt, wirft [respondToLike] diesen Fehler.
+  Object? respondFehler;
+
+  /// Wie oft wurden die Funken geladen?
+  ///
+  /// DER GRUND: Damit sieht ein Test, dass wirklich neu geladen wurde -
+  /// am Bildschirm aendert sich beim Nachladen oft nichts.
+  int matchesAufrufe = 0;
+
+  /// Wie oft wurden die eigenen (gesendeten) Likes geladen?
+  int eigeneLikesAufrufe = 0;
+
   @override
-  Future<List<ReceivedLike>> listMyLikes() async => eigeneLikes;
+  Future<List<ReceivedLike>> listMyLikes() async {
+    eigeneLikesAufrufe++;
+    return eigeneLikes;
+  }
 
   @override
   Future<List<ReceivedLike>> listReceivedLikes() async => erhalteneLikes;
 
   @override
   Future<List<MatchWithState>> listMatchesWithState() async {
+    matchesAufrufe++;
     final fehler = ladeFehler;
     if (fehler != null) throw fehler;
     // Der automatische Funke, der beim Server geloescht wurde, ist auch
@@ -150,10 +175,18 @@ class _FakeFindYourMatchService extends FindYourMatchService {
   }
 
   @override
-  Future<void> hideMatch(int matchId) async => ausgeblendet.add(matchId);
+  Future<void> hideMatch(int matchId) async {
+    final fehler = hideFehler;
+    if (fehler != null) throw fehler;
+    ausgeblendet.add(matchId);
+  }
 
   @override
-  Future<void> coolMatch(int matchId) async => gekuehlt.add(matchId);
+  Future<void> coolMatch(int matchId) async {
+    final fehler = coolFehler;
+    if (fehler != null) throw fehler;
+    gekuehlt.add(matchId);
+  }
 
   @override
   Future<void> endMatch(int matchId) async => beendet.add(matchId);
@@ -163,11 +196,15 @@ class _FakeFindYourMatchService extends FindYourMatchService {
 
   @override
   Future<void> respondToLike(int likeId, {required bool accept}) async {
+    final fehler = respondFehler;
+    if (fehler != null) throw fehler;
     beantwortet.add((likeId: likeId, accept: accept));
   }
 
   @override
   Future<void> ignoreLike(int likeId) async {
+    final fehler = ignoreFehler;
+    if (fehler != null) throw fehler;
     ausgeblendeteLikes.add(likeId);
   }
 }
@@ -1273,6 +1310,34 @@ void main() {
     });
   });
 
+  group('Das Ziehen nach unten', () {
+    testWidgets('laedt die Funken neu', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      service.funken = [_funke()];
+      await _pump(tester, service: service);
+
+      final vorher = service.matchesAufrufe;
+
+      // Nach unten ziehen (Pull-to-Refresh).
+      await tester.drag(find.byType(ListView).first, const Offset(0, 300));
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        service.matchesAufrufe,
+        greaterThan(vorher),
+        reason:
+            'Das Ziehen nach unten muss die Funken neu laden - der Nutzer '
+            'wartet sonst auf einen Stand, der gar nicht neu ist.',
+      );
+    });
+  });
+
   group('Das gespeicherte Profil (QR-Kontakt)', () {
     testWidgets('"Entfernen" loescht den gespeicherten Kontakt', (
       tester,
@@ -1331,6 +1396,159 @@ void main() {
       expect(find.text('Gespeicherte Profile'), findsNothing);
       // ... und der Nutzer bekommt die Bestaetigung.
       expect(find.text('Mira wurde entfernt.'), findsOneWidget);
+    });
+  });
+
+  // Die Fehlerwege: der Nutzer muss erfahren, wenn etwas NICHT
+  // funktioniert hat. Ein stilles Scheitern waere das Schlimmste -
+  // der Nutzer glaubt dann, es sei passiert.
+  group('Die Fehlerwege', () {
+    testWidgets('das Kuehlen meldet dem Nutzer den Fehler', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      service.coolFehler = StateError('Der Server hat nicht geantwortet.');
+      service.funken = [_funke()];
+      await _pump(tester, service: service);
+
+      await tester.tap(find.byIcon(Icons.more_vert).first);
+      await _pumpFrames(tester);
+      await tester.tap(find.text('Archivieren'));
+      await _pumpFrames(tester);
+      await tester.tap(find.text('Funke kühlen'));
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.textContaining('Fehler:'),
+        findsOneWidget,
+        reason:
+            'Ein fehlgeschlagenes Kuehlen muss der Nutzer erfahren - '
+            'sonst glaubt er, der Funke sei ruhig gestellt.',
+      );
+    });
+
+    testWidgets('ein bereits gekuehlter Funke gilt als Erfolg', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      // Der Server meldet "bereits gekuehlt" (z. B. beim Doppel-Tap).
+      service.coolFehler = Exception(
+        'Funke nicht gefunden oder bereits gekuehlt/endet.',
+      );
+      service.funken = [_funke()];
+      await _pump(tester, service: service);
+
+      await tester.tap(find.byIcon(Icons.more_vert).first);
+      await _pumpFrames(tester);
+      await tester.tap(find.text('Archivieren'));
+      await _pumpFrames(tester);
+      await tester.tap(find.text('Funke kühlen'));
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.textContaining('Fehler:'),
+        findsNothing,
+        reason:
+            '"Bereits gekuehlt" ist kein Fehler - der Wunsch ist ja '
+            'erfuellt. Der Nutzer darf keinen Fehler sehen.',
+      );
+      expect(find.textContaining('Mira'), findsWidgets);
+    });
+
+    testWidgets('das Ausblenden eines Funken meldet den Fehler', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      service.hideFehler = StateError('Der Server hat nicht geantwortet.');
+      service.funken = [_funke()];
+      await _pump(tester, service: service);
+
+      await tester.tap(find.byIcon(Icons.more_vert).first);
+      await _pumpFrames(tester);
+      await tester.tap(find.text('Aus Liste entfernen'));
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.textContaining('Fehler:'),
+        findsOneWidget,
+        reason:
+            'Der Funke ist noch da - der Nutzer muss das wissen, sonst '
+            'wartet er vergeblich auf das Verschwinden.',
+      );
+    });
+
+    testWidgets('das Annehmen eines Likes meldet den Fehler', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      service.respondFehler = StateError('Der Server hat nicht geantwortet.');
+      service.erhalteneLikes = [
+        ReceivedLike(
+          likeId: 3,
+          profile: _person(name: 'Jonas', alter: 31),
+          createdAt: DateTime.now(),
+        ),
+      ];
+      await _pump(tester, service: service);
+
+      await tester.tap(find.text('Erhalten'));
+      await _pumpFrames(tester);
+      await tester.tap(find.text('Funke bestätigen'));
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.textContaining('Fehler:'),
+        findsOneWidget,
+        reason: 'Der Like ist nicht bestaetigt - der Nutzer muss das wissen.',
+      );
+    });
+
+    testWidgets('das Ausblenden eines Likes meldet den Fehler', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final service = _FakeFindYourMatchService(
+        supabase.Supabase.instance.client,
+      );
+      service.ignoreFehler = StateError('Der Server hat nicht geantwortet.');
+      service.erhalteneLikes = [
+        ReceivedLike(
+          likeId: 4,
+          profile: _person(name: 'Jonas', alter: 31),
+          createdAt: DateTime.now(),
+        ),
+      ];
+      await _pump(tester, service: service);
+
+      await tester.tap(find.text('Erhalten'));
+      await _pumpFrames(tester);
+      await tester.tap(find.byTooltip('Ignorieren'));
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.textContaining('Fehler:'),
+        findsOneWidget,
+        reason: 'Der Like ist nicht ausgeblendet - der Nutzer muss das wissen.',
+      );
     });
   });
 }
