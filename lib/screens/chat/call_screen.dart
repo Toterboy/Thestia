@@ -806,109 +806,138 @@ class _CallScreenState extends ConsumerState<CallScreen> {
                 child: const Icon(Icons.call_end),
               )
             else if (isConnected)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Stumm-Schalter: deaktiviert Push-to-Talk.
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      FloatingActionButton(
-                        heroTag: 'mute',
-                        backgroundColor: _muted
-                            ? theme.colorScheme.errorContainer
-                            : theme.colorScheme.surfaceContainerHighest,
-                        onPressed: () => setState(() => _muted = !_muted),
-                        child: Icon(
-                          _muted ? Icons.mic_off : Icons.mic,
+              // DER UMBRUCH (18.11.2026, gefunden von einem Test): Die
+              // Knopf-Reihe passte auf einem 390er-Bildschirm nicht -
+              // sie lief 186 Pixel ueber den Rand (die gelb-schwarzen
+              // Streifen standen waehrend des Gespraechs im Bild).
+              //
+              // Die Ursache waren die BESCHRIFTUNGEN unter den Knoepfen:
+              // "Eisbrecher-Fragen" ist breiter als der Knopf daneben und
+              // hat die ganze Reihe gespreizt.
+              //
+              // DER WEG: Die Beschriftungen bekommen die Breite ihres
+              // Knopfs (mit Auslassungspunkten), die Abstaende werden
+              // kleiner, und die ganze Reihe wird notfalls skaliert
+              // (FittedBox) - auf sehr schmalen Telefonen passt sie
+              // damit immer hinein.
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Stumm-Schalter: deaktiviert Push-to-Talk.
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        FloatingActionButton(
+                          heroTag: 'mute',
+                          backgroundColor: _muted
+                              ? theme.colorScheme.errorContainer
+                              : theme.colorScheme.surfaceContainerHighest,
+                          onPressed: () => setState(() => _muted = !_muted),
+                          child: Icon(
+                            _muted ? Icons.mic_off : Icons.mic,
+                            color: _muted
+                                ? theme.colorScheme.onErrorContainer
+                                : theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        SizedBox(
+                          width: 56,
+                          child: Text(
+                            _muted
+                                ? L10n.t(context, 'chat.callMuted')
+                                : L10n.t(context, 'chat.callUnmuted'),
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 16),
+                    // Push-to-Talk: Halten zum Sprechen.
+                    GestureDetector(
+                      onTapDown: (_) => _startTalking(),
+                      onTapUp: (_) => _stopTalking(),
+                      onTapCancel: _stopTalking,
+                      child: Container(
+                        width: 96,
+                        height: 96,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
                           color: _muted
-                              ? theme.colorScheme.onErrorContainer
-                              : theme.colorScheme.onSurface,
+                              ? theme.colorScheme.surfaceContainerHighest
+                                    .withValues(alpha: 0.5)
+                              : _recording
+                              ? Colors.red
+                              : Colors.green,
+                          boxShadow: _muted
+                              ? null
+                              : [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.2),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _muted
-                            ? L10n.t(context, 'chat.callMuted')
-                            : L10n.t(context, 'chat.callUnmuted'),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                        child: Icon(
+                          _muted
+                              ? Icons.mic_off_outlined
+                              : _recording
+                              ? Icons.stop
+                              : Icons.mic,
+                          size: 40,
+                          color: Colors.white,
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 32),
-                  // Push-to-Talk: Halten zum Sprechen.
-                  GestureDetector(
-                    onTapDown: (_) => _startTalking(),
-                    onTapUp: (_) => _stopTalking(),
-                    onTapCancel: _stopTalking,
-                    child: Container(
-                      width: 96,
-                      height: 96,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _muted
-                            ? theme.colorScheme.surfaceContainerHighest
-                                  .withValues(alpha: 0.5)
-                            : _recording
-                            ? Colors.red
-                            : Colors.green,
-                        boxShadow: _muted
-                            ? null
-                            : [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.2),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                      ),
-                      child: Icon(
-                        _muted
-                            ? Icons.mic_off_outlined
-                            : _recording
-                            ? Icons.stop
-                            : Icons.mic,
-                        size: 40,
-                        color: Colors.white,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 32),
-                  // Eisbrecher-Sammlung (Nutzerwunsch): Während des Anrufs
-                  // in den Fragen stöbern und laut stellen, wenn es still
-                  // wird. Reine Anzeige - nichts wird gesendet.
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      FloatingActionButton(
-                        heroTag: 'icebreakers',
-                        backgroundColor:
-                            theme.colorScheme.surfaceContainerHighest,
-                        onPressed: _showIcebreakerSheet,
-                        child: Icon(
-                          Icons.lightbulb_outline,
-                          color: theme.colorScheme.onSurface,
+                    const SizedBox(width: 16),
+                    // Eisbrecher-Sammlung (Nutzerwunsch): Während des Anrufs
+                    // in den Fragen stöbern und laut stellen, wenn es still
+                    // wird. Reine Anzeige - nichts wird gesendet.
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        FloatingActionButton(
+                          heroTag: 'icebreakers',
+                          backgroundColor:
+                              theme.colorScheme.surfaceContainerHighest,
+                          onPressed: _showIcebreakerSheet,
+                          child: Icon(
+                            Icons.lightbulb_outline,
+                            color: theme.colorScheme.onSurface,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        L10n.t(context, 'call.icebreakerTitle'),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                        const SizedBox(height: 4),
+                        SizedBox(
+                          width: 56,
+                          child: Text(
+                            L10n.t(context, 'call.icebreakerTitle'),
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 32),
-                  FloatingActionButton.large(
-                    heroTag: 'hangup',
-                    backgroundColor: Colors.red,
-                    onPressed: _hangUp,
-                    child: const Icon(Icons.call_end),
-                  ),
-                ],
+                      ],
+                    ),
+                    const SizedBox(width: 16),
+                    FloatingActionButton.large(
+                      heroTag: 'hangup',
+                      backgroundColor: Colors.red,
+                      onPressed: _hangUp,
+                      child: const Icon(Icons.call_end),
+                    ),
+                  ],
+                ),
               )
             else if (isFinal)
               const SizedBox()
