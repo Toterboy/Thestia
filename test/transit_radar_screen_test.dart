@@ -125,6 +125,20 @@ class _FakeTransit extends TransitNotifier {
   /// Wenn gesetzt: das Starten schlaegt fehl (mit diesem Grund).
   String? startFehler;
 
+  /// Die gesehenen Geraete (die Begegnungsliste).
+  List<TransitEncounter> begegnungen = const [];
+
+  /// Die gesendeten Gruesse (Text und eigene Zeile).
+  final List<({String messageKey, String? customLine})> gruesse = [];
+
+  /// Setzt die Anzahl der gesehenen Geraete (ohne den Radar zu starten).
+  ///
+  /// DER GRUND: Nach dem Radar bleibt die Liste ueber "in Ruhe finden"
+  /// erreichbar - dafuer muss der Zaehler in der App stimmen.
+  void setzeBegegnungszahl(int anzahl) {
+    state = state.copyWith(encounterCount: anzahl);
+  }
+
   @override
   Future<bool> activate() async {
     starts++;
@@ -174,11 +188,12 @@ class _FakeTransit extends TransitNotifier {
     List<String> selfTags = const [],
   }) async {
     zuwinke++;
+    gruesse.add((messageKey: messageKey, customLine: customLine));
     return zuwinkKlappt;
   }
 
   @override
-  List<TransitEncounter> softEncounters() => const [];
+  List<TransitEncounter> softEncounters() => begegnungen;
 
   @override
   DateTime? softUntil() => null;
@@ -339,6 +354,16 @@ Future<void> _startTippen(WidgetTester tester) async {
   await tester.tap(knopf);
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 400));
+}
+
+/// Startet den Radar (mit der Selbstbeschreibung).
+///
+/// DER GRUND: Die Begegnungsliste steht nur im LAUFENDEN Radar - vorher
+/// gibt es sie gar nicht.
+Future<void> _radarStarten(WidgetTester tester) async {
+  await _startTippen(tester);
+  await _merkmaleWaehlen(tester, ['Haarfarbe', 'Haarlänge']);
+  await _sendenTippen(tester);
 }
 
 void main() {
@@ -862,6 +887,217 @@ void main() {
       // Der Scan-Aufruf des Plugins hat einen eigenen Timer (12 s) - der
       // laeuft hier einfach ab.
       await tester.pump(const Duration(seconds: 13));
+    });
+
+    // Die Begegnungsliste: nach dem Radar sieht der Nutzer, welche
+    // Geraete er gesehen hat - und kann sie anonym gruessen.
+    group('Die Begegnungsliste', () {
+      testWidgets('sie zeigt die gesehenen Geraete', (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final transit = _FakeTransit();
+        transit.begegnungen = [
+          TransitEncounter(token: 'token-1', seenAt: DateTime.now()),
+          TransitEncounter(
+            token: 'token-2',
+            seenAt: DateTime.now().subtract(const Duration(minutes: 5)),
+          ),
+        ];
+        final container = _container(transit: transit);
+        addTearDown(container.dispose);
+        final router = _router();
+        addTearDown(router.dispose);
+
+        await _aufbauen(tester, container, router);
+        // Die Begegnungsliste steht nur im laufenden Radar.
+        await _radarStarten(tester);
+
+        expect(tester.takeException(), isNull);
+        // Beide Geraete stehen da - mit dem Alter ("gerade eben", "vor
+        // 5 Min.").
+        expect(find.text('gerade eben'), findsOneWidget);
+        expect(find.text('vor 5 Min.'), findsOneWidget);
+        // Und beide kann der Nutzer gruessen.
+        expect(
+          find.text(L10n.tWithoutContext('transit.greet')),
+          findsNWidgets(2),
+        );
+
+        await tester.pumpWidget(const SizedBox());
+      });
+
+      testWidgets('ohne Geraete steht der Leerzustand da', (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final transit = _FakeTransit();
+        final container = _container(transit: transit);
+        addTearDown(container.dispose);
+        final router = _router();
+        addTearDown(router.dispose);
+
+        await _aufbauen(tester, container, router);
+        await _radarStarten(tester);
+
+        expect(tester.takeException(), isNull);
+        expect(
+          find.text(L10n.tWithoutContext('transit.noEncounters')),
+          findsOneWidget,
+        );
+
+        await tester.pumpWidget(const SizedBox());
+      });
+
+      testWidgets('der Gruss wird gesendet', (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final transit = _FakeTransit();
+        transit.begegnungen = [
+          TransitEncounter(token: 'token-1', seenAt: DateTime.now()),
+        ];
+        final container = _container(transit: transit);
+        addTearDown(container.dispose);
+        final router = _router();
+        addTearDown(router.dispose);
+
+        await _aufbauen(tester, container, router);
+        await _radarStarten(tester);
+
+        // Der Gruss-Knopf oeffnet das Blatt mit den Vorschlaegen.
+        await _knopfTippen(tester, L10n.tWithoutContext('transit.greet'));
+
+        expect(tester.takeException(), isNull);
+        expect(
+          find.text(L10n.tWithoutContext('transit.pingSheetTitle')),
+          findsOneWidget,
+          reason: 'Das Blatt mit den Vorschlaegen muss aufgehen.',
+        );
+        expect(
+          find.text(L10n.tWithoutContext('transit.preset.wave')),
+          findsOneWidget,
+        );
+
+        // Einen Vorschlag waehlen und senden.
+        await tester.tap(
+          find.text(L10n.tWithoutContext('transit.preset.wave')),
+        );
+        await tester.pump();
+        await tester.tap(
+          find.widgetWithText(
+            FilledButton,
+            L10n.tWithoutContext('transit.pingSend'),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+
+        expect(tester.takeException(), isNull);
+        expect(
+          transit.gruesse,
+          hasLength(1),
+          reason:
+              'Der Gruss muss wirklich raus - sonst sieht die Person '
+              'nie, dass jemand in der Naehe war.',
+        );
+        expect(transit.gruesse.first.messageKey, 'wave');
+        // Und der Nutzer bekommt die Bestaetigung.
+        expect(find.textContaining('Gruß gesendet'), findsWidgets);
+
+        await tester.pumpWidget(const SizedBox());
+      });
+
+      testWidgets('die eigene Zeile wandert mit', (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final transit = _FakeTransit();
+        transit.begegnungen = [
+          TransitEncounter(token: 'token-1', seenAt: DateTime.now()),
+        ];
+        final container = _container(transit: transit);
+        addTearDown(container.dispose);
+        final router = _router();
+        addTearDown(router.dispose);
+
+        await _aufbauen(tester, container, router);
+        await _radarStarten(tester);
+
+        await _knopfTippen(tester, L10n.tWithoutContext('transit.greet'));
+
+        // Die eigene Zeile eintippen (das Feld im Blatt - der Bildschirm
+        // hat noch ein eigenes Eingabefeld).
+        await tester.enterText(
+          find.descendant(
+            of: find.byType(BottomSheet),
+            matching: find.byType(TextField),
+          ),
+          'Bis gleich im Zug!',
+        );
+        await tester.pump();
+        await tester.tap(
+          find.text(L10n.tWithoutContext('transit.preset.wave')),
+        );
+        await tester.pump();
+        await tester.tap(
+          find.widgetWithText(
+            FilledButton,
+            L10n.tWithoutContext('transit.pingSend'),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+
+        expect(tester.takeException(), isNull);
+        expect(
+          transit.gruesse.first.customLine,
+          'Bis gleich im Zug!',
+          reason:
+              'Die eigene Zeile muss mitgesendet werden - sie ist der '
+              'einzige frei formulierte Teil des Grusses.',
+        );
+
+        await tester.pumpWidget(const SizedBox());
+      });
+
+      testWidgets('nach dem Radar bleiben die Begegnungen erreichbar', (
+        tester,
+      ) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final transit = _FakeTransit();
+        transit.begegnungen = [
+          TransitEncounter(
+            token: 'token-1',
+            seenAt: DateTime.now().subtract(const Duration(minutes: 50)),
+          ),
+        ];
+        // Der Radar ist nicht aktiv, aber es gab Begegnungen.
+        transit.setzeBegegnungszahl(1);
+        final container = _container(transit: transit);
+        addTearDown(container.dispose);
+        final router = _router();
+        addTearDown(router.dispose);
+
+        await _aufbauen(tester, container, router);
+
+        // Der Knopf "in Ruhe finden" steht da - die Begegnungen gehen
+        // nach dem Radar nicht verloren.
+        await _knopfTippen(tester, L10n.tWithoutContext('transit.retainedBtn'));
+
+        expect(tester.takeException(), isNull);
+        expect(
+          find.text(L10n.tWithoutContext('transit.retainedTitle')),
+          findsOneWidget,
+          reason: 'Das Blatt mit den erhaltenen Begegnungen muss aufgehen.',
+        );
+        // Und die Begegnung steht drin.
+        expect(find.text('vor 50 Min.'), findsOneWidget);
+
+        await tester.pumpWidget(const SizedBox());
+      });
     });
   });
 }
