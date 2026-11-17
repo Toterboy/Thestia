@@ -590,6 +590,15 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
     await bestEffort('encryptionServiceProvider.clearAllData', () async {
       await _ref.read(encryptionServiceProvider).clearAllData();
     });
+    // DER DIENST NEU BAUEN (BEFUND 18.11.2026, gefunden von einem Test):
+    // Nach dem Leeren hat der Dienst keinen Identity-Key mehr (null) -
+    // jeder Zugriff darauf waere ein Absturz ("Null check operator used
+    // on a null value"). Die App liefe also nach dem Abmelden mit einem
+    // kaputten Dienst weiter (bis zum naechsten App-Neustart).
+    //
+    // DER WEG: Der Provider wird verworfen - der naechste Zugriff baut
+    // ihn neu auf (mit einem neuen Schluessel, wie nach einem Neustart).
+    _ref.invalidate(encryptionServiceProvider);
     bestEffortSync('preKeyServiceProvider.reset', () {
       _ref.read(preKeyServiceProvider).reset();
     });
@@ -680,6 +689,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<bool>> {
     } catch (e) {
       debugPrint('[AuthNotifier] Encryption-Cleanup fehlgeschlagen: $e');
     }
+    // DER DIENST NEU BAUEN: Nach dem Leeren hat er keinen Identity-Key
+    // mehr (siehe die Erklaerung beim Abmelden).
+    _ref.invalidate(encryptionServiceProvider);
     try {
       _ref.read(preKeyServiceProvider).reset();
     } catch (e) {
