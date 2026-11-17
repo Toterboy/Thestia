@@ -172,6 +172,294 @@ void main() {
 
     // Die Foto-Moderation: der Reiter zeigt die wartenden Fotos, und
     // die Entscheidung geht an den Server.
+    group('Die Einsprueche (Bild-Pruefung)', () {
+      /// Fuellt die Einspruchsliste.
+      void queueVorbereiten() {
+        server.rpcAntworten['admin_list_photo_appeals'] = <dynamic>[
+          <String, dynamic>{
+            'id': 'appeal-1',
+            'storagePath': 'user-9/appeals/appeal-1.png',
+            'status': 'pending',
+            'localLabel': 'NSFW',
+            'localScore': 0.82,
+            'userName': 'Jonas',
+            'createdAt': '2026-11-16T09:00:00Z',
+          },
+        ];
+      }
+
+      /// Oeffnet den Reiter der Einsprueche.
+      Future<void> oeffneReiter(WidgetTester tester) async {
+        final etikett = L10n.tWithoutContext('admin.tabAppeals');
+        await scrolleZuReiter(tester, etikett);
+        final pille = find.byKey(ValueKey('pill_tab_$etikett'));
+        expect(pille, findsOneWidget);
+        await tester.ensureVisible(pille);
+        await tester.pump();
+        await tester.tap(pille);
+        for (var i = 0; i < 12; i++) {
+          await tester.pump(const Duration(milliseconds: 150));
+        }
+        // Der Abruf braucht echte Zeit.
+        for (var i = 0; i < 5; i++) {
+          await tester.runAsync(() async {
+            await Future<void>.delayed(const Duration(milliseconds: 80));
+          });
+          await tester.pump(const Duration(milliseconds: 120));
+        }
+      }
+
+      testWidgets('der Einspruch steht da', (tester) async {
+        queueVorbereiten();
+        await zeigeScreen(tester);
+        await oeffneReiter(tester);
+
+        expect(tester.takeException(), isNull);
+        expect(
+          find.text('Jonas'),
+          findsWidgets,
+          reason: 'Der Einspruch muss mit dem Namen stehen.',
+        );
+        // Der Befund der lokalen KI steht auch da.
+        expect(find.textContaining('NSFW'), findsWidgets);
+      });
+
+      testWidgets('das Freigeben geht an den Server', (tester) async {
+        queueVorbereiten();
+        await zeigeScreen(tester);
+        await oeffneReiter(tester);
+
+        // Der Freigabe-Knopf (der gruene Haken).
+        final knopf = find.widgetWithText(
+          FilledButton,
+          L10n.tWithoutContext('admin.approve'),
+        );
+        expect(knopf, findsOneWidget);
+        await tester.tap(knopf);
+        for (var i = 0; i < 8; i++) {
+          await tester.pump(const Duration(milliseconds: 150));
+        }
+        for (var i = 0; i < 5; i++) {
+          await tester.runAsync(() async {
+            await Future<void>.delayed(const Duration(milliseconds: 80));
+          });
+          await tester.pump(const Duration(milliseconds: 120));
+        }
+
+        expect(tester.takeException(), isNull);
+        final aufrufe = server.rpcAufrufe.where(
+          (c) => c['funktion'] == 'admin_decide_photo_appeal',
+        );
+        expect(
+          aufrufe,
+          isNotEmpty,
+          reason:
+              'Die Entscheidung muss beim Server ankommen - sonst wartet '
+              'der Nutzer vergeblich auf die Freigabe seines Bildes.',
+        );
+        expect(aufrufe.first['p_id'], 'appeal-1');
+        expect(aufrufe.first['p_approve'], isTrue);
+      });
+    });
+
+    group('Die Sperrliste', () {
+      /// Fuellt die Sperrliste mit einem gesperrten Konto.
+      void queueVorbereiten() {
+        server.rpcAntworten['admin_list_banned_emails'] = <dynamic>[
+          <String, dynamic>{
+            'email': 'stoer@example.de',
+            'reason': 'Beleidigung',
+            'bannedBy': 'admin-1',
+            'bannedAt': '2026-11-01T10:00:00Z',
+          },
+        ];
+      }
+
+      /// Oeffnet den Reiter der Sperren.
+      Future<void> oeffneReiter(WidgetTester tester) async {
+        final etikett = L10n.tWithoutContext('admin.tabBans');
+        await scrolleZuReiter(tester, etikett);
+        final pille = find.byKey(ValueKey('pill_tab_$etikett'));
+        expect(pille, findsOneWidget);
+        await tester.ensureVisible(pille);
+        await tester.pump();
+        await tester.tap(pille);
+        for (var i = 0; i < 12; i++) {
+          await tester.pump(const Duration(milliseconds: 150));
+        }
+        // Der Abruf der Liste braucht echte Zeit.
+        for (var i = 0; i < 5; i++) {
+          await tester.runAsync(() async {
+            await Future<void>.delayed(const Duration(milliseconds: 80));
+          });
+          await tester.pump(const Duration(milliseconds: 120));
+        }
+      }
+
+      testWidgets('die gesperrten Adressen stehen da', (tester) async {
+        queueVorbereiten();
+        await zeigeScreen(tester);
+        await oeffneReiter(tester);
+
+        expect(tester.takeException(), isNull);
+        expect(
+          find.textContaining('stoer@example.de'),
+          findsWidgets,
+          reason: 'Eine gesperrte Adresse muss im Reiter stehen.',
+        );
+        // Und die Begruendung dazu - der Admin muss sie sehen koennen.
+        expect(find.textContaining('Beleidigung'), findsWidgets);
+      });
+
+      testWidgets('das Entsperren fragt erst nach', (tester) async {
+        queueVorbereiten();
+        await zeigeScreen(tester);
+        await oeffneReiter(tester);
+
+        // Der Knopf mit dem offenen Schloss.
+        final knopf = find.byIcon(Icons.lock_open);
+        expect(knopf, findsWidgets);
+        await tester.tap(knopf.first);
+        for (var i = 0; i < 8; i++) {
+          await tester.pump(const Duration(milliseconds: 150));
+        }
+
+        expect(tester.takeException(), isNull);
+        // Ohne Rueckfrage waere die Sperrung aufgehoben - und das ist ein
+        // Eingriff, den der Admin nicht versehentlich machen darf.
+        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(
+          find.text(L10n.tWithoutContext('admin.unbanTitle')),
+          findsOneWidget,
+        );
+      });
+
+      testWidgets('das Sperren braucht eine Begruendung', (tester) async {
+        queueVorbereiten();
+        await zeigeScreen(tester);
+        await oeffneReiter(tester);
+
+        // Das Formular oeffnen.
+        await tester.tap(find.text(L10n.tWithoutContext('admin.banUser')));
+        for (var i = 0; i < 8; i++) {
+          await tester.pump(const Duration(milliseconds: 150));
+        }
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(AlertDialog), findsOneWidget);
+
+        // Ohne Eingabe wird nichts gesperrt - und der Admin sieht, warum.
+        await tester.tap(
+          find.widgetWithText(FilledButton, L10n.tWithoutContext('admin.ban')),
+        );
+        for (var i = 0; i < 8; i++) {
+          await tester.pump(const Duration(milliseconds: 150));
+        }
+
+        expect(
+          find.text(L10n.tWithoutContext('admin.required')),
+          findsWidgets,
+          reason:
+              'Ohne Ziel gibt es nichts zu sperren - der Admin muss das sehen.',
+        );
+        expect(
+          find.text(L10n.tWithoutContext('admin.minChars')),
+          findsWidgets,
+          reason:
+              'Eine Begruendung ohne Inhalt bringt dem Nutzer nichts - der '
+              'Admin muss sie kennen.',
+        );
+        // Und es ist auch nichts beim Server passiert.
+        expect(
+          server.funktionsAufrufe.any(
+            (c) => c['funktion'] == 'admin-ban' && c['action'] == 'ban',
+          ),
+          isFalse,
+        );
+      });
+
+      testWidgets('das Sperren geht an den Server', (tester) async {
+        queueVorbereiten();
+        await zeigeScreen(tester);
+        await oeffneReiter(tester);
+
+        await tester.tap(find.text(L10n.tWithoutContext('admin.banUser')));
+        for (var i = 0; i < 8; i++) {
+          await tester.pump(const Duration(milliseconds: 150));
+        }
+
+        // Ziel und Begruendung eintragen.
+        final felder = find.byType(TextFormField);
+        await tester.enterText(felder.at(0), 'stoerer@example.de');
+        await tester.enterText(felder.at(1), 'Beleidigung im Chat');
+        await tester.pump();
+        await tester.tap(
+          find.widgetWithText(FilledButton, L10n.tWithoutContext('admin.ban')),
+        );
+        for (var i = 0; i < 8; i++) {
+          await tester.pump(const Duration(milliseconds: 150));
+        }
+        for (var i = 0; i < 5; i++) {
+          await tester.runAsync(() async {
+            await Future<void>.delayed(const Duration(milliseconds: 80));
+          });
+          await tester.pump(const Duration(milliseconds: 120));
+        }
+
+        expect(tester.takeException(), isNull);
+        final aufrufe = server.funktionsAufrufe.where(
+          (c) => c['funktion'] == 'admin-ban' && c['action'] == 'ban',
+        );
+        expect(
+          aufrufe,
+          isNotEmpty,
+          reason: 'Die Sperrung muss beim Server ankommen.',
+        );
+        expect(aufrufe.first['emailOrUserId'], 'stoerer@example.de');
+        expect(aufrufe.first['reason'], 'Beleidigung im Chat');
+      });
+
+      testWidgets('das Entsperren geht an den Server', (tester) async {
+        queueVorbereiten();
+        await zeigeScreen(tester);
+        await oeffneReiter(tester);
+
+        await tester.tap(find.byIcon(Icons.lock_open).first);
+        for (var i = 0; i < 8; i++) {
+          await tester.pump(const Duration(milliseconds: 150));
+        }
+
+        // Bestaetigen - dann geht der Auftrag an den Server.
+        await tester.tap(
+          find.widgetWithText(
+            FilledButton,
+            L10n.tWithoutContext('admin.unban'),
+          ),
+        );
+        for (var i = 0; i < 8; i++) {
+          await tester.pump(const Duration(milliseconds: 150));
+        }
+        // Der Aufruf braucht echte Zeit.
+        for (var i = 0; i < 5; i++) {
+          await tester.runAsync(() async {
+            await Future<void>.delayed(const Duration(milliseconds: 80));
+          });
+          await tester.pump(const Duration(milliseconds: 120));
+        }
+
+        expect(tester.takeException(), isNull);
+        expect(
+          server.funktionsAufrufe.any(
+            (c) => c['funktion'] == 'admin-ban' && c['action'] == 'unban',
+          ),
+          isTrue,
+          reason:
+              'Das Entsperren muss beim Server ankommen - sonst bleibt die '
+              'Sperrung bestehen und der Nutzer wundert sich.',
+        );
+      });
+    });
+
     group('Die Foto-Moderation', () {
       /// Fuellt die Queue mit einer wartenden Meldung.
       void queueVorbereiten() {

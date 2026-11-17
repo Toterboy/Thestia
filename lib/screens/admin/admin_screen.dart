@@ -1665,15 +1665,21 @@ class _AppealCard extends ConsumerWidget {
           ),
           if (status == 'pending') ...[
             const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            // DER UMBRUCH (18.11.2026, gefunden von einem Test): Die beiden
+            // Knopfe standen in einer festen Reihe - bei grosser Schrift
+            // lief die Reihe ueber den Rand ("RenderFlex overflowed").
+            //
+            // DER WEG: Ein "Wrap" bricht die Reihe um, statt zu
+            // ueberlaufen. Bei normaler Schrift steht alles nebeneinander.
+            Wrap(
+              alignment: WrapAlignment.end,
+              spacing: 8,
               children: [
                 OutlinedButton.icon(
                   onPressed: busy ? null : () => onDecide(false),
                   icon: const Icon(Icons.close),
                   label: Text(L10n.t(context, 'admin.rejectTooltip')),
                 ),
-                const SizedBox(width: 8),
                 FilledButton.icon(
                   onPressed: busy ? null : () => onDecide(true),
                   icon: const Icon(Icons.check),
