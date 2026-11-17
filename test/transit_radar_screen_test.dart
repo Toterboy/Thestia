@@ -407,6 +407,11 @@ void main() {
       ),
     );
     await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
+    // DIE ECHTE SCHRIFT: Ohne sie benutzt der Test die Test-Schrift, bei
+    // der jedes Zeichen so breit ist wie die Schrift gross - jede Zeile
+    // laeuft dann ueber den Rand. Der Test meldet damit Fehler, die es in
+    // der App gar nicht gibt.
+    await ladeEchteSchrift();
   });
 
   setUp(() {

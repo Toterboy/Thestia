@@ -126,13 +126,24 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
     // Aktiven Chat freigeben (Notification-Unterdrückung nur solange der
     // Chat sichtbar ist) - über die Notifier, weil `ref` hier nicht mehr
     // benutzt werden darf (siehe die Erklaerung beim Feld).
-    bestEffortSync('aktiven Chat freigeben', () {
-      if (_aktiveChatId.state == widget.sessionId) {
-        _aktiveChatId.state = null;
-      }
-      if (_aktiveChatPeerId.state == _peerId) {
-        _aktiveChatPeerId.state = null;
-      }
+    //
+    // DER WEG (BEFUND 18.11.2026, gefunden von einem Test): Das Ruecksetzen
+    // muss einen Frame warten. Wird der Bildschirm waehrend eines
+    // Routenwechsels abgeraeumt (der Bildschirm springt zu den Funken),
+    // passiert das dispose() MITTEN IM AUFBAU - und Riverpod verbietet
+    // das Aendern eines Providers waehrend des Aufbaus ("Tried to modify
+    // a provider while the widget tree was building"). Die Markierung
+    // blieb dann stehen: die Benachrichtigungen des Gespraechs blieben
+    // unterdrueckt.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      bestEffortSync('aktiven Chat freigeben', () {
+        if (_aktiveChatId.state == widget.sessionId) {
+          _aktiveChatId.state = null;
+        }
+        if (_aktiveChatPeerId.state == _peerId) {
+          _aktiveChatPeerId.state = null;
+        }
+      });
     });
     WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
@@ -1114,21 +1125,31 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
   }
 
   Widget _buildOutcomeBanner(DatingHourSession session) {
+    // DER UMBRUCH (18.11.2026, gefunden von einem Test): Der Text stand
+    // in einer festen Reihe - bei grosser Schrift (oder einer
+    // System-Schriftgroesse ueber 100 %) lief er ueber den Rand.
+    //
+    // DER WEG: "Flexible" laesst den Text umbrechen, statt zu
+    // ueberlaufen. Und der Text kommt aus den Uebersetzungen (vorher
+    // stand er fest in Deutsch da - in der englischen Fassung stand
+    // trotzdem Deutsch).
     if (session.isMutualMatch) {
       return Container(
         width: double.infinity,
         color: Colors.green,
         padding: const EdgeInsets.all(12),
-        child: const Row(
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.favorite, color: Colors.white),
-            SizedBox(width: 8),
-            Text(
-              'Ein Funke ist übersprungen!',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+            const Icon(Icons.favorite, color: Colors.white),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                L10n.t(context, 'dh.chat.bannerMatch'),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
@@ -1139,14 +1160,19 @@ class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen>
       width: double.infinity,
       color: Colors.orange,
       padding: const EdgeInsets.all(12),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.favorite_border, color: Colors.white),
-          SizedBox(width: 8),
-          Text(
-            'Kein Funke diesmal, aber weiter so!',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          const Icon(Icons.favorite_border, color: Colors.white),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              L10n.t(context, 'dh.chat.bannerNoMatch'),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -1569,29 +1595,36 @@ class _DecisionButtons extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
+            // DIE KNOEPFE: "Annehmen" und "Ablehnen" mit den Symbolen.
+            //
+            // DER HINWEIS (18.11.2026, gefunden von einem Test): Mit der
+            // echten Schrift passen die Symbole und die Beschriftung
+            // nebeneinander. Mit der Test-Schrift (jedes Zeichen so breit
+            // wie die Schrift gross) nicht - der Test laedt deshalb die
+            // echte Schrift.
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
                     icon: const Icon(Icons.close),
-                    label: Text(L10n.t(context, 'dh.chat.decline')),
                     onPressed: onReject,
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       foregroundColor: Colors.red,
                       side: const BorderSide(color: Colors.red),
                     ),
+                    label: Text(L10n.t(context, 'dh.chat.decline')),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: FilledButton.icon(
                     icon: const Icon(Icons.favorite),
-                    label: Text(L10n.t(context, 'dh.chat.accept')),
                     onPressed: onAccept,
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
+                    label: Text(L10n.t(context, 'dh.chat.accept')),
                   ),
                 ),
               ],

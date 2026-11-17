@@ -12,6 +12,7 @@
 // Plugin - damit ist er auf jeder Plattform gleich.
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
@@ -43,8 +44,55 @@ const MethodChannel aufnahmeKanal = MethodChannel(
   'com.llfbandit.record/messages',
 );
 
-/// Beantwortet die Aufrufe des Aufnahme-Plugins.
+/// Laedt die echte Textschrift (Roboto) in den Test.
 ///
+/// DER GRUND (18.11.2026): `flutter_test` benutzt ohne diese Schrift die
+/// Test-Schrift, bei der JEDES Zeichen so breit ist wie die Schrift gross.
+/// Damit laeuft in jedem Test eine Zeile ueber den Rand - der Test
+/// meldet dann einen Fehler, den es in der App gar nicht gibt (und
+/// umgekehrt bleibt ein echter Ueberlauf unentdeckt).
+///
+/// Mit der echten Schrift stimmen die Breiten wieder - der Test sieht
+/// dieselbe Oberflaeche wie das Telefon.
+///
+/// Wird die Schrift nicht gefunden (kein Flutter-SDK im Test-Runner),
+/// bleibt es bei der Test-Schrift - der Test laeuft dann wie bisher.
+Future<void> ladeEchteSchrift() async {
+  final datei = _sdkSchrift('material_fonts/roboto-regular.ttf');
+  if (datei == null) return;
+  try {
+    final bytes = await datei.readAsBytes();
+    final loader = FontLoader('Roboto')
+      ..addFont(Future.value(ByteData.sublistView(bytes)));
+    await loader.load();
+  } catch (e) {
+    // Ohne Schrift laeuft der Test mit der Test-Schrift weiter.
+    debugPrint('[Schrift] Roboto konnte nicht geladen werden: $e');
+  }
+}
+
+/// Findet eine Schriftdatei im Flutter-SDK.
+///
+/// Reihenfolge: `FLUTTER_ROOT` aus der Umgebung, danach der Weg zur
+/// Dart-Executable (im Flutter-SDK liegt sie unter bin/cache/dart-sdk).
+File? _sdkSchrift(String name) {
+  final wurzel = Platform.environment['FLUTTER_ROOT'];
+  if (wurzel != null && wurzel.isNotEmpty) {
+    final datei = File('$wurzel/bin/cache/artifacts/$name');
+    if (datei.existsSync()) return datei;
+  }
+
+  // .../flutter/bin/cache/dart-sdk/bin/dart.exe -> .../flutter
+  var teile = Platform.resolvedExecutable.split(RegExp(r'[\\/]'));
+  if (teile.length > 5) {
+    teile = teile.sublist(0, teile.length - 5);
+    final datei = File('${teile.join('/')}/bin/cache/artifacts/$name');
+    if (datei.existsSync()) return datei;
+  }
+  return null;
+}
+
+/// Beantwortet die Aufrufe des Aufnahme-Plugins.///
 /// [erlaubt]=false simuliert "keine Mikrofonberechtigung" - dann zeigt
 /// der Editor den Hinweis statt aufzunehmen.
 ///

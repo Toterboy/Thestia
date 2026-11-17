@@ -2619,6 +2619,11 @@ const Map<String, Map<String, String>> _strings = {
         'Wenn beide sich für eine Verlängerung entscheiden, entsteht ein '
         'Funke und ihr könnt weiter chatten.',
     'dh.chat.sparkJumped': 'Ein Funke ist übersprungen! Chat wird geöffnet...',
+    // Das Banner, das im Chat steht (BEFUND 18.11.2026: der Text war
+    // fest in Deutsch verdrahtet - in der englischen Fassung stand
+    // trotzdem Deutsch da).
+    'dh.chat.bannerMatch': 'Ein Funke ist übersprungen!',
+    'dh.chat.bannerNoMatch': 'Kein Funke diesmal, aber weiter so!',
     'dh.chat.noSpark': 'Kein Funke',
     'dh.chat.keepSearching': 'Weiter suchen',
     'dh.chat.e2e': 'Ende zu Ende verschlüsselt',
@@ -5971,6 +5976,8 @@ const Map<String, Map<String, String>> _strings = {
         'If both decide to extend, a spark is created and you can keep '
         'chatting.',
     'dh.chat.sparkJumped': 'A spark jumped! Opening the chat...',
+    'dh.chat.bannerMatch': 'A spark jumped!',
+    'dh.chat.bannerNoMatch': 'No spark this time - but keep going!',
     'dh.chat.noSpark': 'No spark',
     'dh.chat.keepSearching': 'Keep searching',
     'dh.chat.e2e': 'End-to-end encrypted',

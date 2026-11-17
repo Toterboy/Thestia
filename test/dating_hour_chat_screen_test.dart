@@ -22,6 +22,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
@@ -30,6 +31,7 @@ import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/dating_hour_models.dart';
 import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/dating_hour/dating_hour_chat_screen.dart';
 import 'package:thestia/services/dating_hour_service.dart';
 import 'package:thestia/services/local_storage.dart';
@@ -39,6 +41,7 @@ import 'package:thestia/services/relay_service.dart';
 import 'package:thestia/services/webrtc_service.dart';
 import 'package:thestia/services/supabase_database_service.dart';
 import 'package:thestia/services/secure_storage.dart';
+import 'package:thestia/widgets/funke_overlay.dart';
 
 import 'support/fake_supabase_server.dart';
 import 'support/plugin_mocks.dart';
@@ -88,8 +91,29 @@ class _FakeDatingHourService extends DatingHourService {
   /// Die IDs der beendeten Gespraeche.
   final List<String> beendet = [];
 
+  /// Die Session, die nach der Entscheidung zurueckkommt.
+  ///
+  /// DER GRUND: Nach dem Abstimmen entscheidet die App, ob es einen
+  /// Funken gibt (beide haben "Annehmen" gedrueckt) oder nicht (einer
+  /// hat abgelehnt). Der echte Dienst liest das aus der Datenbank - im
+  /// Test kommt es von hier.
+  DatingHourSession? entscheidung;
+
+  /// Die Abstimmungen, die der Screen gemeldet hat.
+  final List<({String userId, bool accept})> abstimmungen = [];
+
   @override
   Future<DatingHourSession?> getSession(String sessionId) async => session;
+
+  @override
+  Future<DatingHourSession?> recordDecision(
+    String sessionId,
+    String userId,
+    bool accept,
+  ) async {
+    abstimmungen.add((userId: userId, accept: accept));
+    return entscheidung;
+  }
 
   @override
   Future<bool> endConversation(String sessionId) async {
@@ -169,6 +193,33 @@ class _FakeP2PChatService extends P2PChatService {
   Future<void> dispose() async {}
 }
 
+/// Der Router des Tests.
+///
+/// DER GRUND: Beim Funke ("Ein Funke ist uebersprungen!") und bei der
+/// Absage ("Kein Funke") springt der Bildschirm weiter - `context.go`.
+/// Ohne Router waere das ein Absturz - und der Test wuerde an einer
+/// Stelle scheitern, an der der Bildschirm gar nichts falsch gemacht
+/// hat.
+GoRouter _router() {
+  return GoRouter(
+    initialLocation: '/dh',
+    routes: [
+      GoRoute(
+        path: '/dh',
+        builder: (_, _) => const DatingHourChatScreen(sessionId: 'session-1'),
+      ),
+      GoRoute(
+        path: AppRoutes.interessen,
+        builder: (_, _) => const Scaffold(body: Text('Funken')),
+      ),
+      GoRoute(
+        path: AppRoutes.datingHourEvent,
+        builder: (_, _) => const Scaffold(body: Text('Event')),
+      ),
+    ],
+  );
+}
+
 void main() {
   /// Der Ersatz-Server (Antworten aus dem RAM).
   late FakeSupabaseServer server;
@@ -200,6 +251,11 @@ void main() {
     // Hive-Boxen. Ohne initialisierten Hive schlaegt der Aufbau fehl.
     final tempDir = await Directory.systemTemp.createTemp('thesia_dh');
     Hive.init(tempDir.path);
+    // DIE ECHTE SCHRIFT: Ohne sie benutzt der Test die Test-Schrift, bei
+    // der jedes Zeichen so breit ist wie die Schrift gross - jede Zeile
+    // laeuft dann ueber den Rand. Der Test meldet damit Fehler, die es in
+    // der App gar nicht gibt.
+    await ladeEchteSchrift();
   });
 
   tearDownAll(() async {
@@ -236,19 +292,85 @@ void main() {
     }
   }
 
+  /// Laesst die echte Ereignisschleife laufen.
+  ///
+  /// DER GRUND: Die HTTP-Anfragen (der serverseitige Like) kommen nur in
+  /// der echten Ereignisschleife an - mit blossem "pump" bleiben sie
+  /// haengen.
+  Future<void> lassServerArbeiten(WidgetTester tester) async {
+    for (var i = 0; i < 12; i++) {
+      await tester.runAsync(() async {
+        await Future<void>.delayed(const Duration(milliseconds: 40));
+      });
+      await tester.pump(const Duration(milliseconds: 60));
+    }
+  }
+
+  /// Eine abgelaufene Session (die fuenf Minuten sind um).
+  DatingHourSession abgelaufeneSession() {
+    final jetzt = DateTime.now();
+    return DatingHourSession(
+      id: 'session-1',
+      eventId: 'event-1',
+      userA: 'partner',
+      userB: 'ich',
+      startedAt: jetzt.subtract(const Duration(minutes: 6)),
+      expiresAt: jetzt.subtract(const Duration(minutes: 1)),
+    );
+  }
+
+  /// Die Session, nach der BEIDE "Annehmen" gedrueckt haben.
+  DatingHourSession gegenseitigAngenommen() {
+    final jetzt = DateTime.now();
+    return DatingHourSession(
+      id: 'session-1',
+      eventId: 'event-1',
+      userA: 'partner',
+      userB: 'ich',
+      startedAt: jetzt.subtract(const Duration(minutes: 6)),
+      expiresAt: jetzt.subtract(const Duration(minutes: 1)),
+      userADecision: 'accept',
+      userBDecision: 'accept',
+      isMatch: true,
+    );
+  }
+
+  /// Die Session, nach der einer abgelehnt hat.
+  DatingHourSession abgelehnt() {
+    final jetzt = DateTime.now();
+    return DatingHourSession(
+      id: 'session-1',
+      eventId: 'event-1',
+      userA: 'partner',
+      userB: 'ich',
+      startedAt: jetzt.subtract(const Duration(minutes: 6)),
+      expiresAt: jetzt.subtract(const Duration(minutes: 1)),
+      userADecision: 'reject',
+      userBDecision: 'accept',
+      endedAt: jetzt,
+      isMatch: false,
+    );
+  }
+
   /// Baut den Screen mit den Fakes.
   ///
   /// [geburtsdatum] setzt das eigene Profil - ohne Geburtsdatum kennt
   /// der Bildschirm das eigene Alter nicht und kann den Alters-Hinweis
   /// fuer die Gegenseite nicht zeigen.
+  ///
+  /// [sitzung] ist die Session, die der Screen sehen soll (Standard:
+  /// eine laufende Sitzung mit vier Minuten Restzeit).
   Future<_FakeDatingHourService> zeigeScreen(
     WidgetTester tester, {
     DateTime? geburtsdatum,
+    DatingHourSession? sitzung,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    final service = _FakeDatingHourService(session());
+    final service = _FakeDatingHourService(sitzung ?? session());
+    final router = _router();
+    addTearDown(router.dispose);
 
     await tester.pumpWidget(
       ProviderScope(
@@ -287,8 +409,9 @@ void main() {
               return notifier;
             }),
         ],
-        child: const MaterialApp(
-          home: DatingHourChatScreen(sessionId: 'session-1'),
+        child: MaterialApp.router(
+          theme: ThemeData(useMaterial3: true),
+          routerConfig: router,
         ),
       ),
     );
@@ -473,6 +596,111 @@ void main() {
         findsOneWidget,
       );
       expect(find.text(L10n.tWithoutContext('dh.chat.stay')), findsOneWidget);
+    });
+
+    // Die fuenf Minuten sind um: jetzt entscheidet der Nutzer, ob es
+    // einen Funken geben soll. Das ist der wichtigste Moment im
+    // Dating-Hour-Chat - bisher war er untestet.
+    group('Nach den fuenf Minuten', () {
+      testWidgets('die App fragt nach der Entscheidung', (tester) async {
+        await zeigeScreen(tester, sitzung: abgelaufeneSession());
+
+        // Der Timer tickt jede Sekunde - nach einer Sekunde fragt die App.
+        await tester.pump(const Duration(seconds: 2));
+        await pumpFrames(tester);
+
+        expect(tester.takeException(), isNull);
+        expect(
+          find.text(L10n.tWithoutContext('dh.chat.accept')),
+          findsOneWidget,
+          reason:
+              'Nach den fuenf Minuten muss der Nutzer entscheiden koennen - '
+              'sonst laeuft das Gespraech ohne Ende weiter.',
+        );
+        expect(
+          find.text(L10n.tWithoutContext('dh.chat.decline')),
+          findsOneWidget,
+        );
+      });
+
+      testWidgets('wenn beide annehmen, gibt es einen Funken', (tester) async {
+        final service = await zeigeScreen(
+          tester,
+          sitzung: abgelaufeneSession(),
+        );
+        // Die Gegenseite hat auch "Annehmen" gedrueckt.
+        service.entscheidung = gegenseitigAngenommen();
+
+        await tester.pump(const Duration(seconds: 2));
+        await pumpFrames(tester);
+
+        await tester.tap(find.text(L10n.tWithoutContext('dh.chat.accept')));
+        await pumpFrames(tester);
+        await lassServerArbeiten(tester);
+
+        expect(tester.takeException(), isNull);
+        // Die eigene Abstimmung ging wirklich an den Dienst.
+        expect(service.abstimmungen, hasLength(1));
+        expect(service.abstimmungen.first.accept, isTrue);
+
+        // Die Funke-Animation steht da - der Nutzer soll den Moment sehen.
+        expect(find.byType(FunkeOverlay), findsOneWidget);
+        // Ein Tipp schliesst sie sofort.
+        await tester.tapAt(const Offset(20, 20));
+        await pumpFrames(tester);
+        await lassServerArbeiten(tester);
+
+        // Und der Nutzer erfaehrt, was passiert ist.
+        expect(
+          find.textContaining(
+            L10n.tWithoutContext('dh.chat.sparkJumped').split(' ').first,
+          ),
+          findsWidgets,
+        );
+        // Der Bildschirm springt zu den Funken (der neue Funke waere
+        // sonst unsichtbar).
+        await tester.pump(const Duration(milliseconds: 1600));
+        await pumpFrames(tester);
+        expect(find.text('Funken'), findsOneWidget);
+      });
+
+      testWidgets('wenn einer ablehnt, gibt es keinen Funken', (tester) async {
+        final service = await zeigeScreen(
+          tester,
+          sitzung: abgelaufeneSession(),
+        );
+        // Die Gegenseite hat abgelehnt.
+        service.entscheidung = abgelehnt();
+
+        await tester.pump(const Duration(seconds: 2));
+        await pumpFrames(tester);
+
+        await tester.tap(find.text(L10n.tWithoutContext('dh.chat.decline')));
+        await pumpFrames(tester);
+        await lassServerArbeiten(tester);
+
+        expect(tester.takeException(), isNull);
+        expect(service.abstimmungen.first.accept, isFalse);
+        // Der Nutzer sieht klar, dass es keinen Funke gibt.
+        expect(
+          find.text(L10n.tWithoutContext('dh.chat.noSpark')),
+          findsOneWidget,
+          reason:
+              'Der Nutzer muss erfahren, dass kein Funke entstanden ist - '
+              'sonst wartet er vergeblich.',
+        );
+        expect(
+          find.text(L10n.tWithoutContext('dh.chat.keepSearching')),
+          findsOneWidget,
+        );
+
+        // "Weiter suchen" bringt ihn zur Uebersicht.
+        await tester.tap(
+          find.text(L10n.tWithoutContext('dh.chat.keepSearching')),
+        );
+        await pumpFrames(tester);
+        expect(find.text('Event'), findsOneWidget);
+      });
     });
   });
 }
