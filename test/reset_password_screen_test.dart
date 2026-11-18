@@ -263,6 +263,44 @@ void main() {
             'Nach dem Reset darf der Router den Reset-Screen nicht mehr '
             'erzwingen.',
       );
+      // BEFUND (18.11.2026): Die Bestaetigung war nur einen Frame lang
+      // sichtbar - der Bildschirm hat sich selbst zur Anmeldung
+      // umgeleitet. Der Nutzer wusste nicht, ob sein Passwort wirklich
+      // geaendert wurde.
+      expect(
+        find.text(L10n.tWithoutContext('reset.doneTitle')),
+        findsOneWidget,
+        reason:
+            'Die Bestaetigung muss stehen bleiben - der Nutzer muss sehen, '
+            'dass das Passwort geaendert wurde.',
+      );
+    });
+
+    testWidgets('der Knopf fuehrt zur Anmeldung', (tester) async {
+      final container = await zeigeScreen(tester);
+
+      final felder = find.byType(TextFormField);
+      await tester.enterText(felder.at(0), 'SicheresPasswort7');
+      await tester.enterText(felder.at(1), 'SicheresPasswort7');
+      await tester.pump();
+
+      await tester.tap(find.text(L10n.tWithoutContext('reset.save')));
+      await tester.pump();
+      await warteAufServer(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text(L10n.tWithoutContext('reset.doneTitle')),
+        findsOneWidget,
+      );
+
+      // Und von da aus geht es zur Anmeldung.
+      await tester.tap(find.text(L10n.tWithoutContext('reset.toLogin')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('Anmeldung'), findsOneWidget);
+      expect(container.read(passwordRecoveryPendingProvider), isFalse);
     });
 
     testWidgets('der Abbruch raeumt auf', (tester) async {
