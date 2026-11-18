@@ -707,6 +707,172 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
 
+    testWidgets('ein Treffer zeigt den Freude-Dialog', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final transit = _FakeTransit();
+      // Der Radar hat einen Treffer: die andere Person signalisiert auch.
+      transit.sparkErgebnis = const TransitSparkResult(
+        matched: true,
+        partnerId: 'partner-1',
+        partnerNote: 'Steig ein!',
+      );
+      final container = _container(transit: transit);
+      addTearDown(container.dispose);
+      final router = _router();
+      addTearDown(router.dispose);
+
+      await _aufbauen(tester, container, router);
+      await _startTippen(tester);
+      await _merkmaleWaehlen(tester, ['Haarfarbe', 'Haarlänge']);
+      await _sendenTippen(tester);
+      await _knopfTippen(tester, 'Blicke getauscht');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await _merkmaleWaehlen(tester, ['Haarfarbe', 'Haarlänge']);
+      await _sendenTippen(tester);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(tester.takeException(), isNull);
+      // Der Nutzer muss erfahren, dass ein Funke entstanden ist.
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        find.text(L10n.tWithoutContext('transit.matchTitle')),
+        findsOneWidget,
+        reason:
+            'Der Treffer muss dem Nutzer gemeldet werden - sonst passiert '
+            'es scheinbar gar nichts.',
+      );
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('ein bestehender Funke wird erkannt', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final transit = _FakeTransit();
+      // BEFUND (09.11.2026): Mit der Person besteht SCHON ein Funke - der
+      // Nutzer soll darauf hingewiesen werden statt den Freude-Dialog zu
+      // sehen.
+      transit.sparkErgebnis = const TransitSparkResult(
+        matched: true,
+        partnerId: 'partner-1',
+        alreadySpark: true,
+      );
+      final container = _container(transit: transit);
+      addTearDown(container.dispose);
+      final router = _router();
+      addTearDown(router.dispose);
+
+      await _aufbauen(tester, container, router);
+      await _startTippen(tester);
+      await _merkmaleWaehlen(tester, ['Haarfarbe', 'Haarlänge']);
+      await _sendenTippen(tester);
+      await _knopfTippen(tester, 'Blicke getauscht');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await _merkmaleWaehlen(tester, ['Haarfarbe', 'Haarlänge']);
+      await _sendenTippen(tester);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        find.text(L10n.tWithoutContext('transit.alreadySparkTitle')),
+        findsOneWidget,
+        reason:
+            'Der Nutzer muss erfahren, dass mit der Person schon ein Funke '
+            'besteht.',
+      );
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('ohne Geraet in Reichweite steht das drin', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final transit = _FakeTransit();
+      // Kein Match - und der Server sagt, warum.
+      transit.sparkErgebnis = null;
+      transit.sendFehler = 'no_devices';
+      final container = _container(transit: transit);
+      addTearDown(container.dispose);
+      final router = _router();
+      addTearDown(router.dispose);
+
+      await _aufbauen(tester, container, router);
+      await _startTippen(tester);
+      await _merkmaleWaehlen(tester, ['Haarfarbe', 'Haarlänge']);
+      await _sendenTippen(tester);
+      await _knopfTippen(tester, 'Blicke getauscht');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await _merkmaleWaehlen(tester, ['Haarfarbe', 'Haarlänge']);
+      await _sendenTippen(tester);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(tester.takeException(), isNull);
+      // DIE SNACKBAR STEHT IN DER SCHLANGE (die vorherige hat acht
+      // Sekunden) - der Test muss warten.
+      await _warteAufText(tester, L10n.tWithoutContext('transit.noDevices'));
+      expect(
+        find.text(L10n.tWithoutContext('transit.noDevices')),
+        findsOneWidget,
+        reason:
+            '"Kein Geraet in Reichweite" ist kein Fehler, sondern der '
+            'Normalfall - der Nutzer soll das lesen und nicht eine tote '
+            'Meldung.',
+      );
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
+    testWidgets('ohne eigenen Token steht das drin', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final transit = _FakeTransit();
+      transit.sparkErgebnis = null;
+      transit.sendFehler = 'own_token_missing';
+      final container = _container(transit: transit);
+      addTearDown(container.dispose);
+      final router = _router();
+      addTearDown(router.dispose);
+
+      await _aufbauen(tester, container, router);
+      await _startTippen(tester);
+      await _merkmaleWaehlen(tester, ['Haarfarbe', 'Haarlänge']);
+      await _sendenTippen(tester);
+      await _knopfTippen(tester, 'Blicke getauscht');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await _merkmaleWaehlen(tester, ['Haarfarbe', 'Haarlänge']);
+      await _sendenTippen(tester);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(tester.takeException(), isNull);
+      await _warteAufText(
+        tester,
+        L10n.tWithoutContext('transit.ownTokenMissing'),
+      );
+      expect(
+        find.text(L10n.tWithoutContext('transit.ownTokenMissing')),
+        findsOneWidget,
+        reason:
+            'Ohne eigenen Token sendet das Radar kein Signal - das muss der '
+            'Nutzer erfahren.',
+      );
+
+      await tester.pumpWidget(const SizedBox());
+    });
+
     testWidgets('der Zuwink meldet Erfolg und Fehlschlag', (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
