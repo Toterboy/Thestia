@@ -28,6 +28,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
@@ -39,7 +40,9 @@ import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/providers/chat_provider.dart';
 import 'package:thestia/providers/mood_provider.dart';
 import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/models/report_models.dart';
 import 'package:thestia/screens/chat/chat_detail_screen.dart';
+import 'package:thestia/services/report_service.dart';
 import 'package:thestia/services/chat_service.dart';
 import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/services/mood_service.dart';
@@ -187,16 +190,20 @@ Future<void> _pump(
   ChatNotifier notifier, {
   bool hinweisGesehen = true,
   bool unscharfeBilder = false,
+  List<Override> overrides = const <Override>[],
 }) async {
   SharedPreferences.setMockInitialValues(<String, Object>{});
   await SharedPreferences.getInstance();
   await tester.pumpWidget(
     ProviderScope(
-      overrides: _overrides(
-        notifier,
-        hinweisGesehen: hinweisGesehen,
-        unscharfeBilder: unscharfeBilder,
-      ),
+      overrides: [
+        ..._overrides(
+          notifier,
+          hinweisGesehen: hinweisGesehen,
+          unscharfeBilder: unscharfeBilder,
+        ),
+        ...overrides,
+      ],
       child: MaterialApp(theme: ThemeData(useMaterial3: true), home: kind),
     ),
   );
@@ -207,6 +214,45 @@ Future<void> _pump(
   // nicht, der Timer des Zeitlimits bliebe sonst stehen und der Test
   // scheiterte an "a Timer is still pending".
   await tester.pump(const Duration(seconds: 21));
+}
+
+/// Der Meldungs-Dienst als Ersatz.
+///
+/// DER GRUND: Der echte Dienst legt die Meldung in einer
+/// verschluesselten Hive-Box ab - die laesst sich im Widget-Test nicht
+/// oeffnen (das ist echte Datei-Arbeit). Fuer die Oberflaeche reicht der
+/// Ersatz: er merkt sich, WELCHE Nachrichten mitgehen.
+class _FakeReportService extends ReportService {
+  /// Die Nachrichten, die bei der Meldung mitgingen.
+  final List<Message> gemeldeteNachrichten = [];
+
+  /// Der Typ der Meldung.
+  ReportType? gemeldeterTyp;
+
+  @override
+  Future<ReportSubmission> createReport({
+    required String reporterId,
+    required String reporterUserName,
+    required String reportedUserId,
+    required String reportedUserName,
+    required ReportType type,
+    String? description,
+    List<Message>? messages,
+  }) async {
+    gemeldeterTyp = type;
+    gemeldeteNachrichten.addAll(messages ?? const <Message>[]);
+    return ReportSubmission(
+      report: UserReport(
+        id: 'report-1',
+        reporterId: reporterId,
+        reportedUserId: reportedUserId,
+        type: type,
+        description: description,
+        createdAt: DateTime.now(),
+      ),
+      serverAccepted: true,
+    );
+  }
 }
 
 void main() {
@@ -234,6 +280,10 @@ void main() {
     // Ohne diese beiden Ersatzwaerter bleibt der Dialog leer.
     mockKeystore();
     await mockHive();
+    // DER ADAPTER: Der Meldungs-Store legt seine Zeilen als
+    // UserReport-Objekte ab - ohne den Adapter kann Hive sie nicht
+    // schreiben.
+    Hive.registerAdapter(UserReportAdapter());
     // DIE AUFNAHME: der Chat hat eine Sprachnachricht-Funktion - der
     // Recorder wird beim Aufbau erzeugt (sonst: MissingPluginException).
     mockAufnahme();
@@ -699,6 +749,142 @@ void main() {
         );
       },
     );
+
+    group('Die Meldung geht mit dem Verlauf zum Support', () {
+      testWidgets('nur die letzten drei Nachrichten', (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final service = ChatService();
+        final match = service.createMatch(_partner());
+        for (var i = 1; i <= 4; i++) {
+          service.addMessage(
+            match.id,
+            Message(
+              id: 'm_$i',
+              senderId: 'partner-1',
+              receiverId: 'ich',
+              text: 'Nachricht Nummer $i',
+              timestamp: DateTime.now(),
+            ),
+          );
+        }
+        // Der Meldungs-Dienst als Ersatz (der echte braucht die
+        // verschluesselten Hive-Boxen).
+        final meldedienst = _FakeReportService();
+        await _pump(
+          tester,
+          ChatDetailScreen(matchId: match.id),
+          ChatNotifier(service),
+          overrides: [reportServiceProvider.overrideWithValue(meldedienst)],
+        );
+
+        // Das Menue (die drei Punkte) oeffnen.
+        await tester.tap(find.byIcon(Icons.more_vert));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final eintrag = find.text(L10n.tWithoutContext('chat.reportTooltip'));
+        await tester.ensureVisible(eintrag);
+        await tester.pump();
+        await tester.tap(eintrag);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(AlertDialog), findsOneWidget);
+
+        // Den Grund waehlen (der erste Punkt der Liste) - ohne Grund
+        // ist der Melde-Knopf gesperrt.
+        final grund = find.byType(RadioListTile<ReportType>).first;
+        await tester.tap(grund);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        // Und absenden.
+        final senden = find.widgetWithText(
+          FilledButton,
+          L10n.tWithoutContext('bug.send'),
+        );
+        await tester.ensureVisible(senden);
+        await tester.pump();
+        await tester.tap(senden);
+        // Die Meldung braucht mehrere echte Runden: erst der Speicher
+        // (Hive), dann der Server.
+        for (var i = 0; i < 30; i++) {
+          await tester.runAsync(() async {
+            await Future<void>.delayed(const Duration(milliseconds: 60));
+          });
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+
+        expect(tester.takeException(), isNull);
+        // Die Meldung geht mit genau drei Nachrichten zum Support.
+        expect(
+          meldedienst.gemeldeteNachrichten,
+          hasLength(3),
+          reason:
+              'Es duerfen nur die letzten drei Nachrichten mitgehen - der '
+              'Support soll den Verlauf sehen, nicht den ganzen Chat.',
+        );
+        // Und es sind die LETZTEN drei.
+        expect(
+          meldedienst.gemeldeteNachrichten.last.text,
+          'Nachricht Nummer 4',
+        );
+        expect(
+          meldedienst.gemeldeteNachrichten.first.text,
+          'Nachricht Nummer 2',
+        );
+      });
+    });
+
+    group('Ein Funke, der lokal fehlt', () {
+      testWidgets('wird vom Server nachgeladen', (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        // Der Server kennt den Funke (Match-ID 7).
+        server.rpcAntworten['list_my_matches_with_state'] = <dynamic>[
+          <String, dynamic>{
+            'matchId': 7,
+            'status': 'active',
+            'createdAt': DateTime.now().toIso8601String(),
+            'profile': <String, dynamic>{
+              'id': 'partner-1',
+              'name': 'Mira',
+              'bio': 'Liest gern',
+            },
+          },
+        ];
+
+        // Der Chat wird mit der Nummer geoeffnet - lokal gibt es ihn
+        // nicht (z. B. nach einem Neustart oder aus einem gespeicherten
+        // Verlauf).
+        await _pump(
+          tester,
+          const ChatDetailScreen(matchId: '7'),
+          ChatNotifier(ChatService()),
+        );
+        for (var i = 0; i < 8; i++) {
+          await tester.runAsync(() async {
+            await Future<void>.delayed(const Duration(milliseconds: 60));
+          });
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+
+        expect(tester.takeException(), isNull);
+        // Der Name steht da - der Funke wurde wiederhergestellt.
+        expect(
+          find.textContaining('Mira'),
+          findsWidgets,
+          reason:
+              'Ein Funke, den es lokal nicht mehr gibt, muss vom Server '
+              'nachgeladen werden - sonst sieht der Nutzer einen leeren '
+              'Chat.',
+        );
+      });
+    });
 
     group('Die Nutzer-Meldung', () {
       testWidgets('der Melde-Dialog zeigt die letzten Nachrichten', (

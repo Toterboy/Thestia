@@ -172,6 +172,15 @@ class ReportService {
     String? description,
     List<Message>? messages,
   }) async {
+    // DER BOX-VERSUCH (BEFUND 18.11.2026, gefunden von einem Test): Der
+    // Dienst wird erst beim ersten Melden erzeugt - sein "initialize"
+    // laeuft als Microtask. Die erste Meldung kam deshalb IMMER mit einem
+    // "LateInitializationError" heraus: sie wurde weder lokal gespeichert
+    // noch an den Support uebermittelt - und der Nutzer sah keine
+    // Bestaetigung. Eine Meldung, die nicht ankommt, ist keine Meldung.
+    //
+    // DER WEG: Vor dem ersten Zugriff wird der Speicher geoeffnet.
+    if (!_initialized) await initialize();
     final report = UserReport(
       // Nicht-deterministischer Hive-Key OHNE PII (X-M-07): Die User-IDs
       // dürfen nicht im Schlüssel auftauchen.
@@ -243,6 +252,7 @@ class ReportService {
   }
 
   List<UserReport> getReportsByReporter(String reporterId) {
+    if (!_initialized) return const [];
     final hash = hashPii(reporterId);
     return _box.values.where((r) => r.reporterId == hash).toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -250,17 +260,20 @@ class ReportService {
 
   List<UserReport> getReportsAgainstUser(String userId) {
     // Audit N-18: Lookup über den Hash (lokale Speicherung ist gehasht).
+    if (!_initialized) return const [];
     final hash = hashPii(userId);
     return _box.values.where((r) => r.reportedUserId == hash).toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
   List<UserReport> getPendingReports() {
+    if (!_initialized) return const [];
     return _box.values.where((r) => r.status == 'pending').toList()
       ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
   List<UserReport> getReportsForDay(DateTime day) {
+    if (!_initialized) return const [];
     final start = DateTime(day.year, day.month, day.day);
     final end = start.add(const Duration(days: 1));
     return _box.values
@@ -274,6 +287,7 @@ class ReportService {
     String status, {
     String? moderatorNote,
   }) async {
+    if (!_initialized) await initialize();
     final report = _box.get(reportId);
     if (report != null) {
       await _box.put(
@@ -288,6 +302,9 @@ class ReportService {
   }
 
   void dispose() {
+    // DER STORE IST VIELLEICHT NIE GEÖFFNET WORDEN (der Dienst wurde
+    // nie benutzt) - dann gibt es nichts zu schliessen.
+    if (!_initialized) return;
     _box.close();
   }
 }
