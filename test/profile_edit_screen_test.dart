@@ -21,6 +21,7 @@
 // Damit kann der Test den Erfolgsfall UND den Fehlerfall stellen,
 // ohne Netz und ohne Wartezeit.
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -289,6 +290,7 @@ Future<ProviderContainer> _pump(
   WidgetTester tester,
   UserProfile profil, {
   _FakeOrtService? ortService,
+  Map<String, dynamic> gespeicherteEinstellungen = const {},
 }) async {
   SharedPreferences.setMockInitialValues(<String, Object>{});
   final prefs = await SharedPreferences.getInstance();
@@ -301,6 +303,15 @@ Future<ProviderContainer> _pump(
   );
 
   final storage = _FakeLocalStorage();
+  // DIE GESPEICHERTEN EINSTELLUNGEN: Der Screen korrigiert Werte, die der
+  // Altersregel widersprechen (z. B. ein zu grosser Suchradius bei
+  // Minderjaehrigen).
+  if (gespeicherteEinstellungen.isNotEmpty) {
+    await storage.saveString(
+      'user_preferences',
+      jsonEncode(gespeicherteEinstellungen),
+    );
+  }
   final secure = _FakeSecureProfileStore();
   final container = ProviderContainer(
     overrides: [
@@ -505,6 +516,50 @@ void main() {
         isTrue,
         reason: 'Die Entscheidung muss dem Server gemeldet werden.',
       );
+    });
+  });
+
+  group('Die Altersregeln im Formular', () {
+    testWidgets('ein zu grosser Suchradius wird korrigiert', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // Minderjaehrig (16) - fuer sie ist der Suchradius auf 25 km
+      // begrenzt. Gespeichert war aber "ganz Deutschland" mit 200 km.
+      final profil = UserProfile(
+        id: 'ich',
+        name: 'Lena',
+        bio: 'Hallo',
+        birthDate: DateTime(2010, 6, 15),
+        interests: const <String>['Musik'],
+      );
+      final container = await _pump(
+        tester,
+        profil,
+        gespeicherteEinstellungen: const {
+          'maxDistanceKm': 200,
+          'distanceFilterMode': 'germany',
+        },
+      );
+      await _pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      // Die gespeicherten Werte muessen auf die Regel geklemmt werden -
+      // sonst zeigt die App mehr, als der Server erlaubt (der Server
+      // begrenzt es serverseitig auf 25 km).
+      final prefs = container.read(userPreferencesProvider);
+      expect(
+        prefs.maxDistanceKm,
+        25,
+        reason:
+            'Der Suchradius muss auf 25 km geklemmt werden - der Server '
+            'laesst fuer Minderjaehrige nichts groesseres zu.',
+      );
+      expect(prefs.distanceFilterMode, DistanceFilterMode.distanceKm);
+
+      // Der entprellte Server-Sync muss abgelaufen sein, sonst steht am
+      // Ende ein Timer.
+      await _aufraeumen(tester);
     });
   });
 
