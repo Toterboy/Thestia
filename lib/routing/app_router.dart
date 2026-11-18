@@ -236,6 +236,391 @@ String? _requireStringParam(
   String fallback,
 ) => _stringRouteParam(state, name) == null ? fallback : null;
 
+/// DIE UMLENITUNG DES ROUTERS (ANLASS 18.11.2026).
+///
+/// Die Logik steckte vorher direkt im `redirect`-Callback des Routers.
+/// Dort war sie nicht testbar: der Callback bekommt nur einen
+/// [GoRouterState], den ein Test nicht bauen kann. Als eigene Funktion
+/// nimmt sie den Pfad und den [Ref] - so laesst sich genau pruefen, WAS
+/// der Router entscheidet (siehe test/app_router_redirect_test.dart).
+///
+/// [pfad] ist der Pfad, den der Nutzer ansteuert (z. B. `/welcome`).
+/// Das Ergebnis ist der Zielpfad oder null (keine Umleitung).
+Future<String?> umleitung(Ref ref, String pfad) async {
+  final auth = ref.read(authProvider);
+  final settingsReady = ref.read(settingsLoadedProvider);
+
+  // Solange der Auth-Status ODER die Einstellungen noch geladen werden,
+  // keine Redirects auslösen - auf dem Lade-Screen bleiben. Sonst würde
+  // die falsche Default-Route (Login/"Konto erstellen") vor den
+  // Willkommensscreens aufblitzen. Der refreshListenable stööt die
+  // Auswertung erneut an, sobald beide Zustände feststehen.
+  if (auth.isLoading || !settingsReady) return null;
+
+  // Passwort-Reset (Recovery-Deep-Link aus der E-Mail): Solange der
+  // Reset aussteht, ist ausschließlich der Reset-Screen erreichbar –
+  // auch während des Server-Syncs und unabhängig vom Setup-Stand.
+  if (ref.read(passwordRecoveryPendingProvider)) {
+    return pfad == AppRoutes.resetPassword ? null : AppRoutes.resetPassword;
+  }
+
+  final settings = ref.read(settingsProvider);
+  final loggedIn = auth.valueOrNull ?? false;
+  final introSeen = settings.introSeen;
+
+  // Server-Sync (Profil + Setup-Flags) nach Login abwarten: Sonst
+  // blitzt nach einer App-Neuinstallation die Einrichtung auf, bevor
+  // die serverseitigen Flags geladen sind. Solange der Sync läuft,
+  // auf dem Lade-Screen bleiben.
+  final syncDone = ref.read(serverSyncDoneProvider);
+  if (loggedIn && !syncDone) {
+    return pfad == AppRoutes.loading ? null : AppRoutes.loading;
+  }
+
+  final goingToLoading = pfad == AppRoutes.loading;
+  final goingToWelcome = pfad == AppRoutes.welcome;
+  final goingToSignupWelcome = pfad == AppRoutes.signupWelcome;
+  final goingToLogin = pfad == AppRoutes.login;
+  final goingToForgotPassword = pfad == AppRoutes.forgotPassword;
+  final goingToResetPassword = pfad == AppRoutes.resetPassword;
+  final goingToUnbanRequest = pfad == AppRoutes.unbanRequest;
+  final goingToSettingsPrivacyOnce = pfad == AppRoutes.settingsPrivacyOnce;
+  final goingToDatingSafetyEducation = pfad == AppRoutes.datingSafetyEducation;
+  final goingToOnboarding = pfad == AppRoutes.onboarding;
+  final goingToPersonalityTest = pfad == AppRoutes.personalityTest;
+  final goingToDatingHour = pfad == AppRoutes.datingHourEvent;
+  final goingToWhatsNew = pfad == AppRoutes.whatsNew;
+
+  // -- Admin-Bereich: NUR fuer die konfigurierte Admin-ID --
+  // Normale Nutzer duerfen diesen Screen unter keinen Umstaenden
+  // erreichen. Direkter URL-Aufruf wird zur Startseite umgeleitet.
+  if (pfad == AppRoutes.admin && !isCurrentUserAdmin()) {
+    return AppRoutes.home;
+  }
+
+  // -- Modi, die eine Verifikation voraussetzen --
+  //
+  // Defense in Depth (v0.10.0, Security-Audit 31.10.2026).
+  //
+  // Die Verifikationspflicht fuer Find your Spark, Dating Hour und
+  // Transit Spark wird im Modus-Auswahlbildschirm geprueft
+  // (swipe_mode_selection_screen.dart). Das ist eine UI-Sperre -
+  // die Routen selbst waren frei navigierbar.
+  //
+  // Zwei Gruende fuer die Pruefung HIER:
+  //
+  // 1) Ein Deep-Link (App-Links, Passwort-Zuruecksetzen-Mail,
+  //    ein gespeicherter Verlauf) umgeht den Auswahlbildschirm
+  //    vollstaendig. Wer den Bildschirm ueberspringt, kommt an
+  //    den Bildschirm.
+  // 2) Der Server erzwingt die Sperfe erst seit Migration 161
+  //    (vorher nur im Client). Diese Pruefung faengt den
+  //    Rest ab - unabhaengig vom Serverstand.
+  //
+  // Wichtig: Das ist die ZWEITE Sperre, nicht die einzige. Der
+  // Server bleibt die maechtige (Migration 161) - ein gepatchter
+  // Client kommt an der Servergrenze nicht vorbei.
+  if (loggedIn && routeNeedsVerification(pfad)) {
+    final state2 = ref.read(profileProvider).verificationState;
+    if (state2 != VerificationState.verified) {
+      // Zurueck zur Modus-Auswahl: dort steht die Begruendung
+      // ("so kannst du das anbieten") und der Weg zur
+      // Verifikation.
+      return AppRoutes.swipeModeSelection;
+    }
+  }
+  if (!loggedIn) {
+    // Vom Lade-Screen direkt auf die korrekte Start-Screen leiten:
+    // Erststart -> Willkommen, sonst -> Login.
+    if (goingToLoading) {
+      return introSeen ? AppRoutes.login : AppRoutes.welcome;
+    }
+    // HARTES E-Mail-Gate (Nutzer-Regel: erst bestätigen, dann
+    // einrichten): Ohne Session ist die Einrichtung tabu – auch
+    // mit laufender Registrierung. Frische Registrierungen gehen
+    // zur E-Mail-Bestätigung, alle anderen zum Login. So kann kein
+    // Navigationspfad (auch kein verfrühter Sprung aus dem
+    // Login-Screen) mehr Setup ohne bestätigte E-Mail erreichen.
+    final goingToSetup =
+        goingToSettingsPrivacyOnce ||
+        goingToOnboarding ||
+        goingToSignupWelcome ||
+        goingToPersonalityTest;
+    if (goingToSetup) {
+      final freshRegistration =
+          ref.read(pendingVerificationCredentialsProvider) != null ||
+          ref.read(pendingVerificationEmailProvider) != null;
+      return freshRegistration ? AppRoutes.emailVerification : AppRoutes.login;
+    }
+    // Einführung nur beim allerersten Start zeigen: Der Welcome-Screen
+    // setzt introSeen bereits beim ANZEIGEN (initState) – deshalb darf
+    // der Router einen Nicht-Eingeloggten auf /welcome NICHT mehr
+    // wegredirecten, sobald introSeen true ist (sonst wirft er den
+    // Nutzer direkt nach dem ersten Frame wieder runter).
+    // KEIN Login->Welcome-Redirect mehr: Dieser warf den Nutzer nach
+    // einer FEHLGESCHLAGENEN Registrierung (introSeen noch false,
+    // keine pendingVerification) auf den Welcome-Screen – deshalb
+    // kam "Willkommen" scheinbar erst NACH der Registrierung. Der
+    // Erststart läuft ausschließlich über den Lade-Screen-Pfad
+    // (loading -> welcome, siehe oben).
+    final pendingRegistration =
+        ref.read(pendingVerificationCredentialsProvider) != null;
+    if (pendingRegistration) {
+      // Mitten im Registrierungs-Flow (E-Mail-Bestätigung ausstehend)
+      // auf dem Login-Screen bleiben.
+      return null;
+    }
+    if (goingToLogin ||
+        goingToForgotPassword ||
+        goingToResetPassword ||
+        goingToUnbanRequest ||
+        goingToWelcome) {
+      return null;
+    }
+    return AppRoutes.login;
+  }
+
+  // -- Eingeloggt --
+  // Einrichtungs-Reihenfolge (strikt sequenziell, sonst Schleife!):
+  //   0) E-Mail-Bestätigung (direkt nach der Registrierung – BEVOR der
+  //      Nutzer weitere Angaben machen muss)
+  //   1) Einrichtung (Einstellungen & Privatsphäre)
+  //   2) Onboarding-Daten (Bio, Interessen, Stadt, etc.)
+  //   3) Persönlichkeitstest (LETZTER Schritt der Einrichtung)
+  // Jeder Setup-Screen navigiert am Ende einfach zu AppRoutes.home;
+  // die Redirect-Logik holt den Nutzer automatisch zum nächsten
+  // offenen Schritt - so entstehen keine Sprünge oder Schleifen.
+  //
+  // WICHTIG: Die Schritte dürfen NICHT unabhängig geprüft werden, da
+  // sonst Schleifen entstehen (z. B. /settings-privacy-once -> /onboarding
+  // -> /settings-privacy-once -> ⬦). Stattdessen wird jeder Schritt nur
+  // geprüft, wenn die vorherigen bereits erledigt sind.
+
+  // Sicherheitsnetz gegen "Geister-Login": Zustand "eingeloggt" OHNE
+  // aktive Supabase-Session und ohne laufende Registrierung (z. B.
+  // invalidierte Alt-Session nach Datenbank-Reset) darf den Nutzer
+  // nicht im E-Mail-Bestätigungs-Screen einsperren – ohne User gibt es
+  // nichts zu bestätigen und "Erneut senden" schlägt fehl. Zurück zum
+  // Login, wo eine neue Registrierung möglich ist.
+  final supabaseActive = SupabaseService.isInitialized;
+  if (supabaseActive &&
+      SupabaseService.client.auth.currentUser == null &&
+      ref.read(pendingVerificationCredentialsProvider) == null &&
+      ref.read(pendingVerificationEmailProvider) == null) {
+    return pfad == AppRoutes.login ? null : AppRoutes.login;
+  }
+
+  // Schritt 0: E-Mail-Bestaetigung fuer eingeloggte Nutzer erzwingen –
+  // VOR der Einrichtung. So kommt nach der Registrierung zuerst die
+  // Bestätigung und erst danach Settings/Privacy, Persönlichkeitstest etc.
+  // Ausnahmen: Bug-Report und andere Utility-Seiten brauchen keine
+  // bestätigte E-Mail.
+  //
+  // Fast-Path: Ist in der Session bereits eine bestätigte E-Mail
+  // hinterlegt (z. B. direkt nach dem Login), gilt der Nutzer sofort als
+  // bestätigt – sonst blitzt der E-Mail-Verify-Screen kurz auf, bis der
+  // 3-Sekunden-Poller das feststellt.
+  final emailConfirmed = ref.read(emailConfirmedProvider);
+  final sessionConfirmed =
+      supabaseActive &&
+      SupabaseService.client.auth.currentUser?.emailConfirmedAt != null;
+  if (supabaseActive && emailConfirmed != true && !sessionConfirmed) {
+    final location = pfad;
+    // Seiten die OHNE E-Mail-Bestätigung erreichbar sein müssen:
+    final exempt =
+        location == AppRoutes.emailVerification ||
+        location == AppRoutes.bugReport;
+    if (!exempt) {
+      // Session vorhanden, Bestätigungsstatus aber noch unbekannt
+      // (Poller voraus, z. B. direkt nach Login)? Kurz auf Laden
+      // halten statt fälschlich den Verifikations-Screen zu blitzen.
+      // Ohne Session (frische Registrierung) direkt zur Verifizierung.
+      final hasSession = SupabaseService.client.auth.currentSession != null;
+      if (hasSession && emailConfirmed == null) {
+        return pfad == AppRoutes.loading ? null : AppRoutes.loading;
+      }
+      return AppRoutes.emailVerification;
+    }
+    return null;
+  }
+
+  // Schritt 0.5: Zwei-Faktor-Schutz (TOTP/Authenticator-App).
+  //
+  // Verifizierte Faktoren vorhanden, Session aber nur AAL1
+  // (Passwort-Login) -> Code-Abfrage VOR jedem anderen Screen.
+  // Die EINRICHTUNG selbst ist bewusst KEIN Router-Zwang mehr: Sie
+  // läuft als überspringbarer Schritt in der Erst-Einrichtung
+  // (SettingsPrivacyOnceScreen) und jederzeit über die Einstellungen.
+  final mfa = ref.read(mfaStatusProvider);
+  if (mfa.loaded) {
+    final location = pfad;
+    final mfaExempt =
+        location == AppRoutes.mfaChallenge ||
+        location == AppRoutes.mfaSetup ||
+        location == AppRoutes.emailVerification ||
+        location == AppRoutes.bugReport;
+    if (mfa.needsChallenge && !mfaExempt) {
+      return AppRoutes.mfaChallenge;
+    }
+  }
+
+  // Während der Einrichtung dürfen Hilfs-Screens (2FA-Einrichtung,
+  // 2FA-Challenge, Bug-Report) erreicht werden, ohne dass der Router
+  // zur ersten Einrichtungsseite zurückschmeißt. Sonst landet man nach
+  // "Jetzt einrichten" (2FA) wieder auf Seite 1 der Einrichtung.
+  final setupExempt =
+      goingToSettingsPrivacyOnce ||
+      goingToSignupWelcome ||
+      goingToDatingSafetyEducation ||
+      pfad == AppRoutes.mfaSetup ||
+      pfad == AppRoutes.mfaChallenge ||
+      pfad == AppRoutes.bugReport;
+
+  // Schritt 0.7: Kurzer Willkommensscreen nach frischer Registrierung
+  // (v0.9.1, einmalig) – VOR der Einrichtung. Nur für Konten ohne
+  // abgeschlossenes Onboarding; Bestandsnutzer (Update) sehen ihn nie.
+  // Bei Kill während des Screens greift beim nächsten Start direkt
+  // die Einrichtung (Flag bleibt false, Onboarding aber offen).
+  if (!settings.signupWelcomeSeen && !settings.onboardingDone) {
+    if (!goingToSignupWelcome) return AppRoutes.signupWelcome;
+    return null;
+  }
+
+  // "NIEMALS-EINRICHTUNG"-GARANTIE:
+  // Die Einrichtung / der Persönlichkeitstest werden NIE wieder
+  // erzwungen, sobald onboardingDone true ist (mindestens einmal
+  // abgeschlossen, serverseitig gespiegelt als profiles.onboarding_done,
+  // Migration 065) - unabhängig von Einzelflag-Ständen und übersprungenen
+  // Punkten.
+  //
+  // Zusätzliche Absicherung gegen "Einrichtung erscheint nach
+  // Neuinstallation erneut": Ist der Server-Stand NICHT bekannt
+  // (Setup-Flags-Sync insgesamt fehlgeschlagen), wird ebenfalls NICHT
+  // erzwungen - außer bei einer frischen REGISTRIERUNG, wo die
+  // Einrichtung ja gerade zum ersten Mal laufen soll.
+  final flagsKnown = ref.read(setupFlagsKnownProvider);
+  final freshRegistration =
+      ref.read(pendingVerificationCredentialsProvider) != null;
+  final enforceSetup =
+      !settings.onboardingDone && (flagsKnown || freshRegistration);
+
+  // Schritt 1 vor dem eigentlichen Setup (NUTZERWUNSCH 30.10.2026):
+  // Sicherheits-Aufklärung. Sie gilt nur für Konten, deren Setup noch
+  // offen ist - Bestandsnutzer werden nicht nachträglich behelligt.
+  // Ist sie einmal abgeschlossen, erzwingt der Router sie nie wieder.
+  if (enforceSetup && !settings.datingSafetyEducationCompleted) {
+    if (!goingToDatingSafetyEducation) {
+      return AppRoutes.datingSafetyEducation;
+    }
+    return null;
+  }
+
+  if (enforceSetup && !settings.oneTimeSettingsCompleted) {
+    if (!setupExempt) return AppRoutes.settingsPrivacyOnce;
+    return null;
+  }
+  if (enforceSetup && !settings.communityGuidelinesAccepted) {
+    if (!setupExempt) return AppRoutes.settingsPrivacyOnce;
+    return null;
+  }
+  if (enforceSetup && !settings.personalityTestCompleted) {
+    if (!goingToPersonalityTest) return AppRoutes.personalityTest;
+    return null;
+  }
+
+  // Verifizierungs-Flow per Feature-Flag gesperrt (Betreiber-Entscheidung):
+  // Routen sind nicht erreichbar und leiten auf Home um.
+  // Reaktivierung: --dart-define=VERIFICATION_ENABLED=true.
+  if (!AppConstants.verificationEnabled) {
+    final location = pfad;
+    if (location == AppRoutes.verificationVideo ||
+        location == AppRoutes.verificationComplete ||
+        location == AppRoutes.verificationInfo) {
+      return AppRoutes.home;
+    }
+  }
+
+  // -- "Neu in dieser Version" (NUTZERWUNSCH): Nach einem App-Update
+  // (Build gestiegen) bekommen bereits eingerichtete Konten EINMALIG
+  // die Änderungs-Kurzfassung + Nachfragen zu neuen Angaben (z. B.
+  // Geburtstags-Stil). Bewusst als EIGENE Route (kein Overlay-Dialog):
+  // Der Router bleibt Single-Source-of-Truth, und der Screen navigiert
+  // sich selbst zu Home ab. Fail-open: Bei Fehlern (z. B. Storage)
+  // wird der Screen übersprungen, nie blockiert.
+  if (!goingToWhatsNew) {
+    // Fail-open: Gate überspringen statt App zu blockieren.
+    final route = await bestEffortOr<String?>(
+      'WhatsNewService.shouldShow',
+      () async {
+        final currentBuild = await WhatsNewService.currentBuild();
+        final shown = await WhatsNewService.shownBuild(
+          ref.read(localStorageProvider),
+        );
+        final show = WhatsNewService.shouldShow(
+          currentBuild: currentBuild,
+          shownBuild: shown,
+          registered: true,
+          onboardingDone: settings.onboardingDone,
+        );
+        if (show) {
+          // Sofort markieren (Kill-Schutz: kein Endlos-Popup, siehe
+          // WhatsNewService-Doku).
+          await WhatsNewService.markShown(
+            ref.read(localStorageProvider),
+            currentBuild,
+          );
+          return AppRoutes.whatsNew;
+        }
+        return null;
+      },
+      null,
+    );
+    if (route != null) return route;
+  }
+
+  // Ab hier ist die Einrichtung vollständig abgeschlossen.
+  //
+  // Intro/Auth-Screens und die EINMALIGEN Setup-Screens
+  // (Einstellungen & Privatsphäre, Onboarding) ergeben jetzt keinen Sinn
+  // mehr -> zurück zur Startseite.
+  //
+  // WICHTIG: Der Persönlichkeitstest ist bewusst NICHT dabei, damit er
+  // aus den Einstellungen heraus jederzeit wiederholt werden kann
+  // ("Test wiederholen"). Sonst würde der Router den Nutzer sofort wieder
+  // nach Home werfen und der Button hätte keine Wirkung.
+  if (goingToWelcome ||
+      goingToSignupWelcome ||
+      goingToLogin ||
+      goingToForgotPassword ||
+      goingToResetPassword ||
+      goingToSettingsPrivacyOnce ||
+      goingToDatingSafetyEducation ||
+      goingToOnboarding) {
+    return AppRoutes.home;
+  }
+
+  // Dating Hour Intro: Beim ersten Besuch zuerst Regeln und Erklärung zeigen.
+  if (!settings.datingHourIntroSeen) {
+    if (goingToDatingHour) return AppRoutes.datingHourRules;
+    if (pfad == AppRoutes.datingHourHowItWorks) {
+      return null;
+    }
+  }
+
+  // Eingeloggter Nutzer, der noch auf dem Lade-Screen steht: Einrichtung
+  // ist offenbar vollständig abgeschlossen -> IMMER zur Startseite
+  // ("Aktuelles"). Betreiber-Entscheidung: Der App-Start soll die
+  // Startseite öffnen, nicht die zuletzt offene Seite; das Route-
+  // Restore (v0.9.1) wird daher nicht mehr angewendet (der gespeicherte
+  // Wert wird nur konsumiert, damit er nicht stehen bleibt).
+  if (goingToLoading) {
+    consumePendingRouteRestore();
+    return AppRoutes.home;
+  }
+
+  return null;
+}
+
 /// Erstellt den [GoRouter] mit Redirect-Logik basierend auf
 /// Auth-Status und Onboarding-Fortschritt.
 GoRouter createRouter(Ref ref) {
@@ -255,398 +640,7 @@ GoRouter createRouter(Ref ref) {
     // Fallback bei unbekannten Routen: freundliche Fehlerseite mit
     // funktionierendem Button zurück zum sinnvollen Ausgangspunkt.
     errorBuilder: (context, state) => const ErrorScreen(),
-    redirect: (context, state) async {
-      final auth = ref.read(authProvider);
-      final settingsReady = ref.read(settingsLoadedProvider);
-
-      // Solange der Auth-Status ODER die Einstellungen noch geladen werden,
-      // keine Redirects auslösen - auf dem Lade-Screen bleiben. Sonst würde
-      // die falsche Default-Route (Login/"Konto erstellen") vor den
-      // Willkommensscreens aufblitzen. Der refreshListenable stööt die
-      // Auswertung erneut an, sobald beide Zustände feststehen.
-      if (auth.isLoading || !settingsReady) return null;
-
-      // Passwort-Reset (Recovery-Deep-Link aus der E-Mail): Solange der
-      // Reset aussteht, ist ausschließlich der Reset-Screen erreichbar –
-      // auch während des Server-Syncs und unabhängig vom Setup-Stand.
-      if (ref.read(passwordRecoveryPendingProvider)) {
-        return state.matchedLocation == AppRoutes.resetPassword
-            ? null
-            : AppRoutes.resetPassword;
-      }
-
-      final settings = ref.read(settingsProvider);
-      final loggedIn = auth.valueOrNull ?? false;
-      final introSeen = settings.introSeen;
-
-      // Server-Sync (Profil + Setup-Flags) nach Login abwarten: Sonst
-      // blitzt nach einer App-Neuinstallation die Einrichtung auf, bevor
-      // die serverseitigen Flags geladen sind. Solange der Sync läuft,
-      // auf dem Lade-Screen bleiben.
-      final syncDone = ref.read(serverSyncDoneProvider);
-      if (loggedIn && !syncDone) {
-        return state.matchedLocation == AppRoutes.loading
-            ? null
-            : AppRoutes.loading;
-      }
-
-      final goingToLoading = state.matchedLocation == AppRoutes.loading;
-      final goingToWelcome = state.matchedLocation == AppRoutes.welcome;
-      final goingToSignupWelcome =
-          state.matchedLocation == AppRoutes.signupWelcome;
-      final goingToLogin = state.matchedLocation == AppRoutes.login;
-      final goingToForgotPassword =
-          state.matchedLocation == AppRoutes.forgotPassword;
-      final goingToResetPassword =
-          state.matchedLocation == AppRoutes.resetPassword;
-      final goingToUnbanRequest =
-          state.matchedLocation == AppRoutes.unbanRequest;
-      final goingToSettingsPrivacyOnce =
-          state.matchedLocation == AppRoutes.settingsPrivacyOnce;
-      final goingToDatingSafetyEducation =
-          state.matchedLocation == AppRoutes.datingSafetyEducation;
-      final goingToOnboarding = state.matchedLocation == AppRoutes.onboarding;
-      final goingToPersonalityTest =
-          state.matchedLocation == AppRoutes.personalityTest;
-      final goingToDatingHour =
-          state.matchedLocation == AppRoutes.datingHourEvent;
-      final goingToWhatsNew = state.matchedLocation == AppRoutes.whatsNew;
-
-      // -- Admin-Bereich: NUR fuer die konfigurierte Admin-ID --
-      // Normale Nutzer duerfen diesen Screen unter keinen Umstaenden
-      // erreichen. Direkter URL-Aufruf wird zur Startseite umgeleitet.
-      if (state.matchedLocation == AppRoutes.admin && !isCurrentUserAdmin()) {
-        return AppRoutes.home;
-      }
-
-      // -- Modi, die eine Verifikation voraussetzen --
-      //
-      // Defense in Depth (v0.10.0, Security-Audit 31.10.2026).
-      //
-      // Die Verifikationspflicht fuer Find your Spark, Dating Hour und
-      // Transit Spark wird im Modus-Auswahlbildschirm geprueft
-      // (swipe_mode_selection_screen.dart). Das ist eine UI-Sperre -
-      // die Routen selbst waren frei navigierbar.
-      //
-      // Zwei Gruende fuer die Pruefung HIER:
-      //
-      // 1) Ein Deep-Link (App-Links, Passwort-Zuruecksetzen-Mail,
-      //    ein gespeicherter Verlauf) umgeht den Auswahlbildschirm
-      //    vollstaendig. Wer den Bildschirm ueberspringt, kommt an
-      //    den Bildschirm.
-      // 2) Der Server erzwingt die Sperfe erst seit Migration 161
-      //    (vorher nur im Client). Diese Pruefung faengt den
-      //    Rest ab - unabhaengig vom Serverstand.
-      //
-      // Wichtig: Das ist die ZWEITE Sperre, nicht die einzige. Der
-      // Server bleibt die maechtige (Migration 161) - ein gepatchter
-      // Client kommt an der Servergrenze nicht vorbei.
-      if (loggedIn && routeNeedsVerification(state.matchedLocation)) {
-        final state2 = ref.read(profileProvider).verificationState;
-        if (state2 != VerificationState.verified) {
-          // Zurueck zur Modus-Auswahl: dort steht die Begruendung
-          // ("so kannst du das anbieten") und der Weg zur
-          // Verifikation.
-          return AppRoutes.swipeModeSelection;
-        }
-      }
-      if (!loggedIn) {
-        // Vom Lade-Screen direkt auf die korrekte Start-Screen leiten:
-        // Erststart -> Willkommen, sonst -> Login.
-        if (goingToLoading) {
-          return introSeen ? AppRoutes.login : AppRoutes.welcome;
-        }
-        // HARTES E-Mail-Gate (Nutzer-Regel: erst bestätigen, dann
-        // einrichten): Ohne Session ist die Einrichtung tabu – auch
-        // mit laufender Registrierung. Frische Registrierungen gehen
-        // zur E-Mail-Bestätigung, alle anderen zum Login. So kann kein
-        // Navigationspfad (auch kein verfrühter Sprung aus dem
-        // Login-Screen) mehr Setup ohne bestätigte E-Mail erreichen.
-        final goingToSetup =
-            goingToSettingsPrivacyOnce ||
-            goingToOnboarding ||
-            goingToSignupWelcome ||
-            goingToPersonalityTest;
-        if (goingToSetup) {
-          final freshRegistration =
-              ref.read(pendingVerificationCredentialsProvider) != null ||
-              ref.read(pendingVerificationEmailProvider) != null;
-          return freshRegistration
-              ? AppRoutes.emailVerification
-              : AppRoutes.login;
-        }
-        // Einführung nur beim allerersten Start zeigen: Der Welcome-Screen
-        // setzt introSeen bereits beim ANZEIGEN (initState) – deshalb darf
-        // der Router einen Nicht-Eingeloggten auf /welcome NICHT mehr
-        // wegredirecten, sobald introSeen true ist (sonst wirft er den
-        // Nutzer direkt nach dem ersten Frame wieder runter).
-        // KEIN Login->Welcome-Redirect mehr: Dieser warf den Nutzer nach
-        // einer FEHLGESCHLAGENEN Registrierung (introSeen noch false,
-        // keine pendingVerification) auf den Welcome-Screen – deshalb
-        // kam "Willkommen" scheinbar erst NACH der Registrierung. Der
-        // Erststart läuft ausschließlich über den Lade-Screen-Pfad
-        // (loading -> welcome, siehe oben).
-        final pendingRegistration =
-            ref.read(pendingVerificationCredentialsProvider) != null;
-        if (pendingRegistration) {
-          // Mitten im Registrierungs-Flow (E-Mail-Bestätigung ausstehend)
-          // auf dem Login-Screen bleiben.
-          return null;
-        }
-        if (goingToLogin ||
-            goingToForgotPassword ||
-            goingToResetPassword ||
-            goingToUnbanRequest ||
-            goingToWelcome) {
-          return null;
-        }
-        return AppRoutes.login;
-      }
-
-      // -- Eingeloggt --
-      // Einrichtungs-Reihenfolge (strikt sequenziell, sonst Schleife!):
-      //   0) E-Mail-Bestätigung (direkt nach der Registrierung – BEVOR der
-      //      Nutzer weitere Angaben machen muss)
-      //   1) Einrichtung (Einstellungen & Privatsphäre)
-      //   2) Onboarding-Daten (Bio, Interessen, Stadt, etc.)
-      //   3) Persönlichkeitstest (LETZTER Schritt der Einrichtung)
-      // Jeder Setup-Screen navigiert am Ende einfach zu AppRoutes.home;
-      // die Redirect-Logik holt den Nutzer automatisch zum nächsten
-      // offenen Schritt - so entstehen keine Sprünge oder Schleifen.
-      //
-      // WICHTIG: Die Schritte dürfen NICHT unabhängig geprüft werden, da
-      // sonst Schleifen entstehen (z. B. /settings-privacy-once -> /onboarding
-      // -> /settings-privacy-once -> ⬦). Stattdessen wird jeder Schritt nur
-      // geprüft, wenn die vorherigen bereits erledigt sind.
-
-      // Sicherheitsnetz gegen "Geister-Login": Zustand "eingeloggt" OHNE
-      // aktive Supabase-Session und ohne laufende Registrierung (z. B.
-      // invalidierte Alt-Session nach Datenbank-Reset) darf den Nutzer
-      // nicht im E-Mail-Bestätigungs-Screen einsperren – ohne User gibt es
-      // nichts zu bestätigen und "Erneut senden" schlägt fehl. Zurück zum
-      // Login, wo eine neue Registrierung möglich ist.
-      final supabaseActive = SupabaseService.isInitialized;
-      if (supabaseActive &&
-          SupabaseService.client.auth.currentUser == null &&
-          ref.read(pendingVerificationCredentialsProvider) == null &&
-          ref.read(pendingVerificationEmailProvider) == null) {
-        return state.matchedLocation == AppRoutes.login
-            ? null
-            : AppRoutes.login;
-      }
-
-      // Schritt 0: E-Mail-Bestaetigung fuer eingeloggte Nutzer erzwingen –
-      // VOR der Einrichtung. So kommt nach der Registrierung zuerst die
-      // Bestätigung und erst danach Settings/Privacy, Persönlichkeitstest etc.
-      // Ausnahmen: Bug-Report und andere Utility-Seiten brauchen keine
-      // bestätigte E-Mail.
-      //
-      // Fast-Path: Ist in der Session bereits eine bestätigte E-Mail
-      // hinterlegt (z. B. direkt nach dem Login), gilt der Nutzer sofort als
-      // bestätigt – sonst blitzt der E-Mail-Verify-Screen kurz auf, bis der
-      // 3-Sekunden-Poller das feststellt.
-      final emailConfirmed = ref.read(emailConfirmedProvider);
-      final sessionConfirmed =
-          supabaseActive &&
-          SupabaseService.client.auth.currentUser?.emailConfirmedAt != null;
-      if (supabaseActive && emailConfirmed != true && !sessionConfirmed) {
-        final location = state.matchedLocation;
-        // Seiten die OHNE E-Mail-Bestätigung erreichbar sein müssen:
-        final exempt =
-            location == AppRoutes.emailVerification ||
-            location == AppRoutes.bugReport;
-        if (!exempt) {
-          // Session vorhanden, Bestätigungsstatus aber noch unbekannt
-          // (Poller voraus, z. B. direkt nach Login)? Kurz auf Laden
-          // halten statt fälschlich den Verifikations-Screen zu blitzen.
-          // Ohne Session (frische Registrierung) direkt zur Verifizierung.
-          final hasSession = SupabaseService.client.auth.currentSession != null;
-          if (hasSession && emailConfirmed == null) {
-            return state.matchedLocation == AppRoutes.loading
-                ? null
-                : AppRoutes.loading;
-          }
-          return AppRoutes.emailVerification;
-        }
-        return null;
-      }
-
-      // Schritt 0.5: Zwei-Faktor-Schutz (TOTP/Authenticator-App).
-      //
-      // Verifizierte Faktoren vorhanden, Session aber nur AAL1
-      // (Passwort-Login) -> Code-Abfrage VOR jedem anderen Screen.
-      // Die EINRICHTUNG selbst ist bewusst KEIN Router-Zwang mehr: Sie
-      // läuft als überspringbarer Schritt in der Erst-Einrichtung
-      // (SettingsPrivacyOnceScreen) und jederzeit über die Einstellungen.
-      final mfa = ref.read(mfaStatusProvider);
-      if (mfa.loaded) {
-        final location = state.matchedLocation;
-        final mfaExempt =
-            location == AppRoutes.mfaChallenge ||
-            location == AppRoutes.mfaSetup ||
-            location == AppRoutes.emailVerification ||
-            location == AppRoutes.bugReport;
-        if (mfa.needsChallenge && !mfaExempt) {
-          return AppRoutes.mfaChallenge;
-        }
-      }
-
-      // Während der Einrichtung dürfen Hilfs-Screens (2FA-Einrichtung,
-      // 2FA-Challenge, Bug-Report) erreicht werden, ohne dass der Router
-      // zur ersten Einrichtungsseite zurückschmeißt. Sonst landet man nach
-      // "Jetzt einrichten" (2FA) wieder auf Seite 1 der Einrichtung.
-      final setupExempt =
-          goingToSettingsPrivacyOnce ||
-          goingToSignupWelcome ||
-          goingToDatingSafetyEducation ||
-          state.matchedLocation == AppRoutes.mfaSetup ||
-          state.matchedLocation == AppRoutes.mfaChallenge ||
-          state.matchedLocation == AppRoutes.bugReport;
-
-      // Schritt 0.7: Kurzer Willkommensscreen nach frischer Registrierung
-      // (v0.9.1, einmalig) – VOR der Einrichtung. Nur für Konten ohne
-      // abgeschlossenes Onboarding; Bestandsnutzer (Update) sehen ihn nie.
-      // Bei Kill während des Screens greift beim nächsten Start direkt
-      // die Einrichtung (Flag bleibt false, Onboarding aber offen).
-      if (!settings.signupWelcomeSeen && !settings.onboardingDone) {
-        if (!goingToSignupWelcome) return AppRoutes.signupWelcome;
-        return null;
-      }
-
-      // "NIEMALS-EINRICHTUNG"-GARANTIE:
-      // Die Einrichtung / der Persönlichkeitstest werden NIE wieder
-      // erzwungen, sobald onboardingDone true ist (mindestens einmal
-      // abgeschlossen, serverseitig gespiegelt als profiles.onboarding_done,
-      // Migration 065) - unabhängig von Einzelflag-Ständen und übersprungenen
-      // Punkten.
-      //
-      // Zusätzliche Absicherung gegen "Einrichtung erscheint nach
-      // Neuinstallation erneut": Ist der Server-Stand NICHT bekannt
-      // (Setup-Flags-Sync insgesamt fehlgeschlagen), wird ebenfalls NICHT
-      // erzwungen - außer bei einer frischen REGISTRIERUNG, wo die
-      // Einrichtung ja gerade zum ersten Mal laufen soll.
-      final flagsKnown = ref.read(setupFlagsKnownProvider);
-      final freshRegistration =
-          ref.read(pendingVerificationCredentialsProvider) != null;
-      final enforceSetup =
-          !settings.onboardingDone && (flagsKnown || freshRegistration);
-
-      // Schritt 1 vor dem eigentlichen Setup (NUTZERWUNSCH 30.10.2026):
-      // Sicherheits-Aufklärung. Sie gilt nur für Konten, deren Setup noch
-      // offen ist - Bestandsnutzer werden nicht nachträglich behelligt.
-      // Ist sie einmal abgeschlossen, erzwingt der Router sie nie wieder.
-      if (enforceSetup && !settings.datingSafetyEducationCompleted) {
-        if (!goingToDatingSafetyEducation) {
-          return AppRoutes.datingSafetyEducation;
-        }
-        return null;
-      }
-
-      if (enforceSetup && !settings.oneTimeSettingsCompleted) {
-        if (!setupExempt) return AppRoutes.settingsPrivacyOnce;
-        return null;
-      }
-      if (enforceSetup && !settings.communityGuidelinesAccepted) {
-        if (!setupExempt) return AppRoutes.settingsPrivacyOnce;
-        return null;
-      }
-      if (enforceSetup && !settings.personalityTestCompleted) {
-        if (!goingToPersonalityTest) return AppRoutes.personalityTest;
-        return null;
-      }
-
-      // Verifizierungs-Flow per Feature-Flag gesperrt (Betreiber-Entscheidung):
-      // Routen sind nicht erreichbar und leiten auf Home um.
-      // Reaktivierung: --dart-define=VERIFICATION_ENABLED=true.
-      if (!AppConstants.verificationEnabled) {
-        final location = state.matchedLocation;
-        if (location == AppRoutes.verificationVideo ||
-            location == AppRoutes.verificationComplete ||
-            location == AppRoutes.verificationInfo) {
-          return AppRoutes.home;
-        }
-      }
-
-      // -- "Neu in dieser Version" (NUTZERWUNSCH): Nach einem App-Update
-      // (Build gestiegen) bekommen bereits eingerichtete Konten EINMALIG
-      // die Änderungs-Kurzfassung + Nachfragen zu neuen Angaben (z. B.
-      // Geburtstags-Stil). Bewusst als EIGENE Route (kein Overlay-Dialog):
-      // Der Router bleibt Single-Source-of-Truth, und der Screen navigiert
-      // sich selbst zu Home ab. Fail-open: Bei Fehlern (z. B. Storage)
-      // wird der Screen übersprungen, nie blockiert.
-      if (!goingToWhatsNew) {
-        // Fail-open: Gate überspringen statt App zu blockieren.
-        final route = await bestEffortOr<String?>(
-          'WhatsNewService.shouldShow',
-          () async {
-            final currentBuild = await WhatsNewService.currentBuild();
-            final shown = await WhatsNewService.shownBuild(
-              ref.read(localStorageProvider),
-            );
-            final show = WhatsNewService.shouldShow(
-              currentBuild: currentBuild,
-              shownBuild: shown,
-              registered: true,
-              onboardingDone: settings.onboardingDone,
-            );
-            if (show) {
-              // Sofort markieren (Kill-Schutz: kein Endlos-Popup, siehe
-              // WhatsNewService-Doku).
-              await WhatsNewService.markShown(
-                ref.read(localStorageProvider),
-                currentBuild,
-              );
-              return AppRoutes.whatsNew;
-            }
-            return null;
-          },
-          null,
-        );
-        if (route != null) return route;
-      }
-
-      // Ab hier ist die Einrichtung vollständig abgeschlossen.
-      //
-      // Intro/Auth-Screens und die EINMALIGEN Setup-Screens
-      // (Einstellungen & Privatsphäre, Onboarding) ergeben jetzt keinen Sinn
-      // mehr -> zurück zur Startseite.
-      //
-      // WICHTIG: Der Persönlichkeitstest ist bewusst NICHT dabei, damit er
-      // aus den Einstellungen heraus jederzeit wiederholt werden kann
-      // ("Test wiederholen"). Sonst würde der Router den Nutzer sofort wieder
-      // nach Home werfen und der Button hätte keine Wirkung.
-      if (goingToWelcome ||
-          goingToSignupWelcome ||
-          goingToLogin ||
-          goingToForgotPassword ||
-          goingToResetPassword ||
-          goingToSettingsPrivacyOnce ||
-          goingToDatingSafetyEducation ||
-          goingToOnboarding) {
-        return AppRoutes.home;
-      }
-
-      // Dating Hour Intro: Beim ersten Besuch zuerst Regeln und Erklärung zeigen.
-      if (!settings.datingHourIntroSeen) {
-        if (goingToDatingHour) return AppRoutes.datingHourRules;
-        if (state.matchedLocation == AppRoutes.datingHourHowItWorks) {
-          return null;
-        }
-      }
-
-      // Eingeloggter Nutzer, der noch auf dem Lade-Screen steht: Einrichtung
-      // ist offenbar vollständig abgeschlossen -> IMMER zur Startseite
-      // ("Aktuelles"). Betreiber-Entscheidung: Der App-Start soll die
-      // Startseite öffnen, nicht die zuletzt offene Seite; das Route-
-      // Restore (v0.9.1) wird daher nicht mehr angewendet (der gespeicherte
-      // Wert wird nur konsumiert, damit er nicht stehen bleibt).
-      if (goingToLoading) {
-        consumePendingRouteRestore();
-        return AppRoutes.home;
-      }
-
-      return null;
-    },
+    redirect: (context, state) => umleitung(ref, state.matchedLocation),
     routes: [
       GoRoute(
         path: AppRoutes.loading,
