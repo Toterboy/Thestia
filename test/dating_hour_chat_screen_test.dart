@@ -102,8 +102,15 @@ class _FakeDatingHourService extends DatingHourService {
   /// Die Abstimmungen, die der Screen gemeldet hat.
   final List<({String userId, bool accept})> abstimmungen = [];
 
+  /// Wenn gesetzt, schlaegt [getSession] mit diesem Fehler fehl.
+  Object? ladeFehler;
+
   @override
-  Future<DatingHourSession?> getSession(String sessionId) async => session;
+  Future<DatingHourSession?> getSession(String sessionId) async {
+    final fehler = ladeFehler;
+    if (fehler != null) throw fehler;
+    return session;
+  }
 
   @override
   Future<DatingHourSession?> recordDecision(
@@ -359,11 +366,12 @@ void main() {
     WidgetTester tester, {
     DateTime? geburtsdatum,
     DatingHourSession? sitzung,
+    _FakeDatingHourService? dienst,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
-    final service = _FakeDatingHourService(sitzung ?? session());
+    final service = dienst ?? _FakeDatingHourService(sitzung ?? session());
     final router = _router();
     addTearDown(router.dispose);
 
@@ -596,6 +604,24 @@ void main() {
     // Die fuenf Minuten sind um: jetzt entscheidet der Nutzer, ob es
     // einen Funken geben soll. Das ist der wichtigste Moment im
     // Dating-Hour-Chat - bisher war er untestet.
+    testWidgets('ein Fehler beim Laden wird dem Nutzer gesagt', (tester) async {
+      final dienst = _FakeDatingHourService(session());
+      // Die Sitzung laesst sich nicht laden (z. B. weil der Server sie
+      // schon geloescht hat).
+      dienst.ladeFehler = DatingHourException('Die Sitzung ist weg.');
+      await zeigeScreen(tester, dienst: dienst);
+      await pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.textContaining('Die Sitzung ist weg.'),
+        findsWidgets,
+        reason:
+            'Der Nutzer muss erfahren, warum der Chat leer bleibt - sonst '
+            'glaubt er, es ist ein Fehler der App.',
+      );
+    });
+
     group('Nach den fuenf Minuten', () {
       testWidgets('die App fragt nach der Entscheidung', (tester) async {
         await zeigeScreen(tester, sitzung: abgelaufeneSession());

@@ -700,6 +700,133 @@ void main() {
       },
     );
 
+    group('Das Menue (Sicherheit und Verbindung)', () {
+      /// Baut den Chat mit einer Nachricht der Gegenseite.
+      ///
+      /// DER HINWEIS: Die Person hat eine UUID als ID - das Sperren
+      /// pruft die ID vorher ("Ungueltiger Nutzer" sonst). Die
+      /// Test-Personen haben ansonsten "partner-1".
+      Future<ChatNotifier> chatBauen(WidgetTester tester) async {
+        final service = ChatService();
+        final match = service.createMatch(
+          UserProfile(
+            id: '11111111-2222-3333-4444-555555555555',
+            name: 'Mira',
+            bio: '',
+            birthDate: DateTime.now().subtract(const Duration(days: 24 * 365)),
+          ),
+        );
+        service.addMessage(
+          match.id,
+          Message(
+            id: 'm_1',
+            senderId: '11111111-2222-3333-4444-555555555555',
+            receiverId: 'ich',
+            text: 'Hallo, magst du Kaffee?',
+            timestamp: DateTime.now(),
+          ),
+        );
+        final notifier = ChatNotifier(service);
+        await _pump(tester, ChatDetailScreen(matchId: match.id), notifier);
+        return notifier;
+      }
+
+      /// Oeffnet das Menue (die drei Punkte oben rechts).
+      Future<void> menueOeffnen(WidgetTester tester) async {
+        await tester.tap(find.byIcon(Icons.more_vert));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+      }
+
+      testWidgets('das Sperren der Person fragt erst nach', (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await chatBauen(tester);
+        await menueOeffnen(tester);
+
+        // Der Eintrag "Sperren" sitzt weiter unten im Menue.
+        final eintrag = find.text(L10n.tWithoutContext('chat.block'));
+        await tester.ensureVisible(eintrag);
+        await tester.pump();
+        await tester.tap(eintrag);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(tester.takeException(), isNull);
+        // Ohne Rueckfrage waere die Person gesperrt - das ist ein Eingriff,
+        // der nicht zurueckgenommen werden kann.
+        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(
+          find.text(L10n.tWithoutContext('chat.blockTitle')),
+          findsOneWidget,
+        );
+        // Und der Dialog nennt die Person.
+        expect(find.textContaining('Mira'), findsWidgets);
+      });
+
+      testWidgets('das Sperren geht an den Server', (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await chatBauen(tester);
+        await menueOeffnen(tester);
+
+        final eintrag = find.text(L10n.tWithoutContext('chat.block'));
+        await tester.ensureVisible(eintrag);
+        await tester.pump();
+        await tester.tap(eintrag);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        // Bestaetigen - dann geht die Sperre an den Server.
+        await tester.tap(
+          find.widgetWithText(
+            FilledButton,
+            L10n.tWithoutContext('chat.blockAction'),
+          ),
+        );
+        await tester.pump();
+        for (var i = 0; i < 6; i++) {
+          await tester.runAsync(() async {
+            await Future<void>.delayed(const Duration(milliseconds: 80));
+          });
+          await tester.pump(const Duration(milliseconds: 120));
+        }
+
+        expect(tester.takeException(), isNull);
+        expect(
+          server.rpcAufrufe.any((c) => c['funktion'] == 'block_user'),
+          isTrue,
+          reason:
+              'Die Sperre muss beim Server ankommen - sonst kann die Person '
+              'weiter schreiben.',
+        );
+        // Und der Nutzer bekommt die Bestaetigung.
+        expect(find.textContaining('Mira wurde blockiert.'), findsWidgets);
+
+        await tester.pumpWidget(const SizedBox());
+      });
+
+      testWidgets('das Beenden des Funken fragt erst nach', (tester) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        await chatBauen(tester);
+        await menueOeffnen(tester);
+
+        final eintrag = find.text(L10n.tWithoutContext('chat.end'));
+        await tester.ensureVisible(eintrag);
+        await tester.pump();
+        await tester.tap(eintrag);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(AlertDialog), findsOneWidget);
+      });
+    });
+
     testWidgets('das lange Druecken auf ein Bild zeigt die Aktionen', (
       tester,
     ) async {
