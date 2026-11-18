@@ -19,7 +19,11 @@ pats = [
     re.compile(r"label:\s*'((?:[^'\\]|\\.)*)'"),
 ]
 
+# DIE TEXTDATEIEN: Sie enthalten die Texte selbst (in Kartenform) -
+# dort steht kein unuebersetzter UI-Text. Sie werden von den
+# L10n-Pruefungen (check_umlauts, check_parity) geprueft.
 skip_files = {"app_strings.dart"}
+skip_dirs = {os.path.join("lib", "l10n", "strings")}
 
 # Ausnahmen: Texte, die bewusst NICHT uebersetzt werden.
 #
@@ -48,6 +52,12 @@ for root, dirs, files in os.walk("lib"):
         if not f.endswith(".dart") or f in skip_files:
             continue
         p = os.path.join(root, f)
+        # DIE TEXTDATEIEN (lib/l10n/strings/): Sie enthalten die Texte
+        # selbst - dort steht kein unuebersetzter UI-Text.
+        if any(
+            os.path.normpath(d) in os.path.normpath(p) for d in skip_dirs
+        ):
+            continue
         if targets and not any(
             t.replace("/", os.sep) in p for t in targets
         ):

@@ -1,10 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/widgets/intro_recording_guide.dart';
+import 'support/l10n_quellen.dart';
 
 /// Baut den Leitfaden in einer Umgebung mit deutscher Sprache.
 Widget _app({required int elapsed, bool paused = false}) {
@@ -178,7 +177,7 @@ void main() {
     //
     // WICHTIG: der Datei-Read passiert INNERHALB des Test-Bodys.
     ({String de, String en}) readBlocks() {
-      final src = File('lib/l10n/app_strings.dart').readAsStringSync();
+      final src = liesL10nQuellen();
       final deIdx = src.indexOf("'de': {");
       final enIdx = src.indexOf("'en': {");
       expect(deIdx, greaterThan(0), reason: "Marker 'de' nicht gefunden");

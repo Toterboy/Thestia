@@ -23,6 +23,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/screens/dating_hour/dating_hour_rules_screen.dart';
+import 'support/l10n_quellen.dart';
+import 'support/quelltext.dart';
 
 void main() {
   setUp(() {
@@ -45,9 +47,7 @@ void main() {
             'muss dort stehen.',
       );
 
-      final quelle = File(
-        'lib/screens/welcome/welcome_screen.dart',
-      ).readAsStringSync();
+      final quelle = liesQuelltext('lib/screens/welcome/welcome_screen.dart');
       expect(
         quelle.contains("'welcome.t1'"),
         isTrue,
@@ -60,7 +60,7 @@ void main() {
     test('er steht in beiden Sprachen', () {
       // Die englische Mappe ist privat - deshalb wird die Quelle
       // gelesen (so macht es der L10n-Test des Projekts auch).
-      final quelle = File('lib/l10n/app_strings.dart').readAsStringSync();
+      final quelle = liesL10nQuellen();
       expect(
         quelle.contains(
           "'welcome.t1': 'Dating that brings you back into real life.',",

@@ -1,3 +1,9 @@
+﻿// Die Tests 'interessen_screen' (Teil 1).
+//
+// DER WEG: Die Testdatei war zu lang (> 1000 Zeilen). Die Tests
+// sind nach Themen aufgeteilt; die Helfer liegen in
+// test/support/interessen_screen_hilfen.dart.
+
 // Widget-Tests fuer den Screen "Interessen" (Reiter der Startseite).
 //
 // ANLASS: Die Coverage-Messung (13.11.2026) zeigte fuer
@@ -23,335 +29,19 @@
 // nur initialisiert, damit der Screen seinen Serverstand ueberhaupt
 // abfragt - es geht KEINE Anfrage raus (alle Aufrufe landen im Fake).
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
-
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/find_match_models.dart';
-import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/providers/chat_provider.dart';
-import 'package:thestia/providers/pinned_matches_provider.dart';
-import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/screens/interests/interessen_screen.dart';
-import 'package:thestia/services/chat_service.dart';
-import 'package:thestia/services/find_your_match_service.dart';
-import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/widgets/funke_overlay.dart';
+import '../support/fake_supabase_server.dart';
+import '../support/plugin_mocks.dart';
 
-import 'support/fake_supabase_server.dart';
-import 'support/plugin_mocks.dart';
-
-/// In-Memory-Speicher - der Screen schreibt Seen-Marker und
-/// Fixierungen dorthin.
-class _FakeLocalStorage implements LocalStorage {
-  final Map<String, String> _daten = {};
-
-  @override
-  Future<void> saveString(String key, String value) async =>
-      _daten[key] = value;
-
-  @override
-  Future<String?> getString(String key) async => _daten[key];
-
-  @override
-  Future<void> saveBool(String key, bool value) async =>
-      _daten[key] = value.toString();
-
-  @override
-  Future<bool?> getBool(String key) async =>
-      _daten[key] == null ? null : _daten[key] == 'true';
-
-  @override
-  Future<void> remove(String key) async => _daten.remove(key);
-
-  @override
-  Future<void> saveInt(String key, int value) async =>
-      _daten[key] = value.toString();
-
-  @override
-  Future<int?> getInt(String key) async =>
-      _daten[key] == null ? null : int.tryParse(_daten[key]!);
-}
-
-/// Hand-Fake des Find-your-Match-Service.
-///
-/// Der echte Service spricht mit der Datenbank. Der Fake beantwortet
-/// alles aus dem RAM und zaehlt die Schreibaufrufe - so wird sichtbar,
-/// ob die App wirklich "ausgeblendet" hat oder nur so tut.
-class _FakeFindYourMatchService extends FindYourMatchService {
-  _FakeFindYourMatchService(super.client);
-
-  /// Der Ersatz-Server - der Fake liest daraus, was der Server bekommen
-  /// hat.
-  ///
-  /// DER GRUND: Ein automatisch entstandener Funke wird ueber die RPC
-  /// "resolve_dating_hour_auto_match" geloescht. Der Server ist die
-  /// Wahrheit - also filtert der Fake den Funke weg, sobald die RPC mit
-  /// "Person entfernen" angekommen ist. Sonst wuerde der Funke nach dem
-  /// Neuladen wieder dastehen, obwohl er beim Server geloescht wurde.
-  FakeSupabaseServer? server;
-
-  /// Eigene (gesendete) Likes.
-  List<ReceivedLike> eigeneLikes = const [];
-
-  /// Erhaltene Likes.
-  List<ReceivedLike> erhalteneLikes = const [];
-
-  /// Die Funken (Matches).
-  List<MatchWithState> funken = const [];
-
-  /// Wenn gesetzt, wirft [listMatchesWithState] diesen Fehler.
-  Object? ladeFehler;
-
-  /// Die IDs der ausgeblendeten Funken.
-  final List<int> ausgeblendet = [];
-
-  /// Die IDs der gekuehlten Funken.
-  final List<int> gekuehlt = [];
-
-  /// Die beantworteten Likes (ID und ob angenommen).
-  final List<({int likeId, bool accept})> beantwortet = [];
-
-  /// Die ausgeblendeten Likes (nur ausgeblendet, nicht abgelehnt).
-  final List<int> ausgeblendeteLikes = [];
-
-  /// Die endgueltig beendeten Funken.
-  final List<int> beendet = [];
-
-  /// Die wieder entzuendeten Funken.
-  final List<int> wiederEntzuend = [];
-
-  /// Wenn gesetzt, wirft [coolMatch] diesen Fehler.
-  Object? coolFehler;
-
-  /// Wenn gesetzt, wirft [hideMatch] diesen Fehler.
-  Object? hideFehler;
-
-  /// Wenn gesetzt, wirft [ignoreLike] diesen Fehler.
-  Object? ignoreFehler;
-
-  /// Wenn gesetzt, wirft [respondToLike] diesen Fehler.
-  Object? respondFehler;
-
-  /// Wie oft wurden die Funken geladen?
-  ///
-  /// DER GRUND: Damit sieht ein Test, dass wirklich neu geladen wurde -
-  /// am Bildschirm aendert sich beim Nachladen oft nichts.
-  int matchesAufrufe = 0;
-
-  /// Wie oft wurden die eigenen (gesendeten) Likes geladen?
-  int eigeneLikesAufrufe = 0;
-
-  @override
-  Future<List<ReceivedLike>> listMyLikes() async {
-    eigeneLikesAufrufe++;
-    return eigeneLikes;
-  }
-
-  @override
-  Future<List<ReceivedLike>> listReceivedLikes() async => erhalteneLikes;
-
-  @override
-  Future<List<MatchWithState>> listMatchesWithState() async {
-    matchesAufrufe++;
-    final fehler = ladeFehler;
-    if (fehler != null) throw fehler;
-    // Der automatische Funke, der beim Server geloescht wurde, ist auch
-    // hier weg (der Server ist die Wahrheit).
-    final geloeschte = server?.rpcAufrufe
-        .where(
-          (c) =>
-              c['funktion'] == 'resolve_dating_hour_auto_match' &&
-              c['p_keep'] == false,
-        )
-        .map((c) => c['p_partner_id'])
-        .toSet();
-    if (geloeschte == null || geloeschte.isEmpty) return funken;
-    return funken.where((m) => !geloeschte.contains(m.partner.id)).toList();
-  }
-
-  @override
-  Future<void> hideMatch(int matchId) async {
-    final fehler = hideFehler;
-    if (fehler != null) throw fehler;
-    ausgeblendet.add(matchId);
-  }
-
-  @override
-  Future<void> coolMatch(int matchId) async {
-    final fehler = coolFehler;
-    if (fehler != null) throw fehler;
-    gekuehlt.add(matchId);
-  }
-
-  @override
-  Future<void> endMatch(int matchId) async => beendet.add(matchId);
-
-  @override
-  Future<void> resparkMatch(int matchId) async => wiederEntzuend.add(matchId);
-
-  @override
-  Future<void> respondToLike(int likeId, {required bool accept}) async {
-    final fehler = respondFehler;
-    if (fehler != null) throw fehler;
-    beantwortet.add((likeId: likeId, accept: accept));
-  }
-
-  @override
-  Future<void> ignoreLike(int likeId) async {
-    final fehler = ignoreFehler;
-    if (fehler != null) throw fehler;
-    ausgeblendeteLikes.add(likeId);
-  }
-}
-
-/// Die Partnerin als Profil.
-UserProfile _person({String id = 'p1', String name = 'Mira', int? alter = 30}) {
-  return UserProfile(
-    id: id,
-    name: name,
-    bio: 'Liest gern',
-    birthDate: alter == null
-        ? null
-        : DateTime(DateTime.now().year - alter, 5, 4),
-  );
-}
-
-/// Ein Funke (Match) mit der Partnerin.
-MatchWithState _funke({
-  int id = 7,
-  String name = 'Mira',
-  int? alter = 30,
-  String status = 'active',
-  DateTime? erstellt,
-  bool autoMatch = false,
-}) {
-  return MatchWithState(
-    matchId: id,
-    partner: _person(name: name, alter: alter),
-    unlockLevel: 2,
-    failedAttempts: 0,
-    createdVia: 'swipe',
-    status: status,
-    // FRISCH: ein alter Funke wuerde von der Auto-Kuehlung (72 h) erfasst.
-    createdAt: erstellt ?? DateTime.now(),
-    // AUTOMATISCH: der Funke kam nach 10 Minuten Dating Hour zustande und
-    // wurde NICHT von beiden Seiten bestaetigt (Migration 177).
-    autoMatch: autoMatch,
-  );
-}
-
-/// Der Router, den der Screen braucht (Profil- und Chat-Route).
-GoRouter _router() {
-  return GoRouter(
-    initialLocation: _startRoute,
-    routes: [
-      GoRoute(
-        path: _startRoute,
-        builder: (context, state) => const InteressenScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.home,
-        builder: (context, state) => const Scaffold(body: SizedBox.shrink()),
-      ),
-      GoRoute(
-        path: '/profile/:id',
-        builder: (context, state) =>
-            const Scaffold(body: Center(child: Text('Profil'))),
-      ),
-      GoRoute(
-        path: '/chat/:id',
-        builder: (context, state) =>
-            const Scaffold(body: Center(child: Text('Chat'))),
-      ),
-    ],
-  );
-}
-
-/// Die Route, auf der der Screen in diesem Test liegt.
-const String _startRoute = '/interessen';
-
-/// Baut den Screen mit dem Fake-Service.
-///
-/// [pumpAndSettle] waere hier falsch: der Ladeplatzhalter ([CalmLoading])
-/// atmet endlos - pumpAndSettle wuerde nie fertig. Deshalb werden
-/// feste Frames gepumpt.
-///
-/// [overrides] erlaubt zusaetzliche Provider zu ersetzen (z. B. die
-/// Chatliste fuer die gespeicherten Profile).
-Future<_FakeFindYourMatchService> _pump(
-  WidgetTester tester, {
-  required _FakeFindYourMatchService service,
-  double scale = 1.0,
-  List<Override> overrides = const <Override>[],
-}) async {
-  final router = _router();
-  addTearDown(router.dispose);
-
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        localStorageProvider.overrideWithValue(_FakeLocalStorage()),
-        findYourMatchServiceProvider.overrideWithValue(service),
-        ...overrides,
-      ],
-      child: MaterialApp.router(
-        theme: ThemeData(useMaterial3: true),
-        routerConfig: router,
-        // Die MediaQuery sitzt im `builder` - eine aeussere MediaQuery
-        // wuerde vom MaterialApp ueberschrieben.
-        builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(scale)),
-          child: child ?? const SizedBox.shrink(),
-        ),
-      ),
-    ),
-  );
-  await _pumpFrames(tester);
-  return service;
-}
-
-/// Pumpt eine feste Zahl von Frames - der Ladeindikator atmet endlos,
-/// deshalb kann man nicht auf "alles ruhig" warten.
-Future<void> _pumpFrames(WidgetTester tester) async {
-  for (var i = 0; i < 6; i++) {
-    await tester.pump(const Duration(milliseconds: 100));
-  }
-}
-
-/// Laesst die ECHTE Ereignisschleife laufen, damit HTTP-Anfragen
-/// durchgehen.
-///
-/// DER GRUND: Im Widget-Test laeuft alles in einer Fake-Zone - eine
-/// echte Netz-Anfrage (z. B. die RPC zum Aufloesen des automatischen
-/// Funken) kommt dort nie voran. `runAsync` schaltet kurz auf die
-/// echte Schleife um.
-///
-/// [fertig]: Was erreicht sein muss - sobald das da ist, wird nicht
-/// weiter gewartet.
-Future<void> lassServerArbeiten(
-  WidgetTester tester, {
-  bool Function()? fertig,
-}) async {
-  for (var i = 0; i < 25; i++) {
-    await tester.runAsync(() async {
-      await Future<void>.delayed(const Duration(milliseconds: 40));
-    });
-    await tester.pump(const Duration(milliseconds: 60));
-    if (fertig != null && fertig()) return;
-  }
-}
+import 'hilfen.dart';
 
 void main() {
-  /// Der Ersatz-Server (Antworten aus dem RAM).
-  late FakeSupabaseServer server;
-
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -389,7 +79,6 @@ void main() {
     // das ist - das Zuruecknehmen ginge dann gar nicht.
     await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
   });
-
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
     // Der Server merkt sich die Anfragen - fuer jeden Test beginnt er
@@ -399,16 +88,15 @@ void main() {
     server.rpcAufrufe.clear();
     server.rpcFehler.clear();
   });
-
   group('Interessen-Screen', () {
     testWidgets('baut sich mit Reitern und Funken-Kopf', (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
-      await _pump(tester, service: service);
+      await interessenScreenPump(tester, service: service);
 
       expect(tester.takeException(), isNull);
       expect(find.text('Interessen'), findsOneWidget);
@@ -424,10 +112,10 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
-      await _pump(tester, service: service);
+      await interessenScreenPump(tester, service: service);
 
       expect(tester.takeException(), isNull);
       expect(find.text('Noch keine Funken'), findsOneWidget);
@@ -443,20 +131,20 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
-      await _pump(tester, service: service);
+      await interessenScreenPump(tester, service: service);
 
       // "Gesendet" aufklappen.
       await tester.tap(find.text('Gesendet'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
       expect(tester.takeException(), isNull);
       expect(find.text('Du hast noch niemanden geliked'), findsOneWidget);
 
       // "Erhalten" aufklappen - die Liste wechselt.
       await tester.tap(find.text('Erhalten'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
       expect(tester.takeException(), isNull);
       expect(find.text('Noch keine erhaltenen Likes'), findsOneWidget);
     });
@@ -467,20 +155,20 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
       service.eigeneLikes = [
         ReceivedLike(
           likeId: 1,
-          profile: _person(name: 'Jonas'),
+          profile: person(name: 'Jonas'),
           createdAt: DateTime.now(),
         ),
       ];
-      await _pump(tester, service: service);
+      await interessenScreenPump(tester, service: service);
 
       await tester.tap(find.text('Gesendet'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
       expect(find.text('Jonas'), findsOneWidget);
@@ -494,11 +182,11 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
-      service.funken = [_funke()];
-      await _pump(tester, service: service);
+      service.funken = [funke()];
+      await interessenScreenPump(tester, service: service);
 
       expect(tester.takeException(), isNull);
       expect(find.text('Mira, 30'), findsOneWidget);
@@ -510,19 +198,19 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
-      service.funken = [_funke()];
-      await _pump(tester, service: service);
+      service.funken = [funke()];
+      await interessenScreenPump(tester, service: service);
 
       // Das Drei-Punkte-Menue der Kachel oeffnen.
       await tester.tap(find.byIcon(Icons.more_vert).first);
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
       expect(find.text('Aus Liste entfernen'), findsOneWidget);
 
       await tester.tap(find.text('Aus Liste entfernen'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
       // Der Server wurde wirklich informiert ...
@@ -541,25 +229,25 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(800, 900));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
-      service.funken = [_funke()];
-      await _pump(tester, service: service);
+      service.funken = [funke()];
+      await interessenScreenPump(tester, service: service);
 
       // Der Stift schaltet den Auswahl-Modus frei.
       await tester.tap(find.byTooltip('Verwalten'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       // Jetzt ist die Kachel eine Checkbox.
       await tester.tap(find.text('Mira, 30'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
       expect(find.text('Ausblenden (1)'), findsOneWidget);
 
       await tester.tap(find.text('Ausblenden (1)'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
       expect(service.ausgeblendet, contains(7));
@@ -572,11 +260,11 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
       service.ladeFehler = StateError('Server nicht erreichbar');
-      await _pump(tester, service: service);
+      await interessenScreenPump(tester, service: service);
 
       expect(tester.takeException(), isNull);
       // BEFUND (13.11.2026): Ein fehlgeschlagener Abruf sah aus wie
@@ -593,19 +281,19 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
       service.ladeFehler = StateError('Server nicht erreichbar');
-      await _pump(tester, service: service);
+      await interessenScreenPump(tester, service: service);
       expect(find.text('Erneut versuchen'), findsOneWidget);
 
       // Der Server antwortet jetzt.
       service.ladeFehler = null;
-      service.funken = [_funke()];
+      service.funken = [funke()];
 
       await tester.tap(find.text('Erneut versuchen'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
       expect(find.text('Mira, 30'), findsOneWidget);
@@ -615,11 +303,11 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
-      service.funken = [_funke()];
-      await _pump(tester, service: service, scale: 3.2);
+      service.funken = [funke()];
+      await interessenScreenPump(tester, service: service, scale: 3.2);
 
       expect(tester.takeException(), isNull);
     });
@@ -628,24 +316,24 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
       service.erhalteneLikes = [
         ReceivedLike(
           likeId: 3,
-          profile: _person(name: 'Jonas', alter: 31),
+          profile: person(name: 'Jonas', alter: 31),
           createdAt: DateTime.now(),
         ),
       ];
-      await _pump(tester, service: service);
+      await interessenScreenPump(tester, service: service);
 
       // "Erhalten" aufklappen.
       await tester.tap(find.text('Erhalten'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       await tester.tap(find.text('Funke bestätigen'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       // Der Server wurde wirklich informiert ...
       expect(service.beantwortet, hasLength(1));
@@ -662,7 +350,7 @@ void main() {
       // Die Animation laeuft von selbst ab (1,1 s) - danach kommt die
       // Bestaetigung.
       await tester.pump(const Duration(milliseconds: 1500));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
       expect(find.byType(FunkeOverlay), findsNothing);
 
       // Und der Nutzer bekommt die Bestaetigung.
@@ -673,25 +361,25 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
       service.erhalteneLikes = [
         ReceivedLike(
           likeId: 4,
-          profile: _person(name: 'Jonas', alter: 31),
+          profile: person(name: 'Jonas', alter: 31),
           createdAt: DateTime.now(),
         ),
       ];
-      await _pump(tester, service: service);
+      await interessenScreenPump(tester, service: service);
 
       await tester.tap(find.text('Erhalten'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       // Das Auge mit dem Strich heisst "ausblenden" - die Gegenseite
       // darf davon NICHTS sehen (BEFUND 07.11.2026).
       await tester.tap(find.byTooltip('Ignorieren'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
       expect(service.ausgeblendeteLikes, contains(4));
@@ -711,29 +399,29 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
       service.eigeneLikes = [
         ReceivedLike(
           likeId: 11,
-          profile: _person(name: 'Jonas', alter: 31),
+          profile: person(name: 'Jonas', alter: 31),
           createdAt: DateTime.now(),
         ),
       ];
-      await _pump(tester, service: service);
+      await interessenScreenPump(tester, service: service);
 
       // Der Reiter "Gesendet" mit den eigenen Likes.
       await tester.tap(find.text('Gesendet'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       expect(find.text('Jonas'), findsWidgets);
 
       // Das Menue der Person -> "Like zurueckziehen".
       await tester.tap(find.byIcon(Icons.more_vert).last);
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
       await tester.tap(find.text('Like zurückziehen'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
       // Der Server hat die Loeschung bekommen ...
@@ -750,26 +438,37 @@ void main() {
     // Das Datum des gesendeten Likes (NUTZERWUNSCH 28.10.2026: "kann
     // auch sehen, an welchem Tag man den Like gesendet hat").
     group('Das Datum des gesendeten Likes', () {
+      /// Der Anker fuer die Datums-Tests: MITTAGS Heute.
+      ///
+      /// DER GRUND: `DateTime.now().subtract(2 h)` ist kurz nach
+      /// Mitternacht schon GESTERN - dann sagt der Test "Heute" und
+      /// die App "Gestern". Der Mittag liegt weit genug weg von der
+      /// Tagesgrenze, aber immer noch am selben Kalendertag.
+      DateTime anker() {
+        final jetzt = DateTime.now();
+        return DateTime(jetzt.year, jetzt.month, jetzt.day, 12);
+      }
+
       /// Baut den Screen mit einem Like, der [vorher] gesendet wurde.
       Future<void> zeigeLike(
         WidgetTester tester, {
         required Duration vorher,
       }) async {
-        final service = _FakeFindYourMatchService(
+        final service = FakeFindYourMatchService(
           supabase.Supabase.instance.client,
         );
         service.eigeneLikes = [
           ReceivedLike(
             likeId: 21,
-            profile: _person(name: 'Jonas'),
-            createdAt: DateTime.now().subtract(vorher),
+            profile: person(name: 'Jonas'),
+            createdAt: anker().subtract(vorher),
           ),
         ];
-        await _pump(tester, service: service);
+        await interessenScreenPump(tester, service: service);
 
         // "Gesendet" aufklappen (wie der Test, der schon gruen ist).
         await tester.tap(find.text('Gesendet'));
-        await _pumpFrames(tester);
+        await pumpFrames(tester);
       }
 
       testWidgets('ein heute gesendeter Like steht als "Heute" da', (
@@ -817,7 +516,7 @@ void main() {
         // Nach einer Woche steht das konkrete Datum da (kein "vor X
         // Tagen" mehr - das waere beim Scrollen unlesbar).
         // Das Kalenderdatum des Likes (20 Tage zurueck).
-        final damals = DateTime.now().subtract(const Duration(days: 20));
+        final damals = anker().subtract(const Duration(days: 20));
         expect(
           find.textContaining('${damals.day}.${damals.month}.${damals.year}'),
           findsWidgets,
@@ -830,28 +529,28 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
       service.erhalteneLikes = [
         ReceivedLike(
           likeId: 9,
-          profile: _person(name: 'Jonas', alter: 31),
+          profile: person(name: 'Jonas', alter: 31),
           createdAt: DateTime.now(),
         ),
       ];
-      await _pump(tester, service: service);
+      await interessenScreenPump(tester, service: service);
 
       await tester.tap(find.text('Erhalten'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       // Das Menue der Like-Kachel.
       await tester.tap(find.byIcon(Icons.more_vert).last);
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
       await tester.tap(find.text('Blockieren'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       // Es fragt nach - blockiert wird nicht ohne Rueckfrage.
       expect(find.byType(AlertDialog), findsOneWidget);
@@ -866,15 +565,15 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
-      service.funken = [_funke()];
-      await _pump(tester, service: service);
+      service.funken = [funke()];
+      await interessenScreenPump(tester, service: service);
 
       // Das Drei-Punkte-Menue der Funke-Kachel oeffnen.
       await tester.tap(find.byIcon(Icons.more_vert).first);
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
       // Archivieren, Loeschen, Ausblenden ...
@@ -892,16 +591,16 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
-      service.funken = [_funke()];
-      await _pump(tester, service: service);
+      service.funken = [funke()];
+      await interessenScreenPump(tester, service: service);
 
       await tester.tap(find.byIcon(Icons.more_vert).first);
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
       await tester.tap(find.text('Archivieren'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       // Der ehrliche Dialog kommt - es gibt zwei Wege (ruhig oder mit
       // einem Absage-Text).
@@ -910,7 +609,7 @@ void main() {
 
       // "Ruhig enden" - ohne Nachricht.
       await tester.tap(find.text('Funke kühlen'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
       // Der Server wurde wirklich informiert ...
@@ -923,23 +622,23 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
-      service.funken = [_funke()];
-      await _pump(tester, service: service);
+      service.funken = [funke()];
+      await interessenScreenPump(tester, service: service);
 
       await tester.tap(find.byIcon(Icons.more_vert).first);
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
       await tester.tap(find.text('Funke löschen'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       // Die Rueckfrage kommt (zwei Knöpfe: abbrechen und loeschen).
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(find.text('Funke löschen?'), findsOneWidget);
 
       await tester.tap(find.widgetWithText(FilledButton, 'Funke löschen'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
       // Der Server wurde wirklich informiert ...
@@ -952,16 +651,16 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
-      service.funken = [_funke()];
-      await _pump(tester, service: service);
+      service.funken = [funke()];
+      await interessenScreenPump(tester, service: service);
 
       await tester.tap(find.byIcon(Icons.more_vert).first);
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
       await tester.tap(find.text('Aus Liste entfernen'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
       expect(service.ausgeblendet, contains(7));
@@ -974,12 +673,12 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
       // Ein gekuehlter (archivierter) Funke.
-      service.funken = [_funke(status: 'cooled')];
-      await _pump(tester, service: service);
+      service.funken = [funke(status: 'cooled')];
+      await interessenScreenPump(tester, service: service);
 
       // Der Abschnitt "Archivierte Funken" steht da.
       expect(find.text('Archivierte Funken'), findsOneWidget);
@@ -991,7 +690,7 @@ void main() {
       await tester.ensureVisible(knopf);
       await tester.pump();
       await tester.tap(knopf);
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
       expect(service.wiederEntzuend, contains(7));
@@ -1004,16 +703,16 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
       // Acht Tage alt und ohne Nachricht: nach 72 Stunden ohne
       // Aktivitaet wird er gekuehlt (der Nutzer soll nicht wochenlang
       // einen Funken sehen, der niemanden bewegt).
       service.funken = [
-        _funke(erstellt: DateTime.now().subtract(const Duration(days: 8))),
+        funke(erstellt: DateTime.now().subtract(const Duration(days: 8))),
       ];
-      await _pump(tester, service: service);
+      await interessenScreenPump(tester, service: service);
 
       expect(tester.takeException(), isNull);
       expect(
@@ -1029,11 +728,11 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final service = _FakeFindYourMatchService(
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
-      service.funken = [_funke()];
-      await _pump(tester, service: service);
+      service.funken = [funke()];
+      await interessenScreenPump(tester, service: service);
 
       expect(tester.takeException(), isNull);
       expect(
@@ -1045,24 +744,18 @@ void main() {
       );
     });
   });
-
-  // Der automatische Funke (Migration 177): nach 10 Minuten Dating Hour
-  // entsteht ein Funke, den BEIDE Seiten nicht bestaetigt haben. Der
-  // Nutzer soll deshalb EINMAL entscheiden: behalten oder Person
-  // entfernen. Ohne diese Nachfrage steht ein Funke da, den niemand
-  // wollte - der Betreiber hat das im November 2026 so gemeldet.
   group('Der automatische Funke (Migration 177)', () {
     /// Die RPC, die den automatischen Funke aufloest.
     const String rpc = 'resolve_dating_hour_auto_match';
 
     /// Baut den Screen mit einem automatischen Funken.
-    Future<_FakeFindYourMatchService> mitAutoFunke(WidgetTester tester) async {
-      final service = _FakeFindYourMatchService(
+    Future<FakeFindYourMatchService> mitAutoFunke(WidgetTester tester) async {
+      final service = FakeFindYourMatchService(
         supabase.Supabase.instance.client,
       );
       service.server = server;
-      service.funken = [_funke(autoMatch: true)];
-      await _pump(tester, service: service);
+      service.funken = [funke(autoMatch: true)];
+      await interessenScreenPump(tester, service: service);
       return service;
     }
 
@@ -1074,7 +767,7 @@ void main() {
       required bool behalten,
     }) async {
       await tester.tap(find.text('Mira, 30'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
       // Der Dialog braucht einen ruhigen Frame - sonst geht der Klick
       // ins Leere.
       await tester.pump(const Duration(milliseconds: 400));
@@ -1083,7 +776,7 @@ void main() {
       } else {
         await tester.tap(find.widgetWithText(TextButton, 'Person entfernen'));
       }
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
     }
 
     testWidgets('der automatische Funke fragt erst nach', (tester) async {
@@ -1098,7 +791,7 @@ void main() {
 
       // Der Tap auf die Kachel fragt nach - der Chat geht NICHT sofort auf.
       await tester.tap(find.text('Mira, 30'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(find.text('Automatischer Funke'), findsOneWidget);
@@ -1128,7 +821,7 @@ void main() {
         tester,
         fertig: () => server.rpcAufrufe.any((c) => c['funktion'] == rpc),
       );
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
       // Die RPC bekommt die Adresse der ANDEREN Person (nicht die eigene)
@@ -1157,7 +850,7 @@ void main() {
         tester,
         fertig: () => server.rpcAufrufe.any((c) => c['funktion'] == rpc),
       );
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
       final aufruf = server.rpcAufrufe.firstWhere((c) => c['funktion'] == rpc);
@@ -1184,12 +877,12 @@ void main() {
       await mitAutoFunke(tester);
 
       await tester.tap(find.text('Mira, 30'));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
       expect(find.byType(AlertDialog), findsOneWidget);
 
       // Der Dialog wird weggetippt (der Rahmen neben dem Dialog).
       await tester.tapAt(const Offset(10, 10));
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
       await lassServerArbeiten(tester);
 
       expect(tester.takeException(), isNull);
@@ -1214,7 +907,7 @@ void main() {
         tester,
         fertig: () => server.rpcAufrufe.any((c) => c['funktion'] == rpc),
       );
-      await _pumpFrames(tester);
+      await pumpFrames(tester);
 
       expect(tester.takeException(), isNull);
       // Der Nutzer wird NICHT im Glauben gelassen, es hat geklappt.
@@ -1234,320 +927,6 @@ void main() {
       expect(
         find.byTooltip('Automatisch', skipOffstage: false),
         findsOneWidget,
-      );
-    });
-  });
-
-  group('Fixieren', () {
-    testWidgets('"Fixieren" stellt den Funke in den eigenen Abschnitt', (
-      tester,
-    ) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      final service = _FakeFindYourMatchService(
-        supabase.Supabase.instance.client,
-      );
-      service.funken = [_funke()];
-      await _pump(tester, service: service);
-
-      // Das Menue der Kachel oeffnen.
-      await tester.tap(find.byIcon(Icons.more_vert).first);
-      await _pumpFrames(tester);
-      await tester.tap(find.text('Fixieren'));
-      await _pumpFrames(tester);
-
-      expect(tester.takeException(), isNull);
-      // Die Fixierung ist gesetzt ...
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(InteressenScreen)),
-      );
-      expect(container.read(pinnedMatchesProvider), contains(7));
-      // ... der eigene Abschnitt steht da ...
-      expect(find.text('Fixiert'), findsOneWidget);
-      // ... die Nadel ist zu sehen ...
-      expect(find.byIcon(Icons.push_pin), findsWidgets);
-      // ... und der Nutzer bekommt die Bestaetigung.
-      expect(find.text('Funke fixiert'), findsOneWidget);
-    });
-
-    testWidgets('"Fixieren" laesst sich wieder aufheben', (tester) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      final service = _FakeFindYourMatchService(
-        supabase.Supabase.instance.client,
-      );
-      service.funken = [_funke()];
-      await _pump(tester, service: service);
-
-      // Erste Mal fixieren.
-      await tester.tap(find.byIcon(Icons.more_vert).first);
-      await _pumpFrames(tester);
-      await tester.tap(find.text('Fixieren'));
-      await _pumpFrames(tester);
-      expect(find.text('Fixiert'), findsOneWidget);
-
-      // Die erste Meldung muss erst verschwinden - sonst wartet die
-      // zweite in der Schlange hinter ihr (SnackBars stehen hinter-
-      // einander an).
-      await tester.pump(const Duration(seconds: 5));
-      await tester.pump(const Duration(milliseconds: 500));
-
-      // Zweites Mal: die Fixierung geht wieder weg.
-      await tester.tap(find.byIcon(Icons.more_vert).first);
-      await _pumpFrames(tester);
-      await tester.tap(find.text('Fixieren'));
-      await _pumpFrames(tester);
-
-      expect(tester.takeException(), isNull);
-      final container = ProviderScope.containerOf(
-        tester.element(find.byType(InteressenScreen)),
-      );
-      expect(container.read(pinnedMatchesProvider), isEmpty);
-      expect(find.text('Fixiert'), findsNothing);
-      expect(find.text('Fixierung aufgehoben'), findsOneWidget);
-    });
-  });
-
-  group('Das Ziehen nach unten', () {
-    testWidgets('laedt die Funken neu', (tester) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      final service = _FakeFindYourMatchService(
-        supabase.Supabase.instance.client,
-      );
-      service.funken = [_funke()];
-      await _pump(tester, service: service);
-
-      final vorher = service.matchesAufrufe;
-
-      // Nach unten ziehen (Pull-to-Refresh).
-      await tester.drag(find.byType(ListView).first, const Offset(0, 300));
-      await _pumpFrames(tester);
-
-      expect(tester.takeException(), isNull);
-      expect(
-        service.matchesAufrufe,
-        greaterThan(vorher),
-        reason:
-            'Das Ziehen nach unten muss die Funken neu laden - der Nutzer '
-            'wartet sonst auf einen Stand, der gar nicht neu ist.',
-      );
-    });
-  });
-
-  group('Das gespeicherte Profil (QR-Kontakt)', () {
-    testWidgets('"Entfernen" loescht den gespeicherten Kontakt', (
-      tester,
-    ) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      // Der Chat-Dienst mit einem gespeicherten Profil.
-      final chatService = ChatService();
-      chatService.createQrContact(_person());
-
-      final service = _FakeFindYourMatchService(
-        supabase.Supabase.instance.client,
-      );
-      await _pump(
-        tester,
-        service: service,
-        overrides: [
-          chatProvider.overrideWith((ref) => ChatNotifier(chatService)),
-        ],
-      );
-
-      expect(tester.takeException(), isNull);
-      // Der Abschnitt "Gespeicherte Profile" steht da.
-      expect(find.text('Gespeicherte Profile'), findsOneWidget);
-      expect(find.text('Mira, 30'), findsOneWidget);
-
-      // Der Mülleimer fragt erst nach (der Chat-Verlauf geht mit).
-      // Der Knoepfchen liegt weit unten (unter den Reitern) - erst
-      // dorthin scrollen, sonst trifft der Tap ins Leere.
-      final loeschen = find.byTooltip('Gespeichertes Profil entfernen');
-      await tester.ensureVisible(loeschen);
-      await tester.pump(const Duration(milliseconds: 200));
-      await tester.tap(loeschen);
-      await _pumpFrames(tester);
-      expect(find.byType(AlertDialog), findsOneWidget);
-      expect(find.text('Gespeichertes Profil entfernen?'), findsOneWidget);
-
-      // "Behalten" loescht nichts.
-      await tester.tap(find.widgetWithText(TextButton, 'Behalten'));
-      await _pumpFrames(tester);
-      expect(find.text('Mira, 30'), findsOneWidget);
-
-      // Und jetzt "Entfernen".
-      await tester.ensureVisible(loeschen);
-      await tester.pump(const Duration(milliseconds: 200));
-      await tester.tap(loeschen);
-      await _pumpFrames(tester);
-      await tester.pump(const Duration(milliseconds: 400));
-      await tester.tap(find.widgetWithText(FilledButton, 'Entfernen'));
-      await _pumpFrames(tester);
-
-      expect(tester.takeException(), isNull);
-      // Der Kontakt ist weg ...
-      expect(find.text('Mira, 30'), findsNothing);
-      expect(find.text('Gespeicherte Profile'), findsNothing);
-      // ... und der Nutzer bekommt die Bestaetigung.
-      expect(find.text('Mira wurde entfernt.'), findsOneWidget);
-    });
-  });
-
-  // Die Fehlerwege: der Nutzer muss erfahren, wenn etwas NICHT
-  // funktioniert hat. Ein stilles Scheitern waere das Schlimmste -
-  // der Nutzer glaubt dann, es sei passiert.
-  group('Die Fehlerwege', () {
-    testWidgets('das Kuehlen meldet dem Nutzer den Fehler', (tester) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      final service = _FakeFindYourMatchService(
-        supabase.Supabase.instance.client,
-      );
-      service.coolFehler = StateError('Der Server hat nicht geantwortet.');
-      service.funken = [_funke()];
-      await _pump(tester, service: service);
-
-      await tester.tap(find.byIcon(Icons.more_vert).first);
-      await _pumpFrames(tester);
-      await tester.tap(find.text('Archivieren'));
-      await _pumpFrames(tester);
-      await tester.tap(find.text('Funke kühlen'));
-      await _pumpFrames(tester);
-
-      expect(tester.takeException(), isNull);
-      expect(
-        find.textContaining('Fehler:'),
-        findsOneWidget,
-        reason:
-            'Ein fehlgeschlagenes Kuehlen muss der Nutzer erfahren - '
-            'sonst glaubt er, der Funke sei ruhig gestellt.',
-      );
-    });
-
-    testWidgets('ein bereits gekuehlter Funke gilt als Erfolg', (tester) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      final service = _FakeFindYourMatchService(
-        supabase.Supabase.instance.client,
-      );
-      // Der Server meldet "bereits gekuehlt" (z. B. beim Doppel-Tap).
-      service.coolFehler = Exception(
-        'Funke nicht gefunden oder bereits gekuehlt/endet.',
-      );
-      service.funken = [_funke()];
-      await _pump(tester, service: service);
-
-      await tester.tap(find.byIcon(Icons.more_vert).first);
-      await _pumpFrames(tester);
-      await tester.tap(find.text('Archivieren'));
-      await _pumpFrames(tester);
-      await tester.tap(find.text('Funke kühlen'));
-      await _pumpFrames(tester);
-
-      expect(tester.takeException(), isNull);
-      expect(
-        find.textContaining('Fehler:'),
-        findsNothing,
-        reason:
-            '"Bereits gekuehlt" ist kein Fehler - der Wunsch ist ja '
-            'erfuellt. Der Nutzer darf keinen Fehler sehen.',
-      );
-      expect(find.textContaining('Mira'), findsWidgets);
-    });
-
-    testWidgets('das Ausblenden eines Funken meldet den Fehler', (
-      tester,
-    ) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      final service = _FakeFindYourMatchService(
-        supabase.Supabase.instance.client,
-      );
-      service.hideFehler = StateError('Der Server hat nicht geantwortet.');
-      service.funken = [_funke()];
-      await _pump(tester, service: service);
-
-      await tester.tap(find.byIcon(Icons.more_vert).first);
-      await _pumpFrames(tester);
-      await tester.tap(find.text('Aus Liste entfernen'));
-      await _pumpFrames(tester);
-
-      expect(tester.takeException(), isNull);
-      expect(
-        find.textContaining('Fehler:'),
-        findsOneWidget,
-        reason:
-            'Der Funke ist noch da - der Nutzer muss das wissen, sonst '
-            'wartet er vergeblich auf das Verschwinden.',
-      );
-    });
-
-    testWidgets('das Annehmen eines Likes meldet den Fehler', (tester) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      final service = _FakeFindYourMatchService(
-        supabase.Supabase.instance.client,
-      );
-      service.respondFehler = StateError('Der Server hat nicht geantwortet.');
-      service.erhalteneLikes = [
-        ReceivedLike(
-          likeId: 3,
-          profile: _person(name: 'Jonas', alter: 31),
-          createdAt: DateTime.now(),
-        ),
-      ];
-      await _pump(tester, service: service);
-
-      await tester.tap(find.text('Erhalten'));
-      await _pumpFrames(tester);
-      await tester.tap(find.text('Funke bestätigen'));
-      await _pumpFrames(tester);
-
-      expect(tester.takeException(), isNull);
-      expect(
-        find.textContaining('Fehler:'),
-        findsOneWidget,
-        reason: 'Der Like ist nicht bestaetigt - der Nutzer muss das wissen.',
-      );
-    });
-
-    testWidgets('das Ausblenden eines Likes meldet den Fehler', (tester) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      final service = _FakeFindYourMatchService(
-        supabase.Supabase.instance.client,
-      );
-      service.ignoreFehler = StateError('Der Server hat nicht geantwortet.');
-      service.erhalteneLikes = [
-        ReceivedLike(
-          likeId: 4,
-          profile: _person(name: 'Jonas', alter: 31),
-          createdAt: DateTime.now(),
-        ),
-      ];
-      await _pump(tester, service: service);
-
-      await tester.tap(find.text('Erhalten'));
-      await _pumpFrames(tester);
-      await tester.tap(find.byTooltip('Ignorieren'));
-      await _pumpFrames(tester);
-
-      expect(tester.takeException(), isNull);
-      expect(
-        find.textContaining('Fehler:'),
-        findsOneWidget,
-        reason: 'Der Like ist nicht ausgeblendet - der Nutzer muss das wissen.',
       );
     });
   });

@@ -3,9 +3,11 @@ import re
 import sys
 
 sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import l10n_texts  # noqa: E402
 
-src = open("lib/l10n/app_strings.dart", encoding="utf-8").read()
-de_block, en_block = src.split("'en':")
+# DIE TEXTE LIEGEN NACH THEMEN GETRENNT (lib/l10n/strings/).
+de_block, en_block = l10n_texts.lies_sprachen()
 de_keys = set(re.findall(r"'([a-zA-Z0-9_.]+)'\s*:", de_block))
 en_keys = set(re.findall(r"'([a-zA-Z0-9_.]+)'\s*:", en_block))
 
@@ -31,10 +33,14 @@ if en_only:
     findings.append("nur auf Englisch: %s" % en_only)
 
 # Gedankenstriche in Nutzer-Texten
-for i, line in enumerate(src.splitlines(), 1):
-    if "\u2013" in line or "\u2014" in line:
-        print("GEDANKENSTRICH app_strings.dart:%d: %s" % (i, line.strip()[:100]))
-        findings.append("Gedankenstrich in app_strings.dart:%d" % i)
+# DIE TEXTE LIEGEN NACH THEMEN GETRENNT (lib/l10n/strings/) - der
+# Gedankenstrich wird je Datei geprueft.
+for datei in l10n_texts.text_dateien():
+    relativer = str(datei).replace("\\", "/")
+    for i, line in enumerate(datei.read_text(encoding="utf-8").splitlines(), 1):
+        if "\u2013" in line or "\u2014" in line:
+            print("GEDANKENSTRICH %s:%d: %s" % (relativer, i, line.strip()[:100]))
+            findings.append("Gedankenstrich in %s:%d" % (relativer, i))
 
 # Verwendete, aber undefinierte Keys
 used = set()

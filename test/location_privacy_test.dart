@@ -1,10 +1,10 @@
-import 'dart:io';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/models/app_settings.dart';
 import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/utils/distance_bucket.dart';
 import 'package:thestia/utils/location_privacy.dart';
+import 'support/l10n_quellen.dart';
+import 'support/quelltext.dart';
 
 /// Laedt die Texte direkt aus app_strings.dart.
 ///
@@ -13,7 +13,7 @@ import 'package:thestia/utils/location_privacy.dart';
 /// [L10nScope] bereitstellt - Key-Zeilen und Folgezeilen (Zeilenumbruch
 /// in der Quelle) werden zusammengefuegt.
 Map<String, String> _sprache(String sprache) {
-  final src = File('lib/l10n/app_strings.dart').readAsStringSync();
+  final src = liesL10nQuellen();
   final start = src.indexOf("'$sprache': {");
   expect(start, greaterThan(-1), reason: 'Kein $sprache-Block gefunden');
   final end = src.indexOf('\n  },', start);
@@ -163,9 +163,9 @@ void main() {
     // Einrichtungs-Screen aufgerufen und nach city geschrieben wird, ist
     // die Privatisierung nicht erreicht - unabhaengig davon, wie korrekt
     // die Rasterung ist.
-    final src = File(
+    final src = liesQuelltext(
       'lib/screens/onboarding/settings_privacy_once_screen.dart',
-    ).readAsStringSync();
+    );
 
     test('der Screen ruft describePlace nicht mehr auf', () {
       // describePlace() LIEGT weiter in geo_names.dart (dort liefert der
@@ -192,9 +192,7 @@ void main() {
   // wieder in profiles.city - nur eben beim Bearbeiten, nicht bei der
   // Einrichtung. Der Test haelt beide Wege dicht.
   group('Auch der Profil-Edit-Screen kennt keinen Ortsnamen', () {
-    final src = File(
-      'lib/screens/profile/profile_edit_screen.dart',
-    ).readAsStringSync();
+    final src = liesQuelltext('lib/screens/profile/profile_edit_screen.dart');
 
     test('kein Orts-Textfeld und kein city-Parameter', () {
       expect(src.contains('describePlace'), isFalse);
@@ -220,9 +218,9 @@ void main() {
   });
 
   group('Bundesland statt Ortsname', () {
-    final src = File(
+    final src = liesQuelltext(
       'lib/screens/onboarding/settings_privacy_once_screen.dart',
-    ).readAsStringSync();
+    );
 
     test('die Standortermittlung leitet das Bundesland ab', () {
       // Der Aufruf muss die administrativeArea-Version nutzen, nicht
@@ -232,9 +230,7 @@ void main() {
   });
 
   group('Der Praeferenz-Provider fuehrt keinen Ort mit', () {
-    final src = File(
-      'lib/providers/user_preferences_provider.dart',
-    ).readAsStringSync();
+    final src = liesQuelltext('lib/providers/user_preferences_provider.dart');
 
     test('kein location-Feld in den Praeferenzen', () {
       expect(src.contains('setLocation'), isFalse);
@@ -251,9 +247,7 @@ void main() {
   // und die Entfernungsanzeige faellt aus. Migration 135 hat die Tabelle
   // nur fuer Bestandsprofile gefuellt.
   group('Die Koordinaten landen in profile_locations', () {
-    final db = File(
-      'lib/services/supabase_database_service.dart',
-    ).readAsStringSync();
+    final db = liesQuelltext('lib/services/supabase_database_service.dart');
 
     test('der Service schreibt per upsert in profile_locations', () {
       expect(db.contains('saveOwnLocation'), isTrue);
@@ -267,7 +261,7 @@ void main() {
         'lib/screens/onboarding/settings_privacy_once_screen.dart',
         'lib/screens/profile/profile_edit_screen.dart',
       ]) {
-        final s = File(pfad).readAsStringSync();
+        final s = liesQuelltext(pfad);
         expect(
           s.contains('saveOwnLocation'),
           isTrue,

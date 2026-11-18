@@ -31,7 +31,20 @@ def has(rel: str, *needles: str) -> bool:
     f = ROOT / rel
     if not f.exists():
         return False
-    c = read(f)
+    # Die Datei KOMPLETT lesen: Die grossen Bildschirme sind in
+    # `parts/` geteilt, die Texte in `l10n/strings/`. Ohne die Teile
+    # waere der Code "nicht vorhanden", nur weil er umgezogen ist.
+    quellen = [read(f)]
+    teile = f.parent / 'parts'
+    if teile.exists():
+        quellen.extend(read(teil) for teil in sorted(teile.glob('*.dart')))
+    if f.name == 'app_strings.dart':
+        strings = f.parent / 'strings'
+        if strings.exists():
+            quellen.extend(
+                read(teil) for teil in sorted(strings.glob('*.dart'))
+            )
+    c = '\n'.join(quellen)
     return all(n in c for n in needles)
 
 

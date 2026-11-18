@@ -1,6 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter_test/flutter_test.dart';
+import 'support/l10n_quellen.dart';
+import 'support/quelltext.dart';
 
 /// Tests fuer die Fehlermeldung des Auth-Timeouts (v0.9.2).
 ///
@@ -17,10 +17,8 @@ void main() {
   // Die Quelle wird statisch gelesen, nicht ueber ein Widget: der
   // Timeout-Zweig liegt in einer privaten Methode mit BuildContext, und
   // ein Widget-Test wuerde Supabase initialisieren muessen.
-  final loginSrc = File(
-    'lib/screens/auth/login_screen.dart',
-  ).readAsStringSync();
-  final stringsSrc = File('lib/l10n/app_strings.dart').readAsStringSync();
+  final loginSrc = liesQuelltext('lib/screens/auth/login_screen.dart');
+  final stringsSrc = liesL10nQuellen();
 
   group('Timeout-Zweig im catch', () {
     test('der catch behandelt TimeoutException ausdruecklich', () {
@@ -83,7 +81,12 @@ void main() {
 
     test('ist nicht die generische Meldung', () {
       final i = stringsSrc.indexOf("'error.serverUnreachable':");
-      final block = stringsSrc.substring(i, i + 300);
+      expect(i, greaterThan(-1));
+      // DER TEXT der Meldung (bis zum naechsten Schluessel) - nicht ein
+      // Fenster von 300 Zeichen: die Texte liegen nach Themen sortiert,
+      // ein Fenster wuerde den Nachbarn mit einschliessen.
+      final ende = stringsSrc.indexOf("\n    '", i);
+      final block = stringsSrc.substring(i, ende > i ? ende : i + 300);
       expect(block.contains('Etwas ist schiefgelaufen'), isFalse);
     });
   });

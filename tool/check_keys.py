@@ -1,10 +1,13 @@
+import os
 import re
 import sys
 
 sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import l10n_texts  # noqa: E402
 
-src = open("lib/l10n/app_strings.dart", encoding="utf-8").read()
-de_block, en_block = src.split("'en':")
+# DIE TEXTE LIEGEN NACH THEMEN GETRENNT (lib/l10n/strings/).
+de_block, en_block = l10n_texts.lies_sprachen()
 prefixes = sys.argv[1:] or [
     "mfa",
     "unban",

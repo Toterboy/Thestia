@@ -127,7 +127,8 @@ def main() -> int:
     # Auch die App-Texte: der Jugendliche liest sie im Elternbereich.
     alle_seiten = sorted(
         p for p in (ROOT / "passkey-assets").rglob("*.html"))
-    alle_seiten.append(ROOT / "lib" / "l10n" / "app_strings.dart")
+    # DIE APP-TEXTE: sie liegen nach Themen getrennt (lib/l10n/strings/).
+    alle_seiten.extend(sorted((ROOT / "lib" / "l10n" / "strings").glob("*.dart")))
     for satz, warum in verboten:
         for seite in alle_seiten:
             inhalt = lies(seite)

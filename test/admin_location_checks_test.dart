@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'support/quelltext.dart';
 
 /// Tests fuer die Anzeige des Standort-Verdachtsflags im Admin-Bereich.
 ///
@@ -19,9 +20,9 @@ import 'package:flutter_test/flutter_test.dart';
 ///      Entscheidung - waere das anders, waere es eine
 ///      Verhaltensaenderung, die der Betreiber nicht wollte.
 void main() {
-  final migration = File(
+  final migration = liesQuelltext(
     'supabase/migrations/183_admin_list_location_checks.sql',
-  ).readAsStringSync();
+  );
 
   group('Die Admin-Liste ist nur fuer Admins', () {
     test('die RPC prueft den Admin-Status selbst', () {
@@ -71,9 +72,9 @@ void main() {
 
   group('Der Client ruft die richtige RPC', () {
     test('der Datenbank-Service holt die Liste ueber die RPC', () {
-      final service = File(
+      final service = liesQuelltext(
         'lib/services/supabase_database_service.dart',
-      ).readAsStringSync();
+      );
       expect(
         service.contains("_adminList('admin_list_location_checks')"),
         isTrue,
@@ -82,9 +83,7 @@ void main() {
     });
 
     test('der Admin-Screen zeigt den Tab', () {
-      final screen = File(
-        'lib/screens/admin/admin_screen.dart',
-      ).readAsStringSync();
+      final screen = liesQuelltext('lib/screens/admin/admin_screen.dart');
       expect(screen.contains('_LocationChecksTab()'), isTrue);
       expect(screen.contains('admin.tabLocations'), isTrue);
     });

@@ -1,0 +1,22 @@
+// Der Teil '_ReceivedLikesTab'.
+//
+// DER WEG: Die Datei war zu lang (> 1000 Zeilen). Der Teil
+// ist ueber `part` mit der Hauptdatei verbunden - so bleiben
+// die privaten Namen (und der Zugriff auf die privaten Felder)
+// unveraendert.
+//
+// Der Test `code_datei_groessen_test` verhindert, dass die
+// Hauptdatei wieder zu lang wird.
+
+part of '../interessen_screen.dart';
+
+class _ReceivedLikesTab extends ConsumerStatefulWidget {
+  const _ReceivedLikesTab({this.embedded = false, super.key});
+
+  /// Eingebettet: Der Abschnitt steht im Scrollbereich der Seite und
+  /// scrollt deshalb nicht selbst (siehe [_OwnLikesTab.embedded]).
+  final bool embedded;
+
+  @override
+  ConsumerState<_ReceivedLikesTab> createState() => _ReceivedLikesTabState();
+}

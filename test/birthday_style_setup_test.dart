@@ -1,7 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/widgets/birthday_style.dart';
+import 'support/l10n_quellen.dart';
+import 'support/quelltext.dart';
 
 /// Tests fuer den Geburtstags-Stil und die neue Einrichtungs-Seite.
 ///
@@ -46,9 +46,9 @@ void main() {
   });
 
   group('Einrichtungs-Struktur', () {
-    final src = File(
+    final src = liesQuelltext(
       'lib/screens/onboarding/settings_privacy_once_screen.dart',
-    ).readAsStringSync();
+    );
 
     test('die Seite mit dem Geburtstags-Stil existiert', () {
       expect(src.contains("questionKey: 'setupq.birthday'"), isTrue);
@@ -104,7 +104,7 @@ void main() {
   });
 
   group('L10n-Schluessel', () {
-    final src = File('lib/l10n/app_strings.dart').readAsStringSync();
+    final src = liesL10nQuellen();
 
     test('setupq.birthday existiert in DE und EN', () {
       final deMarker = "  'de': {";
@@ -140,9 +140,9 @@ void main() {
   });
 
   group('Musik-Schluessel (Slugs, keine Labels)', () {
-    final setupSrc = File(
+    final setupSrc = liesQuelltext(
       'lib/screens/onboarding/settings_privacy_once_screen.dart',
-    ).readAsStringSync();
+    );
 
     test('die Musik-Seite existiert', () {
       expect(setupSrc.contains("questionKey: 'setupq.music'"), isTrue);

@@ -1,8 +1,12 @@
+import os
 import re
+import sys
 
-src = open("lib/l10n/app_strings.dart", encoding="utf-8").read()
-parts = src.split("'en':")
-de = parts[0]
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import l10n_texts  # noqa: E402
+
+# DIE TEXTE LIEGEN NACH THEMEN GETRENNT (lib/l10n/strings/).
+de, _en = l10n_texts.lies_sprachen()
 anchors = [
     "common.back",
     "auth.email",

@@ -1,3 +1,9 @@
+// Die Tests 'chat_detail_screen' (Teil 1).
+//
+// DER WEG: Die Testdatei war zu lang (> 1000 Zeilen). Die Tests
+// sind nach Themen aufgeteilt; die Helfer liegen in
+// test/support/chat_detail_screen_hilfen.dart.
+
 // Der 1:1-Chat OHNE Server (v0.10.1).
 //
 // WARUM (13.11.2026): Der Chat-Screen ist die groesste Datei der App
@@ -22,246 +28,28 @@
 // brechen ohne Client still ab. Genau das ist hier der Fall - es wird
 // geprueft, was der Bildschirm ohne Server macht, nicht was er mit
 // Server macht (das macht test/live_message_flow_test.dart).
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
-
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/models/match.dart';
 import 'package:thestia/models/message.dart';
 import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/providers/chat_provider.dart';
-import 'package:thestia/providers/mood_provider.dart';
-import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/models/report_models.dart';
 import 'package:thestia/screens/chat/chat_detail_screen.dart';
 import 'package:thestia/services/report_service.dart';
 import 'package:thestia/services/chat_service.dart';
-import 'package:thestia/services/local_storage.dart';
-import 'package:thestia/services/mood_service.dart';
-import 'package:thestia/services/secure_storage.dart';
-import 'package:thestia/utils/constants.dart';
 import 'package:thestia/widgets/secure_composer.dart';
 import 'package:thestia/widgets/secure_keyboard.dart';
+import '../support/fake_supabase_server.dart';
+import '../support/plugin_mocks.dart';
 
-import 'support/fake_supabase_server.dart';
-import 'support/plugin_mocks.dart';
-
-/// In-Memory-Implementierung von [LocalStorage] fuer Tests.
-class _FakeLocalStorage implements LocalStorage {
-  final Map<String, String> _data = {};
-
-  @override
-  Future<void> saveString(String key, String value) async => _data[key] = value;
-
-  @override
-  Future<String?> getString(String key) async => _data[key];
-
-  @override
-  Future<void> saveBool(String key, bool value) async =>
-      _data[key] = value.toString();
-
-  @override
-  Future<bool?> getBool(String key) async =>
-      _data[key] == null ? null : _data[key] == 'true';
-
-  @override
-  Future<void> remove(String key) async => _data.remove(key);
-
-  @override
-  Future<void> saveInt(String key, int value) async =>
-      _data[key] = value.toString();
-
-  @override
-  Future<int?> getInt(String key) async =>
-      _data[key] == null ? null : int.tryParse(_data[key]!);
-}
-
-/// Keystore ohne Plugin: liefert kein Profil (wie auf einem frischen
-/// Geraet).
-class _FakeSecureProfileStore extends SecureProfileStore {
-  @override
-  Future<String?> read() async => null;
-
-  @override
-  Future<void> write(String value) async {}
-
-  @override
-  Future<void> delete() async {}
-}
-
-/// Die eigene Profilseite (als "ich").
-UserProfile _eigenesProfil() => UserProfile(
-  id: 'ich',
-  name: 'Lena',
-  bio: 'Hallo',
-  birthDate: DateTime(1995, 6, 1),
-);
-
-UserProfile _partner() => UserProfile(
-  id: 'partner-1',
-  name: 'Mira',
-  bio: '',
-  birthDate: DateTime.now().subtract(const Duration(days: 24 * 365)),
-);
-
-/// Der Dummy-Client, den der Mood-Service braucht (er greift beim
-/// Erzeugen auf den Supabase-Client zu).
-late supabase.SupabaseClient _moodClient;
-
-/// Baut den Chat mit einem Match und einer Nachricht.
-///
-/// [serverFunke] erzeugt einen Funken mit einer SERVER-Match-ID (einer
-/// Zahl). Nur die haben die Funktionen, die es auf dem Server gibt
-/// (Erinnerungsliste, Funke beenden) - ein lokaler Kontakt bekommt
-/// dort den Hinweis "nur mit einem Funke".
-({ChatNotifier notifier, Match match}) _chatMitNachricht({
-  bool serverFunke = false,
-}) {
-  final service = ChatService();
-  final match = serverFunke
-      ? service.restoreServerMatch('7', _partner(), DateTime.now())!
-      : service.createMatch(_partner());
-  service.addMessage(
-    match.id,
-    Message(
-      id: 'm_1',
-      senderId: 'partner-1',
-      receiverId: 'ich',
-      text: 'Hallo, magst du Kaffee?',
-      timestamp: DateTime.now(),
-    ),
-  );
-  return (notifier: ChatNotifier(service), match: match);
-}
-
-/// Die Overrides: Storage, Profil, Chat und der Mood-Client.
-///
-/// [hinweisGesehen] steuert den Hinweis auf den Chat-Hintergrund (v0.10.0):
-/// beim ersten Chat kommt er, sonst nicht.
-List<Override> _overrides(
-  ChatNotifier notifier, {
-  bool hinweisGesehen = true,
-  bool unscharfeBilder = false,
-}) {
-  final storage = _FakeLocalStorage();
-  // Der Hinweis auf den Chat-Hintergrund (v0.10.0) kommt beim ersten
-  // Chat - im Test stoert er nur, also ist er als "gesehen" markiert.
-  if (hinweisGesehen) {
-    storage.saveString(
-      AppConstants.prefsSettingsKey,
-      jsonEncode(<String, dynamic>{'chatBackgroundSeen': true}),
-    );
-  }
-  // Die Bilder der Gegenseite zuerst unscharf (Schutz vor
-  // unangemessenen Inhalten) - das kommt aus den Einstellungen.
-  if (unscharfeBilder) {
-    storage.saveString(
-      AppConstants.prefsSettingsKey,
-      jsonEncode(<String, dynamic>{
-        'chatBackgroundSeen': true,
-        'blurChatImages': true,
-      }),
-    );
-  }
-  return [
-    localStorageProvider.overrideWithValue(storage),
-    secureProfileStoreProvider.overrideWithValue(_FakeSecureProfileStore()),
-    profileProvider.overrideWith((ref) {
-      final notifier = ProfileNotifier(storage, _FakeSecureProfileStore());
-      notifier.setProfile(_eigenesProfil());
-      return notifier;
-    }),
-    moodServiceProvider.overrideWithValue(MoodService(_moodClient)),
-    chatProvider.overrideWith((ref) => notifier),
-  ];
-}
-
-Future<void> _pump(
-  WidgetTester tester,
-  Widget kind,
-  ChatNotifier notifier, {
-  bool hinweisGesehen = true,
-  bool unscharfeBilder = false,
-  List<Override> overrides = const <Override>[],
-}) async {
-  SharedPreferences.setMockInitialValues(<String, Object>{});
-  await SharedPreferences.getInstance();
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [
-        ..._overrides(
-          notifier,
-          hinweisGesehen: hinweisGesehen,
-          unscharfeBilder: unscharfeBilder,
-        ),
-        ...overrides,
-      ],
-      child: MaterialApp(theme: ThemeData(useMaterial3: true), home: kind),
-    ),
-  );
-  await tester.pump();
-  await tester.pump(const Duration(milliseconds: 300));
-  // Das Zeitlimit der Edge-Function-Aufrufe (20 Sekunden) ablaufen
-  // lassen: im Test antwortet der Server auf einen Functions-Aufruf
-  // nicht, der Timer des Zeitlimits bliebe sonst stehen und der Test
-  // scheiterte an "a Timer is still pending".
-  await tester.pump(const Duration(seconds: 21));
-}
-
-/// Der Meldungs-Dienst als Ersatz.
-///
-/// DER GRUND: Der echte Dienst legt die Meldung in einer
-/// verschluesselten Hive-Box ab - die laesst sich im Widget-Test nicht
-/// oeffnen (das ist echte Datei-Arbeit). Fuer die Oberflaeche reicht der
-/// Ersatz: er merkt sich, WELCHE Nachrichten mitgehen.
-class _FakeReportService extends ReportService {
-  /// Die Nachrichten, die bei der Meldung mitgingen.
-  final List<Message> gemeldeteNachrichten = [];
-
-  /// Der Typ der Meldung.
-  ReportType? gemeldeterTyp;
-
-  @override
-  Future<ReportSubmission> createReport({
-    required String reporterId,
-    required String reporterUserName,
-    required String reportedUserId,
-    required String reportedUserName,
-    required ReportType type,
-    String? description,
-    List<Message>? messages,
-  }) async {
-    gemeldeterTyp = type;
-    gemeldeteNachrichten.addAll(messages ?? const <Message>[]);
-    return ReportSubmission(
-      report: UserReport(
-        id: 'report-1',
-        reporterId: reporterId,
-        reportedUserId: reportedUserId,
-        type: type,
-        description: description,
-        createdAt: DateTime.now(),
-      ),
-      serverAccepted: true,
-    );
-  }
-}
+import 'hilfen.dart';
 
 void main() {
-  /// Der Ersatz-Server (Antworten aus dem RAM).
-  ///
-  /// Als Feld (nicht `late`): so kann der Analyzer nachweisen, dass er
-  /// vor dem ersten Zugriff gesetzt ist.
-  FakeSupabaseServer server = FakeSupabaseServer(userId: 'ich');
-
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -313,10 +101,9 @@ void main() {
     // weiss der Bildschirm nicht, welche Nachrichten die eigenen sind.
     await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
   });
-
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
-    _moodClient = supabase.SupabaseClient(
+    moodClient = supabase.SupabaseClient(
       'https://example.supabase.co',
       'test-key',
     );
@@ -325,19 +112,17 @@ void main() {
     // Der Audio-Player (das Blatt zum Anhoeren legt einen an).
     mockAudioPlayer();
   });
-
   tearDown(() async {
     // Sonst bleibt der Auto-Refresh-Timer des Clients stehen.
-    await _moodClient.dispose();
+    await moodClient.dispose();
   });
-
   group('Der 1:1-Chat (ohne Server)', () {
     testWidgets('rendert die Nachrichten ohne Absturz', (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final chat = _chatMitNachricht();
-      await _pump(
+      final chat = chatMitNachricht();
+      await chatDetailScreenPump(
         tester,
         ChatDetailScreen(matchId: chat.match.id),
         chat.notifier,
@@ -361,8 +146,8 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final chat = _chatMitNachricht();
-      await _pump(
+      final chat = chatMitNachricht();
+      await chatDetailScreenPump(
         tester,
         const ChatDetailScreen(matchId: 'gibt-es-nicht'),
         chat.notifier,
@@ -382,8 +167,8 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final chat = _chatMitNachricht();
-      await _pump(
+      final chat = chatMitNachricht();
+      await chatDetailScreenPump(
         tester,
         ChatDetailScreen(matchId: chat.match.id),
         chat.notifier,
@@ -404,8 +189,8 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final chat = _chatMitNachricht();
-      await _pump(
+      final chat = chatMitNachricht();
+      await chatDetailScreenPump(
         tester,
         ChatDetailScreen(matchId: chat.match.id),
         chat.notifier,
@@ -425,8 +210,8 @@ void main() {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
-      final chat = _chatMitNachricht();
-      await _pump(
+      final chat = chatMitNachricht();
+      await chatDetailScreenPump(
         tester,
         ChatDetailScreen(matchId: chat.match.id),
         chat.notifier,
@@ -454,17 +239,13 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
   });
-
-  // Die Nachrichtenarten (14.11.2026): Der Chat-Screen hatte 1446
-  // offene Zeilen - die grösste Lücke der App. Die Bildnachricht, die
-  // Eisbrecher-Frage und die Systemnotiz sind eigene Wege im Aufbau.
   group('Der 1:1-Chat (die Nachrichtenarten)', () {
     testWidgets('eine Bildnachricht wird als Bild dargestellt', (tester) async {
       await tester.binding.setSurfaceSize(const Size(390, 844));
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       final service = ChatService();
-      final match = service.createMatch(_partner());
+      final match = service.createMatch(chatDetailScreenPartner());
       service.addMessage(
         match.id,
         Message(
@@ -477,7 +258,7 @@ void main() {
           timestamp: DateTime.now(),
         ),
       );
-      await _pump(
+      await chatDetailScreenPump(
         tester,
         ChatDetailScreen(matchId: match.id),
         ChatNotifier(service),
@@ -498,7 +279,7 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       final service = ChatService();
-      final match = service.createMatch(_partner());
+      final match = service.createMatch(chatDetailScreenPartner());
       service.addMessage(
         match.id,
         Message(
@@ -512,7 +293,7 @@ void main() {
           timestamp: DateTime.now(),
         ),
       );
-      await _pump(
+      await chatDetailScreenPump(
         tester,
         ChatDetailScreen(matchId: match.id),
         ChatNotifier(service),
@@ -531,7 +312,7 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       final service = ChatService();
-      final match = service.createMatch(_partner());
+      final match = service.createMatch(chatDetailScreenPartner());
       service.addMessage(
         match.id,
         Message(
@@ -543,7 +324,7 @@ void main() {
           timestamp: DateTime.now(),
         ),
       );
-      await _pump(
+      await chatDetailScreenPump(
         tester,
         ChatDetailScreen(matchId: match.id),
         ChatNotifier(service),
@@ -566,7 +347,7 @@ void main() {
       final service = ChatService();
       final match = service.restoreServerMatch(
         '7',
-        _partner(),
+        chatDetailScreenPartner(),
         DateTime.now(),
       )!;
       service.addMessage(
@@ -579,7 +360,7 @@ void main() {
           timestamp: DateTime.now(),
         ),
       );
-      await _pump(
+      await chatDetailScreenPump(
         tester,
         ChatDetailScreen(matchId: match.id),
         ChatNotifier(service),
@@ -632,7 +413,7 @@ void main() {
       // Die Bilder der Gegenseite sind zuerst unscharf (Schutz vor
       // unangemessenen Inhalten) - das kommt aus den Einstellungen.
       final service = ChatService();
-      final match = service.createMatch(_partner());
+      final match = service.createMatch(chatDetailScreenPartner());
       service.addMessage(
         match.id,
         Message(
@@ -645,7 +426,7 @@ void main() {
           timestamp: DateTime.now(),
         ),
       );
-      await _pump(
+      await chatDetailScreenPump(
         tester,
         ChatDetailScreen(matchId: match.id),
         ChatNotifier(service),
@@ -717,7 +498,7 @@ void main() {
         addTearDown(() => tester.binding.setSurfaceSize(null));
 
         final service = ChatService();
-        final match = service.createMatch(_partner());
+        final match = service.createMatch(chatDetailScreenPartner());
         service.addMessage(
           match.id,
           Message(
@@ -732,7 +513,7 @@ void main() {
             timestamp: DateTime.now(),
           ),
         );
-        await _pump(
+        await chatDetailScreenPump(
           tester,
           ChatDetailScreen(matchId: match.id),
           ChatNotifier(service),
@@ -756,7 +537,7 @@ void main() {
         addTearDown(() => tester.binding.setSurfaceSize(null));
 
         final service = ChatService();
-        final match = service.createMatch(_partner());
+        final match = service.createMatch(chatDetailScreenPartner());
         for (var i = 1; i <= 4; i++) {
           service.addMessage(
             match.id,
@@ -771,8 +552,8 @@ void main() {
         }
         // Der Meldungs-Dienst als Ersatz (der echte braucht die
         // verschluesselten Hive-Boxen).
-        final meldedienst = _FakeReportService();
-        await _pump(
+        final meldedienst = FakeReportService();
+        await chatDetailScreenPump(
           tester,
           ChatDetailScreen(matchId: match.id),
           ChatNotifier(service),
@@ -861,7 +642,7 @@ void main() {
         // Der Chat wird mit der Nummer geoeffnet - lokal gibt es ihn
         // nicht (z. B. nach einem Neustart oder aus einem gespeicherten
         // Verlauf).
-        await _pump(
+        await chatDetailScreenPump(
           tester,
           const ChatDetailScreen(matchId: '7'),
           ChatNotifier(ChatService()),
@@ -894,7 +675,7 @@ void main() {
         addTearDown(() => tester.binding.setSurfaceSize(null));
 
         final service = ChatService();
-        final match = service.createMatch(_partner());
+        final match = service.createMatch(chatDetailScreenPartner());
         for (var i = 1; i <= 4; i++) {
           service.addMessage(
             match.id,
@@ -907,7 +688,7 @@ void main() {
             ),
           );
         }
-        await _pump(
+        await chatDetailScreenPump(
           tester,
           ChatDetailScreen(matchId: match.id),
           ChatNotifier(service),
@@ -975,7 +756,11 @@ void main() {
           ),
         );
         final notifier = ChatNotifier(service);
-        await _pump(tester, ChatDetailScreen(matchId: match.id), notifier);
+        await chatDetailScreenPump(
+          tester,
+          ChatDetailScreen(matchId: match.id),
+          notifier,
+        );
         return notifier;
       }
 
@@ -1082,7 +867,7 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       final service = ChatService();
-      final match = service.createMatch(_partner());
+      final match = service.createMatch(chatDetailScreenPartner());
       service.addMessage(
         match.id,
         Message(
@@ -1095,7 +880,7 @@ void main() {
           timestamp: DateTime.now(),
         ),
       );
-      await _pump(
+      await chatDetailScreenPump(
         tester,
         ChatDetailScreen(matchId: match.id),
         ChatNotifier(service),
@@ -1118,7 +903,7 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       final service = ChatService();
-      final match = service.createMatch(_partner());
+      final match = service.createMatch(chatDetailScreenPartner());
       service.addMessage(
         match.id,
         Message(
@@ -1130,7 +915,7 @@ void main() {
           timestamp: DateTime.now(),
         ),
       );
-      await _pump(
+      await chatDetailScreenPump(
         tester,
         ChatDetailScreen(matchId: match.id),
         ChatNotifier(service),
@@ -1147,7 +932,7 @@ void main() {
       addTearDown(() => tester.binding.setSurfaceSize(null));
 
       final service = ChatService();
-      final match = service.createMatch(_partner());
+      final match = service.createMatch(chatDetailScreenPartner());
       for (var i = 0; i < 30; i++) {
         service.addMessage(
           match.id,
@@ -1160,7 +945,7 @@ void main() {
           ),
         );
       }
-      await _pump(
+      await chatDetailScreenPump(
         tester,
         ChatDetailScreen(matchId: match.id),
         ChatNotifier(service),
@@ -1177,393 +962,4 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
   });
-
-  // Das Drei-Punkte-Menue und der Hinweis auf den Chat-Hintergrund.
-  group('Der 1:1-Chat (Menue und Hinweise)', () {
-    testWidgets('das Menue zeigt die Gruppenueberschriften', (tester) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      final chat = _chatMitNachricht();
-      await _pump(
-        tester,
-        ChatDetailScreen(matchId: chat.match.id),
-        chat.notifier,
-      );
-
-      // Das Menue oeffnen.
-      await tester.tap(find.byIcon(Icons.more_vert));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(tester.takeException(), isNull);
-      // BEFUND (09.11.2026, Betreiber: "Bei 3 Punkte Menue ist ueber
-      // Eisbrecher Fragen ein Strich einfach so aber keine ueberschrift
-      // oder so"): JEDE Gruppe hat eine Ueberschrift - kein nackter
-      // Trennstrich.
-      expect(find.text('Gespräch'), findsOneWidget);
-      expect(find.text('Sicherheit'), findsOneWidget);
-      // Und die wichtigen Eingaenge stehen drin.
-      expect(find.text('Nutzer melden'), findsOneWidget);
-      expect(find.text('Nutzer blockieren'), findsOneWidget);
-
-      await tester.pumpWidget(const SizedBox());
-    });
-
-    testWidgets('der Hinweis auf den Chat-Hintergrund kommt einmal', (
-      tester,
-    ) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      final chat = _chatMitNachricht();
-      // Der Hinweis ist noch nicht gesehen - er muss kommen.
-      await _pump(
-        tester,
-        ChatDetailScreen(matchId: chat.match.id),
-        chat.notifier,
-        hinweisGesehen: false,
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-
-      expect(find.byType(AlertDialog), findsOneWidget);
-      expect(find.text('Chat-Hintergrund'), findsOneWidget);
-
-      // "Spaeter" schliesst ihn - und er kommt nicht wieder.
-      await tester.tap(find.text('Später'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-
-      expect(find.byType(AlertDialog), findsNothing);
-
-      await tester.pumpWidget(const SizedBox());
-    });
-
-    testWidgets('das Menue oeffnet die Erinnerungsliste', (tester) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      // Ein SERVER-Funke - nur bei einer Match-ID aus dem Server gibt es
-      // die Erinnerungsliste.
-      final chat = _chatMitNachricht(serverFunke: true);
-      await _pump(
-        tester,
-        ChatDetailScreen(matchId: chat.match.id),
-        chat.notifier,
-      );
-
-      await tester.tap(find.byIcon(Icons.more_vert));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      await tester.tap(find.text('Erinnerungsliste'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-
-      expect(tester.takeException(), isNull);
-      // Das Blatt steht da (ohne Server: keine Eintraege, aber der
-      // Aufbau muss klappen).
-      expect(find.text('Erinnerungsliste'), findsWidgets);
-
-      await tester.pumpWidget(const SizedBox());
-    });
-
-    // ANMERKUNG: Der Dialog zur Sicherheitsnummer wird hier NICHT
-    // getestet. Er braucht den vollstaendigen Signal-Dienst
-    // (Identity-Key, PreKeys, Session-Ratchet) - der laedt im Test
-    // seine verschluesselten Boxen und rechnet, das ist im
-    // Widget-Test nicht sinnvoll nachzubauen. Die Sicherheitsnummer
-    // selbst hat eigene Tests (test/safety_number_test.dart).
-
-    testWidgets('das Menue beendet den Funke ueber einen Dialog', (
-      tester,
-    ) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      final chat = _chatMitNachricht();
-      await _pump(
-        tester,
-        ChatDetailScreen(matchId: chat.match.id),
-        chat.notifier,
-      );
-
-      await tester.tap(find.byIcon(Icons.more_vert));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      await tester.tap(find.text('Funke beenden'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 400));
-
-      expect(tester.takeException(), isNull);
-      // Der Dialog fragt nach - es gibt Absage-Wege, kein sofortiges
-      // Ende.
-      expect(find.byType(AlertDialog), findsOneWidget);
-
-      await tester.pumpWidget(const SizedBox());
-    });
-  });
-
-  // Die Sprachnachricht: aufnehmen, anhoeren, senden.
-  //
-  // DER GRUND (16.11.2026): Die Aufnahme war der groesste ungetestete
-  // Bereich im Chat (Anlage, Pause, Verwerfen, Anhoeren, Senden).
-  group('Die Sprachnachricht', () {
-    testWidgets('das Mikrofon fragt zuerst nach der Offenlegung', (
-      tester,
-    ) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      final chat = _chatMitNachricht();
-      await _pump(
-        tester,
-        ChatDetailScreen(matchId: chat.match.id),
-        chat.notifier,
-      );
-
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(tester.takeException(), isNull);
-      // DIE OFFENLEGUNG: Google Play verlangt sie VOR der Berechtigung.
-      expect(
-        find.text(L10n.tWithoutContext('chat.micDisclosureTitle')),
-        findsOneWidget,
-        reason:
-            'Ohne Offenlegung fragt die App das Mikrofon im Hintergrund ab '
-            '- das verlangt Google Play nicht.',
-      );
-
-      // "Abbrechen" - es wird nichts aufgenommen.
-      await tester.tap(find.text(L10n.tWithoutContext('common.cancel')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(
-        find.text(L10n.tWithoutContext('intro.recordingState')),
-        findsNothing,
-        reason:
-            'Ohne Offenlegung wird nicht aufgenommen - sonst nimmt die App '
-            'ohne Zutun des Nutzers auf.',
-      );
-
-      await tester.pumpWidget(const SizedBox());
-    });
-
-    testWidgets('nach der Offenlegung laeuft die Aufnahme', (tester) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      final chat = _chatMitNachricht();
-      await _pump(
-        tester,
-        ChatDetailScreen(matchId: chat.match.id),
-        chat.notifier,
-      );
-
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.tap(
-        find.text(L10n.tWithoutContext('chat.micDisclosureAccept')),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      expect(tester.takeException(), isNull);
-      // Die Aufnahme laeuft (das Panel steht da).
-      expect(
-        find.text(L10n.tWithoutContext('intro.recordingState')),
-        findsOneWidget,
-      );
-
-      // PAUSE: die Aufnahme haelt an.
-      await tester.tap(find.text(L10n.tWithoutContext('intro.pause')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(
-        find.text(L10n.tWithoutContext('intro.pausedState')),
-        findsOneWidget,
-        reason:
-            'Die Pause muss am Panel stehen - sonst merkt der Nutzer '
-            'nicht, dass es weitergeht.',
-      );
-
-      // UND WEITER: sie laeuft wieder.
-      await tester.tap(find.text(L10n.tWithoutContext('intro.resume')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(
-        find.text(L10n.tWithoutContext('intro.recordingState')),
-        findsOneWidget,
-      );
-
-      // VERWERFEN: es wird nichts gesendet, der Nutzer bekommt es gesagt.
-      await tester.tap(find.byIcon(Icons.delete_outline));
-      await _echteZeit(tester);
-      expect(
-        find.text(L10n.tWithoutContext('chat.voiceCancelled')),
-        findsOneWidget,
-      );
-      expect(
-        find.text(L10n.tWithoutContext('intro.recordingState')),
-        findsNothing,
-      );
-
-      await tester.pumpWidget(const SizedBox());
-    });
-
-    testWidgets('eine zu kurze Aufnahme wird verworfen', (tester) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      // Eine ECHTE Datei - das Plugin meldet sie beim Stoppen. Ohne Datei
-      // waere der Aufnahme-Pfad ein anderer (das prueft der Test nicht).
-      final datei = (await tester.runAsync(_aufnahmeDatei))!;
-      mockAufnahme(dateiBeimStoppen: datei);
-
-      final chat = _chatMitNachricht();
-      await _pump(
-        tester,
-        ChatDetailScreen(matchId: chat.match.id),
-        chat.notifier,
-      );
-
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.tap(
-        find.text(L10n.tWithoutContext('chat.micDisclosureAccept')),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      // Sofort stoppen - das sind weniger als eine Sekunde.
-      await tester.tap(find.text(L10n.tWithoutContext('intro.stopListen')));
-      await _echteZeit(tester);
-
-      expect(tester.takeException(), isNull);
-      // Der Nutzer bekommt die Meldung ...
-      expect(
-        find.text(L10n.tWithoutContext('chat.voiceTooShort')),
-        findsOneWidget,
-        reason:
-            'Eine zu kurze Aufnahme ist fuer die Gegenseite unbrauchbar - '
-            'der Nutzer muss es wissen.',
-      );
-      // ... und die Datei liegt nicht mehr im Speicher.
-      final existiert = await tester.runAsync(() => File(datei).exists());
-      expect(
-        existiert,
-        isFalse,
-        reason: 'Die verworfene Aufnahme darf nicht liegen bleiben.',
-      );
-
-      await tester.pumpWidget(const SizedBox());
-    });
-
-    testWidgets('die Aufnahme wird erst nach dem Anhoeren gesendet', (
-      tester,
-    ) async {
-      await tester.binding.setSurfaceSize(const Size(390, 844));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      final datei = (await tester.runAsync(_aufnahmeDatei))!;
-      mockAufnahme(dateiBeimStoppen: datei);
-
-      final chat = _chatMitNachricht();
-      await _pump(
-        tester,
-        ChatDetailScreen(matchId: chat.match.id),
-        chat.notifier,
-      );
-
-      await tester.tap(find.byIcon(Icons.mic));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      await tester.tap(
-        find.text(L10n.tWithoutContext('chat.micDisclosureAccept')),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-
-      // Zwei Sekunden aufnehmen (unter einer Sekunde wird verworfen).
-      await tester.pump(const Duration(seconds: 2));
-
-      await tester.tap(find.text(L10n.tWithoutContext('intro.stopListen')));
-      await _echteZeit(tester);
-
-      expect(tester.takeException(), isNull);
-      // Das Blatt zum Anhoeren steht da - gesendet wird erst danach.
-      expect(
-        find.text(L10n.tWithoutContext('intro.review.title')),
-        findsOneWidget,
-        reason:
-            'Der Nutzer soll die Aufnahme anhoeren koennen, bevor sie '
-            'rausgeht.',
-      );
-      // Und noch ist keine Sprachnachricht im Chat.
-      expect(
-        chat.notifier
-            .messagesFor(chat.match.id)
-            .where((m) => m.type == MessageType.voice),
-        isEmpty,
-      );
-
-      // Senden.
-      await tester.tap(find.text(L10n.tWithoutContext('intro.review.send')));
-      await _echteZeit(tester);
-
-      expect(tester.takeException(), isNull);
-      // Jetzt steht sie im Chat (mit ihrer Dauer).
-      final stimmen = chat.notifier
-          .messagesFor(chat.match.id)
-          .where((m) => m.type == MessageType.voice)
-          .toList();
-      expect(stimmen, hasLength(1));
-      expect(stimmen.first.durationSeconds, 2);
-      expect(find.textContaining('0:02'), findsWidgets);
-
-      await tester.pumpWidget(const SizedBox());
-    });
-  });
-}
-
-/// Legt eine kleine Aufnahmedatei an (der Pfad kommt vom Plugin).
-///
-/// DER GRUND: Das Aufnahme-Plugin meldet beim Stoppen einen Pfad. Ohne
-/// Datei prueft der Bildschirm gar nicht weiter - die Datei muss also
-/// wirklich da sein.
-///
-/// ACHTUNG: Das ist echte Datei-Arbeit - sie muss ueber
-/// [WidgetTester.runAsync] laufen, sonst wartet der Test ewig.
-Future<String> _aufnahmeDatei() async {
-  final ordner = await Directory.systemTemp.createTemp('thesia_voice_test');
-  final pfad = '${ordner.path}/aufnahme.m4a';
-  await File(pfad).writeAsBytes(<int>[1, 2, 3, 4]);
-  return pfad;
-}
-
-/// Laesst die echten Datei-Zugriffe durch und baut danach neu.
-///
-/// DER GRUND: Das Lesen und Loeschen der Aufnahme-Datei ist echte
-/// Arbeit - sie laeuft ausserhalb der Test-Uhr. Ohne dieses Warten
-/// bleibt der Bildschirm bei "Aufnahme laeuft" stehen und die Meldung
-/// kommt nicht.
-///
-/// Es sind mehrere Runden: jeder `await` in der Kette (Abo beenden,
-/// Plugin stoppen, Datei loeschen) braucht seine eigene Runde durch
-/// die echte Ereignisschleife.
-Future<void> _echteZeit(WidgetTester tester) async {
-  for (var i = 0; i < 4; i++) {
-    await tester.runAsync(() async {
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-    });
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 200));
-  }
 }

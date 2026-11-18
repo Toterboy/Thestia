@@ -10,7 +10,8 @@ import 'package:thestia/models/user_mood.dart';
 
 /// Guard-Tests für das L10n-System (v0.9.1-Vollsweep).
 ///
-/// Die Tests parsen `lib/l10n/app_strings.dart` statisch und prüfen:
+/// Die Tests parsen die Textdateien unter `lib/l10n/strings/` statisch
+/// und prüfen:
 /// DE/EN-Parität, Platzhalter-Konsistenz, keine Gedankenstriche,
 /// kein Mojibake, alle verwendeten Keys definiert, alle
 /// Modell-labelKeys abgedeckt.
@@ -38,19 +39,49 @@ import 'package:thestia/models/user_mood.dart';
 bool _sameElements(Set<String> a, Set<String> b) =>
     a.length == b.length && a.containsAll(b);
 
+/// Die Dateien mit den Texten.
+///
+/// DIE TEXTE LIEGEN NACH THEMEN GETRENNT: `lib/l10n/app_strings.dart` ist
+/// nur noch die Zusammenfuehrung - die Texte selbst stehen je Thema in
+/// einer Datei unter `lib/l10n/strings/`.
+List<File> _textDateien() {
+  final ordner = Directory('lib/l10n/strings');
+  if (!ordner.existsSync()) {
+    // Der Test darf nicht stillschweigend nichts pruefen.
+    throw StateError(
+      'Der Ordner lib/l10n/strings/ fehlt - die Texte wurden verschoben?',
+    );
+  }
+  final dateien =
+      ordner
+          .listSync()
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.dart'))
+          .toList()
+        ..sort((a, b) => a.path.compareTo(b.path));
+  assert(dateien.isNotEmpty, 'Keine Textdateien gefunden');
+  return dateien;
+}
+
 Map<String, Map<String, Set<String>>> _loadStrings() {
-  final src = File('lib/l10n/app_strings.dart').readAsStringSync();
-  final deMarker = "  'de': {";
-  final enMarker = "  'en': {";
-  final deStart = src.indexOf(deMarker);
-  final enStart = src.indexOf(enMarker);
-  assert(deStart >= 0 && enStart > deStart, 'Locale-Blöcke nicht gefunden');
-  // NACH der Marker-Zeile beginnen, sonst wird 'de'/'en' als Key geparst.
-  final de = _parseBlock(
-    src.substring(src.indexOf('\n', deStart) + 1, enStart),
-  );
-  final en = _parseBlock(src.substring(src.indexOf('\n', enStart) + 1));
-  return {'de': de.placeholders, 'en': en.placeholders};
+  final de = <String, Set<String>>{};
+  final en = <String, Set<String>>{};
+  for (final datei in _textDateien()) {
+    final src = datei.readAsStringSync();
+    final deMarker = "  'de': {";
+    final enMarker = "  'en': {";
+    final deStart = src.indexOf(deMarker);
+    final enStart = src.indexOf(enMarker);
+    assert(deStart >= 0 && enStart > deStart, 'Locale-Blöcke nicht gefunden');
+    // NACH der Marker-Zeile beginnen, sonst wird 'de'/'en' als Key geparst.
+    final deBlock = _parseBlock(
+      src.substring(src.indexOf('\n', deStart) + 1, enStart),
+    );
+    final enBlock = _parseBlock(src.substring(src.indexOf('\n', enStart) + 1));
+    de.addAll(deBlock.placeholders);
+    en.addAll(enBlock.placeholders);
+  }
+  return {'de': de, 'en': en};
 }
 
 /// Alle statischen + dynamischen L10n-Key-Verwendungen in lib/ (ohne
@@ -60,7 +91,13 @@ Set<String> _usedKeys() {
   final useRe = RegExp(r"L10n\.tf?\(\s*(?:context|ctx)\s*,\s*'([^']+)'");
   for (final entity in Directory('lib').listSync(recursive: true)) {
     if (entity is! File || !entity.path.endsWith('.dart')) continue;
-    if (entity.path.endsWith('app_strings.dart')) continue;
+    // Die Textdateien selbst sind keine Verwendung (dort stehen die
+    // Schluessel, nicht ihre Nutzung).
+    if (entity.path.contains(
+      '${Platform.pathSeparator}l10n${Platform.pathSeparator}',
+    )) {
+      continue;
+    }
     final content = entity.readAsStringSync();
     for (final m in useRe.allMatches(content)) {
       used.add(m.group(1)!);
@@ -107,16 +144,20 @@ void main() {
   });
 
   group('L10n-Textqualität', () {
-    test('keine Gedankenstriche (– —) in app_strings.dart', () {
-      final src = File('lib/l10n/app_strings.dart').readAsStringSync();
-      expect(src.contains('–'), isFalse);
-      expect(src.contains('—'), isFalse);
+    test('keine Gedankenstriche (– —) in den Texten', () {
+      for (final datei in _textDateien()) {
+        final src = datei.readAsStringSync();
+        expect(src.contains('–'), isFalse, reason: datei.path);
+        expect(src.contains('—'), isFalse, reason: datei.path);
+      }
     });
 
     test('kein Mojibake (Ã Â als Doppelkodierungs-Reste)', () {
-      final src = File('lib/l10n/app_strings.dart').readAsStringSync();
-      expect(src.contains('Ã'), isFalse, reason: 'U+00C3 gefunden');
-      expect(src.contains('Â'), isFalse, reason: 'U+00C2 gefunden');
+      for (final datei in _textDateien()) {
+        final src = datei.readAsStringSync();
+        expect(src.contains('Ã'), isFalse, reason: 'U+00C3 in ${datei.path}');
+        expect(src.contains('Â'), isFalse, reason: 'U+00C2 in ${datei.path}');
+      }
     });
   });
 

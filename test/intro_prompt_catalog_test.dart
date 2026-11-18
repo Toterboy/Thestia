@@ -1,7 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/data/intro_prompt_catalog.dart';
+import 'support/l10n_quellen.dart';
 
 void main() {
   group('IntroPromptCatalog - Struktur', () {
@@ -158,7 +157,7 @@ void main() {
     // schon bei der Gruppendeklaration wirft in flutter_test ein
     // OutsideTestException.
     ({String de, String en}) readBlocks() {
-      final src = File('lib/l10n/app_strings.dart').readAsStringSync();
+      final src = liesL10nQuellen();
       final deIdx = src.indexOf("'de': {");
       final enIdx = src.indexOf("'en': {");
       expect(deIdx, greaterThan(0), reason: "Marker 'de' nicht gefunden");

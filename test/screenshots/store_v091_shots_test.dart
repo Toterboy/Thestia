@@ -1,3 +1,9 @@
+// Die Tests 'store_v091_shots' (Teil 1).
+//
+// DER WEG: Die Testdatei war zu lang (> 1000 Zeilen). Die Tests
+// sind nach Themen aufgeteilt; die Helfer liegen in
+// test/support/store_v091_shots_hilfen.dart.
+
 // Store-Screenshot-Generator fuer v0.9.1 (KEIN regulaerer Test).
 //
 // Rendert 5 ausgewahlte Screens in ZWEI Aufloesungen:
@@ -8,966 +14,32 @@
 //   $env:STORE_SHOTS="1"; flutter test --update-goldens test/screenshots/store_v091_shots_test.dart
 //
 // Ausgabe: test/screenshots/store_v091/{9x16,wqhd}/*.png
-import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:hive/hive.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:package_info_plus/package_info_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'support/store_screenshot_insets.dart';
-import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/providers/user_preferences_provider.dart';
-import 'package:thestia/providers/profile_provider.dart';
-import 'package:thestia/models/match.dart';
-import 'package:thestia/models/message.dart';
-import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/providers/chat_provider.dart';
 import 'package:thestia/screens/chat/chat_detail_screen.dart';
 import 'package:thestia/screens/home/home_screen.dart';
-import 'package:thestia/services/chat_service.dart';
 import 'package:thestia/screens/spice/spice_questions_screen.dart';
 import 'package:thestia/screens/swipe/swipe_mode_selection_screen.dart';
 import 'package:thestia/screens/welcome/welcome_screen.dart';
-import 'package:thestia/services/local_storage.dart';
-import 'package:thestia/services/secure_storage.dart';
-import 'package:thestia/theme/app_theme.dart';
-import 'package:thestia/utils/constants.dart';
 import 'package:thestia/widgets/appearance_selector.dart';
 import 'package:thestia/widgets/app_logo.dart';
 import 'package:thestia/widgets/chat_background_picker.dart';
 import 'package:thestia/widgets/privacy_section.dart';
 import 'package:thestia/widgets/theme_picker.dart';
-import 'package:thestia/utils/best_effort.dart';
 
-/// Ohne STORE_SHOTS=1 werden diese Tests uebersprungen (kein Goldens-Vergleich
-/// in der normalen Testsuite).
-final bool _enabled = Platform.environment.containsKey('STORE_SHOTS');
-
-/// Sprache des Renders: 'de' (Standard) oder 'en'.
-///
-/// WARUM (03.11.2026): Bis hierher gab es nur einen Render, und die
-/// englische Store-Liste trug deshalb DEUTSCHE Bilder - die
-/// Tablet-Skripte kopierten dieselben Dateien in beide Sprachen. Wer
-/// die englische Liste oeffnete, sah ein englisches Feature-Graphic
-/// und darunter deutsche Screenshots. Das ist keine Kosmetik: die
-/// Screenshots sind das, was im Store zum Installieren verleitet.
-///
-/// Der Render laeuft deshalb zweimal - einmal je Sprache:
-///
-///   $env:STORE_SHOTS="1"; flutter test --update-goldens \
-///       test/screenshots/store_v091_shots_test.dart
-///   $env:STORE_SHOTS="1"; $env:STORE_SHOTS_LANG="en"; flutter test \
-///       --update-goldens test/screenshots/store_v091_shots_test.dart
-final String _lang = (Platform.environment['STORE_SHOTS_LANG'] ?? 'de')
-    .toLowerCase();
-
-/// Waehlt den Text passend zur Render-Sprache.
-String _t(String de, String en) => _lang == 'en' ? en : de;
-
-/// Wurzelordner der Render-Ausgaben.
-///
-/// Die englischen Renders kommen in einen EIGENEN Ordner: sie
-/// duerfen sich nicht mit den deutschen ueberschreiben - sonst waere
-/// nach dem zweiten Lauf der deutsche Stand weg.
-const String _rootDe = 'store_v091';
-const String _rootEn = 'store_v091_en';
-
-String get _root => _lang == 'en' ? _rootEn : _rootDe;
-
-// Zielaufloesung der App-Screens: echtes Smartphone-Seitenverhaeltnis
-// (1080x2400 = 20:9). Die Komposition in
-// tool/make_store_screenshots.py verwendet genau diese Quelle.
-const _sizes = <String, ({Size size, double dpr})>{
-  'phone': (size: Size(1080, 2400), dpr: 3.0),
-};
-
-/// Aufloesung fuer die einzeln exportierten Modus-Kacheln.
-///
-/// 1080 breit, damit eine Kachel in voller Geraetebreite liegt - sie
-/// wird im Store nicht verkleinert dargestellt, sondern nur einzeln
-/// auf dem Verlauf verteilt. dpr 3 wie beim Screen, damit Text und
-/// Icons dieselbe Schriftgroesse haben.
-const Size _phone = Size(1080, 2400);
-const double _dpr = 3.0;
-
-/// Zielordner der einzelnen Kacheln. make_store_screenshots.py liest
-/// daraus und setzt sie auf dem Verlauf zusammen.
-String get outTiles => '$_root/tiles';
-
-/// Zielordner fuer die Kacheln der Screens 01, 02, 04 und 05.
-///
-/// Anders als [outTiles] sind das KEINE gerenderten Einzelkacheln,
-/// sondern vollstaendige Screens plus rects.json. Der Aufbau ist fuer
-/// diese Screens nicht "eine Kachel pro Widget", sondern "die echten
-/// Widgets des Screens an Ort und Stelle". Deshalb wird nichts
-/// umgebaut und nichts nachgeschnitten: rects.json sagt, welcher
-/// Bildbereich zu welcher Karte gehoert.
-String get outCards => '$_root/cards';
-
-/// SharedPreferences-Instanz fuer die Einzel-Exporte.
-///
-/// Wird in _pump() gesetzt, sobald die Mocks eingerichtet sind - dort
-/// wird SharedPreferences.getInstance() ohnehin schon aufgerufen.
-SharedPreferences? _sharedPrefsOrNull;
-
-/// Zugriff auf die gesetzte Instanz; [_soleTileHost] laeuft nach _pump().
-SharedPreferences get _sharedPrefs {
-  final p = _sharedPrefsOrNull;
-  if (p == null) {
-    throw StateError(
-      'SharedPreferences noch nicht initialisiert - '
-      '_sharedPrefsOrNull wird in _pump() gesetzt',
-    );
-  }
-  return p;
-}
-
-bool _fontsLoaded = false;
-
-/// Echte Systemschrift laden, damit kein Ahem-Blocktext erscheint.
-Future<void> _loadFontsOnce() async {
-  if (_fontsLoaded) return;
-  for (final path in [
-    r'C:\Windows\Fonts\segoeui.ttf',
-    r'C:\Windows\Fonts\arial.ttf',
-  ]) {
-    final f = File(path);
-    if (f.existsSync()) {
-      final loader = FontLoader('Roboto')
-        ..addFont(Future.value(ByteData.sublistView(f.readAsBytesSync())));
-      await loader.load();
-      break;
-    }
-  }
-  await bestEffort('FontLoader.load', () async {
-    final dartExe = File(Platform.resolvedExecutable);
-    final cacheDir = dartExe.parent.parent.parent.parent;
-    final icons = File(
-      '${cacheDir.path}${Platform.pathSeparator}'
-      'artifacts${Platform.pathSeparator}material_fonts${Platform.pathSeparator}'
-      'MaterialIcons-Regular.otf',
-    );
-    if (icons.existsSync()) {
-      final loader = FontLoader('MaterialIcons')
-        ..addFont(Future.value(ByteData.sublistView(icons.readAsBytesSync())));
-      await loader.load();
-    }
-  });
-
-  // Emoji (31.10.2026): Die Startseite begruesst mit "Hallo, du! <Emoji>".
-  // Ohne Emoji-Schrift zeichnet der Test ein leeres Kaestchen - im
-  // Store-Listing sieht das nach einem Fehler aus. Die Schrift ist
-  // optional: Fehlt sie (Linux ohne Noto-Color-Emoji), wird einfach
-  // nichts nachgeladen - der Render laeuft dann eben mit dem
-  // Kaestchen.
-  for (final pfad in const [
-    r'C:\Windows\Fonts\seguiemj.ttf', // Windows: Segoe UI Emoji
-    '/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf', // Linux
-    '/System/Library/Fonts/Apple Color Emoji.ttc', // macOS
-  ]) {
-    final f = File(pfad);
-    if (!f.existsSync()) continue;
-    // Manche Systemschriften kann Flutter nicht laden - dann eben ohne.
-    final geladen = await bestEffortOr('FontLoader.load', () async {
-      final loader = FontLoader('Noto Color Emoji')
-        ..addFont(Future.value(ByteData.sublistView(f.readAsBytesSync())));
-      await loader.load();
-      return true;
-    }, false);
-    if (geladen) break;
-  }
-  _fontsLoaded = true;
-}
-
-// ---------------------------------------------------------------------------
-// Fake-Storage (keine Plattform-Kanaele im Test)
-// ---------------------------------------------------------------------------
-
-class _FakeLocalStorage implements LocalStorage {
-  final map = <String, String>{};
-
-  /// Der Chat-Hintergrund-Dialog darf im Store-Screenshot NICHT
-  /// aufpoppen: er verdeckt den Chat, um den es geht ("Screenshot ist
-  /// das Chat-Hintergrund Pop up vor dem Chat, was so nicht sein soll").
-  ///
-  /// Der Dialog erscheint, solange `chatBackgroundSeen` nicht gesetzt
-  /// ist - der Store-Screenshot zeigt einen Geraet, auf dem der Nutzer
-  /// die Auswahl schon getroffen hat.
-  static const _settingsMitDialogGesehen =
-      '{"chatBackgroundSeen":true,"blindModeEnabled":true}';
-
-  @override
-  Future<void> saveString(String key, String value) async => map[key] = value;
-  @override
-  Future<String?> getString(String key) async {
-    if (key == AppConstants.prefsSettingsKey) return _settingsMitDialogGesehen;
-    return map[key];
-  }
-
-  @override
-  Future<void> saveBool(String key, bool value) async =>
-      map[key] = value ? 'true' : 'false';
-  @override
-  Future<bool?> getBool(String key) async =>
-      map[key] == null ? null : map[key] == 'true';
-  @override
-  Future<void> saveInt(String key, int value) async => map[key] = '$value';
-  @override
-  Future<int?> getInt(String key) async =>
-      map[key] == null ? null : int.tryParse(map[key]!);
-  @override
-  Future<void> remove(String key) async => map.remove(key);
-}
-
-class _FakeSecurePrefs extends SecurePreferencesStorage {
-  final map = <String, String>{};
-  @override
-  Future<void> saveString(String key, String value) async => map[key] = value;
-  @override
-  Future<String?> getString(String key) async => map[key];
-  @override
-  Future<void> remove(String key) async => map.remove(key);
-}
-
-class _FakeSecureProfileStore extends SecureProfileStore {
-  @override
-  Future<String?> read() async => null;
-  @override
-  Future<void> write(String json) async {}
-}
-
-// ---------------------------------------------------------------------------
-// Harness
-// ---------------------------------------------------------------------------
-
-Widget _harness(
-  Widget child,
-  SharedPreferences prefs, {
-  List<Override> extra = const [],
-  bool dark = false,
-}) {
-  // Card-SchattEN nur fuer den Store-Render abschalten: der Test-Rasterizer
-  // zeichnet den Drop-Shadow als harte graue Kontur statt weich - im Play Store
-  // sieht das nach einem Renderfehler aus ("grauer Rahmen"). Auf dem Geraet ist
-  // der Schatten weich, die App selbst bleibt unveraendert.
-  //
-  // [dark] = true rendert den DUNKLEN Farbsatz. Das ist fuer die
-  // Split-Kachel noetig (Hell und Dunkel auf einem Bild) - der
-  // Store soll zeigen, dass die App in beiden Modi lesbar ist.
-  final theme = dark
-      ? AppTheme.dark(theme: ThestiaTheme.classic)
-      : AppTheme.light(theme: ThestiaTheme.classic);
-  return ProviderScope(
-    overrides: [
-      localStorageProvider.overrideWithValue(_FakeLocalStorage()),
-      securePrefsProvider.overrideWithValue(_FakeSecurePrefs()),
-      secureProfileStoreProvider.overrideWithValue(_FakeSecureProfileStore()),
-      sharedPrefsProvider.overrideWithValue(prefs),
-      // Die Sprache. `L10n.t` liest localeProvider ueber den
-      // L10nScope - dieser Override ist das, was den Screen wirklich
-      // umschaltet. MaterialApp.locale allein aendert nur die
-      // Material-Widgets (Datum, Zahlen), nicht die App-Texte.
-      localeProvider.overrideWith((ref) => Locale(_lang)),
-      // Das Profil als VERIFIZIERT (NUTZERWUNSCH 31.10.2026: "Die Modi
-      // sollen auf den Screenshots alle entsperrt sein (Nur im
-      // Screenshot)").
-      //
-      // Derselbe Override erledigt zwei Aufgaben:
-      //
-      // 1. Die Modus-Kacheln (Find your Spark, Dating Hour, Transit
-      //    Spark) sind gesperrt, solange das eigene Profil nicht
-      //    verifiziert ist. Im Store-Bild sahen sie ausgegraut aus und
-      //    trugen ein Schloss - das Bild zeigte damit einen Zustand,
-      //    den ein Nutzer NICHT kennenlernen kann (der muss erst
-      //    ein Video einreichen). Alle fuenf Modi sichtbar und
-      //    bedienbar zu zeigen ist die ehrlichere Darstellung.
-      //
-      // 2. Die Startseite zeigte die Karte "Nicht verifiziert" mit dem
-      //    Text "Fuer diesen Modus musst du dein Alter mit einem kurzen
-      //    Video bestaetigen" - auf dem UEBERSCHRIFT des Bildes. Das
-      //    war doppelt stoerend: die Karte nimmt die halbe Hoehe ein
-      //    und erklaert etwas, das im Bild nicht gebraucht wird.
-      //
-      // Der Name bleibt leer - der Screenshot zeigt dadurch weiterhin
-      // "Hallo, du!" statt eines erfundenen Namens.
-      profileProvider.overrideWith((ref) {
-        final notifier = ProfileNotifier(
-          _FakeLocalStorage(),
-          _FakeSecureProfileStore(),
-        );
-        notifier.setProfile(
-          UserProfile(
-            id: AppConstants.currentUserId,
-            name: '',
-            bio: '',
-            // ERWACHSENEN-ALTER (03.11.2026).
-            //
-            // Ohne birthDate ist `profil.age` null, der Code rechnet dann
-            // mit 0 - und 0 ist ein Minderjaehriger. Der Datenschutz-
-            // Bildschirm zeigte deshalb die Jugendschutz-Variante
-            // ("In deinem Alter bleibt die Entfernung aus"), waehrend
-            // die Kachel-Ueberschrift das Verhalten von Erwachsenen
-            // beschreibt ("erst, wenn du sie erlaubst: Stufen von
-            // 10 km"). Zwei widersprechende Aussagen in EINEM Bild.
-            //
-            // Das Play-Listing richtet sich an Erwachsene (Zielgruppe
-            // 18+, "Restrict Minor Access"). Das Bild zeigt darum einen
-            // erwachsenen Nutzer - mit dem Text, den ER sieht.
-            birthDate: DateTime(1994, 4, 12),
-            isVerified: true,
-            verificationState: VerificationState.verified,
-          ),
-        );
-        return notifier;
-      }),
-      ...extra,
-    ],
-    // Der L10nScope steht UEBER dem MaterialApp: `L10n.t` sucht ihn
-    // ueber den Kontext. Wer ihn weglässt, bekommt deutsche Texte in
-    // einem englischen Listing.
-    child: L10nScope(
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: theme.copyWith(
-          cardTheme: theme.cardTheme.copyWith(
-            elevation: 0,
-            shadowColor: const Color(0x00000000),
-          ),
-        ),
-        locale: Locale(_lang),
-        supportedLocales: const [Locale('de'), Locale('en')],
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        home: child,
-      ),
-    ),
-  );
-}
-
-Future<void> _pump(
-  WidgetTester tester,
-  Widget child, {
-  required String outDir,
-  required String name,
-  required Size size,
-  required double dpr,
-  double textScale = 1.0,
-  bool dark = false,
-  Future<void> Function(WidgetTester)? after,
-  List<Override> extra = const [],
-}) async {
-  await tester.runAsync(_loadFontsOnce);
-  tester.view.physicalSize = size;
-  tester.view.devicePixelRatio = dpr;
-  addTearDown(tester.view.reset);
-
-  // System-Insets eines echten Geraets setzen.
-  //
-  // Die Logik liegt in tool/store_screenshot_insets.dart, NICHT hier:
-  // diese Datei ist gitignoriert, der Fix waere beim naechsten Checkout
-  // verloren gegangen. Siehe dort, warum es ueberhaupt noetig ist -
-  // ohne Insets setzt SafeArea im flutter_test nichts und der Render
-  // zeigt die App ohne Statusleiste.
-  applyStoreInsets(tester.view);
-  addTearDown(() => resetStoreInsets(tester.view));
-
-  SharedPreferences.setMockInitialValues({});
-  final prefs = await SharedPreferences.getInstance();
-  _sharedPrefsOrNull = prefs;
-  // Ohne Mock zeigt die Fusszeile "Version ." - im Store wuerde das wie ein
-  // Platzhalter aussehen.
-  //
-  // Version und Build werden aus pubspec.yaml GELESEN, nicht hier
-  // festgeschrieben. Festgeschriebene Werte sind bei jedem Release
-  // stillschweigend veraltet - so stand hier bis v0.9.2 "0.9.1" im
-  // Store-Login-Screenshot, waehrend bereits 0.9.2 ausgeliefert wurde.
-  final pub = _readPubspecVersionSync();
-  PackageInfo.setMockInitialValues(
-    appName: 'Thestia',
-    packageName: 'com.thestia.app',
-    version: pub.version,
-    buildNumber: pub.build,
-    buildSignature: '',
-  );
-  const recordChannel = MethodChannel('com.llfbandit.record/messages');
-  tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-    recordChannel,
-    (call) async => null,
-  );
-
-  await tester.pumpWidget(
-    MediaQuery(
-      // Nur fuer Screens, die sonst ueber den unteren Rand hinauslaufen
-      // (Entdecken-Liste): echtes UI, kompakter gesetzt.
-      data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
-      child: _harness(child, prefs, extra: extra, dark: dark),
-    ),
-  );
-  for (var i = 0; i < 3; i++) {
-    await tester.pumpAndSettle(const Duration(milliseconds: 300));
-    await tester.runAsync(
-      () => Future<void>.delayed(const Duration(milliseconds: 500)),
-    );
-  }
-  if (after != null) {
-    await after(tester);
-    await tester.pumpAndSettle(const Duration(milliseconds: 400));
-  }
-  await expectLater(
-    find.byType(MaterialApp),
-    matchesGoldenFile('$outDir/$name.png'),
-  );
-}
-
-/// Tippt den Verbindungs-Hinweis im Chat weg ("Kein P2P moeglich").
-///
-/// NUTZERWUNSCH (01.11.2026): "Bei Screenshot 3 soll die Nachricht mit
-/// Kein P2P moeglich nicht angezeigt werden (nur da)".
-///
-/// Der Hinweis sieht im Store-Bild wie eine Fehlermeldung aus - und
-/// passt nicht zur Ueberschrift der Kachel ("Euer Chat bleibt bei
-/// euch"). Er steht obendrauf und schiebt die Nachrichten nach unten.
-///
-/// Weggetippt wird er ueber den Knopf, den die App dafuer anbietet -
-/// der Wegtipp-Knopf (X) neben dem Text. Das aendert NICHTS an der
-/// App: sie zeigt den Hinweis weiterhin, wenn keine direkte
-/// Verbindung zustande kommt. Nur das Store-Bild zeigt den Zustand
-/// "Nutzer hat den Hinweis weggetippt" - und genau so sieht ein
-/// Geraet aus, auf dem der Hinweis schon verschwunden ist.
-///
-/// Das prueft nebenbei den Knopf selbst: wenn er nicht mehr da waere
-/// oder nichts mehr tuete, wuerde der Hinweis im Bild stehen bleiben
-/// und `check_store_screenshots.py` faelle nicht auf.
-Future<void> _wegtippeVerbindungshinweis(WidgetTester tester) async {
-  // Der Text kommt aus der App: 'chat.relayBannerShort'.
-  final hinweis = _t('Kein P2P m\u{f6}glich', 'No P2P available');
-  final text = find.text(hinweis);
-  if (text.evaluate().isEmpty) return; // nichts zu tun
-
-  // Der Knopf sitzt in derselben Karte wie der Text.
-  final karte = find.ancestor(of: text, matching: find.byType(Card));
-  final knopf = find.descendant(of: karte, matching: find.byIcon(Icons.close));
-  if (knopf.evaluate().isEmpty) return;
-
-  await tester.tap(knopf.first);
-  await tester.pumpAndSettle(const Duration(milliseconds: 400));
-
-  expect(
-    find.text(hinweis),
-    findsNothing,
-    reason: 'Der Verbindungs-Hinweis muss im Store-Bild weg sein.',
-  );
-}
-
-/// Liest `version: x.y.z+build` aus pubspec.yaml.
-///
-/// Bewusst aus der Datei statt aus PackageInfo: im Test laeuft kein
-/// gebautes Artefakt, PackageInfo wuerde hier nichts liefern. So
-/// stimmen die Store-Screenshots per Konstruktion mit der Version
-/// ueberein, die tatsaechlich ausgeliefert wird.
-({String version, String build}) _readPubspecVersionSync() {
-  final file = File('pubspec.yaml');
-  if (!file.existsSync()) {
-    throw StateError(
-      'pubspec.yaml nicht gefunden - Screenshots nur aus dem '
-      'Repository-Root erzeugen.',
-    );
-  }
-  for (final line in file.readAsLinesSync()) {
-    final m = RegExp(r'^version:\s*([0-9.]+)\+(\d+)\s*$').firstMatch(line);
-    if (m != null) return (version: m.group(1)!, build: m.group(2)!);
-  }
-  throw StateError(
-    'Kein "version: x.y.z+build" in pubspec.yaml gefunden - '
-    'Screenshot-Renderer kann die Version nicht ermitteln.',
-  );
-}
-
-/// No-op-Callback fuer gerenderte Auswahl-Widgets.
-void _noop(String _) {}
-
-/// Der Screen "Erscheinungsbild" - die Einstellungen fuer Farbschema,
-/// Hell/Dunkel und Chat-Hintergrund.
-///
-/// [erscheinung] ist der im Screen gewaehlte Modus ("light" oder
-/// "dark"). Er wird durchgereicht, damit das helle und das dunkle
-/// Bild denselben Screen zeigen - nur mit der passenden Auswahl.
-///
-/// Bewusst NICHT nachgebaut, sondern die echten Widgets der App:
-/// ThemePicker, AppearanceSelector, ChatBackgroundPicker. Wer das
-/// Layout hier nachbaut, erzeugt wieder ein Mockup - und genau das
-/// war der Fehler, den dieser Screen vorher hatte.
-Widget _anpassenScreen(String erscheinung) {
-  // Die Ueberschriften sind im echten Screen L10n-Keys
-  // ('settings.colors' = Farbwelt/Color scheme,
-  // 'settings.chatBg' = Chat-Hintergrund/Chat background). Hier steht
-  // die kurzere Fassung, damit sie im Bild Platz haben.
-  return Builder(
-    builder: (context) => Scaffold(
-      appBar: AppBar(title: Text(_t('Erscheinungsbild', 'Appearance'))),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              _t('Farbschema', 'Color scheme'),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            ThemePicker(selectedName: 'classic', onChanged: (_) {}),
-            const SizedBox(height: 16),
-            Text(
-              _t('Erscheinung', 'Light or dark'),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            AppearanceSelector(value: erscheinung, onChanged: _noop),
-            const SizedBox(height: 16),
-            Text(
-              _t('Chat-Hintergrund', 'Chat background'),
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            const ChatBackgroundPicker(),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-/// No-op-Callback fuer [ThemePicker], der ein [ThestiaTheme] liefert.
-void _noopTheme(ThestiaTheme _) {}
-
-/// Registriert einen Screen in beiden Aufloesungen.
-void _shot(
-  String name,
-  Widget Function() build, {
-  double textScale = 1.0,
-  Future<void> Function(WidgetTester)? after,
-}) {
-  for (final entry in _sizes.entries) {
-    testWidgets('$name [${entry.key}]', (tester) async {
-      await _pump(
-        tester,
-        build(),
-        outDir: '$_root/${entry.key}',
-        name: name,
-        size: entry.value.size,
-        dpr: entry.value.dpr,
-        textScale: textScale,
-        after: after,
-      );
-    }, skip: !_enabled);
-  }
-}
-
-/// Registriert einen Screen im DUNKLEN Farbsatz - nur fuer die
-/// Phone-Aufloesung.
-///
-/// Der Grund: die Split-Kachel zeigt denselben Screen halb hell, halb
-/// dunkel. Dafuer braucht es zwei Renders desselben Screens - und der
-/// dunkle ist nur fuer das Phone-Format noetig (das Tablet-Bild wird
-/// nicht geteilt).
-void _shotDark(String name, Widget Function() build) {
-  testWidgets('$name [dunkel]', (tester) async {
-    await _pump(
-      tester,
-      build(),
-      outDir: '$_root/phone',
-      name: name,
-      size: _phone,
-      dpr: _dpr,
-      dark: true,
-    );
-  }, skip: !_enabled);
-}
-
-/// Die Reihenfolge der Modi im Screen, wie in
-/// `swipe_mode_selection_screen.dart` deklariert.
-///
-/// `DiscoveryMode` ist ein privates Enum in der Screen-Datei und von hier
-/// aus nicht importierbar. Die Reihenfolge wird deshalb als Konstante
-/// gespiegelt und jeder Eintrag einzeln geprueft - kommt in der App ein
-/// Modus dazu, schlaegt der Test fehl statt die Kachel stillschweigend
-/// wegzulassen. In einem Zwischenstand stand hier
-/// 'mode-tile-findYourMatch' statt 'mode-tile-findMatch', wodurch die
-/// erste Kachel im Screenshot fehlte.
-const List<String> _modeOrder = [
-  'findMatch', // Find your Match
-  'datingHour', // Dating Hour (Event)
-  'randomChat', // Zufallschat
-  'qrScan', // QR-Code scannen
-  'transitSpark', // Transit Spark
-];
-
-/// Rendert eine einzelne Modus-Kachel als einziges Widget.
-///
-/// Noetig, weil matchesGoldenFile den VORAHEN-Frame erfasst: auf dem
-/// vollstaendigen Screen umfasst das die ganze Gruppe (Ueberschrift
-/// plus alle Kacheln darunter). Allein in einem Scaffold ist die
-/// Karte das einzige Kind und der Export ist damit wirklich die
-/// Kachel.
-///
-/// Die Kachel wird NICHT nachgebaut - das Widget kommt unveraendert
-/// aus dem gerenderten Screen.
-Widget _soleTileHost(Card card) {
-  final theme = AppTheme.light(theme: ThestiaTheme.classic);
-  return ProviderScope(
-    overrides: [
-      localStorageProvider.overrideWithValue(_FakeLocalStorage()),
-      securePrefsProvider.overrideWithValue(_FakeSecurePrefs()),
-      secureProfileStoreProvider.overrideWithValue(_FakeSecureProfileStore()),
-      sharedPrefsProvider.overrideWithValue(_sharedPrefs),
-      localeProvider.overrideWith((ref) => Locale(_lang)),
-    ],
-    child: L10nScope(
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: theme,
-        locale: Locale(_lang),
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        home: Scaffold(
-          // Die Kachel darf die View NICHT fuellen. Im Listen-Kontext
-          // bestimmt ihr Inhalt die Hoehe; hier wuerde sie sonst
-          // gestreckt und das Icon landete unten. Column mit
-          // mainAxisSize.min erzwingt die Inhaltshoehe.
-          body: Align(
-            alignment: Alignment.topCenter,
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [card],
-              ),
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-/// Karte fuer den Kachel-Aufbau der Store-Screens: echter Inhalt auf
-/// leuchtendem Grund, ohne Geraeterahmen.
-///
-/// KEIN eigenes MaterialApp: _pump() haengt den Kindbaum in _harness(),
-/// und das bringt schon eines mit. Ein zweites wuerde den Capture
-/// unmoeglich machen ("matched too many widgets").
-///
-/// Anders als [_soleTileHost] wird hier nichts gestreckt: der Inhalt
-/// behaelt seine natuerliche Hoehe und steht auf dem Hintergrund. Das
-/// ist die Form, in der die Kachel spaeter erscheint.
-Widget _cardHost(Widget child, {double maxWidth = 340}) {
-  return Builder(
-    builder: (context) {
-      final theme = Theme.of(context);
-      return Scaffold(
-        backgroundColor: theme.colorScheme.surface,
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: maxWidth),
-              child: child,
-            ),
-          ),
-        ),
-      );
-    },
-  );
-}
-
-/// Zielverzeichnis fuer die Rechteck-Dateien, ABSOLUT aufgeloest.
-///
-/// `matchesGoldenFile` loest seinen Pfad relativ zur Testdatei auf, ein
-/// `File('store_v091/...')` dagegen relativ zum Prozessordner - das ist
-/// die Package-Wurzel. Die Rechtecke landeten dadurch in
-/// `<wurzel>/store_v091/cards/` statt neben den Bildern in
-/// `test/screenshots/store_v091/cards/`, und make_store_screenshots.py
-/// fand sie nicht.
-///
-/// Darum wird derselbe Zielordner wie bei den Bildern hier ausdruecklich
-/// gebildet: Package-Wurzel plus test/screenshots/.
-Directory _outCardsDir() =>
-    Directory('${Directory.current.path}/test/screenshots/$outCards');
-
-/// Stabiler Name einer Kachel aus deren Text.
-///
-/// Aus dem ExpansionTile-Titel, nicht aus der Position. Siehe die
-/// Begruendung beim Export von 05.
-String? _tileName(Widget? title) {
-  final data = title is Text ? title.data : null;
-  if (data == null || data.trim().isEmpty) return null;
-  return data
-      .trim()
-      .toLowerCase()
-      .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
-      .replaceAll(RegExp(r'^_+|_+$'), '');
-}
-
-/// Schreibt eine Liste von Kacheln als JSON.
-///
-/// Anders als [_writeCardRects] traegt jede Kachel ihren Screenshot mit
-/// sich: bei 05 wird ueber die Liste gescrollt, und eine Kachel kann nur
-/// aus dem Bild geschnitten werden, in dem sie vollstaendig stand.
-Future<void> _writeCardList(
-  WidgetTester tester,
-  String screen,
-  Map<String, Map<String, Object>> cards,
-) async {
-  final file = File('${_outCardsDir().path}/rects_$screen.json');
-  await tester.runAsync(() async {
-    await file.parent.create(recursive: true);
-    await file.writeAsString(jsonEncode(cards), flush: true);
-  });
-}
-
-/// Schreibt die Rechtecke der Kacheln eines Screens als JSON.
-///
-/// EINE Datei je Screen (`rects_<name>.json`). Eine gemeinsame Datei
-/// wuerde beim zweiten Screen ueberschrieben - die Kacheln von 04
-/// entstuenden dann aus dem Rechteck-Bild von 01.
-///
-/// `rects` in LOGISCHEN Pixeln; make_store_screenshots.py rechnet mit
-/// 3.0 auf physische Pixel um, weil der Screenshot in physischen
-/// Pixeln aufgenommen wird.
-Future<void> _writeCardRects(
-  WidgetTester tester,
-  String screen,
-  Map<String, Rect> rects,
-) async {
-  final file = File('${_outCardsDir().path}/rects_$screen.json');
-  final payload = <String, List<double>>{};
-  rects.forEach((name, r) {
-    payload[name] = [r.left, r.top, r.width, r.height];
-  });
-  // Das Schreiben muss in runAsync. flutter_test laeuft in einer
-  // FakeAsync-Zone: ein echtes Dateisystem-Versprechen wird dort nie
-  // fertig, und der Test haengt bis zum 10-Minuten-Timeout. Genau das
-  // war die Ursache der Timeouts beim ersten Versuch.
-  await tester.runAsync(() async {
-    await file.parent.create(recursive: true);
-    await file.writeAsString(jsonEncode(payload), flush: true);
-  });
-}
-
-/// Findet die Modus-Kacheln im gerenderten Screen, in Bildschirmreihenfolge.
-///
-/// Die Kacheln tragen in der App den Key `mode-tile-<name>`.
-///
-/// Bewusst KEIN Nachbau des Kachel-Layouts: exportiert wird die echte
-/// Card aus dem tatsächlich gerenderten Baum. Genau das war beim
-/// SegmentedButton-Fall der Fehler - im Screenshot stand ein Widget,
-/// das es in der App nicht gab.
-List<Finder> _findModeCards(WidgetTester tester) {
-  final out = <Finder>[];
-  for (final name in _modeOrder) {
-    final f = find.byKey(ValueKey('mode-tile-$name'));
-    expect(
-      f,
-      findsOneWidget,
-      reason:
-          "Modus '$name' nicht gefunden - der Key in _ModeCard "
-          'passt nicht zum Enum-Namen',
-    );
-    out.add(f);
-  }
-  return out;
-}
-
-/// ChatService mit erfundenem Match und erfundenem Verlauf.
-///
-/// Der Chat-Screen liest aus dem echten [ChatService], der aus Supabase
-/// fuellt. Im Test gibt es keine Verbindung, also waere der Screen leer -
-/// und ein leerer Chat ist als Store-Bild wertlos.
-///
-/// Ueberschrieben werden nur [getMatches] und [getMessages].
-/// Richtet die Speicher fuer die Chat-/Startseiten-Screens her.
-///
-/// Der Chat startet ueber EncryptionService die Signal-Boxen, und
-/// SecureHive holt seinen Schluessel direkt aus dem
-/// flutter_secure_storage-Plugin - nicht ueber die Provider-Attrappe des
-/// Harness. Im Test gibt es dafuer keine Implementierung, also bricht
-/// initialize() mit MissingPluginException ab.
-///
-/// Der Kanal wird deshalb hier als leerer Speicher beantwortet:
-/// read -> null (kein Schluessel hinterlegt), write/delete -> true.
-/// Das entspricht einem frisch installierten Geraet.
-/// Hive braucht einen Pfad fuer die verschluesselten Boxen
-/// (Identity-Key, PreKeys, Session-Ratchet). Im Test geht das in
-/// ein temporaeres Verzeichnis.
-Future<void> _vorbereiteChatSpeicher(WidgetTester tester) async {
-  final hiveDir = Directory.systemTemp.createTempSync('thestia_store_chat');
-  Hive.init(hiveDir.path);
-  addTearDown(() {
-    // Dateikoepfe bleiben unter Windows gern kurz offen - fuer
-    // einen Temp-Ordner ist das kein Fehler.
-    bestEffortSync('hiveDir.deleteSync', () {
-      hiveDir.deleteSync(recursive: true);
-    });
-  });
-
-  const secure = MethodChannel(
-    'plugins.it_nomads.com/'
-    'flutter_secure_storage',
-  );
-  tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-    secure,
-    (call) async => switch (call.method) {
-      'read' => null,
-      'write' || 'delete' => true,
-      'containsKey' => false,
-      _ => null,
-    },
-  );
-  addTearDown(
-    () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
-      secure,
-      null,
-    ),
-  );
-}
-
-class _FakeChatService extends ChatService {
-  _FakeChatService(this._partner, this._messages);
-
-  final UserProfile _partner;
-  final List<Message> _messages;
-
-  @override
-  List<Match> getMatches() => [
-    Match(
-      id: 'store-shot-match',
-      partner: _partner,
-      matchedAt: DateTime(2026, 1, 1),
-    ),
-  ];
-
-  @override
-  Match? getMatchById(String matchId) =>
-      matchId == 'store-shot-match' ? getMatches().first : null;
-
-  @override
-  List<Message> getMessages(String matchId) =>
-      matchId == 'store-shot-match' ? _messages : const [];
-}
-
-UserProfile _chatPartner() => UserProfile(
-  id: 'store-shot-peer',
-  name: 'Mara',
-  bio: _t('Bücher, Rad, Kaffee.', 'Books, bikes, coffee.'),
-  state: 'Nordrhein-Westfalen',
-  interests: _lang == 'en'
-      ? const ['Photography', 'Hiking', 'Cooking']
-      : const ['Fotografieren', 'Wandern', 'Kochen'],
-  isVerified: true,
-  introText: _t(
-    'Erzähl mir etwas, das nicht auf deinem Profil steht.',
-    'Tell me something that is not on your profile.',
-  ),
-);
-
-List<Message> _chatHistory() {
-  final now = DateTime(2026, 1, 2, 20, 15);
-  Message m(String id, String from, String text, int min) => Message(
-    id: id,
-    senderId: from,
-    receiverId: from == 'me' ? 'store-shot-peer' : 'me',
-    text: text,
-    timestamp: now.add(Duration(minutes: min)),
-  );
-
-  // 'me' ist die Demo-ID, die AppConstants.currentUserId ohne
-  // Supabase-Session zurueckgibt. Nachrichten mit dieser Absender-ID
-  // landen auf der eigenen Seite, die anderen beim Partner.
-  // Absurder und nicht/generischer Chat-Inhalt fuer den Store-Screenshot.
-  //
-  // "Hey, schreib mir" verkauft eine App nicht. Der Text soll zeigen,
-  // dass hier Menschen miteinander reden und nicht miteinander
-  // ausfuellen - und er soll auf den ersten Blick ungewoehnlich genug
-  // sein, dass jemand innehaelt und weiterklickt.
-  //
-  // Bewusst ohne Schwaeren ("Kaffee am Wochenende?") - der Screenshot
-  // soll Spass machen, nicht kraenkend sein.
-  //
-  // Die letzte Nachricht beantwortet die davor ("Gewinnst du meistens?")
-  // und bleibt im selben Thema. Ein Themenwechsel auf eine Date-Einladung
-  // an der letzten Zeile wirkt, als haette man den Faden verloren - und
-  // genau so gelesen wird das Bild zuerst.
-  return [
-    m(
-      '1',
-      'store-shot-peer',
-      _t(
-        'Ich muss dir was Beunruhigendes sagen.',
-        'I have to tell you something unsettling.',
-      ),
-      0,
-    ),
-    m('2', 'me', _t('Jetzt bin ich neugierig.', 'Now I am curious.'), 2),
-    m(
-      '3',
-      'store-shot-peer',
-      _t(
-        'Ich verhandle nachts mit meinem Toaster.',
-        'I negotiate with my toaster at night.',
-      ),
-      4,
-    ),
-    m('4', 'me', _t('Gewinnst du meistens?', 'Do you usually win?'), 6),
-    m(
-      '5',
-      'store-shot-peer',
-      _t(
-        'Selten. Er akzeptiert nur exakt zwei Scheiben.',
-        'Rarely. It accepts exactly two slices.',
-      ),
-      8,
-    ),
-  ];
-}
+import 'hilfen.dart';
 
 void main() {
-  // 0) Kachel-Export fuer den Aufbau OHNE Geraet.
-  //
-  //    Die Screens 01, 02, 04 und 05 sollen im Store nicht als
-  //    Screenshot eines Screens erscheinen, sondern als KACHELN auf dem
-  //    Markenverlauf - so wie 03_entdecken seine fuenf Moduskacheln hat.
-  //
-  //    Dafuer wird nicht das Layout nachgebaut, sondern jeder echte
-  //    Widget-Bereich vermessen und als Rechteck notiert. Nachgebautes
-  //    Layout driftet von der App; das war beim SegmentedButton-Fall die
-  //    Ursache fuer ein Bild mit einem Widget, das es in der App nicht
-  //    gab.
-  //
-  //    Gespeichert wird der vollstaendige Screen (physische Pixel) plus
-  //    rects.json. make_store_screenshots.py schneidet daraus die
-  //    Kacheln heraus - es braucht also keine Farberkennung, weil die
-  //    Rechtecke exakt sind.
-  if (_enabled) {
+  if (enabled) {
     testWidgets('export Kacheln 01 (Logo und Text)', (tester) async {
-      await _pump(
+      await pump(
         tester,
         const WelcomeScreen(),
         outDir: outCards,
         name: '01_willkommen',
-        size: _phone,
-        dpr: _dpr,
+        size: storeV091ShotsPhone,
+        dpr: storeV091ShotsDpr,
       );
       final content = find.byKey(const Key('welcome-page-content'));
       expect(
@@ -993,8 +65,8 @@ void main() {
       for (final r in boxes.skip(1)) {
         box = box.expandToInclude(r);
       }
-      await _writeCardRects(tester, '01_willkommen', {'willkommen_logo': box});
-      // Kein eigener Capture: _pump() hat den Screenshot unter
+      await writeCardRects(tester, '01_willkommen', {'willkommen_logo': box});
+      // Kein eigener Capture: pump() hat den Screenshot unter
       // $outCards/01_willkommen.png bereits geschrieben. Ein zweiter
       // Capture erzeugte nur eine doppelte PNG.
     });
@@ -1013,21 +85,21 @@ void main() {
       for (final entry in <String, Widget>{
         'anpassen_farbschema': const ThemePicker(
           selectedName: 'classic',
-          onChanged: _noopTheme,
+          onChanged: noopTheme,
         ),
         'anpassen_erscheinung': const AppearanceSelector(
           value: 'light',
-          onChanged: _noop,
+          onChanged: noop,
         ),
         'anpassen_chat': const ChatBackgroundPicker(),
       }.entries) {
-        await _pump(
+        await pump(
           tester,
-          _cardHost(entry.value),
+          cardHost(entry.value),
           outDir: outCards,
           name: entry.key,
-          size: _phone,
-          dpr: _dpr,
+          size: storeV091ShotsPhone,
+          dpr: storeV091ShotsDpr,
         );
         final finder = find.byWidget(entry.value);
         expect(
@@ -1041,10 +113,10 @@ void main() {
           'rect': [r.left, r.top, r.width, r.height],
         };
       }
-      // Einmal am Ende: _writeCardRects pro Durchlauf wuerde die Datei
+      // Einmal am Ende: writeCardRects pro Durchlauf wuerde die Datei
       // bei jedem Widget ueberschreiben und am Ende nur noch das
       // Chat-Hintergrund-Rechteck enthalten.
-      await _writeCardList(tester, '04_anpassen', cards);
+      await writeCardList(tester, '04_anpassen', cards);
     });
 
     // 6) Datenschutz. Eigenes Bild statt vierte Kachel in 04: die
@@ -1058,13 +130,13 @@ void main() {
     testWidgets('export 06_datenschutz Kachel', (tester) async {
       final cards = <String, Map<String, Object>>{};
       const section = PrivacySection(readOnly: true);
-      await _pump(
+      await pump(
         tester,
-        _cardHost(section),
+        cardHost(section),
         outDir: outCards,
         name: '06_datenschutz',
-        size: _phone,
-        dpr: _dpr,
+        size: storeV091ShotsPhone,
+        dpr: storeV091ShotsDpr,
       );
       final finder = find.byWidget(section);
       expect(
@@ -1077,17 +149,17 @@ void main() {
         'file': 'datenschutz.png',
         'rect': [r.left, r.top, r.width, r.height],
       };
-      await _writeCardList(tester, '06_datenschutz', cards);
+      await writeCardList(tester, '06_datenschutz', cards);
     });
 
     testWidgets('export Kacheln 05 (alle Kategorien)', (tester) async {
-      await _pump(
+      await pump(
         tester,
         const SpiceQuestionsScreen(matchId: 1),
         outDir: outCards,
         name: '05_eisbrecher',
-        size: _phone,
-        dpr: _dpr,
+        size: storeV091ShotsPhone,
+        dpr: storeV091ShotsDpr,
       );
       // Die Kategorien stehen in einem ListView.builder: gerendert wird
       // nur, was im Viewport liegt. Also wird durch die Liste gelaufen
@@ -1114,7 +186,7 @@ void main() {
         var added = 0;
         for (var i = 0; i < found; i++) {
           final tile = tester.widget<ExpansionTile>(tiles.at(i));
-          final name = _tileName(tile.title);
+          final name = tileName(tile.title);
           if (name == null || cards.containsKey(name)) continue;
           final r = tester.getRect(tiles.at(i));
           final view = tester.view.physicalSize / tester.view.devicePixelRatio;
@@ -1131,7 +203,7 @@ void main() {
           find.byType(MaterialApp).last,
           matchesGoldenFile('$outCards/05_$step.png'),
         );
-        await _writeCardList(tester, '05_eisbrecher', cards);
+        await writeCardList(tester, '05_eisbrecher', cards);
 
         await tester.drag(list, const Offset(0, -420));
         await tester.pumpAndSettle();
@@ -1143,39 +215,39 @@ void main() {
   //      Versprechen der App und zeigt den Alltag, den die uebrigen
   //      Bilder nicht zeigen - 01 Willkommen, 03 Modi, 04 Personalisierung,
   //      05 Eisbrecher.
-  if (_enabled) {
+  if (enabled) {
     testWidgets('export Kacheln 02 (Chat)', (tester) async {
-      await _vorbereiteChatSpeicher(tester);
+      await vorbereiteChatSpeicher(tester);
 
       // Auch im Phone-Ordner: make_store_screenshots.py liest den
       // Store-Screen 02 von dort, nicht aus cards/. Beide Aufrufe
       // nutzen denselben Provider-Override - ohne ihn waere der Screen
       // in einem der beiden Ordner leer.
-      await _pump(
+      await pump(
         tester,
         const ChatDetailScreen(matchId: 'store-shot-match'),
-        outDir: '$_root/phone',
+        outDir: '$root/phone',
         name: '02_chat',
-        size: _phone,
-        dpr: _dpr,
-        after: _wegtippeVerbindungshinweis,
+        size: storeV091ShotsPhone,
+        dpr: storeV091ShotsDpr,
+        after: wegtippeVerbindungshinweis,
         extra: [
           chatServiceProvider.overrideWithValue(
-            _FakeChatService(_chatPartner(), _chatHistory()),
+            FakeChatService(chatPartner(), chatHistory()),
           ),
         ],
       );
-      await _pump(
+      await pump(
         tester,
         const ChatDetailScreen(matchId: 'store-shot-match'),
         outDir: outCards,
         name: '02_chat',
-        size: _phone,
-        dpr: _dpr,
-        after: _wegtippeVerbindungshinweis,
+        size: storeV091ShotsPhone,
+        dpr: storeV091ShotsDpr,
+        after: wegtippeVerbindungshinweis,
         extra: [
           chatServiceProvider.overrideWithValue(
-            _FakeChatService(_chatPartner(), _chatHistory()),
+            FakeChatService(chatPartner(), chatHistory()),
           ),
         ],
       );
@@ -1195,18 +267,18 @@ void main() {
     //    wirklich sieht: neue Nachrichten, neue Likes, neue Funken und
     //    das Dock.
     testWidgets('export 02_aktuelles (Startseite)', (tester) async {
-      await _vorbereiteChatSpeicher(tester);
+      await vorbereiteChatSpeicher(tester);
 
-      await _pump(
+      await pump(
         tester,
         const HomeScreen(),
-        outDir: '$_root/phone',
+        outDir: '$root/phone',
         name: '02_aktuelles',
-        size: _phone,
-        dpr: _dpr,
+        size: storeV091ShotsPhone,
+        dpr: storeV091ShotsDpr,
         extra: [
           chatServiceProvider.overrideWithValue(
-            _FakeChatService(_chatPartner(), _chatHistory()),
+            FakeChatService(chatPartner(), chatHistory()),
           ),
         ],
       );
@@ -1215,37 +287,8 @@ void main() {
   }
 
   // 1) Willkommen: das Versprechen der App (Persönlichkeit vor Aussehen).
-  _shot('01_willkommen', () => const WelcomeScreen());
-
-  // 2) Anmelden/Registrieren: KEIN Store-Screenshot mehr.
-  //
-  //    Bis v0.9.2 war das Bild 02 ("Erst prüfen, dann freischalten").
-  //    Es zeigt ein Formular - etwas, das man genau einmal macht, und
-  //    damit den schwächsten der fuenf Bilder. Ersetzt durch 02_chat.
-  //
-  //    Der Screen wird hier NICHT mehr gerendert. Das ist Absicht: ein
-  //    Export, den niemand im Store braucht, wird auch nicht gepflegt,
-  //    und make_store_screenshots.py laesst nichts mehr von ihm
-  //    unerwartet im Fastlane-Ordner auftauchen.
-
-  // 3) Entdecken: die fuenf Modus-Kacheln, einzeln exportiert.
-  //
-  //    v0.9.2, zweiter Durchgang: der Screenshot zeigte den kompletten
-  //    Screen in einem Geraet, wodurch die fuenf Modi nur durch
-  //    Verkleinern der Schrift (textScale 0.64) alle sichtbar wurden -
-  //    und die Schrift dadurch kleiner war als in den anderen Bildern.
-  //
-  //    Jetzt: KEIN Screen, KEIN Geraet. Jede echte Modus-Kachel wird
-  //    einzeln in ein eigenes PNG geschrieben und in
-  //    compose_modes() einzeln auf den Markenverlauf verteilt. Jede
-  //    Kachel behält Originalgroesse und Originaltext, nichts wird
-  //    skaliert, alles ist in voller Schriftgroesse sichtbar.
-  //
-  //    Der Modus-Screen wird dazu einmal gerendert und die echten
-  //    _ModeCard-Widgets werden herausgeloest. Das Layout NICHT
-  //    nachbauen - ein nachgebautes Layout driftet von der App. Genau
-  //    das war der Fehler beim SegmentedButton-Fall.
-  if (_enabled) {
+  storeV091ShotsShot('01_willkommen', () => const WelcomeScreen());
+  if (enabled) {
     testWidgets('export 03_entdecken Kacheln', (tester) async {
       // Die View bleibt 1080x2400 bei dpr 3, also logisch 360x800 - die
       // Groesse, in der die App die Kachel auf einem Telefon zeigt.
@@ -1253,18 +296,18 @@ void main() {
       // bricht der Text nicht mehr um, die Kachel wird flacher (88 statt
       // 92 px hoch) und zeigt etwas anderes als die App. Sie kommt
       // ueber den Capture-Finder, siehe unten.
-      await _pump(
+      await pump(
         tester,
         const SwipeModeSelectionScreen(),
         outDir: outTiles,
         name: 'screen',
-        size: _phone,
-        dpr: _dpr,
+        size: storeV091ShotsPhone,
+        dpr: storeV091ShotsDpr,
       );
-      final cards = _findModeCards(tester);
+      final cards = findModeCards(tester);
       expect(
         cards.length,
-        _modeOrder.length,
+        modeOrder.length,
         reason: 'jeder Entdeckungs-Modus muss exportiert werden',
       );
 
@@ -1297,7 +340,7 @@ void main() {
         // exaktes Weiss heraus (_crop_tile) und ist damit
         // aufloesungsunabhaengig.
         final card = widgets[i];
-        await tester.pumpWidget(_soleTileHost(card));
+        await tester.pumpWidget(soleTileHost(card));
         await tester.pumpAndSettle();
         await expectLater(
           find.byType(MaterialApp).last,
@@ -1307,77 +350,20 @@ void main() {
     });
   }
 
-  _shot('03_entdecken', () => const Placeholder());
-
-  // 4) Anpassen: Farbschemata, Erscheinungsmodus UND Chat-Hintergrund
-  //    auf einer Seite - zeigt die generelle Personalisierbarkeit.
-  //
-  //    v0.9.2: Hier stand vorher ein handgebautes SegmentedButton, das es
-  //    in der App NICHT gab - die Einstellungen nutzten drei
-  //    SelectableTile-Radiozeilen. Der Screenshot zeigte damit eine
-  //    Oberflaeche, die kein Nutzer je gesehen hat.
-  //
-  //    Jetzt werden ausschliesslich die echten, in der App verwendeten
-  //    Widgets gerendert. Wer das Layout hier nachbaut, erzeugt wieder
-  //    ein Mockup - das ist genau der Fehler, den dieser Block behalten
-  //    hat. Die Ueberschriften stehen als Text darueber, weil sie in der
-  //    App aus dem umgebenden Screen kommen.
-  //
-  //    v0.9.2: textScale war 0.72. Damit war die Schrift kleiner als in
-  //    den anderen Screens - auf dem Store fiel der Unterschied sofort
-  //    auf. Jetzt 1.0 fuer alle Screens. Der Preis: bei 1.0 passt nicht
-  //    alles auf eine Seite. Statt zu verkleinern wird die Liste so
-  //    gesetzt, dass die beiden wichtigsten Abschnitte sichtbar sind -
-  //    Farbschema oben, Erscheinungsmodus darunter, Chat-Hintergrund
-  //    angetippt am unteren Rand (so sieht es beim Scrollen aus).
-  _shot('04_anpassen', () => _anpassenScreen('light'));
-
-  // Der DUNKLE Gegenpart desselben Screens (31.10.2026).
-  //
-  // Der Wunsch: "Wenn passend vielleicht noch einen Screenshot an
-  // passender Stelle, wo man Dark und Whitemode sieht, also auf einem
-  // Screen so halbiert irgendwie." Der Generator schneidet aus diesem
-  // Render die untere Haelfte heraus und legt sie unter die obere
-  // Haelfte des hellen Screens - so sieht man EINEN Screen, der
-  // zur Haelfte hell und zur Haelfte dunkel ist.
-  //
-  // Der Screen ist derselbe wie im hellen Bild - nur der gewaehlte
-  // Erscheinungsmodus ist "dark", damit die Auswahl im Bild auch
-  // stimmt. Sonst zeigte der Schalter "Hell", obwohl der Screen
-  // dunkel waere.
-  _shotDark('04_anpassen_dunkel', () => _anpassenScreen('dark'));
-
-  // 6) Datenschutz. Eigenes Bild, weil die Entfernungs-Anzeige die
-  // inhaltlich wichtigste Aenderung dieses Releases ist und als vierte
-  // Kachel in 04 zwischen Farbschema und Chat-Hintergrund verschwindet.
-  //
-  // `readOnly: true` heisst: der Render tippt nichts an, und der
-  // Pause-Bestaetigungsdialog (der einen Navigator braucht) wird nicht
-  // geoeffnet. Der Composer dunkelt dieses Bild zusaetzlich ab, damit es
-  // in der Reihe der sechs auffaellt.
-  // Scaffold + AppBar wie bei 04: ohne sie rendert der Inhalt bis unter
-  // den oberen Rand, und check_store_screenshots.py meldet zwei
-  // Befunde - sichtbarer App-Inhalt im Statusleisten-Band und fehlende
-  // System-Symbole. Das ist kein Kosmetikfehler, sondern das Bild sähe
-  // aus wie ein Bild statt wie ein Gerät.
-  // `const` steht hier nur vor `Padding`, nicht vor dem Scaffold: der
-  // AppBar-Konstruktor dieser Material-Version ist nicht const. Beides
-  // zusammen verlangt der Analyzer nicht - er verlangt const fuer
-  // `SingleChildScrollView`, weil dessen Parameter alle konstant sind.
-  _shot(
+  storeV091ShotsShot('03_entdecken', () => const Placeholder());
+  storeV091ShotsShot('04_anpassen', () => anpassenScreen('light'));
+  shotDark('04_anpassen_dunkel', () => anpassenScreen('dark'));
+  storeV091ShotsShot(
     '06_datenschutz',
     () => Scaffold(
-      appBar: AppBar(title: Text(_t('Einstellungen', 'Settings'))),
+      appBar: AppBar(title: Text(storeV091ShotsT('Einstellungen', 'Settings'))),
       body: const SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
         child: PrivacySection(readOnly: true),
       ),
     ),
   );
-
-  // 5) Eisbrecher-Fragen (Spice Questions): das Herzstueck im Chat.
-  //    Erste Kategorie aufgeklappt, damit echte Fragen sichtbar sind.
-  _shot(
+  storeV091ShotsShot(
     '05_eisbrecher',
     () => const SpiceQuestionsScreen(matchId: 1),
     after: (tester) async {

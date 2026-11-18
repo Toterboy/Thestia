@@ -166,15 +166,18 @@ def marker_aus_dem_quellstand():
     Check auf die Versionsnummer zurueck.
     """
     try:
+        # DIE TEXTE LIEGEN NACH THEMEN GETRENNT (lib/l10n/strings/) -
+        # der Verlauf wird darueber gelesen.
+        textpfad = "lib/l10n/strings"
         ergebnis = subprocess.run(
-            ["git", "log", "-1", "--format=%H", "--", "lib/l10n/app_strings.dart"],
+            ["git", "log", "-1", "--format=%H", "--", textpfad],
             capture_output=True, text=True, cwd=str(ROOT), timeout=60)
         commit = ergebnis.stdout.strip()
         if not commit:
             return []
         ergebnis = subprocess.run(
             ["git", "show", "--format=", "--unified=0", commit,
-             "--", "lib/l10n/app_strings.dart"],
+             "--", textpfad],
             capture_output=True, text=True, cwd=str(ROOT), timeout=60)
     except Exception:                                       # noqa: BLE001
         return []

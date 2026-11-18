@@ -285,7 +285,10 @@ AUSNAHMEN: dict[str, str] = {}
 # (Pfad, Art) - Art: 'ganz' (die ganze Datei), 'strings' (nur die
 # String-Literale) oder 'strings_de' (nur der deutsche L10n-Abschnitt).
 ZIELE: list[tuple[str, str]] = [
-    ("lib/l10n/app_strings.dart", "strings_de"),
+    # DIE TEXTE LIEGEN NACH THEMEN GETRENNT: lib/l10n/strings/*.dart
+    # (jede Datei ein Thema, je Deutsch und Englisch). Der Ordner wird
+    # unten auf seine Dateien aufgeloest.
+    ("lib/l10n/strings", "strings_de_ordner"),
     ("lib/generated/privacy_policy_de.dart", "strings"),
     ("docs/DATENSCHUTZ.md", "ganz"),
     ("README.md", "ganz"),
@@ -448,6 +451,26 @@ def main() -> int:
     for relativer, art in ZIELE:
         pfad = ROOT / relativer
         if not pfad.exists():
+            continue
+        if art == "strings_de_ordner":
+            # Der Ordner mit den Texten: jede Datei wird einzeln geprueft.
+            for datei in sorted(pfad.glob("*.dart")):
+                geprueft += 1
+                rohtext = datei.read_text(encoding="utf-8", errors="replace")
+                start = rohtext.find("'de': {")
+                ende = rohtext.find("'en': {")
+                if start < 0 or ende < 0:
+                    continue
+                ausschnitt = rohtext[start:ende]
+                basis = rohtext[:start].count("\n")
+                name = str(datei.relative_to(ROOT))
+                for start_zeile, literal in lies_string_literale(ausschnitt):
+                    pruefe(
+                        literal,
+                        funde,
+                        name,
+                        basiszeile=basis + start_zeile - 1,
+                    )
             continue
         geprueft += 1
         rohtext = pfad.read_text(encoding="utf-8", errors="replace")

@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -6,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/models/transit_models.dart';
 import 'package:thestia/utils/chat_backgrounds.dart';
 import 'package:thestia/widgets/transit_mode_selector.dart';
+import 'support/l10n_quellen.dart';
 
 /// Regressionstests fuer die drei Aenderungen aus v0.9.2:
 ///   1. Chat-Hintergrund: Performance + Mustersemantik
@@ -13,7 +13,7 @@ import 'package:thestia/widgets/transit_mode_selector.dart';
 ///   3. Transit Spark 18+
 void main() {
   setUpAll(() {
-    final src = File('lib/l10n/app_strings.dart').readAsStringSync();
+    final src = liesL10nQuellen();
     _de = _parseLocale(src, "  'de': {");
     _en = _parseLocale(src, "  'en': {");
   });

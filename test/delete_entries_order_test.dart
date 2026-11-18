@@ -1,6 +1,5 @@
-import 'dart:io';
-
 import 'package:flutter_test/flutter_test.dart';
+import 'support/quelltext.dart';
 
 /// Test fuer die Reihenfolge der Loesch-Punkte.
 ///
@@ -20,12 +19,8 @@ void main() {
     late String privacy;
 
     setUp(() {
-      settings = File(
-        'lib/screens/settings/settings_screen.dart',
-      ).readAsStringSync();
-      privacy = File(
-        'lib/screens/privacy/privacy_screen.dart',
-      ).readAsStringSync();
+      settings = liesQuelltext('lib/screens/settings/settings_screen.dart');
+      privacy = liesQuelltext('lib/screens/privacy/privacy_screen.dart');
     });
 
     test('in den Einstellungen stehen sie in der Gefahrenzone', () {
@@ -72,9 +67,9 @@ void main() {
       // Der Ablauf (MFA-Step-up, Bestätigung, Löschung) liegt in
       // delete_account_action.dart - beide Bildschirme nutzen ihn. Sonst
       // gibt es zwei Varianten, und nur eine wird gepflegt.
-      final action = File(
+      final action = liesQuelltext(
         'lib/screens/privacy/delete_account_action.dart',
-      ).readAsStringSync();
+      );
       expect(action.contains('deleteAccountWithConfirmation'), isTrue);
       expect(
         action.contains('promptTotpCode'),
