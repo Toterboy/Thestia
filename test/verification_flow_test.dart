@@ -22,6 +22,38 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/verification/verification_flow.dart';
+import 'package:thestia/services/local_storage.dart';
+
+/// Der Speicher im RAM (die Einstellungen kommen daraus).
+class _FakeLocalStorage implements LocalStorage {
+  final Map<String, String> _daten = {};
+
+  @override
+  Future<void> saveString(String key, String value) async =>
+      _daten[key] = value;
+
+  @override
+  Future<String?> getString(String key) async => _daten[key];
+
+  @override
+  Future<void> saveBool(String key, bool value) async =>
+      _daten[key] = value.toString();
+
+  @override
+  Future<bool?> getBool(String key) async =>
+      _daten[key] == null ? null : _daten[key] == 'true';
+
+  @override
+  Future<void> remove(String key) async => _daten.remove(key);
+
+  @override
+  Future<void> saveInt(String key, int value) async =>
+      _daten[key] = value.toString();
+
+  @override
+  Future<int?> getInt(String key) async =>
+      _daten[key] == null ? null : int.tryParse(_daten[key]!);
+}
 
 /// Die Route, auf der der Erfolgs-Screen im Test liegt.
 const String _erfolgRoute = '/verification/erfolg';
@@ -46,8 +78,7 @@ void main() {
         ),
         GoRoute(
           path: AppRoutes.verificationVideo,
-          builder: (context, state) =>
-              const Scaffold(body: Center(child: Text('Videoaufnahme'))),
+          builder: (context, state) => const VerificationVideoScreen(),
         ),
         GoRoute(
           path: AppRoutes.home,
@@ -79,6 +110,9 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
+          overrides: [
+            localStorageProvider.overrideWithValue(_FakeLocalStorage()),
+          ],
           child: MaterialApp.router(
             theme: ThemeData(useMaterial3: true),
             routerConfig: r,
@@ -101,6 +135,9 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
+          overrides: [
+            localStorageProvider.overrideWithValue(_FakeLocalStorage()),
+          ],
           child: MaterialApp.router(
             theme: ThemeData(useMaterial3: true),
             routerConfig: r,
@@ -138,6 +175,9 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
+          overrides: [
+            localStorageProvider.overrideWithValue(_FakeLocalStorage()),
+          ],
           child: MaterialApp.router(
             theme: ThemeData(useMaterial3: true),
             routerConfig: r,
@@ -155,10 +195,83 @@ void main() {
 
       expect(tester.takeException(), isNull);
       // Die Aufnahme-Seite ist erreicht - und der Code ist angekommen.
-      expect(find.text('Videoaufnahme'), findsOneWidget);
+      // (Der Bildschirm fragt zuerst nach der Kamera-Freigabe - das ist
+      // die Pflicht von Google Play.)
+      expect(find.byType(AlertDialog), findsOneWidget);
       expect(
         r.routerDelegate.currentConfiguration.uri.queryParameters['code'],
         'code-42',
+      );
+    });
+  });
+
+  group('Verifizierung (Video)', () {
+    testWidgets('die Kamera-Offenlegung kommt zuerst', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final r = router(AppRoutes.verificationVideo);
+      addTearDown(r.dispose);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            localStorageProvider.overrideWithValue(_FakeLocalStorage()),
+          ],
+          child: MaterialApp.router(
+            theme: ThemeData(useMaterial3: true),
+            routerConfig: r,
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(tester.takeException(), isNull);
+      // Google Play verlangt die Offenlegung VOR dem Systemdialog - der
+      // Nutzer muss wissen, warum die App filmen will.
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        find.text(L10n.tWithoutContext('verify.cameraDisclosureTitle')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('ohne Freigabe sagt die App es ebenfalls', (tester) async {
+      await tester.binding.setSurfaceSize(const Size(390, 844));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final r = router(AppRoutes.verificationVideo);
+      addTearDown(r.dispose);
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            localStorageProvider.overrideWithValue(_FakeLocalStorage()),
+          ],
+          child: MaterialApp.router(
+            theme: ThemeData(useMaterial3: true),
+            routerConfig: r,
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // Die Offenlegung ablehnen.
+      await tester.tap(
+        find.widgetWithText(TextButton, L10n.tWithoutContext('common.cancel')),
+      );
+      await tester.pump();
+      await pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.textContaining(
+          L10n.tWithoutContext('verify.cameraDeclined').split(' ').first,
+        ),
+        findsWidgets,
+        reason:
+            'Auch ein Ablehnen muss erklaert werden - sonst weiss der '
+            'Nutzer nicht, warum die Aufnahme nicht startet.',
       );
     });
   });
