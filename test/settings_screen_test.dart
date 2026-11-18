@@ -22,6 +22,7 @@ import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/providers/settings_provider.dart';
 import 'package:thestia/screens/settings/settings_screen.dart';
+import 'package:thestia/services/encryption_service.dart';
 import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/services/secure_storage.dart';
 
@@ -68,6 +69,18 @@ class _FakeSecureProfileStore extends SecureProfileStore {
 
   @override
   Future<void> delete() async {}
+}
+
+/// Der Verschluesselungs-Dienst mit einem fertigen Backup-Code.
+///
+/// DER GRUND: Der echte Dienst braucht die verschluesselten Hive-Boxen -
+/// im Test waere das der Weg ueber die Schluesselverwaltung. Fuer die
+/// Oberflaeche reicht der Code: der Dialog muss ihn anzeigen und das
+/// Kopieren anbieten.
+class _FakeEncryptionService extends EncryptionService {
+  @override
+  Future<String?> createEncryptedBackup(String password) async =>
+      'TEST_BACKUP_CODE_1234';
 }
 
 void main() {
@@ -126,6 +139,10 @@ void main() {
       overrides: [
         localStorageProvider.overrideWithValue(storage),
         secureProfileStoreProvider.overrideWithValue(secure),
+        // DER VERSCHLUESSELUNGS-DIENST: Der echte braucht die
+        // verschluesselten Boxen - im Test liefert der Ersatz den
+        // Backup-Code direkt.
+        encryptionServiceProvider.overrideWithValue(_FakeEncryptionService()),
         profileProvider.overrideWith((ref) {
           final notifier = ProfileNotifier(storage, secure);
           notifier.setProfile(
@@ -446,6 +463,69 @@ void main() {
         reason:
             'Ein zu kurzes Passwort waere unbrauchbar - der Nutzer muss es '
             'wissen.',
+      );
+    });
+
+    testWidgets('ein gueltiges Passwort zeigt den Backup-Code', (tester) async {
+      await oeffneBackupDialog(tester);
+
+      await tester.enterText(
+        find.byType(TextFormField).first,
+        'ein-sehr-langes-passwort',
+      );
+      await tester.enterText(
+        find.byType(TextFormField).last,
+        'ein-sehr-langes-passwort',
+      );
+      await pumpFrames(tester);
+      await tester.tap(
+        find.widgetWithText(
+          FilledButton,
+          L10n.tWithoutContext('settings.backupCreateBtn'),
+        ),
+      );
+      await pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      // Der Code steht da - er ist das, was der Nutzer sichern muss.
+      expect(find.text('TEST_BACKUP_CODE_1234'), findsOneWidget);
+      expect(
+        find.text(L10n.tWithoutContext('settings.backupCodeTitle')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('der Backup-Code laesst sich kopieren', (tester) async {
+      await oeffneBackupDialog(tester);
+
+      await tester.enterText(
+        find.byType(TextFormField).first,
+        'ein-sehr-langes-passwort',
+      );
+      await tester.enterText(
+        find.byType(TextFormField).last,
+        'ein-sehr-langes-passwort',
+      );
+      await pumpFrames(tester);
+      await tester.tap(
+        find.widgetWithText(
+          FilledButton,
+          L10n.tWithoutContext('settings.backupCreateBtn'),
+        ),
+      );
+      await pumpFrames(tester);
+
+      // "Kopieren" - dann ist der Code in der Zwischenablage.
+      await tester.tap(
+        find.widgetWithText(TextButton, L10n.tWithoutContext('common.copy')),
+      );
+      await pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text(L10n.tWithoutContext('settings.backupCopied')),
+        findsOneWidget,
+        reason: 'Der Nutzer muss wissen, dass der Code kopiert wurde.',
       );
     });
 

@@ -40,6 +40,7 @@ import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/swipe/transit_radar_screen.dart';
 import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/services/transit_ble_service.dart';
+import 'package:thestia/widgets/funke_overlay.dart';
 import 'package:thestia/services/secure_storage.dart';
 import 'package:thestia/utils/constants.dart';
 
@@ -1187,6 +1188,64 @@ void main() {
     // Der Posteingang der Grueesse: jemand hat in der Naehe gewinkt. Der
     // Nutzer kann den Gruss annehmen (daraus wird ein Funke) oder
     // ausblenden (der Absender sieht nichts davon).
+    group('Der Lauscher auf den spaeten Funken', () {
+      testWidgets('ein frischer Funke wird angezeigt', (tester) async {
+        // Der Server meldet einen FRISCHEN Funken - das ist der Fall, den
+        // der Lauscher fangen soll: der Partner hat (fast gleichzeitig)
+        // auch gedrueckt, der Funke entstand aber erst danach.
+        server.rpcAntworten['list_my_matches_with_state'] = <dynamic>[
+          <String, dynamic>{
+            'matchId': 99,
+            'status': 'active',
+            'createdAt': DateTime.now().toIso8601String(),
+            'profile': <String, dynamic>{'id': 'partner-9', 'name': 'Mira'},
+          },
+        ];
+
+        final transit = _FakeTransit();
+        final container = _container(transit: transit);
+        addTearDown(container.dispose);
+        final router = _router();
+        addTearDown(router.dispose);
+
+        await _aufbauen(tester, container, router);
+
+        // Den Radar starten und das Signal senden - danach lauscht die
+        // App auf einen spaeter entstehenden Funken.
+        await _startTippen(tester);
+        await _merkmaleWaehlen(tester, ['Haarfarbe', 'Haarlänge']);
+        await _sendenTippen(tester);
+        await _knopfTippen(tester, 'Blicke getauscht');
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+        await _merkmaleWaehlen(tester, ['Haarfarbe', 'Haarlänge']);
+        await _sendenTippen(tester);
+
+        expect(tester.takeException(), isNull);
+
+        // Der Lauscher tickt alle drei Sekunden.
+        await tester.pump(const Duration(seconds: 4));
+        await _serverAntwortAbwarten(tester);
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(tester.takeException(), isNull);
+        // Die Funke-Animation steht da - sonst haette der Nutzer den
+        // Funke nicht mitbekommen.
+        expect(
+          find.byType(FunkeOverlay),
+          findsOneWidget,
+          reason:
+              'Ein Funke, der erst nach dem Signal entsteht, muss trotzdem '
+              'angezeigt werden.',
+        );
+
+        // Die Animation schliesst sich nach 1,2 s von selbst - der Timer
+        // darf am Testende nicht mehr laufen.
+        await tester.pump(const Duration(milliseconds: 1300));
+        await tester.pumpWidget(const SizedBox());
+      });
+    });
+
     group('Die Erinnerung nach dem Radar', () {
       testWidgets('sie kommt, wenn der Radar gestoppt wird', (tester) async {
         final transit = _FakeTransit();

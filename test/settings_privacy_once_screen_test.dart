@@ -87,6 +87,10 @@ void main() {
     // ohne den Mock ruft der Test auf dem CI-Runner das echte Plugin
     // (das findet dort keine libsecret-Sitzung).
     mockKeystore();
+    // DIE AUFNAHME: die Vorstellung kann mit Stimme aufgenommen werden -
+    // ohne den Ersatz wartet der Aufruf endlos (bzw. der Test scheitert
+    // an einem Plugin, das es im Test nicht gibt).
+    mockAufnahme();
   });
 
   /// Pumpt eine feste Zahl von Frames.
@@ -159,6 +163,40 @@ void main() {
   Future<void> weiter(WidgetTester tester) async {
     await tester.tap(find.text(L10n.tWithoutContext('onb.next')));
     await pumpFrames(tester);
+  }
+
+  /// Geht durch alle zehn Schritte bis zur letzten Seite.
+  ///
+  /// Schritt 2 (Profil) und Schritt 3 (Vorstellung) haben Pflichtangaben -
+  /// ohne sie geht der "Weiter"-Knopf nicht weiter.
+  Future<void> geheBisZumLetztenSchritt(WidgetTester tester) async {
+    await weiter(tester);
+
+    // Schritt 2: Bio und Interesse.
+    await tester.enterText(
+      find.byType(TextFormField).first,
+      'Ich mag lange Spaziergaenge am Fluss.',
+    );
+    await pumpFrames(tester);
+    final chip = find.widgetWithText(FilterChip, 'Sport');
+    await tester.ensureVisible(chip);
+    await pumpFrames(tester);
+    await tester.tap(chip);
+    await pumpFrames(tester);
+    await weiter(tester);
+
+    // Schritt 3: die Vorstellung (Text ist Pflicht, die Aufnahme nicht).
+    await tester.enterText(
+      find.byType(TextFormField).first,
+      'Ich bin gern draussen unterwegs.',
+    );
+    await pumpFrames(tester);
+    await weiter(tester);
+
+    // Die Schritte 4 bis 9 kommen ohne weitere Pflichtangabe.
+    for (var i = 0; i < 6; i++) {
+      await weiter(tester);
+    }
   }
 
   group('Einrichtung (Einstellungen & Privatsphäre)', () {
@@ -339,6 +377,101 @@ void main() {
       expect(find.text('Schritt 10 von 10'), findsOneWidget);
 
       expect(tester.takeException(), isNull);
+    });
+
+    group('Der Abschluss', () {
+      testWidgets('ohne Passkey und 2FA fragt die App nach', (tester) async {
+        await zeigeScreen(tester);
+        await geheBisZumLetztenSchritt(tester);
+        expect(find.text('Schritt 10 von 10'), findsOneWidget);
+
+        // Der Abschluss-Knopf.
+        final knopf = find.text(L10n.tWithoutContext('setupp.finish'));
+        await tester.ensureVisible(knopf);
+        await pumpFrames(tester);
+        await tester.tap(knopf);
+        await pumpFrames(tester);
+
+        expect(tester.takeException(), isNull);
+        // Ohne Passkey und ohne 2FA ist die Einrichtung nicht vollstaendig
+        // - die App sagt das DEUTLICH, statt es zu verschweigen.
+        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(
+          find.text(L10n.tWithoutContext('setup.nudgeTitle')),
+          findsOneWidget,
+        );
+        // Und die drei Wege stehen da.
+        expect(
+          find.text(L10n.tWithoutContext('setup.nudgePasskey')),
+          findsOneWidget,
+        );
+        expect(
+          find.text(L10n.tWithoutContext('setup.nudgeMfa')),
+          findsOneWidget,
+        );
+        expect(
+          find.text(L10n.tWithoutContext('setup.nudgeSkip')),
+          findsOneWidget,
+        );
+      });
+
+      testWidgets('"Trotzdem fortfahren" schliesst die Einrichtung ab', (
+        tester,
+      ) async {
+        await zeigeScreen(tester);
+        await geheBisZumLetztenSchritt(tester);
+
+        final knopf = find.text(L10n.tWithoutContext('setupp.finish'));
+        await tester.ensureVisible(knopf);
+        await pumpFrames(tester);
+        await tester.tap(knopf);
+        await pumpFrames(tester);
+
+        // "Trotzdem fortfahren" - der Nutzer entscheidet sich bewusst.
+        await tester.tap(
+          find.widgetWithText(
+            TextButton,
+            L10n.tWithoutContext('setup.nudgeSkip'),
+          ),
+        );
+        await pumpFrames(tester);
+        // Das Speichern dauert (der Server wird gefragt).
+        await tester.runAsync(() async {
+          await Future<void>.delayed(const Duration(milliseconds: 300));
+        });
+        await pumpFrames(tester);
+
+        expect(tester.takeException(), isNull);
+        // Und die App landet auf der Startseite - die Einrichtung ist
+        // vorbei.
+        expect(find.text('Startseite'), findsOneWidget);
+      });
+
+      testWidgets('"Passkey einrichten" springt zur Passkey-Seite', (
+        tester,
+      ) async {
+        await zeigeScreen(tester);
+        await geheBisZumLetztenSchritt(tester);
+
+        final knopf = find.text(L10n.tWithoutContext('setupp.finish'));
+        await tester.ensureVisible(knopf);
+        await pumpFrames(tester);
+        await tester.tap(knopf);
+        await pumpFrames(tester);
+
+        await tester.tap(
+          find.widgetWithText(
+            FilledButton,
+            L10n.tWithoutContext('setup.nudgePasskey'),
+          ),
+        );
+        await pumpFrames(tester);
+
+        expect(tester.takeException(), isNull);
+        // Der Nutzer landet auf der Passkey-Seite (nicht auf der
+        // Startseite) - der Weg ist offen.
+        expect(find.text('Startseite'), findsNothing);
+      });
     });
 
     testWidgets('das Zurueckgehen fragt nach', (tester) async {
