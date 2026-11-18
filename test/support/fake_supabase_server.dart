@@ -177,8 +177,39 @@ class FakeSupabaseServer extends http.BaseClient {
       if (request.method == 'GET') {
         return _antwortBytes(request, 200, _kleinesPng, 'image/png');
       }
-      // Das Loeschen (der Speicher-Aufraeum) - der Server meldet Erfolg.
-      return _antwort(request, 200, '');
+      // DER UPLOAD: Das Storage-Client erwartet eine JSON-Antwort mit dem
+      // Schluessel ("Key") - ohne sie castet es den leeren Body auf null
+      // und der Upload scheitert mit "type 'Null' is not a subtype of
+      // type 'Map'".
+      if (pfad.contains('/object/sign/') && request.method == 'POST') {
+        return _antwort(
+          request,
+          200,
+          jsonEncode(<String, dynamic>{
+            'signedURL':
+                'https://example.supabase.co/storage/v1/object/sign/'
+                'avatars/ich/avatar.jpg?token=test',
+          }),
+        );
+      }
+      if (request.method == 'POST' || request.method == 'PUT') {
+        const marker = '/storage/v1/object/';
+        final key = pfad.contains(marker)
+            ? pfad.substring(pfad.indexOf(marker) + marker.length)
+            : pfad;
+        return _antwort(
+          request,
+          200,
+          jsonEncode(<String, dynamic>{
+            'Key': key,
+            'Id': key,
+            'name': key.split('/').last,
+          }),
+        );
+      }
+      // Das Loeschen (der Speicher-Aufraeum) - der Server meldet Erfolg
+      // (das Client erwartet eine Liste, keinen leeren Body).
+      return _antwort(request, 200, '[]');
     }
 
     // Edge Functions (Sperren, Verifizierung, ...).
