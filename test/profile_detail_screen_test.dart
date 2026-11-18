@@ -1,4 +1,4 @@
-// Die Profildetail-Seite (bisher wenig getestet).
+﻿// Die Profildetail-Seite (bisher wenig getestet).
 //
 // ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
 // lib/screens/profile/profile_detail_screen.dart 318 offene Zeilen.
@@ -17,6 +17,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/models/report_models.dart';
 import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/providers/chat_provider.dart';
 import 'package:thestia/providers/profile_provider.dart';
@@ -81,6 +82,9 @@ void main() {
     await SharedPreferences.getInstance();
     await mockPfadProvider();
     mockKeystore();
+    // DER SPEICHER: der Meldungs-Store (beim Melden) legt seine Zeilen
+    // in einer Hive-Box ab.
+    await mockHive();
 
     server = FakeSupabaseServer(userId: 'ich');
     await supabase.Supabase.initialize(
@@ -310,6 +314,67 @@ void main() {
       expect(find.byType(AlertDialog), findsOneWidget);
       expect(
         find.text(L10n.tWithoutContext('chat.blockTitle')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('das Melden fragt nach einem Grund', (tester) async {
+      server.rpcAntworten['get_public_profile'] = <String, dynamic>{
+        'id': 'user-7',
+        'name': 'Mira',
+        'bio': '',
+        'interests': <String>[],
+      };
+      await zeigeProfil(
+        tester,
+        profil: const UserProfile(id: 'user-7', name: 'Mira', bio: ''),
+      );
+
+      // Das Menue (die drei Punkte) oeffnen.
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final eintrag = find.text(
+        L10n.tWithoutContext('profile.detail.reportUser'),
+      );
+      await tester.ensureVisible(eintrag);
+      await tester.pump();
+      await tester.tap(eintrag);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(tester.takeException(), isNull);
+      // Der Melde-Dialog fragt nach dem Grund - ohne Grund kann der
+      // Support nichts tun.
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        find.byType(RadioListTile<ReportType>),
+        findsWidgets,
+        reason: 'Der Nutzer muss einen Grund waehlen.',
+      );
+    });
+
+    testWidgets('ohne auflösbares Profil steht das da', (tester) async {
+      // Der Server kennt die Person nicht (und es gibt keinen lokalen
+      // Match, aus dem der Bildschirm sie nehmen koennte).
+      server.rpcAntworten['get_public_profile'] = null;
+      await zeigeProfil(
+        tester,
+        profil: const UserProfile(id: 'user-7', name: 'Mira', bio: ''),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text(L10n.tWithoutContext('profile.detail.unavailable')),
+        findsOneWidget,
+        reason:
+            'Der Nutzer muss erfahren, dass die Person nicht gefunden wurde - '
+            'statt einer leeren Seite zu starren.',
+      );
+      // Und es gibt einen Weg weiter (neu laden).
+      expect(
+        find.text(L10n.tWithoutContext('profile.detail.retry')),
         findsOneWidget,
       );
     });

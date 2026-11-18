@@ -63,6 +63,17 @@ class FakeSupabaseServer extends http.BaseClient {
   /// EINER bestimmten Liste schweigt.
   final Set<String> rpcFehler = <String>{};
 
+  /// Eigene Fehlerantworten fuer bestimmte Pfade.
+  ///
+  /// DER GRUND: Die App uebersetzt Server-Fehler in verstaendliche
+  /// Texte ("Email oder Passwort ist falsch" statt "Invalid login
+  /// credentials"). Um das zu pruefen, muss der Server GENAU diese
+  /// Meldung liefern - mit dem allgemeinen 500-Schalter geht das nicht.
+  ///
+  /// Der Schluessel ist ein Teil des Pfades (z. B. '/auth/v1/token').
+  final Map<String, ({int status, String body})> fehlerAntworten =
+      <String, ({int status, String body})>{};
+
   /// Die Antworten der Edge Functions: Name -> Antwort.
   ///
   /// Ohne Eintrag antwortet eine Function mit `{}`.
@@ -104,6 +115,14 @@ class FakeSupabaseServer extends http.BaseClient {
         500,
         jsonEncode(<String, dynamic>{'message': 'Serverfehler'}),
       );
+    }
+
+    // DIE EIGENEN FEHLERANTWORTEN: Der Test bestimmt genau, welche
+    // Meldung der Server liefert (die App uebersetzt sie in einen
+    // verstaendlichen Text).
+    for (final eintrag in fehlerAntworten.entries) {
+      if (!pfad.contains(eintrag.key)) continue;
+      return _antwort(request, eintrag.value.status, eintrag.value.body);
     }
 
     // Das eingeloggte Konto ("wer bin ich").
