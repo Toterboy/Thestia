@@ -16,6 +16,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
+import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/user_profile.dart';
 import 'package:thestia/providers/chat_provider.dart';
 import 'package:thestia/providers/profile_provider.dart';
@@ -106,6 +107,7 @@ void main() {
     WidgetTester tester, {
     required UserProfile profil,
     List<String> eigeneInteressen = const [],
+    List<String> eigeneMusik = const [],
     bool mitMatch = false,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
@@ -154,6 +156,7 @@ void main() {
                 name: 'Lena',
                 bio: '',
                 interests: eigeneInteressen,
+                musicLiked: eigeneMusik,
               ),
             );
             return notifier;
@@ -210,6 +213,105 @@ void main() {
       // ... und das gemeinsame traegt das Herz (zusaetzlich zum Herz
       // in der Kopfzeile).
       expect(find.byIcon(Icons.favorite), findsWidgets);
+    });
+
+    testWidgets('der gemeinsame Musik-Geschmack steht da', (tester) async {
+      server.rpcAntworten['get_public_profile'] = <String, dynamic>{
+        'id': 'user-7',
+        'name': 'Mira',
+        'bio': '',
+        'interests': <String>['Klettern'],
+        'music_liked': <String>['Rock', 'Pop'],
+        'music_disliked': <String>['Jazz'],
+      };
+      await zeigeProfil(
+        tester,
+        profil: const UserProfile(id: 'user-7', name: 'Mira', bio: ''),
+        // Ich mag Rock auch - das ist der gemeinsame Geschmack.
+        eigeneMusik: const ['Rock'],
+      );
+
+      expect(tester.takeException(), isNull);
+      // Der gemeinsame Geschmack wird betont - das ist der Punkt der
+      // ganzen Karte ("da habt ihr etwas gemeinsam").
+      expect(
+        find.text(L10n.tWithoutContext('profile.detail.sameTaste')),
+        findsOneWidget,
+      );
+      // Beide Genres stehen da (das gemeinsame und das andere).
+      expect(find.text('Rock'), findsWidgets);
+      expect(find.text('Pop'), findsWidgets);
+    });
+
+    testWidgets('das Speichern des Profils meldet es dem Nutzer', (
+      tester,
+    ) async {
+      server.rpcAntworten['get_public_profile'] = <String, dynamic>{
+        'id': 'user-7',
+        'name': 'Mira',
+        'bio': 'Liest gern',
+        'interests': <String>['Klettern'],
+      };
+      await zeigeProfil(
+        tester,
+        profil: const UserProfile(id: 'user-7', name: 'Mira', bio: ''),
+      );
+
+      // Das Lesezeichen (Profil lokal speichern).
+      final knopf = find.byTooltip(
+        L10n.tWithoutContext('profile.detail.savedSave'),
+      );
+      expect(knopf, findsOneWidget);
+      await tester.ensureVisible(knopf);
+      await tester.pump();
+      await tester.tap(knopf);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(tester.takeException(), isNull);
+      // Der Nutzer muss erfahren, dass das Profil gespeichert ist - sonst
+      // sucht er es spaeter vergebens.
+      expect(
+        find.textContaining('Mira'),
+        findsWidgets,
+        reason: 'Nach dem Speichern steht eine Bestaetigung da.',
+      );
+    });
+
+    testWidgets('das Blockieren fragt erst nach', (tester) async {
+      server.rpcAntworten['get_public_profile'] = <String, dynamic>{
+        'id': 'user-7',
+        'name': 'Mira',
+        'bio': '',
+        'interests': <String>[],
+      };
+      await zeigeProfil(
+        tester,
+        profil: const UserProfile(id: 'user-7', name: 'Mira', bio: ''),
+      );
+
+      // Das Menue (die drei Punkte) oeffnen.
+      await tester.tap(find.byIcon(Icons.more_vert));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      final eintrag = find.text(
+        L10n.tWithoutContext('profile.detail.blockUser'),
+      );
+      await tester.ensureVisible(eintrag);
+      await tester.pump();
+      await tester.tap(eintrag);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(tester.takeException(), isNull);
+      // Ohne Rueckfrage waere die Person gesperrt - das ist nicht
+      // rueckgaengig zu machen.
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        find.text(L10n.tWithoutContext('chat.blockTitle')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('ohne Server bleibt das lokale Profil stehen', (tester) async {
