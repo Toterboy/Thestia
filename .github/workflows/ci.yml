@@ -95,7 +95,15 @@ jobs:
       # kaputter Cache (z. B. weil der Download in einem frueheren Lauf
       # halb durch war) fuehrt so zum erneuten Download, statt den Lauf
       # dauerhaft zu killen.
+      #
+      # "continue-on-error" (18.11.2026): Der Download ist OPTIONAL. Der
+      # NSFW-Test prueft selbst, ob die native Bibliothek da ist, und
+      # ueberspringt dann nur die echte Inferenz (das Modell und sein
+      # Header werden trotzdem geprueft). Ein GitHub-Timeout beim
+      # Download darf deshalb den Rest des Laufs nicht killen - sonst
+      # laeuft der ganze Testlauf nicht, obwohl er laufen koennte.
       - name: onnxruntime native library (fuer NSFW-Inferenz-Test)
+        continue-on-error: true
         run: |
           if [ -f /tmp/ort/onnxruntime-linux-x64-1.15.1/lib/libonnxruntime.so ]; then
             echo "Bibliothek aus dem Cache - kein Download noetig."
@@ -104,12 +112,17 @@ jobs:
           curl -fL --retry 5 --retry-all-errors --retry-delay 5 \
             -o /tmp/ort.tgz \
             https://github.com/microsoft/onnxruntime/releases/download/v1.15.1/onnxruntime-linux-x64-1.15.1.tgz \
-            || { echo "::error::onnxruntime 1.15.1 liess sich nicht laden (Netzwerk oder GitHub-Ausfall). Ohne die Bibliothek schlaegt der NSFW-Inferenz-Test fehl."; exit 1; }
+            || { echo "::warning::onnxruntime 1.15.1 liess sich nicht laden (Netzwerk oder GitHub-Ausfall). Der NSFW-Test ueberspringt dann nur die echte Inferenz."; exit 0; }
           mkdir -p /tmp/ort
           tar -xzf /tmp/ort.tgz -C /tmp/ort
 
       - name: onnxruntime installieren
+        continue-on-error: true
         run: |
+          if [ ! -f /tmp/ort/onnxruntime-linux-x64-1.15.1/lib/libonnxruntime.so ]; then
+            echo "::warning::Keine onnxruntime-Bibliothek - die echte Inferenz entfaellt in diesem Lauf."
+            exit 0
+          fi
           sudo cp /tmp/ort/onnxruntime-linux-x64-1.15.1/lib/libonnxruntime.so* /usr/local/lib/
           sudo ldconfig
 

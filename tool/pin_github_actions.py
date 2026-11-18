@@ -76,12 +76,21 @@ def main() -> int:
         return 1
 
     shas: dict[str, str] = {}
+    # Actions, deren Soll-SHA sich gerade nicht abrufen laesst (die
+    # GitHub-API ist manchmal nicht erreichbar - Rate-Limit).
+    unaufgeloest: set[str] = set()
     for repo, tag in BEKANNT.items():
         try:
             shas[repo] = hole_sha(repo, tag)
         except (urllib.error.URLError, urllib.error.HTTPError, KeyError) as fehler:
-            print(f"FEHLER: {repo}@{tag} nicht abrufbar: {fehler}")
-            return 1
+            # KEIN Projektfehler: die API war nicht erreichbar. Die Pins
+            # werden weiterhin geprueft - nur die Soll-SHA fehlt, und
+            # damit laesst sich kein Sollwert nennen.
+            print(
+                f"WARNUNG: {repo}@{tag} nicht abrufbar ({fehler}) - "
+                "geprueft wird nur, ob die Verwendung gepinnt ist."
+            )
+            unaufgeloest.add(repo)
 
     gefunden = False
     geaendert = 0
@@ -92,6 +101,15 @@ def main() -> int:
             repo = treffer.group("repo")
             tag = treffer.group("tag")
             if repo not in shas:
+                # Ohne Soll-SHA (die API war nicht erreichbar) bleibt nur
+                # die Form pruefen: eine Tag-Referenz ist immer ein
+                # Fehler - gepinnt kann man auch ohne Soll-SHA sehen.
+                if repo in unaufgeloest and not re.fullmatch(r"[0-9a-f]{40}", tag):
+                    gefunden = True
+                    print(
+                        f"{datei.relative_to(ROOT)}: NICHT gepinnt: {alt} "
+                        "(die Soll-SHA war nicht abrufbar)"
+                    )
                 continue
             if re.fullmatch(r"[0-9a-f]{40}", tag):
                 continue  # schon gepinnt
