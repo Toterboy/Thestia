@@ -31,6 +31,10 @@ BEKANNT = {
     "actions/setup-java": "v5",
     "actions/setup-python": "v6",
     "actions/upload-artifact": "v6",
+    # Der Cache fuer die onnxruntime-Bibliothek (18.11.2026): ohne ihn
+    # scheitert der Lauf am Download (GitHub-Antwortet dann mit einem
+    # Timeout).
+    "actions/cache": "v4",
     "subosito/flutter-action": "v2",
 }
 

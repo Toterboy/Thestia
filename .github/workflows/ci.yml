@@ -59,6 +59,19 @@ jobs:
       - name: Dependencies laden
         run: flutter pub get
 
+      # DER CACHE (18.11.2026): Der Download ist der haeufigste Grund fuer
+      # einen roten Lauf - GitHub antwortet dann mit einem Timeout (das ist
+      # im November 2026 mehrfach passiert, zweimal an diesem Schritt
+      # allein). DER WEG: Die entpackte Bibliothek wird gecacht. Der
+      # Cache-Treffer ueberspringt den Download ganz - ab dann braucht der
+      # Lauf kein Netz fuer diese Datei.
+      - name: onnxruntime aus dem Cache holen
+        id: ort-cache
+        uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809
+        with:
+          path: /tmp/ort
+          key: onnxruntime-${{ runner.os }}-1.15.1
+
       # Der NSFW-Inferenz-Test laedt die native onnxruntime-Bibliothek
       # (exakt die Version, die das Plugin erwartet). Ohne diesen Schritt
       # schlaegt der Test auf dem Runner mit "cannot open shared object
@@ -73,14 +86,30 @@ jobs:
       #   * "-f" bricht bei jedem HTTP-Fehler ab (kein Muell im Archiv),
       #   * "--retry" uebersteht einen kurzen CDN-Ausfall,
       #   * die Meldung sagt, WEM die Bibliothek fehlt.
+      #
+      # NUR OHNE CACHE-TREFFER: Der Download ist der teuerste und
+      # fehlerfaelligste Schritt des Laufs.
+      #
+      # DER WEG: Der Cache entscheidet NICHT ueber den Download - der
+      # Schritt prueft selbst, ob die Bibliothek schon da ist. Ein
+      # kaputter Cache (z. B. weil der Download in einem frueheren Lauf
+      # halb durch war) fuehrt so zum erneuten Download, statt den Lauf
+      # dauerhaft zu killen.
       - name: onnxruntime native library (fuer NSFW-Inferenz-Test)
         run: |
+          if [ -f /tmp/ort/onnxruntime-linux-x64-1.15.1/lib/libonnxruntime.so ]; then
+            echo "Bibliothek aus dem Cache - kein Download noetig."
+            exit 0
+          fi
           curl -fL --retry 5 --retry-all-errors --retry-delay 5 \
             -o /tmp/ort.tgz \
             https://github.com/microsoft/onnxruntime/releases/download/v1.15.1/onnxruntime-linux-x64-1.15.1.tgz \
             || { echo "::error::onnxruntime 1.15.1 liess sich nicht laden (Netzwerk oder GitHub-Ausfall). Ohne die Bibliothek schlaegt der NSFW-Inferenz-Test fehl."; exit 1; }
           mkdir -p /tmp/ort
           tar -xzf /tmp/ort.tgz -C /tmp/ort
+
+      - name: onnxruntime installieren
+        run: |
           sudo cp /tmp/ort/onnxruntime-linux-x64-1.15.1/lib/libonnxruntime.so* /usr/local/lib/
           sudo ldconfig
 
