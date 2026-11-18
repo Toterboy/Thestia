@@ -700,6 +700,68 @@ void main() {
       },
     );
 
+    group('Die Nutzer-Meldung', () {
+      testWidgets('der Melde-Dialog zeigt die letzten Nachrichten', (
+        tester,
+      ) async {
+        await tester.binding.setSurfaceSize(const Size(390, 844));
+        addTearDown(() => tester.binding.setSurfaceSize(null));
+
+        final service = ChatService();
+        final match = service.createMatch(_partner());
+        for (var i = 1; i <= 4; i++) {
+          service.addMessage(
+            match.id,
+            Message(
+              id: 'm_$i',
+              senderId: 'partner-1',
+              receiverId: 'ich',
+              text: 'Nachricht Nummer $i',
+              timestamp: DateTime.now(),
+            ),
+          );
+        }
+        await _pump(
+          tester,
+          ChatDetailScreen(matchId: match.id),
+          ChatNotifier(service),
+        );
+
+        // Das Menue (die drei Punkte) oeffnen.
+        await tester.tap(find.byIcon(Icons.more_vert));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        final eintrag = find.text(L10n.tWithoutContext('chat.reportTooltip'));
+        await tester.ensureVisible(eintrag);
+        await tester.pump();
+        await tester.tap(eintrag);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(AlertDialog), findsOneWidget);
+        // Der Dialog sagt, wie viele Nachrichten mitgehen: die letzten
+        // DREI - nur so kann der Support den Verlauf sehen, ohne dass der
+        // Nutzer den ganzen Chat verliert.
+        //
+        // DER HINWEIS: Geprueft wird nur der DIALOG - im Chat selbst
+        // stehen natuerlich alle vier Nachrichten.
+        expect(
+          find.descendant(
+            of: find.byType(AlertDialog),
+            matching: find.textContaining('letzten 3 Nachrichten'),
+          ),
+          findsOneWidget,
+          reason:
+              'Es duerfen nur die letzten drei Nachrichten mitgehen - der '
+              'Support soll den Verlauf sehen, nicht den ganzen Chat.',
+        );
+
+        await tester.pumpWidget(const SizedBox());
+      });
+    });
+
     group('Das Menue (Sicherheit und Verbindung)', () {
       /// Baut den Chat mit einer Nachricht der Gegenseite.
       ///
