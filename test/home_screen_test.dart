@@ -1,4 +1,4 @@
-// Der Startbildschirm "Aktuelles" (bisher ungetestet).
+﻿// Der Startbildschirm "Aktuelles" (bisher ungetestet).
 //
 // ANLASS (14.11.2026): Die Coverage-Messung zeigte fuer
 // lib/screens/home/home_screen.dart 367 offene Zeilen - die Seite, die
@@ -25,10 +25,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/models/message.dart';
+import 'package:thestia/providers/chat_provider.dart';
 import 'package:thestia/providers/profile_provider.dart';
 import 'package:thestia/providers/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/home/home_screen.dart';
+import 'package:thestia/services/chat_service.dart';
 import 'package:thestia/services/local_storage.dart';
 import 'package:thestia/services/secure_storage.dart';
 
@@ -114,6 +117,7 @@ void main() {
   Future<ProviderContainer> zeigeScreen(
     WidgetTester tester, {
     UserProfile? profil,
+    ChatNotifier? chat,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -153,6 +157,7 @@ void main() {
       overrides: [
         localStorageProvider.overrideWithValue(_FakeLocalStorage()),
         secureProfileStoreProvider.overrideWithValue(_FakeSecureProfileStore()),
+        if (chat != null) chatProvider.overrideWith((ref) => chat),
         profileProvider.overrideWith((ref) {
           final notifier = ProfileNotifier(
             ref.watch(localStorageProvider),
@@ -185,6 +190,60 @@ void main() {
     await pumpFrames(tester);
     return container;
   }
+
+  group('Die Funken auf dem Startbildschirm', () {
+    testWidgets('der Name und die letzte Nachricht stehen da', (tester) async {
+      final service = ChatService();
+      final match = service.createMatch(
+        const UserProfile(id: 'partner-1', name: 'Mira', bio: ''),
+      );
+      service.addMessage(
+        match.id,
+        Message(
+          id: 'm1',
+          senderId: 'partner-1',
+          receiverId: 'ich',
+          text: 'Hallo, wie geht es dir?',
+          timestamp: DateTime.now(),
+        ),
+      );
+      // Die Karten zeigen nur Matches mit UNGELESENEN Nachrichten - also
+      // vor dem Notifier hochzaehlen (er liest den Stand aus dem Dienst).
+      service.incrementUnread(match.id);
+      final chat = ChatNotifier(service);
+
+      await zeigeScreen(tester, chat: chat);
+
+      expect(tester.takeException(), isNull);
+      await scrolleZu(tester, 'Mira');
+      expect(find.text('Mira'), findsOneWidget);
+      expect(
+        find.textContaining('Hallo'),
+        findsWidgets,
+        reason:
+            'Die letzte Nachricht muss stehen - der Nutzer will wissen, wer '
+            'ihm geschrieben hat.',
+      );
+    });
+
+    testWidgets('ohne Nachricht steht der Hinweis da', (tester) async {
+      final service = ChatService();
+      service.createMatch(
+        const UserProfile(id: 'partner-1', name: 'Mira', bio: ''),
+      );
+      final match = service.createMatch(
+        const UserProfile(id: 'partner-1', name: 'Mira', bio: ''),
+      );
+      service.incrementUnread(match.id);
+      final chat = ChatNotifier(service);
+
+      await zeigeScreen(tester, chat: chat);
+
+      expect(tester.takeException(), isNull);
+      await scrolleZu(tester, 'Mira');
+      expect(find.text('Mira'), findsOneWidget);
+    });
+  });
 
   group('Startbildschirm (Aktuelles)', () {
     testWidgets('baut sich ohne Absturz', (tester) async {
