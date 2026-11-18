@@ -171,14 +171,16 @@ def marker_aus_dem_quellstand():
         textpfad = "lib/l10n/strings"
         ergebnis = subprocess.run(
             ["git", "log", "-1", "--format=%H", "--", textpfad],
-            capture_output=True, text=True, cwd=str(ROOT), timeout=60)
+            capture_output=True, text=True,
+                encoding='utf-8', errors='replace', cwd=str(ROOT), timeout=60)
         commit = ergebnis.stdout.strip()
         if not commit:
             return []
         ergebnis = subprocess.run(
             ["git", "show", "--format=", "--unified=0", commit,
              "--", textpfad],
-            capture_output=True, text=True, cwd=str(ROOT), timeout=60)
+            capture_output=True, text=True,
+                encoding='utf-8', errors='replace', cwd=str(ROOT), timeout=60)
     except Exception:                                       # noqa: BLE001
         return []
 
