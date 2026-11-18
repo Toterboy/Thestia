@@ -1,4 +1,4 @@
-// Das eigene Profil (bisher kaum getestet).
+﻿// Das eigene Profil (bisher kaum getestet).
 //
 // ANLASS (14.11.2026): Die Coverage-Messung zeigte fuer
 // lib/screens/profile/profile_screen.dart 309 offene Zeilen.
@@ -73,6 +73,7 @@ UserProfile _profil() => UserProfile(
   bio: 'Hallo aus Hamburg',
   birthDate: DateTime.now().subtract(const Duration(days: 24 * 365)),
   isVerified: true,
+  interests: const <String>['wandern', 'klettern'],
 );
 
 void main() {
