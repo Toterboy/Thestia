@@ -4,7 +4,7 @@
 // schreibt sie als PNG-Goldens nach goldens/. Aufruf (schreibt/neu):
 //   flutter test --update-goldens test/screenshots/store_screenshots_test.dart
 // Anschließend nach fastlane/metadata/android/de-DE/images/phoneScreenshots/
-// kopieren (siehe tool/copy_store_screenshots.ps1).
+// kopieren (siehe tool/werkzeuge/sonstiges/copy_store_screenshots.ps1).
 //
 // Hinweise:
 //  - flutter_test nutzt standardmäßig die Ahem-Font (Text = Blöcke). Hier
