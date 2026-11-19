@@ -86,22 +86,16 @@ void main() {
   /// Der Ersatz-Server (Antworten aus dem RAM).
   late FakeSupabaseServer server;
 
-  setUp(() async {
+  setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
     SharedPreferences.setMockInitialValues(<String, Object>{});
-    // DER KEYSTORE: Der Bildschirm liest die Einstellungen aus dem
-    // verschluesselten Speicher - ohne den Mock ruft der Test auf dem
-    // CI-Runner das echte Plugin (das findet dort keine libsecret-
-    // Sitzung).
-    mockKeystore();
-    mockZeitzone();
-    // DER PFAD-KANAL: der Export schreibt seine Datei in den
-    // Temp-Ordner des Geraets - ohne den Mock sucht der Test auf dem
-    // Rechner statt im Testordner.
-    await mockPfadProvider();
+    await SharedPreferences.getInstance();
 
-    // DER CLIENT: der Datenexport braucht den Supabase-Client (der
-    // Chat-Verlauf und die E2E-Boxen werden gelesen).
+    // DER CLIENT: Wird nur EINMAL initialisiert. EIN ZWEITER Aufruf von
+    // `Supabase.initialize` wird vom Paket ignoriert ("Skipping
+    // reinitialization") - der Client wuerde dann weiter den Server des
+    // ERSTEN Tests benutzen, und die FehlerAntworten eines spaeteren
+    // Tests kaemen nie an.
     server = FakeSupabaseServer(userId: 'ich');
     await supabase.Supabase.initialize(
       url: 'https://example.supabase.co',
@@ -114,6 +108,28 @@ void main() {
       ),
     );
     await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
+  });
+
+  setUp(() async {
+    // DER KEYSTORE: Der Bildschirm liest die Einstellungen aus dem
+    // verschluesselten Speicher - ohne den Mock ruft der Test auf dem
+    // CI-Runner das echte Plugin (das findet dort keine libsecret-
+    // Sitzung).
+    mockKeystore();
+    mockZeitzone();
+    // DER PFAD-KANAL: der Export schreibt seine Datei in den
+    // Temp-Ordner des Geraets - ohne den Mock sucht der Test auf dem
+    // Rechner statt im Testordner.
+    await mockPfadProvider();
+
+    // Jeder Test startet mit einem sauberen Server.
+    server.antwortetMitFehler = false;
+    server.rpcAntworten.clear();
+    server.fehlerAntworten.clear();
+    server.zeilen.clear();
+    server.schreibvorgaenge.clear();
+    server.pfade.clear();
+    server.funktionsAufrufe.clear();
   });
 
   Future<void> zeigeScreen(WidgetTester tester) async {
@@ -326,5 +342,265 @@ void main() {
       find.text(L10n.tWithoutContext('privacy.termsTitle')),
       findsOneWidget,
     );
+  });
+
+  // Der Wechsel der E-Mail-Adresse: Das ist der sicherheitskritischste
+  // Weg auf dem Bildschirm - er aendert, wer der Nutzer ist. Deshalb
+  // verlangt er das AKTUELLE Passwort und prueft die Eingaben, BEVOR
+  // er den Server anruft.
+  group('Der Wechsel der E-Mail-Adresse', () {
+    /// Oeffnet den Dialog zum Wechseln.
+    Future<void> oeffneDialog(WidgetTester tester) async {
+      await zeigeScreen(tester);
+      await scrolleZu(tester, L10n.tWithoutContext('privacy.changeEmail'));
+
+      final eintrag = find.text(L10n.tWithoutContext('privacy.changeEmail'));
+      await tester.ensureVisible(eintrag);
+      await tester.pump();
+      await tester.tap(eintrag);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+
+    /// Fuellt die beiden Felder und bestaetigt den Dialog.
+    Future<void> fuelleUndBestaetige(
+      WidgetTester tester,
+      String email,
+      String passwort,
+    ) async {
+      final felder = find.byType(TextFormField);
+      await tester.enterText(felder.at(0), email);
+      await tester.enterText(felder.at(1), passwort);
+      await tester.pump();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text(L10n.tWithoutContext('common.save')),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+
+    /// Wartet, bis der Server geantwortet hat.
+    Future<void> warteAufServer(WidgetTester tester) async {
+      for (var i = 0; i < 10; i++) {
+        await tester.runAsync(() async {
+          await Future<void>.delayed(const Duration(milliseconds: 60));
+        });
+        await tester.pump(const Duration(milliseconds: 120));
+      }
+    }
+
+    testWidgets('der Dialog fragt nach der Adresse und dem Passwort', (
+      tester,
+    ) async {
+      await oeffneDialog(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        find.byType(TextFormField),
+        findsNWidgets(2),
+        reason:
+            'Der Dialog braucht die neue Adresse UND das aktuelle '
+            'Passwort - ohne Passwort waere der Wechsel ein Einfall '
+            'fuer jeden, der am Geraet sitzt.',
+      );
+    });
+
+    testWidgets('eine ungueltige Adresse wird abgewiesen', (tester) async {
+      await oeffneDialog(tester);
+
+      await fuelleUndBestaetige(tester, 'keine-mail', 'geheim123');
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text(L10n.tWithoutContext('privacy.validator.invalidEmail')),
+        findsOneWidget,
+        reason: 'Eine Adresse ohne "@" ist keine Adresse.',
+      );
+      // Der Dialog bleibt offen - es wurde nichts an den Server gegeben.
+      expect(find.byType(AlertDialog), findsOneWidget);
+    });
+
+    testWidgets('ein zu kurzes Passwort wird abgewiesen', (tester) async {
+      await oeffneDialog(tester);
+
+      await fuelleUndBestaetige(tester, 'neu@example.de', 'kurz');
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text(L10n.tWithoutContext('privacy.validator.tooShort')),
+        findsOneWidget,
+        reason:
+            'Ein zu kurzes Passwort kann nicht das aktuelle Passwort sein - '
+            'der Wechsel muss scheitern.',
+      );
+      expect(find.byType(AlertDialog), findsOneWidget);
+    });
+
+    testWidgets('der Wechsel wird gemeldet', (tester) async {
+      await oeffneDialog(tester);
+
+      await fuelleUndBestaetige(tester, 'neu@example.de', 'geheim123');
+      await warteAufServer(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text(L10n.tWithoutContext('privacy.changeEmailSent')),
+        findsOneWidget,
+        reason:
+            'Der Nutzer muss wissen, dass die Aenderung an den Server '
+            'gegangen ist - der Wechsel wird erst mit der Bestaetigung '
+            'an der neuen Adresse aktiv.',
+      );
+    });
+
+    testWidgets('ein falsches Passwort wird gemeldet', (tester) async {
+      // DER SERVER LEHNT DIE ANMELDUNG AB (falsches Passwort).
+      server.fehlerAntworten['/auth/v1/token'] = (
+        status: 400,
+        body: '{"error":"invalid_credentials"}',
+      );
+
+      await oeffneDialog(tester);
+      await fuelleUndBestaetige(tester, 'neu@example.de', 'falsch123');
+      await warteAufServer(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.textContaining(L10n.tWithoutContext('privacy.changeFailed')),
+        findsWidgets,
+        reason:
+            'Ein falsches Passwort muss gemeldet werden - der Nutzer darf '
+            'nicht denken, die Adresse sei gewechselt.',
+      );
+    });
+  });
+
+  // Der Wechsel des Passworts: Auch hier gilt - bevor etwas passiert,
+  // muss das aktuelle Passwort geprueft werden, und die beiden neuen
+  // Passwoerter muessen uebereinstimmen.
+  group('Der Wechsel des Passworts', () {
+    /// Oeffnet den Dialog zum Wechseln.
+    Future<void> oeffneDialog(WidgetTester tester) async {
+      await zeigeScreen(tester);
+      await scrolleZu(tester, L10n.tWithoutContext('privacy.changePassword'));
+
+      final eintrag = find.text(L10n.tWithoutContext('privacy.changePassword'));
+      await tester.ensureVisible(eintrag);
+      await tester.pump();
+      await tester.tap(eintrag);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+
+    /// Fuellt die drei Felder und bestaetigt den Dialog.
+    Future<void> fuelleUndBestaetige(
+      WidgetTester tester,
+      String aktuell,
+      String neu,
+      String wiederholung,
+    ) async {
+      final felder = find.byType(TextFormField);
+      await tester.enterText(felder.at(0), aktuell);
+      await tester.enterText(felder.at(1), neu);
+      await tester.enterText(felder.at(2), wiederholung);
+      await tester.pump();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text(L10n.tWithoutContext('common.save')),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+    }
+
+    /// Wartet, bis der Server geantwortet hat.
+    Future<void> warteAufServer(WidgetTester tester) async {
+      for (var i = 0; i < 10; i++) {
+        await tester.runAsync(() async {
+          await Future<void>.delayed(const Duration(milliseconds: 60));
+        });
+        await tester.pump(const Duration(milliseconds: 120));
+      }
+    }
+
+    testWidgets('der Dialog fragt nach drei Passwoertern', (tester) async {
+      await oeffneDialog(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.byType(TextFormField),
+        findsNWidgets(3),
+        reason:
+            'Es braucht das aktuelle, das neue und die Wiederholung des '
+            'neuen Passworts - sonst koennte der Nutzer sich selbst '
+            'aussperren.',
+      );
+    });
+
+    testWidgets('ein zu kurzes Passwort wird abgewiesen', (tester) async {
+      await oeffneDialog(tester);
+
+      await fuelleUndBestaetige(
+        tester,
+        'kurz',
+        'neuesPasswort1',
+        'neuesPasswort1',
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text(L10n.tWithoutContext('privacy.validator.tooShort')),
+        findsWidgets,
+      );
+      expect(find.byType(AlertDialog), findsOneWidget);
+    });
+
+    testWidgets('zwei verschiedene neue Passwoerter werden abgewiesen', (
+      tester,
+    ) async {
+      await oeffneDialog(tester);
+
+      await fuelleUndBestaetige(
+        tester,
+        'geheim123',
+        'neuesPasswort1',
+        'anderesPasswort',
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text(L10n.tWithoutContext('privacy.validator.mismatch')),
+        findsOneWidget,
+        reason:
+            'Die Wiederholung muss stimmen - sonst ueberschreibt der '
+            'Nutzer sein Passwort mit einem Tippfehler und sperrt sich '
+            'aus.',
+      );
+      expect(find.byType(AlertDialog), findsOneWidget);
+    });
+
+    testWidgets('der Wechsel wird gemeldet', (tester) async {
+      await oeffneDialog(tester);
+
+      await fuelleUndBestaetige(
+        tester,
+        'geheim123',
+        'neuesPasswort1',
+        'neuesPasswort1',
+      );
+      await warteAufServer(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text(L10n.tWithoutContext('privacy.changePasswordDone')),
+        findsOneWidget,
+        reason: 'Der Nutzer muss sehen, dass das Passwort gewechselt wurde.',
+      );
+    });
   });
 }

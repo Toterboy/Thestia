@@ -379,8 +379,17 @@ class PrivacyScreen extends ConsumerWidget {
             child: Text(L10n.t(context, 'common.cancel')),
           ),
           FilledButton(
-            onPressed: () =>
-                Navigator.of(ctx).pop(formKey.currentState!.validate()),
+            // DER GRUND (19.11.2026, gefunden von einem Test): Mit
+            // `pop(validate())` schloss sich der Dialog auch bei
+            // ungueltiger Eingabe - die Fehlermeldung war einen
+            // Augenblick da und dann weg. Der Nutzer sah NICHTS und
+            // wusste nicht, warum es nicht ging. Jetzt bleibt der
+            // Dialog offen, bis die Eingabe stimmt.
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                Navigator.of(ctx).pop(true);
+              }
+            },
             child: Text(L10n.t(context, 'common.save')),
           ),
         ],
@@ -480,8 +489,17 @@ class PrivacyScreen extends ConsumerWidget {
             child: Text(L10n.t(context, 'common.cancel')),
           ),
           FilledButton(
-            onPressed: () =>
-                Navigator.of(ctx).pop(formKey.currentState!.validate()),
+            // DER GRUND (19.11.2026, gefunden von einem Test): Mit
+            // `pop(validate())` schloss sich der Dialog auch bei
+            // ungueltiger Eingabe - die Fehlermeldung war einen
+            // Augenblick da und dann weg. Der Nutzer sah NICHTS und
+            // wusste nicht, warum es nicht ging. Jetzt bleibt der
+            // Dialog offen, bis die Eingabe stimmt.
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                Navigator.of(ctx).pop(true);
+              }
+            },
             child: Text(L10n.t(context, 'common.save')),
           ),
         ],

@@ -246,6 +246,9 @@ void main() {
     await mockHive();
     server.pfade.clear();
     server.funktionsAufrufe.clear();
+    // Die Fehlerantworten des Servers: jeder Test startet sauber
+    // (sonst wuerde der naechste Test die Fehler des vorigen sehen).
+    server.fehlerAntworten.clear();
   });
 
   /// Die Registrierungsdaten, wie sie nach der Anmeldung im Speicher liegen.
@@ -557,6 +560,103 @@ void main() {
       );
       // Und die Daten sind aus dem Speicher verschwunden.
       expect(container.read(pendingVerificationCredentialsProvider), isNull);
+
+      await aufraeumen(tester, container);
+    });
+
+    testWidgets('nach einem Fehler wartet der Auto-Login laenger', (
+      tester,
+    ) async {
+      await starteSupabase(tester);
+      // DER FALL: Der Server lehnt den stillen Login ab (die E-Mail ist
+      // noch nicht bestaetigt). Jeder Versuch kostet Budget im
+      // Rate-Limit des Auth-Servers - deshalb verdoppelt der Screen
+      // die Wartezeit nach jedem Fehler (5 -> 10 -> 20 -> 30 Sekunden).
+      server.fehlerAntworten['/auth/v1/token'] = (
+        status: 400,
+        body: '{"error":"invalid_credentials"}',
+      );
+
+      // DIE SESSION WEG: Ein frueherer Test hat sich angemeldet, und
+      // die Session bleibt im RAM-Client des ganzen Testlaufs. Mit einer
+      // vorhandenen Session prueft der Bildschirm gar nicht erst (der
+      // normale Poller ist dann zustaendig) - der Auto-Login faellt
+      // aus, und es ginge gar nichts zu testen.
+      await supabase.Supabase.instance.client.auth.signOut();
+
+      final container = await zeigeScreen(tester, mitRegistrierung: true);
+
+      /// Wie viele Anmeldeversuche sind bisher gegangen?
+      int versuche() =>
+          server.pfade.where((p) => p.contains('/auth/v1/token')).length;
+
+      /// Laesst die Zeit laufen und das Netz arbeiten, bis [bedingung]
+      /// eintritt (oder [sekunden] vorbei sind).
+      ///
+      /// DER WEG: Die Zeit laeuft in der Test-Zone (der Timer des
+      /// Bildschirms), das Netz in der echten Zone (die Anfrage muss
+      /// wirklich ankommen). Beides wird hier getrieben.
+      Future<bool> warteAuf(int sekunden, bool Function() bedingung) async {
+        for (var i = 0; i < sekunden * 5; i++) {
+          if (bedingung()) return true;
+          // ERST die Zeit laufen lassen (der Timer des Bildschirms),
+          // DANN das Netz (die Anfrage muss wirklich ankommen).
+          await tester.pump(const Duration(milliseconds: 200));
+          await tester.runAsync(() async {
+            await Future<void>.delayed(const Duration(milliseconds: 20));
+          });
+        }
+        return bedingung();
+      }
+
+      // Der erste Versuch kommt nach 5 Sekunden.
+      expect(
+        await warteAuf(10, () => versuche() > 0),
+        isTrue,
+        reason: 'Der erste Versuch muss kommen.',
+      );
+      final erster = versuche();
+
+      // DER BACKOFF: Nach dem Fehler wartet der naechste Versuch 10
+      // statt 5 Sekunden. Nach 6 Sekunden darf es also NOCH keinen
+      // zweiten Versuch geben.
+      await tester.pump(const Duration(seconds: 6));
+      await lassNetzLaufen(tester);
+      expect(
+        versuche(),
+        erster,
+        reason:
+            'Nach einem Fehler muss der Auto-Login laenger warten - das '
+            'Rate-Limit des Auth-Servers soll nicht verheizt werden.',
+      );
+
+      // Nach weiteren 5 Sekunden (zusammen 11) kommt der zweite.
+      expect(
+        await warteAuf(10, () => versuche() > erster),
+        isTrue,
+        reason: 'Der zweite Versuch muss kommen.',
+      );
+      final zweiter = versuche();
+
+      // Und nun wartet der dritte 20 Sekunden (10 -> 20).
+      await tester.pump(const Duration(seconds: 10));
+      await lassNetzLaufen(tester);
+      expect(
+        versuche(),
+        zweiter,
+        reason:
+            'Die Wartezeit verdoppelt sich weiter - sonst wuerde der '
+            'Server mit Versuchen ueberrennt.',
+      );
+
+      // Nach weiteren 10 Sekunden kommt auch der dritte.
+      expect(
+        await warteAuf(15, () => versuche() > zweiter),
+        isTrue,
+        reason:
+            'Der Auto-Login darf nicht aufgeben - sonst bleibt der '
+            'Nutzer fuer immer auf dem Bestaetigungs-Screen.',
+      );
 
       await aufraeumen(tester, container);
     });

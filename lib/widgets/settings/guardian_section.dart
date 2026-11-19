@@ -171,7 +171,17 @@ class _GuardianSectionState extends ConsumerState<GuardianSection> {
   String? _pinAusDemDialog;
 
   Future<void> _zeitWaehlen(bool start) async {
-    final aktuell = start ? _startMin : _endMin;
+    // DER GRUND (19.11.2026, gefunden von einem Test): Der lokale Wert
+    // (_startMin/_endMin) ist erst nach der ERSTEN Auswahl gesetzt.
+    // Vorher zeigte der Waehler 12:00 an, obwohl z. B. 09:00 galt -
+    // wer ihn nur ansah und bestaetigte, schob die Grenze ungefragt
+    // auf 12:00 (und bei beiden Grenzen auf 12:00 - die Nutzungszeit
+    // waere auf null zusammengeschrumpft). Darum der Rueckfall auf den
+    // Serverstand: der Waehler muss mit dem aktuellen Wert starten.
+    final stand = ref.read(guardianProvider);
+    final lokal = start ? _startMin : _endMin;
+    final serverWert = start ? stand.usageStartMin : stand.usageEndMin;
+    final aktuell = lokal ?? serverWert;
     final stunde = aktuell == null ? 12 : aktuell ~/ 60;
     final minute = aktuell == null ? 0 : aktuell % 60;
     final gewaehlt = await showTimePicker(
