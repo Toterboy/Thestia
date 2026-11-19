@@ -300,5 +300,48 @@ void main() {
       // Das eigene Profil mit der Vorstellung steht in der Vorschau.
       expect(find.text('Lena'), findsWidgets);
     });
+
+    testWidgets('die Profil-Vorschau schaltet auf Geburtstag und schliesst', (
+      tester,
+    ) async {
+      await oeffneMenue(tester);
+
+      await tester.tap(find.text(L10n.tWithoutContext('profile.menu.preview')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(tester.takeException(), isNull);
+      // Der Titel der Vorschau und beide Modi stehen da.
+      expect(
+        find.text(L10n.tWithoutContext('profile.preview.title')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(L10n.tWithoutContext('profile.preview.modeNormal')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(L10n.tWithoutContext('profile.preview.modeBirthday')),
+        findsOneWidget,
+      );
+
+      // Umstellen auf Geburtstag: der Stil-Wechsel darf nicht abstuerzen
+      // (der Chip mit dem aktiven Stil wird eingeblendet).
+      await tester.tap(
+        find.text(L10n.tWithoutContext('profile.preview.modeBirthday')),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(tester.takeException(), isNull);
+
+      // Das Schliessen-Icon bringt die Vorschau wieder weg.
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(
+        find.text(L10n.tWithoutContext('profile.preview.title')),
+        findsNothing,
+      );
+    });
   });
 }
