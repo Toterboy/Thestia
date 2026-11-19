@@ -38,15 +38,44 @@ class ChatBackgrounds {
   /// eigenen Hintergrundbildes.
   static void bindAppDocsDir(String dir) => _appDocsDir = dir;
 
+  /// Der Dateiname des eigenen Hintergrundbildes (der Waehler speichert
+  /// es genau unter diesem Namen).
+  static const String _eigeneDatei = 'chat_bg_custom.jpg';
+
+  /// Normalisiert einen Pfad (ohne fremde Abhaengigkeit): '.' und '..'
+  /// werden aufgeloest.
+  ///
+  /// DER GRUND: Ohne das wuerde der Pfad
+  /// `documents/../fremd/chat_bg_custom.jpg` durch die Pruefung rutschen -
+  /// der Import zeigte dann auf eine Datei AUSSERHALB des Verzeichnisses.
+  static String _normalisiere(String pfad) {
+    final teile = pfad.split(RegExp(r'[\\/]'));
+    final raus = <String>[];
+    for (final teil in teile) {
+      if (teil.isEmpty || teil == '.') continue;
+      if (teil == '..') {
+        if (raus.isNotEmpty) raus.removeLast();
+        continue;
+      }
+      raus.add(teil);
+    }
+    return raus.join('/');
+  }
+
   /// Liegt [file] im App-Dokumentenverzeichnis und ist es der
   /// Hintergrund-Dateiname? Schützt davor, dass ein manipulierter
   /// Einstellungs-Import einen beliebigen Dateipfad als Hintergrund
   /// einschleust.
   static bool isOwnBackgroundFile(File file) {
     final docs = _appDocsDir;
-    if (docs == null) return false;
-    return file.path.startsWith(docs) &&
-        file.path.endsWith('chat_bg_custom.jpg');
+    if (docs == null || docs.trim().isEmpty) return false;
+    final teile = _normalisiere(file.path).split('/');
+    if (teile.length < 2) return false;
+    final name = teile.last;
+    final ordner = teile.sublist(0, teile.length - 1).join('/');
+    // Die Datei muss DIREKT im Dokumentenverzeichnis liegen und den
+    // EXAKTEN Namen tragen.
+    return name == _eigeneDatei && ordner == _normalisiere(docs);
   }
 }
 
