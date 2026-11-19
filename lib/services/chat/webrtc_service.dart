@@ -25,6 +25,17 @@ import 'package:thestia/utils/common/best_effort.dart';
 class WebRTCService {
   static const String _dataChannelLabel = 'blind-date-chat';
 
+  /// Der Test-Haken: einen eigenen Peer-Connection-Hersteller einsetzen.
+  ///
+  /// DER GRUND (20.11.2026): `createPeerConnection()` aus flutter_webrtc
+  /// braucht die native Schicht - im Test gibt es sie nicht. Die komplette
+  /// Verbindungs- und Nachrichtenlogik des Dienstes war dadurch
+  /// untestbar. Der Test schiebt hier eine Attrappe hinein; in der App
+  /// bleibt dieser Wert `null` und es wird die echte Verbindung gebaut.
+  @visibleForTesting
+  static Future<RTCPeerConnection> Function(Map<String, dynamic> config)?
+  peerConnectionFactory;
+
   RTCPeerConnection? _peerConnection;
   RTCDataChannel? _dataChannel;
   final EncryptionService _encryptionService;
@@ -924,7 +935,9 @@ class WebRTCService {
       'rtcpMuxPolicy': 'require',
     };
 
-    _peerConnection = await createPeerConnection(config);
+    _peerConnection = peerConnectionFactory != null
+        ? await peerConnectionFactory!(config)
+        : await createPeerConnection(config);
 
     _peerConnection!.onIceCandidate = (candidate) {
       if (_currentPeerId != null) {

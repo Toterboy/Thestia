@@ -13,6 +13,36 @@ import 'package:thestia/services/transit/transit_encounter_service.dart';
 import 'package:thestia/services/transit/transit_ble_privacy.dart';
 import 'package:thestia/utils/common/best_effort.dart';
 
+/// Die Plattform-Pruefungen hinter der Berechtigungslogik des Dienstes.
+///
+/// DER GRUND (20.11.2026, gefunden von der Coverage-Messung): Auf dem
+/// Testrechner (Linux/Windows) sind `Platform.isAndroid` und
+/// `Platform.isIOS` immer false. Die komplette Berechtigungslogik - und
+/// damit die Fehlergruende ('location_permission', 'bluetooth_scan',
+/// 'bluetooth_connect' ...), die der Bildschirm dem Nutzer nennt - war
+/// dadurch untestbar.
+///
+/// DER WEG: Der Test setzt hier eine Attrappe ein (Android 11 oder 12,
+/// iOS). In der App bleibt es bei der echten Plattform.
+@visibleForTesting
+class TransitPlattform {
+  /// Erlaubt dem Test, eine andere Plattform zu melden.
+  TransitPlattform();
+
+  /// Die aktive Plattform (in der App immer echt).
+  static TransitPlattform instance = TransitPlattform();
+
+  bool get istWeb => kIsWeb;
+
+  bool get istAndroid => Platform.isAndroid;
+
+  bool get istIOS => Platform.isIOS;
+
+  /// Die Android-Version (API-Level) des Geraets.
+  Future<int> androidSdkInt() async =>
+      (await DeviceInfoPlugin().androidInfo).version.sdkInt;
+}
+
 /// BLE-Schicht für Transit Spark (Phase 1, v0.9.0).
 ///
 /// Prinzip: Beide Geräte ADVERTISEN ihr ephemeres Token im
@@ -86,18 +116,18 @@ class TransitBleService {
   Future<bool> _ensurePermissions() async {
     lastError = null;
     try {
-      if (kIsWeb) return true;
-      if (Platform.isIOS) {
+      final plattform = TransitPlattform.instance;
+      if (plattform.istWeb) return true;
+      if (plattform.istIOS) {
         var bt = await Permission.bluetooth.status;
         if (!bt.isGranted) bt = await Permission.bluetooth.request();
         final ok = bt.isGranted || bt.isLimited;
         if (!ok) lastError = 'bluetooth_scan';
         return ok;
       }
-      if (!Platform.isAndroid) return true;
+      if (!plattform.istAndroid) return true;
 
-      final info = await DeviceInfoPlugin().androidInfo;
-      final api = info.version.sdkInt;
+      final api = await plattform.androidSdkInt();
 
       // AB ANDROID 12 (API 31) braucht der BLE-Scan KEINEN Standort.
       //
