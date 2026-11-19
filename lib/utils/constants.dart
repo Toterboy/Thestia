@@ -164,7 +164,7 @@ class AppConstants {
   /// `--dart-define` zur Compile-Zeit, NICHT aus einem gebündelten `.env`.
   /// Ein als App-Asset registriertes `.env` landet im APK/IPA und ist
   /// extrahierbar - heute zwar nur öffentliche Werte, aber die Falle ist real
-  /// (früher stand hier einmal ein `HF_API_TOKEN`). `tool/build_release.ps1`
+  /// (früher stand hier einmal ein `HF_API_TOKEN`). `tool/werkzeuge/release/build_release.ps1`
   /// liest die Werte beim Bauen und übergibt sie als Defines.
   ///
   /// `.env` bleibt als reine Entwicklungs-Quelle erhalten (dotenv, unten als

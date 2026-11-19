@@ -56,7 +56,7 @@ class SecureNamespaces {
   /// (dem früheren Default) ALTDATEN für diesen Store lagen. Ein
   /// brandneuer Namespace hat keine Vorgeschichte: es gibt nichts zu
   /// verschieben, und ein erzwungener Leer-Eintrag wäre ein stiller
-  /// No-op (genau das prüft tool/check_namespace_migration.py als
+  /// No-op (genau das prüft tool/pruefer/check_namespace_migration.py als
   /// Fehler).
   ///
   /// Sobald ein Namespace hier steht, sind die Altdaten beim Update nicht

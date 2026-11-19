@@ -1,0 +1,810 @@
+"""Prueft die Release-Artefakte der AKTUELLEN Version.
+
+Geprueft wird:
+  * Signatur: CN muss Thestia sein. Aeltere Versionen im releases/-Ordner
+    tragen absichtlich noch CN=WispDating (bis v0.9.1) - die werden hier
+    NICHT geprueft, denn deren Signatur ist historisch und korrekt.
+  * Admin-UUID: muss in den ADMIN-Builds stehen und in KEINEM
+    oeffentlichen Build. Wird nur geprueft, wenn ADMIN_UUID gesetzt ist -
+    die UUID ist ein Geheimnis und steht deshalb in KEINER Datei.
+
+Zusaetzlich gemeldet (Warnung, kein Fehler): byte-identische Dateien
+zwischen einem oeffentlichen und einem Admin-Build. Das ist der Fall,
+wenn ein Admin-Build den oeffentlichen Pfad ueberschrieben hat.
+
+Aufruf:
+    $env:ADMIN_UUID="..."; python tool/pruefer/check_release_artifacts.py
+"""
+
+import hashlib
+import json
+import os
+import pathlib
+import re
+import subprocess
+import sys
+import zipfile
+
+#: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
+#:
+#: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
+#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe aendert.
+def _projektwurzel() -> pathlib.Path:
+    for kandidat in pathlib.Path(__file__).resolve().parents:
+        if (kandidat / 'pubspec.yaml').exists():
+            return kandidat
+    # DER NOTFALL: Der Ordner mit den Migrationen - den hat auch das
+    # kleine Test-Repo der Selbsttests (dort gibt es keine pubspec).
+    for kandidat in pathlib.Path(__file__).resolve().parents:
+        if (kandidat / 'supabase' / 'migrations').is_dir():
+            return kandidat
+    return pathlib.Path(__file__).resolve().parent.parent
+
+
+ROOT = _projektwurzel()
+
+RELEASES = ROOT / 'releases'
+
+EXPECTED_CN = 'CN=Thestia'
+FORBIDDEN_CN = 'WispDating'
+
+# Der SHA-256-Fingerabdruck des Release-Zertifikats.
+#
+# WARUM (03.11.2026, Sicherheitspruefung): Der CN ist FREI WAEHLBAR.
+# Ein fremder Keystore mit "CN=Thestia" waere durch die CN-Pruefung
+# gegangen - erkannt wurde nur der alte CN. Der Fingerabdruck ist der
+# bindende Nachweis: er sagt, WELCHES Zertifikat signiert hat. Er ist
+# in passkey-assets/assetlinks.json hinterlegt (dort gegen den
+# Release-Keystore geprueft) - das ist dieselbe Quelle, die auch
+# Android fuer die App-Links benutzt.
+EXPECTED_SHA256 = ('8C:BE:F7:D0:8F:86:66:54:2E:1D:53:B9:B4:26:C5:46:AF:'
+                    '82:47:93:1A:DF:E8:20:61:9E:17:F7:91:3F:3E:1A')
+
+# Die UUID kommt aus der Umgebung, damit sie nicht im Repo landet.
+ADMIN_UUID = os.environ.get('ADMIN_UUID', '').strip()
+
+# Der Admin-Build traegt eine eigene Build-Nummer (Basis + 9000).
+#
+# BEFUND (07.11.2026, Betreiber): "Sind die APKs veraltet?" - ja. Der
+# Admin-Build im Ordner war Build 33, der Quellstand Build 38. Beide
+# heissen "v0.10.0" und sind auf dem Geraet nicht zu unterscheiden -
+# die App zeigte keinen Build an. Der Tester hat einen Fehler gemeldet,
+# den es im aktuellen Stand nicht mehr gab.
+#
+# Mit der eigenen Nummer ist der Admin-Build auf dem Geraet erkennbar
+# (die Fusszeile zeigt "Version 0.10.0 (9038)") und laesst sich ueber
+# dem oeffentlichen Build installieren. Das Gate prueft hier, dass die
+# Admin-APK genau diese Nummer hat.
+ADMIN_BUILD_OFFSET = 9000
+
+problems = []
+warnings = []
+rows = []
+uuid_sets = {}
+
+
+def admin_build_nummer_fehler(name, ist, erwartet, oeffentlich):
+    """Prueft die Build-Nummer eines Admin-Builds.
+
+    Gibt den Fehlertext zurueck, oder None wenn alles stimmt.
+
+    Getrennt in eine eigene Funktion, damit der Selbsttest sie ohne
+    eine fertige APK pruefen kann.
+
+    BEFUND (07.11.2026, Betreiber): "Sind die APKs veraltet?" - ja. Der
+    Admin-Build im Ordner war Build 33, der Quellstand Build 38. Beide
+    heissen "v0.10.0" und sind auf dem Geraet nicht zu unterscheiden.
+    """
+    if ist is None:
+        return None
+    if ist == erwartet:
+        return None
+    return (f'{name}: Build-Nummer {ist}, erwartet {erwartet} '
+            f'(oeffentlich {oeffentlich} + {ADMIN_BUILD_OFFSET}). '
+            f'Der Admin-Build ist veraltet - neu bauen.')
+
+
+def find_apksigner():
+    candidates = [
+        pathlib.Path(os.environ.get('LOCALAPPDATA', ''), 'Android', 'Sdk',
+                     'build-tools'),
+        pathlib.Path(r'C:\Program Files\Android\Android Studio\jbr\bin'),
+        pathlib.Path(r'C:\Program Files\Android\Android Studio\jbr'),
+    ]
+    for base in candidates:
+        if not base.is_dir():
+            continue
+        for exe in sorted(base.glob('**/apksigner*'), reverse=True):
+            if exe.suffix == '.bat' or exe.name == 'apksigner':
+                return exe
+    return None
+
+
+def find_aapt2():
+    """Sucht aapt2 in den installierten Android-Build-Tools."""
+    basis = pathlib.Path(os.environ.get('LOCALAPPDATA', ''), 'Android', 'Sdk',
+                         'build-tools')
+    if not basis.is_dir():
+        return None
+    kandidaten = sorted(basis.glob('*/aapt2.exe'), reverse=True)
+    for exe in kandidaten:
+        if exe.is_file():
+            return exe
+    return None
+
+
+def apk_version_code(aapt2, apk):
+    """Liest die Build-Nummer aus einem APK (aapt2 dump badging).
+
+    Nur das Artefakt sagt, was wirklich drin ist - der Dateiname
+    koennte luegen.
+    """
+    try:
+        ergebnis = subprocess.run(
+            [str(aapt2), 'dump', 'badging', str(apk)],
+            capture_output=True, text=True, timeout=120)
+    except Exception:                                       # noqa: BLE001
+        return None
+    treffer = re.search(r"versionCode='(\d+)'", ergebnis.stdout)
+    return int(treffer.group(1)) if treffer else None
+
+
+def newest_app_source_mtime():
+    """Juengste Aenderung am App-Quellstand: (mtime, pfad).
+
+    Beruecksichtigt werden nur die Verzeichnisse, aus denen der
+    Build besteht: lib/, android/ und pubspec.yaml. Die Edge Functions
+    (supabase/functions) sind NICHT Teil der APKs - ein neues Deploy
+    dort macht die APKs nicht alt.
+    """
+    kandidaten = []
+    # Verzeichnisse, die KEIN Quellcode sind, sondern Build-Artefakte
+    # oder Cache. android/.gradle/ enthaelt Zeitstempel-Dateien, die bei
+    # JEDEM Build neu geschrieben werden - sie wuerden eine Frische-
+    # Pruefung, die sich selbst erfuellt, erzeugen.
+    ausgeschlossen = {'.gradle', '.kotlin', 'build', '.cxx', '.idea'}
+    # BILDER UND SCHRIFTEN sind genauso Teil des Builds wie der Code:
+    # ein geaendertes Statusleisten-Icon oder ein neuer Splash macht
+    # die APKs genauso alt wie eine geaenderte .dart-Datei. Vorher
+    # standen hier nur Code-Endungen - ein neues Icon wurde deshalb
+    # als "frisch" gemeldet, obwohl es im APK noch das alte war.
+    endungen = ('.dart', '.yaml', '.kt', '.kts', '.xml', '.gradle',
+                '.properties', '.png', '.webp', '.jpg', '.jpeg', '.svg',
+                '.ttf', '.otf')
+    for basis in ('lib', 'android', 'assets'):
+        wurzel = ROOT / basis
+        if wurzel.is_dir():
+            for p in wurzel.rglob('*'):
+                if any(teil in ausgeschlossen for teil in p.parts):
+                    continue
+                # local.properties ist von Gradle erzeugt (SDK-Pfad,
+                # org.gradle...). Es ist kein Quelltext - und da die
+                # Datei bei jedem Build neu geschrieben wird, wuerde
+                # sie sonst eine Frische-Pruefung, die sich selbst
+                # erfuellt, erzeugen (29.10.2026).
+                if p.name == 'local.properties':
+                    continue
+                if p.is_file() and p.suffix.lower() in endungen:
+                    kandidaten.append(p)
+    pubspec = ROOT / 'pubspec.yaml'
+    if pubspec.is_file():
+        kandidaten.append(pubspec)
+    if not kandidaten:
+        return None
+    juengste = max(kandidaten, key=lambda p: p.stat().st_mtime)
+    return juengste.stat().st_mtime, juengste
+
+
+def format_mtime(ts):
+    """Zeitstempel lesbar - ohne zoneinfo (laeuft auf Windows und Linux)."""
+    import datetime
+    return datetime.datetime.fromtimestamp(ts).strftime('%d.%m. %H:%M')
+
+
+def sha256(path):
+    h = hashlib.sha256()
+    with open(path, 'rb') as f:
+        for chunk in iter(lambda: f.read(1 << 20), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def artifact_bytes_contain(path, needle: bytes) -> bool:
+    """Sucht eine Zeichenkette in einem APK ODER AAB, entpackt.
+
+    Ein Byte-Suchlauf ueber die ganze Datei reicht nicht: im AAB ist
+    `base/lib/<abi>/libapp.so` DEFLATED, und dasselbe gilt fuer ein APK,
+    dessen Gradle-Kompression einmal staerker eingestellt wird. Ein
+    Rohscan findet dort NIE etwas - egal ob das Geheimnis drin ist.
+    Genau die Datei wird hochgeladen, und genau sie waere ungeprueft
+    geblieben. Deshalb wird das Archiv geoeffnet und jeder Eintrag
+    dekomprimiert durchsucht.
+
+    Liest chunkweise, damit keine 240-MB-Datei komplett im RAM liegt.
+    """
+    def scan_stream(reader):
+        overlap = len(needle) - 1
+        tail = b''
+        while True:
+            chunk = reader.read(1 << 20)
+            if not chunk:
+                return False
+            window = tail + chunk
+            if needle in window:
+                return True
+            tail = window[-overlap:] if overlap > 0 else b''
+
+    if path.suffix in ('.aab', '.apk'):
+        try:
+            with zipfile.ZipFile(path) as z:
+                for info in z.infolist():
+                    if info.is_dir():
+                        continue
+                    with z.open(info) as member:
+                        if scan_stream(member):
+                            return True
+        except (zipfile.BadZipFile, OSError):
+            # Unlesbar heisst nicht "enthält nichts".
+            problems.append(f'{path.name}: Archiv nicht lesbar '
+                            f'(kaputt?) - Inhalt ungeprueft')
+            return False
+        return False
+
+    with open(path, 'rb') as f:
+        return scan_stream(f)
+
+
+def uuids_in_artifact(path):
+    """Alle UUID-Muster in einem Artefakt als Menge.
+
+    Braucht kein Geheimnis. Ein Admin-Build kompiliert eine UUID
+    zusaetzlich per dart-define; alles andere ist in beiden Builds
+    gleich. Die Differenz Admin-Menge minus oeffentliche Menge ist
+    damit genau die Admin-UUID - und zwar ohne dass man sie kennen
+    muss.
+
+    Zaehlen allein reicht nicht: die Anzahl schwankt zwischen ABIs und
+    zwischen APK und AAB legitim (ein AAB fuehrt je Eintrag andere
+    Dateien). Die Menge ist der verlaessliche Vergleich.
+    """
+    pat = re.compile(rb'[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-'
+                     rb'[0-9a-fA-F]{4}-[0-9a-fA-F]{12}')
+    found = set()
+
+    def scan(data):
+        found.update(x.decode().lower() for x in pat.findall(data))
+
+    if path.suffix in ('.aab', '.apk'):
+        # Beide Formate werden als ZIP entpackt gelesen, NICHT als
+        # Bytekette.
+        #
+        # Grund: ein Rohscan findet nur, was unkomprimiert im Archiv
+        # steht. Flutter legt libapp.so im APK zwar unkomprimiert ab -
+        # darauf zu bauen ist aber eine Annahme ueber die
+        # Gradle-Konfiguration, und der Fehler waere still: das
+        # Artefakt enthielte das Geheimnis und der Check meldete
+        # "sauber". Genau dieser Fall ist im Selbsttest aufgetreten,
+        # als das Testarchiv die .so deflatet hat.
+        try:
+            with zipfile.ZipFile(path) as z:
+                for info in z.infolist():
+                    if info.is_dir():
+                        continue
+                    # Nur .so: das sind die Dart-AOT-Schnipsel, in
+                    # denen die Defines als Zeichenketten stehen.
+                    # Andere Eintraege zu durchsuchen kostet Zeit
+                    # und findet nichts.
+                    if info.filename.endswith('.so'):
+                        with z.open(info) as member:
+                            scan(member.read())
+        except (zipfile.BadZipFile, OSError):
+            if path.suffix == '.aab':
+                problems.append(f'{path.name}: AAB nicht lesbar '
+                                f'(kaputt?) - Inhalt ungeprueft')
+                return None
+            # Kein ZIP: dann ist es auch keine APK. Rohscan als
+            # Auffangnetz, damit nichts ungeprueft durchrutscht.
+            with open(path, 'rb') as f:
+                scan(f.read())
+        return found
+
+    with open(path, 'rb') as f:
+        scan(f.read())
+    return found
+
+
+def alte_admin_builds(aktueller_ordner):
+    """Admin-Builds in den ALTEN Release-Ordnern.
+
+    BEFUND (07.11.2026, Betreiber): "Sind die APKs veraltet?" - ja. Der
+    Admin-Build im aktuellen Ordner war Build 33, getestet wurde der
+    Stand von vor dem Fix. Der Fehler fiel nicht auf, weil die Datei
+    genauso hiess wie die richtige.
+
+    Dieselbe Gefahr besteht fuer die alten Ordner: in
+    `releases/v0.9.2/admin/` liegen APKs mit der ALTEN UUID, die laut
+    Doku als kompromittiert gilt. Wer die falsche Datei nimmt, hat
+    einen Admin-Zugang mit einem geaecherten Geheimnis.
+
+    Deshalb wird hier gemeldet, dass alte Admin-Builds herumliegen -
+    mit dem Rat, sie zu loeschen.
+
+    In der CI gibt es diese Ordner nicht (releases/ ist ignoriert),
+    also meldet das Gate dort nichts.
+    """
+    alt = []
+    if not RELEASES.is_dir():
+        return alt
+    for ordner in sorted(RELEASES.iterdir()):
+        if not ordner.is_dir() or ordner == aktueller_ordner:
+            continue
+        admin_ordner = ordner / 'admin'
+        if not admin_ordner.is_dir():
+            continue
+        for apk in sorted(admin_ordner.glob('*.apk')):
+            alt.append(apk)
+    return alt
+
+
+def admin_uuid_known() -> bool:
+    """Ist die Admin-UUID fuer den Inhaltscheck bekannt?
+
+    Aus der Umgebungsvariable - bewusst NICHT aus einer Datei im
+    Repo. Die UUID ist ein Geheimnis (sie schaltet den Admin-Zugang
+    frei) und darf deshalb nicht im Arbeitsverzeichnis liegen.
+    """
+    return bool(ADMIN_UUID.strip())
+
+
+def admin_uuids_all(uuid_sets, admin):
+    """Vereinigung aller UUID-Mengen der Admin-Builds."""
+    return set().union(*(uuid_sets[p.relative_to(ROOT).as_posix()]
+                         for p in admin)) if admin else set()
+
+
+def current_version():
+    pub = (ROOT / 'pubspec.yaml').read_text(encoding='utf-8')
+    m = re.search(r'^version:\s*([0-9]+\.[0-9]+\.[0-9]+)\+([0-9]+)',
+                  pub, re.M)
+    if not m:
+        sys.exit('version in pubspec.yaml nicht lesbar')
+    return m.group(1), m.group(2)
+
+
+def main():
+    global signature_checked
+    # Alles zuruecksetzen. Diese Zustände sind Modulvariablen, damit die
+    # Hilfsfunktionen ohne Rücksprungliste auskommen - ohne Reset
+    # sammeln sich Befunde über mehrere Läufe in einem Prozess an, und
+    # ein zweiter Lauf meldet die Fehler des ersten mit.
+    problems.clear()
+    warnings.clear()
+    rows.clear()
+    uuid_sets.clear()
+    signature_checked = True
+    version, code = current_version()
+    vdir = RELEASES / f'v{version}'
+    if not vdir.is_dir():
+        sys.exit(f'{vdir} fehlt - erst bauen:\n'
+                 f'  powershell -NoProfile -ExecutionPolicy Bypass '
+                 f'-File tool\\build_release.ps1 -Flavor both -UniversalApk')
+
+    public = sorted(p for p in vdir.glob('*')
+                    if p.suffix in ('.apk', '.aab'))
+    admin_dir = vdir / 'admin'
+    admin = sorted(admin_dir.glob('*.apk')) if admin_dir.is_dir() else []
+
+    # ------------------------------------------------------------------
+    # ALTE ADMIN-BUILDS: Sie tragen die alte (als kompromittiert
+    # geltende) UUID und sind von den aktuellen nicht zu unterscheiden.
+    # ------------------------------------------------------------------
+    alte = alte_admin_builds(vdir)
+    if alte:
+        warnings.append(
+            f'{len(alte)} alte Admin-Build(s) in anderen Release-Ordnern '
+            f'liegen herum - z. B. {alte[0].relative_to(ROOT).as_posix()}. '
+            f'Sie tragen eine alte UUID und sind von den aktuellen nicht '
+            f'zu unterscheiden. Vor einem Admin-Einsatz loeschen, sonst '
+            f'wird versehentlich die falsche Datei getestet.')
+
+    # ------------------------------------------------------------------
+    # BUILD-NUMMER: Der Admin-Build muss zum aktuellen Release passen.
+    #
+    # BEFUND (07.11.2026, Betreiber): "Sind die APKs veraltet?" - ja. Der
+    # Admin-Build im Ordner war Build 33, der Quellstand Build 38. Beide
+    # heissen "v0.10.0", und die App zeigte nirgends einen Build, mit dem
+    # man sie haette unterscheiden koennen. Der Tester hat daraufhin
+    # einen Fehler gemeldet, den es im aktuellen Stand nicht mehr gab.
+    #
+    # Der Admin-Build traegt deshalb eine eigene Build-Nummer (Basis +
+    # 9000, siehe tool/werkzeuge/release/build_release.ps1). Hier wird geprueft, dass die
+    # Admin-APK genau diese Nummer hat - ein alter Admin-Build faellt
+    # damit sofort auf, statt monatelang still mitzulaufen.
+    #
+    # Gelesen wird die Build-Nummer aus dem APK selbst (aapt2), nicht
+    # aus dem Dateinamen: nur das Artefakt sagt, was drin ist.
+    if admin:
+        erwartet_admin = int(code) + ADMIN_BUILD_OFFSET
+        aapt2 = find_aapt2()
+        if not aapt2:
+            warnings.append('aapt2 nicht gefunden - die Build-Nummer der '
+                            'Admin-Builds wurde nicht geprueft.')
+        else:
+            for pfad in admin:
+                ist = apk_version_code(aapt2, pfad)
+                fehler = admin_build_nummer_fehler(pfad.name, ist,
+                                                   erwartet_admin, code)
+                if fehler:
+                    problems.append(fehler)
+                elif ist is None:
+                    # Nicht lesbar ist kein Fehler der Datei, sondern eine
+                    # Grenze der Pruefung (kein aapt2, synthetische APK im
+                    # Selbsttest). Als Fehler wuerde jeder saubere Stand
+                    # beanstandet, den der Selbsttest prueft.
+                    warnings.append(f'{pfad.name}: Build-Nummer nicht lesbar '
+                                    '- der Admin-Build wurde nicht '
+                                    'auf seine Nummer geprueft.')
+
+    # Ein leerer oder nicht vorhandener Versionsordner ist KEIN
+    # bestandener Check. In der CI sind die APKs gitignoriert und
+    # gar nicht da - der frueher pauschale "OK 0 Artefakte" war
+    # eine gruene, inhaltslose Zeile, die einen echten Fehler
+    # verdeckt hat.
+    if not public and not admin:
+        print()
+        print('FEHLER: keine Artefakte unter '
+              f'{vdir.relative_to(ROOT).as_posix()}/')
+        print('  In der CI sind die APKs bewusst nicht im Repository,')
+        print('  dieser Check kann dort also nichts bestaetigen. Er')
+        print('  schlaegt fehl, statt eine gruene Null zu melden.')
+        print('  Lokal: erst bauen mit tool\\build_release.ps1.')
+        # sys.exit, nicht return: ein "return 1" aus main() lässt die
+        # Kommandozeile mit 0 enden. Genau dieser Fehler ist im
+        # Selbsttest aufgefallen.
+        sys.exit(1)
+
+    # UNGEPRUEFT-FALL (Security-Audit 2026-10-19).
+    #
+    # Bisher: ohne Admin-Build im Ordner wurde die geheimnisfreie
+    # Kontaminationspruefung einfach uebersprungen, und am Ende stand
+    # "OK". Das ist eine gruene, inhaltslose Zeile: genau der Vorfall,
+    # bei dem 2026-10-05 ein Admin-Build unter oeffentlichem Namen
+    # landete, waere in einem frischen Clone, nach "flutter clean" oder
+    # nach dem Loeschen des Admin-Ordners NICHT mehr erkennbar.
+    #
+    # Ohne Admin-Build UND ohne bekannte Admin-UUID gibt es schlicht
+    # keine Moeglichkeit zu pruefen. Das wird als "ungeprueft"
+    # gemeldet und beendet den Lauf mit Fehler - nicht mit "OK".
+    if not admin and not admin_uuid_known():
+        print()
+        print('FEHLER: Kontamination nicht pruefbar.')
+        print('  Es gibt keinen Admin-Build unter '
+              f'{(admin_dir).relative_to(ROOT).as_posix()}/')
+        print('  UND die Admin-UUID ist nicht als Umgebungsvariable')
+        print('  gesetzt. Damit kann der Check nicht feststellen, ob')
+        print('  sich ein Admin-Build im oeffentlichen Ablageort')
+        print('  befindet - der v0.9.1-Vorfall waere genau so')
+        print('  durchgerutscht.')
+        print()
+        print('  Beides bereitstellen:')
+        print("    $env:ADMIN_UUID = '<uuid>'   # fuer den Inhaltscheck")
+        print('    und den Admin-Build bauen:')
+        print('    powershell -NoProfile -ExecutionPolicy Bypass '
+              '-File tool\\build_release.ps1')
+        sys.exit(1)
+
+
+    print('=' * 78)
+    print(f'RELEASE-ARTEFAKTE v{version} (build {code})')
+    print('=' * 78)
+    print(f'öffentlich: {len(public)} Dateien   Admin: {len(admin)} Dateien')
+    print(f'ADMIN_UUID: {"gesetzt (wird geprüft)" if ADMIN_UUID else "NICHT gesetzt - nur Muster-/Provenienzprüfung"}')
+    print()
+
+    # ------------------------------------------------------------------
+    # FRISCHE: passen die Artefakte zum aktuellen Quellstand?
+    # ------------------------------------------------------------------
+    # Die Frage "sind die APKs aktuell gebaut?" war bisher nur durch
+    # Handarbeit beantwortbar - und die Antwort lautete zweimal "ja",
+    # obwohl 17 Quelldateien zwischen Build und Frage geaendert
+    # worden waren. Der Zeitstempel der Artefakte wird hier gegen den
+    # juengsten App-Quellstand gestellt.
+    #
+    # Bewusst als WARNUNG und nicht als Fehler: ein Rebuild ist nicht
+    # immer noetig (z. B. wenn nur die Dokumentation geaendert wurde),
+    # und der Check soll den Zustand melden, nicht die Auslieferung
+    # blockieren. Der Admin-Build wird getrennt betrachtet, weil er
+    # aus einem anderen Grund gebaut wird (mit Admin-UUID).
+    newest_source = newest_app_source_mtime()
+    if newest_source:
+        print(f'Jüngste App-Quelldatei: '
+              f'{format_mtime(newest_source[0])}  '
+              f'({newest_source[1].relative_to(ROOT).as_posix()})')
+        for label, artefakte in (('öffentlich', public), ('Admin', admin)):
+            if not artefakte:
+                continue
+            aeltester = min(artefakte, key=lambda p: p.stat().st_mtime)
+            if aeltester.stat().st_mtime < newest_source[0]:
+                meldung = (f'{label}: {aeltester.name} ist älter als der '
+                           f'Quellstand - neu bauen')
+                # BEFUND (07.11.2026, Betreiber): "Aktuell ist bei Transit
+                # Spark bei der Aussehen auswahl die Schrift noch immer in
+                # der Statusleiste. Sind die APKs veraltet?" - JA. Der
+                # Admin-Build war Build 33 vom 06.11., der Fix steckte im
+                # Build 38. Das Gate hatte es als WARNUNG gemeldet - und
+                # eine Warnung wird ignoriert.
+                #
+                # Fuer den oeffentlichen Build bleibt es eine Warnung (ein
+                # Rebuild ist nicht immer noetig, z. B. wenn nur Doku
+                # geaendert wurde). Fuer den ADMIN-Build ist es ein
+                # Fehler: er wird zum Testen auf dem Geraet installiert,
+                # und genau dort hat ein alter Build Schaden angerichtet -
+                # der Tester hat einen Fehler gemeldet, den es im
+                # aktuellen Stand nicht mehr gab.
+                if label == 'Admin':
+                    problems.append(meldung)
+                else:
+                    warnings.append(meldung)
+    print()
+
+    uuid_sets.setdefault('__init__', set())
+    del uuid_sets['__init__']
+    for path in public + admin:
+        is_admin = path in admin
+        rel = path.relative_to(ROOT).as_posix()
+        size_mb = path.stat().st_size / 1024 / 1024
+        digest = sha256(path)
+        uuids = uuids_in_artifact(path)
+        uuid_sets[rel] = uuids if uuids is not None else set()
+
+        note = f'UUIDs {len(uuid_sets[rel])}' if uuids is not None \
+            else 'UUIDs ?'
+        if ADMIN_UUID:
+            has = artifact_bytes_contain(path, ADMIN_UUID.encode())
+            note += f'   Secret {"JA" if has else "nein"}'
+            if is_admin and not has:
+                problems.append(f'{rel}: ADMIN_UUID fehlt - der Admin-Build '
+                                f'kann keine Admins freischalten.')
+            if not is_admin and has:
+                problems.append(f'{rel}: ADMIN_UUID im öffentlichen Build. '
+                                f'Das ist ein vollständiger Admin-Zugang '
+                                f'für jeden, der die Datei hat.')
+        rows.append(f'  {rel:<52} {size_mb:7.1f} MB  {digest[:12]}  {note}')
+
+    # OHNE GEHEIMNIS: die Admin-UUID selbst bestimmen.
+    #
+    # Alles, was im Admin-Build steht und in KEINEM oeffentlichen
+    # derselben Version, ist per Definition ein Secret, das nur der
+    # Admin-Build kennt. Diese Menge wird danach in ALLEN Artefakten
+    # unter releases/ gesucht - auch in aelteren Versionen und im AAB.
+    # Damit ist die Kontamination ohne Kenntnis des Geheimnisses
+    # erkennbar.
+    if public and admin:
+        # Basis ist der oeffentliche Build GLEICHER ART, nicht der
+        # Schnitt oder die Vereinigung aller oeffentlichen Builds.
+        #
+        # Die UUID-Menge schwankt legitim zwischen den ABIs (arm64 hat 4,
+        # x86_64 hat 2 - andere native Bibliotheken, andere
+        # Konstanten). Ein Schnitt ueber alle Builds ist deshalb zu
+        # aggressiv und meldet Arm-APKs faelschlich als kontaminiert.
+        # Die Vereinigung ist zu schwach: sobald EIN Artefakt
+        # kontaminiert ist, enthaelt sie die Admin-UUID und die
+        # Differenz ist leer.
+        #
+        # Der Vergleich Admin gegen den oeffentlichen Universalbuild
+        # derselben Sorte ist der einzige, der exakt ist: gleiche ABIs,
+        # gleiche Buildkonfiguration, also unterscheidet sich genau das
+        # Define des Admin-Builds.
+        admin_only = set()
+        for adm in admin:
+            stem = adm.name.replace('-ADMIN.apk', '')
+            mate = None
+            for cand in public:
+                if cand.stem == stem:
+                    mate = cand
+                    break
+            if mate is None:
+                # Kein Partner: dann die kleinste oeffentliche Menge
+                # als Basis. Konservativ, kann aber nicht melden.
+                pub_all = set().union(*(uuid_sets.get(
+                    p.relative_to(ROOT).as_posix(), set()) for p in public))
+                admin_only |= (uuid_sets[adm.relative_to(ROOT).as_posix()]
+                               - pub_all)
+            else:
+                admin_only |= (
+                    uuid_sets[adm.relative_to(ROOT).as_posix()]
+                    - uuid_sets[mate.relative_to(ROOT).as_posix()])
+
+        if admin_only:
+            print()
+            print(f'Admin-Build enthält {len(admin_only)} UUID(s), die im '
+                  f'öffentlichen Build derselben Sorte fehlen. Sie gelten '
+                  f'jetzt als bekannt und werden in ALLEN Ablageorten '
+                  f'gesucht - ohne dass jemand das Geheimnis kennt.')
+            for p in sorted(RELEASES.rglob('*')):
+                if p.suffix not in ('.apk', '.aab'):
+                    continue
+                if 'admin' in p.parts:
+                    continue
+                rel = p.relative_to(ROOT).as_posix()
+                # Auch fremde Versionen und die .aab muessen gelesen
+                # werden - uuid_sets enthaelt nur die Artefakte der
+                # aktuellen Version.
+                known = uuid_sets.get(rel)
+                if known is None:
+                    known = uuids_in_artifact(p)
+                    if known is None:
+                        continue          # kaputt, schon gemeldet
+                    uuid_sets[rel] = known
+                hits = known & admin_only
+                if hits:
+                    problems.append(
+                        f'{rel} enthält eine UUID, die nur im Admin-Build '
+                        f'vorkommt. Das ist der Admin-Zugang in einem '
+                        f'öffentlichen Artefakt.')
+        else:
+            print()
+            print('Keine unbekannte UUID: der Admin-Build enthält nichts, '
+                  'was die öffentlichen Builds nicht auch haben.')
+
+        # Zweite, unabhaengige Regel fuer den Fall, dass ALLE
+        # oeffentlichen Artefakte kontaminiert sind: dann ist die Basis
+        # selbst verraet. Ein oeffentliches Artefakt, das alle UUIDs des
+        # Admin-Builds enthaelt, ist eines.
+        for p in public:
+            rel = p.relative_to(ROOT).as_posix()
+            if admin_only and uuid_sets.get(rel, set()) & admin_only:
+                pass          # bereits oben gemeldet
+            elif admin_uuids_all(uuid_sets, admin) and \
+                    uuid_sets.get(rel, set()) >= admin_uuids_all(
+                        uuid_sets, admin):
+                problems.append(
+                    f'{rel} enthält sämtliche UUIDs des Admin-Builds. '
+                    f'Wenn alle öffentlichen Artefakte betroffen sind, '
+                    f'erkennt die Differenz nichts mehr - dieses '
+                    f'Artifact ist trotzdem kontaminiert.')
+
+    print('\n'.join(rows))
+
+    # Signatur
+    apksigner = find_apksigner()
+    print()
+    if apksigner:
+        print(f'Signatur ({apksigner.name}):')
+        for path in public + admin:
+            if path.suffix != '.apk':
+                continue
+            proc = subprocess.run(
+                ['cmd', '/c', str(apksigner), 'verify', '--print-certs',
+                 str(path)],
+                capture_output=True, text=True, timeout=300)
+            out = proc.stdout or ''
+            err = proc.stderr or ''
+            if proc.returncode != 0 or not out.strip():
+                # Kein Raten: apksigner kann unter einem Benutzernamen
+                # mit Leerzeichen scheitern, ohne eine Zeile zu liefern.
+                problems.append(
+                    f'{path.name}: apksigner nicht auswertbar '
+                    f'(rc={proc.returncode})'
+                    + (f' - {err.strip().splitlines()[0]}' if err.strip() else ''))
+                continue
+            m = re.search(r'(CN=[^,\s]+)', out)
+            cn = m.group(1) if m else '(kein CN)'
+            # Der Fingerabdruck steht in der Ausgabe von apksigner als
+            # "Signer #1 certificate SHA-256 digest: <hex>".
+            fp = re.search(r'SHA-256 digest:\s*([0-9a-fA-F]+)', out)
+            fingerabdruck = fp.group(1).upper() if fp else ''
+            erwartet = EXPECTED_SHA256.replace(':', '')
+            if FORBIDDEN_CN in out:
+                problems.append(
+                    f'{path.name}: CN={cn} - das ist die alte Signatur aus '
+                    f'v0.9.1. Ein Update vom Play Store scheitert mit '
+                    f'INSTALL_FAILED_UPDATE_INCOMPATIBLE.')
+            elif EXPECTED_CN not in out:
+                problems.append(f'{path.name}: CN ist {cn}, erwartet '
+                                f'{EXPECTED_CN}')
+            elif not fingerabdruck:
+                problems.append(
+                    f'{path.name}: Fingerabdruck nicht auslesbar - die '
+                    f'Signatur kann nicht eindeutig geprueft werden')
+            elif fingerabdruck != erwartet:
+                problems.append(
+                    f'{path.name}: Signatur-Fingerabdruck {fingerabdruck} '
+                    f'weicht ab vom erwarteten {erwartet}. Der CN ist frei '
+                    f'waehlbar - der Fingerabdruck ist der bindende '
+                    f'N achweis.')
+            print(f'  {path.name:<48} {cn}  '
+                  f'SHA-256:{fingerabdruck[:16] or "(unbekannt)"}…')
+    else:
+        # In der CI fehlt apksigner immer. Das als Fehler zu melden
+        # wuerde den Check dort unbrauchbar machen; es als Erfolg zu
+        # melden waere gelogen. Also: laut und sichtbar, mit Exit 2,
+        # damit der Aufrufer entscheidet.
+        warnings.append('apksigner nicht gefunden - Signatur UNGEPRÜFT. '
+                        'Die Abschlusszeile behauptet das nicht.')
+        signature_checked = False
+        print()
+        print('apksigner nicht gefunden: die Signatur wurde nicht geprüft.')
+        print('Installieren: Android SDK build-tools, oder PATH um '
+              '%LOCALAPPDATA%\\Android\\Sdk\\build-tools ergänzen.')
+
+    if warnings:
+        print()
+        for w in warnings:
+            print('  !', w)
+
+    # Alle Ablageorte unter releases/, nicht nur die Versionsordner.
+    # `releases/testapk/` (interne Screenshot-APKs) ist genauso ein
+    # Ablageort; es war die einzige mit einer release-signierten APK und
+    # ausserhalb des Scans.
+    print()
+    collisions = []
+    admin_digests = {}
+    for admin_apk in RELEASES.rglob('admin/*.apk'):
+        admin_digests[sha256(admin_apk)] = admin_apk
+    for p in RELEASES.rglob('*'):
+        if p.suffix not in ('.apk', '.aab'):
+            continue
+        if 'admin' in p.parts:            # der Admin-Ordner selbst
+            continue
+        d = sha256(p)
+        if d in admin_digests:
+            collisions.append(
+                f'{p.relative_to(ROOT).as_posix()} == '
+                f'{admin_digests[d].relative_to(ROOT).as_posix()}')
+    if collisions:
+        print('ACHTUNG - Admin-Build im öffentlichen Ablageort:')
+        for c in collisions:
+            print('  X', c)
+        problems.append(
+            f'{len(collisions)} Datei(en) sind byte-identisch mit einem '
+            f'Admin-Build. Die betroffenen öffentlichen Dateien enthalten '
+            f'den Admin-Zugang und müssen neu gebaut werden.')
+    else:
+        print('Kein Admin-Build im öffentlichen Ablageort.')
+
+    # Der Marker, den build_release.ps1 schreibt, muss zu den
+    # tatsaechlich vorhandenen Admin-Artefakten passen. Ein marker mit
+    # Einträgen, deren Datei nicht (mehr) existiert, heißt: der Output
+    # wurde zwischenzeitlich von Hand angefasst.
+    print()
+    marker_path = ROOT / 'build' / '.admin-artifacts.json'
+    if marker_path.is_file():
+        # utf-8-sig statt utf-8: Windows PowerShell 5.1 schreibt mit
+        # Set-Content -Encoding UTF8 ein BOM, und json lehnt es ab. Ein
+        # Marker, den der Check nicht lesen kann, waere eine erfundene
+        # Stoerung - das Skript schreibt ihn inzwischen ohne BOM, aber
+        # ein aelterer Marker im Arbeitsverzeichnis soll die Pruefung
+        # nicht sprengen.
+        try:
+            entries = json.loads(marker_path.read_text(encoding='utf-8-sig'))
+        except ValueError:
+            entries = {}
+            problems.append(f'{marker_path.name} ist unlesbar - '
+                            f'Provenienz nicht mehr prüfbar')
+        if entries:
+            print(f'Provenienz-Marker: {len(entries)} Einträge aus '
+                  f'Admin-Builds vermerkt (für diese Dateien ist der '
+                  f'öffentliche Ablageort gesperrt).')
+    else:
+        print('Kein Provenienz-Marker - der letzte Build war kein '
+              'Admin-Build oder der Marker wurde entfernt.')
+
+    print()
+    if problems:
+        print('FEHLER:')
+        for p in problems:
+            print('  X', p)
+        sys.exit(1)
+    if not signature_checked:
+        print(f'OK  {len(public) + len(admin)} Artefakte: Admin-Trennung '
+              f'und Muster stimmen. Die SIGNATUR wurde nicht geprüft '
+              f'(apksigner fehlt).')
+        sys.exit(2)
+    print(f'OK  {len(public) + len(admin)} Artefakte: Signatur und '
+          f'Admin-Trennung stimmen.')
+
+
+if __name__ == '__main__':
+    main()

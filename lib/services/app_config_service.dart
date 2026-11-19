@@ -102,7 +102,7 @@ class AppConfigService {
   static int? _buildNumberCache;
 
   /// Der Aufschlag des Admin-Builds (siehe `build_release.ps1` und
-  /// `tool/check_release_artifacts.py`): Der Admin-Build traegt die
+  /// `tool/pruefer/check_release_artifacts.py`): Der Admin-Build traegt die
   /// Build-Nummer der BASIS + 9000, damit er auf dem Geraet erkennbar
   /// ist. Er geht nicht in den Store.
   static const int adminBuildOffset = 9000;

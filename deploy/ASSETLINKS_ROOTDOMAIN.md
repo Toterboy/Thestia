@@ -79,7 +79,7 @@ Vor dem ersten iOS-Build ersetzen:
 3. Prüfen: `curl -i https://auth.thestia.de/.well-known/apple-app-site-association`
    — die Antwort darf keine Zeichenkette `REPLACE_` enthalten.
 
-`tool/check_passkey_assetlinks.py` schlägt bei diesem Punkt an, solange die
+`tool/pruefer/check_passkey_assetlinks.py` schlägt bei diesem Punkt an, solange die
 Vorlage steht.
 
 ## Warum die Datei genau zwei Zertifikate enthält
@@ -97,7 +97,7 @@ die Passkey-Einrichtung in jedem `flutter run`-Debug-Build mit
 `CreatePublicKeyCredentialDomException` fehl, weil Credential Manager die
 App-Signatur sonst nicht gegen `assetlinks.json` prüfen kann. Für die
 *serverseitige* Origin-Liste ist das eine andere Frage — siehe
-`docs/PASSKEYS_SERVER_SETUP.md`.
+`docs/technik/PASSKEYS_SERVER_SETUP.md`.
 
 ## Nach dem ersten Play-Upload nachpflegen
 
@@ -111,7 +111,7 @@ falsch. Sobald der erste Upload durch ist:
 2. Als dritten Eintrag in `sha256_cert_fingerprints` aufnehmen.
 3. Den zugehörigen `android:apk-key-hash:`-Origin ebenfalls in Supabase
    ergänzen (Auth → Sign In / Providers → Passkeys → Origins).
-4. `python tool/check_passkey_assetlinks.py --live` muss danach grün sein.
+4. `python tool/pruefer/check_passkey_assetlinks.py --live` muss danach grün sein.
 
 Grund: Von Play installierte Builds tragen den Play-Key, nicht den
 Upload-Key. Ohne diesen Eintrag läuft die native Passkey-Dialog-Prüfung

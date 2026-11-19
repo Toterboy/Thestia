@@ -603,7 +603,7 @@ Future<bool> confirmTransitExit(
 /// Ueberschrift liege noch immer in der Statusleiste. Die Ursache war
 /// nicht der Code, sondern die getestete Datei: die Admin-APKs waren
 /// noch Build 33 vom 06.11. 19:00 - also VOR diesem Fix (das Gate
-/// `tool/check_release_artifacts.py` meldet es heute).
+/// `tool/pruefer/check_release_artifacts.py` meldet es heute).
 ///
 /// Oeffentlich, damit der Test den WEG geht, den die App geht - mit
 /// demselben `useSafeArea`. Eine Nachbildung im Test wuerde nur pruefen,

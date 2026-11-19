@@ -58,7 +58,7 @@ nicht vollständig funktional. Beiträge und Feedback sind willkommen.
 **Dokumentation:** [Beitragen](CONTRIBUTING.md) · [Verhaltenskodex](CODE_OF_CONDUCT.md) ·
 [Sicherheitslücken melden](SECURITY.md) · [Support](SUPPORT.md) ·
 [Roadmap](ROADMAP.md) · [Changelog](CHANGELOG.md) ·
-[Datenschutzerklärung](docs/DATENSCHUTZ.md) ·
+[Datenschutzerklärung](docs/recht/DATENSCHUTZ.md) ·
 [Angriffsbild (Threat Model)](passkey-assets/threat-model.md)
 
 ---
@@ -455,8 +455,8 @@ Alterssperre für Transit Spark (Migration 131) umgehen. Details:
   `THESTIA_KEY_PASSWORD`, `THESTIA_KEY_ALIAS`, `THESTIA_KEYSTORE_FILE`).
   `android/key.properties` nennt nur noch Alias und Pfad. Die Auflösung
   (Umgebung → Secret-Datei → `key.properties`) ist in
-  `android/app/build.gradle.kts` und `tool/keystore_secrets.py` hinterlegt;
-  `tool/check_keystore_secrets.py` verhindert, dass ein Passwort zurück ins
+  `android/app/build.gradle.kts` und `tool/hilfen/keystore_secrets.py` hinterlegt;
+  `tool/pruefer/check_keystore_secrets.py` verhindert, dass ein Passwort zurück ins
   Projekt wandert.
 - **Passkey/WebAuthn**: Die GoTrue-Ursprungs-Liste muss den **SHA-256**-Hash der
   installierten APK enthalten (`android:apk-key-hash:…`, 43 Base64URL-Zeichen) –
@@ -505,7 +505,7 @@ und benutzt dabei **genau die Flags der CI**:
 | --- | --- | --- |
 | Analyzer | `flutter analyze --fatal-infos` | ohne `--fatal-infos` ist ein *Hinweis* kein Fehler – lokal grün, in der CI rot |
 | Tests | `flutter test --coverage` mit `.env` aus `.env.example` | die CI baut die `.env` genauso auf |
-| Coverage | `python tool/check_coverage.py` | die CI lädt die `lcov.info` zusätzlich als Artefakt hoch |
+| Coverage | `python tool/pruefer/check_coverage.py` | die CI lädt die `lcov.info` zusätzlich als Artefakt hoch |
 | Prüfer | 66 Skripte unter `tool/` (47 Gates im Spiegel) | `python3` → `python`, weil Windows oft kein `python3` kennt |
 
 Der Unterschied beim Analyzer ist der Grund, warum das Skript existiert:
@@ -529,7 +529,7 @@ wird der Lauf rot: dann fehlt ein Modul, und nicht nur eine Zeile.
 
 ```powershell
 flutter test --coverage
-python tool/check_coverage.py
+python tool/pruefer/check_coverage.py
 ```
 
 Der Bericht nennt die Zahl je Bereich (Screens, Services, Widgets …)

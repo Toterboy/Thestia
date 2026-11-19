@@ -256,7 +256,7 @@ flutter_launcher_icons:
   # Adaptive Icon (Android 8+): Hintergrund = Markenverlauf (volflaechig),
   # Vordergrund = Herz + Schriftzug in der Safe-Zone, damit die KREIS-Maske
   # des Launchers nichts abschneidet. Erzeugt von
-  # tool/generate_launcher_icon.py (dort auch monochrome + Legacy-Round-Icon).
+  # tool/werkzeuge/bilder/generate_launcher_icon.py (dort auch monochrome + Legacy-Round-Icon).
   adaptive_icon_background: "assets/images/thestia_icon_background.png"
   adaptive_icon_foreground: "assets/images/thestia_icon_foreground.png"
   # Safe-Zone steckt bereits im Foreground -> kein zusaetzlicher Inset.
@@ -281,7 +281,7 @@ flutter:
     - assets/models/
     # SECURITY (Audit 2026-09-26): KEIN .env als App-Asset. Eine gebündelte
     # Konfigurationsdatei ist aus APK/IPA extrahierbar. Die Werte werden
-    # ueber --dart-define zur Compile-Zeit injiziert (tool/build_release.ps1),
+    # ueber --dart-define zur Compile-Zeit injiziert (tool/werkzeuge/release/build_release.ps1),
     # .env bleibt rein lokale Entwicklungsquelle (nicht Teil des Bundles).
 
   # Hinweis: In einer echten App würden hier weitere Assets (Bilder, Fonts) registriert.

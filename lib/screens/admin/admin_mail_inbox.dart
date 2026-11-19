@@ -13,7 +13,7 @@ import 'package:thestia/services/supabase_service.dart';
 /// falschen Konto zu schreiben (Migration 168).
 ///
 /// Die Mails kommen aus `public.mail_messages`. Zwei Wege speisen sie:
-/// der IMAP-Abfrage (`tool/mail_imap_poll.py`) und dem Cloudflare
+/// der IMAP-Abfrage (`tool/werkzeuge/sonstiges/mail_imap_poll.py`) und dem Cloudflare
 /// Email Worker (`deploy/cloudflare/email-worker.js`).
 class AdminMailInboxTab extends ConsumerStatefulWidget {
   const AdminMailInboxTab({super.key});

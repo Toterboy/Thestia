@@ -8,7 +8,7 @@ stattdessen die Dateien `_redirects` und `_headers` direkt.
 
 | Datei | Herkunft | Aenderung |
 |---|---|---|
-| `.htaccess` | **erzeugt** von `tool/make_htaccess.py` | niemals von Hand - das naechste Erzeugen ueberschreibt sie |
+| `.htaccess` | **erzeugt** von `tool/werkzeuge/website/make_htaccess.py` | niemals von Hand - das naechste Erzeugen ueberschreibt sie |
 | `README.md` | diese Datei | ja |
 
 Die `.htaccess` enthaelt die 38 Rewrite-Regeln aus `_redirects` und
@@ -19,8 +19,8 @@ Besonderheit des Auth-Hosts (`auth.thestia.de` bekommt die gesperrte
 ## Wenn sich etwas aendert
 
 ```powershell
-python tool/make_htaccess.py           # die Datei neu erzeugen
-python tool/check_publish_folder.py    # prueft, dass alles zusammenpasst
+python tool/werkzeuge/website/make_htaccess.py           # die Datei neu erzeugen
+python tool/pruefer/check_publish_folder.py    # prueft, dass alles zusammenpasst
 ```
 
 Der Publish-Ordner-Gate schlaegt auch dann rot, wenn die `.htaccess`
@@ -84,8 +84,8 @@ Der Auth-Host und die oeffentliche Seite liefern **denselben Inhalt**
 ## Nach dem Upload pruefen
 
 ```powershell
-python tool/check_websites_live.py --host https://thestia.de
-python tool/check_passkey_assetlinks.py --live
+python tool/pruefer/check_websites_live.py --host https://thestia.de
+python tool/pruefer/check_passkey_assetlinks.py --live
 ```
 
 Der erste Befehl prueft alle Adressen, die Sicherheits-Header (an der
@@ -103,8 +103,8 @@ sich die Fingerabdruecke, gegen die Android die Kette prueft. Nach
 dem Aktivieren des Zertifikats:
 
 ```powershell
-python tool/update_assetlinks.py           # Kette live lesen, Datei schreiben
-python tool/check_passkey_assetlinks.py --live
+python tool/werkzeuge/sonstiges/update_assetlinks.py           # Kette live lesen, Datei schreiben
+python tool/pruefer/check_passkey_assetlinks.py --live
 ```
 
 und den Publish-Ordner noch einmal hochladen.

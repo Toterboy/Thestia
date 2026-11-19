@@ -456,7 +456,7 @@ class UserProfile {
       // Serverabruf an. Die Daten waren in der Datenbank vorhanden.
       //
       // Deshalb werden hier BEIDE Schreibweisen gelesen. Das Werkzeug
-      // tool/check_profile_cache_keys.py sucht nach jedem weiteren
+      // tool/pruefer/check_profile_cache_keys.py sucht nach jedem weiteren
       // solchen Mismatch.
       introText: _leseText(json, ['intro_text', 'introText']) ?? '',
       introAudioPath: _leseText(json, ['intro_audio_path', 'introAudioPath']),
@@ -554,7 +554,7 @@ class UserProfile {
   // Deshalb liest jedes Feld jetzt unter ALLEN seinen Schreibweisen.
   // Der erste Treffer gewinnt; null zaehlt nicht als Treffer.
   //
-  // Das Werkzeug tool/check_profile_cache_keys.py sucht nach jedem
+  // Das Werkzeug tool/pruefer/check_profile_cache_keys.py sucht nach jedem
   // weiteren solchen Mismatch - es prueft toJson(), fromJson() und die
   // Server-Zuordnung gegeneinander.
   // =========================================================================

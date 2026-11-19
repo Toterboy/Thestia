@@ -46,7 +46,7 @@ class WebRTCService {
   /// oeffentlichen STUN-Server angefragt - das ist der Zustand, wenn
   /// Thestia einen eigenen TURN-Server betreibt: dann soll die
   /// oeffentliche IP-Adresse niemand fremdes sehen. Anleitung:
-  /// `docs/TURN-SERVER.md`.
+  /// `docs/technik/TURN-SERVER.md`.
   static final List<Map<String, dynamic>> _fallbackIceServers =
       parseIceFallbackUrls(
         const String.fromEnvironment(

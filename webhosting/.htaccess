@@ -1,14 +1,14 @@
 # ============================================================
 # THESTIA - Apache-Konfiguration
 #
-# ERZEUGT von tool/make_htaccess.py aus passkey-assets/_redirects
+# ERZEUGT von tool/werkzeuge/website/make_htaccess.py aus passkey-assets/_redirects
 # und passkey-assets/_headers. NICHT von Hand aendern - das naechste
 # Erzeugen ueberschreibt die Datei.
 #
 # Vor der Aenderung an _redirects oder _headers:
-#     python tool/make_htaccess.py
+#     python tool/werkzeuge/website/make_htaccess.py
 # und dann:
-#     python tool/check_publish_folder.py
+#     python tool/pruefer/check_publish_folder.py
 #
 # Diese Datei gehoert in das WURZELVERZEICHNIS der Website (dort, wo
 # index.html liegt). Sie wird nur fuer das klassische Webhosting

@@ -108,7 +108,7 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
       // DB-Trigger (notify_push_trigger) - der Like-Insert in Zeile 93
       // loest ihn aus. Ein eigener Aufruf von notify-user hier erzeugte
       // die ZWEITE, gleichlautende Meldung.
-      // Live gemessen (tool/measure_push_duplicates.sql): vorher 2
+      // Live gemessen (tool/werkzeuge/datenbank/measure_push_duplicates.sql): vorher 2
       // Meldungen pro Like, jetzt 1.
 
       if (mounted) {

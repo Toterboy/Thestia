@@ -264,7 +264,7 @@ const Map<String, Map<String, String>> stringsAnmeldung = {
         'Der Server konnte den Passkey nicht bestätigen. Wahrscheinlich '
         'fehlt der Ursprung (apk-key-hash) der installierten App in der '
         'Passkey-Konfiguration des Servers - siehe '
-        'docs/PASSKEYS_SERVER_SETUP.md. Alternativ: alten Passkey unter '
+        'docs/technik/PASSKEYS_SERVER_SETUP.md. Alternativ: alten Passkey unter '
         '"Passkeys verwalten" löschen und erneut anlegen.',
     'passkey.loadError':
         'Passkeys konnten nicht geladen werden. Bitte später erneut versuchen.',
@@ -582,7 +582,7 @@ const Map<String, Map<String, String>> stringsAnmeldung = {
         'The server could not confirm the passkey. Most likely the '
         'origin (apk-key-hash) of the installed app is missing in the '
         'server passkey configuration - see '
-        'docs/PASSKEYS_SERVER_SETUP.md. Alternatively delete the old '
+        'docs/technik/PASSKEYS_SERVER_SETUP.md. Alternatively delete the old '
         'passkey under "Manage passkeys" and create it again.',
     'passkey.loadError':
         'Passkeys could not be loaded. Please try again later.',

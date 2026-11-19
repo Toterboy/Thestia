@@ -151,7 +151,7 @@ rp_display_name = "Thestia"
 rp_id = "auth.thestia.de"
 # RP-Origins: HTTPS-Origin der RP-Domain + Android-App-Origin.
 # Den Android-Teil durch den BASE64(SHA256 deines Signing-Zertifikats)
-# ersetzen (Rechenweg in docs/PASSKEYS_SERVER_SETUP.md, Abschnitt
+# ersetzen (Rechenweg in docs/technik/PASSKEYS_SERVER_SETUP.md, Abschnitt
 # "Neue Keystore-Fingerprint -> Origin-String selbst berechnen").
 #
 # GROUND TRUTH per keytool verifiziert (Release-Keywechsel auf CN=Thestia):

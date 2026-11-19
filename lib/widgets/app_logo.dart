@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 ///
 /// Bewusst OHNE ClipOval: Das Artwork bringt seine eigene Rounded-Square-
 /// Form mit. (Für Splash/Benachrichtigungen wird das runde Logo genutzt,
-/// siehe tool/generate_branding.dart.)
+/// siehe tool/werkzeuge/bilder/generate_branding.dart.)
 class AppLogo extends StatelessWidget {
   const AppLogo({super.key, this.size = 120});
 

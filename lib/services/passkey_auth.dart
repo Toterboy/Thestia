@@ -462,7 +462,7 @@ class PasskeyAuth {
     // GoTrue lehnt ab, NACHDEM die native Zeremonie lief: Die WebAuthn-
     // Verifikation des Credentials scheitert ("credential verification
     // failed"). Häufigste Ursache (Diagnose, siehe
-    // docs/PASSKEYS_SERVER_SETUP.md): Der Origin des installierten APKs
+    // docs/technik/PASSKEYS_SERVER_SETUP.md): Der Origin des installierten APKs
     // (android:apk-key-hash:<SHA-256>) fehlt in GOTRUE_WEBAUTHN_RP_ORIGINS
     // - der native Dialog funktioniert trotzdem, weil er nur die
     // assetlinks.json prüft. Zweitursache: Alter/Defekt-Passkey am Konto.
@@ -472,7 +472,7 @@ class PasskeyAuth {
         'Der Server konnte den Passkey nicht bestätigen. Wahrscheinlich '
         'fehlt der Ursprung (apk-key-hash) der installierten App in der '
         'Passkey-Konfiguration des Servers - siehe '
-        'docs/PASSKEYS_SERVER_SETUP.md. Alternativ: alten Passkey unter '
+        'docs/technik/PASSKEYS_SERVER_SETUP.md. Alternativ: alten Passkey unter '
         '"Passkeys verwalten" löschen und erneut anlegen.',
         messageKey: '${k}verificationFailed',
       );

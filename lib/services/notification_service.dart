@@ -62,7 +62,7 @@ class NotificationService {
     // Small Icon: rundes notification_icon (drawable) statt ic_launcher -
     // das Launcher-Icon ist ein voll opakes Adaptive-Icon und erscheint
     // in der Statusleiste als VIERECK. Die rund maskierte Silhouette
-    // (tool/generate_branding.dart) bleibt in der Statusleiste ein Kreis.
+    // (tool/werkzeuge/bilder/generate_branding.dart) bleibt in der Statusleiste ein Kreis.
     const androidSettings = AndroidInitializationSettings('notification_icon');
     const iosSettings = DarwinInitializationSettings(
       requestSoundPermission: true,
@@ -246,7 +246,7 @@ class NotificationService {
           channelId,
           channelId,
           // Thestia-Silhouette statt weissem Punkt (siehe
-          // tool/generate_notification_icon.dart).
+          // tool/werkzeuge/bilder/generate_notification_icon.dart).
           icon: 'notification_icon',
           color: const Color(0xFFFF6B9D),
           importance: Importance.high,

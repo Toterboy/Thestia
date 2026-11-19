@@ -1,5 +1,5 @@
 // GENERIERTE DATEI - NICHT VON HAND AENDERN.
-// Neu erzeugen mit: python tool/make_privacy_policy.py
+// Neu erzeugen mit: python tool/werkzeuge/website/make_privacy_policy.py
 
 /// Ein Abschnitt der Datenschutzerklaerung fuer die Anzeige in der
 /// App.

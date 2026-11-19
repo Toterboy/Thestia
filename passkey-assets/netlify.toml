@@ -14,8 +14,8 @@
 # Publish-Ordner nicht (die App ist Android-only), die Regel wurde in
 # Commit ebc6883 entfernt. Ein Block ohne "from" und "to" ist keine
 # gueltige Netlify-Regel - er wird jetzt nicht mehr mitgeschickt.
-# GEFUNDEN am 05.11.2026 durch tool/check_web_pages.py und
-# tool/check_publish_folder.py, Abschnitt "netlify.toml".)
+# GEFUNDEN am 05.11.2026 durch tool/pruefer/check_web_pages.py und
+# tool/pruefer/check_publish_folder.py, Abschnitt "netlify.toml".)
 
 # EIGENE robots.txt fuer den Auth-Host (04.11.2026).
 #

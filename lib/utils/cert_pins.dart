@@ -1,7 +1,7 @@
 /// Die Zertifikat-Pins - die EINE Quelle der Wahrheit.
 ///
 /// WARUM EIGENE DATEI (Audit 16.11.2026): Das Rotations-Werkzeug
-/// (`tool/rotate_cert_pins.dart`) hatte eine eigene Kopie der
+/// (`tool/werkzeuge/sonstiges/rotate_cert_pins.dart`) hatte eine eigene Kopie der
 /// Pin-Tabelle. Die beiden Tabellen liefen auseinander - das Werkzeug
 /// meldete dauerhaft "Rotation nötig", obwohl der echte Zustand im
 /// Betrieb ganz woanders lag. Und niemand sah, dass der in der App
@@ -87,7 +87,7 @@ const int kRotationGraceDays = 14;
 /// Die gepinnten Hosts.
 ///
 /// ANLEITUNG FUER DIE ROTATION (Audit 16.11.2026):
-///   1. `dart run tool/rotate_cert_pins.dart` - das Werkzeug vergleicht
+///   1. `dart run tool/werkzeuge/sonstiges/rotate_cert_pins.dart` - das Werkzeug vergleicht
 ///      die Live-Zertifikate mit dieser Tabelle.
 ///   2. Den neuen Leaf-Hash hier eintragen (den alten zunaechst
 ///      behalten) und die Gueltigkeit (`leafNotBeforeEpoch`,

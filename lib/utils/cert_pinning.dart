@@ -155,7 +155,7 @@ class CertPinning {
   ///   Fremd-CA (MDM, Stalkerware) das Pinning umgangen (Befund im
   ///   Audit vom 16.11.2026). Wer einen eigenen Supabase-Host
   ///   betreibt, MUSS dessen Pins eintragen (siehe
-  ///   `tool/rotate_cert_pins.dart`).
+  ///   `tool/werkzeuge/sonstiges/rotate_cert_pins.dart`).
   static HttpClient pinnedHttpClient([String? host]) {
     final targetHost = host ?? _defaultHost;
     final pinned = _pinnedByHost[targetHost];

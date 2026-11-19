@@ -1,0 +1,2978 @@
+"""
+tool/werkzeuge/bilder/make_store_screenshots.py
+==============================
+Erzeugt MARKETING-Screenshots fuer den Play Store aus den gerenderten
+App-Screens (test/screenshots/store_v091/phone/*.png).
+
+Statt nackter UI-Dumps: Markenverlauf als Hintergrund, echtes
+Phone-Mockup (Rahmen + Schatten) und eine Nutzen-Headline darueber.
+Das ist das, was im Store wirklich ankommt - ein Feature-Spiegelbild
+ueberzeugt niemanden zum Installieren.
+
+Aufruf:
+    python tool/werkzeuge/bilder/make_store_screenshots.py
+
+Ausgabe:
+    releases/testapk/screenshots/marketing/9x16/*.png   (1080x1920)
+    releases/testapk/screenshots/marketing/wqhd/*.png   (2560x1440)
+    fastlane/metadata/android/de-DE/images/phoneScreenshots/*.png (9x16)
+
+Voraussetzung: die App-Screens vorher rendern -
+    $env:STORE_SHOTS="1"; flutter test --update-goldens test/screenshots/store_v091_shots_test.dart
+"""
+
+import json
+import math
+import math
+import pathlib
+import re
+import sys
+import time
+
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
+
+#: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
+#:
+#: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
+#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe aendert.
+def _projektwurzel() -> pathlib.Path:
+    for kandidat in pathlib.Path(__file__).resolve().parents:
+        if (kandidat / 'pubspec.yaml').exists():
+            return kandidat
+    # DER NOTFALL: Der Ordner mit den Migrationen - den hat auch das
+    # kleine Test-Repo der Selbsttests (dort gibt es keine pubspec).
+    for kandidat in pathlib.Path(__file__).resolve().parents:
+        if (kandidat / 'supabase' / 'migrations').is_dir():
+            return kandidat
+    return pathlib.Path(__file__).resolve().parent.parent
+
+
+ROOT = _projektwurzel()
+
+SRC = ROOT / 'test' / 'screenshots' / 'store_v091' / 'phone'
+OUT_9x16 = ROOT / 'releases' / 'testapk' / 'screenshots' / 'marketing' / '9x16'
+OUT_WQHD = ROOT / 'releases' / 'testapk' / 'screenshots' / 'marketing' / 'wqhd'
+TILES = ROOT / 'test' / 'screenshots' / 'store_v091' / 'tiles'
+OUT_FASTLANE = (ROOT / 'fastlane' / 'metadata' / 'android' / 'de-DE'
+                / 'images' / 'phoneScreenshots')
+
+# Markenfarben (aus thestia_icon_base.png gezogen)
+BRAND = [(0xFF, 0x2E, 0x74), (0xD1, 0x18, 0xB4), (0x6D, 0x1E, 0xC4),
+         (0x3B, 0x14, 0x6B)]
+
+FONT_BOLD = r'C:\Windows\Fonts\segoeuib.ttf'
+FONT_REG = r'C:\Windows\Fonts\segoeui.ttf'
+
+# Datei -> (Headline, Subline, Badge)
+#
+# ACHTUNG - Text ist Produktversprechen, kein Design-Element.
+# "In einer Minute startklar" stand hier bis v0.9.2, war aber falsch und
+# wurde von der App selbst widerlegt: nach der E-Mail-Bestaetigung
+# folgen 8 Seiten Einrichtung (settings_privacy_once_screen.dart,
+# _pageCount = 8) und 8 Seiten Onboarding (onboarding_screen.dart,
+# _pageCount = 8), dazu ein Pflicht-Foto. Das ist eine Investition von
+# mehreren Minuten, keine von einer. Ein Screenshot, der das Gegenteil
+# behauptet, ist Marketing-Waffenschmiede.
+#
+# Kriterien fuer die Badges, in dieser Reihenfolge:
+#   1. Nachpruefbar aus dem Code.
+#   2. Kein Zeitversprechen, keine Mengenangabe ohne Beleg.
+#   3. Erklaert ein echtes Alleinstellungsmerkmal.
+#
+# Die Kacheln sind nach ihrer POSITION im Store benannt (01, 02, ...).
+# Der Render im Repo (test/screenshots/store_v091/) ist nach dem SCREEN
+# benannt. Deshalb die Zuordnung unten: Kachel -> Quelldatei.
+QUELLE = {
+    '01_willkommen': '01_willkommen',
+    '02_aktuelles': '02_aktuelles',
+    '03_chat': '02_chat',
+    '04_entdecken': '03_entdecken',
+    '05_anpassen': '04_anpassen',
+    # 06_hell_dunkel braucht ZWEI Quellen (hell und dunkel). Die
+    # helle ist der Anpassen-Screen, die dunkle sein Gegenpart -
+    # der Sonderfall steht im Hauptlauf.
+    '06_hell_dunkel': '04_anpassen',
+    '07_eisbrecher': '05_eisbrecher',
+    '08_datenschutz': '06_datenschutz',
+}
+
+SHOTS = {
+    '01_willkommen': (
+        'Blind Date mit\nSubstanz',
+        'Persönlichkeit vor Aussehen: Hör erst zu,\n'
+        'und siehst ein Foto erst nach dem Funke.',
+        'Kein Foto vor dem Kennenlernen',
+    ),
+    # 2) Aktuelles: die Startseite (NEU, 31.10.2026).
+    #
+    #    Der Wunsch: "einen neuen Screenshot, wo man die Aktuelles
+    #    Seite sieht ... der zweite sein, also nach Blind Date mit
+    #    Substanz". Das Bild zeigt, was man beim Oeffnen der App
+    #    wirklich sieht: neue Nachrichten, neue Likes, neue Funken und
+    #    das Dock.
+    #
+    #    Der Text ist am Code nachpruefbar: der Bildschirm begruesst
+    #    ("Hallo, du!"), zeigt die Abschnitte "Neue Nachrichten",
+    #    "Neue Likes" und "Neue Funken" und verlinkt auf "Leute
+    #    entdecken". "Ohne Abo" ist die Abgrenzung gegen den
+    #    Marktstandard (es gibt keine Premium-Stufen).
+    '02_aktuelles': (
+        'Dein Überblick,\n'
+        'jeden Tag',
+        'Neue Nachrichten, neue Likes, neue Funken:\n'
+        'alles an einem Ort.',
+        'Ohne Abo, ohne Werbung',
+    ),
+    '03_chat': (
+        # Ersetzt das Anmelde-Bild ("Erst pruefen, dann freischalten").
+        # Das zeigte ein Formular - etwas, das man genau einmal macht. Der
+        # Chat ist das staerkste Versprechen der App UND der Alltag
+        # dazwischen: 01 zeigt den Einstieg, 03 die Modi, 04 die
+        # Personalisierung, 05 die Eisbrecher. Was zwischen zwei Treffen
+        # passiert, zeigte kein Bild.
+        #
+        # "verschluesselt" ist am Bild belegbar: der Screenshot zeigt das
+        # E2E-Schild in der Kopfzeile.
+        'Euer Chat bleibt\n'
+        'bei euch',
+        'Ende-zu-Ende-verschlüsselt, auch über das Relay.\n'
+        'Außer ihr beiden kann niemand mitlesen.',
+        'Schreib, was wirklich wichtig ist',
+    ),
+    '04_entdecken': (
+        'Fünf Wege,\n'
+        'einen Funken zu zünden',
+        'Von Find your Match bis Transit Spark:\n'
+        'im Zug nebenan Blickkontakt genügt.',
+        'Ende-zu-Ende-verschlüsselt',
+    ),
+    '05_anpassen': (
+        'Dein Stil,\n'
+        'deine Farben',
+        'Sechs Farbschemata, Hell/System/Dunkel und ein eigener\n'
+        'Chat-Hintergrund – alles bleibt erhalten.',
+        'Auch 6 Muster im Chat',
+    ),
+    # 6) Hell und Dunkel auf einem Bild.
+    #
+    #    Der Wunsch (31.10.2026): "Wenn passend vielleicht noch einen
+    #    Screenshot an passender Stelle, wo man Dark und Whitemode sieht,
+    #    also auf einem Screen so halbiert irgendwie".
+    #
+    #    Das Bild ist EIN Screen, oben hell und unten dunkel. Es ist
+    #    kein Mockup, sondern zwei echte Renders desselben Bildschirms
+    #    (store_v091/phone/04_anpassen.png und 04_anpassen_dunkel.png),
+    #    an einer Abschnittsgrenze zusammengesetzt.
+    #
+    #    Warum der Bildschirm "Erscheinungsbild": Er IST der Screen,
+    #    auf dem man zwischen Hell und Dunkel waehlt. Wer das Bild
+    #    sieht, sieht damit auch die Auswahl, die den Wechsel bewirkt
+    #    - oben "Hell", unten "Dunkel" markiert.
+    #
+    #    Die Texte sind am Code nachpruefbar: die App hat drei
+    #    Erscheinungsmodi (Hell/System/Dunkel) und sechs Farbschemata.
+    '06_hell_dunkel': (
+        'Hell oder dunkel,\n'
+        'ganz wie du willst',
+        'Drei Erscheinungsmodi: Hell, System oder Dunkel –\n'
+        'die App folgt deinem Gerät.',
+        'Auch sechs Farbschemata',
+    ),
+    # 6) Datenschutz. Eigenes Bild, weil die Entfernungs-Anzeige die
+    #    inhaltlich wichtigste Aenderung dieses Releases ist und in einer
+    #    von vier gleichwertigen Kacheln neben Farbschema und
+    #    Chat-Hintergrund untergeht.
+    #
+    #    Die Texte sind nach den Kriterien oben gebaut: alles am Code
+    #    nachpruefbar (show_distance ist Default false, Anzeige in
+    #    10-km-Stufen, Ort wird nicht erhoben), keine Mengenangabe ohne
+    #    Beleg, und der Punkt beschreibt ein echtes Alleinstellungs-
+    #    merkmal: die Entscheidung liegt beim Nutzer, nicht beim
+    #    Plattform-Standard.
+    '08_datenschutz': (
+        # Text in reinem Deutsch, mit echten Umlauten. Die uebrigen
+        # fuenf Screens benutzen sie auch - eine Transliteration fiel
+        # im Store sofort auf.
+        #
+        # "Du bestimmst, wer was sieht" und "Kein Ort gespeichert, kein
+        # Wert verraten" waren der erste Versuch und klangen nach
+        # Werbespruch mit Reim. Jetzt: beschreibend, in der Formulierung
+        # der App selbst ("Nur Personen, mit denen du einen Funken hast").
+        'Du entscheidest,\n'
+        'wer was sieht.',
+        'Dein Profil für alle – oder nur für die Menschen,\n'
+        'mit denen du einen Funken hast. Die Entfernung zeigt\n'
+        'erst, wenn du sie erlaubst: nur Stufen von 10 km.',
+        'Kein Ort gespeichert',
+    ),
+    '07_eisbrecher': (
+        '60 Fragen gegen\n'
+        'das Schweigen',
+        'Eisbrecher für den ersten Chat: antippen,\n'
+        'senden, plaudern. In 10 Kategorien.',
+        # Stand vorher "Ohne Stockfoto-Posen". Das ist kein
+        # Nutzenversprechen, sondern eine Abgrenzung gegen etwas, das
+        # gar nicht zur App gehoert - und "ohne" liest sich wie ein
+        # Mangel. Ersetzt durch die tatsaechliche Eigenschaft: die
+        # Fragen sind kopierfertig, man muss nichts tippen. Das ist der
+        # Grund, warum es eine Eisbrecher-Liste gibt.
+        'Antippen, senden, plaudern',
+    ),
+}
+
+# Die ENGLISCHEN Texte (03.11.2026).
+#
+# BISHER gab es nur einen Textsatz: die englische Store-Liste zeigte
+# deutsche Headlines UEBER deutschen Screenshots. Das war die
+# schlimmste Variante - ein Bild, das in zwei Sprachen spricht.
+#
+# Die Zusagen sind dieselben wie auf Deutsch und genauso am Code
+# nachpruefbar: sechs Farbschemata, drei Erscheinungsmodi, E2E auch
+# ueber das Relay, Entfernungsanzeige in 10-km-Stufen und nur auf
+# Wunsch, keine Ortesspeicherung, 60 Eisbrecher in 10 Kategorien.
+#
+# Die Ueberschriften sind bewusst kurz: sie stehen im 9:16-Bild neben
+# dem Verlauf und duerfen nicht ueber die Kachel hinauslaufen.
+SHOTS_EN = {
+    '01_willkommen': (
+        'Blind date\n'
+        'with substance',
+        'Personality before looks: listen first,\n'
+        'and see a photo only after the spark.',
+        'No photo before you meet',
+    ),
+    '02_aktuelles': (
+        'Your overview,\n'
+        'every day',
+        'New messages, new likes, new sparks:\n'
+        'all in one place.',
+        'No subscription, no ads',
+    ),
+    '03_chat': (
+        'Your chat stays\n'
+        'between you',
+        'End-to-end encrypted, even over the relay.\n'
+        'Nobody but the two of you can read it.',
+        'Write what really matters',
+    ),
+    '04_entdecken': (
+        'Five ways\n'
+        'to spark a match',
+        'From Find your Match to Transit Spark:\n'
+        'a glance on the train is enough.',
+        'End-to-end encrypted',
+    ),
+    '05_anpassen': (
+        'Your style,\n'
+        'your colors',
+        'Six colour schemes, light/system/dark and your own\n'
+        'chat background - all of it is kept.',
+        'Also 6 chat patterns',
+    ),
+    '06_hell_dunkel': (
+        'Light or dark,\n'
+        'exactly as you like',
+        'Three appearance modes: light, system or dark -\n'
+        'the app follows your device.',
+        'Also six colour schemes',
+    ),
+    '08_datenschutz': (
+        'You decide\n'
+        'who sees what.',
+        'Your profile for everyone - or only for the people\n'
+        'you have a spark with. Distance only shows\n'
+        'when you allow it: in 10 km steps.',
+        'No location stored',
+    ),
+    '07_eisbrecher': (
+        '60 questions against\n'
+        'the silence',
+        'Icebreakers for the first chat: tap,\n'
+        'send, talk. In 10 categories.',
+        'Tap, send, talk',
+    ),
+}
+
+
+def darken(img, amount=0.26):
+    """Zieht den Markenverlauf Richtung Schwarz.
+
+    Fuer das Datenschutz-Bild. Kein eigener Look, sondern derselbe
+    Verlauf mit verschobener Gewichtung: die Seite soll hervorgehen,
+    ohne aus der Reihe der fuenf anderen Bilder zu fallen. 0 = unveraendert,
+    1 = rein schwarz.
+    """
+    base = img.convert('RGB')
+    return Image.blend(base, Image.new('RGB', base.size, (0, 0, 0)), amount)
+
+
+def gradient(size, angle=35.0):
+    """Diagonaler Markenverlauf (Bresenham-artig, ohne numpy)."""
+    import math
+    w, h = size
+    img = Image.new('RGB', (w, h))
+    px = img.load()
+    rad = math.radians(angle)
+    dx, dy = math.cos(rad), math.sin(rad)
+    # Projektionsspanne fuer die Farbverlaeufe
+    proj = [(x * dx + y * dy) for x, y in ((0, 0), (w, 0), (0, h), (w, h))]
+    lo, hi = min(proj), max(proj)
+    span = (hi - lo) or 1
+    seg = (len(BRAND) - 1)
+    for y in range(h):
+        base = y * dy
+        for x in range(w):
+            t = ((x * dx + base) - lo) / span * seg
+            i = min(int(t), seg - 1)
+            f = t - i
+            c0, c1 = BRAND[i], BRAND[i + 1]
+            px[x, y] = tuple(int(c0[k] + (c1[k] - c0[k]) * f) for k in range(3))
+    return img
+
+
+def rounded_mask(size, radius, supersample=4):
+    w, h = size
+    m = Image.new('L', (w * supersample, h * supersample), 0)
+    ImageDraw.Draw(m).rounded_rectangle(
+        [0, 0, w * supersample - 1, h * supersample - 1],
+        radius=radius * supersample, fill=255)
+    return m.resize((w, h), Image.LANCZOS)
+
+
+# Geraetemasse, in den Pixeln des 1080x2400-Quellrendings (mit `scale`
+# skaliert).
+#
+# v0.9.2: Die Werte korrigiert. Vorher BEZEL=36, das sind 3.3% der
+# Bildbreite - bei einem echten Pixel-class Geraet liegt der Rand bei
+# 8..14 px. Zusammen mit dem dicken, gleichmässigen Rahmen wirkte das
+# Geraet wie eine Tafel statt wie ein Telefon. Jetzt 12 px, was einem
+# zeitgeraeten Android-Geraet entspricht.
+BEZEL = 12
+PAD = 40
+CAM_R = 11
+
+# System-UI in dp (Source-Render ist 360x800 dp bei dpr 3).
+# Der App-Render reserviert seit dem SafeArea-Fix genau diese Insets -
+# sie werden hier als echte Elemente gezeichnet, damit der Screen wie
+# ein Geraet und nicht wie ein Bild aussieht.
+STATUS_BAR_DP = 24
+NAV_BAR_DP = 24
+
+# Sprite der echten Statusleisten-Symbole, aus dem Referenz-Screenshot
+# geschnitten (siehe tool/werkzeuge/bilder/make_statusbar_assets.py). Fehlt die Datei,
+# wird zurueckgezeichnet - die Rueckfallloesung ist schlechter, aber
+# sie existiert, damit ohne Referenz ueberhaupt ein Bild entsteht.
+STATUSBAR_SPRITE = ROOT / 'assets' / 'images' / 'statusbar_icons.png'
+STATUSBAR_GEOMETRY = ROOT / 'tool' / 'werkzeuge/sonstiges/statusbar_geometry.json'
+STATUSBAR_ORDER = ('mute', 'wifi', 'signal', 'battery')
+
+# Anzeigewerte der nachgeahmten Systemleiste. Beides sind bewusste
+# Festlegungen des Nutzers, keine Messung:
+#   * 100 % statt des in der Referenz stehenden 70 - ein halbvoller
+#     Akku sieht auf einem Screenshot nach Sorge aus.
+#   * eine gerade Uhrzeit. Aus demselben Grund: 3:41 ist eine
+#     Zufallszeit und wirkt wie ein Screenshot vom falschen Moment.
+BATTERY_PERCENT = '100'
+CLOCK_TEXT = '12:00'
+
+# Randstaerke des Akkukoerpers, als Anteil seiner Hoehe.
+#
+# Das ist eine RENDERENTSCHEIDUNG und keine Messung: der Akku ist auf
+# 474 px ein gefuellter Fleck von 14 px Hoehe ohne leere Mitte, die
+# Innenkante des Rahmens ist im Foto nicht sichtbar. Ein Versuch, sie
+# zu messen, lieferte konsequent die volle Koerperbreite statt einer
+# Randstaerke. Der Wert folgt der Rueckmeldung "die Raender duerfen
+# minimal dicker"; vorher stand hier 0,085.
+BATTERY_STROKE_RATIO = 0.13
+# Vorheriger Wert des Akkurandes. Die Differenz ist der Zuwachs, um den
+# die RENDERUNG insgesamt vergroessert wurde. Die Uhr benutzt exakt
+# denselben Zuwachs (Nutzerwunsch: "so viel dicker, wie der Akku
+# dicker geworden ist"), damit beide nicht auseinanderlaufen.
+BATTERY_STROKE_RATIO_PREV = 0.085
+BATTERY_STROKE_GROWTH = BATTERY_STROKE_RATIO - BATTERY_STROKE_RATIO_PREV
+
+# ZWEI VARIANTEN, bewusst nebeneinander (Nutzerwunsch):
+#
+#   1. MIT nachgeahmter Systemleiste. Die Icons werden aus einem Foto
+#      des Geraetes extrahiert (make_statusbar_assets.py).
+#   2. OHNE Systemleiste. Keine nachgeahmten Symbole - der Store legt
+#      seine eigene Statusleiste ohnehin ueber das Bild.
+#
+# Welche besser aussieht, ist eine Sache des Auges und nicht messbar.
+# Deshalb werden beide erzeugt und getrennt abgelegt, statt im
+# Quelltext umgeschaltet zu werden - dann ist der Vergleich moeglich,
+# ohne dass man weiss, welcher Lauf gerade der aktuelle ist.
+OMIT_SYSTEM_UI = False
+OUT_9x16_OHNE = OUT_9x16.with_name('9x16-ohne-systemleiste')
+OUT_WQHD_OHNE = OUT_WQHD.with_name('wqhd-ohne-systemleiste')
+
+# DRITTE Variante: Kacheln ohne Geraet und ohne Statusleiste.
+#
+# Der Unterschied zu "ohne-systemleiste" ist nicht die Statusleiste,
+# sondern die Komposition: dort steht der App-Screen weiterhin in
+# einem abgerundeten Geraetefeld, hier liegt er als einzelne Kachel
+# direkt auf dem Markenverlauf - genau wie die fuenf Moduskacheln in
+# 03_entdecken. Die vier uebrigen Screens sind so gebaut, dass alle
+# fuenf Bilder dieselbe Sprache sprechen.
+#
+# Die bisherigen zwei Varianten bleiben unberuehrt; es come adds. Der
+# Store-Upload bleibt eine Entscheidung des Nutzers, deshalb wird
+# hier nichts nach fastlane kopiert.
+OUT_9x16_KACHELN = OUT_9x16.with_name('9x16-kacheln')
+OUT_WQHD_KACHELN = OUT_WQHD.with_name('wqhd-kacheln')
+
+# ---------------------------------------------------------------------------
+# Die Sprachlaeufe (03.11.2026)
+# ---------------------------------------------------------------------------
+#
+# BISHER lief der Compositor genau einmal - fuer Deutsch. Die englische
+# Store-Liste bekam deshalb die DEUTSCHEN Bilder: die Tablet-Skripte
+# kopierten dieselben Dateien in beide Sprachen. Wer die englische
+# Liste oeffnete, sah ein englisches Feature-Graphic und darunter
+# deutsche Screenshots mit deutschen Headlines.
+#
+# Jetzt laeuft der Compositor je Sprache ueber eine eigene QUELLE, eigene
+# TEXTE und eigene AUSGABE. Die englischen Render kommen aus
+# test/screenshots/store_v091_en/ - erzeugt von
+# store_v091_shots_test.dart mit STORE_SHOTS_LANG=en.
+#
+# Die DE-Ausgabeordner behalten ihre Namen (9x16, wqhd, 9x16-kacheln):
+# sie liegen seit v0.9.2 in den Release-Skripten und im Tablet-Skript.
+# Die englischen kommen nach marketing/en/ - so bleiben sie getrennt
+# und ueberschreiben sich nicht gegenseitig.
+MARKETING = ROOT / 'releases' / 'testapk' / 'screenshots' / 'marketing'
+
+
+def _profil(lang, quellordner, shots, fastlane_sprache, heading_eisbrecher):
+    """Baut die Pfade eines Sprachlaufs."""
+    basis = ROOT / 'test' / 'screenshots' / quellordner
+    out = MARKETING if lang == 'de' else MARKETING / 'en'
+    return {
+        'lang': lang,
+        'src': basis / 'phone',
+        'tiles': basis / 'tiles',
+        'cards': basis / 'cards',
+        'shots': shots,
+        'heading_eisbrecher': heading_eisbrecher,
+        'out_9x16': out / '9x16',
+        'out_wqhd': out / 'wqhd',
+        'out_9x16_ohne': out / '9x16-ohne-systemleiste',
+        'out_wqhd_ohne': out / 'wqhd-ohne-systemleiste',
+        'out_9x16_kacheln': out / '9x16-kacheln',
+        'out_wqhd_kacheln': out / 'wqhd-kacheln',
+        'out_fastlane': (ROOT / 'fastlane' / 'metadata' / 'android'
+                         / fastlane_sprache / 'images' / 'phoneScreenshots'),
+    }
+
+
+PROFILE = [
+    _profil('de', 'store_v091', SHOTS, 'de-DE', 'Eisbrecher-Fragen'),
+    _profil('en', 'store_v091_en', SHOTS_EN, 'en-US', 'Icebreaker questions'),
+]
+
+
+def _draw_clock(img, d, cy, color):
+    """Zeichnet die Uhrzeit nach den gemessenen Werten der Referenz.
+
+    Die Geometrie steht in tool/werkzeuge/sonstiges/statusbar_geometry.json unter "clock" und
+    wird von tool/werkzeuge/bilder/make_statusbar_assets.py aus dem Referenzfoto
+    ermittelt. Fehlt sie (kein Sprite im Repository), wird auf eine
+    sinnvolle Naeherung zurueckgefallen, damit ueberhaupt eine Uhr da
+    ist.
+    """
+    import json
+    w, _h = img.size
+    u = float(w)
+
+    text = CLOCK_TEXT
+    width_f = 0.0549
+    left_f = 0.0717
+    height_f = 0.0211
+    geom = {}
+    if STATUSBAR_GEOMETRY.is_file():
+        try:
+            geom = json.loads(STATUSBAR_GEOMETRY.read_text(
+                encoding='utf-8-sig'))
+            clock_geom = geom.get('clock') or {}
+            text = CLOCK_TEXT
+            width_f = float(clock_geom.get('widthFraction', width_f))
+            left_f = float(clock_geom.get('leftFraction', left_f))
+            height_f = float(clock_geom.get('heightFraction', height_f))
+        except (OSError, ValueError):
+            geom = {}
+
+        # Akkukoerperhoehe, fuer die Strichstaerke der Uhr weiter unten.
+    body_h = float((geom.get('battery') or {}).get(
+        'bodyHeightFraction', 0.0295)) * u
+
+    # MINDESTENS so gross wie die uebrigen Symbole (Nutzerwunsch).
+    #
+    # Gemessen ist die Uhr mit 2,11 % der Bildbreite, die uebrigen
+    # Symbole sind 2,74 % (WLAN, Mobilfunk) bis 2,95 % (Akku). Die Uhr
+    # war das kleinste Element der Leiste und wirkte als zweiter
+    # Grafikstil.
+    #
+    # Fuehrendes Mass ist die HOEHE, nicht die Breite. Ein erster
+    # Versuch skalierte die Breite mit - damit wurde die Uhr 43 px
+    # breit, aber nur 15 px hoch, waehrend die Symbole 16 bis 20 px
+    # messen. Grund: die Hoehe folgt nicht aus der Breite, sondern aus
+    # der Schrift, und der Ziffern-Doppelpunkt hat ein anderes
+    # Verhaeltnis als die Ziffern. Es gibt bei einer Schrift also nur
+    # EINE frei waehlbare Groesse - wenn die Breite das Ziel
+    # vorgibt, ist die Hoehe eine Folge und nicht ein Wunsch.
+    #
+    # Die gemessene Uhrbreite (5,49 %) ist damit ueberholt. Sie ist
+    # das Mass aus dem Foto, in dem die Uhr sichtbar KLEINER war als
+    # die Symbole - genau das wird hier geaendert. Neu gemessen wird
+    # nichts; neu entschieden wird, welche Groesse gilt.
+    sym_h = max(
+        float((geom.get('battery') or {}).get('bodyHeightFraction', 0.0295)),
+        float((geom.get('wifi') or {}).get('relHeight', 0.0274)),
+        max((float(b['dyTopFraction']) + float(b['hFraction'])
+             for b in ((geom.get('signal') or {}).get('bars') or [])),
+            default=0.0),
+    )
+        # Nie kleiner als das Foto, falls die Geometrie fehlt.
+    target_h = max(sym_h, height_f) * u
+
+    # STRICHSTAERKE der Uhr, aus dem Akku-Zuwachs abgeleitet. Die
+    # Ziffern sind im Referenzfoto duenn, und duenner als die
+    # Nachbar-Symbole wirkt die Uhr als zweiter Grafikstil. Sie soll
+    # deshalb um genau so viel zunehmen wie der Akkurand:
+    #
+    #     Zuwachs = (0,13 - 0,085) * Akkukoerperhoehe
+    #
+    # Beide Werte kommen aus derselben Geometriedatei und sind in
+    # derselben Einheit gerechnet (Anteil der Bildbreite). Die
+    # Ziffernhoeh der Uhr und die Akkukoerperhoehe sind bewusst
+    # verschiedene Bezugsgrossen - "so viel wie beim Akku" heisst
+    # derselbe absolute Zuwachs, nicht dieselbe relative Zahl.
+    stroke_px = max(1, int(round(BATTERY_STROKE_GROWTH * body_h)))
+
+    # Schriftgroesse so lange nachziehen, bis die GERENDERTE Ziffernhoehe
+    # das Ziel trifft. Der Strich waechst nach aussen und wird
+    # mitgemessen, sonst waere die Uhr am Ende niedriger als geplant.
+    #
+    # Frueher wurde auf die Breite nachgezogen. Das ergab eine 43 px
+    # breite, aber nur 15 px hohe Uhr neben 16 bis 20 px hohen Symbolen -
+    # die Breite war dann das Ziel und die Hoehe bloss eine Folge davon.
+    size = max(7, int(target_h / 0.72))
+    f = None
+    for _ in range(5):
+        try:
+            f = ImageFont.truetype(FONT_REG, size)
+        except OSError:
+            return False
+        bb = d.textbbox((0, 0), text, font=f, stroke_width=stroke_px)
+        got_h = bb[3] - bb[1]
+        if got_h <= 0:
+            return False
+        if abs(got_h - target_h) <= 1:
+            break
+        size = max(7, int(size * target_h / got_h))
+    if f is None:
+        return False
+    bb = d.textbbox((0, 0), text, font=f, stroke_width=stroke_px)
+    # Vertikale Mitte auf cy. PIL liefert die Textbox mit negativem
+    # oberem Rand bei Glyphen, die ueber die Grundlinie ragen - deshalb
+    # die Mitte aus beiden Kanten und nicht aus th allein.
+    top = cy - (bb[1] + bb[3]) / 2
+    d.text((left_f * u, top), text, font=f, fill=color,
+           stroke_width=stroke_px, stroke_fill=color)
+    return True
+
+
+def _paste_status_bar_icons(img, cy, tint, draw):
+    """Zeichnet die Symbole der nachgeahmten Statusleiste. True bei Erfolg.
+
+    Der MASSSTAB ist der Quotient aus den Bildbreiten, nicht eine
+    geratene Prozentangabe. Das ist der Unterschied zwischen "Aehnlich"
+    und "skaliert": mit dem Quotienten gilt fuer jedes Zielbild dasselbe
+    Verhaeltnis wie auf dem Geraet des Nutzers.
+
+    ALLE drei Symbole werden gezeichnet, nicht eingeklebt. Das ist eine
+    Aenderung aus einem konkreten Grund: als 13-px-Sprite in eine
+    1080-px-Kachel hochskaliert bleibt das Ergebnis pixelig, egal wie
+    sauber der Ausschnitt war. Gezeichnet wird mit den im Referenzfoto
+    gemessenen Proportionen, darum ist die Form scharf und die Groesse
+    trotzdem gemessen:
+
+      * WLAN   zwei Boegen und ein Punkt, alle drei Abstaende gemessen
+      * Signal vier getrennte Balken auf gemeinsamer Grundlinie
+      * Akku   Koerper, Stift und Prozentzahl gemessen
+
+    Stumm (Lautsprecher mit Schraegstrich) entfaellt. In 11 Pixeln
+    Hoehe ist die Kontur nicht wiederzuerkennen; auf dem fertigen Bild
+    las sie sich als Wecker. Ein Symbol wegzulassen ist ehrlicher, als
+    eines hinzumalen, das nicht mehr das Original ist (Nutzerwunsch).
+
+    Reihenfolge und Abstaende stehen als "cluster"/"gaps" in der
+    Geometriedatei - von rechts nach links gezeichnet, damit die
+    rechte Kante des Akkus am gemessenen rechten Rand sitzt.
+    """
+    import json
+    if not STATUSBAR_SPRITE.is_file() or not STATUSBAR_GEOMETRY.is_file():
+        return False
+    try:
+        geom = json.loads(STATUSBAR_GEOMETRY.read_text(encoding='utf-8'))
+    except (OSError, ValueError, KeyError):
+        return False
+
+    cluster = geom.get('cluster') or []
+    gaps = geom.get('gaps') or []
+    if not cluster or len(gaps) != len(cluster) - 1:
+        return False
+
+    target = tuple(tint[:3])
+    w, h = img.size
+    u = float(w)
+
+    right_margin = float(geom.get('rightMarginFraction', 0.06)) * u
+    cursor = w - right_margin
+
+    # Oberkante des Iconfelds. `cy` ist die Mitte des Statusleisten-
+    # Bandes, die Messwerte in der Geometrie sind aber vom OBEREN Rand
+    # des jeweiligen Iconfelds aus gemessen. Ohne diese Umrechnung
+    # hing der ganze Cluster um halbe Symbolhoehe zu tief und stiess im
+    # Screenshot an den Text darunter ("Ueberspringen").
+    heights = []
+    wifi_h = float(((geom.get('wifi') or {}).get('relHeight', 0)) * u)
+    if wifi_h:
+        heights.append(wifi_h)
+    sig_bars = ((geom.get('signal') or {}).get('bars') or [])
+    for bar in sig_bars:
+        heights.append((float(bar['dyTopFraction'])
+                        + float(bar['hFraction'])) * u)
+    icon_top = cy - (max(heights) / 2.0 if heights else 0.0)
+
+    for i in range(len(cluster) - 1, -1, -1):
+        entry = cluster[i]
+        name = entry['name']
+        icon_w = float(entry['w']) * u
+
+        if name == 'battery':
+            _draw_reference_battery(draw, cursor, cy, target, geom, u)
+        elif name == 'wifi':
+            if not _draw_reference_wifi(draw, cursor, icon_top, target,
+                                        geom, u):
+                return False
+        elif name == 'signal':
+            if not _draw_reference_signal(draw, cursor, icon_top, target,
+                                          geom, u):
+                return False
+        else:
+            return False
+
+        cursor -= icon_w
+        if i > 0:
+            cursor -= float(gaps[i - 1]) * u
+
+    return True
+
+
+def _estimate_background(tile):
+    """Mittlere Randfarbe eines Sprite-Ausschnitts.
+
+    Der Rand ist per Definition nur Polster und damit nur Hintergrund -
+    unabhaengig vom Motiv des Referenzfotos.
+    """
+    w, h = tile.size
+    edge = []
+    step = max(1, h // 6)
+    for yy in range(0, h, step):
+        edge.append(tile.getpixel((0, yy)))
+        edge.append(tile.getpixel((w - 1, yy)))
+    for xx in range(0, w, step):
+        edge.append(tile.getpixel((xx, 0)))
+        edge.append(tile.getpixel((xx, h - 1)))
+    if not edge:
+        return (255, 255, 255)
+    return (sum(p[0] for p in edge) / len(edge),
+            sum(p[1] for p in edge) / len(edge),
+            sum(p[2] for p in edge) / len(edge))
+
+
+def _draw_reference_battery(draw, right, cy, tint, geom, u):
+    """Akku mit den aus der Referenz gemessenen Proportionen.
+
+    Alle vier Werte kommen aus statusbar_geometry.json und wurden im
+    Referenzfoto gemessen:
+
+      Koerper 4,85 % der Bildbreite breit, 2,95 % hoch
+      Stift   0,42 % breit, 1,48 % hoch
+
+    Der Stift war vorher mit dem Icon-Abstand gezeichnet, also rund ein
+    Drittel so breit wie der Koerper - das war das "komisch lange
+    Ende". Er ist jetzt knapp ein Elftel des Koerpers und halb so hoch,
+    genau wie im Original.
+    """
+    b = geom.get('battery') or {}
+    body_w = float(b.get('bodyWidthFraction', 0.0485)) * u
+    body_h = float(b.get('bodyHeightFraction', 0.0295)) * u
+    nub_w = float(b.get('nubWidthFraction', 0.0042)) * u
+    nub_h = float(b.get('nubHeightFraction', 0.0148)) * u
+
+    # `right` ist die rechte Kante des ICONFELDS (inklusive Stift).
+    x1 = right - nub_w
+    x0 = x1 - body_w
+    y0 = cy - body_h / 2
+    stroke = max(1, int(round(BATTERY_STROKE_RATIO * body_h)))
+
+    draw.rounded_rectangle(
+        [x0, y0, x1, y0 + body_h],
+        radius=body_h * 0.28, outline=tint,
+        width=max(1, int(round(BATTERY_STROKE_RATIO * body_h))))
+    if nub_w >= 1:
+        draw.rounded_rectangle(
+            [x1 + 1, cy - nub_h / 2, right, cy + nub_h / 2],
+            radius=max(1, int(nub_h * 0.25)), fill=tint)
+
+    # Prozentzahl. Sie ist der eigentliche Inhalt dieses Symbols - ohne
+    # sie waere der Akku nur eine Form. Deshalb wird sie gezeichnet
+    # statt der Silhouette aus dem Sprite genommen zu werden, wo sie
+    # im gefuellten Rechteck verschwindet.
+    try:
+        f = ImageFont.truetype(FONT_BOLD, max(6, int(body_h * 0.60)))
+        bb = draw.textbbox((0, 0), BATTERY_PERCENT, font=f)
+        tw = bb[2] - bb[0]
+        if tw <= body_w - 2 * stroke - 1:
+            draw.text((x0 + (body_w - tw) / 2 - bb[0],
+                       cy - (bb[1] + bb[3]) / 2),
+                      BATTERY_PERCENT, font=f, fill=tint)
+    except OSError:
+        pass
+
+
+def _draw_reference_signal(draw, right, top, tint, geom, u):
+    """Signal aus vier gemessenen Balken. True bei Erfolg.
+
+    Im Referenzfoto sind es vier getrennte Rechtecke auf einer
+    gemeinsamen Grundlinie: x=386..388, 391..393, 395..398, 400..402,
+    Oberkanten bei y=36, 34, 32, 29. Genau diese Rechtecke werden
+    gezeichnet - als Vektor, nicht als 13-px-Bild.
+
+    Das ist der Unterschied zu den drei vorherigen Versuchen: die
+    Form ist nicht geraten, sondern abgelesen, und sie ist scharf, weil
+    sie nicht aus Pixeln besteht. Die Grundlinie ist die Oberkante des
+    Signal-Iconfelds, die Balken waechsen nach links oben.
+    """
+    # AUFSTEIGEND, gleiche Breiten, gleiche Abstaende.
+    #
+    # Aufsteigend ist die Orientierung der Referenz: x=386 ist der
+    # kuerzeste Balken (Oberkante y=36), x=402 der hoechste (y=29).
+    # Ein zwischenzeitlicher Versuch, die Balken zu SPIEGELN, beruhte
+    # auf einem Missverstaendnis von "anders herum" und wurde
+    # zurueckgenommen - die Referenz stimmt bereits.
+    #
+    # Die Abstaende im Foto sind ungleich: die Balken sind 3, 3, 4 und
+    # 3 px breit, die Luecken dazwischen 2, 1 und 1 px. Auf 17 px
+    # Gesamtbreite faellt das als unruhig auf. Deshalb werden Breite
+    # und Abstand gemittelt und gleich verteilt; die Gesamtspannweite
+    # bleibt die gemessene, die Hoehen bleiben gemessen.
+    sig = sorted((geom.get('signal') or {}).get('bars') or [],
+                 key=lambda b: float(b['dxFraction']))
+    if not sig:
+        return False
+
+    icon_w = float(((geom.get('cluster') or [{}])[-2] or {}).get('w', 0.0)) * u
+    bar_w = (sum(float(b['wFraction']) for b in sig) / len(sig)) * u
+    gap = (icon_w - bar_w * len(sig)) / max(1, len(sig) - 1)
+    if gap < 0:
+        bar_w = icon_w / len(sig)
+        gap = 0.0
+
+    x0 = right - icon_w
+    # Gemeinsame Grundlinie. Im Foto enden drei Balken bei y=41 und der
+    # hoechste bei y=40 - eine Folge davon, dass die Tinte rechts einen
+    # Pixel kuerzer ist. Uebernommen sah die Treppe schief aus, also
+    # werden alle Balken auf die tiefste Unterkante gestellt.
+    baseline = max(float(b['dyTopFraction']) + float(b['hFraction'])
+                   for b in sig) * u
+    for i, bar in enumerate(sig):
+        bx0 = x0 + i * (bar_w + gap)
+        # dyTopFraction ist icon-relativ gemessen: die Oberkante des
+        # Iconfelds ist `top`, die Balken waechsen von dort nach unten.
+        y1 = top + baseline
+        y0 = y1 - float(bar['hFraction']) * u
+        # Ecken minimal abrunden, damit die Balken nicht als Tabelle
+        # aussehen - Android zeichnet sie mit einem kleinen Radius.
+        r = min((y1 - y0) * 0.28, bar_w * 0.45)
+        if r >= 0.5:
+            draw.rounded_rectangle([bx0, y0, bx0 + bar_w, y1],
+                                   radius=r, fill=tint)
+        else:
+            draw.rectangle([bx0, y0, bx0 + bar_w, y1], fill=tint)
+    return True
+
+
+def _draw_reference_wifi(draw, right, top, tint, geom, u):
+    """WLAN als drei konzentrische Boegen, OHNE Punkt. True bei Erfolg.
+
+    Drei Boegen, kein Punkt. Die Form ist ein Kreis, nicht eine
+    Ellipse, und das laesst sich an den gemessenen Spalten nachweisen:
+
+      Spalte x=364 (linker Rand)  Tinten y=31..33
+      Spalte x=372 (Mitte)         Tinten y=29..41
+      Spalte x=379 (rechter Rand)  Tinten y=32..33
+
+    Ein Kreis um (372, 40) mit Radius 11 trifft alle drei: bei x=364
+    ergibt er y = 40 - Wurzel(121-64) = 32,4 und damit genau die
+    gemessenen 31..33 bei einer Strichstaerke von 2,5 px. Bei x=372
+    ergibt er y = 29, ebenfalls der gemessene oberste Wert. Der
+    Radius ist also die Strecke vom Punktmittelpunkt nach oben, nicht
+    die halbe Iconbreite - der Fan ist hoeher als breit, seine Arme
+    werden erst durch den Winkelbereich beschnitten.
+
+    Daraus folgt der Winkelbereich: so geschnitten, dass der
+    Aussenbogen genau die gemessene Iconbreite fuellt. Das ist zugleich
+    die flachste moegliche Form - ein flacherer Bogen waere im
+    gemessenen Kasten nicht unterzubringen, ohne die Breite zu
+    verlassen oder die Oberkante zu verfehlen.
+
+    Drei Boegen, nicht zwei: mit dem gemessenen Radius und der
+    Strichstaerke aus der Referenz passen genau drei uebereinander, und
+    "es fehlt ein Strich" war die Rueckmeldung dazu.
+
+    Der innerste Bogen laeuft nach unten in einer Spitze aus - eine Art
+    Dreieck, dessen Oberkante genau der Bogen bleibt. Ohne Punkt
+    (Nutzerwunsch), aber nicht als leerer Raum: die Spitze fuellt den
+    Platz, den der Punkt in der Referenz einnimmt.
+    """
+    w_geom = geom.get('wifi') or {}
+    if 'relHeight' not in w_geom:
+        return False
+
+    # Achtung: `cluster[i]['w']` ist ein ANTEIL der Bildbreite, kein
+    # Pixelwert. Ohne die Umrechnung mit u war der Radius 0,017 px und
+    # damit kleiner als die Strichstaerke - alle Boegen wurden still
+    # uebersprungen und nur der Punkt blieb uebrig, an falscher Stelle.
+    icon_w = float(((geom.get('cluster') or [{}])[0] or {}).get('w', 0.0)) * u
+    if icon_w <= 0:
+        return False
+
+    height = float(w_geom['relHeight']) * u
+    # Die gemessene Strichstaerke (0,53 % der Bildbreite) sind rund 19 %
+    # der Symbolhoehe. Auf 11 % zu deckeln war eine eigene Erfindung und
+    # machte die Straeche zu duenn - zurueck auf den Messwert, nur bei
+    # 20 % gedeckelt, damit ein blasser Messwert nicht ueberlaeuft.
+    stroke = min(float(w_geom.get('relStroke', 0.004)) * u, height * 0.20)
+    dot_r = float(w_geom.get('relDotRadius', 0.003)) * u
+    dot_cx = right - icon_w + float(w_geom['relDotCentreX']) * u
+    top = top + float(w_geom['relTop']) * u
+    dot_cy = top + height - dot_r
+    stroke_i = max(1, int(round(stroke)))
+
+    # Radius des Aussenbogens: vom Punktmittelpunkt bis zur Oberkante.
+    r_outer = height - dot_r
+    half = icon_w / 2.0
+    # Winkel so, dass der Aussenbogen die halbe Iconbreite genau
+    # erreicht. PIL zaehlt Grad im Uhrzeigersinn ab 3 Uhr, die Oberseite
+    # liegt bei 270.
+    dev = math.degrees(math.acos(max(-1.0, min(1.0, half / r_outer))))
+    start, end = 270.0 - dev, 270.0 + dev
+
+    # Der Fan fuellt seinen Kasten von oben bis unten: Aussenbogen an
+    # die Oberkante, Spitze an die Unterkante.
+    #
+    # Vorher wurde die Mitte des Fanbands mittiert, weil die Boegen ohne
+    # Punkt nur die oberen 3,5 px des Kastens belegten und darunter 9 px
+    # leer blieben. Mit der Spitze ist das gemittelt nicht mehr noetig
+    # und sogar schaedlich: der Bogen saehe dann oben angeklebt aus und
+    # die Spitze haette nur 1,8 px Laenge - ein Punkt, kein Dreieck.
+    # Die Oberkante des Aussenbogens liegt auf stroke/2, damit der
+    # Strich nicht ueber den Kasten hinausragt.
+    apex_y = top + stroke / 2.0
+    arc_cy = apex_y + r_outer
+
+    # Die Boegen als Strich, der INNERSTE mit einer Spitze nach unten
+    # (Nutzerwunsch): der unterste kleine Halbkreis laeuft nicht als
+    # Bogen aus, sondern er endet in einer Spitze - eine Art Dreieck,
+    # dessen Oberkante genau dieser Bogen bleibt.
+    #
+    # Dazu wird der innerste Bogen als geschlossene Form gezeichnet:
+    # Bogenpunkte von `start` bis `end`, dann eine Spitze. Die beiden
+    # aeusseren bleiben normale Boegen. Die Spitze reicht bis zur
+    # Unterkante des Iconfelds - an ihre Stelle fiel sonst die Flaeche,
+    # die vorher der Punkt einnahm (siehe _draw_reference_wifi).
+    step = stroke * 1.5
+    radii = []
+    r = r_outer
+    while r > stroke_i:
+        radii.append(r)
+        r -= step
+
+    for r_mid in radii[:-1]:
+        draw.arc([dot_cx - r_mid, arc_cy - r_mid,
+                  dot_cx + r_mid, arc_cy + r_mid],
+                 start=start, end=end, fill=tint, width=stroke_i)
+
+    if radii:
+        r_in = radii[-1]
+        spike_tip = top + height
+        pts = []
+        steps = 24
+        for i in range(steps + 1):
+            ang = math.radians(start + (end - start) * i / steps)
+            pts.append((dot_cx + r_in * math.cos(ang),
+                        arc_cy + r_in * math.sin(ang)))
+        pts.append((dot_cx, spike_tip))
+        draw.polygon(pts, fill=tint)
+        # Der Bogen darueber noch einmal als Strich, damit die
+        # Oberkante der Form dieselbe Staerke hat wie die beiden
+        # aeusseren Boegen und nicht als Fuellungskante abschneidet.
+        draw.arc([dot_cx - r_in, arc_cy - r_in,
+                  dot_cx + r_in, arc_cy + r_in],
+                 start=start, end=end, fill=tint, width=stroke_i)
+    return True
+
+
+def _icon_mask(tile, bg):
+    """Harte Silhouettenmaske eines Symbols aus dem Referenzfoto.
+
+    `bg` ist die geschaetzte Hintergrundfarbe des Fotos; Abweichung von
+    ihr ist das Signal, nicht die absolute Helligkeit.
+
+    Erster Versuch war "Abstand zu Weiss" als Deckkraft. Das
+    funktioniert nur auf weissem Grund. Die Referenz des Nutzers ist
+    ein Foto, und ein Himmelspixel liegt 185 Einheiten von Weiss weg,
+    bekam also Deckkraft 194 und blieb als graue Box stehen.
+
+    Danach wird binarisiert statt weich skaliert: die Referenz ist ein
+    auf 474 px verkleinerter Ausschnitt eines 1080-px-Screens, ihre
+    Symbole sind etwa 11 px hoch. Weich hochskaliert wird daraus
+    grauer Matsch mit Halo, der wie die alte Zeichnung aussieht, nur
+    blasser. Als Silhouette ist die Form exakt die des Originals, und
+    die Kanten werden beim Skalieren wieder sauber.
+    """
+    wpx, hpx = tile.size
+    br, bg_, bb = bg
+
+    devs = []
+    src = tile.load()
+    for yy in range(hpx):
+        for xx in range(wpx):
+            r, g, b, _a = src[xx, yy]
+            devs.append(abs(r - br) + abs(g - bg_) + abs(b - bb))
+    if not devs:
+        return Image.new('L', tile.size, 0)
+
+    # Weiche Maske, KEINE Binarisierung.
+    #
+    # Zwei Fehler, beide an derselben Stelle:
+    #   * Feste Schwelle 45: die Symbole wurden zu dick. An den Raendern
+    #     eines 11-px-Symbols liegen viele Anti-Aliasing-Pixel knapp
+    #     ueber der Schwelle und verbreitern den Strich beim Binarisieren
+    #     um ein Pixel je Seite.
+    #   * Relative Schwelle (62 % vom Maximum): zu duenn. Das Maximum
+    #     stammt aus Ausreissern, der echte Strich liegt weit darunter
+    #     und wird weggeschnitten - uebrig blieben drei Punkte.
+    #
+    # Die Weichheit ist die ehrliche Uebernahme: die Deckkraft ist die
+    # Abweichung vom Hintergrund, normalisiert. Die Strichstaerke ist
+    # damit genau die des Originals, unabhaengig davon, wie stark
+    # verkleitert die Vorlage ist.
+    top = max(devs)
+    span = max(1.0, top * 0.75)
+    mask = Image.new('L', tile.size, 0)
+    mp = mask.load()
+    i = 0
+    for yy in range(hpx):
+        for xx in range(wpx):
+            d = devs[i]
+            if d < 8:
+                mp[xx, yy] = 0
+            else:
+                mp[xx, yy] = min(255, int(d * 255 / span))
+            i += 1
+
+    # Weichzeichnen entfernt vereinzelte Ausreisser, ohne die
+    # Strichstaerke zu veraendern (im Gegensatz zu einer Erosion).
+    return mask.filter(ImageFilter.GaussianBlur(0.6))
+
+
+def _draw_status_bar(img: Image.Image, clock=CLOCK_TEXT, percent=BATTERY_PERCENT,
+                     tint=None):
+    """Zeichnet die System-Statusleiste nach dem Geraet des Nutzers.
+
+    ZWEI WEGE, und der erste ist der richtige:
+
+    1. Sprite aus dem echten Referenz-Screenshot. Ist
+       `assets/images/statusbar_icons.png` vorhanden (erzeugt von
+       `tool/werkzeuge/bilder/make_statusbar_assets.py`), werden die Original-Symbole
+       pixelgenau eingesetzt. Handgezeichnete Naeherungen sind der
+       Grund, warum die Leiste dreimal nicht gepasst hat: Android-
+       Symbole sind Vektorpfade mit eigenen Kurven, und ein
+       nachgezeichneter Bogen ist nie derselbe Bogen.
+
+    2. Ohne Sprite wird zurueckgezeichnet, nach den Verhaeltnissen aus
+       der Referenz (Cluster 30 % der Bildbreite, Uhr 7 %, linker Rand
+       6,5 %, rechter Rand 3,9 %). Das ist die zweite Schicht und sie
+       ist deutlich schlechter - sie existiert nur, damit ohne
+       Referenzdatei ueberhaupt etwas dasteht.
+
+    Die Anordnung ist in beiden Faellen gleich, von links nach rechts:
+
+        [3:41]  ......  [Stumm] [WLAN] [Signal] [Akku mit 70]
+    """
+    d = ImageDraw.Draw(img)
+    w, h = img.size
+    band = h * (STATUS_BAR_DP / 800.0)
+    if band < 10:
+        return
+    cy = band / 2.0
+
+    # Die Tinte der Symbole. Standard: dunkel (auf hellem Grund).
+    # Fuer den Hell/Dunkel-Split wird sie auf der dunklen Seite hell
+    # gesetzt - sonst waeren die Symbole dort unsichtbar.
+    ICON = tint if tint is not None else (38, 34, 44, 245)
+    u = float(w)
+
+    def font(path, px):
+        try:
+            return ImageFont.truetype(path, max(7, int(px)))
+        except OSError:
+            return None
+
+    # --- Uhrzeit links -------------------------------------------------
+    # Nach den GEMESSENEN Werten, nicht nach einer Schriftgroesse.
+    #
+    # Bisher stand hier u*0.030 als Schriftgroesse. Gemessen ist die Uhr
+    # aber 5,49 % BREIT und 2,11 % hoch, mit einem linken Rand von
+    # 7,17 %. Aus einer Schriftgroesse folgt keine Breite - je nach
+    # Zeichensatz ist derselbe Wert 20 % breiter. Deshalb wird die
+    # Schriftgroesse so lange nachgezogen, bis die gerenderte Breite
+    # passt; drei Schritte reichen fuer jede Ziffernfolge.
+    #
+    # Zusaetzlich FONT_REG statt FONT_BOLD. Die Referenzschrift ist
+    # sichtbar leichter; die fette Variante war der zweite Grund, warum
+    # die Leiste neben echten Android-Symbolen nicht stimmte.
+    # Die Uhr wird IMMER gezeichnet. Zurueckgegeben wird nur, ob der
+    # Sprite-Einsatz klappt - dann braucht es die gezeichneten Symbole
+    # nicht mehr. Ein `return` nach der Uhr (Stand vor diesem Fix)
+    # hat die Symbole uebersprungen: die Leiste zeigte nur die Uhr.
+    _draw_clock(img, d, cy, ICON)
+    if _paste_status_bar_icons(img, cy, ICON, d):
+        return
+
+    def centered(text, fnt, fill, left, width):
+        """Text horizontal in [left, left+width] und vertikal auf cy zentrieren."""
+        if fnt is None:
+            return
+        bb = d.textbbox((0, 0), text, font=fnt)
+        d.text((left + (width - (bb[2] - bb[0])) / 2 - bb[0],
+                cy - (bb[3] - bb[1]) / 2 - bb[1]), text, font=fnt, fill=fill)
+
+    # --- Cluster rechts, vom Rand rueckwaerts ----------------------------
+    # Reihenfolge und Breiten aus der Referenz. Der Akku ist eine breite,
+    # flache Pille MIT der Prozentzahl darin - kein gefuellter Balken und
+    # keine Zahl daneben.
+    gap = u * 0.013
+    icon_h = u * 0.035          # Hoehe der Signalbaenke = hoechste Glyphe
+    stroke = max(1, int(u * 0.0035))
+
+    # Akku ganz rechts: Pille mit Prozentzahl, Kontaktstift nach rechts.
+    bat_h = icon_h * 0.92
+    bat_w = u * 0.108
+    nub_w = u * 0.008
+    bat_x1 = int(u * (1 - 0.039) - nub_w)
+    bat_x0 = bat_x1 - int(bat_w)
+    bat_y0 = int(cy - bat_h / 2)
+    d.rounded_rectangle([bat_x0, bat_y0, bat_x1, bat_y0 + int(bat_h)],
+                        radius=int(bat_h * 0.34), outline=ICON, width=stroke)
+    d.rounded_rectangle([bat_x1 + 1, int(cy - bat_h * 0.22),
+                         bat_x1 + int(nub_w), int(cy + bat_h * 0.22)],
+                        radius=max(1, int(bat_h * 0.10)), fill=ICON)
+    f_pct = font(FONT_BOLD, bat_h * 0.78)
+    centered(percent, f_pct, ICON, bat_x0, bat_w)
+
+    # Signal: vier aufsteigende Balken, links vom Akku.
+    sig_w = u * 0.055
+    sig_x1 = bat_x0 - gap
+    bar_gap = u * 0.006
+    bar_w = (sig_w - 3 * bar_gap) / 4
+    for i in range(4):
+        bh = icon_h * (0.34 + 0.22 * i)
+        bx = sig_x1 - sig_w + i * (bar_w + bar_gap)
+        d.rounded_rectangle([bx, cy + icon_h / 2 - bh,
+                             bx + bar_w, cy + icon_h / 2],
+                            radius=max(1, int(bar_w * 0.35)), fill=ICON)
+
+    # WLAN: zwei Boegen und Punkt, links vom Signal.
+    wifi_w = u * 0.039
+    wifi_h = icon_h * 0.86
+    wx = int(sig_x1 - sig_w - gap - wifi_w)
+    dot_r = icon_h * 0.10
+    dcx, dcy = wx + wifi_w / 2, cy + icon_h / 2 - dot_r * 0.6
+    for k in (0.55, 1.0):
+        r = wifi_h * 0.62 * k
+        d.arc([dcx - r, dcy - r, dcx + r, dcy + r], 212, 328,
+              fill=ICON, width=stroke)
+    d.ellipse([dcx - dot_r, dcy - dot_r, dcx + dot_r, dcy + dot_r],
+              fill=ICON)
+
+    # Stumm: Lautsprecher mit Schraegstrich, links vom WLAN.
+    mute_w = u * 0.028
+    sx = int(wx - gap - mute_w)
+    my = cy + icon_h * 0.06
+    mh = icon_h * 0.46          # halbe Hoehe des Lautsprechers
+    d.rectangle([sx, my - mh * 0.55, sx + mute_w * 0.20, my + mh * 0.55],
+                fill=ICON)
+    d.polygon([(sx + mute_w * 0.20, my - mh * 0.55),
+               (sx + mute_w * 0.58, my - mh * 1.15),
+               (sx + mute_w * 0.58, my + mh * 1.15),
+               (sx + mute_w * 0.20, my + mh * 0.55)], fill=ICON)
+    d.line([(sx - mute_w * 0.16, my + mh * 1.05),
+            (sx + mute_w * 0.74, my - mh * 1.15)],
+           fill=ICON, width=max(1, int(icon_h * 0.11)))
+
+
+def _draw_nav_bar(img: Image.Image, tint=None):
+    """Zeichnet die Gesture-Navigation als hellen Strich mittig unten.
+
+    Der Strich bekommt eine dezente scrim-artige Hinterlegung: auf einem
+    echten Geraet liegt die Systemleiste ueber dem App-Inhalt, und ohne
+    den dunklen Saum verschwindet der Strich auf hellen Kacheln. Der
+    Saum ist sehr weich und nur so breit wie der reservierte Streifen.
+    """
+    d = ImageDraw.Draw(img)
+    w, h = img.size
+    band = h * (NAV_BAR_DP / 800.0)
+    if band < 6:
+        return
+    cy = h - band / 2.0
+
+    # Weicher Saum, damit der Strich auf hellem Inhalt lesbar bleibt.
+    scrim = Image.new('RGBA', img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(scrim).rectangle(
+        [0, int(h - band * 1.5), w, h], fill=(0, 0, 0, 42))
+    img.alpha_composite(scrim.filter(ImageFilter.GaussianBlur(band * 0.35)))
+
+    d = ImageDraw.Draw(img)
+    # Wie bei der Statusleiste: die Leiste liegt auf der hellen App, nicht
+    # auf dem Verlauf. Der weiche Saum bleibt (er hebt den Strich auf
+    # bunten Kacheln ab), der Strich selbst ist aber deckend dunkel.
+    bw, bh = w * 0.28, max(2.0, band * 0.11)
+    # Die Farbe des Strichs: dunkel auf hellem Grund, hell auf
+    # dunklem (siehe _draw_status_bar).
+    strich = tint if tint is not None else (45, 38, 50, 210)
+    d.rounded_rectangle(
+        [w / 2 - bw / 2, cy - bh / 2, w / 2 + bw / 2, cy + bh / 2],
+        radius=int(bh / 2), fill=strich)
+
+
+def phone_mockup(screen: Image.Image, scale=1.0):
+    """Natuerliches Smartphone-Mockup.
+
+    Rundum gleiche, sichtbare Randbreite, echte Punch-Hole-Kamera mit
+    dunklem Ring, Linse und Glanzpunkt, weicher Schlagschatten. Sieht aus wie
+    ein Handy und nicht wie eine Folie.
+    """
+    w, h = screen.size
+    b = BEZEL * scale
+    bs = bt = bb = b
+    pad = PAD * scale
+    radius_out = 54 * scale
+    radius_in = 42 * scale
+
+    body_w, body_h = int(w + 2 * bs), int(h + bt + bb)
+    pad_i = int(pad)
+    canvas = Image.new('RGBA', (body_w + 2 * pad_i, body_h + 2 * pad_i), (0, 0, 0, 0))
+
+    # Weicher Schlagschatten unter dem Geraet
+    shadow = Image.new('RGBA', canvas.size, (0, 0, 0, 0))
+    ImageDraw.Draw(shadow).rounded_rectangle(
+        [pad_i - 5 * scale, pad_i + 12 * scale,
+         pad_i + body_w + 5 * scale, pad_i + body_h + 20 * scale],
+        radius=radius_out, fill=(18, 0, 36, 130))
+    canvas.alpha_composite(shadow.filter(ImageFilter.GaussianBlur(20 * scale)))
+
+    # Geraetekorpus (Graphit, heller Rand)
+    body = Image.new('RGBA', (body_w, body_h), (0, 0, 0, 0))
+    ImageDraw.Draw(body).rounded_rectangle(
+        [0, 0, body_w - 1, body_h - 1], radius=radius_out,
+        fill=(26, 19, 38, 255), outline=(255, 255, 255, 78),
+        width=max(2, int(2 * scale)))
+
+    # Screen mit gerundeten Ecken
+    scr = Image.new('RGBA', (w, h), (0, 0, 0, 0))
+    scr.paste(screen.convert('RGBA'), (0, 0), rounded_mask((w, h), radius_in))
+    # System-UI auf den Screen zeichnen. Der App-Render reserviert diese
+    # Insets seit dem SafeArea-Fix, zeigt aber selbst nichts - ohne sie
+    # bleibt oben und unten ein leerer Streifen, der wie abgeschnitten
+    # wirkt. Gezeichnet wird NACH dem Einfuegen, damit die Kacheln des
+    # Randes nicht darueberliegen.
+    if not OMIT_SYSTEM_UI:
+        _draw_status_bar(scr)
+        _draw_nav_bar(scr)
+    body.alpha_composite(scr, (int(bs), int(bt)))
+
+    d = ImageDraw.Draw(body)
+
+    # Punch-Hole-Kamera mittig im oberen Rand: dunkler Rand, dunkelblaue
+    # Linse, kleiner Glanzpunkt. Wichtig: opake Farben auf einer eigenen Ebene
+    # - alpha_composite mischt, ImageDraw auf dem Korpus wuerde ihn durchbohren.
+    cr = int(CAM_R * scale)
+    cx, cy = int(body_w / 2), int(bt / 2)
+    side = 2 * cr + 2
+    cam = Image.new('RGBA', (side, side), (0, 0, 0, 0))
+    dc = ImageDraw.Draw(cam)
+    dc.ellipse([1, 1, side - 2, side - 2], fill=(8, 6, 12, 255))
+    inset = max(1, int(cr * 0.32))
+    dc.ellipse([inset, inset, side - 1 - inset, side - 1 - inset],
+               fill=(28, 34, 56, 255))
+    mid = max(1, int(cr * 0.66))
+    dc.ellipse([mid, mid, side - 1 - mid, side - 1 - mid], fill=(9, 12, 24, 255))
+    dc.ellipse([int(cr * 1.05), int(cr * 0.75), int(cr * 1.7), int(cr * 1.4)],
+               fill=(150, 155, 175, 255))
+    body.alpha_composite(cam, (cx - cr - 1, cy - cr - 1))
+
+    canvas.alpha_composite(body, (pad_i, pad_i))
+    return canvas
+
+
+def _schnitt_an_inhaltsgrenze(shot: Image.Image, box_w: int, nutzbar_h: int):
+    """Findet die Zeile, an der der Screen beschnitten werden soll.
+
+    Gesucht ist die LEERSTE Zeile nahe beim Ziel: dort, wo der Screen
+    nichts zeigt, faellt der Beschnitt nicht auf - der Screenshot sieht
+    aus wie ein vollstaendiger Screen statt wie ein abgeschnittenes
+    Stueck.
+
+    Das Ziel ist die Zeile, bei der der Screen auf die Kastenbreite
+    skaliert gerade noch in die Kastenhoehe passt. Liegt das Ziel
+    IN einer Inhaltszeile (Text, Kachel), wird die naechste
+    Leerzeile darunter gesucht - ein Schnitt NACH dem Inhalt sieht
+    besser aus als einer mitten darin.
+
+    Gibt es in der Naehe keine Leerzeile, wird auf das Ziel
+    zurueckgefallen (der Screen ist dann lueckenlos gefuellt).
+    """
+    import numpy as np
+
+    grau = shot.convert('L')
+    a = np.asarray(grau)
+    h = a.shape[0]
+    # Hintergrund: der haeufigste Ton des oberen Bildteils (die App
+    # ist in der Regel einfarbig).
+    bg = int(np.median(a[:400]))
+    # Eine Zeile ist "leer", wenn kaum ein Pixel vom Hintergrund
+    # abweicht.
+    leer = []
+    for y in range(h):
+        anteil = float(np.mean(np.abs(a[y].astype(int) - bg) > 12))
+        if anteil < 0.012:
+            leer.append(y)
+
+    if not leer:
+        return max(1, int(h * nutzbar_h / box_w))
+
+    # Die Leerzeilen zu durchlaufenden Abschnitten zusammenfassen.
+    abschnitte = []
+    for y in leer:
+        if abschnitte and y == abschnitte[-1][1] + 1:
+            abschnitte[-1][1] = y
+        else:
+            abschnitte.append([y, y])
+
+    # Zielzeile: so weit darf der Screen geschnitten werden, dass er
+    # nach der Skalierung auf die Kastenbreite noch in die
+    # Kastenhoehe passt.
+    #
+    #   schnitt * (box_w / shot.width) <= nutzbar_h
+    #   => schnitt <= nutzbar_h * shot.width / box_w
+    ziel = nutzbar_h * shot.width / max(1, box_w)
+
+    # Der Leerabschnitt, der das Ziel enthaelt: der Schnitt faellt
+    # dann in eine Luecke - also genau dorthin, wo im Screen ohnehin
+    # nichts steht. Der Schnitt endet am ENDE dieses Abschnitts:
+    # die Kachel darueber ist damit vollstaendig sichtbar.
+    for beginn, ende in abschnitte:
+        if beginn <= ziel <= ende:
+            return max(1, int(ende + 1))
+    # Das Ziel liegt in einem Inhaltsbereich: dann der letzte
+    # Leerabschnitt DARUNTER (der Schnitt faellt nach dem Inhalt).
+    for beginn, ende in abschnitte:
+        if beginn > ziel:
+            return max(1, int(ende + 1))
+    # Nichts darunter: dann der letzte Leerabschnitt oberhalb.
+    for beginn, ende in reversed(abschnitte):
+        if ende < ziel:
+            return max(1, int(ende + 1))
+    return max(1, int(ziel))
+
+
+def app_tile(shot: Image.Image, box_h: int, box_w: int, corner_ratio=0.055,
+             rand_oben=0, rand_unten=0, sauberer_schnitt=False,
+             split=None):
+    """Skaliert den App-Screen auf den Kasten und zeichnet die System-UI.
+
+    v0.9.2: Ersetzt phone_mockup(). Das Geraet ist entfallen, der
+    App-Screen steht direkt und abgerundet auf dem Verlauf.
+
+    Die System-UI (Statusleiste, Gesture-Navigation) wird HIER gezeichnet
+    und nicht mehr im Mockup - sonst fehlt sie nach dessen Wegfall
+    komplett, und ein Screenshot ohne Statusleiste wirkt wie ein Bild
+    statt wie ein Geraet. Der App-Render reserviert diese Streifen seit
+    dem SafeArea-Fix, zeigt aber selbst nichts; sie werden deshalb
+    zusaetzlich gemalt.
+
+    corner_ratio: Eckenradius als Anteil der Breite. Ohne Mockup ist die
+    Kachel das einzige abgerundete Element und traegt damit die
+    Komposition - der Radius ist bewusst grosszuegig gewaehlt.
+
+    SKALIERUNG (31.10.2026): Der Screen fuellt jetzt die BREITE des
+    Kastens und wird oben verankert beschnitten. Vorher wurde er auf
+    die Hoehe skaliert - der Screen ist 20:9, der Kasten aber 9:19,5.
+    Dadurch passte nur 57 % der Kachelbreite zum Bild und der Text
+    war auf dem Store-Listing unlesbar klein. Der Beschnitt am unteren
+    Rand ist gewollt und normal: er zeigt genau, wie ein Screenshot
+    aussieht. Wegfallen darf nur, was nicht klickbar ist (der
+    "Weiter"-Knopf, das Eingabefeld) - der sichtbare Kopf mit Titel und
+    Statusleiste bleibt.
+
+    [rand_oben] / [rand_unten] (31.10.2026): Zusaetzlicher Leerraum
+    oben und unten um den Screen herum - im Verlauf, nicht im Bild.
+    Der Screen wird dann auf [box_h] MINUS diese Raende skaliert.
+
+    Grund: beim zweiten Screenshot (Startseite) schnitt der Bildschirm
+    mitten in einer Kachel ab - der untere Rand wirkte wie abgeschnitten
+    und nicht wie ein Screenshot. Mit einem kleinen Rand oben und unten
+    bekommt das Bild Luft: es sieht aus wie ein Bild von einem Geraet
+    statt wie ein abgeschnittenes Stueck.
+
+    Die System-UI (Statusleiste, Navigationsleiste) wird IN das Bild
+    gezeichnet - sie sitzt also am Bildrand, nicht am Kastenrand.
+    """
+    # Platz fuer die Raende abziehen.
+    nutzbar_h = max(1, box_h - rand_oben - rand_unten)
+
+    if sauberer_schnitt:
+        # Der Schnitt landet an einer INHALTSGRENZE (31.10.2026).
+        #
+        # Bisher wurde der Screen oben verankert geschnitten - die
+        # Schnittkante fiel mitten in eine Kachel ("Keine neuen
+        # Funken" halb sichtbar). Das sah abgeschnitten aus, nicht wie
+        # ein Screenshot.
+        #
+        # Jetzt wird die Schnittkante an die naechste LEERZEILE
+        # gelegt: dort, wo der Screen nichts zeigt, faellt der
+        # Beschnitt nicht auf. Der Screen wird dabei auf die Breite
+        # des Kastens skaliert (der Text bleibt gross).
+        schnitt = _schnitt_an_inhaltsgrenze(shot, box_w, nutzbar_h)
+        scr = shot.crop((0, 0, shot.width, schnitt)).resize(
+            (box_w, max(1, int(schnitt * box_w / shot.width))),
+            Image.LANCZOS)
+    else:
+        # Beide Richtungen: der Screen darf die BREITE fuellen (das
+        # macht den Text gross) und wird nur beschnitten, wenn die
+        # Hoehe nicht reicht. Die Breite ist das Soll, die Hoehe die
+        # Grenze.
+        scale = box_w / shot.width
+        tw, th = int(shot.width * scale), int(shot.height * scale)
+        if th > nutzbar_h:
+            # Zu hoch: dann auf die Hoehe skalieren (der Screen ist ja
+            # breiter als hoch - er passt nur, wenn er kleiner wird).
+            scale = nutzbar_h / shot.height
+            tw, th = int(shot.width * scale), int(shot.height * scale)
+            scr = shot.resize((tw, th), Image.LANCZOS)
+        else:
+            scr = shot.resize((tw, th), Image.LANCZOS)
+    if not OMIT_SYSTEM_UI:
+        if split is None:
+            _draw_status_bar(scr)
+            _draw_nav_bar(scr)
+        else:
+            # Bei einem Hell/Dunkel-Split ist die System-UI zweifarbig:
+            # auf der hellen Seite dunkel, auf der dunklen Seite hell.
+            # Sonst waeren die Symbole auf einer Seite unlesbar.
+            #
+            # Die Grenze verlaeuft DIAGONAL (siehe split_screen). Eine
+            # senkrechte Teilung wuerde die Tinte an der falschen
+            # Stelle umschalten - die Statusleiste liegt oben links auf
+            # dem hellen Teil, die Navigationsleiste unten rechts auf
+            # dem dunklen.
+            #
+            # Deshalb wird eine MASKE benutzt: sie markiert je Pixel,
+            # ob er zur hellen oder zur dunklen Seite gehoert. Die
+            # Statusleiste wird zweimal gezeichnet (einmal mit dunkler,
+            # einmal mit heller Tinte) und dann mit der Maske
+            # zusammengesetzt.
+            winkel, anker_x, anker_y = split
+            hell_t = (38, 34, 44, 245)
+            dunkel_t = (236, 233, 242, 245)
+            hell_nav = (45, 38, 50, 210)
+            dunkel_nav = (236, 233, 242, 210)
+
+            with_hell = scr.copy()
+            _draw_status_bar(with_hell, tint=hell_t)
+            _draw_nav_bar(with_hell, tint=hell_nav)
+            with_dunkel = scr.copy()
+            _draw_status_bar(with_dunkel, tint=dunkel_t)
+            _draw_nav_bar(with_dunkel, tint=dunkel_nav)
+
+            # Die Maske bezieht sich auf das BILD, auf dem die Linie
+            # gezogen wurde - also auf das ungeschnittene Original.
+            # Das Zielbild ist skaliert und (oben) beschnitten, darum
+            # muss die Maske dasselbe erfahren.
+            scale = scr.width / shot.width
+            beschnitt = 0
+            if shot.height * scale > scr.height:
+                beschnitt = 0  # der Beschnitt sitzt oben
+            mask = split_mask(shot.width, shot.height, winkel, anker_x,
+                              anker_y, scale=scale, crop_y=beschnitt)
+            if mask.size != scr.size:
+                mask = mask.resize(scr.size, Image.BILINEAR)
+            scr = Image.composite(with_hell, with_dunkel, mask)
+    gerundet = _round_image(scr, int(scr.width * corner_ratio))
+
+    if rand_oben or rand_unten:
+        # Der Screen in einen Kasten mit Rand setzen. Der Rand zeigt
+        # den Verlauf der Kachel - der Bildschirm "schwebt" darauf.
+        kasten = Image.new('RGBA', (box_w, box_h), (0, 0, 0, 0))
+        kasten.alpha_composite(
+            gerundet, ((box_w - gerundet.width) // 2, rand_oben))
+        return kasten
+    return gerundet
+
+
+def _round_image(img: Image.Image, radius: int) -> Image.Image:
+    """Schneidet ein Bild auf abgerundete Ecken (RGBA, Radius in px).
+
+    Anders als round_corners() wird hier NICHTS transparent ausserhalb
+    gemacht - der App-Screen liegt auf dem Markenverlauf und soll mit
+    seinen runden Ecken darauf schweben. transparent wuerde den
+    Verlauf durchscheinen lassen und die Kachel wirkt hinein geschnitten.
+    """
+    out = Image.new('RGBA', img.size, (0, 0, 0, 0))
+    out.paste(img.convert('RGBA'), (0, 0), rounded_mask(img.size, radius))
+    return out
+
+
+def fit_scale(shot: Image.Image, box_h: int, box_w: int = 10 ** 9):
+    """Scale, damit Screen + Bezel + Schattenplatz in box_h/box_w passen."""
+    h = shot.height + 2 * (BEZEL + PAD)
+    w = shot.width + 2 * (BEZEL + PAD)
+    return min(box_h / h, box_w / w)
+
+
+def round_corners(img: Image.Image, radius: int):
+    """Beschneidet das fertige Bild auf abgerundete Ecken (aussen transparent)."""
+    out = Image.new('RGBA', img.size, (0, 0, 0, 0))
+    out.paste(img.convert('RGBA'), (0, 0), rounded_mask(img.size, radius))
+    return out
+
+
+def draw_lines(draw, xy, text, font, fill, line_gap, anchor_x, y, align='center'):
+    """Zeichnet einen mehrzeiligen Textblock; gibt die neue y-Position zurueck."""
+    for line in text.split('\n'):
+        bbox = draw.textbbox((0, 0), line, font=font)
+        w = bbox[2] - bbox[0]
+        x = anchor_x - w / 2 if align == 'center' else anchor_x
+        draw.text((x, y), line, font=font, fill=fill)
+        y += (bbox[3] - bbox[1]) + line_gap
+    return y
+
+
+def badge_pill(bg, text, cx, top, font_path=FONT_BOLD, size=34, pad_x=72,
+               pad_y=17, align='center'):
+    """Transparentes Abzeichen-Pill MIT Text (alpha-korrekt geblendet).
+
+    Wichtig: ImageDraw auf einem RGBA-Bild ERSETZT die Pixel inkl. Alpha -
+    ein fill=(255,255,255,46) wuerde thus deckend weiss. Deshalb wird die
+    Form auf einer eigenen Ebene gezeichnet und per alpha_composite
+    darueber gelegt.
+
+    `align` ist 'center' (Pill um cx herum) oder 'left' (Pill beginnt bei
+    cx, Text linksbuendig darunter). Der 16:9-Bildaufbau hat eine
+    Textspalte und braucht die linke Variante; vorher wurde die Pille
+    dort mitten in der Spalte gesetzt und stand quer.
+    """
+    layer = Image.new('RGBA', bg.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    font = ImageFont.truetype(font_path, size)
+    bb = d.textbbox((0, 0), text, font=font)
+    tw, th = bb[2] - bb[0], bb[3] - bb[1]
+    w, h = tw + 2 * pad_x, th + 2 * pad_y
+    x0 = int(cx - w / 2) if align == 'center' else int(cx)
+    y0 = int(top)
+    d.rounded_rectangle([x0, y0, x0 + w, y0 + h], radius=h // 2,
+                        fill=(255, 255, 255, 52),
+                        outline=(255, 255, 255, 130), width=2)
+    tx = cx - tw / 2 if align == 'center' else x0 + pad_x
+    d.text((tx - bb[0], y0 + pad_y - bb[1]), text, font=font,
+           fill=(255, 255, 255, 250))
+    bg.alpha_composite(layer)
+
+
+def _crop_tile(img):
+    """Schneidet aus dem Golden-Export genau die Kachel heraus.
+
+    matchesGoldenFile erfasst immer den ganzen Screenshot-Frame, nicht
+    das Widget. Der Export einer Einzel-Kachel ist deshalb 360x800
+    (die View) mit der Kachel mittig darin und viel leerem Rand drum.
+
+    Gesucht wird nach der Kachelkontur: Das erste von oben kommende
+    breite Band heller Pixel ist die Kachel, ihr Ende ist das letzte
+    solche Band. Alles darueber (Scaffold-Hintergrund) und darunter wird
+    abgeschnitten.
+
+    Bewusst ueber Pixel und nicht ueber eine gemeldete Groesse: die
+    Kachelgroesse haengt am Inhalt der jeweiligen Modus-Beschreibung
+    und ist deshalb pro Kachel verschieden (im Zwischenstand zwischen
+    136 und 256 px Hoehe gemessen).
+    """
+    im = img.convert('RGB')
+    w, h = im.size
+    px = im.load()
+
+    # Die Kachel ist EXAKT weiss (255,255,255); der Scaffold drumher ist
+    # (247,247,251). Beide sind "hell" - deshalb wird nicht auf
+    # Helligkeit, sondern auf exaktes Weiss geprueft. Mit einem
+    # Schwellwert >700 lag die ganze View als Kachel da und der Crop
+    # lief ins Leere.
+    def is_card(x, y):
+        r, g, b = px[x, y]
+        return r >= 252 and g >= 252 and b >= 252
+
+    # Vertikal: Zeilen, in denen ein nennenswerter Anteil der Breite
+    # zur Kachel gehoert.
+    rows = []
+    for y in range(h):
+        n = sum(1 for x in range(0, w, 4) if is_card(x, y))
+        if n / len(range(0, w, 4)) > 0.5:
+            rows.append(y)
+    if not rows:
+        return im
+    top, bot = min(rows), max(rows)
+
+    # Seitlich: Spalten, die ueber die Kachel-Hoehe weitgehend weiss sind.
+    mid = range(top, bot + 1, 4)
+    xs = [x for x in range(w)
+          if sum(1 for y in mid if is_card(x, y)) > 0.6 * len(list(mid))]
+    if not xs:
+        return im
+    left, right = min(xs), max(xs)
+    return im.crop((left, top, right + 1, bot + 1))
+
+
+def _card_shadow(img, radius, opacity=52, blur=16, dy=8):
+    """Kachel mit weichem Schatten, auf einer groesseren Flaeche.
+
+    Die Kacheln liegen auf dem gesättigten Markenverlauf. Ohne Schatten
+    heben sie sich nur durch die Helligkeit ab und wirken eingeklebt.
+
+    Wichtig: zurueckgegeben wird die Kachel INKLUSIVE Schatten, nicht
+    nur der Schatten. Die erste Fassion lieferte nur die Schattenebene
+    zurueck - die Kacheln fehlten dadurch in beiden fertigen Bildern,
+    ohne Fehlermeldung, weil alpha_composite mit einem transparenten
+    Bild stillschweigend nichts tut.
+
+    Rueckgabe: (bild, x_offset, y_offset) - das Bild ist um pad links/
+    oben und um dy unten groesser als die Kachel.
+    """
+    w, h = img.size
+    pad = int(blur * 2)
+    total = (w + 2 * pad, h + 2 * pad + dy)
+
+    # 1) Schattenebene
+    shadow = Image.new('RGBA', total, (0, 0, 0, 0))
+    ImageDraw.Draw(shadow).rounded_rectangle(
+        [pad, pad, pad + w, pad + h], radius=radius,
+        fill=(18, 0, 32, opacity))
+    shadow = shadow.filter(ImageFilter.GaussianBlur(blur))
+
+    # 2) Kachel OBEN AUF den Schatten legen - nicht daneben.
+    out = shadow
+    out.alpha_composite(img.convert('RGBA'), (pad, pad))
+    return out, pad, pad
+
+
+# Die echte Modus-Kachel ist eine Card mit 16 dp Eckradius
+# (swipe_mode_selection_screen.dart). Der Golden-Export schneidet nur die
+# exakt weissen Pixel heraus und verliert damit genau diese Rundung -
+# die Kacheln wirkten dadurch wie aufgeklebte Rechtecke. Der Radius wird
+# hier aus der Kachelbreite zurueckgerechnet, damit die Kachel im fertigen
+# Bild exakt so rund ist wie in der App.
+TILE_RADIUS_DP = 16
+TILE_WIDTH_DP = 312
+
+
+def _round_tile(tile, col_w):
+    """Kachel auf die Zielbreite bringen und mit dem echten Radius runden."""
+    r = max(2, int(round(col_w * TILE_RADIUS_DP / TILE_WIDTH_DP)))
+    return round_corners(tile, r)
+
+
+def _tile_scale(tiles, max_w, avail_h, gap):
+    """Groesster gemeinsamer Skalierungsfaktor fuer alle Kacheln.
+
+    Begrenzt von der Breite (max_w) und von der Hoehe (avail_h inklusive
+    der Abstaende). Beide Grenzen sind noetig: eine Kachel, die nur in die
+    Breite passt, wuerde unten aus dem Bild laufen oder die naechste
+    ueberdecken.
+    """
+    widest = max(t.width for t in tiles)
+    total_h = sum(t.height for t in tiles)
+    by_w = max_w / widest
+    by_h = (avail_h - (len(tiles) - 1) * gap) / total_h
+    return min(by_w, by_h)
+
+
+def _place_tiles(bg, tiles, y, avail_h, max_w, gap, x=None, center_w=0):
+    """Kacheln untereinander ab y setzen, zentriert im Restfeld.
+
+    `x` setzt die Kacheln auf eine feste linke Kante (16:9 nutzt das fuer
+    die Textspalte). `center_w` mittelt sie stattdessen in dieser Breite -
+    im 9:16-Bild ist die Mitte die einzige sinnvolle Wahl, weil die
+    Kachelbreite erst aus der Hoehenbegrenzung entsteht.
+
+    Gibt die tatsaechliche Kantenbreite zurueck, damit der Aufrufer den
+    Textblock daneben setzen kann.
+    """
+    k = _tile_scale(tiles, max_w, avail_h, gap)
+    col_w = int(round(max(t.width for t in tiles) * k))
+    block_h = int(round(sum(t.height for t in tiles) * k)) \
+        + (len(tiles) - 1) * gap
+
+    if center_w:
+        x = (center_w - col_w) // 2
+    ty = y + max(0, (avail_h - block_h) // 2)
+    radius = max(2, int(round(col_w * TILE_RADIUS_DP / TILE_WIDTH_DP)))
+    for t in tiles:
+        tile = t.resize((col_w, max(1, int(round(t.height * k)))),
+                        Image.LANCZOS)
+        card, dp, dpy = _card_shadow(_round_tile(tile, col_w), radius)
+        bg.alpha_composite(card, (x - dp, ty - dpy))
+        ty += tile.height + gap
+    return col_w
+
+
+# System-Insets im App-Export: 24 dp Statusleiste oben, 24 dp
+# Gesture-Navigation unten, gerendert mit dpr 3. Das sind die Werte aus
+# test/screenshots/support/store_screenshot_insets.dart.
+#
+# SICHERHEITSHALBER NICHT einfach 72 px abgeschnitten. Gemessen beginnt
+# der Inhalt bei 01_willkommen exakt auf y=72, bei 04_anpassen und
+# 05_eisbrecher aber auf y=62 - die Bildschirme mit AppBar verbrauchen
+# das Inset anders. Ein fester Schnitt von 72 px hat dort 10 px aus der
+# AppBar geschnitten, der Titel "Erscheinungsbild" stand abgeschnitten
+# im Bild. Deshalb wird die Kante gemessen, soweit sie messbar ist.
+STORE_INSET_DP = 24.0
+EXPORT_DPR = 3.0
+# Sicherheitsabstand zur gemessenen Kante. Ohne ihn faellt die Karte mit
+# der Flanke an den Inhalt.
+CONTENT_MARGIN_PX = 8
+
+# Mindestzahl abweichender Stichproben, damit eine Zeile als Inhalt
+# gilt. ABSOLUT, nicht als Anteil: bei 120 Stichproben waere ein Anteil
+# von 2 % "mindestens 3". Genau daran ist "Ueberspringen" auf
+# 01_willkommen verloren gegangen - die Schrift ist duenn, ihre oberste
+# Zeile trifft nur EINE Stichprobe, die zweite nur zwei. Mit "3" kam der
+# Schnitt bei y=80 und der Text begann bei y=66: die Haelfte der
+# Buchstaben stand abgeschnitten im Bild. Mit 2 kommt der Schnitt auf
+# y=64 und der Text bleibt heil.
+CONTENT_MIN_SAMPLES = 2
+
+
+def _content_edge(shot: Image.Image, top=True) -> int:
+    """Erste Inhaltszeile von oben bzw. letzte von unten.
+
+    Gesucht wird nicht nach einer Farbe, sondern nach einer
+    ABWEICHUNG von der Hintergrundfarbe der Zeile. Scaffold-
+    Hintergrund und Statusleisten-Inset sind dieselbe Farbe - es gibt
+    keine Kante, die man abgreifen koennte. Sichtbar wird nur, was
+    wirklich gezeichnet ist.
+
+    Nach dem ersten Fund wird bewusst ein Stueck WEITER geschnitten als
+    gemessen: lieber ein schmaler leerer Rand am Kartenanfang als ein
+    abgeschnittener Titel.
+    """
+    rgb = shot.convert('RGB')
+    w, h = rgb.size
+    px = rgb.load()
+    step = max(1, w // 120)
+    cols = range(0, w, step)
+
+    # Hintergrund aus dem oberen Rand: das erste stabile Band ist der
+    # Scaffold. Gesucht wird nach einer ABWEICHUNG von diesem Wert.
+    bg = None
+    for y in range(0, min(h, 200)):
+        r = sum(px[x, y][0] for x in cols) / len(list(cols))
+        g = sum(px[x, y][1] for x in cols) / len(list(cols))
+        b = sum(px[x, y][2] for x in cols) / len(list(cols))
+        if bg is None:
+            bg = (r, g, b)
+        if abs(r - bg[0]) + abs(g - bg[1]) + abs(b - bg[2]) > 24:
+            break
+        bg = (r, g, b)
+
+    hits = []
+    n_cols = len(list(cols))
+    for y in range(h):
+        n = 0
+        for x in cols:
+            rr, gg, bb = px[x, y]
+            if abs(rr - bg[0]) + abs(gg - bg[1]) + abs(bb - bg[2]) > 36:
+                n += 1
+        if n >= CONTENT_MIN_SAMPLES:
+            hits.append(y)
+    if not hits:
+        px_inset = int(round(STORE_INSET_DP * EXPORT_DPR))
+        return px_inset if top else h - px_inset
+    if top:
+        return max(0, min(hits[0] - CONTENT_MARGIN_PX, h // 2))
+    return max(h // 2, min(hits[-1] + CONTENT_MARGIN_PX, h))
+
+
+def _crop_store_insets(shot: Image.Image) -> Image.Image:
+    """Schneidet die leeren System-Insets aus dem App-Export heraus.
+
+    Der Export enthaelt oben und unten die reservierten Insets
+    (SafeArea), in denen nichts gezeichnet wird. Fuer die Kachel-
+    Komposition ohne Statusleiste sind sie genau das, was weg soll:
+    ein leerer Streifen oben und einer unten.
+
+    Die Kanten werden gemessen, nicht fest angesetzt - siehe
+    _content_edge. Feste 72 px schnitten Screens mit AppBar in den
+    Titel.
+    """
+    rgb = shot.convert('RGB')
+    return rgb.crop((0, _content_edge(rgb, top=True),
+                     rgb.size[0], _content_edge(rgb, top=False)))
+
+
+def _place_card(bg, card, y, avail_h, max_w, center_w=0, x=None):
+    """Eine Inhaltskachel in das Restfeld setzen.
+
+    `x` setzt die linke Kante fest (16:9 nutzt das fuer die Kartenspalte
+    neben dem Text). `center_w` mittelt die Kachel in dieser Breite -
+    im 9:16-Bild ist die Mitte die einzige sinnvolle Wahl.
+
+    Ohne beide Angaben wird die Kachel zentriert im Gesamtbild gesetzt.
+
+    Rueckgabe: die tatsaechliche Kantenbreite, damit der Aufrufer den
+    Textblock daneben setzen kann.
+    """
+    k = min(max_w / card.width, avail_h / card.height)
+    cw = max(1, int(round(card.width * k)))
+    ch = max(1, int(round(card.height * k)))
+    card = card.resize((cw, ch), Image.LANCZOS)
+    # Radius wie in der App: die Kachel ist der App-Screen, dessen
+    # Ecken im Geratebild mit 42 dp gerundet werden.
+    radius = max(2, int(round(cw * 0.042 / 0.9)))
+    layer, dp, dpy = _card_shadow(round_corners(card, radius), radius)
+    if x is None:
+        cx = center_w if center_w else bg.size[0]
+        x = (cx - cw) // 2
+    ty = y + max(0, (avail_h - ch) // 2)
+    bg.alpha_composite(layer, (x - dp, ty - dpy))
+    return cw
+
+
+def compose_card(shot: Image.Image, headline: str, subline: str, badge: str,
+                dark: bool = False):
+    """9:16: EIN Inhaltsblock als Kachel auf dem Markenverlauf.
+
+    Das Gegenstueck zu compose_9x16 fuer die Variante OHNE Geraet und
+    OHNE Statusleiste: glecher Verlauf, gleiche Kopfzeile, gleiche
+    Badge-Pille - aber der Inhalt liegt als einzelne Kachel auf dem
+    Verlauf, genau wie die fuenf Moduskacheln in compose_modes.
+
+    Der Block ist der echte App-Screen, an den Insets beschnitten und
+    heruntergerechnet. Er wird NICHT nachgebaut: ein nachgebautes Layout
+    driftet von der App, das war beim SegmentedButton-Fall die Ursache
+    fuer ein falsches Bild.
+    """
+    W, H = 1080, 1920
+    verlauf = gradient((W, H), 40)
+    if dark:
+        verlauf = darken(verlauf)
+    bg = verlauf.convert('RGBA')
+    draw = ImageDraw.Draw(bg)
+
+    f_head = ImageFont.truetype(FONT_BOLD, 62)
+    f_sub = ImageFont.truetype(FONT_REG, 30)
+    y = 104
+    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255), 14,
+                   W // 2, y)
+    y += 20
+    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226), 10,
+                   W // 2, y)
+
+    margin = 60
+    gap = 28
+    badge_top = H - 136
+    # KEIN Insets-Crop (04.11.2026).
+    #
+    # Der Crop schnitt an der ERSTEN Inhaltszeile ab - mitten durch
+    # den Text. Bei 06 (Hell/Dunkel) fehlte dadurch ueber der
+    # Ueberschrift "Erscheinungsbild" ein Stueck des Screens, unten
+    # fehlten die letzten Chat-Hintergruende. Der Screen ist jetzt
+    # vollstaendig; die leeren Insets-Streifen oben und unten sind
+    # Teil des Screens (dort steht die Statusleiste).
+    card = shot.convert('RGB')
+    _place_card(bg, card, y + 34, badge_top - y - 70, W - 2 * margin,
+                center_w=W)
+
+    badge_pill(bg, badge, W // 2, badge_top)
+    return round_corners(bg, 56)
+
+
+def compose_card_wqhd(shot: Image.Image, headline: str, subline: str,
+                      badge: str, dark: bool = False,
+                      W: int = 2560, H: int = 1440):
+    """16:9: Kachel links, Text rechts - wie compose_modes_wqhd, aber mit
+    einem Inhaltsblock statt der fuenf Moduskacheln.
+
+    W und H sind variabel, damit dieselbe Komposition auch fuer das
+    10-Zoll-Tablet (1920x1200) benutzt werden kann. Vorher gab es nur
+    die 16:9-Variante - und ein nachtraeglicher Beschnitt auf
+    1920x1200 hat den Text auf der rechten Seite abgeschnitten (der
+    Kachel-Block stand links, der Rest fehlte). Das ist der Grund fuer
+    die Parameter: eine Komposition wird in der Groesse erzeugt, in der
+    sie auch gebraucht wird.
+    """
+    verlauf = gradient((W, H), 25)
+    if dark:
+        verlauf = darken(verlauf)
+    bg = verlauf.convert('RGBA')
+    draw = ImageDraw.Draw(bg)
+
+    # Alles proportional zur kleineren Kante: so sieht die Komposition
+    # bei jedem Format gleich aus (nicht nur nicht abgeschnitten).
+    skala = min(W / 2560.0, H / 1440.0)
+    margin = int(90 * skala)
+    kachel_max = int(980 * skala)
+
+    col_w = _place_card(bg, _crop_store_insets(shot.convert('RGB')), margin,
+                        H - 2 * margin, kachel_max, x=margin)
+
+    f_head = ImageFont.truetype(FONT_BOLD, max(28, int(78 * skala)))
+    f_sub = ImageFont.truetype(FONT_REG, max(16, int(38 * skala)))
+    tx = margin + col_w + int(90 * skala)
+    y = max(int(200 * skala), (H - int(400 * skala)) // 2)
+    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255),
+                   max(10, int(20 * skala)), tx, y, align='left')
+    y += max(12, int(24 * skala))
+    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226),
+                   max(8, int(14 * skala)), tx, y, align='left')
+    y += max(20, int(40 * skala))
+    badge_pill(bg, badge, tx, y, size=max(18, int(36 * skala)), align='left')
+    return round_corners(bg, max(24, int(56 * skala)))
+
+
+CARDS = ROOT / 'test' / 'screenshots' / 'store_v091' / 'cards'
+# Der Screenshot-Export laeuft mit dpr 3. Die Rechtecke in den
+# rects_*.json sind LOGISCH, die PNGs sind physisch - ohne diesen
+# Faktor wuerde jedes Rechteck um den Faktor 3 daneben liegen.
+CARDS_DPR = 3.0
+
+# Innenabstand um die Kacheln herum, in LOGISCHEN Pixeln. Siehe
+# load_cards: das vermessene Rechteck klebt am Widget und verliert
+# dadurch den Innenabstand, den der Screen selbst rundherum setzt.
+CARD_MARGIN_LOGICAL = 30.0
+
+
+def _load_card_rects(screen, cards_dir=CARDS):
+    """Liest die Kachelrechtecke EINES Screens.
+
+    Der Dateiname traegt den VOLLEN Screen-Namen, nicht nur die ersten
+    zwei Zeichen. Mit der Kuerze teilten sich 02_anmelden und 02_chat
+    eine Datei: die Rechtecke des Anmelde-Screens wurden auf das
+    Chat-Bild angewendet und zerschnitten es mittendrin. Ein
+    umbenannter Screen ist damit kein Datenleck mehr, sondern ein
+    sichtbar falsches Bild.
+    """
+    path = cards_dir / f'rects_{screen}.json'
+    if not path.is_file():
+        return []
+    try:
+        data = json.loads(path.read_text(encoding='utf-8'))
+    except (OSError, ValueError):
+        return []
+    out = []
+    for name, value in data.items():
+        if isinstance(value, dict):
+            rect, src = value.get('rect'), value.get('file')
+        else:
+            rect, src = value, None
+        if not rect or len(rect) != 4:
+            continue
+        out.append((name, src, [float(v) for v in rect]))
+    return out
+
+
+def load_cards(screen, default_src=None, margin=0.0, cards_dir=CARDS):
+    """Schneidet die Kacheln eines Screens aus den exportierten Bildern.
+
+    `default_src` gilt fuer Rechtecke OHNE eigenen Dateiverweis: bei 01
+    gibt es nur einen Screenshot, aus dem alle Kacheln kommen. Ohne
+    Vorgabe wurden diese Kacheln stillschweigend verworfen und der
+    Screen als eine grosse Kachel eingesetzt - also genau die Loesung,
+    die abgeschafft werden sollte.
+
+    Zwei Formen werden akzeptiert, weil beide im Export vorkommen:
+
+      * {"name": [l, t, w, h]}          - ein Rechteck pro Kachel
+      * {"name": {"file": ..., "rect": [l, t, w, h]}}  - mit Screenshot
+
+    Die zweite Form ist noetig fuer 05: die Eisbrecher-Kategorien
+    stehen in einer Liste, die gescrollt werden muss. Eine Kachel kann
+    nur aus dem Bild geschnitten werden, in dem sie vollstaendig stand.
+
+    `margin` vergroessert das Rechteck in LOGISCHEN Pixeln. Notwendig,
+    weil das Rechteck am Widget klebt: im Screen steckt um das Widget
+    herum noch dessen eigener Innenabstand (32 dp beim Willkommens-Logo,
+    20 dp im Karten-Host), und der faellt beim Zuschneiden weg. Die
+    Kachel bekam dadurch weisse Tinte bis an den Rand - "der weisse Rand
+    um den Inhalt ist zu klein".
+
+    Auch gemalte Teile ragen ueber ihre Layout-Box hinaus: der
+    "Einloggen"-Button wird im 02-Bild halb abgeschnitten, weil seine
+    Layout-Box knapper ist als das, was der Material-Button malt. Der
+    Rand faengt das mit auf.
+    """
+    out = []
+    cache = {}
+    for name, src, rect in _load_card_rects(screen, cards_dir):
+        src = src or default_src
+        if not src:
+            continue
+        img_path = cards_dir / src
+        if img_path not in cache:
+            if not img_path.is_file():
+                continue
+            cache[img_path] = Image.open(img_path).convert('RGB')
+        img = cache[img_path]
+        l, t, w, h = rect
+        # Der Rand ist unten, links und rechts voll, oben nur ein Drittel.
+        # Ein voller Rand nach oben griff im 02-Bild den Herzansatz ueber
+        # der Karte mit - ein dunkler Buckel auf der Oberkante. Nach oben
+        # muss nur so viel Luft sein, dass die schwebende Feldbezeichnung
+        # nicht abgeschnitten wird, und die ragt wenige Pixel heraus.
+        l -= margin
+        w += 2 * margin
+        t -= margin / 3.0
+        h += margin + margin / 3.0
+        box = (int(round(l * CARDS_DPR)), int(round(t * CARDS_DPR)),
+               int(round((l + w) * CARDS_DPR)),
+               int(round((t + h) * CARDS_DPR)))
+        box = (max(0, box[0]), max(0, box[1]),
+               min(img.size[0], box[2]), min(img.size[1], box[3]))
+        if box[2] <= box[0] or box[3] <= box[1]:
+            continue
+        out.append((name, img.crop(box)))
+    return out
+
+
+def _heading_card(text, width, sub=None):
+    """Ueberschriftskachel im Stil der uebrigen Kacheln.
+
+    Fuer 05: die Kategorien sollen unter einer Kachel mit dem
+    Seitentitel stehen, sonst ist die Liste ohne Ueberschrift. Der Text
+    kommt aus den Strings der App (`spice.title`), nicht aus dem
+    Marketing-Headline - der Screen hiess in der App "Eisbrecher-Fragen".
+    """
+    f = ImageFont.truetype(FONT_BOLD, max(14, int(width * 0.062)))
+    layer = Image.new('RGBA', (width, 10), (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    bb = d.textbbox((0, 0), text, font=f)
+    tw, th = bb[2] - bb[0], bb[3] - bb[1]
+    pad = int(width * 0.06)
+    h = th + 2 * pad
+    out = Image.new('RGBA', (width, h), (255, 255, 255, 255))
+    od = ImageDraw.Draw(out)
+    od.rounded_rectangle([0, 0, width - 1, h - 1], radius=h // 3,
+                         fill=(255, 255, 255, 255))
+    od.text(((width - tw) / 2 - bb[0], pad - bb[1]), text, font=f,
+            fill=(45, 38, 50, 255))
+    del layer
+    return out
+
+
+def _paste_card(bg, card, x, y):
+    """Kachel mit Rundung und Schatten an eine feste Stelle setzen."""
+    cw, ch = card.size
+    radius = max(6, int(round(cw * 0.07)))
+    layer, dp, dpy = _card_shadow(round_corners(card.convert('RGBA'), radius),
+                                 radius)
+    bg.alpha_composite(layer, (int(x) - dp, int(y) - dpy))
+    return cw, ch
+
+
+def _grid_metrics(cards, avail_h, max_w, cols=2, gap=24, min_gap=18):
+    """Rechnet Spaltenbreite, Skalierung und Abstaende aus, ohne zu zeichnen.
+
+    Getrennt von [_place_grid], weil der Aufrufer die Blockhoehe kennen
+    muss, BEVOR er die Ueberschrift darueber setzt - und die Hoehe
+    haengt von der Skalierung ab. Ein Aufruf zum Zeichnen als "Probe"
+    wuerde die Kacheln zweimal in den Hintergrund schreiben.
+    """
+    if not cards:
+        return {'k': 1.0, 'col_w': max_w, 'row_h': 0, 'v_gap': gap,
+                'block_h': 0, 'rows': 0}
+    n = len(cards)
+    rows = (n + cols - 1) // cols
+    col_w = (max_w - (cols - 1) * gap) / float(cols)
+    widest = max(c.width for c in cards)
+    tallest = max(c.height for c in cards)
+    # Nur die Breite begrenzt; die Hoehe greift nur, wenn sie wirklich
+    # nicht passt. Sonst wuerde ein einziger zu hoher Rest die Kacheln
+    # kleiner machen, obwohl sie waagerecht Platz haetten.
+    k = min(col_w / widest,
+            avail_h / float(rows * tallest + (rows - 1) * min_gap))
+    row_h = tallest * k
+
+    # Der uebrige Raum wird auf die Zeilenabstaende verteilt, aber nur
+    # begrenzt. Unbegrenzt verteilt lagen zwischen den fuenf Zeilen
+    # riesige Leerraeume - die Gruppen zerfielen optisch in fuenf
+    # einzelne Reihen statt als eine Liste zu lesen ("nicht so viel
+    # Platz zwischen den Gruppen"). 1,5x der Grundabstand ist der
+    # Kompromiss: etwas Luft, aber eine erkennbare Liste.
+    v_gap = gap
+    if rows > 1:
+        spread = (avail_h - rows * row_h) / (rows - 1)
+        v_gap = max(gap, min(spread, gap * 1.5))
+    return {'k': k, 'col_w': col_w, 'row_h': row_h, 'v_gap': v_gap,
+            'block_h': rows * row_h + (rows - 1) * v_gap, 'rows': rows}
+
+
+def _place_grid(bg, cards, y, avail_h, max_w, cols=2, gap=24, min_gap=18,
+                center_w=0):
+    """Kacheln in `cols` Spalten setzen. Rueckgabe: Blockhoehe.
+
+    Anders als [_place_tiles] wird die Kachelgroesse zuerst von der
+    BREITE bestimmt und der uebrige Raum anschliessend (begrenzt) als
+    Zeilenabstand verteilt. [_place_tiles] verteilt einen gemeinsamen
+    Faktor ueber alle Kacheln und laesst danach den Rest ungenutzt - bei
+    zehn flachen Kacheln (Eisbrecher-Kategorien, 72 dp hoch) schrumpfte
+    dadurch jede auf ein paar Pixel Hoehe und die Beschriftung war nicht
+    mehr lesbar.
+
+    Zwei Spalten statt einer: eine Spalte mit zehn Kacheln braucht
+    fuenfzehn Zeilen, zwei Spalten nur sechs.
+    """
+    if not cards:
+        return 0
+    m = _grid_metrics(cards, avail_h, max_w, cols, gap, min_gap)
+    k, col_w, row_h, v_gap = m['k'], m['col_w'], m['row_h'], m['v_gap']
+
+    # Mittig ueber die GESAMTE Rasterbreite, nicht ueber eine Spalte:
+    # zwei Spalten a 466 px plus 28 px Abstand sind 960 px breit und
+    # muessen bei 1080 px Bildbreite bei x=60 beginnen. Ueber die
+    # Spaltenbreite mitteln liess die zweite Spalte bei x=801 beginnen
+    # und damit 187 px aus dem Bild ragen.
+    grid_w = cols * col_w + (cols - 1) * gap
+    cx = (center_w - grid_w) / 2.0 if center_w else 0.0
+
+    for i, card in enumerate(cards):
+        r, c = divmod(i, cols)
+        if c >= cols:
+            break
+        x = cx + c * (col_w + gap)
+        cw = max(1, int(round(card.width * k)))
+        ch = max(1, int(round(card.height * k)))
+        img = card.resize((cw, ch), Image.LANCZOS)
+        ty = y + r * (row_h + v_gap)
+        _paste_card(bg, img, x + (col_w - cw) / 2.0, ty)
+    return m['block_h']
+
+
+def compose_cards(cards, headline: str, subline: str, badge: str,
+                  heading=None, cols=1, dark: bool = False):
+    """9:16: beliebig viele echte Kacheln untereinander auf dem Verlauf.
+
+    Der Aufbau ist der von compose_modes, nur mit den Kacheln, die der
+    Dart-Export aus den echten Widgets des Screens geschnitten hat -
+    nicht mit dem Screen selbst. "Ueberspringen", die AppBar und der
+    grosse Herz-Kopf des Anmeldescreens gehoeren nicht dazu, und
+    deshalb sind sie auch nicht dabei.
+    """
+    W, H = 1080, 1920
+    verlauf = gradient((W, H), 40)
+    if dark:
+        verlauf = darken(verlauf)
+    bg = verlauf.convert('RGBA')
+    draw = ImageDraw.Draw(bg)
+
+    f_head = ImageFont.truetype(FONT_BOLD, 62)
+    f_sub = ImageFont.truetype(FONT_REG, 30)
+    y = 104
+    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255), 14,
+                   W // 2, y)
+    y += 20
+    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226), 10,
+                   W // 2, y)
+
+    margin = 60
+    gap = 28
+    badge_top = H - 136
+    top = y + 34
+    avail_h = badge_top - y - 70
+
+    imgs = [c for _n, c in cards]
+    head_h = 0
+    head = None
+    if heading:
+        width = max((c.width for c in imgs), default=W - 2 * margin)
+        head = _heading_card(heading, W - 2 * margin)
+        head_h = int(head.height * (W - 2 * margin) / width)
+        head = head.resize((W - 2 * margin, head_h), Image.LANCZOS)
+
+    if cols > 1:
+        # Ueberschrift und Raster als EINEN Block mittig setzen. Nur das
+        # Raster zu mitteln liess die Ueberschrift oben kleben und ein
+        # Loch darunter.
+        #
+        # Die Rasterhoehe haengt von der Skalierung ab und die Skalierung
+        # vom verfuegbaren Raum - vorher mitteln waere zirkulaer. Deshalb
+        # wird die Hoehe einmal vorab berechnet (reines Rechnen, ohne zu
+        # zeichnen) und der Block danach einmal verschoben.
+        probe = _grid_metrics(imgs, avail_h, W - 2 * margin, cols, gap, 18)
+        block = head_h + (gap if heading else 0) + probe['block_h']
+        start = top + max(0, (avail_h - block) / 2.0)
+        if head is not None:
+            _paste_card(bg, head, margin, start)
+        _place_grid(bg, imgs, start + head_h + (gap if heading else 0),
+                    avail_h, W - 2 * margin, cols=cols, gap=gap, min_gap=18,
+                    center_w=W)
+    else:
+        if head is not None:
+            _paste_card(bg, head, margin, top)
+            top += head_h + gap
+        _place_tiles(bg, imgs, top, avail_h, W - 2 * margin, gap, center_w=W)
+
+    badge_pill(bg, badge, W // 2, badge_top)
+    return round_corners(bg, 56)
+
+
+def compose_modes(tiles, headline: str, subline: str, badge: str):
+    """9:16: die fuenf echten Modus-Kacheln als grosse Liste.
+
+    v0.9.2, dritter Durchgang. Zwei vorherige Fassungen waren falsch:
+
+      * Kompletter Screen im Geraet - alle fuenf Modi passten nur, wenn
+        die Schrift auf 0.64 verkleinert wurde, also kleiner als in allen
+        anderen Store-Bildern.
+      * Losgeloste Kacheln in zwei Spalten und drei Reihen. Die Kacheln
+        waren dabei nur 460 px breit (43 % der Bildbreite) und der
+        Crop hatte ihnen die runden Ecken genommen. Dazu verteilte der
+        Faktor die Reihen ueber die ganze Bildhoehe, sodass zwischen
+        den Kacheln riesige leere Streifen standen.
+
+    Jetzt: eine Spalte, fuenf Kacheln ueber die volle Bildbreite, so
+    gross wie die Hoehe zulaesst. Das ist genau die Liste, die die App
+    zeigt - und die Kacheln sind mit rund 830 px gut doppelt so breit
+    wie vorher, mit gerundeten Ecken und ohne tote Flaechen.
+    """
+    W, H = 1080, 1920
+    bg = gradient((W, H), 40).convert('RGBA')
+    draw = ImageDraw.Draw(bg)
+
+    f_head = ImageFont.truetype(FONT_BOLD, 62)
+    f_sub = ImageFont.truetype(FONT_REG, 30)
+    y = 104
+    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255), 14,
+                   W // 2, y)
+    y += 20
+    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226), 10,
+                   W // 2, y)
+
+    margin = 60
+    gap = 28
+    badge_top = H - 136
+    _place_tiles(bg, tiles, y + 34, badge_top - y - 70, W - 2 * margin, gap,
+                 center_w=W)
+
+    badge_pill(bg, badge, W // 2, badge_top)
+    return round_corners(bg, 56)
+
+
+def compose_modes_wqhd(tiles, headline: str, subline: str, badge: str,
+                        W: int = 2560, H: int = 1440):
+    """Querformat: Kacheln links, Text rechts - wie compose_wqhd, aber mit
+    Kacheln statt eines Geraets.
+
+    Die Kacheln werden mit derselben Hoehenbegrenzung gesetzt wie im
+    9:16-Bild. Vorher lag die Spaltenbreite fest bei 900 px, wodurch die
+    hohe Transit-Spark-Kachel aus ihrer Zeile in die darunterliegende
+    ragte.
+
+    W und H sind Parameter (04.11.2026): das 10-Zoll-Tablet braucht
+    1920x1200, das 16:9-Bild 2560x1440. Alles proportional zur kleineren
+    Kante - sonst sieht das 10-Zoll-Bild aus wie ein 16:9-Bild, das
+    zusammengestaucht wurde.
+    """
+    # DASSELBE Raster wie in den uebrigen Querformat-Bildern: die
+    # Kacheln stehen an derselben Stelle und der Text beginnt an
+    # derselben Stelle (04.11.2026).
+    skala, margin, spalte_x, spalte_w, tx = _quer_raster(W, H)
+    bg = gradient((W, H), 25).convert('RGBA')
+    draw = ImageDraw.Draw(bg)
+
+    gap = max(10, int(26 * skala))
+    col_w = _place_tiles(bg, tiles, margin, H - 2 * margin,
+                         spalte_w, gap, x=spalte_x)
+
+    f_head = ImageFont.truetype(FONT_BOLD, max(24, int(78 * skala)))
+    f_sub = ImageFont.truetype(FONT_REG, max(12, int(38 * skala)))
+    y = max(int(120 * skala), (H - int(400 * skala)) // 2)
+    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255),
+                   max(8, int(20 * skala)), tx, y, align='left')
+    y += max(10, int(24 * skala))
+    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226),
+                   max(6, int(14 * skala)), tx, y, align='left')
+    y += max(16, int(40 * skala))
+    f_badge = ImageFont.truetype(FONT_BOLD, max(14, int(36 * skala)))
+    bb = draw.textbbox((0, 0), badge, font=f_badge)
+    bw = bb[2] - bb[0] + 2 * max(24, int(68 * skala))
+    layer = Image.new('RGBA', bg.size, (0, 0, 0, 0))
+    ImageDraw.Draw(layer).rounded_rectangle(
+        [tx, y, tx + bw, y + bb[3] - bb[1] + max(14, int(40 * skala))],
+        radius=(bb[3] - bb[1] + max(14, int(40 * skala))) // 2,
+        fill=(255, 255, 255, 52), outline=(255, 255, 255, 130), width=2)
+    ImageDraw.Draw(layer).text(
+        (tx + max(24, int(68 * skala)) - bb[0],
+         y + max(8, int(20 * skala)) - bb[1]), badge, font=f_badge,
+        fill=(255, 255, 255, 250))
+    bg.alpha_composite(layer)
+    return round_corners(bg, max(24, int(56 * skala)))
+
+
+def compose_cards_wqhd(cards, headline: str, subline: str, badge: str,
+                        heading=None, cols: int = 1, dark: bool = False,
+                        W: int = 1920, H: int = 1200):
+    """Querformat: die echten Kacheln links, der Text rechts.
+
+    FUER DAS 10-ZOLL-TABLET (04.11.2026), mit demselben Raster wie
+    das Bild mit dem App-Screen (compose_landscape): die Kacheln
+    stehen an derselben Stelle und der Text beginnt an derselben
+    Stelle. So sehen alle acht Bilder gleich aus.
+
+    Die Kacheln kommen aus dem Dart-Export (echte Widgets, kein
+    nachgebautes Layout), genau wie im 9:16-Bild.
+    """
+    # Das GLEICHE Raster wie im Bild mit dem App-Screen: die Kacheln
+    # stehen an derselben Stelle und der Text beginnt an derselben
+    # Stelle. So sehen alle acht Bilder gleich aus.
+    skala, margin, spalte_x, spalte_w, tx = _quer_raster(W, H)
+    verlauf = gradient((W, H), 25)
+    if dark:
+        verlauf = darken(verlauf)
+    bg = verlauf.convert('RGBA')
+    draw = ImageDraw.Draw(bg)
+
+    gap = max(10, int(26 * skala))
+    max_w = spalte_w
+
+    imgs = [c for _n, c in cards]
+
+    # Die Kacheln bekommen die LINKE Spalte - nicht die ganze Breite.
+    #
+    # (04.11.2026) Vorher lief das 2-Spalten-Raster ueber die volle
+    # Bildbreite: die Kacheln wurden riesig, der Block passte nicht in
+    # die Hoehe (die letzte Reihe war abgeschnitten) und fuer den Text
+    # rechts war kein Platz mehr. Jetzt nimmt die linke Spalte 42 % der
+    # Breite, der Text steht rechts.
+    head = None
+    head_h = 0
+    if heading:
+        width = max((c.width for c in imgs), default=max_w)
+        head = _heading_card(heading, width)
+        head_h = int(head.height * max_w / width)
+        head = head.resize((max_w, head_h), Image.LANCZOS)
+
+    if cols > 1:
+        probe = _grid_metrics(imgs, H - 2 * margin, max_w, cols, gap, 18)
+        block = head_h + (gap if heading else 0) + probe['block_h']
+        start = margin + max(0, (H - 2 * margin - block) / 2.0)
+        if head is not None:
+            _paste_card(bg, head, spalte_x, start)
+        _place_grid(bg, imgs,
+                    int(start + head_h + (gap if heading else 0)),
+                    int(H - 2 * margin), max_w, cols=cols, gap=gap,
+                    min_gap=18, center_w=2 * spalte_x + max_w)
+        col_w = max_w
+    else:
+        # Der Block sitzt MITTIG (sonst klebt die Karte oben und der
+        # Text steht auf halber Hoehe - das Bild sah unausgewogen aus).
+        #
+        # Die Hoehe des Blocks wird vorher berechnet, weil sie von der
+        # Skalierung abhaengt und die Skalierung vom verfuegbaren Raum
+        # (_grid_metrics rechnet ohne zu zeichnen).
+        probe = _grid_metrics(imgs, H - 2 * margin, max_w, 1, gap, 18)
+        block = head_h + (gap if heading else 0) + probe['block_h']
+        start = margin + max(0, (H - 2 * margin - block) / 2.0)
+        if head is not None:
+            _paste_card(bg, head, spalte_x, start)
+        # Die Kacheln beginnen an derselben Stelle wie der App-Screen
+        # im Nachbarbild: linksbuendig in der Spalte.
+        col_w = _place_tiles(
+            bg, imgs,
+            int(start + head_h + (gap if heading else 0)),
+            int(H - start - margin), max_w, gap, x=spalte_x)
+
+    # Der Text rechts, mittig zur Kachel.
+    f_head = ImageFont.truetype(FONT_BOLD, max(24, int(78 * skala)))
+    f_sub = ImageFont.truetype(FONT_REG, max(12, int(38 * skala)))
+    y = max(int(120 * skala), (H - int(400 * skala)) // 2)
+    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255),
+                   max(8, int(20 * skala)), tx, y, align='left')
+    y += max(10, int(24 * skala))
+    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226),
+                   max(6, int(14 * skala)), tx, y, align='left')
+    y += max(16, int(40 * skala))
+    f_badge = ImageFont.truetype(FONT_BOLD, max(14, int(36 * skala)))
+    bb = draw.textbbox((0, 0), badge, font=f_badge)
+    bw = bb[2] - bb[0] + 2 * max(24, int(68 * skala))
+    layer = Image.new('RGBA', bg.size, (0, 0, 0, 0))
+    ImageDraw.Draw(layer).rounded_rectangle(
+        [tx, y, tx + bw, y + bb[3] - bb[1] + max(14, int(40 * skala))],
+        radius=(bb[3] - bb[1] + max(14, int(40 * skala))) // 2,
+        fill=(255, 255, 255, 52), outline=(255, 255, 255, 130), width=2)
+    ImageDraw.Draw(layer).text(
+        (tx + max(24, int(68 * skala)) - bb[0],
+         y + max(8, int(20 * skala)) - bb[1]), badge, font=f_badge,
+        fill=(255, 255, 255, 250))
+    bg.alpha_composite(layer)
+    return round_corners(bg, max(24, int(56 * skala)))
+
+
+def _quer_raster(W: int, H: int):
+    """Die feste Aufteilung des Querformat-Bildes.
+
+    FUER ALLE BILDER GLEICH (04.11.2026): "die Screenshots beim
+    10-Zoll-Tablet alle gleich positioniert sein und das dabei nicht
+    ausserhalb des Bildes sondern mehr mittig".
+
+    Also: eine Spalte fuer den Inhalt an FESTER Stelle (16 % der
+    Breite, 30 % breit) und der Text immer an derselben Stelle
+    (52 %). Ob in der Spalte ein App-Screen oder eine Kachel steht,
+    aendert nichts an der Position - der Betrachter sieht acht Bilder
+    mit derselben Anordnung.
+    """
+    skala = min(W / 2560.0, H / 1440.0)
+    margin = max(24, int(90 * skala))
+    # Die linke Kante der Inhaltsspalte: 12 % der Breite. Nicht am
+    # Rand (3 % sah angeklebt aus) und nicht zu weit innen (der Block
+    # waere dann nicht mehr mittig).
+    spalte_x = int(W * 0.12)
+    spalte_w = int(W * 0.30)
+    # Der Text beginnt direkt nach der Spalte - in JEDEM Bild an
+    # derselben Stelle.
+    text_x = spalte_x + spalte_w + int(W * 0.03)
+    return skala, margin, spalte_x, spalte_w, text_x
+
+
+def compose_landscape(shot: Image.Image, headline: str, subline: str,
+                      badge: str, dark: bool = False, W: int = 1920,
+                      H: int = 1200, split=None, system_ui: bool = True):
+    """QUERFORMAT: der volle App-Screen links, der Text rechts.
+
+    FUER DAS 10-ZOLL-TABLET (04.11.2026).
+
+    DREI SACHEN, DIE VORHER SCHIEFGINGEN (NUTZER-MELDUNG):
+
+    1. "Ueber der Ueberschrift muss noch ein kleiner Teil vom Screen
+       sein, der abgeschnitten wurde." - Der Insets-Crop schnitt an
+       der ersten Inhaltszeile ab, mitten durch den Text. Bei 06
+       (Hell/Dunkel) fehlte dadurch der Streifen ueber der
+       Ueberschrift "Erscheinungsbild" und unten die letzten
+       Chat-Hintergruende. Hier wird NICHTS geschnitten: der
+       Screen ist vollstaendig, die Systemleiste wird in den leeren
+       Rand gezeichnet.
+
+    2. "Die Screenshots sollen alle gleich positioniert sein." - Der
+       Screen steht darum an einer FESTEN Stelle, unabhaengig vom
+       Inhalt. Vorher hing die Position am Text daneben.
+
+    3. "mehr mittig, nicht ausserhalb des Bildes." - Die linke
+       Kante liegt bei 16 % der Bildbreite (vorher am Rand bei 3 %).
+       Der Screen ist damit nicht mehr an den Rand geklebt, und der
+       Block aus Screen und Text sitzt als Ganzes mittig.
+    """
+    skala, margin, spalte_x, spalte_w, tx = _quer_raster(W, H)
+    verlauf = gradient((W, H), 25)
+    if dark:
+        verlauf = darken(verlauf)
+    bg = verlauf.convert('RGBA')
+    draw = ImageDraw.Draw(bg)
+
+    # app_tile zeichnet die Systemleiste mit alpha_composite - das geht
+    # nur mit einem RGBA-Bild. Die Render sind RGBA, der Split-Screen
+    # (zusammengesetzt aus zwei RGB-Bildern) dagegen RGB.
+    if shot.mode != 'RGBA':
+        shot = shot.convert('RGBA')
+
+    # Der Screen in der festen Spalte, mittig zur Hoehe.
+    #
+    # system_ui=False blendet die gezeichnete Statusleiste aus (Uhrzeit,
+    # WLAN, Akku, Gestenlinie). Das ist das KACHEL-Design: der
+    # App-Screen als Kachel auf dem Verlauf, ohne nachgeahmte
+    # Systemleiste - so wie es die Tablet-Bilder zeigen sollen. Der
+    # Screen selbst wird NICHT geschnitten (es fehlt nichts).
+    box_h = H - 2 * margin
+    if system_ui:
+        scr = app_tile(shot, box_h, spalte_w, corner_ratio=0.055,
+                       split=split)
+    else:
+        global OMIT_SYSTEM_UI
+        vorher = OMIT_SYSTEM_UI
+        OMIT_SYSTEM_UI = True
+        try:
+            scr = app_tile(shot, box_h, spalte_w, corner_ratio=0.055,
+                           split=split)
+        finally:
+            OMIT_SYSTEM_UI = vorher
+    tw, th = scr.size
+    bg.alpha_composite(scr, (spalte_x, (H - th) // 2))
+
+    # Der Text rechts daneben, mittig zur Hoehe.
+    f_head = ImageFont.truetype(FONT_BOLD, max(24, int(78 * skala)))
+    f_sub = ImageFont.truetype(FONT_REG, max(12, int(38 * skala)))
+    y = max(int(120 * skala), (H - int(400 * skala)) // 2)
+    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255),
+                   max(8, int(20 * skala)), tx, y, align='left')
+    y += max(10, int(24 * skala))
+    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226),
+                   max(6, int(14 * skala)), tx, y, align='left')
+    y += max(16, int(40 * skala))
+    f_badge = ImageFont.truetype(FONT_BOLD, max(14, int(36 * skala)))
+    bb = draw.textbbox((0, 0), badge, font=f_badge)
+    bw = bb[2] - bb[0] + 2 * max(24, int(68 * skala))
+    layer = Image.new('RGBA', bg.size, (0, 0, 0, 0))
+    ImageDraw.Draw(layer).rounded_rectangle(
+        [tx, y, tx + bw, y + bb[3] - bb[1] + max(14, int(40 * skala))],
+        radius=(bb[3] - bb[1] + max(14, int(40 * skala))) // 2,
+        fill=(255, 255, 255, 52), outline=(255, 255, 255, 130), width=2)
+    ImageDraw.Draw(layer).text(
+        (tx + max(24, int(68 * skala)) - bb[0],
+         y + max(8, int(20 * skala)) - bb[1]), badge, font=f_badge,
+        fill=(255, 255, 255, 250))
+    bg.alpha_composite(layer)
+    return round_corners(bg, max(24, int(56 * skala)))
+
+
+def split_screen(hell: Image.Image, dunkel: Image.Image, winkel: float = -65.8,
+                  anker_x: float = 0.0, anker_y: float = 1.0):
+    """Setzt zwei Renders zu EINEM Screen zusammen - SCHRAE geteilt.
+
+    NUTZERWUNSCH (31.10.2026): "Der Screenshot mit Hell und Dunkel
+    soll die Grenze von Hell und Dunkel von unten links nach oben
+    rechts haben."
+
+    Die Trennlinie laeuft also von der linken unteren Ecke zur
+    rechten oberen Ecke. Links OBEN davon ist der helle Render,
+    rechts UNTEN davon der dunkle.
+
+    Mit dieser Neigung bleiben die beiden relevanten Kacheln ganz:
+    "Hell" liegt links oben (im hellen Bereich), "Dunkel" liegt rechts
+    unten (im dunklen). Nur das mittlere "System" wird diagonal
+    durchschnitten - und genau das ist die Grenze zwischen Hell und
+    Dunkel, die der Nutzerwunsch beschreibt.
+
+    [winkel] ist die Neigung der Linie in Grad:
+      *  -90 = senkrecht
+      *  -66 = von unten links nach oben rechts (Ecke zu Ecke)
+      *   66 = von oben links nach unten rechts
+
+    [anker_x] / [anker_y]: Der Punkt, durch den die Linie laeuft
+    (als Anteil der Breite bzw. Hoehe).
+
+    Die Statusleiste kommt nur oben (aus dem hellen Render) - eine
+    zweite Statusleiste in der Mitte des Bildes waere ein Fehler.
+    """
+    if hell.size != dunkel.size:
+        raise ValueError('Die beiden Renders haben verschiedene Groessen: '
+                         '%s vs %s' % (hell.size, dunkel.size))
+    w, h = hell.size
+
+    mx, my = w * anker_x, h * anker_y
+    rad = math.radians(winkel)
+    dx, dy = math.cos(rad), math.sin(rad)
+
+    hell_rgb = hell.convert('RGB')
+    dunkel_rgb = dunkel.convert('RGB')
+    hell_pix = hell_rgb.load()
+    dunkel_pix = dunkel_rgb.load()
+
+    out = Image.new('RGBA', (w, h))
+    out_pix = out.load()
+
+    # Fuer jede SPALTE einmal rechnen: die Grenze ist eine Gerade,
+    # also laesst sich der Uebergang pro x bestimmen.
+    #
+    # Abstand des Punktes (x, y) von der Geraden durch (mx, my) mit
+    # der Richtung (dx, dy):
+    #   d = (x - mx) * (-dy) + (y - my) * dx
+    # d < 0 -> links der Linie (hier: der helle Render).
+    for x in range(w):
+        basis = (x - mx) * (-dy) - (my * dx)
+        for y in range(h):
+            d = basis + y * dx
+            # 1 px breite weiche Kante in der Mitte der Linie.
+            if d < -0.5:
+                out_pix[x, y] = hell_pix[x, y] + (255,)
+            elif d > 0.5:
+                out_pix[x, y] = dunkel_pix[x, y] + (255,)
+            else:
+                # Der Pixel liegt AUF der Linie: er wird aus beiden
+                # gemittelt. Das glaettet den Uebergang.
+                t = d + 0.5
+                hell_p = hell_pix[x, y]
+                dunkel_p = dunkel_pix[x, y]
+                out_pix[x, y] = (
+                    int(hell_p[0] + (dunkel_p[0] - hell_p[0]) * t),
+                    int(hell_p[1] + (dunkel_p[1] - hell_p[1]) * t),
+                    int(hell_p[2] + (dunkel_p[2] - hell_p[2]) * t),
+                    255,
+                )
+
+    return out
+
+
+def split_mask(w: int, h: int, winkel: float, anker_x: float,
+               anker_y: float, scale: float = 1.0, crop_y: int = 0) -> Image.Image:
+    """Maske der hellen Seite fuer ein SKALIERTES, beschnittenes Bild.
+
+    Liefert eine L-Maske (255 = hell, 0 = dunkel) in der Groesse des
+    Bildes, auf das sie angewendet wird.
+
+    [scale] ist der Skalierungsfaktor zwischen dem Original (w x h)
+    und dem Zielbild, [crop_y] der Versatz des Beschnitts nach oben.
+
+    Wird fuer die System-UI gebraucht: die Statusleiste und die
+    Navigationsleiste muessen auf der hellen Seite dunkel und auf der
+    dunklen Seite hell gezeichnet werden - sonst waeren die Symbole auf
+    einer Seite unlesbar. Die Grenze verlaeuft aber DIAGONAL, also
+    braucht es eine Maske und nicht zwei senkrechte Haelften.
+    """
+    mx = w * anker_x
+    my = h * anker_y
+    rad = math.radians(winkel)
+    dx, dy = math.cos(rad), math.sin(rad)
+
+    mask = Image.new('L', (int(w * scale), int(h * scale)), 0)
+    pix = mask.load()
+    ziel_w, ziel_h = mask.size
+    for x in range(ziel_w):
+        # Zurueck in die Originalkoordinaten.
+        ox = x / scale
+        basis = (ox - mx) * (-dy) - (my * dx)
+        for y in range(ziel_h):
+            oy = y / scale + crop_y
+            d = basis + oy * dx
+            pix[x, y] = 255 if d < 0 else 0
+    return mask
+
+
+def compose_9x16(shot: Image.Image, headline: str, subline: str, badge: str,
+                 dark: bool = False, rand_oben: int = 0, rand_unten: int = 0,
+                 sauberer_schnitt: bool = False, split: float = None):
+    W, H = 1080, 1920
+    verlauf = gradient((W, H), 40)
+    if dark:
+        verlauf = darken(verlauf)
+    bg = verlauf.convert('RGBA')
+    draw = ImageDraw.Draw(bg)
+
+    # --- Textblock oben -------------------------------------------------
+    f_head = ImageFont.truetype(FONT_BOLD, 70)
+    f_sub = ImageFont.truetype(FONT_REG, 34)
+    y = 110
+    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255), 18,
+                   W // 2, y)
+    y += 26
+    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226), 13,
+                   W // 2, y)
+
+    # --- App-Bild: direkt, ohne Mockup-Rahmen ---------------------------
+    # v0.9.2: Das Geraet-Mockup ist entfallen. Es war ein Fremdkoerper:
+    # Rand, Schatten, Punch-Hole-Kamera und System-UI sind Dinge, die der
+    # Store ohnehin ergaenzt, und auf dem Mockup wirkte der echte Screen
+    # wie eine eingepasste Miniatur. Jetzt steht der App-Screen selbst
+    # gross und abgerundet da - die Flaeche gehoert dem Produkt.
+    box_h = H - y - 150
+    box_w = W - 150
+    scr = app_tile(shot, box_h, box_w, corner_ratio=0.055,
+                   rand_oben=rand_oben, rand_unten=rand_unten,
+                   sauberer_schnitt=sauberer_schnitt, split=split)
+    tw, th = scr.size
+    px = (W - tw) // 2
+    py = y + 34
+    bg.alpha_composite(scr, (px, py))
+
+    # --- Badge unter dem Bild --------------------------------------------
+    by = min(py + th + 22, H - 100)
+    badge_pill(bg, badge, W // 2, by)
+    return round_corners(bg, 56)
+
+
+def compose_wqhd(shot: Image.Image, headline: str, subline: str, badge: str, dark: bool = False):
+    W, H = 2560, 1440
+    verlauf = gradient((W, H), 25)
+    if dark:
+        verlauf = darken(verlauf)
+    bg = verlauf.convert('RGBA')
+    draw = ImageDraw.Draw(bg)
+
+    # App-Bild links, ohne Mockup. Hoehe so skalieren, dass es mit Rand
+    # sicher passt; Breite ist bewusst gedeckelt, sonst waere der Screen
+    # bei 20:9 sehr schmal und der Text bekame zu wenig Platz.
+    margin = 60
+    box_h, box_w = H - 2 * margin, 1020
+    scr = app_tile(shot, box_h, box_w, corner_ratio=0.045)
+    tw, th = scr.size
+    px = 130
+    py = (H - th) // 2
+    bg.alpha_composite(scr, (px, py))
+
+    # Text rechts vom Bild, linksbuendig (breite Headlines wuerden sonst
+    # ueber den Bildrand hinausragen).
+    f_head = ImageFont.truetype(FONT_BOLD, 78)
+    f_sub = ImageFont.truetype(FONT_REG, 38)
+    tx = px + tw + 90
+    y = max(200, (H - 400) // 2)
+    y = draw_lines(draw, None, headline, f_head, (255, 255, 255, 255), 20,
+                   tx, y, align='left')
+    y += 24
+    y = draw_lines(draw, None, subline, f_sub, (255, 255, 255, 226), 14,
+                   tx, y, align='left')
+    y += 40
+    # Badge an der Textkante ausrichten
+    f_badge = ImageFont.truetype(FONT_BOLD, 36)
+    bb = draw.textbbox((0, 0), badge, font=f_badge)
+    bw = bb[2] - bb[0] + 2 * 68
+    layer = Image.new('RGBA', bg.size, (0, 0, 0, 0))
+    ImageDraw.Draw(layer).rounded_rectangle(
+        [tx, y, tx + bw, y + bb[3] - bb[1] + 40],
+        radius=(bb[3] - bb[1] + 40) // 2,
+        fill=(255, 255, 255, 52), outline=(255, 255, 255, 130), width=2)
+    ImageDraw.Draw(layer).text(
+        (tx + 68 - bb[0], y + 20 - bb[1]), badge, font=f_badge,
+        fill=(255, 255, 255, 250))
+    bg.alpha_composite(layer)
+    return round_corners(bg, 56)
+
+
+def save_png(img: Image.Image, path: pathlib.Path, tries: int = 6):
+    """PNG schreiben mit Retry.
+
+    Windows-Defender/Indexer haelt die neu geschriebene Datei manchmal
+    kurzzeitig offen; dann schlaegt das Speichern mit Errno 22 fehl.
+    """
+    last = None
+    for attempt in range(tries):
+        try:
+            img.save(path, optimize=True)
+            return
+        except OSError as e:  # Datei temporaer gesperrt
+            last = e
+            time.sleep(0.4 * (attempt + 1))
+    raise last
+
+
+def _check_claims(shots):
+    """Sperrt Textversprechen, die der Code nicht einloest.
+
+    Bis v0.9.2 stand in den Shots "In einer Minute startklar" und
+    "Kostenlos. Fuer immer." Beides war unbelegbar bzw. falsch - der
+    Registrierungsweg dauert nach der E-Mail-Bestaetigung 8 Setup- und
+    8 Onboarding-Seiten. Der Fehler war nicht der schlechte Text,
+    sondern dass niemand pruefen konnte, dass er stimmt.
+
+    Diese Liste ist bewusst eine Positivliste: sie erlaubt Formulie-
+    rungen, deren Richtigkeit aus dem Quellcode hervorgeht, und
+    blockiert die beiden Arten von Aussagen, die erfahrungsgemaess falsch
+    werden - Zeitversprechen und unbegruendete Mengenangaben.
+    """
+    forbidden = [
+        # Zeitversprechen. "einer/eine Minute", "eine Minute", "Minuten"
+        # in jeder Form - der Zwischenwort-Abstand ist gewolft offen.
+        (r'\b(in|einer|eine)?\s*minut', 'Zeitversprechen ohne Beleg'),
+        (r'\bsofort\b', '"sofort" ist ein Zeitversprechen'),
+        (r'\bsekunden?\b', 'Zeitversprechen ohne Beleg'),
+        (r'\bkostenlos', '"kostenlos" ist eine Preiszusage, keine Funktion'),
+        (r'\bunbegrenzt', '"unbegrenzt" ist eine Ressourcen-Zusage'),
+        (r'\bnie\s+gelöscht', 'Datenloesch-Zusage'),
+        (r'\bsicher\b(?!heit)', '"sicher" ohne Bezug ist eine Behauptung'),
+        (r'\b\d+\s*%\s*(sicher|verschlüsselt)',
+         'Prozentangabe zur Verschluesselung ist nicht belegbar'),
+    ]
+    problems = []
+    for name, (headline, subline, badge) in shots.items():
+        blob = ' '.join((headline, subline, badge))
+        for pattern, why in forbidden:
+            m = re.search(pattern, blob, re.I)
+            if m:
+                problems.append(
+                    f'{name}: "{m.group(0)}" - {why}')
+    return problems
+
+
+# Die englischen Gegenstuecke (03.11.2026).
+#
+# Die Liste oben ist auf deutsche Worte geschrieben. Ohne ein
+# englisches Gegenstueck waere der englische Textlauf ungeprueft -
+# und das ist genau der Satz, der am Anfang dieser Sache falsch war
+# ("In einer Minute startklar" stand im deutschen Shots, im englischen
+# waere "ready in a minute" durchgerutscht).
+VERBOT_EN = [
+    (r'\b(in|a|one)?\s*minut', 'Zeitversprechen ohne Beleg'),
+    (r'\binstantly\b', '"instantly" ist ein Zeitversprechen'),
+    (r'\b(right away|immediately)\b', 'Zeitversprechen ohne Beleg'),
+    (r'\bseconds?\b', 'Zeitversprechen ohne Beleg'),
+    (r'\bfree\b', '"free" ist eine Preiszusage, keine Funktion'),
+    (r'\bunlimited\b', '"unlimited" ist eine Ressourcen-Zusage'),
+    (r'\bnever\s+deleted', 'Datenloesch-Zusage'),
+    (r'\bsecure\b', '"secure" ohne Bezug ist eine Behauptung'),
+    (r'\b\d+\s*%\s*(secure|encrypted)',
+     'Prozentangabe zur Verschluesselung ist nicht belegbar'),
+]
+
+
+def _check_claims_en(shots):
+    """Dieselbe Pruefung fuer die englischen Texte."""
+    problems = []
+    for name, (headline, subline, badge) in shots.items():
+        blob = ' '.join((headline, subline, badge))
+        for pattern, why in VERBOT_EN:
+            m = re.search(pattern, blob, re.I)
+            if m:
+                problems.append(
+                    f'{name}: "{m.group(0)}" - {why}')
+    return problems
+
+
+def main():
+    """Baut die Store-Bilder fuer BEIDE Sprachen.
+
+    Die Reihenfolge ist fest: Deutsch zuerst (es ist die Quelle, aus
+    der die uebrigen Texte stammen), Englisch danach. Jeder Lauf
+    schreibt in seine eigenen Ordner - die beiden Sprachen duerfen
+    sich nicht gegenseitig ueberschreiben.
+    """
+    for profil in PROFILE:
+        print('=' * 68)
+        print('Sprache: %s' % profil['lang'])
+        print('=' * 68)
+        _baue_sprache(profil)
+
+
+def _baue_sprache(profil):
+    """Baut die Store-Bilder EINER Sprache.
+
+    Alles, was vorher fest verdrahtet war (Quelle, Ordner, Texte),
+    kommt jetzt aus dem Profil - dadurch koennen DE und EN mit
+    demselben Code und verschiedenen Daten laufen.
+    """
+    if not profil['src'].exists():
+        sys.exit('Keine App-Screens gefunden (%s). Erst rendern:\n'
+                 '  $env:STORE_SHOTS="1"; flutter test --update-goldens '
+                 'test/screenshots/store_v091_shots_test.dart'
+                 % profil['src'].relative_to(ROOT))
+
+    if profil['lang'] == 'en':
+        problems = _check_claims_en(profil['shots'])
+    else:
+        problems = _check_claims(profil['shots'])
+    if problems:
+        print('STORE-SCREENSHOT-TEXT abgelehnt:', file=sys.stderr)
+        for p in problems:
+            print('  X', p, file=sys.stderr)
+        print('\nDer Text ist ein Produktversprechen. Wenn die Aussage '
+              'zutrifft,\ndarf sie NICHT einfach hier erlaubt werden - '
+              'sie muss im Kommentar\nzu den Textressourcen begruendet werden, '
+              'damit '
+              'sie beim naechsten Review wiedergeprueft wird.',
+              file=sys.stderr)
+        sys.exit(1)
+
+    for d in (profil['out_9x16'], profil['out_wqhd'], profil['out_fastlane'],
+              profil['out_9x16_ohne'], profil['out_wqhd_ohne'],
+              profil['out_9x16_kacheln'], profil['out_wqhd_kacheln']):
+        d.mkdir(parents=True, exist_ok=True)
+
+    for name, (headline, subline, badge) in profil['shots'].items():
+        # Die Kachel ist nach ihrer Position benannt, der Render im Repo
+        # nach dem Screen (siehe QUELLE).
+        quelle = QUELLE.get(name, name)
+        src = profil['src'] / f'{quelle}.png'
+        if not src.exists():
+            print('  fehlt:', src.name)
+            continue
+        if name == '04_entdecken' and profil['tiles'].exists():
+            # Sonderfall: nicht der Screen, sondern die einzelnen
+            # Modus-Kacheln (siehe compose_modes).
+            tiles = sorted(profil['tiles'].glob('tile_*.png'),
+                           key=lambda p: int(p.stem.split('_')[1]))
+            if tiles:
+                crops = [_crop_tile(Image.open(t)) for t in tiles]
+                a = compose_modes(crops, headline, subline, badge)
+                b = compose_modes_wqhd(crops, headline, subline, badge)
+                for d, im in ((profil['out_9x16'], a), (profil['out_wqhd'], b),
+                              (profil['out_fastlane'], a),
+                              (profil['out_9x16_ohne'], a), (profil['out_wqhd_ohne'], b),
+                              (profil['out_9x16_kacheln'], a), (profil['out_wqhd_kacheln'], b)):
+                    save_png(im, d / f'{name}.png')
+                print(f'  {name}: 9x16 {a.size} + wqhd {b.size} '
+                      f'({len(tiles)} Kacheln, drei Varianten)')
+                continue
+            print('  04_entdecken: keine Kacheln gefunden, Fallback auf '
+                  'den Screen')
+        shot = Image.open(src)
+        # 06_hell_dunkel: EIN Screen, SCHRAE geteilt (NUTZERWUNSCH
+        # 31.10.2026: "die Unterteilung entweder schraeg oder senkrecht").
+        #
+        # Beide Renders stammen aus demselben Screen (Erscheinungsbild)
+        # - der eine im hellen, der andere im dunklen Farbsatz. Die
+        # Diagonale laeuft durch die Auswahl Hell/System/Dunkel und
+        # trennt genau zwischen "System" und "Dunkel".
+        if name == '06_hell_dunkel':
+            dunkel_src = profil['src'] / '04_anpassen_dunkel.png'
+            if not dunkel_src.exists():
+                print('  fehlt:', dunkel_src.name,
+                      '- zuerst den dunklen Screen rendern')
+                continue
+            # SENKRECHT geteilt (NUTZERWUNSCH: "die Unterteilung
+            # entweder schraeg oder senkrecht") - und weiter
+            # "Die Grenze von Hell und Dunkel von unten links nach
+            # oben rechts".
+            #
+            # Die Linie laeuft also von der linken unteren Ecke zur
+            # rechten oberen Ecke (-65,8 Grad). Oberhalb links davon
+            # ist der helle Render, unterhalb rechts der dunkle.
+            #
+            # Warum gerade diese Neigung (-30,3 Grad): bei dieser
+            # Linie bleiben die beiden Kacheln, um die es geht, GANZ
+            # auf ihrer Seite. "Hell" (links) liegt im hellen Bereich,
+            # "Dunkel" (rechts) im dunklen. Nur das mittlere "System"
+            # wird diagonal durchschnitten - und genau das ist die
+            # Grenze zwischen Hell und Dunkel, die der Nutzerwunsch
+            # beschreibt.
+            #
+            # Der Anker ist die MITTE der System-Kachel in der
+            # Segmentzeile (x = 540, y = 1080 im 2400er Render). Von
+            # dort laeuft die Linie nach rechts oben und nach links
+            # unten - also genau "von unten links nach oben rechts".
+            shot = split_screen(shot, Image.open(dunkel_src), winkel=-30.3,
+                                anker_x=0.5, anker_y=0.45)
+            split_x = (-30.3, 0.5, 0.45)
+            print(f'  {name}: schraeger Split aus 04_anpassen (hell) + '
+                  '04_anpassen_dunkel (dunkel)')
+        # Nur das Datenschutz-Bild wird abgedunkelt. Ein zweites dunkles
+        # Bild wuerde die Wirkung aufheben.
+        dunkel = name == '08_datenschutz'
+        # 02_aktuelles: mehr Rand oben und unten (NUTZERWUNSCH
+        # 31.10.2026: "soll oben und unten der Rand etwas mehr da sein,
+        # da der wie abgeschnitten ist"). Die Startseite ist eine lange
+        # Liste - ohne Rand schnitt der Bildschirm mitten in einer
+        # Kachel ab und wirkte wie ein zerstueckeltes Bild.
+        rand_oben = 0
+        rand_unten = 0
+        # KEIN Schnitt und KEIN Rand mehr (04.11.2026): der Nutzer
+        # wollte "die ganze Aktuelles Seite" - der Schnitt an einer
+        # Inhaltsgrenze hoerte mitten in einer Zeile auf ("Keine neuen
+        # Funken" halb sichtbar) und der Rand liess den Bildschirm
+        # schweben. Der Screen wird jetzt auf die Hoehe skaliert und
+        # zeigt die Seite vollstaendig.
+        sauberer_schnitt = False
+        # Geometrie der System-UI-Trennung (nur beim Hell/Dunkel-Split):
+        # Winkel, Anker-x, Anker-y. None = einfarbig wie bei allen
+        # anderen.
+        split_x = None
+        a = compose_9x16(shot, headline, subline, badge, dark=dunkel,
+                         rand_oben=rand_oben, rand_unten=rand_unten,
+                         sauberer_schnitt=sauberer_schnitt,
+                         split=split_x)
+        b = compose_wqhd(shot, headline, subline, badge, dark=dunkel)
+
+        # Variante MIT nachgeahmter Systemleiste.
+        for d, im in ((profil['out_9x16'], a), (profil['out_wqhd'], b), (profil['out_fastlane'], a)):
+            save_png(im, d / f'{name}.png')
+
+        # Variante OHNE. Der Aufruf geht ueber das Modul-Flag, damit
+        # beide Varianten garantiert denselben Weg nehmen - die App-
+        # Screens werden nicht zweimal geladen.
+        globals()['OMIT_SYSTEM_UI'] = True
+        try:
+            a2 = compose_9x16(shot, headline, subline, badge, dark=dunkel,
+                              rand_oben=rand_oben, rand_unten=rand_unten,
+                              sauberer_schnitt=sauberer_schnitt,
+                              split=split_x)
+            b2 = compose_wqhd(shot, headline, subline, badge, dark=dunkel)
+            save_png(a2, profil['out_9x16_ohne'] / f'{name}.png')
+            save_png(b2, profil['out_wqhd_ohne'] / f'{name}.png')
+        finally:
+            globals()['OMIT_SYSTEM_UI'] = False
+
+        # Variante KACHELN: die echten Widgets des Screens als einzelne
+        # Kacheln auf dem Verlauf. 04 hat seine fuenf Moduskacheln, die
+        # uebrigen Screens ihre eigenen - je nachdem, was der Dart-Export
+        # als Rechtecke notiert hat. Ohne Export bleibt der Screen in
+        # einem Kachelbild: dann ist es kein Fehler, nur weniger schoen.
+        cards = load_cards(quelle, default_src=f'{quelle}.png',
+                           margin=CARD_MARGIN_LOGICAL if name in
+                           ('01_willkommen', '02_aktuelles', '03_chat', '05_anpassen') else 0.0,
+                           cards_dir=profil['cards'])
+        if cards and name != '06_hell_dunkel':
+            k = compose_cards(cards, headline, subline, badge,
+                              heading=profil['heading_eisbrecher']
+                              if name == '07_eisbrecher' else None,
+                              cols=2 if name == '07_eisbrecher' else 1,
+                              dark=dunkel)
+            save_png(k, profil['out_9x16_kacheln'] / f'{name}.png')
+            kw = compose_card_wqhd(shot, headline, subline, badge,
+                                   dark=dunkel)
+            save_png(kw, profil['out_wqhd_kacheln'] / f'{name}.png')
+            print(f'  {name}: 9x16 {a.size} + wqhd {b.size} '
+                  f'(drei Varianten, {len(cards)} Kacheln aus echten '
+                  'Widgets)')
+            continue
+
+        k = compose_card(shot, headline, subline, badge, dark=dunkel)
+        kw = compose_card_wqhd(shot, headline, subline, badge, dark=dunkel)
+        save_png(k, profil['out_9x16_kacheln'] / f'{name}.png')
+        save_png(kw, profil['out_wqhd_kacheln'] / f'{name}.png')
+
+        print(f'  {name}: 9x16 {a.size} + wqhd {b.size} '
+              f'(drei Varianten, Kachel {k.size}'
+              f'{", abgedunkelt" if dunkel else ""})')
+
+    print('Fertig (%s).' % profil['lang'])
+    _remove_stale(profil['shots'].keys(), profil)
+
+
+def _remove_stale(names, profil):
+    """Entfernt PNGs in den Ausgabeordnern, die zu keinem Screen mehr gehoeren.
+
+    Wichtig fuer den Store: in `fastlane/metadata/.../phoneScreenshots`
+    liegt, was hochgeladen wird. Ein Screenshot, dessen Screen umbenannt
+    oder ersetzt wurde (02_anmelden -> 02_chat), bleibt dort sonst als
+    Datei liegen und wird beim naechsten `fastlane upload` mitgeschickt -
+    als Bild eines Screens, den es nicht mehr gibt.
+
+    Die Pruefung meldet jede entfernte Datei, damit das nicht unbemerkt
+    passiert.
+    """
+    expected = {f'{n}.png' for n in names}
+    targets = (OUT_9x16, OUT_WQHD, OUT_FASTLANE, OUT_9x16_OHNE,
+               OUT_WQHD_OHNE, OUT_9x16_KACHELN, OUT_WQHD_KACHELN)
+    for folder in targets:
+        if not folder.is_dir():
+            continue
+        for png in sorted(folder.glob('*.png')):
+            if png.name in expected:
+                continue
+            if folder == OUT_FASTLANE and 'phoneScreenshots' not in png.parts:
+                # Fastlane hat ausser phoneScreenshots noch 7"- und
+                # 10"-Tabletshots; die werden hier nicht erzeugt und
+                # nicht angefasst.
+                continue
+            png.unlink()
+            print(f'  verwaiste Datei entfernt: {folder.name}/{png.name}')
+
+
+if __name__ == '__main__':
+    main()

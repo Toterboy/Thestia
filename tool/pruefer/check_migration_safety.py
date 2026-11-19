@@ -1,0 +1,240 @@
+"""Validiert alle Migrationen mit pglast (echter PostgreSQL-Parser).
+
+Prueft zusaetzlich die eingebauten Sicherheits-Invarianten:
+  * Paarungsfunktionen muessen blocked_users + age_compatible_bidirectional
+    enthalten UND ein Fail-Fast-DO-Block muss das auch durchsetzen.
+"""
+import pathlib
+import re
+import sys
+
+import pglast
+
+MIG = pathlib.Path('supabase/migrations')
+files = sorted(MIG.glob('*.sql'),
+               key=lambda p: int(re.match(r'(\d+)', p.name).group(1)))
+
+syntax_fail = 0
+bom_fail = 0
+for f in files:
+    roh = f.read_bytes()
+    # BEFUND (07.11.2026): Eine Migrationsdatei hatte einen BOM
+    # (Byte Order Mark) am Dateianfang - geschrieben von PowerShell
+    # `Set-Content -Encoding UTF8`. Der echte PostgreSQL-Parser
+    # (pglast) bricht daran ab ("syntax error at or near BOM"), ohne
+    # zu sagen, was es ist. Der Parse-Check daneben entfernt das BOM
+    # beim Lesen und sah die Datei als in Ordnung - der Fehler fiel
+    # deshalb erst im CI auf.
+    #
+    # Deshalb wird das BOM hier ausdruecklich gemeldet (und die Datei
+    # trotzdem geparst, damit alle weiteren Pruefungen laufen).
+    if roh.startswith(b'\xef\xbb\xbf'):
+        bom_fail += 1
+        print(f'BOM-FEHLER {f.name}: die Datei beginnt mit einem BOM.')
+        print('    PowerShells "Set-Content -Encoding UTF8" schreibt das.')
+        print('    Der PostgreSQL-Parser kann die Datei nicht lesen.')
+        print('    Beheben mit: python tool/werkzeuge/datenbank/fix_migration_bom.py')
+    sql = roh.decode('utf-8-sig', errors='replace')
+    try:
+        pglast.parse_sql(sql)
+    except Exception as e:
+        syntax_fail += 1
+        first = str(e).splitlines()
+        print(f'SYNTAX-FEHLER {f.name}:')
+        for line in first[:6]:
+            print('   ', line)
+
+print(f'\nSyntax: {len(files) - syntax_fail}/{len(files)} Migrationen OK')
+if bom_fail:
+    print(f'BOM: {bom_fail} Datei(en) mit BOM - der CI wird daran scheitern')
+
+# --- Endstand je Funktion bestimmen -----------------------------------------
+defs = {}
+for f in files:
+    sql = f.read_text(encoding='utf-8', errors='replace')
+    for m in re.finditer(
+            r'CREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\s+(?:public\.)?"?([a-z0-9_]+)"?\s*\(',
+            sql, re.I):
+        depth, i = 1, m.end()
+        while i < len(sql) and depth:
+            if sql[i] == '(':
+                depth += 1
+            elif sql[i] == ')':
+                depth -= 1
+            i += 1
+        # Body-Ende: bei Dollar-Quoting das schliessende $$; - NICHT das erste
+        # Semikolon (das liegt fast immer schon mitten im Body).
+        close = sql.find('$$;', i)
+        ret = re.search(r'\)\s*RETURNS\s+[a-z0-9_ \[\]]+', sql[i:i + 400], re.I)
+        if close != -1 and (ret is None or close < i + 400 or ret.start() < 0):
+            end = close
+        else:
+            close2 = sql.find(';', i)
+            end = close2 if close2 != -1 else i + 6000
+        defs[m.group(1).lower()] = sql[i:end if end != -1 else i + 6000]
+
+
+def effektiver_koerper(name: str) -> str:
+    """Der Koerper, in dem die Pruefungen TATSAECHLICH stehen.
+
+    WARUM DAS NOETIG IST (04.11.2026):
+
+    Migration 176 hat die Dating-Hour-Funktionen umbenannt
+    (ALTER FUNCTION ... RENAME TO ..._ohne_nutzungszeit) und davor
+    eine duenne Huelle gesetzt, die die elterliche Nutzungszeit
+    erzwingt. Die Sicherheitspruefungen (Verifikation, Blockier-
+    schutz, Alterskompatibilitaet) stehen aber im umbenannten Original.
+
+    Ohne diese Aufloesung wuerde der Pruefer nur die Huelle sehen
+    und eine Luecke melden, die es nicht gibt. Die Huelle ist selbst
+    geprueft - in tool/pruefer/check_security_invariants.py steht die
+    Invariante, dass die Huelle das Gate auch wirklich aufruft.
+    """
+    body = defs.get(name.lower(), '')
+
+    # (a) PERFORM-Huelle (Migration 176): die Huelle ruft das Original
+    #     per PERFORM auf.
+    treffer = re.search(r'PERFORM\s+public\.([a-z0-9_]+)\s*\(', body, re.I)
+    if treffer:
+        innen = defs.get(treffer.group(1).lower())
+        if innen:
+            body = body + '\n' + innen
+
+    # (b) DIREKTER Aufruf einer Hilfsfunktion (Migration 205).
+    #
+    #     WARUM (09.11.2026): Die Blockier- und Funke-Ausschlussregeln
+    #     fuer den Zufallschat liegen jetzt in EINER Hilfsfunktion
+    #     (random_chat_pair_allowed) - join_random_chat() ruft sie an
+    #     allen drei Wegen auf. Ohne diese Aufloesung wuerde der
+    #     Pruefer nur den Aufruf sehen und die Regel als "fehlend"
+    #     melden, obwohl sie durchgesetzt wird.
+    #
+    #     Es werden nur Hilfsfunktionen verfolgt, die in den Migrationen
+    #     selbst definiert sind - Tabellen (public.profiles o. Ae.)
+    #     stehen nicht in `defs` und werden ignoriert.
+    for aufruf in re.finditer(r'public\.([a-z0-9_]+)\s*\(', body, re.I):
+        innen = defs.get(aufruf.group(1).lower())
+        if innen and innen not in body:
+            body = body + '\n' + innen
+    return body
+
+# --- Sicherheits-Invarianten -------------------------------------------------
+PAIRS = ['join_random_chat', 'match_dating_hour_round']
+print('\nInvarianten Paarungs-Sicherheit:')
+ok = True
+for name in PAIRS:
+    body = effektiver_koerper(name)
+    checks = {
+        'blocked_users': 'blocked_users' in body,
+        'age_compatible_bidirectional': 'age_compatible_bidirectional' in body,
+    }
+    for k, v in checks.items():
+        print(f'  {name:26} {k:30} {"OK" if v else "FEHLT"}')
+        ok &= v
+
+# --- Transit Spark nur ab 18 (Migration 131) ----------------------------------
+# Drei Einstiegspunkte muessen das Gate transit_spark_adult() enthalten.
+# Zusaetzlich muss die Gegenseite mitgeprueft werden: nur der aufrufende
+# Nutzer zu sperren wuerde einem Erwachsenen weiterhin erlauben, eine
+# Minderjaehrige zu finden (age_compatible erlaubt ein 2-Jahres-Band).
+TRANSIT_GATED = ['transit_presence_heartbeat', 'match_proximity_spark',
+                 'send_soft_ping']
+print('\nInvarianten Transit Spark 18+ (Migration 131):')
+for name in TRANSIT_GATED:
+    body = effektiver_koerper(name)
+    self_gate = 'transit_spark_adult(' in body
+    print(f'  {name:28} {"OK" if self_gate else "FEHLT":6} (eigenes 18+-Gate)')
+    ok &= self_gate
+for name in ('match_proximity_spark', 'send_soft_ping'):
+    body = effektiver_koerper(name)
+    # Gegenpartei separat filtern: ein Treffer muss auf eine Person
+    # zielen, nicht auf den eigenen uid-Ausdruck.
+    other_gate = re.search(r'transit_spark_adult\(\s*(?:s|pr)\.user_id\s*\)', body)
+    print(f'  {name:28} {"OK" if other_gate else "FEHLT":6} '
+          f'(Gegenpartei 18+)')
+    ok &= bool(other_gate)
+
+# Die Hilfsfunktion selbst muss fail-closed sein: ohne birth_date darf
+# sie NICHT "erwachsen" liefern (public.profile_age coalesct auf 2000).
+#
+# Migration 159 hat transit_spark_adult() um die Notbremse erweitert und
+# die Alterspruefung in transit_spark_is_adult() ausgelagert. Die
+# Invariante bleibt dieselbe - nur der Ort, an dem sie steht, hat sich
+# geaendert. Geprueft wird deshalb BEIDES: die Delegation muss da sein
+# (sonst waere die Bremse umgangen) UND die Alterspruefung muss
+# fail-closed sein.
+helper = defs.get('transit_spark_adult', '')
+alt_helper = defs.get('transit_spark_is_adult', '')
+
+age_body = helper if ('birth_date IS NOT NULL' in helper
+                      and re.search(r'::int\s*>=\s*18', helper)) else alt_helper
+helper_ok = ('birth_date IS NOT NULL' in age_body
+             and re.search(r'::int\s*>=\s*18', age_body) is not None)
+print(f'  {"transit_spark_adult":28} {"OK" if helper_ok else "FEHLT":6} '
+      f'(fail-closed, >= 18)')
+ok &= helper_ok
+
+# Die Notbremse muss im Gate hängen: entweder direkt über den
+# app_config-Schalter oder über die ausgelagerte Altersfunktion, die
+# ihrerseits den Schalter abfragt.
+schalter_ok = ('transit_spark_enabled()' in helper
+                or 'transit_spark_is_adult(' in helper)
+print(f'  {"transit_spark_adult":28} {"OK" if schalter_ok else "FEHLT":6} '
+      f'(Notbremse im Gate)')
+ok &= bool(schalter_ok)
+
+# Und wenn transit_spark_adult die Alterspruefung auslagert, muss der
+# Schalter trotzdem im Gate selbst stehen: die Freigabe ist
+# "Schalter UND Alter", nicht "Alter UND Schalter irgendwo".
+if 'transit_spark_is_adult(' in helper:
+    brake_ok = 'transit_spark_enabled()' in helper
+    print(f'  {"transit_spark_adult":28} {"OK" if brake_ok else "FEHLT":6} '
+          f'(Schalter UND Alter im Gate)')
+    ok &= bool(brake_ok)
+
+# Fail-Fast-Guard vorhanden?
+all_sql = '\n'.join(f.read_text(encoding='utf-8', errors='replace') for f in files)
+guards = {
+    'Quiz-Helfer anon-gesperrt (DO-Check)':
+        "FROM PUBLIC, anon, authenticated;\nREVOKE ALL ON FUNCTION public.quiz_shuffle_for_match" in all_sql
+        or ('quiz_shuffle_for_match' in all_sql and 'has_function_privilege' in all_sql),
+    'Trigger random_chat': 'trg_enforce_random_chat_safety' in all_sql,
+    'Trigger dating_hour': 'trg_enforce_dating_hour_safety' in all_sql,
+    'uniq_active_dh_pair': 'uniq_active_dh_pair' in all_sql,
+    'ALTER DEFAULT PRIVOKE ... FROM PUBLIC':
+        'REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;' in all_sql,
+}
+print('\nInvarianten Guards:')
+for k, v in guards.items():
+    print(f'  {k:44} {"OK" if v else "FEHLT"}')
+    ok &= v
+
+# --- Antwortschluessel-Helfer duerfen nicht mehr oeffentlich sein ---------------
+# Migration 123 loest das DYNAMISCH ueber pg_proc auf (DO-Block mit
+# p.oid::regprocedure), weil `quiz_pick_personalized` zwei Overloads hat.
+# Ein Regex ueber Signaturen kann das nicht mehr sehen - daher wird der
+# dynamische Block als Treffer gewertet.
+dynamic_block = re.search(
+    r"p\.oid::regprocedure::text[\s\S]{0,900}?REVOKE ALL ON FUNCTION %s "
+    r"FROM PUBLIC, anon, authenticated", all_sql, re.I)
+revoke_targets = set()
+for m in re.finditer(
+        r'REVOKE\s+(?:ALL|EXECUTE)\s*(?:ON\s+FUNCTION\s+)?(?:public\.)?"?([a-z0-9_]+)"?\s*\('
+        r'[^)]*\)[^;]*?FROM\s+([^;]+);', all_sql, re.I | re.S):
+    roles = {r.strip().lower() for r in m.group(2).split(',')}
+    if {'public', 'anon'} & roles:
+        revoke_targets.add(m.group(1).lower())
+
+print('\nInterne Quiz-Helfer (Entzug PUBLIC/anon/authenticated):')
+if dynamic_block:
+    print('  dynamischer pg_proc-Block vorhanden -> alle Overloads erfasst')
+ok &= bool(dynamic_block)
+for n in ['quiz_shuffle_for_match', 'quiz_pick_personalized',
+          'quiz_personal_distractors', 'quiz_stopwords', 'quiz_interest_catalog']:
+    hit = n in revoke_targets or bool(dynamic_block)
+    print(f'  {n:32} {"OK" if hit else "FEHLT"}')
+    ok &= hit
+
+print('\nGESAMT:', 'ALLE INVARIANTEN ERFUELLT' if (ok and not syntax_fail)
+      else 'PROBLEME VORHANDEN')
+sys.exit(0 if (ok and not syntax_fail) else 1)

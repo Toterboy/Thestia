@@ -12,7 +12,7 @@ concurrency:
 env:
   # An EINER Stelle. Der Pin stand vorher dreifach im Workflow
   # (analyze-and-test, fdroid-build, play-build) und konnte driften.
-  # Hinweis: docs/BUILD.md nennt 3.35.x - das ist der SDK-Minimum aus
+  # Hinweis: docs/technik/BUILD.md nennt 3.35.x - das ist der SDK-Minimum aus
   # pubspec.yaml, nicht die getestete Version.
   #
   # SICHERHEIT (08.11.2026): 3.44.6 ist VOR 3.47.8 und damit vom
@@ -22,7 +22,7 @@ env:
   # Betriebssystems nicht liest. Ein Angreifer im Netzpfad kann damit
   # ein gefaelschtes TLS-Zertifikat vortaeuschen.
   # 3.47.9 ist das aktuelle Stable (Dart 3.13.7) und enthaelt den Fix.
-  # (Pruefung: tool/check_sdk_security.py)
+  # (Pruefung: tool/pruefer/check_sdk_security.py)
   FLUTTER_VERSION: "3.47.9"
   JAVA_VERSION: "17"
 
@@ -168,7 +168,7 @@ jobs:
       # und kein Pin, den das Werkzeug erzeugt hatte, passte jemals.
       # Der Testvektor "abc" faengt genau das ab.
       - name: Selbsttest des Pin-Werkzeugs
-        run: dart run tool/rotate_cert_pins.dart --selftest
+        run: dart run tool/werkzeuge/sonstiges/rotate_cert_pins.dart --selftest
 
       # MIT COVERAGE (13.11.2026): Die Frage "gibt es fuer jeden Teil der
       # App Tests?" war ohne Messung nicht zu beantworten - es gab 1000+
@@ -240,7 +240,7 @@ jobs:
       # Der Boden: faellt die Abdeckung darunter, schlaegt der Lauf rot -
       # dann fehlt ein Modul (und nicht nur eine Zeile).
       - name: Coverage (Mindestwert)
-        run: python tool/check_coverage.py
+        run: python tool/pruefer/check_coverage.py
 
       # Die Coverage selbst als Artefakt: sie liegt dann bei jedem Lauf
       # vor und laesst sich im Vergleich zweier Laeufe sehen.
@@ -303,18 +303,18 @@ jobs:
       # 2) Hart: die 16 sicherheitsrelevanten Pakete muessen exakt gepinnt
       #    sein. Verhindert, dass jemand ein "^" zurueckbaut.
       - name: Pin-Audit (sicherheitsrelevante Pakete)
-        run: python tool/check_dependency_pins.py --lock
+        run: python tool/pruefer/check_dependency_pins.py --lock
 
       # 3) Hart: die 62 Security-Invarianten laufen bisher nur manuell.
       - name: Security-Invarianten
-        run: python tool/check_security_invariants.py
+        run: python tool/pruefer/check_security_invariants.py
 
       # 4) Hart (Audit 16.11.2026): Die GitHub-Actions muessen auf
       #    Commit-SHAs gepinnt sein. Ein Tag ist eine VERAENDERLICHE
       #    Referenz - wer das Tag-Repo uebernimmt, schiebt Code in den
       #    Workflow und kommt an die Repository-Secrets des Nachtlaufs.
       - name: GitHub-Actions auf SHAs gepinnt
-        run: python tool/pin_github_actions.py --check
+        run: python tool/werkzeuge/sonstiges/pin_github_actions.py --check
 
       # 5) Hart (Audit 16.11.2026): Der gepinnte Leaf-Pin muss zum
       #    Live-Zertifikat passen und darf nicht abgelaufen sein. Am
@@ -322,7 +322,7 @@ jobs:
       #    dadurch nur noch ueber den (dauerhaft offenen) Aussteller-
       #    Fallback. Das faellt ohne diesen Schritt nicht auf.
       - name: Zertifikat-Pins pruefen
-        run: python tool/check_cert_pins.py
+        run: python tool/pruefer/check_cert_pins.py
 
       # Die veroeffentlichte Datenschutzerklaerung muss mit der im Repo
       # uebereinstimmen. Live stand laengere Zeit eine aeltere Fassung
@@ -352,7 +352,7 @@ jobs:
         continue-on-error: true
         run: |
           set +e
-          python tool/check_privacy_deployment.py > /tmp/privacy-deploy.txt 2>&1
+          python tool/pruefer/check_privacy_deployment.py > /tmp/privacy-deploy.txt 2>&1
           code=$?
           cat /tmp/privacy-deploy.txt
           if [ "$code" -ne 0 ]; then
@@ -371,7 +371,7 @@ jobs:
       # neuer Hive-Schluessel -> verschluesselte Boxen unlesbar). Das ist im
       # Review nicht sichtbar, weil der Code je fuer sich korrekt ist.
       - name: Namespace-Migration (Datenverlust beim Update)
-        run: python tool/check_namespace_migration.py
+        run: python tool/pruefer/check_namespace_migration.py
 
       # 4) SBOM fuer die F-Droid-Einreichung vorbereiten.
       #    CycloneDX listet transitive Abhaengigkeiten inkl. der sieben
@@ -531,7 +531,7 @@ jobs:
       # gitignored, also laeuft der Job hier strukturell: JSON-Validitaet,
       # Hex-Laenge, Duplikate, Vorlagen.
       - name: Passkey-Assets pruefen
-        run: python3 tool/check_passkey_assetlinks.py
+        run: python3 tool/pruefer/check_passkey_assetlinks.py
 
       # Bandbreite der veroeffentlichten Seiten (28.10.2026).
       #
@@ -543,7 +543,7 @@ jobs:
       # Adresse) und die Groesse der Seiten (jede Verdreifachung
       # faellt hier auf).
       - name: Web-Payload und Cache pruefen
-        run: python3 tool/check_web_payload.py
+        run: python3 tool/pruefer/check_web_payload.py
 
   # Von 15 Pruefern unter tool/ liefen vor diesem Job nur vier in der CI.
   # check_migrations_sql, check_migration_safety und check_push_readiness
@@ -573,48 +573,48 @@ jobs:
       # gitignored) - es verursacht hier keinen Fehler.
       - name: SQL-Parser
         run: |
-          python3 tool/check_migrations_sql.py
-          python3 tool/check_migration_safety.py
+          python3 tool/pruefer/check_migrations_sql.py
+          python3 tool/pruefer/check_migration_safety.py
 
       # Selftests mit Negativfaellen: sie pruefen, dass die Pruefer nicht
       # nur gruen melden, sondern echte Fehler auch finden.
       - name: Selftests der Pruefer
         run: |
-          python3 tool/check_migrations_sql_selftest.py
-          python3 tool/check_migrations_sql_paths_selftest.py
-          python3 tool/check_namespace_migration_selftest.py
-          python3 tool/check_push_readiness_selftest.py
-          python3 tool/check_push_duplicates_selftest.py
-          python3 tool/check_gitignore_selftest.py
-          python3 tool/check_local_ci_sync_selftest.py
-          python3 tool/check_web_theme_idempotenz.py
+          python3 tool/pruefer/check_migrations_sql_selftest.py
+          python3 tool/pruefer/check_migrations_sql_paths_selftest.py
+          python3 tool/pruefer/check_namespace_migration_selftest.py
+          python3 tool/pruefer/check_push_readiness_selftest.py
+          python3 tool/pruefer/check_push_duplicates_selftest.py
+          python3 tool/pruefer/check_gitignore_selftest.py
+          python3 tool/pruefer/check_local_ci_sync_selftest.py
+          python3 tool/pruefer/check_web_theme_idempotenz.py
           # Der Umlaut-Pruefer (16.11.2026): "fuer" statt "fuer" in
           # nutzersichtbaren Texten. Der Selbsttest beweist, dass er
           # Fehler findet und keine Fehlalarme produziert.
-          python3 tool/check_umlauts_selftest.py
+          python3 tool/pruefer/check_umlauts_selftest.py
           # Der Release-Ordner folgt jetzt der Version aus pubspec.yaml,
           # und das AAB (die Datei, die in den Play Store geht) wird
           # mitgeprueft - beides prueft der Selbsttest nach.
-          python3 tool/check_release_consistency_selftest.py
+          python3 tool/pruefer/check_release_consistency_selftest.py
 
       - name: Uebrige statische Pruefer
         run: |
           set -o pipefail
           {
-            echo "PRUEFER: tool/check_security_invariants.py"
-            python3 tool/check_security_invariants.py
-            echo "PRUEFER: tool/check_dependency_pins.py"
-            python3 tool/check_dependency_pins.py
-            echo "PRUEFER: tool/check_push_readiness.py"
-            python3 tool/check_push_readiness.py
+            echo "PRUEFER: tool/pruefer/check_security_invariants.py"
+            python3 tool/pruefer/check_security_invariants.py
+            echo "PRUEFER: tool/pruefer/check_dependency_pins.py"
+            python3 tool/pruefer/check_dependency_pins.py
+            echo "PRUEFER: tool/pruefer/check_push_readiness.py"
+            python3 tool/pruefer/check_push_readiness.py
             # BEFUND (08.11.2026): "Keine doppelten Benachrichtigungen
             # fuer das Selbe." Der Like-Versand lief zweimal (DB-Trigger
             # UND App-Aufruf). Dieses Gate verhindert, dass das zurueck-
             # kommt: kein Client darf notify-user mit kind='likes'
             # aufrufen, und die Edge Function muss solche Aufrufe
             # ablehnen.
-            echo "PRUEFER: tool/check_push_duplicates.py"
-            python3 tool/check_push_duplicates.py
+            echo "PRUEFER: tool/pruefer/check_push_duplicates.py"
+            python3 tool/pruefer/check_push_duplicates.py
             # BEFUND (08.11.2026): Der Dart-/Flutter-SDK war VOR 3.47.8 und
             # damit vom Advisory GHSA-frr6-h895-5pxp (High) betroffen:
             # `dart:io` vertraute auf Android die kompromittierten
@@ -623,8 +623,8 @@ jobs:
             # installierte Version, WebRTC-SDK) - ein Rueckfall auf eine
             # alte Version wird damit rot, statt stillschweigend zu
             # passieren.
-            echo "PRUEFER: tool/check_sdk_security.py"
-            python3 tool/check_sdk_security.py
+            echo "PRUEFER: tool/pruefer/check_sdk_security.py"
+            python3 tool/pruefer/check_sdk_security.py
             # BEFUND (08.11.2026): Zwei Sicherheitsmechanismen waren
             # STUMM, weil die Policy "No direct app_config access"
             # (USING false) den direkten PostgREST-Zugriff der App
@@ -632,50 +632,50 @@ jobs:
             # nie und die Notbremse fuer Transit Spark griff nicht. Das
             # Gate fragt genau so ab, wie es die App tut (mit einem echten
             # Benutzer-Token) - ohne die Schluessel im CI sagt es SKIP.
-            echo "PRUEFER: tool/check_app_config_readable.py"
-            python3 tool/check_app_config_readable.py
-            echo "PRUEFER: tool/check_passkey_assetlinks.py"
-            python3 tool/check_passkey_assetlinks.py
-            echo "PRUEFER: tool/check_dashes.py"
-            python3 tool/check_dashes.py
-            echo "PRUEFER: tool/check_texts.py"
-            python3 tool/check_texts.py
-            echo "PRUEFER: tool/check_keys.py"
-            python3 tool/check_keys.py
-            echo "PRUEFER: tool/check_local_ci_sync.py"
-            python3 tool/check_local_ci_sync.py
+            echo "PRUEFER: tool/pruefer/check_app_config_readable.py"
+            python3 tool/pruefer/check_app_config_readable.py
+            echo "PRUEFER: tool/pruefer/check_passkey_assetlinks.py"
+            python3 tool/pruefer/check_passkey_assetlinks.py
+            echo "PRUEFER: tool/pruefer/check_dashes.py"
+            python3 tool/pruefer/check_dashes.py
+            echo "PRUEFER: tool/pruefer/check_texts.py"
+            python3 tool/pruefer/check_texts.py
+            echo "PRUEFER: tool/pruefer/check_keys.py"
+            python3 tool/pruefer/check_keys.py
+            echo "PRUEFER: tool/pruefer/check_local_ci_sync.py"
+            python3 tool/pruefer/check_local_ci_sync.py
             # BEFUND 04.11.2026: Eine Edge Function war zerlegt und kam
             # trotzdem ins Repository - die bis dahin genutzte
             # Syntaxpruefung ("node --experimental-strip-types --check")
             # MELDET SICH NICHT. Der Deploy hat den Fehler gefangen,
             # aber zu spaet. Dieser Check parst TypeScript wirklich.
-            echo "PRUEFER: tool/check_edge_syntax.py"
-            python3 tool/check_edge_syntax.py
+            echo "PRUEFER: tool/pruefer/check_edge_syntax.py"
+            python3 tool/pruefer/check_edge_syntax.py
             # Der Publish-Ordner wird per Drag-and-Drop hochgeladen - es
             # gibt keinen Build-Schritt, der einen Fehler meldet. Was
             # nicht geprueft wird, landet live: eine Regel auf eine
             # fehlende Datei, eine durch noindex gesperrte Pflichtseite,
             # ein toter Link.
-            echo "PRUEFER: tool/check_publish_folder.py"
-            python3 tool/check_publish_folder.py
-            echo "PRUEFER: tool/check_terms_claims.py"
-            python3 tool/check_terms_claims.py
-            echo "PRUEFER: tool/check_web_pages.py"
-            python3 tool/check_web_pages.py
-            echo "PRUEFER: tool/check_web_pages_selftest.py"
-            python3 tool/check_web_pages_selftest.py
-            echo "PRUEFER: tool/check_no_empty_catches.py"
-            python3 tool/check_no_empty_catches.py
+            echo "PRUEFER: tool/pruefer/check_publish_folder.py"
+            python3 tool/pruefer/check_publish_folder.py
+            echo "PRUEFER: tool/pruefer/check_terms_claims.py"
+            python3 tool/pruefer/check_terms_claims.py
+            echo "PRUEFER: tool/pruefer/check_web_pages.py"
+            python3 tool/pruefer/check_web_pages.py
+            echo "PRUEFER: tool/pruefer/check_web_pages_selftest.py"
+            python3 tool/pruefer/check_web_pages_selftest.py
+            echo "PRUEFER: tool/pruefer/check_no_empty_catches.py"
+            python3 tool/pruefer/check_no_empty_catches.py
             # Umlaute in nutzersichtbaren Texten (16.11.2026): "ae/oe/ue/ss"
             # statt "ae/oe/ue/ss" - in einem deutschen Text faellt das
             # sofort auf. Die Kommentare im Quelltext bleiben bewusst
             # ASCII; geprueft werden nur die Texte, die der Nutzer liest.
-            echo "PRUEFER: tool/check_umlauts.py"
-            python3 tool/check_umlauts.py
-            echo "PRUEFER: tool/check_async_setstate.py"
-            python3 tool/check_async_setstate.py
-            echo "PRUEFER: tool/check_provider_in_lifecycle.py"
-            python3 tool/check_provider_in_lifecycle.py
+            echo "PRUEFER: tool/pruefer/check_umlauts.py"
+            python3 tool/pruefer/check_umlauts.py
+            echo "PRUEFER: tool/pruefer/check_async_setstate.py"
+            python3 tool/pruefer/check_async_setstate.py
+            echo "PRUEFER: tool/pruefer/check_provider_in_lifecycle.py"
+            python3 tool/pruefer/check_provider_in_lifecycle.py
           } 2>&1 | tee /tmp/static-checks.txt
 
       # Welcher Pruefer ist rot? (14.11.2026) Ohne diese Zeilen stand im
@@ -694,7 +694,7 @@ jobs:
       # anderem nutzer-sichtbare Strings in privacy_screen.dart und die
       # description aus pubspec.yaml, die im Play-Listing erscheint.
       #
-      # test/l10n_test.dart und tool/check_mojibake.py enthalten die
+      # test/l10n_test.dart und tool/pruefer/check_mojibake.py enthalten die
       # Fehlzeichen ABSICHTLICH (der eine sucht danach, der andere zeigt
       # sie in der Doku) und sind deshalb ausgenommen - sonst wuerde die
       # Reparatur das Pruefmittel zerstoeren.
@@ -718,7 +718,7 @@ jobs:
         continue-on-error: true
         run: |
           set +e
-          python3 tool/check_websites_live.py > /tmp/websites-live.txt 2>&1
+          python3 tool/pruefer/check_websites_live.py > /tmp/websites-live.txt 2>&1
           code=$?
           cat /tmp/websites-live.txt
           if [ "$code" -ne 0 ]; then
@@ -732,7 +732,7 @@ jobs:
           fi
           exit 0
       - name: Mojibake (Doppelkodierung) pruefen
-        run: python3 tool/check_mojibake.py --skip-known
+        run: python3 tool/pruefer/check_mojibake.py --skip-known
 
       # Eine .gitignore ist nur eine Seite der Wahrheit: sie muss
       # aufnehmen, was nicht ins Repo gehoert - UND duerfen nicht
@@ -742,7 +742,7 @@ jobs:
       # mit API-Key lag dadurch im oeffentlichen Verlauf, obwohl die
       # Regel existiert.
       - name: .gitignore auf Luecken pruefen
-        run: python3 tool/check_gitignore.py
+        run: python3 tool/pruefer/check_gitignore.py
 
       # Am 2026-09-29 war fastlane/.../01_willkommen.png unlesbar: eine
       # Binärdatei war als Text behandelt und mit CRLF/BOM zerstoert
@@ -750,7 +750,7 @@ jobs:
       # Check fällt das erst beim Store-Upload auf - die Version im
       # Login-Screenshot war parallel auf 0.9.1 stehen geblieben.
       - name: PNG-Dateien auf Korruption pruefen
-        run: python3 tool/check_png_integrity.py
+        run: python3 tool/pruefer/check_png_integrity.py
 
       # Der Screenshot-Render (store_v091_shots_test.dart) ist gitignoriert
       # - Fehler darin fallen sonst erst beim Store-Upload auf. Geprueft
@@ -759,7 +759,7 @@ jobs:
       # test/screenshots/support/ beginnt die App im Bild direkt am oberen
       # Rand und der Screenshot wirkt abgeschnitten.
       - name: Store-Screenshots auf Realismus pruefen
-        run: python3 tool/check_store_screenshots.py
+        run: python3 tool/pruefer/check_store_screenshots.py
 
       # Muss VOR allem anderen laufen.
       #
@@ -773,9 +773,9 @@ jobs:
       #
       # Dieser Check kann die Datei nicht selbst pruefen - er steht in
       # derselben Datei. Deshalb laeuft er zusaetzlich lokal vor dem
-      # Push: python tool/check_workflows.py
+      # Push: python tool/pruefer/check_workflows.py
       - name: "Workflow-Datei selbst ist gueltiges YAML"
-        run: python3 tool/check_workflows.py
+        run: python3 tool/pruefer/check_workflows.py
 
       # Am 2026-09-30 lief 03_entdecken mit textScale 0.64 und
       # 04_anpassen mit 0.72, die anderen mit 1.0. Im Play Store waren
@@ -784,7 +784,7 @@ jobs:
       # gelesen - dann gilt der Check auch fuer eine spaetere Aenderung
       # am Harness.
       - name: Screenshot-Schriftgroesse einheitlich
-        run: python3 tool/check_screenshot_consistency.py
+        run: python3 tool/pruefer/check_screenshot_consistency.py
 
       # Beide Store-Listen muessen vollstaendig sein - und eigenstaendig.
       #
@@ -797,14 +797,14 @@ jobs:
       # und genau die wird hier geprueft: vollstaendig und nicht
       # identisch zwischen den Sprachen.
       - name: Store-Listen vollstaendig und je Sprache eigenstaendig
-        run: python3 tool/check_store_listing_languages.py
+        run: python3 tool/pruefer/check_store_listing_languages.py
 
       # Der Store zeigt den Aenderungstext anhand der VERSION-CODE.
       # Fehlt die Datei fuer den aktuellen Build, erscheint beim
       # Upload kein "Was ist neu" - das ist bei jedem
       # Versionssprung moeglich und wurde bisher nicht geprueft.
       - name: Store-Text fuer den aktuellen Build vorhanden
-        run: python3 tool/check_store_changelog.py
+        run: python3 tool/pruefer/check_store_changelog.py
 
       # BEFUND (11.11.2026): Die Release-Notes hatten einen eigenen
       # Pruefsummen-Block, der beim Build nicht mitgepflegt wurde - auf
@@ -816,7 +816,7 @@ jobs:
       # es nicht). Das Skript gibt sich dann zufrieden, OHNE dass
       # das Gate entschaerft wird ("|| true" waere wirkungslos).
       - name: Release-Pruefsummen stimmen
-        run: python3 tool/check_release_checksums.py
+        run: python3 tool/pruefer/check_release_checksums.py
 
       # Die Signier-Passwoerter duerfen NICHT im Projektverzeichnis liegen.
       #
@@ -826,7 +826,7 @@ jobs:
       # Umgebungsvariablen. Der Check sucht in ALLEN *.properties unterhalb
       # des Repos nach Passwoertern - nicht nur in key.properties.
       - name: Keystore-Passwoerter nicht im Projektverzeichnis
-        run: python3 tool/check_keystore_secrets.py
+        run: python3 tool/pruefer/check_keystore_secrets.py
 
       # Release-Artefakte: Signatur und Admin-Trennung.
       #
@@ -856,7 +856,7 @@ jobs:
       # Checks, statt rot zu werden. Das ist der stillste Fehler, den
       # eine CI machen kann.
       - name: "Release-Checker: Selbsttest (Negativfaelle)"
-        run: python3 tool/check_release_artifacts_selftest.py
+        run: python3 tool/pruefer/check_release_artifacts_selftest.py
 
       - name: "Release-Artefakte (nur informativ, ohne Artefakte im CI)"
         continue-on-error: true
@@ -870,7 +870,7 @@ jobs:
           # DER WEG: Wie bei den Live-Checks - das Ergebnis wird als
           # WARNUNG gemeldet, der Schritt endet mit 0.
           set +e
-          python3 tool/check_release_artifacts.py > /tmp/release-artifacts.txt 2>&1
+          python3 tool/pruefer/check_release_artifacts.py > /tmp/release-artifacts.txt 2>&1
           code=$?
           cat /tmp/release-artifacts.txt
           if [ "$code" -ne 0 ]; then

@@ -491,7 +491,7 @@ Future<void> _initializeSupabase() async {
     debugPrint(
       '[MAIN] ACHTUNG: $supabaseHost ist NICHT gepinnt - alle '
       'Serververbindungen werden abgebrochen (fail-closed). Pins eintragen: '
-      'dart run tool/rotate_cert_pins.dart',
+      'dart run tool/werkzeuge/sonstiges/rotate_cert_pins.dart',
     );
   }
 

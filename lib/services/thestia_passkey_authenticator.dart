@@ -21,7 +21,7 @@ class ThestiaPasskeyAuthenticator implements PasskeyAuthenticatorInterface {
   /// Diagnose (nur Debug-Builds): Dekodiert die clientDataJSON und loggt
   /// Typ + ORIGIN. Der Origin MUSS in GoTrue `GOTRUE_WEBAUTHN_RP_ORIGINS`
   /// stehen, sonst lehnt der Server die Registrierung ab ("credential
-  /// verification failed") - siehe docs/PASSKEYS_SERVER_SETUP.md.
+  /// verification failed") - siehe docs/technik/PASSKEYS_SERVER_SETUP.md.
   void _logClientData(String clientDataJsonB64) {
     if (!kDebugMode) return;
     // Diagnose ist best-effort.

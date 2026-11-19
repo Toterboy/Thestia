@@ -200,9 +200,9 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
 - [~] Applogo & Branding-Feinschliff – Quelle ist
       `assets/images/thestia_icon_base.png` (941×941, im Repo vorhanden).
       **Im Kern erledigt:** Store-Icon (512×512) und Feature Graphic
-      (1024×500) sind erzeugt (`tool/make_play_icon.py`,
-      `tool/make_feature_graphic.py`), alle Icon-Masken sind geprüft, und
-      die Website führt jetzt ein Favicon (`tool/make_favicon.py`).
+      (1024×500) sind erzeugt (`tool/werkzeuge/bilder/make_play_icon.py`,
+      `tool/werkzeuge/sonstiges/make_feature_graphic.py`), alle Icon-Masken sind geprüft, und
+      die Website führt jetzt ein Favicon (`tool/werkzeuge/website/make_favicon.py`).
       **Offen:** Feinschliff an Masken und Farbwirkung – kein
       Blocker für den Upload.
 - [x] **Store-Listing auch auf Englisch** (03.11.2026) – die englische
@@ -217,7 +217,7 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
         ändert nur Datum und Zahlen, die App-Texte kommen aus
         `L10n.t` – ohne den Scope bleibt der Screen deutsch.
       * Der Compositor hat je Sprache eigene Quelle, eigene Texte und
-        eigene Ausgabe (`tool/make_store_screenshots.py`, `PROFILE`).
+        eigene Ausgabe (`tool/werkzeuge/bilder/make_store_screenshots.py`, `PROFILE`).
       * Die Textprüfung gilt für beide Sprachen (`_check_claims_en`):
         „ready in a minute" wäre sonst durchgerutscht.
       * Das Tablet-Skript baut je Sprache aus der eigenen Quelle –
@@ -680,7 +680,7 @@ zugestellte Kopie beim Gegenüber kann nicht zurückgerufen werden.
       > **Offen:** nichts davon ist je auf einem Gerät durchlaufen
       > worden. Der Serverzustand ist durch Migration 142 verifiziert,
       > der Client-Pfad nicht. Prüfpunkte 4.12 bis 4.15 in
-      > `docs/RELEASE-ABNAHME.md`.
+      > `docs/betrieb/RELEASE-ABNAHME.md`.
 - [x] **Folge des Contract-Schritts prüfen** – Migration 138 macht
       **jede** bereits gebaute App unbrauchbar, die `city` oder
       `location_*` aus `profiles` liest. Das ist kein Absturz, sondern
@@ -703,7 +703,7 @@ zugestellte Kopie beim Gegenüber kann nicht zurückgerufen werden.
       Reichweite, kein Funkrauschen). Der in 0.9.0 als „Gerätetest
       ausstehend" vermerkte Punkt bleibt bis dahin offen – er ist kein
       Nice-to-have, sondern Abnahmekriterium. **Durchsetzung: siehe
-      Statusblock oben.** Protokoll: `docs/BLE-GERAETETEST.md`
+      Statusblock oben.** Protokoll: `docs/betrieb/BLE-GERAETETEST.md`
       > **BESTANDEN (10.11.2026):** Der Betreiber hat den Transit-Spark-
       > Test auf echten Geräten erfolgreich durchlaufen und als Erfolg
       > gemeldet. Damit ist die Release-Bedingung für 0.10.0 erfüllt und
@@ -987,7 +987,7 @@ keine gemeinsamen Tokens.)
       mit einem stillen „kein Match" im Glauben lassen, es sei niemand
       in der Nähe.
 - [x] **18 Haarfarben** (Migration 186) – lila, rosa, blau, grün sind
-      dazu gekommen. Und ein Werkzeug (`tool/check_transit_catalog.py`),
+      dazu gekommen. Und ein Werkzeug (`tool/pruefer/check_transit_catalog.py`),
       das prüft, dass App und Server dieselben Merkmale kennen: ein
       Wert, den der Server nicht kennt, wird beim Senden
       **stillschweigend weggefiltert** – der Nutzer wählt ihn, er
@@ -1044,7 +1044,7 @@ ob das Radar anbleiben soll - wie beim Verlassen des
 Radar-Bildschirms.
 
 > **Und das Werkzeug gegen diese Klasse:**
-> `tool/check_function_returns.py` findet Funktionen, die einen Wert
+> `tool/pruefer/check_function_returns.py` findet Funktionen, die einen Wert
 > zurueckgeben **sollten**, aber kein `RETURN` haben. Der Aufruf
 > scheitert dann mit „query has no destination for result data" -
 > ohne dass irgendwo ein Fehler sichtbar wird. Der Selbsttest (eine
@@ -1094,7 +1094,7 @@ Symptom.
 > belegt statt ueber eine Sitzung auf einem Geraet. Ausfuehrlich in
 > `releases/v0.10.0/TESTANLEITUNG.md`, Abschnitt 7.
 
-> **Das Werkzeug gegen diese Klasse:** `tool/cleanup_transit_testdata.sql`
+> **Das Werkzeug gegen diese Klasse:** `tool/werkzeuge/datenbank/cleanup_transit_testdata.sql`
 > raeumt die Testdaten der Live-Nachweise weg (zwei Likes, ein Match)
 > und prueft danach, dass nichts mehr da ist. Ohne das bliebe beim
 > Betreiber ein Phantom-Funke zurueck - ein Funke, den er nicht
@@ -1144,11 +1144,11 @@ exakt die Version des Upstream-1.6.3 („drop compromised eMudhra CA
 root").
 
 > **Das Werkzeug, das die Klasse fängt:**
-> `tool/check_sdk_security.py` haelt die Sicherheitsuntergrenzen fest
+> `tool/pruefer/check_sdk_security.py` haelt die Sicherheitsuntergrenzen fest
 > (SDK-Version der CI, lokal installierte Version, WebRTC-SDK) und ist
 > blockierend im CI. Ein Rueckfall auf eine alte SDK-Version wird rot,
 > statt stillschweigend zu passieren. Das vollstaendige Audit mit allen
-> Quellen liegt in `docs/SICHERHEITSPRUEFUNG-2026-11-08.md`.
+> Quellen liegt in `docs/recht/SICHERHEITSPRUEFUNG-2026-11-08.md`.
 
 #### Build 46, Nachpruefung II: eine Benachrichtigung pro Ereignis
 
@@ -1165,10 +1165,10 @@ ein Ereignis - und die Like-Meldung war inhaltlich falsch, denn im
 Radar wird kein Profil geliked, sondern gefunkt.
 
 **Das Werkzeug, das diese Klasse fängt:**
-`tool/measure_push_duplicates.sql` zaehlt die Push-Aufrufe, ohne dass
+`tool/werkzeuge/datenbank/measure_push_duplicates.sql` zaehlt die Push-Aufrufe, ohne dass
 eine einzige Nachricht rausgeht: die Zaehlung laeuft in einer
 Transaktion, und der pg_net-Worker sieht uncommittete Zeilen einer
-anderen Sitzung nicht. `tool/check_push_duplicates.py` macht daraus ein
+anderen Sitzung nicht. `tool/pruefer/check_push_duplicates.py` macht daraus ein
 Gate (statisch: kein Client darf `notify-user` mit `kind='likes'` rufen;
 live: die vier Szenarien mit der Soll-Zahl), mit einem Selbsttest, der
 alle vier Fehlerquellen nachbaut.
@@ -1270,17 +1270,17 @@ hätten das nie gezeigt - der Server sagt es nur, wenn man ihn fragt.
 den P2P-Kanal sendete. Jetzt: P2P, dann E2E-Relay, dann Outbox.
 
 > **Die Werkzeuge, die diese Klasse fangen:**
-> * `tool/check_function_grants.py` - sammelt alle RPC-Aufrufe des
+> * `tool/pruefer/check_function_grants.py` - sammelt alle RPC-Aufrufe des
 >   Clients und fragt die Produktivdatenbank nach den Rechten. Hat
 >   `unblock_user` und `accept_soft_ping` gefunden.
-> * `tool/check_profile_cache_keys.py` - vergleicht, was der Cache
+> * `tool/pruefer/check_profile_cache_keys.py` - vergleicht, was der Cache
 >   schreibt, was die Parser lesen und was die Server-Zuordnung kennt.
 >   Hat die Vorstellung gefunden.
-> * `tool/check_on_conflict.py` - findet Konflikt-Ziele, die kein Index
+> * `tool/pruefer/check_on_conflict.py` - findet Konflikt-Ziele, die kein Index
 >   trägt (der Dating-Hour-Bug).
-> * `tool/check_migration_history.py` - findet Migrationen, die als
+> * `tool/pruefer/check_migration_history.py` - findet Migrationen, die als
 >   „angewandt" markiert sind, aber nicht vollständig gelaufen sind.
-> * `tool/check_release_version.py` - findet die alte APK im
+> * `tool/pruefer/check_release_version.py` - findet die alte APK im
 >   Release-Ordner.
 
 > **Die Lehre daraus (und die Antwort auf die Frage des Betreibers,
@@ -1330,11 +1330,11 @@ bekam keine Runde mehr.
 > does not exist" fehl. Migration 190 legt die Tabelle nach.
 
 > **Das Werkzeug, das beides gefunden hat:**
-> `tool/check_on_conflict.py` fragt die Produktivdatenbank ab und
+> `tool/pruefer/check_on_conflict.py` fragt die Produktivdatenbank ab und
 > vergleicht **jedes** `ON CONFLICT`-Ziel mit den tatsächlichen
 > Indizes - es sieht alle 26 Funktionen auf einmal. Dazu
-> `tool/check_migration_history.py` (jede Migration aus dem
-> Repository ist auch angewandt) und `tool/check_release_version.py`
+> `tool/pruefer/check_migration_history.py` (jede Migration aus dem
+> Repository ist auch angewandt) und `tool/pruefer/check_release_version.py`
 > (die ausgelieferten Artefakte tragen den aktuellen Code).
 
 #### Build 41: Haarlänge, Frisur - und ein Redesign des Bildschirms
@@ -1442,7 +1442,7 @@ ausreichend. Genau das ist der Maßstab, an dem unten entworfen wird.
 **ENTSCHEIDUNG 05.11.2026: Der 16+-Pfad bleibt (bewusst).**
 
 Bei der Bestandsaufnahme vom 05.11.2026 (siehe
-`docs/MINDERJAEHRIGE-NUTZUNG.md`) wurde die Frage gestellt, ob der
+`docs/recht/MINDERJAEHRIGE-NUTZUNG.md`) wurde die Frage gestellt, ob der
 Minderjährigen-Pfad (Elternfreigabe, Nutzungszeit, Aufsicht) ganz
 entfernt werden soll. Entscheidung: **er bleibt.** Begründung:
 
@@ -1467,13 +1467,13 @@ beides, ohne zu verschweigen, dass es zwei Kanäle gibt:
 > Minderjährige unsichtbar
 
 Damit stimmen Listing und Wirklichkeit überein: der Kanal gibt 18+ her,
-die App kann 16+. Eine Invariante (`tool/check_security_invariants.py`)
+die App kann 16+. Eine Invariante (`tool/pruefer/check_security_invariants.py`)
 sichert das ab - schreibt jemand wieder „ab 16 Jahren, mit
 Elternfreigabe" ins Listing, schlägt sie an.
 
 **Bleiben würde Weg 2:** den Minderjährigen-Pfad ganz entfernen. Das ist
 eine Markt- und Rechtsfrage, keine technische; die technische Umsetzung
-steht in `docs/MINDERJAEHRIGE-NUTZUNG.md` (Abschnitt 9).
+steht in `docs/recht/MINDERJAEHRIGE-NUTZUNG.md` (Abschnitt 9).
 
 ### 2. Der juristische Anker (Deutschland)
 
