@@ -323,6 +323,61 @@ void main() {
     expect(find.byIcon(Icons.call_end), findsOneWidget);
   });
 
+  group('Die Stummschaltung', () {
+    testWidgets('der Schalter schaltet um', (tester) async {
+      await imGespraech(tester);
+
+      expect(tester.takeException(), isNull);
+      // Das Mikrofon-Symbol steht fuer "nicht stumm".
+      expect(find.byIcon(Icons.mic_off), findsNothing);
+      expect(
+        find.text(L10n.tWithoutContext('chat.callUnmuted')),
+        findsOneWidget,
+      );
+
+      // DER SCHALTER: Er ist ein eigener Knopf (nicht das Mikrofon des
+      // Push-to-Talk) - sonst wuerde man sich selbst stumm schalten.
+      final schalter = find.widgetWithIcon(FloatingActionButton, Icons.mic);
+      expect(schalter, findsOneWidget);
+      await tester.tap(schalter);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(tester.takeException(), isNull);
+      expect(find.byIcon(Icons.mic_off), findsOneWidget);
+      expect(find.text(L10n.tWithoutContext('chat.callMuted')), findsOneWidget);
+    });
+
+    testWidgets('im stummgeschalteten Zustand wird nicht gesprochen', (
+      tester,
+    ) async {
+      final p2p = await imGespraech(tester);
+
+      // Erst stumm schalten.
+      await tester.tap(find.widgetWithIcon(FloatingActionButton, Icons.mic));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+
+      // Dann "sprechen": Der Knopf wird gedrueckt und wieder losgelassen.
+      final sprechKnopf = find.byIcon(Icons.mic_off_outlined);
+      expect(sprechKnopf, findsOneWidget);
+      final gestures = await tester.startGesture(tester.getCenter(sprechKnopf));
+      await tester.pump(const Duration(milliseconds: 200));
+      await gestures.up();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(tester.takeException(), isNull);
+      expect(
+        p2p.sprachPakete,
+        isEmpty,
+        reason:
+            'Im stummgeschalteten Zustand darf nichts aufgenommen werden - '
+            'der Nutzer hat es ausgeschaltet.',
+      );
+    });
+  });
+
   testWidgets('die Gegenseite legt auf - der Bildschirm folgt', (tester) async {
     final p2p = await zeigeScreen(
       tester,
