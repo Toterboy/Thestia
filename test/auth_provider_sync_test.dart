@@ -184,4 +184,123 @@ void main() {
       expect(container.read(serverSyncDoneProvider), isTrue);
     });
   });
+
+  group('Die Selbstheilung: lokale Flags gehen zum Server', () {
+    /// Baut einen Container, OHNE den Abgleich zu starten - so kann der
+    /// Test den lokalen Stand vorher setzen (der erste Abgleich darf
+    /// lokale Werte noch nicht hochschieben).
+    Future<ProviderContainer> baueContainerOhneAbgleich() async {
+      final container = ProviderContainer(
+        overrides: <Override>[
+          localStorageProvider.overrideWithValue(_Speicher()),
+          secureProfileStoreProvider.overrideWithValue(_Keystore()),
+        ],
+      );
+      addTearDown(container.dispose);
+      return container;
+    }
+
+    /// Wartet, bis der Abgleich durch ist (die HTTP-Antworten kommen nur
+    /// in der echten Schleife an).
+    Future<void> warteAufAbgleich() async {
+      for (var i = 0; i < 40; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 40));
+      }
+    }
+
+    /// Wartet, BIS eine Bedingung eintritt (hoechstens [sekunden]).
+    ///
+    /// DER GRUND: Ein Schreibvorgang kann nach dem Abgleich noch
+    /// eintrudeln. Ohne Warten landet er im NAECHSTEN Test - und der
+    /// glaubt dann, sein eigener Weg habe geschrieben.
+    Future<bool> warteBis(bool Function() bedingung, {int sekunden = 8}) async {
+      for (var i = 0; i < sekunden * 10; i++) {
+        if (bedingung()) return true;
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      }
+      return bedingung();
+    }
+
+    /// Hat der Server ein "erledigt"-Flag bekommen?
+    bool flagGeschrieben(String schluessel) => server.schreibvorgaenge.any(
+      (v) => v['tabelle'] == 'profiles' && v[schluessel] == true,
+    );
+
+    test(
+      'nach dem zweiten Abgleich wird das lokale Flag nachgezogen',
+      () async {
+        // Der Server kennt die Einrichtung NICHT (das Speichern bei der
+        // Einrichtung schlug still fehl).
+        server.zeilen['profiles'] = <String, dynamic>{
+          'user_id': 'ich',
+          'name': 'Lena',
+          'one_time_settings_completed': false,
+          'community_guidelines_accepted': false,
+        };
+        await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
+
+        final container = await baueContainer();
+
+        // Lokal ist die Einrichtung erledigt (z. B. nach einem Update).
+        await container
+            .read(settingsProvider.notifier)
+            .completeOneTimeSettings();
+        expect(
+          container.read(settingsProvider).oneTimeSettingsCompleted,
+          isTrue,
+        );
+
+        // Der naechste Abgleich schiebt das Flag zum Server.
+        await container
+            .read(authProvider.notifier)
+            .silentLogin(email: 'lena@example.de', password: 'geheim123');
+
+        // Auf den Schreibvorgang WARTEN - sonst eilt der Test davon und
+        // der Vorgang landet im naechsten Test.
+        await warteBis(() => flagGeschrieben('one_time_settings_completed'));
+        await warteAufAbgleich();
+
+        expect(
+          flagGeschrieben('one_time_settings_completed'),
+          isTrue,
+          reason:
+              'Das lokale "erledigt" muss zum Server - sonst erscheint die '
+              'Einrichtung nach der naechsten Neuinstallation erneut.',
+        );
+      },
+    );
+
+    test('beim ERSTEN Abgleich wird nichts hochgeschoben', () async {
+      // DER GRUND fuer die Sperre: Wer sich gerade registriert hat, hat
+      // lokal noch nichts erledigt. Ein lokaler Restwert (aus einem
+      // frueheren Test oder einer alten Installation) darf die
+      // Einrichtung nicht ueberspringen.
+      server.zeilen['profiles'] = <String, dynamic>{
+        'user_id': 'ich',
+        'name': 'Lena',
+        'one_time_settings_completed': false,
+      };
+      await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
+
+      // Der lokale Stand wird VOR dem ersten Abgleich gesetzt.
+      final container = await baueContainerOhneAbgleich();
+      await container.read(settingsProvider.notifier).completeOneTimeSettings();
+
+      // Jetzt der erste Abgleich. Vorher die Schreibvorgaenge leeren:
+      // ein spaeter eintrudelnder Vorgang des Vorherigen Tests darf
+      // diesen Test nicht beeinflussen.
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      server.schreibvorgaenge.clear();
+      container.read(authProvider);
+      await warteAufAbgleich();
+
+      expect(
+        flagGeschrieben('one_time_settings_completed'),
+        isFalse,
+        reason:
+            'Beim ersten Abgleich wird nichts hochgeschoben - sonst '
+            'ueberspringt die App die Einrichtung.',
+      );
+    });
+  });
 }
