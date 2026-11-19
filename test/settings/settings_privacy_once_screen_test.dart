@@ -26,6 +26,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/profile/user_profile.dart';
 import 'package:thestia/providers/profile/profile_provider.dart';
+import 'package:thestia/providers/settings/user_preferences_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/onboarding/settings_privacy_once_screen.dart';
 import 'package:thestia/services/storage/local_storage.dart';
@@ -242,6 +243,46 @@ void main() {
       );
       // Die Auswahl der gesuchten Geschlechter steht da (als Chips).
       expect(find.byType(FilterChip), findsWidgets);
+    });
+
+    testWidgets('der Entfernungsfilter laesst sich umstellen', (tester) async {
+      await zeigeScreen(tester);
+
+      // DER FILTER: Es gibt drei Arten - nach Entfernung, nach Bundesland
+      // oder ganz Deutschland. Jede Art hat ihre eigene Oberflaeche.
+      final auswahl = find.byType(DropdownButtonFormField<DistanceFilterMode>);
+      expect(auswahl, findsWidgets, reason: 'Der Entfernungsfilter fehlt.');
+
+      await tester.ensureVisible(auswahl.first);
+      await tester.pump();
+      await tester.tap(auswahl.first);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(tester.takeException(), isNull);
+      // Die Auswahl "Deutschland" steht zur Wahl.
+      expect(
+        find.text(DistanceFilterMode.germany.label),
+        findsWidgets,
+        reason:
+            'Der Nutzer muss waehlen koennen, ob er ganz Deutschland sucht '
+            '- das ist fuer ihn der Normalfall.',
+      );
+    });
+
+    testWidgets('der Radius laesst sich stellen', (tester) async {
+      await zeigeScreen(tester);
+
+      // DER SCHIEBER: Die Entfernung, bis der Filter greift.
+      final schieber = find.byType(Slider);
+      expect(
+        schieber,
+        findsWidgets,
+        reason:
+            'Der Radius muss stellen sein - sonst sucht der Filter immer '
+            'im gleichen Umkreis.',
+      );
+      expect(find.textContaining('km'), findsWidgets);
     });
 
     testWidgets('"Weiter" fuehrt zur naechsten Seite', (tester) async {
