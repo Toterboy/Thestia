@@ -18,17 +18,62 @@ import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/screens/auth/login_screen.dart';
+import 'package:thestia/services/storage/local_storage.dart';
 
+import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';
 
+/// Der Speicher im RAM.
+class _Speicher implements LocalStorage {
+  final Map<String, String> _daten = <String, String>{};
+
+  @override
+  Future<void> saveString(String key, String value) async =>
+      _daten[key] = value;
+
+  @override
+  Future<String?> getString(String key) async => _daten[key];
+
+  @override
+  Future<void> saveBool(String key, bool value) async =>
+      _daten[key] = value.toString();
+
+  @override
+  Future<bool?> getBool(String key) async =>
+      _daten[key] == null ? null : _daten[key] == 'true';
+
+  @override
+  Future<void> remove(String key) async => _daten.remove(key);
+
+  @override
+  Future<void> saveInt(String key, int value) async =>
+      _daten[key] = value.toString();
+
+  @override
+  Future<int?> getInt(String key) async =>
+      _daten[key] == null ? null : int.tryParse(_daten[key]!);
+}
+
 void main() {
+  /// Der Ersatz-Server: an ihm sieht der Test, OB eine Registrierung
+  /// ueberhaupt hinausgegangen ist.
+  late FakeSupabaseServer server;
+
   setUpAll(() async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await SharedPreferences.getInstance();
     await mockPfadProvider();
+    // DER KEYSTORE: der sichere Speicher der Anmeldung - ohne den
+    // Ersatz ruft der Test auf dem CI-Runner das echte Plugin.
+    mockKeystore();
+    // HIVE: der Verschlüsselungs-Dienst oeffnet beim Registrieren seine
+    // Boxen - ohne initialisierten Hive scheitert der Aufruf.
+    await mockHive();
+    server = FakeSupabaseServer(userId: 'ich');
     await supabase.Supabase.initialize(
       url: 'https://example.supabase.co',
       publishableKey: 'test-key',
+      httpClient: server,
       authOptions: const supabase.FlutterAuthClientOptions(
         autoRefreshToken: false,
         persistSession: false,
@@ -39,14 +84,28 @@ void main() {
 
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
+    server.pfade.clear();
   });
+
+  /// Ist eine Registrierung an den Server gegangen?
+  bool gingRaus() => server.pfade.any(
+    (p) => p.contains('/auth/v1/signup') || p.contains('/auth/v1/token'),
+  );
 
   Future<void> zeigeScreen(WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
-      const ProviderScope(child: MaterialApp(home: LoginScreen())),
+      ProviderScope(
+        overrides: [
+          // Ohne den Ersatz wuerde die Registrierung am Schreiben in
+          // den lokalen Speicher scheitern (der Provider wirft
+          // absichtlich, wenn er nicht gesetzt ist).
+          localStorageProvider.overrideWithValue(_Speicher()),
+        ],
+        child: const MaterialApp(home: LoginScreen()),
+      ),
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
@@ -85,8 +144,8 @@ void main() {
     await tester.enterText(find.byType(TextFormField).at(0), 'Lena');
     await tester.enterText(find.byType(TextFormField).at(1), 'lena@example.de');
     // Das Passwort muss die Server-Regel erfuellen (8 Zeichen, Buchstabe,
-    // Zahl) - sonst stoppt die Formularpruefung vorher.
-    await tester.enterText(find.byType(TextFormField).at(2), 'Passwort123');
+    // Zahl UND Sonderzeichen) - sonst stoppt die Formularpruefung vorher.
+    await tester.enterText(find.byType(TextFormField).at(2), 'Passwort123!');
     await tester.pump();
   }
 
@@ -117,6 +176,16 @@ void main() {
         reason:
             'Ohne Geburtsdatum kann das Alter nicht geprueft werden - die '
             'Registrierung muss hier stoppen (Jugendschutz).',
+      );
+      // DIE EIGENTLICHE ZUSICHERUNG: Es darf gar nichts beim Server
+      // ankommen. Ein Hinweis reicht nicht - es muss auch nichts
+      // registriert werden.
+      expect(
+        gingRaus(),
+        isFalse,
+        reason:
+            'Ohne Geburtsdatum darf sich niemand registrieren - sonst '
+            'kaeme eine Person unter 16 ohne Alterspruefung in die App.',
       );
     });
 
@@ -156,6 +225,15 @@ void main() {
         reason:
             'Das Alter muss ausdruecklich bestaetigt werden - der Nutzer '
             'muss bestaetigen, dass er die Wahrheit sagt.',
+      );
+      // DIE EIGENTLICHE ZUSICHERUNG: Ohne die Bestaetigung darf sich
+      // niemand registrieren.
+      expect(
+        gingRaus(),
+        isFalse,
+        reason:
+            'Ohne Alters-Bestaetigung darf sich niemand registrieren - '
+            'das Alter muss bestaetigt werden (Jugendschutz).',
       );
     });
 
