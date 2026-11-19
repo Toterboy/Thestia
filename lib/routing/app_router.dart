@@ -641,312 +641,322 @@ GoRouter createRouter(Ref ref) {
     // funktionierendem Button zurück zum sinnvollen Ausgangspunkt.
     errorBuilder: (context, state) => const ErrorScreen(),
     redirect: (context, state) => umleitung(ref, state.matchedLocation),
-    routes: [
-      GoRoute(
-        path: AppRoutes.loading,
-        builder: (context, state) => const LoadingScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.welcome,
-        builder: (context, state) => const WelcomeScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.signupWelcome,
-        builder: (context, state) => const SignupWelcomeScreen(),
-      ),
-      // Selektive Datenloeschung: einzelne Kategorien loeschen, ohne
-      // das Konto aufzugeben.
-      GoRoute(
-        path: AppRoutes.deleteData,
-        builder: (context, state) => const DeleteDataScreen(),
-      ),
-      // Elternfreigabe (16/17). Freiwillig - wer sie nicht will,
-      // ueberspringt sie und kommt direkt ins Setup.
-      GoRoute(
-        path: AppRoutes.guardianConsent,
-        builder: (context, state) => const GuardianConsentScreen(),
-      ),
-      // Die Entscheidung mit 18: Zugriff beenden, Nachfrist oder
-      // weiter behalten.
-      GoRoute(
-        path: AppRoutes.guardianTransition,
-        builder: (context, state) => const GuardianTransitionScreen(),
-      ),
-      // Die Elterneinstellungen als eigener Screen (04.11.2026).
-      GoRoute(
-        path: AppRoutes.guardianSettings,
-        builder: (context, state) => const GuardianSettingsScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.login,
-        builder: (context, state) => const LoginScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.forgotPassword,
-        builder: (context, state) => const ForgotPasswordScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.resetPassword,
-        builder: (context, state) => const ResetPasswordScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.unbanRequest,
-        builder: (context, state) => UnbanRequestScreen(
-          initialEmail: state.extra is String ? state.extra as String : null,
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.settingsPrivacyOnce,
-        builder: (context, state) => const SettingsPrivacyOnceScreen(),
-      ),
-      // Sicherheits-Aufklärung (nach E-Mail-Bestätigung, vor dem Setup)
-      GoRoute(
-        path: AppRoutes.datingSafetyEducation,
-        builder: (context, state) => const DatingSafetyEducationScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.settings,
-        builder: (context, state) => const SettingsScreen(),
-      ),
-      // Verifizierungs-Flow
-      GoRoute(
-        path: AppRoutes.verificationVideo,
-        builder: (context, state) => const VerificationVideoScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.verificationComplete,
-        builder: (context, state) => const VerificationSuccessScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.verificationInfo,
-        builder: (context, state) => const VerificationInfoScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.emailVerification,
-        builder: (context, state) => const EmailVerificationScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.mfaSetup,
-        builder: (context, state) => const MfaSetupScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.mfaChallenge,
-        builder: (context, state) => const MfaChallengeScreen(),
-      ),
-      GoRoute(
-        path: AppRoutes.communityGuidelines,
-        builder: (context, state) => const CommunityGuidelinesScreen(),
-      ),
-      // Geschuetzter Admin-Bereich (nur ueber verstecketen Zugang erreichbar,
-      // Zugriff nur fuer AppConstants.adminUserId). Der redirect unten
-      // blockt den Aufruf fuer alle anderen Nutzer.
-      GoRoute(
-        path: AppRoutes.admin,
-        builder: (context, state) => const AdminScreen(),
-      ),
-      // Bug-Report (erreichbar von überall, kein Bottom-Nav)
-      GoRoute(
-        path: AppRoutes.bugReport,
-        builder: (context, state) => const BugReportScreen(),
-      ),
-      // Mood of the Day
-      GoRoute(
-        path: AppRoutes.moodPicker,
-        builder: (context, state) => const MoodPickerScreen(),
-      ),
-      // "Neu in dieser Version" (App-Update-Popup für Registrierte).
-      GoRoute(
-        path: AppRoutes.whatsNew,
-        builder: (context, state) => const WhatsNewScreen(),
-      ),
-      // Datenschutz & Account (DSGVO)
-      GoRoute(
-        path: AppRoutes.privacy,
-        builder: (context, state) => const PrivacyScreen(),
-      ),
-      // Volltext der Datenschutzerklärung (Google Play verlangt den Text
-      // auch IN der App, nicht nur als Link im Store).
-      GoRoute(
-        path: AppRoutes.privacyPolicy,
-        builder: (context, state) => const PrivacyPolicyTextScreen(),
-      ),
-      // Volltext der Nutzungsbedingungen (BEFUND 14.11.2026: "Die
-      // Nutzungsbedingungen funktionieren in der App nicht" - sie waren
-      // nur ein Link auf die Webseite).
-      GoRoute(
-        path: AppRoutes.privacyTerms,
-        builder: (context, state) => const TermsTextScreen(),
-      ),
-      // Safety Center: Hilfe bei Belästigung/Stalking + In-App-Maßnahmen
-      GoRoute(
-        path: AppRoutes.safetyCenter,
-        builder: (context, state) => const SafetyCenterScreen(),
-      ),
-      // Geräte & Sitzungen ("Wo bin ich eingeloggt?" + Überall-Abmelden)
-      GoRoute(
-        path: AppRoutes.devices,
-        builder: (context, state) => const DevicesScreen(),
-      ),
-      // Dating Hour (Event-Modus) - Vollbild-Routen ohne Navigator-Stack:
-      // Zurück-Geste führt jeweils zur Seite davor statt App-Exit.
-      GoRoute(
-        path: AppRoutes.datingHourRules,
-        builder: (context, state) => const BackToRouteScope(
-          route: AppRoutes.datingHourEvent,
-          child: DatingHourRulesScreen(),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.datingHourHowItWorks,
-        builder: (context, state) => const BackToRouteScope(
-          route: AppRoutes.datingHourEvent,
-          child: DatingHourHowItWorksScreen(),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.datingHourEvent,
-        builder: (context, state) => const BackToRouteScope(
-          route: AppRoutes.swipeModeSelection,
-          child: DatingHourEventScreen(),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.datingHourPreferences,
-        builder: (context, state) => const BackToRouteScope(
-          route: AppRoutes.datingHourEvent,
-          child: DatingHourPreferencesScreen(),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.datingHourChat,
-        redirect: (context, state) =>
-            _requireStringParam(state, 'sessionId', AppRoutes.datingHourEvent),
-        builder: (context, state) => BackToRouteScope(
-          route: AppRoutes.datingHourEvent,
-          child: DatingHourChatScreen(
-            sessionId: _stringRouteParam(state, 'sessionId')!,
-          ),
-        ),
-      ),
-      // Legacy-Pfade des alten "Matches"/"Likes"-Reiters: Weiterleitung
-      // auf den neuen Interessen-Reiter.
-      GoRoute(
-        path: '/matches',
-        redirect: (context, state) => AppRoutes.interessen,
-      ),
-      GoRoute(
-        path: '/likes',
-        redirect: (context, state) => AppRoutes.interessen,
-      ),
-      ShellRoute(
-        builder: (context, state, child) => MainNavigation(child: child),
-        routes: [
-          GoRoute(
-            path: AppRoutes.home,
-            builder: (context, state) => const HomeScreen(),
-          ),
-          GoRoute(
-            path: AppRoutes.findYourMatchCategory,
-            builder: (context, state) => const FindYourMatchCategoryScreen(),
-          ),
-          GoRoute(
-            path: AppRoutes.findYourMatch,
-            builder: (context, state) => const FindYourMatchScreen(),
-          ),
-          GoRoute(
-            path: AppRoutes.interessen,
-            builder: (context, state) => const InteressenScreen(),
-          ),
-          GoRoute(
-            path: AppRoutes.quiz,
-            redirect: (context, state) =>
-                _requireIntParam(state, 'matchId', AppRoutes.interessen),
-            builder: (context, state) =>
-                QuizScreen(matchId: _intRouteParam(state, 'matchId')!),
-          ),
-          GoRoute(
-            path: AppRoutes.spiceQuestions,
-            redirect: (context, state) =>
-                _requireIntParam(state, 'matchId', AppRoutes.interessen),
-            builder: (context, state) => SpiceQuestionsScreen(
-              matchId: _intRouteParam(state, 'matchId')!,
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.personalityTest,
-            builder: (context, state) => const PersonalityTestScreen(),
-          ),
-          GoRoute(
-            path: AppRoutes.profile,
-            builder: (context, state) => const ProfileScreen(),
-          ),
-          GoRoute(
-            path: AppRoutes.profileEdit,
-            builder: (context, state) => const ProfileEditScreen(),
-          ),
-          GoRoute(
-            path: AppRoutes.chatDetail,
-            redirect: (context, state) =>
-                _requireStringParam(state, 'matchId', AppRoutes.interessen),
-            builder: (context, state) =>
-                ChatDetailScreen(matchId: _stringRouteParam(state, 'matchId')!),
-          ),
-          GoRoute(
-            path: AppRoutes.profileDetail,
-            redirect: (context, state) =>
-                _requireStringParam(state, 'userId', AppRoutes.profile),
-            builder: (context, state) => ProfileDetailScreen(
-              userId: _stringRouteParam(state, 'userId')!,
-            ),
-          ),
-          GoRoute(
-            path: AppRoutes.randomChat,
-            builder: (context, state) => const RandomChatScreen(),
-          ),
-          GoRoute(
-            path: AppRoutes.transitRadar,
-            builder: (context, state) => const TransitRadarScreen(),
-          ),
-          // "Mit anderen verbinden" (QR-Code + Kontaktdaten).
-          //
-          // BEFUND (09.11.2026, Betreiber): "Bei dem Modi Screen Mit
-          // anderen verbinden soll unten die Reiterleiste noch sichtbar
-          // sein."
-          //
-          // DER GRUND: Diese Routen lagen VOR der ShellRoute - also
-          // ausserhalb des Haupt-Navigators, in dem `MainNavigation`
-          // (mit der Reiter-Leiste) sitzt. Sie waren dadurch
-          // Vollbild-Screens ohne Leiste.
-          //
-          // JETZT: Sie sind Teil der ShellRoute - die Leiste ist da.
-          // Der Reiter "/qr/" ist in `_subRoutePrefixes` bereits dem
-          // Entdecken-Reiter zugeordnet, damit der richtige Reiter
-          // hervorgehoben bleibt.
-          GoRoute(
-            path: AppRoutes.qrProfile,
-            builder: (context, state) => const QrProfileScreen(),
-          ),
-          GoRoute(
-            path: AppRoutes.qrScan,
-            builder: (context, state) => const QrScanScreen(),
-          ),
-          // "Connect to others": Telefon & Social Media (nur lokal gespeichert)
-          GoRoute(
-            path: AppRoutes.qrContacts,
-            builder: (context, state) => const ContactShareScreen(),
-          ),
-          // T: Entdeckungs-Modus-Auswahl MUSS Teil des Bottom-Navigation-Shells
-          // sein (nicht eigenständiger Vollbild-Screen), damit die untere
-          // Navigationsleiste sichtbar bleibt und der "Entdecken"-Tab korrekt
-          // hervorgehoben wird. Kein Zurück-Pfeil - siehe swipe_mode_selection_screen.
-          GoRoute(
-            path: AppRoutes.swipeModeSelection,
-            builder: (context, state) => const SwipeModeSelectionScreen(),
-          ),
-        ],
-      ),
-    ],
+    routes: appRoutes(),
   );
+}
+
+/// Die Routen der App - ohne die Umleitung.
+///
+/// DER WEG (19.11.2026, gefunden vom Rauchtest): Die Tabelle stand
+/// direkt in [createRouter]. Ein Test konnte sie deshalb nicht ohne
+/// Umleitung benutzen - und die Umleitung schickt den Nutzer je nach
+/// Zustand auf andere Seiten. So blieb der groesste Teil der Bildschirme
+/// ungetestet. Als eigene Funktion kann der Test jetzt JEDE Route
+/// ansteuern (test/screens/router_rauchtest_test.dart).
+///
+/// Die Umleitung selbst bleibt in [createRouter] - sie ist eine
+/// Entscheidung des Zustands, nicht der Tabelle.
+List<RouteBase> appRoutes() {
+  return [
+    GoRoute(
+      path: AppRoutes.loading,
+      builder: (context, state) => const LoadingScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.welcome,
+      builder: (context, state) => const WelcomeScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.signupWelcome,
+      builder: (context, state) => const SignupWelcomeScreen(),
+    ),
+    // Selektive Datenloeschung: einzelne Kategorien loeschen, ohne
+    // das Konto aufzugeben.
+    GoRoute(
+      path: AppRoutes.deleteData,
+      builder: (context, state) => const DeleteDataScreen(),
+    ),
+    // Elternfreigabe (16/17). Freiwillig - wer sie nicht will,
+    // ueberspringt sie und kommt direkt ins Setup.
+    GoRoute(
+      path: AppRoutes.guardianConsent,
+      builder: (context, state) => const GuardianConsentScreen(),
+    ),
+    // Die Entscheidung mit 18: Zugriff beenden, Nachfrist oder
+    // weiter behalten.
+    GoRoute(
+      path: AppRoutes.guardianTransition,
+      builder: (context, state) => const GuardianTransitionScreen(),
+    ),
+    // Die Elterneinstellungen als eigener Screen (04.11.2026).
+    GoRoute(
+      path: AppRoutes.guardianSettings,
+      builder: (context, state) => const GuardianSettingsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.login,
+      builder: (context, state) => const LoginScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.forgotPassword,
+      builder: (context, state) => const ForgotPasswordScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.resetPassword,
+      builder: (context, state) => const ResetPasswordScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.unbanRequest,
+      builder: (context, state) => UnbanRequestScreen(
+        initialEmail: state.extra is String ? state.extra as String : null,
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.settingsPrivacyOnce,
+      builder: (context, state) => const SettingsPrivacyOnceScreen(),
+    ),
+    // Sicherheits-Aufklärung (nach E-Mail-Bestätigung, vor dem Setup)
+    GoRoute(
+      path: AppRoutes.datingSafetyEducation,
+      builder: (context, state) => const DatingSafetyEducationScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.settings,
+      builder: (context, state) => const SettingsScreen(),
+    ),
+    // Verifizierungs-Flow
+    GoRoute(
+      path: AppRoutes.verificationVideo,
+      builder: (context, state) => const VerificationVideoScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.verificationComplete,
+      builder: (context, state) => const VerificationSuccessScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.verificationInfo,
+      builder: (context, state) => const VerificationInfoScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.emailVerification,
+      builder: (context, state) => const EmailVerificationScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.mfaSetup,
+      builder: (context, state) => const MfaSetupScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.mfaChallenge,
+      builder: (context, state) => const MfaChallengeScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.communityGuidelines,
+      builder: (context, state) => const CommunityGuidelinesScreen(),
+    ),
+    // Geschuetzter Admin-Bereich (nur ueber verstecketen Zugang erreichbar,
+    // Zugriff nur fuer AppConstants.adminUserId). Der redirect unten
+    // blockt den Aufruf fuer alle anderen Nutzer.
+    GoRoute(
+      path: AppRoutes.admin,
+      builder: (context, state) => const AdminScreen(),
+    ),
+    // Bug-Report (erreichbar von überall, kein Bottom-Nav)
+    GoRoute(
+      path: AppRoutes.bugReport,
+      builder: (context, state) => const BugReportScreen(),
+    ),
+    // Mood of the Day
+    GoRoute(
+      path: AppRoutes.moodPicker,
+      builder: (context, state) => const MoodPickerScreen(),
+    ),
+    // "Neu in dieser Version" (App-Update-Popup für Registrierte).
+    GoRoute(
+      path: AppRoutes.whatsNew,
+      builder: (context, state) => const WhatsNewScreen(),
+    ),
+    // Datenschutz & Account (DSGVO)
+    GoRoute(
+      path: AppRoutes.privacy,
+      builder: (context, state) => const PrivacyScreen(),
+    ),
+    // Volltext der Datenschutzerklärung (Google Play verlangt den Text
+    // auch IN der App, nicht nur als Link im Store).
+    GoRoute(
+      path: AppRoutes.privacyPolicy,
+      builder: (context, state) => const PrivacyPolicyTextScreen(),
+    ),
+    // Volltext der Nutzungsbedingungen (BEFUND 14.11.2026: "Die
+    // Nutzungsbedingungen funktionieren in der App nicht" - sie waren
+    // nur ein Link auf die Webseite).
+    GoRoute(
+      path: AppRoutes.privacyTerms,
+      builder: (context, state) => const TermsTextScreen(),
+    ),
+    // Safety Center: Hilfe bei Belästigung/Stalking + In-App-Maßnahmen
+    GoRoute(
+      path: AppRoutes.safetyCenter,
+      builder: (context, state) => const SafetyCenterScreen(),
+    ),
+    // Geräte & Sitzungen ("Wo bin ich eingeloggt?" + Überall-Abmelden)
+    GoRoute(
+      path: AppRoutes.devices,
+      builder: (context, state) => const DevicesScreen(),
+    ),
+    // Dating Hour (Event-Modus) - Vollbild-Routen ohne Navigator-Stack:
+    // Zurück-Geste führt jeweils zur Seite davor statt App-Exit.
+    GoRoute(
+      path: AppRoutes.datingHourRules,
+      builder: (context, state) => const BackToRouteScope(
+        route: AppRoutes.datingHourEvent,
+        child: DatingHourRulesScreen(),
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.datingHourHowItWorks,
+      builder: (context, state) => const BackToRouteScope(
+        route: AppRoutes.datingHourEvent,
+        child: DatingHourHowItWorksScreen(),
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.datingHourEvent,
+      builder: (context, state) => const BackToRouteScope(
+        route: AppRoutes.swipeModeSelection,
+        child: DatingHourEventScreen(),
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.datingHourPreferences,
+      builder: (context, state) => const BackToRouteScope(
+        route: AppRoutes.datingHourEvent,
+        child: DatingHourPreferencesScreen(),
+      ),
+    ),
+    GoRoute(
+      path: AppRoutes.datingHourChat,
+      redirect: (context, state) =>
+          _requireStringParam(state, 'sessionId', AppRoutes.datingHourEvent),
+      builder: (context, state) => BackToRouteScope(
+        route: AppRoutes.datingHourEvent,
+        child: DatingHourChatScreen(
+          sessionId: _stringRouteParam(state, 'sessionId')!,
+        ),
+      ),
+    ),
+    // Legacy-Pfade des alten "Matches"/"Likes"-Reiters: Weiterleitung
+    // auf den neuen Interessen-Reiter.
+    GoRoute(
+      path: '/matches',
+      redirect: (context, state) => AppRoutes.interessen,
+    ),
+    GoRoute(path: '/likes', redirect: (context, state) => AppRoutes.interessen),
+    ShellRoute(
+      builder: (context, state, child) => MainNavigation(child: child),
+      routes: [
+        GoRoute(
+          path: AppRoutes.home,
+          builder: (context, state) => const HomeScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.findYourMatchCategory,
+          builder: (context, state) => const FindYourMatchCategoryScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.findYourMatch,
+          builder: (context, state) => const FindYourMatchScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.interessen,
+          builder: (context, state) => const InteressenScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.quiz,
+          redirect: (context, state) =>
+              _requireIntParam(state, 'matchId', AppRoutes.interessen),
+          builder: (context, state) =>
+              QuizScreen(matchId: _intRouteParam(state, 'matchId')!),
+        ),
+        GoRoute(
+          path: AppRoutes.spiceQuestions,
+          redirect: (context, state) =>
+              _requireIntParam(state, 'matchId', AppRoutes.interessen),
+          builder: (context, state) =>
+              SpiceQuestionsScreen(matchId: _intRouteParam(state, 'matchId')!),
+        ),
+        GoRoute(
+          path: AppRoutes.personalityTest,
+          builder: (context, state) => const PersonalityTestScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.profile,
+          builder: (context, state) => const ProfileScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.profileEdit,
+          builder: (context, state) => const ProfileEditScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.chatDetail,
+          redirect: (context, state) =>
+              _requireStringParam(state, 'matchId', AppRoutes.interessen),
+          builder: (context, state) =>
+              ChatDetailScreen(matchId: _stringRouteParam(state, 'matchId')!),
+        ),
+        GoRoute(
+          path: AppRoutes.profileDetail,
+          redirect: (context, state) =>
+              _requireStringParam(state, 'userId', AppRoutes.profile),
+          builder: (context, state) =>
+              ProfileDetailScreen(userId: _stringRouteParam(state, 'userId')!),
+        ),
+        GoRoute(
+          path: AppRoutes.randomChat,
+          builder: (context, state) => const RandomChatScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.transitRadar,
+          builder: (context, state) => const TransitRadarScreen(),
+        ),
+        // "Mit anderen verbinden" (QR-Code + Kontaktdaten).
+        //
+        // BEFUND (09.11.2026, Betreiber): "Bei dem Modi Screen Mit
+        // anderen verbinden soll unten die Reiterleiste noch sichtbar
+        // sein."
+        //
+        // DER GRUND: Diese Routen lagen VOR der ShellRoute - also
+        // ausserhalb des Haupt-Navigators, in dem `MainNavigation`
+        // (mit der Reiter-Leiste) sitzt. Sie waren dadurch
+        // Vollbild-Screens ohne Leiste.
+        //
+        // JETZT: Sie sind Teil der ShellRoute - die Leiste ist da.
+        // Der Reiter "/qr/" ist in `_subRoutePrefixes` bereits dem
+        // Entdecken-Reiter zugeordnet, damit der richtige Reiter
+        // hervorgehoben bleibt.
+        GoRoute(
+          path: AppRoutes.qrProfile,
+          builder: (context, state) => const QrProfileScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.qrScan,
+          builder: (context, state) => const QrScanScreen(),
+        ),
+        // "Connect to others": Telefon & Social Media (nur lokal gespeichert)
+        GoRoute(
+          path: AppRoutes.qrContacts,
+          builder: (context, state) => const ContactShareScreen(),
+        ),
+        // T: Entdeckungs-Modus-Auswahl MUSS Teil des Bottom-Navigation-Shells
+        // sein (nicht eigenständiger Vollbild-Screen), damit die untere
+        // Navigationsleiste sichtbar bleibt und der "Entdecken"-Tab korrekt
+        // hervorgehoben wird. Kein Zurück-Pfeil - siehe swipe_mode_selection_screen.
+        GoRoute(
+          path: AppRoutes.swipeModeSelection,
+          builder: (context, state) => const SwipeModeSelectionScreen(),
+        ),
+      ],
+    ),
+  ];
 }
 
 /// Provider für den Router (abhängig von auth/settings via Ref).

@@ -25,6 +25,35 @@ const MethodChannel pfadKanal = MethodChannel(
   'plugins.flutter.io/path_provider',
 );
 
+/// Der Kanal von package_info_plus (die Versionsangaben der App).
+///
+/// DER GRUND (19.11.2026, gefunden vom Rauchtest): Die App fragt die
+/// Versionsangaben ab (der "Was ist neu"-Bildschirm vergleicht den
+/// Build mit dem gemerkten). Ohne den Ersatz wartet der Aufruf im
+/// Test endlos - der Bildschirm bleibt beim Lade-Spinner.
+const MethodChannel packageInfoKanal = MethodChannel(
+  'dev.fluttercommunity.plus/package_info',
+);
+
+/// Beantwortet die Versionsangaben der App.
+///
+/// [build] ist die Build-Nummer - der Rauchtest braucht eine, damit
+/// der "Was ist neu"-Bildschirm nicht dauerhaft auftaucht.
+void mockPackageInfo({String version = '0.10.2', String build = '56'}) {
+  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+      .setMockMethodCallHandler(packageInfoKanal, (anfrage) async {
+        if (anfrage.method == 'getAll') {
+          return <String, dynamic>{
+            'appName': 'Thestia',
+            'packageName': 'de.toterboy.thestia',
+            'version': version,
+            'buildNumber': build,
+          };
+        }
+        return null;
+      });
+}
+
 /// Der Kanal von flutter_secure_storage.
 const MethodChannel keystoreKanal = MethodChannel(
   'plugins.it_nomads.com/flutter_secure_storage',

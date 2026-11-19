@@ -62,6 +62,13 @@ class ImageSafetyService {
 
   static final ImageSafetyService instance = ImageSafetyService._();
 
+  /// Der Test-Haken: Uebernimmt den Befund der lokalen Pruefung.
+  ///
+  /// DER WEG: Nur der Test setzt das (und wieder zurueck). In der App
+  /// ist es immer `null` - dort entscheidet das Modell.
+  @visibleForTesting
+  static ImageSafetyResult? Function(Uint8List bytes)? classifyOverride;
+
   static const String _assetPath =
       'assets/models/image-safety-classifier-xs.onnx';
   static const int _inputSize = 224;
@@ -116,7 +123,16 @@ class ImageSafetyService {
   ///
   /// Vorverarbeitung: Resize auf 224x224 RGB, NCHW-Float32-Tensor,
   /// Pixelwerte normalisiert auf 0..1.
+  ///
+  /// DER TEST-HAKEN: [classifyOverride] uebernimmt den Befund, wenn er
+  /// gesetzt ist. DER GRUND (19.11.2026): Das Modell liegt als Datei
+  /// bei - im Test gibt es sie nicht, also lieferte die Pruefung immer
+  /// "kein Befund". Genau der Fall "Befund" ist aber der heikelste:
+  /// der Nutzer wird zurueckgewiesen, und der Weg dorthin (Einspruch
+  /// beim Team) war voellig ungetestet.
   Future<ImageSafetyResult?> classifyImage(Uint8List bytes) async {
+    final ueberschreibung = classifyOverride;
+    if (ueberschreibung != null) return ueberschreibung(bytes);
     if (!await ensureSession()) return null;
     final session = _session;
     if (session == null) return null;

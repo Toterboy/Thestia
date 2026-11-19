@@ -69,12 +69,20 @@ ROOT = _projektwurzel()
 # lag bei 24,0 %.
 # Stand 14.11.2026: 31,0 % (vor den neuen Tests: 30,0 %) - der Boden
 # liegt jetzt bei 30,0 %.
+# Stand 19.11.2026: 72,2 % (vor den neuen Tests: 70,0 %) - der Boden
+# liegt jetzt bei 70,0 %.
 #
 # DER BODEN LIEGT ETWAS NIEDRIGER ALS DIE MESSUNG: Auf Linux laeuft
 # eine Gruppe nicht (das UnifiedPush-Plugin kennt dort kein DBus) - die
 # Abdeckung ist dort also etwas kleiner als lokal. Der Boden soll den
 # Stand sichern, nicht an der Plattform haengen.
-MINDEST = 30.0
+#
+# WARUM 70 %: Der Boden war 30 % - das war eine Notfallgrenze fuer den
+# Anfang. Bei 72 % gemessener Deckung waere ein Boden von 30 % sinnlos:
+# es koennte die Haelfte des Codes ungetestet wegfallen, ohne dass das
+# Gate anschlaegt. Der Boden ist jetzt 70 % - knapp unter dem Stand, mit
+# Luft fuer die Linux-Messung.
+MINDEST = 70.0
 
 # Die Bereiche, in die die lib-Dateien einsortiert werden.
 BEREICHE = [

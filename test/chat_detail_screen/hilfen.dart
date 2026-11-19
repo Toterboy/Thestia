@@ -94,18 +94,30 @@ UserProfile chatDetailScreenPartner() => UserProfile(
   bio: '',
   birthDate: DateTime.now().subtract(const Duration(days: 24 * 365)),
 );
+
+/// Der Partner mit einer WOHLGEFORMTEN UUID.
+///
+/// DER GRUND: Die Peer-IDs werden geprueft (Audit M1/M2 - sie stehen in
+/// URL-Pfaden und Filtern). "partner-1" ist keine UUID - mit dieser ID
+/// wuerde der Server die Blockierung ablehnen.
+UserProfile chatDetailScreenPartnerUuid() => UserProfile(
+  id: '11111111-2222-3333-4444-555555555555',
+  name: 'Mira',
+  bio: '',
+  birthDate: DateTime.now().subtract(const Duration(days: 24 * 365)),
+);
 late supabase.SupabaseClient moodClient;
 ({ChatNotifier notifier, Match match}) chatMitNachricht({
   bool serverFunke = false,
+  bool partnerMitUuid = false,
 }) {
   final service = ChatService();
+  final partner = partnerMitUuid
+      ? chatDetailScreenPartnerUuid()
+      : chatDetailScreenPartner();
   final match = serverFunke
-      ? service.restoreServerMatch(
-          '7',
-          chatDetailScreenPartner(),
-          DateTime.now(),
-        )!
-      : service.createMatch(chatDetailScreenPartner());
+      ? service.restoreServerMatch('7', partner, DateTime.now())!
+      : service.createMatch(partner);
   service.addMessage(
     match.id,
     Message(

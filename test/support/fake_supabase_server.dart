@@ -79,6 +79,12 @@ class FakeSupabaseServer extends http.BaseClient {
   /// Ohne Eintrag antwortet eine Function mit `{}`.
   final Map<String, Object?> funktionsAntworten = <String, Object?>{};
 
+  /// Die Passkeys des Kontos (die Verwaltung im Einstellungs-Screen).
+  ///
+  /// DER GRUND: Der Client erwartet ein reines JSON-Array. Der Test
+  /// stellt damit genau die Liste, die er pruefen will.
+  final List<Map<String, dynamic>> passkeys = <Map<String, dynamic>>[];
+
   /// Die Aufrufe der Edge Functions (Name + Body) in der Reihenfolge.
   ///
   /// DAMIT ist sichtbar, WAS an den Server geschickt wurde - bei der
@@ -128,6 +134,15 @@ class FakeSupabaseServer extends http.BaseClient {
     // Das eingeloggte Konto ("wer bin ich").
     if (pfad.endsWith('/auth/v1/user')) {
       return _antwort(request, 200, jsonEncode(_benutzer()));
+    }
+
+    // Die Passkeys des Kontos (die Verwaltung im Einstellungs-Screen).
+    //
+    // DER GRUND: Die Liste liefert der Client als reines JSON-Array.
+    // Ohne diese Antwort wuerde die Karte den Fehler zeigen - und der
+    // Weg "Passkey umbenennen" bzw. "loeschen" waere ungetestet.
+    if (pfad.endsWith('/auth/v1/passkeys')) {
+      return _antwort(request, 200, jsonEncode(passkeys));
     }
 
     // Die Session (Anmeldung, Token-Aktualisierung).
