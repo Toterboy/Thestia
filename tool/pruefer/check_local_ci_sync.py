@@ -70,7 +70,10 @@ SPIEGEL = ROOT / "tool" / "pruefer/check_local_ci.ps1"
 # Schalter. Beide Seiten (CI und Spiegel) benutzen dieselbe Form -
 # sonst vergleicht man Aepfel mit Birnen und meldet grundlos einen
 # Unterschied.
-AUFruf = re.compile(r"python3?\s+tool[/\\](check_[a-z0-9_]+\.py)((?:\s+--?[\w-]+)*)")
+AUFruf = re.compile(
+    r"python3?\s+tool[/\\][\w./\\-]*(check_[a-z0-9_]+\.py)"
+    r"((?:\s+--?[\w-]+)*)"
+)
 
 # continue-on-error: true - nur informativ, kein Gate.
 WEICH = re.compile(r"continue-on-error:\s*true")
@@ -104,7 +107,7 @@ def _skripte_aus_ci() -> tuple[set[str], set[str]]:
 def _skripte_aus_spiegel() -> set[str]:
     text = SPIEGEL.read_text(encoding="utf-8")
     gefunden: set[str] = set()
-    for m in re.finditer(r"tool[/\\](check_[a-z0-9_]+\.py)", text):
+    for m in re.finditer(r"tool[/\\][\w./\\-]*(check_[a-z0-9_]+\.py)", text):
         gefunden.add(m.group(1).replace("\\", "/"))
     return gefunden
 
