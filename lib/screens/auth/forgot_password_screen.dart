@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/utils/validators.dart';
-import 'package:thestia/widgets/buttons.dart';
+import 'package:thestia/utils/security/validators.dart';
+import 'package:thestia/widgets/common/buttons.dart';
 
 /// Platzhalter-Screen für "Passwort vergessen?" (Prototyp).
 ///

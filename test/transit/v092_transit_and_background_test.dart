@@ -2,8 +2,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thestia/models/transit_models.dart';
-import 'package:thestia/utils/chat_backgrounds.dart';
+import 'package:thestia/models/transit/transit_models.dart';
+import 'package:thestia/utils/chat/chat_backgrounds.dart';
 import 'package:thestia/widgets/transit_mode_selector.dart';
 import '../support/l10n_quellen.dart';
 

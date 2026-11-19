@@ -1,0 +1,1182 @@
+#!/usr/bin/env python3
+"""Gemeinsames Web-Design fuer alle Seiten in passkey-assets/.
+
+DREI VORGABEN, die hier zusammenkommen:
+
+1. NUTZERWUNSCH (27.10.2026): Dark- und Light-Mode mit einem kleinen
+   Umschalt-Knopf, und alles abgerundet - die Seiten sollen zum Design
+   der App passen.
+
+2. NUTZERWUNSCH (27.10.2026, zweite Runde): "Die Websiten sehen
+   grauenhaft aus. Die Schriftart ist schlimm. Der Button zum Umschalten
+   sieht vom Icon nicht ganz logisch aus." Daraus wurden drei Regeln:
+     * eine echte Typografie (System-Schrift in der richtigen
+       Reihenfolge, groessere Grundgroesse, klare Hierarchie, Zeilenlaenge
+       begrenzt) statt der vorherigen Standard-Browser-Schrift,
+     * eine Karten-Anordnung wie in der App (Karte auf getoentem
+       Grund, Radius 24) statt einer nackten Textseite,
+     * ein Umschalt-Knopf mit EINEM logischen Symbol.
+
+3. PROJEKTREGEL: Die veroeffentlichten Seiten sind bewusst statisch.
+   Kein JavaScript, keine externen Requests - das prueft
+   test/privacy_policy_test.dart ("Die HTML-Datei ist statisch - kein
+   Skript, keine externen Requests"). Ein Skript waere hier nicht nur
+   unnoetig, es waere auch ein Grund, die Seite nicht mehr ohne
+   Weiteres zu statischen Dateien zu halten.
+
+DER UMSCHALTER OHNE JAVASCRIPT:
+
+Ein echter Schalter, versteckt, plus ein sichtbares Label - beides
+reines CSS ueber die Pseudo-Klasse :has():
+
+    <input type="checkbox" id="modus-umschalter" class="modus-schalter">
+    <label for="modus-umschalter" class="modus-knopf"> ... </label>
+
+    html:has(#modus-umschalter:checked) { --bg: #0e0e13; ... }
+
+Vorteile:
+  * Die Checkbox bleibt fokussierbar und mit der Leertaste bedienbar -
+    ein <label> allein waere fuer die Tastatur tot.
+  * Der Klick auf das Label schaltet die Checkbox um, das Label ist der
+    sichtbare Knopf.
+  * Kein Skript, keine Speicherung, keine Anfrage.
+
+Nachteil, ehrlich benannt: die Wahl ueberlebt das Neuladen NICHT (ohne
+localStorage). Beim naechsten Besuch gilt wieder die Systemeinstellung.
+Das ist der Preis fuer die Projektregel "statische Seite".
+
+Browser ohne :has() (sehr alte Safari/Firefox) zeigen die Seite im
+hellen Modus; `color-scheme: light dark` faerbt trotzdem die
+Formularfelder und die Scrollleiste ein.
+
+DAS SYMBOL DES KNOPFS (Nutzerwunsch, zweite Runde):
+
+Vorher standen dort zwei Unicode-Zeichen (U+263D und U+263E, beides
+Halbmonde) nebeneinander - die sahen weder nach Sonne noch nach Mond
+aus und je nach System unterschiedlich aus. Jetzt ist es ein
+SVG-Symbolpaar aus den Material-Icons (dark_mode / light_mode).
+
+DIE LOGIK: das Symbol zeigt den Modus, in den man WECHSELT, nicht den,
+in dem man ist. Im hellen Modus steht ein MOND (Klick = dunkel), im
+dunklen Modus eine SONNE (Klick = hell). Das ist die uebliche
+Konvention und die einzige, die man nicht nachschlagen muss.
+"""
+
+# Die Variablen und das, was der Knopf braucht.
+THEME_CSS = """
+    /* Web-Design (tool/helpers/web_theme.py) */
+    /* ---------------------------------------------------------------
+       Eine Quelle fuer alle Seiten.
+
+       Die Farben kommen aus der App: Primaer #E9457B, heller
+       Grund #F7F7FB, Karten weiss, dunkler Grund #121212, Karten
+       #1E1E1E. Die Linkfarbe ist eine dunklere Variante des Rosa
+       (#d62d6c), damit sie auf weiss den Kontrast-Anspruch von 4,5:1
+       erreicht.
+       --------------------------------------------------------------- */
+    /* --- Farben: zwei Paletten, vier Zustaende --------------------- */
+    /*
+     * (1) Die Seite folgt der Systemeinstellung - ohne Zutun.
+     * (2) Der Schalter dreht um: hell -> dunkel, dunkel -> hell.
+     *
+     * Dazu braucht es vier Regeln, weil CSS den Systemzustand nicht
+     * "unsetten" kann - der Schalter ist ein 2-Zustands-Schalter:
+     *
+     *   System hell + Schalter aus  -> hell
+     *   System hell + Schalter an   -> dunkel
+     *   System dunkel + Schalter aus -> dunkel
+     *   System dunkel + Schalter an  -> hell
+     *
+     * Specificitaet: alle vier Selektoren haben (0,2,0) - `:root:has(...)`
+     * gewinnt gegen `:root` (0,1,0), und die beiden Media-Query-Varianten
+     * entscheiden sich ueber die Reihenfolge (die letzte gewinnt).
+     */
+    :root {
+      color-scheme: light;
+      --bg: #f2f2f8;
+      --fg: #1b1b21;
+      --muted: #575764;
+      --card: #ffffff;
+      --card-fg: #1b1b21;
+      --line: #e4e2ee;
+      --accent: #d62d6c;
+      --accent-soft: rgba(214,45,108,.08);
+      --accent-line: rgba(214,45,108,.30);
+      --accent-fg: #ffffff;
+      --shadow-sm: 0 1px 2px rgba(25,18,45,.06);
+      --shadow: 0 1px 2px rgba(25,18,45,.04),
+                 0 20px 44px -24px rgba(25,18,45,.40);
+      --radius: 24px;
+      --radius-s: 14px;
+    }
+    /* System dunkel: die Seite startet dunkel (ohne Zutun des Nutzers). */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --bg: #0e0e13;
+        --fg: #ece9f2;
+        --muted: #a29fb0;
+        --card: #191920;
+        --card-fg: #ece9f2;
+        --line: #2b2a35;
+        --accent: #ff86b3;
+        --accent-soft: rgba(255,134,179,.12);
+        --accent-line: rgba(255,134,179,.34);
+        --accent-fg: #17161c;
+        --shadow-sm: 0 1px 2px rgba(0,0,0,.55);
+        --shadow: 0 1px 2px rgba(0,0,0,.40),
+                   0 24px 48px -24px rgba(0,0,0,.85);
+      }
+    }
+    /* Schalter an: umdrehen. Im hellen System wird es dunkel ... */
+    :root:has(#modus-umschalter:checked) {
+      color-scheme: dark;
+      --bg: #0e0e13;
+      --fg: #ece9f2;
+      --muted: #a29fb0;
+      --card: #191920;
+      --card-fg: #ece9f2;
+      --line: #2b2a35;
+      --accent: #ff86b3;
+      --accent-soft: rgba(255,134,179,.12);
+      --accent-line: rgba(255,134,179,.34);
+      --accent-fg: #17161c;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.55);
+      --shadow: 0 1px 2px rgba(0,0,0,.40),
+                 0 24px 48px -24px rgba(0,0,0,.85);
+    }
+    /* ... und im dunklen System wieder hell. */
+    @media (prefers-color-scheme: dark) {
+      :root:has(#modus-umschalter:checked) {
+        color-scheme: light;
+        --bg: #f2f2f8;
+        --fg: #1b1b21;
+        --muted: #575764;
+        --card: #ffffff;
+        --card-fg: #1b1b21;
+        --line: #e4e2ee;
+        --accent: #d62d6c;
+        --accent-soft: rgba(214,45,108,.08);
+        --accent-line: rgba(214,45,108,.30);
+        --accent-fg: #ffffff;
+        --shadow-sm: 0 1px 2px rgba(25,18,45,.06);
+        --shadow: 0 1px 2px rgba(25,18,45,.04),
+                   0 20px 44px -24px rgba(25,18,45,.40);
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      /* --- Der Scrollstrich rechts ---------------------------------
+         BEFUND (14.11.2026, Betreiber): "Nutzungsbedingungen,
+         Datenschutzerklaerung und Impressum sollen rechts diesen
+         Scrollstrich haben, woran man erkennen kann wie weit die Seite
+         noch geht und man soll damit auch scrollen koennen mit dem
+         Strich."
+
+         Drei Stuecke, die zusammenspielen:
+           * `overflow-y: scroll` - die Leiste ist IMMER da. Ohne das
+             blendet der Browser sie auf dem Telefon aus, bis man
+             scrollt; man sieht dann nicht, wie lang die Seite noch ist.
+           * `::-webkit-scrollbar` - macht die Leiste sichtbar und dick
+             genug, um sie mit dem Finger zu ziehen (Chrome, Safari).
+           * `scrollbar-width` / `scrollbar-color` - dasselbe fuer
+             Firefox, das keine ::-webkit-Regeln kennt.
+         `scrollbar-gutter: stable` haelt den Platz frei, damit die
+         Seite beim Scrollen nicht springt. */
+      overflow-y: scroll;
+      scrollbar-gutter: stable;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent) transparent;
+    }
+
+    ::-webkit-scrollbar {
+      width: 14px;
+      height: 14px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      /* Der Rand innen (3px) macht den Griff schmaler, ohne die
+         Leiste selbst schmaler zu machen - so bleibt er gut treffbar. */
+      background: var(--accent);
+      border-radius: 8px;
+      border: 3px solid transparent;
+      background-clip: content-box;
+    }
+
+    ::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      max-width: none;
+      background: var(--bg);
+      color: var(--fg);
+      /* Die Reihenfolge ist wichtig: `system-ui` zuerst nimmt die
+         System-Schrift (San Francisco, Segoe UI Variable, Roboto) -
+         das ist auf jedem Geraet die Schrift, fuer die die App gebaut
+         ist. Die konkreten Namen danach sind der Fallback fuer
+         aeltere Systeme, `sans-serif` der letzte Notnagel. */
+      font-family: system-ui, -apple-system, "Segoe UI Variable Text",
+                   "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans",
+                   Arial, sans-serif;
+      font-size: 17px;
+      line-height: 1.7;
+      letter-spacing: -0.003em;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    /* --- Kopfzeile: Marke, Name, Umschalter ------------------------ */
+    .kopf {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px clamp(16px, 5vw, 40px);
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+    }
+    .marke { display: inline-flex; line-height: 0; }
+    .marke svg { display: block; width: 26px; height: 26px; }
+    .marken-text {
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: -0.015em;
+    }
+
+    /* Die Checkbox bleibt im Quelltext (Tastatur!), ist aber nicht
+       sichtbar. Der Klick geht ueber das Label. */
+    .modus-schalter {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .modus-knopf {
+      margin-left: auto;
+      /* BEFUND 04.11.2026: Der Elternbereich hat eine seiten-eigene
+         Formular-Regel "label { margin: 1rem 0 .35rem; }". Sie trifft
+         auch diesen Knopf - er ist ja ein <label> fuer den
+         unsichtbaren Schalter. Dadurch sass er 5,6 px hoeher als der
+         Sprachknopf daneben. Die Kopfschaltflaechen werden deshalb
+         hier vollstaendig definiert: kein margin, damit keine Seite
+         sie versehentlich verschieben kann. */
+      margin-top: 0;
+      margin-bottom: 0;
+      width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--card);
+      color: var(--fg);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      transition: transform .15s ease, color .2s ease,
+                  border-color .2s ease, background .2s ease;
+    }
+    .modus-knopf:hover {
+      transform: scale(1.06);
+      color: var(--accent);
+      border-color: var(--accent-line);
+    }
+    .modus-knopf:active { transform: scale(.97); }
+    .modus-schalter:focus-visible + .modus-knopf {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+    .modus-knopf svg { width: 20px; height: 20px; }
+
+    /* Der Sprachknopf sitzt rechts neben dem Modus-Knopf. Er ist ein
+       LINK, kein Schalter: die zweite Sprache ist eine eigene Datei, und
+       ein Link laesst sich mit der Tastatur bedienen und im neuen Tab
+       oeffnen. */
+    .sprach-knopf {
+      width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      /* Wie der Modusknopf: kein margin. Eine seiten-eigene Formular-
+         Regel darf die Kopfzeile nicht verschieben. */
+      margin-top: 0;
+      margin-bottom: 0;
+      flex: 0 0 auto;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--card);
+      color: var(--fg);
+      box-shadow: var(--shadow-sm);
+      font-size: .8rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform .15s ease, color .2s ease,
+                  border-color .2s ease, background .2s ease;
+    }
+    .sprach-knopf:hover {
+      transform: scale(1.06);
+      color: var(--accent);
+      border-color: var(--accent-line);
+    }
+    .sprach-knopf:active { transform: scale(.97); }
+    .sprach-knopf:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    /* Das Symbol zeigt den ZIEL-Modus: Mond im hellen Modus (Klick
+       = dunkel), Sonne im dunklen Modus (Klick = hell).
+
+       Dieselbe Logik wie die Farben: das System entscheidet, was der
+       Knopf anzeigt - der Schalter dreht nur um. */
+    .modus-knopf .icon-sonne { display: none; }
+    /* System dunkel: Ziel ist hell -> Sonne zeigen. */
+    @media (prefers-color-scheme: dark) {
+      :root:not(:has(#modus-umschalter:checked)) .modus-knopf .icon-sonne {
+        display: block;
+      }
+      :root:not(:has(#modus-umschalter:checked)) .modus-knopf .icon-mond {
+        display: none;
+      }
+    }
+    /* Schalter an: im hellen System war der Ziel-Modus dunkel (Mond),
+       im dunklen System hell (Sonne). */
+    :root:has(#modus-umschalter:checked) .modus-knopf .icon-sonne {
+      display: block;
+    }
+    :root:has(#modus-umschalter:checked) .modus-knopf .icon-mond {
+      display: none;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:has(#modus-umschalter:checked) .modus-knopf .icon-sonne {
+        display: none;
+      }
+      :root:has(#modus-umschalter:checked) .modus-knopf .icon-mond {
+        display: block;
+      }
+    }
+
+    /* --- Inhalt: eine Karte auf getoentem Grund -------------------- */
+    .inhalt {
+      max-width: 46rem;
+      margin: clamp(16px, 3vw, 32px) auto 0;
+      padding: clamp(22px, 4vw, 32px);
+      background: var(--card);
+      color: var(--card-fg);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .inhalt > :first-child { margin-top: 0; }
+    .inhalt > :last-child { margin-bottom: 0; }
+
+    /* --- Typografie ----------------------------------------------- */
+    h1 {
+      font-size: clamp(1.7rem, 1.2rem + 1.8vw, 2.15rem);
+      line-height: 1.15;
+      letter-spacing: -0.025em;
+      font-weight: 700;
+      margin: 0 0 .35rem;
+    }
+    h1 + p.lead { margin-top: 0; }
+    h2 {
+      font-size: 1.22rem;
+      line-height: 1.3;
+      letter-spacing: -0.012em;
+      font-weight: 650;
+      margin: 2.4rem 0 .7rem;
+      padding-top: 1.4rem;
+      border-top: 1px solid var(--line);
+    }
+    h3 {
+      font-size: 1.03rem;
+      line-height: 1.35;
+      font-weight: 650;
+      margin: 1.6rem 0 .5rem;
+    }
+    p { margin: 0 0 1.05rem; }
+    p.lead {
+      color: var(--muted);
+      font-size: 1.06rem;
+      margin-bottom: 1.6rem;
+    }
+    .klein { color: var(--muted); font-size: .9rem; }
+    strong { font-weight: 650; }
+    em { font-style: italic; }
+    a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+      text-decoration-color: var(--accent-line);
+    }
+    a:hover { text-decoration-color: var(--accent); }
+
+    ul, ol { margin: .4rem 0 1.25rem; padding-left: 1.35rem; }
+    li { margin-bottom: .4rem; }
+    li::marker { color: var(--accent); }
+
+    /* Hinweis-Boxen: wie die tonalen Karten der App. */
+    .box, .hinweis {
+      background: var(--accent-soft);
+      color: var(--card-fg);
+      border: 1px solid var(--accent-line);
+      border-left: 1px solid var(--accent-line);
+      border-radius: var(--radius-s);
+      padding: 1rem 1.15rem;
+      margin: 1.6rem 0;
+    }
+    .box > :last-child, .hinweis > :last-child { margin-bottom: 0; }
+
+    /* --- Tabellen: abgerundete Karten ----------------------------- */
+    .tabellen-huelle {
+      overflow-x: auto;
+      margin: 1.4rem 0 1.6rem;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      box-shadow: var(--shadow);
+    }
+    table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      margin: 0;
+      /* 0,88 rem statt 0,95: die grosse Tabelle der
+         Datenschutzerklaerung brauchte 693 px, die Karte bietet 672 px.
+         Mit der kleineren Schrift passt sie in die Karte - sonst
+         schneidet der Kartenrand die letzte Spalte ab. */
+      font-size: .88rem;
+      background: var(--card);
+      color: var(--card-fg);
+    }
+    th, td {
+      border: 0;
+      padding: .65rem .75rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { font-weight: 650; }
+    thead th {
+      background: var(--accent-soft);
+      border-bottom: 1px solid var(--line);
+      white-space: nowrap;
+    }
+    tbody tr + tr td { border-top: 1px solid var(--line); }
+
+    footer {
+      max-width: 46rem;
+      margin: 0 auto;
+      padding: 20px clamp(16px, 4vw, 28px) 56px;
+      color: var(--muted);
+      font-size: .88rem;
+    }
+    footer p { margin-bottom: .4rem; }
+
+    /* --- Landing- und Bestaetigungsseite ---------------------------- */
+    .held { max-width: 46rem; margin: 0 auto; padding: clamp(20px, 4vw, 32px); }
+    .held-karte {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: clamp(22px, 4vw, 40px); margin: clamp(16px, 3vw, 32px) auto 0;
+      max-width: 46rem; text-align: center;
+    }
+    .held-marke { display: flex; align-items: center; justify-content: center; }
+    .held-marke svg { width: 88px; height: 88px; }
+    .held-titel {
+      font-size: clamp(1.8rem, 1.2rem + 2.6vw, 2.5rem);
+      line-height: 1.15; letter-spacing: -0.03em; font-weight: 700;
+      margin: 10px 0 0;
+    }
+    .held-text {
+      color: var(--muted); font-size: 1.05rem; line-height: 1.6;
+      margin: 10px auto 0; max-width: 34rem;
+    }
+    .held-knopfe {
+      display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+      margin: 26px 0 0;
+    }
+    .held-knopf {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 13px 20px; border-radius: 999px; font-weight: 600;
+      text-decoration: none; border: 1px solid var(--line);
+      color: var(--fg); background: var(--card);
+    }
+    .held-knopf.primary {
+      background: var(--accent); border-color: transparent;
+      color: var(--accent-fg);
+    }
+    .held-knopf:hover { transform: translateY(-1px); }
+    .held-liste {
+      display: grid; gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      margin: 0;
+    }
+    /*
+     * Die unterste der fuenf Kacheln steht allein in ihrer Zeile
+     * (NUTZERWUNSCH 31.10.2026: "Unten bei den 5 Kacheln soll die
+     * untere mittig sein und nicht linksbuendig").
+     *
+     * Bei fuenf Kacheln und zwei Spalten bleibt eine Kachel uebrig, die
+     * allein in der letzten Zeile steht - und die hing linksbuendig.
+     * Das sah nach einem Fehler aus: als waere die Zeile unvollstaendig.
+     *
+     * `grid-column: 1 / -1` laesst sie die ganze Zeile einnehmen,
+     * `justify-self: center` stellt sie mittig darin. Ihre Breite
+     * bleibt dabei die einer normalen Kachel (die Spaltenbreite) -
+     * sonst waere sie plötzlich doppelt so breit wie ihre Schwestern.
+     */
+    .held-liste > .held-link:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+      justify-self: center;
+      width: calc(50% - 6px);
+    }
+    /* Bei einer Spalte (schmale Fenster) ist die Kachel allein und
+       darf die volle Breite nehmen - dort ist "mittig" nicht sinnvoll,
+       die Kachel fuellt die Zeile ohnehin aus. */
+    @media (max-width: 479px) {
+      .held-liste > .held-link:last-child:nth-child(odd) {
+        width: 100%;
+      }
+    }
+    .held-link {
+      display: block; padding: 16px 18px; border-radius: var(--radius-s);
+      background: var(--card); border: 1px solid var(--line);
+      text-decoration: none; color: inherit;
+    }
+    .held-link strong { display: block; font-size: 1rem; margin-bottom: 3px; }
+    .held-link span {
+      color: var(--muted); font-size: .92rem; line-height: 1.45;
+      display: block;
+    }
+    .held-link:hover { border-color: var(--accent); }
+    .held-fuss {
+      max-width: 46rem; margin: 0 auto;
+      padding: 22px clamp(20px, 4vw, 32px) 56px;
+      color: var(--muted); font-size: .9rem;
+    }
+    .held-fuss a { color: var(--accent); }
+
+    /* --- Die Screenshot-Galerie (NUTZERWUNSCH 31.10.2026) ------------ */
+    /*
+     * "Auf thestia.de sollen auch die Screenshots angezeigt werden."
+     *
+     * Die Bilder liegen in passkey-assets/screenshots/ und werden von
+     * tool/web/make_web_screenshots.py verkleinert und hierher kopiert.
+     * Das Markup erzeugt dasselbe Skript - es kann also nicht
+     * auseinanderlaufen (Bild da, Bild fehlt).
+     */
+    .galerie {
+      max-width: 46rem; margin: 0 auto;
+      padding: clamp(6px, 1vw, 12px) clamp(20px, 4vw, 32px) 0;
+    }
+    .galerie-titel {
+      font-size: 1.22rem; line-height: 1.3; letter-spacing: -0.012em;
+      font-weight: 650; margin: 0 0 .35rem;
+      /* KEIN Trennstrich (NUTZERWUNSCH 31.10.2026: "Bei thestia.de
+       * soll der Strich zwischen dem oberen Bereich mit den Buttons
+       * (Im Play Store etc.) und der Ueberschrift Ein Blick in die App
+       * weg").
+       *
+       * Die h2-Regel setzt einen Strich ueber jede Zwischenueberschrift
+       * - auf den Textseiten trennt er die Abschnitte voneinander, das
+       * ist richtig. Hier aber trennt er zwei Dinge, die zusammen
+       * gehoeren: die Karte mit den Buttons und die Galerie direkt
+       * darunter. Der Strich sah aus wie ein Rest der Karte. */
+      border-top: none;
+      padding-top: 0;
+    }
+    .galerie-text {
+      color: var(--muted); font-size: .95rem; margin: 0 0 1rem;
+    }
+    /*
+     * Das Raster ist ein FLEX-Container, kein Grid (NUTZERWUNSCH
+     * 31.10.2026: "Zudem sollen die unteren beiden Bilder zentriert
+     * werden").
+     *
+     * Bei acht Bildern und drei Spalten bleiben in der letzten Reihe
+     * zwei uebrig - im Grid standen die linksbuendig, als waeren sie
+     * nicht dazugehoerig. Mit Flex und `justify-content: center`
+     * richtet Flex jede Zeile einzeln aus: die letzte Reihe mit zwei
+     * Bildern steht damit automatisch mittig.
+     *
+     * Flex ist hier robuster als Grid: bei einer anderen Bildzahl
+     * (sieben, neun, zehn) stimmt die Zentrierung immer - im Grid
+     * muesste man die Positionen hart codieren, und das passte dann
+     * nur bei genau acht Bildern.
+     *
+     * Die Breite ist fest (kein wachsen): `flex: 0 0 <breite>`
+     * verhindert, dass ein Bild in einer Reihe mit nur einem Bild
+     * allein auf die volle Breite aufgeht.
+     */
+    .galerie-raster {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 14px;
+    }
+    .galerie-bild {
+      /* Zwei Spalten auf schmalen Fenstern. */
+      flex: 0 0 calc(50% - 7px);
+      max-width: calc(50% - 7px);
+    }
+    /* Ab Tablet-Breite: drei Spalten statt zwei. Die Bilder sind dann
+       gross genug, dass man sie ohne Zooming lesen kann, und die
+       Bildunterschrift passt in zwei Zeilen. */
+    @media (min-width: 640px) {
+      .galerie-bild {
+        flex: 0 0 calc(33.3333% - 9.3333px);
+        max-width: calc(33.3333% - 9.3333px);
+      }
+    }
+    /* Auf sehr schmalen Fenstern ein Bild pro Zeile. */
+    @media (max-width: 419px) {
+      .galerie-bild {
+        flex: 0 0 100%;
+        max-width: 100%;
+      }
+    }
+    .galerie-bild {
+      margin: 0; overflow: hidden;
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius-s); box-shadow: var(--shadow-sm);
+      transition: transform .18s ease, border-color .18s ease;
+    }
+    .galerie-bild:hover {
+      transform: translateY(-2px); border-color: var(--accent-line);
+    }
+    .galerie-bild img {
+      display: block; width: 100%; height: auto;
+      background: var(--accent-soft);
+    }
+    .galerie-bild figcaption {
+      padding: 10px 12px 12px;
+      font-size: .82rem; line-height: 1.4; color: var(--muted);
+    }
+    .galerie-bild figcaption strong {
+      display: block; color: var(--card-fg);
+      font-size: .9rem; font-weight: 650; margin-bottom: 2px;
+    }
+
+    /* --- Der Sicherheitscheck (Captcha-Seite) ------------------------ */
+    .sicherheit { max-width: 30rem; margin: 0 auto; padding: clamp(16px, 4vw, 28px); }
+    .sicherheit-karte {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      padding: clamp(18px, 4vw, 28px); text-align: center;
+    }
+    .sicherheit-titel { font-weight: 700; font-size: 1.2rem; letter-spacing: -0.02em; margin: 0 0 4px; }
+    .sicherheit-status { display: inline-block; font-size: .92rem; color: var(--muted); margin-bottom: 14px; }
+    .sicherheit-status.ok { color: #1b7f4d; font-weight: 600; }
+    .sicherheit-status.fehler { color: #b3261e; }
+    .sicherheit-hinweis { color: var(--muted); font-size: .92rem; line-height: 1.55; margin: 16px 0 0; }
+    .sicherheit-neu {
+      margin-top: 16px; padding: 11px 18px; border-radius: 999px;
+      border: 1px solid var(--line); background: var(--card); color: var(--fg);
+      font: inherit; font-weight: 600; cursor: pointer;
+    }
+    .sicherheit-neu:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Der WebView der App ist klein (300 x 200 dp). Dort wird alles
+       weggepackt, was nicht das Widget selbst ist - der Nutzer sieht
+       in der App nur den Sicherheitscheck, nicht die Seite drumherum. */
+    @media (max-width: 420px), (max-height: 260px) {
+      .kopf { display: none; }
+      .sicherheit { padding: 8px; }
+      .sicherheit-karte { padding: 12px; border-radius: 16px; box-shadow: none; }
+      .sicherheit-titel { font-size: 1rem; }
+      .sicherheit-status { margin-bottom: 8px; }
+      .sicherheit-hinweis { display: none; }
+    }
+
+
+    @media (max-width: 560px) {
+      body { font-size: 16px; }
+      table { font-size: .88rem; }
+      th, td { padding: .6rem .7rem; }
+    }
+"""
+
+# Der Schalter und sein sichtbares Label.
+#
+# Die Checkbox kommt ZUERST: das Label greift ueber `for` auf sie zu und
+# die CSS-Regel `.modus-schalter:focus-visible + .modus-knopf` braucht das
+# Label als unmittelbar nachfolgenden Geschwister.
+#
+# DIE SYMBOLE: Material-Icons als SVG (dark_mode / light_mode). Vorher
+# standen hier zwei Unicode-Halbmonde - die wirkten weder wie eine Sonne
+# noch wie ein Mond.
+_SVG_SONNE = (
+    '<svg class="icon-sonne" viewBox="0 0 24 24" fill="none" '
+    'stroke="currentColor" stroke-width="1.8" stroke-linecap="round" '
+    'aria-hidden="true">'
+    '<circle cx="12" cy="12" r="4"/>'
+    '<path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4'
+    'M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'
+    '</svg>'
+)
+_SVG_MOND = (
+    '<svg class="icon-mond" viewBox="0 0 24 24" fill="none" '
+    'stroke="currentColor" stroke-width="1.8" stroke-linecap="round" '
+    'stroke-linejoin="round" aria-hidden="true">'
+    '<path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9Z"/>'
+    '</svg>'
+)
+
+# Die Marke: das Herz der App in ihrem Verlaufsrot-Violett.
+_SVG_MARKE = (
+    '<svg viewBox="0 0 24 24" aria-hidden="true">'
+    '<defs><linearGradient id="thestia-marke" x1="0" y1="0" x2="1" y2="1">'
+    '<stop offset="0" stop-color="#ff6b95"/>'
+    '<stop offset="1" stop-color="#7b4dd6"/>'
+    '</linearGradient></defs>'
+    '<path fill="url(#thestia-marke)" '
+    'd="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 '
+    '7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 '
+    '22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>'
+    '</svg>'
+)
+
+# Die Kopfzeile mit Marke, Name und Umschalt-Knopf.
+KOPF_HTML = (
+    '<header class="kopf">\n'
+    '  <span class="marke">' + _SVG_MARKE + '</span>\n'
+    '  <span class="marken-text">Thestia</span>\n'
+    '  <input type="checkbox" id="modus-umschalter" class="modus-schalter" '
+    'aria-label="Dark- und Light-Mode umschalten">\n'
+    '  <label for="modus-umschalter" class="modus-knopf" '
+    'title="Dark- und Light-Mode umschalten">'
+    + _SVG_MOND + _SVG_SONNE +
+    '</label>\n'
+    '__SPRACHKNOPF__'
+    '</header>'
+)
+
+
+def sprachknopf(ziel: str, sprache: str) -> str:
+    """Der Sprachknopf (leer, wenn es keine zweite Fassung gibt).
+
+    NUTZERWUNSCH (03.11.2026): "Oben rechts neben dem Button fuer Dark
+    und Light Mode soll ein Button fuer die Sprache zwischen Deutsch und
+    Englisch sein."
+
+    Der Knopf zeigt die ZIEL-Sprache, nicht die aktuelle: auf der
+    deutschen Seite steht "EN", auf der englischen "DE". Das ist
+    dieselbe Logik wie beim Modus-Knopf (das Symbol zeigt den Modus, in
+    den man wechselt) und die einzige, die man nicht nachschlagen muss.
+
+    [sprache] ist das Kuerzel des ZIELS ("EN" oder "DE").
+    """
+    if not ziel:
+        return ''
+    label = ('Switch to English' if sprache == 'EN'
+             else 'Auf Deutsch wechseln')
+    return (
+        '  <a class="sprach-knopf" href="%s" hreflang="%s" title="%s" '
+        'aria-label="%s">%s</a>\n'
+        % (ziel, sprache.lower(), label, label, sprache)
+    )
+
+# =====================================================================
+# Die Suchmaschinen-Beschreibung der Seiten
+# =====================================================================
+#
+# WARUM (05.11.2026): Ohne <meta name="description"> zeigt Google im
+# Suchergebnis einen beliebigen Textausschnitt der Seite. Bei der
+# Datenschutzerklaerung oder dem Impressum ist das der schlechteste
+# moegliche Ausschnitt - meistens ein Nebensatz ueber Cookies.
+#
+# Der Schluessel ist der Seitenname OHNE den Ordner "en/" und OHNE
+# ".html" - "eltern-einstellungen.html" steht fuer beide Fassungen
+# (de/en/eltern/einstellungen.html), denn beide bekommen denselben
+# Text in ihrer Sprache.
+#
+# KEIN Eintrag fuer die transienten Seiten (bestaetigt.html,
+# eltern-einstellungen.html): sie stehen auf noindex - eine
+# Suchmaschinen-Beschreibung waere dort sinnlos.
+BESCHREIBUNG = {
+    'impressum': (
+        'Impressum von Thestia: Anbieterkennzeichnung nach Par. 5 DDG '
+        'mit Anschrift, Kontakt und Hinweisen zum Jugendschutz und zu '
+        'den Nutzungsbedingungen.',
+        'Legal notice for Thestia: provider identification under Sec. 5 '
+        'DDG with address, contact details and notes on child '
+        'protection and the terms of use.',
+    ),
+    'kinderschutz': (
+        'Kinderschutz bei Thestia: Altersprüfung, die Regeln für 16- '
+        'und 17-Jährige, die Meldestelle bei Verstößen und '
+        'Sofortmaßnahmen gegen Kontakte zu Minderjährigen.',
+        'Child protection at Thestia: age verification, the rules for 16 '
+        'and 17 year olds, the reporting point for violations and '
+        'immediate measures against contact with minors.',
+    ),
+    'dating-sicherheit': (
+        'Die Sicherheits-Aufklärung von Thestia: Fake-Profile, '
+        'Datenschutz, das erste Treffen, Grenzen und Hilfe im Notfall.',
+        'The safety guidance of Thestia: fake profiles, data privacy, '
+        'the first meeting, boundaries and help in an emergency.',
+    ),
+    'konto-loeschen': (
+        'Konto löschen bei Thestia: so löschst du dein Konto und deine '
+        'Daten in der App, und welche Angaben aus steuerlichen Gründen '
+        'erhalten bleiben.',
+        'Deleting your account at Thestia: how to delete your account '
+        'and your data in the app, and which details are retained for '
+        'tax reasons.',
+    ),
+    'daten-loeschen': (
+        'Daten löschen bei Thestia: welche Daten du in der App löschen '
+        'kannst, wie die Löschung abläuft und welche '
+        'Aufbewahrungsfristen es gibt.',
+        'Deleting data at Thestia: which data you can delete in the '
+        'app, how the deletion works and which retention periods apply.',
+    ),
+    'datenschutz': (
+        'Datenschutzerklärung von Thestia: welche Daten verarbeitet '
+        'werden, auf welcher Rechtsgrundlage, wie lange sie gespeichert '
+        'bleiben und welche Rechte du hast.',
+        'Privacy policy for Thestia: which data is processed, on what '
+        'legal basis, how long it is stored and what rights you have.',
+    ),
+    'eltern': (
+        'Eltern und Jugendliche bei Thestia: die freiwillige '
+        'Elternaufsicht für 16- und 17-Jährige, der Ablauf der '
+        'Zustimmung und die Rechte des Kindes.',
+        'Parents and young people at Thestia: the voluntary parental '
+        'supervision for 16 and 17 year olds, how the consent works and '
+        'the rights of the child.',
+    ),
+    'nutzungsbedingungen': (
+        'Nutzungsbedingungen von Thestia: die Regeln für die Nutzung, '
+        'die besonderen Regeln für 16- und 17-Jährige, der Meldeweg '
+        'und der Kontakt.',
+        'Terms of use for Thestia: the rules for using the app, the '
+        'special rules for 16 and 17 year olds, the reporting route and '
+        'the contact details.',
+    ),
+    'index': (
+        'Thestia ist eine Dating-App für Android: Ende-zu-Ende-'
+        'verschlüsselte Chats, Blind Dates nach Vorstellung statt Foto, '
+        'Jugendschutz ab 16 Jahren und Datenschutz ohne Werbung.',
+        'Thestia is a dating app for Android: end-to-end encrypted '
+        'chats, blind dates based on personality instead of photos, '
+        'child protection from 16, and privacy without ads.',
+    ),
+}
+
+
+def beschreibung(seitenname: str, sprache: str = 'de') -> str:
+    """Die Suchmaschinen-Beschreibung fuer eine Seite (leer, wenn keine).
+
+    [seitenname] ist der Pfad relativ zu passkey-assets/, z. B.
+    "en/eltern/einstellungen.html" oder "impressum.html".
+
+    [sprache] ist "de" oder "en" - die Seite ist zweisprachig, die
+    Beschreibung auch.
+    """
+    name = seitenname
+    if name.startswith('en/'):
+        name = name[3:]
+    name = name.replace('/', '-')
+    if name.endswith('.html'):
+        name = name[:-len('.html')]
+    eintrag = BESCHREIBUNG.get(name)
+    if not eintrag:
+        return ''
+    return eintrag[0] if sprache == 'de' else eintrag[1]
+
+
+def meta_description(html: str, text: str) -> str:
+    """Setzt die meta description - aber nur, wenn noch keine da ist.
+
+    NUR wenn noch keine da ist: Das Werkzeug muss wiederholbar sein.
+    Ein Ersetzen wuerde bei jedem Durchlauf die Datei anruehren.
+    """
+    if not text or 'name="description"' in html:
+        return html
+    import re
+    zeile = '<meta name="description" content="%s">' % text
+    m = re.search(r'<title>.*?</title>', html, re.S)
+    if m:
+        return html[:m.end()] + '\n' + zeile + html[m.end():]
+    return html.replace('</head>', zeile + '\n</head>', 1)
+
+
+# Kurzname fuer den Generator, der bisher ein eigenes CSS hatte.
+CSS = THEME_CSS
+
+# Marker: daran erkennt apply_theme(), dass eine Seite schon bearbeitet
+# wurde. Ohne ihn waere jeder Lauf ein zweiter Durchgang.
+MARKER = '/* Web-Design (tool/helpers/web_theme.py) */'
+
+# AELTERE Marker. Das Design wurde zweimal ueberarbeitet; wer eine Seite
+# mit einer aelteren Fassung bearbeitet, traegt deren CSS sonst ZUSAETZLICH
+# zum neuen - zwei Umschalter-Regeln und ein Knopf an zwei Stellen.
+# Deshalb werden beim Entfernen alle bekannten Marker beruecksichtigt.
+AELTERE_MARKER = [
+    # Fassung 0 (28.10.2026, erste Fassung des Themes).
+    '/* modus-knopf (tool/helpers/web_theme.py)',
+    # Fassung 1 (28.10.2026, die "eine Quelle"-Fassung). Ihr Marker
+    # war NICHT exakt der Anfang des CSS-Blocks - deshalb hat
+    # strip_theme() sie nicht gefunden und jede Ausfuehrung hat eine
+    # weitere Kopie eingefuegt (am Ende waren es sieben in einer
+    # Seite). Deshalb stehen HIER alle bekannten Fassungen.
+    'Web-Design (tool/helpers/web_theme.py) - eine Quelle',
+]
+
+
+def strip_theme(html: str, remove_chrome: bool = True) -> str:
+    """Entfernt ein bereits eingespieltes Design samt Schalter.
+
+    Nötig, weil das Design nachgebessert wurde: ohne dieses Entfernen
+    stuende in jeder Seite zweimal das alte Theme-CSS und der alte
+    Schalter daneben - zwei Umschalter auf einer Seite.
+
+    [remove_chrome] = False: die Kopfzeile und die Inhalts-Huelle
+    bleiben stehen. Das braucht die Captcha-Seite (index.html): ihre
+    Kopfzeile ist Teil der Seite (sie traegt die Landing-Ansicht), und
+    ihre Huelle wird nicht eingefuegt.
+    """
+    import re
+
+    # 1) Den CSS-Block des Themes entfernen (Marker bis </style>).
+    #    Bei mehreren Markern zaehlt der FRUEHESTE - dann ist der Rest
+    #    des Style-Blocks genau der Block, der weg muss.
+    positionen = [i for i in (html.find(m) for m in [MARKER] + AELTERE_MARKER)
+                  if i >= 0]
+    if positionen:
+        i = min(positionen)
+        j = html.find('</style>', i)
+        if j >= 0:
+            # Der Anteil VOR dem Marker gehoert ebenfalls zum Theme und
+            # muss mit entfernt werden.
+            #
+            # BEFUND (01.11.2026): THEME_CSS beginnt mit einem Umbruch
+            # und einer Einrueckung, und der Marker sitzt erst an
+            # Position 5 des CSS-Blocks. Beim Entfernen blieb genau
+            # dieser Rest stehen - bei jedem Lauf kam eine Zeile dazu.
+            # Die Seite war dadurch NIE wieder identisch, auch wenn sich
+            # an ihr nichts geaendert hatte: der Betreiber musste also
+            # nach jedem Durchlauf alles neu hochladen.
+            #
+            # Deshalb geht das Zurueckgehen jetzt ueber den ganzen
+            # Leerraum vor dem Marker. Der Rest der Seite (das eigene
+            # CSS der Seite) bleibt unberuehrt - es endet mit dem
+            # letzten Zeichen vor dem Leerraum.
+            k = i
+            while k > 0 and html[k - 1] in ' \t\r\n':
+                k -= 1
+            # Genau EIN Zeilenumbruch bleibt erhalten: er beendet die
+            # letzte CSS-Zeile der Seite. Ohne das rueckte die
+            # Einrueckung der Theme-Regeln in die vorige Zeile, und
+            # die Seite waere nach dem ersten Durchlauf anders als
+            # nach dem zweiten - der erste Durchlauf muesste also
+            # immer wiederholt werden.
+            if '\n' in html[k:i]:
+                html = html[:k] + '\n' + html[j:]
+            else:
+                html = html[:k] + html[j:]
+
+    # 1b) Die eigenstaendigen ":root { color-scheme: light dark; }"-Bloecke
+    #     entfernen - in JEDER Schreibweise.
+    #
+    #     Der Block war ueber Jahre als Extra ueber dem Theme. Er ist
+    #     ueberfluessig (das Theme setzt color-scheme selbst) und er
+    #     hat sich bei jedem Lauf verdoppelt, weil der Abgleich nur die
+    #     Einzeilen-Form kannte, eingefuegt wurde aber die
+    #     mehrzeilige. Deshalb: Regex statt Textvergleich.
+    html = re.sub(
+        r'[ \t]*:root\s*\{\s*color-scheme:\s*light\s+dark;\s*\}\s*',
+        '', html)
+    # Auch die Variante ohne Leerzeichen nach der Doppelpunktregel.
+    html = re.sub(
+        r'[ \t]*:root\s*\{\s*color-scheme:\s*light\s+dark\s*\}\s*',
+        '', html)
+
+    if remove_chrome:
+        # 2) Alten Schalter und altes Label entfernen.
+        html = re.sub(r'<input[^>]*id="modus-umschalter"[^>]*>\s*', '', html)
+        html = re.sub(
+            r'<label[^>]*for="modus-umschalter"[^>]*>.*?</label>\s*', '', html,
+            flags=re.S)
+        # 3) Die alte Kopfzeile entfernen, falls sie schon existiert.
+        #
+        #    WICHTIG: Der Umbruch zwischen <body> und der Kopfzeile
+        #    gehoert zum eingefuegten Chrome - apply_theme() setzt ihn
+        #    ("<body>\n" + kopf). Bliebe er beim Entfernen stehen,
+        #    haette die Seite nach jedem Lauf eine Zeile mehr, ohne
+        #    dass sich an ihr etwas geaendert haette. Deshalb wird er
+        #    hier MIT entfernt: das Muster beginnt bei <body>.
+        html = re.sub(
+            r'(<body[^>]*>)\s*<header class="kopf">.*?</header>\s*',
+            r'\1', html, flags=re.S)
+        # Notfall fuer Quellen, in denen die Kopfzeile ohne <body>
+        # davor steht: sie muss trotzdem weg, sonst stuende sie
+        # doppelt.
+        html = re.sub(r'<header class="kopf">.*?</header>\s*', '', html,
+                      flags=re.S)
+        # 4) Die alte Inhalts-Huelle entfernen. Ohne diesen Schritt
+        #    stapelt sich bei jedem Lauf eine weitere Huelle - der Inhalt
+        #    saehe dann in einer Karte in einer Karte in einer Karte aus.
+        #
+        # WICHTIG (05.11.2026): Es werden BEIDE Formen entfernt - die
+        # alte (<div class="inhalt">) und die neue (<main
+        # class="inhalt">). Das <main> kam wegen der Lighthouse-Meldung
+        # "Document does not have a main landmark": ohne es springt ein
+        # Screenreader durch Kopfzeile und Fuss statt zum Inhalt.
+        html = html.replace('<main class="inhalt">\n', '')
+        html = html.replace('<main class="inhalt">', '')
+        html = html.replace('<div class="inhalt">\n', '')
+        html = html.replace('<div class="inhalt">', '')
+        html = re.sub(r'</(?:div|main)>\s*(<footer)', r'\1', html)
+        html = re.sub(r'</(?:div|main)>\s*</body>', '</body>', html)
+    return html
+
+
+# Die Favicon-Links fuer alle Seiten.
+#
+# WARUM (06.11.2026, Betreiber): In der Google-Suche stand neben
+# "Thestia" ein allgemeiner Globus-Knopf statt des Logos - die Seite
+# hatte kein Favicon. Genau dieses Bild zeigt die Suche an.
+#
+# Zentral hier im Theme, damit es nicht auf 22 Seiten (x 2 Sprachen)
+# verteilt ist und beim naechsten Mal auf einer Seite fehlt.
+FAVICON_LINKS = (
+    '<link rel="icon" href="/favicon.ico" sizes="any">\n'
+    '<link rel="icon" type="image/png" sizes="192x192" href="/favicon.png">\n'
+    '<link rel="icon" type="image/svg+xml" href="/favicon.svg">\n'
+    '<link rel="apple-touch-icon" href="/favicon.png">'
+)
+
+
+def favicon_links(html: str) -> str:
+    """Haengt die Favicon-Links in den Kopf - nur, wenn noch keiner da ist.
+
+    Nur wenn noch keiner da ist: Das Werkzeug muss wiederholbar sein
+    (wie bei der meta description). Ein Ersetzen wuerde bei jedem Lauf
+    die Datei anruehren.
+    """
+    if 'rel="icon"' in html or "rel='icon'" in html:
+        return html
+    import re
+    m = re.search(r'<title>.*?</title>', html, re.S)
+    if m:
+        return html[:m.end()] + '\n' + FAVICON_LINKS + html[m.end():]
+    return html.replace('</head>', FAVICON_LINKS + '\n</head>', 1)
+
+
+def apply_theme(html: str, css_extra: str = '',
+                insert_chrome: bool = True,
+                sprach_ziel: str = '',
+                sprache: str = 'EN',
+                beschreibung: str = '') -> str:
+    """Haengt Design, Kopfzeile und Umschalt-Knopf in eine HTML-Seite ein.
+
+    [css_extra] sind seiten-eigene Regeln, die VOR den gemeinsamen
+    kommen - die gemeinsamen gewinnen dann, weil sie spaeter im
+    Style-Block stehen.
+
+    [insert_chrome] = False: nur das gemeinsame CSS, keine Kopfzeile
+    und keine Inhalts-Huelle. Das braucht die Captcha-Seite
+    (index.html): sie hat ZWEI Ansichten (Sicherheitscheck und
+    Landing-Seite) und bringt ihre eigene Kopfzeile mit - die
+    gemeinsame Huelle wuerde den Sicherheitscheck in eine Karte
+    packen.
+
+    [sprach_ziel] = Adresse der anderen Sprachfassung (z. B.
+    "/en/impressum"). Leer lassen, wenn es keine gibt - dann fehlt
+    der Sprachknopf.
+
+    [sprache] = Kuerzel des ZIELS: "EN" auf der deutschen Seite,
+    "DE" auf der englischen.
+
+    [beschreibung] = der Text fuer <meta name="description">. Wird
+    nur gesetzt, wenn die Seite noch keinen hat. Leer lassen, wenn
+    die Seite keine bekommen soll (transiente Seiten auf noindex).
+    """
+    # Die Favicon-Links zuerst: sie gehören in den <head> und duerfen
+    # nicht zwischen <body> und der Kopfzeile landen.
+    html = favicon_links(html)
+
+    # Ein altes Design wird entfernt, damit die Seite nie zweimal
+    # gestyled wird. Die Kopfzeile wird nur entfernt, wenn sie auch
+    # automatisch eingefuegt wurde.
+    html = strip_theme(html, remove_chrome=insert_chrome)
+
+    # 0) Die Suchmaschinen-Beschreibung (nur, wenn noch keine da ist).
+    #
+    #    WICHTIG (05.11.2026): Vor der Kopfzeile. Der meta-Tag gehoert
+    #    in den <head> - er darf nicht zwischen <body> und der
+    #    Kopfzeile landen.
+    html = meta_description(html, beschreibung)
+
+    # 1) Die alte eigenstaendige :root-Zeile braucht es nicht mehr.
+    #
+    #    Frueher stand hier ein Block, der nur color-scheme setzte. Das
+    #    THEME_CSS traegt die Eigenschaft selbst (im eigenen :root) -
+    #    der Extra-Block war also doppelt.
+    #
+    #    WICHTIG: Er wurde per exaktem Textvergleich gesucht, obwohl er
+    #    mehrzeilig eingefuegt wurde. Der Vergleich traf nie zu, also
+    #    wurde bei jedem Lauf ein weiterer eingefuegt: nach 18 Laeufen
+    #    standen 18 identische Bloecke in impressum.html. Deshalb
+    #    entfernt strip_theme() jetzt ALLE Varianten per Regex - gleich
+    #    ob einzeilig oder mehrzeilig.
+
+    # 2) Die gemeinsamen Regeln an den Style-Block haengen.
+    #
+    # WICHTIG (05.11.2026): Der Style-Block muss das eigene CSS VOR dem
+    # gemeinsamen tragen. Grund: strip_theme() entfernt den gemeinsamen
+    # Block und laesst bei einer Seite, die NUR den gemeinsamen Block
+    # im Style-Block hat, eine Leerzeile stehen - der naechste Durchlauf
+    # haette sie wieder drin und die Datei waere ein Zeichen laenger.
+    # Der Idempotenz-Gate der CI ("Web-Theme wiederholbar") hat genau
+    # das gemeldet. Seiten mit eigenem CSS im Style-Block sind stabil.
+    if '</style>' in html:
+        html = html.replace('</style>', css_extra + THEME_CSS + '</style>', 1)
+    else:
+        html = html.replace('</head>',
+                            '<style>%s</style></head>' % (css_extra + THEME_CSS),
+                            1)
+
+    # Ohne Chrome (Captcha-Seite) ist hier Schluss: die Seite hat ihre
+    # eigene Kopfzeile und zwei Ansichten.
+    if not insert_chrome:
+        return html
+
+    # 3) Kopfzeile direkt nach <body>, Inhalt in die Karte.
+    kopf = (KOPF_HTML.replace('__SPRACHKNOPF__', sprachknopf(sprach_ziel, sprache))
+            + '\n<main class="inhalt">\n')
+    if '<body>' in html:
+        html = html.replace('<body>', '<body>\n' + kopf, 1)
+    elif '<body ' in html:
+        import re as _re
+        html = _re.sub(r'(<body[^>]*>)', r'\1\n' + kopf, html, count=1)
+
+    # 4) Die Karte schliessen - VOR dem Fuss, falls die Seite einen
+    #    hat. Der Fuss steht dann auf dem Seitenhintergrund und nicht
+    #    in der Karte (wie die Fusszeile der App unter der Karte).
+    if '<footer' in html:
+        i = html.index('<footer')
+        html = html[:i] + '</main>\n' + html[i:]
+    else:
+        html = html.replace('</body>', '</main>\n</body>', 1)
+
+    return html

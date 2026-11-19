@@ -5,13 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:thestia/providers/auth_provider.dart';
-import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/providers/auth/auth_provider.dart';
+import 'package:thestia/providers/settings/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/services/supabase_service.dart';
-import 'package:thestia/utils/constants.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
+import 'package:thestia/utils/common/constants.dart';
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/widgets/captcha_challenge.dart';
+import 'package:thestia/widgets/settings/captcha_challenge.dart';
 
 /// Screen zur Bestätigung der E-Mail-Adresse nach der Registrierung.
 ///

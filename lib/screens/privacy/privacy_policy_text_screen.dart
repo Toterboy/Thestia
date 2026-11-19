@@ -16,7 +16,7 @@ import 'package:thestia/screens/privacy/legal_text_screen.dart';
 ///
 /// Quelle ist `docs/recht/DATENSCHUTZ.md` (deutsch) und
 /// `docs/recht/DATENSCHUTZ_EN.md` (englisch). Wird eine davon geändert,
-/// erzeugt `python tool/werkzeuge/website/make_privacy_policy.py` beide Ausgaben neu:
+/// erzeugt `python tool/web/make_privacy_policy.py` beide Ausgaben neu:
 /// diese Texte, `passkey-assets/datenschutz.html` und
 /// `passkey-assets/en/datenschutz.html` für den Store-Eintrag. So können
 /// App und Store nicht auseinanderlaufen.

@@ -1,0 +1,368 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'package:thestia/models/chat/find_match_models.dart';
+import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
+
+/// Service für "Find your Match": Kandidaten, gerichtete Likes und der
+/// Antwort-Flow (Match bestätigen / ablehnen) über SECURITY DEFINER-RPCs.
+class FindYourMatchService {
+  FindYourMatchService(this._client);
+
+  final SupabaseClient _client;
+
+  /// Kandidaten mit Vorstellung (ohne Foto) laden.
+  Future<List<UserProfile>> getCandidates({int limit = 20}) async {
+    final response = await _client.rpc(
+      'get_find_match_candidates',
+      params: {'p_limit': limit},
+    );
+    final rows = (response as List<dynamic>? ?? <dynamic>[]);
+    return rows
+        .map(
+          (row) =>
+              UserProfile.fromPublicView(Map<String, dynamic>.from(row as Map)),
+        )
+        .toList();
+  }
+
+  /// Kandidaten einer INTERESSENS-KATEGORIE (Migration 203).
+  ///
+  /// Das ist die zweite Art, jemanden kennenzulernen: nicht per
+  /// Zufall, sondern gezielt nach einem Interesse. Die Kategorie ist
+  /// einer der Interessen (["Musik","Gaming",...]).
+  ///
+  /// Die Altersgrenze wird **serverseitig** erzwungen (die RPC liest
+  /// aus `public_profiles`, und die Sicht filtert ueber
+  /// `profile_discovery_visible_full`): Minderjaehrige sehen
+  /// ausschliesslich Minderjaehrige. Die Altersspanne [ageMin]/[ageMax]
+  /// ist die **Zusatz**-Spanne des Browsers - der Server begrenzt sie
+  /// zusaetzlich auf das, was der Betrachter ueberhaupt sehen darf.
+  Future<List<UserProfile>> getCandidatesByCategory(
+    String category, {
+    required int ageMin,
+    required int ageMax,
+    int limit = 20,
+  }) async {
+    final response = await _client.rpc(
+      'get_find_match_by_category',
+      params: {
+        'p_category': category,
+        'p_age_min': ageMin,
+        'p_age_max': ageMax,
+        'p_limit': limit,
+      },
+    );
+    final rows = (response as List<dynamic>? ?? <dynamic>[]);
+    return rows
+        .map(
+          (row) =>
+              UserProfile.fromPublicView(Map<String, dynamic>.from(row as Map)),
+        )
+        .toList();
+  }
+
+  /// Die Kategorien, in denen es fuer mich gerade jemanden gibt - mit
+  /// der Zahl der Kandidaten (Migration 204).
+  ///
+  /// Ohne diese Zahlen waere das Stoebern blind: man tippt auf
+  /// "Sport" und sieht niemanden und weiss nicht, ob die Funktion
+  /// kaputt ist oder es in dem Bereich schlicht niemanden gibt.
+  ///
+  /// Die Zahlen respects dieselben Altersregeln wie die Kandidaten
+  /// selbst (serverseitig, aus derselben Sicht).
+  Future<List<CategoryCount>> getCategoryCounts({
+    required int ageMin,
+    required int ageMax,
+  }) async {
+    final response = await _client.rpc(
+      'get_find_match_categories',
+      params: {'p_age_min': ageMin, 'p_age_max': ageMax},
+    );
+    final rows = (response as List<dynamic>? ?? <dynamic>[]);
+    return rows
+        .map(
+          (row) =>
+              CategoryCount.fromJson(Map<String, dynamic>.from(row as Map)),
+        )
+        .toList();
+  }
+
+  /// Eigenen Like setzen.
+  ///
+  /// Liefert das Ergebnis des Servers (Migration 197):
+  ///   * `is_match` - es ist ein Funke entstanden (der Like war
+  ///     beidseitig).
+  ///   * `already_matched` - es gab schon einen Funke. Vorher wurde
+  ///     der Like in dem Fall stillschweigend geschluckt (BEFUND
+  ///     07.11.2026: "Man kann nicht von einer Person einen Like
+  ///     haben, mit der man schon einen Funken hat."). Jetzt weiss die
+  ///     App es und kann es sagen.
+  Future<Map<String, dynamic>?> likeUser(String targetUserId) async {
+    final res = await _client.rpc(
+      'like_user',
+      params: {'p_target': targetUserId},
+    );
+    if (res is Map) return Map<String, dynamic>.from(res);
+    if (res is Map) return res.cast<String, dynamic>();
+    return null;
+  }
+
+  /// Erhaltenen Like AUSBLENDEN - ohne die andere Person zu
+  /// benachrichtigen.
+  ///
+  /// BEFUND (07.11.2026, Betreiber): "Das Auge mit dem Strich ist like
+  /// abgelehnt, aber man wuerde eher sowas wie ausblenden oder ignorieren
+  /// darunter verstehen." Das Auge war mit "Ignorieren" beschriftet,
+  /// rief aber das ABLEHNEN auf - die andere Person sah die Ablehnung.
+  ///
+  /// Jetzt gibt es dafuer einen eigenen Weg (ignore_like, Migration
+  /// 198): der Like verschwindet aus der Liste, die Gegenseite
+  /// bekommt nichts davon zu sehen.
+  Future<void> ignoreLike(int likeId) async {
+    await _client.rpc('ignore_like', params: {'p_like_id': likeId});
+  }
+
+  /// Erhaltenen Like annehmen (=> Match) oder ablehnen.
+  Future<void> respondToLike(int likeId, {required bool accept}) async {
+    await _client.rpc(
+      'respond_to_like',
+      params: {'p_like_id': likeId, 'p_accept': accept},
+    );
+  }
+
+  /// Eigene offene Likes.
+  Future<List<ReceivedLike>> listMyLikes() =>
+      _listLikes('list_my_likes_pending');
+
+  /// Erhaltene offene Likes.
+  Future<List<ReceivedLike>> listReceivedLikes() =>
+      _listLikes('list_received_likes_pending');
+
+  Future<List<ReceivedLike>> _listLikes(String rpcName) async {
+    final response = await _client.rpc(rpcName);
+    final rows = (response as List<dynamic>? ?? <dynamic>[]);
+    return rows
+        .map(
+          (row) => ReceivedLike.fromJson(Map<String, dynamic>.from(row as Map)),
+        )
+        .toList();
+  }
+
+  /// Matches inklusive Quiz-Freischaltungsstand.
+  /// Zaehlt eine gesendete Nachricht je Funke - serverseitig.
+  ///
+  /// BEFUND (11.11.2026): Die kleine Zahl in der Kachel las den LOKALEN
+  /// Verlauf. Der entsteht aber erst, wenn der Chat auf diesem Geraet
+  /// geoeffnet wurde - bei einem nie geoeffneten Funke stand ueberhaupt
+  /// keine Zahl, und auf zwei Geraeten standen verschiedene. Der Server
+  /// zaehlt deshalb jetzt mit: auf allen Geraeten dieselbe Zahl.
+  ///
+  /// [messageId] muss die ID der gesendeten Nachricht sein - der Server
+  /// zaehlt jede ID genau einmal (idempotent).
+  ///
+  /// Best-Effort: ein Fehler darf das Senden nie stoeren.
+  Future<void> bumpMessageCount({
+    required int matchId,
+    required String messageId,
+  }) async {
+    try {
+      await _client.rpc(
+        'bump_match_message_count',
+        params: {'p_match_id': matchId, 'p_message_id': messageId},
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[FindYourMatch] Nachrichtenzaehler: $e');
+      }
+    }
+  }
+
+  /// Loescht eine EIGENE Nachricht fuer alle.
+  ///
+  /// BEFUND (11.11.2026): "Wie bei Whatsapp - die Nachricht kann man
+  /// irgendwie fuer alle loeschen, aber ein Hinweis steht dann da."
+  ///
+  /// Der Server speichert NUR die Tatsache (keinen Inhalt). Der
+  /// Empfaenger ersetzt die Nachricht durch einen Hinweis.
+  ///
+  /// Wirft, wenn die Nachricht nicht dem Aufrufer gehoert.
+  Future<void> deleteMessageForAll({
+    required int matchId,
+    required String messageId,
+  }) async {
+    await _client.rpc(
+      'delete_message_for_all',
+      params: {'p_match_id': matchId, 'p_message_id': messageId},
+    );
+  }
+
+  /// Die "fuer alle geloescht"-Hinweise eines Funkes.
+  Future<List<({String messageId, DateTime? deletedAt})>> listMessageDeletions(
+    int matchId,
+  ) async {
+    final response = await _client.rpc(
+      'list_message_deletions',
+      params: {'p_match_id': matchId},
+    );
+    final rows = (response as List<dynamic>? ?? <dynamic>[]);
+    return rows
+        .map(
+          (row) => (
+            messageId: (row as Map)['messageId'] as String,
+            deletedAt: DateTime.tryParse((row['deletedAt'] as String?) ?? ''),
+          ),
+        )
+        .toList();
+  }
+
+  Future<List<MatchWithState>> listMatchesWithState() async {
+    final response = await _client.rpc('list_my_matches_with_state');
+    final rows = (response as List<dynamic>? ?? <dynamic>[]);
+    return rows
+        .map(
+          (row) =>
+              MatchWithState.fromJson(Map<String, dynamic>.from(row as Map)),
+        )
+        .toList();
+  }
+
+  // -- v0.8.0: Match-Status-RPCs (Migration 074) ---------------------------
+
+  /// "Ruhig enden lassen": Funke wird gekühlt (active -> cooled). Er
+  /// erscheint bei BEIDEN unter "Erschlossene Funken" ohne Countdown.
+  Future<void> coolMatch(int matchId) async {
+    await _client.rpc('cool_match', params: {'p_match_id': matchId});
+  }
+
+  /// "Re-Funke ohne Druck": gekühlte Verbindung mit einem Tap reaktivieren
+  /// (cooled -> active).
+  Future<void> resparkMatch(int matchId) async {
+    await _client.rpc('respark_match', params: {'p_match_id': matchId});
+  }
+
+  /// Endgültig beenden (für beide Seiten): status -> ended.
+  Future<void> endMatch(int matchId) async {
+    await _client.rpc('end_match', params: {'p_match_id': matchId});
+  }
+
+  /// "Chats verwalten": Chat nur für mich aus der Liste nehmen.
+  Future<void> hideMatch(int matchId) async {
+    await _client.rpc('hide_match', params: {'p_match_id': matchId});
+  }
+
+  // -- v0.9.2: Herzensstärken (Ideen 3 + 5) -------------------------------
+
+  /// Funken-Typ umschalten: romantisch (spark) <-> Freundschaft (friends).
+  /// Nur der eigene Stand wird geändert; die Gegenseite sieht denselben
+  /// Typ (kann ihn ebenfalls umschalten - letzer Schreibzugriff gewinnt).
+  Future<void> setMatchKind(int matchId, {required bool friends}) async {
+    await _client.rpc(
+      'set_match_kind',
+      params: {'p_match_id': matchId, 'p_kind': friends ? 'friends' : 'spark'},
+    );
+  }
+
+  /// Erinnerungsliste (Idee 5): Einträge eines Funkens lesen.
+  Future<List<BucketItem>> bucketItems(int matchId) async {
+    try {
+      final response = await _client.rpc(
+        'match_bucket_items',
+        params: {'p_match_id': matchId},
+      );
+      final rows = response is List ? response : const <dynamic>[];
+      return rows
+          .map(
+            (row) => BucketItem.fromJson(Map<String, dynamic>.from(row as Map)),
+          )
+          .toList();
+    } catch (e) {
+      debugPrint('[Bucket] Lesen fehlgeschlagen: $e');
+      return const [];
+    }
+  }
+
+  /// Erinnerungsliste: Eintrag hinzufügen (max. 200 Zeichen).
+  Future<int?> bucketAdd(int matchId, String text) async {
+    try {
+      final response = await _client.rpc(
+        'match_bucket_add',
+        params: {'p_match_id': matchId, 'p_text': text},
+      );
+      return (response as num?)?.toInt();
+    } catch (e) {
+      debugPrint('[Bucket] Hinzufügen fehlgeschlagen: $e');
+      return null;
+    }
+  }
+
+  /// Erinnerungsliste: Eintrag abhaken/zurücksetzen (Toggle).
+  Future<bool> bucketToggle(int itemId) async {
+    try {
+      final response = await _client.rpc(
+        'match_bucket_toggle',
+        params: {'p_item_id': itemId},
+      );
+      return response is Map && response['done'] == true;
+    } catch (e) {
+      debugPrint('[Bucket] Abhaken fehlgeschlagen: $e');
+      return false;
+    }
+  }
+
+  /// Erinnerungsliste: eigenen Eintrag löschen.
+  Future<void> bucketDelete(int itemId) async {
+    try {
+      await _client.rpc('match_bucket_delete', params: {'p_item_id': itemId});
+    } catch (e) {
+      debugPrint('[Bucket] Löschen fehlgeschlagen: $e');
+    }
+  }
+
+  /// Signierte URL für die Intro-Audio-Datei eines Nutzers.
+  ///
+  /// Die match-media-Edge-Function prüft serverseitig, ob eine Berechtigung
+  /// besteht (Like in beliebiger Richtung oder Match).
+  Future<String?> getIntroAudioUrl(String targetUserId) async {
+    try {
+      // MIT ZEITLIMIT (15.11.2026): ohne Grenze blieb der Aufruf
+      // stehen - das Bild bzw. der Ton wurde endlos erwartet.
+      final response = await SupabaseService.rufeEdgeFunktion(
+        'match-media',
+        body: {'targetUserId': targetUserId, 'kind': 'intro'},
+        client: _client,
+      );
+      final data = response.data as Map<String, dynamic>?;
+      return data?['url'] as String?;
+    } catch (e) {
+      debugPrint('[FindYourMatch] Intro-URL fehlgeschlagen: $e');
+      return null;
+    }
+  }
+
+  /// Signierte URL für das Avatar-Bild eines Match-Partners.
+  /// Nur mit bestehendem Match erlaubt (serverseitig geprüft).
+  Future<String?> getAvatarUrl(String targetUserId) async {
+    try {
+      // MIT ZEITLIMIT (15.11.2026): ohne Grenze blieb der Aufruf
+      // stehen - das Bild bzw. der Ton wurde endlos erwartet.
+      final response = await SupabaseService.rufeEdgeFunktion(
+        'match-media',
+        body: {'targetUserId': targetUserId, 'kind': 'avatar'},
+        client: _client,
+      );
+      final data = response.data as Map<String, dynamic>?;
+      return data?['url'] as String?;
+    } catch (e) {
+      debugPrint('[FindYourMatch] Avatar-URL fehlgeschlagen: $e');
+      return null;
+    }
+  }
+}
+
+/// Provider für den Find-your-Match-Service.
+final findYourMatchServiceProvider = Provider<FindYourMatchService>((ref) {
+  return FindYourMatchService(SupabaseService.client);
+});

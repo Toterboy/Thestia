@@ -26,9 +26,9 @@ import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/screens/chat/call_screen.dart';
-import 'package:thestia/services/p2p_chat_service.dart';
-import 'package:thestia/services/prekey_service.dart';
-import 'package:thestia/services/webrtc_service.dart';
+import 'package:thestia/services/chat/p2p_chat_service.dart';
+import 'package:thestia/services/chat/prekey_service.dart';
+import 'package:thestia/services/chat/webrtc_service.dart';
 
 import '../support/plugin_mocks.dart';
 

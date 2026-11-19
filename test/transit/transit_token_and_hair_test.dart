@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thestia/models/transit_models.dart';
-import 'package:thestia/services/local_storage.dart';
-import 'package:thestia/services/transit_encounter_service.dart';
+import 'package:thestia/models/transit/transit_models.dart';
+import 'package:thestia/services/storage/local_storage.dart';
+import 'package:thestia/services/transit/transit_encounter_service.dart';
 
 /// Tests fuer die strenge Token-Pruefung und die Haarfarben.
 ///

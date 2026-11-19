@@ -1,0 +1,12 @@
+﻿Future<PeripheralBluetoothState> start({
+Future<PeripheralBluetoothState> stop() async {
+Future<bool> get isAdvertising async {
+Future<void> sendData(Uint8List data, {
+Future<bool> enableBluetooth({
+Future<PeripheralBluetoothState> requestPermission() async {
+Future<PeripheralBluetoothState> hasPermission() async {
+Future<void> openBluetoothSettings() async {
+Future<void> openAppSettings() async {
+Future<void> openNearbyShareSettings() async {
+Future<bool> isNearbyShareEnabled() async {
+Future<void> openLocationSettings() async {

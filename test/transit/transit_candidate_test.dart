@@ -8,7 +8,7 @@
 // freigegeben hat. Der Ort ist ihre eigene Angabe. Dieser Test haelt
 // beides fest.
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thestia/models/transit_models.dart';
+import 'package:thestia/models/transit/transit_models.dart';
 
 void main() {
   group('TransitCandidate', () {

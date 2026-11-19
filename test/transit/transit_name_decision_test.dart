@@ -7,7 +7,7 @@
 // Geprueft wird das Modell: der Wert (AN/AUS) und das Flag "hat der
 // Nutzer entschieden" (das den Dialog steuert) sind getrennt.
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thestia/models/app_settings.dart';
+import 'package:thestia/models/settings/app_settings.dart';
 
 void main() {
   group('AppSettings.transitShowName / transitShowNameSet', () {

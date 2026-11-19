@@ -1,7 +1,7 @@
 // Die ICE-Konfiguration des WebRTC-Dienstes - der Abruf war ungetestet.
 //
 // ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
-// lib/services/webrtc_service.dart 262 offene Zeilen. Der Abruf der
+// lib/services/chat/webrtc_service.dart 262 offene Zeilen. Der Abruf der
 // ICE-Konfiguration ist der erste Schritt jeder Direktverbindung - und
 // er ist genau der Teil, der im August 2026 schon einmal kaputt war
 // (401, weil der Aufruf im PostgREST-Pfad landete).
@@ -18,8 +18,8 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
-import 'package:thestia/services/encryption_service.dart';
-import 'package:thestia/services/webrtc_service.dart';
+import 'package:thestia/services/chat/encryption_service.dart';
+import 'package:thestia/services/chat/webrtc_service.dart';
 
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';

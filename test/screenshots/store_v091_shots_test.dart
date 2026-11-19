@@ -16,17 +16,17 @@
 // Ausgabe: test/screenshots/store_v091/{9x16,wqhd}/*.png
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/providers/chat/chat_provider.dart';
 import 'package:thestia/screens/chat/chat_detail_screen.dart';
 import 'package:thestia/screens/home/home_screen.dart';
 import 'package:thestia/screens/spice/spice_questions_screen.dart';
 import 'package:thestia/screens/swipe/swipe_mode_selection_screen.dart';
 import 'package:thestia/screens/welcome/welcome_screen.dart';
-import 'package:thestia/widgets/appearance_selector.dart';
-import 'package:thestia/widgets/app_logo.dart';
-import 'package:thestia/widgets/chat_background_picker.dart';
-import 'package:thestia/widgets/privacy_section.dart';
-import 'package:thestia/widgets/theme_picker.dart';
+import 'package:thestia/widgets/settings/appearance_selector.dart';
+import 'package:thestia/widgets/common/app_logo.dart';
+import 'package:thestia/widgets/chat/chat_background_picker.dart';
+import 'package:thestia/widgets/settings/privacy_section.dart';
+import 'package:thestia/widgets/settings/theme_picker.dart';
 
 import 'hilfen.dart';
 

@@ -1,0 +1,616 @@
+#!/usr/bin/env python3
+"""Erzeugt die Datenschutzerklaerung in zwei Formaten aus einer Quelle.
+
+Google Play verlangt die Erklaerung an zwei getrennten Stellen:
+
+1. als **Link oder Text innerhalb der App selbst**, und
+2. als **aktiv erreichbare oeffentliche URL** (ausdruecklich keine PDF).
+
+Beide muessen denselben Inhalt haben. Also gibt es hier eine Quelle,
+docs/recht/DATENSCHUTZ.md, und zwei Ableitungen:
+
+* ``lib/generated/privacy_policy_de.dart`` - strukturierte Bloecke fuer
+  den Text-Bildschirm in der App. Bewusst *strukturiert* und nicht als
+  Markdown-String: die App soll das Markdown nicht zur Laufzeit
+  zerlegen, und der Bildschirm soll Absaetze, Listen und Tabellen
+  lesbar darstellen koennen.
+* ``passkey-assets/datenschutz.html`` - eine einzelne, statische
+  HTML-Datei fuer den Store-Eintrag. Ohne JavaScript, ohne externe
+  Requests, ohne Tracking: die Datei ist das gesamte Dokument.
+
+Das ist das Publish-Verzeichnis des bestehenden Netlify-Projekts fuer
+thestia.de - aus zwei Gruenden der richtige Ort und nicht eine eigene
+Site:
+
+1. **Die Domain ist vergeben.** Netlify meldet fuer www.thestia.de
+   "Another project is already using this domain". Domains sind ueber
+   Netlify eindeutig; eine zweite Site kann sie nicht bekommen.
+2. **Dort liegt bereits, was Android prueft.** `netlify.toml` liefert
+   die .well-known-Dateien fuer die App-Link-Verifikation. Eine eigene
+   Site koennte diese Pfade nicht mitausliefern und wuerde die
+   Verifikation gefaehrden.
+
+Ein eigenes ``index.html`` wird hier bewusst NICHT geschrieben:
+`passkey-assets/index.html` ist die bestehende Startseite und darf
+nicht ueberschrieben werden.
+
+Beide Dateien werden erzeugt und nicht gepflegt. Aenderungen gehoeren
+in docs/recht/DATENSCHUTZ.md, danach::
+
+    python tool/web/make_privacy_policy.py
+
+Deterministisch: gleiche Eingabe ergibt gleiche Ausgabe, ohne
+Zeitstempel. Sonst wuerde jede Erzeugung einen Diff erzeugen.
+"""
+
+import html
+import pathlib
+import io
+import os
+import re
+import subprocess
+import sys
+
+#: Die Wurzel des Projekts - der Ordner mit der pubspec.yaml.
+#:
+#: DER GRUND: Die Skripte liegen in Unterordnern von tool/. Statt
+#: feste Ebenen zu zaehlen, wird die Wurzel gesucht - so brechen die
+#: Pfade nicht, wenn sich die Tiefe aendert.
+def _projektwurzel() -> pathlib.Path:
+    for kandidat in pathlib.Path(__file__).resolve().parents:
+        if (kandidat / 'pubspec.yaml').exists():
+            return kandidat
+    # DER NOTFALL: Der Ordner mit den Migrationen - den hat auch das
+    # kleine Test-Repo der Selbsttests (dort gibt es keine pubspec).
+    for kandidat in pathlib.Path(__file__).resolve().parents:
+        if (kandidat / 'supabase' / 'migrations').is_dir():
+            return kandidat
+    return pathlib.Path(__file__).resolve().parent.parent
+
+
+ROOT = _projektwurzel()
+
+# Publish-Verzeichnis des bestehenden Netlify-Projekts fuer thestia.de.
+
+# Die Erklaerung gibt es in zwei Sprachen (NUTZERWUNSCH 03.11.2026:
+# "Jede der Websites soll auf Englisch und Deutsch verfuegbar sein").
+#
+# Beide Fassungen entstehen aus einer eigenen Markdown-Quelle mit
+# IDENTISCHER Struktur - sonst waeren die beiden Texte nicht
+# vergleichbar und die Versionshistorie lief auseinander.
+#
+# Die englische Fassung liegt unter /en/ (die URLs ohne ".html" entstehen
+# ueber die Rewrite-Regeln in _redirects).
+SPRACHEN = [
+    {
+        'sprache': 'de',
+        'quelle': os.path.join(ROOT, 'docs', 'recht', 'DATENSCHUTZ.md'),
+        'dart': os.path.join(
+            ROOT, 'lib', 'generated', 'privacy_policy_de.dart'),
+        'html': os.path.join(
+            ROOT, 'passkey-assets', 'datenschutz.html'),
+        'klasse': 'kPrivacyPolicyDe',
+        'blocks': os.path.join(
+            ROOT, 'lib', 'generated', 'privacy_policy_blocks.dart'),
+        'titel': 'Datenschutzerklärung für Thestia',
+        'lang': 'de',
+        'fuss': (
+            'Verantwortliche Stelle im Sinne der DSGVO ist Thestia. '
+            'Kontakt über das In-App-Bug-Report-Formular oder das '
+            'Issue-Tracker des öffentlichen Projekt-Repositorys.'),
+        # Der Sprachknopf zeigt auf die andere Fassung.
+        'sprach_ziel': '/en/datenschutz',
+        'sprach_label': 'EN',
+        # Die kanonische Adresse. Ohne sie ist die Seite bei mehreren
+        # Adressen erreichbar (/datenschutz und /datenschutz.html) -
+        # die Suchmaschine waehlt dann eine davon aus.
+        #
+        # BEFUND 04.11.2026: Der Generator hat die Seite ohne canonical
+        # geschrieben. Beim Neuerzeugen (etwa nach einer Textaenderung)
+        # verschwand die Angabe wieder - und die Seite war auf einmal
+        # "nicht auffindbar" fuer die Suchmaschine.
+        'canonical': 'https://thestia.de/datenschutz',
+    },
+    {
+        'sprache': 'en',
+        'quelle': os.path.join(ROOT, 'docs', 'recht', 'DATENSCHUTZ_EN.md'),
+        'dart': os.path.join(
+            ROOT, 'lib', 'generated', 'privacy_policy_en.dart'),
+        'html': os.path.join(
+            ROOT, 'passkey-assets', 'en', 'datenschutz.html'),
+        'klasse': 'kPrivacyPolicyEn',
+        'blocks': os.path.join(
+            ROOT, 'lib', 'generated', 'privacy_policy_blocks.dart'),
+        'titel': 'Privacy policy for Thestia',
+        'lang': 'en',
+        'fuss': (
+            'The data controller within the meaning of the GDPR is Thestia. '
+            'Get in touch via the in-app bug report form or the issue '
+            'tracker of the public project repository.'),
+        'sprach_ziel': '/datenschutz',
+        'sprach_label': 'DE',
+        'canonical': 'https://thestia.de/en/datenschutz',
+    },
+]
+
+# Design und Umschalt-Knopf kommen aus tool/helpers/web_theme.py - damit sind
+# alle Seiten im Publish-Verzeichnis wirklich gleich aufgebaut.
+#
+# Die Datenschutzerklaerung ist eine statische Datei OHNE JavaScript
+# (Projektregel, geprueft von test/privacy_policy_test.dart). Der
+# Dark-/Light-Umschalter ist deshalb reines CSS.
+import pathlib as _pathlib
+import sys as _sys
+_sys.path.insert(0, str(_pathlib.Path(__file__).resolve().parent))
+# Das gemeinsame Modul web_theme.py liegt in tool/hilfen/.
+_sys.path.insert(
+    0,
+    str(
+        _pathlib.Path(__file__).resolve().parent.parent.parent / 'helpers'
+    ),
+)
+from web_theme import (CSS, KOPF_HTML,  # noqa: E402
+                       beschreibung, sprachknopf)
+
+# Der Fuss-Text steht in der Sprachbeschreibung (SPRACHEN).
+
+
+# --------------------------------------------------------------------------
+# Markdown -> Bloecke
+# --------------------------------------------------------------------------
+
+def parse(md_lines):
+    """Zerlegt das Markdown in Bloecke.
+
+    Blockarten: h1, h2, h3, p (Absatz), li (Listenpunkt),
+    table (Zelle einer Tabellenzeile).
+    """
+    blocks = []
+    i = 0
+    n = len(md_lines)
+
+    while i < n:
+        stripped = md_lines[i].strip()
+
+        if not stripped:
+            i += 1
+            continue
+
+        m = re.match(r'^(#{1,3})\s+(.*)$', stripped)
+        if m:
+            blocks.append({'kind': 'h%d' % len(m.group(1)),
+                           'text': m.group(2).strip()})
+            i += 1
+            continue
+
+        if stripped.startswith('|'):
+            cells = [c.strip() for c in stripped.strip('|').split('|')]
+            # Trennzeile |---|---| oder |---:|:---:
+            if all(re.match(r'^:?-{2,}:?$', c) for c in cells if c):
+                i += 1
+                continue
+            # Die erste Zeile einer Tabelle ist die Kopfzeile. Sie wird
+            # als eigener Block gefuehrt, damit die App die
+            # Spaltenbezeichnungen verwenden kann, statt sie zu raten.
+            head = not (blocks and blocks[-1]['kind'].startswith('table'))
+            blocks.append({
+                'kind': 'table_head' if head else 'table',
+                'cells': cells,
+            })
+            i += 1
+            continue
+
+        m = re.match(r'^[-*]\s+(.*)$', stripped)
+        if m:
+            # Umbrochene Folgezeilen mitnehmen. In diesem Dokument sind
+            # die Listenpunkte hart umbrochen (z. B. "**lokal auf dem
+            #   Gerät** per ONNX-Modell..."). Ohne das wuerde jede
+            # Folgezeile ein eigener Absatz und der Satz zerfiele
+            # mitten im Wort - die Erklaerung waere unlesbar.
+            item = [m.group(1).strip()]
+            i += 1
+            while i < n:
+                nxt = md_lines[i].strip()
+                if (not nxt or nxt.startswith('#') or nxt.startswith('|')
+                        or re.match(r'^[-*]\s+', nxt)):
+                    break
+                item.append(nxt)
+                i += 1
+            blocks.append({'kind': 'li', 'text': ' '.join(item)})
+            continue
+
+        # Absatz: Folgezeilen anhaengen, bis ein anderer Block beginnt.
+        para = [stripped]
+        i += 1
+        while i < n:
+            nxt = md_lines[i].strip()
+            if (not nxt or nxt.startswith('#') or nxt.startswith('|')
+                    or re.match(r'^[-*]\s+', nxt)):
+                break
+            para.append(nxt)
+            i += 1
+        blocks.append({'kind': 'p', 'text': ' '.join(para)})
+
+    return blocks
+
+
+def group_tables(blocks):
+    """Fasst eine Kopfzeile und die folgenden Tabellenzeilen zusammen.
+
+    Ergebnis: ein Block ``table_rows`` mit ``head`` (oder ``None``) und
+    ``rows``. Ohne Kopfzeile bleibt ``head`` leer - dann werden alle
+    Zeilen als Datenzeilen gerendert.
+    """
+    out = []
+    i = 0
+    n = len(blocks)
+
+    while i < n:
+        kind = blocks[i]['kind']
+
+        if kind not in ('table_head', 'table'):
+            out.append(blocks[i])
+            i += 1
+            continue
+
+        head = blocks[i]['cells'] if kind == 'table_head' else None
+        if kind == 'table_head':
+            i += 1
+
+        rows = []
+        while i < n and blocks[i]['kind'] == 'table':
+            rows.append(blocks[i]['cells'])
+            i += 1
+
+        out.append({'kind': 'table_rows', 'head': head, 'rows': rows})
+
+    return out
+
+
+def _inline_html(text):
+    """Maskiert HTML und wandelt Auszeichnung um.
+
+    Unterstuetzt werden:
+      * **fett**      -> <strong>
+      * *kursiv*     -> <em>
+      * <https://..>  -> Link (die Markdown-Autolink-Schreibweise)
+
+    VORHER standen die Sternchen und spitzen Klammern als Text auf der
+    Seite: "(*Einstellungen -> Datenschutz -> Bug melden*)" und
+    "<https://auth.thestia.de/impressum>". Das sah nach einem
+    Fehler aus, ist aber nur eine nicht behandelte Auszeichnung.
+    """
+    s = html.escape(text, quote=False)
+
+    # Autolinks zuerst: <https://...> -> <a href="...">...</a>
+    s = re.sub(
+        r'&lt;(https?://[^\s&]+)&gt;',
+        r'<a href="\1">\1</a>',
+        s)
+
+    # **fett** zuerst, danach *kursiv* (sonst frisst das Kursiv die
+    # Sternchen des Fetts).
+    s = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', s)
+    s = re.sub(r'(?<![\*\w])\*([^*\n]+?)\*(?!\*)', r'<em>\1</em>', s)
+
+    # Datum mit geschuetztem Bindestrich: "2026-10" wurde in der
+    # schmalen Spalte der Versions-Tabelle als "2026-" / "10"
+    # umgebrochen. U+2011 (geschuetzter Bindestrich) verhindert das.
+    s = re.sub(r'(\d{4})-(\d{2})', '\\1&#8209;\\2', s)
+    return s
+
+
+# --------------------------------------------------------------------------
+# Dart
+# --------------------------------------------------------------------------
+
+def dart_quote(s):
+    """Dart-String-Literal.
+
+    Dart kennt kein rohes Mehrzeilen-Literal, deshalb wird jeder
+    Zeilenumbruch zu \\n im normalen String. Entscheidend: KEIN
+    Zeilenumbruch innerhalb eines Literals - genau daran ist
+    app_strings.dart gescheitert, deshalb prueft main() das auch.
+    """
+    out = s.replace('\\', '\\\\').replace("'", "\\'").replace('\n', '\\n')
+    return "'" + out + "'"
+
+
+def render_blocks() -> str:
+    """Die Klasse PrivacyBlock - einmal, fuer beide Sprachfassungen.
+
+    Beide Fassungen werden im selben Bildschirm benutzt. Wenn beide
+    Dateien die Klasse selbst definieren, gibt es beim Import einen
+    Namenskonflikt ("PrivacyBlock is imported from both"). Deshalb
+    liegt sie in einer dritten Datei.
+    """
+    return '''// GENERIERTE DATEI - NICHT VON HAND AENDERN.
+// Neu erzeugen mit: python tool/web/make_privacy_policy.py
+
+/// Ein Abschnitt der Datenschutzerklaerung fuer die Anzeige in der
+/// App.
+///
+/// Google Play verlangt die Erklaerung nicht nur als Link im Store,
+/// sondern ausdruecklich auch als Text innerhalb der App selbst.
+/// Deshalb steht sie hier und wird im Privacy-Screen gelesen, statt
+/// nur verlinkt zu werden - eine URL kann falsch oder nicht erreichbar
+/// sein, dieser Text nicht.
+class PrivacyBlock {
+  const PrivacyBlock(this.kind, this.text, {this.cells});
+
+  /// h1, h2, h3, p, li oder table.
+  final String kind;
+
+  /// Fliesstext bzw. Ueberschrift. Fuer [kind] == 'table' leer.
+  final String text;
+
+  /// Zellen einer Tabellenzeile. Nur bei [kind] == 'table' gesetzt.
+  final List<String>? cells;
+}
+'''
+
+
+def render_dart(blocks, sprache: dict):
+    lines = [
+        '// GENERIERTE DATEI - NICHT VON HAND AENDERN.',
+        '// Quelle: docs/recht/DATENSCHUTZ%s.md' % (
+            '_EN' if sprache['sprache'] == 'en' else ''),
+        '// Neu erzeugen mit: python tool/web/make_privacy_policy.py',
+        '',
+        "import 'package:thestia/generated/privacy_policy_blocks.dart';",
+        '',
+        '/// Die vollstaendige Datenschutzerklaerung als Bloecke, in der',
+        '/// Reihenfolge der Quelle.',
+        'const List<PrivacyBlock> %s = <PrivacyBlock>[' % sprache['klasse'],
+    ]
+
+    for b in blocks:
+        if b['kind'] in ('table', 'table_head'):
+            cells = ', '.join(dart_quote(c) for c in b['cells'])
+            # Kein 'const' vor dem Element: die Liste ist bereits const,
+            # die Elemente sind damit implizit const. Ein zusaetzliches
+            # 'const' ist nur ein Lint-Fund.
+            lines.append("  PrivacyBlock('%s', '', "
+                         'cells: <String>[%s]),' % (b['kind'], cells))
+        else:
+            lines.append("  PrivacyBlock('%s', %s),"
+                         % (b['kind'], dart_quote(b['text'])))
+
+    lines.append('];')
+    lines.append('')
+    return '\n'.join(lines)
+
+
+# --------------------------------------------------------------------------
+# HTML
+# --------------------------------------------------------------------------
+
+def render_html(blocks, sprache: dict):
+    """Eine einzige statische Datei. Kein JavaScript, keine Requests."""
+    grouped = group_tables(blocks)
+
+    out = ['<!DOCTYPE html>', '<html lang="%s">' % sprache['lang'], '<head>',
+           '<meta charset="utf-8">',
+           '<meta name="viewport" content="width=device-width, '
+           'initial-scale=1">',
+           '<title>%s</title>' % sprache['titel'],
+    '<meta name="description" content="%s">'
+    % beschreibung('datenschutz.html', sprache['sprache']),
+           # Die Favicon-Links. WARUM (06.11.2026, Betreiber): In der
+           # Google-Suche stand neben "Thestia" ein allgemeiner
+           # Globus-Knopf statt des Logos - die Seite hatte kein Favicon.
+           # Die Datenschutz-Seiten werden hier erzeugt und NICHT von
+           # apply_web_theme.py bearbeitet (sie stehen nicht in dessen
+           # SEITEN-Liste) - die Links muessen deshalb hier stehen.
+           '<link rel="icon" href="/favicon.ico" sizes="any">',
+           '<link rel="icon" type="image/png" sizes="192x192" '
+           'href="/favicon.png">',
+           '<link rel="icon" type="image/svg+xml" href="/favicon.svg">',
+           '<link rel="apple-touch-icon" href="/favicon.png">',
+           # Die kanonische Adresse: die Seite ist unter zwei Adressen
+           # erreichbar (/datenschutz und /datenschutz.html). Ohne diese
+           # Angabe entscheidet die Suchmaschine, welche davon gilt.
+           '<link rel="canonical" href="%s">' % sprache['canonical'],
+           '<style>%s</style>' % CSS,
+           '</head>', '<body>',
+           # Kopfzeile mit Marke, Umschalt-Knopf und Sprachknopf: reine
+           # CSS-Variante, kein Skript.
+           *KOPF_HTML.replace(
+               '__SPRACHKNOPF__',
+               sprachknopf(sprache['sprach_ziel'],
+                           sprache['sprach_label'])).split('\n'),
+           # Der Inhalt liegt in einer Karte - wie die Karten der App.
+           '<main class="inhalt">']
+
+    table_open = False
+
+    skip_until = 0
+
+    for idx, b in enumerate(grouped):
+        # Punkte, die bereits in eine Liste aufgenommen wurden, nicht
+        # noch einmal verarbeiten. Sonst wird jeder Punkt der zweiten
+        # und folgenden Folge noch mal als eigene <ul> ausgegeben.
+        if idx < skip_until:
+            continue
+
+        kind = b['kind']
+
+        if kind == 'table_rows':
+            rows = b['rows']
+            head = b.get('head')
+            # Die Huelle erlaubt das seitliche Scrollen auf schmalen
+            # Bildschirmen, ohne dass die Tabelle die Seite sprengt.
+            out.append('<div class="tabellen-huelle">')
+            out.append('<table>')
+            if head:
+                out.append('<thead><tr>%s</tr></thead>'
+                           % ''.join('<th>%s</th>' % _inline_html(c)
+                                     for c in head))
+            out.append('<tbody>')
+            for r in rows:
+                out.append('<tr>%s</tr>'
+                           % ''.join('<td>%s</td>' % _inline_html(c)
+                                     for c in r))
+            out.append('</tbody>')
+            out.append('</table>')
+            out.append('</div>')
+            continue
+
+        if kind in ('h1', 'h2', 'h3'):
+            out.append('<%s>%s</%s>'
+                       % (kind, _inline_html(b['text']), kind))
+            # continue ist hier Pflicht: ohne es faellt der Block unten
+            # noch in den Absatz-Zweig und die Ueberschrift steht
+            # ZWEIMAL da - einmal als h2 und einmal als p mit demselben
+            # Text. Im HTML war das sichtbar; die Dart-Ausgabe fuer die
+            # App ist nicht betroffen, weil sie die Bloecke direkt
+            # uebernimmt und nicht durch diesen Renderer laeuft.
+            continue
+        elif kind == 'li':
+            # Aufeinanderfolgende Listenpunkte zu EINER Liste
+            # zusammenfassen. Sonst bekommt jeder Punkt eine eigene
+            # <ul> mit eigenem Abstand - sieht aus wie 21
+            # Einzelauzaehlungen statt einer Liste.
+            items = [b['text']]
+            j = idx + 1
+            while j < len(grouped) and grouped[j]['kind'] == 'li':
+                items.append(grouped[j]['text'])
+                j += 1
+            out.append('<ul>%s</ul>'
+                       % ''.join('<li>%s</li>' % _inline_html(t)
+                                 for t in items))
+            skip_until = j
+            continue
+
+        if b['text'].strip() in ('---', '***', '___'):
+            # Die Trennlinien aus dem Markdown werden NICHT ausgegeben:
+            # jede Ueberschrift traegt inzwischen selbst eine Trennlinie
+            # (Rand oben). Beides zusammen ergab zwei Linien
+            # untereinander.
+            continue
+
+        out.append('<p>%s</p>' % _inline_html(b['text']))
+
+    # Die Karte wird VOR dem Fuss geschlossen: der Fuss steht auf dem
+    # Seitenhintergrund, nicht in der Karte - so wie die Fusszeile der
+    # App unter der Karte steht.
+    out.append('</div>')
+    out.append('<footer>%s</footer>'
+               % html.escape(sprache['fuss'], quote=False))
+    out.append('</body>')
+    out.append('</html>')
+
+    return '\n'.join(out) + '\n'
+
+
+# --------------------------------------------------------------------------
+
+def _schreibe_wenn_geaendert(pfad: str, inhalt: str) -> None:
+    """Schreibt nur, wenn sich der Inhalt wirklich aendert.
+
+    WARUM (28.10.2026): der Generator schrieb die Dart-Datei bei JEDEM
+    Lauf neu - auch wenn sie unveraendert blieb. Die Datei bekam dadurch
+    einen neuen Zeitstempel, und die Frische-Pruefung der Release-
+    Artefakte meldete daraufhin "APK aelter als der Quellstand",
+    obwohl der Inhalt identisch war. Ein Fehlalarm, der zum Rebuild
+    verleitet.
+    """
+    alt = None
+    if os.path.exists(pfad):
+        with io.open(pfad, encoding='utf-8') as fh:
+            alt = fh.read()
+    if alt == inhalt:
+        return
+    with io.open(pfad, 'w', encoding='utf-8', newline='\n') as fh:
+        fh.write(inhalt)
+
+
+def _formatiere(dart_datei):
+    """Formatiert eine erzeugte Dart-Datei (ohne Dart: uebersprungen).
+
+    Warum: Die CI prueft "dart format --set-exit-if-changed lib test
+    tool". Ein Generatorlauf, der die Datei unformatiert zuruecklaesst,
+    bricht dieses Gate - obwohl der INHALT korrekt ist (BEFUND
+    06.11.2026).
+    """
+    pfad = _pathlib.Path(dart_datei)
+    if not pfad.exists():
+        return
+    # WICHTIG (Windows): "dart" und "flutter" sind .bat-Wrapper. Ohne
+    # shell=True findet Python sie nicht (FileNotFoundError) - der
+    # Generatorlauf blieb dann unformatiert und brach das Format-Gate
+    # der CI (BEFUND 06.11.2026).
+    for befehl in ('dart format "%s"' % pfad, 'flutter format "%s"' % pfad):
+        try:
+            ergebnis = subprocess.run(
+                befehl,
+                shell=(os.name == 'nt'),
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+        if ergebnis.returncode == 0:
+            return
+    print('  (HINWEIS: Konnte %s nicht formatieren - bitte "dart format %s '
+          'manuell ausfuehren)' % (pfad.name, pfad.name))
+
+
+def main():
+    for sprache in SPRACHEN:
+        quelle = sprache['quelle']
+        if not os.path.exists(quelle):
+            print('FEHLER: Quelle fehlt: %s' % quelle)
+            return 1
+
+        with io.open(quelle, encoding='utf-8') as fh:
+            blocks = parse(fh.read().split('\n'))
+
+        if not blocks:
+            print('FEHLER: keine Bloecke aus %s' % quelle)
+            return 1
+
+        # Kein Block darf einen Zeilenumbruch im Dart-Literal erzeugen.
+        # Genau daran ist app_strings.dart gescheitert, deshalb wird es
+        # hier abgesichert und nicht erst beim Analysieren des
+        # Dart-Codes.
+        for b in blocks:
+            texts = [b.get('text', '')] + list(b.get('cells') or [])
+            for t in texts:
+                if '\n' in t:
+                    print('FEHLER: Block enthaelt einen Zeilenumbruch: %r'
+                          % t[:60])
+                    return 1
+
+        os.makedirs(os.path.dirname(sprache['dart']), exist_ok=True)
+        _schreibe_wenn_geaendert(sprache['blocks'], render_blocks())
+        _schreibe_wenn_geaendert(sprache['dart'],
+                                 render_dart(blocks, sprache))
+        # Die Dart-Ausgabe SELBST formatieren (BEFUND 06.11.2026):
+        # Ohne das blieb nach einem Generatorlauf die unformatierte
+        # Fassung stehen - und die CI prueft
+        # "dart format --set-exit-if-changed lib test tool". Der
+        # Generator brach das Format-Gate also, ohne dass etwas
+        # inhaltlich falsch war.
+        _formatiere(sprache['dart'])
+
+        os.makedirs(os.path.dirname(sprache['html']), exist_ok=True)
+        _schreibe_wenn_geaendert(sprache['html'],
+                                 render_html(blocks, sprache))
+
+        kinds = {}
+        for b in blocks:
+            kinds[b['kind']] = kinds.get(b['kind'], 0) + 1
+
+        print('Datenschutzerklaerung (%s) erzeugt: %d Bloecke'
+              % (sprache['sprache'], len(blocks)))
+        for k in sorted(kinds):
+            print('  %-6s %d' % (k, kinds[k]))
+        print('  -> %s' % os.path.relpath(sprache['dart'], ROOT))
+        print('  -> %s' % os.path.relpath(sprache['html'], ROOT))
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

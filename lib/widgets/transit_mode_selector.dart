@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/models/transit_models.dart';
+import 'package:thestia/models/transit/transit_models.dart';
 
 /// Reichweiten-Auswahl fuer Transit Spark.
 ///

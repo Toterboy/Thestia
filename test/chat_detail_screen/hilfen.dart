@@ -36,19 +36,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
-import 'package:thestia/models/match.dart';
-import 'package:thestia/models/message.dart';
-import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/providers/chat_provider.dart';
-import 'package:thestia/providers/mood_provider.dart';
-import 'package:thestia/providers/profile_provider.dart';
-import 'package:thestia/models/report_models.dart';
-import 'package:thestia/services/report_service.dart';
-import 'package:thestia/services/chat_service.dart';
-import 'package:thestia/services/local_storage.dart';
-import 'package:thestia/services/mood_service.dart';
-import 'package:thestia/services/secure_storage.dart';
-import 'package:thestia/utils/constants.dart';
+import 'package:thestia/models/chat/match.dart';
+import 'package:thestia/models/chat/message.dart';
+import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/providers/chat/chat_provider.dart';
+import 'package:thestia/providers/profile/mood_provider.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
+import 'package:thestia/models/verification/report_models.dart';
+import 'package:thestia/services/profile/report_service.dart';
+import 'package:thestia/services/chat/chat_service.dart';
+import 'package:thestia/services/storage/local_storage.dart';
+import 'package:thestia/services/server/mood_service.dart';
+import 'package:thestia/services/storage/secure_storage.dart';
+import 'package:thestia/utils/common/constants.dart';
 import '../support/fake_supabase_server.dart';
 
 class FakeLocalStorage implements LocalStorage {

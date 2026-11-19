@@ -14,7 +14,7 @@
 //   Unbekanntes wird "waiting" (nicht "active") - im Zweifel wartet die
 //   App, statt dem Nutzer eine falsche Partnerin zu zeigen.
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thestia/models/random_chat_session.dart';
+import 'package:thestia/models/chat/random_chat_session.dart';
 
 void main() {
   group('RandomChatStatus.fromString', () {

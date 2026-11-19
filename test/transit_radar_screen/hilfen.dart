@@ -32,16 +32,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 // Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
-import 'package:thestia/models/transit_models.dart';
-import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/providers/profile_provider.dart';
-import 'package:thestia/providers/settings_provider.dart';
-import 'package:thestia/providers/transit_provider.dart';
+import 'package:thestia/models/transit/transit_models.dart';
+import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
+import 'package:thestia/providers/settings/settings_provider.dart';
+import 'package:thestia/providers/transit/transit_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/swipe/transit_radar_screen.dart';
-import 'package:thestia/services/local_storage.dart';
-import 'package:thestia/services/secure_storage.dart';
-import 'package:thestia/utils/constants.dart';
+import 'package:thestia/services/storage/local_storage.dart';
+import 'package:thestia/services/storage/secure_storage.dart';
+import 'package:thestia/utils/common/constants.dart';
 import '../support/fake_supabase_server.dart';
 
 class FakeLocalStorage implements LocalStorage {

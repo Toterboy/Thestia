@@ -21,7 +21,7 @@
 // an der App, er beantwortet nur die Plugin-Kanaele im Test.
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:thestia/services/transit_ble_service.dart';
+import 'package:thestia/services/transit/transit_ble_service.dart';
 
 import '../support/ble_mocks.dart';
 

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thestia/models/app_settings.dart';
+import 'package:thestia/models/settings/app_settings.dart';
 import '../support/l10n_quellen.dart';
 import '../support/quelltext.dart';
 
@@ -107,7 +107,7 @@ void main() {
     test('ein Fehler beim Lesen der Liste blockiert die Einrichtung nicht', () {
       // Sonst waere auf einem Geraet ohne biometrische Anmeldung
       // (Listen lesen verlangt AAL2) kein Passkey einrichtbar.
-      final src = liesQuelltext('lib/services/passkey_auth.dart');
+      final src = liesQuelltext('lib/services/auth/passkey_auth.dart');
       final anfang = src.indexOf('hasRegisteredPasskey()');
       expect(anfang, greaterThan(-1));
       final body = src.substring(anfang, anfang + 700);

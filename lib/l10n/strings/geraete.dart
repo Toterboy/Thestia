@@ -140,7 +140,7 @@ const Map<String, Map<String, String>> stringsGeraete = {
         'oder später im Profil-Bearbeiten).',
     // Build 30 (v0.9.2). EIN Key pro Anzeigepunkt, jeder Punkt ein
     // vollstaendiger Satz - siehe Bug-Hinweis in
-    // lib/services/whats_new_service.dart: bei hartkodiertem Text
+    // lib/services/server/whats_new_service.dart: bei hartkodiertem Text
     // waren es Satzbausteine, und die Abschneidegrenze zerschnitt
     // mitten im Satz. Ausserdem waren diese Zeilen ueberhaupt nicht
     // uebersetzt, englische Nutzer sahen deutschen Text.

@@ -25,7 +25,7 @@
 # gueltiges robots.txt - Lighthouse meldete "robots.txt is not valid"
 # und der SEO-Score der Startseite blieb bei 80. Zusaetzlich standen die
 # internen Betriebsnotizen (Netlify-Credits, Host-Struktur) oeffentlich
-# im Netz. Die Notizen stehen jetzt in tool/pruefer/check_publish_folder.py,
+# im Netz. Die Notizen stehen jetzt in tool/checks/check_publish_folder.py,
 # nicht mehr in der ausgelieferten Datei.
 
 User-agent: *

@@ -1,4 +1,4 @@
-// Die Texte des Themas 'datenschutz' (Deutsch und Englisch).
+// Die Texte des Themas 'privacy' (Deutsch und Englisch).
 //
 // DER WEG: Die Texte sind nach Themen getrennt, damit keine Datei
 // zu lang wird (Grenze: 1000 Zeilen - siehe

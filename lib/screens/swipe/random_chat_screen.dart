@@ -7,21 +7,21 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import 'package:thestia/models/message.dart';
-import 'package:thestia/models/random_chat_session.dart';
-import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/models/chat/message.dart';
+import 'package:thestia/models/chat/random_chat_session.dart';
+import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/providers/chat/chat_provider.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/services/find_your_match_service.dart';
-import 'package:thestia/services/p2p_chat_service.dart';
-import 'package:thestia/services/random_chat_service.dart';
-import 'package:thestia/services/relay_service.dart';
-import 'package:thestia/services/supabase_database_service.dart';
-import 'package:thestia/services/supabase_service.dart';
-import 'package:thestia/widgets/chat_bubbles.dart';
-import 'package:thestia/widgets/secure_composer.dart';
+import 'package:thestia/services/dating_hour/find_your_match_service.dart';
+import 'package:thestia/services/chat/p2p_chat_service.dart';
+import 'package:thestia/services/dating_hour/random_chat_service.dart';
+import 'package:thestia/services/chat/relay_service.dart';
+import 'package:thestia/services/server/supabase_database_service.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
+import 'package:thestia/widgets/chat/chat_bubbles.dart';
+import 'package:thestia/widgets/chat/secure_composer.dart';
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/utils/best_effort.dart';
+import 'package:thestia/utils/common/best_effort.dart';
 
 part 'parts/zufallchataktionen.dart';
 

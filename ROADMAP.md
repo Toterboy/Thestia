@@ -200,9 +200,9 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
 - [~] Applogo & Branding-Feinschliff – Quelle ist
       `assets/images/thestia_icon_base.png` (941×941, im Repo vorhanden).
       **Im Kern erledigt:** Store-Icon (512×512) und Feature Graphic
-      (1024×500) sind erzeugt (`tool/werkzeuge/bilder/make_play_icon.py`,
-      `tool/werkzeuge/sonstiges/make_feature_graphic.py`), alle Icon-Masken sind geprüft, und
-      die Website führt jetzt ein Favicon (`tool/werkzeuge/website/make_favicon.py`).
+      (1024×500) sind erzeugt (`tool/images/make_play_icon.py`,
+      `tool/scripts/make_feature_graphic.py`), alle Icon-Masken sind geprüft, und
+      die Website führt jetzt ein Favicon (`tool/web/make_favicon.py`).
       **Offen:** Feinschliff an Masken und Farbwirkung – kein
       Blocker für den Upload.
 - [x] **Store-Listing auch auf Englisch** (03.11.2026) – die englische
@@ -217,7 +217,7 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
         ändert nur Datum und Zahlen, die App-Texte kommen aus
         `L10n.t` – ohne den Scope bleibt der Screen deutsch.
       * Der Compositor hat je Sprache eigene Quelle, eigene Texte und
-        eigene Ausgabe (`tool/werkzeuge/bilder/make_store_screenshots.py`, `PROFILE`).
+        eigene Ausgabe (`tool/images/make_store_screenshots.py`, `PROFILE`).
       * Die Textprüfung gilt für beide Sprachen (`_check_claims_en`):
         „ready in a minute" wäre sonst durchgerutscht.
       * Das Tablet-Skript baut je Sprache aus der eigenen Quelle –
@@ -244,7 +244,7 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
       **Umgesetzt:** Der Text-Teil war schon in 0.9.2 fertig (rotierende
       Prompt-Karten aus vier Themen, `lib/data/intro_prompt_catalog.dart`;
       ein Tipp hängt den Einstiegssatz an, Freitext bleibt erlaubt).
-      Der Audio-Teil kam in 0.10.0: `lib/widgets/intro_recording_guide.dart`
+      Der Audio-Teil kam in 0.10.0: `lib/widgets/profile/intro_recording_guide.dart`
       zeigt während der Aufnahme die drei Winkel in fester Reihenfolge.
       Zwei Entscheidungen, die absicht sind: die Schritte laufen von
       selbst (alle 15 Sekunden ein neuer Winkel), ein Tipp auf einen
@@ -362,7 +362,7 @@ verschluesselt gespeichert und wird erst beim Funke gehoert.
 - [x] **Lokaler Encounter-Cache** (`lib/services/encounter_cache_service.dart`):
       Erkannte Thestia-BLE-Tokens mit Zeitstempel + stärkstem RSSI cachen,
       45 Minuten Vorhaltezeit, automatisches Aufräumen alter Einträge
-- [x] **BLE Proximity Service** (`lib/services/transit_ble_service.dart`):
+- [x] **BLE Proximity Service** (`lib/services/transit/transit_ble_service.dart`):
       Advertising rotierender ephemerer Tokens + Tag-Bitmask; Scanning auf
       Thestia-UUID; Messe-Modus mit engerem RSSI-Schwellwert (z. B. > -75 dBm
       = echter Sichtkontakt); Batterieschutz über gepulste Scans und
@@ -372,12 +372,12 @@ verschluesselt gespeichert und wird erst beim Funke gehoert.
       wechselseitige Begegnung zwischen zwei Nutzern mit passendem Alter/
       Geschlecht und übereinstimmenden Tags lag; bei Treffer Realtime-Event
       für beide Clients
-- [x] **Datenmodelle** (`lib/models/transit_models.dart`): `TransitTag`
+- [x] **Datenmodelle** (`lib/models/transit/transit_models.dart`): `TransitTag`
       (id, label, category: clothing/accessory/activity/event, icon),
       `EncounterRecord` (ephemeralPeerToken, detectedAt, strongestRssi),
       `SparkSignal` (senderSessionToken, recentEncounterTokens, targetTagIds,
       timestamp)
-- [x] **State Management** (`lib/providers/transit_provider.dart`):
+- [x] **State Management** (`lib/providers/transit/transit_provider.dart`):
       AsyncNotifier mit `isActive`, `remainingDuration`, `myActiveTags`,
       `currentMode` (transit vs. convention), `encounterCache`,
       `sendSpark(targetTags)` + Realtime-Listener für eingehende Funken
@@ -601,7 +601,7 @@ zugestellte Kopie beim Gegenüber kann nicht zurückgerufen werden.
 >    persönlichem Text kommen `autocorrect: false` und
 >    `enableSuggestions: false` dazu.
 > 2. **Nicht sehen** – im Chat (1:1, Zufallschat, Dating Hour) hat die
->    App **ihre eigene Tastatur** (`lib/widgets/secure_keyboard.dart`).
+>    App **ihre eigene Tastatur** (`lib/widgets/chat/secure_keyboard.dart`).
 >    Das Eingabefeld steht auf `readOnly`: auf Android und iOS entsteht
 >    bei einem solchen Feld **keine Eingabeverbindung**, die
 >    Systemtastatur bekommt also nichts zu sehen – keinen Buchstaben,
@@ -725,7 +725,7 @@ zugestellte Kopie beim Gegenüber kann nicht zurückgerufen werden.
       kosmetischen Punkten, weil die Exposition bereits gegenwärtig für jeden
       Nutzer mit aktivem Transit Spark besteht.*
       **Was die App tatsächlich steuern kann - und das ist umgesetzt**
-      (`lib/services/transit_ble_privacy.dart`):
+      (`lib/services/transit/transit_ble_privacy.dart`):
       * **Token-Rotation mit Jitter:** Basis 10 min, Streuung ± 40 %
         (6-14 min). Ohne Jitter wäre der Rotationszeitpunkt selbst ein
         Fingerprint: wer morgens immer zur selben Sekunde startet, ist
@@ -793,7 +793,7 @@ zugestellte Kopie beim Gegenüber kann nicht zurückgerufen werden.
       * **Unter 16 ist die App nicht gedacht und nicht zugänglich.**
         Durchgesetzt wird das an drei Stellen, nicht nur in der Anzeige:
         die Altersprüfung im Registrierungsformular
-        (`lib/utils/validators.dart`, Mindestalter 16), der
+        (`lib/utils/security/validators.dart`, Mindestalter 16), der
         Datenbank-Constraint `chk_profiles_birth_date_age`
         (Migration 154 – auch ein manipulierter Client kommt nicht
         daran vorbei) und die serverseitige Verifikation, deren
@@ -815,7 +815,7 @@ zugestellte Kopie beim Gegenüber kann nicht zurückgerufen werden.
       Der Text-Teil war schon in 0.9.2 fertig (rotierende Prompt-Karten
       aus vier Themen, `lib/data/intro_prompt_catalog.dart`; ein Tipp
       hängt den Einstiegssatz an, Freitext bleibt erlaubt). Der
-      Audio-Teil ist neu: `lib/widgets/intro_recording_guide.dart`
+      Audio-Teil ist neu: `lib/widgets/profile/intro_recording_guide.dart`
       begleitet die Aufnahme mit drei Winkeln in fester Reihenfolge
       (Wer bist du? / Was macht dich aus? / Warum bist du hier?). Die
       Schritte laufen von selbst (alle 15 Sekunden ein neuer Winkel),
@@ -987,7 +987,7 @@ keine gemeinsamen Tokens.)
       mit einem stillen „kein Match" im Glauben lassen, es sei niemand
       in der Nähe.
 - [x] **18 Haarfarben** (Migration 186) – lila, rosa, blau, grün sind
-      dazu gekommen. Und ein Werkzeug (`tool/pruefer/check_transit_catalog.py`),
+      dazu gekommen. Und ein Werkzeug (`tool/checks/check_transit_catalog.py`),
       das prüft, dass App und Server dieselben Merkmale kennen: ein
       Wert, den der Server nicht kennt, wird beim Senden
       **stillschweigend weggefiltert** – der Nutzer wählt ihn, er
@@ -1044,7 +1044,7 @@ ob das Radar anbleiben soll - wie beim Verlassen des
 Radar-Bildschirms.
 
 > **Und das Werkzeug gegen diese Klasse:**
-> `tool/pruefer/check_function_returns.py` findet Funktionen, die einen Wert
+> `tool/checks/check_function_returns.py` findet Funktionen, die einen Wert
 > zurueckgeben **sollten**, aber kein `RETURN` haben. Der Aufruf
 > scheitert dann mit „query has no destination for result data" -
 > ohne dass irgendwo ein Fehler sichtbar wird. Der Selbsttest (eine
@@ -1094,7 +1094,7 @@ Symptom.
 > belegt statt ueber eine Sitzung auf einem Geraet. Ausfuehrlich in
 > `releases/v0.10.0/TESTANLEITUNG.md`, Abschnitt 7.
 
-> **Das Werkzeug gegen diese Klasse:** `tool/werkzeuge/datenbank/cleanup_transit_testdata.sql`
+> **Das Werkzeug gegen diese Klasse:** `tool/db/cleanup_transit_testdata.sql`
 > raeumt die Testdaten der Live-Nachweise weg (zwei Likes, ein Match)
 > und prueft danach, dass nichts mehr da ist. Ohne das bliebe beim
 > Betreiber ein Phantom-Funke zurueck - ein Funke, den er nicht
@@ -1144,7 +1144,7 @@ exakt die Version des Upstream-1.6.3 („drop compromised eMudhra CA
 root").
 
 > **Das Werkzeug, das die Klasse fängt:**
-> `tool/pruefer/check_sdk_security.py` haelt die Sicherheitsuntergrenzen fest
+> `tool/checks/check_sdk_security.py` haelt die Sicherheitsuntergrenzen fest
 > (SDK-Version der CI, lokal installierte Version, WebRTC-SDK) und ist
 > blockierend im CI. Ein Rueckfall auf eine alte SDK-Version wird rot,
 > statt stillschweigend zu passieren. Das vollstaendige Audit mit allen
@@ -1165,10 +1165,10 @@ ein Ereignis - und die Like-Meldung war inhaltlich falsch, denn im
 Radar wird kein Profil geliked, sondern gefunkt.
 
 **Das Werkzeug, das diese Klasse fängt:**
-`tool/werkzeuge/datenbank/measure_push_duplicates.sql` zaehlt die Push-Aufrufe, ohne dass
+`tool/db/measure_push_duplicates.sql` zaehlt die Push-Aufrufe, ohne dass
 eine einzige Nachricht rausgeht: die Zaehlung laeuft in einer
 Transaktion, und der pg_net-Worker sieht uncommittete Zeilen einer
-anderen Sitzung nicht. `tool/pruefer/check_push_duplicates.py` macht daraus ein
+anderen Sitzung nicht. `tool/checks/check_push_duplicates.py` macht daraus ein
 Gate (statisch: kein Client darf `notify-user` mit `kind='likes'` rufen;
 live: die vier Szenarien mit der Soll-Zahl), mit einem Selbsttest, der
 alle vier Fehlerquellen nachbaut.
@@ -1270,17 +1270,17 @@ hätten das nie gezeigt - der Server sagt es nur, wenn man ihn fragt.
 den P2P-Kanal sendete. Jetzt: P2P, dann E2E-Relay, dann Outbox.
 
 > **Die Werkzeuge, die diese Klasse fangen:**
-> * `tool/pruefer/check_function_grants.py` - sammelt alle RPC-Aufrufe des
+> * `tool/checks/check_function_grants.py` - sammelt alle RPC-Aufrufe des
 >   Clients und fragt die Produktivdatenbank nach den Rechten. Hat
 >   `unblock_user` und `accept_soft_ping` gefunden.
-> * `tool/pruefer/check_profile_cache_keys.py` - vergleicht, was der Cache
+> * `tool/checks/check_profile_cache_keys.py` - vergleicht, was der Cache
 >   schreibt, was die Parser lesen und was die Server-Zuordnung kennt.
 >   Hat die Vorstellung gefunden.
-> * `tool/pruefer/check_on_conflict.py` - findet Konflikt-Ziele, die kein Index
+> * `tool/checks/check_on_conflict.py` - findet Konflikt-Ziele, die kein Index
 >   trägt (der Dating-Hour-Bug).
-> * `tool/pruefer/check_migration_history.py` - findet Migrationen, die als
+> * `tool/checks/check_migration_history.py` - findet Migrationen, die als
 >   „angewandt" markiert sind, aber nicht vollständig gelaufen sind.
-> * `tool/pruefer/check_release_version.py` - findet die alte APK im
+> * `tool/checks/check_release_version.py` - findet die alte APK im
 >   Release-Ordner.
 
 > **Die Lehre daraus (und die Antwort auf die Frage des Betreibers,
@@ -1330,11 +1330,11 @@ bekam keine Runde mehr.
 > does not exist" fehl. Migration 190 legt die Tabelle nach.
 
 > **Das Werkzeug, das beides gefunden hat:**
-> `tool/pruefer/check_on_conflict.py` fragt die Produktivdatenbank ab und
+> `tool/checks/check_on_conflict.py` fragt die Produktivdatenbank ab und
 > vergleicht **jedes** `ON CONFLICT`-Ziel mit den tatsächlichen
 > Indizes - es sieht alle 26 Funktionen auf einmal. Dazu
-> `tool/pruefer/check_migration_history.py` (jede Migration aus dem
-> Repository ist auch angewandt) und `tool/pruefer/check_release_version.py`
+> `tool/checks/check_migration_history.py` (jede Migration aus dem
+> Repository ist auch angewandt) und `tool/checks/check_release_version.py`
 > (die ausgelieferten Artefakte tragen den aktuellen Code).
 
 #### Build 41: Haarlänge, Frisur - und ein Redesign des Bildschirms
@@ -1467,7 +1467,7 @@ beides, ohne zu verschweigen, dass es zwei Kanäle gibt:
 > Minderjährige unsichtbar
 
 Damit stimmen Listing und Wirklichkeit überein: der Kanal gibt 18+ her,
-die App kann 16+. Eine Invariante (`tool/pruefer/check_security_invariants.py`)
+die App kann 16+. Eine Invariante (`tool/checks/check_security_invariants.py`)
 sichert das ab - schreibt jemand wieder „ab 16 Jahren, mit
 Elternfreigabe" ins Listing, schlägt sie an.
 
@@ -1651,7 +1651,7 @@ Vorgesehene Bausteine (noch nicht umgesetzt):
    der Hinweis „Mach erst deine Vorstellung" – **mit Prüfung, ob
    schon eine existiert** (sonst wird ein zweites Mal aufgefordert,
    obwohl längst eine da ist). Der bestehende Weg
-   (`lib/widgets/intro_editor.dart`) wird dafür geprüft, nicht
+   (`lib/widgets/profile/intro_editor.dart`) wird dafür geprüft, nicht
    dupliziert. **Eine Textvorstellung genügt** – das Audio ist
    optional (und wird erst bei einem Funke gehört).
 2. **Zwei Wege**: *Zufallsvorstellung* (ein Kandidat nach dem anderen,
@@ -1673,7 +1673,7 @@ erst bei einem Funke gehört (dort, wo die Vorstellung heute ohnehin
 
 - Die Grenzen sind **keine UI-Kosmetik**: sie stehen serverseitig in
   `age_compatible_bidirectional` (Migration 154/155) und werden von
-  `lib/utils/age_safety_rules.dart` nur noch gespiegelt. **Minderjährige
+  `lib/utils/location/age_safety_rules.dart` nur noch gespiegelt. **Minderjährige
   sehen ausschließlich Minderjährige, Erwachsene ausschließlich
   Erwachsene.** Ein 18-Jähriger bekommt nie einen 16-Jährigen zu
   sehen – auch nicht über die neue Kategorie-Sicht.
@@ -1889,7 +1889,7 @@ browse_by_category(
         beiden Helligkeiten lesbar bleiben (Kontrast!).
       * **Eigene Farbe** – ein einzelner, selbst gewählter Farbton
         (eigener Schlüssel `keyboardColor`).
-      * **Umsetzung:** `lib/widgets/secure_keyboard.dart` holt die
+      * **Umsetzung:** `lib/widgets/chat/secure_keyboard.dart` holt die
         Farben heute hart aus `Theme.of(context).colorScheme`. Der
         Umbau ist: die Farben kommen aus der Einstellung, die Tastatur
         bekommt sie als Parameter (kein globales Theme-Umhängen - die
@@ -2154,7 +2154,7 @@ browse_by_category(
       `profile_widgets.dart` zusammenpasst. Ohne diese Antworten
       verschiebt man nur die Probleme
 - [ ] **Spenden-Button mit echter Zieladresse**: Der Button ist wieder
-      da (`lib/widgets/donate_button.dart`), `kDonateUrl` ist aber leer.
+      da (`lib/widgets/common/donate_button.dart`), `kDonateUrl` ist aber leer.
       Offen ist die Abwicklung – Zahlungsanbieter, steuerliche
       Behandlung, Beleg, Rückerstattung – und ob daraus das frühere
       „Spender"-Badge zurückkommt (damals entfernt, weil die Zahlung
@@ -2207,7 +2207,7 @@ browse_by_category(
       zentrale rechtliche Voraussetzung, kein Feature.
       **Erledigt in 0.10.0:** das Mindestalter ist entschieden (16 Jahre,
       Betreiberentscheidung 03.11.2026) und an drei Stellen erzwungen -
-      im Registrierungsformular (`lib/utils/validators.dart`), in der
+      im Registrierungsformular (`lib/utils/security/validators.dart`), in der
       Datenbank (`chk_profiles_birth_date_age`, Migration 154, greift
       auch bei manipuliertem Client) und bei der serverseitigen
       Altersannahme. Der BLE-Nahbereich ist für unter 18-Jährige

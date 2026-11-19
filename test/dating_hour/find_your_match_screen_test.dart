@@ -22,11 +22,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
 import 'package:thestia/screens/swipe/find_your_match_screen.dart';
-import 'package:thestia/services/local_storage.dart';
-import 'package:thestia/services/secure_storage.dart';
+import 'package:thestia/services/storage/local_storage.dart';
+import 'package:thestia/services/storage/secure_storage.dart';
 
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';

@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/services/data_deletion_service.dart';
-import 'package:thestia/widgets/buttons.dart';
+import 'package:thestia/services/server/data_deletion_service.dart';
+import 'package:thestia/widgets/common/buttons.dart';
 
 /// Screen zum Loeschen einzelner Datenkategorien.
 ///

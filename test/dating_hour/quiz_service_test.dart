@@ -1,7 +1,7 @@
 // Das Match-Quiz (bisher ungetestet - 0 %).
 //
 // ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
-// lib/services/quiz_service.dart 0 %.
+// lib/services/dating_hour/quiz_service.dart 0 %.
 //
 // WAS HIER GEPRUEFT WIRD:
 //   * der Zustand wird vom Server gelesen,
@@ -16,7 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
-import 'package:thestia/services/quiz_service.dart';
+import 'package:thestia/services/dating_hour/quiz_service.dart';
 
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';

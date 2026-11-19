@@ -20,7 +20,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/models/transit_models.dart';
+import 'package:thestia/models/transit/transit_models.dart';
 import 'package:thestia/screens/swipe/transit_radar_screen.dart';
 
 void main() {

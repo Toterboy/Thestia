@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:thestia/services/supabase_service.dart';
-import 'package:thestia/services/report_service.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
+import 'package:thestia/services/profile/report_service.dart';
 import 'package:thestia/l10n/app_strings.dart';
 
 /// Safety Center: zentrale Anlaufstelle bei Belästigung, Stalking oder

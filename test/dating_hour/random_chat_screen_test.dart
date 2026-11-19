@@ -21,15 +21,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/models/random_chat_session.dart';
-import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/models/chat/random_chat_session.dart';
+import 'package:thestia/providers/chat/chat_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/swipe/random_chat_screen.dart';
-import 'package:thestia/services/local_storage.dart';
-import 'package:thestia/services/p2p_chat_service.dart';
-import 'package:thestia/services/prekey_service.dart';
-import 'package:thestia/services/random_chat_service.dart';
-import 'package:thestia/services/webrtc_service.dart';
+import 'package:thestia/services/storage/local_storage.dart';
+import 'package:thestia/services/chat/p2p_chat_service.dart';
+import 'package:thestia/services/chat/prekey_service.dart';
+import 'package:thestia/services/dating_hour/random_chat_service.dart';
+import 'package:thestia/services/chat/webrtc_service.dart';
 
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';

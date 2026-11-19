@@ -1,7 +1,7 @@
 // Die Ende-zu-Ende-Verschluesselung - der Session-Aufbau war ungetestet.
 //
 // ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
-// lib/services/encryption_service.dart 136 offene Zeilen. Die
+// lib/services/chat/encryption_service.dart 136 offene Zeilen. Die
 // Session-Aufbau-Funktionen (PreKey-Bundle, Session, Trust) waren
 // ungetestet - obwohl sie die ZUSEITUNG der App tragen: "Ende-zu-Ende-
 // verschluesselt".
@@ -30,8 +30,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart';
 
-import 'package:thestia/models/signal_key_models.dart';
-import 'package:thestia/services/encryption_service.dart';
+import 'package:thestia/models/signal/signal_key_models.dart';
+import 'package:thestia/services/chat/encryption_service.dart';
 
 import '../support/plugin_mocks.dart';
 

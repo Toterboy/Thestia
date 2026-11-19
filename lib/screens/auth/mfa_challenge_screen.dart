@@ -5,10 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/providers/auth_provider.dart';
+import 'package:thestia/providers/auth/auth_provider.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/services/mfa_service.dart';
-import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/services/auth/mfa_service.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
 
 /// 2FA-Code-Abfrage beim Login (TOTP/Authenticator-App).
 ///

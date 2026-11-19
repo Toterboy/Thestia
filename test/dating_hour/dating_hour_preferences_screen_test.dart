@@ -21,9 +21,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/providers/user_preferences_provider.dart';
+import 'package:thestia/providers/settings/user_preferences_provider.dart';
 import 'package:thestia/screens/dating_hour/dating_hour_preferences_screen.dart';
-import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/storage/local_storage.dart';
 
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';

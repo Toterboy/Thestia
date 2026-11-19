@@ -9,7 +9,7 @@
 // Produktivsystem anruehren. Deshalb steht hier auch die Regel, wie
 // sie ihre Testdaten wieder loswerden:
 //
-//     tool/werkzeuge/datenbank/cleanup_transit_testdata.sql
+//     tool/db/cleanup_transit_testdata.sql
 //
 // Die Tests raeumen selbst ab, was sie ablegen koennen (die
 // Relay-Zeile ueber relay_ack). Die Likes und der Match bleiben
@@ -30,7 +30,7 @@ import 'package:http/http.dart' as http;
 ///
 /// WICHTIG: Das sind die Konten des Betreibers. Der Live-Test legt
 /// dort Likes und einen Match an und raeumt sie danach ueber
-/// tool/werkzeuge/datenbank/cleanup_transit_testdata.sql wieder weg. Die Konten selbst
+/// tool/db/cleanup_transit_testdata.sql wieder weg. Die Konten selbst
 /// werden NICHT veraendert.
 const String kontoA = '46f3f558-b134-4d25-946b-4e052a8ab3b5';
 const String kontoB = 'd177d5f9-f2d0-420e-981b-4d6ef5b77056';
@@ -73,7 +73,7 @@ bool hatSchluessel(Map<String, String> env) {
 ///   2. `THESTIA_SKIP_LIVE_TESTS=1` schaltet sie ab.
 ///
 /// **WARUM (13.11.2026):** Der lokale CI-Spiegel
-/// (tool/pruefer/check_local_ci.ps1) hat frueher die .env des Entwicklers
+/// (tool/checks/check_local_ci.ps1) hat frueher die .env des Entwicklers
 /// durch die .env.example ersetzt - damit die Live-Tests nicht gegen
 /// das Produktivsystem laufen - und sie danach **nicht** zurueckgespielt.
 /// Die echten Werte waren damit weg (sie mussten aus dem Release-Build

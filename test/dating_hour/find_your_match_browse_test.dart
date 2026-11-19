@@ -17,9 +17,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:thestia/models/find_match_models.dart';
-import 'package:thestia/providers/find_your_match_browse_provider.dart';
-import 'package:thestia/services/find_your_match_service.dart';
+import 'package:thestia/models/chat/find_match_models.dart';
+import 'package:thestia/providers/dating_hour/find_your_match_browse_provider.dart';
+import 'package:thestia/services/dating_hour/find_your_match_service.dart';
 
 /// Ein Client, der NICHT verbindet (die Abfragen laufen ohne Server
 /// gar nicht erst - der Provider prueft `SupabaseService.isInitialized`).

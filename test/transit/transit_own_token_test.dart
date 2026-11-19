@@ -20,7 +20,7 @@
 // Selbsttest in der Migration selbst.
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/server/supabase_database_service.dart';
 
 void main() {
   group('Transit Spark: der eigene Token (v0.10.0, Migration 185)', () {

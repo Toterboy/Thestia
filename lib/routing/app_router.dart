@@ -2,17 +2,17 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:thestia/models/app_settings.dart';
+import 'package:thestia/models/settings/app_settings.dart';
 import 'package:thestia/routing/route_restore.dart';
 import 'package:thestia/routing/verification_required_routes.dart';
 
-import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/providers/auth_provider.dart';
-import 'package:thestia/providers/profile_provider.dart';
-import 'package:thestia/providers/settings_provider.dart';
-import 'package:thestia/services/supabase_service.dart';
-import 'package:thestia/services/mfa_service.dart';
-import 'package:thestia/utils/constants.dart';
+import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/providers/auth/auth_provider.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
+import 'package:thestia/providers/settings/settings_provider.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
+import 'package:thestia/services/auth/mfa_service.dart';
+import 'package:thestia/utils/common/constants.dart';
 import 'package:thestia/screens/auth/login_screen.dart';
 import 'package:thestia/screens/auth/forgot_password_screen.dart';
 import 'package:thestia/screens/auth/reset_password_screen.dart';
@@ -36,8 +36,8 @@ import 'package:thestia/screens/onboarding/settings_privacy_once_screen.dart';
 import 'package:thestia/screens/onboarding/dating_safety_education_screen.dart';
 import 'package:thestia/screens/mood/mood_picker_screen.dart';
 import 'package:thestia/screens/core/whats_new_screen.dart';
-import 'package:thestia/services/whats_new_service.dart';
-import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/server/whats_new_service.dart';
+import 'package:thestia/services/storage/local_storage.dart';
 import 'package:thestia/screens/privacy/privacy_screen.dart';
 import 'package:thestia/screens/privacy/privacy_policy_text_screen.dart';
 import 'package:thestia/screens/privacy/terms_text_screen.dart';
@@ -67,8 +67,8 @@ import 'package:thestia/screens/qr/contact_share_screen.dart';
 import 'package:thestia/screens/qr/qr_profile_screen.dart';
 import 'package:thestia/screens/qr/qr_scan_screen.dart';
 import 'package:thestia/screens/legal/community_guidelines_screen.dart';
-import 'package:thestia/widgets/back_to_route_scope.dart';
-import 'package:thestia/utils/best_effort.dart';
+import 'package:thestia/widgets/chat/back_to_route_scope.dart';
+import 'package:thestia/utils/common/best_effort.dart';
 
 /// Zentrale Routen der App.
 class AppRoutes {

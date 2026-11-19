@@ -1,0 +1,2 @@
+﻿1029 | /// Ablauf und erm├Âglicht die Entscheidung (Annehmen/Ablehnen). Bei beidseitigem
+7945 | Future<void> _handleDecision(bool accept) async {

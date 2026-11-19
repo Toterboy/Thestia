@@ -1,0 +1,36 @@
+﻿ce.getSession(sessionId);
+      if (!mounted || session == null) return;
+      if (session.status == RandomChatStatus.ended && !_leaving) {
+        _statusTimer?.cancel();
+        _showPartnerLeftDialog();
+      }
+    });
+  }
+
+  // ------------------------------------------------------------------ Chat --
+
+  Future<void> _send() async {
+    final text = _ctrl.text.trim();
+    if (text.isEmpty || _partnerId == null) return;
+    _ctrl.clear();
+
+    final local = _localMessage(text, senderId: _myUserId!);
+    ref.read(chatProvider.notifier)
+        .addMessage(_sessionId ?? 'random', local, ref: ref);
+
+    try {
+      await _p2p?.sendText(text);
+    } catch (e) {
+      debugPrint('[RandomChat] Sende-Fehler: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Nachricht konnte nicht gesendet werden.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  Message _localMes

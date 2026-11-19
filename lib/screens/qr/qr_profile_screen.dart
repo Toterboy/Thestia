@@ -3,10 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/providers/profile_provider.dart';
-import 'package:thestia/services/supabase_storage_service.dart';
-import 'package:thestia/widgets/qr_profile.dart';
-import 'package:thestia/utils/constants.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
+import 'package:thestia/services/server/supabase_storage_service.dart';
+import 'package:thestia/widgets/common/qr_profile.dart';
+import 'package:thestia/utils/common/constants.dart';
 
 /// Entschlüsselte Bild-Bytes des eigenen Avatars (Speicher-Cache im
 /// Storage-Service macht dies nach dem ersten Laden sofort verfügbar).

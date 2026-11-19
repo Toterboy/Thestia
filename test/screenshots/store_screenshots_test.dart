@@ -4,7 +4,7 @@
 // schreibt sie als PNG-Goldens nach goldens/. Aufruf (schreibt/neu):
 //   flutter test --update-goldens test/screenshots/store_screenshots_test.dart
 // Anschließend nach fastlane/metadata/android/de-DE/images/phoneScreenshots/
-// kopieren (siehe tool/werkzeuge/sonstiges/copy_store_screenshots.ps1).
+// kopieren (siehe tool/scripts/copy_store_screenshots.ps1).
 //
 // Hinweise:
 //  - flutter_test nutzt standardmäßig die Ahem-Font (Text = Blöcke). Hier
@@ -20,19 +20,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:thestia/models/habitude_level.dart';
-import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/providers/profile_provider.dart';
-import 'package:thestia/providers/user_preferences_provider.dart';
+import 'package:thestia/models/profile/habitude_level.dart';
+import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
+import 'package:thestia/providers/settings/user_preferences_provider.dart';
 import 'package:thestia/screens/auth/login_screen.dart';
 import 'package:thestia/screens/dating_hour/dating_hour_how_it_works_screen.dart';
 import 'package:thestia/screens/profile/profile_edit_screen.dart';
 import 'package:thestia/screens/welcome/welcome_screen.dart';
-import 'package:thestia/services/local_storage.dart';
-import 'package:thestia/services/secure_storage.dart';
+import 'package:thestia/services/storage/local_storage.dart';
+import 'package:thestia/services/storage/secure_storage.dart';
 import 'package:thestia/theme/app_theme.dart';
-import 'package:thestia/widgets/theme_picker.dart';
-import 'package:thestia/utils/best_effort.dart';
+import 'package:thestia/widgets/settings/theme_picker.dart';
+import 'package:thestia/utils/common/best_effort.dart';
 
 bool _fontsLoaded = false;
 

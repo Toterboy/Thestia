@@ -1,0 +1,50 @@
+﻿=== photo_moderation_service (erste 1800) ===
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'package:wisp/models/photo_moderation_models.dart';
+import 'package:wisp/services/huggingface_service.dart';
+import 'package:wisp/utils/constants.dart';
+
+/// Service f├╝r Foto-Moderation (NSFW via Hugging Face, FaceMatch Mock).
+class PhotoModerationService {
+  PhotoModerationService(this._supabase);
+
+  final SupabaseClient _supabase;
+
+  static const int _maxViolationsIn24h = 3;
+  static const Duration _violationWindow = Duration(hours: 24);
+
+  /// Pr├╝ft ein Bild auf Nacktinhalt.
+  ///
+  /// Feature-Flag (Betreiber-Entscheidung): Ist die NSFW-Moderation
+  /// deaktiviert (AppConstants.nsfwModerationEnabled = false), wird das
+  /// Bild sofort freigegeben ÔÇô OHNE Pr├╝fung und OHNE photo_moderation-
+  /// DB-Eintrag (keine Admin-Warteschlange, keine Datenhoarder-Eintr├ñge).
+  Future<ModerationResult> checkNudityContent({
+    required String userId,
+    required Uint8List imageBytes,
+  }) async {
+    if (!AppConstants.nsfwModerationEnabled) {
+      return const ModerationResult(approved: true);
+    }
+
+    final hash = sha256.convert(imageBytes).toString();
+
+    final result = await HuggingFaceService.checkImage(imageBytes);
+
+    // In Supabase persistieren.
+    try {
+      await _supabase.from('photo_moderation').insert({
+        'user_id': userId,
+        'photo_hash': hash,
+        'status': result.isSafe ? 'approved' : (result.needsReview ? 'pending_review' : 'rejected'),
+        'hf_categories': jsonEncode(result.categories),
+        'hf_label': result.label,
+      });
+    } catch (e) {
+      debugPrint('[PhotoModeration] DB-Insert fehlgeschlagen: $e');

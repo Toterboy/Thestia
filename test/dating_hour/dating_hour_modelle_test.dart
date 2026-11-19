@@ -1,7 +1,7 @@
 // Die Modelle der Dating Hour.
 //
 // ANLASS (19.11.2026): Bei der Coverage-Messung war
-// `lib/models/dating_hour_models.dart` nur zu 54 % abgedeckt. Gerade
+// `lib/models/dating_hour/dating_hour_models.dart` nur zu 54 % abgedeckt. Gerade
 // die Zeitlogik (5-Minuten-Fenster, automatischer Funke) entscheidet,
 // was der Nutzer im Chat sieht - sie gehoert geprueft.
 //
@@ -12,8 +12,8 @@
 //     darf das Fenster nicht verschieben),
 //   * die Kopien (copyWith) aendern nur das, was man ihnen gibt.
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thestia/models/dating_hour_models.dart';
-import 'package:thestia/services/server_time_service.dart';
+import 'package:thestia/models/dating_hour/dating_hour_models.dart';
+import 'package:thestia/services/server/server_time_service.dart';
 
 /// Die Session im frischen Zustand (5 Minuten offen, nichts entschieden).
 DatingHourSession _session({

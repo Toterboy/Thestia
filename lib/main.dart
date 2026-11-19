@@ -16,33 +16,33 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'package:thestia/app.dart';
 import 'package:thestia/routing/route_restore.dart' show setPendingRouteRestore;
-import 'package:thestia/providers/user_preferences_provider.dart'
+import 'package:thestia/providers/settings/user_preferences_provider.dart'
     show sharedPrefsProvider;
 import 'package:thestia/screens/core/loading_screen.dart';
 import 'package:thestia/screens/core/update_required_screen.dart';
-import 'package:thestia/services/app_config_service.dart';
-import 'package:thestia/services/crash_journal.dart';
-import 'package:thestia/services/server_time_service.dart';
-import 'package:thestia/services/local_storage.dart';
-import 'package:thestia/services/notification_service.dart';
-import 'package:thestia/services/secure_location_storage.dart';
-import 'package:thestia/services/secure_supabase_session_storage.dart';
-import 'package:thestia/services/secure_storage_namespaces.dart';
-import 'package:thestia/services/startup_watchdog.dart';
-import 'package:thestia/services/supabase_database_service.dart';
-import 'package:thestia/services/supabase_service.dart';
-import 'package:thestia/widgets/startup_failure_screen.dart';
-import 'package:thestia/models/signal_key_models.dart';
-import 'package:thestia/models/photo_moderation_models.dart';
-import 'package:thestia/models/report_models.dart';
+import 'package:thestia/services/storage/app_config_service.dart';
+import 'package:thestia/services/server/crash_journal.dart';
+import 'package:thestia/services/server/server_time_service.dart';
+import 'package:thestia/services/storage/local_storage.dart';
+import 'package:thestia/services/server/notification_service.dart';
+import 'package:thestia/services/profile/secure_location_storage.dart';
+import 'package:thestia/services/storage/secure_supabase_session_storage.dart';
+import 'package:thestia/services/storage/secure_storage_namespaces.dart';
+import 'package:thestia/services/auth/startup_watchdog.dart';
+import 'package:thestia/services/server/supabase_database_service.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
+import 'package:thestia/widgets/common/startup_failure_screen.dart';
+import 'package:thestia/models/signal/signal_key_models.dart';
+import 'package:thestia/models/verification/photo_moderation_models.dart';
+import 'package:thestia/models/verification/report_models.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/theme/app_theme.dart';
-import 'package:thestia/utils/chat_backgrounds.dart';
-import 'package:thestia/utils/cert_pinning.dart';
-import 'package:thestia/utils/constants.dart';
-import 'package:thestia/utils/pinned_http_overrides.dart';
-import 'package:thestia/utils/pinned_realtime_transport.dart';
-import 'package:thestia/utils/best_effort.dart';
+import 'package:thestia/utils/chat/chat_backgrounds.dart';
+import 'package:thestia/utils/security/cert_pinning.dart';
+import 'package:thestia/utils/common/constants.dart';
+import 'package:thestia/utils/security/pinned_http_overrides.dart';
+import 'package:thestia/utils/security/pinned_realtime_transport.dart';
+import 'package:thestia/utils/common/best_effort.dart';
 
 /// Einstiegspunkt der App.
 ///
@@ -491,7 +491,7 @@ Future<void> _initializeSupabase() async {
     debugPrint(
       '[MAIN] ACHTUNG: $supabaseHost ist NICHT gepinnt - alle '
       'Serververbindungen werden abgebrochen (fail-closed). Pins eintragen: '
-      'dart run tool/werkzeuge/sonstiges/rotate_cert_pins.dart',
+      'dart run tool/scripts/rotate_cert_pins.dart',
     );
   }
 

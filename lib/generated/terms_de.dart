@@ -1,6 +1,6 @@
 // GENERIERTE DATEI - NICHT VON HAND AENDERN.
-// Quelle: tool/werkzeuge/website/make_terms.py
-// Neu erzeugen mit: python tool/werkzeuge/website/make_terms.py
+// Quelle: tool/web/make_terms.py
+// Neu erzeugen mit: python tool/web/make_terms.py
 
 import 'package:thestia/generated/privacy_policy_blocks.dart';
 

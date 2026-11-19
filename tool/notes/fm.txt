@@ -1,0 +1,66 @@
+﻿ f├╝r diese Sitzung schlicht ├╝bersprungen.
+Future<void> _initializeFirebase() async {
+  try {
+    await Firebase.initializeApp().timeout(const Duration(seconds: 8));
+  } catch (e) {
+    debugPrint('[MAIN] Firebase-Init fehlgeschlagen (Push deaktiviert): $e');
+    return;
+  }
+
+  try {
+    await FirebaseMessaging.instance
+        .requestPermission()
+        .timeout(const Duration(seconds: 5));
+    FirebaseMessaging.onMessage.listen((message) {
+      // N-17: Kein Benachrichtigungsinhalt in Release-Logs.
+      if (kDebugMode) {
+        debugPrint('[MAIN] FCM-Message erhalten: ${message.notification?.title}');
+      }
+    });
+    FirebaseMessaging.instance.onTokenRefresh.listen((token) {
+      if (kDebugMode) debugPrint('[MAIN] FCM-Token erneuert');
+    });
+  } catch (e) {
+    debugPrint('[MAIN] FCM-Listener/Permission fehlgeschlagen: $e');
+  }
+}
+
+/// Initialisiert Supabase mit Timeout.
+///
+/// Ohne Timeout kann ein langsames/unerreichbares Netzwerk den App-Start
+/// unbegrenzt blockieren ("Thestia isn't responding"). Bei Timeout oder Fehler
+/// startet die App im Limit-Modus weiter
+/// ([SupabaseService.isInitialized] == false).
+Future<void> _initializeSupabase() async {
+  final supabaseUrl = dotenv.env['SUPABASE_URL'];
+  final supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'];
+
+  if (supabaseUrl == null ||
+      supabaseUrl.isEmpty ||
+      supabaseUrl.contains('example.com') ||
+      supabaseAnonKey == null ||
+      supabaseAnonKey.isEmpty) {
+    return;
+  }
+
+  try {
+    await Supabase.initialize(
+      url: supabaseUrl,
+      publishableKey: supabaseAnonKey,
+      // Deep-Link-Handling f├╝r Passwort-Reset / E-Mail-Best├ñtigung
+      // (wisp://reset-password): supabase_flutter h├Ârt ├╝ber app_links auf
+      // eingehende URIs. Der eingebaute Filter erkennt aber nur
+      // access_token/code/error ÔÇô PKCE-Links mit token_hash (Standard bei
+      // E-Mail-OTP und Recovery) w├╝rden ignoriert. Das Predicate erweitert
+      // die Erkennung um token_hash, damit getSessionFromUrl den Link
+      // verarbeitet und das passwordRecovery-Event feuert (das der
+      // AuthNotifier in den passwordRecoveryPendingProvider schreibt).
+      // QR-Deep-Links (wisp://user/...) tragen kein Auth-Token und fallen
+      // weiterhin NICHT darunter.
+      authOptions: FlutterAuthClientOptions(
+        // Audit H-6: Session (inkl. Refresh-Token) im Keystore/Keychain
+        // statt im Klartext-SharedPreferences persistieren.
+        localStorage: SecureSupabaseLocalStorage(),
+        detectSessionInUriPredicate: (uri) {
+          final query = uri.queryParameters;
+          final 

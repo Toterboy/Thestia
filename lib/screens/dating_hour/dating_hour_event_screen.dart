@@ -4,18 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:thestia/models/dating_hour_models.dart';
-import 'package:thestia/providers/dating_hour_provider.dart';
-import 'package:thestia/providers/settings_provider.dart';
-import 'package:thestia/providers/user_preferences_provider.dart';
+import 'package:thestia/models/dating_hour/dating_hour_models.dart';
+import 'package:thestia/providers/dating_hour/dating_hour_provider.dart';
+import 'package:thestia/providers/settings/settings_provider.dart';
+import 'package:thestia/providers/settings/user_preferences_provider.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/dating_hour/dating_hour_preferences_screen.dart'
     show genderPrefFromList;
-import 'package:thestia/services/dating_hour_service.dart';
-import 'package:thestia/services/notification_service.dart';
-import 'package:thestia/services/server_time_service.dart';
-import 'package:thestia/utils/constants.dart';
+import 'package:thestia/services/dating_hour/dating_hour_service.dart';
+import 'package:thestia/services/server/notification_service.dart';
+import 'package:thestia/services/server/server_time_service.dart';
+import 'package:thestia/utils/common/constants.dart';
 
 part 'parts/participantprogress.dart';
 part 'parts/activesessionbutton.dart';

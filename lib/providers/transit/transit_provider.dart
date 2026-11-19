@@ -1,0 +1,534 @@
+import 'dart:async';
+
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:thestia/models/transit/transit_models.dart';
+import 'package:thestia/services/storage/app_config_service.dart';
+import 'package:thestia/services/storage/local_storage.dart';
+import 'package:thestia/services/server/supabase_database_service.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
+import 'package:thestia/services/transit/transit_ble_service.dart';
+import 'package:thestia/services/transit/transit_ble_privacy.dart';
+import 'package:thestia/services/transit/transit_encounter_service.dart';
+import 'package:thestia/utils/common/best_effort.dart';
+
+/// Transit-Aktivitätsdauer (Session-Fenster).
+const Duration kTransitSessionDuration = Duration(minutes: 45);
+
+/// Zustand des Transit-Radars (v0.9.0).
+class TransitState {
+  const TransitState({
+    this.active = false,
+    this.mode = TransitMode.transit,
+    this.endsAt,
+    this.encounterCount = 0,
+    this.busy = false,
+    this.lastResult,
+    this.selfTags = const [],
+    this.selfNote = '',
+    this.placeKind = '',
+    this.placeText = '',
+    this.lastError,
+    this.featureDisabled = false,
+  });
+
+  /// Taegliche Selbst-Angaben (v0.9.0): 1-3 Merkmale zu sich selbst,
+  /// werden mit jedem Signal mitgeschickt - andere finden dich darueber.
+  final List<String> selfTags;
+
+  /// Freie Ergänzung zur Selbstbeschreibung (v0.9.1, max. 140 Zeichen).
+  final String selfNote;
+
+  /// Die Art des ungefaehren Ortes (v0.10.1, Betreiber: "wenn man im Zug
+  /// ist z.B. Wagen 3").
+  ///
+  /// FREI GEWAEHLT und KEIN Standort: der Nutzer nennt selbst, was er
+  /// nennen will. Leer = kein Ort.
+  final String placeKind;
+
+  /// Der ungefaehre Ort in den eigenen Worten (z. B. "Wagen 3",
+  /// "Halle 2 bei den Toiletten"). Max. 60 Zeichen.
+  final String placeText;
+
+  final bool active;
+
+  /// Bahn/Café vs. Messe/Event (steuert die RSSI-Schärfe clientseitig).
+  final TransitMode mode;
+
+  /// Wann die Session endet (Auto-Stop + Countdown-Anzeige).
+  final DateTime? endsAt;
+
+  final int encounterCount;
+  final bool busy;
+
+  /// Ergebnis des letzten "Blicke getauscht"-Versands.
+  final TransitSparkResult? lastResult;
+
+  /// Fehlerursache des letzten Signal-Versands (Snackbar-Diagnose).
+  final String? lastError;
+
+  /// Der Server hat Transit Spark abgeschaltet (Migration 159).
+  ///
+  /// Der Schalter in `app_config` ist die Notbremse fuer den Fall, dass
+  /// der BLE-Gerätetest nicht besteht. Der Client fragt den Stand ab,
+  /// damit der Nutzer eine klare Begruendung sieht und nicht nur eine
+  /// Alters-Meldung, obwohl es um etwas anderes geht.
+  final bool featureDisabled;
+
+  TransitState copyWith({
+    bool? active,
+    TransitMode? mode,
+    DateTime? endsAt,
+    int? encounterCount,
+    bool? busy,
+    TransitSparkResult? lastResult,
+    bool clearResult = false,
+    List<String>? selfTags,
+    String? selfNote,
+    String? placeKind,
+    String? placeText,
+    String? lastError,
+    bool? featureDisabled,
+  }) {
+    return TransitState(
+      active: active ?? this.active,
+      mode: mode ?? this.mode,
+      endsAt: endsAt ?? this.endsAt,
+      encounterCount: encounterCount ?? this.encounterCount,
+      busy: busy ?? this.busy,
+      lastResult: clearResult ? null : (lastResult ?? this.lastResult),
+      selfTags: selfTags ?? this.selfTags,
+      selfNote: selfNote ?? this.selfNote,
+      placeKind: placeKind ?? this.placeKind,
+      placeText: placeText ?? this.placeText,
+      lastError: lastError,
+      featureDisabled: featureDisabled ?? this.featureDisabled,
+    );
+  }
+}
+
+/// Provider für Transit Spark: aktiviert BLE (Advertising + Scanning),
+/// rotiert Tokens, hält den Encounter-Cache warm und sendet Signale
+/// mit 1-3 Merkmal-Tags.
+class TransitNotifier extends StateNotifier<TransitState>
+    with WidgetsBindingObserver {
+  TransitNotifier() : super(const TransitState()) {
+    WidgetsBinding.instance.addObserver(this);
+    _encounters.load();
+    unawaited(_refreshFeatureFlag());
+  }
+
+  /// AKKU + PRIVATSPHARE (03.11.2026): Das BLE-Funk-Radio wird
+  /// abgeschaltet, wenn die App in den Hintergrund geht.
+  ///
+  /// Vorher lief das Advertising bis zu 45 Minuten im ~100-ms-Takt
+  /// weiter, auch wenn der Nutzer die App nicht ansah. Der Kommentar
+  /// am Dateianfang von transit_ble_service.dart sagt "Vordergrund-
+  /// Betrieb" - das war die Absicht, die Umsetzung folgte ihr nicht.
+  ///
+  /// Der Radar bleibt dabei AKTIV (die Sitzung laeuft weiter, der
+  /// Nutzer sieht sie im Interface als "aktiv"); nur das Funk-Radio
+  /// schweigt. Beim Zurueckkommen startet es wieder.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      if (this.state.active) {
+        // FRISCHES Token beim Neustart (ROADMAP, "BLE-Tracking-Haertung":
+        // "frische Token pro Advertising-Neustart"). Mit demselben Token
+        // weiterzumachen wuerde verraten, dass das Geraet zwischendurch
+        // nur still war.
+        final neuerToken = TransitEncounterService.generateToken();
+        unawaited(_resumeMitNeuemToken(neuerToken));
+      }
+      return;
+    }
+    unawaited(TransitBleService.instance.suspend());
+  }
+
+  /// Startet das Advertising mit einem neuen Token und meldet ihn dem
+  /// Server als Anwesenheit.
+  Future<void> _resumeMitNeuemToken(String neuerToken) async {
+    final ok = await TransitBleService.instance.resume(token: neuerToken);
+    if (!ok) return;
+    if (SupabaseService.isInitialized) {
+      await bestEffort(
+        'SupabaseDatabaseService.transitPresenceHeartbeat',
+        () async {
+          await SupabaseDatabaseService(
+            SupabaseService.client,
+          ).transitPresenceHeartbeat(neuerToken);
+        },
+      );
+    }
+  }
+
+  /// Fragt den Schalterstand ab (Migration 159).
+  ///
+  /// Fail-open: Wenn der Stand nicht gelesen werden kann, bleibt das
+  /// Feature aktiv - der Server entscheidet ohnehin, und ein Lesefehler
+  /// soll das Feature nicht ungefragt stilllegen.
+  Future<void> _refreshFeatureFlag() async {
+    try {
+      final aktiv = await AppConfigService.fetchTransitSparkEnabled();
+      if (aktiv != state.featureDisabled) {
+        state = state.copyWith(featureDisabled: !aktiv);
+      }
+    } catch (e) {
+      debugPrint('[Transit] Schalterstand nicht gelesen: $e');
+    }
+  }
+
+  TransitEncounterService? _encountersField;
+
+  /// SECURITY (Audit 2026-09-26): Der Encounter-Cache wird BEWUSST nicht
+  /// ueber `_storage` (localStorageProvider = SharedPreferences =
+  /// Klartext) geschrieben, sondern in den Keystore. Der Cache enthaelt
+  /// BEGEHNACHWEISE - welche fremden Geraete waren per BLE in Funkreichweite
+  /// und wann. Das ist ein Ortungsdatum (DSGVO Art. 9); die restlichen
+  /// Art.-9-Preferenzen liegen bereits im Keystore
+  /// (user_preferences_provider.dart), dieser Store war die Ausnahme.
+  TransitEncounterService get _encounters =>
+      _encountersField ??= TransitEncounterService(SecurePreferencesStorage());
+
+  Timer? _countdownTimer;
+  Timer? _rotateTimer;
+  Timer? _persistTimer;
+
+  void _recordEncounter(String token, int rssi) {
+    // Messe-Modus (v0.9.0): nur starke Signale = echter Sichtkontakt
+    // (dichte BLE-Umgebungen fluten sonst den Cache).
+    if (state.mode.rssiThreshold > rssi) return;
+    _encounters.recordEncounter(token);
+    state = state.copyWith(encounterCount: _encounters.freshCount);
+    // Persist entprellt (nicht bei jedem Treffer schreiben).
+    _persistTimer?.cancel();
+    _persistTimer = Timer(const Duration(seconds: 5), () {
+      _encounters.persist();
+    });
+  }
+
+  /// Modus setzen (nur bei inaktivem Radar umschaltbar).
+  void setMode(TransitMode mode) {
+    if (!state.active) state = state.copyWith(mode: mode);
+  }
+
+  /// Taegliche Selbst-Angaben setzen (v0.9.0, beim Radar-Start).
+  void setSelfTags(List<String> tags) {
+    state = state.copyWith(selfTags: tags);
+  }
+
+  /// Freie Ergänzung zur Selbstbeschreibung setzen (v0.9.1).
+  void setSelfNote(String note) {
+    state = state.copyWith(selfNote: note.trim());
+  }
+
+  /// Setzt den ungefaehren Ort (v0.10.1, Betreiber: "wenn man im Zug ist
+  /// z.B. Wagen 3 oder so oder wenn man auf ner Messe ist z.B. Halle 2").
+  ///
+  /// Der Ort ist eine SELBSTAUSKUNFT - kein Standort, keine Koordinaten.
+  /// Er geht mit dem Signal zum Server und steht bei den Kandidaten
+  /// dabei, damit sie wissen, wo sie dich suchen sollen.
+  void setPlace({String? kind, String? text}) {
+    state = state.copyWith(
+      placeKind: (kind ?? '').trim(),
+      placeText: (text ?? '').trim(),
+    );
+  }
+
+  /// Aktiviert das Radar (BLE + Cache). Gibt false zurück, wenn BLE
+  /// nicht starten konnte (z. B. Bluetooth aus / Berechtigung fehlt).
+  Future<bool> activate() async {
+    if (state.active) return true;
+    // Der Server kann Transit Spark abschalten (Migration 159). Dann
+    // wird das BLE gar nicht erst gestartet - ein Funkgerät, das nichts
+    // bewirkt, ist nur Datenschutz-Aufwand ohne Gegenwert.
+    if (state.featureDisabled) return false;
+    final token = TransitEncounterService.generateToken();
+    final ok = await TransitBleService.instance.start(
+      token: token,
+      onEncounter: _recordEncounter,
+    );
+    if (!ok) return false;
+
+    final endsAt = DateTime.now().add(kTransitSessionDuration);
+    state = state.copyWith(active: true, endsAt: endsAt);
+
+    // Presence-Heartbeat (v0.9.1 Soft-Ping): Das aktuelle Token wird
+    // serverseitig hinterlegt (TTL 45 min, Auto-Purge) - NUR so kann
+    // ein nachtraeglicher Gruß die Person ueberhaupt erreichen. Im
+    // Privacy-Hinweis des Radars transparent genannt.
+    if (SupabaseService.isInitialized) {
+      unawaited(() async {
+        try {
+          await SupabaseDatabaseService(
+            SupabaseService.client,
+          ).transitPresenceHeartbeat(token);
+        } catch (e) {
+          debugPrint('[Transit] Presence-Heartbeat fehlgeschlagen: ');
+        }
+      }());
+    }
+
+    // Token-Rotation mit JITTER (v0.9.2): vorher exakt alle 10 Minuten.
+    // Ein fester Rotations-Raster ist selbst ein Fingerprint - wer den
+    // Wechsel mitzaehlt, kennt die Periode und bildet daraus eine
+    // Geraeteklasse ueber Sitzungen hinweg. Jetzt 6-14 min, neu gewuerfelt
+    // nach jeder Rotation. Der Server prueft Begegnungen ueber ein
+    // 30-Minuten-Fenster, der grosszuehige Spielraum passt weiter.
+    _scheduleRotation();
+
+    // Countdown/Ende-Überwachung: EINMAL-Timer auf die Restlaufzeit.
+    // Vorher lief hier ein 1-s-Timer, der nichts tat außer
+    // `DateTime.now().isAfter(endsAt)` zu vergleichen - 3600 Weckrufe pro
+    // Stunde und Aktivierungsminute, obwohl die Sekunden-Anzeige gar nicht
+    // davon profitiert (sie rendert über eigene Mini-Widgets beim Aufbau).
+    _countdownTimer?.cancel();
+    final sessionEndsAt = state.endsAt;
+    if (sessionEndsAt != null) {
+      final remaining = sessionEndsAt.difference(DateTime.now());
+      if (remaining <= Duration.zero) {
+        unawaited(deactivate());
+      } else {
+        _countdownTimer = Timer(remaining, () {
+          if (state.active) unawaited(deactivate());
+        });
+      }
+    }
+
+    return true;
+  }
+
+  /// Deaktiviert Radar + räumt serverseitig die Präsenz ab (Privacy).
+  ///
+  /// v0.9.0-Nutzerwunsch: Die lokal gesehene Personen-Liste bleibt
+  /// NOCH 2 STUNDEN bestehen ( zum Nachschauen/Anschreiben in Ruhe) -
+  /// die Tokens sind ephemere Zufallswerte ohne Positionsdaten und
+  /// verfallen lokael; die eigenen PRESENCE-Tokens werden weiterhin
+  /// sofort entfernt (Radar aus = nicht mehr adressierbar).
+  /// Plant die naechste Token-Rotation mit jitteriger Verzoegerung.
+  ///
+  /// Einmal-Timer statt `Timer.periodic`, weil sich die Verzoegerung nach
+  /// jeder Rotation neu auswerfen soll - ein periodischer Timer hat
+  /// zwangslaeufig eine feste Periode.
+  void _scheduleRotation() {
+    _rotateTimer?.cancel();
+    _rotateTimer = Timer(TransitBlePrivacy.tokenRotationDelay(), () async {
+      if (!state.active) return;
+      final newToken = TransitEncounterService.generateToken();
+      await TransitBleService.instance.rotateToken(
+        newToken: newToken,
+        onEncounter: _recordEncounter,
+      );
+      if (SupabaseService.isInitialized) {
+        await bestEffort(
+          'SupabaseDatabaseService.transitPresenceHeartbeat',
+          () async {
+            await SupabaseDatabaseService(
+              SupabaseService.client,
+            ).transitPresenceHeartbeat(newToken);
+          },
+        );
+      }
+      if (state.active) _scheduleRotation();
+    });
+  }
+
+  Future<void> deactivate() async {
+    _rotateTimer?.cancel();
+    _countdownTimer?.cancel();
+    _persistTimer?.cancel();
+    await TransitBleService.instance.stop();
+    // Presence-Token entfernen (Privacy - Radar aus = nicht mehr
+    // adressierbar).
+    if (SupabaseService.isInitialized) {
+      try {
+        await SupabaseDatabaseService(
+          SupabaseService.client,
+        ).transitPresenceLeave();
+      } catch (e) {
+        debugPrint('[Transit] Presence-Leave fehlgeschlagen: ');
+      }
+    }
+    await _encounters.persist();
+    // FIX "Button verschwindet / Ansicht wie davor": Ein blanker Reset
+    // warf auch Selbstbeschreibung und Encounter-Stand weg - der
+    // "Gesehene Geräte"-Button und die Ergänzungs-Karte verschwanden
+    // plötzlich. Jetzt: nur das AKTIVE Radar zurücksetzen, alles andere
+    // (Selbst-Tags, Notiz, Encounter-Anzeige) bleibt bestehen.
+    state = state.copyWith(
+      active: false,
+      endsAt: null,
+      encounterCount: _encounters.count,
+      busy: false,
+      clearResult: true,
+    );
+  }
+
+  /// Liste der NOCH SICHTBAREN Encounters (2-Stunden-Fenster, v0.9.0)
+  /// fuer die Gruessen-Sektion im Radar.
+  List<TransitEncounter> softEncounters() => _encounters.softList();
+
+  /// True, wenn gesehene Personen noch in der 2-Stunden-Ruhezeit sind.
+  bool get hasSoftEncounters => _encounters.softList().isNotEmpty;
+
+  /// Countdown der Rest-Sichtbarkeit (2 h Fenster) für die Liste; null,
+  /// wenn nichts mehr sichtbar ist.
+  DateTime? softUntil() {
+    final list = _encounters.softList();
+    if (list.isEmpty) return null;
+    var latest = list.first.seenAt;
+    for (final e in list) {
+      if (e.seenAt.isAfter(latest)) latest = e.seenAt;
+    }
+    return latest.add(TransitEncounter.softRetention);
+  }
+
+  /// Soft-Ping senden (1x pro Token, 48 h).
+  ///
+  /// BEFUND (11.11.2026, Betreiber): "die Moeglichkeit hat auch mehrere
+  /// anzuschreiben". Darum kann der Empfaenger auch direkt benannt werden
+  /// (die Kandidatenliste liefert die Person). Der Server prueft die
+  /// Naehe in BEIDEN Faellen selbst - ein Ping an eine beliebige Person
+  /// ist damit nicht moeglich.
+  Future<bool> sendSoftPing({
+    required String token,
+    required String messageKey,
+    String? customLine,
+    String? recipientId,
+    String? placeKind,
+    String? placeText,
+    List<String> tags = const [],
+    List<String> selfTags = const [],
+  }) async {
+    try {
+      if (!SupabaseService.isInitialized) return false;
+      await SupabaseDatabaseService(SupabaseService.client).sendSoftPing(
+        token: token,
+        messageKey: messageKey,
+        customLine: customLine,
+        recipientId: recipientId,
+        placeKind: placeKind,
+        placeText: placeText,
+        tags: tags,
+        selfTags: selfTags,
+      );
+      return true;
+    } catch (e) {
+      debugPrint('[Transit] sendSoftPing fehlgeschlagen: $e');
+      return false;
+    }
+  }
+
+  /// Die Personen in der Naehe, deren Beschreibung passt.
+  ///
+  /// BEFUND (11.11.2026, Betreiber): "wenn es bei Transit Spark mehrere mit
+  /// der selben Beschreibung geben sollte, dass man dann alle dafuer
+  /// vorgeschlagen bekommt".
+  Future<List<TransitCandidate>> listCandidates({
+    required List<String> tags,
+    List<String> selfTags = const [],
+  }) async {
+    try {
+      if (!SupabaseService.isInitialized) return const [];
+      final rows = await SupabaseDatabaseService(
+        SupabaseService.client,
+      ).listTransitCandidates(tags: tags, selfTags: selfTags);
+      return rows.map(TransitCandidate.fromJson).toList();
+    } catch (e) {
+      debugPrint('[Transit] Kandidaten nicht abrufbar: $e');
+      return const [];
+    }
+  }
+
+  /// "Blicke getauscht": frische Encounter-Tokens + 1-3 Merkmal-Tags
+  /// an den Server senden. Match = beidseitiges Signal MIT gemeinsamen
+  /// Merkmalen -> Bestandspipeline (Likes -> Match -> Push) erzeugt den
+  /// Funke. Ohne Gegensignal wird das eigene Signal 45 Minuten
+  /// vorgehalten.
+  Future<TransitSparkResult?> sendSpark(List<String> tags) async {
+    if (!state.active || state.busy) return null;
+    if (state.featureDisabled) return null;
+    state = state.copyWith(busy: true, clearResult: true);
+    try {
+      final tokens = _encounters.freshTokens();
+      // BEFUND (06.11.2026, Betreiber: "Android 11 findet gar keins
+      // Bad request."): Mit einer LEEREN Token-Liste ging der Aufruf an
+      // den Server, der antwortete mit einem 400 und dem Rohfehler im
+      // Text ("Bad request"). Der Nutzer wusste damit nichts.
+      //
+      // Ohne Geraet in Reichweite gibt es nichts zu vergleichen - das
+      // ist kein Fehler, sondern eine Lage. Die App sagt es jetzt
+      // selbst.
+      if (tokens.isEmpty) {
+        state = state.copyWith(busy: false, lastError: 'no_devices');
+        return null;
+      }
+      // Der eigene Token (v0.10.0, Migration 185).
+      //
+      // BEFUND (07.11.2026, Betreiber): "Beide Geraete suchen eine
+      // Person bei Transit Spark ... aber gibt keinen Funken." Der
+      // Server verglich zwei Sichtungslisten - die sind bei zwei
+      // Personen, die nur einander sehen, disjunkt. Mit genau zwei
+      // Geraeten war ein Match mathematisch unmoeglich.
+      //
+      // Der eigene Token macht die Frage beantwortbar: "hat der
+      // andere mich gesehen?" - denn der eigene Token des anderen
+      // steht in dessen Sichtungsliste, wenn der andere mich gesehen
+      // hat.
+      final eigenerToken = TransitBleService.instance.currentToken;
+      if (eigenerToken == null || eigenerToken.isEmpty) {
+        // Das Radar laeuft, sendet aber noch kein Signal (oder der
+        // Token wurde gerade gewechselt). Ein Versuch ohne ihn kann
+        // keinen Match finden - das wird gesagt, statt still nichts
+        // zu tun.
+        state = state.copyWith(busy: false, lastError: 'own_token_missing');
+        return null;
+      }
+      final res = await SupabaseDatabaseService(SupabaseService.client)
+          .matchProximitySpark(
+            tokens: tokens,
+            tags: tags,
+            mode: state.mode.value,
+            selfTags: state.selfTags,
+            selfNote: state.selfNote.isEmpty ? null : state.selfNote,
+            selfToken: eigenerToken,
+            // BEFUND (11.11.2026): Der ungefaehre Ort geht mit dem Signal
+            // zum Server - damit steht er bei den Kandidaten dabei.
+            placeKind: state.placeKind.isEmpty ? null : state.placeKind,
+            placeText: state.placeText.isEmpty ? null : state.placeText,
+          );
+      final result = TransitSparkResult.fromJson(res);
+      state = state.copyWith(busy: false, lastResult: result, lastError: null);
+      return result;
+    } catch (e) {
+      debugPrint('[Transit] sendSpark fehlgeschlagen: $e');
+      state = state.copyWith(busy: false, lastError: _shortError(e));
+      return null;
+    }
+  }
+
+  String _shortError(Object e) {
+    var t = e.toString();
+    t = t.replaceFirst('AppException: ', '').replaceFirst('Exception: ', '');
+    if (t.length > 160) t = t.substring(0, 160);
+    return t;
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _rotateTimer?.cancel();
+    _countdownTimer?.cancel();
+    _persistTimer?.cancel();
+    TransitBleService.instance.stop();
+    super.dispose();
+  }
+}
+
+/// Provider für Transit Spark.
+final transitProvider = StateNotifierProvider<TransitNotifier, TransitState>((
+  ref,
+) {
+  return TransitNotifier();
+});

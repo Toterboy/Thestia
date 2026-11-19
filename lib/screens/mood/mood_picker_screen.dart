@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/models/user_mood.dart';
-import 'package:thestia/providers/mood_provider.dart';
+import 'package:thestia/models/profile/user_mood.dart';
+import 'package:thestia/providers/profile/mood_provider.dart';
 import 'package:thestia/theme/app_theme.dart';
-import 'package:thestia/widgets/buttons.dart';
+import 'package:thestia/widgets/common/buttons.dart';
 
 /// Screen zur Auswahl des Mood of the Day.
 ///

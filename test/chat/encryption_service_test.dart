@@ -1,7 +1,7 @@
 // Der Verschluesselungs-Dienst (Signal-Protokoll) - bisher kaum getestet.
 //
 // ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
-// lib/services/encryption_service.dart 268 offene Zeilen bei 308 Zeilen
+// lib/services/chat/encryption_service.dart 268 offene Zeilen bei 308 Zeilen
 // gesamt - der Dienst, der die privaten Schluessel, die PreKeys und die
 // Session-Ratchet-States haelt, war fast voellig ungetestet.
 //
@@ -23,8 +23,8 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'package:thestia/models/signal_key_models.dart';
-import 'package:thestia/services/encryption_service.dart';
+import 'package:thestia/models/signal/signal_key_models.dart';
+import 'package:thestia/services/chat/encryption_service.dart';
 
 import '../support/plugin_mocks.dart';
 

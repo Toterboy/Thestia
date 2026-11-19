@@ -1,0 +1,57 @@
+﻿-- 076_v0802_pause_dealbreaker_feedback.sql
+--
+-- v0.8.0 Nachtrag:
+--  1) Pausenmodus: profiles.paused - pausierte Profile sind in Discovery
+--     und Find-your-Match unsichtbar, bestehende Funken/Chats bleiben.
+--  2) Habit-Dealbreaker: profiles.habits_dealbreaker - wer den Schalter
+--     setzt, sieht nur noch Kandidaten, deren Konsum maximal so hoch ist
+--     wie der eigene (pro Habit nur wirksam, wenn das eigene Feld gesetzt).
+--  3) Mindest-App-Version: app_config.min_app_version_build - alte Clients
+--     zeigen beim Start einen Update-Hinweis (Fail-open bei Netzfehlern).
+--  4) Meldungs-Feedback: list_my_reports() - Meldende sehen Status ihrer
+--     eigenen Meldungen (keine Details zu Dritten).
+--  5) Blockierliste: list_blocked_users() - wer ist blockiert (f├╝r die
+--     Verwaltungs-UI; unblock_user existiert seit 043).
+
+-- ==========================================================================
+-- 1) profiles-Spalten ------------------------------------------------------
+-- ==========================================================================
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS paused boolean NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS habits_dealbreaker boolean NOT NULL DEFAULT false;
+
+COMMENT ON COLUMN public.profiles.paused IS
+'v0.8.0 Pausenmodus: true = Profil ist in Discovery/Find-your-Match unsichtbar, bestehende Funken und Chats bleiben bestehen.';
+COMMENT ON COLUMN public.profiles.habits_dealbreaker IS
+'v0.8.0: true = Kandidaten mit hoeberem Konsum als der eigene (Rauchen/Alkohol/Drogen) werden im Find-your-Match ausgeschlossen. Wirkt pro Habit nur, wenn das eigene Feld gesetzt ist.';
+
+-- ==========================================================================
+-- 2) public_profiles: paused-Spalte erg├ñnzen (Basis 074) -------------------
+-- ==========================================================================
+create or replace view public.public_profiles as
+select
+  p.user_id,
+  p.name,
+  coalesce(p.gender, 'unknown') as gender,
+  coalesce(p.bio, '') as bio,
+  coalesce(p.interests, '[]'::jsonb) as interests,
+  coalesce(p.personality_type, 'INTJ') as personality_type,
+  date_part('year', age(coalesce(p.birth_date, '2000-01-01'::date)))::int as age,
+  round(coalesce(p.location_lat, 0)::numeric, 1)::float8 as lat_approx,
+  round(coalesce(p.location_lng, 0)::numeric, 1)::float8 as lng_approx,
+  coalesce(p.created_at, now()) as created_at,
+  coalesce(p.updated_at, now()) as updated_at,
+  um.mood,
+  coalesce(p.intro_text, '') as intro_text,
+  p.intro_audio_path,
+  p.smoking,
+  p.alcohol,
+  p.drugs,
+  coalesce(p.music_liked, '{}'::text[]) as music_liked,
+  coalesce(p.music_disliked, '{}'::text[]) as music_disliked,
+  p.paused
+from public.profiles p
+left join lateral (
+  select mood
+  from public.user_mood
+  wher

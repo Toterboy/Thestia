@@ -1,0 +1,27 @@
+﻿=== index.ts 17254
+// Supabase Edge Function: notify-user
+//
+// Sendet Push-Benachrichtigungen direkt ├╝ber die FCM-API v1
+// (Transport). Verarbeitung/Speicherung der Daten bleibt in der EU
+// (Supabase eu-central-1). FCM dient nur als Zustell-Transport.
+//
+// Aufrufer:
+//   1. DB-Trigger (likes/matches via pg_net) mit Header
+//      "x-wisp-internal: <WISP_INTERNAL_SECRET>"
+//   2. Authentifizierter Client (JWT) ÔÇô z. B. beim Senden einer
+//      Chat-Nachricht (NUR Metadaten, niemals Nachrichteninhalte ÔÇô E2E).
+//
+// Die Einzel-Schalter (profiles.notify_matches/likes/messages/dating_hour
+// + notifications_enabled) werden VOR dem Versand serverseitig gepr├╝ft.
+//
+// Voraussetzung: kostenloses Firebase-Konto
+//   - google-services.json in android/app (Client)
+//   - Service-Account-JSON als Secret FIREBASE_SERVICE_ACCOUNT_JSON
+//     (Firebase Console -> Project Settings -> Service Accounts ->
+//      Generate new private key)
+//
+// Secrets:
+//   WISP_INTERNAL_SECRET          ÔÇô muss zum Vault-Secret 'wisp_internal_secret'
+//                                   passen (Migration 040). KEIN hartcodierter
+//                                   Fallback: fehlt das Env, ist die Funktion
+//                      

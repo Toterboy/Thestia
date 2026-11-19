@@ -1,0 +1,41 @@
+﻿123 | Tab(text: 'Moderation', icon: Icon(Icons.photo_library)),
+144 | _PhotoModerationList(),
+588 | // Tab 4: Foto-Moderation (unveraendert uebernommen, mit Hash-Guard)
+590 | class _PhotoModerationList extends ConsumerStatefulWidget {
+591 | const _PhotoModerationList();
+594 | ConsumerState<_PhotoModerationList> createState() =>
+595 | _PhotoModerationListState();
+598 | class _PhotoModerationListState extends ConsumerState<_PhotoModerationList> {
+610 | final service = ref.read(photoModerationServiceProvider);
+618 | final service = ref.read(photoModerationServiceProvider);
+626 | final service = ref.read(photoModerationServiceProvider);
+635 | return const Center(child: Text('Keine ausstehenden Moderationen.'));
+123 | Tab(text: 'Moderation', icon: Icon(Icons.photo_library)),
+120 | Tab(text: 'Meldungen', icon: Icon(Icons.flag)),
+121 | Tab(text: 'Bug Reports', icon: Icon(Icons.bug_report)),
+122 | Tab(text: 'Verifizierung', icon: Icon(Icons.verified)),
+123 | Tab(text: 'Moderation', icon: Icon(Icons.photo_library)),
+124 | Tab(text: 'Sperren', icon: Icon(Icons.block)),
+141 | _UserReportsTab(),
+142 | _BugReportsTab(),
+143 | _VerificationTab(),
+145 | _BansTab(),
+232 | const _UserReportsTab();
+365 | const _BugReportsTab();
+455 | const _VerificationTab();
+679 | const _BansTab();
+34 | ///     `is_current_user_admin` (fail-closed - bei Fehler wird umgeleitet).
+36 | ///     (`admin_list_*`), die `is_current_user_admin()` serverseitig
+74 | final result = await SupabaseService.client.rpc('is_current_user_admin');
+49 | class _AdminScreenState extends ConsumerState<AdminScreen> {
+156 | class _AsyncList extends StatelessWidget {
+231 | class _UserReportsTab extends ConsumerStatefulWidget {
+238 | class _UserReportsTabState extends ConsumerState<_UserReportsTab> {
+364 | class _BugReportsTab extends ConsumerStatefulWidget {
+371 | class _BugReportsTabState extends ConsumerState<_BugReportsTab> {
+454 | class _VerificationTab extends ConsumerStatefulWidget {
+461 | class _VerificationTabState extends ConsumerState<_VerificationTab> {
+590 | class _PhotoModerationList extends ConsumerStatefulWidget {
+598 | class _PhotoModerationListState extends ConsumerState<_PhotoModerationList> {
+678 | class _BansTab extends ConsumerStatefulWidget {
+685 | class _BansTabState extends ConsumerState<_BansTab> {

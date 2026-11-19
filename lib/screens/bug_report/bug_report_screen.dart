@@ -8,7 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:image/image.dart' as img;
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:thestia/services/brevo_bug_report_service.dart';
+import 'package:thestia/services/profile/brevo_bug_report_service.dart';
 import 'package:thestia/l10n/app_strings.dart';
 
 /// Grenzen eines Bugreports (auch serverseitig in der Edge Function

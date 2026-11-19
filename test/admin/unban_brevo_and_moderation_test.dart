@@ -1,7 +1,7 @@
 // Die bisher ungetesteten Dienste und Modelle.
 //
 // ANLASS (14.11.2026): Die Coverage-Messung zeigte fuer
-// lib/services/unban_request_service.dart, lib/services/
+// lib/services/verification/unban_request_service.dart, lib/services/
 // brevo_bug_report_service.dart und lib/models/
 // photo_moderation_models.dart je 0 %.
 //
@@ -24,10 +24,10 @@ import 'package:hive/hive.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
-import 'package:thestia/models/photo_moderation_models.dart';
-import 'package:thestia/services/auth_exception.dart';
-import 'package:thestia/services/brevo_bug_report_service.dart';
-import 'package:thestia/services/unban_request_service.dart';
+import 'package:thestia/models/verification/photo_moderation_models.dart';
+import 'package:thestia/services/auth/auth_exception.dart';
+import 'package:thestia/services/profile/brevo_bug_report_service.dart';
+import 'package:thestia/services/verification/unban_request_service.dart';
 
 import '../support/fake_supabase_server.dart';
 

@@ -1,0 +1,74 @@
+﻿=== 032_random_chat.sql
+ index if not exists idx_random_chat_user_a
+  on public.random_chat_sessions (user_a, status);
+create index if not exists idx_random_chat_user_b
+  on public.random_chat_sessions (user_b, status);
+
+-- join_random_chat():
+--  - Bestehende aktive/wartende Session des Aufrufers -> zur├╝ckgeben (Reconnect).
+--  - Sonst: ├ñltesten Wartenden matchen (atomar, skip locked) -> Paarung.
+--  - Sonst: eigene wartende Session anlegen.
+create or replace function public.join_random_chat()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user uuid := auth.uid();
+  v_id uuid;
+  v_partner uuid;
+  v_status text;
+begin
+  if v_user is null then
+    raise exception 'Nicht authentifiziert';
+  end if;
+
+  -- Reconnect: bestehende Session bevorzugen.
+  select s.id,
+         case when s.user_a = v_user then s.user_b else s.user_a end,
+         s.status
+    into v_id, v_partner, v_status
+    from public.random_chat_sessions s
+   where s.status in ('waiting', 'active')
+     and (s.user_a = v_user or s.user_b = v_user)
+     and s.created_at > now() - interval '30 minutes'
+   order by s.created_at desc
+   limit 1;
+
+  if v_id is not null then
+    return jsonb_build_object(
+      'sessionId', v_id,
+      'partnerId', v_partner,
+      'status', v_status
+    );
+  end if;
+
+  -- ├ältesten Wartenden atomar ├╝bernehmen.
+  select s.id, s.user_a
+    into v_id, v_partner
+    from public.random_chat_sessions s
+   where s.status = 'waiting'
+     and s.user_b is null
+     and s.user_a <> v_user
+     and s.created_at > now() - interval '5 minutes'
+   order by s.created_at asc
+   limit 1
+   for update skip locked;
+
+  if v_id is not null then
+    update public.random_chat_sessions
+       set user_b = v_user,
+           status = 'active',
+           matched_at = now()
+     where id = v_id;
+
+    return jsonb_build_object(
+      'sessionId', v_id,
+      'partnerId', v_partner,
+      'status', 'active'
+    );
+  end if;
+
+  -- Neue wartende Session.
+  insert into public.random_chat_

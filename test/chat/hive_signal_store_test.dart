@@ -1,7 +1,7 @@
 // Der persistente Signal-Speicher - ungetestet (8,2 %).
 //
 // ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
-// lib/services/hive_signal_store.dart 78 offene Zeilen bei 85 Zeilen
+// lib/services/chat/hive_signal_store.dart 78 offene Zeilen bei 85 Zeilen
 // gesamt. Hier liegt die Persistenz der Ende-zu-Ende-Verschluesselung:
 // die Sessions, der Identity-Trust und die PreKeys.
 //
@@ -22,8 +22,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart';
 
-import 'package:thestia/models/signal_key_models.dart';
-import 'package:thestia/services/hive_signal_store.dart';
+import 'package:thestia/models/signal/signal_key_models.dart';
+import 'package:thestia/services/chat/hive_signal_store.dart';
 
 import '../support/plugin_mocks.dart';
 

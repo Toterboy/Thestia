@@ -1,7 +1,7 @@
 // Die Treffen-Vorschlags-Karte im Chat - bisher kaum getestet (9,2 %).
 //
 // ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
-// lib/widgets/meet_intent_card.dart 89 offene Zeilen bei 98 Zeilen
+// lib/widgets/profile/meet_intent_card.dart 89 offene Zeilen bei 98 Zeilen
 // gesamt. Die Karte ist das, was aus einem Funke ein echtes Treffen
 // machen soll - und sie hat fuenf Zustaende.
 //
@@ -19,7 +19,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/widgets/meet_intent_card.dart';
+import 'package:thestia/widgets/profile/meet_intent_card.dart';
 
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';

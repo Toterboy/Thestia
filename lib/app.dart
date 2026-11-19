@@ -8,18 +8,18 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/providers/chat_provider.dart';
-import 'package:thestia/providers/user_preferences_provider.dart'
+import 'package:thestia/providers/chat/chat_provider.dart';
+import 'package:thestia/providers/settings/user_preferences_provider.dart'
     show sharedPrefsProvider;
-import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/providers/settings/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/core/update_required_screen.dart';
-import 'package:thestia/services/app_config_service.dart';
-import 'package:thestia/services/global_relay_inbox.dart';
-import 'package:thestia/services/notification_service.dart';
-import 'package:thestia/services/unified_push_service.dart';
+import 'package:thestia/services/storage/app_config_service.dart';
+import 'package:thestia/services/chat/global_relay_inbox.dart';
+import 'package:thestia/services/server/notification_service.dart';
+import 'package:thestia/services/server/unified_push_service.dart';
 import 'package:thestia/theme/app_theme.dart';
-import 'package:thestia/widgets/usage_time_gate.dart';
+import 'package:thestia/widgets/settings/usage_time_gate.dart';
 
 /// Laufende Instanz des globalen Relay-Eingangs (für [App.dispose]).
 final globalRelayInboxProvider = StateProvider<GlobalRelayInbox?>(

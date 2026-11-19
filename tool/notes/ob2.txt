@@ -1,0 +1,186 @@
+﻿import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import 'package:wisp/models/habitude_level.dart';
+import 'package:wisp/providers/profile_provider.dart';
+import 'package:wisp/providers/settings_provider.dart';
+import 'package:wisp/routing/app_router.dart';
+import 'package:wisp/services/supabase_database_service.dart';
+import 'package:wisp/services/supabase_service.dart';
+import 'package:wisp/utils/constants.dart';
+import 'package:wisp/widgets/buttons.dart';
+import 'package:wisp/widgets/habitude_selector.dart';
+
+/// Onboarding mit Blind-Mode-Erkl├ñrung, Datenschutz-Hinweisen und
+/// erg├ñnzbaren Profilschritten.
+///
+/// Jeder Profil-Schritt ist ├╝berspringbar ("Sp├ñter ausf├╝llen"). Am Ende
+/// werden die eingegebenen Daten im Profil/Einstellungen gespeichert.
+class OnboardingScreen extends ConsumerStatefulWidget {
+  const OnboardingScreen({super.key});
+
+  @override
+  ConsumerState<OnboardingScreen> createState() => _OnboardingScreenState();
+}
+
+class _InterestsStep extends StatefulWidget {
+  const _InterestsStep({
+    required this.title,
+    required this.onSkip,
+    required this.onContinue,
+    this.onBack,
+    required this.initialInterests,
+    required this.onChanged,
+  });
+
+  final String title;
+  final VoidCallback onSkip;
+  final VoidCallback onContinue;
+  final VoidCallback? onBack;
+  final Set<String> initialInterests;
+  final ValueChanged<Set<String>> onChanged;
+
+  @override
+  State<_InterestsStep> createState() => _InterestsStepState();
+}
+
+class _InterestsStepState extends State<_InterestsStep> {
+  late final Set<String> _interests;
+
+  @override
+  void initState() {
+    super.initState();
+    _interests = Set<String>.from(widget.initialInterests);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            widget.title,
+            style: Theme.of(context).textTheme.headlineSmall,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          Expanded(
+            child: Scrollbar(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: AppConstants.presetInterests
+                          .map(
+                            (i) => FilterChip(
+                              label: Text(i),
+                              selected: _interests.contains(i),
+                              onSelected: (sel) {
+                                setState(() {
+                                  if (sel) {
+                                    _interests.add(i);
+                                  } else {
+                                    _interests.remove(i);
+                                  }
+                                });
+                                widget.onChanged(Set<String>.from(_interests));
+                              },
+                            ),
+                          )
+                          .toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    TextButton(
+                      onPressed: widget.onSkip,
+                      child: const Text('Sp├ñter ausf├╝llen'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (widget.onBack != null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: widget.onBack,
+                icon: const Icon(Icons.arrow_back),
+                label: const Text('Zur├╝ck'),
+              ),
+            ),
+          PrimaryButton(label: 'Weiter', onPressed: widget.onContinue),
+        ],
+      ),
+    );
+  }
+}
+
+/// Statische Informationsseite (Blind Mode / Privatsph├ñre).
+class _Page extends StatelessWidget {
+  const _Page({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
+
+  final IconData icon;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: 60,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+          const SizedBox(height: 32),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.headlineSmall,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            body,
+            style: Theme.of(context).textTheme.bodyLarge,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ├£berspringbarer Eingabeschritt im Onboarding.
+class _Step extends StatelessWidget {
+  const _Step({
+    required this.title,
+    required this.child,
+    required this.onSkip,
+    required this.onContinue,
+    this.onBack,
+  });
+
+  final String title;
+  final Widget child;
+  final VoidCallback o

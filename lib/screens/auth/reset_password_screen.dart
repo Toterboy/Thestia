@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:thestia/providers/auth_provider.dart';
+import 'package:thestia/providers/auth/auth_provider.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/services/supabase_service.dart';
-import 'package:thestia/utils/validators.dart';
-import 'package:thestia/widgets/buttons.dart';
-import 'package:thestia/utils/best_effort.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
+import 'package:thestia/utils/security/validators.dart';
+import 'package:thestia/widgets/common/buttons.dart';
+import 'package:thestia/utils/common/best_effort.dart';
 
 /// Screen zum Setzen eines neuen Passworts nach der Passwort-Reset-Mail.
 ///

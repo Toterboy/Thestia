@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:thestia/services/supabase_database_service.dart';
+import 'package:thestia/services/server/supabase_database_service.dart';
 
 /// Filtert Sperren nach E-Mail, Begruendung oder Person.
 ///

@@ -1,0 +1,8 @@
+﻿screens\auth\email_verification_screen.dart | 76 | context.go(AppRoutes.home);
+screens\auth\email_verification_screen.dart | 88 | if (mounted) context.go(AppRoutes.home);
+screens\auth\email_verification_screen.dart | 213 | context.go(AppRoutes.login);
+screens\auth\email_verification_screen.dart | 434 | onPressed: () => context.push(AppRoutes.bugReport),
+screens\auth\email_verification_screen.dart | 445 | context.go(AppRoutes.login);
+screens\auth\login_screen.dart | 242 | context.go(AppRoutes.unbanRequest, extra: e.email);
+screens\auth\login_screen.dart | 379 | context.go(AppRoutes.home);
+screens\auth\login_screen.dart | 627 | : () => context.go(AppRoutes.forgotPassword),

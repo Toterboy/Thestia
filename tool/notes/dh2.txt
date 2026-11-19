@@ -1,0 +1,41 @@
+﻿=== 033_find_your_match.sql
+ add column if not exists created_via text not null default 'swipe'
+    check (created_via in ('swipe', 'qr', 'find_match', 'dating_hour', 'random_chat'));
+
+-- 4) RPC: like_user - eigener Like (kein Auto-Match mehr).
+create or replace function public.like_user(p_target uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user uuid := auth.uid();
+begin
+  if v_user is null then
+    raise exception 'Nicht authentifiziert';
+  end if;
+  if p_target is null or p_target = v_user then
+    raise exception 'Ung├╝ltiges Ziel';
+  end if;
+
+  -- Besteht bereits ein Match, ist ein erneuter Like sinnlos (und w├╝rde
+  -- den Antwort-Status zur├╝cksetzen).
+  if exists (
+    select 1 from public.matches m
+     where (m.user_one_id = v_user and m.user_two_id = p_target)
+        or (m.user_one_id = p_target and m.user_two_id = v_user)
+  ) then
+    return;
+  end if;
+
+  insert into public.likes (user_id, liked_user_id, status)
+  values (v_user, p_target, 'pending')
+  on conflict (user_id, liked_user_id) do update
+    set status = 'pending', responded_at = null;
+end;
+$$;
+
+-- 5) RPC: respond_to_like - erhaltenen Like annehmen oder ablehnen.
+--    Annahme legt (idempotent) die kanonisch sortierte matches-Zeile an.
+create or replace function public.respond_to_like(p_

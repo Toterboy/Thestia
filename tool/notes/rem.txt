@@ -1,0 +1,17 @@
+﻿lib/screens/swipe/find_your_match_screen.dart | 78 | content: Text('Vorstellung gespeichert. Viel Spa├ƒ beim Kennenlernen!'),
+--- lib/screens/swipe/find_your_match_screen.dart 1
+lib/screens/swipe/swipe_mode_selection_screen.dart | 23 | title: const Text('Entdeckungsmodus w├ñhlen'),
+--- lib/screens/swipe/swipe_mode_selection_screen.dart 1
+lib/screens/profile/profile_edit_screen.dart | 1429 | DropdownMenuItem(value: 'BW', child: Text('Baden-W├╝rttemberg')),
+lib/screens/profile/profile_edit_screen.dart | 1444 | DropdownMenuItem(value: 'TH', child: Text('Th├╝ringen')),
+--- lib/screens/profile/profile_edit_screen.dart 2
+lib/screens/onboarding/settings_privacy_once_screen.dart | 300 | content: Text('Passkey eingerichtet. Du kannst dich k├╝nftig damit '
+lib/screens/onboarding/settings_privacy_once_screen.dart | 581 | content: Text('Standort erkannt und ├╝bernommen (GPS Koordinaten).'),
+lib/screens/onboarding/settings_privacy_once_screen.dart | 635 | title: const Text('Einstellungen & Privatsph├ñre'),
+lib/screens/onboarding/settings_privacy_once_screen.dart | 639 | tooltip: 'Zur├╝ck',
+lib/screens/onboarding/settings_privacy_once_screen.dart | 764 | title: 'Filter & Pr├ñferenzen',
+lib/screens/onboarding/settings_privacy_once_screen.dart | 765 | subtitle: 'Wen m├Âchtest du kennenlernen?',
+lib/screens/onboarding/settings_privacy_once_screen.dart | 810 | child: Text('Offen f├╝r alles'),
+lib/screens/onboarding/settings_privacy_once_screen.dart | 1062 | tooltip: 'Profilbild w├ñhlen',
+lib/screens/onboarding/settings_privacy_once_screen.dart | 1092 | hint: const Text('Bitte w├ñhlen'),
+--- lib/screens/onboarding/settings_privacy_once_screen.dart 9

@@ -5,10 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/services/auth_exception.dart';
-import 'package:thestia/services/device_session_service.dart';
-import 'package:thestia/services/supabase_service.dart';
-import 'package:thestia/widgets/buttons.dart';
+import 'package:thestia/services/auth/auth_exception.dart';
+import 'package:thestia/services/server/device_session_service.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
+import 'package:thestia/widgets/common/buttons.dart';
 
 /// Ergebnis eines Ladevorgangs: Liste + optionaler Registrierungs-Hinweis
 /// (das eigene Gerät konnte nicht aktualisiert werden - die Liste wird

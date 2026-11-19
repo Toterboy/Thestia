@@ -1,0 +1,59 @@
+﻿Future<void> _createMatchAndNavigate(DatingHourSession session) async {
+    final partnerId = session.getPeerId(_currentUserId!);
+
+    // In Produktion sollte hier das echte Profil des Partners geladen werden.
+    final partnerProfile = UserProfile(
+      id: partnerId,
+      name: 'Dein Gegen├╝ber',
+      bio: '',
+      interests: [],
+    );
+
+    ref.read(chatProvider.notifier).addMatch(partnerProfile, ref: ref);
+
+    if (mounted) {
+      await FunkeOverlay.show(context);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text(L10n.t(context, 'dh.chat.sparkJumped'))),
+        );
+      }
+      await Future.delayed(const Duration(milliseconds: 1500));
+      if (mounted) {
+        context.go(AppRoutes.interessen);
+      }
+    }
+  }
+
+  void _showRejectionMessage(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.favorite_border, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 8),
+            Text(L10n.t(context, 'dh.chat.noSpark')),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          FilledButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              if (mounted) context.go(AppRoutes.datingHourEvent);
+            },
+            child: Text(L10n.t(context, 'dh.chat.keepSearching')),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getDefaultRejectionMessage() {
+    const messages = [
+      'Diese Verbindung hat leider nicht ganz gepasst. Aber keine Sorge, das sagt nichts ├╝ber dich aus! Wir suchen gleich jemand Neues f├╝r dich.',
+      'Manchmal funkt es einf

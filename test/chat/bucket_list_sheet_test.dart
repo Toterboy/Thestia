@@ -19,11 +19,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/models/find_match_models.dart';
-import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/models/chat/find_match_models.dart';
+import 'package:thestia/providers/chat/chat_provider.dart';
 import 'package:thestia/screens/chat/bucket_list_sheet.dart';
-import 'package:thestia/services/chat_service.dart';
-import 'package:thestia/services/find_your_match_service.dart';
+import 'package:thestia/services/chat/chat_service.dart';
+import 'package:thestia/services/dating_hour/find_your_match_service.dart';
 
 /// Hand-Fake des Dienstes fuer die Erinnerungsliste.
 ///

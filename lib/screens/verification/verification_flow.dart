@@ -10,17 +10,17 @@ import 'package:geolocator/geolocator.dart';
 import 'package:video_thumbnail/video_thumbnail.dart' as thumb;
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/providers/profile_provider.dart';
-import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
+import 'package:thestia/providers/settings/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/services/age_estimation_service.dart';
-import 'package:thestia/services/local_storage.dart';
-import 'package:thestia/services/play_integrity_service.dart';
-import 'package:thestia/services/verification_service.dart';
-import 'package:thestia/services/location_verification_service.dart';
-import 'package:thestia/services/supabase_service.dart';
-import 'package:thestia/widgets/ai_badge.dart';
-import 'package:thestia/utils/best_effort.dart';
+import 'package:thestia/services/transit/age_estimation_service.dart';
+import 'package:thestia/services/storage/local_storage.dart';
+import 'package:thestia/services/auth/play_integrity_service.dart';
+import 'package:thestia/services/verification/verification_service.dart';
+import 'package:thestia/services/profile/location_verification_service.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
+import 'package:thestia/widgets/profile/ai_badge.dart';
+import 'package:thestia/utils/common/best_effort.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 part 'parts/verificationinfoscreen.dart';

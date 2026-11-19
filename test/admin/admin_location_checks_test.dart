@@ -73,7 +73,7 @@ void main() {
   group('Der Client ruft die richtige RPC', () {
     test('der Datenbank-Service holt die Liste ueber die RPC', () {
       final service = liesQuelltext(
-        'lib/services/supabase_database_service.dart',
+        'lib/services/server/supabase_database_service.dart',
       );
       expect(
         service.contains("_adminList('admin_list_location_checks')"),

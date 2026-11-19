@@ -1,0 +1,4 @@
+﻿RPC: 
+        'get_public_profile',
+        params: {'p_user_id': peerId},
+      

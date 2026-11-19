@@ -32,7 +32,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/admin/admin_screen.dart';
-import 'package:thestia/widgets/pill_tab_bar.dart';
+import 'package:thestia/widgets/chat/pill_tab_bar.dart';
 
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';

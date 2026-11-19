@@ -1,0 +1,9 @@
+﻿--- '/random-chat' ---
+est = '/personality-test'; |   static const String settingsPrivacyOnce = '/settings-privacy-once'; |   static const String swipeModeSelection = '/swipe-mode-selection'; |   static const String randomChat = '/random-chat'; |   static const String bugReport = '/bug-report'; |   // QR-Code (Profil teilen + Scannen) |   static const String qrProfile = '/qr/profile'; |   static const String qrScan = '/qr/scan'; |   // Mood of the Day |   static const String moodPicker = '/mood/picker'; |   // Datenschutz & Account (DSGVO) |   static const String privacy = '/privacy'; |   static const String safetyC
+
+--- randomChat ---
+ personalityTest = '/personality-test'; |   static const String settingsPrivacyOnce = '/settings-privacy-once'; |   static const String swipeModeSelection = '/swipe-mode-selection'; |   static const String randomChat = '/random-chat'; |   static const String bugReport = '/bug-report'; |   // QR-Code (Profil teilen + Scannen) |   static const String qrProfile = '/qr/profile'; |   static const String qrScan = '/qr/scan'; |   // Mood of the Day |   static const String moodPicker = '/mood/picker'; |   // Datenschutz & Account (DSGVO) |   static const String privacy = '/privacy'; |   static const S
+
+--- qrScan ---
+onst String randomChat = '/random-chat'; |   static const String bugReport = '/bug-report'; |   // QR-Code (Profil teilen + Scannen) |   static const String qrProfile = '/qr/profile'; |   static const String qrScan = '/qr/scan'; |   // Mood of the Day |   static const String moodPicker = '/mood/picker'; |   // Datenschutz & Account (DSGVO) |   static const String privacy = '/privacy'; |   static const String safetyCenter = '/safety-center'; |   // Ger├ñte & Sitzungen ("Wo bin ich eingeloggt?") |   static const String devices = '/devices'; |   // Dating Hour (Event-Modus) |   static const String
+

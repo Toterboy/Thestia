@@ -35,15 +35,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 // Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/models/message.dart';
-import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/providers/chat_provider.dart';
-import 'package:thestia/models/report_models.dart';
+import 'package:thestia/models/chat/message.dart';
+import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/providers/chat/chat_provider.dart';
+import 'package:thestia/models/verification/report_models.dart';
 import 'package:thestia/screens/chat/chat_detail_screen.dart';
-import 'package:thestia/services/report_service.dart';
-import 'package:thestia/services/chat_service.dart';
-import 'package:thestia/widgets/secure_composer.dart';
-import 'package:thestia/widgets/secure_keyboard.dart';
+import 'package:thestia/services/profile/report_service.dart';
+import 'package:thestia/services/chat/chat_service.dart';
+import 'package:thestia/widgets/chat/secure_composer.dart';
+import 'package:thestia/widgets/chat/secure_keyboard.dart';
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';
 

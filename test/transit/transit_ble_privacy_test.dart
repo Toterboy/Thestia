@@ -1,8 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thestia/services/transit_ble_privacy.dart';
-import 'package:thestia/services/transit_encounter_service.dart';
+import 'package:thestia/services/transit/transit_ble_privacy.dart';
+import 'package:thestia/services/transit/transit_encounter_service.dart';
 
 void main() {
   group('TransitBlePrivacy - Advertising-Zyklus', () {

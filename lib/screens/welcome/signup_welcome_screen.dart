@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/providers/profile_provider.dart';
-import 'package:thestia/providers/settings_provider.dart';
-import 'package:thestia/utils/age_safety_rules.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
+import 'package:thestia/providers/settings/settings_provider.dart';
+import 'package:thestia/utils/location/age_safety_rules.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/widgets/app_logo.dart';
+import 'package:thestia/widgets/common/app_logo.dart';
 
 /// Kurzer Willkommensscreen nach erfolgreicher Registrierung (v0.9.1).
 ///

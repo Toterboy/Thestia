@@ -12,19 +12,19 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/models/user_profile.dart';
+import 'package:thestia/models/profile/user_profile.dart';
 import 'package:thestia/screens/privacy/delete_account_action.dart';
-import 'package:thestia/providers/chat_provider.dart';
-import 'package:thestia/providers/mood_provider.dart';
-import 'package:thestia/providers/profile_provider.dart';
-import 'package:thestia/providers/settings_provider.dart';
-import 'package:thestia/providers/user_preferences_provider.dart';
+import 'package:thestia/providers/chat/chat_provider.dart';
+import 'package:thestia/providers/profile/mood_provider.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
+import 'package:thestia/providers/settings/settings_provider.dart';
+import 'package:thestia/providers/settings/user_preferences_provider.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/widgets/captcha_challenge.dart';
+import 'package:thestia/widgets/settings/captcha_challenge.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show UserAttributes;
-import 'package:thestia/services/supabase_service.dart';
-import 'package:thestia/utils/constants.dart';
-import 'package:thestia/utils/best_effort.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
+import 'package:thestia/utils/common/constants.dart';
+import 'package:thestia/utils/common/best_effort.dart';
 
 /// DSGVO-relevanter Datenschutz- und Account-Screen.
 ///

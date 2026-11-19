@@ -11,9 +11,9 @@ import 'package:record/record.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/data/icebreaker_catalog.dart';
-import 'package:thestia/services/p2p_chat_service.dart';
-import 'package:thestia/services/supabase_service.dart';
-import 'package:thestia/utils/best_effort.dart';
+import 'package:thestia/services/chat/p2p_chat_service.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
+import 'package:thestia/utils/common/best_effort.dart';
 
 /// ID des aktuell aktiven Anrufs (oder null).
 ///

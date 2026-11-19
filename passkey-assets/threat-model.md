@@ -56,7 +56,7 @@ Sicherheitsfunktionen `SET search_path = public, pg_temp`.
   gezieltem `GRANT` an `anon` oder `authenticated`
 - Interne Hilfsfunktionen ohne Grant – das ist der Grund für die
   `security_invoker`-Umstellung
-- Harte Invarianten prüft `tool/pruefer/check_security_invariants.py`
+- Harte Invarianten prüft `tool/checks/check_security_invariants.py`
   (66 Regeln), läuft in CI
 - **Restrisiko:** Eine neue Funktion ohne `REVOKE` ist sofort
   weltweit aufrufbar. Kein automatisches Werkzeug verhindert das –
@@ -193,7 +193,7 @@ Profil des Aufrufers nicht verifiziert ist.
 - Die App prüft zusätzlich im Router, ob der angesteuerte Bildschirm zu
   einem verifizierungspflichtigen Modus gehört. Das ist eine zweite
   Verteidigungslinie; die maechtige Sperre ist die im Server.
-- Harte Invarianten prüft `tool/pruefer/check_security_invariants.py` (66 Regeln),
+- Harte Invarianten prüft `tool/checks/check_security_invariants.py` (66 Regeln),
   läuft in CI. Der Check liest die **letzte** Definition einer Funktion -
   eine ältere, sichere Fassung ließe ihn sonst bestehen, obwohl die
   aktive Funktion ungeschützt wäre.

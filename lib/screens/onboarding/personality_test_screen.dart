@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/providers/profile_provider.dart';
-import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
+import 'package:thestia/providers/settings/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/services/supabase_database_service.dart';
-import 'package:thestia/services/supabase_service.dart';
-import 'package:thestia/widgets/buttons.dart';
+import 'package:thestia/services/server/supabase_database_service.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
+import 'package:thestia/widgets/common/buttons.dart';
 
 /// Persönlichkeitstest als Teil des Registrierungs-Flows (MBTI-Stil).
 ///

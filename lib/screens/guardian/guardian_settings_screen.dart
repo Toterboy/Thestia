@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/widgets/guardian_section.dart';
+import 'package:thestia/widgets/settings/guardian_section.dart';
 
 /// Der eigene Screen fuer die Elterneinstellungen.
 ///

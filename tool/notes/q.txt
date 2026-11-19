@@ -1,0 +1,64 @@
+﻿ge:wisp/l10n/app_strings.dart';
+
+enum _QrMode { choice, camera, manual }
+
+/// QR-Code-Men├╝: eigenen Code zeigen, Code scannen oder Code eingeben.
+///
+/// Der beim eigenen QR Code angezeigte Kurz-Code (erste 8 Zeichen der
+/// User-ID) kann hier manuell eingegeben werden; die Aufl├Âsung erfolgt
+/// serverseitig ├╝ber die RPC `find_user_by_code`.
+class QrScanScreen extends ConsumerStatefulWidget {
+  const QrScanScreen({super.key});
+
+  @override
+  ConsumerState<QrScanScreen> createState() => _QrScanScreenState();
+}
+
+class _QrScanScreenState extends ConsumerState<QrScanScreen> {
+  final _codeCtrl = TextEditingController();
+  _QrMode _mode = _QrMode.choice;
+  bool _processing = false;
+  bool _resolving = false;
+
+  @override
+  void dispose() {
+    _codeCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onUserFound(String peerId) {
+    final myId = ref.read(profileProvider).id;
+    if (myId.isEmpty) {
+      // Eigenes Profil noch nicht geladen: Supabase-ID verwenden.
+    }
+
+    final ownId = SupabaseService.currentUser?.id ?? myId;
+    if (peerId == ownId) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Das ist dein eigener Code!'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
+    final notifier = ref.read(chatProvider.notifier);
+    final profile = notifier.findOrCreateMatch(peerId);
+
+    if (!mounted) return;
+
+    if (profile != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(L10n.tf(context, 'qr.openingChat', {'name': profile.name})),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      context.go(AppRoutes.chatDetailPath(profile.id));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nutzer nicht gefunden.'),

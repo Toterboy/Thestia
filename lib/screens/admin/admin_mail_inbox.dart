@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/services/supabase_database_service.dart';
-import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/services/server/supabase_database_service.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
 
 /// Der Posteingang im Admin-Bereich.
 ///
@@ -13,7 +13,7 @@ import 'package:thestia/services/supabase_service.dart';
 /// falschen Konto zu schreiben (Migration 168).
 ///
 /// Die Mails kommen aus `public.mail_messages`. Zwei Wege speisen sie:
-/// der IMAP-Abfrage (`tool/werkzeuge/sonstiges/mail_imap_poll.py`) und dem Cloudflare
+/// der IMAP-Abfrage (`tool/scripts/mail_imap_poll.py`) und dem Cloudflare
 /// Email Worker (`deploy/cloudflare/email-worker.js`).
 class AdminMailInboxTab extends ConsumerStatefulWidget {
   const AdminMailInboxTab({super.key});

@@ -1,7 +1,7 @@
 // Der Melde-Dialog fuer Chat-Bilder - bisher ungetestet.
 //
 // ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
-// lib/services/image_report_service.dart 230 offene Zeilen (9 %).
+// lib/services/profile/image_report_service.dart 230 offene Zeilen (9 %).
 // Der Dialog ist der einzige Weg, ueber den ein Nutzer ein Bild im Chat
 // meldet - und dort steht die Zusage, dass NUR das gemeldete Bild und
 // NICHTS aus dem Verlauf an den Server geht.
@@ -18,14 +18,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/models/message.dart';
-import 'package:thestia/models/report_models.dart';
-import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/providers/profile_provider.dart';
-import 'package:thestia/services/image_report_service.dart';
-import 'package:thestia/services/local_storage.dart';
-import 'package:thestia/services/report_service.dart';
-import 'package:thestia/services/secure_storage.dart';
+import 'package:thestia/models/chat/message.dart';
+import 'package:thestia/models/verification/report_models.dart';
+import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
+import 'package:thestia/services/profile/image_report_service.dart';
+import 'package:thestia/services/storage/local_storage.dart';
+import 'package:thestia/services/profile/report_service.dart';
+import 'package:thestia/services/storage/secure_storage.dart';
 
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';

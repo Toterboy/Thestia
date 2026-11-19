@@ -20,12 +20,12 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/swipe/swipe_mode_selection_screen.dart';
-import 'package:thestia/services/local_storage.dart';
-import 'package:thestia/services/secure_storage.dart';
+import 'package:thestia/services/storage/local_storage.dart';
+import 'package:thestia/services/storage/secure_storage.dart';
 
 /// Der Speicher im RAM - die Einstellungen kommen daraus.
 class _FakeLocalStorage implements LocalStorage {

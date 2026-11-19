@@ -1,0 +1,79 @@
+﻿Future<void> _handleDecision(bool accept) async {
+    if (_session == null) return;
+
+    final service = ref.read(datingHourServiceProvider);
+    try {
+      final updated = await service.recordDecision(
+        widget.sessionId,
+        _currentUserId!,
+        accept,
+      );
+
+      if (updated != null && mounted) {
+        setState(() {
+          _session = updated;
+          _hasVoted = true;
+          _showDecision = true;
+        });
+        _evaluateSessionOutcome();
+      }
+    } on DatingHourException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Fehler: ${e.message}')),
+        );
+      }
+    }
+  }
+
+  void _evaluateSessionOutcome() {
+    final session = _session;
+    if (session == null || !session.bothDecided) return;
+
+    if (session.isMutualMatch) {
+      _createMatchAndNavigate(session);
+    } else if (session.isRejected) {
+      _showRejectionMessage(_getDefaultRejectionMessage());
+    }
+  }
+
+  Future<void> _createMatchAndNavigate(DatingHourSession session) async {
+    final partnerId = session.getPeerId(_currentUserId!);
+
+    // In Produktion sollte hier das echte Profil des Partners geladen werden.
+    final partnerProfile = UserProfile(
+      id: partnerId,
+      name: 'Dein Gegen├╝ber',
+      bio: '',
+      interests: [],
+    );
+
+    ref.read(chatProvider.notifier).addMatch(partnerProfile, ref: ref);
+
+    if (mounted) {
+      await FunkeOverlay.show(context);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text(L10n.t(context, 'dh.chat.sparkJumped'))),
+        );
+      }
+      await Future.delayed(const Duration(milliseconds: 1500));
+      if (mounted) {
+        context.go(AppRoutes.interessen);
+      }
+    }
+  }
+
+  void _showRejectionMessage(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.favorite_border, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 8),
+            Text(L10n.t(context, 'dh.chat.noSpark')),
+  

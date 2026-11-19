@@ -4,38 +4,38 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:thestia/utils/avatar_image.dart';
+import 'package:thestia/utils/location/avatar_image.dart';
 
-import 'package:thestia/models/gender.dart';
-import 'package:thestia/models/habitude_level.dart';
-import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/providers/profile_provider.dart';
-import 'package:thestia/providers/settings_provider.dart';
-import 'package:thestia/providers/user_preferences_provider.dart';
+import 'package:thestia/models/profile/gender.dart';
+import 'package:thestia/models/profile/habitude_level.dart';
+import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
+import 'package:thestia/providers/settings/settings_provider.dart';
+import 'package:thestia/providers/settings/user_preferences_provider.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/services/location_check_service.dart';
-import 'package:thestia/services/location_verification_service.dart';
-import 'package:thestia/services/image_safety_service.dart';
-import 'package:thestia/services/supabase_database_service.dart';
-import 'package:thestia/services/supabase_service.dart';
-import 'package:thestia/services/supabase_storage_service.dart';
-import 'package:thestia/utils/age_safety_rules.dart';
-import 'package:thestia/utils/constants.dart';
-import 'package:thestia/utils/geo_names.dart';
-import 'package:thestia/utils/location_privacy.dart';
-import 'package:thestia/utils/validators.dart';
-import 'package:thestia/widgets/ai_badge.dart';
-import 'package:thestia/widgets/birthday_style.dart';
-import 'package:thestia/widgets/buttons.dart';
-import 'package:thestia/widgets/age_range_sliders.dart';
-import 'package:thestia/widgets/gender_preference_selector.dart';
-import 'package:thestia/widgets/location_disclosure.dart';
-import 'package:thestia/widgets/music_taste_widgets.dart';
-import 'package:thestia/widgets/habitude_selector.dart';
-import 'package:thestia/widgets/intro_editor.dart';
-import 'package:thestia/widgets/stable_chip.dart';
-import 'package:thestia/utils/best_effort.dart';
+import 'package:thestia/services/profile/location_check_service.dart';
+import 'package:thestia/services/profile/location_verification_service.dart';
+import 'package:thestia/services/profile/image_safety_service.dart';
+import 'package:thestia/services/server/supabase_database_service.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
+import 'package:thestia/services/server/supabase_storage_service.dart';
+import 'package:thestia/utils/location/age_safety_rules.dart';
+import 'package:thestia/utils/common/constants.dart';
+import 'package:thestia/utils/location/geo_names.dart';
+import 'package:thestia/utils/location/location_privacy.dart';
+import 'package:thestia/utils/security/validators.dart';
+import 'package:thestia/widgets/profile/ai_badge.dart';
+import 'package:thestia/widgets/common/birthday_style.dart';
+import 'package:thestia/widgets/common/buttons.dart';
+import 'package:thestia/widgets/settings/age_range_sliders.dart';
+import 'package:thestia/widgets/settings/gender_preference_selector.dart';
+import 'package:thestia/widgets/settings/location_disclosure.dart';
+import 'package:thestia/widgets/profile/music_taste_widgets.dart';
+import 'package:thestia/widgets/settings/habitude_selector.dart';
+import 'package:thestia/widgets/profile/intro_editor.dart';
+import 'package:thestia/widgets/common/stable_chip.dart';
+import 'package:thestia/utils/common/best_effort.dart';
 
 part 'parts/profileditspeichern.dart';
 
@@ -49,7 +49,7 @@ part 'parts/profileditaufbau.dart';
 
 /// Unterstützte Wohnsitzländer (Auswahl für die Profilangabe).
 
-// kGermanStates ist zentral in lib/utils/constants.dart definiert.
+// kGermanStates ist zentral in lib/utils/common/constants.dart definiert.
 
 /// Angezeigter Name für gespeicherte (deutsche) Länder-/Bundesland-Werte.
 /// Unbekannte Werte fallen auf den Rohwert zurück (niemals leer).

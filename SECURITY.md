@@ -115,7 +115,7 @@ Einige Punkte erfordern BETREIBER-Seitige Aktionen bzw. Entscheidungen:
 ### Zu bestätigen (aus dem Audit)
 
 - [ ] Leaf-Zertifikats-Pins vor Ablauf aktualisieren:
-      `dart run tool/werkzeuge/sonstiges/rotate_cert_pins.dart`.
+      `dart run tool/scripts/rotate_cert_pins.dart`.
 
 ### Bekannte Restriktionen
 

@@ -31,7 +31,7 @@
 // ER LAEUFT NUR MIT .env (der CI hat keine Schluessel) - deshalb ist er
 // ueber skip() abgesichert. Die Testdaten (Likes und Match) werden am
 // Ende per SQL entfernt; das Skript dafuer liegt bei:
-//   tool/werkzeuge/datenbank/cleanup_transit_testdata.sql
+//   tool/db/cleanup_transit_testdata.sql
 import 'dart:convert';
 import 'dart:typed_data';
 

@@ -1,7 +1,7 @@
 // Der Dialog "Funke beenden" (bisher ungetestet - 0 %).
 //
 // ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
-// lib/widgets/end_spark_dialog.dart 0 % - und die Absage-Texte sind
+// lib/widgets/chat/end_spark_dialog.dart 0 % - und die Absage-Texte sind
 // nutzersichtbar: sie werden an die andere Person geschickt.
 //
 // WAS HIER GEPRUEFT WIRD:
@@ -16,7 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/widgets/end_spark_dialog.dart';
+import 'package:thestia/widgets/chat/end_spark_dialog.dart';
 
 void main() {
   /// Oeffnet den Dialog, fuehrt die [aktion] aus und liefert, was der

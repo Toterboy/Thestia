@@ -9,11 +9,11 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/providers/settings/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/services/mfa_service.dart';
-import 'package:thestia/services/supabase_service.dart';
-import 'package:thestia/utils/best_effort.dart';
+import 'package:thestia/services/auth/mfa_service.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
+import 'package:thestia/utils/common/best_effort.dart';
 
 /// 2FA-Einrichtung (Authenticator-App / TOTP) – wird nach der
 /// E-Mail-Bestätigung als optionaler Schritt angezeigt.

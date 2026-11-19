@@ -1,0 +1,74 @@
+﻿serve(async (req) => {
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405, headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  // Auth: interner Trigger-Aufruf ODER authentifizierter Client (JWT).
+  const internal = req.headers.get("x-wisp-internal") ?? "";
+  const isInternal =
+    WISP_INTERNAL_SECRET !== "" &&
+    internal !== "" &&
+    timingSafeEqual(internal, WISP_INTERNAL_SECRET);
+
+  let callerId = "";
+  if (!isInternal) {
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const token = authHeader.replace(/^Bearer\s+/i, "");
+    try {
+      const { data } = await admin.auth.getUser(token);
+      if (!data.user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401, headers: { "Content-Type": "application/json" },
+        });
+      }
+      callerId = data.user.id;
+    } catch {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = await req.json();
+  } catch {
+    return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+      status: 400, headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const targetUserId = String(body.target_user_id ?? "");
+  const kind = String(body.kind ?? "");
+
+  if (!targetUserId || !kind) {
+    return new Response(JSON.stringify({ error: "Missing target_user_id or kind" }), {
+      status: 400, headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  // Strikte UUID-Validierung (wie match-media): target_user_id flie├ƒt in
+  // PostgREST-Filter (.or()-Interpolation) - ohne Pr├╝fung w├ñre die
+  // Beziehungspr├╝fung theoretisch umlenkbar.
+  const UUID_REGEX =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_REGEX.test(targetUserId)) {
+    return new Response(JSON.stringify({ error: "Invalid target_user_id" }), {
+      status: 400, headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  // Nur internen Aufrufen (DB-Trigger) ist es erlaubt, Titel/Text frei zu
+  // w├ñhlen. Clients bekommen feste, serverseitig generierte Texte - das
+  // verhindert Push-Phishing mit beliebigem Inhalt im App-Look.
+  let title: string;
+  let text: string;
+  if (isInternal) {
+    title = String(body.title ?? "Thestia").slice(0, 100);
+    text = String(body.body ?? "").slice(0, 200);
+  } else {
+    const fixed = clientTextsByKind[kind];
+    if (!fixed) {
+      // Client darf nur die unte

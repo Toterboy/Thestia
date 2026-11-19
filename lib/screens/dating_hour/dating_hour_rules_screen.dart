@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/services/notification_service.dart';
+import 'package:thestia/services/server/notification_service.dart';
 
 /// Screen mit den wichtigsten Regeln für die Dating Hour.
 ///

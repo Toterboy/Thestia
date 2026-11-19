@@ -40,16 +40,16 @@ import 'package:go_router/go_router.dart';
 import 'package:permission_handler_platform_interface/permission_handler_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 // Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
-import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/providers/profile_provider.dart';
-import 'package:thestia/providers/user_preferences_provider.dart';
+import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
+import 'package:thestia/providers/settings/user_preferences_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/profile/profile_edit_screen.dart';
-import 'package:thestia/services/local_storage.dart';
-import 'package:thestia/services/location_check_service.dart';
-import 'package:thestia/services/location_verification_service.dart';
-import 'package:thestia/services/secure_storage.dart';
-import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/services/storage/local_storage.dart';
+import 'package:thestia/services/profile/location_check_service.dart';
+import 'package:thestia/services/profile/location_verification_service.dart';
+import 'package:thestia/services/storage/secure_storage.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
 import '../support/fake_supabase_server.dart';
 
 class FakeLocalStorage implements LocalStorage {

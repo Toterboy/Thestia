@@ -1,7 +1,7 @@
 // Der globale Relay-Eingang - die Zustellung war ungetestet.
 //
 // ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
-// lib/services/global_relay_inbox.dart 117 offene Zeilen bei 128 Zeilen
+// lib/services/chat/global_relay_inbox.dart 117 offene Zeilen bei 128 Zeilen
 // gesamt. Der Eingang ist DER Weg, ueber den eine Nachricht im
 // Hintergrund bei einem Nutzer ankommt, der gerade keinen Chat offen
 // hat.
@@ -20,12 +20,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
-import 'package:thestia/models/match.dart' as model;
-import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/providers/chat_provider.dart';
-import 'package:thestia/services/chat_service.dart';
-import 'package:thestia/services/global_relay_inbox.dart';
-import 'package:thestia/services/relay_service.dart' show RelayMessage;
+import 'package:thestia/models/chat/match.dart' as model;
+import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/providers/chat/chat_provider.dart';
+import 'package:thestia/services/chat/chat_service.dart';
+import 'package:thestia/services/chat/global_relay_inbox.dart';
+import 'package:thestia/services/chat/relay_service.dart' show RelayMessage;
 
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';

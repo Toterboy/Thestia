@@ -6,9 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/providers/settings_provider.dart';
-import 'package:thestia/services/supabase_database_service.dart';
-import 'package:thestia/services/supabase_service.dart';
+import 'package:thestia/providers/settings/settings_provider.dart';
+import 'package:thestia/services/server/supabase_database_service.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
 
 /// Screen, der erklärt, wie die Dating Hour funktioniert.
 ///

@@ -17,8 +17,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/widgets/secure_composer.dart';
-import 'package:thestia/widgets/secure_keyboard.dart';
+import 'package:thestia/widgets/chat/secure_composer.dart';
+import 'package:thestia/widgets/chat/secure_keyboard.dart';
 
 void main() {
   group('Die eigene Tastatur', () {

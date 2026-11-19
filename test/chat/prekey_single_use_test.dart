@@ -4,8 +4,8 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart';
-import 'package:thestia/models/signal_key_models.dart';
-import 'package:thestia/services/hive_signal_store.dart';
+import 'package:thestia/models/signal/signal_key_models.dart';
+import 'package:thestia/services/chat/hive_signal_store.dart';
 
 /// Tests fuer die Einmal-Nutzung der PreKeys.
 ///

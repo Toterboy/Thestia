@@ -1,0 +1,41 @@
+﻿2264
+Future<RandomChatSession?> join() async {
+    try {
+      final response = await _client.rpc('join_random_chat');
+      if (response == null) return null;
+      return RandomChatSession.fromJson(Map<String, dynamic>.from(response as Map));
+    } catch (e) {
+      debugPrint('[RandomChat] join fehlgeschlagen: $e');
+      return null;
+    }
+  }
+
+  /// Fragt den aktuellen Status einer Session ab (Polling auf den Partner).
+  Future<RandomChatSession?> getSession(String sessionId) async {
+    try {
+      final response = await _client.rpc(
+        'get_random_chat_session',
+        params: {'p_session_id': sessionId},
+      );
+      if (response == null) return null;
+      return RandomChatSession.fromJson(Map<String, dynamic>.from(response as Map));
+    } catch (e) {
+      debugPrint('[RandomChat] getSession fehlgeschlagen: $e');
+      return null;
+    }
+  }
+
+  /// Beendet die Session (Idempotent, serverseitig).
+  Future<void> leave(String sessionId) async {
+    try {
+      await _client.rpc(
+        'leave_random_chat',
+        params: {'p_session_id': sessionId},
+      );
+    } catch (e) {
+      debugPrint('[RandomChat] leave fehlgeschlagen: $e');
+    }
+  }
+}
+
+/// Provider f├╝r den Ra

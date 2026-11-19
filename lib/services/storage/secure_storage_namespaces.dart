@@ -1,0 +1,233 @@
+/// Zentrale Keystore-Namespaces (Security-Audit 2026-09-26).
+///
+/// BEFUND: Sechs `FlutterSecureStorage`-Instanzen teilten sich denselben
+/// Default-Namespace - also denselben Keystore-Alias und dieselbe
+/// verschlüsselte Datei. In v11 ist `resetOnError: true` der Default: der
+/// ERSTE Dekrypt-Fehler (z. B. `BadPaddingException` nach einem
+/// OS-Schlüssel-Reset, siehe flutter_secure_storage#933) löscht dann den
+/// GESAMTEN Namespace - also Auth-Tokens UND Supabase-Session UND Profil
+/// UND Standort UND Signal-Schlüssel. Ein unbedachter Gerätewechsel war
+/// damit ein globaler Logout.
+///
+/// LÖSUNG: eigener Namespace pro Store. Ein Fehler in einem Store
+/// entleert nur noch diesen.
+///
+/// WICHTIG - MIGRATION: Ein anderer Namespace bedeutet anderer
+/// Speicherort. Ohne die Migration hier unten wuerden alle bereits
+/// gespeicherten Tokens beim Update unlesbar (Massen-Logout).
+/// [migrateLegacyNamespaces] ist idempotent und verschiebt die Werte
+/// einmalig aus dem Legacy-Namespace.
+library;
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+/// Namespaces (je Store genau einer).
+class SecureNamespaces {
+  SecureNamespaces._();
+
+  /// Auth-Tokens (Access/Refresh/User-ID, Demo-Credentials).
+  static const String tokens = 'thestia.tokens';
+
+  /// Supabase-Session (inkl. Refresh-Token).
+  static const String session = 'thestia.session';
+
+  /// Gecachtes Nutzerprofil (PII: Geburtsdatum, Koordinaten, Bio).
+  static const String profile = 'thestia.profile';
+
+  /// Verifizierungs-Standort (Art. 9 DSGVO).
+  static const String location = 'thestia.location';
+
+  /// Hive-Schlüssel für die E2EE-Boxen (Signal-Keys, Ratchets).
+  static const String signals = 'thestia.signals';
+
+  /// Geräte-/sonstige Metadaten.
+  static const String device = 'thestia.device';
+
+  /// Lokale Kontaktdaten für "Connect to others" (Telefonnummer,
+  /// Handles). Eigener Namespace, damit ein Keychain-/Keystore-Fehler
+  /// höchstens diese freiwilligen Angaben betrifft.
+  static const String contacts = 'thestia.contacts';
+
+  /// Namespaces, für die es keine Migration geben kann - weil es sie
+  /// vorher nicht gab.
+  ///
+  /// Ein Migrations-Eintrag ist nur dann nötig, wenn im Legacy-Namespace
+  /// (dem früheren Default) ALTDATEN für diesen Store lagen. Ein
+  /// brandneuer Namespace hat keine Vorgeschichte: es gibt nichts zu
+  /// verschieben, und ein erzwungener Leer-Eintrag wäre ein stiller
+  /// No-op (genau das prüft tool/checks/check_namespace_migration.py als
+  /// Fehler).
+  ///
+  /// Sobald ein Namespace hier steht, sind die Altdaten beim Update nicht
+  /// betroffen - und das ist hier auch so gemeint.
+  static const Set<String> withoutMigration = <String>{contacts};
+}
+
+/// Schlüssel je Legacy-Namespace (für die Migration).
+const Map<String, List<String>> _legacyKeys = {
+  SecureNamespaces.tokens: [
+    'auth_access_token',
+    'auth_refresh_token',
+    'auth_user_id',
+    'demo_auth_credentials',
+    'auth_device_id',
+  ],
+  SecureNamespaces.profile: [
+    'user_profile_secure',
+    'seen_like_ids',
+    'seen_match_ids',
+    'seen_qr_ids',
+  ],
+  // v0.9.2 (Release-Blocker): Beide Namespaces wurden bei der Umstellung
+  // vergessen. `hive_encryption_key` ohne Migration bedeutet einen NEUEN
+  // Verschluesselungsschluessel - jede verschluesselte Box waere danach nicht
+  // mehr lesbar, bei Signal-Keys also Verlust der E2E-Identitaet.
+  // `session` bleibt hier leer, weil der Key projektabhaengig ist
+  // (`sb-<host-prefix>-auth-token`); er wird ueber `extraSessionKeys`
+  // dazugefuegt.
+  SecureNamespaces.session: [],
+  SecureNamespaces.signals: ['hive_encryption_key'],
+  SecureNamespaces.location: [
+    'thestia_loc_lat',
+    'thestia_loc_lng',
+    'thestia_loc_ts',
+    'thestia_loc_acc',
+    'verification_latitude',
+    'verification_longitude',
+    'verification_location_timestamp',
+    'verification_location_accuracy',
+    'thestia_loc_migrated_v1',
+  ],
+};
+
+/// Migriert Werte aus dem Default-Namespace in die neuen Namespaces.
+///
+/// Idempotent: läuft nur, wenn der Ziel-Namespace LEER ist und im
+/// Legacy-Namespace noch Werte liegen. Danach wird der Legacy-Eintrag
+/// gelöscht, damit kein Klartext-Duplikat zurückbleibt.
+///
+/// Sicherheits-Fail-closed: Kopieren und Löschen passieren einzeln pro
+/// Schlüssel; ein Fehler bricht ab, ohne etwas zu verlieren (der
+/// Legacy-Wert bleibt dann noch da und der nächste Start versucht es
+/// erneut).
+///
+/// Aufruf: VOR der ersten Nutzung der umgestellten Stores, z. B. direkt
+/// nach `FlutterSecureStorage`-Initialisierung im Bootstrap.
+Future<void> migrateLegacyNamespaces({
+  /// Legacy-Keys, die nicht statisch in [_legacyKeys] stehen.
+  ///
+  /// Nötig für den Supabase-Session-Key: er folgt der SDK-Konvention
+  /// `sb-<host-prefix>-auth-token` und ist damit projektabhängig. Ohne
+  /// Übergabe wird die Session nicht migriert und jeder Bestandsnutzer
+  /// wird beim Update abgemeldet.
+  List<String> extraSessionKeys = const [],
+  FlutterSecureStorage? storage,
+  AndroidOptions legacyAndroid = const AndroidOptions(),
+  IOSOptions legacyIOS = const IOSOptions(
+    accessibility: KeychainAccessibility.first_unlock_this_device,
+  ),
+}) async {
+  final store = storage ?? const FlutterSecureStorage();
+
+  // PERFORMANCE (31.10.2026): Der Legacy-Namespace ist EINER - alle
+  // fuenf Ziel-Namespaces teilen ihn sich. Er wird deshalb genau
+  // EINMAL gelesen, und mit readAll statt mit einzelnen reads:
+  //
+  //   readAll ist EIN Plattform-Aufruf und liefert ALLE Schluessel
+  //   des Namespaces. Ein einzelner read ist dagegen ein eigener
+  //   Aufruf je Schluessel - und jeder Zugriff auf den Keystore
+  //   kostet eine Dateioperation mit Entschluesselung im Android
+  //   Keystore.
+  //
+  // Vorher lasse der Start bis zu 21 einzelne Zugriffe: je Schluessel
+  // ein read auf dem Ziel, und bei leerem Ziel noch einmal denselben
+  // Schluessel im Legacy. Das passierte VOR dem ersten Frame - der
+  // Nutzer wartete auf den Keystore, nicht auf die App.
+  //
+  // Nach der Migration ist der Legacy-Namespace leer. Dann genuegt
+  // EIN readAll, und die Ziel-Namespaces werden gar nicht angefasst.
+  Map<String, String> legacyAll;
+  try {
+    legacyAll = await store.readAll(
+      aOptions: legacyAndroid,
+      iOptions: legacyIOS,
+    );
+  } catch (e) {
+    // Fail-closed: ohne den Legacy-Inhalt kann nichts verschoben
+    // werden. Der Versuch wird beim naechsten Start wiederholt -
+    // und die Werte bleiben unangetastet.
+    debugPrint('[SecureNamespaces] Legacy-Namespace nicht lesbar: $e');
+    return;
+  }
+
+  for (final entry in _legacyKeys.entries) {
+    final namespace = entry.key;
+    final keys = [
+      ...entry.value,
+      if (entry.key == SecureNamespaces.session) ...extraSessionKeys,
+    ];
+    final target = AndroidOptions(storageNamespace: namespace);
+    final targetIOS = IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock_this_device,
+      accountName: namespace,
+    );
+
+    try {
+      // Welche unserer Schluessel liegen noch im Legacy-Namespace?
+      // Der Default-Namespace wird von mehreren Stellen benutzt -
+      // nur die hier aufgefuehrten Keys sind unsere.
+      //
+      // Liegt keiner davon im Legacy, ist fuer diesen Namespace nichts
+      // zu tun. Das ist der Normalfall nach der Migration - und dann
+      // wird der Ziel-Namespace gar nicht gelesen.
+      final zuMigrieren = <String, String>{};
+      for (final key in keys) {
+        final wert = legacyAll[key];
+        if (wert != null) zuMigrieren[key] = wert;
+      }
+      if (zuMigrieren.isEmpty) continue;
+
+      // Ist der Ziel-Namespace bereits gefuellt? Dann ist nichts zu tun -
+      // die App hat die Werte schon in der neuen Struktur.
+      //
+      // Geprueft werden ALLE Keys des Namespaces, nicht nur die im
+      // Legacy gefundenen: ein halb umgestellter Namespace wird
+      // bewusst nicht angefasst.
+      final targetAll = await store.readAll(
+        aOptions: target,
+        iOptions: targetIOS,
+      );
+      var targetHasData = false;
+      for (final key in keys) {
+        if (targetAll.containsKey(key)) {
+          targetHasData = true;
+          break;
+        }
+      }
+      if (targetHasData) continue;
+
+      for (final eintrag in zuMigrieren.entries) {
+        await store.write(
+          key: eintrag.key,
+          value: eintrag.value,
+          aOptions: target,
+          iOptions: targetIOS,
+        );
+        // Erst NACH erfolgreichem Schreiben loeschen.
+        await store.delete(
+          key: eintrag.key,
+          aOptions: legacyAndroid,
+          iOptions: legacyIOS,
+        );
+        if (kDebugMode) {
+          debugPrint('[SecureNamespaces] $namespace/${eintrag.key} migriert');
+        }
+      }
+    } catch (e) {
+      // Fail-closed: kein Datenverlust. Der Legacy-Wert bleibt erhalten,
+      // der Versuch wird beim naechsten Start wiederholt.
+      debugPrint('[SecureNamespaces] Migration $namespace fehlgeschlagen: $e');
+    }
+  }
+}

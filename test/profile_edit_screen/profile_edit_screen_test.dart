@@ -36,12 +36,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 // Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/providers/profile_provider.dart';
-import 'package:thestia/providers/user_preferences_provider.dart';
+import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
+import 'package:thestia/providers/settings/user_preferences_provider.dart';
 import 'package:thestia/screens/profile/profile_edit_screen.dart';
-import 'package:thestia/services/location_check_service.dart';
-import 'package:thestia/utils/location_privacy.dart';
+import 'package:thestia/services/profile/location_check_service.dart';
+import 'package:thestia/utils/location/location_privacy.dart';
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';
 

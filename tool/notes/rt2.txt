@@ -1,0 +1,10 @@
+﻿python :   File "<string>", line 5
+In Zeile:1 Zeichen:1
++ python -X utf8 -c "
++ ~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (  File "<string>", line 5:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    i = s.find(" path: AppRoutes.randomChat\)
+               ^
+SyntaxError: unterminated string literal (detected at line 5)

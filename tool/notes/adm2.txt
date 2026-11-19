@@ -1,0 +1,53 @@
+﻿tionList(),
+            _BansTab(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ===========================================================================
+// Gemeinsames Lade-Geruest fuer Server-Listen.
+// ===========================================================================
+class _AsyncList extends StatelessWidget {
+  const _AsyncList({
+    required this.loading,
+    required this.error,
+    required this.items,
+    required this.emptyText,
+    required this.itemBuilder,
+    required this.onRetry,
+  });
+
+  final bool loading;
+  final String? error;
+  final List<Map<String, dynamic>> items;
+  final String emptyText;
+  final Widget Function(BuildContext, Map<String, dynamic>) itemBuilder;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    if (loading) return const Center(child: CircularProgressIndicator());
+    if (error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Fehler: $error'),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: () => onRetry(),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Erneut versuchen'),
+            ),
+          ],
+        ),
+      );
+    }
+    if (items.isEmpty) return Center(child: Text(emptyText));
+    return RefreshIndicator(
+      onRefresh: onRetry,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(12

@@ -1,6 +1,6 @@
 // GENERIERTE DATEI - NICHT VON HAND AENDERN.
 // Quelle: docs/recht/DATENSCHUTZ.md
-// Neu erzeugen mit: python tool/werkzeuge/website/make_privacy_policy.py
+// Neu erzeugen mit: python tool/web/make_privacy_policy.py
 
 import 'package:thestia/generated/privacy_policy_blocks.dart';
 

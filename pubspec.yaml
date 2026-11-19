@@ -78,7 +78,7 @@ dependencies:
   # WebSocket-Kanal für Supabase Realtime. Wird DIREKT importiert, weil
   # der Realtime-Verbindung ein eigener, gepinnter Client übergeben
   # werden muss (der Standard-WebSocket umgeht das Pinning - siehe
-  # lib/utils/pinned_realtime_transport.dart). Exakt gepinnt auf die
+  # lib/utils/security/pinned_realtime_transport.dart). Exakt gepinnt auf die
   # Version, die realtime_client 2.13.2 mitzieht.
   web_socket_channel: 3.0.3
 
@@ -140,7 +140,7 @@ dependencies:
 
   # Passkeys (WebAuthn): native Passkey-Dialoge (FaceID/TouchID/Biometrie).
   # Der Plugin-Code läuft auf iOS 16+ / Android; es reicht die
-  # Plattform-Prompts an Supabase Auth weiter (siehe lib/services/passkey_auth.dart).
+  # Plattform-Prompts an Supabase Auth weiter (siehe lib/services/auth/passkey_auth.dart).
   # ACHTUNG: Benötigt Flutter 3.35+ / Dart 3.9+ und supabase_flutter mit
   # Passkey-Unterstützung (signInWithPasskey/registerPasskey).
   # Direkte Abhängigkeit: ThestiaPasskeyAuthenticator implementiert die
@@ -256,7 +256,7 @@ flutter_launcher_icons:
   # Adaptive Icon (Android 8+): Hintergrund = Markenverlauf (volflaechig),
   # Vordergrund = Herz + Schriftzug in der Safe-Zone, damit die KREIS-Maske
   # des Launchers nichts abschneidet. Erzeugt von
-  # tool/werkzeuge/bilder/generate_launcher_icon.py (dort auch monochrome + Legacy-Round-Icon).
+  # tool/images/generate_launcher_icon.py (dort auch monochrome + Legacy-Round-Icon).
   adaptive_icon_background: "assets/images/thestia_icon_background.png"
   adaptive_icon_foreground: "assets/images/thestia_icon_foreground.png"
   # Safe-Zone steckt bereits im Foreground -> kein zusaetzlicher Inset.
@@ -281,7 +281,7 @@ flutter:
     - assets/models/
     # SECURITY (Audit 2026-09-26): KEIN .env als App-Asset. Eine gebündelte
     # Konfigurationsdatei ist aus APK/IPA extrahierbar. Die Werte werden
-    # ueber --dart-define zur Compile-Zeit injiziert (tool/werkzeuge/release/build_release.ps1),
+    # ueber --dart-define zur Compile-Zeit injiziert (tool/release/build_release.ps1),
     # .env bleibt rein lokale Entwicklungsquelle (nicht Teil des Bundles).
 
   # Hinweis: In einer echten App würden hier weitere Assets (Bilder, Fonts) registriert.

@@ -4,7 +4,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:thestia/services/webrtc_service.dart';
+import 'package:thestia/services/chat/webrtc_service.dart';
 
 import '../support/live_test_support.dart' show liveTestsLaufen;
 

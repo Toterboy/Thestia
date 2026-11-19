@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thestia/services/encryption_service.dart';
-import 'package:thestia/services/webrtc_service.dart';
+import 'package:thestia/services/chat/encryption_service.dart';
+import 'package:thestia/services/chat/webrtc_service.dart';
 
 /// Tests fuer die P2P-Diagnose im Release-Build.
 ///

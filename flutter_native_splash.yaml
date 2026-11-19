@@ -1,9 +1,9 @@
 flutter_native_splash:
   color: "#ffffff"
   color_dark: "#121212"
-  # Die Splash-Bilder werden von tool/werkzeuge/bilder/generate_splash_images.dart erzeugt
+  # Die Splash-Bilder werden von tool/images/generate_splash_images.dart erzeugt
   # (Logo verkleinert + auf transparenter Leinwand zentriert):
-  #   dart run tool/werkzeuge/bilder/generate_splash_images.dart
+  #   dart run tool/images/generate_splash_images.dart
   #   dart run flutter_native_splash:create
   #
   # WARUM: flutter_native_splash rendert das Bild in NATIVER Pixelgroesse

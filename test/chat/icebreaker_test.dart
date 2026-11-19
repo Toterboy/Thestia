@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:thestia/data/icebreaker_catalog.dart';
-import 'package:thestia/models/message.dart';
+import 'package:thestia/models/chat/message.dart';
 
 void main() {
   group('Eisbrecher-Katalog (v0.9.1)', () {

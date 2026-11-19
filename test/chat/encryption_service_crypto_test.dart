@@ -2,7 +2,7 @@
 // AES-256-GCM-Ver-/Entschlüsselung).
 //
 // [BackupCrypto] ist die saubere Test-Schicht der Backup-Verschlüsselung:
-// - Genau EINE Implementierung der Krypto-Logik (in lib/services/backup_crypto.dart)
+// - Genau EINE Implementierung der Krypto-Logik (in lib/services/storage/backup_crypto.dart)
 // - Wird vom [EncryptionService.createEncryptedBackup] / [restoreFromBackup]
 //   in Produktion genutzt — es gibt keine parallele Test-API mehr.
 // - Hat KEINE Abhängigkeit zu Hive, Supabase oder Flutter-Platform-Channels
@@ -14,7 +14,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thestia/services/backup_crypto.dart';
+import 'package:thestia/services/storage/backup_crypto.dart';
 
 void main() {
   // Klartext-Fixture: identifizierbar als Test-Daten.

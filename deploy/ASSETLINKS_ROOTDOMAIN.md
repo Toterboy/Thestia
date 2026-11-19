@@ -79,7 +79,7 @@ Vor dem ersten iOS-Build ersetzen:
 3. Prüfen: `curl -i https://auth.thestia.de/.well-known/apple-app-site-association`
    — die Antwort darf keine Zeichenkette `REPLACE_` enthalten.
 
-`tool/pruefer/check_passkey_assetlinks.py` schlägt bei diesem Punkt an, solange die
+`tool/checks/check_passkey_assetlinks.py` schlägt bei diesem Punkt an, solange die
 Vorlage steht.
 
 ## Warum die Datei genau zwei Zertifikate enthält
@@ -111,7 +111,7 @@ falsch. Sobald der erste Upload durch ist:
 2. Als dritten Eintrag in `sha256_cert_fingerprints` aufnehmen.
 3. Den zugehörigen `android:apk-key-hash:`-Origin ebenfalls in Supabase
    ergänzen (Auth → Sign In / Providers → Passkeys → Origins).
-4. `python tool/pruefer/check_passkey_assetlinks.py --live` muss danach grün sein.
+4. `python tool/checks/check_passkey_assetlinks.py --live` muss danach grün sein.
 
 Grund: Von Play installierte Builds tragen den Play-Key, nicht den
 Upload-Key. Ohne diesen Eintrag läuft die native Passkey-Dialog-Prüfung

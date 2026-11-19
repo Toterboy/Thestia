@@ -6,9 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/models/contact_share_profile.dart';
-import 'package:thestia/providers/contact_share_provider.dart';
-import 'package:thestia/utils/best_effort.dart';
+import 'package:thestia/models/profile/contact_share_profile.dart';
+import 'package:thestia/providers/profile/contact_share_provider.dart';
+import 'package:thestia/utils/common/best_effort.dart';
 
 /// "Connect to others": Kontaktdaten lokal speichern und teilen.
 ///

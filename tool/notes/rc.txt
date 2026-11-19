@@ -1,0 +1,2 @@
+﻿content: Text('Verbindung zum Partner fehlgeschlagen: $e'),
+content: Text('Nachricht konnte nicht gesendet werden.'),

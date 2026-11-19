@@ -10,10 +10,10 @@
 // Nachricht durch einen HINWEIS ersetzt (nicht durch einen Text, der
 // verraten wuerde, was drin stand).
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thestia/models/message.dart';
-import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/providers/chat_provider.dart';
-import 'package:thestia/services/chat_service.dart';
+import 'package:thestia/models/chat/message.dart';
+import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/providers/chat/chat_provider.dart';
+import 'package:thestia/services/chat/chat_service.dart';
 
 UserProfile _profil([String id = 'partner']) {
   return UserProfile(

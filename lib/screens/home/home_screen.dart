@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:thestia/models/app_settings.dart';
-import 'package:thestia/models/match.dart' as match_model;
-import 'package:thestia/models/message.dart';
-import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/providers/chat_provider.dart';
-import 'package:thestia/providers/find_your_match_provider.dart';
-import 'package:thestia/providers/profile_provider.dart';
-import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/models/settings/app_settings.dart';
+import 'package:thestia/models/chat/match.dart' as match_model;
+import 'package:thestia/models/chat/message.dart';
+import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/providers/chat/chat_provider.dart';
+import 'package:thestia/providers/dating_hour/find_your_match_provider.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
+import 'package:thestia/providers/settings/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/interests/interessen_screen.dart'
     show interessenInitialTabProvider;
-import 'package:thestia/services/seen_service.dart';
-import 'package:thestia/utils/age_safety_rules.dart';
+import 'package:thestia/services/chat/seen_service.dart';
+import 'package:thestia/utils/location/age_safety_rules.dart';
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/utils/best_effort.dart';
+import 'package:thestia/utils/common/best_effort.dart';
 
 /// Hat der Nutzer schon wirklich jemanden angeschrieben?
 ///

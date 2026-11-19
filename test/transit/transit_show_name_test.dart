@@ -5,7 +5,7 @@
 //  2. Der Standard ist "an" (der Name wird beim Zuwinken gezeigt).
 //  3. Der Server-Schalter wird beim Start uebernommen ("Server gewinnt").
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thestia/models/app_settings.dart';
+import 'package:thestia/models/settings/app_settings.dart';
 
 void main() {
   group('AppSettings.transitShowName', () {

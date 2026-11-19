@@ -26,8 +26,8 @@ Betrachter der Metadaten.
 | Baustein | Datei | Status |
 |---|---|---|
 | TURN-Credentials (kurzlebige HMAC-Credentials nach dem coturn-REST-Verfahren) | `supabase/functions/ice-config/index.ts` | fertig – **aktiv, sobald die zwei Secrets gesetzt sind** |
-| Ablauf der Credentials (55 Minuten), Cache-Frist im Client | `lib/services/webrtc_service.dart` (`effectiveTtl`) | fertig |
-| Abschaltbare öffentliche STUN-Server | `lib/services/webrtc_service.dart` (`_fallbackIceServers`) | fertig – über `ICE_FALLBACK_URLS` im Build |
+| Ablauf der Credentials (55 Minuten), Cache-Frist im Client | `lib/services/chat/webrtc_service.dart` (`effectiveTtl`) | fertig |
+| Abschaltbare öffentliche STUN-Server | `lib/services/chat/webrtc_service.dart` (`_fallbackIceServers`) | fertig – über `ICE_FALLBACK_URLS` im Build |
 | Auftragsverarbeiter-Liste (STUN ist jetzt genannt, TURN ist entfernt) | `lib/screens/privacy/privacy_screen.dart`, `lib/l10n/app_strings.dart` | fertig |
 | Datenschutzerklärung (kein TURN, STUN-Betreiber) | `docs/recht/DATENSCHUTZ.md` | fertig |
 
@@ -224,10 +224,10 @@ nicht erreichbar ist (ohne Netz, Ausfall der Supabase-Instanz).
 > nur die IP, die auch sonst sichtbar ist.
 
 Der Wert muss im Release-Skript durchgereicht werden. Das ist bereits
-vorbereitet: `tool/werkzeuge/release/build_release.ps1` liest die erlaubten Schlüssel aus
+vorbereitet: `tool/release/build_release.ps1` liest die erlaubten Schlüssel aus
 der `.env` – dort ist `ICE_FALLBACK_URLS` als **einer** der
 durchgereichten Werte eingetragen (die Liste der erlaubten Schlüssel
-steht in `tool/werkzeuge/release/build_release.ps1`).
+steht in `tool/release/build_release.ps1`).
 
 ## Teil 4: Die Datenschutzerklärung anpassen
 

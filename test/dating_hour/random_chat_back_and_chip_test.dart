@@ -13,12 +13,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/providers/chat_provider.dart';
+import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/providers/chat/chat_provider.dart';
 import 'package:thestia/screens/swipe/random_chat_screen.dart';
-import 'package:thestia/services/chat_service.dart';
-import 'package:thestia/services/local_storage.dart';
-import 'package:thestia/widgets/stable_chip.dart';
+import 'package:thestia/services/chat/chat_service.dart';
+import 'package:thestia/services/storage/local_storage.dart';
+import 'package:thestia/widgets/common/stable_chip.dart';
 
 /// In-Memory-Implementierung von [LocalStorage] fuer Tests.
 class _FakeLocalStorage implements LocalStorage {

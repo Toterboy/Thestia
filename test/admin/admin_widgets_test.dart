@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thestia/widgets/admin_metric_row.dart';
-import 'package:thestia/widgets/pill_tab_bar.dart';
+import 'package:thestia/widgets/common/admin_metric_row.dart';
+import 'package:thestia/widgets/chat/pill_tab_bar.dart';
 
 /// Tests fuer die beiden neuen Bausteine des Admin-Screens
 /// (ROADMAP Zeile 807): Pillen-Tab-Indikator und Kennzahlen-Zeile.

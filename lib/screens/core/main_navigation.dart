@@ -12,9 +12,9 @@ import 'package:thestia/screens/profile/profile_edit_screen.dart'
     show profileEditDirtyProvider, profileEditNavigateAfterSaveProvider;
 import 'package:thestia/screens/swipe/transit_radar_screen.dart'
     show confirmTransitExit;
-import 'package:thestia/services/local_storage.dart';
-import 'package:thestia/widgets/dock_tab_bar.dart';
-import 'package:thestia/utils/best_effort.dart';
+import 'package:thestia/services/storage/local_storage.dart';
+import 'package:thestia/widgets/chat/dock_tab_bar.dart';
+import 'package:thestia/utils/common/best_effort.dart';
 
 /// Sichert die Route für die Wiederherstellung nach Prozesstod (v0.9.1).
 Future<void> _saveLastRoute(WidgetRef ref, String path) async {

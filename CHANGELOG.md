@@ -38,7 +38,7 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   wird breiter, die Reihe packt neu, und der gerade geklickte Knopf
   springt in die nächste Zeile. Das fühlt sich an wie ein Fehlklick: der
   Nutzer tippt, und der Knopf wandert weg.
-  * Neu: `lib/widgets/stable_chip.dart` – ein Knopf ohne Häkchen. Die
+  * Neu: `lib/widgets/common/stable_chip.dart` – ein Knopf ohne Häkchen. Die
     Auswahl bleibt sichtbar (Material 3 füllt den Knopf in der
     Akzentfarbe, die „mag ich nicht"-Knöpfe in der Fehlerfarbe), die
     Größe bleibt – und damit auch die Position. Umgestellt: die
@@ -444,7 +444,7 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   Wiederholen-Knopf; im 1:1-Chat das Löschen einer Nachricht für alle;
   im Dialog "Funke beenden" die vier Absage-Texte und die Auswahl; in den Eisbrecher-Fragen das Suchen, das Kopieren und die Frage, ob eine Frage kopiert oder gesendet werden soll.; in der Erinnerungsliste das Abhaken, das Loeschen eigener Eintraege und der Leerzustand.; beim Entfernen der Bild-Metadaten, dass die Metadaten wirklich verschwinden und dass kein Original zurueckkommt.; bei der Bundesland-Aufloesung, dass der Ort nicht zurueckkommt (nur das Bundesland) und dass stattdessen null kommt.; in den Profil-Bausteinen, dass die gemeinsamen Interessen hervorgehoben sind und der Blind-Mode-Platzhalter seinen Grund nennt.; im Admin-Bereich die Verifizierungen mit der KI-Altersschaetzung und dem Minderjaehrigkeitsfall, die Fehlerberichte, die Sperren und die Standort-Pruefungen; im Interessen-Screen das Funken-Menue und das Archivieren; bei der Bild-Meldung, dass nur das gemeldete Bild rausgeht und die Reporter-ID pseudonymisiert wird.; in den Einstellungen, dass sich das Erscheinungsbild umstellen laesst und dass System dem Geraet folgt.; ausserdem der Foto-Einspruch, das Match-Quiz, der Posteingang, die Server-Konfiguration (die Notbremse fuer Transit Spark) und die Standort-Pruefung. Auf der Profildetail-Seite stehen die gemeinsamen Interessen hervorgehoben. In den Einstellungen steht der Stand des Kinderschutzes - und ein Lesefehler wird als Fehler gemeldet, nicht als "keine Aufsicht". Und die Angaben aus der Ersteinrichtung kommen beim Server an - nicht nur lokal. Dazu der Verifikations-Hinweis auf Aktuelles und die Meldung bei der Freigabe.
 - **Die Abdeckung wird gemessen, nicht behauptet**
-  (`tool/pruefer/check_coverage.py`, Gate in der CI). **Stand: 48,4 %** der
+  (`tool/checks/check_coverage.py`, Gate in der CI). **Stand: 48,4 %** der
   Zeilen in `lib/` (vor dieser Runde 24,3 %, davor 20,8 %) – der Boden
   im Gate liegt jetzt bei 30,0 %. 1549 Tests, 0 Fehler.
   * **Ehrlich zur Zielmarke:** 100 % sind nicht in Sicht. Die Lücke
@@ -497,7 +497,7 @@ Luecken** gefunden. Die beiden wichtigsten betrafen den laufenden Betrieb:
   wurde akzeptiert.
   * **Jetzt:** Die SHA-256 ist repariert und hat einen Selbsttest (Testvektor
     "abc"), der in der CI laeuft. Der Leaf-Pin stimmt wieder mit dem
-    Live-Zertifikat ueberein - ein neues CI-Gate (`tool/pruefer/check_cert_pins.py`)
+    Live-Zertifikat ueberein - ein neues CI-Gate (`tool/checks/check_cert_pins.py`)
     prueft das bei **jedem** Commit.
   * Der Rotations-Fallback ist **zeitlich begrenzt** (nur noch im
     Rotationsfenster um das Ablaufdatum des Leafs). Ausserhalb gilt der
@@ -659,7 +659,7 @@ Ein vollständiger Durchgang über Funktion, Sicherheit und Datenschutz hat
   (`DistanceFilterModeLabel.dbValue` und `dbPreferredState`), und ein
   Test liest die CHECK-Constraints aus den Migrationen und prüft, dass
   jeder geschickte Wert in der Datenbank-Domäne liegt. Ein Werkzeug
-  (`tool/pruefer/check_profile_write_allowed.py`) macht den Schreibvorgang der
+  (`tool/checks/check_profile_write_allowed.py`) macht den Schreibvorgang der
   App gegen die echte Datenbank nach – in einer Transaktion, die
   zurückgerollt wird.
 - **Die eigene Nachricht war erst nach dem Netz-Roundtrip sichtbar:**
@@ -1141,7 +1141,7 @@ Ein vollständiger Durchgang über Funktion, Sicherheit und Datenschutz hat
 - **Jede Website-Seite hat jetzt eine englische Fassung** (04.11.2026):
   Die Bestätigungsseite war die letzte ohne. Alle 20 Seiten sind jetzt
   zweisprachig, jede verlinkt auf die andere Fassung, und eine neue
-  Dauerprüfung (`tool/pruefer/check_publish_folder.py`) sagt es, wenn eine
+  Dauerprüfung (`tool/checks/check_publish_folder.py`) sagt es, wenn eine
   Seite fehlt.
 - **Die Kopfschaltflächen der Website sitzen wieder auf gleicher Höhe**
   (04.11.2026): Der Modus-Knopf (Hell/Dunkel) und der Sprachknopf waren
@@ -1169,7 +1169,7 @@ Ein vollständiger Durchgang über Funktion, Sicherheit und Datenschutz hat
 - **Jede Website-Seite hat jetzt eine englische Fassung** (04.11.2026):
   Die Bestätigungsseite war die letzte ohne. Alle 20 Seiten sind jetzt
   zweisprachig, jede verlinkt auf die andere Fassung, und eine neue
-  Dauerprüfung (`tool/pruefer/check_publish_folder.py`) sagt es, wenn eine
+  Dauerprüfung (`tool/checks/check_publish_folder.py`) sagt es, wenn eine
   Seite fehlt.
 - **Die Kopfschaltflächen der Website sitzen wieder auf gleicher Höhe**
   (04.11.2026): Der Modus-Knopf (Hell/Dunkel) und der Sprachknopf waren
@@ -1203,7 +1203,7 @@ Ein vollständiger Durchgang über Funktion, Sicherheit und Datenschutz hat
 - **Der Timer ist aus- und wieder einblendbar** (04.11.2026): Nicht
   jeder möchte, dass ein Gespräch nach Zeit aussieht.
 
-- **`tool/pruefer/check_local_ci.ps1` – die CI-Gates lokal laufen lassen**
+- **`tool/checks/check_local_ci.ps1` – die CI-Gates lokal laufen lassen**
   (04.11.2026): Das Skript spiegelt die vier Jobs aus
   `.github/workflows/ci.yml` und benutzt dieselben Flags: der Analyzer
   mit `--fatal-infos`, die Tests mit der `.env` aus `.env.example`,
@@ -1366,7 +1366,7 @@ Ein vollständiger Durchgang über Funktion, Sicherheit und Datenschutz hat
   (04.11.2026): Die bis dahin genutzte Syntaxprüfung
   (`node --experimental-strip-types --check`) meldet sich *nicht* -
   sie meldete auch die kaputte Datei als gültig. Jetzt prüft
-  `tool/pruefer/check_edge_syntax.py` mit esbuild (einem echten
+  `tool/checks/check_edge_syntax.py` mit esbuild (einem echten
   TypeScript-Parser) alle 24 Dateien, und der Prüfer ist Teil der CI.
 
 
@@ -1536,7 +1536,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 #### Neu (Pruefwerkzeuge)
 
 - **Vier neue Waechter**, alle in der CI und im lokalen Spiegel
-  (`tool/pruefer/check_local_ci.ps1`): `check_async_setstate.py` (findet
+  (`tool/checks/check_local_ci.ps1`): `check_async_setstate.py` (findet
   `setState` nach einem `await` ohne `mounted`-Check), `check_provider_
   in_lifecycle.py` (findet Provider-Schreibzugriffe in `initState` und
   `build`), `check_no_empty_catches.py` und `check_web_pages.py` mit
@@ -1643,7 +1643,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     im Sitemap, das die Suchmaschine findet).
 
 14. **Die Release-Abnahme prüft den richtigen Ordner - und das AAB.**
-    `tool/pruefer/check_release_consistency.py` hatte fest auf `releases/v0.9.2`
+    `tool/checks/check_release_consistency.py` hatte fest auf `releases/v0.9.2`
     gestanden. Die Abnahme von v0.10.0 hätte damit die Dateien von
     v0.9.2 geprüft und "9 Artefakte: ein Build, Versionen ok" gemeldet -
     für Dateien, die zwei Versionen alt waren. Der Ordner folgt jetzt
@@ -1690,7 +1690,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     `changelogs/<versionCode>.txt` in einer der beiden Sprachen,
     erscheint beim Upload kein "Was ist neu". Das war bei jedem
     Versionssprung möglich und wurde bisher nicht gemeldet. Neues Gate:
-    `tool/pruefer/check_store_changelog.py`.
+    `tool/checks/check_store_changelog.py`.
 
 19. **Der Admin-Build war Build 33 - und niemand konnte es sehen.**
     BEFUND (07.11.2026, Betreiber): "Aktuell ist bei Transit Spark bei
@@ -1806,12 +1806,12 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     (`hair_color:purple` ist etwas anderes als `hemd:purple`).
 
     **Und ein Werkzeug, das die Brücke prüft:** App und Server führen
-    dieselben Merkmale zweimal – in `lib/models/transit_models.dart`
+    dieselben Merkmale zweimal – in `lib/models/transit/transit_models.dart`
     und in `public.transit_tag_catalog`. Die RPC baut ihre Whitelist
     aus der Server-Tabelle; **ein Wert, den der Server nicht kennt,
     wird beim Senden stillschweigend weggefiltert.** Bietet die App eine
     solche Farbe an, sieht der Nutzer keinen Fehler: er wählt sie, sie
-    verschwindet, der Funke kommt nie. `tool/pruefer/check_transit_catalog.py`
+    verschwindet, der Funke kommt nie. `tool/checks/check_transit_catalog.py`
     vergleicht deshalb beide Seiten.
 
 25. **Die Chat-Hintergrund-Auswahl muss nicht mehr gescrollt werden.**
@@ -1881,7 +1881,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 
     Beides sind **Auslieferungsfehler**, keine Codefehler – und gegen
     die kann kein Test der App etwas tun. Neu ist deshalb
-    `tool/pruefer/check_release_version.py`: Es prüft für jedes Artefakt, ob
+    `tool/checks/check_release_version.py`: Es prüft für jedes Artefakt, ob
     die Build-Nummer zum Quellstand passt, ob es nach der letzten
     Quellzeile gebaut wurde und ob der Text des aktuellen Quellstands
     im kompilierten Code steht. Der Negativfall ist belegt: das Gate
@@ -2038,7 +2038,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     zeigt, was andere wirklich sehen) und ein Test mit neun Fällen.
 
     *Und das Werkzeug, das so etwas findet:*
-    `tool/pruefer/check_profile_cache_keys.py` vergleicht, was `toJson()`
+    `tool/checks/check_profile_cache_keys.py` vergleicht, was `toJson()`
     schreibt, was `fromJson()` liest und was die Server-Zuordnung
     kennt - und meldet jedes Feld, das verloren geht.
 
@@ -2095,7 +2095,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     *Beide Rechte sind nachgezogen (Migration 192), live geprüft.*
 
     *Und das Werkzeug, das beides findet:*
-    `tool/pruefer/check_function_grants.py` sammelt **alle** RPC-Aufrufe des
+    `tool/checks/check_function_grants.py` sammelt **alle** RPC-Aufrufe des
     Clients (Dart und Edge Functions) und fragt die Produktivdatenbank,
     welche Rechte die Rollen wirklich haben. Es meldet jede aufgerufene
     Funktion, die der Server nicht ausführen kann.
@@ -2228,20 +2228,20 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
     ohne dass der Nutzer das entschieden hat.
 
 49. **Ein Werkzeug gegen die stille Relay-Klasse.**
-    `tool/pruefer/check_function_returns.py` findet Funktionen, die einen Wert
+    `tool/checks/check_function_returns.py` findet Funktionen, die einen Wert
     zurückgeben **sollten**, aber kein `RETURN` haben - der Aufruf
     scheitert dann mit „query has no destination for result data", ohne
     dass irgendwo ein Fehler sichtbar wird. Der Selbsttest (eine
     absichtlich kaputte Funktion) beweist, dass der Prüfer sie findet.
 
 50. **Ein Werkzeug, das die stummen Fehler findet.**
-    `tool/pruefer/check_on_conflict.py` fragt die Produktivdatenbank ab und
+    `tool/checks/check_on_conflict.py` fragt die Produktivdatenbank ab und
     vergleicht **jedes** `ON CONFLICT`-Ziel mit den tatsächlichen
     Indizes. Es hat beide Fehler gefunden (Befunde 31 und 32) – und
     es findet alle 26 Funktionen mit `ON CONFLICT` auf einmal.
-    Dazu `tool/pruefer/check_migration_history.py` (jede Migration aus dem
+    Dazu `tool/checks/check_migration_history.py` (jede Migration aus dem
     Repository ist auch angewandt) und
-    `tool/pruefer/check_release_version.py` (die ausgelieferten Artefakte
+    `tool/checks/check_release_version.py` (die ausgelieferten Artefakte
     tragen den aktuellen Code).
 
 51. **Die Verschlüsselung ist belegt - und mein Verdacht war falsch.**
@@ -2305,7 +2305,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      damit vom Advisory GHSA-frr6-h895-5pxp (High) betroffen. Jetzt läuft
      der Build auf **Flutter 3.47.9 / Dart 3.13.7** (das aktuelle Stable
      mit dem Fix). Die CI pinnt die Version jetzt fest, und
-     `tool/pruefer/check_sdk_security.py` ist **blockierend** im CI: ein
+     `tool/checks/check_sdk_security.py` ist **blockierend** im CI: ein
      Rueckfall auf eine alte Version wird rot, statt stillschweigend zu
      passieren.
 
@@ -2340,7 +2340,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      **Das Gate hat noch nie funktioniert.**
 
      Die App liest `app_config` direkt über PostgREST
-     (`lib/services/app_config_service.dart`). Die Policy aus Migration
+     (`lib/services/storage/app_config_service.dart`). Die Policy aus Migration
      034 („No direct app_config access") hat aber `USING (false)` für
      die Rolle `authenticated` - der Client bekam also IMMER eine
      leere Liste. Live geprüft: HTTP 200 mit `[]`.
@@ -2374,7 +2374,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      nicht ankommen. Genau die Fehlerklasse, die sich in den letzten
      Wochen wiederholt hat.
 
-     **Das Werkzeug dagegen:** `tool/pruefer/check_app_config_readable.py`
+     **Das Werkzeug dagegen:** `tool/checks/check_app_config_readable.py`
      fragt live genau so ab, wie es die App tut (mit einem echten
      Benutzer-Token) und schlaegt an, wenn ein benoetigter Wert fehlt
      ODER ein interner Wert lesbar ist. Ohne die Schlüssel sagt es
@@ -2421,7 +2421,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 
      **Behoben (wirkt sofort, ohne SDK-Update):**
      - Der Realtime-WebSocket bekommt einen eigenen Transport mit dem
-       **gepinnten** Client (`lib/utils/pinned_realtime_transport.dart`).
+       **gepinnten** Client (`lib/utils/security/pinned_realtime_transport.dart`).
        Über diesen Kanal laufen Chat-Events, Transit-Signaling und
        die Soft-Pings.
      - Passkey und Storage nutzen den `IOClient` mit dem strikten
@@ -2448,7 +2448,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      (das aktuelle Stable mit dem Fix). Es ist die Ursachenbehebung und
      behebt auch die Engine-Luecken - aber es steckt erst in der
      Binary, also sind danach ein Neubau und eine erneute Verteilung
-     noetig. `tool/pruefer/check_sdk_security.py` prueft die Untergrenzen (SDK
+     noetig. `tool/checks/check_sdk_security.py` prueft die Untergrenzen (SDK
      in der CI, lokal installierte Version, WebRTC-SDK) und macht den
      offenen Punkt sichtbar, statt ihn zu uebergehen.
 
@@ -2506,10 +2506,10 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      Ereignis, und die Like-Meldung war inhaltlich falsch: im Radar
      wird kein Profil geliked, sondern gefunkt.
 
-     **Das Werkzeug, das zählt:** `tool/werkzeuge/datenbank/measure_push_duplicates.sql`
+     **Das Werkzeug, das zählt:** `tool/db/measure_push_duplicates.sql`
      zählt die Push-Aufrufe, ohne dass eine einzige Nachricht rausgeht
      (Transaktion plus ROLLBACK - der pg_net-Worker sieht uncommittete
-     Zeilen einer anderen Sitzung nicht). `tool/pruefer/check_push_duplicates.py`
+     Zeilen einer anderen Sitzung nicht). `tool/checks/check_push_duplicates.py`
      macht daraus ein Gate: statisch (kein Client darf `notify-user` mit
      `kind='likes'` aufrufen, und die Edge Function muss solche Aufrufe
      ablehnen) und live (die vier Szenarien).
@@ -2552,7 +2552,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 
 53. **Was damit nicht belegt ist - und was aufgeraeumt wird.**
      Die Live-Tests legen echte Zeilen an (zwei Likes, ein Match).
-     `tool/werkzeuge/datenbank/cleanup_transit_testdata.sql` nimmt sie wieder weg und
+     `tool/db/cleanup_transit_testdata.sql` nimmt sie wieder weg und
      prueft danach, dass nichts mehr da ist; die Konten selbst bleiben
      unberuehrt.
 
@@ -2594,7 +2594,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      Webserver.
 
      **Das Gate prueft jetzt die Kette** und meldet, wenn ein stabiles
-     Glied in der Datei fehlt. Das Werkzeug `tool/werkzeuge/sonstiges/update_assetlinks.py`
+     Glied in der Datei fehlt. Das Werkzeug `tool/scripts/update_assetlinks.py`
      liest die Kette live, schreibt die Datei und macht die Gegenprobe -
      nach einem Hosterwechsel einmal laufen lassen, dann passt es
      wieder.
@@ -2636,10 +2636,10 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      zwei Wegen, weil die Hoster unterschiedliche Moeglichkeiten haben.
 
      **Das Prüfen ist schaerfer geworden:**
-     `tool/pruefer/check_publish_folder.py` prueft jetzt, dass der Ordner
+     `tool/checks/check_publish_folder.py` prueft jetzt, dass der Ordner
      keine Netlify-Syntax mehr traegt, die Cloudflare nicht kennt -
      und dass der Ersatz für die domain-bezogene Regel wirklich
-     vorhanden ist. `tool/pruefer/check_websites_live.py` kann mit `--host`
+     vorhanden ist. `tool/checks/check_websites_live.py` kann mit `--host`
      jeden weiteren Host prüfen (etwa das Pages-Projekt, BEVOR der
      DNS umgestellt wird), prueft die Sicherheits-Header an der
      **Antwort des Servers** statt an der Datei - und vergleicht die
@@ -2762,7 +2762,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      nachgezogen werden mussten - und stillschweigend veralten
      können (die Seite läuft dann weiter, nur ohne den Schutz).
 
-     **Die Lösung:** `tool/werkzeuge/website/make_htaccess.py` erzeugt die Datei aus
+     **Die Lösung:** `tool/web/make_htaccess.py` erzeugt die Datei aus
      beiden Quellen. Die Uebersetzung sitzt damit an genau einer
      Stelle. Zwei Fehler, die beim ersten Versuch passiert sind und
      jetzt im Selbsttest feststeckt:
@@ -2778,7 +2778,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      erzeugt die `.htaccess` neu und vergleicht sie mit der Datei auf
      der Platte. Wer `_headers` oder `_redirects` ändert, bekommt
      rot: "webhosting/.htaccess ist veraltet - Reparieren: python
-     tool/werkzeuge/website/make_htaccess.py". Die Drift-Prüfung ist getestet (sie
+     tool/web/make_htaccess.py". Die Drift-Prüfung ist getestet (sie
      schlaegt bei einer absichtlichen Abweichung an).
 
      **Die Datei liegt bewusst AUSSERHALB des Publish-Ordners**
@@ -2956,9 +2956,9 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
      Deckkraft. Die Schwelle ist jetzt 88-104: das Artwork ist voll
      deckend, nur der Verlauf fällt weg.
 
-     **DER RUNDE SCHNITT** steht jetzt in `tool/werkzeuge/bilder/logo_round.py` (Python,
+     **DER RUNDE SCHNITT** steht jetzt in `tool/images/logo_round.py` (Python,
      weil die Favicons mit Pillow erzeugt werden) - dieselbe Rechnung
-     wie in `tool/werkzeuge/bilder/generate_round_logo.dart`. Beide Wege wurden
+     wie in `tool/images/generate_round_logo.dart`. Beide Wege wurden
      gegeneinander geprüft: mittlere Abweichung 0,81 je Kanal
      (nur die Anti-Aliasing-Pixel am Kreisrand unterscheiden sich).
 
@@ -3138,7 +3138,7 @@ Stand 0.11.0 verwendet und wird deshalb nicht wiederverwendet.
 - **HOOK_SECRET**: das Secret war 64 Hex-Zeichen, die Function hat
   Base64 dekodiert – die Signaturprüfung schlug deshalb immer fehl
   (401). Die Function akzeptiert jetzt Base64, Hex und Rohbytes;
-  `tool/pruefer/check_hook_secret.py` prüft den Dashboard-Wert gegen die
+  `tool/checks/check_hook_secret.py` prüft den Dashboard-Wert gegen die
   laufende Function
 - **Neue Tabellen brauchen ein GRANT**: Supabase gibt ab 30.10.2026
   neuen Tabellen im Schema `public` keine automatischen Data-API-Rechte

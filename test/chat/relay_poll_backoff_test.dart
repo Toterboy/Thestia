@@ -1,8 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thestia/services/global_relay_inbox.dart';
-import 'package:thestia/services/relay_poll_backoff.dart';
+import 'package:thestia/services/chat/global_relay_inbox.dart';
+import 'package:thestia/services/chat/relay_poll_backoff.dart';
 
 void main() {
   group('RelayPollBackoff', () {

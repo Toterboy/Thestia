@@ -1,0 +1,61 @@
+﻿s.dart';
+
+/// Screen f├╝r den aktiven Dating Hour Chat (5-Minuten-Timer).
+///
+/// L├ñdt die Session serverseitig anhand ihrer ID, zeigt den Countdown bis zum
+/// Ablauf und erm├Âglicht die Entscheidung (Annehmen/Ablehnen). Bei beidseitigem
+/// Accept wird ein Match erzeugt und zur Matches-Seite navigiert.
+///
+/// Nachrichten laufen E2E-verschl├╝sselt ├╝ber den P2P-DataChannel
+/// ([P2PChatService]) - identisch zum 1:1-Chat. Kein Nachrichteninhalt
+/// verl├ñsst das Ger├ñt Richtung Server.
+class DatingHourChatScreen extends ConsumerStatefulWidget {
+  const DatingHourChatScreen({required this.sessionId, super.key});
+  final String sessionId;
+
+  @override
+  ConsumerState<DatingHourChatScreen> createState() => _DatingHourChatScreenState();
+}
+
+class _DatingHourChatScreenState extends ConsumerState<DatingHourChatScreen> {
+  /// Cache: Partner-Profil nur einmal pro Session laden.
+  final Map<String, Future<Map<String, dynamic>?>> partnerHabitsCache = {};
+  final _messageController = TextEditingController();
+  final _scrollController = ScrollController();
+  Timer? _timer;
+  DatingHourSession? _session;
+  String? _currentUserId;
+  String? _peerId;
+  bool _hasVoted = false;
+  bool _showDecision = false;
+
+  /// Alter des Chat-Partners (aus public_profiles) - f├╝r den
+  /// Altersdifferenz-Hinweis (Migration: >= 10 Jahre Differenz).
+  int? _partnerAge;
+  bool _ageWarningShown = false;
+
+  // E2E-P2P-Verbindung (Signal Protocol + WebRTC DataChannel).
+  P2PChatService? _p2p;
+  StreamSubscription<String>? _msgSub;
+  bool _p2pInitStarted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentUserId = AppConstants.currentUserId;
+    _loadSession();
+    _startTimer();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _msgSub?.cancel();
+    _p2p?.disconnect();
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// L├ñdt das Alter des Chat-Partners (RPC get_public_profile, Migration
+  /// 080 - Nachfolger der public_pr

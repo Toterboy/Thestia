@@ -1,0 +1,102 @@
+﻿## Geplant f├╝r 0.9.0 ÔÇô Nahbereichs-Funke (ÔÇ×Transit Spark", BLE)
+
+> Status nach dem Bau (v0.9.0-Beta): Kern-Feature + Begleitposten
+> umgesetzt (Migrationen 080-082). ABWEICHUNG: Das Matching l├ñuft als
+> SECURITY-DEFINER-RPC `match_proximity_spark` statt als Edge Function -
+> gleiche Aufgabe, einfachere Wartung/Deployment. Soft-Ping folgt in
+> 0.9.1. Geraetetest auf zwei echten Geraeten steht aus (BLE-Reichweite,
+> Advertise-Abdeckung, Match-Flow).
+
+> Vision: Man l├ñchelt sich im Zug, Caf├® oder auf einer Messe (z. B.
+> Gamescom) an ÔÇô traut sich aber nicht anzusprechen. Kurz darauf ist die
+> Person 50ÔÇô500 m entfernt. Thestia macht aus diesem Moment trotzdem einen
+> Funke: **Asynchrone Two-Tier-Spark-Architektur**.
+>
+> 1. **Phase 1 (Nahbereichs-Moment per BLE):** In der N├ñhe (3ÔÇô10 m)
+>    registrieren die Ger├ñte im Hintergrund anonyme, ephemere
+>    ÔÇ×Encounter-Tokens" und cachen sie lokal f├╝r 45 Minuten.
+> 2. **Phase 2 (Asynchroner Funke ├╝ber Distanz via Supabase):** Tippt
+>    Person A (auch 10 Minuten sp├ñter) auf ÔÇ×Blicke getauscht" und Person B
+>    dasselbe, matcht Supabase die Encounter-Tokens + optischen Tags ÔÇô
+>    auch wenn beide inzwischen weit voneinander entfernt sind.
+> 3. **Privacy:** Kein Fotokatalog im Raum. Ein Funke entsteht
+>    ausschlie├ƒlich bei **beidseitigem Signal (Double Blind Opt-In)**.
+>
+> Enth├ñlt strikten Jugendschutz (serverseitige Alter/Geschlecht-Pr├╝fung
+> wie ├╝berall) und Datensparsamkeit (Auto-Cleanup, keine dauerhaften
+> Verl├ñufe).
+
+- [x] **Lokaler Encounter-Cache** (`lib/services/encounter_cache_service.dart`):
+      Erkannte Thestia-BLE-Tokens mit Zeitstempel + st├ñrkstem RSSI cachen,
+      45 Minuten Vorhaltezeit, automatisches Aufr├ñumen alter Eintr├ñge
+- [x] **BLE Proximity Service** (`lib/services/transit/transit_ble_service.dart`):
+      Advertising rotierender ephemerer Tokens + Tag-Bitmask; Scanning auf
+      Thestia-UUID; Messe-Modus mit engerem RSSI-Schwellwert (z. B. > -75 dBm
+      = echter Sichtkontakt); Batterieschutz ├╝ber gepulste Scans und
+      einstellbaren Auto-Stop-Timer
+- [x] **Matching als RPC `match_proximity_spark`** (Abweichung: SECURITY-DEFINER-RPC statt Edge Function - gleiche Aufgabe, kein Extra-Deployment): Nimmt `cachedEncounterTokens`,
+      `targetTags`, `timestamp`; pr├╝ft, ob in den letzten 30 Minuten eine
+      wechselseitige Begegnung zwischen zwei Nutzern mit passendem Alter/
+      Geschlecht und ├╝bereinstimmenden Tags lag; bei Treffer Realtime-Event
+      f├╝r beide Clients
+- [x] **Datenmodelle** (`lib/models/transit/transit_models.dart`): `TransitTag`
+      (id, label, category: clothing/accessory/activity/event, icon),
+      `EncounterRecord` (ephemeralPeerToken, detectedAt, strongestRssi),
+      `SparkSignal` (senderSessionToken, recentEncounterTokens, targetTagIds,
+      timestamp)
+- [x] **State Management** (`lib/providers/transit/transit_provider.dart`):
+      AsyncNotifier mit `isActive`, `remainingDuration`, `myActiveTags`,
+      `currentMode` (transit vs. convention), `encounterCache`,
+      `sendSpark(targetTags)` + Realtime-Listener f├╝r eingehende Funken
+- [x] **Radar-Screen + Messe-Modus + Merkmal-Tags** (`lib/screens/swipe/transit_radar_screen.dart`, Migration 082):
+      animiertes Radar im Material-3-Style; Mode-Toggle ÔÇ×Bahn/Caf├®" vs.
+      ÔÇ×Messe/Gamescom"; Quick-Action ÔÇ×Gerade Blicke getauscht ­ƒæü´©ÅÔ£¿" ├Âffnet
+      Bottom Sheet zur Auswahl von 1ÔÇô3 Merkmalen (z. B. schwarzer Hoodie +
+      Gamescom-Lanyard); diskreter Status-Text (ÔÇ×Signal aktiv. Auch wenn
+      ihr euch aus den Augen verliert: Wenn die Person denselben Moment
+      sp├╝rt, matcht ihr euch."); Match-Dialog ÔÇ×Funke ├╝bergesprungen! Ô£¿"
+      ├Âffnet den Chat mit situativen Fragen (ÔÇ×Bist du noch in der N├ñhe von
+      Halle 7?") + optionaler gegenseitiger Foto-Freischaltung nur f├╝r
+      diese Session
+- [ ] **Einseitiges Anschreiben (ÔÇ×Soft-Ping")** ÔÇô folgt in 0.9.1: Falls die andere Person
+      nicht an die App denkt oder sich selbst nicht traut, kann NUR der
+      Meldende nach der Begegnung EINMAL eine diskrete Anfrage senden
+      (vorgefertigte, freundliche S├ñtze + optional eine kurze eigene Zeile
+      ÔÇô kein freier Text, kein Spam). Die Person erh├ñlt eine dezente
+      Benachrichtigung und kann den Funke NACHTR├äGLICH aktivieren.
+      Schutzregeln: genau 1 Versuch pro Begegnung (kein Wiederholen),
+      die Anfrage verf├ñllt still nach 48 h, der Absender erf├ñhrt NIEMALS
+      eine Ablehnung (kein Lesestatus, kein ÔÇ×Nein" ÔÇô Schweigen = Ende),
+      Blockier-/Melde-Schutz greift wie ├╝berall, Jugendschutz-Filter
+      serverseitig
+- [x] **Native Berechtigungen**: Android (`AndroidManifest.xml`) und iOS
+      (`Info.plist`) BLE-Konfiguration
+
+### Begleitend in 0.9.0 (UX & Server)
+
+- [ ] **public_profiles-View durch SECURITY-DEFINER-Funktion ersetzen**
+      (Option A ÔÇô l├Âst den wiederkehrenden Advisor-Befund
+      ÔÇ×security_definer_view" auf): RPC `get_public_profile(user_id)` plus
+      Batch-Variante `get_public_profiles(ids)` mit der bisherigen
+      Spalten-Whitelist und dem `age_compatible`-Jugendschutzfilter;
+      Client-Umstellung von `from('public_profiles')` auf die RPCs
+      inkl. Umbau der Likes/Match-Embedded-Joins
+      (`liker:public_profiles!inner(*)` ÔåÆ Batch-Fetch); Parsing der
+      Interessen-/Match-Screens anpassen; die View erst entfernen, wenn
+      ALLE Aufrufer migriert sind; Begr├╝ndungs-Doku (072, ARCHITEKTUR)
+      aktualisieren. Aufwand ~┬¢ÔÇô1 Tag, nicht als Pre-Release-Quickfix
+- [ ] **Entdecken-Seite: Modus-Gruppierung** (Vorbereitung auf mehr Modi):
+      Die Karten nach Zweck gruppieren statt flacher Liste ÔÇô
+      ÔÇ×Menschen kennenlernen" (Find your Match, Dating Hour),
+      ÔÇ×Direkt verbinden" (Zufallschat),
+      ÔÇ×Unterwegs" (QR-Code teilen/scannen + Transit Spark ÔÇô beides
+      Out-and-About-Szenarien). Neue Modi rutschen damit ohne
+      Un├╝bersichtlichkeit ein; NEU-/Experimentell-Badges f├╝r frische Modi
+- [ ] **Onboarding als Interview**: Die Einrichtung vom stumpfen
+      Daten-Eingeben zu einem spielerischen Frage-f├╝r-Frage-Flow
+      umgestalten (eine Frage pro Screen, warme Mikrocopy, immer
+      ├╝berspringbar) ÔÇô KEINE neuen Datenpunkte, nur die bestehenden in
+      Gespr├ñchsform; bewusst KEIN Belohnungs-Mechanismus (App-Prinzip:
+      spielerisch Ôëá Dopamin-Loop)
+
+

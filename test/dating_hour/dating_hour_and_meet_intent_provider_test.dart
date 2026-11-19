@@ -1,8 +1,8 @@
 // Die Provider der Dating Hour und des Meet-Intents.
 //
 // ANLASS (14.11.2026): Die Coverage-Messung zeigte fuer
-// lib/providers/dating_hour_provider.dart und
-// lib/providers/meet_intent_provider.dart je 0 % - sie wurden nie
+// lib/providers/dating_hour/dating_hour_provider.dart und
+// lib/providers/dating_hour/meet_intent_provider.dart je 0 % - sie wurden nie
 // beruehrt. Beide Provider sind die Schnittstelle zwischen der
 // Oberflaeche und dem Server: ein Fehler dort faellt im Alltag nicht
 // auf, sondern nur gar nicht.
@@ -25,10 +25,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
-import 'package:thestia/models/meet_intent.dart';
-import 'package:thestia/providers/dating_hour_provider.dart';
-import 'package:thestia/providers/meet_intent_provider.dart';
-import 'package:thestia/services/meet_intent_service.dart';
+import 'package:thestia/models/dating_hour/meet_intent.dart';
+import 'package:thestia/providers/dating_hour/dating_hour_provider.dart';
+import 'package:thestia/providers/dating_hour/meet_intent_provider.dart';
+import 'package:thestia/services/dating_hour/meet_intent_service.dart';
 
 import '../support/fake_supabase_server.dart';
 

@@ -8,20 +8,20 @@ import 'package:go_router/go_router.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/models/transit_models.dart';
-import 'package:thestia/providers/transit_provider.dart';
-import 'package:thestia/providers/profile_provider.dart';
-import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/models/transit/transit_models.dart';
+import 'package:thestia/providers/transit/transit_provider.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
+import 'package:thestia/providers/settings/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/services/find_your_match_service.dart';
-import 'package:thestia/services/local_storage.dart';
-import 'package:thestia/services/supabase_database_service.dart';
-import 'package:thestia/services/supabase_service.dart';
-import 'package:thestia/services/transit_ble_service.dart';
-import 'package:thestia/widgets/funke_overlay.dart';
-import 'package:thestia/widgets/location_disclosure.dart';
+import 'package:thestia/services/dating_hour/find_your_match_service.dart';
+import 'package:thestia/services/storage/local_storage.dart';
+import 'package:thestia/services/server/supabase_database_service.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
+import 'package:thestia/services/transit/transit_ble_service.dart';
+import 'package:thestia/widgets/chat/funke_overlay.dart';
+import 'package:thestia/widgets/settings/location_disclosure.dart';
 import 'package:thestia/widgets/transit_mode_selector.dart';
-import 'package:thestia/utils/best_effort.dart';
+import 'package:thestia/utils/common/best_effort.dart';
 
 part 'parts/transitradarkandidaten.dart';
 
@@ -603,7 +603,7 @@ Future<bool> confirmTransitExit(
 /// Ueberschrift liege noch immer in der Statusleiste. Die Ursache war
 /// nicht der Code, sondern die getestete Datei: die Admin-APKs waren
 /// noch Build 33 vom 06.11. 19:00 - also VOR diesem Fix (das Gate
-/// `tool/pruefer/check_release_artifacts.py` meldet es heute).
+/// `tool/checks/check_release_artifacts.py` meldet es heute).
 ///
 /// Oeffentlich, damit der Test den WEG geht, den die App geht - mit
 /// demselben `useSafeArea`. Eine Nachbildung im Test wuerde nur pruefen,

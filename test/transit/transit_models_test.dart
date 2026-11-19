@@ -1,6 +1,6 @@
 // Der Transit-Katalog: Merkmale, Kategorien und die Suche.
 //
-// ANLASS (19.11.2026): `lib/models/transit_models.dart` war nur zu 40 %
+// ANLASS (19.11.2026): `lib/models/transit/transit_models.dart` war nur zu 40 %
 // abgedeckt. Gerade die Suche ist wichtig - der Nutzer tippt "pulli"
 // und muss das richtige Merkmal finden.
 //
@@ -12,7 +12,7 @@
 //   * die Suche versteht Umlaute ("muetze" findet "mütze"),
 //   * ein leerer Suchbegriff liefert den ganzen Katalog.
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thestia/models/transit_models.dart';
+import 'package:thestia/models/transit/transit_models.dart';
 
 void main() {
   group('Das Ergebnis des Signal-Versands', () {

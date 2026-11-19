@@ -1,0 +1,66 @@
+﻿UUID_REGEX =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!UUID_REGEX.test(targetUserId)) {
+    return new Response(JSON.stringify({ error: "Invalid target_user_id" }), {
+      status: 400, headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  // Nur internen Aufrufen (DB-Trigger) ist es erlaubt, Titel/Text frei zu
+  // w├ñhlen. Clients bekommen feste, serverseitig generierte Texte - das
+  // verhindert Push-Phishing mit beliebigem Inhalt im App-Look.
+  let title: string;
+  let text: string;
+  if (isInternal) {
+    title = String(body.title ?? "Thestia").slice(0, 100);
+    text = String(body.body ?? "").slice(0, 200);
+  } else {
+    const fixed = clientTextsByKind[kind];
+    if (!fixed) {
+      // Client darf nur die unterst├╝tzten kinds ausl├Âsen.
+      return new Response(JSON.stringify({ error: "Invalid kind" }), {
+        status: 400, headers: { "Content-Type": "application/json" },
+      });
+    }
+    if (await isRateLimited(callerId)) {
+      return new Response(JSON.stringify({ ok: false, reason: "rate_limited" }), {
+        status: 200, headers: { "Content-Type": "application/json" },
+      });
+    }
+    // Audit E1: Push nur an Nutzer, mit denen der Aufrufer eine reale
+    // Beziehung hat (Match oder eigener Like). Verhindert Bel├ñstigung
+    // ├╝ber beliebige target_user_id-Werte.
+    if (!(await hasRelationshipBetween(callerId, targetUserId))) {
+      return new Response(JSON.stringify({ ok: false, reason: "no_relationship" }), {
+        status: 200, headers: { "Content-Type": "application/json" },
+      });
+    }
+    title = fixed.title;
+    text = fixed.body;
+  }
+
+  // Einzel-Schalter + Master serverseitig pr├╝fen (Service-Role, RLS-frei).
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("notifications_enabled, notify_matches, notify_likes, notify_messages, notify_dating_hour, fcm_token, up_endpoint")
+    .eq("user_id", targetUserId)
+    .maybeSingle();
+
+  if (!profile) {
+    return new Response(JSON.stringify({ ok: false, reason: "no_profile" }), {
+      status: 200, headers: { "Content-Type": "application/json" },
+    });
+  }
+  if (profile.notifications_enabled !== true) {
+    return new Response(JSON.stringify({ ok: false, reason: "master_disabled" }), {
+      status: 200, headers: { "Content-Type": "application/json" },
+    });
+  }
+  const flagByKind: Record<string, string> = {
+    matches: "notify_matches",
+    likes: "notify_likes",
+    messages: "notify_messages",
+    dating_hour: "notify_dating_hour",
+  };
+  const flag = flagByKind[kind];
+  if (flag && profile[flag] !== true

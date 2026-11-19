@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:thestia/models/dating_hour_models.dart';
-import 'package:thestia/models/gender.dart';
-import 'package:thestia/models/habitude_level.dart';
-import 'package:thestia/providers/settings_provider.dart';
-import 'package:thestia/providers/user_preferences_provider.dart';
+import 'package:thestia/models/dating_hour/dating_hour_models.dart';
+import 'package:thestia/models/profile/gender.dart';
+import 'package:thestia/models/profile/habitude_level.dart';
+import 'package:thestia/providers/settings/settings_provider.dart';
+import 'package:thestia/providers/settings/user_preferences_provider.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/services/dating_hour_service.dart';
-import 'package:thestia/widgets/age_range_sliders.dart';
-import 'package:thestia/widgets/habitude_selector.dart';
-import 'package:thestia/utils/best_effort.dart';
+import 'package:thestia/services/dating_hour/dating_hour_service.dart';
+import 'package:thestia/widgets/settings/age_range_sliders.dart';
+import 'package:thestia/widgets/settings/habitude_selector.dart';
+import 'package:thestia/utils/common/best_effort.dart';
 
 /// Screen für Dating-Hour-Präferenzen (vor dem Event-Beitritt).
 class DatingHourPreferencesScreen extends ConsumerStatefulWidget {

@@ -1,7 +1,7 @@
 // Der Chat-Speicher (Verlauf und QR-Kontakte) - ungetestet.
 //
 // ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
-// lib/services/chat_service.dart 102 offene Zeilen. Der Verlauf wird
+// lib/services/chat/chat_service.dart 102 offene Zeilen. Der Verlauf wird
 // OPT-IN verschluesselt gespeichert (SecureHive, Schluessel im
 // Keystore) - das ist die Zusage "der Verlauf bleibt auf dem Geraet und
 // niemand sonst sieht ihn".
@@ -24,9 +24,9 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 
-import 'package:thestia/models/message.dart';
-import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/services/chat_service.dart';
+import 'package:thestia/models/chat/message.dart';
+import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/services/chat/chat_service.dart';
 
 import '../support/plugin_mocks.dart';
 

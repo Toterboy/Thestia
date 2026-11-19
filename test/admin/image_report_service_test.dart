@@ -1,7 +1,7 @@
 // Die Bild-Meldung (bisher ungetestet - 0 %).
 //
 // ANLASS (15.11.2026): Die Coverage-Messung zeigte fuer
-// lib/services/image_report_service.dart 0 %.
+// lib/services/profile/image_report_service.dart 0 %.
 //
 // WARUM DAS WICHTIG IST: Wenn ein Nutzer ein Chat-Bild meldet, geht
 // genau EIN Bild an die KI-Pruefung und an das Moderations-Team. Zwei
@@ -17,7 +17,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
-import 'package:thestia/services/image_report_service.dart';
+import 'package:thestia/services/profile/image_report_service.dart';
 
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';

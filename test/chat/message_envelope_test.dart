@@ -4,7 +4,7 @@
 // Nachricht nicht "fuer alle geloescht" werden (die beiden Seiten
 // hatten verschiedene IDs). Die Huelle traegt die ID des Senders.
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thestia/services/message_envelope.dart';
+import 'package:thestia/services/chat/message_envelope.dart';
 
 void main() {
   group('Die Nachrichten-Huelle', () {

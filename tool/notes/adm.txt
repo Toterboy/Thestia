@@ -1,0 +1,48 @@
+﻿=== 052_verification_and_admin.sql
+function public.admin_resolve_user_report(p_report_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  if not public.is_current_user_admin() then
+    raise exception 'Forbidden';
+  end if;
+  update public.user_reports
+     set status = 'resolved'
+   where id = p_report_id;
+end;
+$$;
+
+-- Bug-Reports (Datenbank-Kopie der per Email versendeten Reports).
+create or replace function public.admin_list_bug_reports()
+returns jsonb
+language sql
+security definer
+set search_path = public, pg_temp
+as $$
+  select coalesce(jsonb_agg(
+           jsonb_build_object(
+             'id', b.id,
+             'description', b.description,
+             'deviceInfo', b.device_info,
+             'attachmentCount', b.attachment_count,
+             'createdAt', b.created_at,
+             'userId', b.user_id
+           ) order by b.created_at desc), '[]'::jsonb)
+  from public.bug_reports b
+  where public.is_current_user_admin();
+$$;
+
+-- Ausstehende Verifizierungen (Videos warten auf Freigabe).
+create or replace function public.admin_list_pending_verifications()
+returns jsonb
+language sql
+security definer
+set search_path = public, pg_temp
+as $$
+  select coalesce(jsonb_agg(
+           jsonb_build_object(
+             'userId', p.user_id,
+             'name', p

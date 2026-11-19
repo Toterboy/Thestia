@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/providers/find_your_match_provider.dart';
-import 'package:thestia/providers/profile_provider.dart';
-import 'package:thestia/services/supabase_database_service.dart';
-import 'package:thestia/services/supabase_service.dart';
-import 'package:thestia/widgets/intro_audio_player.dart';
+import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/providers/dating_hour/find_your_match_provider.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
+import 'package:thestia/services/server/supabase_database_service.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
+import 'package:thestia/widgets/profile/intro_audio_player.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/widgets/intro_editor.dart';
+import 'package:thestia/widgets/profile/intro_editor.dart';
 import 'package:thestia/l10n/app_strings.dart';
 
 /// "Find your Match": Kennenlernen über die Vorstellung (Text oder Audio)

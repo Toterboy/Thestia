@@ -4,9 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/services/auth_exception.dart';
-import 'package:thestia/services/unban_request_service.dart';
-import 'package:thestia/widgets/buttons.dart';
+import 'package:thestia/services/auth/auth_exception.dart';
+import 'package:thestia/services/verification/unban_request_service.dart';
+import 'package:thestia/widgets/common/buttons.dart';
 
 /// Entsperrungsantrag für gesperrte E-Mail-Adressen (Plattform-Sperre,
 /// Migration 045). Erreichbar über [AppRoutes.unbanRequest], öffentlich

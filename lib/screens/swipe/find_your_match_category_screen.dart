@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/models/find_match_models.dart';
-import 'package:thestia/models/user_profile.dart';
-import 'package:thestia/providers/find_your_match_browse_provider.dart';
-import 'package:thestia/providers/profile_provider.dart';
-import 'package:thestia/utils/age_safety_rules.dart';
-import 'package:thestia/widgets/age_range_sliders.dart';
+import 'package:thestia/models/chat/find_match_models.dart';
+import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/providers/dating_hour/find_your_match_browse_provider.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
+import 'package:thestia/utils/location/age_safety_rules.dart';
+import 'package:thestia/widgets/settings/age_range_sliders.dart';
 
 /// "Find your Spark" - STOEBERN NACH INTERESSENS-KATEGORIE.
 ///

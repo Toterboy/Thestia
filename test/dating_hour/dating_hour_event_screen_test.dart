@@ -20,11 +20,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:thestia/models/dating_hour_models.dart';
+import 'package:thestia/models/dating_hour/dating_hour_models.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/dating_hour/dating_hour_event_screen.dart';
-import 'package:thestia/services/dating_hour_service.dart';
-import 'package:thestia/services/local_storage.dart';
+import 'package:thestia/services/dating_hour/dating_hour_service.dart';
+import 'package:thestia/services/storage/local_storage.dart';
 
 /// Der Speicher im RAM - die Einstellungen kommen daraus.
 class _FakeLocalStorage implements LocalStorage {

@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:thestia/providers/chat_provider.dart';
-import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/providers/chat/chat_provider.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/services/find_your_match_service.dart';
-import 'package:thestia/services/supabase_service.dart';
-import 'package:thestia/utils/peer_id.dart';
+import 'package:thestia/services/dating_hour/find_your_match_service.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
+import 'package:thestia/utils/chat/peer_id.dart';
 
 // mobile_scanner: Kamera auf Mobile, Stub auf Web/Desktop.
 import 'package:mobile_scanner/mobile_scanner.dart'
-    if (dart.library.html) 'package:thestia/utils/mobile_scanner_stub.dart';
+    if (dart.library.html) 'package:thestia/utils/common/mobile_scanner_stub.dart';
 import 'package:thestia/l10n/app_strings.dart';
 
 enum _QrMode { choice, camera, manual }
@@ -108,7 +108,7 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
       // DB-Trigger (notify_push_trigger) - der Like-Insert in Zeile 93
       // loest ihn aus. Ein eigener Aufruf von notify-user hier erzeugte
       // die ZWEITE, gleichlautende Meldung.
-      // Live gemessen (tool/werkzeuge/datenbank/measure_push_duplicates.sql): vorher 2
+      // Live gemessen (tool/db/measure_push_duplicates.sql): vorher 2
       // Meldungen pro Like, jetzt 1.
 
       if (mounted) {

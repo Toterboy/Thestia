@@ -28,7 +28,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/screens/auth/unban_request_screen.dart';
-import 'package:thestia/widgets/buttons.dart';
+import 'package:thestia/widgets/common/buttons.dart';
 
 import '../support/fake_supabase_server.dart';
 

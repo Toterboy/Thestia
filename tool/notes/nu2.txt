@@ -1,0 +1,57 @@
+﻿// Supabase Edge Function: notify-user
+//
+// Sendet Push-Benachrichtigungen direkt ├╝ber die FCM-API v1
+// (Transport). Verarbeitung/Speicherung der Daten bleibt in der EU
+// (Supabase eu-central-1). FCM dient nur als Zustell-Transport.
+//
+// Aufrufer:
+//   1. DB-Trigger (likes/matches via pg_net) mit Header
+//      "x-wisp-internal: <WISP_INTERNAL_SECRET>"
+//   2. Authentifizierter Client (JWT) ÔÇô z. B. beim Senden einer
+//      Chat-Nachricht (NUR Metadaten, niemals Nachrichteninhalte ÔÇô E2E).
+//
+// Die Einzel-Schalter (profiles.notify_matches/likes/messages/dating_hour
+// + notifications_enabled) werden VOR dem Versand serverseitig gepr├╝ft.
+//
+// Voraussetzung: kostenloses Firebase-Konto
+//   - google-services.json in android/app (Client)
+//   - Service-Account-JSON als Secret FIREBASE_SERVICE_ACCOUNT_JSON
+//     (Firebase Console -> Project Settings -> Service Accounts ->
+//      Generate new private key)
+//
+// Secrets:
+//   WISP_INTERNAL_SECRET          ÔÇô muss zum Vault-Secret 'wisp_internal_secret'
+//                                   passen (Migration 040). KEIN hartcodierter
+//                                   Fallback: fehlt das Env, ist die Funktion
+//                                   f├╝r interne Aufrufe geschlossen (fail-closed).
+//   SUPABASE_SERVICE_ROLE_KEY     ÔÇô bereits als Function-Secret vorhanden
+//   FIREBASE_SERVICE_ACCOUNT_JSON ÔÇô Service-Account-Schl├╝ssel (siehe oben)
+
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
+
+const WISP_INTERNAL_SECRET = Deno.env.get("WISP_INTERNAL_SECRET") ?? "";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
+
+/** Constant-time-Vergleich (verhindert Timing-Leaks beim Secret-Check). */
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+/**
+ * M-11 (SSRF-Guard): Der UnifiedPush-Endpunkt ist client-kontrolliert.
+ * Vor dem serverseitigen Fetch pr├╝fen: https-only, keine Userinfo,
+ * kein IP-Literal/localhost, aufgel├Âste IPs nicht in privaten/internen
+ * Netzen. DNS-Fehler werden fail-closed behandelt.
+ */
+async functio

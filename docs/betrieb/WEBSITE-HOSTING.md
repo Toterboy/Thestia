@@ -95,7 +95,7 @@ verbinden** - dann gibt es keinen Build und keine Build-Minuten.
 Die Datei zum Hochladen erzeugt das Projekt:
 
 ```powershell
-python tool/werkzeuge/release/pack_publish.py
+python tool/release/pack_publish.py
 ```
 
 Das Ergebnis liegt in `releases/publish-<zeit>.zip` (1,42 MB, 49
@@ -109,7 +109,7 @@ Das Projekt bekommt eine Adresse wie `https://thestia.pages.dev`.
 ### 3. Pruefen, BEVOR irgendetwas umgestellt wird
 
 ```powershell
-python tool/pruefer/check_websites_live.py --host https://thestia.pages.dev
+python tool/checks/check_websites_live.py --host https://thestia.pages.dev
 ```
 
 Der Pruefer meldet: alle Adressen erreichbar, die
@@ -179,8 +179,8 @@ gegen genau diese Liste. Ohne Anpassung funktionieren die Passkeys auf
 Android nicht mehr.
 
 ```powershell
-python tool/werkzeuge/sonstiges/update_assetlinks.py            # liest die Kette live, schreibt die Datei
-python tool/pruefer/check_passkey_assetlinks.py --live
+python tool/scripts/update_assetlinks.py            # liest die Kette live, schreibt die Datei
+python tool/checks/check_passkey_assetlinks.py --live
 ```
 
 Der Ordner `passkey-assets` danach erneut hochladen.
@@ -188,9 +188,9 @@ Der Ordner `passkey-assets` danach erneut hochladen.
 ### 7. Endpruefung
 
 ```powershell
-python tool/pruefer/check_websites_live.py
-python tool/pruefer/check_passkey_assetlinks.py --live
-python tool/pruefer/check_privacy_deployment.py
+python tool/checks/check_websites_live.py
+python tool/checks/check_passkey_assetlinks.py --live
+python tool/checks/check_privacy_deployment.py
 ```
 
 Alles gruen? Dann ist der Wechsel fertig. Netlify kann man danach
@@ -205,7 +205,7 @@ alles sperrt. Cloudflare Pages kann **keine** domain-bezogenen Regeln
 der Header `X-Robots-Tag: noindex` in `_headers` die Sperre - er gilt
 nur fuer `auth.thestia.de`, `thestia.de` bleibt indexierbar. Beides
 ist im Publish-Ordner vorbereitet und wird von
-`tool/pruefer/check_publish_folder.py` geprueft.
+`tool/checks/check_publish_folder.py` geprueft.
 
 **Die `_redirects`.** Die Regeln tragen kein Netlify-Ausrufezeichen
 mehr (Cloudflare wuerde die ganze Regel ignorieren). Fuer Netlify
@@ -293,9 +293,9 @@ Die Mail laeuft unberuehrt weiter ueber `mx1.efwd.spaceship.net`.
 ### 6. Passkeys nachziehen und pruefen
 
 ```powershell
-python tool/werkzeuge/sonstiges/update_assetlinks.py                  # Kette lesen, Datei schreiben
-python tool/pruefer/check_websites_live.py --host https://thestia.de
-python tool/pruefer/check_passkey_assetlinks.py --live
+python tool/scripts/update_assetlinks.py                  # Kette lesen, Datei schreiben
+python tool/checks/check_websites_live.py --host https://thestia.de
+python tool/checks/check_passkey_assetlinks.py --live
 ```
 
 ### Infomaniak oder Cloudflare Pages?
@@ -324,7 +324,7 @@ python tool/pruefer/check_passkey_assetlinks.py --live
 - **Netlify abschalten**, wenn der neue Stand laeuft: das Projekt
   loeschen und das Abo beenden. Bis dahin laeuft es weiter und
   verbraucht Credits - also die Deploys dort einstellen.
-- **`tool/werkzeuge/sonstiges/update_assetlinks.py` laeuft nicht von allein.** Nach jedem
+- **`tool/scripts/update_assetlinks.py` laeuft nicht von allein.** Nach jedem
   Wechsel des Zertifikats (das kann auch eine Erneuerung sein) die
   Kette neu lesen und die Datei neu schreiben.
 

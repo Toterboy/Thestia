@@ -7,7 +7,7 @@
 # der Check plötzlich um. Genau das ist passiert: 30.18.0 kam nach dem
 # letzten Stand des Checkers rein.
 #
-# Beim Wechsel: tool/pruefer/check_migrations_sql.py Abschnitt 2b pruefen, ob die
+# Beim Wechsel: tool/checks/check_migrations_sql.py Abschnitt 2b pruefen, ob die
 # Umgehung noch noetig ist, und diese Zeile mitziehen.
 sqlglot==30.18.0
 

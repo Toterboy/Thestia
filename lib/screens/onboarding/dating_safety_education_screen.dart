@@ -7,10 +7,10 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/providers/settings_provider.dart';
+import 'package:thestia/providers/settings/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/services/local_storage.dart';
-import 'package:thestia/utils/best_effort.dart';
+import 'package:thestia/services/storage/local_storage.dart';
+import 'package:thestia/utils/common/best_effort.dart';
 
 /// Ausführliche Fassung der Sicherheits-Aufklärung (statische Seite).
 ///

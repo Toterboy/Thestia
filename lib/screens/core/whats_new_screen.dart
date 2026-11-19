@@ -3,14 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/providers/profile_provider.dart';
+import 'package:thestia/providers/profile/profile_provider.dart';
 import 'package:thestia/routing/app_router.dart';
-import 'package:thestia/services/local_storage.dart';
-import 'package:thestia/services/supabase_database_service.dart';
-import 'package:thestia/services/supabase_service.dart';
-import 'package:thestia/services/whats_new_service.dart';
-import 'package:thestia/widgets/birthday_style.dart';
-import 'package:thestia/utils/best_effort.dart';
+import 'package:thestia/services/storage/local_storage.dart';
+import 'package:thestia/services/server/supabase_database_service.dart';
+import 'package:thestia/services/auth/supabase_service.dart';
+import 'package:thestia/services/server/whats_new_service.dart';
+import 'package:thestia/widgets/common/birthday_style.dart';
+import 'package:thestia/utils/common/best_effort.dart';
 
 /// "Neu in dieser Version"-Screen (NUTZERWUNSCH): Bei einem App-Update
 /// bekommen bereits registrierte Nutzer einmalig die Änderungs-

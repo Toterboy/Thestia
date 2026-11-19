@@ -1,0 +1,64 @@
+﻿=== DH chat 79-100 ===
+79 |   /// L├ñdt das Alter des Chat-Partners (public_profiles-View, nur das Alter)
+80 |   /// und zeigt bei >= 10 Jahren Differenz einen Hinweis im Chat an.
+81 |   Future<void> _loadPartnerAge(DatingHourSession session) async {
+82 |     try {
+83 |       final myAge = ref.read(profileProvider).age;
+84 |       if (myAge == null) return;
+85 |       final peerId = session.getPeerId(_currentUserId ?? AppConstants.currentUserId);
+86 |       final rows = await SupabaseService.client
+87 |           .from('public_profiles')
+88 |           .select('age')
+89 |           .eq('user_id', peerId)
+90 |           .limit(1);
+91 |       if (rows.isEmpty) return;
+92 |       final partnerAge = (rows.first['age'] as num?)?.toInt();
+93 |       if (partnerAge == null || !mounted) return;
+94 |       setState(() => _partnerAge = partnerAge);
+95 |       final diff = (myAge - partnerAge).abs();
+96 |       if (diff >= 10) {
+97 |         setState(() => _ageWarningShown = true);
+98 |       }
+99 |     } catch (e) {
+100 |       debugPrint('[DatingHourChat] Partner-Alter konnte nicht geladen werden: $e');
+
+=== detail fallback ===
+s Chat oder Matches).
+///
+/// Zeigt nur die Infos, die laut Alters-Sichtbarkeitsregeln erlaubt sind
+/// (z. B. Fotos erst nach Match). Bietet keinen Bearbeiten-Button.
+///
+/// L├ñdt das fremde Profil aus mehreren Quellen: synchron aus Matches/
+/// Vorschl├ñgen, asynchron als Fallback aus der Supabase public_profiles-View.
+class ProfileDetailScreen extends ConsumerStatefulWidget {
+  const ProfileDetailScreen({required this.userId, super.key});
+
+  final String userId;
+
+  @override
+  ConsumerState<ProfileDetailScreen> createState() =>
+      _ProfileDetailScreenState();
+}
+
+class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
+  UserProfile? _profile;
+  double? _distanceKm;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final userId = widget.userId;
+    // Synchron aus bekannten Quellen.
+    var profile = resolveProfileById(ref, userId);
+
+    // Asynchroner Fallback: Supabase public_profiles-View.
+    if (profile == null) {
+      try {
+        final db = ref.read(supabaseDatabaseServiceProvider);
+        final row = await db.fetchPublicProfile(userId);
+        if (row != null) {
+          p

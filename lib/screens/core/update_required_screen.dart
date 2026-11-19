@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/utils/best_effort.dart';
+import 'package:thestia/utils/common/best_effort.dart';
 
 /// Screen fuer "dieses Build ist zu alt".
 ///

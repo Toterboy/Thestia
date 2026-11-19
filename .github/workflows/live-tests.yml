@@ -28,7 +28,7 @@
 #
 # Ohne SUPABASE_DB_URL laeuft der Aufraeum-Schritt nicht - dann bleibt
 # ein Match zwischen den Testkonten stehen, den der Betreiber mit
-#   psql "$SUPABASE_DB_URL" -f tool/werkzeuge/datenbank/cleanup_transit_testdata.sql
+#   psql "$SUPABASE_DB_URL" -f tool/db/cleanup_transit_testdata.sql
 # wegraeumen kann. Das Skript ist im Repository und loescht NUR die
 # Testdaten der beiden Testkonten.
 name: Live-Tests
@@ -122,12 +122,12 @@ jobs:
             echo "::warning::SUPABASE_DB_URL ist nicht gesetzt - die"
             echo "::warning::Testdaten (Likes/Match der Testkonten) bleiben"
             echo "::warning::stehen. Aufraeumen:"
-            echo "::warning::psql \"\$SUPABASE_DB_URL\" -f tool/werkzeuge/datenbank/cleanup_transit_testdata.sql"
+            echo "::warning::psql \"\$SUPABASE_DB_URL\" -f tool/db/cleanup_transit_testdata.sql"
             exit 0
           fi
           if command -v psql >/dev/null 2>&1; then
             psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 \
-              -f tool/werkzeuge/datenbank/cleanup_transit_testdata.sql
+              -f tool/db/cleanup_transit_testdata.sql
           else
             echo "::warning::psql ist in diesem Runner nicht vorhanden -"
             echo "::warning::das Skript muss von Hand laufen."

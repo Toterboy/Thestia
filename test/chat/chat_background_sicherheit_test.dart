@@ -1,6 +1,6 @@
 // Die Pfadpruefung des eigenen Chat-Hintergrunds.
 //
-// ANLASS (19.11.2026): `lib/utils/chat_backgrounds.dart` war nur zu 82 %
+// ANLASS (19.11.2026): `lib/utils/chat/chat_backgrounds.dart` war nur zu 82 %
 // abgedeckt. Die Pruefung ist eine SICHERHEITSgrenze: ein manipulierter
 // Einstellungs-Import darf nicht jeden beliebigen Dateipfad als
 // Hintergrund einschleusen (sonst zeigt die App eine Datei aus fremden
@@ -14,7 +14,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thestia/utils/chat_backgrounds.dart';
+import 'package:thestia/utils/chat/chat_backgrounds.dart';
 
 void main() {
   group('Die Pfadpruefung des Hintergrundbildes', () {

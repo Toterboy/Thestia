@@ -25,9 +25,9 @@ import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:thestia/models/message.dart';
-import 'package:thestia/models/report_models.dart';
-import 'package:thestia/services/report_service.dart';
+import 'package:thestia/models/chat/message.dart';
+import 'package:thestia/models/verification/report_models.dart';
+import 'package:thestia/services/profile/report_service.dart';
 
 import '../support/plugin_mocks.dart';
 

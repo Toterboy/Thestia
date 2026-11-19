@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:thestia/services/local_storage.dart';
-import 'package:thestia/widgets/chat_background_picker.dart';
+import 'package:thestia/services/storage/local_storage.dart';
+import 'package:thestia/widgets/chat/chat_background_picker.dart';
 
 /// Test fuer den Chat-Hintergrund-Picker.
 ///

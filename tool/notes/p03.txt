@@ -1,0 +1,68 @@
+﻿=== 003 storage policies ===
+-- Migration 003: Private Storage-Bucket "avatars" mit RLS-Policies
+--
+-- bucket_id: avatars
+-- public: false
+-- Zugriff nur ├╝ber signierte URLs und eingeschr├ñnkte RLS-Policies.
+
+-- 1) Bucket anlegen (falls noch nicht vorhanden)
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'avatars',
+  'avatars',
+  false,
+  5242880,
+  ARRAY['image/jpeg', 'image/png', 'image/webp']
+)
+ON CONFLICT (id) DO UPDATE SET
+  public = EXCLUDED.public,
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+-- 2) RLS-Policies f├╝r den avatars-Bucket
+-- (Row Level Security ist auf storage.objects standardm├ñ├ƒig aktiviert)
+
+-- 3) INSERT-Policy: Nutzer d├╝rfen nur unter ihrem eigenen auth.uid-Ordner hochladen
+CREATE POLICY "Users can upload own avatar"
+  ON storage.objects
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    bucket_id = 'avatars'
+    AND (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- 4) SELECT-Policy: Nutzer d├╝rfen nur Dateien aus ihrem eigenen Ordner lesen
+CREATE POLICY "Users can read own avatar"
+  ON storage.objects
+  FOR SELECT
+  TO authenticated
+  USING (
+    bucket_id = 'avatars'
+    AND (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- 5) UPDATE-Policy: Nutzer d├╝rfen nur eigene Avatare ├╝berschreiben
+CREATE POLICY "Users can update own avatar"
+  ON storage.objects
+  FOR UPDATE
+  TO authenticated
+  USING (
+    bucket_id = 'avatars'
+    AND (storage.foldername(name))[1] = auth.uid()::text
+  )
+  WITH CHECK (
+    bucket_id = 'avatars'
+    AND (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- 6) DELETE-Policy: Nutzer d├╝rfen nur eigene Avatare l├Âschen
+CREATE POLICY "Users can delete own avatar"
+  ON storage.objects
+  FOR DELETE
+  TO authenticated
+  USING (
+    bucket_id = 'avatars'
+    AND (storage.foldername(name))[1] = auth.uid()::text
+  );
+

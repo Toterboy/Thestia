@@ -2,7 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:thestia/services/auth_exception.dart';
+import 'package:thestia/services/auth/auth_exception.dart';
 
 import 'package:thestia/l10n/strings/grundlagen.dart';
 import 'package:thestia/l10n/strings/laender.dart';

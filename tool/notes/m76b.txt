@@ -1,0 +1,53 @@
+﻿create or replace function public.list_my_reports()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_result jsonb;
+begin
+  select coalesce(jsonb_agg(
+           jsonb_build_object(
+             'id', r.id,
+             'reportType', r.report_type,
+             'status', r.status,
+             'createdAt', r.created_at
+           ) order by r.created_at desc), '[]'::jsonb)
+    into v_result
+    from public.user_reports r
+   where r.reporter_id = auth.uid();
+  return v_result;
+end;
+$$;
+
+grant execute on function public.list_my_reports() to authenticated;
+
+-- ==========================================================================
+-- 6) Blockierliste ---------------------------------------------------------
+-- ==========================================================================
+create or replace function public.list_blocked_users()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_result jsonb;
+begin
+  select coalesce(jsonb_agg(
+           jsonb_build_object(
+             'blockedUserId', b.blocked,
+             'name', p.name,
+             'createdAt', b.created_at
+           ) order by b.created_at desc), '[]'::jsonb)
+    into v_result
+    from public.blocked_users b
+    left join public.profiles p on p.user_id = b.blocked
+   where b.blocker = auth.uid();
+  return v_result;
+end;
+$$;
+
+grant execute on function public.list_blocked_users() to authenticated;
+

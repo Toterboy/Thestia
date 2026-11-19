@@ -16,8 +16,8 @@ import 'package:thestia/screens/privacy/legal_text_screen.dart';
 /// wie bei der Datenschutzerklärung, die Play ohnehin als Text in der
 /// App verlangt.
 ///
-/// Quelle ist `tool/werkzeuge/website/make_terms.py` (dort stehen beide Sprachfassungen).
-/// `python tool/werkzeuge/website/make_terms_app.py` erzeugt daraus diese beiden Dateien;
+/// Quelle ist `tool/web/make_terms.py` (dort stehen beide Sprachfassungen).
+/// `python tool/web/make_terms_app.py` erzeugt daraus diese beiden Dateien;
 /// dasselbe Skript erzeugt die Webseiten. App und Website können so
 /// nicht auseinanderlaufen.
 ///
@@ -35,7 +35,7 @@ class TermsTextScreen extends ConsumerWidget {
       blocks: blocks,
       title: L10n.t(context, 'privacy.termsTitle'),
       // Die Webfassung bleibt erreichbar - dort steht dieselbe Fassung
-      // (beide entstehen aus tool/werkzeuge/website/make_terms.py).
+      // (beide entstehen aus tool/web/make_terms.py).
       footer: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         child: Align(
