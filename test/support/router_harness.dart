@@ -76,7 +76,21 @@ class TestAuth implements AppAuthService {
   /// der Test selbst, nicht der Server.
   final bool eingeloggt;
 
-  TestAuth({this.eingeloggt = true});
+  /// Wirft der Dienst bei der Registrierung einen Fehler?
+  final Object? registrierungsFehler;
+
+  /// Wirft der Dienst bei der Anmeldung einen Fehler?
+  final Object? anmeldeFehler;
+
+  /// Das Profil, das die Registrierung liefert.
+  final UserProfile? registriertesProfil;
+
+  TestAuth({
+    this.eingeloggt = true,
+    this.registrierungsFehler,
+    this.anmeldeFehler,
+    this.registriertesProfil,
+  });
 
   @override
   Future<bool> restoreSession() async {
@@ -94,7 +108,9 @@ class TestAuth implements AppAuthService {
     required String password,
     String? captchaToken,
   }) async {
-    // Der Test meldet sich nicht an - der Zustand wird gesetzt.
+    final fehler = anmeldeFehler;
+    if (fehler != null) throw fehler;
+    // Der Test meldet sich nicht wirklich an - der Zustand wird gesetzt.
   }
 
   @override
@@ -123,7 +139,10 @@ class TestAuth implements AppAuthService {
     double? latitude,
     double? longitude,
   }) async {
-    throw UnimplementedError('Der Test registriert niemanden.');
+    final fehler = registrierungsFehler;
+    if (fehler != null) throw fehler;
+    return registriertesProfil ??
+        UserProfile(id: 'ich', name: name, bio: '', birthDate: birthDate);
   }
 }
 

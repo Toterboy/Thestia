@@ -263,6 +263,105 @@ void main() {
     );
   });
 
+  group('Die Benachrichtigungen', () {
+    /// Tippt einen Schalter an (er kann unterhalb der Falz liegen).
+    Future<void> schalterTippen(WidgetTester tester, String titel) async {
+      await scrolleZu(tester, titel);
+      final zeile = find.ancestor(
+        of: find.text(titel),
+        matching: find.byType(SwitchListTile),
+      );
+      expect(zeile, findsOneWidget, reason: 'Der Schalter "$titel" fehlt.');
+      // DER TIPP: Auf den Schalter selbst (nicht auf die Zeile - deren
+      // Mitte kann auf dem Untertitel liegen und der Tipp geht ins Leere).
+      final schalter = find.descendant(
+        of: zeile,
+        matching: find.byType(Switch),
+      );
+      if (schalter.evaluate().isEmpty) {
+        await tester.ensureVisible(zeile);
+        await tester.tap(zeile);
+      } else {
+        // DER SCHALTER muss selbst im Bild sein - sonst geht der Tipp
+        // unterhalb des Bildschirmrands ins Leere.
+        await tester.ensureVisible(schalter);
+        await tester.pump();
+        await tester.tap(schalter);
+      }
+      await pumpFrames(tester);
+      // Der Server-Sync ist entprellt (1,5 s) - der Timer muss
+      // abgelaufen sein, sonst meldet der Test am Ende "Timer is still
+      // pending".
+      await tester.pump(const Duration(milliseconds: 2000));
+      await pumpFrames(tester);
+    }
+
+    testWidgets('der Hauptschalter gibt die anderen frei', (tester) async {
+      await zeigeScreen(tester);
+
+      // DER HAUPTSCHALTER: Standardmaessig sind die Benachrichtigungen
+      // an. Schaltet der Nutzer sie aus, sind die einzelnen Schalter
+      // gesperrt - sonst koennte er einstellen, dass er "bei neuen
+      // Funken" benachrichtigt wird, obwohl alle Benachrichtigungen
+      // aus sind.
+      expect(container.read(settingsProvider).notificationsEnabled, isTrue);
+
+      await schalterTippen(tester, L10n.tWithoutContext('settings.pushEnable'));
+
+      expect(tester.takeException(), isNull);
+      expect(
+        container.read(settingsProvider).notificationsEnabled,
+        isFalse,
+        reason:
+            'Der Nutzer hat die Benachrichtigungen ausgeschaltet - das '
+            'muss gespeichert sein.',
+      );
+    });
+
+    testWidgets('die einzelnen Schalter lassen sich umstellen', (tester) async {
+      await zeigeScreen(tester);
+
+      await schalterTippen(
+        tester,
+        L10n.tWithoutContext('settings.notifyFunken'),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(
+        container.read(settingsProvider).notifyMatches,
+        isFalse,
+        reason:
+            'Der Nutzer will KEINE Benachrichtigung bei neuen Funken - '
+            'das muss gespeichert sein.',
+      );
+    });
+
+    testWidgets('ohne den Hauptschalter sind die anderen gesperrt', (
+      tester,
+    ) async {
+      await zeigeScreen(tester);
+      // Erst die Benachrichtigungen aus (der Hauptschalter).
+      await schalterTippen(tester, L10n.tWithoutContext('settings.pushEnable'));
+
+      await scrolleZu(tester, L10n.tWithoutContext('settings.notifyFunken'));
+      final schalter = find.ancestor(
+        of: find.text(L10n.tWithoutContext('settings.notifyFunken')),
+        matching: find.byType(SwitchListTile),
+      );
+      expect(schalter, findsOneWidget);
+      // DER GESPERRTE SCHALTER: onChanged ist null, wenn die
+      // Benachrichtigungen aus sind.
+      final widget = tester.widget<SwitchListTile>(schalter);
+      expect(
+        widget.onChanged,
+        isNull,
+        reason:
+            'Ohne Benachrichtigungen nuetzt der einzelne Schalter nichts - '
+            'er darf deshalb nicht schaltbar sein.',
+      );
+    });
+  });
+
   testWidgets('"System" heisst: die App folgt dem Geraet', (tester) async {
     await zeigeScreen(tester);
 

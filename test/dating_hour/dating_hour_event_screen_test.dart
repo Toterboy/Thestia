@@ -21,10 +21,26 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:thestia/models/dating_hour/dating_hour_models.dart';
+import 'package:thestia/models/settings/app_settings.dart';
+import 'package:thestia/providers/settings/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/screens/dating_hour/dating_hour_event_screen.dart';
 import 'package:thestia/services/dating_hour/dating_hour_service.dart';
 import 'package:thestia/services/storage/local_storage.dart';
+
+/// Die Einstellungen als Ersatz (der Test gibt sie direkt vor).
+///
+/// DER GRUND: Der automatische Beitritt liest die Einstellung aus dem
+/// Anbieter. Der Test muss sie also VOR dem Aufbau setzen - danach
+/// waere der Bildschirm schon gebaut.
+class _Einstellungen extends SettingsNotifier {
+  _Einstellungen(Ref ref, {bool autoJoin = false})
+    : super(_FakeLocalStorage(), ref) {
+    if (autoJoin) {
+      state = AppSettings.defaults().copyWith(datingHourAutoJoin: true);
+    }
+  }
+}
 
 /// Der Speicher im RAM - die Einstellungen kommen daraus.
 class _FakeLocalStorage implements LocalStorage {
@@ -154,6 +170,25 @@ void main() {
     );
   }
 
+  /// Ein Event, das VORBEI ist (es ist vor einer Stunde zu Ende gegangen).
+  DatingHourEvent beendetesEvent() {
+    final jetzt = DateTime.now();
+    final start = jetzt.subtract(const Duration(hours: 2));
+    final ende = jetzt.subtract(const Duration(hours: 1));
+    return DatingHourEvent(
+      id: 'event-1',
+      eventDate: jetzt,
+      dayOfWeek: jetzt.weekday % 7,
+      startHour: start.hour,
+      startMinute: start.minute,
+      endHour: ende.hour,
+      endMinute: ende.minute,
+      startsAt: start,
+      endsAt: ende,
+      status: 'ended',
+    );
+  }
+
   /// Pumpt eine feste Zahl von Frames.
   Future<void> pumpFrames(WidgetTester tester) async {
     for (var i = 0; i < 6; i++) {
@@ -182,6 +217,7 @@ void main() {
   Future<_FakeDatingHourService> zeigeScreen(
     WidgetTester tester, {
     required _FakeDatingHourService service,
+    bool autoJoin = false,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -212,6 +248,9 @@ void main() {
         overrides: [
           localStorageProvider.overrideWithValue(_FakeLocalStorage()),
           datingHourServiceProvider.overrideWithValue(service),
+          settingsProvider.overrideWith(
+            (ref) => _Einstellungen(ref, autoJoin: autoJoin),
+          ),
         ],
         child: MaterialApp.router(
           theme: ThemeData(useMaterial3: true),
@@ -325,6 +364,70 @@ void main() {
       // Die Regeln sind der Kern der Dating Hour - sie muessen da
       // stehen, nicht nur im Kleingedruckten.
       expect(find.text('Wichtige Regeln'), findsOneWidget);
+    });
+
+    group('Der automatische Beitritt und der Wiedereinstieg', () {
+      testWidgets('nach dem Event-Ende wird nach dem Wiedereinstieg gefragt', (
+        tester,
+      ) async {
+        // DER FALL: Das Event ist vorbei und der Nutzer war dabei.
+        // Einmal fragen, ob er beim naechsten Mal automatisch wieder
+        // dabei sein will - das ist die Zusage aus dem Event.
+        final service = await zeigeScreen(
+          tester,
+          service: _FakeDatingHourService(
+            event: beendetesEvent(),
+            teilnahme: true,
+          ),
+        );
+
+        expect(tester.takeException(), isNull);
+        expect(
+          find.byType(AlertDialog),
+          findsOneWidget,
+          reason:
+              'Nach dem Event-Ende muss der Nutzer gefragt werden - sonst '
+              'weiss er nicht, dass es eine solche Moeglichkeit gibt.',
+        );
+        expect(find.text('Ja, gerne'), findsOneWidget);
+        expect(find.text('Nein, danke'), findsOneWidget);
+
+        // "Ja, gerne" wird gemerkt.
+        await tester.tap(find.text('Ja, gerne'));
+        await pumpFrames(tester);
+
+        expect(tester.takeException(), isNull);
+        expect(service.beigetreten, isEmpty);
+      });
+
+      testWidgets('der automatische Beitritt nimmt ohne Rueckfrage teil', (
+        tester,
+      ) async {
+        // DER FALL: Der Nutzer hat beim letzten Mal "Ja, gerne" gesagt.
+        // Beim naechsten laufenden Event nimmt er automatisch teil - ohne
+        // erneut gefragt zu werden.
+        final service = await zeigeScreen(
+          tester,
+          service: _FakeDatingHourService(event: laufendesEvent()),
+          autoJoin: true,
+        );
+
+        expect(tester.takeException(), isNull);
+        expect(
+          service.beigetreten,
+          contains('event-1'),
+          reason:
+              'Mit dem Auto-Beitritt muss der Nutzer ohne Rueckfrage dabei '
+              'sein - sonst waere die Zusage nicht eingehalten.',
+        );
+        expect(
+          find.byType(AlertDialog),
+          findsNothing,
+          reason:
+              'Der Auto-Beitritt fragt nicht - genau das ist der Sinn der '
+              'Einstellung.',
+        );
+      });
     });
   });
 }
