@@ -397,41 +397,17 @@ class _EmailVerificationScreenState
       return;
     }
 
-    final controller = TextEditingController(text: creds.email);
     final neue = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(L10n.t(ctx, 'email.changeAddressTitle')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(L10n.t(ctx, 'email.changeAddressBody')),
-            const SizedBox(height: 16),
-            TextField(
-              enableIMEPersonalizedLearning: false,
-              controller: controller,
-              keyboardType: TextInputType.emailAddress,
-              autofocus: true,
-              decoration: InputDecoration(
-                labelText: L10n.t(ctx, 'email.newAddress'),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(L10n.t(ctx, 'common.cancel')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
-            child: Text(L10n.t(ctx, 'email.changeAddress')),
-          ),
-        ],
+      builder: (ctx) => _AdressDialog(
+        initialEmail: creds.email,
+        title: L10n.t(ctx, 'email.changeAddressTitle'),
+        body: L10n.t(ctx, 'email.changeAddressBody'),
+        label: L10n.t(ctx, 'email.newAddress'),
+        confirmLabel: L10n.t(ctx, 'email.changeAddress'),
+        cancelLabel: L10n.t(ctx, 'common.cancel'),
       ),
     );
-    controller.dispose();
     if (neue == null || neue.isEmpty) return;
     if (neue.toLowerCase() == creds.email.toLowerCase()) return;
     // Der Dialog war modal, aber die Route darunter kann inzwischen
@@ -833,6 +809,92 @@ class _Adresskarte extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Der Dialog zum Wechseln der E-Mail-Adresse.
+///
+/// DER GRUND (19.11.2026, gefunden von einem Test): Der Text-Controller
+/// wurde direkt nach dem Schliessen des Dialogs freigegeben - aber der
+/// Dialog blendet noch aus und sein TextField baut sich dabei noch.
+/// Das Ergebnis war "A TextEditingController was used after being
+/// disposed": der Bildschirm stuerzte beim Schliessen ab.
+///
+/// DER WEG: Das Widget besitzt den Controller und gibt ihn erst frei,
+/// wenn es wirklich aus dem Baum ist.
+class _AdressDialog extends StatefulWidget {
+  const _AdressDialog({
+    required this.initialEmail,
+    required this.title,
+    required this.body,
+    required this.label,
+    required this.confirmLabel,
+    required this.cancelLabel,
+  });
+
+  /// Die Adresse, die im Feld steht.
+  final String initialEmail;
+
+  /// Der Titel des Dialogs.
+  final String title;
+
+  /// Der Erklaerungstext.
+  final String body;
+
+  /// Die Beschriftung des Eingabefelds.
+  final String label;
+
+  /// Der Knopf, der die Aenderung bestaetigt.
+  final String confirmLabel;
+
+  /// Der Knopf, der abbricht.
+  final String cancelLabel;
+
+  @override
+  State<_AdressDialog> createState() => _AdressDialogState();
+}
+
+class _AdressDialogState extends State<_AdressDialog> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initialEmail,
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.title),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(widget.body),
+          const SizedBox(height: 16),
+          TextField(
+            enableIMEPersonalizedLearning: false,
+            controller: _controller,
+            keyboardType: TextInputType.emailAddress,
+            autofocus: true,
+            decoration: InputDecoration(labelText: widget.label),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(widget.cancelLabel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(_controller.text.trim()),
+          child: Text(widget.confirmLabel),
+        ),
+      ],
     );
   }
 }

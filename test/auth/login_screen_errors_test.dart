@@ -188,6 +188,93 @@ void main() {
       );
     });
 
+    // DIE UEBERSETZUNGEN: Der Server spricht Englisch, die App zeigt
+    // deutsche Saetze. Jede Uebersetzung wird einzeln geprueft - sonst
+    // sieht der Nutzer bei einem seltenen Fehler den rohen Servertext.
+    group('die Servertexte werden uebersetzt', () {
+      Future<void> pruefe(
+        WidgetTester tester,
+        String serverText,
+        String l10nKey,
+      ) async {
+        await meldeAn(tester, serverText);
+
+        expect(tester.takeException(), isNull);
+        expect(
+          find.text(L10n.tWithoutContext(l10nKey)),
+          findsOneWidget,
+          reason:
+              'Der Servertext "$serverText" muss uebersetzt werden - der '
+              'Nutzer soll nicht "invalid login credentials" lesen.',
+        );
+      }
+
+      testWidgets('die Adresse ist schon vergeben', (tester) async {
+        await pruefe(
+          tester,
+          'User already registered',
+          'error.alreadyRegistered',
+        );
+      });
+
+      testWidgets('es gab zu viele Versuche', (tester) async {
+        await pruefe(tester, 'Too many requests', 'error.rateLimited');
+      });
+
+      testWidgets('das Passwort ist zu schwach', (tester) async {
+        await pruefe(tester, 'Weak password', 'error.weakPassword');
+      });
+
+      testWidgets('die Mindestlaenge des Passworts kommt durch', (
+        tester,
+      ) async {
+        // DER GRUND: Die Mindestlaenge steht im Server-Dashboard (nicht
+        // in der App) - deshalb muss der Servertext durchgereicht werden.
+        await meldeAn(tester, 'Password should be at least 12 characters');
+
+        expect(tester.takeException(), isNull);
+        expect(
+          find.text('Password should be at least 12 characters'),
+          findsOneWidget,
+          reason:
+              'Die Mindestlaenge steht im Dashboard - der Text muss '
+              'durchgereicht werden, sonst weiss der Nutzer nicht, '
+              'wie lang sein Passwort sein muss.',
+        );
+      });
+
+      testWidgets('die Sicherheitsabfrage wurde abgelehnt', (tester) async {
+        await pruefe(
+          tester,
+          'captcha verification failed',
+          'error.captchaRejected',
+        );
+      });
+
+      testWidgets('der Server hat einen Datenbankfehler', (tester) async {
+        await pruefe(
+          tester,
+          'Database error saving new user',
+          'error.signupFailed',
+        );
+      });
+
+      testWidgets('ein unbekannter Fehler wird allgemein gemeldet', (
+        tester,
+      ) async {
+        await meldeAn(tester, 'irgendein seltsamer Fehler');
+
+        expect(tester.takeException(), isNull);
+        expect(
+          find.textContaining(L10n.tWithoutContext('error.loginFailed')),
+          findsOneWidget,
+          reason:
+              'Ein unbekannter Fehler darf nicht als Servertext kommen - '
+              'der Nutzer kann damit nichts anfangen.',
+        );
+      });
+    });
+
     testWidgets('zu viele Versuche', (tester) async {
       await meldeAn(tester, 'Too many requests');
 

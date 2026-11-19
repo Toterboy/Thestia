@@ -471,10 +471,98 @@ void main() {
       await aufraeumen(tester, container);
     });
 
+    group('Der Wechsel der E-Mail-Adresse', () {
+      testWidgets('der Dialog geht auf und nimmt die neue Adresse an', (
+        tester,
+      ) async {
+        await starteSupabase(tester);
+        final container = await zeigeScreen(tester, mitRegistrierung: true);
+
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        // DER WEG: Der Nutzer hat einen Tippfehler in seiner Adresse
+        // bemerkt. Er soll sie hier aendern koennen - ohne das ganze
+        // Konto neu zu machen.
+        await scrolleZu(tester, L10n.tWithoutContext('email.changeAddress'));
+        await tester.tap(
+          find.text(L10n.tWithoutContext('email.changeAddress')),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(AlertDialog), findsOneWidget);
+        expect(
+          find.text(L10n.tWithoutContext('email.changeAddressTitle')),
+          findsOneWidget,
+        );
+
+        // Die neue Adresse eingeben.
+        await tester.enterText(find.byType(TextField).first, 'neu@example.de');
+        await tester.pump();
+        await tester.tap(
+          find.widgetWithText(
+            FilledButton,
+            L10n.tWithoutContext('email.changeAddress'),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+
+        expect(tester.takeException(), isNull);
+        expect(
+          container.read(pendingVerificationEmailProvider),
+          'neu@example.de',
+          reason:
+              'Die neue Adresse muss gemerkt sein - sonst geht die '
+              'Bestaetigungs-Mail an die alte Adresse und der Nutzer '
+              'wartet vergeblich.',
+        );
+
+        await aufraeumen(tester, container);
+      });
+
+      testWidgets('der Dialog laesst sich abbrechen', (tester) async {
+        await starteSupabase(tester);
+        final container = await zeigeScreen(tester, mitRegistrierung: true);
+
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        await scrolleZu(tester, L10n.tWithoutContext('email.changeAddress'));
+        await tester.tap(
+          find.text(L10n.tWithoutContext('email.changeAddress')),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        await tester.tap(
+          find.widgetWithText(
+            TextButton,
+            L10n.tWithoutContext('common.cancel'),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        expect(tester.takeException(), isNull);
+        expect(find.byType(AlertDialog), findsNothing);
+        expect(
+          container.read(pendingVerificationEmailProvider),
+          'neu@example.de',
+          reason:
+              'Nach dem Abbruch muss die alte Adresse stehen - ein '
+              'halbfertiger Wechsel waere schlimmer als keiner.',
+        );
+
+        await aufraeumen(tester, container);
+      });
+    });
+
     testWidgets('"Registrierung behalten" loescht nichts', (tester) async {
       await starteSupabase(tester);
       final container = await zeigeScreen(tester, mitRegistrierung: true);
-
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
