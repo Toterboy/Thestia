@@ -19,9 +19,11 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart' as webrtc;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
+import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/chat/message.dart';
 import 'package:thestia/screens/chat/chat_detail_screen.dart';
 import 'package:thestia/services/chat/encryption_service.dart';
@@ -41,6 +43,25 @@ class FakeWebRTCService extends WebRTCService {
 
   @override
   Stream<String> get incomingMessages => _eingang.stream;
+
+  /// Der Zustand des Datenkanals (steuert das E2E-Abzeichen).
+  final StreamController<webrtc.RTCDataChannelState> _zustand =
+      StreamController<webrtc.RTCDataChannelState>.broadcast();
+
+  @override
+  Stream<webrtc.RTCDataChannelState> get connectionState => _zustand.stream;
+
+  /// Der Kanal gilt als offen (das steuert das E2E-Abzeichen).
+  bool verbunden = false;
+
+  @override
+  bool get isConnected => verbunden;
+
+  /// Meldet die offene Direktverbindung.
+  void verbinde() {
+    verbunden = true;
+    _zustand.add(webrtc.RTCDataChannelState.RTCDataChannelOpen);
+  }
 
   /// Schiebt eine Nachricht in den Kanal (wie der Partner).
   void empfange(String draht) => _eingang.add(draht);
@@ -84,6 +105,46 @@ void main() {
   });
 
   group('Der Empfang ueber die Direktverbindung', () {
+    testWidgets('das E2E-Abzeichen zeigt die offene Verbindung', (
+      tester,
+    ) async {
+      final chat = chatMitNachricht();
+      late FakeWebRTCService webrtc;
+
+      await chatDetailScreenPump(
+        tester,
+        ChatDetailScreen(matchId: chat.match.id),
+        chat.notifier,
+        overrides: <Override>[
+          webRTCServiceProvider.overrideWith((ref) {
+            webrtc = FakeWebRTCService(ref.watch(encryptionServiceProvider));
+            return webrtc;
+          }),
+        ],
+      );
+      addTearDown(() => webrtc.schliessen());
+
+      // VORHER: noch keine Verbindung - das Abzeichen warnt.
+      expect(
+        find.byTooltip(L10n.tWithoutContext('chat.e2eWaiting')),
+        findsOneWidget,
+      );
+
+      // Der Datenkanal geht auf.
+      webrtc.verbinde();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.byTooltip(L10n.tWithoutContext('chat.e2eReady')),
+        findsOneWidget,
+        reason:
+            'Der Nutzer muss sehen, dass die Nachrichten jetzt direkt und '
+            'verschluesselt gehen - vorher lief alles ueber den Server.',
+      );
+    });
+
     testWidgets('eine eingehende Nachricht erscheint im Chat', (tester) async {
       final chat = chatMitNachricht();
       late FakeWebRTCService webrtc;
