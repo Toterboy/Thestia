@@ -20,6 +20,7 @@ import 'package:thestia/screens/auth/unban_request_screen.dart';
 import 'package:thestia/screens/auth/email_verification_screen.dart';
 import 'package:thestia/screens/guardian/guardian_consent_screen.dart';
 import 'package:thestia/screens/privacy/delete_data_screen.dart';
+import 'package:thestia/screens/privacy/imprint_text_screen.dart';
 import 'package:thestia/screens/guardian/guardian_settings_screen.dart';
 import 'package:thestia/screens/guardian/guardian_transition_screen.dart';
 import 'package:thestia/screens/auth/mfa_setup_screen.dart';
@@ -138,6 +139,12 @@ class AppRoutes {
 
   /// Die Nutzungsbedingungen als Text IN der App (nicht nur als Link).
   static const String privacyTerms = '/privacy/terms';
+
+  /// Das Impressum als Text IN der App (nicht nur als Link).
+  ///
+  /// BEFUND (20.11.2026): Der Link auf thestia.de/impressum oeffnete
+  /// die App selbst - thestia.de ist ein verifizierter App-Link.
+  static const String imprint = '/privacy/imprint';
   static const String safetyCenter = '/safety-center';
   // Geräte & Sitzungen ("Wo bin ich eingeloggt?")
   static const String devices = '/devices';
@@ -792,6 +799,13 @@ List<RouteBase> appRoutes() {
     GoRoute(
       path: AppRoutes.privacyTerms,
       builder: (context, state) => const TermsTextScreen(),
+    ),
+    // Volltext des Impressums (BEFUND 20.11.2026: "Das Impressum in der
+    // App funktioniert nicht" - der Link auf thestia.de oeffnete die
+    // App selbst, weil die Domain ein verifizierter App-Link ist).
+    GoRoute(
+      path: AppRoutes.imprint,
+      builder: (context, state) => const ImprintTextScreen(),
     ),
     // Safety Center: Hilfe bei Belästigung/Stalking + In-App-Maßnahmen
     GoRoute(

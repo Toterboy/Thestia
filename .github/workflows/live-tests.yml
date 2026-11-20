@@ -106,9 +106,15 @@ jobs:
       - name: Live-Tests gegen den echten Server
         if: env.HAS_SECRETS == 'true'
         run: |
+          # BEFUND (20.11.2026): Die Pfade zeigten noch auf test/ - nach
+          # dem Sortieren der Tests in Unterordner (test/chat/) lief der
+          # Lauf ins Leere ("Test file not found"). Die Live-Tests sind
+          # genau die, die einen Serverfehler wie den 405 der Funken-
+          # Liste (BEFUND 20.11.2026) sehen - sie muessen laufen.
           flutter test \
-            test/live_message_flow_test.dart \
-            test/live_prekey_bundle_test.dart \
+            test/chat/live_message_flow_test.dart \
+            test/chat/live_prekey_bundle_test.dart \
+            test/chat/live_sparks_list_test.dart \
             --reporter expanded
 
       # Die Testdaten wegraeumen. Der Schritt ist best effort: fehlt die

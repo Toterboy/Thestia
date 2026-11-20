@@ -9,7 +9,6 @@ import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/profile/user_profile.dart';
@@ -600,12 +599,23 @@ class PrivacyScreen extends ConsumerWidget {
           // ein digitaler Dienst im Sinne des Par. 5 DDG. Ohne diesen
           // Eintrag kann die App die Anbieterkennzeichnung nicht
           // liefern (Recherche 05.11.2026).
+          //
+          // BEFUND (20.11.2026, Betreiber): "Das Impressum in der App
+          // funktioniert nicht." Vorher stand hier ein Link auf
+          // thestia.de/impressum. Diese Domain ist ein VERIFIZIERTER
+          // APP-LINK (assetlinks.json + android:autoVerify) - Android
+          // oeffnete den Link in der App selbst, nicht im Browser. Die
+          // App bekam ihren eigenen Link und zeigte nichts.
+          //
+          // Der Text steht jetzt IN der App (wie Datenschutz und
+          // Nutzungsbedingungen) - eine URL kann falsch, verschoben
+          // oder nicht erreichbar sein; der Text nicht.
           ListTile(
             leading: const Icon(Icons.badge_outlined),
             title: Text(L10n.t(context, 'privacy.imprintTitle')),
             subtitle: Text(L10n.t(context, 'privacy.imprintSub')),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () => _openImprint(context),
+            onTap: () => context.push(AppRoutes.imprint),
           ),
           // Die Nutzungsbedingungen gehoeren ebenfalls in die App:
           // Google Play verlangt fuer jede App eine erreichbare Adresse
@@ -727,31 +737,6 @@ class PrivacyScreen extends ConsumerWidget {
             onTap: () => _deleteAccount(context, ref),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Oeffnet das Impressum auf thestia.de.
-///
-/// Das Impressum liegt auf der Website, nicht in der App: es ist ein
-/// fester Text, und ihn an zwei Stellen zu pflegen (App und Web) waere
-/// eine Fehlerquelle. Ausserdem ist die Website die vollstaendige
-/// Fassung - dort stehen Anschrift, Kontakt sowie die Hinweise zu
-/// Moderation und Streitfaellen.
-Future<void> _openImprint(BuildContext context) async {
-  const url = 'https://thestia.de/impressum';
-  var ok = false;
-  try {
-    ok = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-  } catch (e) {
-    debugPrint('[Privacy] Impressum konnte nicht geoeffnet werden: $e');
-  }
-  if (!ok && context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(L10n.t(context, 'privacy.imprintFailed')),
-        behavior: SnackBarBehavior.floating,
       ),
     );
   }

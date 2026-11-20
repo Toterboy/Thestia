@@ -297,6 +297,17 @@ if (Soll 'static-checks') {
         # vergleicht die Summen in ALLEN Release-Dokumenten mit den
         # Dateien.
         (G 'Release-Pruefsummen stimmen' @($py, 'tool/checks/check_release_checksums.py'))
+        # BEFUND (20.11.2026): "Die Funken beim Interessen-Screen
+        # koennen nicht geladen werden." Drei Funktionen waren STABLE und
+        # schrieben dabei in die Datenbank - PostgREST fuehrt STABLE-
+        # Aufrufe in einer READ-ONLY-Transaktion aus, der Aufruf brach
+        # mit HTTP 405 ab. Das Gate sieht jede neue STABLE-Funktion, die
+        # schreibt - BEVOR sie live geht.
+        (G 'STABLE-Funktionen schreiben nicht' @($py, 'tool/checks/check_stable_functions.py'))
+        (G 'STABLE-Pruefer Selbsttest' @($py, 'tool/checks/check_stable_functions_selftest.py'))
+        # Der Impressum-Text in der App muss zur Webfassung passen (der
+        # Link auf thestia.de/impressum oeffnete die App selbst).
+        (G 'Impressum-Text aktuell' @($py, 'tool/web/make_imprint_app.py', '--check'))
     )
 }
 

@@ -27,22 +27,30 @@ class TermsTextScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final blocks = ref.watch(localeProvider).languageCode == 'en'
-        ? kTermsEn
-        : kTermsDe;
+    final english = ref.watch(localeProvider).languageCode == 'en';
+    final blocks = english ? kTermsEn : kTermsDe;
 
     return LegalTextScreen(
       blocks: blocks,
       title: L10n.t(context, 'privacy.termsTitle'),
       // Die Webfassung bleibt erreichbar - dort steht dieselbe Fassung
       // (beide entstehen aus tool/web/make_terms.py).
+      //
+      // WARUM auth.thestia.de UND NICHT thestia.de (BEFUND 20.11.2026):
+      // thestia.de ist ein verifizierter App-Link - der Knopf wuerde die
+      // App selbst oeffnen statt der Seite. auth.thestia.de ist nicht
+      // fuer die App verifiziert, dort oeffnet sich der Browser.
       footer: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         child: Align(
           alignment: Alignment.centerLeft,
           child: TextButton.icon(
             onPressed: () => launchUrl(
-              Uri.parse('https://thestia.de/nutzungsbedingungen'),
+              Uri.parse(
+                english
+                    ? 'https://auth.thestia.de/en/nutzungsbedingungen'
+                    : 'https://auth.thestia.de/nutzungsbedingungen',
+              ),
               mode: LaunchMode.externalApplication,
             ),
             icon: const Icon(Icons.open_in_new, size: 18),

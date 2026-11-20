@@ -1567,12 +1567,31 @@ check(has('supabase/migrations/180_atomic_location_check_and_admin_audit.sql',
 # Nutzerinhalten verlangt DSA Art. 16 die "Bedingungen fuer die
 # Vereinbarung von Leistungen".
 
+# BEFUND (20.11.2026, Betreiber: "Das Impressum in der App
+# funktioniert nicht"): thestia.de ist ein VERIFIZIERTER APP-LINK
+# (assetlinks.json + android:autoVerify im Manifest). Android
+# oeffnet einen solchen Link IN DER APP SELBST, nicht im Browser -
+# die App bekam ihren eigenen Link und zeigte nichts.
+#
+# DER TEXT STEHT DESHALB IN DER APP: Der Eintrag fuehrt auf einen
+# eigenen Bildschirm mit dem Volltext (wie Datenschutz und
+# Nutzungsbedingungen). Zusaetzlich geprueft: die App darf thestia.de
+# gar nicht mehr oeffnen - dort wuerde sie sich selbst oeffnen.
 check(has('lib/screens/privacy/privacy_screen.dart',
           "'privacy.imprintTitle'",
-          '_openImprint',
-          'https://thestia.de/impressum'),
-      'APP: Die Datenschutz-Einstellungen enthalten einen '
-      'Impressum-Einstieg (Par. 5 DDG gilt auch fuer die App)')
+          'AppRoutes.imprint')
+      and has('lib/screens/privacy/imprint_text_screen.dart',
+              'kImprintDe', 'kImprintEn', 'ImprintTextScreen')
+      and has('lib/generated/imprint_de.dart',
+              '§ 5 DDG', 'Im Schlade 10, 28844 Weyhe')
+      and has('lib/generated/imprint_en.dart',
+              'Sec. 5 DDG', 'Im Schlade 10, 28844 Weyhe')
+      and 'https://thestia.de/' not in read(
+          ROOT / 'lib' / 'screens' / 'privacy' / 'privacy_screen.dart'),
+      'APP: Der Impressum-Text steht IN der App (Par. 5 DDG gilt '
+      'auch fuer die App) - und die App oeffnet thestia.de nicht '
+      '(verifizierter App-Link: der Link wuerde die App selbst '
+      'oeffnen)')
 
 for _terms, _alter, _freigabe in (
         ('passkey-assets/nutzungsbedingungen.html',
@@ -1643,14 +1662,22 @@ for _name, _liste in (('de-DE', _liste_de), ('en-US', _liste_en)):
 # (BEFUND des Betreibers: "Die Nutzungsbedingungen funktionieren in der
 # App nicht") - die Adresse steht deshalb im Bedingungs-Screen, und
 # der Datenschutz-Screen fuehrt dorthin. Beides wird geprueft.
+#
+# BEFUND (20.11.2026): Auch der Knopf "Die Webfassung im Browser
+# oeffnen" lief auf thestia.de - und damit auf die App selbst (siehe
+# den App-Link oben). Er zeigt jetzt auf auth.thestia.de; dort
+# oeffnet sich der Browser.
 check(has('lib/screens/privacy/privacy_screen.dart',
           "'privacy.termsTitle'",
           'AppRoutes.privacyTerms')
       and has('lib/screens/privacy/terms_text_screen.dart',
-              'https://thestia.de/nutzungsbedingungen'),
+              'https://auth.thestia.de/nutzungsbedingungen',
+              'https://auth.thestia.de/en/nutzungsbedingungen')
+      and 'https://thestia.de/' not in read(
+          ROOT / 'lib' / 'screens' / 'privacy' / 'terms_text_screen.dart'),
       'APP: Die Nutzungsbedingungen sind in den '
       'Datenschutz-Einstellungen verlinkt (Play verlangt eine erreichbare '
-      'Adresse)')
+      'Adresse) - und die Webfassung oeffnet den Browser, nicht die App')
 
 # =====================================================================
 # Ausgabe

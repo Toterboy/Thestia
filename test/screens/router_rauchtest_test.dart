@@ -88,6 +88,7 @@ const Map<String, String> _routen = <String, String>{
   '/privacy': '/privacy',
   '/privacy/policy': '/privacy/policy',
   '/privacy/terms': '/privacy/terms',
+  '/privacy/imprint': '/privacy/imprint',
   '/safety-center': '/safety-center',
   '/devices': '/devices',
   '/dating-hour': '/dating-hour',

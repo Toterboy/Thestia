@@ -596,6 +596,9 @@ jobs:
           # und das AAB (die Datei, die in den Play Store geht) wird
           # mitgeprueft - beides prueft der Selbsttest nach.
           python3 tool/checks/check_release_consistency_selftest.py
+          # Der STABLE-Pruefer (20.11.2026) muss echte Fehler finden -
+          # sonst waere er ein gruener Nilpott.
+          python3 tool/checks/check_stable_functions_selftest.py
 
       - name: Uebrige statische Pruefer
         run: |
@@ -676,6 +679,20 @@ jobs:
             python3 tool/checks/check_async_setstate.py
             echo "PRUEFER: tool/checks/check_provider_in_lifecycle.py"
             python3 tool/checks/check_provider_in_lifecycle.py
+            # BEFUND (20.11.2026): "Die Funken beim Interessen-Screen
+            # koennen nicht geladen werden." Drei Funktionen waren STABLE
+            # und schrieben dabei in die Datenbank (der Rate-Limit-
+            # Zaehler). PostgREST fuehrt STABLE-Aufrufe in einer
+            # READ-ONLY-Transaktion aus - der Aufruf brach mit HTTP 405
+            # ab. Das Gate sieht jede neue STABLE-Funktion, die
+            # schreibt - BEVOR sie live geht.
+            echo "PRUEFER: tool/checks/check_stable_functions.py"
+            python3 tool/checks/check_stable_functions.py
+            # Der Impressum-Text in der App muss zur Webfassung passen
+            # (BEFUND 20.11.2026: der Link auf thestia.de/impressum
+            # oeffnete die App selbst - der Text steht jetzt im Binary).
+            echo "PRUEFER: tool/web/make_imprint_app.py --check"
+            python3 tool/web/make_imprint_app.py --check
           } 2>&1 | tee /tmp/static-checks.txt
 
       # Welcher Pruefer ist rot? (14.11.2026) Ohne diese Zeilen stand im

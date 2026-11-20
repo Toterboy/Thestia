@@ -21,6 +21,15 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
   erzwungener Altersgrenze und text-only-Vorstellung). MINOR-Bump
   **nach Regel** – eine Änderung der Datenverarbeitung für Nutzende ist
   eine Kern-Funktion
+- **0.10.3** – **umgesetzt** (Build 57): Zwei produktive Fehler vom
+  20.11.2026. Das Impressum steht als Text in der App (vorher öffnete
+  der Link auf `thestia.de` die App selbst, weil die Domain ein
+  verifizierter App-Link ist), und die Funkenliste im Interessen-Bereich
+  lädt wieder (drei Datenbank-Funktionen waren `STABLE` und schrieben
+  dabei in die Datenbank – der Server lehnte den Aufruf mit HTTP 405 ab).
+  Dazu: die Live-Tests gegen den echten Server laufen wieder (sie zeigten
+  auf Pfade, die es nicht mehr gab) und ein neues Gate findet jede
+  `STABLE`-Funktion, die schreibt.
 - **0.10.2** – **umgesetzt** (Build 56): Die Rückfrage beim Verlassen des
   Zufallschats (das System-Zurück fragt jetzt wie der Knopf), die Knöpfe
   in den Profileinstellungen, die beim Auswählen nicht mehr in die nächste
@@ -494,6 +503,22 @@ verschluesselt gespeichert und wird erst beim Funke gehoert.
 > soll bewusst sein; „nein, bleib anonym" ist ja auch eine Entscheidung.
 > Die Antwort liegt auf dem **Server**, damit das zweite Gerät nicht
 > nochmal fragt.
+
+### Stand 20.11.2026: 0.10.3 behebt zwei produktive Fehler (Build 57)
+
+Der Betreiber hat zwei Fehler gemeldet, die beide im echten Betrieb
+auftraten:
+
+| Befund | Ursache | Lösung |
+|---|---|---|
+| „Das Impressum in der App funktioniert nicht" | `thestia.de` ist ein **verifizierter App-Link** – Android öffnete den Link in der App selbst, nicht im Browser | Der Text steht jetzt in der App (`lib/generated/imprint_de.dart` / `imprint_en.dart`), erzeugt aus der Webfassung |
+| „Die Funken beim Interessen-Screen können nicht geladen werden" | Drei Funktionen waren `STABLE` und schrieben dabei in die Datenbank (der Rate-Limit-Zähler) – PostgREST führt `STABLE`-Aufrufe in einer READ-ONLY-Transaktion aus, der Aufruf brach mit HTTP 405 ab | Migration 221 setzt sie auf `VOLATILE`; das neue Gate `check_stable_functions.py` verhindert die Wiederholung |
+
+Dabei mitgefunden und behoben: die Entfernung in Profilen war **immer**
+leer und der Stapel-Abruf mehrerer Profile schlug fehl – dieselbe
+Ursache. Außerdem zeigten die **Live-Tests** gegen den echten Server
+auf Pfade, die es seit dem Sortieren der Tests nicht mehr gab: sie
+liefen ins Leere. Genau diese Tests hätten den 405 gesehen.
 
 ### Stand 14.11.2026: 0.10.2 ist die Fassung für den Store (Build 56)
 

@@ -120,12 +120,10 @@ const Map<String, Map<String, String>> stringsDatenschutz = {
         'werden. Bitte prüfe den Inhalt.',
     'privacy.importSub': 'JSON-Datenexport wiederherstellen',
     'privacy.importTitle': 'Daten importieren',
-    'privacy.imprintFailed':
-        'Das Impressum konnte nicht geöffnet werden. Bitte öffne '
-        'https://thestia.de/impressum im Browser.',
     'privacy.imprintSub':
         'Anbieterkennzeichnung nach § 5 DDG - Anschrift und Kontakt',
     'privacy.imprintTitle': 'Impressum',
+    'privacy.imprintWeb': 'Die Webfassung im Browser öffnen',
     'privacy.location': 'Standortfreigabe',
     'privacy.locationSub':
         'Du kannst die Standortfreigabe in den Systemeinstellungen deines '
@@ -283,12 +281,10 @@ const Map<String, Map<String, String>> stringsDatenschutz = {
         'The pasted JSON could not be read. Please check the content.',
     'privacy.importSub': 'Restore your JSON data export',
     'privacy.importTitle': 'Import data',
-    'privacy.imprintFailed':
-        'The imprint could not be opened. Please open '
-        'https://thestia.de/impressum in your browser.',
     'privacy.imprintSub':
         'Provider identification pursuant to Sec. 5 DDG - address and contact',
     'privacy.imprintTitle': 'Imprint',
+    'privacy.imprintWeb': 'Open the web version in your browser',
     'privacy.location': 'Location sharing',
     'privacy.locationSub':
         'You can revoke location sharing at any time in your device\'s '

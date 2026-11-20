@@ -7,6 +7,94 @@ und folgt der [Semantic Versioning Specification (SemVer)](https://semver.org/la
 Solange die Versionsnummer mit `0.` beginnt (Initial Development Phase nach SemVer §4),
 können sich Schnittstellen und Verhalten jederzeit ändern.
 
+## [0.10.3] – Die Funken laden wieder, das Impressum steht in der App
+(Build 57, 2026-11-20)
+
+> **Warum eine neue Version?** v0.10.2 (Build 56) war für die
+> Testabnahme gedacht, aber noch nicht veröffentlicht. Die beiden
+> Befunde des Betreibers – das Impressum und die Funken – sind
+> produktive Fehler; sie gehören in eine eigene Fassung, damit der
+> Teststand (Build 56) nachvollziehbar bleibt.
+
+### Behoben (20.11.2026) – Die Funken ließen sich nicht laden
+
+- **Die Funkenliste auf dem Interessen-Screen war leer** (Befund des
+  Betreibers: „Die Funken beim Interessen-Screen können nicht geladen
+  werden"). Der Aufruf von `list_my_matches_with_state()` antwortete
+  mit `HTTP 405 – cannot execute INSERT in a read-only transaction`.
+  * *Die Ursache (live gemessen, nicht vermutet):* Die Funktion war
+  `STABLE`. PostgREST führt `STABLE`-Aufrufe in einer **READ-ONLY**-
+  Transaktion aus. Die Funktion berechnet aber für jede Zeile die
+  Entfernung über `profile_distance_km()`, und das wiederum ruft
+  `consume_rate_limit()` auf – den Rate-Limit-Zähler gegen
+  Trilateration. **Der zählt mit einem `INSERT` in die Datenbank** – in
+  einer READ-ONLY-Transaktion ist das verboten, der Aufruf bricht ab.
+  * *PostgreSQLs Regel:* Eine `STABLE`-Funktion darf die Datenbank
+  nicht verändern. Hier wurde gegen diese Regel verstoßen – der
+  Zähler wurde in eine `STABLE`-Funktion eingebaut.
+  * *Die Lösung:* Migration 221 setzt die betroffenen Funktionen auf
+    `VOLATILE`. Das ist nicht nur ein Trick: die Funktionen schreiben
+    tatsächlich, die Deklaration stimmt jetzt. Der Rate-Limit als
+    Sicherheitsmaßnahme bleibt unverändert.
+- **Dieselbe Ursache hat zwei weitere Wege kaputt gemacht** (im
+  Quelltext nicht zu sehen, weil der Fehler beim Aufruf passiert):
+  - `profile_distance_km()` – die Entfernung in Profilen. Die App
+    fängt den Fehler stillschweigend ab, die Entfernung war deshalb
+    **immer** leer.
+  - `get_public_profiles()` – der Stapel-Abruf von Profilen (Profilseite,
+    Chat, Listen).
+- **Der Fehler kann sich nicht wiederholen:** Das neue Werkzeug
+  `tool/checks/check_stable_functions.py` findet jede `STABLE`-Funktion,
+  die in die Datenbank schreibt – statisch in den Migrationen (läuft in
+  der CI) und live in der Produktivdatenbank. Der Selbsttest dazu
+  beweist, dass das Werkzeug echte Fehler findet.
+
+### Behoben (20.11.2026) – Das Impressum funktionierte nicht
+
+- **Das Impressum in der App war tot** (Befund des Betreibers: „Das
+  Impressum in der App funktioniert nicht"). Die App verlinkte auf
+  `https://thestia.de/impressum`.
+  * *Die Ursache:* `thestia.de` ist ein **verifizierter App-Link**
+    (`assetlinks.json` + `android:autoVerify` im Manifest) – Android
+    öffnet einen solchen Link **in der App selbst**, nicht im Browser.
+    Die App bekam also ihren eigenen Link und zeigte nichts. Der
+    Browser musste nicht einmal fehlen.
+  * *Die Lösung:* Der Text steht jetzt **in der App** – wie
+    Datenschutzerklärung und Nutzungsbedingungen. Quelle ist die
+    Webfassung (`passkey-assets/impressum.html`); das neue Skript
+    `tool/web/make_imprint_app.py` erzeugt daraus beide Sprachfassungen
+    (`lib/generated/imprint_de.dart` / `imprint_en.dart`), damit App
+    und Website nicht auseinanderlaufen. Die CI prüft das mit
+    `make_imprint_app.py --check`.
+- **Der Link auf die Webfassung der Nutzungsbedingungen öffnete
+  ebenfalls die App** – er zeigt jetzt auf `auth.thestia.de` (diese
+  Domain ist nicht für die App verifiziert, dort öffnet sich der
+  Browser).
+- **Ein Test verhindert die Rückkehr:** Der neue Test
+  `test/privacy/imprint_text_screen_test.dart` sucht in allen
+  Dart-Dateien nach `Uri.parse(…)`- und `launchUrl(…)`-Aufrufen und
+  meldet jeden, der auf `thestia.de` zeigt.
+
+### Behoben (20.11.2026) – Die Live-Tests liefen ins Leere
+
+- Der nächtliche Live-Lauf (`.github/workflows/live-tests.yml`) rief
+  `test/live_message_flow_test.dart` auf – die Datei liegt aber seit
+  dem Sortieren der Tests in `test/chat/`. `flutter test` bricht mit
+  „Test file not found" ab: **die Live-Tests liefen seit dem Refactoring
+  nicht mehr.** Das sind genau die Tests, die einen Serverfehler wie
+  den 405 der Funkenliste sehen.
+- Der neue Test `test/chat/live_sparks_list_test.dart` ruft die
+  Funkenliste und die Entfernung gegen den echten Server – er schlägt
+  an, wenn wieder eine `STABLE`-Funktion schreibt.
+
+### Kleinigkeiten
+
+- Die englischen Seiten hatten neun Links mit einem zusätzlichen
+  Anführungszeichen im Ziel (`href="/en/datenschutz""`). Die Links
+  funktionierten, der HTML-Code war aber ungültig.
+- Der Impressum-Text in der App folgt der App-Sprache; die
+  Webfassung wird je nach Sprache verlinkt.
+
 ## [0.10.2] – Fehlerbehebungen aus dem Alltag und mehr Tests
 (Build 56, 2026-11-14)
 

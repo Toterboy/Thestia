@@ -1,0 +1,11 @@
+Deine Funken laden wieder
+
+Im Bereich "Interessen" war die Liste deiner Funken leer und die App zeigte einen Fehler. Der Server hat die Anfrage abgelehnt, weil die Funktion im Hintergrund etwas notieren wollte, was dort nicht erlaubt war. Jetzt kommt die Liste wieder - und dasselbe gilt für die Entfernung in Profilen und für mehrere Profile auf einmal.
+
+Das Impressum steht jetzt in der App
+
+Unter "Datenschutz & Account" findest du das Impressum jetzt als Text in der App - ohne Umweg über den Browser. Vorher hat der Link die App selbst geöffnet, sodass du gar nichts zu sehen bekamst.
+
+Und: Die automatischen Tests gegen den echten Server laufen wieder
+
+Sie zeigten seit einiger Zeit auf Pfade, die es nicht mehr gab, und liefen deshalb ins Leere. Jetzt laufen sie wieder - und sie prüfen auch, dass die Funkenliste antwortet.

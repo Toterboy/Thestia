@@ -1,0 +1,11 @@
+Your sparks load again
+
+In the "Interests" area the list of your sparks was empty and the app showed an error. The server rejected the request because the function wanted to note something in the background that was not allowed there. Now the list is back - and the same applies to the distance in profiles and to several profiles at once.
+
+The imprint is now in the app
+
+Under "Privacy & Account" you will find the imprint as a text in the app - no detour through the browser. Before, the link opened the app itself, so you did not see anything at all.
+
+And: the automatic tests against the real server run again
+
+They pointed at paths that no longer existed for some time and therefore ran into the void. Now they run again - and they also check that the list of sparks answers.
