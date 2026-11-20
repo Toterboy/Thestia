@@ -49,9 +49,7 @@ void main() {
 
   tearDown(() async {
     await Hive.close();
-    if (temp.existsSync()) {
-      await temp.delete(recursive: true);
-    }
+    // DER ORDNER BLEIBT LIEGEN: Unter mehreren parallelen Testdateien\n    // kann ein anderer Test Hive gerade noch schreiben - dann schlaegt\n    // das Loeschen hier fehl (PathNotFoundException). Das Betriebssystem\n    // raeumt den Temp-Ordner spaeter auf.\n    // (frueher: await temp.delete(recursive: true))
   });
 
   /// Eine Nachricht.
@@ -76,7 +74,7 @@ void main() {
 
       // Der Verlauf liegt in der Box (verschluesselt).
       final boxName = ChatService.historyBoxNameFor('ich');
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await Future<void>.delayed(const Duration(milliseconds: 200));
       expect(
         Hive.isBoxOpen(boxName),
         isTrue,
@@ -122,11 +120,11 @@ void main() {
         const UserProfile(id: 'partner-1', name: 'Mira', bio: ''),
       );
       service.addMessage(match.id, nachricht('m1', 'Hallo'));
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await Future<void>.delayed(const Duration(milliseconds: 200));
 
       // Jetzt ausschalten.
       service.setHistoryPersistence(false);
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await Future<void>.delayed(const Duration(milliseconds: 200));
 
       final boxName = ChatService.historyBoxNameFor('ich');
       expect(
@@ -149,7 +147,7 @@ void main() {
         const UserProfile(id: 'partner-1', name: 'Mira', bio: ''),
       );
       service.addMessage(match.id, nachricht('m1', 'Hallo'));
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await Future<void>.delayed(const Duration(milliseconds: 200));
 
       final export = await service.exportHistory();
       expect(export, isNotEmpty);
@@ -170,7 +168,7 @@ void main() {
       service.createQrContact(
         const UserProfile(id: 'partner-2', name: 'Toni', bio: ''),
       );
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await Future<void>.delayed(const Duration(milliseconds: 200));
 
       // Ein neuer Dienst laedt sie wieder.
       final neu = ChatService();
@@ -199,7 +197,7 @@ void main() {
         const UserProfile(id: 'partner-2', name: 'Toni', bio: ''),
         isQrContact: true,
       );
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+      await Future<void>.delayed(const Duration(milliseconds: 200));
 
       await service.deleteOwnedData('ich');
 
