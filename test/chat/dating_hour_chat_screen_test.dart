@@ -723,5 +723,73 @@ void main() {
         expect(find.text('Event'), findsOneWidget);
       });
     });
+
+    // Das Warten auf die Gegenseite (ANLASS 22.11.2026: Die Coverage-
+    // Messung zeigte fuer lib/screens/dating_hour/parts/waitingforpartner.dart
+    // 0 % - der Bildschirm, in dem man nach der eigenen Entscheidung
+    // wartet, war komplett ungetestet).
+    group('Das Warten auf die Gegenseite', () {
+      testWidgets('nach der eigenen Entscheidung wartet die App', (
+        tester,
+      ) async {
+        final service = await zeigeScreen(
+          tester,
+          sitzung: abgelaufeneSession(),
+        );
+        // DIE GEGENSEITE HAT NOCH NICHT ENTSCHIEDEN: Der Dienst meldet
+        // eine Session, in der nur ich entschieden habe.
+        service.entscheidung = abgelaufeneSession();
+
+        await tester.pump(const Duration(seconds: 2));
+        await pumpFrames(tester);
+
+        await tester.tap(find.text(L10n.tWithoutContext('dh.chat.accept')));
+        await pumpFrames(tester);
+        await lassServerArbeiten(tester);
+
+        expect(tester.takeException(), isNull);
+        expect(
+          find.text(L10n.tWithoutContext('dh.chat.voted')),
+          findsOneWidget,
+          reason:
+              'Nach der eigenen Entscheidung muss der Nutzer sehen, dass '
+              'die App wartet - sonst tippt er vergeblich weiter.',
+        );
+        expect(
+          find.text(L10n.tWithoutContext('dh.chat.resultPending')),
+          findsOneWidget,
+          reason: 'Der Grund des Wartens muss benannt sein.',
+        );
+      });
+
+      testWidgets('der Weg zurueck zur Uebersicht steht da', (tester) async {
+        final service = await zeigeScreen(
+          tester,
+          sitzung: abgelaufeneSession(),
+        );
+        service.entscheidung = abgelaufeneSession();
+
+        await tester.pump(const Duration(seconds: 2));
+        await pumpFrames(tester);
+
+        await tester.tap(find.text(L10n.tWithoutContext('dh.chat.accept')));
+        await pumpFrames(tester);
+        await lassServerArbeiten(tester);
+
+        // DER KNOPF: Er bringt zur Uebersicht der Runden.
+        final knopf = find.text(L10n.tWithoutContext('dh.chat.backToOverview'));
+        expect(knopf, findsOneWidget);
+        await tester.tap(knopf);
+        await pumpFrames(tester);
+
+        expect(
+          find.text('Event'),
+          findsOneWidget,
+          reason:
+              'Wer nicht mehr wartet, muss wieder in die Uebersicht kommen '
+              '- sonst sitzt er in einem leeren Chat fest.',
+        );
+      });
+    });
   });
 }

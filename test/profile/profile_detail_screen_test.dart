@@ -461,5 +461,46 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('Mira'), findsWidgets);
     });
+
+    // Das Nachladen des Bildes (ANLASS 22.11.2026: Die Coverage-Messung
+    // zeigte fuer lib/screens/profile/parts/avatarretryloader.dart 0 %).
+    testWidgets('ein Bild, das nicht kommt, bietet das Nachladen an', (
+      tester,
+    ) async {
+      // DIE PERSON MIT BILD: Das Bild kommt ueber match-media vom Server -
+      // im Test gibt es das nicht, also bleibt es leer.
+      server.antwortetMitFehler = true;
+      await zeigeProfil(
+        tester,
+        profil: UserProfile(
+          id: 'user-7',
+          name: 'Mira',
+          bio: '',
+          birthDate: DateTime.now().subtract(const Duration(days: 24 * 365)),
+          photos: const <String>['user-7/bild.jpg'],
+        ),
+        mitMatch: true,
+      );
+
+      // Der Ladevorgang muss durch sein - erst danach weiss die App, dass
+      // das Bild nicht kommt. Der Aufruf laeuft ueber den Server, also
+      // braucht er die echte Ereignisschleife.
+      for (var i = 0; i < 12; i++) {
+        await tester.runAsync(() async {
+          await Future<void>.delayed(const Duration(milliseconds: 60));
+        });
+        await tester.pump(const Duration(milliseconds: 500));
+      }
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.byIcon(Icons.refresh),
+        findsOneWidget,
+        reason:
+            'NUTZERWUNSCH "Bild einfach nicht sichtbar": Der Nutzer muss das '
+            'Bild selbst nachladen koennen - sonst sieht er gar nichts und '
+            'weiss nicht warum.',
+      );
+    });
   });
 }

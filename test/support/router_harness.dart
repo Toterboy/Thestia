@@ -85,11 +85,22 @@ class TestAuth implements AppAuthService {
   /// Das Profil, das die Registrierung liefert.
   final UserProfile? registriertesProfil;
 
+  /// Wurde das Konto geloescht?
+  ///
+  /// DER GRUND (22.11.2026): Der Test prueft den Loesch-Ablauf - und
+  /// muss wissen, OB die Loeschung wirklich passiert ist (und nicht nur
+  /// der Dialog aufging).
+  bool kontoGeloescht = false;
+
+  /// Wirft der Dienst bei der Loeschung einen Fehler?
+  final Object? loeschFehler;
+
   TestAuth({
     this.eingeloggt = true,
     this.registrierungsFehler,
     this.anmeldeFehler,
     this.registriertesProfil,
+    this.loeschFehler,
   });
 
   @override
@@ -125,7 +136,11 @@ class TestAuth implements AppAuthService {
 
   @override
   Future<void> deleteAccount() async {
-    // Der Test loescht kein Konto.
+    // Der Test loescht kein Konto - aber er merkt sich, DASS es
+    // passiert ist (sonst waere der Loesch-Ablauf nicht beweisbar).
+    kontoGeloescht = true;
+    final fehler = loeschFehler;
+    if (fehler != null) throw fehler;
   }
 
   @override
