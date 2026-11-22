@@ -103,13 +103,16 @@ void main() {
     int anzahl = 1,
     List<String> partnerInteressen = const <String>['Musik'],
     bool alsServerFunke = false,
+    int? partnerAlter,
   }) {
     final service = ChatService();
     final partner = UserProfile(
       id: 'partner-1',
       name: 'Mira',
       bio: '',
-      birthDate: DateTime.now().subtract(const Duration(days: 24 * 365)),
+      birthDate: partnerAlter == null
+          ? DateTime.now().subtract(const Duration(days: 24 * 365))
+          : DateTime.now().subtract(Duration(days: partnerAlter * 365)),
       interests: partnerInteressen,
     );
     final match = alsServerFunke
@@ -131,11 +134,16 @@ void main() {
   }
 
   /// Das eigene Profil (mit Interessen fuer den Kontext-Eisbrecher).
-  UserProfile ich(List<String> interessen) => UserProfile(
+  ///
+  /// [alter] setzt das eigene Alter - der Altersdifferenz-Hinweis
+  /// braucht beide Alter.
+  UserProfile ich(List<String> interessen, {int? alter}) => UserProfile(
     id: 'ich',
     name: 'Lena',
     bio: 'Hallo',
-    birthDate: DateTime(1995, 6, 1),
+    birthDate: alter == null
+        ? DateTime(1995, 6, 1)
+        : DateTime.now().subtract(Duration(days: alter * 365)),
     interests: interessen,
   );
 
@@ -185,6 +193,11 @@ void main() {
         GoRoute(
           path: '/profile/:userId',
           builder: (ctx, state) => const Scaffold(body: Text('Profil')),
+        ),
+        GoRoute(
+          path: '/safety-center',
+          builder: (ctx, state) =>
+              const Scaffold(body: Text('Sicherheitscenter')),
         ),
       ],
     );
@@ -624,6 +637,98 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
 
       expect(find.byType(AlertDialog), findsNothing);
+    });
+  });
+
+  group('Der Altersdifferenz-Hinweis (Jugendschutz)', () {
+    testWidgets('bei zehn Jahren Unterschied steht der Hinweis da', (
+      tester,
+    ) async {
+      final chat = chatMitNachrichten(anzahl: 2, partnerAlter: 20);
+
+      await baue(
+        tester,
+        match: chat.match,
+        notifier: chat.notifier,
+        profil: ich(<String>[], alter: 40),
+      );
+
+      expect(
+        find.byIcon(Icons.warning_amber_rounded),
+        findsOneWidget,
+        reason:
+            'Eine grosse Altersdifferenz kann eine falsche Altersangabe '
+            'verbergen - der Nutzer muss darauf hingewiesen werden.',
+      );
+    });
+
+    testWidgets('bei kleiner Differenz steht der Hinweis nicht da', (
+      tester,
+    ) async {
+      final chat = chatMitNachrichten(anzahl: 2, partnerAlter: 30);
+
+      await baue(
+        tester,
+        match: chat.match,
+        notifier: chat.notifier,
+        profil: ich(<String>[], alter: 32),
+      );
+
+      expect(
+        find.byIcon(Icons.warning_amber_rounded),
+        findsNothing,
+        reason:
+            'Der Hinweis waere bei zwei Jahren Difference nur nervig - er '
+            'kommt ab zehn Jahren.',
+      );
+    });
+
+    testWidgets('der Hinweis fuehrt ins Sicherheitscenter', (tester) async {
+      final chat = chatMitNachrichten(anzahl: 2, partnerAlter: 20);
+
+      await baue(
+        tester,
+        match: chat.match,
+        notifier: chat.notifier,
+        profil: ich(<String>[], alter: 40),
+      );
+
+      await tester.tap(find.byIcon(Icons.warning_amber_rounded));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(
+        find.text('Sicherheitscenter'),
+        findsOneWidget,
+        reason:
+            'Der Hinweis muss einen Weg zeigen - blockieren, melden, '
+            'Sicherheitscenter.',
+      );
+    });
+  });
+
+  group('Die Wege aus der Kopfzeile', () {
+    testWidgets('der Zurueck-Knopf bringt zur Funken-Liste', (tester) async {
+      final chat = chatMitNachrichten(anzahl: 2);
+
+      await baue(
+        tester,
+        match: chat.match,
+        notifier: chat.notifier,
+        profil: ich(<String>[]),
+      );
+
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(
+        find.text('Interessen'),
+        findsOneWidget,
+        reason:
+            'Nach dem Zurueck-Knopf kommt die Funken-Liste - der Nutzer '
+            'soll zu seinen Chats zurueck.',
+      );
     });
   });
 }
