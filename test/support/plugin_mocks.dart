@@ -72,6 +72,14 @@ const MethodChannel aufnahmeKanal = MethodChannel(
   'com.llfbandit.record/messages',
 );
 
+/// Laeuft die Aufnahme gerade? (der Zustand des Ersatzes)
+///
+/// DER GRUND: Das Aufnahme-Plugin fragt in festen Abstaenden den Pegel
+/// ab - aber nur, wenn wirklich aufgenommen wird. Ohne diesen Zustand
+/// bekommt die App nie einen Pegel und kann eine Aufnahme nicht von
+/// Stille unterscheiden.
+bool aufnahmeLaeuft = false;
+
 /// Beantwortet die Aufrufe des Aufnahme-Plugins.///
 /// [erlaubt]=false simuliert "keine Mikrofonberechtigung" - dann zeigt
 /// der Editor den Hinweis statt aufzunehmen.
@@ -80,7 +88,18 @@ const MethodChannel aufnahmeKanal = MethodChannel(
 /// zurueckgibt. Standard: ein Name im Temp-Ordner (die Datei existiert
 /// dann nicht - so verhaelt sich ein Geraet ohne echte Aufnahme).
 /// Fuellt man eine echte Datei hinein, kann der Screen sie lesen.
-void mockAufnahme({bool erlaubt = true, String? dateiBeimStoppen}) {
+///
+/// [amplitude] ist der Pegel in dB, den das Plugin meldet. Der Wert
+/// entscheidet darueber, ob die Aufnahme als "Sprache" oder als "Stille"
+/// gilt - der Vorstellungs-Editor fragt eine stille Aufnahme nach.
+void mockAufnahme({
+  bool erlaubt = true,
+  String? dateiBeimStoppen,
+  double amplitude = -20,
+}) {
+  // DER ZUSTAND BEGINNT NEU: Ein Test, der eine Aufnahme laufen laesst,
+  // darf den naechsten nicht beeinflussen.
+  aufnahmeLaeuft = false;
   TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
       .setMockMethodCallHandler(aufnahmeKanal, (anfrage) async {
         switch (anfrage.method) {
@@ -95,19 +114,27 @@ void mockAufnahme({bool erlaubt = true, String? dateiBeimStoppen}) {
             _mockeAufnahmeEreignisse(anfrage.arguments);
             return null;
           case 'isRecording':
+            return aufnahmeLaeuft;
           case 'isPaused':
             return false;
           case 'isEncoderSupported':
             return true;
           case 'getAmplitude':
-            return <String, dynamic>{'current': -20.0, 'max': -10.0};
+            return <String, dynamic>{'current': amplitude, 'max': -10.0};
           case 'start':
           case 'resume':
+            // DIE AUFNAHME LAEUFT: Erst jetzt fragt das Plugin den Pegel
+            // ab - so verhaelt sich das echte Plugin auch.
+            aufnahmeLaeuft = true;
+            return null;
           case 'pause':
+            return null;
           case 'cancel':
           case 'dispose':
+            aufnahmeLaeuft = false;
             return null;
           case 'stop':
+            aufnahmeLaeuft = false;
             // Der Pfad der Aufnahme. Ohne Angabe: ein Name im
             // Temp-Ordner (die Datei existiert dann nicht - so
             // verhaelt sich ein Geraet ohne echte Aufnahme).
@@ -155,6 +182,60 @@ class _FakeAudioPlattform extends JustAudioPlatform {
   Future<DisposeAllPlayersResponse> disposeAllPlayers(
     DisposeAllPlayersRequest request,
   ) async => DisposeAllPlayersResponse();
+
+  @override
+  Future<AudioPlayerPlatform> init(InitRequest request) async =>
+      _FakeAudioPlayerPlatform();
+}
+
+/// Der Player-Ersatz: leere Strom, kein Ton.
+///
+/// DER GRUND: Der Standard-Ersatz kann den Player nicht oeffnen. Der
+/// Player haengt dann mit einem offenen Datenstrom fest - und beim
+/// Schliessen wirft er ("cannot close the subject while items are being
+/// added"). Das trifft jeden Test, der eine Aufnahme anhoeren will.
+class _FakeAudioPlayerPlatform extends AudioPlayerPlatform {
+  _FakeAudioPlayerPlatform() : super('fake-player');
+
+  @override
+  Stream<PlaybackEventMessage> get playbackEventMessageStream =>
+      const Stream<PlaybackEventMessage>.empty();
+
+  @override
+  Future<LoadResponse> load(LoadRequest request) async =>
+      LoadResponse(duration: const Duration(seconds: 1));
+
+  @override
+  Future<SetVolumeResponse> setVolume(SetVolumeRequest request) async =>
+      SetVolumeResponse();
+
+  @override
+  Future<SetSpeedResponse> setSpeed(SetSpeedRequest request) async =>
+      SetSpeedResponse();
+
+  @override
+  Future<SetPitchResponse> setPitch(SetPitchRequest request) async =>
+      SetPitchResponse();
+
+  @override
+  Future<SetSkipSilenceResponse> setSkipSilence(
+    SetSkipSilenceRequest request,
+  ) async => SetSkipSilenceResponse();
+
+  @override
+  Future<SetLoopModeResponse> setLoopMode(SetLoopModeRequest request) async =>
+      SetLoopModeResponse();
+
+  @override
+  Future<SetShuffleModeResponse> setShuffleMode(
+    SetShuffleModeRequest request,
+  ) async => SetShuffleModeResponse();
+
+  @override
+  Future<PlayResponse> play(PlayRequest request) async => PlayResponse();
+
+  @override
+  Future<PauseResponse> pause(PauseRequest request) async => PauseResponse();
 }
 
 /// Beantwortet die Aufrufe des Audio-Players (just_audio).
