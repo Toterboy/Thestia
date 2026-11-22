@@ -247,6 +247,70 @@ void main() {
       expect(find.text('Pop'), findsWidgets);
     });
 
+    testWidgets('der Lieblings-Kuenstler allein zeigt schon die Musik-Karte', (
+      tester,
+    ) async {
+      // BEFUND (22.11.2026, Betreiber): "Musik Genres, die man mag und
+      // Lieblings-Song und Künstler werden alle nicht im Profil angezeigt
+      // (öffentlich)." Die Bedingung der Musik-Karte pruefte Genres und
+      // Lieblingssong - aber NICHT den Lieblings-Kuenstler. Stand nur der
+      // in der Karte, war die ganze Karte weg.
+      server.rpcAntworten['get_public_profile'] = <String, dynamic>{
+        'id': 'user-7',
+        'name': 'Mira',
+        'bio': '',
+        'interests': <String>[],
+        'favorite_band': 'Rammstein',
+      };
+      await zeigeProfil(
+        tester,
+        profil: const UserProfile(id: 'user-7', name: 'Mira', bio: ''),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(find.textContaining('Rammstein'), findsOneWidget);
+    });
+
+    testWidgets('die Gewohnheiten stehen da', (tester) async {
+      // NUTZERWUNSCH (22.11.2026): Die Gewohnheiten gehoeren ins
+      // oeffentliche Profil - je Gewohnheit ein Schalter (Migration 222).
+      server.rpcAntworten['get_public_profile'] = <String, dynamic>{
+        'id': 'user-7',
+        'name': 'Mira',
+        'bio': '',
+        'interests': <String>[],
+        'smoking': 'never',
+        'alcohol': 'occasionally',
+        'drugs': 'daily',
+      };
+      await zeigeProfil(
+        tester,
+        profil: const UserProfile(id: 'user-7', name: 'Mira', bio: ''),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text(L10n.tWithoutContext('profile.detail.habits')),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(
+          L10n.tWithoutContext('profile.detail.habitSmoking'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(
+          L10n.tWithoutContext('profile.detail.habitAlcohol'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(L10n.tWithoutContext('profile.detail.habitDrugs')),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('das Speichern des Profils meldet es dem Nutzer', (
       tester,
     ) async {

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:thestia/models/settings/app_settings.dart';
 import 'package:thestia/routing/route_restore.dart';
+import 'package:thestia/routing/safety_routes.dart';
 import 'package:thestia/routing/verification_required_routes.dart';
 
 import 'package:thestia/models/profile/user_profile.dart';
@@ -58,7 +59,6 @@ import 'package:thestia/screens/dating_hour/dating_hour_how_it_works_screen.dart
 import 'package:thestia/screens/dating_hour/dating_hour_preferences_screen.dart';
 import 'package:thestia/screens/dating_hour/dating_hour_rules_screen.dart';
 import 'package:thestia/screens/verification/verification_flow.dart';
-import 'package:thestia/screens/safety/safety_center_screen.dart';
 import 'package:thestia/screens/chat/chat_detail_screen.dart';
 import 'package:thestia/screens/profile/profile_detail_screen.dart';
 import 'package:thestia/screens/swipe/random_chat_screen.dart';
@@ -146,6 +146,15 @@ class AppRoutes {
   /// die App selbst - thestia.de ist ein verifizierter App-Link.
   static const String imprint = '/privacy/imprint';
   static const String safetyCenter = '/safety-center';
+
+  /// Die blockierten Nutzer als eigener Screen.
+  ///
+  /// NUTZERWUNSCH (22.11.2026): Das Safety Center soll nicht überladen
+  /// werden, wenn es viele Blockierungen oder Meldungen gibt.
+  static const String blockedUsers = '/safety-center/blocked-users';
+
+  /// Die eigenen Meldungen als eigener Screen (siehe [blockedUsers]).
+  static const String myReports = '/safety-center/my-reports';
   // Geräte & Sitzungen ("Wo bin ich eingeloggt?")
   static const String devices = '/devices';
   // Dating Hour (Event-Modus)
@@ -807,11 +816,10 @@ List<RouteBase> appRoutes() {
       path: AppRoutes.imprint,
       builder: (context, state) => const ImprintTextScreen(),
     ),
-    // Safety Center: Hilfe bei Belästigung/Stalking + In-App-Maßnahmen
-    GoRoute(
-      path: AppRoutes.safetyCenter,
-      builder: (context, state) => const SafetyCenterScreen(),
-    ),
+    // Safety Center: Hilfe bei Belästigung/Stalking + In-App-Maßnahmen.
+    // Die drei Routen liegen in `safety_routes.dart` (die Datei hier
+    // waechst sonst ueber die 1000-Zeilen-Grenze).
+    ...safetyRoutes(),
     // Geräte & Sitzungen ("Wo bin ich eingeloggt?" + Überall-Abmelden)
     GoRoute(
       path: AppRoutes.devices,

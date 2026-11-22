@@ -142,11 +142,17 @@ SPRACHEN = [
 import pathlib as _pathlib
 import sys as _sys
 _sys.path.insert(0, str(_pathlib.Path(__file__).resolve().parent))
-# Das gemeinsame Modul web_theme.py liegt in tool/hilfen/.
+# Das gemeinsame Modul web_theme.py liegt in tool/helpers/.
+#
+# BEFUND (22.11.2026): Der Pfad zeigte auf die Projektwurzel statt auf
+# tool/ - nach dem Sortieren der Werkzeuge (tool/hilfen/ ->
+# tool/helpers/) kam das Modul nicht mehr gefunden. Das Skript liess sich
+# damit gar nicht mehr starten - die Datenschutzerklaerung konnte nicht
+# neu erzeugt werden.
 _sys.path.insert(
     0,
     str(
-        _pathlib.Path(__file__).resolve().parent.parent.parent / 'helpers'
+        _pathlib.Path(__file__).resolve().parent.parent / 'helpers'
     ),
 )
 from web_theme import (CSS, KOPF_HTML,  # noqa: E402

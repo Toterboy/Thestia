@@ -145,6 +145,19 @@ const Map<String, Map<String, String>> stringsEinstellungen = {
     'settings.saveFailed':
         'Die Einstellung konnte nicht gespeichert werden. Bitte einmal neu versuchen.',
     'settings.showDistance': 'Entfernung anzeigen',
+    // NUTZERWUNSCH (22.11.2026): Die Punkte und die Gewohnheiten
+    // einzeln fuer das oeffentliche Profil an- und auschalten.
+    'settings.showFavoriteBand': 'Lieblings-Künstler',
+    'settings.showFavoriteSong': 'Lieblingssong',
+    'settings.showHabitsAlcohol': 'Alkohol',
+    'settings.showHabitsDrugs': 'Drogen',
+    'settings.showHabitsSmoking': 'Rauchen',
+    'settings.showMusicDisliked': 'Abgelehnte Musik-Genres',
+    'settings.showMusicLiked': 'Gemagte Musik-Genres',
+    'settings.publicProfileFields': 'Was andere über mich sehen',
+    'settings.publicProfileFieldsSub':
+        'Diese Angaben stehen in deinem öffentlichen Profil. Du '
+        'kannst jeden Punkt einzeln abschalten.',
     'settings.showDistanceSub':
         'Zeigt anderen nur ungefähr, wie weit weg du bist - in Stufen '
         'von 10 km. Aus ist der Standard; dein genauer Standort bleibt '
@@ -447,6 +460,19 @@ const Map<String, Map<String, String>> stringsEinstellungen = {
     'privacy.title': 'Privacy & account',
     'settings.saveFailed': 'The setting could not be saved. Please try again.',
     'settings.showDistance': 'Show distance',
+    // NUTZERWUNSCH (22.11.2026): Die Punkte und die Gewohnheiten
+    // einzeln fuer das oeffentliche Profil an- und auschalten.
+    'settings.showFavoriteBand': 'Favourite artist',
+    'settings.showFavoriteSong': 'Favourite song',
+    'settings.showHabitsAlcohol': 'Alcohol',
+    'settings.showHabitsDrugs': 'Drugs',
+    'settings.showHabitsSmoking': 'Smoking',
+    'settings.showMusicDisliked': 'Music genres I dislike',
+    'settings.showMusicLiked': 'Music genres I like',
+    'settings.publicProfileFields': 'What others see about me',
+    'settings.publicProfileFieldsSub':
+        'These details appear in your public profile. You can switch off '
+        'each one separately.',
     'settings.showDistanceSub':
         'Shows others roughly how far away you are, in 10 km steps. '
         'Off by default; your exact location stays private.',

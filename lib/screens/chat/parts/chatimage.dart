@@ -49,6 +49,13 @@ class _ChatImage extends StatelessWidget {
   /// BEFUND (09.11.2026): Die Bilder waren viel zu gross im Chat.
   static const double _maxKachel = 160;
 
+  /// Der Radius der abgerundeten Ecken.
+  ///
+  /// NUTZERWUNSCH (22.11.2026): "Bilder im Chat an den Kanten
+  /// abgerundet, damit sie nicht eckig sind." Davor stand das Bild
+  /// als Rechteck in der Blase - die eckigen Kanten fielen auf.
+  static const double _radius = 12;
+
   /// Die dekodierten Bytes - mit Cache.
   ///
   /// Der Cache ist wichtig: Ohne ihn wuerde die Blase bei JEDEM
@@ -84,14 +91,22 @@ class _ChatImage extends StatelessWidget {
     // die man schickt, ist viel zu gross im Chat." Das Bild fuellte die
     // ganze Zeile der Blase aus. Es ist jetzt auf eine Feste Kachel
     // begrenzt (160 px) - ein Vorschaubild, kein Vollbild.
-    Widget bild = Image.memory(
-      bytes,
-      fit: fit,
-      width: width ?? _maxKachel,
-      height: height,
-      // In der Blase reichen 600 px - ohne das waeren es mehrere MB
-      // dekodierte Bitmap pro Bild.
-      cacheWidth: fit == BoxFit.contain ? null : 600,
+    //
+    // NUTZERWUNSCH (22.11.2026): Die Kanten sind abgerundet - das Bild
+    // soll nicht eckig wirken. Das Zuschneiden kommt VOR der
+    // Weichzeichnung: sonst laeuft der weiche Rand ueber die runden
+    // Ecken hinaus.
+    Widget bild = ClipRRect(
+      borderRadius: BorderRadius.circular(_radius),
+      child: Image.memory(
+        bytes,
+        fit: fit,
+        width: width ?? _maxKachel,
+        height: height,
+        // In der Blase reichen 600 px - ohne das waeren es mehrere MB
+        // dekodierte Bitmap pro Bild.
+        cacheWidth: fit == BoxFit.contain ? null : 600,
+      ),
     );
     if (blurred) {
       bild = ImageFiltered(

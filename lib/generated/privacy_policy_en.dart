@@ -513,6 +513,40 @@ const List<PrivacyBlock> kPrivacyPolicyEn = <PrivacyBlock>[
     'p',
     '**What this is not:** The Android switch against learning has no equivalent on iOS - there only the app\'s own keyboard helps. And in the fields that still use the system keyboard, that keyboard does see your text; it is only not allowed to learn from it. Visible text can also always be captured from the screen - the app\'s screenshot protection is what stands against that.',
   ),
+  PrivacyBlock('h3', '3b-6. What others see in your profile (v0.10.2)'),
+  PrivacyBlock(
+    'p',
+    'Your public profile does not show everything you have entered. Under **"Privacy & account"** you can switch off **each item separately**: the music genres you like, the genres you dislike, your favourite song, your favourite artist and your habits (smoking, alcohol, drugs). The distance (rough, in steps) and your name when someone waves to you on Transit Spark have their own switches.',
+  ),
+  PrivacyBlock(
+    'table_head',
+    '',
+    cells: <String>['Detail', 'Recipient', 'Purpose', 'Storage'],
+  ),
+  PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
+      'The switches themselves (which items are visible)',
+      'only you and the server that evaluates them',
+      'they decide what the public profile shows',
+      'on the server with your profile',
+    ],
+  ),
+  PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
+      'The switched-off details (e.g. your favourite song)',
+      'nobody - the server does not deliver them at all',
+      'the rest of the profile',
+      'like the detail itself: with your profile',
+    ],
+  ),
+  PrivacyBlock(
+    'p',
+    '**The server decides, not your device:** The switches are stored with your profile and are evaluated whenever the public profile is called. A device that does not have the switch cannot show the detail anyway.',
+  ),
   PrivacyBlock('h2', '3b. Near-field radio (BLE, "Transit Spark")'),
   PrivacyBlock(
     'p',

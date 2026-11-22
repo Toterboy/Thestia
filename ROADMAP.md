@@ -21,19 +21,17 @@ den ADRs des Projekts (betrieblich, nicht im öffentlichen Repository).
   erzwungener Altersgrenze und text-only-Vorstellung). MINOR-Bump
   **nach Regel** – eine Änderung der Datenverarbeitung für Nutzende ist
   eine Kern-Funktion
-- **0.10.3** – **umgesetzt** (Build 57): Zwei produktive Fehler vom
-  20.11.2026. Das Impressum steht als Text in der App (vorher öffnete
-  der Link auf `thestia.de` die App selbst, weil die Domain ein
-  verifizierter App-Link ist), und die Funkenliste im Interessen-Bereich
-  lädt wieder (drei Datenbank-Funktionen waren `STABLE` und schrieben
-  dabei in die Datenbank – der Server lehnte den Aufruf mit HTTP 405 ab).
-  Dazu: die Live-Tests gegen den echten Server laufen wieder (sie zeigten
-  auf Pfade, die es nicht mehr gab) und ein neues Gate findet jede
-  `STABLE`-Funktion, die schreibt.
-- **0.10.2** – **umgesetzt** (Build 56): Die Rückfrage beim Verlassen des
+- **0.10.2** - **umgesetzt** (Build 56 und 57): Die Rückfrage beim Verlassen des
   Zufallschats (das System-Zurück fragt jetzt wie der Knopf), die Knöpfe
   in den Profileinstellungen, die beim Auswählen nicht mehr in die nächste
-  Zeile springen, und ein deutlicher Ausbau der Tests.
+  Zeile springen, ein deutlicher Ausbau der Tests – und mit Build 57 die
+  beiden produktiven Fehler vom 20./22.11.2026: das Impressum steht als
+  Text in der App, und die Funkenliste im Interessen-Bereich lädt wieder
+  (drei Datenbank-Funktionen waren `STABLE` und schrieben dabei in die
+  Datenbank). Dazu die Schalter je Punkt für das öffentliche Profil
+  (Musik, Lieblingssong, Lieblings-Künstler, Gewohnheiten), die eigenen
+  Screens für blockierte Nutzer und Meldungen im Safety Center, der echte
+  Geburtstags-Hintergrund und runde Chat-Bilder ohne Rahmen.
 - **0.10.1** – **umgesetzt** (Build 51/52/54/55): Die Namens-Entscheidung beim
   Transit Spark (der Dialog fragt beim ersten Öffnen, danach bleibt der
   Schalter änderbar), der serverseitige Nachrichtenzähler, „Nachricht für
@@ -504,7 +502,7 @@ verschluesselt gespeichert und wird erst beim Funke gehoert.
 > Die Antwort liegt auf dem **Server**, damit das zweite Gerät nicht
 > nochmal fragt.
 
-### Stand 20.11.2026: 0.10.3 behebt zwei produktive Fehler (Build 57)
+### Stand 20.11.2026: 0.10.2 (Build 57) behebt zwei produktive Fehler
 
 Der Betreiber hat zwei Fehler gemeldet, die beide im echten Betrieb
 auftraten:

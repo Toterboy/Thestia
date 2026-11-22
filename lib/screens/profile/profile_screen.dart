@@ -445,6 +445,12 @@ class ProfileScreen extends ConsumerWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      // NUTZERWUNSCH (22.11.2026): "Die Geburtstagsvorschau ist noch
+      // immer komplett falsch, da der Hintergrund nicht der des
+      // Geburtstagsthemes ist." Das Blatt bekommt deshalb KEINEN eigenen
+      // Hintergrund - der Geburtstagsstil (BirthdayStyleSurface) malt
+      // den Theme-Hintergrund in das ganze Blatt hinein.
+      backgroundColor: Colors.transparent,
       shape: profilDialogForm(),
       builder: (ctx) => DraggableScrollableSheet(
         initialChildSize: 0.85,
@@ -456,7 +462,9 @@ class ProfileScreen extends ConsumerWidget {
           builder: (context, istGeburtstag, _) => BirthdayStyleSurface(
             style: profile.birthdayStyle,
             active: istGeburtstag,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            // Alle vier Ecken (wie das Blatt) - sonst schauen die
+            // unteren Ecken des Theme-Hintergrunds heraus.
+            borderRadius: BorderRadius.circular(28),
             child: SingleChildScrollView(
               controller: controller,
               padding: const EdgeInsets.all(24),
@@ -492,7 +500,15 @@ class ProfileScreen extends ConsumerWidget {
                   Text(
                     L10n.t(context, 'profile.preview.hint'),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      // Im Geburtstags-Modus liegt der Text auf dem
+                      // Theme-Hintergrund - bei midnight und mono ist
+                      // der dunkel, also muss der Text hell sein.
+                      color: istGeburtstag
+                          ? BirthdayStyle.foregroundFor(
+                              profile.birthdayStyle,
+                              context,
+                            ).withValues(alpha: 0.85)
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                     textAlign: TextAlign.center,
                   ),

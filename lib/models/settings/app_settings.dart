@@ -186,6 +186,34 @@ class AppSettings {
   /// steht.
   final bool transitShowName;
 
+  /// Stehen meine gemagten Musik-Genres im oeffentlichen Profil?
+  ///
+  /// NUTZERWUNSCH (22.11.2026): "Man soll diese Punkte und die
+  /// Gewohnheiten einzeln fürs öffentliche Profil an und aus machen
+  /// können."
+  ///
+  /// Der Server entscheidet (Migration 222): die Projektion liefert die
+  /// Genres nur, wenn dieser Schalter an ist.
+  final bool showMusicLiked;
+
+  /// Stehen meine abgelehnten Musik-Genres im oeffentlichen Profil?
+  final bool showMusicDisliked;
+
+  /// Steht mein Lieblingssong im oeffentlichen Profil?
+  final bool showFavoriteSong;
+
+  /// Steht mein Lieblings-Künstler (Lieblingsband) im oeffentlichen Profil?
+  final bool showFavoriteBand;
+
+  /// Steht die Gewohnheit "Rauchen" im oeffentlichen Profil?
+  final bool showHabitsSmoking;
+
+  /// Steht die Gewohnheit "Alkohol" im oeffentlichen Profil?
+  final bool showHabitsAlcohol;
+
+  /// Steht die Gewohnheit "Drogen" im oeffentlichen Profil?
+  final bool showHabitsDrugs;
+
   /// Hat der Nutzer bewusst entschieden, ob sein Name beim Transit-Zuwinken
   /// gezeigt wird?
   ///
@@ -247,6 +275,16 @@ class AppSettings {
     this.showDistance = false,
     this.transitShowName = true,
     this.transitShowNameSet = false,
+    // NUTZERWUNSCH (22.11.2026): Die Musik und die Gewohnheiten
+    // stehen standardmaessig im oeffentlichen Profil - so war es
+    // bisher. Wer sie nicht zeigen will, schaltet sie ab.
+    this.showMusicLiked = true,
+    this.showMusicDisliked = true,
+    this.showFavoriteSong = true,
+    this.showFavoriteBand = true,
+    this.showHabitsSmoking = true,
+    this.showHabitsAlcohol = true,
+    this.showHabitsDrugs = true,
   });
 
   /// Standard-Einstellungen für einen neuen Nutzer.
@@ -310,6 +348,15 @@ class AppSettings {
       showDistance: json['showDistance'] as bool? ?? false,
       transitShowName: json['transitShowName'] as bool? ?? true,
       transitShowNameSet: json['transitShowNameSet'] as bool? ?? false,
+      // NUTZERWUNSCH (22.11.2026): Fehlende Schluessel (alte
+      // Installation) gelten als "an" - das war das bisherige Verhalten.
+      showMusicLiked: json['showMusicLiked'] as bool? ?? true,
+      showMusicDisliked: json['showMusicDisliked'] as bool? ?? true,
+      showFavoriteSong: json['showFavoriteSong'] as bool? ?? true,
+      showFavoriteBand: json['showFavoriteBand'] as bool? ?? true,
+      showHabitsSmoking: json['showHabitsSmoking'] as bool? ?? true,
+      showHabitsAlcohol: json['showHabitsAlcohol'] as bool? ?? true,
+      showHabitsDrugs: json['showHabitsDrugs'] as bool? ?? true,
     );
   }
 
@@ -352,6 +399,13 @@ class AppSettings {
     'showDistance': showDistance,
     'transitShowName': transitShowName,
     'transitShowNameSet': transitShowNameSet,
+    'showMusicLiked': showMusicLiked,
+    'showMusicDisliked': showMusicDisliked,
+    'showFavoriteSong': showFavoriteSong,
+    'showFavoriteBand': showFavoriteBand,
+    'showHabitsSmoking': showHabitsSmoking,
+    'showHabitsAlcohol': showHabitsAlcohol,
+    'showHabitsDrugs': showHabitsDrugs,
   };
 
   /// Immutabele Kopie mit veränderten Werten.
@@ -406,6 +460,13 @@ class AppSettings {
     bool? showDistance,
     bool? transitShowName,
     bool? transitShowNameSet,
+    bool? showMusicLiked,
+    bool? showMusicDisliked,
+    bool? showFavoriteSong,
+    bool? showFavoriteBand,
+    bool? showHabitsSmoking,
+    bool? showHabitsAlcohol,
+    bool? showHabitsDrugs,
   }) {
     return AppSettings(
       // Blind Mode ist fest AN - der uebergebene Wert wird
@@ -461,6 +522,13 @@ class AppSettings {
       showDistance: showDistance ?? this.showDistance,
       transitShowName: transitShowName ?? this.transitShowName,
       transitShowNameSet: transitShowNameSet ?? this.transitShowNameSet,
+      showMusicLiked: showMusicLiked ?? this.showMusicLiked,
+      showMusicDisliked: showMusicDisliked ?? this.showMusicDisliked,
+      showFavoriteSong: showFavoriteSong ?? this.showFavoriteSong,
+      showFavoriteBand: showFavoriteBand ?? this.showFavoriteBand,
+      showHabitsSmoking: showHabitsSmoking ?? this.showHabitsSmoking,
+      showHabitsAlcohol: showHabitsAlcohol ?? this.showHabitsAlcohol,
+      showHabitsDrugs: showHabitsDrugs ?? this.showHabitsDrugs,
     );
   }
 }

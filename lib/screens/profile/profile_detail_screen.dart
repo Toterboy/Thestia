@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:thestia/models/profile/gender.dart';
+import 'package:thestia/models/profile/habitude_level.dart';
 import 'package:thestia/models/profile/user_mood.dart';
 import 'package:thestia/models/profile/user_profile.dart';
 import 'package:thestia/providers/chat/chat_provider.dart';
@@ -536,9 +537,16 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
               ],
               // Musik-Geschmack (v0.8.0): gemeinsame Genres hervorgehoben.
               // Plus Lieblingssong/Band (v0.9.1, aus der Einrichtung).
+              //
+              // BEFUND (22.11.2026, Betreiber): "Musik Genres, die man
+              // mag und Lieblings-Song und Künstler werden alle nicht im
+              // Profil angezeigt (öffentlich)." Der Lieblings-Kuenstler
+              // (Lieblingsband) fehlte in der Bedingung - stand nur der
+              // Lieblings-Kuenstler im Profil, war die ganze Karte weg.
               if (profile.musicLiked.isNotEmpty ||
                   profile.musicDisliked.isNotEmpty ||
-                  (profile.favoriteSong?.isNotEmpty == true)) ...[
+                  (profile.favoriteSong?.isNotEmpty == true) ||
+                  (profile.favoriteBand?.isNotEmpty == true)) ...[
                 const SizedBox(height: 12),
                 Builder(
                   builder: (context) {
@@ -680,11 +688,84 @@ class _ProfileDetailScreenState extends ConsumerState<ProfileDetailScreen> {
                   },
                 ),
               ],
+              // Die Gewohnheiten (Rauchen/Alkohol/Drogen).
+              //
+              // NUTZERWUNSCH (22.11.2026): "Man soll diese Punkte und die
+              // Gewohnheiten einzeln fürs öffentliche Profil an und aus
+              // machen können." Die Werte kommen vom Server - ist eine
+              // Gewohnheit abgeschaltet, liefert der Server null und sie
+              // steht hier nicht.
+              if (profile.smoking != null ||
+                  profile.alcohol != null ||
+                  profile.drugs != null) ...[
+                const SizedBox(height: 12),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.local_cafe_outlined,
+                              size: 18,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              L10n.t(context, 'profile.detail.habits'),
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        for (final eintrag in <(String, HabitudeLevel?)>[
+                          ('profile.detail.habitSmoking', profile.smoking),
+                          ('profile.detail.habitAlcohol', profile.alcohol),
+                          ('profile.detail.habitDrugs', profile.drugs),
+                        ])
+                          if (eintrag.$2 != null) ...[
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    '${L10n.t(context, eintrag.$1)}: '
+                                    '${_habitudeLabel(context, eintrag.$2!)}',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                          ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
+  }
+}
+
+/// Der Text einer Gewohnheit (NUTZERWUNSCH 22.11.2026: die Gewohnheiten
+/// stehen im oeffentlichen Profil).
+String _habitudeLabel(BuildContext context, HabitudeLevel stufe) {
+  switch (stufe) {
+    case HabitudeLevel.never:
+      return L10n.t(context, 'profile.detail.habitNever');
+    case HabitudeLevel.occasionally:
+      return L10n.t(context, 'profile.detail.habitOccasionally');
+    case HabitudeLevel.daily:
+      return L10n.t(context, 'profile.detail.habitDaily');
   }
 }
 

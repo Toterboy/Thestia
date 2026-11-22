@@ -90,6 +90,8 @@ const Map<String, String> _routen = <String, String>{
   '/privacy/terms': '/privacy/terms',
   '/privacy/imprint': '/privacy/imprint',
   '/safety-center': '/safety-center',
+  '/safety-center/blocked-users': '/safety-center/blocked-users',
+  '/safety-center/my-reports': '/safety-center/my-reports',
   '/devices': '/devices',
   '/dating-hour': '/dating-hour',
   '/dating-hour/preferences': '/dating-hour/preferences',

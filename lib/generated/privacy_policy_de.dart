@@ -513,6 +513,40 @@ const List<PrivacyBlock> kPrivacyPolicyDe = <PrivacyBlock>[
     'p',
     '**Was das nicht ist:** Der Android-Schalter gegen das Lernen hat auf iOS keine Entsprechung - dort wirkt nur die eigene Tastatur. Und in den Feldern mit Systemtastatur sieht die Tastatur deinen Text weiterhin; sie darf ihn nur nicht lernen. Sichtbarer Text kann außerdem immer über den Bildschirm abgefangen werden - dagegen steht die Screenshot-Sperre der App.',
   ),
+  PrivacyBlock('h3', '3b-6. Was andere in deinem Profil sehen (v0.10.2)'),
+  PrivacyBlock(
+    'p',
+    'Dein öffentliches Profil zeigt nicht alles, was du angegeben hast. Unter **„Datenschutz & Account"** kannst du **jeden Punkt einzeln** abschalten: deine gemagten Musik-Genres, die abgelehnten Genres, deinen Lieblingssong, deinen Lieblings-Künstler sowie deine Gewohnheiten (Rauchen, Alkohol, Drogen). Die Entfernung (grob, in Stufen) und dein Name beim Transit-Zuwinken haben eigene Schalter.',
+  ),
+  PrivacyBlock(
+    'table_head',
+    '',
+    cells: <String>['Angabe', 'Empfänger', 'Zweck', 'Speicherung'],
+  ),
+  PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
+      'Die Schalter selbst (welche Punkte sichtbar sind)',
+      'nur du und der Server, der sie auswertet',
+      'sie entscheiden, was das öffentliche Profil zeigt',
+      'serverseitig bei deinem Profil',
+    ],
+  ),
+  PrivacyBlock(
+    'table',
+    '',
+    cells: <String>[
+      'Die abgeschalteten Angaben (z. B. dein Lieblingssong)',
+      'niemand - der Server liefert sie gar nicht erst',
+      'der Rest des Profils',
+      'wie die Angabe selbst: bei deinem Profil',
+    ],
+  ),
+  PrivacyBlock(
+    'p',
+    '**Der Server entscheidet, nicht dein Gerät:** Die Schalter werden mit deinem Profil gespeichert und bei jedem Aufruf des öffentlichen Profils ausgewertet. Ein Gerät, auf dem der Schalter fehlt, kann die Angabe nicht doch anzeigen.',
+  ),
   PrivacyBlock('h2', '3b. Nahbereichsfunk (BLE, „Transit Spark")'),
   PrivacyBlock(
     'p',

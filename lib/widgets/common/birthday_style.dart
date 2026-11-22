@@ -26,6 +26,70 @@ class BirthdayStyle {
 
   static String orDefault(String? style) =>
       (style != null && isKnown(style)) ? style : values.first;
+
+  /// Der Hintergrund des Geburtstagsthemes (der Verlauf des Stils).
+  ///
+  /// NUTZERWUNSCH (22.11.2026): "Die Geburtstagsvorschau ist noch immer
+  /// komplett falsch, da der Hintergrund nicht der des
+  /// Geburtstagsthemes ist." Der Hintergrund lag vorher PRIVAT in der
+  /// Vorschaukarte - die Profilflaeche ([BirthdayStyleSurface]) hatte
+  /// deshalb eine eigene, schwache Tönung und zeigte nie den Verlauf,
+  /// den der Nutzer gewählt hat (und den er in der Auswahl sieht).
+  ///
+  /// Es ist derselbe Verlauf fuer Auswahl, Profil und Vorschau - so
+  /// kann die Vorschau nicht vom echten Profil abweichen.
+  static LinearGradient gradientFor(String style, BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final surface = scheme.surfaceContainerHighest;
+    switch (style) {
+      case 'midnight':
+        return const LinearGradient(
+          colors: [Color(0xFF1A2340), Color(0xFF2E3E6E)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'sage':
+        return LinearGradient(
+          colors: [const Color(0xFF9CAF88), surface],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'rose':
+        return LinearGradient(
+          colors: [const Color(0xFFE8B4B8), surface],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'mono':
+        return const LinearGradient(
+          colors: [Color(0xFF2B2B2B), Color(0xFF5A5A5A)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+      case 'classic':
+      default:
+        return LinearGradient(
+          colors: [const Color(0xFFC9A227).withValues(alpha: 0.55), surface],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+    }
+  }
+
+  /// Die Textfarbe, die auf dem Hintergrund des Stils lesbar ist.
+  ///
+  /// Bei den dunklen Stilen (midnight, mono) muss der Text hell sein -
+  /// sonst steht schwarzer Text auf dunkelblauem Grund.
+  static Color foregroundFor(String style, BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    switch (style) {
+      case 'midnight':
+      case 'mono':
+        return Colors.white;
+      default:
+        return scheme.onSurface;
+    }
+  }
 }
 
 /// Vorschaukarte für einen Geburtstags-Stil: MINI-PROFIL-SCREEN-VORSCHAU
@@ -257,43 +321,13 @@ class BirthdayStylePreview extends StatelessWidget {
 
   /// Dezente Verläufe je Stil (Light/Dark-tauglich über Scheme-Farben
   /// gemischt mit Stil-Akzent).
-  static LinearGradient _gradientFor(String style, BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final surface = scheme.surfaceContainerHighest;
-    switch (style) {
-      case 'midnight':
-        return const LinearGradient(
-          colors: [Color(0xFF1A2340), Color(0xFF2E3E6E)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        );
-      case 'sage':
-        return LinearGradient(
-          colors: [const Color(0xFF9CAF88), surface],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        );
-      case 'rose':
-        return LinearGradient(
-          colors: [const Color(0xFFE8B4B8), surface],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        );
-      case 'mono':
-        return const LinearGradient(
-          colors: [Color(0xFF2B2B2B), Color(0xFF5A5A5A)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        );
-      case 'classic':
-      default:
-        return LinearGradient(
-          colors: [const Color(0xFFC9A227).withValues(alpha: 0.55), surface],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        );
-    }
-  }
+  ///
+  /// DER HINTERGRUND DES THEMAS (20.11.2026) - er liegt jetzt in
+  /// [BirthdayStyle.gradientFor], damit Profil, Vorschau und Auswahl
+  /// denselben Hintergrund benutzen. Vorher war er nur hier (privat),
+  /// und die Profilfläche malte eine eigene, schwache Tönung.
+  static LinearGradient _gradientFor(String style, BuildContext context) =>
+      BirthdayStyle.gradientFor(style, context);
 
   /// Kopf-Waschung (leichter Schein im Profil-Kopfbereich, je Stil
   /// anders - Midnight/Mono dunkler Schein, Rose/Sage/Gold warm).
@@ -580,9 +614,17 @@ class BirthdayChip extends StatelessWidget {
 /// [BirthdayStyleFrame] bleibt als Akzent um das Bild; diese Fläche legt
 /// den Stil zusätzlich hinter den gesamten Inhalt.
 ///
-/// Die Farbe wird mit der Oberfläche gemischt, nicht als transparenter
-/// Schleier darübergelegt: Text und Karten bleiben so in jedem Theme
-/// lesbar. [active] = false gibt das Kind unverändert zurück.
+/// NUTZERWUNSCH (22.11.2026): "Die Geburtstagsvorschau ist noch immer
+/// komplett falsch, da der Hintergrund nicht der des Geburtstagsthemes
+/// ist." Deshalb malt die Fläche jetzt [BirthdayStyle.gradientFor] - den
+/// Hintergrund, den der Nutzer in der Auswahl sieht. Vorher war es eine
+/// eigene, schwache Tönung (22 % Akzent auf der weißen Fläche) - bei
+/// midnight und mono war die Fläche damit praktisch weiß.
+///
+/// Der Text auf der Fläche bekommt die passende Farbe
+/// ([BirthdayStyle.foregroundFor]) - bei den dunklen Stilen (midnight,
+/// mono) muss er hell sein, sonst steht schwarzer Text auf dunklem
+/// Grund.
 class BirthdayStyleSurface extends StatelessWidget {
   const BirthdayStyleSurface({
     required this.style,
@@ -606,46 +648,17 @@ class BirthdayStyleSurface extends StatelessWidget {
       duration: duration,
       curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
-        gradient: surfaceGradientFor(style, context),
+        gradient: BirthdayStyle.gradientFor(style, context),
         borderRadius: borderRadius,
       ),
-      child: child,
+      // Die runden Ecken duerfen das Kind nicht ueberragen.
+      clipBehavior: Clip.antiAlias,
+      child: DefaultTextStyle.merge(
+        // NUR die Farbe - Groesse und Schriftart kommen aus dem Theme.
+        style: TextStyle(color: BirthdayStyle.foregroundFor(style, context)),
+        child: child,
+      ),
     );
-  }
-
-  /// Opaque Mischung aus Stil-Akzent und Oberfläche.
-  ///
-  /// Bewusst deckend statt halbtransparent: ein Gradient mit Alpha
-  /// würde je nach Untergrund (Scaffold, Bottom-Sheet, Karte) anders
-  /// aussehen und den Kontrast von Text unvorhersehbar machen.
-  static LinearGradient surfaceGradientFor(String style, BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final accent = _accentFor(style);
-    final base = scheme.surface;
-    return LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [
-        Color.alphaBlend(accent.withValues(alpha: 0.22), base),
-        Color.alphaBlend(accent.withValues(alpha: 0.07), base),
-      ],
-    );
-  }
-
-  static Color _accentFor(String style) {
-    switch (style) {
-      case 'midnight':
-        return const Color(0xFF2E3E6E);
-      case 'sage':
-        return const Color(0xFF9CAF88);
-      case 'rose':
-        return const Color(0xFFE8B4B8);
-      case 'mono':
-        return const Color(0xFF5A5A5A);
-      case 'classic':
-      default:
-        return const Color(0xFFC9A227);
-    }
   }
 }
 

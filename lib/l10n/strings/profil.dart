@@ -28,6 +28,15 @@ const Map<String, Map<String, String>> stringsProfil = {
     'profile.detail.commonWithYou': 'Gemeinsam mit dir',
     'profile.detail.favoriteBand': 'Lieblingsband: {band}',
     'profile.detail.favoriteSong': 'Lieblingssong: {song}',
+    // NUTZERWUNSCH (22.11.2026): Die Gewohnheiten gehoeren ins
+    // oeffentliche Profil (mit einem Schalter je Gewohnheit).
+    'profile.detail.habitAlcohol': 'Alkohol',
+    'profile.detail.habitDaily': 'Täglich',
+    'profile.detail.habitDrugs': 'Drogen',
+    'profile.detail.habitNever': 'Nie',
+    'profile.detail.habitOccasionally': 'Gelegentlich',
+    'profile.detail.habitSmoking': 'Rauchen',
+    'profile.detail.habits': 'Gewohnheiten',
     'profile.detail.interests': 'Interessen',
     'profile.detail.more': 'Weitere',
     'profile.detail.music': 'Musik',
@@ -223,6 +232,15 @@ const Map<String, Map<String, String>> stringsProfil = {
     'profile.detail.commonWithYou': 'Shared with you',
     'profile.detail.favoriteBand': 'Favorite band: {band}',
     'profile.detail.favoriteSong': 'Favorite song: {song}',
+    // NUTZERWUNSCH (22.11.2026): Die Gewohnheiten gehoeren ins
+    // oeffentliche Profil (mit einem Schalter je Gewohnheit).
+    'profile.detail.habitAlcohol': 'Alcohol',
+    'profile.detail.habitDaily': 'Daily',
+    'profile.detail.habitDrugs': 'Drugs',
+    'profile.detail.habitNever': 'Never',
+    'profile.detail.habitOccasionally': 'Occasionally',
+    'profile.detail.habitSmoking': 'Smoking',
+    'profile.detail.habits': 'Habits',
     'profile.detail.interests': 'Interests',
     'profile.detail.more': 'More',
     'profile.detail.music': 'Music',

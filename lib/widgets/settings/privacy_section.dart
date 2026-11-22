@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/profile/profile_visibility.dart';
+import 'package:thestia/models/settings/app_settings.dart';
 import 'package:thestia/providers/profile/profile_provider.dart';
 import 'package:thestia/providers/settings/settings_provider.dart';
 import 'package:thestia/utils/location/age_safety_rules.dart';
@@ -207,6 +208,70 @@ class PrivacySectionCard extends ConsumerWidget {
                   ? null
                   : (v) => notifier.setShowDistance(v),
             ),
+            const SizedBox(height: 16),
+            // NUTZERWUNSCH (22.11.2026): "Man soll diese Punkte und die
+            // Gewohnheiten einzeln fürs öffentliche Profil an und aus
+            // machen können."
+            //
+            // JEDER PUNKTE EIN SCHALTER. Der Server entscheidet
+            // (Migration 222): die andere Person sieht das Profil über
+            // den Server - ein Schalter nur im Gerät wäre wertlos.
+            Text(
+              L10n.t(context, 'settings.publicProfileFields'),
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              L10n.t(context, 'settings.publicProfileFieldsSub'),
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 4),
+            for (final schalter in <_OeffentlicherSchalter>[
+              _OeffentlicherSchalter(
+                'settings.showMusicLiked',
+                (a) => a.showMusicLiked,
+                notifier.setShowMusicLiked,
+              ),
+              _OeffentlicherSchalter(
+                'settings.showMusicDisliked',
+                (a) => a.showMusicDisliked,
+                notifier.setShowMusicDisliked,
+              ),
+              _OeffentlicherSchalter(
+                'settings.showFavoriteSong',
+                (a) => a.showFavoriteSong,
+                notifier.setShowFavoriteSong,
+              ),
+              _OeffentlicherSchalter(
+                'settings.showFavoriteBand',
+                (a) => a.showFavoriteBand,
+                notifier.setShowFavoriteBand,
+              ),
+              _OeffentlicherSchalter(
+                'settings.showHabitsSmoking',
+                (a) => a.showHabitsSmoking,
+                notifier.setShowHabitsSmoking,
+              ),
+              _OeffentlicherSchalter(
+                'settings.showHabitsAlcohol',
+                (a) => a.showHabitsAlcohol,
+                notifier.setShowHabitsAlcohol,
+              ),
+              _OeffentlicherSchalter(
+                'settings.showHabitsDrugs',
+                (a) => a.showHabitsDrugs,
+                notifier.setShowHabitsDrugs,
+              ),
+            ])
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                title: Text(L10n.t(context, schalter.titelKey)),
+                value: schalter.lesen(settings),
+                onChanged: readOnly
+                    ? null
+                    : (v) => unawaited(schalter.setzen(v)),
+              ),
             const SizedBox(height: 8),
             Text(
               L10n.t(context, 'settings.localDataNote'),
@@ -220,6 +285,24 @@ class PrivacySectionCard extends ConsumerWidget {
     if (maxHeight == null) return karte;
     return SizedBox(height: maxHeight, child: karte);
   }
+}
+
+/// Ein Schalter fuer das oeffentliche Profil.
+///
+/// NUTZERWUNSCH (22.11.2026): Die Punkte (Musik, Lieblingssong,
+/// Lieblings-Kuenstler) und die Gewohnheiten sollen je einzeln
+/// ein- und ausgeschaltet werden koennen.
+class _OeffentlicherSchalter {
+  const _OeffentlicherSchalter(this.titelKey, this.lesen, this.setzen);
+
+  /// Der L10n-Key des Titels.
+  final String titelKey;
+
+  /// Liest den aktuellen Stand.
+  final bool Function(AppSettings) lesen;
+
+  /// Schreibt den neuen Stand (lokal und auf dem Server).
+  final Future<void> Function(bool) setzen;
 }
 
 /// Überschrift des Abschnitts.

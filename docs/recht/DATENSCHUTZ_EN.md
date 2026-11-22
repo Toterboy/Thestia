@@ -264,6 +264,24 @@ text; it is only not allowed to learn from it. Visible text can also
 always be captured from the screen - the app's screenshot protection is
 what stands against that.
 
+### 3b-6. What others see in your profile (v0.10.2)
+
+Your public profile does not show everything you have entered. Under
+**"Privacy & account"** you can switch off **each item separately**: the
+music genres you like, the genres you dislike, your favourite song, your
+favourite artist and your habits (smoking, alcohol, drugs). The distance
+(rough, in steps) and your name when someone waves to you on Transit Spark
+have their own switches.
+
+| Detail | Recipient | Purpose | Storage |
+|---|---|---|---|
+| The switches themselves (which items are visible) | only you and the server that evaluates them | they decide what the public profile shows | on the server with your profile |
+| The switched-off details (e.g. your favourite song) | nobody - the server does not deliver them at all | the rest of the profile | like the detail itself: with your profile |
+
+**The server decides, not your device:** The switches are stored with your
+profile and are evaluated whenever the public profile is called. A device
+that does not have the switch cannot show the detail anyway.
+
 ## 3b. Near-field radio (BLE, "Transit Spark")
 
 Transit Spark uses Bluetooth Low Energy so that two people can meet

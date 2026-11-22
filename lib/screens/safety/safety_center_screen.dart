@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:thestia/services/auth/supabase_service.dart';
-import 'package:thestia/services/profile/report_service.dart';
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/routing/app_router.dart';
 
 /// Safety Center: zentrale Anlaufstelle bei Belästigung, Stalking oder
 /// Bedrohung – mit externen Hilfsangeboten und In-App-Maßnahmen.
@@ -126,9 +126,28 @@ class _SafetyCenterScreenState extends ConsumerState<SafetyCenterScreen> {
             titelKey: 'safety.ageTitle',
             textKey: 'safety.ageBody',
           ),
-          const _BlockedUsersSection(),
-          const SizedBox(height: 8),
-          const _MyReportsSection(),
+          // NUTZERWUNSCH (22.11.2026): "Blockierte Nutzer und Meldungen
+          // sollen beide als einzelne Screens, damit der Safety Center
+          // Screen nicht überladen wird, wenn es viele blockierungen
+          // und oder Meldungen gibt."
+          //
+          // Vorher standen beide Listen hier - eine Zeile je Eintrag.
+          // Bei vielen Blockierungen oder Meldungen wurde der Screen
+          // unbrauchbar. Jetzt führen zwei Kacheln zu je einem Screen.
+          ListTile(
+            leading: const Icon(Icons.block_outlined),
+            title: Text(L10n.t(context, 'safety.blockedUsers')),
+            subtitle: Text(L10n.t(context, 'safety.blockedUsersSub')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.blockedUsers),
+          ),
+          ListTile(
+            leading: const Icon(Icons.flag_outlined),
+            title: Text(L10n.t(context, 'safety.myReports')),
+            subtitle: Text(L10n.t(context, 'safety.myReportsSub')),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.myReports),
+          ),
           // BEFUND (14.11.2026, Betreiber): "Meine Daten exportieren bei
           // Safety Center obwohl schon bei Datenschutz und Account."
           //
@@ -208,184 +227,6 @@ class _SchutzKachel extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// Meine Meldungen (v0.8.0): Status-Feedback ohne Details zu Dritten.
-class _MyReportsSection extends ConsumerStatefulWidget {
-  const _MyReportsSection();
-
-  @override
-  ConsumerState<_MyReportsSection> createState() => _MyReportsSectionState();
-}
-
-class _MyReportsSectionState extends ConsumerState<_MyReportsSection> {
-  List<MyReportEntry>? _reports;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    try {
-      final reports = await _loadReports();
-      if (mounted) setState(() => _reports = reports);
-    } catch (_) {
-      if (mounted) setState(() => _reports = []);
-    }
-  }
-
-  Future<List<MyReportEntry>> _loadReports() async {
-    final response = await SupabaseService.client.rpc('list_my_reports');
-    final rows = (response as List<dynamic>? ?? <dynamic>[]);
-    return rows
-        .map(
-          (row) =>
-              MyReportEntry.fromJson(Map<String, dynamic>.from(row as Map)),
-        )
-        .toList();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          L10n.t(context, 'safety.myReports'),
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        if (_reports == null)
-          const Center(
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          )
-        else if (_reports!.isEmpty)
-          Text(
-            L10n.t(context, 'safety.noReports'),
-            style: const TextStyle(color: Colors.grey),
-          )
-        else
-          for (final report in _reports!)
-            ListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(
-                report.status == 'pending'
-                    ? Icons.hourglass_top
-                    : Icons.check_circle_outline,
-                size: 20,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              title: Text(
-                report.reportType.isEmpty
-                    ? L10n.t(context, 'report.type.default')
-                    : report.reportType,
-              ),
-              subtitle: Text(report.statusLabel),
-            ),
-      ],
-    );
-  }
-}
-
-/// Blockierte Nutzer (v0.8.0): Liste mit Entblocken.
-class _BlockedUsersSection extends ConsumerStatefulWidget {
-  const _BlockedUsersSection();
-
-  @override
-  ConsumerState<_BlockedUsersSection> createState() =>
-      _BlockedUsersSectionState();
-}
-
-class _BlockedUsersSectionState extends ConsumerState<_BlockedUsersSection> {
-  List<BlockedUserEntry>? _blocked;
-
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    try {
-      final response = await SupabaseService.client.rpc('list_blocked_users');
-      final rows = (response as List<dynamic>? ?? <dynamic>[]);
-      final blocked = rows
-          .map(
-            (row) => BlockedUserEntry.fromJson(
-              Map<String, dynamic>.from(row as Map),
-            ),
-          )
-          .toList();
-      if (mounted) setState(() => _blocked = blocked);
-    } catch (_) {
-      if (mounted) setState(() => _blocked = []);
-    }
-  }
-
-  Future<void> _unblock(BlockedUserEntry entry) async {
-    try {
-      await SupabaseService.client.rpc(
-        'unblock_user',
-        params: {'p_blocked': entry.blockedUserId},
-      );
-      _load();
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(L10n.t(context, 'safety.unblockFailed')),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          L10n.t(context, 'safety.blockedUsers'),
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 8),
-        if (_blocked == null)
-          const Center(
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          )
-        else if (_blocked!.isEmpty)
-          Text(
-            L10n.t(context, 'safety.noBlocked'),
-            style: const TextStyle(color: Colors.grey),
-          )
-        else
-          for (final entry in _blocked!)
-            ListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.block_outlined),
-              title: Text(entry.name),
-              trailing: TextButton(
-                onPressed: () => _unblock(entry),
-                child: Text(L10n.t(context, 'safety.unblock')),
-              ),
-            ),
-      ],
     );
   }
 }

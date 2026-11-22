@@ -7,9 +7,15 @@
 //
 // WAS HIER GEPRUEFT WIRD:
 //   * die Hilfetelefone und die Schutz-Kacheln stehen da,
-//   * die eigenen Meldungen werden angezeigt (mit ihrem Status),
-//   * blockierte Nutzer werden angezeigt und koennen entsperrt werden,
-//   * ohne Meldungen/blockierte Nutzer steht das ehrlich da.
+//   * die beiden Listen (blockierte Nutzer, eigene Meldungen) haben je
+//     einen EIGENEN Screen - hier steht nur der Einstieg.
+//     Die Listen selbst werden in safety_lists_screens_test.dart
+//     geprueft.
+//
+// NUTZERWUNSCH (22.11.2026): "Blockierte Nutzer und Meldungen sollen
+// beide als einzelne Screens, damit der Safety Center Screen nicht
+// ueberladen wird, wenn es viele blockierungen und oder Meldungen
+// gibt."
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -113,57 +119,17 @@ void main() {
       );
     });
 
-    testWidgets('ohne Meldungen steht das da', (tester) async {
-      server.rpcAntworten['list_my_reports'] = <dynamic>[];
-
-      await zeigeScreen(tester);
-      await warteAufServer(tester);
-
-      expect(tester.takeException(), isNull);
-      await scrollZu(
-        tester,
-        find.text(L10n.tWithoutContext('safety.myReports')),
-      );
-      expect(
-        find.text(L10n.tWithoutContext('safety.noReports')),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets('die eigenen Meldungen werden gezeigt', (tester) async {
-      server.rpcAntworten['list_my_reports'] = <dynamic>[
-        <String, dynamic>{
-          'id': 'r1',
-          'reportType': 'Belästigung / Beleidigungen',
-          'status': 'pending',
-          'createdAt': '2026-11-01T10:00:00Z',
-        },
-        <String, dynamic>{
-          'id': 'r2',
-          'reportType': 'Spam',
-          'status': 'reviewed',
-          'createdAt': '2026-11-02T10:00:00Z',
-        },
-      ];
-
-      await zeigeScreen(tester);
-      await warteAufServer(tester);
-
-      expect(tester.takeException(), isNull);
-      await scrollZu(
-        tester,
-        find.text(L10n.tWithoutContext('safety.myReports')),
-      );
-      expect(find.text('Belästigung / Beleidigungen'), findsOneWidget);
-      expect(find.text('Spam'), findsOneWidget);
-      // Der Status steht dabei - der Nutzer muss wissen, was passiert ist.
-      expect(find.text('Wird geprüft'), findsOneWidget);
-      expect(find.text('Wurde geprüft'), findsOneWidget);
-    });
-
-    testWidgets('ohne blockierte Nutzer steht das da', (tester) async {
-      server.rpcAntworten['list_blocked_users'] = <dynamic>[];
-
+    testWidgets('die beiden Listen haben je einen eigenen Screen', (
+      tester,
+    ) async {
+      // NUTZERWUNSCH (22.11.2026): "Blockierte Nutzer und Meldungen
+      // sollen beide als einzelne Screens, damit der Safety Center
+      // Screen nicht ueberladen wird, wenn es viele blockierungen
+      // und oder Meldungen gibt."
+      //
+      // Der Safety Center zeigt also nur die EINSTIEGE - die Listen
+      // selbst stehen in eigenen Screens (test dafuer:
+      // safety_lists_screens_test.dart).
       await zeigeScreen(tester);
       await warteAufServer(tester);
 
@@ -173,14 +139,26 @@ void main() {
         find.text(L10n.tWithoutContext('safety.blockedUsers')),
       );
       expect(
-        find.text(L10n.tWithoutContext('safety.noBlocked')),
+        find.text(L10n.tWithoutContext('safety.blockedUsersSub')),
+        findsOneWidget,
+      );
+      expect(
+        find.text(L10n.tWithoutContext('safety.myReportsSub')),
         findsOneWidget,
       );
     });
 
-    testWidgets('ein blockierter Nutzer laesst sich entsperren', (
+    testWidgets('die Listen selbst stehen nicht mehr im Safety Center', (
       tester,
     ) async {
+      server.rpcAntworten['list_my_reports'] = <dynamic>[
+        <String, dynamic>{
+          'id': 'r1',
+          'reportType': 'Belästigung / Beleidigungen',
+          'status': 'pending',
+          'createdAt': '2026-11-01T10:00:00Z',
+        },
+      ];
       server.rpcAntworten['list_blocked_users'] = <dynamic>[
         <String, dynamic>{
           'blockedUserId': 'partner-1',
@@ -193,23 +171,9 @@ void main() {
       await warteAufServer(tester);
 
       expect(tester.takeException(), isNull);
-      await scrollZu(tester, find.text('Mira'));
-      expect(find.text('Mira'), findsOneWidget);
-
-      await tester.tap(
-        find.widgetWithText(TextButton, L10n.tWithoutContext('safety.unblock')),
-      );
-      await tester.pump();
-      await warteAufServer(tester);
-
-      expect(tester.takeException(), isNull);
-      expect(
-        server.rpcAufrufe.any((c) => c['funktion'] == 'unblock_user'),
-        isTrue,
-        reason:
-            'Das Entsperren muss beim Server ankommen - sonst bleibt der '
-            'Nutzer gesperrt.',
-      );
+      // Die Eintraege selbst duerfen hier NICHT mehr stehen.
+      expect(find.text('Belästigung / Beleidigungen'), findsNothing);
+      expect(find.text('Mira'), findsNothing);
     });
   });
 }

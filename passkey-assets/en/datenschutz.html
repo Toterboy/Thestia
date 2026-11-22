@@ -794,6 +794,18 @@
 </table>
 </div>
 <p><strong>What this is not:</strong> The Android switch against learning has no equivalent on iOS - there only the app's own keyboard helps. And in the fields that still use the system keyboard, that keyboard does see your text; it is only not allowed to learn from it. Visible text can also always be captured from the screen - the app's screenshot protection is what stands against that.</p>
+<h3>3b-6. What others see in your profile (v0.10.2)</h3>
+<p>Your public profile does not show everything you have entered. Under <strong>"Privacy &amp; account"</strong> you can switch off <strong>each item separately</strong>: the music genres you like, the genres you dislike, your favourite song, your favourite artist and your habits (smoking, alcohol, drugs). The distance (rough, in steps) and your name when someone waves to you on Transit Spark have their own switches.</p>
+<div class="tabellen-huelle">
+<table>
+<thead><tr><th>Detail</th><th>Recipient</th><th>Purpose</th><th>Storage</th></tr></thead>
+<tbody>
+<tr><td>The switches themselves (which items are visible)</td><td>only you and the server that evaluates them</td><td>they decide what the public profile shows</td><td>on the server with your profile</td></tr>
+<tr><td>The switched-off details (e.g. your favourite song)</td><td>nobody - the server does not deliver them at all</td><td>the rest of the profile</td><td>like the detail itself: with your profile</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>The server decides, not your device:</strong> The switches are stored with your profile and are evaluated whenever the public profile is called. A device that does not have the switch cannot show the detail anyway.</p>
 <h2>3b. Near-field radio (BLE, "Transit Spark")</h2>
 <p>Transit Spark uses Bluetooth Low Energy so that two people can meet nearby without having to talk to each other. Radio metadata is processed in the process.</p>
 <p><strong>What is sent:</strong> an ephemeral, random token (no device ID, no name, no MAC address of the device). The operating system's stack assigns a resolvable private address for the advertising; the app does not set a fixed address.</p>

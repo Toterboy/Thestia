@@ -15,15 +15,19 @@ class _ImageBubblePlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // NUTZERWUNSCH (22.11.2026): "Keinen Rand um Bilder im Chat." Der
+    // farbige Verlauf (lila/blau) um das Bild-Symbol wirkte wie ein
+    // Rahmen - der Platzhalter ist jetzt neutral grau, wie der
+    // View-Once-Platzhalter.
     return Container(
       width: 180,
       height: 120,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        gradient: const LinearGradient(colors: [Colors.purple, Colors.blue]),
+        color: Colors.grey.shade300,
       ),
       child: const Center(
-        child: Icon(Icons.image, color: Colors.white, size: 40),
+        child: Icon(Icons.image, color: Colors.grey, size: 40),
       ),
     );
   }

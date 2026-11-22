@@ -520,6 +520,14 @@ void main() {
         await tester.pump(const Duration(milliseconds: 120));
       }
       expect(knopf, findsOneWidget, reason: 'Der Backup-Knopf muss da sein.');
+      // DER KNOPF KANN AUSSERHALB DES BILDSCHIRMS LIEGEN: die Liste
+      // baut auch die Eintraege direkt unterhalb des Bildschirms - das
+      // Symbol ist dann im Baum, aber nicht antippbar ("off-screen").
+      // BEFUND (22.11.2026): Die sieben neuen Schalter fuer das
+      // oeffentliche Profil haben den Abschnitt nach unten geschoben -
+      // der Test tippte ins Leere.
+      await tester.ensureVisible(knopf);
+      await tester.pump();
       await tester.tap(knopf);
       await pumpFrames(tester);
     }

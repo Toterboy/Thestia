@@ -372,14 +372,14 @@ class _MessageBubbleState extends State<_MessageBubble> {
           child: Stack(
             children: [
               Center(
-                child: Container(
+                child: SizedBox(
                   width: double.infinity,
                   height: 320,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.purple, Colors.blue],
-                    ),
-                  ),
+                  // NUTZERWUNSCH (22.11.2026): "Keinen Rand um Bilder im
+                  // Chat." Vorher lag um das Bild ein farbiger Verlauf
+                  // (lila/blau) - der wirkte wie ein Rahmen um das
+                  // Bild. Das Bild steht jetzt direkt auf dem schwarzen
+                  // Dialog-Hintergrund.
                   child: _ChatImage(
                     mediaUrl: msg.mediaUrl ?? '',
                     fit: BoxFit.contain,
@@ -446,14 +446,13 @@ class _MessageBubbleState extends State<_MessageBubble> {
           child: Stack(
             children: [
               Center(
-                child: Container(
+                child: SizedBox(
                   width: double.infinity,
                   height: 320,
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.purple, Colors.blue],
-                    ),
-                  ),
+                  // NUTZERWUNSCH (22.11.2026): "Keinen Rand um Bilder im
+                  // Chat" - der farbige Verlauf war ein Rahmen um das
+                  // Bild. Jetzt steht das Bild direkt auf dem schwarzen
+                  // Dialog-Hintergrund.
                   child: _ChatImage(
                     mediaUrl: msg.mediaUrl ?? '',
                     fit: BoxFit.contain,

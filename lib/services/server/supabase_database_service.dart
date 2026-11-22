@@ -190,25 +190,45 @@ class SupabaseDatabaseService {
   Future<Map<String, dynamic>?> fetchOwnSwitches() async {
     final userId = _currentUser?.id;
     if (userId == null) return null;
-    try {
-      final response = await _client
-          .from('profiles')
-          .select(
-            'show_distance, notifications_enabled, notify_matches, '
-            'notify_likes, notify_messages, notify_dating_hour',
-          )
-          .eq('user_id', userId)
-          .maybeSingle();
-      if (response == null) return null;
-      return Map<String, dynamic>.from(response);
-    } catch (e) {
-      // Spalte fehlt (alter Serverstand) - kein Grund, den ganzen
-      // Vorgang abzubrechen.
-      if (kDebugMode) {
-        debugPrint('[DB] Schalter nicht lesbar: $e');
+    // DER WEG (22.11.2026): Die Spaltenliste wird stufenweise probiert.
+    // FEHLER: Ein fehlender Spaltenname macht die GANZE Abfrage kippen -
+    // dann kam kein einziger Schalter an (und der Nutzer glaubte, die
+    // Entfernung sei verborgen, obwohl der Server sie weiter zeigte).
+    // Deshalb: mit allen Spalten versuchen, bei einem Fehler ohne die
+    // neueren Spalten erneut.
+    const stufen = <String>[
+      // Alles (Migration 222).
+      'show_distance, notifications_enabled, notify_matches, notify_likes, '
+          'notify_messages, notify_dating_hour, transit_show_name, '
+          'transit_show_name_set, show_music_liked, show_music_disliked, '
+          'show_favorite_song, show_favorite_band, show_habits_smoking, '
+          'show_habits_alcohol, show_habits_drugs',
+      // Ohne die Schalter vom 10./22.11.2026.
+      'show_distance, notifications_enabled, notify_matches, notify_likes, '
+          'notify_messages, notify_dating_hour, transit_show_name, '
+          'transit_show_name_set',
+      // Nur die alten Push-Schalter (vor Migration 208).
+      'show_distance, notifications_enabled, notify_matches, notify_likes, '
+          'notify_messages, notify_dating_hour',
+    ];
+    for (final spalten in stufen) {
+      try {
+        final response = await _client
+            .from('profiles')
+            .select(spalten)
+            .eq('user_id', userId)
+            .maybeSingle();
+        if (response == null) return null;
+        return Map<String, dynamic>.from(response);
+      } catch (e) {
+        // Spalte fehlt (alter Serverstand) - die naechste Stufe ohne
+        // die neueren Spalten versuchen.
+        if (kDebugMode) {
+          debugPrint('[DB] Schalter nicht lesbar: $e');
+        }
       }
-      return null;
     }
+    return null;
   }
 
   Future<Map<String, dynamic>?> fetchOwnPreferences() async {

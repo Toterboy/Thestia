@@ -48,26 +48,42 @@ class _CooledMatchTile extends StatelessWidget {
         ),
         // NUTZERWUNSCH (31.10.2026): "Verifizierung soll fuer alle
         // Personen sichtbar sein" - auch in der Funken-Liste.
-        title: Row(
+        //
+        // NUTZERWUNSCH (22.11.2026): "Name und Alter nicht nebeneinander
+        // sondern untereinander aktuell (wenn refunke button da). So ist
+        // das nicht okay!" Der Re-Funke-Button braucht Platz - in einer
+        // Zeile wurde "Name, Alter" abgeschnitten. Der Name steht
+        // jetzt oben, das Alter darunter.
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Flexible(child: Text('${p.name}, ${p.age ?? '?'}')),
-            if (p.isVerified) ...[
-              const SizedBox(width: 6),
-              Tooltip(
-                message: L10n.t(context, 'verify.badge'),
-                child: Icon(
-                  Icons.verified,
-                  size: 18,
-                  color: Colors.lightBlue.shade400,
-                ),
-              ),
-            ],
-            // Der automatische Funke (Migration 177) - auch hier sichtbar,
-            // die Rueckfrage kommt beim Antippen.
-            if (match.autoMatch) ...[
-              const SizedBox(width: 6),
-              const _AutoMatchBadge(),
-            ],
+            Row(
+              children: [
+                Flexible(child: Text(p.name)),
+                if (p.isVerified) ...[
+                  const SizedBox(width: 6),
+                  Tooltip(
+                    message: L10n.t(context, 'verify.badge'),
+                    child: Icon(
+                      Icons.verified,
+                      size: 18,
+                      color: Colors.lightBlue.shade400,
+                    ),
+                  ),
+                ],
+                // Der automatische Funke (Migration 177) - auch hier
+                // sichtbar, die Rueckfrage kommt beim Antippen.
+                if (match.autoMatch) ...[
+                  const SizedBox(width: 6),
+                  const _AutoMatchBadge(),
+                ],
+              ],
+            ),
+            Text(
+              '${p.age ?? '?'} ${L10n.t(context, 'common.years')}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           ],
         ),
         subtitle: Text(

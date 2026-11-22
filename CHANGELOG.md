@@ -7,14 +7,35 @@ und folgt der [Semantic Versioning Specification (SemVer)](https://semver.org/la
 Solange die Versionsnummer mit `0.` beginnt (Initial Development Phase nach SemVer §4),
 können sich Schnittstellen und Verhalten jederzeit ändern.
 
-## [0.10.3] – Die Funken laden wieder, das Impressum steht in der App
-(Build 57, 2026-11-20)
+## [0.10.2] – Fehlerbehebungen aus dem Alltag und mehr Tests
+(Build 56 und 57, 2026-11-14 und 2026-11-22)
 
-> **Warum eine neue Version?** v0.10.2 (Build 56) war für die
-> Testabnahme gedacht, aber noch nicht veröffentlicht. Die beiden
-> Befunde des Betreibers – das Impressum und die Funken – sind
-> produktive Fehler; sie gehören in eine eigene Fassung, damit der
-> Teststand (Build 56) nachvollziehbar bleibt.
+> **Warum Build 57?** v0.10.2 (Build 56) war für die Testabnahme
+> gedacht, aber noch nicht veröffentlicht. Die beiden Befunde des
+> Betreibers – das Impressum und die Funken – sind produktive Fehler;
+> sie gehören in dieselbe, noch nicht veröffentlichte Fassung (Build
+> 57). Die Versionsnummer bleibt v0.10.2 – sie ging noch nirgends raus.
+>
+> **Neu in Build 57 (22.11.2026), aus dem Alltag des Betreibers:**
+>
+> - **Das Impressum steht jetzt in der App** (war: der Link auf
+>   thestia.de öffnete die App selbst, weil die Domain ein verifizierter
+>   App-Link ist).
+> - **Die Funkenliste im Interessen-Bereich lädt wieder** (war: der
+>   Server lehnte den Aufruf ab).
+> - **Die Entfernung in fremden Profilen** und **mehrere Profile auf
+>   einmal** (dieselbe Ursache).
+> - **Musik, Lieblingssong, Lieblings-Künstler und die Gewohnheiten**
+>   stehen im öffentlichen Profil – und lassen sich je Punkt einzeln
+>   abschalten.
+> - **Blockierte Nutzer und Meldungen** haben im Safety Center je einen
+>   eigenen Screen (der Screen war bei vielen Einträgen unbrauchbar).
+> - **Der Geburtstagsstil** färbt die ganze Fläche (vorher nur eine
+>   blasse Tönung – der Hintergrund des Geburtstagsthemes war nirgends
+>   zu sehen).
+> - **Bilder im Chat** haben runde Ecken und keinen Rahmen mehr.
+> - **Name und Alter** stehen in der Funken-Kachel untereinander (mit
+>   dem Re-Funke-Knopf war die Zeile zu eng).
 
 ### Behoben (20.11.2026) – Die Funken ließen sich nicht laden
 

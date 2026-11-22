@@ -149,6 +149,9 @@ const Map<String, Map<String, String>> stringsSchutz = {
         'entfernt; künftige Interaktionen werden serverseitig verhindert. '
         'Die Person erfährt nicht davon.',
     'safety.blockedUsers': 'Blockierte Nutzer',
+    'safety.blockedUsersSub':
+        'Nutzer, die du blockiert hast - hier kannst du sie wieder '
+        'entsperren.',
     'safety.hotline1': 'Hilfetelefon "Gewalt gegen Frauen"',
     'safety.hotline1Sub': '116 016 - kostenlos, 24/7, anonym',
     'safety.hotline2': 'TelefonSeelsorge',
@@ -159,6 +162,8 @@ const Map<String, Map<String, String>> stringsSchutz = {
     'safety.hotline4Sub': 'weisser-ring.de - 116 006',
     'safety.linkFailed': 'Konnte Link nicht öffnen.',
     'safety.myReports': 'Meine Meldungen',
+    'safety.myReportsSub':
+        'Meldungen, die du geschrieben hast, und ihr Bearbeitungsstand.',
     'safety.noBlocked': 'Du hast niemanden blockiert.',
     'safety.noReports': 'Du hast bisher keine Meldungen geschrieben.',
     'safety.protectOwnImages': 'Eigene Bilder schützen',
@@ -395,6 +400,8 @@ const Map<String, Map<String, String>> stringsSchutz = {
         'future interactions are prevented server-side. The person is not '
         'notified.',
     'safety.blockedUsers': 'Blocked users',
+    'safety.blockedUsersSub':
+        'People you blocked - you can unblock them again here.',
     'safety.hotline1': 'Help hotline "Violence against women"',
     'safety.hotline1Sub': '116 016 - free, 24/7, anonymous',
     'safety.hotline2': 'Telephone counselling',
@@ -405,6 +412,7 @@ const Map<String, Map<String, String>> stringsSchutz = {
     'safety.hotline4Sub': 'weisser-ring.de - 116 006',
     'safety.linkFailed': 'Could not open link.',
     'safety.myReports': 'My reports',
+    'safety.myReportsSub': 'Reports you wrote and the status of their review.',
     'safety.noBlocked': 'You have not blocked anyone.',
     'safety.noReports': 'You have not written any reports yet.',
     'safety.protectOwnImages': 'Protect your own images',

@@ -91,7 +91,16 @@ BODY = """
   photos = ARRAY[]::text[],
   max_distance_km = 100,
   distance_filter_mode = 'distance_km',
-  preferred_state = NULL
+  preferred_state = NULL,
+  -- NUTZERWUNSCH (22.11.2026): Die Schalter fuer das oeffentliche
+  -- Profil (Migration 222). Die App schickt sie mit.
+  show_music_liked = true,
+  show_music_disliked = true,
+  show_favorite_song = true,
+  show_favorite_band = true,
+  show_habits_smoking = true,
+  show_habits_alcohol = true,
+  show_habits_drugs = true
 """
 
 # Was der Client fuer preferred_state schickt, wenn dort ein BUNDESLAND

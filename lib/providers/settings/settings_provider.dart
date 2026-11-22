@@ -678,6 +678,89 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     }
   }
 
+  /// NUTZERWUNSCH (22.11.2026): "Man soll diese Punkte und die
+  /// Gewohnheiten einzeln fürs öffentliche Profil an und aus machen
+  /// können."
+  ///
+  /// Je Punkt EIN Schalter. Der Server entscheidet (Migration 222): die
+  /// oeffentliche Projektion liefert die Angabe nur, wenn der Schalter
+  /// an ist - ein Schalter nur im Geraet waere wertlos.
+  Future<void> setShowMusicLiked(bool value) => _setPublicSwitch(
+    'show_music_liked',
+    value,
+    (s) => s.showMusicLiked,
+    (s, v) => s.copyWith(showMusicLiked: v),
+  );
+
+  Future<void> setShowMusicDisliked(bool value) => _setPublicSwitch(
+    'show_music_disliked',
+    value,
+    (s) => s.showMusicDisliked,
+    (s, v) => s.copyWith(showMusicDisliked: v),
+  );
+
+  Future<void> setShowFavoriteSong(bool value) => _setPublicSwitch(
+    'show_favorite_song',
+    value,
+    (s) => s.showFavoriteSong,
+    (s, v) => s.copyWith(showFavoriteSong: v),
+  );
+
+  Future<void> setShowFavoriteBand(bool value) => _setPublicSwitch(
+    'show_favorite_band',
+    value,
+    (s) => s.showFavoriteBand,
+    (s, v) => s.copyWith(showFavoriteBand: v),
+  );
+
+  Future<void> setShowHabitsSmoking(bool value) => _setPublicSwitch(
+    'show_habits_smoking',
+    value,
+    (s) => s.showHabitsSmoking,
+    (s, v) => s.copyWith(showHabitsSmoking: v),
+  );
+
+  Future<void> setShowHabitsAlcohol(bool value) => _setPublicSwitch(
+    'show_habits_alcohol',
+    value,
+    (s) => s.showHabitsAlcohol,
+    (s, v) => s.copyWith(showHabitsAlcohol: v),
+  );
+
+  Future<void> setShowHabitsDrugs(bool value) => _setPublicSwitch(
+    'show_habits_drugs',
+    value,
+    (s) => s.showHabitsDrugs,
+    (s, v) => s.copyWith(showHabitsDrugs: v),
+  );
+
+  /// Setzt einen der oeffentlichen Schalter: lokal, in den Cache und auf
+  /// dem Server.
+  ///
+  /// Der Server ist die Wahrheit - die ANDERE Person sieht das Profil
+  /// ueber den Server. Deshalb wird der Wert auch dorthin geschrieben
+  /// (best effort: der Server-Schalter entscheidet).
+  Future<void> _setPublicSwitch(
+    String spalte,
+    bool wert,
+    bool Function(AppSettings) lesen,
+    AppSettings Function(AppSettings, bool) setzen,
+  ) async {
+    if (lesen(state) == wert) return;
+    state = setzen(state, wert);
+    await _persist();
+    try {
+      if (!SupabaseService.isInitialized) return;
+      await SupabaseDatabaseService(
+        SupabaseService.client,
+      ).updateOwnProfile({spalte: wert});
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[Settings] $spalte-Sync fehlgeschlagen: $e');
+      }
+    }
+  }
+
   /// Uebernimmt die serverseitig gespiegelten Schalter, die in eigenen
   /// Spalten stehen (v0.10.0).
   ///
@@ -723,6 +806,49 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     if (transitShowNameSet != null &&
         transitShowNameSet != next.transitShowNameSet) {
       next = next.copyWith(transitShowNameSet: transitShowNameSet);
+      changed = true;
+    }
+
+    // NUTZERWUNSCH (22.11.2026): Die Schalter fuer Musik und
+    // Gewohnheiten kommen auch vom Server - sie entscheiden, was andere
+    // sehen. Fehlt eine Spalte (alter Serverstand), bleibt der lokale
+    // Stand stehen.
+    final showMusicLiked = read<bool>('show_music_liked');
+    if (showMusicLiked != null && showMusicLiked != next.showMusicLiked) {
+      next = next.copyWith(showMusicLiked: showMusicLiked);
+      changed = true;
+    }
+    final showMusicDisliked = read<bool>('show_music_disliked');
+    if (showMusicDisliked != null &&
+        showMusicDisliked != next.showMusicDisliked) {
+      next = next.copyWith(showMusicDisliked: showMusicDisliked);
+      changed = true;
+    }
+    final showFavoriteSong = read<bool>('show_favorite_song');
+    if (showFavoriteSong != null && showFavoriteSong != next.showFavoriteSong) {
+      next = next.copyWith(showFavoriteSong: showFavoriteSong);
+      changed = true;
+    }
+    final showFavoriteBand = read<bool>('show_favorite_band');
+    if (showFavoriteBand != null && showFavoriteBand != next.showFavoriteBand) {
+      next = next.copyWith(showFavoriteBand: showFavoriteBand);
+      changed = true;
+    }
+    final showHabitsSmoking = read<bool>('show_habits_smoking');
+    if (showHabitsSmoking != null &&
+        showHabitsSmoking != next.showHabitsSmoking) {
+      next = next.copyWith(showHabitsSmoking: showHabitsSmoking);
+      changed = true;
+    }
+    final showHabitsAlcohol = read<bool>('show_habits_alcohol');
+    if (showHabitsAlcohol != null &&
+        showHabitsAlcohol != next.showHabitsAlcohol) {
+      next = next.copyWith(showHabitsAlcohol: showHabitsAlcohol);
+      changed = true;
+    }
+    final showHabitsDrugs = read<bool>('show_habits_drugs');
+    if (showHabitsDrugs != null && showHabitsDrugs != next.showHabitsDrugs) {
+      next = next.copyWith(showHabitsDrugs: showHabitsDrugs);
       changed = true;
     }
 
