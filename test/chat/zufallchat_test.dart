@@ -72,7 +72,16 @@ class _FakeRandomChatService extends RandomChatService {
 /// Test vorgibt - so laesst sich der Ausfall der Direktverbindung
 /// stellen.
 class _FakeP2PChatService extends P2PChatService {
-  _FakeP2PChatService(super.webrtc, super.prekey);
+  _FakeP2PChatService(super.webrtc, super.prekey, {this.haengeConnect = false});
+
+  /// Bleibt der Verbindungsaufbau haengen?
+  ///
+  /// DER GRUND: So bleibt der Bildschirm im Zustand "verbinde" stehen -
+  /// genau den sieht der Nutzer, wenn die direkte Verbindung Zeit braucht.
+  final bool haengeConnect;
+
+  /// Loest den haengenden Verbindungsaufbau.
+  final Completer<void> haenger = Completer<void>();
 
   /// Der ICE-Zustand, den der Test meldet.
   final StreamController<RTCIceConnectionState> ice =
@@ -90,6 +99,11 @@ class _FakeP2PChatService extends P2PChatService {
     required String peerId,
   }) async {
     verbindungen++;
+    if (haengeConnect) {
+      // Der Aufbau haengt - wie im Mobilfunknetz ohne TURN. Der Test
+      // loest ihn wieder (sonst steckt ein Timer im Test).
+      await haenger.future;
+    }
   }
 
   @override
@@ -182,6 +196,7 @@ void main() {
   Future<_FakeP2PChatService?> zeige(
     WidgetTester tester, {
     required RandomChatSession? sitzung,
+    bool haengeConnect = false,
   }) async {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -216,6 +231,7 @@ void main() {
             final dienst = _FakeP2PChatService(
               ref.watch(webRTCServiceProvider),
               ref.watch(preKeyServiceProvider),
+              haengeConnect: haengeConnect,
             );
             p2p = dienst;
             ref.onDispose(dienst.dispose);
@@ -281,6 +297,35 @@ void main() {
         reason:
             'Im Chat muss der "Gefällt mir"-Knopf stehen - das ist der '
             'einzige Weg aus dem Zufallschat heraus.',
+      );
+    });
+
+    testWidgets('waehrend des Verbindens steht der Hinweis', (tester) async {
+      // DER HANGENDE AUFBAU: Die direkte Verbindung kommt nicht - der
+      // Bildschirm muss das zeigen (sonst denkt der Nutzer, die App
+      // haenge).
+      final p2p = await zeige(
+        tester,
+        sitzung: const RandomChatSession(
+          sessionId: 'session-1',
+          partnerId: 'partner-1',
+          status: RandomChatStatus.active,
+        ),
+        haengeConnect: true,
+      );
+      addTearDown(() {
+        final dienst = p2p;
+        if (dienst != null && !dienst.haenger.isCompleted) {
+          dienst.haenger.complete();
+        }
+      });
+
+      expect(
+        find.text(L10n.tWithoutContext('random.connecting')),
+        findsOneWidget,
+        reason:
+            'Der Nutzer muss sehen, dass die App gerade verbindet - sonst '
+            'glaubt er, sie sei abgestuerzt.',
       );
     });
 
