@@ -131,25 +131,63 @@ def m_raise_bare(c):
         "RAISE EXCEPTION auth_strength_insufficient;")
 
 
+#: Eine Migration, die regprocedure benutzt, aber NICHTS sperrt.
+#:
+#: BEFUND (20.11.2026): Der Checker hielt jede Migration mit dem Wort
+#: "regprocedure" fuer einen Sweep. Viele Migrationen benutzen es nur,
+#: um die Definition EINER Funktion zu pruefen (pg_get_functiondef im
+#: Fail-Fast) - das ist kein Sweep. Dadurch wurde das Gate blind.
+KEIN_SWEEP_DATEI = '900_selftest_kein_sweep.sql'
+KEIN_SWEEP_INHALT = """-- Testdatei des Selbsttests: benutzt regprocedure und pg_proc,
+-- sperrt aber NICHTS. Eine solche Migration darf den Sweep nicht
+-- vortaeuschen - sonst sieht das Gate die offene Variante nicht.
+DO $$
+DECLARE
+  v_def text;
+BEGIN
+  SELECT pg_get_functiondef(
+           'public.match_proximity_spark(text[], text[], text, text[], text, text, text, text)'
+           ::regprocedure)
+    INTO v_def;
+  IF v_def IS NULL THEN
+    RAISE EXCEPTION 'Die Funktion fehlt.';
+  END IF;
+END;
+$$;
+"""
+
+
 MUTATIONS = [
     ('1 PUBLIC-Revoke', 'REVOKE ... FROM anon ohne FROM PUBLIC',
-     '123_revoke_public_execute.sql', m_anon_ohne_public),
+     '123_revoke_public_execute.sql', m_anon_ohne_public, '1 PUBLIC-Revoke'),
     ('2 Overloads', 'eine Variante einer ueberladenen Function bleibt offen',
-     '213_transit_candidates_and_place.sql', m_overload_luecke),
+     '213_transit_candidates_and_place.sql', m_overload_luecke, '2 Overloads'),
     ('3 prossrc-Check', 'Fail-Fast-Muster steht nur im Kommentar',
-     '127_remaining_db_hardening.sql', m_prosrc_kommentar),
+     '127_remaining_db_hardening.sql', m_prosrc_kommentar, '3 prossrc-Check'),
     ('4 LANGUAGE sql', 'spricht eine spaeter definierte Function an',
-     '126_discovery_privacy_filters.sql', m_language_sql),
+     '126_discovery_privacy_filters.sql', m_language_sql, '4 LANGUAGE sql'),
     ('5 Signatur', 'CREATE OR REPLACE aendert den Rueckabetyp',
-     '128_server_side_auth_strength.sql', m_rueckabetyp),
+     '128_server_side_auth_strength.sql', m_rueckabetyp, '5 Signatur'),
     ('6 RAISE', 'RAISE EXCEPTION ohne Anfuehrungszeichen',
-     '128_server_side_auth_strength.sql', m_raise_bare),
+     '128_server_side_auth_strength.sql', m_raise_bare, '6 RAISE'),
+    # BEFUND (20.11.2026): Migration 221 (die VOLATILE-Korrektur) hat
+    # das Gate blind gemacht - sie benutzt "regprocedure", sperrt aber
+    # nichts. Der Checker hat jede Migration mit dem Wort "regprocedure"
+    # als Sweep gehalten. Damit war die Fehlerklasse "2 Overloads" fuer
+    # alles unsichtbar, was VOR der letzten Migration angelegt war.
+    #
+    # Dieser Fall legt eine Migration an, die regprocedure und pg_proc
+    # benutzt, aber NICHTS sperrt - und verlangt, dass der Checker die
+    # offene Variante trotzdem meldet.
+    ('7 kein Sweep', 'eine Migration mit regprocedure sperrt nichts',
+     '213_transit_candidates_and_place.sql', m_overload_luecke,
+     '2 Overloads'),
 ]
 
 print('SELBSTTEST check_push_readiness.py\n' + '=' * 74)
 fails = []
 
-for cls, desc, target, mutate in MUTATIONS:
+for cls, desc, target, mutate, erwartet_klasse in MUTATIONS:
     with tempfile.TemporaryDirectory() as td:
         root = pathlib.Path(td)
         shutil.copytree(REPO / 'supabase' / 'migrations',
@@ -165,7 +203,7 @@ for cls, desc, target, mutate in MUTATIONS:
         #
         # Die uebrigen Fehlerklassen beziehen sich auf EINE Datei - fuer
         # sie bleibt der alte Ablauf (nur die Zieldatei wird mutiert).
-        if cls == '2 Overloads':
+        if cls in ('2 Overloads', '7 kein Sweep'):
             ziel_gefunden = False
             for f in sorted((root / 'supabase' / 'migrations').glob('*.sql')):
                 original = f.read_text(encoding='utf-8', errors='replace')
@@ -178,6 +216,10 @@ for cls, desc, target, mutate in MUTATIONS:
                 fails.append((cls, 'Mutation wirkungslos - Test ungueltig'))
                 print(f'  UNGUELTIG     {cls:16} Mutation hat nichts geaendert')
                 continue
+            if cls == '7 kein Sweep':
+                # Die Migration, die den Sweep vortaeuschen wuerde.
+                (root / 'supabase' / 'migrations' / KEIN_SWEEP_DATEI).write_text(
+                    KEIN_SWEEP_INHALT, encoding='utf-8', newline='\n')
         else:
             f = root / 'supabase' / 'migrations' / target
             original = f.read_text(encoding='utf-8', errors='replace')
@@ -197,7 +239,9 @@ for cls, desc, target, mutate in MUTATIONS:
             [sys.executable, str(root / 'tool' / 'checks/check_push_readiness.py')],
             capture_output=True)
         stdout = (r.stdout or b'').decode('utf-8', errors='replace')
-        detected = r.returncode != 0 and cls in stdout
+        # Die Fehlerklasse in der Ausgabe kann eine andere sein als der
+        # Name des Falls: Fall 7 prueft die Fehlerklasse "2 Overloads".
+        detected = r.returncode != 0 and erwartet_klasse in stdout
         print(f'  {"OK          " if detected else "NICHT ERKANNT"} {cls:16} {desc}')
         if detected:
             detail = next((l.strip() for l in stdout.splitlines()

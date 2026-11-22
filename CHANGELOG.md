@@ -89,6 +89,11 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
 
 ### Kleinigkeiten
 
+- Das Gate „eine Variante einer überladenen Funktion bleibt aufrufbar"
+  (Push-Reife) war blind: Es erkannte einen Datenbank-Sweep an einem
+  Hilfswort (`regprocedure`), das auch Migrationen benutzen, die nur die
+  Definition einer Funktion prüfen. Jetzt erkennt es einen Sweep an der
+  Sperre selbst – und ein neuer Selbsttest sichert das ab.
 - Die englischen Seiten hatten neun Links mit einem zusätzlichen
   Anführungszeichen im Ziel (`href="/en/datenschutz""`). Die Links
   funktionierten, der HTML-Code war aber ungültig.

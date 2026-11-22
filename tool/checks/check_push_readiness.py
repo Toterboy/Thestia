@@ -168,8 +168,32 @@ multi = {k for k, v in overloads.items() if len(v) > 1}
 # alten Generation).
 # Die Indizes aller Sweeps. Ein Sweep arbeitet ueber pg_proc und
 # erfasst damit den ganzen Bestand zur Zeit der Migration.
+#
+# BEFUND (20.11.2026): Die Erkennung war zu weit gefasst - JEDE
+# Migration mit dem Wort "regprocedure" galt als Sweep. Das war
+# falsch: viele Migrationen benutzen regprocedure nur, um die
+# Definition EINER Funktion zu pruefen (pg_get_functiondef, Fail-Fast).
+# Migration 221 (die VOLATILE-Korrektur) tut das auch - und damit
+# wurde das Gate "2 Overloads" blind fuer ALLES, was vor ihr angelegt
+# war. Der Selbsttest des Gates schlug deshalb fehl (der eingebaute
+# Fehler wurde nicht mehr erkannt).
+#
+# EIN SWEEP ERKENNT MANN AN DER SPERRE SELBST, nicht an einem
+# Hilfswort:
+#   REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;        (Migration 123)
+#   EXECUTE format('REVOKE ALL ON FUNCTION %s ...')  (aelttere Form)
+def _ist_sweep(code: str) -> bool:
+    """Sperrt diese Migration den ganzen Funktionsbestand?"""
+    if 'regprocedure' not in code:
+        return False
+    if re.search(r"REVOKE\s+(?:EXECUTE\s+)?(?:ALL\s+)?ON\s+FUNCTIONS?\s+FROM\s+PUBLIC",
+                 code, re.I):
+        return True
+    return bool(re.search(r"REVOKE\s+ALL\s+ON\s+FUNCTION\s+%", code, re.I))
+
+
 sweep_indizes = [i for i, f_sweep in enumerate(ALL)
-                 if 'regprocedure' in strip_comments(read(f_sweep))]
+                 if _ist_sweep(strip_comments(read(f_sweep)))]
 
 # Wann wurde jede Variante zum LETZTEN angelegt? (CREATE OR REPLACE
 # kann dieselbe Signatur mehrfach anlegen - massgeblich ist der letzte
