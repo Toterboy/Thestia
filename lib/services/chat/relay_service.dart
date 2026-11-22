@@ -7,6 +7,7 @@ import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart';
 import 'package:thestia/services/chat/encryption_service.dart';
 import 'package:thestia/services/chat/prekey_service.dart';
 import 'package:thestia/services/auth/supabase_service.dart';
+import 'package:thestia/utils/common/json_leser.dart';
 
 /// Eine abgeholte Relay-Nachricht (entschlüsselt, versandbereit zur Anzeige).
 class RelayMessage {
@@ -30,13 +31,14 @@ class RelayMessage {
 
   factory RelayMessage.fromJson(Map<String, dynamic> json) {
     return RelayMessage(
-      id: (json['id'] as num).toInt(),
-      senderId: json['sender'] as String,
-      text: json['text'] as String? ?? '',
-      kind: json['kind'] as String? ?? 'text',
-      createdAt:
-          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
-          DateTime.now(),
+      // BEFUND (22.11.2026, Fuzzing): Die Zeile kommt ueber den Server -
+      // ihr Inhalt stammt von der GEGENSEITE. Die Casts hier warfen bei
+      // jedem falschen Typ.
+      id: intOf(json, ['id']) ?? 0,
+      senderId: textOf(json, ['sender']) ?? '',
+      text: textOf(json, ['text']) ?? '',
+      kind: textOf(json, ['kind']) ?? 'text',
+      createdAt: dateOf(json, ['createdAt']) ?? DateTime.now(),
     );
   }
 }
@@ -110,35 +112,44 @@ class RelayService {
     final out = <RelayMessage>[];
     final ackIds = <int>[];
     for (final row in rows) {
+      // BEFUND (22.11.2026, Fuzzing): Die Relay-Zeile kommt vom Server,
+      // ihr Inhalt von der GEGENSEITE. Die Casts hier warfen bei jedem
+      // falschen Typ - im catch-Block selbst (Zeile unten) hat sogar der
+      // Fehlerpfad geworfen, wenn die ID keine Zahl war.
+      final map = row is Map
+          ? Map<String, dynamic>.from(row)
+          : <String, dynamic>{};
+      final rowId = intOf(map, ['id']) ?? -1;
       try {
-        final map = Map<String, dynamic>.from(row as Map);
         // Fremde Absender (anderer Chat) überspringen, OHNE sie zu
         // bestätigen - ihr Chat holt sie später selbst ab.
-        if (from != null && map['sender'] != from) continue;
-        final cipherBytes = base64Decode(map['ciphertext'] as String);
-        final msgType =
-            (map['msgType'] as num?)?.toInt() ?? CiphertextMessage.prekeyType;
+        final senderId = textOf(map, ['sender']) ?? '';
+        if (from != null && senderId != from) continue;
+        final cipherText = textOf(map, ['ciphertext']);
+        if (cipherText == null || cipherText.isEmpty) {
+          throw const FormatException('keine Chiffre');
+        }
+        final cipherBytes = base64Decode(cipherText);
+        final msgType = intOf(map, ['msgType']) ?? CiphertextMessage.prekeyType;
         final CiphertextMessage signalMessage =
             msgType == CiphertextMessage.prekeyType
             ? PreKeySignalMessage(cipherBytes)
             : SignalMessage.fromSerialized(cipherBytes);
-        final senderId = map['sender'] as String;
         // KEIN ensureSession hier: Für das Entschlüsseln wird die
         // Session automatisch aus der PreKey-Nachricht aufgebaut. Ein
         // fehlgeschlagener Bundle-Fetch würde sonst die Nachricht
         // blockieren.
         final text = await _encryption.decryptMessage(senderId, signalMessage);
         out.add(RelayMessage.fromJson({...map, 'text': text}));
-        ackIds.add((map['id'] as num).toInt());
-        _decryptFailures.remove((map['id'] as num).toInt());
+        ackIds.add(rowId);
+        _decryptFailures.remove(rowId);
       } catch (e) {
         // Entschlüsselung fehlgeschlagen: Nachricht bleibt im Relay!
         // Sie wird beim nächsten Poll erneut versucht. Erst nach
         // [_maxDecryptRetries] Fehlversuchen wird sie gelöscht
         // (sonst wächst das Relay endlos, wenn die Session dauerhaft
         // kaputt ist).
-        final rowId = (Map<String, dynamic>.from(row as Map)['id'] as num)
-            .toInt();
+        if (rowId < 0) continue;
         final failures = (_decryptFailures[rowId] ?? 0) + 1;
         _decryptFailures[rowId] = failures;
         if (failures >= _maxDecryptRetries) {

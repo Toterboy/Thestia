@@ -1,3 +1,5 @@
+import 'package:thestia/utils/common/json_leser.dart';
+
 /// Status des "echtes Treffen"-Vorschlags für ein Match.
 ///
 /// Liegt serverseitig (meet_intents), damit beide Chat-Partner synchron
@@ -30,12 +32,14 @@ class MeetIntent {
   bool get bothWant => myWants && partnerWants;
 
   factory MeetIntent.fromJson(Map<String, dynamic> json) {
+    // BEFUND (22.11.2026, Fuzzing): Die Casts hier warfen bei jedem
+    // falschen Typ - die Zeile kommt vom Server.
     return MeetIntent(
-      matchId: (json['matchId'] as num).toString(),
-      eligible: json['eligible'] as bool? ?? false,
-      myWants: json['myWants'] as bool? ?? false,
-      partnerWants: json['partnerWants'] as bool? ?? false,
-      metConfirmed: json['metConfirmed'] as bool? ?? false,
+      matchId: textOf(json, ['matchId']) ?? '',
+      eligible: boolOf(json, ['eligible']) ?? false,
+      myWants: boolOf(json, ['myWants']) ?? false,
+      partnerWants: boolOf(json, ['partnerWants']) ?? false,
+      metConfirmed: boolOf(json, ['metConfirmed']) ?? false,
     );
   }
 }

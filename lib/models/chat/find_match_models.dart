@@ -1,4 +1,5 @@
 import 'package:thestia/models/profile/user_profile.dart';
+import 'package:thestia/utils/common/json_leser.dart';
 
 /// Ein erhaltener Like inklusive Profil (Vorstellung) des Likers.
 class ReceivedLike {
@@ -13,19 +14,24 @@ class ReceivedLike {
   final DateTime? createdAt;
 
   factory ReceivedLike.fromJson(Map<String, dynamic> json) {
+    // BEFUND (22.11.2026, Fuzzing): Die Casts hier (`as int`, `as Map`,
+    // `as String`) warfen, sobald der Server einen anderen Typ lieferte.
+    // Die Daten kommen vom Server - ein Fehler dort darf die App nicht
+    // abstuerzen lassen.
+    final profilWert = json['profile'];
     final profile = UserProfile.fromPublicView(
-      Map<String, dynamic>.from(json['profile'] as Map? ?? {}),
+      profilWert is Map
+          ? Map<String, dynamic>.from(profilWert)
+          : <String, dynamic>{},
     );
-    final distanceKm = (json['distanceKm'] as num?)?.toDouble();
+    final distanceKm = numOf(json, ['distanceKm'])?.toDouble();
     return ReceivedLike(
-      likeId: json['likeId'] as int,
+      likeId: intOf(json, ['likeId']) ?? 0,
       // Distanz kommt als Geschwister-Feld der RPC-Antwort (5-km-Schritte).
       profile: distanceKm == null
           ? profile
           : profile.copyWith(distanceKm: distanceKm),
-      createdAt: json['createdAt'] == null
-          ? null
-          : DateTime.tryParse(json['createdAt'] as String),
+      createdAt: dateOf(json, ['createdAt']),
     );
   }
 }
@@ -100,41 +106,38 @@ class MatchWithState {
   bool get cooled => status == 'cooled';
 
   factory MatchWithState.fromJson(Map<String, dynamic> json) {
+    final profilWert = json['profile'];
     final profile = UserProfile.fromPublicView(
-      Map<String, dynamic>.from(json['profile'] as Map? ?? {}),
+      profilWert is Map
+          ? Map<String, dynamic>.from(profilWert)
+          : <String, dynamic>{},
     );
-    final distanceKm = (json['distanceKm'] as num?)?.toDouble();
+    final distanceKm = numOf(json, ['distanceKm'])?.toDouble();
     // Automatischer Funke (Migration 177). Die Listen-RPC liefert die
     // Spalte `auto_match` als 'autoMatch' (Namenskonvention der RPC);
     // 'auto_match' wird auch gelesen, falls der Wert unveraendert aus
     // der Tabelle kommt.
     final autoFlag = json['autoMatch'] ?? json['auto_match'];
+    // BEFUND (22.11.2026, Fuzzing): Die Casts hier warfen bei jedem
+    // falschen Typ (die Liste kommt vom Server).
     return MatchWithState(
-      matchId: json['matchId'] as int,
+      matchId: intOf(json, ['matchId']) ?? 0,
       // Distanz kommt als Geschwister-Feld der RPC-Antwort (5-km-Schritte).
       partner: distanceKm == null
           ? profile
           : profile.copyWith(distanceKm: distanceKm),
-      unlockLevel: (json['unlockLevel'] as num?)?.toInt() ?? 0,
-      failedAttempts: (json['failedAttempts'] as num?)?.toInt() ?? 0,
-      createdVia: json['createdVia'] as String? ?? 'swipe',
-      status: json['status'] as String? ?? 'active',
-      createdAt: json['createdAt'] == null
-          ? null
-          : DateTime.tryParse(json['createdAt'] as String),
-      resparkedAt: json['resparkedAt'] == null
-          ? null
-          : DateTime.tryParse(json['resparkedAt'] as String),
-      passedAt: json['passedAt'] == null
-          ? null
-          : DateTime.tryParse(json['passedAt'] as String),
-      lastAttemptAt: json['lastAttemptAt'] == null
-          ? null
-          : DateTime.tryParse(json['lastAttemptAt'] as String),
-      kind: json['kind'] as String? ?? 'spark',
+      unlockLevel: intOf(json, ['unlockLevel']) ?? 0,
+      failedAttempts: intOf(json, ['failedAttempts']) ?? 0,
+      createdVia: textOf(json, ['createdVia']) ?? 'swipe',
+      status: textOf(json, ['status']) ?? 'active',
+      createdAt: dateOf(json, ['createdAt']),
+      resparkedAt: dateOf(json, ['resparkedAt']),
+      passedAt: dateOf(json, ['passedAt']),
+      lastAttemptAt: dateOf(json, ['lastAttemptAt']),
+      kind: textOf(json, ['kind']) ?? 'spark',
       autoMatch: autoFlag is bool ? autoFlag : false,
-      messageCount: (json['messageCount'] as num?)?.toInt() ?? 0,
-      messageCountMine: (json['messageCountMine'] as num?)?.toInt() ?? 0,
+      messageCount: intOf(json, ['messageCount']) ?? 0,
+      messageCountMine: intOf(json, ['messageCountMine']) ?? 0,
     );
   }
 }
@@ -157,13 +160,11 @@ class BucketItem {
 
   factory BucketItem.fromJson(Map<String, dynamic> json) {
     return BucketItem(
-      id: (json['id'] as num).toInt(),
-      text: json['text'] as String? ?? '',
-      createdBy: json['createdBy'] as String? ?? '',
-      done: json['done'] as bool? ?? false,
-      createdAt: json['createdAt'] == null
-          ? null
-          : DateTime.tryParse(json['createdAt'] as String),
+      id: intOf(json, ['id']) ?? 0,
+      text: textOf(json, ['text']) ?? '',
+      createdBy: textOf(json, ['createdBy']) ?? '',
+      done: boolOf(json, ['done']) ?? false,
+      createdAt: dateOf(json, ['createdAt']),
     );
   }
 }
@@ -207,24 +208,17 @@ class QuizState {
 
   factory QuizState.fromJson(Map<String, dynamic> json) {
     return QuizState(
-      matchId: json['matchId'] as int,
-      partnerId: json['partnerId'] as String? ?? '',
-      createdVia: json['createdVia'] as String? ?? 'swipe',
-      unlockLevel: (json['unlockLevel'] as num?)?.toInt() ?? 0,
-      failedAttempts: (json['failedAttempts'] as num?)?.toInt() ?? 0,
-      answeredCurrent: json['answeredCurrent'] as bool? ?? false,
-      passedAt: json['passedAt'] == null
-          ? null
-          : DateTime.tryParse(json['passedAt'] as String),
-      lastAttemptAt: json['lastAttemptAt'] == null
-          ? null
-          : DateTime.tryParse(json['lastAttemptAt'] as String),
-      currentQuestionId: json['currentQuestionId'] as String?,
-      nextAttemptAt: json['nextAttemptAt'] == null
-          ? null
-          : DateTime.tryParse(json['nextAttemptAt'] as String),
-      cooldownRemainingSeconds:
-          (json['cooldownRemainingSeconds'] as num?)?.toInt() ?? 0,
+      matchId: intOf(json, ['matchId']) ?? 0,
+      partnerId: textOf(json, ['partnerId']) ?? '',
+      createdVia: textOf(json, ['createdVia']) ?? 'swipe',
+      unlockLevel: intOf(json, ['unlockLevel']) ?? 0,
+      failedAttempts: intOf(json, ['failedAttempts']) ?? 0,
+      answeredCurrent: boolOf(json, ['answeredCurrent']) ?? false,
+      passedAt: dateOf(json, ['passedAt']),
+      lastAttemptAt: dateOf(json, ['lastAttemptAt']),
+      currentQuestionId: textOf(json, ['currentQuestionId']),
+      nextAttemptAt: dateOf(json, ['nextAttemptAt']),
+      cooldownRemainingSeconds: intOf(json, ['cooldownRemainingSeconds']) ?? 0,
     );
   }
 }
@@ -243,11 +237,9 @@ class QuizQuestion {
 
   factory QuizQuestion.fromJson(Map<String, dynamic> json) {
     return QuizQuestion(
-      id: json['questionId'] as String,
-      prompt: json['prompt'] as String,
-      options: (json['options'] as List<dynamic>? ?? <dynamic>[])
-          .map((e) => e as String)
-          .toList(),
+      id: textOf(json, ['questionId']) ?? '',
+      prompt: textOf(json, ['prompt']) ?? '',
+      options: textListOf(json, ['options']),
     );
   }
 }
@@ -277,7 +269,7 @@ class QuizAnswerResult {
   final int cooldownRemainingSeconds;
 
   factory QuizAnswerResult.fromJson(Map<String, dynamic> json) {
-    final error = json['error'] as String?;
+    final error = textOf(json, ['error']);
     if (error == 'round_closed') {
       return const QuizAnswerResult(
         correct: false,
@@ -299,23 +291,18 @@ class QuizAnswerResult {
         passed: false,
         cooldownActive: true,
         cooldownRemainingSeconds:
-            (json['cooldownRemainingSeconds'] as num?)?.toInt() ?? 0,
-        nextAttemptAt: json['nextAttemptAt'] == null
-            ? null
-            : DateTime.tryParse(json['nextAttemptAt'] as String),
+            intOf(json, ['cooldownRemainingSeconds']) ?? 0,
+        nextAttemptAt: dateOf(json, ['nextAttemptAt']),
       );
     }
     return QuizAnswerResult(
-      correct: json['correct'] as bool? ?? false,
-      passed: json['passed'] as bool? ?? false,
-      waitingForPartner: json['waitingForPartner'] as bool? ?? false,
-      unlockLevel: (json['unlockLevel'] as num?)?.toInt() ?? 0,
-      failedAttempts: (json['failedAttempts'] as num?)?.toInt() ?? 0,
-      nextAttemptAt: json['nextAttemptAt'] == null
-          ? null
-          : DateTime.tryParse(json['nextAttemptAt'] as String),
-      cooldownRemainingSeconds:
-          (json['cooldownRemainingSeconds'] as num?)?.toInt() ?? 0,
+      correct: boolOf(json, ['correct']) ?? false,
+      passed: boolOf(json, ['passed']) ?? false,
+      waitingForPartner: boolOf(json, ['waitingForPartner']) ?? false,
+      unlockLevel: intOf(json, ['unlockLevel']) ?? 0,
+      failedAttempts: intOf(json, ['failedAttempts']) ?? 0,
+      nextAttemptAt: dateOf(json, ['nextAttemptAt']),
+      cooldownRemainingSeconds: intOf(json, ['cooldownRemainingSeconds']) ?? 0,
     );
   }
 }
@@ -337,8 +324,8 @@ class CategoryCount {
 
   factory CategoryCount.fromJson(Map<String, dynamic> json) {
     return CategoryCount(
-      category: (json['category'] as String?) ?? '',
-      count: (json['cnt'] as num?)?.toInt() ?? 0,
+      category: textOf(json, ['category']) ?? '',
+      count: intOf(json, ['cnt']) ?? 0,
     );
   }
 

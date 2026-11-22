@@ -210,7 +210,12 @@ class DatingHourService {
       );
       final rows = response is List ? response : <dynamic>[];
       if (rows.isEmpty) return null;
-      return DatingHourSession.fromJson(rows.first as Map<String, dynamic>);
+      // BEFUND (22.11.2026, Fuzzing): parse gibt null zurueck, wenn die
+      // Zeile unbrauchbar ist (fehlende Zeiten) - eine Session mit
+      // erfundenem Datum wuerde einen falschen Zustand anzeigen.
+      return DatingHourSession.parse(
+        Map<String, dynamic>.from(rows.first as Map),
+      );
     });
   }
 
@@ -223,7 +228,10 @@ class DatingHourService {
           .eq('id', sessionId)
           .limit(1);
       if (rows.isEmpty) return null;
-      return DatingHourSession.fromJson(rows.first);
+      // BEFUND (22.11.2026, Fuzzing): Siehe getMyActiveSession.
+      return DatingHourSession.parse(
+        Map<String, dynamic>.from(rows.first as Map),
+      );
     });
   }
 

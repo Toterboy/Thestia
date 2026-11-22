@@ -1,4 +1,5 @@
 import 'package:thestia/services/server/server_time_service.dart';
+import 'package:thestia/utils/common/json_leser.dart';
 
 /// Domain-Modelle für das Dating-Hour-Feature.
 ///
@@ -55,28 +56,70 @@ class DatingHourSession {
     this.endedBy,
   });
 
-  /// Baut eine Session aus einer Supabase-Row.
-  factory DatingHourSession.fromJson(Map<String, dynamic> json) {
+  /// Liest eine Session aus einer Supabase-Row - oder NULL, wenn die
+  /// Zeile unbrauchbar ist.
+  ///
+  /// WARUM NULL (BEFUND 22.11.2026, Fuzzing): Eine Session ohne
+  /// brauchbare Zeiten hat einen **unbekannten** Zustand: Ohne
+  /// `expires_at` weiss die App nicht, ob die fuenf Minuten laufen oder
+  /// ob die Entscheidungsphase ist. Frueher standen hier Casts - ein
+  /// fehlendes Feld liess die App abstuerzen. Mit einem
+  /// "Ersatzdatum" (dem Jahr 1970) waere die Anzeige zwar nicht mehr
+  /// kaputt, aber **falsch** (die Zeit stuende sofort auf 0, und die
+  /// Entscheidungsphase stuende an - der Bildschirm zeigte dann
+  /// Entscheidungs-Knoepfe statt des Eingabefelds).
+  ///
+  /// DER WEG: Lieber keine Session als eine erfundene. Der Bildschirm
+  /// zeigt dann den Zustand "Verbinde..." - das ist ehrlich.
+  static DatingHourSession? parse(Map<String, dynamic> json) {
+    final start = dateOf(json, ['started_at']);
+    final ende = dateOf(json, ['expires_at']);
+    if (start == null || ende == null) return null;
     return DatingHourSession(
-      id: json['id'] as String,
-      eventId: json['event_id'] as String,
-      userA: json['user_a'] as String,
-      userB: json['user_b'] as String,
-      startedAt: DateTime.parse(json['started_at'] as String),
-      expiresAt: DateTime.parse(json['expires_at'] as String),
-      endedAt: json['ended_at'] != null
-          ? DateTime.parse(json['ended_at'] as String)
-          : null,
-      userADecision: json['user_a_decision'] as String?,
-      userBDecision: json['user_b_decision'] as String?,
-      isMatch: json['is_match'] as bool? ?? false,
+      id: textOf(json, ['id']) ?? '',
+      eventId: textOf(json, ['event_id']) ?? '',
+      userA: textOf(json, ['user_a']) ?? '',
+      userB: textOf(json, ['user_b']) ?? '',
+      startedAt: start,
+      expiresAt: ende,
+      endedAt: dateOf(json, ['ended_at']),
+      userADecision: textOf(json, ['user_a_decision']),
+      userBDecision: textOf(json, ['user_b_decision']),
+      isMatch: boolOf(json, ['is_match']) ?? false,
       // Migration 177: die zweite Frist und die Kennzeichnung des
       // automatischen Funkes.
-      autoMatchAt: json['auto_match_at'] != null
-          ? DateTime.parse(json['auto_match_at'] as String)
-          : null,
-      autoMatched: json['auto_matched'] as bool? ?? false,
-      endedBy: json['ended_by'] as String?,
+      autoMatchAt: dateOf(json, ['auto_match_at']),
+      autoMatched: boolOf(json, ['auto_matched']) ?? false,
+      endedBy: textOf(json, ['ended_by']),
+    );
+  }
+
+  /// Baut eine Session aus einer Supabase-Row.
+  ///
+  /// BEFUND (22.11.2026, Fuzzing): Die Casts hier waren ungeschuetzt.
+  /// Fuer das Lesen aus fremden Daten ist [parse] der richtige Weg -
+  /// es gibt null zurueck, wenn die Zeile unbrauchbar ist.
+  factory DatingHourSession.fromJson(Map<String, dynamic> json) {
+    return DatingHourSession(
+      id: textOf(json, ['id']) ?? '',
+      eventId: textOf(json, ['event_id']) ?? '',
+      userA: textOf(json, ['user_a']) ?? '',
+      userB: textOf(json, ['user_b']) ?? '',
+      startedAt:
+          dateOf(json, ['started_at']) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      expiresAt:
+          dateOf(json, ['expires_at']) ??
+          DateTime.fromMillisecondsSinceEpoch(0),
+      endedAt: dateOf(json, ['ended_at']),
+      userADecision: textOf(json, ['user_a_decision']),
+      userBDecision: textOf(json, ['user_b_decision']),
+      isMatch: boolOf(json, ['is_match']) ?? false,
+      // Migration 177: die zweite Frist und die Kennzeichnung des
+      // automatischen Funkes.
+      autoMatchAt: dateOf(json, ['auto_match_at']),
+      autoMatched: boolOf(json, ['auto_matched']) ?? false,
+      endedBy: textOf(json, ['ended_by']),
     );
   }
 
@@ -239,15 +282,18 @@ class DatingHourPreferences {
   };
 
   factory DatingHourPreferences.fromJson(Map<String, dynamic> json) {
+    // BEFUND (22.11.2026, Fuzzing): Die Casts hier warfen bei jedem
+    // falschen Typ - die Einstellungen kommen aus dem Cache und vom
+    // Server.
     return DatingHourPreferences(
-      ageMin: json['ageMin'] as int,
-      ageMax: json['ageMax'] as int,
-      genderPreference: json['genderPreference'] as String,
-      preferredTrait: json['preferredTrait'] as String,
-      maxDistanceKm: (json['maxDistanceKm'] as num).toDouble(),
-      smoking: json['smoking'] as String?,
-      alcohol: json['alcohol'] as String?,
-      drugs: json['drugs'] as String?,
+      ageMin: intOf(json, ['ageMin']) ?? 18,
+      ageMax: intOf(json, ['ageMax']) ?? 99,
+      genderPreference: textOf(json, ['genderPreference']) ?? 'all',
+      preferredTrait: textOf(json, ['preferredTrait']) ?? '',
+      maxDistanceKm: (numOf(json, ['maxDistanceKm']) ?? 100).toDouble(),
+      smoking: textOf(json, ['smoking']),
+      alcohol: textOf(json, ['alcohol']),
+      drugs: textOf(json, ['drugs']),
     );
   }
 }
@@ -293,17 +339,20 @@ class DatingHourEvent {
 
   /// Baut ein Event aus einer Supabase-Row.
   factory DatingHourEvent.fromJson(Map<String, dynamic> json) {
+    // BEFUND (22.11.2026, Fuzzing): Die Casts hier warfen bei jedem
+    // falschen Typ - die Zeile kommt vom Server.
+    final epoch = DateTime.fromMillisecondsSinceEpoch(0);
     return DatingHourEvent(
-      id: json['id'] as String,
-      eventDate: DateTime.parse(json['event_date'] as String),
-      dayOfWeek: json['day_of_week'] as int,
-      startHour: json['start_hour'] as int,
-      startMinute: json['start_minute'] as int,
-      endHour: json['end_hour'] as int,
-      endMinute: json['end_minute'] as int,
-      startsAt: DateTime.parse(json['starts_at'] as String),
-      endsAt: DateTime.parse(json['ends_at'] as String),
-      status: json['status'] as String,
+      id: textOf(json, ['id']) ?? '',
+      eventDate: dateOf(json, ['event_date']) ?? epoch,
+      dayOfWeek: intOf(json, ['day_of_week']) ?? 0,
+      startHour: intOf(json, ['start_hour']) ?? 0,
+      startMinute: intOf(json, ['start_minute']) ?? 0,
+      endHour: intOf(json, ['end_hour']) ?? 0,
+      endMinute: intOf(json, ['end_minute']) ?? 0,
+      startsAt: dateOf(json, ['starts_at']) ?? epoch,
+      endsAt: dateOf(json, ['ends_at']) ?? epoch,
+      status: textOf(json, ['status']) ?? '',
     );
   }
 

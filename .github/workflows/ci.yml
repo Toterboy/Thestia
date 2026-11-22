@@ -688,6 +688,12 @@ jobs:
             # schreibt - BEVOR sie live geht.
             echo "PRUEFER: tool/checks/check_stable_functions.py"
             python3 tool/checks/check_stable_functions.py
+            # BEFUND (22.11.2026, Fuzzing): Ein Cast auf einen fremden
+            # JSON-Wert laesst die App abstuerzen - ein Denial of Service
+            # ueber die Schnittstelle (der Server, ja die Gegenseite
+            # liefert den Wert). Das Gate verbietet solche Casts.
+            echo "PRUEFER: tool/checks/check_keine_unsicheren_casts.py"
+            python3 tool/checks/check_keine_unsicheren_casts.py
             # Der Impressum-Text in der App muss zur Webfassung passen
             # (BEFUND 20.11.2026: der Link auf thestia.de/impressum
             # oeffnete die App selbst - der Text steht jetzt im Binary).

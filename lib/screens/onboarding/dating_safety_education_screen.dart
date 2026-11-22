@@ -11,6 +11,7 @@ import 'package:thestia/providers/settings/settings_provider.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/services/storage/local_storage.dart';
 import 'package:thestia/utils/common/best_effort.dart';
+import 'package:thestia/utils/common/json_leser.dart';
 
 /// Ausführliche Fassung der Sicherheits-Aufklärung (statische Seite).
 ///
@@ -104,8 +105,9 @@ class _SafetyProgress {
     }
     return _SafetyProgress(
       step: step,
-      usedBefore: json['usedBefore'] as bool?,
-      awareOfDangers: json['awareOfDangers'] as bool?,
+      // BEFUND (22.11.2026, Fuzzing): Die Casts hier waren ungeschuetzt.
+      usedBefore: boolOf(json, ['usedBefore']),
+      awareOfDangers: boolOf(json, ['awareOfDangers']),
       page: page,
       startedAtMs: started,
     );

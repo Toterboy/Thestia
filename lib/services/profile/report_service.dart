@@ -15,6 +15,7 @@ import 'package:thestia/services/storage/secure_hive.dart';
 import 'package:thestia/services/auth/supabase_service.dart';
 import 'package:thestia/utils/common/constants.dart';
 import 'package:thestia/utils/common/best_effort.dart';
+import 'package:thestia/utils/common/json_leser.dart';
 
 /// Pseudonymisiert einen Identifier/Name mit SHA-256 (H-06).
 ///
@@ -57,12 +58,12 @@ class MyReportEntry {
 
   factory MyReportEntry.fromJson(Map<String, dynamic> json) {
     return MyReportEntry(
-      id: json['id'] as String,
-      reportType: json['reportType'] as String? ?? '',
-      status: json['status'] as String? ?? 'pending',
-      createdAt: json['createdAt'] == null
-          ? null
-          : DateTime.tryParse(json['createdAt'] as String),
+      // BEFUND (22.11.2026, Fuzzing): Die Casts hier warfen bei jedem
+      // falschen Typ - die Zeile kommt vom Server.
+      id: textOf(json, ['id']) ?? '',
+      reportType: textOf(json, ['reportType']) ?? '',
+      status: textOf(json, ['status']) ?? 'pending',
+      createdAt: dateOf(json, ['createdAt']),
     );
   }
 
@@ -85,11 +86,9 @@ class BlockedUserEntry {
 
   factory BlockedUserEntry.fromJson(Map<String, dynamic> json) {
     return BlockedUserEntry(
-      blockedUserId: json['blockedUserId'] as String,
-      name: json['name'] as String? ?? 'Unbekannt',
-      createdAt: json['createdAt'] == null
-          ? null
-          : DateTime.tryParse(json['createdAt'] as String),
+      blockedUserId: textOf(json, ['blockedUserId']) ?? '',
+      name: textOf(json, ['name']) ?? 'Unbekannt',
+      createdAt: dateOf(json, ['createdAt']),
     );
   }
 }

@@ -117,6 +117,15 @@ jobs:
             test/chat/live_sparks_list_test.dart \
             --reporter expanded
 
+      # Das API-Fuzzing (22.11.2026): die Datenbank-Schnittstelle wird
+      # mit boesen Werten gerufen (SQL-Versuche, Riesenzahlen, Unsinn).
+      # Gesucht wird nach einem Absturz des Servers (HTTP 5xx).
+      #
+      # Es werden NUR LESE-Aufrufe gemacht - es entsteht nichts.
+      - name: API-Fuzzing gegen die echte Schnittstelle
+        if: env.HAS_SECRETS == 'true'
+        run: python3 tool/checks/check_live_api_fuzz.py
+
       # Die Testdaten wegraeumen. Der Schritt ist best effort: fehlt die
       # DB-Verbindung, bleibt der Match zwischen den Testkonten stehen -
       # das Skript dafuer liegt im Repository.

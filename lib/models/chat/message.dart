@@ -1,3 +1,5 @@
+import 'package:thestia/utils/common/json_leser.dart';
+
 /// Typ einer Chat-Nachricht.
 ///
 /// Erweitert das Modell, damit neben Text auch Bilder und
@@ -83,21 +85,30 @@ class Message {
   });
 
   /// Erzeugt eine Nachricht aus einem JSON-Map.
+  ///
+  /// BEFUND (22.11.2026, Fuzzing): Die Casts hier waren ungeschuetzt -
+  /// ein fehlendes oder falsch typisiertes Feld liess die App
+  /// abstuerzen. Die Nachricht kommt aus der lokalen Historie und (ueber
+  /// das Relay) vom Server: ein fremder Wert darf nicht abstuerzen.
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
-      id: json['id'] as String,
-      senderId: json['senderId'] as String,
-      receiverId: json['receiverId'] as String,
-      text: json['text'] as String? ?? '',
+      id: textOf(json, ['id']) ?? '',
+      senderId: textOf(json, ['senderId']) ?? '',
+      receiverId: textOf(json, ['receiverId']) ?? '',
+      text: textOf(json, ['text']) ?? '',
       type: MessageType.values.firstWhere(
-        (t) => t.name == (json['type'] as String? ?? 'text'),
+        (t) => t.name == (textOf(json, ['type']) ?? 'text'),
         orElse: () => MessageType.text,
       ),
-      mediaUrl: json['mediaUrl'] as String?,
-      durationSeconds: (json['durationSeconds'] as num? ?? 0).toInt(),
-      timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp'] as int),
-      viewOnce: json['viewOnce'] as bool? ?? false,
-      viewed: json['viewed'] as bool? ?? false,
+      mediaUrl: textOf(json, ['mediaUrl']),
+      durationSeconds: intOf(json, ['durationSeconds']) ?? 0,
+      // Der Zeitstempel kommt aus dem lokalen Verlauf. Ein Zeitstempel
+      // ausserhalb des darstellbaren Bereichs wird verworfen (der Leser
+      // prueft das) - `fromMillisecondsSinceEpoch` wuerde sonst werfen.
+      timestamp:
+          dateOf(json, ['timestamp']) ?? DateTime.fromMillisecondsSinceEpoch(0),
+      viewOnce: boolOf(json, ['viewOnce']) ?? false,
+      viewed: boolOf(json, ['viewed']) ?? false,
     );
   }
 

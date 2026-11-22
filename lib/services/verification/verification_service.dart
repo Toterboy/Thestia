@@ -16,6 +16,7 @@ import 'package:thestia/services/storage/secure_hive.dart';
 import 'package:thestia/services/auth/supabase_service.dart';
 import 'package:thestia/services/server/supabase_storage_service.dart';
 import 'package:thestia/utils/common/best_effort.dart';
+import 'package:thestia/utils/common/json_leser.dart';
 
 /// Merker "Verifizierung eingereicht" für die Pending-Anzeige im Profil.
 ///
@@ -99,17 +100,24 @@ class VerificationVideo {
   };
 
   factory VerificationVideo.fromJson(Map<String, dynamic> json) {
+    // BEFUND (22.11.2026, Fuzzing): Die Casts hier warfen bei jedem
+    // falschen Typ - der Eintrag kommt aus dem lokalen Speicher, kann
+    // aber auch aus einer fremden Datei stammen.
+    final ort = json['location'];
+    final einbettung = json['faceEmbedding'];
+    final ortMap = ort is Map
+        ? Map<String, dynamic>.from(ort)
+        : <String, dynamic>{};
     return VerificationVideo(
-      filePath: json['filePath'] as String,
-      recordedAt: DateTime.parse(json['recordedAt'] as String),
-      durationSeconds: json['durationSeconds'] as int,
-      challengeText: json['challengeText'] as String?,
-      challengeGesture: json['challengeGesture'] as String?,
-      location: json['location'] == null
-          ? null
-          : Position(
-              latitude: (json['location']['lat'] as num).toDouble(),
-              longitude: (json['location']['lng'] as num).toDouble(),
+      filePath: textOf(json, ['filePath']) ?? '',
+      recordedAt: dateOf(json, ['recordedAt']) ?? DateTime.now(),
+      durationSeconds: intOf(json, ['durationSeconds']) ?? 0,
+      challengeText: textOf(json, ['challengeText']),
+      challengeGesture: textOf(json, ['challengeGesture']),
+      location: ort is Map
+          ? Position(
+              latitude: (numOf(ortMap, ['lat']) ?? 0).toDouble(),
+              longitude: (numOf(ortMap, ['lng']) ?? 0).toDouble(),
               timestamp: DateTime.now(),
               accuracy: 0,
               altitude: 0,
@@ -118,11 +126,12 @@ class VerificationVideo {
               speedAccuracy: 0,
               headingAccuracy: 0,
               altitudeAccuracy: 0,
-            ),
-      isVerified: json['isVerified'] as bool? ?? false,
-      faceEmbedding: (json['faceEmbedding'] as List<dynamic>?)
-          ?.map((e) => (e as num).toDouble())
-          .toList(),
+            )
+          : null,
+      isVerified: boolOf(json, ['isVerified']) ?? false,
+      faceEmbedding: einbettung is List
+          ? einbettung.whereType<num>().map((e) => e.toDouble()).toList()
+          : null,
     );
   }
 }

@@ -10,6 +10,7 @@ import 'package:thestia/services/storage/local_storage.dart';
 import 'package:thestia/services/server/supabase_database_service.dart';
 import 'package:thestia/services/auth/supabase_service.dart';
 import 'package:thestia/utils/common/best_effort.dart';
+import 'package:thestia/utils/common/json_leser.dart';
 
 /// Filter-Modus für die Entfernungs-Suche.
 enum DistanceFilterMode {
@@ -116,15 +117,18 @@ class UserPreferences {
   /// automatisch in die neue Liste: 'all'/leer -> alle Geschlechter,
   /// einzelner Wert -> Liste mit einem Eintrag.
   factory UserPreferences.fromJson(Map<String, dynamic> json) {
+    // BEFUND (22.11.2026, Fuzzing): Die Casts hier warfen bei jedem
+    // falschen Typ - die Einstellungen kommen aus dem Cache und vom
+    // Server.
     return UserPreferences(
       genderPreferences: _parseGenderPreferences(json),
       distanceFilterMode: DistanceFilterMode.values.byName(
-        json['distanceFilterMode'] as String? ?? 'distanceKm',
+        textOf(json, ['distanceFilterMode']) ?? 'distanceKm',
       ),
-      maxDistanceKm: json['maxDistanceKm'] as int? ?? 100,
-      preferredState: json['preferredState'] as String?,
+      maxDistanceKm: intOf(json, ['maxDistanceKm']) ?? 100,
+      preferredState: textOf(json, ['preferredState']),
       relationshipType: RelationshipType.values.byName(
-        json['relationshipType'] as String? ?? 'open',
+        textOf(json, ['relationshipType']) ?? 'open',
       ),
     );
   }
@@ -135,7 +139,7 @@ class UserPreferences {
       return raw.whereType<String>().toList();
     }
     // Legacy-Format: einzelner String.
-    final legacy = json['genderPreference'] as String?;
+    final legacy = textOf(json, ['genderPreference']);
     if (legacy == null || legacy.isEmpty || legacy == 'all') {
       return List.of(kAllGenderValues);
     }

@@ -305,6 +305,10 @@ if (Soll 'static-checks') {
         # schreibt - BEVOR sie live geht.
         (G 'STABLE-Funktionen schreiben nicht' @($py, 'tool/checks/check_stable_functions.py'))
         (G 'STABLE-Pruefer Selbsttest' @($py, 'tool/checks/check_stable_functions_selftest.py'))
+        # BEFUND (22.11.2026, Fuzzing): Kein Cast auf einen fremden
+        # JSON-Wert - sonst kann der Server (oder die Gegenseite) die
+        # App zum Absturz bringen.
+        (G 'Keine unsicheren Casts' @($py, 'tool/checks/check_keine_unsicheren_casts.py'))
         # Der Impressum-Text in der App muss zur Webfassung passen (der
         # Link auf thestia.de/impressum oeffnete die App selbst).
         (G 'Impressum-Text aktuell' @($py, 'tool/web/make_imprint_app.py', '--check'))

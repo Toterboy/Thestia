@@ -5,6 +5,7 @@
 // diese Fotos erst nach einem Match für andere sichtbar sind.
 
 import 'package:thestia/models/profile/habitude_level.dart';
+import 'package:thestia/utils/common/json_leser.dart';
 import 'package:thestia/utils/location/age_calculator.dart';
 import 'package:thestia/utils/location/distance_bucket.dart';
 
@@ -294,7 +295,12 @@ class UserProfile {
   /// waere es nicht.
   factory UserProfile.fromPublicView(Map<String, dynamic> json) {
     // Alter rückrechnen: ungefähres Geburtsjahr.
-    final age = json['age'] as int?;
+    //
+    // BEFUND (22.11.2026, Fuzzing): `json['age'] as int?` wirft, wenn
+    // der Server eine Zahl mit Nachkommastellen oder einen Text
+    // liefert. Das oeffentliche Profil kommt vom SERVER - ein Fehler
+    // dort darf die App nicht abstuerzen lassen.
+    final age = intOf(json, ['age']);
     final birthDate = age != null
         ? DateTime(DateTime.now().year - age, 1, 1)
         : null;
@@ -307,7 +313,7 @@ class UserProfile {
     // nie das Verifikations-Abzeichen, obwohl der Server die Information
     // hatte. Die Modus-Sperre (Verifikation noetig) blieb dadurch auch
     // bei verifizierten Personen bestehen.
-    final publicVerified = json['is_verified'] as bool? ?? false;
+    final publicVerified = boolOf(json, ['is_verified']) ?? false;
     final publicState = VerificationState.fromJson(
       json,
       isVerified: publicVerified,
@@ -328,10 +334,12 @@ class UserProfile {
       bio: _leseText(json, ['bio']) ?? '',
       // Profilbilder (v0.9.0, max. 3): verschlüsselte Refs - Lesen via
       // loadAvatarBytes (Client entschlüsselt lokal).
-      photos: (_leseListe(json, ['photos'])).map((e) => e as String).toList(),
-      interests: (_leseListe(json, [
-        'interests',
-      ])).map((e) => e as String).toList(),
+      //
+      // BEFUND (22.11.2026, Fuzzing): `map((e) => e as String)` wirft,
+      // sobald der Server eine Zahl in die Liste stellt. Der Leser
+      // [textListOf] ueberspringt solche Elemente.
+      photos: textListOf(json, ['photos']),
+      interests: textListOf(json, ['interests']),
       gender: _leseText(json, ['gender']),
       personalityType: _leseText(json, ['personality_type', 'personalityType']),
       birthDate: birthDate,
@@ -414,10 +422,8 @@ class UserProfile {
       id: _leseText(json, ['id', 'user_id']) ?? '',
       name: _leseText(json, ['name']) ?? '',
       bio: _leseText(json, ['bio']) ?? '',
-      interests: (_leseListe(json, [
-        'interests',
-      ])).map((e) => e as String).toList(),
-      photos: (_leseListe(json, ['photos'])).map((e) => e as String).toList(),
+      interests: textListOf(json, ['interests']),
+      photos: textListOf(json, ['photos']),
       state: _leseText(json, ['state']),
       country: _leseText(json, ['country']) ?? 'Deutschland',
       distanceKm: (_leseZahl(json, ['distanceKm', 'distance_km']) ?? 0)

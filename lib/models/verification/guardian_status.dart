@@ -4,6 +4,8 @@
 /// entscheidet - dieses Modell ist nur die Abbildung fuer die Anzeige.
 library;
 
+import 'package:thestia/utils/common/json_leser.dart';
+
 /// Der Stand der Freigabe und der Aufsicht.
 class GuardianStatus {
   const GuardianStatus({
@@ -148,19 +150,19 @@ class GuardianStatus {
     }
 
     return GuardianStatus(
-      consentState: json['consentState'] as String? ?? 'none',
+      consentState: textOf(json, ['consentState']) ?? 'none',
       supervised: json['supervised'] == true,
-      status: json['status'] as String? ?? 'none',
+      status: textOf(json, ['status']) ?? 'none',
       age: minOf(json['age']),
-      guardianEmail: json['guardianEmail'] as String?,
-      guardianEmailMasked: json['guardianEmailMasked'] as String?,
+      guardianEmail: textOf(json, ['guardianEmail']),
+      guardianEmailMasked: textOf(json, ['guardianEmailMasked']),
       notifyEnabled: json['notifyEnabled'] == true,
-      notifyFrequency: json['notifyFrequency'] as String? ?? 'none',
+      notifyFrequency: textOf(json, ['notifyFrequency']) ?? 'none',
       usageLimitEnabled: json['usageLimitEnabled'] == true,
       usageStartMin: minOf(json['usageStartMin']),
       usageEndMin: minOf(json['usageEndMin']),
       hasPin: json['hasPin'] == true,
-      accessPolicy: json['accessPolicy'] as String? ?? 'ended',
+      accessPolicy: textOf(json, ['accessPolicy']) ?? 'ended',
       accessUntil: timeOf(json['accessUntil']),
       emailDeletedAt: timeOf(json['emailDeletedAt']),
       graceMonths: minOf(json['graceMonths']),

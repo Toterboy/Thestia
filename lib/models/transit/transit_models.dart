@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:thestia/utils/common/json_leser.dart';
+
 /// Ergebnis des Signal-Versands ("Blicke getauscht").
 class TransitSparkResult {
   const TransitSparkResult({
@@ -32,10 +34,10 @@ class TransitSparkResult {
   final bool alreadySpark;
 
   factory TransitSparkResult.fromJson(Map<String, dynamic> json) {
-    final note = json['partnerNote'] as String?;
+    final note = textOf(json, ['partnerNote']);
     return TransitSparkResult(
       matched: json['matched'] == true,
-      partnerId: json['partner'] as String?,
+      partnerId: textOf(json, ['partner']),
       partnerNote: (note == null || note.trim().isEmpty) ? null : note,
       alreadySpark: json['alreadySpark'] == true,
     );
@@ -98,13 +100,13 @@ class TransitCandidate {
 
   factory TransitCandidate.fromJson(Map<String, dynamic> json) {
     return TransitCandidate(
-      id: (json['id'] as String?) ?? '',
+      id: textOf(json, ['id']) ?? '',
       tags: _liste(json['tags']),
       selfTags: _liste(json['selfTags']),
-      note: (json['note'] as String?)?.trim(),
-      placeKind: (json['placeKind'] as String?)?.trim(),
-      placeText: (json['placeText'] as String?)?.trim(),
-      name: (json['name'] as String?)?.trim(),
+      note: textOf(json, ['note'])?.trim(),
+      placeKind: textOf(json, ['placeKind'])?.trim(),
+      placeText: textOf(json, ['placeText'])?.trim(),
+      name: textOf(json, ['name'])?.trim(),
       showName: json['showName'] == true,
     );
   }

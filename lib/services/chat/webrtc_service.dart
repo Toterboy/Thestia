@@ -10,8 +10,10 @@ import 'package:libsignal_protocol_dart/libsignal_protocol_dart.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:thestia/services/chat/encryption_service.dart';
+import 'package:thestia/services/chat/signal_envelope.dart';
 import 'package:thestia/utils/security/cert_pinning.dart';
 import 'package:thestia/utils/common/best_effort.dart';
+import 'package:thestia/utils/common/json_leser.dart';
 
 /// Service für WebRTC Peer-to-Peer Verbindungen.
 ///
@@ -264,7 +266,7 @@ class WebRTCService {
   static int _extractTtl(String body) {
     try {
       final json = jsonDecode(body) as Map<String, dynamic>;
-      return (json['ttlSeconds'] as num?)?.toInt() ?? 3600;
+      return intOf(json, ['ttlSeconds']) ?? 3600;
     } catch (_) {
       return 3600;
     }
@@ -993,10 +995,10 @@ class WebRTCService {
   /// Peer ist zwar authentifiziert, kann aber bösartig sein - beliebig
   /// große base64-Payloads/metadata-Maps dürfen den Speicher nicht
   /// sprengen können.
-  static const int _maxEnvelopeBytes = 512 * 1024;
-
-  /// Maximalzahl der metadata-Einträge im Binär-Envelope.
-  static const int _maxMetadataEntries = 16;
+  ///
+  /// (Die Grenze selbst steht jetzt in `signal_envelope.dart` - dort
+  /// wird der Peer-Payload gelesen.)
+  static const int _maxEnvelopeBytes = maxSignalEnvelopeBytes;
 
   /// Verarbeitet eingehende verschlüsselte Nachrichten.
   Future<void> _handleIncomingMessage(RTCDataChannelMessage message) async {
@@ -1006,78 +1008,78 @@ class WebRTCService {
         _melde('Eine Nachricht war zu groß und wurde verworfen.');
         return;
       }
-      final data = jsonDecode(message.text) as Map<String, dynamic>;
-      final type = data['type'] as String;
+      final envelope = SignalEnvelope.parse(message.text);
+      if (envelope == null) {
+        // BEFUND (22.11.2026, Fuzzing): Die Huelle kommt von der
+        // GEGENSEITE. Vorher standen hier Casts (`as Map`, `as String`,
+        // `as int`) und ein `base64Decode` - jeder davon wirft bei
+        // einer falschen Eingabe. Eine boesartige Nachricht hat damit
+        // den Kanal abbrechen lassen. Jetzt: weg damit, weiter gehts.
+        _melde('Eine Nachricht war nicht lesbar und wurde verworfen.');
+        return;
+      }
+      final type = envelope.typ == SignalEnvelopeType.binary
+          ? 'signal_binary'
+          : 'signal_message';
+      final ciphertext = base64Decode(envelope.ciphertext);
+      final messageType = envelope.messageType;
 
-      if (type == 'signal_message' || type == 'signal_binary') {
-        final ciphertextB64 = data['ciphertext'] as String;
-        final ciphertext = base64Decode(ciphertextB64);
-        final messageType = data['messageType'] as int;
+      if (type == 'signal_message') {
+        final CiphertextMessage signalMessage =
+            messageType == CiphertextMessage.prekeyType
+            ? PreKeySignalMessage(ciphertext)
+            : SignalMessage.fromSerialized(ciphertext);
 
-        if (type == 'signal_message') {
-          final CiphertextMessage signalMessage =
-              messageType == CiphertextMessage.prekeyType
-              ? PreKeySignalMessage(ciphertext)
-              : SignalMessage.fromSerialized(ciphertext);
-
-          final plaintext = await _encryptionService.decryptMessage(
-            _currentPeerId!,
-            signalMessage,
+        final plaintext = await _encryptionService.decryptMessage(
+          _currentPeerId!,
+          signalMessage,
+        );
+        // Kontroll-Nachrichten (Anruf-Signaling) vom Chat-Verlauf trennen.
+        // Fällt der JSON-Parse fehl (z. B. Nutzer-Text mit CALL:-Präfix),
+        // landet die Nachricht als normaler Chat-Text statt zu
+        // verschwinden (Fix: "Nachricht kommt nicht an").
+        if (plaintext.startsWith(controlPrefix)) {
+          final payload = bestEffortOrSync<Map<String, dynamic>?>(
+            'jsonDecode',
+            () {
+              final dekodiert = jsonDecode(
+                plaintext.substring(controlPrefix.length),
+              );
+              return dekodiert is Map<String, dynamic> ? dekodiert : null;
+            },
+            null,
           );
-          // Kontroll-Nachrichten (Anruf-Signaling) vom Chat-Verlauf trennen.
-          // Fällt der JSON-Parse fehl (z. B. Nutzer-Text mit CALL:-Präfix),
-          // landet die Nachricht als normaler Chat-Text statt zu
-          // verschwinden (Fix: "Nachricht kommt nicht an").
-          if (plaintext.startsWith(controlPrefix)) {
-            final payload = bestEffortOrSync<Map<String, dynamic>?>(
-              'jsonDecode',
-              () {
-                final dekodiert = jsonDecode(
-                  plaintext.substring(controlPrefix.length),
-                );
-                return dekodiert is Map<String, dynamic> ? dekodiert : null;
-              },
-              null,
-            );
-            if (payload != null) {
-              _controlController.add(payload);
-              return;
-            }
+          if (payload != null) {
+            _controlController.add(payload);
+            return;
           }
-          _incomingMessageController.add(plaintext);
+        }
+        _incomingMessageController.add(plaintext);
+      } else {
+        // Binärdaten müssen mit decryptBinary entschlüsselt werden,
+        // da decryptMessage einen UTF-8-Text-Decoder anwendet.
+        final CiphertextMessage signalMessage =
+            messageType == CiphertextMessage.prekeyType
+            ? PreKeySignalMessage(ciphertext)
+            : SignalMessage.fromSerialized(ciphertext);
+
+        final plaintext = await _encryptionService.decryptBinary(
+          _currentPeerId!,
+          signalMessage,
+        );
+        final contentType = envelope.contentType;
+        // Die Metadaten sind im Leser schon begrenzt (Audit S3).
+        final record = (
+          data: plaintext,
+          contentType: contentType,
+          metadata: envelope.metadata,
+        );
+        // Anruf-Sprachpakete in den Kontroll-Stream, sonst normaler
+        // Binärkanal (Bilder, Sprachnachrichten).
+        if (contentType == callAudioContentType) {
+          _controlAudioController.add(record);
         } else {
-          // Binärdaten müssen mit decryptBinary entschlüsselt werden,
-          // da decryptMessage einen UTF-8-Text-Decoder anwendet.
-          final CiphertextMessage signalMessage =
-              messageType == CiphertextMessage.prekeyType
-              ? PreKeySignalMessage(ciphertext)
-              : SignalMessage.fromSerialized(ciphertext);
-
-          final plaintext = await _encryptionService.decryptBinary(
-            _currentPeerId!,
-            signalMessage,
-          );
-          final contentType =
-              (data['contentType'] as String?) ?? 'application/octet-stream';
-          // metadata begrenzen: beliebig große/verschlachtelte Maps vom
-          // Peer werden nicht ungeprüft übernommen (Audit S3).
-          final metadataRaw = data['metadata'];
-          final metadata =
-              (metadataRaw is Map && metadataRaw.length <= _maxMetadataEntries)
-              ? Map<String, dynamic>.from(metadataRaw)
-              : null;
-          final record = (
-            data: plaintext,
-            contentType: contentType,
-            metadata: metadata,
-          );
-          // Anruf-Sprachpakete in den Kontroll-Stream, sonst normaler
-          // Binärkanal (Bilder, Sprachnachrichten).
-          if (contentType == callAudioContentType) {
-            _controlAudioController.add(record);
-          } else {
-            _incomingBinaryController.add(record);
-          }
+          _incomingBinaryController.add(record);
         }
       }
     } catch (e) {

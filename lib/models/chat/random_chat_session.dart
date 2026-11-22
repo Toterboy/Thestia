@@ -1,3 +1,5 @@
+import 'package:thestia/utils/common/json_leser.dart';
+
 /// Status einer Zufallschat-Session (serverseitiges Matching).
 enum RandomChatStatus {
   waiting,
@@ -34,9 +36,9 @@ class RandomChatSession {
 
   factory RandomChatSession.fromJson(Map<String, dynamic> json) {
     return RandomChatSession(
-      sessionId: json['sessionId'] as String?,
-      partnerId: json['partnerId'] as String?,
-      status: RandomChatStatus.fromString(json['status'] as String?),
+      sessionId: textOf(json, ['sessionId']),
+      partnerId: textOf(json, ['partnerId']),
+      status: RandomChatStatus.fromString(textOf(json, ['status'])),
     );
   }
 }
