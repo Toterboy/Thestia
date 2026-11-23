@@ -318,6 +318,7 @@ ZIELE: list[tuple[str, str]] = [
     ("passkey-assets/konto-loeschen.html", "ganz"),
     ("fastlane/metadata/android/de-DE/changelogs/56.txt", "ganz"),
     ("fastlane/metadata/android/de-DE/changelogs/57.txt", "ganz"),
+    ("fastlane/metadata/android/de-DE/changelogs/58.txt", "ganz"),
 ]
 
 

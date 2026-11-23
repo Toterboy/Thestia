@@ -304,7 +304,7 @@ class AgeEstimationService {
     try {
       // 1) Dekodieren + auf max. 640 px verkleinern (Isolate, kein Jank).
       //    Rückgabe: [Breite, Höhe, RGB-Bytes].
-      final small = await compute(_decodeDownscaleSync, bytes);
+      final small = await compute(decodeDownscaleSync, bytes);
       if (small == null) return null;
       final baseW = small[0] as int;
       final baseH = small[1] as int;
@@ -313,17 +313,17 @@ class AgeEstimationService {
       // 2) Gesichter zählen (falls Detektor vorhanden). UltraFace:
       //    fest 320x240, (x-127)/128. Boxen sind normiert.
       var faceCount = -1;
-      var crop = _centerSquare(baseW, baseH);
+      var crop = centerSquare(baseW, baseH);
       final detector = _detector;
       if (detector != null) {
-        final detTensor = _tensorFromRgbUltraFace(rgb, baseW, baseH);
+        final detTensor = tensorFromRgbUltraFace(rgb, baseW, baseH);
         final boxes = _detectFaces(detector, detTensor);
         faceCount = boxes.length;
         if (boxes.isNotEmpty) {
           // Größte Box (normiert -> Originalkoordinaten).
           boxes.sort((a, b) => b.$5.compareTo(a.$5));
           final b = boxes.first;
-          crop = _clampCrop(
+          crop = clampCrop(
             (b.$1 * baseW).toInt(),
             (b.$2 * baseH).toInt(),
             (b.$3 * baseW).toInt(),
@@ -335,7 +335,7 @@ class AgeEstimationService {
       }
 
       // 3) Crop aufbereiten (Isolate, Norm siehe [ageInputNorm]).
-      final tensor = await compute(_cropResizeFromRgbSync, {
+      final tensor = await compute(cropResizeFromRgbSync, {
         'rgb': rgb,
         'w': baseW,
         'h': baseH,
@@ -479,7 +479,7 @@ class AgeEstimationService {
       kept.add(i);
       for (final j in indexed) {
         if (j == i || suppressed[j]) continue;
-        if (_iou(rows[i], rows[j]) > iouThreshold) suppressed[j] = true;
+        if (iou(rows[i], rows[j]) > iouThreshold) suppressed[j] = true;
       }
     }
     return [
@@ -494,7 +494,11 @@ class AgeEstimationService {
     ];
   }
 
-  static double _iou(List<double> a, List<double> b) {
+  /// Überschneidungsfläche zweier Rechtecke (fuer die NMS des Detektors).
+  ///
+  /// Test-Zugang, s. [centerSquare].
+  @visibleForTesting
+  static double iou(List<double> a, List<double> b) {
     final x1 = math.max(a[0], b[0]);
     final y1 = math.max(a[1], b[1]);
     final x2 = math.min(a[2], b[2]);
@@ -531,7 +535,14 @@ class AgeEstimationService {
   }
 
   /// Mittiges Quadrat (x1,y1,x2,y2) als Fallback-Crop.
-  List<int> _centerSquare(int w, int h) {
+  ///
+  /// DER GRUND FUER DEN TEST-ZUGANG (23.11.2026): Die Alterspruefung ist
+  /// die einzige Stelle der App, die ein Gesicht bewertet - und ihre
+  /// reinen Bild-Helfer (Crop, Tensor, Groesse) waren voellig ungetestet.
+  /// Sie sind oeffentlich, weil der Test sie aufrufen muss; benutzt
+  /// werden sie trotzdem nur hier.
+  @visibleForTesting
+  static List<int> centerSquare(int w, int h) {
     final side = w < h ? w : h;
     final x = (w - side) ~/ 2;
     final y = (h - side) ~/ 2;
@@ -539,7 +550,10 @@ class AgeEstimationService {
   }
 
   /// Crop auf Bildgrenzen klemmen (mind. 1 px groß).
-  List<int> _clampCrop(int x1, int y1, int x2, int y2, int w, int h) {
+  ///
+  /// Test-Zugang, s. [centerSquare].
+  @visibleForTesting
+  static List<int> clampCrop(int x1, int y1, int x2, int y2, int w, int h) {
     final a = x1.clamp(0, w - 1);
     final b = y1.clamp(0, h - 1);
     final c = x2.clamp(a + 1, w);
@@ -549,7 +563,10 @@ class AgeEstimationService {
 
   /// RGB-Bytes -> UltraFace-Tensor [1,3,240,320] mit (x-127)/128
   /// (offizielles detect-Skript, Linzaer). Hauptthread, klein und schnell.
-  Float32List _tensorFromRgbUltraFace(Uint8List rgb, int srcW, int srcH) {
+  ///
+  /// Test-Zugang, s. [centerSquare].
+  @visibleForTesting
+  static Float32List tensorFromRgbUltraFace(Uint8List rgb, int srcW, int srcH) {
     const dstW = _detectWidth;
     const dstH = _detectHeight;
     final planeSize = dstW * dstH;
@@ -572,7 +589,10 @@ class AgeEstimationService {
 
   /// Dekodiert + verkleinert (längste Seite max. 640) im Isolate.
   /// Rückgabe [Breite, Höhe, RGB-Bytes] oder null.
-  static List<dynamic>? _decodeDownscaleSync(Uint8List bytes) {
+  ///
+  /// Test-Zugang, s. [centerSquare].
+  @visibleForTesting
+  static List<dynamic>? decodeDownscaleSync(Uint8List bytes) {
     final decoded = img.decodeImage(bytes);
     if (decoded == null) return null;
     // EXIF-Orientation in die Pixel-Daten baken (Fix "KI-Triage immer
@@ -611,7 +631,10 @@ class AgeEstimationService {
 /// Crop + Resize + Normalisierung im Isolate.
 /// Params: rgb, w, h, crop [x1,y1,x2,y2], size, norm
 /// ('01' | 'imagenet' | 'minus11') -> NCHW-Float32.
-Float32List _cropResizeFromRgbSync(Map<String, dynamic> params) {
+///
+/// Test-Zugang (23.11.2026), s. [AgeEstimationService.centerSquare].
+@visibleForTesting
+Float32List cropResizeFromRgbSync(Map<String, dynamic> params) {
   final rgb = params['rgb'] as Uint8List;
   final w = params['w'] as int;
   final h = params['h'] as int;

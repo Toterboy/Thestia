@@ -58,17 +58,16 @@ void main() {
   Future<String?> zeigeChallenge(
     WidgetTester tester, {
     bool abbrechen = false,
+    double schriftGroesse = 0.5,
   }) async {
     String? ergebnis;
     await tester.pumpWidget(
       MediaQuery(
-        // DIE SCHRIFTGROESSE (50 %): Der Dialog hat eine feste Hoehe
-        // (200 Pixel) - im Test-Font (jeder Buchstabe ein Quadrat) passt
-        // der Fehlertext nicht hinein und laeuft ueber. In der App passt
-        // er (die echte Schrift ist kleiner); die Meldung steht trotzdem
-        // am Rand, wenn der Nutzer eine riesige Systemschrift gewaehlt
-        // hat - das ist eine offene Baustelle (siehe die Roadmap).
-        data: const MediaQueryData(textScaler: TextScaler.linear(0.5)),
+        // DIE SCHRIFTGROESSE (50 %): Der Test-Font ist uebertrieben
+        // (jeder Buchstabe ein Quadrat) - mit der echten Schrift passt
+        // der Fehlertext ohne Scrollen. Fuer den Fall "riesige
+        // Systemschrift" gibt es einen eigenen Test unten.
+        data: MediaQueryData(textScaler: TextScaler.linear(schriftGroesse)),
         child: MaterialApp(
           theme: ThemeData(useMaterial3: true),
           home: Scaffold(
@@ -188,6 +187,42 @@ void main() {
         reason:
             'Der Nutzer muss sehen, dass es nicht geklappt hat - sonst '
             'wartet er ewig auf eine Antwort, die nicht kommt.',
+      );
+    });
+
+    testWidgets('bei riesiger Systemschrift bleibt der Dialog benutzbar', (
+      tester,
+    ) async {
+      // DIE GROSSE SYSTEMSCHRIFT (300 %): Die App erlaubt bis 3,2x. Der
+      // Dialog hat eine feste Hoehe (200 Pixel) - der Fehlertext passte
+      // dort nicht hinein und lief ueber. Das hat den Dialog unbrauchbar
+      // gemacht: der Nutzer konnte weder die Meldung lesen noch auf
+      // "Erneut versuchen" tippen.
+      await zeigeChallenge(tester, schriftGroesse: 3.0);
+
+      webview.sendeAusDerSeite('ERROR:CAPTCHA_ERROR:110200');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(
+        tester.takeException(),
+        isNull,
+        reason:
+            'Der Dialog darf bei grosser Schrift nicht ueberlaufen - sonst '
+            'ist er fuer genau die Nutzer unbrauchbar, die ihn am '
+            'meisten brauchen.',
+      );
+      expect(
+        find.text(L10n.tWithoutContext('captcha.retry')),
+        findsOneWidget,
+        reason:
+            'Der Knopf "Erneut versuchen" muss erreichbar bleiben - sonst '
+            'kann der Nutzer den Fehler nicht beheben.',
+      );
+      expect(
+        find.textContaining('110200'),
+        findsOneWidget,
+        reason: 'Der Fehlercode muss sichtbar bleiben.',
       );
     });
 

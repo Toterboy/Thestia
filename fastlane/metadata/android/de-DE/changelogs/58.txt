@@ -1,0 +1,11 @@
+Der Sicherheitscheck bleibt bedienbar
+
+Wenn du eine sehr große Schrift eingestellt hast, lief die Fehlermeldung des Sicherheitschecks aus dem Fenster: der Knopf "Erneut versuchen" war dann nicht mehr zu erreichen und die Meldung selbst war abgeschnitten. Die Meldung ist jetzt scrollbar - du liest sie ganz, und du kannst es noch einmal versuchen.
+
+Die Altersprüfung ist gründlicher abgesichert
+
+Die Bildauswertung der Altersprüfung (Zuschnitt, Bildgröße, Normierung) wird jetzt von Tests abgedeckt. Vorher war sie nur durch die tatsächliche Prüfung auf dem Gerät abgesichert: ein Fehler dort fiel nicht auf, sondern nur durch - die Prüfung landete dann grundlos bei der manuellen Kontrolle.
+
+Und: gemeldete Bilder lassen sich jetzt speichern
+
+Die Datentypen einer Bild-Meldung waren in der lokalen Ablage nicht registriert. Deshalb konnte eine Meldung nicht gespeichert werden. Das ist behoben.

@@ -628,6 +628,15 @@ void _registerHiveAdapters() {
   Hive.registerAdapter(SignalIdentityKeyStoreAdapterAdapter());
   // Datinghour-Modelle werden nicht mehr lokal persistiert (serverseitig in
   // Supabase). Daher keine Hive-Adapter nötig.
+  //
+  // DIE AUFZAEHLUNGEN (Befund 23.11.2026, gefunden von einem Test):
+  // PhotoModerationFlag hat zwei Felder vom Typ PhotoModerationType und
+  // PhotoModerationStatus. Ohne ihre Adapter kann Hive das Flag nicht
+  // schreiben ("Cannot read, unknown typeId 20/21") - die Meldung
+  // waere damit unmoeglich. Die Adapter der Modelle allein reichen
+  // nicht: Hive kennt jeden Typ nur ueber seinen Adapter.
+  Hive.registerAdapter(PhotoModerationTypeAdapter());
+  Hive.registerAdapter(PhotoModerationStatusAdapter());
   Hive.registerAdapter(PhotoModerationFlagAdapter());
   Hive.registerAdapter(UserModerationRecordAdapter());
   Hive.registerAdapter(UserReportAdapter());

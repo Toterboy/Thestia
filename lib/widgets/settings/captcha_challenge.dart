@@ -205,10 +205,28 @@ class _CaptchaChallengeDialogState extends State<_CaptchaChallengeDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (_error != null) ...[
-                Text(
-                  _errorText(context),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                // DER FEHLERTEXT (Befund 23.11.2026, gefunden von einem
+                // Test): Das Fenster hat eine feste Hoehe (200 Pixel).
+                // Bei grosser Systemschrift (die App erlaubt bis 3,2x)
+                // passte der Fehlertext nicht hinein - er lief ueber und
+                // der Dialog wurde unbrauchbar (der Nutzer konnte weder
+                // die Meldung lesen noch auf "Erneut versuchen" tippen).
+                //
+                // Die Loesung: Der Text bekommt seinen eigenen Bereich
+                // mit einer Obergrenze und wird darin scrollbar. So
+                // bleibt der Dialog benutzbar, und die Meldung ist
+                // vollstaendig lesbar (nur bei Bedarf gescrollt).
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 96),
+                  child: SingleChildScrollView(
+                    child: Text(
+                      _errorText(context),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 TextButton.icon(

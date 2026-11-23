@@ -1,0 +1,11 @@
+The security check stays usable
+
+If you set a very large font size, the error message of the security check ran out of the window: the "Try again" button was no longer reachable and the message itself was cut off. The message is now scrollable - you can read all of it, and you can try again.
+
+The age check is more thoroughly covered
+
+The image processing of the age check (crop, image size, normalisation) is now covered by tests. Before, it was only secured by the actual check on the device: a mistake there did not show up, it only showed up as a result - the check then ended up in the manual review for no reason.
+
+And: reported images can now be stored
+
+The data types of an image report were not registered in the local storage. That is why a report could not be stored. This is fixed.
