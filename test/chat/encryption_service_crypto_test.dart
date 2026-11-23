@@ -24,6 +24,11 @@ void main() {
   // Passwort-Fixture: NICHT aus der Produktion, offensichtlich als Test.
   const testPassword = 'TEST_ONLY_p4ssw0rd-not-used-anywhere-else!';
 
+  // DIE ZEIT: Jede Verschluesselung leitet den Schluessel mit einem
+  // langsamen KDF ab (das ist Absicht - ein schneller KDF waere eine
+  // Einladung zum Brute-Force). Ein Test mit sechs Passwoertern
+  // braucht darum unter Last (viele Testdateien parallel) mehr als die
+  // 30 Sekunden des Standard-Zeitlimits.
   group('AES-256-GCM Backup-Krypto', () {
     test('Encrypt → Decrypt Roundtrip liefert Original-Wert zurück', () {
       final encrypted = BackupCrypto.encrypt(testPlaintext, testPassword);
@@ -156,6 +161,11 @@ void main() {
       expect(c1, isNot(equals(c2)));
     });
 
+    // DIE ZEIT: Jede Verschluesselung leitet den Schluessel mit einem
+    // langsamen KDF ab (das ist Absicht - ein schneller KDF waere eine
+    // Einladung zum Brute-Force). Der Test mit sechs Passwoertern
+    // braucht darum unter Last (viele Testdateien parallel) mehr als
+    // die 30 Sekunden des Standard-Zeitlimits.
     test('Roundtrip mit Sonderzeichen im Passwort (Emoji, Umlaute, '
         'Steuerzeichen, >100 Zeichen)', () {
       // Sonderzeichen-Passwörter: Emoji, Umlaute, Steuerzeichen, Leerzeichen.
@@ -176,6 +186,6 @@ void main() {
           reason: 'Roundtrip mit Passwort: ${pw.length} Zeichen',
         );
       }
-    });
+    }, timeout: const Timeout(Duration(minutes: 3)));
   });
 }
