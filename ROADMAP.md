@@ -11,6 +11,12 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
   (0.x.y).
 - Auch eine Änderung der Datenverarbeitung **für Nutzende** ist eine neue
   Nutzerfunktion.
+- **Eine noch nie veröffentlichte Fassung wird nicht neu nummeriert.**
+  Ist die aktuelle Fassung (z. B. 0.10.2) noch nicht draußen, gehören
+  ihre Fixes zu **ihr** – es gibt nur eine neue Build-Nummer. Erst wenn
+  eine Fassung veröffentlicht wurde, zählt der Sprung auf die nächste
+  Nummer. (Zwei Mal passiert: 22.11.2026 mit Build 57 und 24.11.2026 mit
+  Build 58 – beide Male hätte die Nummer bleiben müssen.)
 - Jede Fassung hat einen Build; der Build ist das, was im Store liegt.
   Der Admin-Build hat eine eigene Build-Nummer (Basis + 9000).
 - Eine Abweichung von der Regel wird im [CHANGELOG](CHANGELOG.md)
@@ -80,7 +86,7 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
   keinen Inhalt), Transit Spark: mehrere mit derselben Beschreibung
   anschreiben, ungefährer Ort als Selbstauskunft statt als Standort,
   serverseitiger Nachrichtenzähler, Kategorie-Sicht ohne Sackgasse
-- **0.10.2** (Build 56/57) – **Das Impressum steht als Text in der App**
+- **0.10.2** (Build 56/57/58) – **Das Impressum steht als Text in der App**
   (der verifizierte App-Link öffnete die App selbst statt des Browsers),
   **die Funkenliste lädt wieder** (drei `STABLE`-Funktionen schrieben in
   die Datenbank → HTTP 405), Schalter je Punkt für das öffentliche Profil
@@ -89,6 +95,9 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
   Geburtstags-Hintergrund, runde Chat-Bilder ohne Rahmen, der Zufallschat
   fragt beim Verlassen nach, die Auswahl im Auswahl-Modus der
   Funken-Liste schneidet den Knopf nicht mehr ab, deutlicher Testausbau
+  (Build 58: der Sicherheitscheck bleibt bei großer Schrift bedienbar,
+  die Bildauswertung der Altersprüfung ist getestet, gemeldete Bilder
+  lassen sich speichern)
 
 ## In Arbeit
 
