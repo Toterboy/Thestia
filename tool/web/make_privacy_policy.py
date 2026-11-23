@@ -531,6 +531,42 @@ def _schreibe_wenn_geaendert(pfad: str, inhalt: str) -> None:
         fh.write(inhalt)
 
 
+def _schreibe_dart_wenn_geaendert(pfad: str, inhalt: str) -> None:
+    """Schreibt die Dart-Datei nur, wenn sich der INHALT aendert.
+
+    WARUM (23.11.2026): Der Generator erzeugt unformatierten Dart und
+    formatiert ihn danach. Der Vergleich "unformatiert gegen die Datei
+    auf der Platte" sah deshalb immer einen Unterschied - die Datei
+    wurde neu geschrieben, `dart format` machte sie wieder identisch,
+    und git meldete nichts. Der Zeitstempel war trotzdem neu: die
+    Release-Pruefung meldete daraufhin "der Build traegt einen
+    aelteren Code", obwohl sich kein Byte geaendert hat.
+
+    DER WEG: Schreiben, formatieren, und wenn der Inhalt am Ende doch
+    der alte ist, den alten Zeitstempel zuruecksetzen. Dann bleibt die
+    Datei unberuehrt - Inhalt UND Zeitstempel.
+    """
+    alt = None
+    alt_zeit = None
+    if os.path.exists(pfad):
+        alt_zeit = os.path.getmtime(pfad)
+        with io.open(pfad, encoding='utf-8') as fh:
+            alt = fh.read()
+    if alt == inhalt:
+        return
+    with io.open(pfad, 'w', encoding='utf-8', newline='\n') as fh:
+        fh.write(inhalt)
+    _formatiere(pfad)
+    if alt is None or alt_zeit is None:
+        return
+    with io.open(pfad, encoding='utf-8') as fh:
+        neu = fh.read()
+    if neu == alt:
+        # Der Inhalt ist am Ende doch der alte (nur die Formatierung
+        # war anders) - der Zeitstempel wird zurueckgesetzt.
+        os.utime(pfad, (alt_zeit, alt_zeit))
+
+
 def _formatiere(dart_datei):
     """Formatiert eine erzeugte Dart-Datei (ohne Dart: uebersprungen).
 
@@ -591,15 +627,10 @@ def main():
 
         os.makedirs(os.path.dirname(sprache['dart']), exist_ok=True)
         _schreibe_wenn_geaendert(sprache['blocks'], render_blocks())
-        _schreibe_wenn_geaendert(sprache['dart'],
-                                 render_dart(blocks, sprache))
-        # Die Dart-Ausgabe SELBST formatieren (BEFUND 06.11.2026):
-        # Ohne das blieb nach einem Generatorlauf die unformatierte
-        # Fassung stehen - und die CI prueft
-        # "dart format --set-exit-if-changed lib test tool". Der
-        # Generator brach das Format-Gate also, ohne dass etwas
-        # inhaltlich falsch war.
-        _formatiere(sprache['dart'])
+        # DIE DART-DATEI: eigener Weg, weil sie danach formatiert wird -
+        # siehe _schreibe_dart_wenn_geaendert (der Zeitstempel).
+        _schreibe_dart_wenn_geaendert(sprache['dart'],
+                                      render_dart(blocks, sprache))
 
         os.makedirs(os.path.dirname(sprache['html']), exist_ok=True)
         _schreibe_wenn_geaendert(sprache['html'],

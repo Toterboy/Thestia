@@ -72,10 +72,11 @@ SEITEN = [
 # entfernen und apply_theme() eine ohne Sprachknopf einsetzen.
 
 # Die englischen Fassungen liegen unter en/ und tragen dieselben
-# Dateinamen. "en/eltern/einstellungen.html" gehoert zu
-# "eltern-einstellungen.html" - die Ordnerstruktur bildet die Adresse
-# ab, damit "/en/eltern/einstellungen" und "/eltern/einstellungen"
-# zueinander passen.
+# Dateinamen. "en/eltern-einstellungen.html" gehoert zu
+# "eltern-einstellungen.html" - die Adresse "/en/eltern/einstellungen"
+# entsteht aus der Rewrite-Regel (BEFUND 23.11.2026: die Datei liegt
+# FLACH, weil ein Ordner "en/eltern/" auf dem Server am Schraegstrich
+# dreht).
 EN_SEITEN = [
     'en/impressum.html',
     'en/kinderschutz.html',
@@ -83,7 +84,7 @@ EN_SEITEN = [
     'en/konto-loeschen.html',
     'en/daten-loeschen.html',
     'en/eltern.html',
-    'en/eltern/einstellungen.html',
+    'en/eltern-einstellungen.html',
     'en/nutzungsbedingungen.html',
 ]
 
@@ -116,20 +117,13 @@ def sprachziel(rel: str) -> tuple[str, str]:
     'impressum.html' oder 'en/impressum.html'.
 
     Fuer die englischen Seiten ist der Name die Datei OHNE den Ordner
-    'en/' (z. B. 'en/eltern/einstellungen.html' -> 'eltern-einstellungen
-    .html'), weil die Ordnerstruktur die Adresse abbildet.
+    'en/' (z. B. 'en/eltern-einstellungen.html' -> 'eltern-einstellungen
+    .html'); die Adresse "/en/eltern/einstellungen" kommt aus der
+    Rewrite-Regel.
     """
     if rel.startswith('en/'):
         rest = rel[3:]
-        # 'en/eltern/einstellungen.html' gehoert zu 'eltern-einstellungen
-        # .html' - der Pfad zwischen 'en/' und dem Dateinamen ist
-        # genau die Adresse ohne '/en/'.
-        basis = rest.replace('/', '-', 1) if '/' in rest else rest
-        # 'eltern/einstellungen.html' -> 'eltern-einstellungen.html'
-        if '/' in rest:
-            teil = rest.split('/')
-            basis = teil[0] + '-' + teil[-1]
-        eintrag = SEITEN_URL.get(basis)
+        eintrag = SEITEN_URL.get(rest)
         if not eintrag:
             return '', ''
         return eintrag[0], 'DE'

@@ -23,11 +23,13 @@ Options -Indexes -MultiViews
 DirectoryIndex index.html
 
 # KEIN AUTOMATISCHER SCHRAGSTRICH (BEFUND 23.11.2026): Unter /en/
-# liegt ein Ordner "eltern/" (fuer /en/eltern/einstellungen.html) und
-# daneben die Datei "en/eltern.html". Ohne diese Zeile macht Apache aus
+# lag ein Ordner "eltern/" (fuer die Eltern-Einstellungen-Seite) und
+# daneben die Datei "en/eltern.html". Ohne diese Zeile machte Apache aus
 # /en/eltern (der Adresse aus der Sitemap!) einen 301 auf /en/eltern/
 # und dort gibt es keinen Index -> 403. Mit "DirectorySlash Off" greift
 # stattdessen die Rewrite-Regel ^en/eltern$ -> en/eltern.html.
+# (Die Seite liegt inzwischen flach in en/eltern-einstellungen.html -
+# der Ordner ist damit ohnehin weg.)
 DirectorySlash Off
 
 <IfModule mod_rewrite.c>
@@ -67,7 +69,8 @@ RewriteRule ^en/konto-loeschen$ en/konto-loeschen.html [L]
 RewriteRule ^en/daten-loeschen$ en/daten-loeschen.html [L]
 RewriteRule ^en/datenschutz$ en/datenschutz.html [L]
 RewriteRule ^en/eltern$ en/eltern.html [L]
-RewriteRule ^en/eltern/einstellungen$ en/eltern/einstellungen.html [L]
+RewriteRule ^en/eltern/einstellungen$ en/eltern-einstellungen.html [L]
+RewriteRule ^en/eltern/einstellungen/$ en/eltern-einstellungen.html [L]
 RewriteRule ^en/impressum/$ en/impressum.html [L]
 RewriteRule ^en/kinderschutz/$ en/kinderschutz.html [L]
 RewriteRule ^en/dating-sicherheit/$ en/dating-sicherheit.html [L]
@@ -75,9 +78,12 @@ RewriteRule ^en/konto-loeschen/$ en/konto-loeschen.html [L]
 RewriteRule ^en/daten-loeschen/$ en/daten-loeschen.html [L]
 RewriteRule ^en/datenschutz/$ en/datenschutz.html [L]
 RewriteRule ^en/eltern/$ en/eltern.html [L]
-RewriteRule ^en/eltern/einstellungen/$ en/eltern/einstellungen.html [L]
+RewriteRule ^en/eltern/einstellungen/$ en/eltern-einstellungen.html [L]
 RewriteRule ^eltern-einstellungen$ eltern-einstellungen.html [L]
 RewriteRule ^eltern-einstellungen/$ eltern-einstellungen.html [L]
+RewriteRule ^en/eltern-einstellungen$ en/eltern-einstellungen.html [L]
+RewriteRule ^en/eltern-einstellungen/$ en/eltern-einstellungen.html [L]
+RewriteRule ^en/eltern/einstellungen\.html$ en/eltern-einstellungen.html [L]
 RewriteRule ^nutzungsbedingungen$ nutzungsbedingungen.html [L]
 RewriteRule ^nutzungsbedingungen/$ nutzungsbedingungen.html [L]
 RewriteRule ^en/nutzungsbedingungen$ en/nutzungsbedingungen.html [L]
@@ -129,15 +135,16 @@ SetEnvIf Request_URI "^/en/eltern(/)?(\?|$)" thestia_pfad_27
 SetEnvIf Request_URI "^/en/eltern\.html(/)?(\?|$)" thestia_pfad_28
 SetEnvIf Request_URI "^/en/eltern/einstellungen(/)?(\?|$)" thestia_pfad_29
 SetEnvIf Request_URI "^/en/eltern/einstellungen\.html(/)?(\?|$)" thestia_pfad_30
-SetEnvIf Request_URI "^/daten-loeschen(/)?(\?|$)" thestia_pfad_31
-SetEnvIf Request_URI "^/daten-loeschen\.html(/)?(\?|$)" thestia_pfad_32
-SetEnvIf Request_URI "^/eltern(/)?(\?|$)" thestia_pfad_33
-SetEnvIf Request_URI "^/eltern\.html(/)?(\?|$)" thestia_pfad_34
-SetEnvIf Request_URI "^/eltern/einstellungen(/)?(\?|$)" thestia_pfad_35
-SetEnvIf Request_URI "^/eltern-einstellungen\.html(/)?(\?|$)" thestia_pfad_36
-SetEnvIf Request_URI "^/threat-model\.md(/)?(\?|$)" thestia_pfad_37
-SetEnvIf Request_URI "^/screenshots/" thestia_pfad_38
-SetEnvIf Request_URI "^/en/screenshots/" thestia_pfad_39
+SetEnvIf Request_URI "^/en/eltern-einstellungen\.html(/)?(\?|$)" thestia_pfad_31
+SetEnvIf Request_URI "^/daten-loeschen(/)?(\?|$)" thestia_pfad_32
+SetEnvIf Request_URI "^/daten-loeschen\.html(/)?(\?|$)" thestia_pfad_33
+SetEnvIf Request_URI "^/eltern(/)?(\?|$)" thestia_pfad_34
+SetEnvIf Request_URI "^/eltern\.html(/)?(\?|$)" thestia_pfad_35
+SetEnvIf Request_URI "^/eltern/einstellungen(/)?(\?|$)" thestia_pfad_36
+SetEnvIf Request_URI "^/eltern-einstellungen\.html(/)?(\?|$)" thestia_pfad_37
+SetEnvIf Request_URI "^/threat-model\.md(/)?(\?|$)" thestia_pfad_38
+SetEnvIf Request_URI "^/screenshots/" thestia_pfad_39
+SetEnvIf Request_URI "^/en/screenshots/" thestia_pfad_40
 </IfModule>
 
 # --- 4) Die Header (aus _headers) ----------------------
@@ -184,17 +191,19 @@ Header always set Cache-Control "no-store" env=thestia_pfad_29
 Header always set Referrer-Policy "no-referrer" env=thestia_pfad_29
 Header always set Cache-Control "no-store" env=thestia_pfad_30
 Header always set Referrer-Policy "no-referrer" env=thestia_pfad_30
-Header always set Cache-Control "public, max-age=300" env=thestia_pfad_31
+Header always set Cache-Control "no-store" env=thestia_pfad_31
+Header always set Referrer-Policy "no-referrer" env=thestia_pfad_31
 Header always set Cache-Control "public, max-age=300" env=thestia_pfad_32
 Header always set Cache-Control "public, max-age=300" env=thestia_pfad_33
 Header always set Cache-Control "public, max-age=300" env=thestia_pfad_34
-Header always set Cache-Control "no-store" env=thestia_pfad_35
-Header always set Referrer-Policy "no-referrer" env=thestia_pfad_35
+Header always set Cache-Control "public, max-age=300" env=thestia_pfad_35
 Header always set Cache-Control "no-store" env=thestia_pfad_36
 Header always set Referrer-Policy "no-referrer" env=thestia_pfad_36
-Header always set Cache-Control "public, max-age=86400" env=thestia_pfad_37
+Header always set Cache-Control "no-store" env=thestia_pfad_37
+Header always set Referrer-Policy "no-referrer" env=thestia_pfad_37
 Header always set Cache-Control "public, max-age=86400" env=thestia_pfad_38
 Header always set Cache-Control "public, max-age=86400" env=thestia_pfad_39
+Header always set Cache-Control "public, max-age=86400" env=thestia_pfad_40
 </IfModule>
 
 # --- 5) Der Auth-Host und die spaetere Web-Version --------------

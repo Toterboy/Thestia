@@ -804,8 +804,10 @@ def sprachknopf(ziel: str, sprache: str) -> str:
 #
 # Der Schluessel ist der Seitenname OHNE den Ordner "en/" und OHNE
 # ".html" - "eltern-einstellungen.html" steht fuer beide Fassungen
-# (de/en/eltern/einstellungen.html), denn beide bekommen denselben
-# Text in ihrer Sprache.
+# (de/eltern-einstellungen.html und en/eltern-einstellungen.html), denn
+# beide bekommen denselben Text in ihrer Sprache. Die Adressen
+# (/eltern/einstellungen und /en/eltern/einstellungen) kommen aus den
+# Rewrite-Regeln in _redirects.
 #
 # KEIN Eintrag fuer die transienten Seiten (bestaetigt.html,
 # eltern-einstellungen.html): sie stehen auf noindex - eine
@@ -886,7 +888,7 @@ def beschreibung(seitenname: str, sprache: str = 'de') -> str:
     """Die Suchmaschinen-Beschreibung fuer eine Seite (leer, wenn keine).
 
     [seitenname] ist der Pfad relativ zu passkey-assets/, z. B.
-    "en/eltern/einstellungen.html" oder "impressum.html".
+    "en/eltern-einstellungen.html" oder "impressum.html".
 
     [sprache] ist "de" oder "en" - die Seite ist zweisprachig, die
     Beschreibung auch.

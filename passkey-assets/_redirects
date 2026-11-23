@@ -149,7 +149,8 @@ https://auth.thestia.de/robots.txt          /robots-auth.txt               200!
 /en/daten-loeschen    /en/daten-loeschen.html  200
 /en/datenschutz    /en/datenschutz.html  200
 /en/eltern    /en/eltern.html  200
-/en/eltern/einstellungen    /en/eltern/einstellungen.html  200
+/en/eltern/einstellungen    /en/eltern-einstellungen.html  200
+/en/eltern/einstellungen/   /en/eltern-einstellungen.html  200
 
 # Die englischen Adressen MIT Schluss-Schraegstrich (BEFUND 23.11.2026):
 # Auf Netlify wurde das mit einem 301 auf die Form ohne Schraegstrich
@@ -163,7 +164,7 @@ https://auth.thestia.de/robots.txt          /robots-auth.txt               200!
 /en/daten-loeschen/         /en/daten-loeschen.html  200
 /en/datenschutz/            /en/datenschutz.html  200
 /en/eltern/                 /en/eltern.html  200
-/en/eltern/einstellungen/   /en/eltern/einstellungen.html  200
+/en/eltern/einstellungen/   /en/eltern-einstellungen.html  200
 
 # Der Dateiname selbst als Adresse (ohne ".html"). Die echte Seite
 # heisst "/eltern/einstellungen" (mit Schraegstrich); die Variante mit
@@ -171,6 +172,17 @@ https://auth.thestia.de/robots.txt          /robots-auth.txt               200!
 # Dateinamen abgeleitet.
 /eltern-einstellungen   /eltern-einstellungen.html  200
 /eltern-einstellungen/  /eltern-einstellungen.html  200
+
+# DIE DATEI LIEGT IN KEINEM ORDNER (BEFUND 23.11.2026, Live): Die
+# englische Eltern-Einstellungen-Seite lag unter "en/eltern/" - neben
+# der Datei "en/eltern.html". Apache haengte an /en/eltern (der Adresse
+# aus der Sitemap!) deshalb einen Schraegstrich an und lieferte 403.
+# Ohne den Ordner greift die Rewrite-Regel auf en/eltern.html. Der
+# deutsche Teil liegt seit jeher flach (eltern-einstellungen.html) -
+# jetzt ist es auf beiden Seiten gleich.
+/en/eltern-einstellungen   /en/eltern-einstellungen.html  200
+/en/eltern-einstellungen/  /en/eltern-einstellungen.html  200
+/en/eltern/einstellungen.html   /en/eltern-einstellungen.html  200
 
 # Nutzungsbedingungen (DSA Art. 16: Bedingungen fuer die Vereinbarung
 # von Leistungen). Die Seite ist die Grundlage fuer die Meldestelle und

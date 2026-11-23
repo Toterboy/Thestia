@@ -92,8 +92,9 @@ EN_PFLICHT_PFADE = ['/en/', '/en/datenschutz', '/en/impressum',
 # Cache-Zeit wuerde die Seite zwischenspeichern und der Token
 # landete im Netlify-Zugriffslog - und im Referer jedes internen
 # Klicks. "no-store" ist hier die richtige Angabe.
-KEIN_CACHE = {'/eltern/einstellungen', '/eltern/einstellungen.html',
-              '/en/eltern/einstellungen', '/en/eltern/einstellungen.html'}
+KEIN_CACHE = {'/eltern/einstellungen', '/eltern-einstellungen.html',
+              '/en/eltern/einstellungen', '/en/eltern/einstellungen.html',
+              '/en/eltern-einstellungen.html'}
 
 problems = []
 

@@ -528,14 +528,13 @@ def main() -> int:
         """Die Seite in der anderen Sprache."""
         r = rel(p)
         if r.startswith("en/"):
-            rest = r[3:]
-            # Die Ordnerstruktur bildet die Adresse ab:
-            # /eltern/einstellungen liegt in en/eltern/einstellungen.html
-            if rest == "eltern/einstellungen.html":
-                return pathlib.Path("eltern-einstellungen.html")
-            return pathlib.Path(rest)
-        if r == "eltern-einstellungen.html":
-            return pathlib.Path("en/eltern/einstellungen.html")
+            # Die Ordnerstruktur bildet die Adresse ab: die englische
+            # Eltern-Einstellungen-Seite liegt flach in
+            # en/eltern-einstellungen.html (die Adresse /en/eltern/
+            # einstellungen kommt aus der Rewrite-Regel) - sonst waere
+            # es en/eltern/einstellungen.html und der Ordner en/eltern/
+            # wuerde auf dem Server wieder am Schraegstrich drehen.
+            return pathlib.Path(r[3:])
         return pathlib.Path("en") / r
 
     def adresse(p: pathlib.Path) -> str:
@@ -549,7 +548,7 @@ def main() -> int:
         # Datei eltern-einstellungen.html.
         if r == "eltern-einstellungen.html":
             return "/eltern/einstellungen"
-        if r == "en/eltern/einstellungen.html":
+        if r == "en/eltern-einstellungen.html":
             return "/en/eltern/einstellungen"
         if r.endswith("index.html"):
             return "/" + r[:-len("index.html")]

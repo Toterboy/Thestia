@@ -3,6 +3,15 @@
 Danke für dein Interesse! Thestia ist Open Source (AGPLv3) und lebt von
 Beiträgen – Code, Design, Übersetzungen, Dokumentation und Bug-Reports.
 
+> **Du möchtest Thestia unterstützen?**
+> Du kannst unter folgendem Link spenden: <https://liberapay.com/Thestia/>
+> Die App bleibt kostenlos – für immer, ohne Abos, ohne Premium und ohne
+> Werbung. Eine Spende deckt Server, Backups und die Domain ab.
+> **Spenden sind freiwillig und geben keine Gegenleistung**: keine
+> Belohnungen, keine Zusatzfunktionen, keine Vorteile für Geberinnen und
+> Geber – der Quellcode bleibt AGPLv3 und offen. Beiträge, Übersetzungen
+> und Bug-Reports sind genauso willkommen – und genauso viel wert.
+
 ## Setup
 
 ```bash

@@ -562,8 +562,13 @@ void main() {
       expect(lese('eltern.html'), contains('/eltern/einstellungen'));
       expect(lese('en/eltern.html'), contains('/en/eltern/einstellungen'));
       expect(
-        File('${assets.path}/en/eltern/einstellungen.html').existsSync(),
+        File('${assets.path}/en/eltern-einstellungen.html').existsSync(),
         isTrue,
+        reason:
+            'Die englische Seite liegt FLACH neben den anderen - ein Ordner '
+            '"en/eltern/" wuerde auf dem Server wieder am Schraegstrich '
+            'drehen und /en/eltern (der Sitemap-Adresse) auf einen 403 '
+            'schicken (BEFUND 23.11.2026).',
       );
     });
 

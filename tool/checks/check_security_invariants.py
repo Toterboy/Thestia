@@ -1283,7 +1283,7 @@ check(has('passkey-assets/en/eltern.html',
 check(has('passkey-assets/eltern-einstellungen.html',
           'Der Link ist 24 Stunden lang'),
       'WEB: Das Elternportal meldet einen abgelaufenen Link nach 24 Stunden')
-check(has('passkey-assets/en/eltern/einstellungen.html',
+check(has('passkey-assets/en/eltern-einstellungen.html',
           'The link is valid for 24 hours'),
       'WEB: Das englische Elternportal meldet 24 hours')
 
