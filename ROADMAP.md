@@ -101,11 +101,11 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
 
 ## In Arbeit
 
-- [~] **Website-Umzug auf Infomaniak** (Netlify bleibt als Fallback;
+- [x] **Website-Umzug auf Infomaniak** (Netlify bleibt als Fallback;
   `thestia.de` und `auth.thestia.de` werden dort getrennt - eigene
-  Verzeichnisse, eigene Zertifikate; DNS und Zertifikate stehen, es
-  fehlt nur der Upload. Der Sicherheitscheck bekommt das Design der
-  Website. Details: docs/betrieb/WEBSITE-HOSTING.md)
+  Verzeichnisse, eigene Zertifikate; DNS und Zertifikate stehen, der
+  Upload ist am 23.11.2026 erfolgt. Der Sicherheitscheck bekommt das
+  Design der Website. Details: docs/betrieb/WEBSITE-HOSTING.md)
 - [ ] **F-Droid-Einreichung** (google-freier Flavor, UnifiedPush,
   Fastlane-Metadaten liegen vor; die Einreichung steht aus)
 - [~] **Branding-Feinschliff** (Store-Icon 512×512, Feature Graphic
