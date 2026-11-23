@@ -21,24 +21,26 @@ DAS WAR ZWEI FEHLER IN EINER:
      (die Alpha-Schwelle in `generate_launcher_icon.py`).
 
 DIE DATEIEN - alle aus EINER Quelle, `assets/images/thestia_icon_base.png`
-(die einzige Logo-Quelle im Projekt), und alle RUND:
+(die einzige Logo-Quelle im Projekt). Seit dem 23.11.2026 sind sie
+ALLE ABGERUNDET (nicht rund):
 
-  favicon.png   192x192  - das ThestiaIcon, rund
-  favicon.ico   16/32/48/64/128/256 - dasselbe, rund. Das ist der Weg,
-                den die Suche nimmt (sie fragt /favicon.ico).
+  favicon.png   192x192  - das ThestiaIcon, abgerundet
+  favicon.ico   16/32/48/64/128/256 - dasselbe, abgerundet. Das ist der
+                Weg, den die Suche nimmt (sie fragt /favicon.ico).
   favicon.svg   dasselbe als SVG (mit dem PNG eingebettet) - fuer
                 Browser, die SVG-Icons bevorzugen. Ohne diese Datei
                 nimmte der Browser das Herz.
-  logo.png      512x512  - das ThestiaIcon, ABGERUNDET (der Weg aus dem
-                Herz-Icon). Es steht in der Kopfzeile und auf der Karte
-                jeder Seite (23.11.2026, Betreiber: "Bei allen Websites
-                und auch auth.thestia soll statt diesem Herz Icon das
-                richtige App logo da sein, also dieses abgerundete,
-                aber nicht ganz runde").
+  logo.png      256x256  - dasselbe Bild fuer die Kopfzeile und die
+                Karte jeder Seite (23.11.2026, Betreiber: "Bei allen
+                Websites und auch auth.thestia soll statt diesem Herz
+                Icon das richtige App logo da sein, also dieses
+                abgerundete, aber nicht ganz runde").
 
-Der runde Schnitt steht in `tool/images/logo_round.py` - dieselbe Rechnung wie
-in `tool/images/generate_round_logo.dart`, in Python (weil die Favicons mit
-Pillow erzeugt werden).
+DIE ENTSCHEIDUNG VOM 09.11.2026 ("Hier muss das Bild Rund sein") ist
+damit ueberholt (23.11.2026, Betreiber): "Das Icon sollte außerdem
+nicht rund sein. Es soll so sein wie thestia_icon_base.png aus
+assets/images." Die Quelle hat bereits abgerundete, transparente Ecken
+- es wird nur skaliert, nicht mehr in einen Kreis geschnitten.
 
 WARUM EIN WERKZEUG FUER BEIDES: Der Weg zum Logo laeuft sonst
 auseinander - das war schon einmal der Grund fuer den Bug vom
@@ -89,22 +91,22 @@ PUBLISH = WURZEL / "passkey-assets"
 #: Die Logo-Quelle (die einzige im Projekt).
 QUELLE = WURZEL / "assets" / "images" / "thestia_icon_base.png"
 
-#: DER RUNDE SNITT: Er steht in tool/images/logo_round.py (dieselbe
-#: Rechnung wie in tool/images/generate_round_logo.dart, in Python, weil
-#: die Favicons mit Pillow erzeugt werden).
-#:
-#: BEFUND (23.11.2026): Der Import zeigte auf tool/helpers - dort liegt
-#: die Datei nicht. Das Skript lief also gar nicht mehr (die Favicons
-#: waren noch von einem frueheren Lauf).
-sys.path.insert(0, str(WURZEL / "tool" / "images"))
-from logo_round import rundes_logo  # noqa: E402
+#: ABGERUNDET, NICHT RUND (23.11.2026, Betreiber): "Das Icon sollte
+#: außerdem nicht rund sein. Es soll so sein wie thestia_icon_base.png
+#: aus assets/images." Die runde Fassung (tool/images/logo_round.py)
+#: war die Entscheidung vom 09.11.2026 - sie ist damit ueberholt.
+#: Die Quelle unten ist bereits das abgerundete Artwork mit
+#: transparenten Ecken; es wird nur noch skaliert, nicht maskiert.
 
 # ---------------------------------------------------------------------
-# 1) Das runde Icon in den benoetigten Groessen
+# 1) Das abgerundete Icon in den benoetigten Groessen
 # ---------------------------------------------------------------------
 # 256 als Quelle fuer die ICO: das groesste Format darin soll nicht
-# hochskaliert werden.
-gross = rundes_logo(256)
+# hochskaliert werden. Die abgerundeten Ecken sind in der Quelle
+# bereits transparent - es wird nur skaliert, nicht maskiert.
+gross = Image.open(QUELLE).convert("RGBA")
+if gross.size != (256, 256):
+    gross = gross.resize((256, 256), Image.LANCZOS)
 gross_pfad = PUBLISH / "favicon.png"
 gross.resize((192, 192), Image.LANCZOS).save(gross_pfad, "PNG", optimize=True)
 print("  favicon.png   192x192  %d Bytes" % gross_pfad.stat().st_size)
@@ -118,7 +120,7 @@ gross.save(
 print("  favicon.ico   16-256  %d Bytes" % ico_pfad.stat().st_size)
 
 # ---------------------------------------------------------------------
-# 2) Das SVG: das runde Icon als eingebettetes PNG
+# 2) Das SVG: das abgerundete Icon als eingebettetes PNG
 # ---------------------------------------------------------------------
 # WARUM EINGEBETTET UND NICHT ALS VEKTOR: Das Artwork (Verlauf, Herz,
 # Kopf-Silhouetten, Funken, Schriftzug) ist eine Rastergrafik. Eine
@@ -133,15 +135,16 @@ daten = base64.b64encode(puffer.getvalue()).decode("ascii")
 svg = (
     '<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" '
     'viewBox="0 0 192 192" role="img" aria-label="Thestia">\n'
-    '  <!-- Das ThestiaIcon, rund (eingebettetes PNG - das Artwork ist '
-    'eine Rastergrafik). Erzeugt von tool/web/make_favicon.py. -->\n'
+    '  <!-- Das ThestiaIcon, abgerundet (eingebettetes PNG - das '
+    'Artwork ist eine Rastergrafik). Erzeugt von tool/web/'
+    'make_favicon.py. -->\n'
     '  <image href="data:image/png;base64,%s" x="0" y="0" '
     'width="192" height="192"/>\n'
     '</svg>\n'
 ) % daten
 svg_pfad = PUBLISH / "favicon.svg"
 svg_pfad.write_text(svg, encoding="utf-8", newline="\n")
-print("  favicon.svg          %d Bytes (rundes ThestiaIcon)"
+print("  favicon.svg          %d Bytes (abgerundetes ThestiaIcon)"
       % svg_pfad.stat().st_size)
 
 # ---------------------------------------------------------------------

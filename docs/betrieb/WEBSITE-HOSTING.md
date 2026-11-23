@@ -363,6 +363,23 @@ Upload-Werkzeuge ueberspringen Punkt-Dateien. Im Zweifel ueber
 SFTP/FTP hochladen oder im Panel die Anzeige der versteckten Dateien
 einschalten.
 
+**WO DER UPLOAD IM PANEL STECKT (BEFUND 23.11.2026, Infomaniak-FAQ
+1130 "Schnell auf den Server zugreifen (Web-FTP)"):** Es gibt dort
+keinen Knopf "Dateien hochladen" auf der Website-Seite selbst. Der Weg
+ist:
+
+1. `https://manager.infomaniak.com/v3/ng/products/web/hosting`
+   (**Hostings & Websites**).
+2. Auf den **Namen des Hostings** klicken (nicht auf den der Website).
+3. Im **linken Menü auf `FTP / SSH`** klicken.
+4. Die Schaltfläche **`Web FTP`** klicken (braucht kein FTP-Konto - das
+   Infomaniak-Passwort genuegt).
+5. Im Web-FTP in das Verzeichnis der jeweiligen Website wechseln
+   (`htdocs`) und die Dateien per **Drag & Drop** aus Windows
+   hineinziehen - oder das ZIP hochladen und im Web-FTP **entpacken**
+   (beides wird unterstuetzt, unsere ZIPs sind rund 2,2 MB - Grenze
+   50 MB).
+
 **Der Weg per Skript** (falls doch mit Zugangsdaten - die kommen dann
 nur aus der Umgebung, nie aus einer Datei und nie als Parameter):
 
