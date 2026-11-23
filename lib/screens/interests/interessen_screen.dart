@@ -33,6 +33,7 @@ part 'parts/receivedlikestab.dart';
 part 'parts/receivedlikestabstate.dart';
 part 'parts/matchestab.dart';
 part 'parts/matchestabstate.dart';
+part 'parts/matchestabauswahl.dart';
 part 'parts/cooledmatchtile.dart';
 part 'parts/busyicon.dart';
 part 'parts/busyiconstate.dart';

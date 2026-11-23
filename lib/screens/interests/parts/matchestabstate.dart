@@ -826,37 +826,23 @@ class _MatchesTabState extends ConsumerState<_MatchesTab>
           // NUTZERWUNSCH: Der "Verwalten"-Textbutton nahm zu viel Platz
           // ein. Er lebt jetzt als Icon-Button in der AppBar (aktiver
           // Modus: Abbrechen + Zähler bleiben hier in der Zeile).
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-            child: Row(
-              children: [
-                if (selectMode) ...[
-                  TextButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        _selected.clear();
-                      });
-                      ref.read(matchSelectModeProvider.notifier).state = false;
-                    },
-                    icon: const Icon(Icons.close, size: 18),
-                    label: Text(L10n.t(context, 'common.cancel')),
-                  ),
-                  const Spacer(),
-                  FilledButton.icon(
-                    onPressed: _selected.isEmpty ? null : _hideSelected,
-                    icon: const Icon(Icons.visibility_off, size: 18),
-                    label: Text(
-                      L10n.tf(context, 'interests.hideSelected', {
-                        'n': '${_selected.length}',
-                      }),
-                    ),
-                  ),
-                ] else ...[
-                  const Spacer(),
-                ],
-              ],
+          //
+          // BEFUND (23.11.2026, gefunden von einem Test): Die beiden
+          // Knöpfe passten nebeneinander nicht in einen 390-px-Bildschirm -
+          // der "Ausblenden"-Knopf wurde um 118 Pixel abgeschnitten. Die
+          // Leiste steht deshalb in 'matchestabauswahl.dart' (eigene
+          // Datei) und nutzt einen Wrap.
+          if (selectMode)
+            _FunkenAuswahlLeiste(
+              anzahl: _selected.length,
+              onAbbrechen: () {
+                setState(() {
+                  _selected.clear();
+                });
+                ref.read(matchSelectModeProvider.notifier).state = false;
+              },
+              onAusblenden: _hideSelected,
             ),
-          ),
         ],
         if (qrContacts.isNotEmpty) ...[
           _SectionHeader(
