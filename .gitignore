@@ -239,6 +239,13 @@ docs/recht/*
 !docs/technik/
 docs/technik/*
 !docs/technik/TURN-SERVER.md
+# Die drei Plan-Dokumente sind oeffentlich: sie sind der ausfuehrliche
+# Teil der Roadmap (Roadmap = Stichpunkte, hier die Hintergruende). Ohne
+# sie waere die oeffentliche Planung unvollstaendig - die betrieblichen
+# und rechtlichen Dokumente bleiben lokal.
+!docs/technik/elternaufsicht.md
+!docs/technik/lokale-ki-reflexion.md
+!docs/technik/web-bridge.md
 
 # Der komplette releases-Ordner gehoert NIE ins Repository: er
 # enthaelt die gebauten APKs und AABs (mehrere hundert MB pro Datei)
