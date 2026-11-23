@@ -39,9 +39,9 @@ als Parameter (die landen sonst in der Shell-History):
 
     $env:INFORMANIAK_HOST  = "web12.infomaniak.com"   # aus dem Panel
     $env:INFORMANIAK_USER  = "thXXXX"                 # der FTP-Benutzer
-    $env:INFORMANIAK_PATH  = "/home/clients/<ID>/sites/thestia.de/htdocs/"
+    $env:INFORMANIAK_PATH  = "/home/clients/<ID>/sites/thestia.de/"
     # optional, nur mit --getrennt (zwei Verzeichnisse):
-    $env:INFORMANIAK_AUTH_PATH = "/home/clients/<ID>/sites/auth.thestia.de/htdocs/"
+    $env:INFORMANIAK_AUTH_PATH = "/home/clients/<ID>/sites/auth.thestia.de/"
     # optional (empfohlen - sonst fragt der Server nach dem Passwort):
     $env:INFORMANIAK_SSH_KEY = "$HOME\\.ssh\\id_ed25519"
     $env:INFORMANIAK_PORT  = "22"
@@ -132,10 +132,12 @@ def _hole(getrennt: bool) -> dict:
     }
     if not daten["pfad"]:
         # Der echte Pfad auf Infomaniak (BEFUND 23.11.2026):
-        # /home/clients/<Client-ID>/sites/<Website>/htdocs/
-        daten["pfad"] = (
-            f"/home/clients/{daten['user']}/sites/{OEFFENTLICHER_HOST}/htdocs/"
-        )
+        # /home/clients/<Client-ID>/sites/<Website>/
+        #
+        # WICHTIG: Es gibt hier KEIN "htdocs" darunter - das
+        # Wurzelverzeichnis der Website IST dieser Ordner (dort liegt
+        # schon die Platzhalter-index.html).
+        daten["pfad"] = f"/home/clients/{daten['user']}/sites/{OEFFENTLICHER_HOST}/"
     if not daten["pfad"].endswith("/"):
         daten["pfad"] += "/"
     # Ein eigenes Verzeichnis fuer den Auth-Host schaltet die Trennung
@@ -143,9 +145,7 @@ def _hole(getrennt: bool) -> dict:
     if daten["auth_pfad"]:
         daten["getrennt"] = True
     if daten["getrennt"] and not daten["auth_pfad"]:
-        daten["auth_pfad"] = (
-            f"/home/clients/{daten['user']}/sites/{AUTH_HOST}/htdocs/"
-        )
+        daten["auth_pfad"] = f"/home/clients/{daten['user']}/sites/{AUTH_HOST}/"
     if daten["auth_pfad"] and not daten["auth_pfad"].endswith("/"):
         daten["auth_pfad"] += "/"
     return daten

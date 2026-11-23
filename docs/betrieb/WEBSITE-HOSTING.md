@@ -284,7 +284,7 @@ Weg, den die Entscheidung vom 23.11.2026 geht. Zwei Varianten:
 
 | | eine Website + Alias | zwei Websites (getrennt) |
 |---|---|---|
-| Verzeichnisse | eines | zwei (`thestia.de/htdocs`, `auth.thestia.de/htdocs`) |
+| Verzeichnisse | eines | zwei (`sites/thestia.de`, `sites/auth.thestia.de`) |
 | Zertifikate | eines (mit beiden Namen) | je eines |
 | Inhalt | einmal hochgeladen | zweimal hochgeladen (dieselben Dateien) |
 | `robots.txt` | pro Host (Regel in der `.htaccess`) | pro Verzeichnis |
@@ -374,18 +374,22 @@ ist:
 3. Im **linken Menü auf `FTP / SSH`** klicken.
 4. Die Schaltfläche **`Web FTP`** klicken (braucht kein FTP-Konto - das
    Infomaniak-Passwort genuegt).
-5. Im Web-FTP (BEFUND 23.11.2026): Das Startverzeichnis ist
-   `/home/clients/<Client-ID>/`. Die Websites liegen unter **`sites/`**,
-   und dort in einem Ordner je Website mit einem **`htdocs/`**-Ordner
-   darunter. Also:
-   - `sites/<Ordner von thestia.de>/htdocs/` ← `thestia.de.zip` entpacken
-   - `sites/<Ordner von auth.thestia.de>/htdocs/` ← `auth.thestia.de.zip` entpacken
+5. Im Web-FTP (BEFUND 23.11.2026, Screenshot): Das Startverzeichnis
+   ist `/home/clients/<Client-ID>/`. Die Websites liegen unter
+   **`sites/`**, und zwar direkt in einem Ordner je Website -
+   **`sites/thestia.de/`** und **`sites/auth.thestia.de/`**. Es gibt
+   **kein `htdocs`** darunter; der Website-Ordner selbst ist das
+   Wurzelverzeichnis (dort liegt schon die Platzhalter-`index.html`).
+   Also:
+   - `sites/thestia.de/` ← `thestia.de.zip` entpacken
+   - `sites/auth.thestia.de/` ← `auth.thestia.de.zip` entpacken
 
-   Falls die Ordnernamen abweichen: der richtige Ordner ist der, in dem
-   schon die Platzhalter-`index.html` liegt. Nach dem Upload müssen
-   `index.html` und `.htaccess` **direkt** in `htdocs/` liegen - nicht
-   in einem Unterordner davon (sonst gibt es eine leere
-   Verzeichnisansicht).
+   Vorher liegen dort nur `index.html` (4,4 KB - die Platzhalterseite),
+   `.user.ini`, `.infomaniak-maintenance.html` und eine kleine
+   `.htaccess` (803 B - der Infomaniak-Standard). Beim Entpacken oder
+   Drag & Drop das **Ueberschreiben bestaetigen**. Die Dateien
+   `.user.ini` und `.infomaniak-maintenance.html` bleiben unangetastet
+   (die braucht Infomaniak).
 6. Dateien per **Drag & Drop** aus Windows in das Web-FTP-Fenster
    hineinziehen - oder das ZIP hochladen und im Web-FTP **entpacken**
    (beides wird unterstuetzt, unsere ZIPs sind rund 2,2 MB - Grenze
@@ -399,7 +403,7 @@ nur aus der Umgebung, nie aus einer Datei und nie als Parameter):
 ```powershell
 $env:INFORMANIAK_HOST = "web12.infomaniak.com"    # aus dem Panel
 $env:INFORMANIAK_USER = "thXXXX"                  # der FTP-Benutzer
-$env:INFORMANIAK_PATH = "/home/clients/<ID>/sites/thestia.de/htdocs/"
+$env:INFORMANIAK_PATH = "/home/clients/<ID>/sites/thestia.de/"
 $env:INFORMANIAK_SSH_KEY = "$HOME\.ssh\id_ed25519"   # optional
 
 python tool/release/deploy_web_informaniak.py --dry-run   # erst ansehen
@@ -413,7 +417,7 @@ Remove-Item Env:\INFORMANIAK_HOST, Env:\INFORMANIAK_USER
 zweite Pfad dazu, und der Aufruf bekommt `--getrennt`:
 
 ```powershell
-$env:INFORMANIAK_AUTH_PATH = "/home/clients/<ID>/sites/auth.thestia.de/htdocs/"
+$env:INFORMANIAK_AUTH_PATH = "/home/clients/<ID>/sites/auth.thestia.de/"
 
 python tool/release/deploy_web_informaniak.py --getrennt --dry-run
 python tool/release/deploy_web_informaniak.py --getrennt
