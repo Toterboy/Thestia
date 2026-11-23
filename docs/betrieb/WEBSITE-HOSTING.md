@@ -13,6 +13,13 @@ zeigen auf **dasselbe** Projekt:
 | `thestia.de` | die oeffentlichen Seiten (Impressum, Datenschutz, Kinderschutz, Nutzungsbedingungen, Elternbereich, ...) | Netlify |
 | `auth.thestia.de` | die CAPTCHA-Seite, die die App beim Registrieren laedt | Netlify |
 
+**BEIDE TEILEN SICH HEUTE EIN PROJEKT** (Stand 23.11.2026): beide
+Adressen zeigen per CNAME auf `chic-tapioca-1e7c68.netlify.app` und
+liefern dieselben Dateien. Die Seite entscheidet per Hostname, ob sie
+den Sicherheitscheck oder die Landing-Seite zeigt. Bei Infomaniak
+werden die beiden **getrennt** (zwei Websites, zwei Verzeichnisse) -
+die Hintergruende stehen in Schritt 2.
+
 **Die E-Mail gehoert nicht dazu.** Die MX-Records zeigen auf
 `mx1.efwd.spaceship.net` / `mx2.efwd.spaceship.net` - die Mail laeuft
 ueber Spaceship, unabhaengig vom Webhosting. Wird die Website umgezogen,
@@ -231,6 +238,13 @@ umgestellt, **nachdem** Schritt 3 gruen war.
 
 ## Der Infomaniak-Weg (Schweiz, im Studentenprogramm kostenlos)
 
+**ENTSCHEIDUNG (23.11.2026, Betreiber):** Die Website zieht auf
+**Infomaniak** um. **Netlify bleibt als Fallback bestehen** - das
+Netlify-Projekt wird nicht geloescht, der Publish-Ordner traegt die
+Netlify-Dateien weiterhin, und der Upload dorthin bleibt ein Drag &
+Drop. Zurueckwechseln heisst: im DNS die A-Records wieder auf Netlify
+setzen (siehe Schritt 5 und den Abschnitt "Der Rollback").
+
 Das ist der Weg, wenn der Betreiber noch einen Schulausweis vorlegen
 kann: **1 Webhosting (250 GB, 20 Websites) + 1 Mail-Service kostenlos**
 fuer die Dauer des Studiums (maximal vier Jahre, jaehrlich mit den
@@ -257,12 +271,57 @@ das Webhosting (250 GB, 20 Websites) und der Mail-Service kostenlos.
 Die Domain ist nicht dabei - **die eigene (`thestia.de`) darf verwendet
 werden**. Let's Encrypt ist bei jedem Hosting enthalten.
 
-### 2. Die Website anlegen
+### 2. Die Website anlegen - zwei getrennte oder eine mit Alias?
 
-Im Infomaniak-Panel (`Site Creator`) eine Website fuer `thestia.de`
-anlegen. `auth.thestia.de` als **zweite Domain derselben Website**
-eintragen - dann teilen sich beide Adressen das Wurzelverzeichnis,
-und die `.htaccess` unterscheidet die Hosts von selbst.
+**BEFUND (23.11.2026):** Bei Netlify sind die beiden Adressen **ein
+Projekt**. `thestia.de` und `auth.thestia.de` zeigen beide auf
+`chic-tapioca-1e7c68.netlify.app` und liefern dieselben Dateien; die
+Seite entscheidet per Hostname, ob sie den Sicherheitscheck oder die
+Landing-Seite zeigt (`passkey-assets/index.html`).
+
+Bei Infomaniak kann der Betreiber die beiden **trennen** - das ist der
+Weg, den die Entscheidung vom 23.11.2026 geht. Zwei Varianten:
+
+| | eine Website + Alias | zwei Websites (getrennt) |
+|---|---|---|
+| Verzeichnisse | eines | zwei (`thestia.de/htdocs`, `auth.thestia.de/htdocs`) |
+| Zertifikate | eines (mit beiden Namen) | je eines |
+| Inhalt | einmal hochgeladen | zweimal hochgeladen (dieselben Dateien) |
+| `robots.txt` | pro Host (Regel in der `.htaccess`) | pro Verzeichnis |
+| Pflege | eine Stelle | zwei Stellen (gleicher Inhalt) |
+
+Das Upload-Skript kann beides: ohne Schalter fuellt es ein
+Verzeichnis, mit `--getrennt` zwei.
+
+**IM PANEL:** Fuer `auth.thestia.de` als eigene Website braucht es
+eine Domain, die nicht bei Infomaniak liegt - dafuer gibt es im Panel
+den Weg "Domain hinzufuegen, die woanders verwaltet wird" (die
+Nameserver bleiben dann bei Spaceship, es wird nur ein A-Record bzw.
+CNAME eingetragen). Ob Infomaniak die Subdomain dabei als eigene
+Website mit eigenem Verzeichnis anlegt oder als Alias, zeigt das
+Panel. **Beides geht:** die `.htaccess` trennt die Hosts auch dann
+ueber `RewriteCond %{HTTP_HOST}`, wenn beide im selben Verzeichnis
+liegen.
+
+**WICHTIG - warum der Auth-Host die oeffentlichen Seiten braucht:**
+Die App verlinkt die Rechtsseiten ueber `auth.thestia.de`:
+`https://auth.thestia.de/impressum`, `/kinderschutz`,
+`/konto-loeschen`, `/threat-model.md` und `/datenschutz`. Das steht so
+im Datenschutztext der App (`lib/generated/privacy_policy_de.dart`) und
+im Store-Eintrag; die Loesch-URL ist im Play Console Pflicht. Faellt
+der Auth-Host auf "nur der Sicherheitscheck" zurueck, sind diese Links
+tot - und mit ihnen der Pflichtnachweis im Store.
+
+Deshalb traegt das Verzeichnis des Auth-Hosts **dieselben Dateien**:
+Die Trennung ist organisatorisch (eigenes Verzeichnis, eigenes
+Zertifikat, eigene `robots.txt`), nicht inhaltlich. Die
+CAPTCHA-Seite erkennt sich weiterhin am Hostnamen - am Inhalt muss
+nichts geaendert werden.
+
+Soll der Auth-Host spaeter wirklich nur noch der Sicherheitscheck
+sein, muessen die Links der App auf `thestia.de` umgestellt werden.
+Das ist eine Aenderung an `lib/` (und damit eine neue Fassung) - sie
+gehoert nicht in den Hosting-Umzug.
 
 ### 3. Das Zertifikat
 
@@ -273,8 +332,42 @@ Zertifikat ist **anders** als das von Netlify - die Fingerabdruecke in
 ### 4. Hochladen
 
 Der Inhalt ist der Ordner `passkey-assets/` (49 Dateien, 2,04 MB) plus
-die `.htaccess` aus `webhosting/`. Die genauen Befehle (SFTP und
-rsync) stehen in `webhosting/README.md`.
+die `.htaccess` aus `webhosting/`. Das Skript erledigt beides - und
+nimmt die Netlify-Dateien (`netlify.toml`, `_headers`, `_redirects`)
+bewusst NICHT mit (auf Apache sind sie ueberfluessig; ihre Regeln
+stecken in der `.htaccess`):
+
+```powershell
+$env:INFORMANIAK_HOST = "web12.infomaniak.com"    # aus dem Panel
+$env:INFORMANIAK_USER = "thXXXX"                  # der FTP-Benutzer
+$env:INFORMANIAK_PATH = "/home/www/thXXXX/thestia.de/htdocs/"
+$env:INFORMANIAK_SSH_KEY = "$HOME\.ssh\id_ed25519"   # optional
+
+python tool/release/deploy_web_informaniak.py --dry-run   # erst ansehen
+python tool/release/deploy_web_informaniak.py             # dann hochladen
+python tool/release/deploy_web_informaniak.py --pruefen   # mit Live-Pruefung
+
+Remove-Item Env:\INFORMANIAK_HOST, Env:\INFORMANIAK_USER
+```
+
+**Zwei Verzeichnisse (die getrennten Websites):** dann kommt der
+zweite Pfad dazu, und der Aufruf bekommt `--getrennt`:
+
+```powershell
+$env:INFORMANIAK_AUTH_PATH = "/home/www/thXXXX/auth.thestia.de/htdocs/"
+
+python tool/release/deploy_web_informaniak.py --getrennt --dry-run
+python tool/release/deploy_web_informaniak.py --getrennt
+```
+
+Im Verzeichnis des Auth-Hosts landet dann die **gesperrte**
+`robots.txt` (die Datei `robots-auth.txt` aus dem Publish-Ordner) als
+`robots.txt` - dort sollen die Maschinen nicht herumlaufen. Die
+oeffentlichen Seiten bleiben in beiden Verzeichnissen (siehe Schritt 2).
+
+Die Zugangsdaten kommen **nur aus der Umgebung** - nie aus einer
+Datei, nie als Parameter (die landen sonst in der Shell-History). Das
+Skript nutzt `rsync`, wenn es da ist, sonst `sftp` (Stapeldatei).
 
 ### 5. DNS bei Spaceship
 
@@ -285,6 +378,16 @@ wie sie sind**:
 |---|---|---|
 | A | `@` | die IP-Adresse der Infomaniak-Website (steht im Panel) |
 | CNAME | `auth` | der Hostname der Infomaniak-Website (steht im Panel) |
+
+**BEFUND (23.11.2026, live gemessen):** `auth.thestia.de` zeigt auf
+`185.176.225.58` (Netlify). Fuer `thestia.de` gibt es **weder einen A-
+noch einen AAAA-Record** - die Apex-Domain loest derzeit nicht auf
+(die Nameserver von Spaceship antworten "kein A-Record"; vorhanden sind
+nur die MX- und TXT-Records). Die oeffentliche Seite ist damit im DNS
+gerade nicht erreichbar; der Inhalt liegt unveraendert auf Netlify
+(`chic-tapioca-1e7c68.netlify.app` liefert die Startseite mit HTTP
+200). Beim Umzug wird der A-Record fuer `@` also neu angelegt - das
+ist keine Aenderung, sondern eine Reparatur.
 
 Die alten Netlify-Eintraege (`75.2.60.5`, `99.83.231.61` und der
 CNAME auf `chic-tapioca-1e7c68.netlify.app`) werden dadurch ersetzt.
@@ -298,6 +401,42 @@ python tool/checks/check_websites_live.py --host https://thestia.de
 python tool/checks/check_passkey_assetlinks.py --live
 ```
 
+**Die Reihenfolge ist wichtig:** `update_assetlinks.py` liest die
+Zertifikatskette von **beiden** Hosts (`thestia.de` und
+`auth.thestia.de`). Der A-Record fuer `@` muss also schon stehen,
+sonst liess das Skript die Kette nicht und bricht ab. Das Skript
+schreibt die **stabilen** Glieder der Kette (Root und Zwischen-
+zertifikate) in die Datei - das Leaf fehlt bewusst, weil es alle
+90 Tage erneuert wird. Beide Hosts bekommen bei Infomaniak ein eigenes
+Let's-Encrypt-Zertifikat, aber dieselbe Kette darunter: die Datei
+muss deshalb nicht geaendert werden, wenn die Kette gleich bleibt.
+
+Nach dem Schreiben den Publish-Ordner **noch einmal** hochladen (die
+`assetlinks.json` ist Teil davon).
+
+## Der Rollback: Netlify bleibt als Fallback
+
+**Der Netlify-Stand bleibt unangetastet.** Das heisst konkret:
+
+* Das Netlify-Projekt wird **nicht** geloescht und das Abo nicht
+  gekuendigt - die Deploys dort werden nur eingestellt (die Credits
+  laufen sonst auf).
+* Der Publish-Ordner traegt weiterhin `netlify.toml`, `_headers` und
+  `_redirects` (das Deploy-Skript nimmt sie beim Infomaniak-Upload
+  bewusst NICHT mit). Der Upload nach Netlify bleibt damit ein
+  Drag & Drop des Ordners `passkey-assets/`.
+* **Zurueckwechseln dauert eine Minute:** im DNS (Spaceship) die
+  A-Records wieder auf `75.2.60.5` und `99.83.231.61` setzen und den
+  CNAME `auth` wieder auf `chic-tapioca-1e7c68.netlify.app`. Fertig -
+  die Dateien liegen dort nach wie vor.
+
+Deshalb wird der DNS **erst** umgestellt, wenn der Infomaniak-Stand
+geprueft ist (Schritt 6) - und der Publish-Ordner bleibt fuer beide
+Hoster derselbe: es gibt kein zweites Verzeichnis, das auseinanderlaufen
+kann. (Bei der getrennten Variante kommen zwei Verzeichnisse auf dem
+Infomaniak-Server dazu - die sind aber Kopien voneinander, nicht
+zwei Versionen der Website.)
+
 ### Infomaniak oder Cloudflare Pages?
 
 | | Infomaniak (CH) | Cloudflare Pages |
@@ -306,8 +445,12 @@ python tool/checks/check_passkey_assetlinks.py --live
 | Daten | eigene Rechenzentren in Genf und Zuerich | US-Firma, EU-Knoten |
 | DNS | **bleibt bei Spaceship** | Nameserver-Umstellung noetig (Apex-Domain) |
 | Mail | unberuehrt | Records wandern mit (MX, SPF, DMARC) |
-| Deploy | SFTP/rsync | Drag & Drop |
+| Deploy | SFTP/rsync (`deploy_web_informaniak.py`) | Drag & Drop |
 | Server | einer, den man selbst pflegt | keiner |
+
+**Entschieden: Infomaniak** (23.11.2026). Cloudflare Pages bleibt nur
+als Notiz im Kopf - die DNS-Umstellung faellt damit weg, und damit auch
+das Risiko fuer `datenschutz@thestia.de`.
 
 ## Nacharbeiten nach dem Wechsel
 

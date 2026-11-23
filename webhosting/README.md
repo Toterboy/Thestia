@@ -29,12 +29,30 @@ hat, ohne die `.htaccess` neu zu erzeugen.
 
 ## Der Upload (nach Infomaniak)
 
+**Das Skript macht das** (es prueft vorher den Publish-Ordner, nimmt
+die Netlify-Dateien nicht mit und laedt die `.htaccess` als Letzte):
+
+```powershell
+$env:INFORMANIAK_HOST = "web12.infomaniak.com"    # aus dem Panel
+$env:INFORMANIAK_USER = "thXXXX"                  # der FTP-Benutzer
+$env:INFORMANIAK_PATH = "/home/www/thXXXX/thestia.de/htdocs/"
+$env:INFORMANIAK_SSH_KEY = "$HOME\.ssh\id_ed25519"   # optional
+
+python tool/release/deploy_web_informaniak.py --dry-run   # erst ansehen
+python tool/release/deploy_web_informaniak.py             # dann hochladen
+
+Remove-Item Env:\INFORMANIAK_HOST, Env:\INFORMANIAK_USER
+```
+
+Die Zugangsdaten kommen **nur aus der Umgebung** - nie aus einer Datei,
+nie als Parameter (die landen sonst in der Shell-History).
+
+### Mit SFTP (jeder SFTP-Client)
+
 Der Inhalt der Website ist der Ordner `passkey-assets/` (49 Dateien,
 2,04 MB). Er kommt **in das Wurzelverzeichnis der Website** (dort, wo
 die `index.html` liegt) - zusammen mit der `.htaccess` aus diesem
 Ordner.
-
-### Mit SFTP (jeder SFTP-Client)
 
 | | |
 |---|---|
@@ -69,17 +87,40 @@ nicht im Quellordner liegt. Vor dem ersten Mal mit `--dry-run` testen
 
 ### Zwei Websites oder eine mit Alias?
 
-Der Auth-Host und die oeffentliche Seite liefern **denselben Inhalt**
-(beide Domains zeigen auf dasselbe Projekt). Es gibt zwei Wege:
+**ENTSCHEIDUNG (23.11.2026):** zwei Websites, also zwei Verzeichnisse
+(`thestia.de/htdocs` und `auth.thestia.de/htdocs`). Bei Netlify sind
+beide Adressen ein Projekt; bei Infomaniak trennt der Betreiber sie.
 
-1. **Eine Website + Alias-Domain** (empfohlen): `auth.thestia.de` wird
-   als zweite Domain der Website eingetragen. Beide teilen sich das
+Der Auth-Host und die oeffentliche Seite liefern **denselben Inhalt**
+(beide Domains zeigen auf dasselbe Projekt). Der Grund ist nicht
+Bequemlichkeit: die **App verlinkt die Rechtsseiten ueber
+`auth.thestia.de`** (`/impressum`, `/kinderschutz`, `/konto-loeschen`,
+`/threat-model.md`, `/datenschutz`) - im Datenschutztext der App, im
+Store-Eintrag und als Pflichtangabe im Play Console. Diese Links
+muessen weiter funktionieren.
+
+| | eine Website + Alias | zwei Websites (der gewaehlte Weg) |
+|---|---|---|
+| Verzeichnisse | eines | zwei |
+| Zertifikate | eines | je eines |
+| Inhalt | einmal hochgeladen | zweimal (dieselben Dateien) |
+| `robots.txt` | pro Host (Regel in der `.htaccess`) | pro Verzeichnis |
+
+1. **Zwei Websites** (gewählt): je ein Verzeichnis, je ein Zertifikat.
+   Im Verzeichnis des Auth-Hosts liegt die gesperrte `robots.txt`
+   (die Datei `robots-auth.txt` aus dem Publish-Ordner als `robots.txt`).
+2. **Eine Website + Alias-Domain**: beide teilen sich das
    Wurzelverzeichnis - und die `.htaccess` unterscheidet die Hosts
    ueber `RewriteCond %{HTTP_HOST}` und `SetEnvIf Host`.
-2. **Zwei Websites** mit zwei Verzeichnissen: dann kommt der Inhalt
-   zweimal hoch, und im Verzeichnis des Auth-Hosts muss `robots-auth.txt`
-   als `robots.txt` abgelegt werden (dort ist die Sperre dann schon
-   drin, die Host-Bedingungen in der `.htaccess` schaden aber nicht).
+
+Das Upload-Skript macht die getrennte Variante mit `--getrennt`:
+
+```powershell
+$env:INFORMANIAK_AUTH_PATH = "/home/www/thXXXX/auth.thestia.de/htdocs/"
+
+python tool/release/deploy_web_informaniak.py --getrennt --dry-run
+python tool/release/deploy_web_informaniak.py --getrennt
+```
 
 ## Nach dem Upload pruefen
 

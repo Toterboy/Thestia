@@ -92,6 +92,10 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
 
 ## In Arbeit
 
+- [~] **Website-Umzug auf Infomaniak** (Netlify bleibt als Fallback;
+  `thestia.de` und `auth.thestia.de` werden dort getrennt - eigene
+  Verzeichnisse, eigene Zertifikate; der Publish-Ordner bleibt für
+  Netlify unverändert. Details: docs/betrieb/WEBSITE-HOSTING.md)
 - [ ] **F-Droid-Einreichung** (google-freier Flavor, UnifiedPush,
   Fastlane-Metadaten liegen vor; die Einreichung steht aus)
 - [~] **Branding-Feinschliff** (Store-Icon 512×512, Feature Graphic
