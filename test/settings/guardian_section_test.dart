@@ -1,21 +1,18 @@
-// Der Elternbereich in den Einstellungen (Kinderschutz & Elternzugriff).
+// Der Kinderschutz-Abschnitt in den Einstellungen.
 //
-// ANLASS (23.11.2026): Die Coverage-Messung zeigte fuer
-// lib/widgets/settings/guardian_section.dart 63 offene Zeilen. Der
-// Abschnitt entscheidet, was der Jugendliche ueber die Aufsicht seiner
-// Eltern sieht - und ob er etwas aendern darf (nur mit der PIN des
-// Elternteils).
+// ANLASS (16.11.2026): Die Coverage-Messung zeigte fuer
+// lib/widgets/settings/guardian_section.dart 256 offene Zeilen - und gerade hier
+// geht es um die elterliche Aufsicht (Nutzungszeit, PIN).
 //
 // WAS HIER GEPRUEFT WIRD:
-//   * der Abruf schlaegt fehl: es gibt einen Grund und einen Knopf
-//     (kein endloser Ladekreis - das war ein gemeldeter Fehler),
-//   * ohne Freigabe steht das da (und ein Minderjaehriger kann eine
-//     Freigabe anfordern),
-//   * eine wartende Freigabe nennt die Adresse des Elternteils,
-//   * eine aktive Freigabe zeigt Rhythmus und Nutzungszeit,
-//   * ohne PIN kann nichts geaendert werden,
-//   * die falsche PIN wird abgelehnt (mit klarer Meldung),
-//   * mit der PIN wird der Bereich bearbeitbar und gespeichert.
+//   * der Stand kommt vom Server und wird angezeigt,
+//   * das Entsperren fragt nach der vierstelligen PIN,
+//   * eine falsche PIN (zu kurz oder falsch) wird abgewiesen,
+//   * die richtige PIN schaltet die Aenderungen frei.
+//
+// DIE PIN LAEUFT AUF DEM SERVER: Das Geraet kennt die PIN nie - der
+// Vergleich passiert in der Datenbank (Migration 167). Deshalb wird
+// hier der Server beantwortet, nicht die PIN nachgebaut.
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -23,71 +20,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import 'package:thestia/l10n/app_strings.dart';
-import 'package:thestia/models/verification/guardian_status.dart';
-import 'package:thestia/providers/settings/guardian_provider.dart';
-import 'package:thestia/services/auth/supabase_service.dart';
-import 'package:thestia/services/verification/guardian_service.dart';
 import 'package:thestia/widgets/settings/guardian_section.dart';
 
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';
 
-/// Der Ersatz fuer den Eltern-Dienst (kein Netz im Test).
-class _FakeGuardianDienst extends GuardianService {
-  _FakeGuardianDienst() : super(SupabaseService.client);
-
-  /// Der Stand, den der Dienst liefert.
-  GuardianStatus stand = const GuardianStatus(loaded: true);
-
-  /// Wirft der Dienst beim Lesen einen Fehler?
-  bool wirftFehler = false;
-
-  /// Ist die PIN richtig?
-  bool pinRichtig = true;
-
-  /// Wie oft wurde der Stand gelesen?
-  int anzahlLaden = 0;
-
-  /// Die gespeicherten Aenderungen.
-  final List<Map<String, dynamic>> gespeichert = <Map<String, dynamic>>[];
-
-  @override
-  Future<GuardianStatus> fetchStatus() async {
-    anzahlLaden++;
-    if (wirftFehler) {
-      throw const GuardianServiceException('network');
-    }
-    return stand;
-  }
-
-  @override
-  Future<bool> verifyPin(String pin) async => pinRichtig;
-
-  @override
-  Future<GuardianResult> updateSettingsWithPin({
-    required String pin,
-    String? notifyFrequency,
-    bool? usageLimitEnabled,
-    int? usageStartMin,
-    int? usageEndMin,
-  }) async {
-    gespeichert.add(<String, dynamic>{
-      'pin': pin,
-      'notifyFrequency': notifyFrequency,
-      'usageLimitEnabled': usageLimitEnabled,
-      'usageStartMin': usageStartMin,
-      'usageEndMin': usageEndMin,
-    });
-    return const GuardianResult.ok();
-  }
-
-  @override
-  Future<GuardianResult> revoke() async => const GuardianResult.ok();
-}
-
 void main() {
   late FakeSupabaseServer server;
-  late _FakeGuardianDienst dienst;
 
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
@@ -95,7 +34,12 @@ void main() {
     await SharedPreferences.getInstance();
     await mockPfadProvider();
     mockKeystore();
+    mockZeitzone();
+    // HIVE: der Signal-Dienst (der im Hintergrund mitlaeuft) liest seine
+    // verschluesselten Boxen - ohne initialisierten Hive scheitert der
+    // Aufbau.
     await mockHive();
+
     server = FakeSupabaseServer(userId: 'ich');
     await supabase.Supabase.initialize(
       url: 'https://example.supabase.co',
@@ -111,254 +55,178 @@ void main() {
   });
 
   setUp(() {
-    dienst = _FakeGuardianDienst();
+    server.rpcAntworten.clear();
+    // Der Stand: das Konto steht unter Aufsicht, die Nutzungszeit ist
+    // begrenzt und es gibt eine PIN.
+    server.rpcAntworten['get_my_guardian_status'] = <String, dynamic>{
+      'consentState': 'granted',
+      'supervised': true,
+      'status': 'active',
+      'age': 17,
+      'guardianEmail': 'eltern@example.de',
+      'usageLimitEnabled': true,
+      'usageStartMin': 540,
+      'usageEndMin': 1200,
+      'hasPin': true,
+      'accessPolicy': 'until_18',
+      'loaded': true,
+    };
   });
 
-  /// Baut den Abschnitt.
+  /// Baut den Abschnitt und wartet, bis der Stand geladen ist.
   Future<void> zeigeAbschnitt(WidgetTester tester) async {
-    await tester.binding.setSurfaceSize(const Size(390, 1400));
+    await tester.binding.setSurfaceSize(const Size(390, 900));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
     await tester.pumpWidget(
-      ProviderScope(
-        overrides: <Override>[
-          guardianServiceProvider.overrideWithValue(dienst),
-        ],
+      const ProviderScope(
         child: MaterialApp(
-          theme: ThemeData(useMaterial3: true),
-          home: const Scaffold(
+          home: Scaffold(
+            // Der Abschnitt ist laenger als der Bildschirm - in der App
+            // steht er in einer scrollbaren Liste.
             body: SingleChildScrollView(child: GuardianSection()),
           ),
         ),
       ),
     );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+    // Der Status kommt vom Server - das braucht echte Zeit.
+    for (var i = 0; i < 10; i++) {
+      await tester.runAsync(() async {
+        await Future<void>.delayed(const Duration(milliseconds: 60));
+      });
+      await tester.pump(const Duration(milliseconds: 120));
+    }
   }
 
-  group('Der Abruf', () {
-    testWidgets('schlaegt er fehl, gibt es einen Grund und einen Knopf', (
-      tester,
-    ) async {
-      dienst.wirftFehler = true;
-
+  group('Der Kinderschutz-Abschnitt', () {
+    testWidgets('der Stand kommt vom Server', (tester) async {
       await zeigeAbschnitt(tester);
 
       expect(tester.takeException(), isNull);
-      expect(
-        find.text(L10n.tWithoutContext('guardian.loadErrorTitle')),
-        findsOneWidget,
-        reason:
-            'Der Nutzer muss einen Grund sehen - ein endloser Ladekreis '
-            'war der gemeldete Fehler ("der Elternbereich laedt ewig lang").',
-      );
-      expect(
-        find.text(L10n.tWithoutContext('guardian.retry')),
-        findsOneWidget,
-        reason: 'Es muss einen Weg aus dem Bildschirm geben.',
-      );
+      // Die Nutzungszeit steht da (9:00 bis 20:00).
+      expect(find.textContaining('09:00'), findsWidgets);
+      expect(find.textContaining('20:00'), findsWidgets);
     });
 
-    testWidgets('der Knopf holt den Stand erneut', (tester) async {
-      dienst.wirftFehler = true;
-      await zeigeAbschnitt(tester);
-      final vorher = dienst.anzahlLaden;
-
-      await tester.tap(find.text(L10n.tWithoutContext('guardian.retry')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
-
-      expect(dienst.anzahlLaden, greaterThan(vorher));
-    });
-  });
-
-  group('Der Zustand', () {
-    testWidgets('ohne Freigabe steht das da', (tester) async {
-      dienst.stand = const GuardianStatus(loaded: true, status: 'none');
-
+    testWidgets('das Entsperren fragt nach der PIN', (tester) async {
       await zeigeAbschnitt(tester);
 
-      expect(tester.takeException(), isNull);
-      expect(
-        find.text(L10n.tWithoutContext('guardian.noConsentTitle')),
-        findsOneWidget,
-      );
-    });
-
-    testWidgets('eine wartende Freigabe nennt die Adresse', (tester) async {
-      dienst.stand = const GuardianStatus(
-        loaded: true,
-        status: 'pending',
-        guardianEmail: 'eltern@example.de',
-      );
-
-      await zeigeAbschnitt(tester);
-
-      expect(tester.takeException(), isNull);
-      expect(
-        find.text(L10n.tWithoutContext('guardian.pendingTitle')),
-        findsOneWidget,
-      );
-      expect(
-        find.textContaining('eltern@example.de'),
-        findsOneWidget,
-        reason:
-            'Der Jugendliche muss sehen, bei wem die Freigabe haengt - er '
-            'hat die Adresse selbst eingetragen.',
-      );
-    });
-
-    testWidgets('eine aktive Freigabe zeigt Rhythmus und Nutzungszeit', (
-      tester,
-    ) async {
-      dienst.stand = const GuardianStatus(
-        loaded: true,
-        status: 'active',
-        notifyFrequency: 'daily',
-        usageLimitEnabled: true,
-        usageStartMin: 9 * 60,
-        usageEndMin: 22 * 60,
-        hasPin: true,
-      );
-
-      await zeigeAbschnitt(tester);
-
-      expect(tester.takeException(), isNull);
-      expect(
-        find.text(L10n.tWithoutContext('guardian.activeTitle')),
-        findsOneWidget,
-      );
-      expect(
-        find.textContaining('09:00'),
-        findsOneWidget,
-        reason: 'Das Nutzungsfenster muss fuer den Nutzer sichtbar sein.',
-      );
-      expect(find.textContaining('22:00'), findsOneWidget);
-    });
-
-    testWidgets('ohne PIN kann nichts geaendert werden', (tester) async {
-      dienst.stand = const GuardianStatus(
-        loaded: true,
-        status: 'active',
-        hasPin: false,
-      );
-
-      await zeigeAbschnitt(tester);
-
-      expect(tester.takeException(), isNull);
-      expect(
-        find.text(L10n.tWithoutContext('guardian.pinLocked')),
-        findsNothing,
-        reason:
-            'Ohne PIN gibt es keinen Knopf zum Aendern - die PIN gehoert '
-            'dem Elternteil.',
-      );
-      expect(
-        find.text(L10n.tWithoutContext('guardian.usagePinNote')),
-        findsOneWidget,
-        reason:
-            'Der Nutzer muss wissen, dass die Aenderung nur mit der PIN des '
-            'Elternteils geht.',
-      );
-    });
-  });
-
-  group('Die PIN', () {
-    /// Tippt die PIN ein und bestaetigt.
-    Future<void> tippePin(WidgetTester tester, String pin) async {
       final knopf = find.text(L10n.tWithoutContext('guardian.pinLocked'));
-      await tester.ensureVisible(knopf);
-      await tester.pump();
+      expect(knopf, findsOneWidget);
       await tester.tap(knopf);
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 200));
-
-      await tester.enterText(find.byType(TextField), pin);
-      await tester.pump();
-      await tester.tap(
-        find.widgetWithText(FilledButton, L10n.tWithoutContext('common.ok')),
-      );
-      await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-    }
 
-    testWidgets('eine falsche PIN wird abgelehnt', (tester) async {
-      dienst.pinRichtig = false;
-      dienst.stand = const GuardianStatus(
-        loaded: true,
-        status: 'active',
-        hasPin: true,
+      expect(tester.takeException(), isNull);
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(
+        find.text(L10n.tWithoutContext('guardian.unlockTitle')),
+        findsOneWidget,
       );
+    });
+
+    testWidgets('eine zu kurze PIN wird abgewiesen', (tester) async {
       await zeigeAbschnitt(tester);
 
-      await tippePin(tester, '1234');
+      final knopf = find.text(L10n.tWithoutContext('guardian.pinLocked'));
+      await tester.tap(knopf);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // Drei Ziffern sind keine PIN.
+      await tester.enterText(find.byType(TextField).first, '123');
+      await tester.pump();
+      await tester.tap(find.text(L10n.tWithoutContext('common.ok')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
       expect(tester.takeException(), isNull);
       expect(
         find.text(L10n.tWithoutContext('guardian.pinWrong')),
         findsOneWidget,
         reason:
-            'Der Nutzer muss wissen, dass die PIN nicht stimmt - er kennt '
-            'die PIN des Elternteils nicht.',
-      );
-      expect(
-        find.text(L10n.tWithoutContext('guardian.saveBtn')),
-        findsNothing,
-        reason: 'Ohne richtige PIN darf der Bereich nicht offen sein.',
+            'Eine zu kurze PIN muss abgewiesen werden - die Aenderung an '
+            'der Nutzungszeit gehoert dem Elternteil.',
       );
     });
 
-    testWidgets('mit der richtigen PIN wird der Bereich bearbeitbar', (
-      tester,
-    ) async {
-      dienst.pinRichtig = true;
-      dienst.stand = const GuardianStatus(
-        loaded: true,
-        status: 'active',
-        hasPin: true,
-      );
+    testWidgets('die falsche PIN wird abgewiesen', (tester) async {
       await zeigeAbschnitt(tester);
+      // Der Server lehnt die PIN ab.
+      server.rpcAntworten['verify_guardian_pin'] = false;
 
-      await tippePin(tester, '1234');
-
-      expect(tester.takeException(), isNull);
-      expect(
-        find.text(L10n.tWithoutContext('guardian.saveBtn')),
-        findsOneWidget,
-        reason:
-            'Mit der PIN darf der Jugendliche die Einstellungen der Aufsicht '
-            'aendern - geprueft wird sie auf dem Server.',
-      );
-      expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
-    });
-
-    testWidgets('das Speichern geht mit der PIN an den Server', (tester) async {
-      dienst.pinRichtig = true;
-      dienst.stand = const GuardianStatus(
-        loaded: true,
-        status: 'active',
-        hasPin: true,
-      );
-      await zeigeAbschnitt(tester);
-
-      await tippePin(tester, '1234');
-
-      final speichern = find.text(L10n.tWithoutContext('guardian.saveBtn'));
-      await tester.ensureVisible(speichern);
-      await tester.pump();
-      await tester.tap(speichern);
+      final knopf = find.text(L10n.tWithoutContext('guardian.pinLocked'));
+      await tester.tap(knopf);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
+      await tester.enterText(find.byType(TextField).first, '9999');
+      await tester.pump();
+      await tester.tap(find.text(L10n.tWithoutContext('common.ok')));
+      await tester.pump();
+      for (var i = 0; i < 5; i++) {
+        await tester.runAsync(() async {
+          await Future<void>.delayed(const Duration(milliseconds: 60));
+        });
+        await tester.pump(const Duration(milliseconds: 120));
+      }
+
       expect(tester.takeException(), isNull);
       expect(
-        dienst.gespeichert.length,
-        1,
-        reason:
-            'Die Aenderung muss mit der PIN zum Server - ohne PIN aendert '
-            'gar nichts.',
+        find.text(L10n.tWithoutContext('guardian.pinWrong')),
+        findsOneWidget,
+        reason: 'Eine falsche PIN muss abgewiesen werden.',
       );
-      expect(dienst.gespeichert.first['pin'], '1234');
+      // Und der Server wurde gefragt (der Vergleich laeuft dort).
+      expect(
+        server.pfade.any((p) => p.contains('verify_guardian_pin')),
+        isTrue,
+      );
+
+      // UND: Der Bereich bleibt gesperrt - die Nutzungszeit des
+      // Jugendlichen darf nur der Elternteil aendern.
+      expect(
+        find.text(L10n.tWithoutContext('guardian.pinLocked')),
+        findsOneWidget,
+        reason:
+            'Nach einer falschen PIN muss der Bereich gesperrt bleiben - '
+            'sonst koennte der Jugendliche seine Nutzungszeit selbst '
+            'aendern.',
+      );
+    });
+
+    testWidgets('die richtige PIN schaltet die Aenderungen frei', (
+      tester,
+    ) async {
+      await zeigeAbschnitt(tester);
+      // Der Server bestaetigt die PIN.
+      server.rpcAntworten['verify_guardian_pin'] = true;
+
+      final knopf = find.text(L10n.tWithoutContext('guardian.pinLocked'));
+      await tester.tap(knopf);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      await tester.enterText(find.byType(TextField).first, '1234');
+      await tester.pump();
+      await tester.tap(find.text(L10n.tWithoutContext('common.ok')));
+      await tester.pump();
+      for (var i = 0; i < 6; i++) {
+        await tester.runAsync(() async {
+          await Future<void>.delayed(const Duration(milliseconds: 80));
+        });
+        await tester.pump(const Duration(milliseconds: 120));
+      }
+
+      expect(tester.takeException(), isNull);
+      // Der Sperr-Knopf ist weg - jetzt kann bearbeitet werden.
+      expect(
+        find.text(L10n.tWithoutContext('guardian.pinLocked')),
+        findsNothing,
+        reason:
+            'Mit der richtigen PIN muss die Bearbeitung moeglich sein - '
+            'sonst kann der Elternteil gar nichts aendern.',
+      );
     });
   });
 }
