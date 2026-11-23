@@ -201,8 +201,22 @@ def main() -> int:
     # Live-Host auf - bei der Datei, die am wichtigsten ist: ohne
     # /.well-known/assetlinks.json funktionieren die Passkeys auf
     # Android nicht mehr.
-    print("\n2c) Cloudflare-Tauglichkeit:")
+    print("\n2c) Hoster-Tauglichkeit (Infomaniak zuerst, Netlify als Fallback):")
     NETLIFY_ONLY = "https://auth.thestia.de/robots.txt"
+    # DIE ERLAUBTEN Netlify-SONDERFAELLE (beide mit "!" und beide
+    # domain-bezogen):
+    #   * die gesperrte robots.txt des Auth-Hosts - dort liegt
+    #     /robots.txt als Datei im Ordner, ohne "!" wuerde die Datei
+    #     ausgeliefert und der Auth-Host waere indexierbar,
+    #   * die Weiterleitung von www auf thestia.de - dort liegen die
+    #     Dateien ebenfalls (gleiches Verzeichnis), ohne "!" greift die
+    #     Regel also nicht.
+    # FUER APACHE SIND BEIDE NICHT NOETIG: die .htaccess traegt sie
+    # (siehe tool/web/make_htaccess.py, Abschnitt 2).
+    erlaubt = {
+        NETLIFY_ONLY: "die gesperrte robots.txt des Auth-Hosts",
+        "https://www.thestia.de/*": "die Weiterleitung von www auf thestia.de",
+    }
     regeln = []
     for z in (A / "_redirects").read_text(encoding="utf-8").split("\n"):
         s = z.strip()
@@ -221,34 +235,41 @@ def main() -> int:
         if quelle.startswith("http"):
             domains.append(quelle)
 
-    # (1) Das Ausrufezeichen: nur bei der einen Regel erlaubt, fuer die
-    #     es noetig ist (dort liegt /robots.txt als Datei im Ordner).
-    erlaubt = {NETLIFY_ONLY}
+    # (1) Das Ausrufezeichen: nur bei den Regeln erlaubt, fuer die es
+    #     noetig ist (siehe `erlaubt` oben).
     for quelle, code in ausrufezeichen:
         if quelle in erlaubt:
-            print("  OK  %s: Ausrufezeichen noetig (Netlify-only)" % quelle)
+            print("  OK  %s: Ausrufezeichen noetig (%s)"
+                  % (quelle, erlaubt[quelle]))
             continue
         fehler.append(
             "_redirects: die Regel '%s' traegt ein Ausrufezeichen (%s) - "
-            "Cloudflare Pages versteht nur eine Zahl als Code und wuerde "
-            "die ganze Regel ignorieren. Das Ausrufezeichen ist nur bei "
-            "'%s' erlaubt." % (quelle, code, NETLIFY_ONLY))
+            "das ist Netlify-Syntax. Sie ist nur bei den Regeln erlaubt, "
+            "bei denen es noetig ist: %s." % (quelle, code, ", ".join(
+                "'%s' (%s)" % (q, g) for q, g in erlaubt.items())))
         print("  FEHLER %s: Ausrufezeichen (%s)" % (quelle, code))
     if not ausrufezeichen:
         print("  OK  keine Regel mit Netlify-Ausrufezeichen")
 
-    # (2) Domain-bezogene Regeln: nur die eine, und dafuer muss der
-    #     Ersatz in _headers stehen.
+    # (2) Domain-bezogene Regeln: nur die erlaubten. Fuer die
+    #     robots.txt des Auth-Hosts muss zusaetzlich der Ersatz in
+    #     _headers stehen (der Header gilt fuer JEDEN Hoster).
     headers_inhalt = (A / "_headers").read_text(encoding="utf-8")
     for quelle in domains:
-        if quelle != NETLIFY_ONLY:
+        if quelle not in erlaubt:
             fehler.append(
-                "_redirects: die domain-bezogene Regel '%s' kann nur "
-                "Netlify (nicht Cloudflare Pages)." % quelle)
+                "_redirects: die domain-bezogene Regel '%s' traegt eine "
+                "Netlify-Sonderform. Erlaubt sind nur: %s."
+                % (quelle, ", ".join("'%s' (%s)" % (q, g)
+                                     for q, g in erlaubt.items())))
             print("  FEHLER %s: domain-bezogene Regel" % quelle)
             continue
-        print("  OK  %s: domain-bezogen (nur Netlify - bei Cloudflare "
-              "greift der Ersatz unten)" % quelle)
+        print("  OK  %s: domain-bezogen (%s - bei Apache steht die "
+              "Regel in der .htaccess)" % (quelle, erlaubt[quelle]))
+        if quelle != NETLIFY_ONLY:
+            # Nur fuer die robots.txt des Auth-Hosts wird der Ersatz
+            # gebraucht (der Header muss den Host sperren).
+            continue
         ersatz = False
         block = []
         for zeile in headers_inhalt.split("\n"):

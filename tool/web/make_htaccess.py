@@ -205,13 +205,33 @@ def baue_htaccess(publish: pathlib.Path | None = None) -> str:
     # damit sie nicht von einer allgemeinen Regel ueberholt wird.
     for quelle, ziel, code in host_regeln:
         host = quelle.split("/")[2]
+        pfad = quelle.split("/", 3)[3]
+        # EINE WEITERLEITUNG AUF EINE ANDERE ADRESSE (23.11.2026):
+        # "www.thestia.de" soll auf "thestia.de" zeigen - eine Adresse,
+        # zwei Inhalte, sind schlecht fuer die Suche. Netlify schreibt
+        # das als "https://www.thestia.de/*  https://thestia.de/:splat
+        # 301"; auf Apache wird daraus eine 301, die den Pfad mitnimmt.
+        if ziel.startswith("http"):
+            ziel_apache = ziel.replace(":splat", "$1")
+            if pfad.strip() == "*":
+                apache_muster = "^(.*)$"
+            else:
+                apache_muster = "^%s$" % regex_escape(pfad)
+            teile.append(
+                "# Der Host '%s' zeigt auf '%s' (eine Adresse, ein Inhalt).\n"
+                "RewriteCond %%{HTTP_HOST} ^%s$ [NC]\n"
+                "RewriteRule %s %s [R=%s,L]\n"
+                % (host, ziel_apache, regex_escape(host), apache_muster,
+                   ziel_apache, code.rstrip("!")))
+            teile.append("\n")
+            continue
         ziel_pfad = ziel.lstrip("/")
         teile.append(
             "# Der Auth-Host bekommt die gesperrte robots.txt (bei Netlify\n"
             "# ist das eine domain-bezogene Regel in _redirects).\n"
             "RewriteCond %%{HTTP_HOST} ^%s$ [NC]\n"
             "RewriteRule ^%s$ %s [L]\n"
-            % (regex_escape(host), regex_escape(quelle.split("/", 3)[3]),
+            % (regex_escape(host), regex_escape(pfad),
                ziel_pfad))
         teile.append("\n")
 
@@ -320,6 +340,7 @@ def selbsttest() -> int:
             "/datenschutz    /datenschutz.html  200\n"
             "/eltern/        /eltern.html  200\n"
             "https://auth.thestia.de/robots.txt  /robots-auth.txt  200!\n"
+            "https://www.thestia.de/*  https://thestia.de/:splat  301!\n"
             "/intern         /threat-model.md  301\n",
             encoding="utf-8", newline="\n")
         (ordner / "_headers").write_text(
@@ -350,6 +371,10 @@ def selbsttest() -> int:
     # Die domain-bezogene Regel wird zu einer Host-Bedingung
     muss("RewriteCond %{HTTP_HOST} ^auth\\.thestia\\.de$ [NC]")
     muss("RewriteRule ^robots\\.txt$ robots-auth.txt [L]")
+    # Eine Weiterleitung auf eine ANDERE Adresse (www auf die
+    # Haupt-Domain) wird eine 301, die den Pfad mitnimmt.
+    muss("RewriteCond %{HTTP_HOST} ^www\\.thestia\\.de$ [NC]")
+    muss("RewriteRule ^(.*)$ https://thestia.de/$1 [R=301,L]")
     # Die Header: global ohne Bedingung, die anderen mit
     muss('Header always set X-Frame-Options "DENY"')
     muss('SetEnvIf Request_URI "^/datenschutz(/)?(\\?|$)"')

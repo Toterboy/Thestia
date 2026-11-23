@@ -36,6 +36,27 @@
 # Netlify "Pretty URLs" schon per Default beherrscht - dann haengt die
 # Adresse an einer Dashboard-Einstellung, die jemand aus schalten kann.
 
+# www.thestia.de zeigt auf thestia.de (23.11.2026).
+#
+# DER GRUND: Beide Adressen sind beim Registrar eingetragen und der
+# Hoster liefert beide aus. Zwei Adressen fuer denselben Inhalt sind
+# schlecht fuer die Suche (die Suchmaschine sieht zwei Seiten und
+# weiss nicht, welche die echte ist) - die kanonische Adresse steht in
+# den Seiten selbst (canonical: https://thestia.de/) und in der
+# Sitemap. Deshalb wird www mit einem 301 auf die Haupt-Domain
+# umgeleitet: der Besucher landet auf der Adresse, die auch in den
+# App-Links steht.
+#
+# Das "!" ist hier noetig: Es heisst "die Regel gilt auch, wenn an der
+# Quelladresse eine Datei liegt". Ohne das "!" wuerde Netlify (und der
+# Apache) die Regel nur anwenden, wenn unter www.thestia.de keine Datei
+# liegt - und da liegen die gleichen Dateien wie unter thestia.de, waere
+# die Umleitung wirkungslos.
+#
+# Der Pfad wandert mit: /kinderschutz auf www wird /kinderschutz auf
+# thestia.de (nicht auf die Startseite).
+https://www.thestia.de/*                 https://thestia.de/:splat          301!
+
 # /.well-known/-Pfade auf die Dateien im Root (Netlify Drop ignoriert
 # Ordner mit fuehrendem Punkt).
 #

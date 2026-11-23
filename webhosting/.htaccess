@@ -32,6 +32,10 @@ RewriteCond %{HTTPS} !=on
 RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
 
 # --- 2) Die Adressen (aus _redirects) --------------------
+# Der Host 'www.thestia.de' zeigt auf 'https://thestia.de/$1' (eine Adresse, ein Inhalt).
+RewriteCond %{HTTP_HOST} ^www\.thestia\.de$ [NC]
+RewriteRule ^(.*)$ https://thestia.de/$1 [R=301,L]
+
 # Der Auth-Host bekommt die gesperrte robots.txt (bei Netlify
 # ist das eine domain-bezogene Regel in _redirects).
 RewriteCond %{HTTP_HOST} ^auth\.thestia\.de$ [NC]

@@ -332,10 +332,39 @@ Zertifikat ist **anders** als das von Netlify - die Fingerabdruecke in
 ### 4. Hochladen
 
 Der Inhalt ist der Ordner `passkey-assets/` (49 Dateien, 2,04 MB) plus
-die `.htaccess` aus `webhosting/`. Das Skript erledigt beides - und
-nimmt die Netlify-Dateien (`netlify.toml`, `_headers`, `_redirects`)
-bewusst NICHT mit (auf Apache sind sie ueberfluessig; ihre Regeln
-stecken in der `.htaccess`):
+die `.htaccess` aus `webhosting/`.
+
+**DER WEG (23.11.2026, Betreiber):** Der Betreiber laedt selbst
+hoch - im Infomaniak-Panel per Drag & Drop. Das Skript
+`tool/release/bereite_upload_infomaniak.py` legt ihm dafuer die
+fertigen Ordner samt ZIP an:
+
+```powershell
+python tool/release/bereite_upload_infomaniak.py
+```
+
+Das Ergebnis liegt in `build/informaniak/`:
+
+| Datei | Fuer |
+|---|---|
+| `thestia.de.zip` | die Website **thestia.de** (die oeffentlichen Seiten) |
+| `auth.thestia.de.zip` | die Website **auth.thestia.de** (der Sicherheitscheck) |
+
+Beide enthalten denselben Inhalt (der Sicherheitscheck entscheidet
+per Hostname) plus die `.htaccess`. **Nur die `robots.txt` unterscheidet
+sich:** im Auth-Ordner ist die gesperrte Fassung (die Datei
+`robots-auth.txt` aus dem Publish-Ordner) - dort sollen die Maschinen
+nicht herumlaufen.
+
+Der Upload geht dann im Panel: **Website -> Dateien verwalten -> das
+ZIP in das Wurzelverzeichnis** (dort, wo die `index.html` liegt).
+Achtung: die `.htaccess` beginnt mit einem Punkt - manche
+Upload-Werkzeuge ueberspringen Punkt-Dateien. Im Zweifel ueber
+SFTP/FTP hochladen oder im Panel die Anzeige der versteckten Dateien
+einschalten.
+
+**Der Weg per Skript** (falls doch mit Zugangsdaten - die kommen dann
+nur aus der Umgebung, nie aus einer Datei und nie als Parameter):
 
 ```powershell
 $env:INFORMANIAK_HOST = "web12.infomaniak.com"    # aus dem Panel
@@ -359,11 +388,6 @@ $env:INFORMANIAK_AUTH_PATH = "/home/www/thXXXX/auth.thestia.de/htdocs/"
 python tool/release/deploy_web_informaniak.py --getrennt --dry-run
 python tool/release/deploy_web_informaniak.py --getrennt
 ```
-
-Im Verzeichnis des Auth-Hosts landet dann die **gesperrte**
-`robots.txt` (die Datei `robots-auth.txt` aus dem Publish-Ordner) als
-`robots.txt` - dort sollen die Maschinen nicht herumlaufen. Die
-oeffentlichen Seiten bleiben in beiden Verzeichnissen (siehe Schritt 2).
 
 Die Zugangsdaten kommen **nur aus der Umgebung** - nie aus einer
 Datei, nie als Parameter (die landen sonst in der Shell-History). Das
@@ -392,6 +416,22 @@ ist keine Aenderung, sondern eine Reparatur.
 Die alten Netlify-Eintraege (`75.2.60.5`, `99.83.231.61` und der
 CNAME auf `chic-tapioca-1e7c68.netlify.app`) werden dadurch ersetzt.
 Die Mail laeuft unberuehrt weiter ueber `mx1.efwd.spaceship.net`.
+
+**STAND 23.11.2026, 20 Uhr (nach der DNS-Umstellung des Betreibers):**
+
+| Adresse | Zeigt auf | Zertifikat | Inhalt |
+|---|---|---|---|
+| `thestia.de` | 185.176.225.58 (Infomaniak) | Let's Encrypt, gilt fuer `thestia.de` **und** `www.thestia.de` | noch die Infomaniak-Platzhalterseite |
+| `www.thestia.de` | 185.176.225.58 | dasselbe Zertifikat | noch die Platzhalterseite |
+| `auth.thestia.de` | 185.176.225.58 | Let's Encrypt, eigener Host | noch die Platzhalterseite |
+
+**ES FEHLT NUR NOCH DER UPLOAD** (Schritt 4). Die Zertifikate sind
+da, die DNS stimmt - die Seiten liefern nur noch die
+Infomaniak-Platzhalterseite ("Diese Website ist zurzeit in Bearbeitung").
+
+**`www.thestia.de` wird auf `thestia.de` umgeleitet** (301): eine
+Adresse, ein Inhalt. Die Regel steht in `_redirects` (Netlify) und in
+der `.htaccess` (Apache) - beide werden aus derselben Quelle erzeugt.
 
 ### 6. Passkeys nachziehen und pruefen
 

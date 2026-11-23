@@ -144,19 +144,33 @@ def main() -> int:
         try:
             glieder = kette(host)
         except Exception as e:  # noqa: BLE001
-            print("  X  %s: die Kette liess sich nicht lesen: %s" % (host, e))
-            return 1
+            # EIN HOST OHNE LESBARE KETTE DARF DEN LAUF NICHT STOPPEN
+            # (23.11.2026, beim Umzug auf Infomaniak): Zwischen dem
+            # Umschalten des DNS und der Zertifikatsausstellung war der
+            # oeffentliche Host kurz nicht erreichbar. Der Auth-Host
+            # (der den RP-ID traegt) war da - und der ist der Wichtigere.
+            # Die Liste nimmt die Kette jedes erreichbaren Hosts auf; die
+            # Gegenprobe unten prueft nur die gelesenen.
+            print("  !  %s: die Kette liess sich nicht lesen: %s" % (host, e))
+            print("     (der Host wird uebersprungen - sein Zertifikat muss")
+            print("      aber angelegt sein, bevor die Passkeys dort laufen)")
+            continue
         fps = [fp(g) for g in glieder]
         alle[host] = fps
         print("  %-22s Kette: %d Zertifikat(e)" % (host, len(glieder)))
         for i, f in enumerate(fps):
             print("    [%d] %s" % (i, f))
 
+    if not alle:
+        print()
+        print("  FEHLER: von keinem Host liess sich die Kette lesen - die")
+        print("  Datei bleibt unveraendert.")
+        return 1
+
     # Das Root ist das LETZTE Glied, die Zwischenzertifikate liegen
     # davor. Das Leaf (Index 0) wird bewusst weggelassen.
     ziel = []
-    for host in HOSTS:
-        fps = alle[host]
+    for host, fps in alle.items():
         for f in fps[1:]:
             if f not in ziel:
                 ziel.append(f)
@@ -220,8 +234,7 @@ def main() -> int:
     print()
     print("  Gegenprobe:")
     ok = True
-    for host in HOSTS:
-        fps = alle[host]
+    for host, fps in alle.items():
         stabile = fps[1:]  # ohne das Leaf (wird alle 90 Tage erneuert)
         fehlend = [f for f in stabile if f not in ziel]
         if fehlend:

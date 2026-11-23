@@ -15,8 +15,10 @@
   <!--
     ZWEI ANSICHTEN, EIN HOST (28.10.2026).
 
-    Diese Datei wird an zwei Adressen ausgeliefert (beide zeigen auf
-    dieselbe Netlify-Site):
+    Diese Datei wird an zwei Adressen ausgeliefert (seit dem Umzug auf
+    Infomaniak, 23.11.2026, sind es zwei getrennte Websites mit
+    demselben Inhalt - die Datei entscheidet weiterhin nach dem
+    Hostnamen):
 
       * https://auth.thestia.de/  - der SICHERHEITSCHECK der App. Die
         App oeffnet diese Adresse in einem WebView und erwartet hier
@@ -31,9 +33,8 @@
     aus und stellte eine sinnlose Frage ("Muss hier ein Captcha sein?").
 
     Die Aufteilung nach Hostname loest beides:
-      * auth.thestia.de bekommt den Sicherheitscheck (mit dunklem
-        Hintergrund, damit beim Oeffnen des WebViews kein heller
-        Fleck aufblitzt),
+      * auth.thestia.de bekommt den Sicherheitscheck (im Design der
+        App - er ist Teil der Website, kein schwarzer Bildschirm),
       * jede andere Adresse bekommt eine ordentliche Landing-Seite im
         Design der App.
 
@@ -104,16 +105,61 @@
     }
 
     /* --- ANSICHT 1: Sicherheitscheck (nur auth.thestia.de) ------------ */
+    /*
+     * DAS DESIGN (23.11.2026, Betreiber): "Die Website soll uebrigens auch
+     * so schick wie die anderen in dem Design sein." Der Sicherheitscheck
+     * bekommt deshalb dieselben Farben, dieselbe Karte und dieselbe
+     * Typografie wie die oeffentliche Seite - er ist Teil der Website,
+     * kein schwarzer Bildschirm.
+     *
+     * DER HINTERGRUND: Vorher stand hier ein festes Schwarz (#121212),
+     * damit beim Oeffnen des WebViews kein heller Fleck aufblitzte. Mit
+     * den Design-Farben folgt die Seite dem System (hell oder dunkel) -
+     * und damit dem Geraet, in dem die App laeuft.
+     */
     html.captcha-host body {
       display: flex;
       justify-content: center;
       align-items: center;
-      background: #121212;
-      color: #ffffff;
+      background: var(--bg, #f2f2f8);
+      color: var(--fg, #1b1b21);
       font-size: 15px;
     }
-    #captcha-view { display: flex; flex-direction: column; align-items: center; }
+    #captcha-view { display: flex; flex-direction: column; align-items: center; width: 100%; }
     html.landing-host #captcha-view { display: none; }
+
+    .captcha-huelle {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      padding: clamp(20px, 6vw, 48px) 16px;
+    }
+    .captcha-karte {
+      margin: 0;
+      max-width: 26rem;
+      text-align: center;
+    }
+    .captcha-karte .held-marke svg { width: 72px; height: 72px; }
+    .captcha-karte .held-titel { font-size: clamp(1.5rem, 1.1rem + 2vw, 2rem); }
+    .captcha-karte .held-text { font-size: 1rem; margin-top: 8px; }
+    .captcha-karte .cf-turnstile { margin-top: 22px; }
+    .captcha-debug {
+      display: none;
+      margin-top: 16px;
+      color: #4ade80;
+      font-family: monospace;
+    }
+    .captcha-fehler {
+      display: none;
+      margin: 16px auto 0;
+      max-width: 320px;
+      color: #c02626;
+      font-size: 14px;
+      text-align: center;
+    }
+    @media (prefers-color-scheme: dark) {
+      .captcha-fehler { color: #ff9a9a; }
+    }
 
     /* --- ANSICHT 2: Landing-Seite (alle anderen Hostnamen) ----------- */
     html.landing-host body { background: var(--bg, #f2f2f8); color: var(--fg, #1b1b21); }
@@ -844,26 +890,56 @@
     WebView und wartet auf das Token.
   -->
   <div id="captcha-view">
-    <!-- Öffentlicher Sitekey (kein Secret!). -->
-    <div id="captcha-box" class="cf-turnstile"
-         data-sitekey="0x4AAAAAAFDhMgIL_nrpUokM"></div>
-
-    <!-- Nur sichtbar bei Browser-/Debug-Tests ohne WebView-Channel.
-         Zeigt NIEMALS das Token - nur einen neutralen Text oder den
-         Fehlercode (siehe sendToApp). -->
-    <div id="debug-output" style="display:none; margin-top:16px; color:#4ade80; font-family:monospace;"></div>
-
     <!--
-      Sichtbarer Hinweis, wenn der Captcha-Block nicht startet. Ohne das
-      sieht der Nutzer nur eine schwarze Flaeche und weiss nicht, was
-      los ist. Der Text erscheint nur im Fehlerfall.
+      DIE KARTE: Der Sicherheitscheck benutzt dieselbe Karte wie die
+      oeffentliche Seite (siehe .held-karte) - der Nutzer sieht, dass er
+      bei Thestia ist, auch wenn die App gerade nur das WebView zeigt.
     -->
-    <div id="captcha-error"
-         style="display:none; margin-top:16px; max-width:320px; color:#f87171;
-                font-family:system-ui,sans-serif; font-size:14px; text-align:center;">
-      Der Sicherheitscheck konnte nicht geladen werden. Bitte Internetverbindung
-      pr&uuml;fen und die Seite neu laden. Falls ein Werbeblocker aktiv ist,
-      muss er f&uuml;r <code>challenges.cloudflare.com</code> erlaubt sein.
+    <div class="captcha-huelle">
+      <div class="held-karte captcha-karte">
+        <div class="held-marke">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <defs><linearGradient id="captcha-marke" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#ff6b95"/>
+              <stop offset="1" stop-color="#7b4dd6"/>
+            </linearGradient></defs>
+            <path fill="url(#captcha-marke)"
+                  d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          </svg>
+        </div>
+        <!--
+          DIE UEBERSCHRIFT: In diesem Dokument stehen ZWEI Ansichten
+          (Sicherheitscheck und oeffentliche Seite) - die oeffentliche
+          traegt die h1. Der Sicherheitscheck bekommt deshalb eine h2
+          (gleiche Optik, gleiche Schriftgroesse). Das Gate
+          "check_web_pages.py" verlangt genau eine h1 je Seite.
+        -->
+        <h2 class="held-titel">Sicherheitscheck</h2>
+        <p class="held-text">
+          Einmal kurz best&auml;tigen, dann geht&rsquo;s weiter. Das ist nur
+          ein Bot-Schutz - deine Daten bleiben dabei auf dem Ger&auml;t.
+        </p>
+
+        <!-- Öffentlicher Sitekey (kein Secret!). -->
+        <div id="captcha-box" class="cf-turnstile"
+             data-sitekey="0x4AAAAAAFDhMgIL_nrpUokM"></div>
+
+        <!-- Nur sichtbar bei Browser-/Debug-Tests ohne WebView-Channel.
+             Zeigt NIEMALS das Token - nur einen neutralen Text oder den
+             Fehlercode (siehe sendToApp). -->
+        <div id="debug-output" class="captcha-debug"></div>
+
+        <!--
+          Sichtbarer Hinweis, wenn der Captcha-Block nicht startet. Ohne das
+          sieht der Nutzer nur die Karte ohne Aufgabe und weiss nicht, was
+          los ist. Der Text erscheint nur im Fehlerfall.
+        -->
+        <div id="captcha-error" class="captcha-fehler">
+          Der Sicherheitscheck konnte nicht geladen werden. Bitte Internetverbindung
+          pr&uuml;fen und die Seite neu laden. Falls ein Werbeblocker aktiv ist,
+          muss er f&uuml;r <code>challenges.cloudflare.com</code> erlaubt sein.
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1047,7 +1123,7 @@
         out.textContent = istFehler ? message : 'Sicherheitscheck abgeschlossen.';
       }
       // Sichtbarer Hinweis im Fehlerfall (SCRIPT_NOT_LOADED /
-      // CAPTCHA_ERROR). Ohne ihn bleibt nur eine schwarze Flaeche.
+      // CAPTCHA_ERROR). Ohne ihn bleibt nur die leere Karte.
       if (message && message.indexOf('ERROR:') === 0) {
         var err = document.getElementById('captcha-error');
         if (err) err.style.display = 'block';
