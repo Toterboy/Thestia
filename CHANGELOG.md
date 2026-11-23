@@ -7,58 +7,17 @@ und folgt der [Semantic Versioning Specification (SemVer)](https://semver.org/la
 Solange die Versionsnummer mit `0.` beginnt (Initial Development Phase nach SemVer §4),
 können sich Schnittstellen und Verhalten jederzeit ändern.
 
-## [0.10.3] – Sicherheitscheck, Altersprüfung und eine viel größere Testabdeckung
-(Build 58, 2026-11-23)
-
-> **Warum PATCH?** Alle drei Änderungen beheben Fehler – es kommt keine
-> neue Funktion für den Nutzer dazu. Nach der Roadmap-Regel („neue
-> Nutzerfunktion = MINOR, Fix = PATCH") ist das ein PATCH.
-
-### Behoben – Der Sicherheitscheck lief bei großer Schrift aus dem Fenster
-
-Das Fenster des Sicherheitschecks hat eine feste Höhe (200 Pixel). Bei
-einer Systemschrift von 3,2x passte die Fehlermeldung nicht mehr hinein:
-Sie lief über (im Test: 536 Pixel), und der Knopf „Erneut versuchen" war
-nicht mehr erreichbar. Genau die Nutzer, die den Fehlertext am nötigsten
-brauchen, konnten ihn nicht lesen und nicht handeln.
-
-Die Meldung hat jetzt einen eigenen Bereich mit einer Obergrenze und ist
-darin scrollbar: Der Dialog bleibt bedienbar, die Meldung ist vollständig
-lesbar. Gefunden von einem Test (der Test schlägt ohne den Fix mit
-„A RenderFlex overflowed by 536 pixels" fehl).
-
-### Behoben – Gemeldete Bilder ließen sich nicht speichern
-
-In `lib/main.dart` waren die Hive-Adapter der beiden Aufzählungen
-`PhotoModerationType` und `PhotoModerationStatus` nicht registriert. Ein
-gemeldetes Bild ließ sich deshalb nicht in der lokalen Ablage speichern
-(„Cannot read, unknown typeId 20/21"). Die Adapter sind jetzt registriert.
-
-### Behoben – Die Bildauswertung der Altersprüfung war ungetestet
-
-Der Dienst `age_estimation_service.dart` hatte 193 offene Zeilen – darunter
-den Zuschnitt, die Bildgröße, die Normierung des UltraFace-Tensors und die
-Überschneidungsfläche. Ein Fehler dort fällt auf dem Gerät nicht auf: Er
-fällt nur durch, und die Prüfung landet dann grundlos bei der manuellen
-Kontrolle.
-
-Die reinen Helfer sind jetzt öffentlich (`@visibleForTesting`, wie die
-Box-Namen im Chat-Dienst) und werden von 19 Tests abgedeckt: Das mittige
-Quadrat, das Klemmen des Crops, der Tensor (Größe, Normierung, Ebenen-
-Reihenfolge), das Verkleinern auf höchstens 640 Pixel, der Alters-Tensor
-(mit allen drei Normalisierungen) und die Überschneidungsfläche.
-
-### Tests
-
-Die Abdeckung steigt von 78,6 % auf rund 80 %. Neu sind unter anderem die
-Tests für den Sicherheitscheck (mit einem WebView-Ersatz), die
-Passkey-Fehlerübersetzung, die Bild-Meldung, die Sicherheits-Aufklärung
-vor dem Setup, das Wischen zwischen den Reitern, der Musik-Geschmack, der
-Elternbereich und der Verifizierungs-Dienst.
-
 ## [0.10.2] – Fehlerbehebungen aus dem Alltag und mehr Tests
-(Build 56 und 57, 2026-11-14 und 2026-11-22)
+(Build 56, 57 und 58, 2026-11-14, 2026-11-22 und 2026-11-24)
 
+> **Warum Build 58?** v0.10.2 ist **noch nie veröffentlicht** worden –
+> die letzte öffentliche Fassung ist v0.10.1 (GitHub) bzw. der Play-Store.
+> Deshalb gehört Build 58 zu **v0.10.2** und nicht zu einer neuen
+> Fassung: Nach der Roadmap-Regel („neue Nutzerfunktion = MINOR, Fix =
+> PATCH") sind die drei Änderungen von Build 58 Fehlerbehebungen, und
+> eine PATCH-Fassung, die noch nie draußen war, wird nicht neu
+> nummeriert.
+>
 > **Warum Build 57?** v0.10.2 (Build 56) war für die Testabnahme
 > gedacht, aber noch nicht veröffentlicht. Die beiden Befunde des
 > Betreibers – das Impressum und die Funken – sind produktive Fehler;
@@ -85,6 +44,39 @@ Elternbereich und der Verifizierungs-Dienst.
 > - **Bilder im Chat** haben runde Ecken und keinen Rahmen mehr.
 > - **Name und Alter** stehen in der Funken-Kachel untereinander (mit
 >   dem Re-Funke-Knopf war die Zeile zu eng).
+
+### Behoben (24.11.2026, Build 58) – Der Sicherheitscheck, die Altersprüfung und die Bild-Meldung
+
+Drei Befunde aus der Testarbeit – alle im Werkzeug gefunden, keiner auf
+dem Gerät:
+
+- **Der Sicherheitscheck lief bei großer Schrift aus dem Fenster.** Das
+  Fenster hat eine feste Höhe (200 Pixel). Bei einer Systemschrift von
+  3,2x passte die Fehlermeldung nicht mehr hinein: Sie lief über (im
+  Test: 536 Pixel), und der Knopf „Erneut versuchen" war nicht mehr
+  erreichbar. Genau die Nutzer, die den Fehlertext am nötigsten brauchen,
+  konnten ihn nicht lesen und nicht handeln. Die Meldung hat jetzt einen
+  eigenen Bereich mit einer Obergrenze und ist darin scrollbar: Der
+  Dialog bleibt bedienbar, die Meldung ist vollständig lesbar.
+- **Gemeldete Bilder ließen sich nicht speichern.** In `lib/main.dart`
+  waren die Hive-Adapter der beiden Aufzählungen `PhotoModerationType`
+  und `PhotoModerationStatus` nicht registriert – ein gemeldetes Bild
+  ließ sich deshalb nicht in der lokalen Ablage speichern („Cannot read,
+  unknown typeId 20/21"). Die Adapter sind jetzt registriert.
+- **Die Bildauswertung der Altersprüfung war ungetestet.** Der Dienst
+  `age_estimation_service.dart` hatte 193 offene Zeilen – darunter den
+  Zuschnitt, die Bildgröße, die Normierung des UltraFace-Tensors und die
+  Überschneidungsfläche. Ein Fehler dort fällt auf dem Gerät nicht auf:
+  Er fällt nur durch, und die Prüfung landet dann grundlos bei der
+  manuellen Kontrolle. Die reinen Helfer sind jetzt öffentlich
+  (`@visibleForTesting`, wie die Box-Namen im Chat-Dienst) und werden
+  von 19 Tests abgedeckt.
+
+**Die Tests:** Die Abdeckung steigt von 78,6 % auf 80,1 %. Neu sind
+unter anderem die Tests für den Sicherheitscheck (mit einem
+WebView-Ersatz), die Passkey-Fehlerübersetzung, die Bild-Meldung, die
+Sicherheits-Aufklärung vor dem Setup, das Wischen zwischen den Reitern,
+der Musik-Geschmack, der Elternbereich und der Verifizierungs-Dienst.
 
 ### Behoben (20.11.2026) – Die Funken ließen sich nicht laden
 
