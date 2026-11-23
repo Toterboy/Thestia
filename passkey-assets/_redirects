@@ -151,6 +151,27 @@ https://auth.thestia.de/robots.txt          /robots-auth.txt               200!
 /en/eltern    /en/eltern.html  200
 /en/eltern/einstellungen    /en/eltern/einstellungen.html  200
 
+# Die englischen Adressen MIT Schluss-Schraegstrich (BEFUND 23.11.2026):
+# Auf Netlify wurde das mit einem 301 auf die Form ohne Schraegstrich
+# beantwortet. Auf Apache gibt es ohne diese Regeln einen 404 - die
+# Live-Pruefung meldet das, und alte Lesezeichen/Suchtreffer zeigen
+# dann eine kaputte Seite.
+/en/impressum/              /en/impressum.html  200
+/en/kinderschutz/           /en/kinderschutz.html  200
+/en/dating-sicherheit/      /en/dating-sicherheit.html  200
+/en/konto-loeschen/         /en/konto-loeschen.html  200
+/en/daten-loeschen/         /en/daten-loeschen.html  200
+/en/datenschutz/            /en/datenschutz.html  200
+/en/eltern/                 /en/eltern.html  200
+/en/eltern/einstellungen/   /en/eltern/einstellungen.html  200
+
+# Der Dateiname selbst als Adresse (ohne ".html"). Die echte Seite
+# heisst "/eltern/einstellungen" (mit Schraegstrich); die Variante mit
+# Bindestrich liegt nahe und wird von der Live-Pruefung aus dem
+# Dateinamen abgeleitet.
+/eltern-einstellungen   /eltern-einstellungen.html  200
+/eltern-einstellungen/  /eltern-einstellungen.html  200
+
 # Nutzungsbedingungen (DSA Art. 16: Bedingungen fuer die Vereinbarung
 # von Leistungen). Die Seite ist die Grundlage fuer die Meldestelle und
 # fuer das Impressum.

@@ -91,10 +91,17 @@ def lade_urls():
     pfade = set()
     for datei in PUBLISH.glob("*.html"):
         pfade.add("/" + datei.name)
+        # "/index" und "/index/" sind keine Adressen der Website - die
+        # Wurzel ist "/". Das sind Artefakte aus dem Dateinamen, keine
+        # echten Fehler (23.11.2026, erster Live-Lauf auf Apache).
+        if datei.stem == "index":
+            continue
         pfade.add("/" + datei.stem)
         pfade.add("/" + datei.stem + "/")
     for datei in (PUBLISH / "en").glob("*.html"):
         pfade.add("/en/" + datei.name)
+        if datei.stem == "index":
+            continue
         pfade.add("/en/" + datei.stem)
         pfade.add("/en/" + datei.stem + "/")
     pfade.update({"/", "/index.html", "/favicon.ico", "/favicon.png",
@@ -136,6 +143,7 @@ def main() -> int:
                 # Inhalt fuer die Suchmaschine). Das war am 08.11.2026
                 # ein Fehlalarm: 26 "Fehler", die keine waren.
                 ziel = kopf.get("Location", "")
+                ziel_code = 0
                 if ziel:
                     # Der Location-Header ist manchmal RELATIV ("/bestaetigt").
                     if ziel.startswith("/"):
@@ -408,6 +416,7 @@ def pruefe_zusatzhosts(hosts: list) -> int:
                 # Netlify macht aus "/datenschutz/" eine 301 auf
                 # "/datenschutz" (die kanonische Form).
                 ziel = kopf.get("Location", "")
+                ziel_code = 0
                 if ziel:
                     if ziel.startswith("/"):
                         ziel = domain + ziel

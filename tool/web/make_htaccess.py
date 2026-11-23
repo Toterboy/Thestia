@@ -104,6 +104,14 @@ KOPF = """# ============================================================
 Options -Indexes -MultiViews
 DirectoryIndex index.html
 
+# KEIN AUTOMATISCHER SCHRAGSTRICH (BEFUND 23.11.2026): Unter /en/
+# liegt ein Ordner "eltern/" (fuer /en/eltern/einstellungen.html) und
+# daneben die Datei "en/eltern.html". Ohne diese Zeile macht Apache aus
+# /en/eltern (der Adresse aus der Sitemap!) einen 301 auf /en/eltern/
+# und dort gibt es keinen Index -> 403. Mit "DirectorySlash Off" greift
+# stattdessen die Rewrite-Regel ^en/eltern$ -> en/eltern.html.
+DirectorySlash Off
+
 <IfModule mod_rewrite.c>
 RewriteEngine On
 
