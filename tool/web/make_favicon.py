@@ -1,4 +1,4 @@
-"""Erzeugt die Favicons fuer die Website (tool/web/make_favicon.py).
+"""Erzeugt die Bilder der Website (Favicons und Logo).
 
 WARUM (06.11.2026, Betreiber): In der Google-Suche erschien neben
 "Thestia" ein allgemeiner Globus-Knopf statt des Logos - die Seite hat
@@ -29,10 +29,20 @@ DIE DATEIEN - alle aus EINER Quelle, `assets/images/thestia_icon_base.png`
   favicon.svg   dasselbe als SVG (mit dem PNG eingebettet) - fuer
                 Browser, die SVG-Icons bevorzugen. Ohne diese Datei
                 nimmte der Browser das Herz.
+  logo.png      512x512  - das ThestiaIcon, ABGERUNDET (der Weg aus dem
+                Herz-Icon). Es steht in der Kopfzeile und auf der Karte
+                jeder Seite (23.11.2026, Betreiber: "Bei allen Websites
+                und auch auth.thestia soll statt diesem Herz Icon das
+                richtige App logo da sein, also dieses abgerundete,
+                aber nicht ganz runde").
 
 Der runde Schnitt steht in `tool/images/logo_round.py` - dieselbe Rechnung wie
 in `tool/images/generate_round_logo.dart`, in Python (weil die Favicons mit
 Pillow erzeugt werden).
+
+WARUM EIN WERKZEUG FUER BEIDES: Der Weg zum Logo laeuft sonst
+auseinander - das war schon einmal der Grund fuer den Bug vom
+09.11.2026. Wer das Logo aendert, aendert es hier an EINER Stelle.
 
 Aufruf:
     python tool/web/make_favicon.py
@@ -76,7 +86,17 @@ WURZEL = _projektwurzel()
 
 PUBLISH = WURZEL / "passkey-assets"
 
-sys.path.insert(0, str(WURZEL / "tool" / "helpers"))
+#: Die Logo-Quelle (die einzige im Projekt).
+QUELLE = WURZEL / "assets" / "images" / "thestia_icon_base.png"
+
+#: DER RUNDE SNITT: Er steht in tool/images/logo_round.py (dieselbe
+#: Rechnung wie in tool/images/generate_round_logo.dart, in Python, weil
+#: die Favicons mit Pillow erzeugt werden).
+#:
+#: BEFUND (23.11.2026): Der Import zeigte auf tool/helpers - dort liegt
+#: die Datei nicht. Das Skript lief also gar nicht mehr (die Favicons
+#: waren noch von einem frueheren Lauf).
+sys.path.insert(0, str(WURZEL / "tool" / "images"))
 from logo_round import rundes_logo  # noqa: E402
 
 # ---------------------------------------------------------------------
@@ -123,3 +143,25 @@ svg_pfad = PUBLISH / "favicon.svg"
 svg_pfad.write_text(svg, encoding="utf-8", newline="\n")
 print("  favicon.svg          %d Bytes (rundes ThestiaIcon)"
       % svg_pfad.stat().st_size)
+
+# ---------------------------------------------------------------------
+# 3) Das Logo fuer die Seiten (das ABGERUNDETE ThestiaIcon)
+# ---------------------------------------------------------------------
+# WARUM (23.11.2026, Betreiber): "Bei allen Websites und auch auth.thestia
+# soll statt diesem Herz Icon das richtige App logo da sein, also dieses
+# abgerundete, aber nicht ganz runde." Auf den Seiten stand bisher eine
+# Marke aus einem Herz-SVG - nicht das Logo der App. Die Seite zeigt
+# jetzt DASSELBE Bild wie der Launcher.
+#
+# DIE GROESSE: 256 Pixel - die Karte zeigt es mit 96 Pixeln (auf einem
+# Pixel-doppelten Geraet also 192), die Kopfzeile mit 30. Mehr waere
+# Dateigroesse ohne Nutzen, weniger waere unscharf.
+LOGO_GROESSE = 256
+
+logo = Image.open(QUELLE).convert("RGBA")
+if logo.size[0] != LOGO_GROESSE:
+    logo = logo.resize((LOGO_GROESSE, LOGO_GROESSE), Image.LANCZOS)
+logo_pfad = PUBLISH / "logo.png"
+logo.save(logo_pfad, "PNG", optimize=True)
+print("  logo.png       %dx%d  %d Bytes (abgerundetes ThestiaIcon)"
+      % (LOGO_GROESSE, LOGO_GROESSE, logo_pfad.stat().st_size))

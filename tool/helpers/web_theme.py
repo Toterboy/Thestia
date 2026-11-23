@@ -249,7 +249,7 @@ THEME_CSS = """
       border-bottom: 1px solid var(--line);
     }
     .marke { display: inline-flex; line-height: 0; }
-    .marke svg { display: block; width: 26px; height: 26px; }
+    .marke img { display: block; width: 30px; height: 30px; }
     .marken-text {
       font-weight: 700;
       font-size: 1.05rem;
@@ -501,7 +501,7 @@ THEME_CSS = """
       max-width: 46rem; text-align: center;
     }
     .held-marke { display: flex; align-items: center; justify-content: center; }
-    .held-marke svg { width: 88px; height: 88px; }
+    .held-marke img { width: 96px; height: 96px; }
     .held-titel {
       font-size: clamp(1.8rem, 1.2rem + 2.6vw, 2.5rem);
       line-height: 1.15; letter-spacing: -0.03em; font-weight: 700;
@@ -739,24 +739,24 @@ _SVG_MOND = (
     '</svg>'
 )
 
-# Die Marke: das Herz der App in ihrem Verlaufsrot-Violett.
-_SVG_MARKE = (
-    '<svg viewBox="0 0 24 24" aria-hidden="true">'
-    '<defs><linearGradient id="thestia-marke" x1="0" y1="0" x2="1" y2="1">'
-    '<stop offset="0" stop-color="#ff6b95"/>'
-    '<stop offset="1" stop-color="#7b4dd6"/>'
-    '</linearGradient></defs>'
-    '<path fill="url(#thestia-marke)" '
-    'd="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 '
-    '7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 '
-    '22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>'
-    '</svg>'
-)
+# Die Marke: das LOGO der App (das abgerundete ThestiaIcon).
+#
+# WARUM (23.11.2026, Betreiber): "Bei allen Websites und auch auth.thestia
+# soll statt diesem Herz Icon das richtige App logo da sein, also dieses
+# abgerundete, aber nicht ganz runde." Vorher stand hier ein
+# Herz-SVG - ein allgemeines Herz, nicht das Logo der App.
+#
+# DAS BILD: /logo.png wird von tool/web/make_favicon.py aus derselben
+# Quelle erzeugt wie die Favicons (assets/images/thestia_icon_base.png).
+# Es ist ein Bild, kein Vektor - das Artwork (Verlauf, Herz, Silhouetten,
+# Funken, Schriftzug) ist eine Rastergrafik. "vektorisiert" waere eine
+# ANDERE Marke.
+_BILD_MARKE = '<img src="/logo.png" alt="Thestia-Logo" width="30" height="30">'
 
 # Die Kopfzeile mit Marke, Name und Umschalt-Knopf.
 KOPF_HTML = (
     '<header class="kopf">\n'
-    '  <span class="marke">' + _SVG_MARKE + '</span>\n'
+    '  <span class="marke">' + _BILD_MARKE + '</span>\n'
     '  <span class="marken-text">Thestia</span>\n'
     '  <input type="checkbox" id="modus-umschalter" class="modus-schalter" '
     'aria-label="Dark- und Light-Mode umschalten">\n'

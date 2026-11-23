@@ -139,7 +139,7 @@
       max-width: 26rem;
       text-align: center;
     }
-    .captcha-karte .held-marke svg { width: 72px; height: 72px; }
+    .captcha-karte .held-marke img { width: 72px; height: 72px; }
     .captcha-karte .held-titel { font-size: clamp(1.5rem, 1.1rem + 2vw, 2rem); }
     .captcha-karte .held-text { font-size: 1rem; margin-top: 8px; }
     .captcha-karte .cf-turnstile { margin-top: 22px; }
@@ -179,7 +179,7 @@
     }
 
     .held-marke { display: flex; align-items: center; justify-content: center; }
-    .held-marke svg { width: 96px; height: 96px; }
+    .held-marke img { width: 96px; height: 96px; }
 
     .held-titel {
       font-size: clamp(2rem, 1.2rem + 3vw, 2.8rem);
@@ -419,7 +419,7 @@
       border-bottom: 1px solid var(--line);
     }
     .marke { display: inline-flex; line-height: 0; }
-    .marke svg { display: block; width: 26px; height: 26px; }
+    .marke img { display: block; width: 30px; height: 30px; }
     .marken-text {
       font-weight: 700;
       font-size: 1.05rem;
@@ -671,7 +671,7 @@
       max-width: 46rem; text-align: center;
     }
     .held-marke { display: flex; align-items: center; justify-content: center; }
-    .held-marke svg { width: 88px; height: 88px; }
+    .held-marke img { width: 96px; height: 96px; }
     .held-titel {
       font-size: clamp(1.8rem, 1.2rem + 2.6vw, 2.5rem);
       line-height: 1.15; letter-spacing: -0.03em; font-weight: 700;
@@ -897,16 +897,7 @@
     -->
     <div class="captcha-huelle">
       <div class="held-karte captcha-karte">
-        <div class="held-marke">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <defs><linearGradient id="captcha-marke" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#ff6b95"/>
-              <stop offset="1" stop-color="#7b4dd6"/>
-            </linearGradient></defs>
-            <path fill="url(#captcha-marke)"
-                  d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-          </svg>
-        </div>
+        <div class="held-marke"><img src="/logo.png" alt="Thestia-Logo" width="96" height="96"></div>
         <!--
           DIE UEBERSCHRIFT: In diesem Dokument stehen ZWEI Ansichten
           (Sicherheitscheck und oeffentliche Seite) - die oeffentliche
@@ -951,16 +942,7 @@
   -->
   <div id="landing-view">
     <header class="kopf">
-      <span class="marke">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <defs><linearGradient id="held-marke-klein" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#ff6b95"/>
-            <stop offset="1" stop-color="#7b4dd6"/>
-          </linearGradient></defs>
-          <path fill="url(#held-marke-klein)"
-                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-        </svg>
-      </span>
+      <span class="marke"><img src="/logo.png" alt="Thestia-Logo" width="30" height="30"></span>
       <span class="marken-text">Thestia</span>
       <input type="checkbox" id="modus-umschalter" class="modus-schalter" aria-label="Dark- und Light-Mode umschalten">
       <label for="modus-umschalter" class="modus-knopf" title="Dark- und Light-Mode umschalten">
@@ -979,16 +961,7 @@
     <main class="landing-inhalt">
 
     <div class="held-karte">
-      <div class="held-marke">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <defs><linearGradient id="held-marke-gross" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#ff6b95"/>
-            <stop offset="1" stop-color="#7b4dd6"/>
-          </linearGradient></defs>
-          <path fill="url(#held-marke-gross)"
-                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-        </svg>
-      </div>
+      <div class="held-marke"><img src="/logo.png" alt="Thestia-Logo" width="96" height="96"></div>
       <h1 class="held-titel">Thestia</h1>
       <p class="held-text">
         <strong>Dating, das dich ins echte Leben zurückführt.</strong>
