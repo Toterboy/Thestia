@@ -39,9 +39,9 @@ als Parameter (die landen sonst in der Shell-History):
 
     $env:INFORMANIAK_HOST  = "web12.infomaniak.com"   # aus dem Panel
     $env:INFORMANIAK_USER  = "thXXXX"                 # der FTP-Benutzer
-    $env:INFORMANIAK_PATH  = "/home/www/thXXXX/thestia.de/htdocs/"
+    $env:INFORMANIAK_PATH  = "/home/clients/<ID>/sites/thestia.de/htdocs/"
     # optional, nur mit --getrennt (zwei Verzeichnisse):
-    $env:INFORMANIAK_AUTH_PATH = "/home/www/thXXXX/auth.thestia.de/htdocs/"
+    $env:INFORMANIAK_AUTH_PATH = "/home/clients/<ID>/sites/auth.thestia.de/htdocs/"
     # optional (empfohlen - sonst fragt der Server nach dem Passwort):
     $env:INFORMANIAK_SSH_KEY = "$HOME\\.ssh\\id_ed25519"
     $env:INFORMANIAK_PORT  = "22"
@@ -131,8 +131,11 @@ def _hole(getrennt: bool) -> dict:
         "getrennt": getrennt,
     }
     if not daten["pfad"]:
-        # Der Standardpfad von Infomaniak: /home/www/<benutzer>/<website>/htdocs/
-        daten["pfad"] = f"/home/www/{daten['user']}/{OEFFENTLICHER_HOST}/htdocs/"
+        # Der echte Pfad auf Infomaniak (BEFUND 23.11.2026):
+        # /home/clients/<Client-ID>/sites/<Website>/htdocs/
+        daten["pfad"] = (
+            f"/home/clients/{daten['user']}/sites/{OEFFENTLICHER_HOST}/htdocs/"
+        )
     if not daten["pfad"].endswith("/"):
         daten["pfad"] += "/"
     # Ein eigenes Verzeichnis fuer den Auth-Host schaltet die Trennung
@@ -140,7 +143,9 @@ def _hole(getrennt: bool) -> dict:
     if daten["auth_pfad"]:
         daten["getrennt"] = True
     if daten["getrennt"] and not daten["auth_pfad"]:
-        daten["auth_pfad"] = f"/home/www/{daten['user']}/{AUTH_HOST}/htdocs/"
+        daten["auth_pfad"] = (
+            f"/home/clients/{daten['user']}/sites/{AUTH_HOST}/htdocs/"
+        )
     if daten["auth_pfad"] and not daten["auth_pfad"].endswith("/"):
         daten["auth_pfad"] += "/"
     return daten

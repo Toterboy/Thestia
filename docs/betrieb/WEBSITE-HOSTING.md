@@ -374,11 +374,24 @@ ist:
 3. Im **linken Menü auf `FTP / SSH`** klicken.
 4. Die Schaltfläche **`Web FTP`** klicken (braucht kein FTP-Konto - das
    Infomaniak-Passwort genuegt).
-5. Im Web-FTP in das Verzeichnis der jeweiligen Website wechseln
-   (`htdocs`) und die Dateien per **Drag & Drop** aus Windows
+5. Im Web-FTP (BEFUND 23.11.2026): Das Startverzeichnis ist
+   `/home/clients/<Client-ID>/`. Die Websites liegen unter **`sites/`**,
+   und dort in einem Ordner je Website mit einem **`htdocs/`**-Ordner
+   darunter. Also:
+   - `sites/<Ordner von thestia.de>/htdocs/` ← `thestia.de.zip` entpacken
+   - `sites/<Ordner von auth.thestia.de>/htdocs/` ← `auth.thestia.de.zip` entpacken
+
+   Falls die Ordnernamen abweichen: der richtige Ordner ist der, in dem
+   schon die Platzhalter-`index.html` liegt. Nach dem Upload müssen
+   `index.html` und `.htaccess` **direkt** in `htdocs/` liegen - nicht
+   in einem Unterordner davon (sonst gibt es eine leere
+   Verzeichnisansicht).
+6. Dateien per **Drag & Drop** aus Windows in das Web-FTP-Fenster
    hineinziehen - oder das ZIP hochladen und im Web-FTP **entpacken**
    (beides wird unterstuetzt, unsere ZIPs sind rund 2,2 MB - Grenze
-   50 MB).
+   50 MB). Die `.htaccess` ist eine Punkt-Datei: falls sie beim
+   Drag & Drop fehlt, im Web-FTP einzeln hochladen (dort sind
+   versteckte Dateien sichtbar).
 
 **Der Weg per Skript** (falls doch mit Zugangsdaten - die kommen dann
 nur aus der Umgebung, nie aus einer Datei und nie als Parameter):
@@ -386,7 +399,7 @@ nur aus der Umgebung, nie aus einer Datei und nie als Parameter):
 ```powershell
 $env:INFORMANIAK_HOST = "web12.infomaniak.com"    # aus dem Panel
 $env:INFORMANIAK_USER = "thXXXX"                  # der FTP-Benutzer
-$env:INFORMANIAK_PATH = "/home/www/thXXXX/thestia.de/htdocs/"
+$env:INFORMANIAK_PATH = "/home/clients/<ID>/sites/thestia.de/htdocs/"
 $env:INFORMANIAK_SSH_KEY = "$HOME\.ssh\id_ed25519"   # optional
 
 python tool/release/deploy_web_informaniak.py --dry-run   # erst ansehen
@@ -400,7 +413,7 @@ Remove-Item Env:\INFORMANIAK_HOST, Env:\INFORMANIAK_USER
 zweite Pfad dazu, und der Aufruf bekommt `--getrennt`:
 
 ```powershell
-$env:INFORMANIAK_AUTH_PATH = "/home/www/thXXXX/auth.thestia.de/htdocs/"
+$env:INFORMANIAK_AUTH_PATH = "/home/clients/<ID>/sites/auth.thestia.de/htdocs/"
 
 python tool/release/deploy_web_informaniak.py --getrennt --dry-run
 python tool/release/deploy_web_informaniak.py --getrennt
