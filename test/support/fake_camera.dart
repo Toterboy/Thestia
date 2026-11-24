@@ -139,8 +139,12 @@ class FakeCameraPlatform extends CameraPlatform {
     aufnahmen++;
   }
 
+  /// Wie oft wurde die Aufnahme beendet?
+  int aufnahmenGestoppt = 0;
+
   @override
   Future<XFile> stopVideoRecording(int cameraId) async {
+    aufnahmenGestoppt++;
     // Die Aufnahme-Datei: der Test legt sie vorher an.
     return XFile(aufnahmeDatei ?? '');
   }
