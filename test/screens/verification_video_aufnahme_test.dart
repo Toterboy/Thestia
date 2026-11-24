@@ -16,8 +16,6 @@
 //     Nutzer nicht endlos filmen lassen - und der Server bekommt kein
 //     unbegrenztes Video),
 //   * schlaegt der Start fehl, wird dem Nutzer der Grund gesagt.
-import 'dart:async';
-
 import 'package:camera_platform_interface/camera_platform_interface.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
