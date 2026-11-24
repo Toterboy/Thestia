@@ -16,8 +16,6 @@
 //   * im Hintergrund schweigt das Funk-Radio,
 //   * beim Zurueckkommen kommt ein FRISCHES Token,
 //   * ohne aktiven Radar passiert beim Zurueckkommen nichts.
-import 'dart:async';
-
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
