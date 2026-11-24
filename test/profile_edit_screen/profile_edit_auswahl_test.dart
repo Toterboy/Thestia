@@ -21,7 +21,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/profile/gender.dart';
-import 'package:thestia/providers/profile/profile_provider.dart';
 import 'package:thestia/providers/settings/user_preferences_provider.dart';
 
 import 'hilfen.dart';
