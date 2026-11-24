@@ -85,9 +85,7 @@ void main() {
             'Nach dem Zurueckkommen muss der Server das neue Token '
             'bekommen - sonst weiss er nichts vom frischen Geraet.',
       );
-      final token = heartbeats.last['params'] is Map
-          ? ((heartbeats.last['params'] as Map)['p_token'] as String?)
-          : null;
+      final token = heartbeats.last['p_token'] as String?;
       expect(
         TransitEncounterService.isValidToken(token ?? ''),
         isTrue,
