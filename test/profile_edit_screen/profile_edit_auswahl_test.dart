@@ -96,6 +96,47 @@ void main() {
       await aufraeumen(tester);
     });
 
+    testWidgets('ein anderes Land leert das Bundesland', (tester) async {
+      await profileEditScreenPump(tester, profileEditScreenProfil);
+
+      // DAS LANDFELD: Es wird ueber sein Label gefunden (die
+      // Dropdown-Auswahl liegt in einem Ueberlauf, den man erst scrollen
+      // muss).
+      final land = find.byWidgetPredicate(
+        (w) =>
+            w is DropdownButtonFormField<String> &&
+            w.decoration.labelText ==
+                L10n.tWithoutContext('profile.edit.country'),
+      );
+      expect(land, findsOneWidget);
+      await tester.ensureVisible(land);
+      await tester.pump();
+      await tester.tap(land);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      // EIN ANDERES LAND: Das Bundesland passt dann nicht mehr.
+      final waehler = find.widgetWithText(
+        DropdownMenuItem<String>,
+        'Österreich',
+      );
+      expect(waehler, findsWidgets);
+      await tester.tap(waehler.last);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text(L10n.tWithoutContext('profile.edit.state')),
+        findsNothing,
+        reason:
+            'Nach dem Wechsel des Landes darf das alte Bundesland nicht '
+            'stehen - "Berlin" in Oesterreich waere Unsinn.',
+      );
+
+      await aufraeumen(tester);
+    });
+
     testWidgets('der Suchradius laesst sich umschalten', (tester) async {
       final container = await profileEditScreenPump(
         tester,
