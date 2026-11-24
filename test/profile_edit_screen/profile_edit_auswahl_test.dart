@@ -47,10 +47,7 @@ void main() {
 
   group('Die Auswahl-Felder', () {
     testWidgets('das Geschlecht laesst sich waehlen', (tester) async {
-      final container = await profileEditScreenPump(
-        tester,
-        profileEditScreenProfil,
-      );
+      await profileEditScreenPump(tester, profileEditScreenProfil);
 
       await oeffneAuswahl(tester, 'profile.edit.gender');
 
