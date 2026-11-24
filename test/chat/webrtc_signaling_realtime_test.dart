@@ -1,8 +1,8 @@
 // Das Signaling ueber den echten Realtime-Kanal.
 //
 // ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
-// lib/services/chat/webrtc_service.dart 130 offene Zeilen - der groesste
-// Rest. Die Ursache: Der Dienst holt seinen Kanal ueber
+// lib/services/chat/webrtc_service.dart ueber 130 offene Zeilen - der
+// groesste Rest. Die Ursache: Der Dienst holt seinen Kanal ueber
 // `Supabase.instance.client.channel(...)` und wartet auf die
 // Bestaetigung des Servers. Ohne Server bleibt der Kanal 15 Sekunden im
 // Zustand "joining" - also war genau der sicherheitskritische Teil
@@ -10,7 +10,8 @@
 //
 // DER WEG: Der [FakeRealtimeServer] spricht das Phoenix-Protokoll des
 // Realtime-Clients. Der Test sieht damit,
-//   * was die App ueber den Kanal schickt (das Angebot, die Antwort),
+//   * was die App ueber den Kanal schickt (das Angebot, die Antwort,
+//     den ICE-Kandidaten, den Relay-Ping),
 //   * dass eine eingehende Nachricht wirklich bei der App ankommt,
 //   * und was passiert, wenn kein Server erreichbar ist.
 //
@@ -58,6 +59,26 @@ class _AufzeichnendeVerbindung extends FakePeerConnection {
   @override
   Future<void> addCandidate(RTCIceCandidate candidate) async {
     kandidaten.add(candidate);
+  }
+
+  /// Der Dienst hat einen ICE-Kandidaten gefunden (der Weg ueber den
+  /// Kanal in die andere Richtung).
+  void meldeKandidat(RTCIceCandidate kandidat) {
+    onIceCandidate?.call(kandidat);
+  }
+
+  /// Die ICE-Verbindung ist verloren gegangen.
+  void verliere() {
+    onIceConnectionState?.call(
+      RTCIceConnectionState.RTCIceConnectionStateFailed,
+    );
+  }
+
+  /// Die ICE-Verbindung wurde geschlossen.
+  void schliesse() {
+    onIceConnectionState?.call(
+      RTCIceConnectionState.RTCIceConnectionStateClosed,
+    );
   }
 }
 
@@ -117,7 +138,7 @@ void main() {
 
     // DER ERSATZ-SERVER: Der Supabase-Client zeigt auf seinen Port -
     // der Realtime-Client verbindet sich dann mit
-    // ws://127.0.0.1:<port>/realtime/v1/websocket.
+    // ws://127.0.0.1:PORT/realtime/v1/websocket.
     server = await FakeRealtimeServer.starten();
     await supabase.Supabase.initialize(
       url: server.url,
@@ -129,6 +150,10 @@ void main() {
         detectSessionInUri: false,
       ),
     );
+    // DIE SITZUNG: In der App ist immer ein Konto angemeldet - nur dann
+    // traegt der Join das User-Token (sonst verweigert die RLS-Policy
+    // den Beitritt zum privaten Kanal).
+    await alsNutzerAnmelden(supabase.Supabase.instance.client, 'ich');
   });
 
   tearDownAll(() async {
@@ -174,6 +199,22 @@ void main() {
         reason:
             'Der Kanalname muss sortiert unddeterministisch sein - beide '
             'Seiten muessen denselben Kanal finden.',
+      );
+    });
+
+    test('der Join traegt das Token des Kontos', () async {
+      await dienst.connect(myUserId: 'user-1', peerId: 'partner-1');
+
+      final join = server.empfangeneFrames.firstWhere(
+        (frame) => frame['event'] == 'phx_join',
+      );
+      final nutzlast = join['payload'] as Map<String, dynamic>;
+      expect(
+        nutzlast['access_token'],
+        isNotNull,
+        reason:
+            'Der Join braucht das User-Token - ohne ihn verweigert die '
+            'RLS-Policy den Beitritt zum privaten Kanal.',
       );
     });
 
@@ -283,6 +324,7 @@ void main() {
           'kind': 'offer',
           'from': 'partner-1',
           'sdp': 'v=0\r\no=- 1 1 IN IP4 127.0.0.1',
+          'gen': 7,
         },
       );
 
@@ -299,6 +341,13 @@ void main() {
         reason:
             'Die Antwort muss zurueck - ohne sie bleibt der Partner auf '
             'seinem Angebot sitzen.',
+      );
+      expect(
+        server.broadcastsMitArt('answer').first['gen'],
+        7,
+        reason:
+            'Die Nummer des Angebots muss in der Antwort wiederkehren - '
+            'sonst haelt der Absender die Antwort fuer veraltet.',
       );
     });
 
@@ -358,10 +407,73 @@ void main() {
       },
     );
 
+    test('eine Antwort zu einem alten Angebot wird verworfen', () async {
+      // DER GRUND (06.11.2026): Nach einem Retry gehoert eine noch
+      // fliegende ALTE Antwort zur hinweggelegten PeerConnection - sie
+      // darf die neue nicht setzen, sonst wird die echte Antwort
+      // verworfen und die Verbindung ist unreparierbar.
+      await dienst.connect(myUserId: 'user-1', peerId: 'partner-1');
+      await dienst.createOffer('partner-1');
+      await warteAuf(() => server.broadcastsMitArt('offer').isNotEmpty);
+
+      server.sendeBroadcast(
+        topic: server.beigetreteneTopics.last,
+        event: 'signal',
+        nutzlast: <String, dynamic>{
+          'type': 'broadcast',
+          'event': 'signal',
+          'kind': 'answer',
+          'from': 'partner-1',
+          'sdp': 'v=0\r\no=- 3 3 IN IP4 127.0.0.1',
+          'gen': 99,
+        },
+      );
+
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+
+      expect(
+        peer.remoteBeschreibungen,
+        isEmpty,
+        reason:
+            'Eine Antwort zu einem alten Angebot darf die aktuelle '
+            'Verbindung nicht setzen.',
+      );
+    });
+
+    test('eine kaputte Nachricht bringt den Dienst nicht um', () async {
+      // DER ANGRIFF: 'from' ist keine Text, sondern eine Zahl. Der
+      // Dienst darf daran nicht sterben - er muss weiterlaufen.
+      await dienst.connect(myUserId: 'user-1', peerId: 'partner-1');
+
+      server.sendeBroadcast(
+        topic: server.beigetreteneTopics.last,
+        event: 'signal',
+        nutzlast: <String, dynamic>{
+          'type': 'broadcast',
+          'event': 'signal',
+          'kind': 'offer',
+          'from': 42,
+          'sdp': 'v=0',
+        },
+      );
+
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+
+      expect(
+        verbindungen,
+        0,
+        reason: 'Eine kaputte Nachricht darf keine Verbindung aufbauen.',
+      );
+      expect(dienst.isConnected, isFalse);
+    });
+
     test('eine fremde Nachricht wird verworfen', () async {
       // DER ANGRIFF (Audit H8): Ein Angreifer schickt ein Angebot mit
       // seinem 'from' - er wuerde sonst zum Partner.
       await dienst.connect(myUserId: 'user-1', peerId: 'partner-1');
+      final probleme = <String>[];
+      final abo = dienst.problems.listen(probleme.add);
+      addTearDown(abo.cancel);
 
       server.sendeBroadcast(
         topic: server.beigetreteneTopics.last,
@@ -382,6 +494,70 @@ void main() {
         0,
         reason: 'Ein fremder Absender darf keine Verbindung aufbauen.',
       );
+      expect(
+        probleme.any((text) => text.contains('fremde')),
+        isTrue,
+        reason:
+            'Der Nutzer muss sehen, dass eine fremde Nachricht kam - '
+            'sonst haelt er die Verbindung fuer ruhig.',
+      );
+    });
+  });
+
+  group('Der ICE-Zustand', () {
+    test('ein Kandidat geht ueber den Kanal raus', () async {
+      await dienst.connect(myUserId: 'user-1', peerId: 'partner-1');
+      await dienst.createOffer('partner-1');
+
+      expect(
+        dienst.isDataChannelOpen,
+        isTrue,
+        reason:
+            'Der Datenkanal muss offen sein - der Anruf-Invite wartet '
+            'darauf und scheitert sonst sofort.',
+      );
+
+      peer.meldeKandidat(
+        RTCIceCandidate(
+          'candidate:1 1 udp 2130706431 192.168.1.2 54321 typ host',
+          '0',
+          0,
+        ),
+      );
+
+      expect(
+        await warteAuf(() => server.broadcastsMitArt('ice').isNotEmpty),
+        isTrue,
+        reason:
+            'Der Kandidat muss zum Partner - ohne ihn finden sich die '
+            'Geraete nicht.',
+      );
+      final kandidaten = server.broadcastsMitArt('ice');
+      expect(kandidaten.first['from'], 'user-1');
+      expect(kandidaten.first['sdpMid'], '0');
+    });
+
+    test('ein verlorener Zustand beendet die Verbindung', () async {
+      await dienst.connect(myUserId: 'user-1', peerId: 'partner-1');
+      await dienst.createOffer('partner-1');
+      final zustaende = <RTCIceConnectionState>[];
+      final abo = dienst.iceConnectionState.listen(zustaende.add);
+      addTearDown(abo.cancel);
+
+      peer.verliere();
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      expect(dienst.isConnected, isFalse);
+      expect(dienst.lastIceConnectionState, isNotNull);
+      expect(zustaende, isNotEmpty, reason: 'Die App muss den Zustand sehen.');
+
+      // UND DER GESCHLOSSENE KANAL: Auch der Zustand "geschlossen" muss
+      // die Verbindung beenden - sonst zeigt die App weiterhin
+      // "verbunden", obwohl der Kanal tot ist.
+      peer.schliesse();
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      expect(dienst.isConnected, isFalse);
     });
   });
 
@@ -416,6 +592,21 @@ void main() {
             'Nach dem Fehler darf kein toter Kanal zurueckbleiben - der '
             'naechste Versuch muss wieder sauber aufbauen.',
       );
+    });
+  });
+
+  group('Der Dienst', () {
+    test('er bietet alle Straeme an', () {
+      // DIE API: Die Bildschirme lauschen auf diesen Straemen - fehlt
+      // einer, wartet der Bildschirm vergeblich auf seine Nachricht.
+      expect(dienst.incomingMessages, isNotNull);
+      expect(dienst.incomingBinary, isNotNull);
+      expect(dienst.callControl, isNotNull);
+      expect(dienst.callAudio, isNotNull);
+      expect(dienst.connectionState, isNotNull);
+      expect(dienst.iceConnectionState, isNotNull);
+      expect(dienst.problems, isNotNull);
+      expect(dienst.relayPing, isNotNull);
     });
   });
 }

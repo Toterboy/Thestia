@@ -151,14 +151,14 @@ class FakeRealtimeServer {
     verbindungen++;
     _sockets.add(socket);
     socket.listen(
-      (nachricht) => _handleNachricht(nachricht),
+      (nachricht) => _handleNachricht(socket, nachricht),
       onDone: () => _sockets.remove(socket),
       onError: (Object _) => _sockets.remove(socket),
     );
   }
 
   /// Nimmt einen Frame des Clients entgegen.
-  void _handleNachricht(dynamic roh) {
+  void _handleNachricht(WebSocket socket, dynamic roh) {
     if (roh is! String) return;
     final Object? dekodiert;
     try {
@@ -184,11 +184,11 @@ class FakeRealtimeServer {
     if (event == 'phx_join') {
       if (topic is String) beigetreteneTopics.add(topic);
       if (!joinBeantworten) return;
-      _reply('ok', <String, dynamic>{});
+      _reply(socket, 'ok', <String, dynamic>{});
       return;
     }
     if (event == 'phx_leave' || event == 'phx_heartbeat') {
-      _reply('ok', <String, dynamic>{});
+      _reply(socket, 'ok', <String, dynamic>{});
       return;
     }
     if (event == 'broadcast') {
@@ -199,7 +199,10 @@ class FakeRealtimeServer {
   }
 
   /// Antwortet auf den letzten Frame (Phoenix: "phx_reply").
-  void _reply(String status, Map<String, dynamic> response) {
+  ///
+  /// DER GRUND: Die Antwort geht nur an den Socket, der gefragt hat -
+  /// sonst antwortet der Server allen Clients mit derselben Nummer.
+  void _reply(WebSocket socket, String status, Map<String, dynamic> response) {
     if (empfangeneFrames.isEmpty) return;
     final frame = empfangeneFrames.last;
     final antwort = jsonEncode(<dynamic>[
@@ -209,8 +212,6 @@ class FakeRealtimeServer {
       'phx_reply',
       <String, dynamic>{'status': status, 'response': response},
     ]);
-    for (final socket in List<WebSocket>.from(_sockets)) {
-      socket.add(antwort);
-    }
+    socket.add(antwort);
   }
 }
