@@ -102,6 +102,14 @@ class FakeSupabaseServer extends http.BaseClient {
   /// Wie viele Anfragen sind angekommen?
   int anfragen = 0;
 
+  /// Wie viele der ERSTEN Anfragen fehlschlagen?
+  ///
+  /// DER GRUND: Viele Wege der App fragen den Server mit mehreren
+  /// Spaltenlisten (eine fehlende Spalte kippt die ganze Abfrage). Der
+  /// Test muss diesen Fall stellen koennen: der Server kennt die erste
+  /// Liste nicht, die zweite schon.
+  int fehlerBeiDenErstenN = 0;
+
   /// Die Pfade der angefragten URLs (in der Reihenfolge).
   ///
   /// DAMIT KANN EIN TEST PRUEFEN, WELCHE Funktion aufgerufen wurde -
@@ -120,6 +128,18 @@ class FakeSupabaseServer extends http.BaseClient {
         request,
         500,
         jsonEncode(<String, dynamic>{'message': 'Serverfehler'}),
+      );
+    }
+
+    // DIE ERSTEN ANFRAGEN SCHLAGEN FEHL: Der Test stellt damit einen
+    // Server dar, der eine Spalte (oder eine RPC-Signatur) noch nicht
+    // kennt - die App muss auf eine aeltere Fassung zurueckfallen.
+    if (fehlerBeiDenErstenN > 0) {
+      fehlerBeiDenErstenN--;
+      return _antwort(
+        request,
+        400,
+        jsonEncode(<String, dynamic>{'message': 'Spalte existiert nicht'}),
       );
     }
 
