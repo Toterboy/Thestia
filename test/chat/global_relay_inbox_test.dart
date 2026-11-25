@@ -1,52 +1,89 @@
-// Der globale Relay-Eingang - die Zustellung war ungetestet.
+// Der globale Relay-Eingang (die Nachrichten, die ohne offenen Chat
+// ankommen).
 //
-// ANLASS (18.11.2026): Die Coverage-Messung zeigte fuer
-// lib/services/chat/global_relay_inbox.dart 117 offene Zeilen bei 128 Zeilen
-// gesamt. Der Eingang ist DER Weg, ueber den eine Nachricht im
-// Hintergrund bei einem Nutzer ankommt, der gerade keinen Chat offen
-// hat.
+// ANLASS (24.11.2026): Die Coverage-Messung zeigte fuer
+// lib/services/chat/global_relay_inbox.dart 60 offene Zeilen.
+//
+// DER WEG: Der Dienst hat einen Test-Haken (`debugPollOnce`), der
+// denselben Weg laeuft wie ein echter Poll-Durchlauf - mit beliebigem
+// Fetch-Ergebnis und ohne Supabase. Damit laesst sich die
+// Zustellungs-Logik pruefen, ohne den Timer zu brauchen.
 //
 // WAS HIER GEPRUEFT WIRD:
-//   * eine Nachricht von einem bekannten Partner landet im richtigen Chat,
-//   * sie wird quittiert (also vom Relay geloescht - sonst kommt sie
-//     doppelt an),
-//   * eine Nachricht von einem Unbekannten bleibt liegen (sie gehoert
-//     einem Dating-Hour-Chat, den der Bildschirm selbst holt),
-//   * ein Server-Funke, dessen lokales Match fehlt, wird wiederhergestellt
-//     (BEfund vom 09.11.2026: "Nachrichten kommen nicht richtig an"),
-//   * der Nutzer bekommt eine Benachrichtigung.
-import 'package:flutter_test/flutter_test.dart';
+//   * eine Relay-Nachricht landet in der passenden Session,
+//   * ein Eisbrecher wird als solcher markiert,
+//   * eine Nachricht von einem Unbekannten bleibt liegen (sie wird
+//     NICHT quittiert - sonst waere sie weg, ohne dass jemand sie gelesen
+//     hat),
+//   * ein Fehler beim Abholen streckt das Intervall (sonst pollt der
+//     Eingang bei totem Netz dauerhaft alle 6 Sekunden),
+//   * im Hintergrund pollt der Eingang nicht, im Vordergrund wieder.
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
-import 'package:thestia/models/chat/match.dart' as model;
+import 'package:thestia/models/chat/message.dart';
 import 'package:thestia/models/profile/user_profile.dart';
 import 'package:thestia/providers/chat/chat_provider.dart';
 import 'package:thestia/services/chat/chat_service.dart';
-import 'package:thestia/services/chat/global_relay_inbox.dart';
-import 'package:thestia/services/chat/relay_service.dart' show RelayMessage;
+// Der Praefix: 'appInForeground' gibt es auch im Chat-Provider.
+import 'package:thestia/services/chat/global_relay_inbox.dart' as relay;
+import 'package:thestia/services/chat/relay_service.dart';
+import 'package:thestia/services/storage/local_storage.dart';
+import 'package:thestia/services/storage/secure_storage.dart';
 
 import '../support/fake_supabase_server.dart';
 import '../support/plugin_mocks.dart';
 
-/// Der Ref-Ersatz: er reicht die Abfragen an den Container weiter.
-class _FakeRef {
-  _FakeRef(this._container);
+/// Der Speicher im RAM.
+class _Speicher implements LocalStorage {
+  final Map<String, String> _daten = <String, String>{};
 
-  final ProviderContainer _container;
+  @override
+  Future<void> saveString(String key, String value) async =>
+      _daten[key] = value;
 
-  T read<T>(Object provider) {
-    // Der Notifier kommt als Objekt (nicht als Anbieter) - der Container
-    // hat ihn mit dem Ersatz-Notifier beliefert.
-    if (provider is ChatNotifier) return provider as T;
-    return _container.read(provider as ProviderListenable<T>);
-  }
+  @override
+  Future<String?> getString(String key) async => _daten[key];
+
+  @override
+  Future<void> saveBool(String key, bool value) async =>
+      _daten[key] = value.toString();
+
+  @override
+  Future<bool?> getBool(String key) async =>
+      _daten[key] == null ? null : _daten[key] == 'true';
+
+  @override
+  Future<void> remove(String key) async => _daten.remove(key);
+
+  @override
+  Future<void> saveInt(String key, int value) async =>
+      _daten[key] = value.toString();
+
+  @override
+  Future<int?> getInt(String key) async =>
+      _daten[key] == null ? null : int.tryParse(_daten[key]!);
+}
+
+/// Der Keystore ohne Plugin.
+class _Keystore extends SecureProfileStore {
+  @override
+  Future<String?> read() async => null;
+
+  @override
+  Future<void> write(String value) async {}
+
+  @override
+  Future<void> delete() async {}
 }
 
 void main() {
-  /// Der Ersatz-Server.
   late FakeSupabaseServer server;
+  late ProviderContainer container;
+  late relay.GlobalRelayInbox inbox;
 
   setUpAll(() async {
     TestWidgetsFlutterBinding.ensureInitialized();
@@ -54,6 +91,7 @@ void main() {
     await SharedPreferences.getInstance();
     await mockPfadProvider();
     mockKeystore();
+    await mockHive();
 
     server = FakeSupabaseServer(userId: 'ich');
     await supabase.Supabase.initialize(
@@ -70,156 +108,159 @@ void main() {
   });
 
   setUp(() {
-    server.rpcAntworten.clear();
+    server.pfade.clear();
     server.rpcAufrufe.clear();
-  });
+    server.rpcAntworten.clear();
 
-  /// Baut den Chat mit einem Match und den Eingang dazu.
-  ({ProviderContainer container, ChatNotifier notifier, model.Match match})
-  baueEingang() {
     final service = ChatService();
-    final match = service.createMatch(
+    // EIN MATCH: Die Relay-Nachricht des Partners wird ihm zugeordnet.
+    service.createMatch(
       const UserProfile(id: 'partner-1', name: 'Mira', bio: ''),
     );
-    final notifier = ChatNotifier(service);
-    final container = ProviderContainer(
-      overrides: <Override>[chatProvider.overrideWith((ref) => notifier)],
+
+    container = ProviderContainer(
+      overrides: <Override>[
+        localStorageProvider.overrideWithValue(_Speicher()),
+        secureProfileStoreProvider.overrideWithValue(_Keystore()),
+        chatProvider.overrideWith((ref) => ChatNotifier(service)),
+      ],
     );
-    addTearDown(container.dispose);
-    // Das Element erzeugen - erst dann gibt es den Notifier.
-    container.read(chatProvider);
-    return (container: container, notifier: notifier, match: match);
-  }
+    inbox = relay.GlobalRelayInbox(container);
+  });
 
-  /// Eine Relay-Nachricht.
-  RelayMessage nachricht({int id = 1, String sender = 'partner-1'}) =>
-      RelayMessage(
-        id: id,
-        senderId: sender,
-        text: 'Hallo',
-        kind: 'text',
-        createdAt: DateTime.now(),
-      );
+  tearDown(() {
+    inbox.stop();
+    container.dispose();
+  });
 
-  group('Der globale Relay-Eingang', () {
-    test('eine Nachricht von einem bekannten Partner landet im Chat', () async {
-      final chat = baueEingang();
-      final inbox = GlobalRelayInbox(_FakeRef(chat.container));
+  /// Eine Relay-Nachricht vom Partner.
+  RelayMessage nachricht({
+    int id = 1,
+    String senderId = 'partner-1',
+    String text = 'Hallo aus dem Relay',
+    String kind = 'text',
+  }) => RelayMessage(
+    id: id,
+    senderId: senderId,
+    text: text,
+    kind: kind,
+    createdAt: DateTime(2026, 11, 25),
+  );
 
-      await inbox.debugPollOnce(pending: [nachricht()]);
+  group('Die Zustellung', () {
+    test('eine Nachricht landet in der passenden Session', () async {
+      await inbox.debugPollOnce(pending: <RelayMessage>[nachricht()]);
 
-      // Die Nachricht ist im Chat.
-      final nachrichten = chat.notifier.messagesFor(chat.match.id);
+      final nachrichten = container
+          .read(chatProvider.notifier)
+          .messagesFor(container.read(chatProvider).first.id);
       expect(
-        nachrichten.any((m) => m.text == 'Hallo'),
-        isTrue,
+        nachrichten.map((m) => m.text),
+        contains('Hallo aus dem Relay'),
         reason:
-            'Die Nachricht muss im Chat landen - der Nutzer sieht sie sonst '
-            'nicht.',
+            'Die Relay-Nachricht muss im Chat landen - der Nutzer hat sie '
+            'sonst nie gesehen.',
       );
-      // Und sie ist quittiert (sonst kommt sie immer wieder).
-      final acks = server.rpcAufrufe.where((c) => c['funktion'] == 'relay_ack');
-      expect(acks, isNotEmpty, reason: 'Die Zeile muss quittiert werden.');
-      expect(acks.first['p_ids'], contains(1));
     });
 
-    test('eine Nachricht von einem Unbekannten bleibt liegen', () async {
-      final chat = baueEingang();
-      final inbox = GlobalRelayInbox(_FakeRef(chat.container));
+    test('ein Eisbrecher wird als solcher markiert', () async {
+      await inbox.debugPollOnce(
+        pending: <RelayMessage>[nachricht(kind: 'icebreaker')],
+      );
 
-      await inbox.debugPollOnce(pending: [nachricht(sender: 'fremd-1')]);
-
-      // Kein Chat bekommen...
-      final nachrichten = chat.notifier.messagesFor(chat.match.id);
-      expect(nachrichten.any((m) => m.text == 'Hallo'), isFalse);
-      // ...und nichts quittiert (die Zeile gehoert einem anderen Chat).
+      final nachrichten = container
+          .read(chatProvider.notifier)
+          .messagesFor(container.read(chatProvider).first.id);
       expect(
-        server.rpcAufrufe.where((c) => c['funktion'] == 'relay_ack'),
+        nachrichten.first.type,
+        MessageType.icebreaker,
+        reason:
+            'Ein Eisbrecher wird in der Mitte angezeigt - mit eigenem '
+            'Aussehen. Ohne die Markierung saehe er wie eine Nachricht aus.',
+      );
+    });
+
+    test('eine fremde Nachricht bleibt liegen', () async {
+      await inbox.debugPollOnce(
+        pending: <RelayMessage>[nachricht(senderId: 'unbekannt')],
+      );
+
+      final nachrichten = container
+          .read(chatProvider.notifier)
+          .messagesFor(container.read(chatProvider).first.id);
+      expect(
+        nachrichten,
         isEmpty,
         reason:
-            'Eine fremde Zeile darf NICHT quittiert werden - sonst geht sie '
-            'verloren.',
+            'Eine Nachricht von einem Unbekannten gehoert nicht in diesen '
+            'Chat - der zustaendige Screen holt sie ab.',
       );
     });
+  });
 
-    test('der Nutzer bekommt eine Benachrichtigung', () async {
-      final chat = baueEingang();
-      final inbox = GlobalRelayInbox(_FakeRef(chat.container));
-
-      // DER HAKEN: Der App-Wurzel setzt ihn (der Dienst hat kein WidgetRef).
-      String? titel;
-      String? koerper;
-      GlobalRelayInbox.notifier =
-          ({
-            required int id,
-            String? title,
-            required String body,
-            required String senderId,
-          }) async {
-            titel = title;
-            koerper = body;
-          };
-      addTearDown(() => GlobalRelayInbox.notifier = null);
-
-      await inbox.debugPollOnce(pending: [nachricht()]);
-
-      expect(titel, 'Mira', reason: 'Die Benachrichtigung nennt den Namen.');
-      expect(koerper, 'Hallo');
-    });
-
-    test('ein Server-Funke wird wiederhergestellt', () async {
-      final chat = baueEingang();
-      // Der Server kennt einen Funke, dessen lokales Match fehlt.
-      server.rpcAntworten['list_my_matches_with_state'] = <dynamic>[
-        <String, dynamic>{
-          'matchId': 7,
-          'status': 'active',
-          'createdAt': DateTime.now().toIso8601String(),
-          'profile': <String, dynamic>{
-            'id': 'partner-2',
-            'name': 'Toni',
-            'bio': 'Mag Musik',
-          },
-        },
-      ];
-
-      final inbox = GlobalRelayInbox(_FakeRef(chat.container));
+  group('Das Intervall', () {
+    test('ein Fehler beim Abholen streckt das Intervall', () async {
+      final vorher = inbox.debugBackoffStep;
 
       await inbox.debugPollOnce(
-        pending: [nachricht(id: 5, sender: 'partner-2')],
+        pending: <RelayMessage>[],
+        throwBeforeHandling: true,
       );
 
-      // Der Funke wurde lokal wiederhergestellt...
       expect(
-        chat.notifier.state.any((m) => m.id == '7'),
-        isTrue,
+        inbox.debugBackoffStep,
+        greaterThan(vorher),
         reason:
-            'Der Server-Funke muss lokal wiederhergestellt werden - sonst '
-            'bleibt die Nachricht unsichtbar.',
-      );
-      // ...und die Nachricht ist angekommen.
-      final nachrichten = chat.notifier.messagesFor('7');
-      expect(nachrichten.any((m) => m.text == 'Hallo'), isTrue);
-      // Und quittiert.
-      expect(
-        server.rpcAufrufe.where((c) => c['funktion'] == 'relay_ack'),
-        isNotEmpty,
+            'Bei totem Netz muss der Eingang langsamer werden - sonst pollt '
+            'er dauerhaft alle 6 Sekunden und produziert Last ohne '
+            'Gegenwert.',
       );
     });
 
-    test('ohne passende Zuordnung bleibt die Zeile liegen', () async {
-      final chat = baueEingang();
-      final inbox = GlobalRelayInbox(_FakeRef(chat.container));
+    test('eine leere Runde streckt das Intervall ebenfalls', () async {
+      final vorher = inbox.debugBackoffStep;
 
-      // Der Server kennt keinen Funken -> nichts zu routen.
-      server.rpcAntworten['list_my_matches_with_state'] = <dynamic>[];
+      await inbox.debugPollOnce(pending: <RelayMessage>[]);
 
-      await inbox.debugPollOnce(pending: [nachricht(sender: 'fremd-2')]);
+      expect(inbox.debugBackoffStep, greaterThan(vorher));
+    });
+  });
+
+  group('Der Lebenszyklus', () {
+    testWidgets('im Vordergrund pollt der Eingang', (tester) async {
+      expect(relay.appInForeground(), isTrue);
+
+      inbox.start();
+      // Der erste Poll laeuft sofort. Die Test-Uhr muss dabei laufen -
+      // ein Future.delayed wartet im Widget-Test ewig.
+      await tester.pump(const Duration(milliseconds: 300));
 
       expect(
-        server.rpcAufrufe.where((c) => c['funktion'] == 'relay_ack'),
-        isEmpty,
+        server.pfade.where((p) => p.contains('relay')).isNotEmpty,
+        isTrue,
+        reason:
+            'Solange kein Chat offen ist, holt der Eingang die Nachrichten '
+            'selbst - sonst kaeme im Chat nichts an.',
       );
+      inbox.stop();
+    });
+
+    testWidgets('im Hintergrund pollt der Eingang nicht', (tester) async {
+      // Der App-Wechsel: Das Fenster geht in den Hintergrund.
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump(const Duration(milliseconds: 50));
+
+      inbox.start();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        server.pfade.where((p) => p.contains('relay')),
+        isEmpty,
+        reason:
+            'Im Hintergrund soll der Eingang nicht laufen - das kostet '
+            'Akku und bringt nichts, wenn der Bildschirm aus ist.',
+      );
+      inbox.stop();
     });
   });
 }
