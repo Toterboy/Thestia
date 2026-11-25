@@ -10,7 +10,6 @@
 //
 // DER WEG: Die Kanaele werden hier beantwortet. Der Test ruft nie das
 // Plugin - damit ist er auf jeder Plattform gleich.
-import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/services.dart';
@@ -198,41 +197,13 @@ class _FakeAudioPlattform extends JustAudioPlatform {
 class _FakeAudioPlayerPlatform extends AudioPlayerPlatform {
   _FakeAudioPlayerPlatform() : super('fake-player');
 
-  /// Die Ereignisse des Players (Ladezustand, Position).
-  ///
-  /// DER GRUND (25.11.2026): just_audio wartet NACH dem Laden auf einen
-  /// Zustand ungleich "loading". Ohne diese Ereignisse kommt der Spieler
-  /// nie aus dem Laden heraus - der Aufrufer wartet dann ewig (der
-  /// Aufnahme-Knopf in der Vorstellung blieb ewig im Lade-Spinner).
-  final StreamController<PlaybackEventMessage> _ereignisse =
-      StreamController<PlaybackEventMessage>.broadcast();
-
   @override
   Stream<PlaybackEventMessage> get playbackEventMessageStream =>
-      _ereignisse.stream;
+      const Stream<PlaybackEventMessage>.empty();
 
   @override
-  Future<LoadResponse> load(LoadRequest request) async {
-    // Das Laden meldet "fertig" - mit der Dauer der Aufnahme.
-    //
-    // DER HINWEIS: Der Zustand muss "ready" sein, nicht "idle": just_audio
-    // haelt den Spieler im Ladezustand, solange die Meldung "idle" sagt
-    // (und wartet dann auf einen Zustand ungleich "loading" - der
-    // Aufrufer wartet ewig).
-    _ereignisse.add(
-      PlaybackEventMessage(
-        processingState: ProcessingStateMessage.ready,
-        updateTime: DateTime.now(),
-        updatePosition: Duration.zero,
-        bufferedPosition: Duration.zero,
-        duration: const Duration(seconds: 1),
-        icyMetadata: null,
-        currentIndex: null,
-        androidAudioSessionId: null,
-      ),
-    );
-    return LoadResponse(duration: const Duration(seconds: 1));
-  }
+  Future<LoadResponse> load(LoadRequest request) async =>
+      LoadResponse(duration: const Duration(seconds: 1));
 
   @override
   Future<SetVolumeResponse> setVolume(SetVolumeRequest request) async =>
