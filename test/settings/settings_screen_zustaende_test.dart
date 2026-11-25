@@ -6,7 +6,7 @@
 //
 // DER WEG: Der Bildschirm ist eine lange Liste - der Test benutzt einen
 // hohen Bildschirm (3000 px), damit alle Eintraege auf einmal gebaut
-// werden. Das VerschlÃƒÂ¼sselungs-Dienst und die Versionsangaben bekommen
+// werden. Der Verschluesselungs-Dienst und die Versionsangaben bekommen
 // ihre Ersatzteile.
 //
 // WAS HIER GEPRUEFT WIRD:
@@ -16,7 +16,7 @@
 //   * die Versionsangabe steht da (der Support braucht sie),
 //   * die Dialoge lassen sich abbrechen - und ein Scheitern wird
 //     gemeldet, nicht verschwiegen,
-//   * das LÃƒÂ¶schen des Kontos fragt erst nach,
+//   * das Loeschen des Kontos fragt erst nach,
 //   * der Zwei-Faktor-Stand steht an der Kachel.
 import 'dart:io';
 
