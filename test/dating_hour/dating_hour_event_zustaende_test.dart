@@ -22,6 +22,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/dating_hour/dating_hour_models.dart';
 import 'package:thestia/models/settings/app_settings.dart';
 import 'package:thestia/providers/settings/settings_provider.dart';
@@ -123,8 +124,12 @@ class _FakeDatingHourService extends DatingHourService {
   @override
   Future<int> getParticipantCount(String eventId) async => 7;
 
+  /// Die aktive Session (null = der Nutzer ist noch nicht gepaart).
+  DatingHourSession? session;
+
   @override
-  Future<DatingHourSession?> getMyActiveSession(String eventId) async => null;
+  Future<DatingHourSession?> getMyActiveSession(String eventId) async =>
+      session;
 }
 
 void main() {
@@ -550,6 +555,97 @@ void main() {
         reason:
             'Der Zurueck-Knopf muss zurueckbringen - sonst ist der Nutzer im '
             'Dating-Hour-Bildschirm gefangen.',
+      );
+    });
+  });
+
+  group('Die aktive Sitzung', () {
+    testWidgets('ohne Session sucht der Bildschirm einen Partner', (
+      tester,
+    ) async {
+      await zeigeScreen(
+        tester,
+        service: _FakeDatingHourService(
+          event: laufendesEvent(),
+          teilnahme: true,
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text(L10n.tWithoutContext('dh.event.searchingPartner')),
+        findsOneWidget,
+        reason:
+            'Der Nutzer muss sehen, dass auf einen Partner gewartet wird - '
+            'sonst denkt er, die App haette ihn vergessen.',
+      );
+      expect(
+        find.text(L10n.tWithoutContext('dh.event.genderMixHint')),
+        findsOneWidget,
+        reason:
+            'Der Hinweis erklaert das Warten - ohne ihn sieht es wie ein '
+            'Fehler aus.',
+      );
+    });
+
+    testWidgets('mit Session gibt es den Chat-Knopf', (tester) async {
+      final jetzt = DateTime.now();
+      await zeigeScreen(
+        tester,
+        service:
+            _FakeDatingHourService(event: laufendesEvent(), teilnahme: true)
+              ..session = DatingHourSession(
+                id: 'session-1',
+                eventId: 'event-1',
+                userA: 'ich',
+                userB: 'partner-1',
+                startedAt: jetzt,
+                expiresAt: jetzt.add(const Duration(minutes: 5)),
+              ),
+      );
+      await pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.text(L10n.tWithoutContext('dh.event.toChat')),
+        findsOneWidget,
+        reason:
+            'Mit einer Session muss der Nutzer in den Chat kommen - '
+            'sonst sitzt er auf dem Bildschirm fest.',
+      );
+    });
+
+    testWidgets('bei einer neuen Session fragt der Bildschirm nach', (
+      tester,
+    ) async {
+      final jetzt = DateTime.now();
+      await zeigeScreen(
+        tester,
+        service:
+            _FakeDatingHourService(event: laufendesEvent(), teilnahme: true)
+              ..session = DatingHourSession(
+                id: 'session-1',
+                eventId: 'event-1',
+                userA: 'ich',
+                userB: 'partner-1',
+                startedAt: jetzt,
+                expiresAt: jetzt.add(const Duration(minutes: 5)),
+              ),
+      );
+      await pumpFrames(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.byType(AlertDialog),
+        findsOneWidget,
+        reason:
+            'BEFUND (07.11.2026, Betreiber): "kein Chat-Erzwang (mit Abfrage)" '
+            '- nach der Paarung fragt der Bildschirm, statt den Nutzer '
+            'unbemerkt in den Chat zu druecken.',
+      );
+      expect(
+        find.text(L10n.tWithoutContext('dh.event.pairedTitle')),
+        findsOneWidget,
       );
     });
   });
