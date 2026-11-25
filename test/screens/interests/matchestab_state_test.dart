@@ -28,9 +28,11 @@
 //     Abschnitt "_MatchesTab" ist privat, und die App benutzt ihn immer
 //     eingebettet ("embedded: true"). Ein Test kann die private Klasse
 //     nicht erzeugen.
-//   * "Ein bereits gekuehlter Funke wird nochmal gekuehlt" - gekuehlte
-//     Funken bekommen eine eigene Kachel ohne "Archivieren"-Knopf. Der
-//     Weg ist im Bildschirm nicht erreichbar.
+//   * "Ein bereits gekuehlter Funke wird nochmal gekuehlt" - der Knopf
+//     "Archivieren" steht nur an den Kacheln der AKTIVEN Funken (und an
+//     den fixierten, die auch aktiv sind). Ein gekuehlter Funke hat seine
+//     eigene Kachel ohne diesen Knopf - der Weg ist im Bildschirm nicht
+//     erreichbar.
 //
 // OHNE SERVER: Der Find-your-Match-Service wird durch einen Hand-Fake
 // ersetzt (test/interests_screen/hilfen.dart). Der Supabase-Client zeigt
@@ -166,12 +168,16 @@ GoRouter _router() {
 }
 
 /// Baut den Screen auf (wie die anderen Tests des Bildschirms).
+///
+/// [groesse] ist die Bildschirmgroesse. Manche Tests brauchen einen
+/// breiteren Bildschirm - das wird dort begruendet.
 Future<void> _pump(
   WidgetTester tester, {
   required FindYourMatchService service,
   List<Override> overrides = const <Override>[],
+  Size groesse = const Size(390, 844),
 }) async {
-  await tester.binding.setSurfaceSize(const Size(390, 844));
+  await tester.binding.setSurfaceSize(groesse);
   addTearDown(() => tester.binding.setSurfaceSize(null));
 
   final router = _router();
@@ -612,7 +618,7 @@ void main() {
             'die Fixierung ist eine Anordnung, kein Vertrag.',
       );
 
-      // "Funke löschen" - endgueltig.
+      // Das endgueltige Loeschen.
       await tester.tap(_menueVon('Mira, 30'));
       await pumpFrames(tester);
       await tester.tap(
@@ -912,14 +918,15 @@ void main() {
         ..funken = [
           funkeVon(id: 7, personId: 'p1', name: 'Mira', status: 'cooled'),
         ];
-      await _pump(tester, service: dienst);
+      // DER BREITERE BILDSCHIRM: Die Kachel der archivierten Funken hat
+      // drei Knoepfe rechts (Profil, Re-Funke, Loeschen). Auf einem schmalen
+      // Bildschirm bleibt fuer den Namen kein Platz mehr - der Name hat
+      // dann keine Breite und kann nicht getippt werden. Auf dem breiten
+      // Bildschirm steht der Name da, und der Nutzer tippt ihn an.
+      await _pump(tester, service: dienst, groesse: const Size(600, 900));
 
-      // Der Abschnitt steht weit unten - erst dorthin scrollen, sonst
-      // trifft der Tap ins Leere.
-      await tester.drag(find.byType(ListView).first, const Offset(0, -500));
-      await pumpFrames(tester);
       await tester.tap(find.text('Mira'));
-      await pumpFrames(tester);
+      await tester.pumpAndSettle();
 
       expect(
         find.text('Chat'),
