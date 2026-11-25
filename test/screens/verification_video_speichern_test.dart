@@ -138,6 +138,17 @@ class _KameraMitFehler extends FakeCameraPlatform {
   }
 }
 
+/// Die Kamera, deren Aufnahme nicht startet.
+class _KameraMitStartFehler extends FakeCameraPlatform {
+  @override
+  Future<void> startVideoRecording(
+    int cameraId, {
+    Duration? maxVideoDuration,
+  }) async {
+    throw CameraException('Kamera', 'Die Aufnahme startet nicht');
+  }
+}
+
 void main() {
   late CameraPlatform original;
   late FakeCameraPlatform kamera;
@@ -346,6 +357,72 @@ void main() {
         reason:
             'Nach dem Fehler beim Stoppen wird kein Video geoeffnet - die '
             'Frames werden erst danach entnommen.',
+      );
+    });
+
+    testWidgets('der Start der Aufnahme scheitert, wird der Grund gesagt', (
+      tester,
+    ) async {
+      // DIE KAMERA: Die Aufnahme startet nicht (das kam auf echten
+      // Geraeten vor - dann steht der Screen ohne Rueckmeldung).
+      CameraPlatform.instance = _KameraMitStartFehler();
+      await zeige(tester);
+      await kameraFreigeben(tester);
+
+      await tippeAufnahme(tester);
+      await tester.pump();
+      for (var i = 0; i < 4; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      expect(tester.takeException(), isNull);
+      expect(
+        find.textContaining('Die Aufnahme startet nicht'),
+        findsOneWidget,
+        reason:
+            'Der Nutzer muss erfahren, dass die Aufnahme nicht startet - '
+            'sonst tippt er vergeblich auf den Knopf.',
+      );
+    });
+  });
+
+  group('Der App-Wechsel', () {
+    testWidgets('nach dem Zurueck aus dem Hintergrund kommt die Kamera', (
+      tester,
+    ) async {
+      await zeige(tester);
+      await kameraFreigeben(tester);
+      final nachDemOeffnen = kamera.anfragen;
+
+      // DER APP-WECHSEL: Das Geraet geht in den Hintergrund - die Kamera
+      // muss frei werden (der Sensor darf nicht belegt bleiben).
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      await tester.pump();
+      for (var i = 0; i < 4; i++) {
+        await tester.runAsync(() async {
+          await Future<void>.delayed(const Duration(milliseconds: 30));
+        });
+        await tester.pump(const Duration(milliseconds: 150));
+      }
+
+      // UND ZURUECK: Die Kamera kommt wieder - ohne sie bleibt der
+      // Screen fuer den Nutzer leer.
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      for (var i = 0; i < 8; i++) {
+        await tester.runAsync(() async {
+          await Future<void>.delayed(const Duration(milliseconds: 30));
+        });
+        await tester.pump(const Duration(milliseconds: 150));
+      }
+
+      expect(tester.takeException(), isNull);
+      expect(
+        kamera.anfragen,
+        greaterThan(nachDemOeffnen),
+        reason:
+            'Nach der Rueckkehr muss die Kamera wieder offen sein - sonst '
+            'steht der Nutzer vor einem leeren Bildschirm.',
       );
     });
   });
