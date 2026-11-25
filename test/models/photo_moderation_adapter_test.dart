@@ -64,7 +64,12 @@ void main() {
       );
 
       await box.put('flag-1', gemeldet);
-      final gelesen = box.get('flag-1');
+      // DIE BOX NEU OEFFNEN: Hive liefert den gespeicherten Wert aus dem
+      // Speicher - erst beim Wiederoeffnen wird er gelesen (und der
+      // Leseweg des Adapters benutzt).
+      await box.close();
+      final neu = await Hive.openBox<PhotoModerationFlag>('flags');
+      final gelesen = neu.get('flag-1');
 
       expect(gelesen, isNotNull);
       expect(gelesen!.id, 'flag-1');
@@ -91,8 +96,10 @@ void main() {
           resolvedBy: 'admin',
         ),
       );
+      await box.close();
+      final neu = await Hive.openBox<PhotoModerationFlag>('flags');
 
-      final gelesen = box.get('flag-2');
+      final gelesen = neu.get('flag-2');
 
       expect(gelesen!.status, PhotoModerationStatus.flagged);
       expect(gelesen.resolvedBy, 'admin');
@@ -113,8 +120,10 @@ void main() {
           banReason: 'Wiederholte Verstoesse',
         ),
       );
+      await box.close();
+      final neu = await Hive.openBox<UserModerationRecord>('vermerke');
 
-      final gelesen = box.get('nutzer-1');
+      final gelesen = neu.get('nutzer-1');
 
       expect(gelesen, isNotNull);
       expect(gelesen!.userId, 'nutzer-1');
@@ -133,8 +142,10 @@ void main() {
           isBanned: false,
         ),
       );
+      await box.close();
+      final neu = await Hive.openBox<UserModerationRecord>('vermerke');
 
-      final gelesen = box.get('nutzer-2');
+      final gelesen = neu.get('nutzer-2');
 
       expect(gelesen!.isBanned, isFalse);
       expect(gelesen.bannedAt, isNull);
