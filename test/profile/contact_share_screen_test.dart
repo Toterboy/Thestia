@@ -30,10 +30,10 @@ import '../support/plugin_mocks.dart';
 
 /// Der Speicher als Attrappe (kann scheitern).
 class _Speicher extends SecureContactShareStore {
-  _Speicher({this.scheitert = false});
+  _Speicher();
 
   /// Scheitert das Laden (und das Speichern)?
-  bool scheitert;
+  bool scheitert = false;
 
   /// Wie oft wurde geladen?
   int ladeAufrufe = 0;
