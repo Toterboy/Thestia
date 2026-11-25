@@ -89,6 +89,37 @@ void main() {
       );
     });
 
+    test(
+      'eine zweite Instanz ohne Wartende laesst keinen Fehler laufen',
+      () async {
+        // DER FALL (BEFUND 24.11.2026): Ein Provider baut eine EIGENE
+        // Instanz, waehrend die Boxen schon offen sind. Das Oeffnen
+        // schlaegt dann fehl (die Box hat einen anderen Typ) - und der
+        // Fehler hatte niemanden, der ihn abwartete. Dart meldet so einen
+        // Fehler als "unhandled error" - der Test waere rot, obwohl die
+        // App richtig arbeitet.
+        // DIE BOXEN ZU: Sie werden mit einem ANDEREN Typ geoeffnet - das
+        // Oeffnen der Instanz schlaegt dann fehl.
+        await Hive.close();
+        await Hive.openBox<String>('signal_identity');
+
+        final zweiter = EncryptionService();
+
+        // DER FEHLER: Er kommt an - der Aufrufer sieht ihn.
+        await expectLater(
+          zweiter.initialize(),
+          throwsA(anything),
+          reason: 'Der Aufrufer muss den Fehler sehen.',
+        );
+
+        // UND: Er laeuft nicht ungehandelt weiter (der Test wuerde sonst
+        // mit einem "unhandled error" abbrechen).
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        await Hive.close();
+      },
+    );
+
     test('die Safety-Nummer ist auf beiden Seiten gleich', () async {
       // Zwei oeffentliche Keys (syntetisch - echte Schluessel braucht der
       // Test nicht).

@@ -210,6 +210,31 @@ void main() {
       );
     });
 
+    test('resume mit einem neuen Token nimmt auch das neue Token', () async {
+      await dienst.stop();
+      await dienst.start(token: token, onEncounter: (_, _) {});
+      await dienst.suspend();
+
+      // DER NEUE TOKEN: Nach dem Hintergrund muss ein FRISCHES Token
+      // gesendet werden (Wer das Geraet eine Stunde aus hatte, sendet
+      // sonst wieder dasselbe - genau die Kontinuitaet, die ein
+      // Beobachter sucht).
+      final neuesToken = 'x' * TransitEncounterService.tokenLaenge;
+      final ok = await dienst.resume(token: neuesToken);
+
+      expect(ok, isTrue);
+      expect(
+        dienst.currentToken,
+        neuesToken,
+        reason:
+            'Das gesendete Token muss auch das aktuelle sein - der Server '
+            'bekommt ueber den Heartbeat sonst ein anderes Token als die '
+            'App ueber Funk sendet (BEFUND 24.11.2026).',
+      );
+
+      await dienst.stop();
+    });
+
     test('stoppen vergisst das Token', () async {
       await dienst.stop();
       await dienst.start(token: token, onEncounter: (_, _) {});

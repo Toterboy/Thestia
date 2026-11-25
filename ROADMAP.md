@@ -86,7 +86,7 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
   keinen Inhalt), Transit Spark: mehrere mit derselben Beschreibung
   anschreiben, ungefährer Ort als Selbstauskunft statt als Standort,
   serverseitiger Nachrichtenzähler, Kategorie-Sicht ohne Sackgasse
-- **0.10.2** (Build 56/57/58) – **Das Impressum steht als Text in der App**
+- **0.10.2** (Build 56/57/58/59) – **Das Impressum steht als Text in der App**
   (der verifizierte App-Link öffnete die App selbst statt des Browsers),
   **die Funkenliste lädt wieder** (drei `STABLE`-Funktionen schrieben in
   die Datenbank → HTTP 405), Schalter je Punkt für das öffentliche Profil
@@ -97,7 +97,11 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
   Funken-Liste schneidet den Knopf nicht mehr ab, deutlicher Testausbau
   (Build 58: der Sicherheitscheck bleibt bei großer Schrift bedienbar,
   die Bildauswertung der Altersprüfung ist getestet, gemeldete Bilder
-  lassen sich speichern)
+  lassen sich speichern; Build 59: das Funk-Radio meldet nach dem
+  Pausieren das richtige Token, das Bundesland-Feld der Ersteinrichtung
+  läuft nicht mehr aus dem Rahmen, eine zweite Instanz des
+  Verschlüsselungs-Dienstes lässt keinen Fehler ungehandelt laufen, die
+  Restzeit der Dating Hour passt bei großer Schrift)
 
 ## In Arbeit
 

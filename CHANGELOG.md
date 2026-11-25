@@ -8,7 +8,7 @@ Solange die Versionsnummer mit `0.` beginnt (Initial Development Phase nach SemV
 können sich Schnittstellen und Verhalten jederzeit ändern.
 
 ## [0.10.2] – Fehlerbehebungen aus dem Alltag und mehr Tests
-(Build 56, 57 und 58, 2026-11-14, 2026-11-22 und 2026-11-24)
+(Build 56, 57, 58 und 59, 2026-11-14, 2026-11-22, 2026-11-24 und 2026-11-25)
 
 > **Warum Build 58?** v0.10.2 ist **noch nie veröffentlicht** worden –
 > die letzte öffentliche Fassung ist v0.10.1 (GitHub) bzw. der Play-Store.
@@ -77,6 +77,47 @@ unter anderem die Tests für den Sicherheitscheck (mit einem
 WebView-Ersatz), die Passkey-Fehlerübersetzung, die Bild-Meldung, die
 Sicherheits-Aufklärung vor dem Setup, das Wischen zwischen den Reitern,
 der Musik-Geschmack, der Elternbereich und der Verifizierungs-Dienst.
+
+### Behoben (25.11.2026, Build 59) – Vier Befunde aus der Testarbeit
+
+Alle vier Befunde sind im Werkzeug gefunden, keiner auf dem Gerät. Jeder
+ist mit einem Test abgesichert, der **ohne** den Fix rot wird.
+
+- **Das Funk-Radio im Transit-Spot meldete nach dem Pausieren das
+  falsche Token.** `TransitBleService.resume()` startet das Advertising
+  mit einem neuen Token, übernimmt es aber nicht in den eigenen Zustand:
+  Der Server bekam über den Heartbeat das richtige Token, die App aber
+  lieferte weiter das alte. Nach dem Wechsel in den Hintergrund sendete
+  die App also ein frisches Token über Funk, während der Weg, den der
+  Server für „hat der andere mich gesehen?" nutzt, noch den alten
+  lieferte. Das gesendete Token ist jetzt auch das aktuelle.
+- **Das Bundesland-Feld der Ersteinrichtung lief aus dem Rahmen.** Das
+  Feld hatte – anders als die beiden anderen Dropdowns derselben Seite –
+  kein `isExpanded`. Auf einem 390-Pixel-Bildschirm lief der Text des
+  längsten Bundeslands („Nordrhein-Westfalen") um 41 Pixel aus dem
+  Feld.
+- **Eine zweite Instanz des Verschlüsselungs-Dienstes ließ einen Fehler
+  ungehandelt laufen.** Schlägt das Öffnen der Boxen fehl, wurde der
+  Fehler an einen Completer gegeben, auf den niemand wartete – Dart
+  meldet das als „unhandled error". Betroffen war jeder Provider, der
+  eine eigene Instanz baut, während die Boxen schon offen sind (das
+  ist der Fall, wenn die WebRTC-Einrichtung eine eigene Instanz
+  braucht). Der Fehler kommt jetzt an die Wartenden – und läuft nicht
+  ungehandelt weiter.
+- **Die Restzeit der Dating Hour lief bei großer Schrift aus dem
+  Rahmen.** Der Info-Chip („Startet in 1 Stunde 30 Minuten") hatte keine
+  Breitenbegrenzung; bei großer Systemschrift lief er aus dem Bildschirm.
+  Der Text bricht jetzt um.
+
+**Die Tests:** Die Abdeckung steigt von 82,9 % auf 83,9 %. Neu sind
+unter anderem die Tests für die Wege auf dem Startbildschirm (QR,
+Einstellungen, Verifikation, die Zähler und das Nachladen), die
+Einstellungen (die einzelnen Schalter, die Dialoge, die Versionsangabe
+und der Zwei-Faktor), der Event-Bildschirm der Dating Hour (die
+Fehlerfälle, der App-Wechsel und die Nebenwege), der Bildversand im
+Chat (Kamera, Galerie, ein kaputtes Bild), der Teilen-Screen
+(Speichern, Kopieren, Teilen), der Profil-Editor (das Zurück mit
+Änderungen) und der Weg der Video-Verifizierung vom Video zum Speicher.
 
 ### Behoben (20.11.2026) – Die Funken ließen sich nicht laden
 

@@ -1,0 +1,15 @@
+Das Funk-Radio meldet nach dem Pausieren das richtige Token
+
+Wenn das Gerät eine Weile im Hintergrund war, hat das Funk-Radio (Transit Spot) ein neues Token gesendet, aber weiter das alte gemeldet. Der Server wusste damit an einer Stelle vom neuen und an einer anderen vom alten Token. Jetzt ist das gesendete Token auch das gemeldete.
+
+Das Bundesland-Feld passt auf den Bildschirm
+
+In der Ersteinrichtung lief das Bundesland-Feld auf einem schmalen Bildschirm aus dem Rahmen: der Text war abgeschnitten. Das ist behoben.
+
+Eine zweite Instanz des Verschlüsselungs-Dienstes lässt keinen Fehler mehr laufen
+
+In bestimmten Fällen (wenn die verschlüsselten Ablagen schon offen sind) konnte ein Fehler auftreten, den niemand angezeigt bekam. Der Fehler kommt jetzt an die Stelle, die ihn anzeigen kann.
+
+Und: die Restzeit der Dating Hour passt bei großer Schrift
+
+Die Anzeige "Startet in 1 Stunde 30 Minuten" lief bei großer Systemschrift aus dem Bildschirm. Der Text bricht jetzt um.

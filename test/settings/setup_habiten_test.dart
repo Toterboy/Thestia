@@ -905,6 +905,38 @@ void main() {
       await lassTimerLaufen(tester);
     });
 
+    testWidgets('das Bundesland-Feld laeuft auf einem schmalen Bildschirm '
+        'nicht aus dem Rahmen', (tester) async {
+      // DER SCHMALE BILDSCHIRM: 390 Pixel (der Normalfall).
+      //
+      // BEFUND (24.11.2026): Ohne "isExpanded" lief das Feld um 41 Pixel
+      // aus dem Rahmen (der Text des laengsten Bundeslands). Die beiden
+      // anderen Dropdowns derselben Seite hatten es - dieses nicht.
+      await zeigeEinrichtung(tester);
+
+      await waehleImDropdown<DistanceFilterMode>(
+        tester,
+        find.byType(DropdownButtonFormField<DistanceFilterMode>).first,
+        DistanceFilterMode.state.label,
+      );
+
+      // JETZT gibt es die Bundesland-Auswahl.
+      final auswahl = dropdownMitLabel(
+        L10n.tWithoutContext('setupp.stateLabel'),
+      );
+      expect(auswahl, findsOneWidget);
+
+      expect(
+        tester.takeException(),
+        isNull,
+        reason:
+            'Das Feld muss auf einem normalen Bildschirm passen - sonst '
+            'sieht der Nutzer einen abgeschnittenen Text.',
+      );
+
+      await lassTimerLaufen(tester);
+    });
+
     testWidgets('der Modus "Ganz Deutschland" erklaert sich', (tester) async {
       await zeigeEinrichtung(tester);
 

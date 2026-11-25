@@ -168,13 +168,14 @@ void main() {
     );
   }
 
-  /// Ein Event, das in 60 Minuten startet (die Anzeige in Stunden).
+  /// Ein Event, das in 90 Minuten startet (die Anzeige in Stunden).
+  ///
+  /// DER HINWEIS: 90 Minuten sind wichtig - der Text "Startet in 1 Stunde
+  /// 30 Minuten" ist der laengste, den der Info-Chip bekommt. Er muss
+  /// auch bei grosser Schrift im Bildschirm bleiben (BEFUND 25.11.2026).
   DatingHourEvent eventInStunden() {
     final jetzt = DateTime.now();
-    // Die 45 Sekunden Reserve: die Anzeige rechnet in ganzen Minuten -
-    // ohne Reserve waere sie "59 Minuten" und die Stunden-Formatierung
-    // wuerde nicht getroffen.
-    final start = jetzt.add(const Duration(minutes: 60, seconds: 45));
+    final start = jetzt.add(const Duration(minutes: 90));
     return DatingHourEvent(
       id: 'event-1',
       eventDate: jetzt,

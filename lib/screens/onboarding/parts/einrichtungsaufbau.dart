@@ -330,6 +330,12 @@ extension _SettingsPrivacyOnceScreenBuild on _SettingsPrivacyOnceScreenState {
                                   _selectedState?.trim().isEmpty ?? true
                                   ? null
                                   : _selectedState!.trim(),
+                              // isExpanded: siehe Kommentar beim
+                              // Geschlecht-Feld - ohne das laeuft der
+                              // Text des Bundeslands aus dem Feld
+                              // heraus (BEFUND 24.11.2026: 41 Pixel
+                              // auf einem 390-px-Bildschirm).
+                              isExpanded: true,
                               borderRadius: BorderRadius.circular(16),
                               decoration: InputDecoration(
                                 labelText: L10n.t(context, 'setupp.stateLabel'),

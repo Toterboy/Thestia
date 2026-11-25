@@ -32,11 +32,17 @@ class _InfoChip extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: effectiveColor),
           const SizedBox(width: 6),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: effectiveColor,
-              fontWeight: FontWeight.w500,
+          // Flexible: bei grosser Schrift waechst der Text ueber die
+          // Zeile hinaus (RenderFlex-Overflow, BEFUND 25.11.2026). Der
+          // Chip steht in einem Wrap - der gibt seinen Kindern die
+          // Breite des Bildschirms, der Text bricht also um.
+          Flexible(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: effectiveColor,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],

@@ -1,0 +1,15 @@
+The radio reports the right token after pausing
+
+If the phone had been in the background for a while, the radio (Transit Spot) sent a new token but kept reporting the old one. The server therefore knew the new token in one place and the old one in another. The sent token is now also the reported one.
+
+The state field fits on the screen
+
+During the setup, the state field ran out of the frame on a narrow screen: the text was cut off. This is fixed.
+
+A second instance of the encryption service no longer lets an error through
+
+In certain cases (when the encrypted storages are already open) an error could occur that nobody was shown. The error now reaches the place that can show it.
+
+And: the remaining time of the Dating Hour fits with a large font size
+
+The display "Starts in 1 hour 30 minutes" ran out of the screen with a large system font size. The text now wraps.

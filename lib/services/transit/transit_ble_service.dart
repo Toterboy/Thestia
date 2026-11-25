@@ -475,6 +475,15 @@ class TransitBleService {
         debugPrint('[TransitBle] Resume abgelehnt.');
         return false;
       }
+      // DER TOKEN: Das gesendete Token ist ab jetzt das aktuelle.
+      //
+      // BEFUND (24.11.2026): Vorher blieb `_currentToken` auf dem alten
+      // Stand stehen. Der Server bekam ueber den Heartbeat das neue
+      // Token - die App aber meldete weiter das alte. Nach dem Wechsel
+      // in den Hintergrund sendete die App also ein frisches Token
+      // ueber Funk, waehrend der Weg, den der Server fuer "hat der
+      // andere mich gesehen?" nutzt, noch den alten lieferte.
+      _currentToken = token;
       _startScanWindow();
       _schedulePulseNext();
       _scanning = true;

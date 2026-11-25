@@ -126,7 +126,16 @@ class EncryptionService {
     try {
       await _initializeInner();
     } catch (e) {
-      if (!_initCompleter.isCompleted) _initCompleter.completeError(e);
+      if (!_initCompleter.isCompleted) {
+        // DER ZUHOERER: Ein Completer, dessen Fehler niemand abwartet,
+        // meldet ihn als "unhandled error". Das passiert bei einer
+        // ZWEITEN Instanz (der Provider baut eine eigene - die Boxen
+        // sind aber schon offen, das Oeffnen schlaegt also fehl).
+        // Der Fehler wird an die Wartenden gereicht - und der eigene
+        // Zuhoerer faengt ihn fuer die ohne Wartenden ab.
+        unawaited(_initCompleter.future.catchError((Object _) {}));
+        _initCompleter.completeError(e);
+      }
       rethrow;
     }
   }
