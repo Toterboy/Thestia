@@ -57,6 +57,7 @@ import 'package:thestia/widgets/profile/intro_audio_player.dart';
 import 'package:thestia/widgets/profile/meet_intent_card.dart';
 import 'package:thestia/widgets/profile/profile_widgets.dart';
 import 'package:thestia/widgets/chat/secure_composer.dart';
+import 'package:thestia/widgets/chat/nachricht_ueberdenken.dart';
 import 'package:thestia/utils/common/best_effort.dart';
 
 part 'parts/chatdialoge.dart';
@@ -68,6 +69,7 @@ part 'parts/chatsprache.dart';
 part 'parts/chatbilder.dart';
 
 part 'parts/chatnachrichten.dart';
+part 'parts/chatnachrichtpruefung.dart';
 
 part 'parts/chatp2p.dart';
 
@@ -134,7 +136,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   StreamSubscription<void>? _relayPingSub;
   StreamSubscription<String>? _problemSub;
 
-  /// Das letzte Problem aus dem P2P-Aufbau (fuer die Diagnosezeile).
+  /// Das letzte Problem aus dem P2P-Aufbau (für die Diagnosezeile).
   ///
   /// 06.11.2026: Die internen Meldungen des WebRTC-Service gingen nur
   /// in den Debug-Log. Im Store-Build - dem, in dem der Betreiber
@@ -202,14 +204,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   /// Die Notifier der beiden "aktiver Chat"-Markierungen.
   ///
   /// BEFUND (14.11.2026, gefunden von einem Test): Riverpod hat den
-  /// Consumer-State im `dispose()` schon abgeraeumt - ein `ref.read()`
+  /// Consumer-State im `dispose()` schon abgeräumt - ein `ref.read()`
   /// dort wirft ("Cannot use ref after the widget was disposed"). Damit
-  /// blieb die Notification-Unterdrueckung BIS ZUM APP-ENDE stehen: die
+  /// blieb die Notification-Unterdrückung BIS ZUM APP-ENDE stehen: die
   /// Meldungen des Partners kamen nicht mehr an.
   ///
   /// DER WEG: Die Notifier werden im `initState` geholt. Der
-  /// StateNotifier lebt laenger als der Screen - so wird die
-  /// Unterdrueckung wirklich wieder aufgehoben.
+  /// StateNotifier lebt länger als der Screen - so wird die
+  /// Unterdrückung wirklich wieder aufgehoben.
   late final StateController<String?> _aktiveChatId;
   late final StateController<String?> _aktiveChatPeerId;
 
@@ -218,29 +220,29 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     // Die Notifier jetzt holen: im dispose() ist `ref` nicht mehr
-    // benutzbar (siehe die Erklaerung beim Feld).
+    // benutzbar (siehe die Erklären beim Feld).
     _aktiveChatId = ref.read(activeChatIdProvider.notifier);
     _aktiveChatPeerId = ref.read(activeChatPeerIdProvider.notifier);
 
     // Alles, was Provider-State anfasst, wartet auf den ersten Frame.
     //
-    // Riverpod verbietet das Aendern eines Providers in einer
-    // Lebenszyklus-Phase ausdruecklich und nennt initState in der
+    // Riverpod verbietet das Ändern eines Providers in einer
+    // Lebenszyklus-Phase ausdrücklich und nennt initState in der
     // Fehlermeldung: "Tried to modify a provider while the widget tree
     // was building". Zwei Stellen taten genau das hier:
     //
     //   * activeChatIdProvider wird unten synchron gesetzt - das ist ein
-    //     Schreibzugriff WHaehrend des Aufbaus, und die Zuhoerer des
-    //     Providers haengen zu diesem Zeitpunkt noch nicht.
+    //     Schreibzugriff Whährend des Aufbaus, und die Zuhörer des
+    //     Providers hängen zu diesem Zeitpunkt noch nicht.
     //   * _bootstrap() beginnt mit hydrateHistory(), das den State des
-    //     ChatNotifier setzt; die Microtask-Aufloesung landete dadurch
+    //     ChatNotifier setzt; die Microtask-Auflösung landete dadurch
     //     mitten im Aufbau.
     //
-    // In der App faellt beides nicht auf, weil der Screen normalerweise
-    // ueber eine Route geoeffnet wird und ein Frame vergeht. Sichtbar
+    // In der App fällt beides nicht auf, weil der Screen normalerweise
+    // über eine Route geöffnet wird und ein Frame vergeht. Sichtbar
     // wird es, sobald der Screen als erstes gerendert wird - etwa im
-    // Screenshot-Render. Der Fix ist unabhaengig davon richtig: Provider
-    // gehoeren nach dem Frame.
+    // Screenshot-Render. Der Fix ist unabhängig davon richtig: Provider
+    // gehören nach dem Frame.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       // NUTZERWUNSCH: Unterdrückt die Lokal-Benachrichtigung für
@@ -261,11 +263,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
 
   /// Relay-Ticker als Einmal-Timer mit variablem Intervall.
   ///
-  /// Der Wake-up-Ping liefert Nachrichten sofort; dieser Timer faengt nur
+  /// Der Wake-up-Ping liefert Nachrichten sofort; dieser Timer fängt nur
   /// verlorene Pings ab. Ein aktiver Chat ohne Nachrichtenverkehr ist der
   /// Normalfall - deshalb wird das Intervall bei leerem Ergebnis gestreckt
   /// (3 s -> 10 s -> 20 s) statt stur alle 3 s einen RPC zu feuern. Kommt
-  /// etwas an, geht es sofort zurueck auf 3 s.
+  /// etwas an, geht es sofort zurück auf 3 s.
   static const List<Duration> _relayIntervals = [
     Duration(seconds: 3),
     Duration(seconds: 10),
@@ -278,8 +280,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
     // Hintergrund: kein Polling/Netz (Akku). Vordergrund: Timer neu +
     // sofort abholen (Nachrichten aus der Abwesenheit).
     //
-    // `hidden` zaehlt mit: auf Android kommt es direkt nach `inactive`,
-    // wenn der Nutzer den App-Switcher oeffnet - der Poller soll da
+    // `hidden` zählen mit: auf Android kommt es direkt nach `inactive`,
+    // wenn der Nutzer den App-Switcher öffnet - der Poller soll da
     // ebenfalls sofort enden statt 3 s weiterzulaufen.
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden ||
@@ -351,7 +353,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen>
   ///
   /// DER GRUND: In einer Erweiterung darf `setState` nicht aufgerufen
   /// werden (der Analyser erlaubt es nur in Instanzmitgliedern einer
-  /// State-Klasse). Diese Methode gehoert zur Klasse - die Erweiterung
+  /// State-Klasse). Diese Methode gehört zur Klasse - die Erweiterung
   /// ruft sie auf.
   void _setzeState(VoidCallback fn) => setState(fn);
 }

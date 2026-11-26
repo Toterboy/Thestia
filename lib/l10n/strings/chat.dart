@@ -2,7 +2,7 @@
 //
 // DER WEG: Die Texte sind nach Themen getrennt, damit keine Datei
 // zu lang wird (Grenze: 1000 Zeilen - siehe
-// test/code_datei_groessen_test.dart). app_strings.dart fuegt sie
+// test/code_datei_groessen_test.dart). app_strings.dart fügt sie
 // wieder zusammen.
 
 const Map<String, Map<String, String>> stringsChat = {
@@ -160,6 +160,28 @@ const Map<String, Map<String, String>> stringsChat = {
         'Sie wird als Datei verschlüsselt gespeichert und nur an deinen '
         'Gegenüber gesendet. Ohne Mikrofon kannst du weiter schreiben.',
     'chat.more': 'Weitere Optionen',
+    // Nachricht überdenken (NUTZERWUNSCH 26.11.2026): Vor dem Senden
+    // fragen, wie der Nutzer die Nachricht selbst versteht.
+    'chat.nachrichtPruefAbZeichen': 'Ab {n} Zeichen',
+    'chat.nachrichtPruefAus': 'Aus - es wird nicht nachgefragt',
+    'chat.nachrichtPruefBogen':
+        'Vor dem Senden fragt die App, wie du die Nachricht selbst '
+        'verstehst. Du entscheidest, ob das für alle Kontakte gilt oder '
+        'nur für diesen einen.',
+    'chat.nachrichtPruefFeld': 'Meine eigene Deutung',
+    'chat.nachrichtPruefFrage': 'Wie verstehst du diese Nachricht selbst?',
+    'chat.nachrichtPruefGlobal': 'Für alle Kontakte',
+    'chat.nachrichtPruefHinweis':
+        'Deine Deutung bleibt nur auf diesem Gerät - sie wird nicht '
+        'mitgesendet und nirgends gespeichert.',
+    'chat.nachrichtPruefImmer': 'Bei jeder Nachricht',
+    'chat.nachrichtPruefManuell': 'Nur über den Knopf im Eingabefeld',
+    'chat.nachrichtPruefNurKontakt': 'Nur für {name}',
+    'chat.nachrichtPruefSchwelle': 'Ab wie vielen Zeichen wird gefragt?',
+    'chat.nachrichtPruefSenden': 'So senden',
+    'chat.nachrichtPruefTitle': 'Nachricht überdenken',
+    'chat.nachrichtPruefZurueck': 'Zurück zum Text',
+    'chat.nachrichtPruefKnopf': 'Nachricht überdenken',
     'chat.photosAfterSpark': 'Fotos nach Funke sichtbar',
     'chat.queuedHint':
         'Offline - Nachricht wartet in der Warteschlange und wird bei der '
@@ -228,7 +250,7 @@ const Map<String, Map<String, String>> stringsChat = {
         'bereits angehört.',
     'chat.voiceRecordFailed': 'Aufnahme fehlgeschlagen: {error}',
     // Prominente Mikrofon-Offenlegung (Google Play verlangt eine
-    // sichtbare Begruendung VOR der Berechtigungsanfrage).
+    // sichtbare Begründung VOR der Berechtigungsanfrage).
     'chat.micDisclosureTitle': 'Sprachnachricht aufnehmen',
     'chat.voiceStartFailed': 'Aufnahme konnte nicht gestartet werden: {error}',
     'chat.voiceStopSend': 'Aufnahme beenden & senden',
@@ -420,6 +442,28 @@ const Map<String, Map<String, String>> stringsChat = {
         'microphone you can keep typing.',
     'chat.micDisclosureTitle': 'Record a voice message',
     'chat.more': 'More options',
+    // Think before sending (request 26.11.2026): before a message goes
+    // out, the app asks how the sender reads it themselves.
+    'chat.nachrichtPruefAbZeichen': 'From {n} characters',
+    'chat.nachrichtPruefAus': 'Off - nothing is asked',
+    'chat.nachrichtPruefBogen':
+        'Before sending, the app asks how you read the message yourself. '
+        'You decide whether that applies to all contacts or only to this '
+        'one.',
+    'chat.nachrichtPruefFeld': 'My own reading',
+    'chat.nachrichtPruefFrage': 'How do you read this message yourself?',
+    'chat.nachrichtPruefGlobal': 'For all contacts',
+    'chat.nachrichtPruefHinweis':
+        'Your reading stays on this device - it is not sent along and not '
+        'stored anywhere.',
+    'chat.nachrichtPruefImmer': 'For every message',
+    'chat.nachrichtPruefManuell': 'Only via the button in the input field',
+    'chat.nachrichtPruefNurKontakt': 'Only for {name}',
+    'chat.nachrichtPruefSchwelle': 'From how many characters is it asked?',
+    'chat.nachrichtPruefSenden': 'Send it this way',
+    'chat.nachrichtPruefTitle': 'Think before sending',
+    'chat.nachrichtPruefZurueck': 'Back to the text',
+    'chat.nachrichtPruefKnopf': 'Think before sending',
     'chat.photosAfterSpark': 'Photos visible after spark',
     'chat.queuedHint':
         'Offline - message is queued and will be delivered on the next '

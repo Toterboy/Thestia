@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Die Methoden
 // liegen in einer EXTENSION auf dieselbe Klasse - so haben sie
 // weiterhin Zugriff auf die privaten Felder, und der Aufrufer
-// bleibt unveraendert (`_methode(...)` ist derselbe Name).
+// bleibt unverändert (`_methode(...)` ist derselbe Name).
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -11,11 +11,11 @@
 part of '../chat_detail_screen.dart';
 
 extension _ChatNachrichten on _ChatDetailScreenState {
-  /// Holt die "fuer alle geloescht"-Hinweise des Funkes und wendet sie an.
+  /// Holt die "für alle gelöscht"-Hinweise des Funkes und wendet sie an.
   ///
-  /// BEFUND (11.11.2026): Der Empfaenger ersetzt die geloeschte Nachricht
-  /// durch den Hinweis. Das passiert beim Oeffnen des Chats und bei jeder
-  /// Relay-Abfrage (damit es auch im laufenden Gespraech ankommt).
+  /// BEFUND (11.11.2026): Der Empfänger ersetzt die gelöschte Nachricht
+  /// durch den Hinweis. Das passiert beim Öffnen des Chats und bei jeder
+  /// Relay-Abfrage (damit es auch im laufenden Gespräch ankommt).
   Future<void> _applyMessageDeletions(String matchId) async {
     final serverId = int.tryParse(matchId);
     if (serverId == null) return;
@@ -46,12 +46,12 @@ extension _ChatNachrichten on _ChatDetailScreenState {
     }
   }
 
-  /// Zaehlt die gesendete Nachricht serverseitig (BEFUND 11.11.2026).
+  /// Zählen die gesendete Nachricht serverseitig (BEFUND 11.11.2026).
   ///
-  /// Damit die kleine Zahl in der Kachel auf ALLEN Geraeten stimmt und
-  /// auch dann da ist, wenn der Chat hier nie geoeffnet wurde.
+  /// Damit die kleine Zahl in der Kachel auf ALLEN Geräten stimmt und
+  /// auch dann da ist, wenn der Chat hier nie geöffnet wurde.
   ///
-  /// Best-Effort: ein Fehler darf das Senden nie stoeren.
+  /// Best-Effort: ein Fehler darf das Senden nie stören.
   Future<void> _bumpMessageCounter(Match match, String messageId) async {
     final serverId = int.tryParse(match.id);
     if (serverId == null) return;
@@ -63,10 +63,10 @@ extension _ChatNachrichten on _ChatDetailScreenState {
     });
   }
 
-  /// Darf diese Nachricht geloescht werden?
+  /// Darf diese Nachricht gelöscht werden?
   ///
-  /// BEFUND (11.11.2026): Nur EIGENE Textnachrichten. Der Server prueft
-  /// das auch - aber die Oberflaeche soll es gar nicht erst anbieten.
+  /// BEFUND (11.11.2026): Nur EIGENE Textnachrichten. Der Server prüft
+  /// das auch - aber die Oberfläche soll es gar nicht erst anbieten.
   bool _canDeleteMessage(Message msg) {
     if (msg.type != MessageType.text) return false;
     final myId = _myUserId ?? AppConstants.currentUserId;
@@ -74,21 +74,21 @@ extension _ChatNachrichten on _ChatDetailScreenState {
     return msg.senderId == myId;
   }
 
-  /// Loescht eine Nachricht fuer alle (BEFUND 11.11.2026).
+  /// Löscht eine Nachricht für alle (BEFUND 11.11.2026).
   ///
   /// ABLAUF:
   /// 1. Der Server markiert die Nachricht (er speichert NUR die Tatsache -
   ///    keinen Inhalt).
   /// 2. Lokal wird die Nachricht durch den Hinweis ersetzt.
-  /// 3. Beim Empfaenger erscheint derselbe Hinweis, sobald er die
-  ///    Loeschungen des Funkes abfragt.
+  /// 3. Beim Empfänger erscheint derselbe Hinweis, sobald er die
+  ///    Löschungen des Funkes abfragt.
   Future<void> _deleteMessageForAll(Message msg) async {
     final match = _match;
     if (match == null) return;
     final serverId = int.tryParse(match.id);
     if (serverId == null) {
       // QR-Kontakte haben keinen Server-Funke - dort gibt es kein
-      // "fuer alle".
+      // "für alle".
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -142,16 +142,60 @@ extension _ChatNachrichten on _ChatDetailScreenState {
     }
   }
 
-  Future<void> _send() async {
+  /// Sendet die Nachricht aus dem Eingabefeld (der Senden-Knopf).
+  ///
+  /// DER WEG: Vor dem Senden wird die Nachricht geprüft ("Nachricht
+  /// überdenken"). Passt die Einstellung nicht zu diesem Chat, geht
+  /// die Nachricht sofort raus.
+  Future<void> _send() => _sende(pruefen: true);
+
+  /// Prüft die aktuelle Nachricht von Hand (der Extra-Knopf).
+  ///
+  /// NUTZERWUNSCH (26.11.2026): "Einmal bei jeder Nachricht, bei langen
+  /// Nachrichten oder per extra Button individuell aktivierbar." Der
+  /// Extra-Knopf fragt immer - auch wenn die Einstellung sonst aus ist.
+  ///
+  /// DER ZWEITE BLICK: Nach der Bestätigung wird ohne erneute Frage
+  /// gesendet - sonst käme der Dialog zweimal.
+  Future<void> _pruefeVonHand() async {
     final match = _match;
     if (match == null) return;
     final text = _ctrl.text.trim();
     if (text.isEmpty) return;
+    final bestaetigt = await frageNachrichtNach(context, text: text);
+    if (!bestaetigt) return;
+    await _sende(pruefen: false);
+  }
+
+  /// Muss vor dem Senden nachgefragt werden?
+  ///
+  /// DER WEG: Die Einstellung kennt drei Fälle, in denen die App von
+  /// selbst fragt: "aus" (nie), "immer" (immer) und "ab N Zeichen" (bei
+  /// langen Nachrichten). "manuell" fragt nur der Extra-Knopf - der
+  /// kommt hier nicht vorbei.
+  Future<bool> _pruefungNoetig(String text, String partnerId) async {
+    final einstellung = ref.read(settingsProvider).nachrichtPruef;
+    if (!einstellung.prueftNach(text, partnerId)) return true;
+    if (!mounted) return false;
+    final bestaetigt = await frageNachrichtNach(context, text: text);
+    return bestaetigt;
+  }
+
+  /// Das eigentliche Senden.
+  Future<void> _sende({required bool pruefen}) async {
+    final match = _match;
+    if (match == null) return;
+    final text = _ctrl.text.trim();
+    if (text.isEmpty) return;
+    // Die Nachricht überdenken (NUTZERWUNSCH 26.11.2026): Der Dialog
+    // kommt VOR dem Leeren des Eingabefelds - bricht der Nutzer ab, steht
+    // die Nachricht noch da und kann überarbeitet werden.
+    if (pruefen && !await _pruefungNoetig(text, match.partner.id)) return;
     final myId = _myUserId ?? AppConstants.currentUserId;
     _ctrl.clear();
 
     // Die ID kommt vom SENDER - damit kennen beide Seiten dieselbe
-    // Nachricht (BEFUND 11.11.2026: "Nachricht fuer alle loeschen" geht
+    // Nachricht (BEFUND 11.11.2026: "Nachricht für alle löschen" geht
     // nur, wenn die ID auf beiden Seiten gleich ist).
     final msgId = Message.newId('m');
     final localMsg = Message(
@@ -166,20 +210,20 @@ extension _ChatNachrichten on _ChatDetailScreenState {
     // BEFUND (13.11.2026, Test am Chat-Bildschirm): Der Bildschrim baute
     // erst NACH dem Senden neu - die eigene Nachricht war also erst zu
     // sehen, wenn der Netz-Roundtrip durch war. Bei langsamer Verbindung
-    // (oder wenn das Relay haengt) sah der Nutzer seine eigene Nachricht
+    // (oder wenn das Relay hängt) sah der Nutzer seine eigene Nachricht
     // nicht: er dachte, es sei nichts angekommen, und schrieb sie
     // noch einmal.
     //
-    // Der Neuaufbau gehoert deshalb direkt hinter das Hinzufuegen - die
-    // Nachricht ist lokal da, also gehoert sie auch sofort auf den
-    // Bildschirm. Der Versand laeuft danach weiter.
+    // Der Neuaufbau gehört deshalb direkt hinter das Hinzufügen - die
+    // Nachricht ist lokal da, also gehört sie auch sofort auf den
+    // Bildschirm. Der Versand läuft danach weiter.
     if (mounted) _setzeState(() {});
 
     // … und ECHT E2E-verschlüsselt zustellen: direkt per P2P, sonst über
     // das Server-Relay (Partner holt beim Öffnen ab), sonst Outbox.
     await _transmitText(match, text, messageId: msgId);
-    // Der Zaehler: die Zahl der gesendeten Nachrichten soll auf ALLEN
-    // Geraeten stimmen (BEFUND 11.11.2026). Dazu zaehlt der Server -
+    // Der Zählen: die Zahl der gesendeten Nachrichten soll auf ALLEN
+    // Geräten stimmen (BEFUND 11.11.2026). Dazu zählt der Server -
     // genau einmal je Nachrichten-ID.
     unawaited(_bumpMessageCounter(match, msgId));
   }
@@ -198,11 +242,11 @@ extension _ChatNachrichten on _ChatDetailScreenState {
   }) async {
     // DIE HULLE (BEFUND 11.11.2026): Die Nachrichten-ID des Senders
     // reist mit - damit kennen beide Seiten dieselbe Nachricht (Grundlage
-    // fuer "fuer alle loeschen" und dafuer, dass dieselbe Nachricht
-    // ueber P2P und Relay nicht doppelt erscheint).
+    // für "für alle löschen" und dafür, dass dieselbe Nachricht
+    // über P2P und Relay nicht doppelt erscheint).
     //
-    // Die Huelle ersetzt den Eisbreker-Praefix: die Art steht jetzt im
-    // Feld `art` der Huelle.
+    // Die Hülle ersetzt den Eisbreker-Präfix: die Art steht jetzt im
+    // Feld `art` der Hülle.
     final wireText = buildEnvelope(
       id: messageId ?? Message.newId('m'),
       kind: kind == 'icebreaker' ? WireKind.icebreaker : WireKind.text,
@@ -224,10 +268,10 @@ extension _ChatNachrichten on _ChatDetailScreenState {
     final ueberRelay = await bestEffortOr(
       'relayServiceProvider.storeText',
       () async {
-        // BEFUND (11.11.2026): Ueber das Relay muss DIE HULLE laufen,
+        // BEFUND (11.11.2026): Über das Relay muss DIE HULLE laufen,
         // nicht der blanke Text - sonst verliert der Relay-Weg die
-        // Nachrichten-ID des Senders (und damit das "fuer alle
-        // loeschen" und die Doppel-Erkennung zwischen P2P und Relay).
+        // Nachrichten-ID des Senders (und damit das "für alle
+        // löschen" und die Doppel-Erkennung zwischen P2P und Relay).
         await ref
             .read(relayServiceProvider)
             .storeText(peerId: match.partner.id, text: wireText, kind: kind);

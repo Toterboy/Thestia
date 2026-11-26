@@ -1,0 +1,9 @@
+Ask how you read the message yourself before sending it
+
+When you tap "Send", the app now asks how you read the message yourself - and whether it should really go out that way. You write down your own reading and only then it is sent. A button takes you back to the text: the message stays in the input field and can be reworked.
+
+You decide yourself when it asks: in the three-dot menu of the chat, either for all contacts or only for that one - for every message, from about 250 characters on, or only via the extra button in the input field. Your reading stays on the device - it is not sent along.
+
+And: real umlauts in the German texts
+
+Many German texts still used the ASCII spelling. That looks like a machine - now they have real umlauts. Thirteen app texts had a mistake on top of that: missing umlauts and a typo in "Geschmäcke".

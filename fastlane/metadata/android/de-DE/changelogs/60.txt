@@ -1,0 +1,9 @@
+Vor dem Senden nachfragen, wie man selbst die Nachricht versteht
+
+Wenn du auf "Senden" drückst, fragt die App jetzt, wie du die Nachricht selbst verstehst - und ob sie wirklich so bleiben soll. Du trägst deine Deutung ein und sendest erst dann. Ein Knopf bringt zurück zum Text: die Nachricht bleibt im Eingabefeld und kann überarbeitet werden.
+
+Du entscheidest selbst, wann gefragt wird: im Drei-Punkte-Menü des Chats für alle Kontakte oder nur für den einen, bei jeder Nachricht, erst ab etwa 250 Zeichen oder nur über den Extra-Knopf im Eingabefeld. Deine Deutung bleibt auf dem Gerät - sie wird nicht mitgesendet.
+
+Und: echte Umlaute in den deutschen Texten
+
+In den App-Texten standen an vielen Stellen die ASCII-Ersatzschreibweisen. Das sieht nach Maschine aus - jetzt stehen dort echte Umlaute. Dreizehn App-Texte hatten zusätzlich einen Fehler: fehlende Umlaute und ein Tippfehler bei "Geschmäcke".

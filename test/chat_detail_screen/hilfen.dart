@@ -1,4 +1,4 @@
-// Die Helfer fuer die Tests des Bildschirms 'chat_detail_screen'.
+// Die Helfer für die Tests des Bildschirms 'chat_detail_screen'.
 //
 // DER WEG: Die Testdatei war zu lang (> 1000 Zeilen). Die Helfer
 // (Ersatz-Speicher, Aufbau, Bildschirm-Helfer) liegen hier -
@@ -6,27 +6,27 @@
 
 // Der 1:1-Chat OHNE Server (v0.10.1).
 //
-// WARUM (13.11.2026): Der Chat-Screen ist die groesste Datei der App
+// WARUM (13.11.2026): Der Chat-Screen ist die größte Datei der App
 // (rund 1.800 Zeilen) - und die Coverage-Messung zeigte: 0,1 %.
 // Genau dort sitzt auch die eigene Tastatur (Build 54). Ein Screen, den
 // niemand gerendert hat, ist geraten: der Absturz beim Wischen zwischen
-// den Reitern (31.10.2026) war nur zufaellig im Screenshot-Render
+// den Reitern (31.10.2026) war nur zufällig im Screenshot-Render
 // aufgefallen.
 //
-// WAS HIER GEPRUEFT WIRD:
+// WAS HIER GEPRÜFT WIRD:
 //   * der Chat rendert mit seinen Nachrichten (kein Absturz, kein
 //     Render-Overflow),
 //   * ein Chat, den es nicht mehr gibt, zeigt den Hinweis statt eines
 //     leeren Bildschirms,
 //   * die EINGABE ist die eigene Tastatur: das Feld ist readOnly (die
-//     Systemtastatur sieht nichts) und das Tippen oeffnet die
+//     Systemtastatur sieht nichts) und das Tippen öffnet die
 //     App-Tastatur,
 //   * eine getippte Nachricht landet im Chat.
 //
 // OHNE SERVER: Die Supabase-Aufrufe des Bildschirms (P2P, Relay,
-// Loeschen, Herz-Staerken) laufen ueber bestEffort/bestEffortOr und
+// Löschen, Herz-Stärken) laufen über bestEffort/bestEffortOr und
 // brechen ohne Client still ab. Genau das ist hier der Fall - es wird
-// geprueft, was der Bildschirm ohne Server macht, nicht was er mit
+// geprüft, was der Bildschirm ohne Server macht, nicht was er mit
 // Server macht (das macht test/live_message_flow_test.dart).
 import 'dart:convert';
 import 'dart:io';
@@ -34,7 +34,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-// Praefix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
+// Präfix, weil supabase_flutter ein eigenes LocalStorage mitbringt.
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 import 'package:thestia/models/chat/match.dart';
 import 'package:thestia/models/chat/message.dart';
@@ -97,9 +97,9 @@ UserProfile chatDetailScreenPartner() => UserProfile(
 
 /// Der Partner mit einer WOHLGEFORMTEN UUID.
 ///
-/// DER GRUND: Die Peer-IDs werden geprueft (Audit M1/M2 - sie stehen in
+/// DER GRUND: Die Peer-IDs werden geprüft (Audit M1/M2 - sie stehen in
 /// URL-Pfaden und Filtern). "partner-1" ist keine UUID - mit dieser ID
-/// wuerde der Server die Blockierung ablehnen.
+/// würde der Server die Blockierung ablehnen.
 UserProfile chatDetailScreenPartnerUuid() => UserProfile(
   id: '11111111-2222-3333-4444-555555555555',
   name: 'Mira',
@@ -135,26 +135,24 @@ List<Override> chatDetailScreenOverrides(
   ChatNotifier notifier, {
   bool hinweisGesehen = true,
   bool unscharfeBilder = false,
+  Map<String, dynamic> settings = const <String, dynamic>{},
 }) {
   final storage = FakeLocalStorage();
-  // Der Hinweis auf den Chat-Hintergrund (v0.10.0) kommt beim ersten
-  // Chat - im Test stoert er nur, also ist er als "gesehen" markiert.
-  if (hinweisGesehen) {
-    storage.saveString(
-      AppConstants.prefsSettingsKey,
-      jsonEncode(<String, dynamic>{'chatBackgroundSeen': true}),
-    );
-  }
-  // Die Bilder der Gegenseite zuerst unscharf (Schutz vor
-  // unangemessenen Inhalten) - das kommt aus den Einstellungen.
-  if (unscharfeBilder) {
-    storage.saveString(
-      AppConstants.prefsSettingsKey,
-      jsonEncode(<String, dynamic>{
-        'chatBackgroundSeen': true,
-        'blurChatImages': true,
-      }),
-    );
+  // DER HINWEIS auf den Chat-Hintergrund (v0.10.0) kommt beim ersten
+  // Chat - im Test stört er nur, also ist er als "gesehen" markiert.
+  //
+  // DIE EIGENEN EINSTELLUNGEN: Die Tests können so den Stand der
+  // App-Einstellungen vorgeben (etwa "Nachricht überdenken"). Sie
+  // werden zuletzt gemischt - der Test gewinnt also gegen die Vorgaben.
+  final daten = <String, dynamic>{
+    if (hinweisGesehen) 'chatBackgroundSeen': true,
+    // Die Bilder der Gegenseite zuerst unscharf (Schutz vor
+    // unangemessenen Inhalten) - das kommt aus den Einstellungen.
+    if (unscharfeBilder) 'blurChatImages': true,
+    ...settings,
+  };
+  if (daten.isNotEmpty) {
+    storage.saveString(AppConstants.prefsSettingsKey, jsonEncode(daten));
   }
   return [
     localStorageProvider.overrideWithValue(storage),
@@ -175,6 +173,7 @@ Future<void> chatDetailScreenPump(
   ChatNotifier notifier, {
   bool hinweisGesehen = true,
   bool unscharfeBilder = false,
+  Map<String, dynamic> settings = const <String, dynamic>{},
   List<Override> overrides = const <Override>[],
 }) async {
   SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -186,6 +185,7 @@ Future<void> chatDetailScreenPump(
           notifier,
           hinweisGesehen: hinweisGesehen,
           unscharfeBilder: unscharfeBilder,
+          settings: settings,
         ),
         ...overrides,
       ],
@@ -236,10 +236,10 @@ class FakeReportService extends ReportService {
 /// Legt eine kleine Aufnahmedatei an (der Pfad kommt vom Plugin).
 ///
 /// DER GRUND: Das Aufnahme-Plugin meldet beim Stoppen einen Pfad. Ohne
-/// Datei prueft der Bildschirm gar nicht weiter - die Datei muss also
+/// Datei prüft der Bildschirm gar nicht weiter - die Datei muss also
 /// wirklich da sein.
 ///
-/// ACHTUNG: Das ist echte Datei-Arbeit - sie muss ueber
+/// ACHTUNG: Das ist echte Datei-Arbeit - sie muss über
 /// [WidgetTester.runAsync] laufen, sonst wartet der Test ewig.
 Future<String> aufnahmeDatei() async {
   final ordner = await Directory.systemTemp.createTemp('thesia_voice_test');
@@ -248,15 +248,15 @@ Future<String> aufnahmeDatei() async {
   return pfad;
 }
 
-/// Laesst die echten Datei-Zugriffe durch und baut danach neu.
+/// Lässt die echten Datei-Zugriffe durch und baut danach neu.
 ///
-/// DER GRUND: Das Lesen und Loeschen der Aufnahme-Datei ist echte
-/// Arbeit - sie laeuft ausserhalb der Test-Uhr. Ohne dieses Warten
-/// bleibt der Bildschirm bei "Aufnahme laeuft" stehen und die Meldung
+/// DER GRUND: Das Lesen und Löschen der Aufnahme-Datei ist echte
+/// Arbeit - sie läuft außerhalb der Test-Uhr. Ohne dieses Warten
+/// bleibt der Bildschirm bei "Aufnahme läuft" stehen und die Meldung
 /// kommt nicht.
 ///
 /// Es sind mehrere Runden: jeder `await` in der Kette (Abo beenden,
-/// Plugin stoppen, Datei loeschen) braucht seine eigene Runde durch
+/// Plugin stoppen, Datei löschen) braucht seine eigene Runde durch
 /// die echte Ereignisschleife.
 Future<void> echteZeit(WidgetTester tester) async {
   for (var i = 0; i < 4; i++) {

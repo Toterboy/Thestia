@@ -1,4 +1,5 @@
 import 'package:thestia/models/profile/profile_visibility.dart';
+import 'package:thestia/models/settings/nachricht_ueberdenken.dart';
 import 'package:thestia/utils/common/constants.dart';
 
 /// App-Einstellungen inkl. Blind-Mode und Privatsphäre-Optionen.
@@ -82,34 +83,34 @@ class AppSettings {
   /// unangemessenen Inhalten; Antippen zeigt nach Warnung das Bild).
   final bool blurChatImages;
 
-  /// Hat der Nutzer die prominente Mikrofon-Offenlegung bestaetigt?
+  /// Hat der Nutzer die prominente Mikrofon-Offenlegung bestätigt?
   ///
-  /// Google Play verlangt fuer RECORD_AUDIO eine in der App sichtbare
-  /// Begruendung, BEVOR die Berechtigung angefragt wird. Damit die
+  /// Google Play verlangt für RECORD_AUDIO eine in der App sichtbare
+  /// Begründung, BEVOR die Berechtigung angefragt wird. Damit die
   /// Offenlegung nicht bei jeder Sprachnachricht erneut erscheint, wird
-  /// die Bestaetigung hier gespeichert - es ist eine Einstellung und
-  /// gehoert neben die anderen datenschutzrelevanten Schalter.
+  /// die Bestätigen hier gespeichert - es ist eine Einstellung und
+  /// gehört neben die anderen datenschutzrelevanten Schalter.
   ///
   /// `false` ist der sichere Standard: wer die App frisch installiert,
-  /// sieht die Erklaerung beim ersten Versuch eine Sprachnachricht zu
+  /// sieht die Erklären beim ersten Versuch eine Sprachnachricht zu
   /// schreiben.
   final bool micDisclosureAccepted;
 
-  /// Hat der Nutzer die prominente Kamera-Offenlegung bestaetigt?
+  /// Hat der Nutzer die prominente Kamera-Offenlegung bestätigt?
   ///
-  /// Wie [micDisclosureAccepted], aber fuer CAMERA. Die Kamera wird in
-  /// der Alters-/Identitaetsverifikation direkt beim Oeffnen benutzt -
-  /// ohne Offenlegung waere das ein Antrag im Hintergrund, den der
-  /// Nutzer nicht erwartet. Google Play verlangt fuer beides eine
-  /// sichtbare Begruendung VOR der Anfrage.
+  /// Wie [micDisclosureAccepted], aber für CAMERA. Die Kamera wird in
+  /// der Alters-/Identitätsverifikation direkt beim Öffnen benutzt -
+  /// ohne Offenlegung wäre das ein Antrag im Hintergrund, den der
+  /// Nutzer nicht erwartet. Google Play verlangt für beides eine
+  /// sichtbare Begründung VOR der Anfrage.
   final bool cameraDisclosureAccepted;
 
-  /// Hat der Nutzer die prominente Standort-Offenlegung bestaetigt?
+  /// Hat der Nutzer die prominente Standort-Offenlegung bestätigt?
   ///
-  /// Wie [cameraDisclosureAccepted], aber fuer den Standort. Google Play
-  /// verlangt fuer empfindliche Berechtigungen (Kamera, Mikrofon,
-  /// Standort) eine sichtbare Begruendung VOR der Anfrage - die App hat
-  /// das fuer Kamera und Mikrofon, fuer den Standort fehlte es (BEFUND
+  /// Wie [cameraDisclosureAccepted], aber für den Standort. Google Play
+  /// verlangt für empfindliche Berechtigungen (Kamera, Mikrofon,
+  /// Standort) eine sichtbare Begründung VOR der Anfrage - die App hat
+  /// das für Kamera und Mikrofon, für den Standort fehlte es (BEFUND
   /// 06.11.2026).
   final bool locationDisclosureAccepted;
 
@@ -132,11 +133,11 @@ class AppSettings {
   final String chatBackground;
 
   /// Lokaler Dateipfad des eigenen Chat-Hintergrundbildes (nur custom).
-  /// Bleibt bewusst NUR auf dem Geraet (kein Server-Sync).
+  /// Bleibt bewusst NUR auf dem Gerät (kein Server-Sync).
   final String? chatBackgroundPath;
 
   /// Kurzer Willkommensscreen nach der Registrierung (v0.9.1) gesehen?
-  /// Einmalig nach E-Mail-Bestaetigung, danach direkt Einrichtung.
+  /// Einmalig nach E-Mail-Bestätigen, danach direkt Einrichtung.
   final bool signupWelcomeSeen;
 
   /// Sicherheits-Aufklärung vor der Einrichtung abgeschlossen?
@@ -152,22 +153,22 @@ class AppSettings {
   ///
   /// Bewusst KEIN Teil der Einrichtung: der Hintergrund ist eine
   /// Geschmacksfrage, und die Einrichtung war mit zehn Seiten lang
-  /// genug. Die Abfrage kommt stattdessen beim ersten geoeffneten Chat
+  /// genug. Die Abfrage kommt stattdessen beim ersten geöffneten Chat
   /// (Dialog) - dort sieht der Nutzer auch, worum es geht.
   ///
-  /// Einmalig: nach dem Schliessen bleibt es in den Einstellungen
+  /// Einmalig: nach dem Schließen bleibt es in den Einstellungen
   /// erreichbar und wird nicht erneut angeboten.
   final bool chatBackgroundSeen;
 
-  /// Veroeffentlichen, dass andere meine (grobe) Entfernung sehen
-  /// duerfen (v0.10.0)?
+  /// Veröffentlichen, dass andere meine (grobe) Entfernung sehen
+  /// dürfen (v0.10.0)?
   ///
-  /// Standard `false`: es wird nichts veroeffentlicht, solange der
-  /// Nutzer das nicht ausdruecklich erlaubt hat. Wer es einschaltet,
+  /// Standard `false`: es wird nichts veröffentlicht, solange der
+  /// Nutzer das nicht ausdrücklich erlaubt hat. Wer es einschaltet,
   /// sieht danach eine Entfernung in 10-km-Stufen ("unter 10 km",
   /// "10 bis 20 km") - nie den genauen Standort.
   ///
-  /// Serverseitig gespiegelt, weil die Anzeegeraete fremd entscheiden.
+  /// Serverseitig gespiegelt, weil die Anzeegeräte fremd entscheiden.
   final bool showDistance;
 
   /// Zeigt meinen Namen, wenn jemand bei Transit Spark zuwinkt?
@@ -186,7 +187,7 @@ class AppSettings {
   /// steht.
   final bool transitShowName;
 
-  /// Stehen meine gemagten Musik-Genres im oeffentlichen Profil?
+  /// Stehen meine gemagten Musik-Genres im öffentlich Profil?
   ///
   /// NUTZERWUNSCH (22.11.2026): "Man soll diese Punkte und die
   /// Gewohnheiten einzeln fürs öffentliche Profil an und aus machen
@@ -196,29 +197,68 @@ class AppSettings {
   /// Genres nur, wenn dieser Schalter an ist.
   final bool showMusicLiked;
 
-  /// Stehen meine abgelehnten Musik-Genres im oeffentlichen Profil?
+  /// Stehen meine abgelehnten Musik-Genres im öffentlich Profil?
   final bool showMusicDisliked;
 
-  /// Steht mein Lieblingssong im oeffentlichen Profil?
+  /// Steht mein Lieblingssong im öffentlich Profil?
   final bool showFavoriteSong;
 
-  /// Steht mein Lieblings-Künstler (Lieblingsband) im oeffentlichen Profil?
+  /// Steht mein Lieblings-Künstler (Lieblingsband) im öffentlich Profil?
   final bool showFavoriteBand;
 
-  /// Steht die Gewohnheit "Rauchen" im oeffentlichen Profil?
+  /// Steht die Gewohnheit "Rauchen" im öffentlich Profil?
   final bool showHabitsSmoking;
 
-  /// Steht die Gewohnheit "Alkohol" im oeffentlichen Profil?
+  /// Steht die Gewohnheit "Alkohol" im öffentlich Profil?
   final bool showHabitsAlcohol;
 
-  /// Steht die Gewohnheit "Drogen" im oeffentlichen Profil?
+  /// Steht die Gewohnheit "Drogen" im öffentlich Profil?
   final bool showHabitsDrugs;
+
+  /// Wie die App vor dem Senden nachfragt ("Nachricht überdenken").
+  ///
+  /// NUTZERWUNSCH (26.11.2026): "In den Einstellungen im Chat bei den
+  /// drei Punkten soll das sein - beim drücken auf den Senden-Button
+  /// wird erst noch gefragt, wie du selbst die Nachricht verstehen
+  /// würdest und ob sie wirklich so sein soll."
+  ///
+  /// Gespeichert wird der Text des Modus (siehe [NachrichtPruefModus]),
+  /// damit man die Datei lesen kann. Standard ist "aus" - wer nichts
+  /// eingestellt hat, wird nicht aufgehalten.
+  final String nachrichtPruefModus;
+
+  /// Ab wie vielen Zeichen geprüft wird (Modus "ab Zeichen").
+  ///
+  /// 250 Zeichen sind ungefähr vier Sätze. Der Wert ist frei stellbar -
+  /// manche schreiben lieber kurz, andere brauchen mehr Ruhe.
+  final int nachrichtPruefSchwelle;
+
+  /// Die Ausnahmen je Kontakt (die Kontakt-ID auf den Modus als Text).
+  ///
+  /// DER WEG: So kann der Nutzer global "immer" sagen und für einen
+  /// Kontakt "nein" - oder umgekehrt. Beides ist möglich, weil die
+  /// Ausnahme des Kontakts den globalen Wert überstimmt.
+  final Map<String, String> nachrichtPruefAusnahmen;
+
+  /// Die Einstellung "Nachricht überdenken" in der Form, in der die
+  /// Oberfläche sie braucht.
+  ///
+  /// DER WEG: Gespeichert wird als Text (siehe [nachrichtPruefModus]),
+  /// damit die Datei lesbar bleibt. Hier steht die fertige Einstellung
+  /// bereit - inklusive der Ausnahmen je Kontakt.
+  NachrichtPruefEinstellung get nachrichtPruef => NachrichtPruefEinstellung(
+    modus: NachrichtPruefModusWert.ausWert(nachrichtPruefModus),
+    schwelle: nachrichtPruefSchwelle,
+    ausnahmen: nachrichtPruefAusnahmen.map(
+      (k, v) => MapEntry(k, NachrichtPruefModusWert.ausWert(v)),
+    ),
+  );
 
   /// Hat der Nutzer bewusst entschieden, ob sein Name beim Transit-Zuwinken
   /// gezeigt wird?
   ///
   /// BEFUND (Betreiber, 10.11.2026): "Die Abfrage über die Entscheidung
-  /// Name an oder aus soll beim ersten öffnen des Transit Spark screens
+  /// Name an oder aus soll beim ersten Öffnen des Transit Spark screens
   /// kommen und dann nachträglich noch änderbar sein. So ist die
   /// Entscheidung beim User und er kann bewusst entscheiden."
   ///
@@ -236,11 +276,11 @@ class AppSettings {
     this.onboardingCompleted = true,
     this.maxDistanceKm = AppConstants.defaultDistanceKm,
     // v0.10.0: Die Spanne war 16-99 und damit praktisch "keine
-    // Grenze" - ein 20-Jaehriger bekam 99-Jaehrige vorgeschlagen.
+    // Grenze" - ein 20-Jähriger bekam 99-Jährige vorgeschlagen.
     //
     // 18-65 ist die Spanne, die ein Vermittlungsdienst realistisch
     // bedienen kann: unter 18 ist Transit Spark ohnehin gesperrt, und
-    // ueber 65 ist die Erfolgsquote erfahrungsgemaess sehr niedrig.
+    // über 65 ist die Erfolgsquote erfahrungsgemäss sehr niedrig.
     // Beide Grenzen bleiben frei einstellbar.
     this.ageRangeMin = 18,
     this.ageRangeMax = 65,
@@ -270,13 +310,13 @@ class AppSettings {
     this.signupWelcomeSeen = false,
     this.datingSafetyEducationCompleted = false,
     this.chatBackgroundSeen = false,
-    // v0.10.0: Datenschutz-Vorgabe. Nichts veroeffentlichen, was der
-    // Nutzer nicht ausdruecklich erlaubt hat.
+    // v0.10.0: Datenschutz-Vorgabe. Nichts veröffentlichen, was der
+    // Nutzer nicht ausdrücklich erlaubt hat.
     this.showDistance = false,
     this.transitShowName = true,
     this.transitShowNameSet = false,
     // NUTZERWUNSCH (22.11.2026): Die Musik und die Gewohnheiten
-    // stehen standardmaessig im oeffentlichen Profil - so war es
+    // stehen standardmässig im öffentlich Profil - so war es
     // bisher. Wer sie nicht zeigen will, schaltet sie ab.
     this.showMusicLiked = true,
     this.showMusicDisliked = true,
@@ -285,6 +325,9 @@ class AppSettings {
     this.showHabitsSmoking = true,
     this.showHabitsAlcohol = true,
     this.showHabitsDrugs = true,
+    this.nachrichtPruefModus = 'aus',
+    this.nachrichtPruefSchwelle = 250,
+    this.nachrichtPruefAusnahmen = const <String, String>{},
   });
 
   /// Standard-Einstellungen für einen neuen Nutzer.
@@ -294,7 +337,7 @@ class AppSettings {
   factory AppSettings.fromJson(Map<String, dynamic> json) {
     return AppSettings(
       // Blind Mode ist fest AN (NUTZERWUNSCH 01.11.2026) - der
-      // gespeicherte Wert wird bewusst ignoriert. Sonst koennte ein
+      // gespeicherte Wert wird bewusst ignoriert. Sonst könnte ein
       // alter Stand (Blind Mode aus) die App weiter ausblenden.
       blindModeEnabled: true,
       revealPhotosAfterMatch: json['revealPhotosAfterMatch'] as bool? ?? true,
@@ -307,7 +350,7 @@ class AppSettings {
           json['maxDistanceKm'] as int? ?? AppConstants.defaultDistanceKm,
       // v0.10.0: 18-65 wie im Konstruktor. Vorher stand hier 16-99 -
       // der ausJson-Pfad hat damit die Server-Vorgabe wieder
-      // ueberschrieben, sobald der lokale Stand fehlte.
+      // überschrieben, sobald der lokale Stand fehlte.
       ageRangeMin: json['ageRangeMin'] as int? ?? 18,
       ageRangeMax: json['ageRangeMax'] as int? ?? 65,
       personalityTestCompleted:
@@ -343,12 +386,12 @@ class AppSettings {
       datingSafetyEducationCompleted:
           json['datingSafetyEducationCompleted'] as bool? ?? false,
       chatBackgroundSeen: json['chatBackgroundSeen'] as bool? ?? false,
-      // Fehlende Schluessel (alte Installation) gelten als "aus" -
+      // Fehlende Schlüssel (alte Installation) gelten als "aus" -
       // das ist die datenschutzfreundliche Richtung.
       showDistance: json['showDistance'] as bool? ?? false,
       transitShowName: json['transitShowName'] as bool? ?? true,
       transitShowNameSet: json['transitShowNameSet'] as bool? ?? false,
-      // NUTZERWUNSCH (22.11.2026): Fehlende Schluessel (alte
+      // NUTZERWUNSCH (22.11.2026): Fehlende Schlüssel (alte
       // Installation) gelten als "an" - das war das bisherige Verhalten.
       showMusicLiked: json['showMusicLiked'] as bool? ?? true,
       showMusicDisliked: json['showMusicDisliked'] as bool? ?? true,
@@ -357,6 +400,16 @@ class AppSettings {
       showHabitsSmoking: json['showHabitsSmoking'] as bool? ?? true,
       showHabitsAlcohol: json['showHabitsAlcohol'] as bool? ?? true,
       showHabitsDrugs: json['showHabitsDrugs'] as bool? ?? true,
+      // "Nachricht überdenken" (26.11.2026): Fehlt der Schlüssel (alte
+      // Installation), wird nicht nachgefragt.
+      nachrichtPruefModus: json['nachrichtPruefModus'] as String? ?? 'aus',
+      nachrichtPruefSchwelle:
+          (json['nachrichtPruefSchwelle'] as num?)?.toInt() ?? 250,
+      nachrichtPruefAusnahmen:
+          (json['nachrichtPruefAusnahmen'] as Map?)?.map(
+            (k, v) => MapEntry('$k', '$v'),
+          ) ??
+          const <String, String>{},
     );
   }
 
@@ -406,6 +459,9 @@ class AppSettings {
     'showHabitsSmoking': showHabitsSmoking,
     'showHabitsAlcohol': showHabitsAlcohol,
     'showHabitsDrugs': showHabitsDrugs,
+    'nachrichtPruefModus': nachrichtPruefModus,
+    'nachrichtPruefSchwelle': nachrichtPruefSchwelle,
+    'nachrichtPruefAusnahmen': nachrichtPruefAusnahmen,
   };
 
   /// Immutabele Kopie mit veränderten Werten.
@@ -467,9 +523,12 @@ class AppSettings {
     bool? showHabitsSmoking,
     bool? showHabitsAlcohol,
     bool? showHabitsDrugs,
+    String? nachrichtPruefModus,
+    int? nachrichtPruefSchwelle,
+    Map<String, String>? nachrichtPruefAusnahmen,
   }) {
     return AppSettings(
-      // Blind Mode ist fest AN - der uebergebene Wert wird
+      // Blind Mode ist fest AN - der übergebene Wert wird
       // bewusst ignoriert (NUTZERWUNSCH 01.11.2026).
       blindModeEnabled: true,
       revealPhotosAfterMatch:
@@ -529,6 +588,11 @@ class AppSettings {
       showHabitsSmoking: showHabitsSmoking ?? this.showHabitsSmoking,
       showHabitsAlcohol: showHabitsAlcohol ?? this.showHabitsAlcohol,
       showHabitsDrugs: showHabitsDrugs ?? this.showHabitsDrugs,
+      nachrichtPruefModus: nachrichtPruefModus ?? this.nachrichtPruefModus,
+      nachrichtPruefSchwelle:
+          nachrichtPruefSchwelle ?? this.nachrichtPruefSchwelle,
+      nachrichtPruefAusnahmen:
+          nachrichtPruefAusnahmen ?? this.nachrichtPruefAusnahmen,
     );
   }
 }

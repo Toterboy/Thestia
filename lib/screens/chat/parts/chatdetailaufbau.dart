@@ -3,7 +3,7 @@
 // DER WEG: Die Klasse war zu lang (> 1000 Zeilen). Der Aufbau
 // liegt in einer ERWEITERUNG auf dieselbe Klasse - die lokalen
 // Variablen des Aufbaus wandern mit, das Verhalten bleibt also
-// unveraendert.
+// unverändert.
 //
 // Der Test `code_datei_groessen_test` verhindert, dass die
 // Hauptdatei wieder zu lang wird.
@@ -157,18 +157,18 @@ extension _ChatDetailScreenBuild on _ChatDetailScreenState {
                 //
                 // Vorher stand das Badge in einer eigenen, zentrierten
                 // Zeile unter dem Namen. Dadurch war der Name links
-                // buendig und die Kopfzeile zweizeilig - bei einem
+                // bündig und die Kopfzeile zweizeilig - bei einem
                 // Namen wie "Mara" sah das nach einem Zufall aus und
                 // nicht nach einer Absicht.
                 //
                 // Jetzt bilden Name und Badge eine Einheit und werden
                 // gemeinsam zentriert. Der Name bleibt Flexible, damit
                 // ein langer Name mit Auslassungspunkten endet, statt
-                // das Badge aus dem Titel zu druecken.
+                // das Badge aus dem Titel zu drücken.
                 //
                 // Bewusst KEIN Online-Status / "schreibt..." /
-                // Lesebestaetigung - siehe ADR-0007 (Praesenz-frei).
-                // KEINE Streaks/Flammen-Zaehlung (v0.9.0-Feedback:
+                // Lesebestätigung - siehe ADR-0007 (Präsenz-frei).
+                // KEINE Streaks/Flammen-Zählung (v0.9.0-Feedback:
                 // "Es soll keine Streaks geben").
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -276,25 +276,30 @@ extension _ChatDetailScreenBuild on _ChatDetailScreenState {
                   _showBlockUserDialog(partner.id, partner.name);
                 case 'dissolve':
                   _showEndSparkDialog();
+                case 'nachrichtPruef':
+                  // Die Nachricht überdenken (26.11.2026): Vor dem
+                  // Senden nachfragen, wie der Nutzer die Nachricht
+                  // selbst versteht.
+                  _zeigeNachrichtPruefEinstellungen();
               }
             },
             itemBuilder: (ctx) => [
               // NUTZERWUNSCH "Menü besser geordnet": Die Punkte laufen in
-              // sinngemaessen Gruppen - GESPRAECH (Eisbrecher,
+              // sinngemässen Gruppen - GESPRÄCH (Eisbrecher,
               // Erinnerungsliste) -> SICHERHEIT (Sicherheitsnummer, Melden,
               // Blockieren) -> VERBINDUNG (Kontext-Eisbrecher an/aus,
-              // Funke beenden). Jede Gruppe hat eine UEBERSCHRIFT und ist
+              // Funke beenden). Jede Gruppe hat eine ÜBERSCHRIFT und ist
               // durch einen Divider getrennt.
               //
-              // BEFUND (09.11.2026, Betreiber): "Bei 3 Punkte Menue ist
-              // ueber Eisbrecher Fragen ein Strich einfach so aber keine
-              // ueberschrift oder so." Der Strich war der ERSTE Eintrag
-              // des Menues - er trennte nichts, er stand einfach da. Und
-              // die Gruppe "Sicherheit" hatte eine Ueberschrift, die
+              // BEFUND (09.11.2026, Betreiber): "Bei 3 Punkte Menü ist
+              // über Eisbrecher Fragen ein Strich einfach so aber keine
+              // überschrift oder so." Der Strich war der ERSTE Eintrag
+              // des Menüs - er trennte nichts, er stand einfach da. Und
+              // die Gruppe "Sicherheit" hatte eine Überschrift, die
               // beiden anderen nicht.
               //
-              // Also: Der fuehrende Divider ist weg, und JEDE Gruppe
-              // bekommt ihre Ueberschrift - so wie es die
+              // Also: Der führende Divider ist weg, und JEDE Gruppe
+              // bekommt ihre Überschrift - so wie es die
               // Sicherheits-Gruppe schon hatte.
               PopupMenuItem(
                 enabled: false,
@@ -325,9 +330,12 @@ extension _ChatDetailScreenBuild on _ChatDetailScreenState {
                   contentPadding: EdgeInsets.zero,
                 ),
               ),
+              // Die Nachricht überdenken (26.11.2026): gehört in die
+              // Gruppe "Gespräch" - es geht um das Senden.
+              _nachrichtPruefMenueEintrag(),
               const PopupMenuDivider(),
               // Kein 'const': L10n.t braucht den Kontext und ist damit
-              // keine konstante Ausdruecksform.
+              // keine konstante Ausdrücksform.
               PopupMenuItem(
                 enabled: false,
                 child: Padding(
@@ -497,10 +505,10 @@ extension _ChatDetailScreenBuild on _ChatDetailScreenState {
                                 child: StreamBuilder(
                                   stream: _p2p?.iceConnectionState,
                                   builder: (context, snap) {
-                                    // Der letzte Zustand wird zusaetzlich
+                                    // Der letzte Zustand wird zusätzlich
                                     // direkt vom Service geholt: der
                                     // Broadcast-Stream wiederholt nichts,
-                                    // wer sich erst spaeter anmeldet, sah
+                                    // wer sich erst später anmeldet, sah
                                     // sonst gar nichts (die Zeile stand
                                     // dauerhaft auf "-").
                                     final ice =
@@ -789,7 +797,7 @@ extension _ChatDetailScreenBuild on _ChatDetailScreenState {
                 ),
               // Ideen-Rad (v0.8.0, Test): wählt aus den bestehenden Date-
               // Kategorien einen Vorschlag, der als Nachricht gesendet wird -
-              // beide bestätigen im Chat. Für Freunde-Sucher ausgeblendet
+              // beide bestätigt im Chat. Für Freunde-Sucher ausgeblendet
               // (v0.9.0: "keine Dates vorschlagen"). Erst nach 50-70
               // Nachrichten pro Chat sichtbar und ausblendbar (v0.9.1).
               if (showIdeaWheel)
@@ -930,7 +938,7 @@ extension _ChatDetailScreenBuild on _ChatDetailScreenState {
               // Sekunden im Hint-Text (altes Design).
               if (_recording) _buildVoiceRecordingPanel(context),
               // Die Eingabeleiste bringt ihre eigene Tastatur mit
-              // (v0.10.1): die Systemtastatur des Geraets sieht dabei
+              // (v0.10.1): die Systemtastatur des Geräts sieht dabei
               // keinen einzelnen Buchstaben.
               SecureComposer(
                 controller: _ctrl,
@@ -941,6 +949,9 @@ extension _ChatDetailScreenBuild on _ChatDetailScreenState {
                     : L10n.t(context, 'chat.hint'),
                 onSend: _send,
                 leading: <Widget>[
+                  // Der Extra-Knopf "Nachricht überdenken" (26.11.2026) -
+                  // er steht nur da, wenn die Einstellung ihn braucht.
+                  ..._nachrichtPruefKnopf(),
                   IconButton(
                     icon: const Icon(Icons.image),
                     tooltip: L10n.t(context, 'chat.imageSend'),

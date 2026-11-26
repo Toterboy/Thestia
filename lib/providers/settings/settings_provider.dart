@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/models/settings/app_settings.dart';
+import 'package:thestia/models/settings/nachricht_ueberdenken.dart';
 import 'package:thestia/models/profile/profile_visibility.dart';
 import 'package:thestia/services/storage/local_storage.dart';
 import 'package:thestia/services/server/supabase_database_service.dart';
@@ -12,6 +13,9 @@ import 'package:thestia/services/auth/supabase_service.dart';
 import 'package:thestia/utils/chat/chat_backgrounds.dart';
 import 'package:thestia/utils/common/constants.dart';
 import 'package:thestia/utils/common/best_effort.dart';
+
+part 'settings_nachrichtpruefung.dart';
+part 'settings_ui_prefs.dart';
 
 /// StateNotifier, der die App-Einstellungen verwaltet und sicher persistiert.
 ///
@@ -30,7 +34,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   /// sie vorher liest, sieht nur die Vorgabewerte - und kann damit eine
   /// Entscheidung treffen, die falsch ist (der Chat zeigte den
   /// Chat-Hintergrund-Dialog auch bei Personen, die ihn schon
-  /// weggedrueckt hatten). [whenLoaded] wartet auf den echten Stand.
+  /// weggedrückt hatten). [whenLoaded] wartet auf den echten Stand.
   final Completer<void> _geladen = Completer<void>();
 
   /// Wartet, bis die Einstellungen geladen sind, und liefert sie.
@@ -66,21 +70,21 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
   Future<void> _persist() async {
     // BEFUND (07.11.2026, Betreiber): "Der Hintergrund, den man
-    // auswaehlt, wird nicht gespeichert."
+    // auswählt, wird nicht gespeichert."
     //
     // DIE URSACHE: Das Schreiben in den Keystore kann fehlschlagen (bei
     // gleichzeitigem Zugriff - der Picker schrieb zweimal hintereinander:
     // Pfad und Auswahl). Der Fehler wurde nur protokolliert: die
-    // Oberflaeche zeigte die neue Einstellung trotzdem an (der Zustand
-    // ist optimistisch gesetzt), aber beim naechsten Start war sie weg.
-    // Der Nutzer sah keine Meldung - fuer ihn hat die App die Auswahl
+    // Oberfläche zeigte die neue Einstellung trotzdem an (der Zustand
+    // ist optimistisch gesetzt), aber beim nächst Start war sie weg.
+    // Der Nutzer sah keine Meldung - für ihn hat die App die Auswahl
     // einfach verworfen.
     //
     // DESHALB: Drei Versuche mit kurzer Pause (der Keystore ist nach
     // einem anderen Zugriff wieder frei) - und wenn es dann immer noch
     // nicht klappt, wird es GEMELDET statt still zu scheitern.
     final json = jsonEncode(state.toJson());
-    // Doppelte Schreibvorgaenge vermeiden: der Chat-Hintergrund-Picker ruft
+    // Doppelte Schreibvorgänge vermeiden: der Chat-Hintergrund-Picker ruft
     // ansonsten zweimal hintereinander (Pfad + Auswahl) und schreibt
     // zweimal den kompletten Stand in den Keystore.
     if (json == _lastPersisted) return;
@@ -103,7 +107,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
         if (kDebugMode) {
           debugPrint('[Settings] Persist fehlgeschlagen: $e');
         }
-        // Der Merker wird zurueckgesetzt, damit der naechste Versuch
+        // Der Merker wird zurückgesetzt, damit der nächst Versuch
         // wieder schreibt - und der Nutzer bekommt eine Meldung.
         _lastPersisted = null;
         persistFehlgeschlagen = 'settings.saveFailed';
@@ -111,12 +115,12 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     }
   }
 
-  /// Der Text-Schluessel des letzten Schreibfehlers (null = alles
+  /// Der Text-Schlüssel des letzten Schreibfehlers (null = alles
   /// gespeichert).
   ///
-  /// Die Oberflaeche liest das nach einem Setzen und zeigt eine Meldung:
+  /// Die Oberfläche liest das nach einem Setzen und zeigt eine Meldung:
   /// eine Einstellung, die nicht gespeichert wurde, muss der Nutzer
-  /// erfahren - sonst denkt er, sie waere uebernommen worden.
+  /// erfahren - sonst denkt er, sie wäre übernommen worden.
   String? persistFehlgeschlagen;
 
   /// Zuletzt erfolgreich geschriebener JSON-Stand (Deduplizierung).
@@ -280,9 +284,9 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     T? read<T>(String key) => ui[key] is T ? ui[key] as T : null;
 
     // 'blindModeEnabled' wird vom Server bewusst NICHT mehr
-    // uebernommen: der Blind Mode ist fest AN. Ohne das wuerde ein
+    // übernommen: der Blind Mode ist fest AN. Ohne das würde ein
     // alter Serverstand (Blind Mode aus) die App wieder ausblenden -
-    // der Wert wird beim naechsten Sync auf true gesetzt und
+    // der Wert wird beim nächst Sync auf true gesetzt und
     // heilt damit auch die Bestandskonten.
     final reveal = read<bool>('revealPhotosAfterMatch');
     if (reveal != null && reveal != next.revealPhotosAfterMatch) {
@@ -458,8 +462,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   /// Nach frischer Registrierung (v0.9.0-Fix): Die Einrichtung MUSS
   /// sofort kommen - nicht erst beim 2. Appstart, wenn der Server-Flag-
   /// Sync ggf. einen falschen Stand geliefert hat. Lokal forciert;
-  /// der Server-Sync (syncSetupFlagsFromServer) ueberschreibt true nur
-  /// fuer BESTEHende Konten.
+  /// der Server-Sync (syncSetupFlagsFromServer) überschreibt true nur
+  /// für BESTEHende Konten.
   Future<void> markOnboardingPending() async {
     state = state.copyWith(onboardingDone: false, onboardingCompleted: false);
     await _persist();
@@ -505,13 +509,13 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   ///
   /// Wird auch serverseitig gespiegelt (profiles.theme_name, Migration
   /// 071). Das ist kein Luxus: der lokale Speicher liegt im Keystore und
-  /// wird mit der App geloescht - ohne den Server-Spiegel waere die
+  /// wird mit der App gelöscht - ohne den Server-Spiegel wäre die
   /// Farbe nach einer Neuinstallation weg.
   ///
   /// Der Sync stand vorher NUR im Einstellungs-Screen. Wer die Farbe im
-  /// Onboarding waehlte (der normale Weg beim ersten Start), kam dort
+  /// Onboarding wählte (der normale Weg beim ersten Start), kam dort
   /// nie vor - die Farbe wurde nie gespiegelt. Deshalb liegt er jetzt
-  /// hier, im Provider: so gilt er fuer jeden Weg.
+  /// hier, im Provider: so gilt er für jeden Weg.
   Future<void> setThemeName(String name) async {
     if (state.themeName == name) return;
     state = state.copyWith(themeName: name);
@@ -533,36 +537,36 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     }
   }
 
-  /// Mikrofon-Offenlegung bestaetigt (Google-Play-Richtlinie).
+  /// Mikrofon-Offenlegung bestätigt (Google-Play-Richtlinie).
   ///
   /// Wird gesetzt, nachdem der Nutzer im Chat-Dialog gelesen hat, WARUM
   /// die App aufnimmt. Erst danach wird die Berechtigung angefragt.
-  /// Ohne diesen Schalter wuerde die Offenlegung bei jeder einzelnen
-  /// Sprachnachricht erneut erscheinen - nervend und fuer den Nutzer
+  /// Ohne diesen Schalter würde die Offenlegung bei jeder einzelnen
+  /// Sprachnachricht erneut erscheinen - nervend und für den Nutzer
   /// ein Grund, alles abzulehnen.
   Future<void> setMicDisclosureAccepted(bool value) async {
     state = state.copyWith(micDisclosureAccepted: value);
     await _persist();
   }
 
-  /// Kamera-Offenlegung bestaetigt (Google-Play-Richtlinie).
+  /// Kamera-Offenlegung bestätigt (Google-Play-Richtlinie).
   ///
   /// Gegenteil von [setMicDisclosureAccepted]: wird gesetzt, nachdem der
   /// Nutzer im Verifikationsschritt gelesen hat, warum die Kamera
-  /// genutzt wird. Die Verifikation oeffnet die Kamera direkt beim
-  /// Betreten - ohne diese Bestaetigung waere das ein Antrag, den der
+  /// genutzt wird. Die Verifikation öffnet die Kamera direkt beim
+  /// Betreten - ohne diese Bestätigen wäre das ein Antrag, den der
   /// Nutzer nicht erwartet.
   Future<void> setCameraDisclosureAccepted(bool value) async {
     state = state.copyWith(cameraDisclosureAccepted: value);
     await _persist();
   }
 
-  /// Die prominente Standort-Offenlegung wurde bestaetigt.
+  /// Die prominente Standort-Offenlegung wurde bestätigt.
   ///
-  /// Google Play verlangt fuer empfindliche Berechtigungen eine
-  /// sichtbare Begruendung IN DER APP, bevor der Systemdialog erscheint
-  /// (BEFUND 06.11.2026: fuer Kamera und Mikrofon gab es das bereits,
-  /// fuer den Standort fehlte es).
+  /// Google Play verlangt für empfindliche Berechtigungen eine
+  /// sichtbare Begründung IN DER APP, bevor der Systemdialog erscheint
+  /// (BEFUND 06.11.2026: für Kamera und Mikrofon gab es das bereits,
+  /// für den Standort fehlte es).
   Future<void> setLocationDisclosureAccepted(bool value) async {
     state = state.copyWith(locationDisclosureAccepted: value);
     await _persist();
@@ -622,9 +626,9 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
   /// Entfernungs-Anzeige ein- oder ausschalten (v0.10.0).
   ///
-  /// Ueber den Server gespiegelt, weil die Anzeegeraete fremd
+  /// Über den Server gespiegelt, weil die Anzeegeräte fremd
   /// entscheiden: ein eingeschalteter Schalter muss auch auf einem
-  /// anderen Geraet gelten.
+  /// anderen Gerät gelten.
   Future<void> setShowDistance(bool value) async {
     if (state.showDistance == value) return;
     state = state.copyWith(showDistance: value);
@@ -635,16 +639,16 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   /// Zeigt meinen Namen bei Transit Spark? (v0.10.1)
   ///
   /// BEFUND (Betreiber, 10.11.2026): Der Name beim Zuwinken soll
-  /// abschaltbar sein. Ueber den Server gespiegelt, weil die ANDERE
+  /// abschaltbar sein. Über den Server gespiegelt, weil die ANDERE
   /// Person entscheidet: sie sieht den Namen nur, wenn der Server ihn
   /// freigibt (Migration 208).
   Future<void> setTransitShowName(bool value) async {
-    // BEFUND (10.11.2026): Jede Aenderung am Schalter ist eine bewusste
+    // BEFUND (10.11.2026): Jede Änderung am Schalter ist eine bewusste
     // Entscheidung - also wird das Flag mitgesetzt. Danach kommt der
-    // Dialog beim Oeffnen des Transit-Radars nicht mehr.
+    // Dialog beim Öffnen des Transit-Radars nicht mehr.
     //
     // (Und: ist der Wert gleich, wird trotzdem gespeichert - sonst
-    // wuerde das Flag nie gesetzt, wenn der Wert schon passend steht.)
+    // würde das Flag nie gesetzt, wenn der Wert schon passend steht.)
     if (state.transitShowName == value && state.transitShowNameSet) return;
     state = state.copyWith(transitShowName: value, transitShowNameSet: true);
     await _persist();
@@ -683,8 +687,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   /// können."
   ///
   /// Je Punkt EIN Schalter. Der Server entscheidet (Migration 222): die
-  /// oeffentliche Projektion liefert die Angabe nur, wenn der Schalter
-  /// an ist - ein Schalter nur im Geraet waere wertlos.
+  /// öffentlich Projektion liefert die Angabe nur, wenn der Schalter
+  /// an ist - ein Schalter nur im Gerät wäre wertlos.
   Future<void> setShowMusicLiked(bool value) => _setPublicSwitch(
     'show_music_liked',
     value,
@@ -734,11 +738,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     (s, v) => s.copyWith(showHabitsDrugs: v),
   );
 
-  /// Setzt einen der oeffentlichen Schalter: lokal, in den Cache und auf
+  /// Setzt einen der öffentlich Schalter: lokal, in den Cache und auf
   /// dem Server.
   ///
   /// Der Server ist die Wahrheit - die ANDERE Person sieht das Profil
-  /// ueber den Server. Deshalb wird der Wert auch dorthin geschrieben
+  /// über den Server. Deshalb wird der Wert auch dorthin geschrieben
   /// (best effort: der Server-Schalter entscheidet).
   Future<void> _setPublicSwitch(
     String spalte,
@@ -761,13 +765,13 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     }
   }
 
-  /// Uebernimmt die serverseitig gespiegelten Schalter, die in eigenen
+  /// Übernimmt die serverseitig gespiegelten Schalter, die in eigenen
   /// Spalten stehen (v0.10.0).
   ///
   /// BETROFFEN:
   ///   * show_distance - die Entfernungsanzeige. Der Schalter wurde
   ///     bisher NUR geschrieben, nie gelesen. Nach einer Neuinstallation
-  ///     oder auf einem zweiten Geraet zeigte der Schalter "aus", waehrend
+  ///     oder auf einem zweiten Gerät zeigte der Schalter "aus", während
   ///     der Server weiter true hatte: der Nutzer glaubte, die Entfernung
   ///     sei verborgen, und sie wurde trotzdem angezeigt.
   ///   * notifications_enabled, notify_matches, notify_likes,
@@ -789,9 +793,9 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     }
 
     // BEFUND (10.11.2026): Der Name beim Transit-Zuwinken muss auch auf
-    // einem zweiten Geraet gelten - der SERVER entscheidet, ob der Name
-    // ankommt. Ohne dieses Lesen wuerde der Schalter lokal "aus" sein,
-    // waehrend der Server weiter true hat: der Nutzer glaubt, sein Name
+    // einem zweiten Gerät gelten - der SERVER entscheidet, ob der Name
+    // ankommt. Ohne dieses Lesen würde der Schalter lokal "aus" sein,
+    // während der Server weiter true hat: der Nutzer glaubt, sein Name
     // bleibe verborgen, und er wird trotzdem angezeigt.
     final transitShowName = read<bool>('transit_show_name');
     if (transitShowName != null && transitShowName != next.transitShowName) {
@@ -800,7 +804,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     }
 
     // BEFUND (10.11.2026): Das Flag "hat der Nutzer entschieden" kommt
-    // vom Server - sonst fragt der Dialog auf dem zweiten Geraet nochmal,
+    // vom Server - sonst fragt der Dialog auf dem zweiten Gerät nochmal,
     // obwohl die Entscheidung schon gefallen ist.
     final transitShowNameSet = read<bool>('transit_show_name_set');
     if (transitShowNameSet != null &&
@@ -809,7 +813,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       changed = true;
     }
 
-    // NUTZERWUNSCH (22.11.2026): Die Schalter fuer Musik und
+    // NUTZERWUNSCH (22.11.2026): Die Schalter für Musik und
     // Gewohnheiten kommen auch vom Server - sie entscheiden, was andere
     // sehen. Fehlt eine Spalte (alter Serverstand), bleibt der lokale
     // Stand stehen.
@@ -884,7 +888,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     }
   }
 
-  /// Laedt die servergehaltenen Schalter und wendet sie an.
+  /// Lädt die servergehaltenen Schalter und wendet sie an.
   ///
   /// Liest die EIGENE Zeile - mit der verengten profiles-Policy
   /// (Migration 144) ist das genau die Zeile, die der Nutzer sehen darf.
@@ -904,6 +908,40 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     }
   }
 
+  /// Setzt den Modus der Nachrichten-Prüfung (für alle Kontakte).
+  ///
+  /// DER WEG: Die Erweiterung (settings_nachrichtpruefung.dart) kann den
+  /// Zustand nicht selbst setzen - `state` ist geschützt. Deshalb
+  /// gibt es hier diese Zugänge.
+  Future<void> setzeNachrichtPruefModus(String modus) async {
+    state = state.copyWith(nachrichtPruefModus: modus);
+    await _persist();
+  }
+
+  /// Setzt die Schwelle der Nachrichten-Prüfung (die Zeichen-Zahl).
+  ///
+  /// Die Grenze liegt bei 50 bis 2000 Zeichen - darunter wäre die
+  /// Prüfung sinnlos, darüber wäre sie unbenutzbar.
+  Future<void> setzeNachrichtPruefSchwelle(int zeichen) async {
+    state = state.copyWith(nachrichtPruefSchwelle: zeichen.clamp(50, 2000));
+    await _persist();
+  }
+
+  /// Setzt die Ausnahme für einen Kontakt (null = keine Ausnahme).
+  Future<void> setzeNachrichtPruefAusnahme(
+    String kontaktId,
+    String? modus,
+  ) async {
+    final ausnahmen = Map<String, String>.of(state.nachrichtPruefAusnahmen);
+    if (modus == null) {
+      ausnahmen.remove(kontaktId);
+    } else {
+      ausnahmen[kontaktId] = modus;
+    }
+    state = state.copyWith(nachrichtPruefAusnahmen: ausnahmen);
+    await _persist();
+  }
+
   /// Setzt alle Einstellungen auf die Standardwerte zurück
   /// (z. B. nach Account-Löschung – keine Alt-Daten im neuen Account).
   Future<void> resetToDefaults() async {
@@ -919,72 +957,6 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 /// Checks abgeschlossen sind, wird weitergeleitet - so ist die
 /// Screen-Reihenfolge beim Erststart garantiert (Willkommen vor Login).
 final settingsLoadedProvider = StateProvider<bool>((ref) => false);
-
-/// Spiegelt den Rest der UI-Einstellungen nach profiles.ui_prefs (v0.8.0,
-/// Migration 074) - "Nach Neuinstallation ist ALLES wieder da". Sensible
-/// Inhalte (Chats, E2E-Identität) sind bewusst NICHT Teil davon.
-///
-/// Entprellt (1,5 s): Schalter feuern schnell hintereinander; es geht
-/// maximal EIN Schreibvorgang pro Ruhe-Window raus. Fire-and-forget -
-/// Fehler blockieren die UI nicht (der Stand wird beim nächsten Aufruf
-/// bzw. Login erneut gespiegelt).
-Timer? _uiPrefsSyncTimer;
-
-void scheduleUiPrefsServerSync(AppSettings settings) {
-  if (!SupabaseService.isInitialized) return;
-  _uiPrefsSyncTimer?.cancel();
-  _uiPrefsSyncTimer = Timer(const Duration(milliseconds: 1500), () {
-    unawaited(() async {
-      try {
-        await SupabaseDatabaseService(SupabaseService.client).updateOwnProfile({
-          // DIE ECHTEN SPALTEN (v0.10.0).
-          //
-          // Die Push-Einstellungen standen bisher NUR in ui_prefs.
-          // Die Edge Function notify-user liest aber die fuenf
-          // Einzelspalten (notifications_enabled, notify_matches,
-          // notify_likes, notify_messages, notify_dating_hour) - und
-          // die blieben dauerhaft auf ihrem Default true.
-          //
-          // Folge: die fuenf Schalter in den Einstellungen waren
-          // sichtbar und bedienbar, hatten aber KEINE Wirkung. Wer
-          // Push fuer "Likes" abgeschaltet hat, bekam weiter welche.
-          //
-          // ui_prefs bleibt unberuehrt - dort steht die Spiegelung
-          // fuer den schnellen Zugriff, aber die Serverlogik wertet
-          // die Spalten aus.
-          'notifications_enabled': settings.notificationsEnabled,
-          'notify_matches': settings.notifyMatches,
-          'notify_likes': settings.notifyLikes,
-          'notify_messages': settings.notifyMessages,
-          'notify_dating_hour': settings.notifyDatingHour,
-          'ui_prefs': {
-            'blindModeEnabled': settings.blindModeEnabled,
-            'revealPhotosAfterMatch': settings.revealPhotosAfterMatch,
-            'profileVisibility': settings.profileVisibility.value,
-            'paused': settings.paused,
-            'useDarkMode': settings.useDarkMode,
-            'notificationsEnabled': settings.notificationsEnabled,
-            'notifyMatches': settings.notifyMatches,
-            'notifyLikes': settings.notifyLikes,
-            'notifyMessages': settings.notifyMessages,
-            'notifyDatingHour': settings.notifyDatingHour,
-            'blurChatImages': settings.blurChatImages,
-            // Geraete-lokal gedrueckt, nicht in ui_prefs: die
-            // Mikrofon-Offenlegung gehoert zur Einwilligung auf diesem
-            // Geraet und soll nicht in andere Konten wandern.
-            'micDisclosureAccepted': settings.micDisclosureAccepted,
-            'cameraDisclosureAccepted': settings.cameraDisclosureAccepted,
-            'chatBackground': settings.chatBackground,
-          },
-        });
-      } catch (e) {
-        if (kDebugMode) {
-          debugPrint('[Settings] ui_prefs-Sync fehlgeschlagen: $e');
-        }
-      }
-    }());
-  });
-}
 
 /// Provider für die App-Einstellungen.
 final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>((
