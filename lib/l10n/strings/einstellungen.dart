@@ -21,6 +21,20 @@ const Map<String, Map<String, String>> stringsEinstellungen = {
     // ===================================================================
     'location.disclosureTitle': 'Standort freigeben?',
     'settings.appearance': 'Darstellung',
+    'settings.keyboard': 'Tastatur',
+    'settings.keyboardSub':
+        'Die eigene Tastatur der App: Belegung und Farbe. Sie sieht '
+        'nichts vom Tippen - die App weiß nur, was du selbst eintippst.',
+    'settings.keyboardLayout': 'Belegung',
+    'settings.keyboardLayoutApp': 'Wie die App',
+    'settings.keyboardLayoutDe': 'Deutsch (QWERTZ)',
+    'settings.keyboardLayoutEn': 'Englisch (QWERTY)',
+    'settings.keyboardStyle': 'Farbe',
+    'settings.keyboardStyleApp': 'Wie die App',
+    'settings.keyboardStyleAccent': 'In der Farbe der App',
+    'settings.keyboardStyleOwn': 'Eigene Farbe',
+    'settings.keyboardColor': 'Eigene Farbe',
+    'settings.keyboardPreview': 'Vorschau',
     // AppearanceSelector: Wert + Erklärung je Modus. Die Erklärung
     // sagt, was die Wahl TUT - das unterscheidet 'System' (folgt dem
     // Gerät) von 'Hell'/'Dunkel' (erzwingen etwas). Ohne das sind drei
@@ -348,6 +362,20 @@ const Map<String, Map<String, String>> stringsEinstellungen = {
     // ===================================================================
     'location.disclosureTitle': 'Share your location?',
     'settings.appearance': 'Appearance',
+    'settings.keyboard': 'Keyboard',
+    'settings.keyboardSub':
+        'The app\'s own keyboard: layout and colour. It sees nothing of '
+        'what you type - the app only knows what you enter yourself.',
+    'settings.keyboardLayout': 'Layout',
+    'settings.keyboardLayoutApp': 'Like the app',
+    'settings.keyboardLayoutDe': 'German (QWERTZ)',
+    'settings.keyboardLayoutEn': 'English (QWERTY)',
+    'settings.keyboardStyle': 'Colour',
+    'settings.keyboardStyleApp': 'Like the app',
+    'settings.keyboardStyleAccent': 'In the app\'s colour',
+    'settings.keyboardStyleOwn': 'Own colour',
+    'settings.keyboardColor': 'Own colour',
+    'settings.keyboardPreview': 'Preview',
     'settings.backupChoosePw': 'Choose backup password',
     'settings.backupCodeTitle': 'Your backup code',
     'settings.backupCopied': 'Backup code copied.',

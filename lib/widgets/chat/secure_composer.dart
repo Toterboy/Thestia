@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:thestia/models/settings/tastatur_einstellungen.dart';
 import 'package:thestia/utils/common/best_effort.dart';
 import 'package:thestia/widgets/chat/secure_keyboard.dart';
 
@@ -34,8 +35,26 @@ class SecureComposer extends StatefulWidget {
     this.minLines = 1,
     this.enterSends = false,
     this.padding = const EdgeInsets.all(12),
+    this.layout,
+    this.stil,
+    this.farbe,
     super.key,
   });
+
+  /// Die Belegung der eigenen Tastatur (0.11.0).
+  ///
+  /// Null bedeutet "wie die App" - dann folgt die Belegung der Sprache
+  /// der App. Gesetzt zwingt sie eine Belegung (QWERTZ oder QWERTY).
+  final TastaturBelegung? layout;
+
+  /// Der Farbstil der eigenen Tastatur (0.11.0).
+  ///
+  /// Null bedeutet "wie die App" - dann kommen die Farben aus dem
+  /// App-Thema.
+  final TastaturStil? stil;
+
+  /// Die eigene Farbe der Tastatur (0.11.0) als ARGB-Zahl.
+  final int? farbe;
 
   /// Der Controller des Aufrufers (der Screen besitzt ihn, damit er
   /// senden und leeren kann).
@@ -260,6 +279,9 @@ class _SecureComposerState extends State<SecureComposer> {
         ),
         if (_keyboardOpen)
           SecureKeyboard(
+            layout: widget.layout,
+            stil: widget.stil,
+            farbe: widget.farbe,
             onCharacter: _insert,
             onBackspace: _backspace,
             onEnter: _enter,

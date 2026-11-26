@@ -67,6 +67,11 @@ void scheduleUiPrefsServerSync(AppSettings settings) {
             'micDisclosureAccepted': settings.micDisclosureAccepted,
             'cameraDisclosureAccepted': settings.cameraDisclosureAccepted,
             'chatBackground': settings.chatBackground,
+            // Die Tastatur (0.11.0): sie übersteht damit eine
+            // Neuinstallation und ist auf dem zweiten Gerät da.
+            'tastaturBelegung': settings.tastaturBelegung,
+            'tastaturStil': settings.tastaturStil,
+            'tastaturFarbe': settings.tastaturFarbe,
           },
         });
       } catch (e) {
@@ -76,4 +81,127 @@ void scheduleUiPrefsServerSync(AppSettings settings) {
       }
     }());
   });
+}
+
+/// Die serverseitig gespiegelten UI-Einstellungen übernehmen.
+///
+/// DER WEG: Das Übernehmen liegt in einer Erweiterung, weil die
+/// Hauptdatei sonst über der Grenze von 1000 Zeilen läge. Der Zustand
+/// kommt über die zwei Zugänge der Klasse (`stand` und `setzeStand`) -
+/// `state` selbst ist geschützt.
+extension SettingsUiPrefsServer on SettingsNotifier {
+  /// Übernimmt die serverseitig gespiegelten UI-Einstellungen
+  /// (profiles.ui_prefs, Migration 074) nach Login/Neuinstallation.
+  /// Server gewinnt bei vorhandenen Schlüsseln; fehlende Schlüssel
+  /// (alter Serverstand) lassen den lokalen Stand unangetastet.
+  Future<void> applyServerUiPrefs(Map<String, dynamic>? ui) async {
+    if (ui == null || ui.isEmpty) return;
+    var next = stand;
+    var changed = false;
+
+    T? read<T>(String key) => ui[key] is T ? ui[key] as T : null;
+
+    // 'blindModeEnabled' wird vom Server bewusst NICHT mehr
+    // übernommen: der Blind Mode ist fest AN. Ohne das würde ein
+    // alter Serverstand (Blind Mode aus) die App wieder ausblenden -
+    // der Wert wird beim nächst Sync auf true gesetzt und
+    // heilt damit auch die Bestandskonten.
+    final reveal = read<bool>('revealPhotosAfterMatch');
+    if (reveal != null && reveal != next.revealPhotosAfterMatch) {
+      next = next.copyWith(revealPhotosAfterMatch: reveal);
+      changed = true;
+    }
+    final visibilityRaw = read<String>('profileVisibility');
+    if (visibilityRaw != null) {
+      final v = ProfileVisibility.fromValue(visibilityRaw);
+      if (v != next.profileVisibility) {
+        next = next.copyWith(profileVisibility: v);
+        changed = true;
+      }
+    }
+    final dark = read<bool>('useDarkMode');
+    if (dark != null && dark != next.useDarkMode) {
+      next = next.copyWith(useDarkMode: dark);
+      changed = true;
+    }
+    final master = read<bool>('notificationsEnabled');
+    if (master != null && master != next.notificationsEnabled) {
+      next = next.copyWith(notificationsEnabled: master);
+      changed = true;
+    }
+    final notifyMatches = read<bool>('notifyMatches');
+    final notifyLikes = read<bool>('notifyLikes');
+    final notifyMessages = read<bool>('notifyMessages');
+    final notifyDatingHour = read<bool>('notifyDatingHour');
+    final blur = read<bool>('blurChatImages');
+    if (notifyMatches != null && notifyMatches != next.notifyMatches) {
+      next = next.copyWith(notifyMatches: notifyMatches);
+      changed = true;
+    }
+    final chatBg = read<String>('chatBackground');
+    if (chatBg != null &&
+        ChatBackgrounds.isValid(chatBg) &&
+        chatBg != next.chatBackground) {
+      next = next.copyWith(chatBackground: chatBg);
+      changed = true;
+    }
+    final paused = read<bool>('paused');
+    if (paused != null && paused != next.paused) {
+      var vis = next.profileVisibility;
+      if (paused) {
+        vis = ProfileVisibility.hidden;
+      } else if (vis == ProfileVisibility.hidden) {
+        vis = ProfileVisibility.everyone;
+      }
+      next = next.copyWith(paused: paused, profileVisibility: vis);
+      changed = true;
+    }
+    final icebreaker = read<bool>('contextIcebreakerEnabled');
+    if (icebreaker != null && icebreaker != next.contextIcebreakerEnabled) {
+      next = next.copyWith(contextIcebreakerEnabled: icebreaker);
+      changed = true;
+    }
+    final dealbreaker = read<bool>('habitsDealbreaker');
+    if (dealbreaker != null && dealbreaker != next.habitsDealbreaker) {
+      next = next.copyWith(habitsDealbreaker: dealbreaker);
+      changed = true;
+    }
+    if (notifyLikes != null && notifyLikes != next.notifyLikes) {
+      next = next.copyWith(notifyLikes: notifyLikes);
+      changed = true;
+    }
+    if (notifyMessages != null && notifyMessages != next.notifyMessages) {
+      next = next.copyWith(notifyMessages: notifyMessages);
+      changed = true;
+    }
+    if (notifyDatingHour != null && notifyDatingHour != next.notifyDatingHour) {
+      next = next.copyWith(notifyDatingHour: notifyDatingHour);
+      changed = true;
+    }
+    if (blur != null && blur != next.blurChatImages) {
+      next = next.copyWith(blurChatImages: blur);
+      changed = true;
+    }
+    // Die Tastatur (0.11.0): sie übersteht damit eine Neuinstallation.
+    final belegung = read<String>('tastaturBelegung');
+    if (belegung != null && belegung != next.tastaturBelegung) {
+      next = next.copyWith(tastaturBelegung: belegung);
+      changed = true;
+    }
+    final stil = read<String>('tastaturStil');
+    if (stil != null && stil != next.tastaturStil) {
+      next = next.copyWith(tastaturStil: stil);
+      changed = true;
+    }
+    final tastaturFarbe = read<int>('tastaturFarbe');
+    if (tastaturFarbe != null && tastaturFarbe != next.tastaturFarbe) {
+      next = next.copyWith(tastaturFarbe: tastaturFarbe);
+      changed = true;
+    }
+
+    if (changed) {
+      setzeStand(next);
+      await _persist();
+    }
+  }
 }

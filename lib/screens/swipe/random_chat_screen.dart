@@ -11,6 +11,8 @@ import 'package:thestia/models/chat/message.dart';
 import 'package:thestia/models/chat/random_chat_session.dart';
 import 'package:thestia/models/profile/user_profile.dart';
 import 'package:thestia/providers/chat/chat_provider.dart';
+import 'package:thestia/providers/settings/settings_provider.dart';
+import 'package:thestia/models/settings/tastatur_einstellungen.dart';
 import 'package:thestia/routing/app_router.dart';
 import 'package:thestia/services/dating_hour/find_your_match_service.dart';
 import 'package:thestia/services/chat/p2p_chat_service.dart';
@@ -478,6 +480,15 @@ class _RandomChatScreenState extends ConsumerState<RandomChatScreen>
               // Die eigene Tastatur (v0.10.1): die Systemtastatur sieht
               // keinen einzelnen Buchstaben.
               SecureComposer(
+                // Die Tastatur (0.11.0): Belegung und Farben kommen aus den
+                // Einstellungen.
+                layout: TastaturBelegungWert.ausWert(
+                  ref.watch(settingsProvider).tastaturBelegung,
+                ),
+                stil: TastaturStilWert.ausWert(
+                  ref.watch(settingsProvider).tastaturStil,
+                ),
+                farbe: ref.watch(settingsProvider).tastaturFarbe,
                 controller: _ctrl,
                 hintText: L10n.t(context, 'random.hint'),
                 onSend: _send,

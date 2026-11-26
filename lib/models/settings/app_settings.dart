@@ -1,5 +1,6 @@
 import 'package:thestia/models/profile/profile_visibility.dart';
 import 'package:thestia/models/settings/nachricht_ueberdenken.dart';
+import 'package:thestia/models/settings/tastatur_einstellungen.dart';
 import 'package:thestia/utils/common/constants.dart';
 
 /// App-Einstellungen inkl. Blind-Mode und Privatsphäre-Optionen.
@@ -240,6 +241,30 @@ class AppSettings {
   /// Ausnahme des Kontakts den globalen Wert überstimmt.
   final Map<String, String> nachrichtPruefAusnahmen;
 
+  /// Wie die eigene Tastatur belegt ist (0.11.0).
+  ///
+  /// DER WEG: Bisher folgte die Belegung der Sprache der App. Wer auf
+  /// Deutsch schreibt, aber in einer englischen Umgebung arbeitet, will
+  /// die App-Sprache ändern, ohne dass sich die Tasten verschieben -
+  /// und umgekehrt. Deshalb ist es eine eigene Einstellung.
+  ///
+  /// Gespeichert als Text (siehe [TastaturBelegung]), gespiegelt nach
+  /// `profiles.ui_prefs` (Überstehen einer Neuinstallation).
+  final String tastaturBelegung;
+
+  /// Wie die eigene Tastatur gefärbt ist (0.11.0).
+  ///
+  /// "wieApp" ist der heutige Stand (die Flächenfarben des Themas),
+  /// "appFarbe" nimmt die Akzentfarbe der Farbwelt, "eigeneFarbe" den
+  /// selbst gewählten Farbton aus [tastaturFarbe].
+  final String tastaturStil;
+
+  /// Der eigene Farbton der Tastatur (0.11.0) als ARGB-Zahl.
+  ///
+  /// Null, solange der Nutzer keine eigene Farbe gewählt hat. Wird
+  /// nur benutzt, wenn [tastaturStil] auf "eigeneFarbe" steht.
+  final int? tastaturFarbe;
+
   /// Die Einstellung "Nachricht überdenken" in der Form, in der die
   /// Oberfläche sie braucht.
   ///
@@ -328,6 +353,9 @@ class AppSettings {
     this.nachrichtPruefModus = 'aus',
     this.nachrichtPruefSchwelle = 250,
     this.nachrichtPruefAusnahmen = const <String, String>{},
+    this.tastaturBelegung = 'wieApp',
+    this.tastaturStil = 'wieApp',
+    this.tastaturFarbe,
   });
 
   /// Standard-Einstellungen für einen neuen Nutzer.
@@ -410,6 +438,10 @@ class AppSettings {
             (k, v) => MapEntry('$k', '$v'),
           ) ??
           const <String, String>{},
+      // Die Tastatur (0.11.0): fehlende Schlüssel bedeuten "wie App".
+      tastaturBelegung: json['tastaturBelegung'] as String? ?? 'wieApp',
+      tastaturStil: json['tastaturStil'] as String? ?? 'wieApp',
+      tastaturFarbe: (json['tastaturFarbe'] as num?)?.toInt(),
     );
   }
 
@@ -462,6 +494,9 @@ class AppSettings {
     'nachrichtPruefModus': nachrichtPruefModus,
     'nachrichtPruefSchwelle': nachrichtPruefSchwelle,
     'nachrichtPruefAusnahmen': nachrichtPruefAusnahmen,
+    'tastaturBelegung': tastaturBelegung,
+    'tastaturStil': tastaturStil,
+    'tastaturFarbe': tastaturFarbe,
   };
 
   /// Immutabele Kopie mit veränderten Werten.
@@ -477,6 +512,10 @@ class AppSettings {
   /// Sentinel für [chatBackgroundPath]: null bedeutet "Pfad löschen",
   /// daher braucht es die Unterscheidung wie bei [useDarkMode].
   static const _chatBackgroundPathUnset = Object();
+
+  /// Sentinel für [tastaturFarbe]: null bedeutet "Farbe löschen"
+  /// (zurück auf keine eigene Farbe).
+  static const _tastaturFarbeUnset = Object();
 
   AppSettings copyWith({
     bool? blindModeEnabled,
@@ -526,6 +565,9 @@ class AppSettings {
     String? nachrichtPruefModus,
     int? nachrichtPruefSchwelle,
     Map<String, String>? nachrichtPruefAusnahmen,
+    String? tastaturBelegung,
+    String? tastaturStil,
+    Object? tastaturFarbe = _tastaturFarbeUnset,
   }) {
     return AppSettings(
       // Blind Mode ist fest AN - der übergebene Wert wird
@@ -593,6 +635,11 @@ class AppSettings {
           nachrichtPruefSchwelle ?? this.nachrichtPruefSchwelle,
       nachrichtPruefAusnahmen:
           nachrichtPruefAusnahmen ?? this.nachrichtPruefAusnahmen,
+      tastaturBelegung: tastaturBelegung ?? this.tastaturBelegung,
+      tastaturStil: tastaturStil ?? this.tastaturStil,
+      tastaturFarbe: identical(tastaturFarbe, _tastaturFarbeUnset)
+          ? this.tastaturFarbe
+          : tastaturFarbe as int?,
     );
   }
 }

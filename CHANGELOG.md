@@ -36,6 +36,25 @@ können sich Schnittstellen und Verhalten jederzeit ändern.
   mit und ohne Bestätigung, die Schwelle, die Ausnahme je Kontakt, das
   Menü und der Extra-Knopf
 
+### Neu (26.11.2026) – Die eigene Tastatur wird einstellbar
+
+- **Der Hintergrund der App-Tastatur ist einstellbar** (Einstellungen →
+  Darstellung): „Wie die App" (das heutige Verhalten), „in der Farbe der
+  App" (die Tasten bekommen die Akzentfarbe der gewählten Farbwelt) oder
+  „eigene Farbe" (acht Farbtöne zur Auswahl). Der Text auf den Tasten
+  bleibt in beiden Helligkeiten lesbar – das rechnet die Helligkeit der
+  Fläche, geraten wäre hier ein Fehler, den der Nutzer sieht.
+- **Die Belegung ist unabhängig von der App-Sprache**: „wie die App"
+  (deutsch → QWERTZ, englisch → QWERTY), „immer Deutsch (QWERTZ)" oder
+  „immer Englisch (QWERTY)". Bisher war die Belegung ein Nebenprodukt des
+  Sprachumschalters – wer auf Deutsch schreibt, aber in einer englischen
+  Umgebung arbeitet, wollte die App-Sprache ändern, ohne dass sich die
+  Tasten verschieben.
+- **Beide Schalter überstehen eine Neuinstallation** und sind auf dem
+  zweiten Gerät da (sie stehen in `profiles.ui_prefs` – keine Migration,
+  keine neue Spalte, keine neuen Daten; die Datenschutzerklärung
+  ändert sich dadurch nicht).
+
 ### Behoben (26.11.2026) – Echte Umlaute in den deutschen Texten
 
 - **In den deutschen Texten standen an vielen Stellen die

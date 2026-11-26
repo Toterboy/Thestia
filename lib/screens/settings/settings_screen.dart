@@ -36,6 +36,7 @@ import 'package:thestia/widgets/settings/appearance_selector.dart';
 import 'package:thestia/widgets/common/buttons.dart';
 import 'package:thestia/widgets/chat/chat_background_picker.dart';
 import 'package:thestia/widgets/settings/privacy_section.dart';
+import 'package:thestia/widgets/settings/tastatur_einstellungen.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/widgets/settings/language_switch.dart';
 import 'package:thestia/widgets/settings/theme_picker.dart';
@@ -331,6 +332,9 @@ class SettingsScreen extends ConsumerWidget {
                       ref.read(settingsProvider.notifier).setThemeName(t.name);
                     },
                   ),
+                  const SizedBox(height: 16),
+                  // Die eigene Tastatur (0.11.0): Belegung und Farbe.
+                  const TastaturEinstellungen(),
                   const SizedBox(height: 16),
                   const LanguageSwitch(),
                   const SizedBox(height: 12),

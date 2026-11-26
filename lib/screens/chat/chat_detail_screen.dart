@@ -18,6 +18,7 @@ import 'package:thestia/models/chat/match.dart';
 import 'package:thestia/l10n/app_strings.dart';
 import 'package:thestia/models/profile/gender.dart' show RelationshipType;
 import 'package:thestia/models/chat/message.dart';
+import 'package:thestia/models/settings/tastatur_einstellungen.dart';
 import 'package:thestia/utils/chat/chat_backgrounds.dart';
 import 'package:thestia/widgets/chat/chat_background_picker.dart';
 import 'package:thestia/models/profile/user_profile.dart';

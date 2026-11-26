@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:thestia/l10n/app_strings.dart';
+import 'package:thestia/models/settings/tastatur_einstellungen.dart';
 
 /// Die eigene Bildschirmtastatur der App (v0.10.1).
 ///
@@ -45,8 +46,31 @@ class SecureKeyboard extends StatefulWidget {
     this.onEnter,
     this.onHide,
     this.onPaste,
+    this.layout,
+    this.stil,
+    this.farbe,
     super.key,
   });
+
+  /// Die Belegung (0.11.0).
+  ///
+  /// Null bedeutet "wie die App" - dann folgt die Belegung der
+  /// Sprache der App (deutsch → QWERTZ, englisch → QWERTY). Ein
+  /// gesetzter Wert zwingt eine Belegung: wer auf Deutsch schreibt,
+  /// aber in einer englischen Umgebung arbeitet, will die
+  /// App-Sprache ändern, ohne dass sich die Tasten verschieben.
+  final TastaturBelegung? layout;
+
+  /// Der Farbstil der Tastatur (0.11.0).
+  ///
+  /// Null bedeutet "wie die App" - dann kommen die Farben aus dem
+  /// App-Thema (das heutige Verhalten).
+  final TastaturStil? stil;
+
+  /// Die eigene Farbe der Tastatur (0.11.0) als ARGB-Zahl.
+  ///
+  /// Wird nur benutzt, wenn [stil] auf "eigeneFarbe" steht.
+  final int? farbe;
 
   /// Die Belegung, die zur Sprache der App passt.
   ///
@@ -164,6 +188,63 @@ class _SecureKeyboardState extends State<SecureKeyboard> {
     ],
   );
 
+  /// Die Farben der Tastatur (0.11.0).
+  ///
+  /// DER WEG: "Wie die App" nimmt die Flächenfarben des Themas (das
+  /// heutige Verhalten), "in der Farbe der App" die Akzentfarbe der
+  /// Farbwelt, "eigene Farbe" den selbst gewählten Ton. Der Text
+  /// darauf muss in beiden Helligkeiten lesbar bleiben - darum wird
+  /// er aus der Helligkeit der Fläche berechnet, nicht geraten.
+  _TastaturFarben _farben(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final stil = widget.stil;
+    if (stil == null || stil == TastaturStil.wieApp) {
+      return _TastaturFarben(
+        hintergrund: scheme.surfaceContainer,
+        taste: scheme.surfaceContainerHighest,
+        aktiv: scheme.primaryContainer,
+        text: scheme.onSurface,
+        aktivText: scheme.onPrimaryContainer,
+      );
+    }
+    final eigene = stil == TastaturStil.eigeneFarbe && widget.farbe != null;
+    final flaeche = eigene ? Color(widget.farbe!) : scheme.primary;
+    return _TastaturFarben(
+      hintergrund: scheme.surfaceContainer,
+      taste: flaeche,
+      aktiv: flaeche,
+      // DER KONTRAST: Auf einer dunklen Fläche braucht es einen hellen
+      // Text und umgekehrt. Das rechnet die Helligkeit der Fläche -
+      // geraten wäre hier ein Fehler, den der Nutzer sieht.
+      text: _lesbarerText(flaeche),
+      aktivText: _lesbarerText(flaeche),
+    );
+  }
+
+  /// Der lesbare Text für eine Fläche (hell auf dunkel, dunkel auf hell).
+  static Color _lesbarerText(Color flaeche) {
+    final helligkeit = flaeche.computeLuminance();
+    return helligkeit > 0.5 ? Colors.black87 : Colors.white;
+  }
+
+  /// Die Belegung, die gerade gilt (0.11.0).
+  ///
+  /// DER WEG: "Wie die App" folgt der Sprache der App; sonst zählt die
+  /// eigene Wahl. Die Emoji-Auswahl und die Zahlenebene sind
+  /// sprachneutral - die betrifft das nicht.
+  SecureKeyboardLayout aktiveLayout(BuildContext context) {
+    final wahl = widget.layout;
+    if (wahl == TastaturBelegung.deutsch) {
+      return SecureKeyboardLayout.qwertz;
+    }
+    if (wahl == TastaturBelegung.englisch) {
+      return SecureKeyboardLayout.qwerty;
+    }
+    return SecureKeyboard.layoutFuerSprache(
+      L10n.localeOf(context).languageCode,
+    );
+  }
+
   /// Das große Eszett gibt es nicht - "SS" wäre zwei Zeichen und
   /// würde den Text unlesbar machen. Der Buchstabe bleibt "ß".
   static String _gross(String zeichen) =>
@@ -243,10 +324,15 @@ class _SecureKeyboardState extends State<SecureKeyboard> {
 
   Widget _charCap(String c) => _KeyCap(
     label: c,
+    farben: _farben,
     onTap: () => widget.onCharacter(c),
     child: Text(
       c,
-      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w500,
+        color: _farben(context).text,
+      ),
     ),
   );
 
@@ -257,9 +343,10 @@ class _SecureKeyboardState extends State<SecureKeyboard> {
     bool active = false,
   }) => _KeyCap(
     label: label,
+    farben: _farben,
     onTap: onTap,
     active: active,
-    child: Icon(icon, size: 20),
+    child: Icon(icon, size: 20, color: _farben(context).text),
   );
 
   /// Die Emoji-Auswahl (feste Höhe, damit die Tastatur nicht wächst).
@@ -299,11 +386,9 @@ class _SecureKeyboardState extends State<SecureKeyboard> {
   Widget build(BuildContext context) {
     final rows = <Widget>[];
 
-    // Die Belegung folgt der Sprache der App: Deutsch -> QWERTZ mit
-    // Umlauten, Englisch -> QWERTY.
-    final belegung =
-        SecureKeyboard.layoutFuerSprache(L10n.localeOf(context).languageCode) ==
-            SecureKeyboardLayout.qwertz
+    // Die Belegung: entweder die der Einstellung oder - wie bisher -
+    // die der Sprache der App (Deutsch -> QWERTZ, Englisch -> QWERTY).
+    final belegung = aktiveLayout(context) == SecureKeyboardLayout.qwertz
         ? _qwertz
         : _qwerty;
 
@@ -407,17 +492,18 @@ class _SecureKeyboardState extends State<SecureKeyboard> {
         _KeyCap(
           flex: 4,
           label: L10n.t(context, 'keyboard.space'),
+          farben: _farben,
           onTap: () => widget.onCharacter(' '),
           child: Text(
             L10n.t(context, 'keyboard.space'),
-            style: const TextStyle(fontSize: 14),
+            style: TextStyle(fontSize: 14, color: _farben(context).text),
           ),
         ),
       ]),
     );
 
     return Material(
-      color: Theme.of(context).colorScheme.surfaceContainer,
+      color: _farben(context).hintergrund,
       child: SafeArea(
         top: false,
         child: Padding(
@@ -429,6 +515,36 @@ class _SecureKeyboardState extends State<SecureKeyboard> {
   }
 }
 
+/// Die Farben der Tastatur (0.11.0).
+///
+/// DER WEG: Die Tastatur holt ihre Farben nicht selbst aus dem Theme -
+/// sie bekommt sie von oben (der Einstellung). So verändert sie das
+/// Theme der anderen Bildschirme nicht.
+class _TastaturFarben {
+  const _TastaturFarben({
+    required this.hintergrund,
+    required this.taste,
+    required this.aktiv,
+    required this.text,
+    required this.aktivText,
+  });
+
+  /// Der Hintergrund der Tastatur.
+  final Color hintergrund;
+
+  /// Die Farbe einer Taste.
+  final Color taste;
+
+  /// Die Farbe einer aktiven Taste (Umschaltung).
+  final Color aktiv;
+
+  /// Der Text auf den Tasten.
+  final Color text;
+
+  /// Der Text auf einer aktiven Taste.
+  final Color aktivText;
+}
+
 /// Eine einzelne Taste. Die [flex] bestimmt, wie breit sie wird
 /// (die Leertaste ist breiter als ein Buchstabe).
 class _KeyCap extends StatelessWidget {
@@ -436,6 +552,7 @@ class _KeyCap extends StatelessWidget {
     required this.child,
     required this.onTap,
     required this.label,
+    required this.farben,
     this.flex = 1,
     this.active = false,
   });
@@ -451,9 +568,13 @@ class _KeyCap extends StatelessWidget {
   /// Hervorgehobene Taste (aktive Umschaltung).
   final bool active;
 
+  /// Die Farben der Tastatur (kommen von oben - die Tastatur hängt
+  /// sich nicht selbst um).
+  final _TastaturFarben Function(BuildContext context) farben;
+
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final palette = farben(context);
     return Expanded(
       flex: flex,
       child: Semantics(
@@ -462,9 +583,7 @@ class _KeyCap extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 3),
           child: Material(
-            color: active
-                ? scheme.primaryContainer
-                : scheme.surfaceContainerHighest,
+            color: active ? palette.aktiv : palette.taste,
             borderRadius: BorderRadius.circular(8),
             clipBehavior: Clip.antiAlias,
             child: InkWell(

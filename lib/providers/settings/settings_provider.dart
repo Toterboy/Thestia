@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:thestia/models/settings/app_settings.dart';
 import 'package:thestia/models/settings/nachricht_ueberdenken.dart';
+import 'package:thestia/models/settings/tastatur_einstellungen.dart';
 import 'package:thestia/models/profile/profile_visibility.dart';
 import 'package:thestia/services/storage/local_storage.dart';
 import 'package:thestia/services/server/supabase_database_service.dart';
@@ -15,6 +16,7 @@ import 'package:thestia/utils/common/constants.dart';
 import 'package:thestia/utils/common/best_effort.dart';
 
 part 'settings_nachrichtpruefung.dart';
+part 'settings_tastatur.dart';
 part 'settings_ui_prefs.dart';
 
 /// StateNotifier, der die App-Einstellungen verwaltet und sicher persistiert.
@@ -266,105 +268,6 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       next = next.copyWith(habitsDealbreaker: habitsDealbreaker);
       changed = true;
     }
-    if (changed) {
-      state = next;
-      await _persist();
-    }
-  }
-
-  /// Übernimmt die serverseitig gespiegelten UI-Einstellungen
-  /// (profiles.ui_prefs, Migration 074) nach Login/Neuinstallation.
-  /// Server gewinnt bei vorhandenen Schlüsseln; fehlende Schlüssel
-  /// (alter Serverstand) lassen den lokalen Stand unangetastet.
-  Future<void> applyServerUiPrefs(Map<String, dynamic>? ui) async {
-    if (ui == null || ui.isEmpty) return;
-    var next = state;
-    var changed = false;
-
-    T? read<T>(String key) => ui[key] is T ? ui[key] as T : null;
-
-    // 'blindModeEnabled' wird vom Server bewusst NICHT mehr
-    // übernommen: der Blind Mode ist fest AN. Ohne das würde ein
-    // alter Serverstand (Blind Mode aus) die App wieder ausblenden -
-    // der Wert wird beim nächst Sync auf true gesetzt und
-    // heilt damit auch die Bestandskonten.
-    final reveal = read<bool>('revealPhotosAfterMatch');
-    if (reveal != null && reveal != next.revealPhotosAfterMatch) {
-      next = next.copyWith(revealPhotosAfterMatch: reveal);
-      changed = true;
-    }
-    final visibilityRaw = read<String>('profileVisibility');
-    if (visibilityRaw != null) {
-      final v = ProfileVisibility.fromValue(visibilityRaw);
-      if (v != next.profileVisibility) {
-        next = next.copyWith(profileVisibility: v);
-        changed = true;
-      }
-    }
-    final dark = read<bool>('useDarkMode');
-    if (dark != null && dark != next.useDarkMode) {
-      next = next.copyWith(useDarkMode: dark);
-      changed = true;
-    }
-    final master = read<bool>('notificationsEnabled');
-    if (master != null && master != next.notificationsEnabled) {
-      next = next.copyWith(notificationsEnabled: master);
-      changed = true;
-    }
-    final notifyMatches = read<bool>('notifyMatches');
-    final notifyLikes = read<bool>('notifyLikes');
-    final notifyMessages = read<bool>('notifyMessages');
-    final notifyDatingHour = read<bool>('notifyDatingHour');
-    final blur = read<bool>('blurChatImages');
-    if (notifyMatches != null && notifyMatches != next.notifyMatches) {
-      next = next.copyWith(notifyMatches: notifyMatches);
-      changed = true;
-    }
-    final chatBg = read<String>('chatBackground');
-    if (chatBg != null &&
-        ChatBackgrounds.isValid(chatBg) &&
-        chatBg != next.chatBackground) {
-      next = next.copyWith(chatBackground: chatBg);
-      changed = true;
-    }
-    final paused = read<bool>('paused');
-    if (paused != null && paused != next.paused) {
-      var vis = next.profileVisibility;
-      if (paused) {
-        vis = ProfileVisibility.hidden;
-      } else if (vis == ProfileVisibility.hidden) {
-        vis = ProfileVisibility.everyone;
-      }
-      next = next.copyWith(paused: paused, profileVisibility: vis);
-      changed = true;
-    }
-    final icebreaker = read<bool>('contextIcebreakerEnabled');
-    if (icebreaker != null && icebreaker != next.contextIcebreakerEnabled) {
-      next = next.copyWith(contextIcebreakerEnabled: icebreaker);
-      changed = true;
-    }
-    final dealbreaker = read<bool>('habitsDealbreaker');
-    if (dealbreaker != null && dealbreaker != next.habitsDealbreaker) {
-      next = next.copyWith(habitsDealbreaker: dealbreaker);
-      changed = true;
-    }
-    if (notifyLikes != null && notifyLikes != next.notifyLikes) {
-      next = next.copyWith(notifyLikes: notifyLikes);
-      changed = true;
-    }
-    if (notifyMessages != null && notifyMessages != next.notifyMessages) {
-      next = next.copyWith(notifyMessages: notifyMessages);
-      changed = true;
-    }
-    if (notifyDatingHour != null && notifyDatingHour != next.notifyDatingHour) {
-      next = next.copyWith(notifyDatingHour: notifyDatingHour);
-      changed = true;
-    }
-    if (blur != null && blur != next.blurChatImages) {
-      next = next.copyWith(blurChatImages: blur);
-      changed = true;
-    }
-
     if (changed) {
       state = next;
       await _persist();
@@ -941,6 +844,37 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     state = state.copyWith(nachrichtPruefAusnahmen: ausnahmen);
     await _persist();
   }
+
+  /// Setzt die Werte der eigenen Tastatur (0.11.0).
+  ///
+  /// DER WEG: Das ist der einzige Zugang, den die Erweiterung im Teil
+  /// braucht - `state` ist geschützt, von dort kommt man nicht heran.
+  ///
+  /// [farbeSetzen] unterscheidet "Farbe nicht anfassen" (null) von
+  /// "Farbe löschen" (die eigene Farbe wieder verwerfen).
+  Future<void> setzeTastaturWerte({
+    String? belegung,
+    String? stil,
+    int? farbe,
+    bool farbeSetzen = false,
+  }) async {
+    state = state.copyWith(
+      tastaturBelegung: belegung,
+      tastaturStil: stil,
+      tastaturFarbe: farbeSetzen ? farbe : state.tastaturFarbe,
+    );
+    await _persist();
+  }
+
+  /// Der aktuelle Stand der Einstellungen.
+  ///
+  /// DER WEG: `state` ist geschützt - die Erweiterungen in den
+  /// Teil-Dateien kommen nicht daran. Das ist ihr einziger Weg.
+  AppSettings get stand => state;
+
+  /// Setzt den Stand der Einstellungen (der Zugang für die Erweiterungen
+  /// in den Teil-Dateien).
+  void setzeStand(AppSettings neu) => state = neu;
 
   /// Setzt alle Einstellungen auf die Standardwerte zurück
   /// (z. B. nach Account-Löschung – keine Alt-Daten im neuen Account).

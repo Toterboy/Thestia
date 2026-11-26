@@ -86,11 +86,16 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
   keinen Inhalt), Transit Spark: mehrere mit derselben Beschreibung
   anschreiben, ungefährer Ort als Selbstauskunft statt als Standort,
   serverseitiger Nachrichtenzähler, Kategorie-Sicht ohne Sackgasse
-- **0.11.0** (Build 60) – **Die Nachricht überdenken**: vor dem Senden
-  fragt die App, wie der Nutzer die Nachricht selbst versteht – und ob
-  sie wirklich so bleiben soll. Einstellbar im Drei-Punkte-Menü des
-  Chats: bei jeder Nachricht, ab etwa 250 Zeichen oder nur über einen
-  Extra-Knopf, global für alle Kontakte oder je Kontakt/Funke einzeln
+- **0.11.0** (Build 60) – **Die Nachricht überdenken** und **die
+  eigene Tastatur wird einstellbar**. Vor dem Senden fragt die App, wie
+  der Nutzer die Nachricht selbst versteht – und ob sie wirklich so
+  bleiben soll. Einstellbar im Drei-Punkte-Menü des Chats: bei jeder
+  Nachricht, ab etwa 250 Zeichen oder nur über einen Extra-Knopf, global
+  für alle Kontakte oder je Kontakt/Funke einzeln. Die App-Tastatur
+  (Build 54) bekommt ihren eigenen Hintergrund (wie die App, in der
+  Akzentfarbe der Farbwelt oder eine eigene Farbe) und ihre eigene
+  Belegung (wie die App, immer QWERTZ, immer QWERTY) – App-Sprache und
+  Werkzeug sind damit getrennt
 - **0.10.2** (Build 56/57/58/59) – **Das Impressum steht als Text in der App**
   (der verifizierte App-Link öffnete die App selbst statt des Browsers),
   **die Funkenliste lädt wieder** (drei `STABLE`-Funktionen schrieben in
@@ -145,6 +150,14 @@ drum herum steht, ist noch nicht entschieden. Die Hintergründe stehen im
     nur über einen Extra-Knopf im Eingabefeld
   - die eigene Deutung bleibt auf dem Gerät: sie wird nicht gesendet
     und nirgends gespeichert
+  - **umgesetzt in Build 60** (siehe oben unter „Umgesetzt")
+- **Die eigene Tastatur wird einstellbar** (die App-Tastatur aus
+  Build 54): der **Hintergrund** (wie die App, in der Akzentfarbe der
+  Farbwelt oder eine eigene Farbe) und die **Belegung** (wie die App,
+  immer QWERTZ, immer QWERTY). Die Tastatur folgt damit nicht mehr
+  blind dem Sprachumschalter – App-Sprache und Werkzeug sind getrennt.
+  Beide Schalter stehen in `ui_prefs` und überstehen damit eine
+  Neuinstallation
   - **umgesetzt in Build 60** (siehe oben unter „Umgesetzt")
 - Details: [docs/technik/lokale-ki-reflexion.md](docs/technik/lokale-ki-reflexion.md)
 
